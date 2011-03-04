@@ -783,9 +783,6 @@ class chooser(object):
 
         vbox = gtk.VBox()
 
-        wholegroup_cb = gtk.CheckButton( "Rename the group" )
-        vbox.pack_start (wholegroup_cb, True)
-
         label = gtk.Label("Group" )
         group_entry = gtk.Entry()
         hbox = gtk.HBox()
@@ -800,13 +797,11 @@ class chooser(object):
         hbox.pack_start(name_entry, True) 
         vbox.pack_start( hbox )
 
-        wholegroup_cb.connect( "toggled", self.toggle_entry_sensitivity, name_entry )
- 
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Rename" )
-        ok_button.connect("clicked", self.rename_suite, window, reg, group_entry, name_entry, wholegroup_cb )
+        ok_button.connect("clicked", self.rename_suite, window, reg, group_entry, name_entry )
 
         #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -820,11 +815,10 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def rename_suite( self, b, w, ffrom, g_e, n_e, wholegroup_cb ):
+    def rename_suite( self, b, w, reg, g_e, n_e ):
         g = g_e.get_text()
         n = n_e.get_text()
-        options = ''
-        ffroms = re.split(':', ffrom)
+        ffroms = re.split(':', reg)
         if len(ffroms) == 3:
             fo, fg, fn = ffroms
         elif len(ffroms) == 2:
@@ -833,27 +827,61 @@ class chooser(object):
         elif len(ffroms) == 1:
             fn = ffroms
             fg = 'default'
-
         if g == '':
             g = 'default'
-        if wholegroup_cb.get_active():
-            options += ' -g '
-            tto = g
-            ffrom = fg
-        else: 
-            tto = g + ':' + n
+        tto = g + ':' + n
+        options = ''
         if self.cdb:
             options += ' -c '
-
-        call( 'capture "cylc rename ' + options + ' ' + ffrom + ' ' + tto + '" --width=600 &', shell=True )
+        call( 'capture "cylc rename ' + options + ' ' + reg + ' ' + tto + '" --width=600 &', shell=True )
         w.destroy()
 
     def rename_group_popup( self, w, group ):
-        pass
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Rename Group'" + group + "'")
+
+        vbox = gtk.VBox()
+
+        label = gtk.Label("New Group Name" )
+        new_group_entry = gtk.Entry()
+        hbox = gtk.HBox()
+        hbox.pack_start( label )
+        hbox.pack_start(new_group_entry, True) 
+        vbox.pack_start( hbox )
+ 
+        cancel_button = gtk.Button( "_Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        ok_button = gtk.Button( "_Rename" )
+        ok_button.connect("clicked", self.rename_group, window, group, new_group_entry )
+
+        #help_button = gtk.Button( "_Help" )
+        #help_button.connect("clicked", self.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( ok_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def rename_group( self, b, w, g_from, g_to_e ):
+        g_to = g_to_e.get_text()
+        options = ' -g '
+        if self.cdb:
+            options += ' -c '
+        call( 'capture "cylc rename ' + options + ' ' + g_from + ' ' + g_to + '" --width=600 &', shell=True )
+        w.destroy()
+
     def import_group_popup( self, w, group ):
         pass
+
     def export_group_popup( self, w, group ):
         pass
+
     def copy_group_popup( self, w, group ):
         window = gtk.Window()
         window.set_border_width(5)
