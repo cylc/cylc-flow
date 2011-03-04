@@ -89,6 +89,9 @@ def unqualify( suite ):
         raise RegistrationError, 'Illegal suite name: ' + suite
     return suite
 
+def regjoin( owner, group, name ):
+    return owner + ':' + group + ':' + name
+
 class regsplit( object ):
     def __init__( self, suite ):
         user = os.environ['USER']
@@ -253,17 +256,33 @@ class regdb(object):
         self.register( suite_to, dir, descr )
         return True
 
-    def rename_group( self, gfrom, gto, verbose=False ):
+    def rename_group( self, gfrom, gto, verbose=False, exclusive=False ):
+        # move all group members to another (new or existing) group
         # bulk group rename, owner only
         # LOCKING HANDLED BY CALLERS
+
+        # if input is owner:group, check owner is allowed
+        m = re.match( '^(\w+):(\w+)$', gfrom )
+        n = re.match( '^(\w+):(\w+)$', gto )
+        if m:
+            fowner, gfrom = m.groups()
+            if fowner != self.user:
+                raise RegistrationError, 'You can only rename your own suites'
+        if n:
+            towner, gto = n.groups()
+            if towner != self.user:
+                raise RegistrationError, 'You can only rename your own suites'
+ 
         owner = self.user
         if gfrom not in self.items[owner]:
             raise GroupNotFoundError, gfrom
-        if gto in self.items[owner]:
+        if gto in self.items[owner] and exclusive:
             raise GroupAlreadyExistsError, gto
-
-        self.items[owner][gto] = self.items[owner][gfrom]
-        del self.items[owner][gfrom]
+        names = self.items[owner][gfrom].keys()
+        for name in names:
+            dir, descr = self.items[owner][gfrom][name]
+            self.register( regjoin(owner,gto,name), dir, descr )
+            self.unregister( regjoin(owner,gfrom,name) )
         return True
 
     def unregister( self, suite, verbose=False ):
@@ -527,21 +546,27 @@ class centraldb( regdb ):
     def suiteid( self, owner, group, name ):
         return owner + ':' + group + ':' + name
 
-if __name__ == '__main__':
-    # unit test
-    reg = localdb( os.path.join( os.environ['CYLC_DIR'], 'REGISTRATIONS'))
-    reg.unregister_multi()
-    try:
-        reg.register( 'foo', 'suites/userguide',      'the quick'    ) # new
-        reg.register( 'ONE:bar', 'suites/userguide',  'brown fox'    ) # new
-        reg.register( 'TWO:bar', 'suites/userguidex', 'jumped over'  ) # new
-        reg.register( 'TWO:baz', 'suites/userguidex' ) # new
-        reg.register( 'TWO:baz', 'suites/userguidex' ) # OK repeat
-        reg.register( 'TWO:baz', 'suites/userguidexx') # BAD repeat
-    except RegistrationError,x:
-        print x
-    reg.dump_to_file()
+def getdb( suite ):
+        type = None
+        if re.match( '^(\w+):(\w+):(\w+)$', suite ):
+            # owner:group:name
+            type = 'central'
+        elif re.match( '^(\w+):(\w+)$', suite ): 
+            # group:name
+            type = 'local'
+        elif re.match('^(\w+)$', suite ):
+            # [default:]name
+            type = 'local'
+        elif re.match('^(\w+):(\w+):$', suite ):
+            # owner:group:
+            type = 'central'
+        elif re.match('^(\w+):$', suite ):
+            # group:
+            type = 'local'
+        else:
+            raise RegistrationError, 'Illegal registration: ' + suite
 
-    reg2 = localdb( os.path.join( os.environ['CYLC_DIR'], 'REGISTRATIONS'))
-    reg2.load_from_file()
-    reg2.print_multi()
+        if type == 'central':
+            return centraldb()
+        else:
+            return localdb()

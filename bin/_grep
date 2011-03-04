@@ -3,7 +3,7 @@
 import os, re, sys
 from optparse import OptionParser
 from collections import deque
-from registration import localdb, centraldb, RegistrationError
+from registration import getdb, RegistrationError
 
 def include_files( suitedir, inf ):
     outf = []
@@ -67,14 +67,10 @@ See also:
 
 Arguments:
   PATTERN - or Python-style regular expression or a raw string.
-  SUITE   - name of the suite to search.""")
+  SUITE   - suite registration [OWNER:]GROUP:NAME.""")
 
 parser.add_option( "-x", help="Do not search in the suite bin directory",
         action="store_false", default=True, dest="search_bin" )
-
-parser.add_option( "-c","--centraldb",
-        help="Search a suite from the central database.",
-        action="store_true", default=False, dest="central" )
 
 ( options, args ) = parser.parse_args()
 
@@ -85,17 +81,16 @@ arg0 = args[0]
 arg1 = args[1]
 
 # find location of the suite definition directory
-if options.central:
-    reg = centraldb()
-else:
-    reg = localdb()
-reg.load_from_file()
 try:
+    reg = getdb( arg1 )
+    reg.load_from_file()
     reg.get( arg1 )
 except RegistrationError,x:
     print x
     print "Trying reversed arguments..."
     try:
+        reg = getdb( arg0 )
+        reg.load_from_file()
         reg.get( arg0 )
     except RegistrationError,x:
         raise SystemExit(x)
@@ -190,7 +185,7 @@ if not options.search_bin:
 # search files in suite bin directory
 bin = os.path.join( suitedir, 'bin' )
 if not os.path.isdir( bin ):
-    print "\nSuite " + suite + " has no bin directory"
+    print >> sys.stderr, "\nSuite " + suite + " has no bin directory"
     sys.exit(0)
 
 for file in os.listdir( bin ):

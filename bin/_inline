@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 from optparse import OptionParser
 from collections import deque
-from registration import localdb, centraldb, RegistrationError
+from registration import getdb, RegistrationError
 
 done = []
 
@@ -84,11 +84,7 @@ See also:
     cylc prep validate
 
 Arguments:
-  SUITE   - registered name of the suite.""")
-
-parser.add_option( "-c","--centraldb",
-        help="View a suite from the central database.",
-        action="store_true", default=False, dest="central" )
+  SUITE   - suite registration [OWNER:]GROUP:NAME.""")
 
 parser.add_option( "--mark", "-m", 
         help="Mark inclusions in the left margin (line numbers will "
@@ -129,13 +125,9 @@ except KeyError:
     raise SystemExit( 'export $TMPDIR before using this command' )
 
 # find location of the suite definition directory
-if options.central:
-    reg = centraldb()
-else:
-    reg = localdb()
-reg.load_from_file()
-
 try:
+    reg = getdb(suite)
+    reg.load_from_file()
     suitedir,descr = reg.get( suite )
 except RegistrationError,x:
     raise SystemExit(x)

@@ -28,7 +28,7 @@ graph from coldstart is plotted; you can omit suite coldstart tasks
 with the '-w,--warmstart' option. 
 
 Arguments:
-  SUITE   - Registered name of the suite.
+  SUITE   - suite registration [OWNER:]GROUP:NAME
   START   - Hour (HH) at which to start plotting.
   STOP    - Hours beyond START at which to stop plotting (default 6).
   """)
@@ -44,10 +44,6 @@ parser.add_option( "-r", "--runtime",
     help="Plot the suite run-time graph, if one has been generated "
     "($CYLC_SUITE_DIR/graphing/runtime.dot).",
     action="store_true", default=False, dest="view_runtime" )
-
-parser.add_option( "-c", "--centraldb", 
-    help="Access the central suite database, rather than the local.",
-    action="store_true", default=False, dest="central" )
 
 parser.add_option( "-o", "--output", 
     help="Write an image file with format determined by file extension. "
@@ -129,7 +125,7 @@ elif len( hour ) > 2:
 
 # fake a full cycle time
 ctime = '29990101' + hour
-window = MyDotWindow( suite, ctime, stop, raw, options.outputfile, options.central )
+window = MyDotWindow( suite, ctime, stop, raw, options.outputfile )
 window.parse_graph()
 window.connect( 'destroy', gtk.main_quit)
 gobject.timeout_add(1000, window.update)

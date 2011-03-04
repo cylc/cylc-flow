@@ -7,205 +7,41 @@ from optparse import OptionParser
 from registration import localdb, centraldb, regsplit, RegistrationError
 from regprompt import prompt
 
-parser = OptionParser( usage = """cylc [db] import [OPTIONS] [ARGUMENTS]
+parser = OptionParser( usage = """cylc [db] import [OPTIONS] CENTRAL [LOCAL] DIR
 
-Import suites from the central registration database.
-
-1/ cylc [db] import CENTRAL [LOCAL] DIR
-Import one suite under the same group and name, or as LOCAL
-
-2/ cylc [db] import -a,--all FROMGROUP [TOGROUP] TOPDIR
-Import all members of FROMGROUP, under same name or as TOGROUP
-
-3/ cylc [db] import [FILTER OPTIONS] TOPDIR
-Interactively import suites selected by filtering on owner, group, and name.
+Import suites or groups from the central registration database.
 
 Arguments:
-    CENTRAL, FROMGROUP  - OWNER:GROUP:NAME, OWNER:GROUP.
-    LOCAL, TOGROUP      - GROUP:NAME or NAME (default group).
+    CENTRAL, LOCAL  - OWNER:GROUP:NAME, OWNER:GROUP.
     DIR    - destination for the imported suite definition (must not exist).
-    TOPDIR - top level directory for imported suite definitions.""" )
-
-parser.add_option( "-o", "--owner",
-        help="Owner filter Regular Expression.",
-        metavar="RE", action="store", default=None, dest="ownerfilt" )
-
-parser.add_option( "-g", "--group",
-        help="Group filter Regular Expression.",
-        metavar="RE", action="store", default=None, dest="groupfilt" )
-
-parser.add_option( "-n", "--name",
-        help="Name filter Regular Expression.",
-        metavar="RE", action="store", default=None, dest="namefilt" )
-
-parser.add_option( "-a", "--all",
-        help="Import all members of a group.",
-        action="store_true", default=False, dest="groupimport" )
+             or top level directory for imported groups.""" )
 
 ( options, args ) = parser.parse_args()
 
-if len(args) == 0 or len(args) > 3:
+if len(args) != 2 and len(args) != 3:
     parser.error('Illegal number of arguments')
 
 local = localdb()
 central = centraldb() 
 
-if len(args) == 1:
-    # interactive, filtered
-    if not options.ownerfilt and not options.groupfilt and not options.namefilt:
-        parser.error( "filtering options are required for single argument" )
 
-    topdir = args[0]
-    try:
-        mkdir_p( topdir )
-    except Exception,x:
-        raise SystemExit(x)
-
-    # check for valid regular expressions:
-    for filt in options.ownerfilt, options.groupfilt, options.namefilt:
-        if filt:
-            try:
-                re.compile( filt )
-            except:
-                raise SystemExit( 'Bad expression: ' + filt )
-
-    # retrieve central registrations
-    central.load_from_file()
-    try:
-        csuites = central.get_list( ownerfilt=options.ownerfilt,
-                groupfilt=options.groupfilt, namefilt=options.namefilt )
-    except RegistrationError, x:
-        raise SystemExit(x)
-
-    # organise into owner_group groups
-    cgroups = {}
-    print 'Matched:'
-    for csuite, cdir, cdescr in csuites:
-        print '  ', csuite
-        cowner, cgroup, cname = re.split( ':', csuite )
-        cowner_group = cowner + ':' + cgroup
-        if cowner_group not in cgroups:
-            cgroups[cowner_group] = [ ( cname, cdir, cdescr ) ]
-        else:
-            cgroups[cowner_group].append( (cname, cdir, cdescr))
-
-    # import to local
-    try:
-        local.lock()
-    except RegistrationError, x:
-        raise SystemExit(x)
-    local.load_from_file()
-    changed = False
- 
-    for cowner_group in cgroups:
-        cowner, cgroup = re.split(':', cowner_group )
-        lgroup = prompt( "Import " + cowner + ':' + cgroup + " as what group?", cgroup )
-        if lgroup == 'q':
-            local.unlock()
-            sys.exit(0)
-        if lgroup == 's':
-            continue
-        for cname, cdir, cdescr in cgroups[cowner_group]:
-            lname = prompt( "  Import " + cowner + ':' + cgroup + ':' + cname  + " as " + lgroup + ":WHAT?", cname ) 
-            if lname == 'q':
-                local.unlock()
-                sys.exit(0)
-            if lname == 's':
-                continue
-            defldir = os.path.join( topdir, lgroup, lname )
-            ldir = prompt( "  Copy Suite Definition to what directory?", defldir ) 
-            if os.path.exists( ldir ):
-                print >> sys.stderr, 'WARNING: skipping import, directory already exists: ' + ldir
-                continue
-            lreg = lgroup + ':' + lname
-            try:
-                local.register( lreg, ldir, cdescr )
-            except RegistrationError, x:
-                print >> sys.stderr, x
-            else:
-                print 'Copying suite definition'
-                try:
-                    mkdir_p( os.path.dirname(ldir))
-                except Exception,x:
-                    print >> sys.stderr, x
-                    local.unregister( lreg )
-                else:
-                    try:
-                        copytree( cdir, ldir )
-                    except OSError, x:
-                        print >> sys.stderr,x
-                        local.unregister( lreg )
-                    else:
-                        changed = True
-
-    if changed:
-        local.dump_to_file()
-    local.unlock()
-
-elif not options.groupimport:
-    # single suite
-    creg = args[0]
-    if len(args) == 2:
-        lreg = creg
-        ldir = args[1]
-    else:
-        lreg = args[1]
-        ldir = args[2]
-
-    # retrieve central registration
-    central.load_from_file()
-    try:
-        cdir, cdescr = central.get( creg )
-    except RegistrationError, x:
-        raise SystemExit(x)
-
-    if os.path.exists( ldir ):
-        raise SystemExit( 'ERROR, destination directory already exists: ' + ldir )
-
-    # import to local
-    try:
-        local.lock()
-    except RegistrationError, x:
-        raise SystemExit(x)
-    local.load_from_file()
- 
-    try:
-        local.register( lreg, ldir, cdescr )
-    except RegistrationError, x:
-        local.unlock()
-        raise SystemExit(x)
-    else:
-        print 'Copying suite definition'
-        try:
-            mkdir_p( os.path.dirname(ldir))
-        except Exception,x:
-            print >> sys.stderr, x
-            local.unregister( lreg )
-            local.unlock()
-        else:
-            try:
-                copytree( cdir, ldir )
-            except OSError, x:
-                print >> sys.stderr,x
-                local.unregister( lreg )
-                local.unlock()
-            else:
-                local.dump_to_file()
-                local.unlock()
+arg_central = args[0]
+if len(args) == 2:
+    arg_local = arg_central
+    arg_dir = args[1]
 else:
-    # import a whole group
-    m = re.match( '^(\w+):(\w+)$', args[0] )
-    if m:
-        fromowner, fromgroup = m.groups()
+    arg_local = args[1]
+    arg_dir = args[2]
+
+m = re.match( '^(.*):$', arg_central )
+n = re.match( '^(.*):$', arg_local )
+if m:
+    # copy a whole group
+    fromgroup = m.groups()[0]
+    if n:
+        togroup = n.groups()[0]
     else:
-        raise SystemExit( "FROMGROUP must be owner:group" )
-    
-    if len(args) == 2:
-        togroup = fromgroup
-        topdir = args[1]
-    else:
-        togroup = args[1]
-        topdir = args[2]
+        raise SystemExit( 'Inconsistent command arguments' )
 
     # retrieve registrations
     central.load_from_file()
@@ -258,7 +94,54 @@ else:
                     local.unregister( lreg )
                 else:
                     changed = True
-
     if changed:
         local.dump_to_file()
     local.unlock()
+
+else:
+    # single suite
+    creg = arg_central
+    lreg = arg_local
+    ldir = arg_dir
+
+    # retrieve central registration
+    central.load_from_file()
+    try:
+        cdir, cdescr = central.get( creg )
+    except RegistrationError, x:
+        raise SystemExit(x)
+
+    if os.path.exists( ldir ):
+        raise SystemExit( 'ERROR, destination directory already exists: ' + ldir )
+
+    # import to local
+    try:
+        local.lock()
+    except RegistrationError, x:
+        raise SystemExit(x)
+    local.load_from_file()
+ 
+    try:
+        local.register( lreg, ldir, cdescr )
+    except RegistrationError, x:
+        local.unlock()
+        raise SystemExit(x)
+    else:
+        print 'Copying suite definition'
+        try:
+            mkdir_p( os.path.dirname(ldir))
+        except Exception,x:
+            print >> sys.stderr, x
+            local.unregister( lreg )
+            local.unlock()
+        else:
+            try:
+                copytree( cdir, ldir )
+            except OSError, x:
+                print >> sys.stderr,x
+                local.unregister( lreg )
+                local.unlock()
+            else:
+                local.dump_to_file()
+                local.unlock()
+

@@ -219,7 +219,7 @@ if len(sys.argv) == 1:
 
 # command summaries
 comsum = OrderedDict()
-comsum[ 'register'   ] = 'Registration a suite in your local database'
+comsum[ 'register'   ] = 'Add a suite to your local registration database'
 comsum[ 'rename'     ] = 'Rename local or central suite registrations'
 comsum[ 'unregister' ] = 'Unregister suites from the local or central database'
 comsum[ 'print'      ] = 'Print local or central suite registrations'

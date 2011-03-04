@@ -18,8 +18,7 @@ class MyDotWindow( xdot.DotWindow ):
         </toolbar>
     </ui>
     '''
-    def __init__(self, suite, ctime, stop_after, raw, outfile=None, central=False ):
-        self.central=central
+    def __init__(self, suite, ctime, stop_after, raw, outfile=None ):
         self.outfile = outfile
         self.disable_output_image = False
         self.suite = suite
@@ -78,7 +77,7 @@ class MyDotWindow( xdot.DotWindow ):
     def parse_graph( self ):
         #print 'ullo'
         # reparse the graph
-        self.suiterc = config.config( self.suite, central=self.central )
+        self.suiterc = config.config( self.suite )
         self.suitercfile = self.suiterc.get_filename()
         graph = self.suiterc.get_graph( self.ctime, self.stop_after, raw=self.raw )
         self.set_dotcode( graph.string() )

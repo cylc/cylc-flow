@@ -5,142 +5,37 @@ from optparse import OptionParser
 from registration import localdb, centraldb, regsplit, RegistrationError
 from regprompt import prompt
 
-parser = OptionParser( usage = """cylc [db] export [OPTIONS] [ARGUMENTS]
+parser = OptionParser( usage = """cylc [db] export [OPTIONS] LOCAL [CENTRAL]
 
-Export local suite registrations to the central database.
-
-1/ cylc [db] export LOCAL [CENTRAL]
-Export one suite under its own group and name, or as CENTRAL.
-
-2/ cylc [db] export -a,--all LOCALGROUP [CENTRALGROUP]
-Export all members of group LOCALGROUP under its own name, or as CENTRALGROUP.
-
-3/ cylc [db] export [FILTER-OPTIONS]
-Interactively export suites selected by filtering on group and name.
+Export local suite or group registrations to the central database.
 
 Arguments:
     LOCAL, CENTRAL   - registrations, GROUP:NAME or NAME (default group).""" )  
 
-parser.add_option( "-g", "--group",
-        help="Group filter Regular Expression.",
-        metavar="RE", action="store", default=None, dest="groupfilt" )
-
-parser.add_option( "-n", "--name",
-        help="Name filter Regular Expression.",
-        metavar="RE", action="store", default=None, dest="namefilt" )
-
-parser.add_option( "-a", "--all",
-        help="Export all members of a group.",
-        action="store_true", default=False, dest="groupexport" )
-
 ( options, args ) = parser.parse_args()
 
-if len(args) > 2:
-    parser.error('Too many arguments')
+if len(args) < 1 or len(args) > 2:
+    parser.error('Wrong number of arguments')
 
 local = localdb()
 central = centraldb() 
 owner = os.environ['USER']
 
-if len(args) == 0:
-    # interactive, filtered.
-
-    # check for valid regular expressions:
-    for filt in options.groupfilt, options.namefilt:
-        if filt:
-            try:
-                re.compile( filt )
-            except:
-                raise SystemExit( 'Bad expression: ' + filt )
-
-    local.load_from_file()
-    suites = local.get_list( groupfilt=options.groupfilt, namefilt=options.namefilt )
-    if len( suites ) == 0:
-        raise SystemExit( "ERROR, No matching suites to export" )
-
-    # organise into groups
-    groups = {}
-    print 'Matched:'
-    for suite, dir, descr in suites:
-        print '  ', suite
-        owner, group, name = regsplit( suite ).get()
-        if group not in groups:
-            groups[group] = [ ( name, dir, descr ) ]
-        else:
-            groups[group].append( (name, dir, descr))
-
-    try:
-        central.lock()
-    except RegistrationError, x:
-        raise SystemExit(x)
-    central.load_from_file()
-    changed = False
- 
-    # export to central
-    changed = False
-    for group in groups:
-        cgroup = prompt( "Export GROUP " + group + " as what group?", group )
-        if cgroup == 'q':
-            central.unlock()
-            sys.exit(0)
-        if cgroup == 's':
-            continue
-        for name, dir, descr in groups[group]:
-            cname = prompt( "  Export " + group + ':' + name  + " as " + cgroup + ":WHAT?", name ) 
-            if cname == 'q':
-                central.unlock()
-                sys.exit(0)
-            if cname == 's':
-                continue
-            try:
-                central.register( cgroup + ':' + cname, dir, descr )
-            except RegistrationError, x:
-                print x
-            else:
-                changed = True
-
-    if changed:
-        central.dump_to_file()
-    central.unlock()
-
-elif not options.groupexport:
-    # single suite
-    if options.groupfilt or options.namefilt:
-        parser.error("Filtering does not apply to single suite export")
-
-    source = args[0]
-    if len( args ) == 2:
-        target = args[1]
-    else:
-        target = source
-
-    try:
-        local.load_from_file()
-        dir, descr = local.get( source )
-    except RegistrationError, x:
-        print x
-    else:
-        try:
-            central.lock()
-            central.load_from_file()
-            central.register( target, dir, descr )
-        except RegistrationError, x:
-            changed = False
-            print x
-        else:
-            changed = True
-
-    if changed:
-        central.dump_to_file()
-    central.unlock()
-
+source = args[0]
+if len( args ) == 2:
+    target = args[1]
 else:
-    # group export
-    fromgroup = args[0]
-    if len(args) == 1:
-        togroup = fromgroup
+    target = source
+
+m = re.match( '^(.*):$', source )
+n = re.match( '^(.*):$', target )
+if m:
+    # group export a whole group
+    fromgroup = m.groups()[0]
+    if n:
+        togroup = n.groups()[0]
     else:
-        togroup = args[1]
+        raise SystemExit( 'Inconsistent command arguments' )
 
     # retrieve registrations
     local.load_from_file()
@@ -166,14 +61,31 @@ else:
         cowner, cgroup, cname = regsplit( csuite ).get()
         lgroup = togroup
         lname = cname
-
         try:
             central.register( owner + ':' + lgroup + ':' + lname, cdir, cdescr )
         except RegistrationError, x:
             print >> sys.stderr, x
         else:
             changed = True
-
     if changed:
         central.dump_to_file()
     central.unlock()
+
+else:
+    # single suite
+    try:
+        local.load_from_file()
+        dir, descr = local.get( source )
+    except RegistrationError, x:
+        print x
+    else:
+        try:
+            central.lock()
+            central.load_from_file()
+            central.register( target, dir, descr )
+        except RegistrationError, x:
+            print x
+            central.unlock()
+        else:
+            central.dump_to_file()
+            central.unlock()

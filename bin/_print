@@ -23,15 +23,15 @@ stop this ('foo$' matches only literal 'foo').
   (d) to single out entries in the default group you have to specify
   the group name explicitly (-g default).""" )
 
-parser.add_option( "-o", "--owner",
+parser.add_option( "-o", "--ofilt",
         help="Owner filter Regular Expression.",
         metavar="RE", action="store", default=None, dest="ownerfilt" )
 
-parser.add_option( "-g", "--group",
+parser.add_option( "-g", "--gfilt",
         help="Group filter Regular Expression.",
         metavar="RE", action="store", default=None, dest="groupfilt" )
 
-parser.add_option( "-n", "--name",
+parser.add_option( "-n", "--nfilt",
         help="Name filter Regular Expression.",
         metavar="RE", action="store", default=None, dest="namefilt" )
 
@@ -46,7 +46,7 @@ parser.add_option( "-v", "--verbose",
 ( options, args ) = parser.parse_args()
 
 # check for valid regular expressions:
-for filt in options.groupfilt, options.namefilt:
+for filt in options.ownerfilt, options.groupfilt, options.namefilt:
     if filt:
         try:
             re.compile( filt )

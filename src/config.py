@@ -21,7 +21,7 @@ from mkdir_p import mkdir_p
 from validate import Validator
 from configobj import get_extra_values, flatten_errors
 from cylcconfigobj import CylcConfigObj, ConfigObjError
-from registration import localdb, centraldb, RegistrationError
+from registration import getdb, RegistrationError
 from graphnode import graphnode
 
 try:
@@ -120,7 +120,7 @@ class edge( object):
         return res
 
 class config( CylcConfigObj ):
-    def __init__( self, suite=None, dummy_mode=False, path=None, central=False ):
+    def __init__( self, suite=None, dummy_mode=False, path=None ):
         self.dummy_mode = dummy_mode
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
         self.taskdefs = {}
@@ -129,12 +129,8 @@ class config( CylcConfigObj ):
 
         if suite:
             self.suite = suite
-            if central:
-                reg = centraldb()
-            else:
-                reg = localdb()
-
             try:
+                reg = getdb( suite )
                 reg.load_from_file()
                 self.dir, descr = reg.get( suite )
             except RegistrationError, x:

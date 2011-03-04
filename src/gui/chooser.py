@@ -155,7 +155,7 @@ class chooser(object):
         newreg_button = gtk.Button( "_Register Another Suite" )
         newreg_button.connect("clicked", self.newreg_popup )
 
-        self.db_button = gtk.Button( "_Switch to Central DB" )
+        self.db_button = gtk.Button( "_Local/Central DB" )
         self.db_button.connect("clicked", self.switchdb, newreg_button )
         self.main_label = gtk.Label( "Local Suite Registrations" )
 
@@ -219,11 +219,11 @@ class chooser(object):
         hbox = gtk.HBox()
         hbox_l = gtk.HBox()
         hbox_r = gtk.HBox()
-        hbox_r.pack_start( self.db_button, False )
         hbox_r.pack_start( help_button, False )
         hbox_r.pack_start( quit_all_button, False )
         hbox_l.pack_start( filter_button, False )
         hbox_l.pack_start( expand_button, False )
+        hbox_l.pack_start( self.db_button, False )
         hbox_l.pack_start( newreg_button, False )
         hbox.pack_start( hbox_l, False )
         hbox.pack_end( hbox_r, False )
@@ -244,11 +244,11 @@ class chooser(object):
     def start_updater(self, ownerfilt=None, groupfilt=None, namefilt=None):
         if self.cdb:
             db = centraldb()
-            self.db_button.set_label( "_Switch to Local DB" )
+            self.db_button.set_label( "_Local/Central DB" )
             self.main_label.set_text( "Central Suite Registrations" )
         else:
             db = localdb()
-            self.db_button.set_label( "_Switch to Central DB" )
+            self.db_button.set_label( "_Local/Central DB" )
             self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:
             self.updater.quit = True # does this take effect?

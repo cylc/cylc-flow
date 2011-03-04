@@ -4,12 +4,12 @@ import os, sys
 from optparse import OptionParser
 from config import config, SuiteConfigError
 
-parser = OptionParser( """cylc [prep] list [options] SUITE
+parser = OptionParser( """cylc [prep] list [OPTIONS] SUITE
 
-Print the configured task list of a registered suite.
+Parse a suite config file and print the configured task list.
 
 Arguments:
-   SUITE    - name of the target suite""")
+   SUITE    - suite registration [OWNER:]GROUP:NAME""")
 
 parser.add_option( "-a", "--all", help="also print the suite title "
         "and description.", action="store_true", 
@@ -18,11 +18,6 @@ parser.add_option( "-a", "--all", help="also print the suite title "
 parser.add_option( "-d", "--debug", help="print the "
         "exception traceback for validation errors.",
         action="store_true", default=False, dest="debug" )
-
-#
-#parser.add_option( "-o", "--owner", help="suite owner (default $USER).",
-#        metavar='USERNAME', action="store", default=os.environ['USER'], 
-#        dest="owner" )
 
 (options, args) = parser.parse_args()
 

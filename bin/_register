@@ -12,7 +12,7 @@ a suite definition directory (stored in $HOME/.cylc/registrations). Cylc
 commands target a particular suite using its registered name.
 
 Arguments:
-     SUITE  -  GROUP:NAME or NAME (in the 'default' group)
+     SUITE  -  local registration GROUP:NAME
      PATH   -  A cylc suite definition directory location.
     
 If you accidentally delete the registration of a running suite, just

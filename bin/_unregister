@@ -2,57 +2,29 @@
 
 import os, re, sys
 from optparse import OptionParser
-from registration import localdb, centraldb, RegistrationError
+from registration import getdb, RegistrationError
 from config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc [db] unregister [OPTIONS] [ARGUMENTS]
+parser = OptionParser( usage = """cylc [db] unregister [OPTIONS] SUITE
 
-Delete local or central cylc suite registrations.
+Delete local or central suite or group registrations (this does not
+delete suite definition directories!).
 
-     $ cylc db unreg [-c] SUITE             # unregister one suite
-     $ cylc db unreg [-c] [FILTER options]  # unregister matching suites
-     $ cylc db --invalid [-c]               # unregister invalid suites
+     $ cylc db unreg SUITE
  
-NOTE: deleting a suite registration does not delete the suite itself!
-
-FILTERING: 
-  (a) The filter patterns are Regular Expressions, not shell globs, so
-the general wildcard is '.*' (match zero or more of anything), NOT '*'.
-  (b) For our purposes there is an implicit wildcard at the end of each
-pattern ('foo' is the same as 'foo.*'); use the string end marker to
-stop this ('foo$' matches only literal 'foo').
-  (c) Omission of an item filter is taken to mean "match any of item".
-  (d) to single out entries in the default group you have to specify
-  the group name explicitly (-g default).
-
 If you accidentally delete the registration of a running suite, just
-reregister it under the same name to regain access to the suite.""" )
+reregister it under the same name to regain access to the suite.
 
-parser.add_option( "-o", "--owner",
-        help="Owner filter Regular Expression.",
-        metavar="RE", action="store", default=os.environ['USER'],
-        dest="ownerfilt" )
-
-parser.add_option( "-g", "--group",
-        help="Group filter Regular Expression.",
-        metavar="RE", action="store", default=None, dest="groupfilt" )
-
-parser.add_option( "-n", "--name",
-        help="Name filter Regular Expression.",
-        metavar="RE", action="store", default=None, dest="namefilt" )
-
-parser.add_option( "-c","--centraldb",
-        help="Delete registrations from the central database.",
-        action="store_true", default=False, dest="central" )
+Arguments:
+    SUITE - suite registrations:
+            OWNER:GROUP:NAME, GROUP:NAME or [default:]NAME
+            or registration groups (not trailing colon!):
+            OWNER:GROUP: or GROUP:""" )
 
 # TO DO?
 #parser.add_option( "-d", "--delete-def-dir",
 #        help="Delete the suite definition directory too (!DANGEROUS!).",
 #        action="store_true", default=False, dest="deldefdir" )
-
-parser.add_option( "--invalid",
-        help="Delete any registrations that are not valid.",
-        action="store_true", default=False, dest="clean" )
 
 parser.add_option( "-v", "--verbose",
         help="Turn on verbose output.",
@@ -60,24 +32,39 @@ parser.add_option( "-v", "--verbose",
 
 ( options, args ) = parser.parse_args()
 
-if len(args) > 1:
-    parser.error( "Too many arguments" )
+if len(args) != 1:
+    parser.error( "Wrong number of arguments" )
 
-if options.central:
-    reg = centraldb()
-else:
-    reg = localdb()
+suite = args[0]
 
+reg = getdb( suite )
 try:
     reg.lock()
 except RegistrationError, x:
     raise SystemExit(x)
 reg.load_from_file()
 
-if len(args) == 1:
-    # single suite
-    suite = args[0]
+group_unreg = False
+m = re.match( '^(\w+):(\w+):$', suite)
+if m:
+    owner, group = m.groups()
+    group_unreg = True
+else:
+    n = re.match( '^(\w+):$', suite)
+    if n:
+        group_unreg = True
+        group = n.groups()[0]
 
+if group_unreg:
+    try:
+        reg.unregister_group_fast( group )
+    except RegistrationError, x:
+        reg.unlock()
+        raise SystemExit(x)
+    else:
+        reg.dump_to_file()
+        reg.unlock()
+else:
     try:
         reg.unregister( suite, verbose=options.verbose )
     except RegistrationError, x:
@@ -86,28 +73,3 @@ if len(args) == 1:
     else:
         reg.dump_to_file()
         reg.unlock()
-
-elif options.clean:
-    if reg.unregister_multi( verbose=options.verbose, invalid=True ):
-        reg.dump_to_file()
-    reg.unlock()
-
-else:
-    # filtered
-    changed = False
-    # check for valid regular expressions:
-    for filt in options.groupfilt, options.namefilt:
-        if filt:
-            try:
-                re.compile( filt )
-            except:
-                raise SystemExit( 'Bad expression: ' + filt )
-
-    if reg.unregister_multi( ownerfilt=None,
-            groupfilt=options.groupfilt, namefilt=options.namefilt,
-            verbose=options.verbose ):
-        changed = True
-
-    if changed:
-        reg.dump_to_file()
-    reg.unlock()
