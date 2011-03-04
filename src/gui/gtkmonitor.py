@@ -216,8 +216,9 @@ A real time suite control and monitoring tool for cylc.
         tvcs = self.led_treeview.get_columns()
         for n in range( 1,1+len( self.task_list) ):
             heading = self.led_headings[n]
-            # underscores treated as underlines markup?
-            heading = re.sub( '_', '\_', heading )
+            # double on underscores or they get turned into underlines
+            # (may be related to keyboard mnemonics for button labels?)
+            heading = re.sub( '_', '__', heading )
             tvcs[n].set_title( heading )
 
     def create_led_panel( self ):
