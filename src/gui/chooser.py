@@ -152,10 +152,10 @@ class chooser(object):
         regd_treeview.set_model(self.regd_treestore)
         regd_treeview.connect( 'button_press_event', self.on_suite_select )
 
-        newreg_button = gtk.Button( "Register Another Suite" )
+        newreg_button = gtk.Button( "_Register Another Suite" )
         newreg_button.connect("clicked", self.newreg_popup )
 
-        self.db_button = gtk.Button( "Switch to Central DB" )
+        self.db_button = gtk.Button( "_Switch to Central DB" )
         self.db_button.connect("clicked", self.switchdb, newreg_button )
         self.main_label = gtk.Label( "Local Suite Registrations" )
 
@@ -189,23 +189,23 @@ class chooser(object):
         regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'Definition', cr, text=3, background=4 )
+        tvc = gtk.TreeViewColumn( 'Suite Definition Directory', cr, text=3, background=4 )
         regd_treeview.append_column( tvc )
 
         # NOTE THAT WE CANNOT LEAVE ANY SUITE CONTROL WINDOWS OPEN WHEN
         # WE CLOSE THE CHOOSER WINDOW: when launched by the chooser 
         # they are all under the same gtk main loop (?) and do not
         # call gtk_main.quit() unless launched as standalone viewers.
-        quit_all_button = gtk.Button( " Quit " )
+        quit_all_button = gtk.Button( "_Quit" )
         quit_all_button.connect("clicked", self.delete_all_event, None, None )
 
-        filter_button = gtk.Button( "Filter" )
+        filter_button = gtk.Button( "_Filter" )
         filter_button.connect("clicked", self.filter_popup, None, None )
 
-        expand_button = gtk.Button( "Expand/Collapse" )
+        expand_button = gtk.Button( "_Expand/Collapse")
         expand_button.connect( 'clicked', self.toggle_expand, regd_treeview )
     
-        help_button = gtk.Button( "Help" )
+        help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.main )
 
         vbox = gtk.VBox()
@@ -244,11 +244,11 @@ class chooser(object):
     def start_updater(self, ownerfilt=None, groupfilt=None, namefilt=None):
         if self.cdb:
             db = centraldb()
-            self.db_button.set_label( "Switch to Local DB" )
+            self.db_button.set_label( "_Switch to Local DB" )
             self.main_label.set_text( "Central Suite Registrations" )
         else:
             db = localdb()
-            self.db_button.set_label( "Switch to Central DB" )
+            self.db_button.set_label( "_Switch to Central DB" )
             self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:
             self.updater.quit = True # does this take effect?
@@ -301,13 +301,13 @@ class chooser(object):
         box.pack_start (name_entry, True)
         vbox.pack_start(box)
 
-        cancel_button = gtk.Button( "Close" )
+        cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        apply_button = gtk.Button( "Register" )
+        apply_button = gtk.Button( "_Register" )
         apply_button.connect("clicked", self.new_reg, window, dir, group_entry, name_entry )
 
-        #help_button = gtk.Button( "Help" )
+        #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.filter_guide )
 
         hbox = gtk.HBox()
@@ -376,16 +376,16 @@ class chooser(object):
         box.pack_start (name_entry, True)
         vbox.pack_start(box)
 
-        cancel_button = gtk.Button( "Close" )
+        cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: self.filter_window.destroy() )
 
-        apply_button = gtk.Button( "Apply" )
+        apply_button = gtk.Button( "_Apply" )
         apply_button.connect("clicked", self.filter, owner_entry, group_entry, name_entry )
 
-        reset_button = gtk.Button( "Reset" )
+        reset_button = gtk.Button( "_Reset" )
         reset_button.connect("clicked", self.filter_reset, owner_entry, group_entry, name_entry )
 
-        help_button = gtk.Button( "Help" )
+        help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.filter )
 
         hbox = gtk.HBox()
@@ -463,7 +463,6 @@ class chooser(object):
                     name = one
                     group = two
                     owner = three
-                    
         else:
             owner = self.owner
             one = model.get_value( iter, 0 )
@@ -513,6 +512,10 @@ class chooser(object):
 
         else:
             # MENU OPTIONS FOR SUITES
+            if self.cdb:
+                reg = owner + ':' + group + ':' + name
+            else:
+                reg = group + ':' + name
             if not self.cdb:
                 #if state == 'dormant':
                 title = 'Control'
@@ -520,36 +523,36 @@ class chooser(object):
                 #    title = 'Connect'
                 con_item = gtk.MenuItem( title )
                 menu.append( con_item )
-                con_item.connect( 'activate', self.launch_controller, name, state, suite_dir )
+                con_item.connect( 'activate', self.launch_controller, reg, state, suite_dir )
     
                 menu.append( gtk.SeparatorMenuItem() )
     
             edit_item = gtk.MenuItem( 'Edit' )
             menu.append( edit_item )
-            edit_item.connect( 'activate', self.edit_suite_popup, name )
+            edit_item.connect( 'activate', self.edit_suite_popup, reg )
     
             graph_item = gtk.MenuItem( 'Graph' )
             menu.append( graph_item )
-            graph_item.connect( 'activate', self.graph_suite_popup, name )
+            graph_item.connect( 'activate', self.graph_suite_popup, reg )
     
             search_item = gtk.MenuItem( 'Search' )
             menu.append( search_item )
-            search_item.connect( 'activate', self.search_suite_popup, name )
+            search_item.connect( 'activate', self.search_suite_popup, reg )
 
             val_item = gtk.MenuItem( 'Validate' )
             menu.append( val_item )
-            val_item.connect( 'activate', self.validate_suite, name )
+            val_item.connect( 'activate', self.validate_suite, reg )
     
             menu.append( gtk.SeparatorMenuItem() )
     
             if not self.cdb:
                 copy_item = gtk.MenuItem( 'Copy' )
                 menu.append( copy_item )
-                copy_item.connect( 'activate', self.copy_suite_popup, name )
+                copy_item.connect( 'activate', self.copy_suite_popup, reg )
     
             rename_item = gtk.MenuItem( 'Rename' )
             menu.append( rename_item )
-            rename_item.connect( 'activate', self.rename_suite_popup, name )
+            rename_item.connect( 'activate', self.rename_suite_popup, reg )
             if self.cdb:
                 if owner != self.owner:
                     rename_item.set_sensitive( False )
@@ -557,15 +560,15 @@ class chooser(object):
             if self.cdb:
                 imp_item = gtk.MenuItem( 'Import' )
                 menu.append( imp_item )
-                imp_item.connect( 'activate', self.import_suite_popup, name, suite_dir, descr )
+                imp_item.connect( 'activate', self.import_suite_popup, reg, suite_dir, descr )
             else:
                 exp_item = gtk.MenuItem( 'Export' )
                 menu.append( exp_item )
-                exp_item.connect( 'activate', self.export_suite_popup, name, suite_dir, descr )
+                exp_item.connect( 'activate', self.export_suite_popup, reg, suite_dir, descr )
     
             del_item = gtk.MenuItem( 'Unregister' )
             menu.append( del_item )
-            del_item.connect( 'activate', self.delete_suite_popup, name )
+            del_item.connect( 'activate', self.delete_suite_popup, reg )
             if self.cdb:
                 if owner != self.owner:
                     del_item.set_sensitive( False )
@@ -586,13 +589,13 @@ class chooser(object):
         wholegroup_cb = gtk.CheckButton( "Unregister Parent Group" )
         vbox.pack_start (wholegroup_cb, True)
 
-        cancel_button = gtk.Button( "Cancel" )
+        cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        ok_button = gtk.Button( "Unregister" )
+        ok_button = gtk.Button( "_Unregister" )
         ok_button.connect("clicked", self.delete_suite, window, reg, wholegroup_cb )
 
-        #help_button = gtk.Button( "Help" )
+        #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
 
         hbox = gtk.HBox()
@@ -667,13 +670,13 @@ class chooser(object):
 
         wholegroup_cb.connect( "toggled", self.toggle_entry_sensitivity, name_entry )
  
-        cancel_button = gtk.Button( "Close" )
+        cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        ok_button = gtk.Button( "Import" )
+        ok_button = gtk.Button( "_Import" )
         ok_button.connect("clicked", self.import_suite, window, reg, group_entry, name_entry, def_entry, wholegroup_cb )
 
-        #help_button = gtk.Button( "Help" )
+        #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
 
         hbox = gtk.HBox()
@@ -707,7 +710,7 @@ class chooser(object):
         vbox = gtk.VBox()
         #label = gtk.Label( 'Export ' + reg + ' as:' )
 
-        wholegroup_cb = gtk.CheckButton( "Export the whole group" )
+        wholegroup_cb = gtk.CheckButton( "_Export the whole group" )
         vbox.pack_start (wholegroup_cb, True)
 
         owner = self.owner
@@ -739,13 +742,13 @@ class chooser(object):
 
         wholegroup_cb.connect( "toggled", self.toggle_entry_sensitivity, name_entry )
  
-        cancel_button = gtk.Button( "Close" )
+        cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        ok_button = gtk.Button( "Export" )
+        ok_button = gtk.Button( "_Export" )
         ok_button.connect("clicked", self.export_suite, window, reg, group_entry, name_entry, wholegroup_cb )
 
-        #help_button = gtk.Button( "Help" )
+        #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
 
         hbox = gtk.HBox()
@@ -799,13 +802,13 @@ class chooser(object):
 
         wholegroup_cb.connect( "toggled", self.toggle_entry_sensitivity, name_entry )
  
-        cancel_button = gtk.Button( "Cancel" )
+        cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        ok_button = gtk.Button( "Rename" )
+        ok_button = gtk.Button( "_Rename" )
         ok_button.connect("clicked", self.rename_suite, window, reg, group_entry, name_entry, wholegroup_cb )
 
-        #help_button = gtk.Button( "Help" )
+        #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
 
         hbox = gtk.HBox()
@@ -872,13 +875,13 @@ class chooser(object):
         box.pack_start (def_entry, True)
         vbox.pack_start(box)
 
-        cancel_button = gtk.Button( "Cancel" )
+        cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        ok_button = gtk.Button( "Copy" )
+        ok_button = gtk.Button( "_Copy" )
         ok_button.connect("clicked", self.copy_group, window, group, group_entry, def_entry )
 
-        #help_button = gtk.Button( "Help" )
+        #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
 
         hbox = gtk.HBox()
@@ -924,13 +927,13 @@ class chooser(object):
         box.pack_start (def_entry, True)
         vbox.pack_start(box)
 
-        cancel_button = gtk.Button( "Cancel" )
+        cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        ok_button = gtk.Button( "Copy" )
+        ok_button = gtk.Button( "_Copy" )
         ok_button.connect("clicked", self.copy_suite, window, reg, group_entry, name_entry, def_entry )
 
-        #help_button = gtk.Button( "Help" )
+        #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
 
         hbox = gtk.HBox()
@@ -967,13 +970,13 @@ class chooser(object):
         hbox.pack_start(pattern_entry, True) 
         vbox.pack_start( hbox )
  
-        cancel_button = gtk.Button( "Close" )
+        cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        ok_button = gtk.Button( "Search" )
+        ok_button = gtk.Button( "_Search" )
         ok_button.connect("clicked", self.search_suite, reg, nobin_cb, pattern_entry )
 
-        #help_button = gtk.Button( "Help" )
+        #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
 
         hbox = gtk.HBox()
@@ -1026,13 +1029,13 @@ class chooser(object):
         hbox.pack_start(stop_entry, True) 
         vbox.pack_start (hbox, True)
   
-        cancel_button = gtk.Button( "Close" )
+        cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
-        ok_button = gtk.Button( "Graph" )
+        ok_button = gtk.Button( "_Graph" )
         ok_button.connect("clicked", self.graph_suite, reg,
                 warm_cb, outputfile_entry, start_entry, stop_entry )
 
-        #help_button = gtk.Button( "Help" )
+        #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
 
         hbox = gtk.HBox()
@@ -1122,13 +1125,13 @@ class chooser(object):
 
         view_inlined_rb.connect( "toggled", self.view_inlined_toggled, view_inlined_rb, hbox )
 
-        cancel_button = gtk.Button( "Close" )
+        cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
-        ok_button = gtk.Button( "Launch Editor" )
+        ok_button = gtk.Button( "_Edit" )
         ok_button.connect("clicked", self.edit_suite, reg, edit_rb,
                 edit_inlined_rb, view_inlined_rb, mark_cb, label_cb, nojoin_cb, single_cb )
 
-        #help_button = gtk.Button( "Help" )
+        #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
 
         hbox = gtk.HBox()

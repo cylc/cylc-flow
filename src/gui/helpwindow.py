@@ -18,7 +18,7 @@ class helpwindow( object ):
         sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
 
         vbox = gtk.VBox()
-        quit_button = gtk.Button( "Close" )
+        quit_button = gtk.Button( "_Close" )
         quit_button.connect("clicked", lambda x: self.window.destroy() )
         vbox.pack_start( sw )
         vbox.pack_start( quit_button, False )

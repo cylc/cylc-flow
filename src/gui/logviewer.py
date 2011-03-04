@@ -99,11 +99,11 @@ class logviewer(object):
         # PASSING IN ARGUMENTS?
         if b.get_active():
             self.t.freeze = True
-            b.set_label( 'Reconnect' )
+            b.set_label( 'Re_connect' )
             self.reset_logbuffer()
         else:
             self.t.freeze = False
-            b.set_label( 'Disconnect' )
+            b.set_label( 'Dis_connect' )
 
         return False
 
@@ -124,7 +124,7 @@ class logviewer(object):
         #self.log_label.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#f00" ))
         self.hbox.pack_start( self.log_label, True )
 
-        self.freeze_button = gtk.ToggleButton( "Disconnect" )
+        self.freeze_button = gtk.ToggleButton( "Dis_connect" )
         self.freeze_button.set_active(False)
         self.freeze_button.connect("toggled", self.freeze_log )
 

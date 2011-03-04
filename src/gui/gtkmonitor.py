@@ -192,12 +192,12 @@ A real time suite control and monitoring tool for cylc.
         self.window.destroy()
         return False
 
-    def expand_all( self, widget, view ):
-        view.expand_all()
+    def toggle_expand( self, widget, view ):
+        if view.row_expanded(0):
+            view.collapse_all()
+        else:
+            view.expand_all()
  
-    def collapse_all( self, widget, view ):
-        view.collapse_all()
-
     def toggle_headings( self, w ):
         if w.get_active():
             self.no_task_headings()
@@ -296,14 +296,10 @@ A real time suite control and monitoring tool for cylc.
         hbox.pack_start( eb, True )
 
         bbox = gtk.HButtonBox()
-        expand_button = gtk.Button( "Expand" )
-        expand_button.connect( 'clicked', self.expand_all, treeview )
+        expand_button = gtk.Button( "E_xpand/Collapse" )
+        expand_button.connect( 'clicked', self.toggle_expand, treeview )
     
-        collapse_button = gtk.Button( "Collapse" )
-        collapse_button.connect( 'clicked', self.collapse_all, treeview )
-
         bbox.add( expand_button )
-        bbox.add( collapse_button )
         bbox.set_layout( gtk.BUTTONBOX_END )
 
         vbox = gtk.VBox()
@@ -482,11 +478,17 @@ A real time suite control and monitoring tool for cylc.
 
         # allow filtering out of 'finished' and 'waiting'
         all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
+        labels = {}
+        labels[ 'waiting'   ] = '_waiting'
+        labels[ 'submitted' ] = 's_ubmitted'
+        labels[ 'running'   ] = '_running'
+        labels[ 'finished'  ] = 'f_inished'
+        labels[ 'failed'    ] = 'f_ailed'
         # initially filter out 'finished' and 'waiting' tasks
         self.filter_states = [ 'waiting', 'finished' ]
 
         for st in all_states:
-            b = gtk.ToggleButton( st )
+            b = gtk.ToggleButton( labels[st] )
             self.filter_buttonbox.pack_start(b)
             if st in self.filter_states:
                 b.set_active(False)
@@ -534,7 +536,7 @@ A real time suite control and monitoring tool for cylc.
         sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
 
         vbox = gtk.VBox()
-        quit_button = gtk.Button( "Close" )
+        quit_button = gtk.Button( "_Close" )
         quit_button.connect("clicked", lambda x: window.destroy() )
         vbox.pack_start( sw )
         vbox.pack_start( quit_button, False )
@@ -607,7 +609,7 @@ A real time suite control and monitoring tool for cylc.
         sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
 
         vbox = gtk.VBox()
-        quit_button = gtk.Button( "Close" )
+        quit_button = gtk.Button( "_Close" )
         quit_button.connect("clicked", lambda x: window.destroy() )
         vbox.pack_start( sw )
         vbox.pack_start( quit_button, False )
@@ -662,7 +664,7 @@ A real time suite control and monitoring tool for cylc.
         sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
 
         vbox = gtk.VBox()
-        quit_button = gtk.Button( "Close" )
+        quit_button = gtk.Button( "_Close" )
         quit_button.connect("clicked", lambda x: window.destroy() )
         vbox.pack_start( sw )
         vbox.pack_start( quit_button, False )
@@ -762,7 +764,7 @@ A real time suite control and monitoring tool for cylc.
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
         vbox = gtk.VBox()
-        quit_button = gtk.Button( "Close" )
+        quit_button = gtk.Button( "_Close" )
         quit_button.connect("clicked", lambda x: window.destroy() )
         vbox.pack_start( sw )
         vbox.pack_start( quit_button, False )
@@ -1193,7 +1195,7 @@ A real time suite control and monitoring tool for cylc.
         #state_button = gtk.Button( "Interrogate" )
         #state_button.connect("clicked", self.popup_requisites, task_id )
  
-        quit_button = gtk.Button( "Close" )
+        quit_button = gtk.Button( "_Close" )
         quit_button.connect("clicked", self.on_popup_quit, lv, window )
         
         lv.hbox.pack_start( quit_button )
@@ -1206,68 +1208,68 @@ A real time suite control and monitoring tool for cylc.
     def create_menu( self ):
         file_menu = gtk.Menu()
 
-        file_menu_root = gtk.MenuItem( 'File' )
+        file_menu_root = gtk.MenuItem( '_File' )
         file_menu_root.set_submenu( file_menu )
 
-        exit_item = gtk.MenuItem( 'Exit ' + self.suite + ' GUI' )
+        exit_item = gtk.MenuItem( 'E_xit ' + self.suite + ' GUI' )
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
 
         start_menu = gtk.Menu()
-        start_menu_root = gtk.MenuItem( 'Suite' )
+        start_menu_root = gtk.MenuItem( '_Suite' )
         start_menu_root.set_submenu( start_menu )
 
-        start_item = gtk.MenuItem( 'Start' )
+        start_item = gtk.MenuItem( '_Start' )
         start_menu.append( start_item )
         start_item.connect( 'activate', self.startsuite_popup )
         if self.readonly:
             start_item.set_sensitive(False)
 
-        stop_item = gtk.MenuItem( 'Stop' )
+        stop_item = gtk.MenuItem( 'Sto_p' )
         start_menu.append( stop_item )
         stop_item.connect( 'activate', self.stopsuite_popup )
         if self.readonly:
             stop_item.set_sensitive(False)
 
-        pause_item = gtk.MenuItem( 'Pause' )
+        pause_item = gtk.MenuItem( 'Pa_use' )
         start_menu.append( pause_item )
         pause_item.connect( 'activate', self.pause_suite )
         if self.readonly:
             pause_item.set_sensitive(False)
 
-        resume_item = gtk.MenuItem( 'Resume' )
+        resume_item = gtk.MenuItem( '_Resume' )
         start_menu.append( resume_item )
         resume_item.connect( 'activate', self.resume_suite )
         if self.readonly:
             resume_item.set_sensitive(False)
 
-        insert_item = gtk.MenuItem( 'Insert' )
+        insert_item = gtk.MenuItem( '_Insert' )
         start_menu.append( insert_item )
         insert_item.connect( 'activate', self.insert_task_popup )
         if self.readonly:
             insert_item.set_sensitive(False)
 
-        block_item = gtk.MenuItem( 'Block' )
+        block_item = gtk.MenuItem( '_Block' )
         start_menu.append( block_item )
         block_item.connect( 'activate', self.block_suite )
         if self.readonly or not self.use_block:
             block_item.set_sensitive(False)
 
-        unblock_item = gtk.MenuItem( 'Unblock' )
+        unblock_item = gtk.MenuItem( '_Unblock' )
         start_menu.append( unblock_item )
         unblock_item.connect( 'activate', self.unblock_suite )
         if self.readonly or not self.use_block:
             unblock_item.set_sensitive(False)
 
         help_menu = gtk.Menu()
-        help_menu_root = gtk.MenuItem( 'Help' )
+        help_menu_root = gtk.MenuItem( '_Help' )
         help_menu_root.set_submenu( help_menu )
 
-        guide_item = gtk.MenuItem( 'Quick Guide' )
+        guide_item = gtk.MenuItem( '_Quick Guide' )
         help_menu.append( guide_item )
         guide_item.connect( 'activate', self.userguide )
  
-        about_item = gtk.MenuItem( 'About' )
+        about_item = gtk.MenuItem( '_About' )
         help_menu.append( about_item )
         about_item.connect( 'activate', self.about )
       
@@ -1382,7 +1384,7 @@ A real time suite control and monitoring tool for cylc.
 
         self.create_menu()
 
-        view_button = gtk.ToggleButton( "Task Names" )
+        view_button = gtk.ToggleButton( "_Task Names" )
         view_button.connect( 'toggled', self.toggle_headings )
     
         self.led_headings = None 

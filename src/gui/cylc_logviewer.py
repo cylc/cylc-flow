@@ -31,11 +31,11 @@ class cylc_logviewer( logviewer ):
 
         self.hbox.pack_end( combobox, False )
 
-        previous = gtk.Button( "newer rotation" )
+        previous = gtk.Button( "_newer rotation" )
         previous.connect("clicked", self.rotate_log, False )
         self.hbox.pack_end( previous, False )
 
-        previous = gtk.Button( "older rotation" )
+        previous = gtk.Button( "_older rotation" )
         previous.connect("clicked", self.rotate_log, True )
         self.hbox.pack_end( previous, False )
 
