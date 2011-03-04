@@ -414,7 +414,6 @@ class chooser(object):
             item.click_exit( None )
         gtk.main_quit()
 
-
     def on_suite_select( self, treeview, event ):
         # DISPLAY MENU ON RIGHT CLICK ONLY
         if event.button != 3:
@@ -490,25 +489,32 @@ class chooser(object):
         if group_clicked:
             # MENU OPTIONS FOR GROUPS
             if not self.cdb:
-                copy_item = gtk.MenuItem( 'Copy Group' )
+                copy_item = gtk.MenuItem( 'Copy' )
                 menu.append( copy_item )
                 copy_item.connect( 'activate', self.copy_group_popup, group )
 
-            reregister_item = gtk.MenuItem( 'reregister Group' )
+            if self.cdb:
+                imp_item = gtk.MenuItem( 'Import' )
+                menu.append( imp_item )
+                imp_item.connect( 'activate', self.import_group_popup, owner, group )
+            else:
+                exp_item = gtk.MenuItem( 'Export' )
+                menu.append( exp_item )
+                exp_item.connect( 'activate', self.export_group_popup, group )
+
+            reregister_item = gtk.MenuItem( 'Reregister' )
             menu.append( reregister_item )
             reregister_item.connect( 'activate', self.reregister_group_popup, group)
             if self.cdb:
                 if owner != self.owner:
                     reregister_item.set_sensitive( False )
 
+            del_item = gtk.MenuItem( 'Unregister' )
+            menu.append( del_item )
+            del_item.connect( 'activate', self.unregister_group_popup, group )
             if self.cdb:
-                imp_item = gtk.MenuItem( 'Import Group' )
-                menu.append( imp_item )
-                imp_item.connect( 'activate', self.import_group_popup, group )
-            else:
-                exp_item = gtk.MenuItem( 'Export Group' )
-                menu.append( exp_item )
-                exp_item.connect( 'activate', self.export_group_popup, group )
+                if owner != self.owner:
+                    del_item.set_sensitive( False )
 
         else:
             # MENU OPTIONS FOR SUITES
@@ -550,7 +556,7 @@ class chooser(object):
                 menu.append( copy_item )
                 copy_item.connect( 'activate', self.copy_suite_popup, reg )
     
-            reregister_item = gtk.MenuItem( 'reregister' )
+            reregister_item = gtk.MenuItem( 'Reregister' )
             menu.append( reregister_item )
             reregister_item.connect( 'activate', self.reregister_suite_popup, reg )
             if self.cdb:
@@ -560,11 +566,11 @@ class chooser(object):
             if self.cdb:
                 imp_item = gtk.MenuItem( 'Import' )
                 menu.append( imp_item )
-                imp_item.connect( 'activate', self.import_suite_popup, reg, suite_dir, descr )
+                imp_item.connect( 'activate', self.import_suite_popup, reg )
             else:
                 exp_item = gtk.MenuItem( 'Export' )
                 menu.append( exp_item )
-                exp_item.connect( 'activate', self.export_suite_popup, reg, suite_dir, descr )
+                exp_item.connect( 'activate', self.export_suite_popup, reg )
     
             del_item = gtk.MenuItem( 'Unregister' )
             menu.append( del_item )
@@ -579,6 +585,39 @@ class chooser(object):
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
         return True
 
+    def unregister_group_popup( self, w, group ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Unregister '" + group + "'")
+
+        vbox = gtk.VBox()
+
+        cancel_button = gtk.Button( "_Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        ok_button = gtk.Button( "_Unregister" )
+        ok_button.connect("clicked", self.unregister_group, window, group )
+
+        #help_button = gtk.Button( "_Help" )
+        #help_button.connect("clicked", self.stop_guide )
+
+        label = gtk.Label( "Unregister the entire " + group + " group?" + """
+Note that this will not delete any suite definition directories.""" )
+        vbox.pack_start( label )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( ok_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def unregister_group( self, b, w, group ):
+        call( 'capture "cylc unregister ' + group + ': " --width=600 &', shell=True )
+        w.destroy()
+
     def unregister_suite_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
@@ -586,14 +625,59 @@ class chooser(object):
 
         vbox = gtk.VBox()
 
-        wholegroup_cb = gtk.CheckButton( "Unregister Parent Group" )
-        vbox.pack_start (wholegroup_cb, True)
-
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Unregister" )
-        ok_button.connect("clicked", self.unregister_suite, window, reg, wholegroup_cb )
+        ok_button.connect("clicked", self.unregister_suite, window, reg )
+
+        #help_button = gtk.Button( "_Help" )
+        #help_button.connect("clicked", self.stop_guide )
+
+        label = gtk.Label( "Unregister suite " + reg + "?" + """
+Note that this will not delete the suite definition directory.""" )
+        vbox.pack_start( label )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( ok_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def unregister_suite( self, b, w, reg ):
+        call( 'capture "cylc unregister ' + reg + '" --width=600 &', shell=True )
+        w.destroy()
+
+    def import_group_popup( self, w, owner, group ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Import '" + group )
+
+        vbox = gtk.VBox()
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Group' )
+        box.pack_start( label, True )
+        group_entry = gtk.Entry()
+        group_entry.set_text( group )
+        box.pack_start (group_entry, True)
+        vbox.pack_start( box )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Directory' )
+        box.pack_start( label, True )
+        def_entry = gtk.Entry()
+        box.pack_start (def_entry, True)
+        vbox.pack_start(box)
+
+        cancel_button = gtk.Button( "_Close" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        ok_button = gtk.Button( "_Import" )
+        ok_button.connect("clicked", self.import_group, window, owner, group, group_entry, def_entry )
 
         #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -607,40 +691,21 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def unregister_suite( self, b, w, reg, wholegroup_cb ):
-        wholegroup = wholegroup_cb.get_active()
-        items = re.split(':', reg)
-        if len(items) == 3:
-            fo, fg, fn = items
-        elif len(items) == 2:
-            fg, fn = items
-            fo = self.owner
-        elif len(items) == 1:
-            fo = self.owner
-            fn = items[0]
-            fg = 'default'
-
-        options = ''
-        if self.cdb:
-            options += ' -c '
-
-        options += " -g '^" + fg + "$' "
-        if not wholegroup:
-            options += " -n '^" + fn + "$' "
-
-        call( 'capture "cylc unregister ' + options + '" --width=600 &', shell=True )
+    def import_group( self, b, w, fowner, fgroup, group_entry, def_entry ):
+        group = group_entry.get_text()
+        dir = def_entry.get_text()
+        if not self.check_entries( [group, dir] ):
+            return False
+        call( 'capture "cylc import ' + fowner + ':' + fgroup + ': ' + group + ': ' + dir + '" --width=600 &', shell=True )
         w.destroy()
-
-    def import_suite_popup( self, w, reg, dir, descr ):
+ 
+    def import_suite_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Import '" + reg + "' from central database")
 
         vbox = gtk.VBox()
         #label = gtk.Label( 'Import ' + reg + ' as:' )
-
-        wholegroup_cb = gtk.CheckButton( "Import the whole group" )
-        vbox.pack_start (wholegroup_cb, True)
 
         owner = self.owner
         cowner, cgroup, cname = re.split( ':', reg )
@@ -668,13 +733,11 @@ class chooser(object):
         box.pack_start (def_entry, True)
         vbox.pack_start(box)
 
-        wholegroup_cb.connect( "toggled", self.toggle_entry_sensitivity, name_entry )
- 
         cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Import" )
-        ok_button.connect("clicked", self.import_suite, window, reg, group_entry, name_entry, def_entry, wholegroup_cb )
+        ok_button.connect("clicked", self.import_suite, window, reg, group_entry, name_entry, def_entry )
 
         #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -688,30 +751,22 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def import_suite( self, b, w, reg, group_entry, name_entry, def_entry, wholegroup_cb ):
-        reg_owner, reg_group, junk = regsplit( reg ).get() 
+    def import_suite( self, b, w, reg, group_entry, name_entry, def_entry ):
         group = group_entry.get_text()
         name  = name_entry.get_text()
         dir = def_entry.get_text()
-        if dir == '':
-            warning_dialog('Suite Definition Directory required').warn()
-            return
-        if wholegroup_cb.get_active():
-            call( 'capture "cylc import --all ' + reg_owner + ':' + group + ' ' + dir + '" --width=600 &', shell=True )
-        else:
-            call( 'capture "cylc import ' + reg + ' ' + group + ':' + name + ' ' + dir + '" --width=600 &', shell=True )
+        if not self.check_entries( [group, name, dir] ):
+            return False
+        call( 'capture "cylc import ' + reg + ' ' + group + ':' + name + ' ' + dir + '" --width=600 &', shell=True )
         w.destroy()
  
-    def export_suite_popup( self, w, reg, dir, descr ):
+    def export_suite_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Export '" + reg + "' to central database")
 
         vbox = gtk.VBox()
         #label = gtk.Label( 'Export ' + reg + ' as:' )
-
-        wholegroup_cb = gtk.CheckButton( "_Export the whole group" )
-        vbox.pack_start (wholegroup_cb, True)
 
         owner = self.owner
         junk, group, name = regsplit( reg ).get()
@@ -732,21 +787,11 @@ class chooser(object):
         box.pack_start (name_entry, True)
         vbox.pack_start(box)
 
-        #box = gtk.HBox()
-        #label = gtk.Label( 'Description' )
-        #box.pack_start( label, True )
-        #descr_entry = gtk.Entry()
-        #descr_entry.set_text( descr )
-        #box.pack_start (descr_entry, True)
-        #vbox.pack_start(box)
-
-        wholegroup_cb.connect( "toggled", self.toggle_entry_sensitivity, name_entry )
- 
         cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Export" )
-        ok_button.connect("clicked", self.export_suite, window, reg, group_entry, name_entry, wholegroup_cb )
+        ok_button.connect("clicked", self.export_suite, window, reg, group_entry, name_entry )
 
         #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -760,14 +805,12 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def export_suite( self, b, w, reg, group_entry, name_entry, wholegroup_cb ):
-        reg_owner, reg_group, junk = regsplit( reg ).get() 
+    def export_suite( self, b, w, reg, group_entry, name_entry ):
         group = group_entry.get_text()
         name  = name_entry.get_text()
-        if wholegroup_cb.get_active():
-            call( 'capture "cylc export --all ' + reg_group + ' ' + group + '" --width=600 &', shell=True )
-        else:
-            call( 'capture "cylc export ' + reg + ' ' + group + ':' + name + '" --width=600 &', shell=True )
+        if not self.check_entries( [group, name] ):
+            return False
+        call( 'capture "cylc export ' + reg + ' ' + group + ':' + name + '" --width=600 &', shell=True )
         w.destroy()
  
     def toggle_entry_sensitivity( self, w, entry ):
@@ -779,12 +822,15 @@ class chooser(object):
     def reregister_suite_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "reregister '" + reg + "'")
+        window.set_title( "Reregister '" + reg + "'")
 
         vbox = gtk.VBox()
 
+        reg_owner, reg_group, reg_name = regsplit( reg ).get() 
+ 
         label = gtk.Label("Group" )
         group_entry = gtk.Entry()
+        group_entry.set_text( reg_group )
         hbox = gtk.HBox()
         hbox.pack_start( label )
         hbox.pack_start(group_entry, True) 
@@ -792,6 +838,7 @@ class chooser(object):
  
         label = gtk.Label("Name" )
         name_entry = gtk.Entry()
+        name_entry.set_text( reg_name )
         hbox = gtk.HBox()
         hbox.pack_start( label )
         hbox.pack_start(name_entry, True) 
@@ -800,7 +847,7 @@ class chooser(object):
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        ok_button = gtk.Button( "_reregister" )
+        ok_button = gtk.Button( "_Reregister" )
         ok_button.connect("clicked", self.reregister_suite, window, reg, group_entry, name_entry )
 
         #help_button = gtk.Button( "_Help" )
@@ -818,22 +865,11 @@ class chooser(object):
     def reregister_suite( self, b, w, reg, g_e, n_e ):
         g = g_e.get_text()
         n = n_e.get_text()
-        ffroms = re.split(':', reg)
-        if len(ffroms) == 3:
-            fo, fg, fn = ffroms
-        elif len(ffroms) == 2:
-            fg, fn = ffroms
-            fo = self.owner
-        elif len(ffroms) == 1:
-            fn = ffroms
-            fg = 'default'
-        if g == '':
-            g = 'default'
+        reg_owner, reg_group, reg_name = regsplit( reg ).get() 
         tto = g + ':' + n
-        options = ''
         if self.cdb:
-            options += ' -c '
-        call( 'capture "cylc reregister ' + options + ' ' + reg + ' ' + tto + '" --width=600 &', shell=True )
+            tto = reg_owner + ':' + tto
+        call( 'capture "cylc reregister ' + reg + ' ' + tto + '" --width=600 &', shell=True )
         w.destroy()
 
     def reregister_group_popup( self, w, group ):
@@ -876,12 +912,46 @@ class chooser(object):
         call( 'capture "cylc reregister ' + g_from + ': ' + g_to + ':" --width=600 &', shell=True )
         w.destroy()
 
-    def import_group_popup( self, w, group ):
-        pass
-
     def export_group_popup( self, w, group ):
-        pass
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Export '" + group )
 
+        vbox = gtk.VBox()
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Group' )
+        box.pack_start( label, True )
+        group_entry = gtk.Entry()
+        group_entry.set_text( group )
+        box.pack_start (group_entry, True)
+        vbox.pack_start( box )
+
+        cancel_button = gtk.Button( "_Close" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        ok_button = gtk.Button( "_Export" )
+        ok_button.connect("clicked", self.export_group, window, group, group_entry )
+
+        #help_button = gtk.Button( "_Help" )
+        #help_button.connect("clicked", self.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( ok_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def export_group( self, b, w, lgroup, group_entry ):
+        group = group_entry.get_text()
+        if not self.check_entries( [group] ):
+            return False
+        call( 'capture "cylc export ' + lgroup + ': ' + group + ':" --width=600 &', shell=True )
+        w.destroy()
+ 
     def copy_group_popup( self, w, group ):
         window = gtk.Window()
         window.set_border_width(5)
@@ -980,9 +1050,8 @@ class chooser(object):
         group = group_entry.get_text()
         name  = name_entry.get_text()
         dir = def_entry.get_text()
-        if group == '' or name == '' or dir == '':
-            warning_dialog( 'One or more entries have not been completed' ).warn()
-            return
+        if not self.check_entries( [group, name, dir] ):
+            return False
         call( 'capture "cylc copy ' + reg + ' ' + group + ':' + name + ' ' + dir + '" --width=600 &', shell=True )
         w.destroy()
  
@@ -1093,7 +1162,7 @@ class chooser(object):
         # TO DO 2/ instead of external process make part of chooser app?
         # Would have to launch in own thread as xdot is interactive?
         # Probably not necessary ... same goes for controller actually?
-        call( 'capture "cylc grep ' + options + ' ' + pattern + ' ' + reg + ' ' + '" --height=500 &', shell=True )
+        call( 'capture "cylc search ' + options + ' ' + pattern + ' ' + reg + ' ' + '" --height=500 &', shell=True )
 
     def graph_suite( self, w, reg, warm_cb, outputfile_entry, start_entry, stop_entry ):
         start = start_entry.get_text()
@@ -1236,4 +1305,15 @@ class chooser(object):
         #return False
         call( 'capture "gcylc ' + name  + '" --width=700 &', shell=True )
 
+    def check_entries( self, entries ):
+        # note this check retrieved entry values
+        bad = False
+        for entry in entries:
+            if entry == '':
+                bad = True
+        if bad:
+            warning_dialog( "Complete all text entry panels" ).warn()
+            return False
+        else:
+            return True
 

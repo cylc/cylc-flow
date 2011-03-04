@@ -24,7 +24,6 @@ if len(args) != 2 and len(args) != 3:
 local = localdb()
 central = centraldb() 
 
-
 arg_central = args[0]
 if len(args) == 2:
     arg_local = arg_central
@@ -33,11 +32,13 @@ else:
     arg_local = args[1]
     arg_dir = args[2]
 
-m = re.match( '^(.*):$', arg_central )
+topdir = arg_dir
+
+m = re.match( '^(\w+):(\w+):$', arg_central )
 n = re.match( '^(.*):$', arg_local )
 if m:
     # copy a whole group
-    fromgroup = m.groups()[0]
+    fromowner, fromgroup = m.groups()
     if n:
         togroup = n.groups()[0]
     else:
