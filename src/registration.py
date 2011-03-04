@@ -237,28 +237,28 @@ class regdb(object):
         self.items[owner][group][name] = (dir, description)
         self.print_reg( suite, prefix='REGISTERED' )
 
-    def rename( self, suite_from, suite_to, verbose=False ):
+    def reregister( self, suite_from, suite_to, verbose=False ):
         # LOCKING HANDLED BY CALLERS
         from_owner, from_group, from_name = regsplit(suite_from).get()
         if from_owner != self.user:
-            #raise RegistrationError, 'You cannot rename another user\'s suite'
+            #raise RegistrationError, 'You cannot reregister another user\'s suite'
             self.print_reg( suite_from )
-            print "(can't rename, wrong suite owner)"
+            print "(can't reregister, wrong suite owner)"
             return
         to_owner, to_group, to_name = regsplit(suite_to).get()
         if to_owner != self.user:
             #raise RegistrationError, 'You cannot unregister as another user'
             self.print_reg( suite_to )
-            print "(can't rename, wrong suite owner)"
+            print "(can't reregister, wrong suite owner)"
             return
         dir, descr = self.get( suite_from )
         self.unregister( suite_from )
         self.register( suite_to, dir, descr )
         return True
 
-    def rename_group( self, gfrom, gto, verbose=False, exclusive=False ):
+    def reregister_group( self, gfrom, gto, verbose=False, exclusive=False ):
         # move all group members to another (new or existing) group
-        # bulk group rename, owner only
+        # bulk group reregister, owner only
         # LOCKING HANDLED BY CALLERS
 
         # if input is owner:group, check owner is allowed
@@ -267,11 +267,11 @@ class regdb(object):
         if m:
             fowner, gfrom = m.groups()
             if fowner != self.user:
-                raise RegistrationError, 'You can only rename your own suites'
+                raise RegistrationError, 'You can only reregister your own suites'
         if n:
             towner, gto = n.groups()
             if towner != self.user:
-                raise RegistrationError, 'You can only rename your own suites'
+                raise RegistrationError, 'You can only reregister your own suites'
  
         owner = self.user
         if gfrom not in self.items[owner]:
@@ -484,11 +484,11 @@ class localdb( regdb ):
         regdb.__init__(self)
 
     def suiteid( self, owner, group, name ):
-        # for local use, the user does not need the suite owner prefix
-        if group == 'default':
-            return name
-        else:
-            return group + ':' + name
+        ## for local use, the user does not need the suite owner prefix
+        #if group == 'default':
+        #    return name
+        #else:
+        return group + ':' + name
 
     def print_multi( self, ownerfilt=None, groupfilt=None, namefilt=None, verbose=False ):
         # for local use, don't need to print the owner name

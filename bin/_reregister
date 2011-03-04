@@ -5,9 +5,9 @@ from optparse import OptionParser
 from registration import getdb, RegistrationError
 from config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc [db] rename [options] FROM TO
+parser = OptionParser( usage = """cylc [db] reregister [options] FROM TO
 
-rename local or central suite registrations or registration groups.
+reregister local or central suite registrations or registration groups.
 
 Arguments:
     FROM, TO    - suite registrations:
@@ -32,14 +32,14 @@ reg = getdb( arg_from )
 m = re.match( '^(.*):$', arg_from )
 n = re.match( '^(.*):$', arg_to )
 if m:
-    rename_group = True
+    reregister_group = True
     group_from = m.groups()[0]
     if n:
         group_to = n.groups()[0]
     else:
         raise SystemExit( 'Inconsistent command arguments' )
 else: 
-    rename_group = False
+    reregister_group = False
 
 try:
     reg.lock()
@@ -49,9 +49,9 @@ reg.load_from_file()
 
 changed = False
 
-if not rename_group:
+if not reregister_group:
     try:
-        if reg.rename( arg_from, arg_to, verbose=options.verbose ):
+        if reg.reregister( arg_from, arg_to, verbose=options.verbose ):
             changed = True
     except RegistrationError, x:
         reg.unlock()
@@ -59,7 +59,7 @@ if not rename_group:
 
 else:
     try:
-        if reg.rename_group( group_from, group_to, verbose=options.verbose ):
+        if reg.reregister_group( group_from, group_to, verbose=options.verbose ):
             changed = True
     except RegistrationError, x:
         reg.unlock()

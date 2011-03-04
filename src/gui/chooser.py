@@ -494,12 +494,12 @@ class chooser(object):
                 menu.append( copy_item )
                 copy_item.connect( 'activate', self.copy_group_popup, group )
 
-            rename_item = gtk.MenuItem( 'Rename Group' )
-            menu.append( rename_item )
-            rename_item.connect( 'activate', self.rename_group_popup, group)
+            reregister_item = gtk.MenuItem( 'reregister Group' )
+            menu.append( reregister_item )
+            reregister_item.connect( 'activate', self.reregister_group_popup, group)
             if self.cdb:
                 if owner != self.owner:
-                    rename_item.set_sensitive( False )
+                    reregister_item.set_sensitive( False )
 
             if self.cdb:
                 imp_item = gtk.MenuItem( 'Import Group' )
@@ -550,12 +550,12 @@ class chooser(object):
                 menu.append( copy_item )
                 copy_item.connect( 'activate', self.copy_suite_popup, reg )
     
-            rename_item = gtk.MenuItem( 'Rename' )
-            menu.append( rename_item )
-            rename_item.connect( 'activate', self.rename_suite_popup, reg )
+            reregister_item = gtk.MenuItem( 'reregister' )
+            menu.append( reregister_item )
+            reregister_item.connect( 'activate', self.reregister_suite_popup, reg )
             if self.cdb:
                 if owner != self.owner:
-                    rename_item.set_sensitive( False )
+                    reregister_item.set_sensitive( False )
     
             if self.cdb:
                 imp_item = gtk.MenuItem( 'Import' )
@@ -568,7 +568,7 @@ class chooser(object):
     
             del_item = gtk.MenuItem( 'Unregister' )
             menu.append( del_item )
-            del_item.connect( 'activate', self.delete_suite_popup, reg )
+            del_item.connect( 'activate', self.unregister_suite_popup, reg )
             if self.cdb:
                 if owner != self.owner:
                     del_item.set_sensitive( False )
@@ -579,7 +579,7 @@ class chooser(object):
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
         return True
 
-    def delete_suite_popup( self, w, reg ):
+    def unregister_suite_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Unregister '" + reg + "'")
@@ -593,7 +593,7 @@ class chooser(object):
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Unregister" )
-        ok_button.connect("clicked", self.delete_suite, window, reg, wholegroup_cb )
+        ok_button.connect("clicked", self.unregister_suite, window, reg, wholegroup_cb )
 
         #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -607,7 +607,7 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def delete_suite( self, b, w, reg, wholegroup_cb ):
+    def unregister_suite( self, b, w, reg, wholegroup_cb ):
         wholegroup = wholegroup_cb.get_active()
         items = re.split(':', reg)
         if len(items) == 3:
@@ -776,10 +776,10 @@ class chooser(object):
         else:
             entry.set_sensitive( False )
 
-    def rename_suite_popup( self, w, reg ):
+    def reregister_suite_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Rename '" + reg + "'")
+        window.set_title( "reregister '" + reg + "'")
 
         vbox = gtk.VBox()
 
@@ -800,8 +800,8 @@ class chooser(object):
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        ok_button = gtk.Button( "_Rename" )
-        ok_button.connect("clicked", self.rename_suite, window, reg, group_entry, name_entry )
+        ok_button = gtk.Button( "_reregister" )
+        ok_button.connect("clicked", self.reregister_suite, window, reg, group_entry, name_entry )
 
         #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -815,7 +815,7 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def rename_suite( self, b, w, reg, g_e, n_e ):
+    def reregister_suite( self, b, w, reg, g_e, n_e ):
         g = g_e.get_text()
         n = n_e.get_text()
         ffroms = re.split(':', reg)
@@ -833,13 +833,13 @@ class chooser(object):
         options = ''
         if self.cdb:
             options += ' -c '
-        call( 'capture "cylc rename ' + options + ' ' + reg + ' ' + tto + '" --width=600 &', shell=True )
+        call( 'capture "cylc reregister ' + options + ' ' + reg + ' ' + tto + '" --width=600 &', shell=True )
         w.destroy()
 
-    def rename_group_popup( self, w, group ):
+    def reregister_group_popup( self, w, group ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Rename Group'" + group + "'")
+        window.set_title( "reregister Group'" + group + "'")
 
         vbox = gtk.VBox()
 
@@ -853,8 +853,8 @@ class chooser(object):
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        ok_button = gtk.Button( "_Rename" )
-        ok_button.connect("clicked", self.rename_group, window, group, new_group_entry )
+        ok_button = gtk.Button( "_reregister" )
+        ok_button.connect("clicked", self.reregister_group, window, group, new_group_entry )
 
         #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -868,12 +868,12 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def rename_group( self, b, w, g_from, g_to_e ):
+    def reregister_group( self, b, w, g_from, g_to_e ):
         g_to = g_to_e.get_text()
         if self.cdb:
             g_from = self.owner + ':' + g_from
             g_to = self.owner + ':' + g_to
-        call( 'capture "cylc rename ' + g_from + ': ' + g_to + ':" --width=600 &', shell=True )
+        call( 'capture "cylc reregister ' + g_from + ': ' + g_to + ':" --width=600 &', shell=True )
         w.destroy()
 
     def import_group_popup( self, w, group ):
@@ -923,8 +923,10 @@ class chooser(object):
 
     def copy_group( self, b, w, g_from, g_to_entry, dir_entry ):
         g_to = g_to_entry.get_text()
+        g_to += ':'
+        g_from += ':'
         dir = dir_entry.get_text()
-        call( 'capture "cylc copy --all ' + g_from + ' ' + g_to + ' ' + dir + '" --width=600 &', shell=True )
+        call( 'capture "cylc copy ' + g_from + ' ' + g_to + ' ' + dir + '" --width=600 &', shell=True )
         w.destroy()
 
     def copy_suite_popup( self, w, reg ):
@@ -978,6 +980,9 @@ class chooser(object):
         group = group_entry.get_text()
         name  = name_entry.get_text()
         dir = def_entry.get_text()
+        if group == '' or name == '' or dir == '':
+            warning_dialog( 'One or more entries have not been completed' ).warn()
+            return
         call( 'capture "cylc copy ' + reg + ' ' + group + ':' + name + ' ' + dir + '" --width=600 &', shell=True )
         w.destroy()
  
