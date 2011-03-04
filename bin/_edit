@@ -147,7 +147,7 @@ The $EDITOR and $TMPDIR variables must be defined. Tested with:
    export EDITOR='emacs -nw'
 
 See also:
-    cylc prep grep 
+    cylc prep search 
     cylc prep inline
     cylc prep validate
 

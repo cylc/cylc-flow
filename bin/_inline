@@ -79,7 +79,7 @@ The viewer process is spawned in the foreground as follows:
 (You must have $EDITOR and $TMDPIR defined in your shell environment). 
 
 See also:
-    cylc prep grep
+    cylc prep search
     cylc prep edit
     cylc prep validate
 

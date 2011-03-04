@@ -132,10 +132,10 @@ utility_commands = \
 db_commands = \
     [
     'register',
-    'print',
-    'copy',
     'reregister',
     'unregister',
+    'copy',
+    'print',
     'export',
     'import',
     ]
@@ -144,35 +144,27 @@ prepare_commands = \
     [
     'edit',
     'inline',
-    'graph',
-    'grep',
     'validate',
+    'search',
+    'graph',
     'list',
     ]
 
 discover_commands = \
     [
-    'scan',
     'ping',
+    'scan',
     ]
 
 task_commands = \
     [
     'wrap',
+    'submit',
     'started',
     'message',
     'finished',
     'failed',
     ]
-
-
-# all commands; uniquify in case any appear in multiple categories:
-allcoms = OrderedDict()
-for command in db_commands + prepare_commands + \
-    control_commands + discover_commands + utility_commands + task_commands:
-    if command not in allcoms:
-        allcoms[ command ] = True
-all_commands = allcoms.keys()
 
 general_usage = """
 USAGE:
@@ -219,18 +211,22 @@ if len(sys.argv) == 1:
 
 # command summaries
 comsum = OrderedDict()
+# db
 comsum[ 'register'   ] = 'Add a suite to your local registration database'
 comsum[ 'reregister' ] = 'Reregister local or central suite registrations'
 comsum[ 'unregister' ] = 'Unregister suites from the local or central database'
-comsum[ 'print'      ] = 'Print local or central suite registrations'
-comsum[ 'export'     ] = 'Export local registrations to the central database'
-comsum[ 'import'     ] = 'Import central registrations to your local database'
 comsum[ 'copy'       ] = 'Copy a suite or group of suites.'
+comsum[ 'print'      ] = 'Print local or central suite registrations'
+comsum[ 'import'     ] = 'Import central registrations to your local database'
+comsum[ 'export'     ] = 'Export local registrations to the central database'
+# prepare
 comsum[ 'edit'       ] = 'Edit a suite.rc file in $EDITOR, optionally inlined'
-comsum[ 'validate'   ] = 'Parse and validate a suite config (suite.rc) file'
-comsum[ 'graph'      ] = 'A dependency graph viewer that updates as you edit'
-comsum[ 'grep'       ] = 'An intelligent search tool for cylc suites'
 comsum[ 'inline'     ] = 'View suite.rc files in $EDITOR, include-files inlined'
+comsum[ 'validate'   ] = 'Parse and validate a suite config (suite.rc) file'
+comsum[ 'search'     ] = 'An intelligent search tool for cylc suites'
+comsum[ 'graph'      ] = 'A dependency graph viewer that updates as you edit'
+comsum[ 'list'       ] = 'Print a suite\'s configured task list'
+# control
 comsum[ 'start'      ] = 'Cold, warm, or raw start a suite at a given cycle time'
 comsum[ 'stop'       ] = 'Shut down a running suite (now or later)'
 comsum[ 'restart'    ] = 'Restart a suite from a previous state'
@@ -240,26 +236,27 @@ comsum[ 'remove'     ] = 'Remove a task from a running suite'
 comsum[ 'purge'      ] = 'Remove a full dependency tree from a running suite'
 comsum[ 'pause'      ] = 'Pause a running suite (stop submitting tasks)'
 comsum[ 'resume'     ] = 'Resume submitting tasks in a paused suite'
-comsum[ 'reset'      ] = 'Force a task to waiting, ready, or finished state'
 comsum[ 'block'      ] = 'Do not comply with subsequent intervention commands'
 comsum[ 'unblock'    ] = 'Comply with subsequent intervention commands'
+comsum[ 'reset'      ] = 'Force a task to waiting, ready, or finished state'
 comsum[ 'dump'       ] = 'Print the state of each task in a running suite'
 comsum[ 'show'       ] = 'Print task-specific information (prerequisites...)'
-comsum[ 'list'       ] = 'Print a suite\'s configured task list'
-comsum[ 'ping'       ] = 'Check that a named suite is running'
-comsum[ 'scan'       ] = 'Scan a host for running cylc suites'
 comsum[ 'log'        ] = 'Print or view suite logs, with filtering'
 comsum[ 'tmon'       ] = 'An in-terminal suite monitor (deprecated, see gcylc)'
-comsum[ 'submit'     ] = 'Run a single task just as its parent suite would'
-comsum[ 'lockserver' ] = 'Lockserver interrogation and lock management'
+comsum[ 'lockserver' ] = 'The cylc lockserver daemon'
+comsum[ 'lockclient' ] = 'Manual suite and task lock management'
 comsum[ 'verbosity'  ] = 'Change a suite\'s logging verbosity level'
+# discover
+comsum[ 'ping'       ] = 'Check that a named suite is running'
+comsum[ 'scan'       ] = 'Scan a host for running cylc suites'
+# task
 comsum[ 'wrap'       ] = 'Use an existing script or program as a cylc task'
+comsum[ 'submit'     ] = 'Run a single task just as its parent suite would'
 comsum[ 'started'    ] = 'Acquire a task lock and report started'
 comsum[ 'message'    ] = 'Report completion of outputs, etc.'
 comsum[ 'finished'   ] = 'Release task lock and report finished'
 comsum[ 'failed'     ] = 'Release task lock and report failure'
-comsum[ 'lockserver' ] = 'The cylc lockserver daemon'
-comsum[ 'lockclient' ] = 'Manual suite and task lock management'
+# utility
 comsum[ 'cycletime'  ] = 'Cycle time arithmetic'
 comsum[ 'checkvars'  ] = 'Check required environment variables en masse'
 comsum[ 'template'   ] = 'Powerful cycle time offset filename templating'
@@ -285,6 +282,8 @@ if len( sys.argv ) == 2 and \
         ( sys.argv[1] == '-v' or sys.argv[1] == '--version' ):
     print cylc_version
     sys.exit(0)
+
+all_commands = comsum.keys()
 
 if len( sys.argv ) == 3 and \
         ( is_help( sys.argv[1] ) or is_help( sys.argv[2] )):
