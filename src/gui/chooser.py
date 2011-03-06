@@ -75,10 +75,8 @@ class chooser_updater(threading.Thread):
             ports[ name ] = port
 
         # construct tree[owner][group][name] = [state, descr, dir ]
-        tree = {}
-        self.regd_treestore.clear()
-        choices = self.regd_choices
-        for reg in choices:
+        newtree = {}
+        for reg in self.regd_choices:
             suite, suite_dir, descr = reg
             suite_dir = re.sub( os.environ['HOME'], '~', suite_dir )
             if suite in ports:
@@ -90,37 +88,184 @@ class chooser_updater(threading.Thread):
             else:
                 owner = self.owner
                 group, name = re.split( ':', suite )
-            if owner not in tree:
-                tree[owner] = {}
-            if group not in tree[owner]:
-                tree[owner][group] = {}
-            if name not in tree[owner][group]:
-                tree[owner][group][name] = {}
-            tree[owner][group][name] = [ state, descr, suite_dir ]
+            if owner not in newtree:
+                newtree[owner] = {}
+            if group not in newtree[owner]:
+                newtree[owner][group] = {}
+            if name not in newtree[owner][group]:
+                newtree[owner][group][name] = {}
+            newtree[owner][group][name] = [ state, descr, suite_dir ]
 
         #grn = '#2f2'
         #grn2 = '#19ae0a'
         #red = '#ff1a45'
         #red = self.state_line_colors.get_color()
- 
-        # construct treestore
-        if self.is_cdb:
-            for owner in tree:
-                o_iter = self.regd_treestore.append( None, [owner, None, None, None, 'white', 'white' ] )
-                for group in tree[owner]:
-                    g_iter = self.regd_treestore.append( o_iter, [ group, None, None, None, 'white', 'white' ] )
-                    for name in tree[owner][group]:
-                        col = self.line_colors_cdb.get_color()
-                        state, descr, dir = tree[owner][group][name]
-                        n_iter = self.regd_treestore.append( g_iter, [ name, state, descr, dir, col, col ] )
+
+        # construct tree of the old data, 
+        # remove any old data not found in the new data.
+        # change any old data that is different in the new data
+        # (later we'll add any new data not found in the old data)
+        oldtree = {}
+        ts = self.regd_treestore
+        iter = ts.get_iter_first()
+        while iter:
+            # get owner
+            row = []
+            for col in range( ts.get_n_columns() ):
+                row.append( ts.get_value( iter, col))
+            owner = row[0]
+            #print 'OWNER', owner
+            oldtree[owner] = {}
+            if owner not in newtree:
+                # remove owner
+                #print 'removing owner ', owner
+                result = ts.remove(iter)
+                if not result:
+                    iter = None
+            else:
+                # owner still exists, check it
+                iterch = ts.iter_children(iter)
+                while iterch:
+                    # get group
+                    ch_row = []
+                    for col in range( ts.get_n_columns()):
+                        ch_row.append( ts.get_value(iterch,col))
+                    group = ch_row[0]
+                    #print '  GROUP', group
+
+                    oldtree[owner][group] = {}
+                    if group not in newtree[owner]:
+                        # remove group
+                        #print '  removing group ', group
+                        result = ts.remove(iterch)
+                        if not result:
+                            iterch = None
+                    else:
+                        # group still exists, check it
+                        iterchch = ts.iter_children(iterch)
+                        while iterchch:
+                            # get name
+                            chch_row = []
+                            for col in range( ts.get_n_columns()):
+                                chch_row.append( ts.get_value(iterchch,col))
+                            [name, state, descr, dir, junk, junk ] = chch_row
+                            oldtree[owner][group][name] = [state, descr, dir ]
+                            #print '    REG', name, state, descr, dir
+
+                            if name not in newtree[owner][group]:
+                                # remove name
+                                #print '    removing reg ', name
+                                result = ts.remove(iterchch)
+                                if not result:
+                                    iterchch = None
+                            elif oldtree[owner][group][name] != newtree[owner][group][name]:
+                                # data changed
+                                #print '     changing reg ', name
+                                ts.append( iterchch, [ name ] + [ state, descr, dir, 'white', 'white' ] )
+                                result = ts.remove(iterchch)
+                                if not result:
+                                    iterchch = None
+                            else:
+                                iterchch = ts.iter_next( iterchch )
+                        iterch = ts.iter_next( iterch )
+                iter = ts.iter_next(iter)  
+
+        #if self.is_cdb:
+        if True:
+            ### construct treestore
+            ##self.regd_treestore.clear()
+            #for owner in tree:
+            #    o_iter = self.regd_treestore.append( None, [owner, None, None, None, 'white', 'white' ] )
+            #    for group in tree[owner]:
+            #        g_iter = self.regd_treestore.append( o_iter, [ group, None, None, None, 'white', 'white' ] )
+            #        for name in tree[owner][group]:
+            #            col = self.line_colors_cdb.get_color()
+            #            state, descr, dir = tree[owner][group][name]
+            #            n_iter = self.regd_treestore.append( g_iter, [ name, state, descr, dir, col, col ] )
+
+            for owner in newtree:
+                if owner not in oldtree:
+                    # new owner: insert all of its data
+                    oiter = ts.append( None, [owner, None, None, None, None, None ] )
+                    for group in newtree[owner]:
+                        giter = ts.append( oiter, [group, None, None, None, None, None ] )
+                        for name in newtree[owner][group]:
+                            niter = ts.append( giter, [name] + newtree[owner][group][name] + ['white','white'])
+                    continue
+
+                # owner already in the treemodel, find it
+                oiter = self.search_level( ts, ts.get_iter_first(),
+                    self.match_func, (0, owner ))
+
+                for group in newtree[owner]:
+                    if group not in oldtree[owner]:
+                        # new group: insert all of its data
+                        giter = ts.append( oiter, [ group, None, None, None, None, None ] )
+                        for name in newtree[owner][group]:
+                            niter = ts.append( giter, [name] + newtree[owner][group][name] + ['white','white'])
+                        continue
+
+                    # group already in the treemodel, find it
+                    giter = self.search_level( ts, ts.iter_children(oiter),
+                            self.match_func, (0, group))
+
+                    for name in newtree[owner][group]:
+                        if name not in oldtree[owner][group]:
+                            # new name, insert it and its data
+                            niter = ts.append( giter, [name] + newtree[owner][group][name] + ['white', 'white'])
+                            continue
+
         else:
+            ### construct treestore
+            ##self.regd_treestore.clear()
+            #owner = self.owner
+            #for group in tree[owner]:
+            #    g_iter = self.regd_treestore.append( None, [ group, None, None, None, 'white', 'white' ] )
+            #    for name in tree[owner][group]:
+            #        col = self.line_colors.get_color()
+            #        state, descr, dir = tree[owner][group][name]
+            #        n_iter = self.regd_treestore.append( g_iter, [ name, state, descr, dir, col, col ] )
+
             owner = self.owner
-            for group in tree[owner]:
-                g_iter = self.regd_treestore.append( None, [ group, None, None, None, 'white', 'white' ] )
-                for name in tree[owner][group]:
-                    col = self.line_colors.get_color()
-                    state, descr, dir = tree[owner][group][name]
-                    n_iter = self.regd_treestore.append( g_iter, [ name, state, descr, dir, col, col ] )
+            for group in newtree[owner]:
+                if owner not in oldtree or group not in oldtree[owner]:
+                    # new group: insert all of its data
+                    giter = ts.append( None, [ group, None, None, None, None, None ] )
+                    for name in newtree[owner][group]:
+                        niter = ts.append( giter, [name] + newtree[owner][group][name] + ['white', 'white'])
+                    continue
+
+                # group already in the treemodel, find it
+                giter = self.search_level( ts, ts.get_iter_first(),
+                        self.match_func, (0, group))
+
+                for name in newtree[owner][group]:
+                    if name not in oldtree[owner][group]:
+                        # new name, insert it and its data
+                        niter = ts.append( giter, [name] + newtree[owner][group][name] + ['white', 'white'])
+                        continue
+
+    def search_level( self, model, iter, func, data ):
+        while iter:
+            if func( model, iter, data):
+                return iter
+            iter = model.iter_next(iter)
+        return None
+
+    def search_treemodel( self, model, iter, func, data ):
+        while iter:
+            if func( model, iter, data):
+                return iter
+            result = self.search_treemodel( model, model.iter_children(iter), func, data)
+            if result:
+                return result
+            iter = model.iter_next(iter)
+        return None
+
+    def match_func( self, model, iter, data ):
+        column, key = data
+        value = model.get_value( iter, column )
+        return value == key
 
 class chooser(object):
     def __init__(self, host, imagedir, readonly=False ):
@@ -150,7 +295,9 @@ class chooser(object):
         # [owner>]group>name, state, title, dir, color1, color2
         self.regd_treestore = gtk.TreeStore( str, str, str, str, str, str, )
         regd_treeview.set_model(self.regd_treestore)
+        # search column zero (Ctrl-F)
         regd_treeview.connect( 'button_press_event', self.on_suite_select )
+        regd_treeview.set_search_column(0)
 
         newreg_button = gtk.Button( "_Register Another Suite" )
         newreg_button.connect("clicked", self.newreg_popup )
@@ -170,26 +317,23 @@ class chooser(object):
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn( 'Suite', cr, text=0, background=4 )
+        tvc.set_sort_column_id(0)
         regd_treeview.append_column( tvc )
-
-        #cr = gtk.CellRendererText()
-        #tvc = gtk.TreeViewColumn( 'Group', cr, text=1, background=6 )
-        #regd_treeview.append_column( tvc )
-
-        #cr = gtk.CellRendererText()
-        #tvc = gtk.TreeViewColumn( 'Name', cr, text=2, background=6)
-        #regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn( 'State', cr, text=1, background=5 )
+        # not sure how this sorting works
+        #tvc.set_sort_column_id(1)
         regd_treeview.append_column( tvc ) 
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn( 'Title', cr, text=2, background=4 )
+        #vc.set_sort_column_id(2)
         regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn( 'Suite Definition Directory', cr, text=3, background=4 )
+        #vc.set_sort_column_id(3)
         regd_treeview.append_column( tvc )
 
         # NOTE THAT WE CANNOT LEAVE ANY SUITE CONTROL WINDOWS OPEN WHEN
@@ -252,6 +396,7 @@ class chooser(object):
             self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:
             self.updater.quit = True # does this take effect?
+        self.regd_treestore.clear()
         self.updater = chooser_updater( self.owner, self.regd_treestore, 
                 db, self.cdb, self.host, ownerfilt, groupfilt, namefilt )
         self.updater.update_liststore()
