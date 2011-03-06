@@ -41,6 +41,7 @@ class helpwindow_base( object ):
         self.tag_bold = self.tb.create_tag( None, weight = pango.WEIGHT_BOLD )
 
         self.add_main_heading( title )
+        quit_button.grab_focus()
          
     def add_main_heading( self, text ):
         self.tb.insert_with_tags( self.tb.get_end_iter(), text + '\n', self.tag_bold, self.tag_title )
@@ -92,32 +93,33 @@ class helpwindow( helpwindow_base ):
 def main( b ):
     help = helpwindow( "Gcylc Main Window Help", """%h2 Overview
 
-The gcylc main window shows your registered suites. Using the available
-buttons and right-click menu choices you can register new suites; copy,
-rename, and unregister existing ones; start suites running or connect to
-ones that are already running; edit, search, validate, or graph suite
-definitions; and import suites from or export them to the central suite
-registration database (seen be all users). You can't run suites directly
-from the central database, but you can view, search, and graph them when
-considering whether to import them to your local database for your own
-use.
+The gcylc main window initially shows your privately registered suites.
+
+Using the available buttons and right-click menu items you can register
+new suites; copy, reregister, and unregister existing suites; start
+suites running or connect a controller to suites that are already
+running; edit, search, validate, and graph suite definitions; and import
+suites from, or export them to, the central suite registration database
+(which is seen by all users). You can't run suites directly from the
+central database (they may be owned by others after all) but you can
+view, search, validate, and graph them when considering whether to
+import them for your own use.
 
 %h2 Buttons
 
 %h3 Switch To Local/Central DB
 
 Toggle between the local and central suite registration databases.
-Right-click menu options vary somewhat according to which database is
-being viewed.
 
 %h3 Filter
 
-Use group and name match patterns to filter which suites are visisble.
+Change which suites are visible by searching on group and name match
+patterns.
 
 %h3 Register Another Suite
 
-Open a file chooser dialog to load cylc suite definition (suite.rc)
-files and thereby register a new suite.
+Open a file chooser dialog to load a cylc suite definition (suite.rc)
+file and thereby register a suite.
 
 %h3 Quit
 
@@ -135,36 +137,46 @@ the others are cylc commandline programs. The options available depend
 on whether you have right-clicked on a suite or a group of suites.
 
 %h3 Control
+
 Launch a suite control GUI to start a suite running, or connect to a
 suite that is already running.
 
 %h3 Edit
+
 Edit the suite config (suite.rc) file
 
 %h3 Graph
+
 Graph the suite. The graph will update in real time as you edit the
 suite.
 
 %h3 Search
+
 Search in the suite config file and bin directory.
 
 %h3 Validate
+
 Parse the suite config file, validate it against the spec, and report
 any errors.
 
 %h3 Copy
+
 Copy an existing suite and register it for use.
 
 %h3 Export
+
 Export a suite to the central database to make it available to others.
 
 %h3 Import
+
 Import a suite from the central database, to modify and use yourself.
 
 %h3 Reregister
+
 Reregister an existing suite under a different group:name.
 
 %h3 Unregister
+
 Unregister a suite (this does not delete the suite definition directory).""")
     help.show()
 
