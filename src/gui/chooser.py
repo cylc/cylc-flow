@@ -262,7 +262,7 @@ class chooser_updater(threading.Thread):
         white = '#fff'
         black='#000'
         if state == 'dormant':
-            return (black, white)
+            return (black, None)
         else:
             return (grnfg, grnbg)
 
@@ -305,7 +305,7 @@ class chooser(object):
             self.window.set_title("Registered Suites (READONLY)" )
         else:
             self.window.set_title("Registered Suites" )
-        self.window.set_size_request(800, 200)
+        self.window.set_size_request(800, 400)
         self.window.set_border_width( 5 )
         self.window.connect("delete_event", self.delete_all_event)
 
@@ -316,7 +316,7 @@ class chooser(object):
         # [owner>]group>name, state, title, dir, color1, color2
         self.regd_treestore = gtk.TreeStore( str, str, str, str, str, str, )
         regd_treeview.set_model(self.regd_treestore)
-        #regd_treeview.set_rules_hint(True)
+        regd_treeview.set_rules_hint(True)
         # search column zero (Ctrl-F)
         regd_treeview.connect( 'button_press_event', self.on_suite_select )
         regd_treeview.set_search_column(0)
@@ -723,13 +723,6 @@ class chooser(object):
                 menu.append( copy_item )
                 copy_item.connect( 'activate', self.copy_suite_popup, reg )
     
-            reregister_item = gtk.MenuItem( 'Reregister' )
-            menu.append( reregister_item )
-            reregister_item.connect( 'activate', self.reregister_suite_popup, reg )
-            if self.cdb:
-                if owner != self.owner:
-                    reregister_item.set_sensitive( False )
-    
             if self.cdb:
                 imp_item = gtk.MenuItem( 'Import' )
                 menu.append( imp_item )
@@ -738,6 +731,13 @@ class chooser(object):
                 exp_item = gtk.MenuItem( 'Export' )
                 menu.append( exp_item )
                 exp_item.connect( 'activate', self.export_suite_popup, reg )
+    
+            reregister_item = gtk.MenuItem( 'Reregister' )
+            menu.append( reregister_item )
+            reregister_item.connect( 'activate', self.reregister_suite_popup, reg )
+            if self.cdb:
+                if owner != self.owner:
+                    reregister_item.set_sensitive( False )
     
             del_item = gtk.MenuItem( 'Unregister' )
             menu.append( del_item )
@@ -1463,7 +1463,7 @@ Note that this will not delete the suite definition directory.""" )
         #    logging_dir, self.imagedir, self.readonly )
         #self.viewer_list.append( tv )
         #return False
-        call( 'capture "gcylc ' + name  + '" --width=700 &', shell=True )
+        call( 'capture "gcylc ' + name  + '" --width=700 --height=400 &', shell=True )
 
     def check_entries( self, entries ):
         # note this check retrieved entry values
