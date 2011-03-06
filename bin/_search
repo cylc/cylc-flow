@@ -194,7 +194,13 @@ for file in os.listdir( bin ):
         # (e.g. vim editor temporary files)
         continue
     new_file = True
-    h = open( os.path.join(bin,file), 'rb')
+    try:
+        h = open( os.path.join(bin,file), 'rb')
+    except IOError, x:
+        # e.g. there's a sub-directory under bin; ignore it.
+        print >> sys.stderr, 'Unable to open file ' + os.path.join(bin,file)
+        print >> sys.stderr, x
+        continue
     contents = h.readlines()
     h.close()
 
