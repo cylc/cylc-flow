@@ -164,6 +164,10 @@ task_commands = \
     'message',
     'finished',
     'failed',
+    'task-started',
+    'task-finished',
+    'task-failed',
+    'task-message'
     ]
 
 general_usage = """
@@ -256,6 +260,12 @@ comsum[ 'started'    ] = 'Acquire a task lock and report started'
 comsum[ 'message'    ] = 'Report completion of outputs, etc.'
 comsum[ 'finished'   ] = 'Release task lock and report finished'
 comsum[ 'failed'     ] = 'Release task lock and report failure'
+
+comsum[ 'task-started'    ] = 'DEPRECATED: use started'
+comsum[ 'task-message'    ] = 'DEPRECATED: use message.'
+comsum[ 'task-finished'   ] = 'DEPRECATED: use finished'
+comsum[ 'task-failed'     ] = 'DEPRECATED: use failed'
+
 # utility
 comsum[ 'cycletime'  ] = 'Cycle time arithmetic'
 comsum[ 'checkvars'  ] = 'Check required environment variables en masse'
@@ -359,6 +369,9 @@ if command not in ['cycletime', 'template']:
     notify=True
 
 # construct command to execute
+# DEPRECATED TASK COMMANDS (backward compatibility):
+if command in [ 'task-started', 'task-finished', 'task-failed', 'task-message' ]:
+    command = re.sub( '^task-', '', command )
 command = '_' + command 
 commandlist = [ command ]
 for f in arglist:

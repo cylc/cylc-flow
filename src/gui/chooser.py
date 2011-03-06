@@ -446,7 +446,8 @@ class chooser(object):
 
         self.window.add(vbox)
         self.window.show_all()
-
+        # grab focus after adding to window
+        quit_all_button.grab_focus()
         self.viewer_list = []
 
     def toggle_expand( self, widget, view ):
