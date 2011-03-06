@@ -27,9 +27,6 @@ class chooser_updater(threading.Thread):
         self.regd_treestore = regd_treestore
         super(chooser_updater, self).__init__()
         self.running_choices = []
-        self.line_colors = rotator([ '#ccc', '#aaa' ])
-        self.line_colors_cdb = rotator([ '#cfc', '#ada' ])
-        self.state_line_colors = rotator([ '#fcc', '#faa' ])
 
         self.db.load_from_file()
         self.regd_choices = []
@@ -71,16 +68,16 @@ class chooser_updater(threading.Thread):
         ##print "Updating list of available suites"
         ports = {}
         for suite in self.running_choices:
-            name, port = suite
-            ports[ name ] = port
+            reg, port = suite
+            ports[ reg ] = port
 
-        # construct tree[owner][group][name] = [state, descr, dir ]
+        # construct newtree[owner][group][name] = [state, descr, dir ]
         newtree = {}
         for reg in self.regd_choices:
             suite, suite_dir, descr = reg
             suite_dir = re.sub( os.environ['HOME'], '~', suite_dir )
             if suite in ports:
-                state = 'port ' + str(ports[name])
+                state = 'port ' + str(ports[suite])
             else:
                 state = 'dormant'
             if self.is_cdb:
@@ -96,40 +93,35 @@ class chooser_updater(threading.Thread):
                 newtree[owner][group][name] = {}
             newtree[owner][group][name] = [ state, descr, suite_dir ]
 
-        #grn = '#2f2'
-        #grn2 = '#19ae0a'
-        #red = '#ff1a45'
-        #red = self.state_line_colors.get_color()
-
         # construct tree of the old data, 
         # remove any old data not found in the new data.
         # change any old data that is different in the new data
         # (later we'll add any new data not found in the old data)
         oldtree = {}
         ts = self.regd_treestore
-        iter = ts.get_iter_first()
-        while iter:
+        oiter = ts.get_iter_first()
+        while oiter:
             # get owner
             row = []
             for col in range( ts.get_n_columns() ):
-                row.append( ts.get_value( iter, col))
+                row.append( ts.get_value( oiter, col))
             owner = row[0]
             #print 'OWNER', owner
             oldtree[owner] = {}
             if owner not in newtree:
                 # remove owner
                 #print 'removing owner ', owner
-                result = ts.remove(iter)
+                result = ts.remove(oiter)
                 if not result:
-                    iter = None
+                    oiter = None
             else:
                 # owner still exists, check it
-                iterch = ts.iter_children(iter)
-                while iterch:
+                giter = ts.iter_children(oiter)
+                while giter:
                     # get group
                     ch_row = []
                     for col in range( ts.get_n_columns()):
-                        ch_row.append( ts.get_value(iterch,col))
+                        ch_row.append( ts.get_value(giter,col))
                     group = ch_row[0]
                     #print '  GROUP', group
 
@@ -137,17 +129,17 @@ class chooser_updater(threading.Thread):
                     if group not in newtree[owner]:
                         # remove group
                         #print '  removing group ', group
-                        result = ts.remove(iterch)
+                        result = ts.remove(giter)
                         if not result:
-                            iterch = None
+                            giter = None
                     else:
                         # group still exists, check it
-                        iterchch = ts.iter_children(iterch)
-                        while iterchch:
+                        niter = ts.iter_children(giter)
+                        while niter:
                             # get name
                             chch_row = []
                             for col in range( ts.get_n_columns()):
-                                chch_row.append( ts.get_value(iterchch,col))
+                                chch_row.append( ts.get_value(niter,col))
                             [name, state, descr, dir, junk, junk ] = chch_row
                             oldtree[owner][group][name] = [state, descr, dir ]
                             #print '    REG', name, state, descr, dir
@@ -155,20 +147,25 @@ class chooser_updater(threading.Thread):
                             if name not in newtree[owner][group]:
                                 # remove name
                                 #print '    removing reg ', name
-                                result = ts.remove(iterchch)
+                                result = ts.remove(niter)
                                 if not result:
-                                    iterchch = None
+                                    niter = None
                             elif oldtree[owner][group][name] != newtree[owner][group][name]:
                                 # data changed
-                                #print '     changing reg ', name
-                                ts.append( iterchch, [ name ] + [ state, descr, dir, 'white', 'white' ] )
-                                result = ts.remove(iterchch)
+                                state, descr, dir = newtree[owner][group][name]
+                                col1, col2 = self.statecol( state )
+                                if state != 'dormant':
+                                    ts.set_value( giter,4,col2)
+                                else:
+                                    ts.set_value( giter,4,None)
+                                foo = ts.prepend( giter, [ name ] + [ state, descr, dir, col1, col2 ] )
+                                result = ts.remove(niter)
                                 if not result:
-                                    iterchch = None
+                                    niter = None
                             else:
-                                iterchch = ts.iter_next( iterchch )
-                        iterch = ts.iter_next( iterch )
-                iter = ts.iter_next(iter)  
+                                niter = ts.iter_next( niter )
+                        giter = ts.iter_next( giter )
+                oiter = ts.iter_next(oiter)  
 
         #if self.is_cdb:
         if True:
@@ -190,29 +187,33 @@ class chooser_updater(threading.Thread):
                     for group in newtree[owner]:
                         giter = ts.append( oiter, [group, None, None, None, None, None ] )
                         for name in newtree[owner][group]:
-                            niter = ts.append( giter, [name] + newtree[owner][group][name] + ['white','white'])
+                            state, descr, dir = newtree[owner][group][name]
+                            col1, col2 = self.statecol( state )
+                            niter = ts.append( giter, [name] + [state, descr, dir, col1, col2])
                     continue
 
                 # owner already in the treemodel, find it
-                oiter = self.search_level( ts, ts.get_iter_first(),
-                    self.match_func, (0, owner ))
+                oiter = self.search_level( ts, ts.get_iter_first(), self.match_func, (0, owner ))
 
                 for group in newtree[owner]:
                     if group not in oldtree[owner]:
                         # new group: insert all of its data
                         giter = ts.append( oiter, [ group, None, None, None, None, None ] )
                         for name in newtree[owner][group]:
-                            niter = ts.append( giter, [name] + newtree[owner][group][name] + ['white','white'])
+                            state, descr, dir = newtree[owner][group][name]
+                            col1, col2 = self.statecol( state )
+                            niter = ts.append( giter, [name] + [state, descr, dir, col1, col2 ])
                         continue
 
                     # group already in the treemodel, find it
-                    giter = self.search_level( ts, ts.iter_children(oiter),
-                            self.match_func, (0, group))
+                    giter = self.search_level( ts, ts.iter_children(oiter), self.match_func, (0, group))
 
                     for name in newtree[owner][group]:
                         if name not in oldtree[owner][group]:
                             # new name, insert it and its data
-                            niter = ts.append( giter, [name] + newtree[owner][group][name] + ['white', 'white'])
+                            state, descr, dir = newtree[owner][group][name]
+                            col1, col2 = self.statecol( state )
+                            niter = ts.append( giter, [name] + [ state, descr, dir, col1, col2 ])
                             continue
 
         else:
@@ -226,6 +227,7 @@ class chooser_updater(threading.Thread):
             #        state, descr, dir = tree[owner][group][name]
             #        n_iter = self.regd_treestore.append( g_iter, [ name, state, descr, dir, col, col ] )
 
+            # TO DO: THE FOLLOWING HAS BEEN DISABLED (if True:) AND NEEDS TO LIKE THE ABOVE BUT WITHOUT OWNER
             owner = self.owner
             for group in newtree[owner]:
                 if owner not in oldtree or group not in oldtree[owner]:
@@ -236,14 +238,25 @@ class chooser_updater(threading.Thread):
                     continue
 
                 # group already in the treemodel, find it
-                giter = self.search_level( ts, ts.get_iter_first(),
-                        self.match_func, (0, group))
+                giter = self.search_level( ts, ts.get_iter_first(), self.match_func, (0, group))
 
                 for name in newtree[owner][group]:
                     if name not in oldtree[owner][group]:
                         # new name, insert it and its data
                         niter = ts.append( giter, [name] + newtree[owner][group][name] + ['white', 'white'])
                         continue
+    
+    def statecol( self, state ):
+        grn = '#29de3a'
+        grn2 = '#19ae0a'
+        #red = '#ff1a45'
+        red = '#845'
+        white = '#fff'
+        black='#000'
+        if state == 'dormant':
+            return (red, white)
+        else:
+            return (black, grn)
 
     def search_level( self, model, iter, func, data ):
         while iter:
@@ -295,6 +308,7 @@ class chooser(object):
         # [owner>]group>name, state, title, dir, color1, color2
         self.regd_treestore = gtk.TreeStore( str, str, str, str, str, str, )
         regd_treeview.set_model(self.regd_treestore)
+        #regd_treeview.set_rules_hint(True)
         # search column zero (Ctrl-F)
         regd_treeview.connect( 'button_press_event', self.on_suite_select )
         regd_treeview.set_search_column(0)
@@ -316,23 +330,23 @@ class chooser(object):
         regd_ts.set_mode( gtk.SELECTION_SINGLE )
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'Suite', cr, text=0, background=4 )
+        tvc = gtk.TreeViewColumn( 'Suite', cr, text=0, foreground=4, background=5 )
         tvc.set_sort_column_id(0)
         regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'State', cr, text=1, background=5 )
+        tvc = gtk.TreeViewColumn( 'State', cr, text=1, foreground=4, background=5 )
         # not sure how this sorting works
         #tvc.set_sort_column_id(1)
         regd_treeview.append_column( tvc ) 
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'Title', cr, text=2, background=4 )
+        tvc = gtk.TreeViewColumn( 'Title', cr, text=2, foreground=4, background=5 )
         #vc.set_sort_column_id(2)
         regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'Suite Definition Directory', cr, text=3, background=4 )
+        tvc = gtk.TreeViewColumn( 'Suite Definition', cr, text=3, foreground=4, background=5 )
         #vc.set_sort_column_id(3)
         regd_treeview.append_column( tvc )
 
