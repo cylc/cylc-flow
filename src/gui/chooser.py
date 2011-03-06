@@ -1327,9 +1327,6 @@ Note that this will not delete the suite definition directory.""" )
         if nobin_cb.get_active():
             options += ' -x '
 
-        if self.cdb:
-            options += ' -c '
-
         # TO DO 1/ use non-shell non-blocking launch here?
         # TO DO 2/ instead of external process make part of chooser app?
         # Would have to launch in own thread as xdot is interactive?
@@ -1354,9 +1351,6 @@ Note that this will not delete the suite definition directory.""" )
 
         if warm_cb.get_active():
             options += ' -w '
-
-        if self.cdb:
-            options += ' -c '
 
         # TO DO 1/ use non-shell non-blocking launch here?
         # TO DO 2/ instead of external process make part of chooser app?
@@ -1422,8 +1416,6 @@ Note that this will not delete the suite definition directory.""" )
 
         if view_inlined_rb.get_active():
             extra = ''
-            if self.cdb:
-                extra += '-c '
             if markcb.get_active():
                 extra += ' -m'
             if nojcb.get_active():
@@ -1438,8 +1430,6 @@ Note that this will not delete the suite definition directory.""" )
                 extra = '-i '
             else:
                 extra = ''
-            if self.cdb:
-                extra += '-c '
             call( 'capture "cylc edit ' + extra + ' ' + reg + '" &', shell=True  )
         return False
 
@@ -1459,8 +1449,6 @@ Note that this will not delete the suite definition directory.""" )
 
         # for now, launch external process via the cylc capture command:
         options = ''
-        if self.cdb:
-            options += ' -c '
         call( 'capture "cylc validate ' + options + name  + '" &', shell=True )
 
     def launch_controller( self, w, name, state, suite_dir ):
