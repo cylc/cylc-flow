@@ -1413,7 +1413,7 @@ Note that this will not delete the suite definition directory.""" )
     def edit_suite_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Suite Editing Options for '" + reg + "'")
+        window.set_title( "Edit '" + reg + "'")
 
         vbox = gtk.VBox()
         box = gtk.HBox()
@@ -1448,13 +1448,13 @@ Note that this will not delete the suite definition directory.""" )
         ok_button.connect("clicked", self.edit_suite, reg, edit_rb,
                 edit_inlined_rb, view_inlined_rb, mark_cb, label_cb, nojoin_cb, single_cb )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", self.stop_guide )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.edit )
 
         hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
         hbox.pack_start( ok_button, False )
-        #hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )

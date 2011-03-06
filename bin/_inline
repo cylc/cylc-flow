@@ -77,6 +77,12 @@ without inlined include-files, use the 'cylc prep edit' command.
 The viewer process is spawned in the foreground as follows:
   $EDITOR <temporary inlined file in $TMPDIR>
 (You must have $EDITOR and $TMDPIR defined in your shell environment). 
+Examples:
+   export EDITOR=vim
+   export EDITOR='gvim -f'       # -f: do not detach from parent shell!!
+   export EDITOR='xterm -e vim'  # for gcylc, if gvim is not available
+   export EDITOR=emacs
+   export EDITOR='emacs -nw'
 
 See also:
     cylc prep search

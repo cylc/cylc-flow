@@ -142,7 +142,8 @@ The editing process is spawned in the foreground as follows:
 
 The $EDITOR and $TMPDIR variables must be defined. Tested with:
    export EDITOR=vim
-   export EDITOR='gvim -f'  # -f: do not detach from parent shell!!
+   export EDITOR='gvim -f'       # -f: do not detach from parent shell!!
+   export EDITOR='xterm -e vim'  # for gcylc, if gvim is not available
    export EDITOR=emacs
    export EDITOR='emacs -nw'
 

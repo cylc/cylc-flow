@@ -170,8 +170,6 @@ Unregister a suite (this does not delete the suite definition directory).""")
 
 def filter( b ):
     help = helpwindow( "Filter Window Help", """
-%h2 Overview
-
 Change suite visibility by filtering on group and/or name with
 (Python-style) regular expressions (so, for example, the
 wildcard is '.*, not '*' as in a shell glob expression).
@@ -184,5 +182,31 @@ no implicit string end character ('$'). Examples:
 %i .*foo$  - matches 'foo', 'barfoo', but not 'foobar'
 %i (?i)foo - case-insensitive (matches 'foo', 'Food', 'FOOb',...)
 %i (foo|bar) - match 'foo' or 'bar' followed by anything""")
+    help.show()
+
+def edit( b ):
+    help = helpwindow( "Edit Window Help", """
+By default ('Edit') this changes the current working directory to
+your suite definition directory (so that you can easily open include 
+files and suite bin scripts) and spawns your $EDITOR on the suite.rc
+file.
+
+Choosing 'Edit Inlined' lets you edit a copy of the suite.rc file with
+all include-files inlined; changes will be split back out into the
+include files when you exit from the editor (see 'cylc prep edit --help'
+for more information).
+
+Note that for gcylc, as opposed to the command line 'cylc edit', you
+must use a GUI editor such as emacs or gvim, or else run your editor in
+a terminal:
+%i export EDITOR=emacs
+%i export EDITOR=xemacs
+%i export EDITOR='gvim -f'       # (*) see below
+%i export EDITOR='xterm -e vim'  # run vim in a new xterminal
+
+(*) The '-f' option is required to prevent gvim detaching from the
+parent process, which is important for inlined editing (the parent 
+process has to know when you exit from the editor).
+""")
     help.show()
  
