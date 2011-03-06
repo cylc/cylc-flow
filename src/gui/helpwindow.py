@@ -35,9 +35,9 @@ class helpwindow_base( object ):
         self.tb = textview.get_buffer()
 
         self.tag_text = self.tb.create_tag( None, foreground = "#222" )
-        self.tag_title = self.tb.create_tag( None, foreground = "blue" )
-        self.tag_heading = self.tb.create_tag( None, foreground = "red" )
-        self.tag_subheading = self.tb.create_tag( None, foreground = "#d73" )
+        self.tag_title = self.tb.create_tag( None, foreground = "#003" )
+        self.tag_heading = self.tb.create_tag( None, foreground = "#008" )
+        self.tag_subheading = self.tb.create_tag( None, foreground = "#00f" )
         self.tag_bold = self.tb.create_tag( None, weight = pango.WEIGHT_BOLD )
 
         self.add_main_heading( title )
@@ -58,7 +58,8 @@ class helpwindow_base( object ):
         self.tb.insert_with_tags( self.tb.get_end_iter(), text, self.tag_text, self.tag_bold )
 
     def add_list_item( self, item ):
-        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n o ' + item, self.tag_text )
+        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n o ', self.tag_bold )
+        self.tb.insert_with_tags( self.tb.get_end_iter(), item, self.tag_text )
 
     def show( self ):
         self.window.show_all()
@@ -125,68 +126,63 @@ control windows, etc., that you have opened.
 
 %h2 Right Click Menu Options
 
-Each menu option, except Control, launches one of the cylc commandline
-programs  inside a wrapper that captures command output in real time for
-display in a GUI window. The Control option launches a self-contained
-GUI application for suite control and montoring.
-%b To operate on a whole group of suites
-(some options only), click on any one of the group members and set
-'Apply To Parent Group' or similar in the subsequent option popup window
-(you will be able to select the group itself when gcylc changes to
-tree-view registration display).  
+Each right-click menu item runs a subprocess inside a GUI wrapper that
+captures stdout and stderr for display in real time. The output log
+window can be closed without affecting the associated subprocess (but
+you will lose access to the output). The Control subprocess is a
+self-contained GUI application for suite control and montoring, while
+the others are cylc commandline programs. The options available depend
+on whether you have right-clicked on a suite or a group of suites.
 
 %h3 Control
-
-Launch a suite control GUI to start a suite running or connect to a
+Launch a suite control GUI to start a suite running, or connect to a
 suite that is already running.
 
 %h3 Edit
-
 Edit the suite config (suite.rc) file
 
 %h3 Graph
-
 Graph the suite. The graph will update in real time as you edit the
 suite.
 
 %h3 Search
-
 Search in the suite config file and bin directory.
 
 %h3 Validate
-
 Parse the suite config file, validate it against the spec, and report
 any errors.
 
 %h3 Copy
-
 Copy an existing suite and register it for use.
 
-%h3 Reregister
-
-Reregister an existing suite under a different group:name.
-
 %h3 Export
-
 Export a suite to the central database to make it available to others.
 
-%h3 Unregister
+%h3 Import
+Import a suite from the central database, to modify and use yourself.
 
-Unregister a suite (note this does not delete the suite definition directory).""")
+%h3 Reregister
+Reregister an existing suite under a different group:name.
+
+%h3 Unregister
+Unregister a suite (this does not delete the suite definition directory).""")
     help.show()
 
 def filter( b ):
-    help = helpwindow_base( "Filter Window Help" )
-    help.add_heading( "\nOverview" )
-    help.add_text( 
-            "Change suite registration visibility by filtering on "
-            "group and/or name. Filter patterns can be plain strings "
-            "or Python-style regular expressions (not the general "
-            "regex wildcard is '.*' not '*'). Examples:")
+    help = helpwindow( "Filter Window Help", """
+%h2 Overview
 
-    help.add_list_item( "OUTPUT_DIR - literal string" )
-    help.add_list_item( "(?i)foo - case-insensitive (matches foo or Foo or FOO...)" )
-    help.add_list_item( "(foo|bar) - match 'foo' or 'bar'" )
+Change suite visibility by filtering on group and/or name with
+(Python-style) regular expressions (so, for example, the
+wildcard is '.*, not '*' as in a shell glob expression).
+
+Filter patterns have an implicit string start character ('^') but
+no implicit string end character ('$'). Examples:
+
+%i foo - matches 'foo' and 'foobar', but not 'barfoo'
+%i foo$ - matches 'foo' only
+%i .*foo$  - matches 'foo', 'barfoo', but not 'foobar'
+%i (?i)foo - case-insensitive (matches 'foo', 'Food', 'FOOb',...)
+%i (foo|bar) - match 'foo' or 'bar' followed by anything""")
     help.show()
  
-
