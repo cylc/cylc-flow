@@ -8,7 +8,6 @@ from config import config, SuiteConfigError
 from port_scan import scan_my_suites
 from registration import localdb, centraldb, regsplit, RegistrationError
 from gtkmonitor import monitor
-from color_rotator import rotator
 from warning_dialog import warning_dialog, info_dialog
 from subprocess import call
 import helpwindow 
@@ -155,7 +154,7 @@ class chooser_updater(threading.Thread):
                                 state, descr, dir = newtree[owner][group][name]
                                 col1, col2 = self.statecol( state )
                                 if state != 'dormant':
-                                    ts.set_value( giter,4,col2)
+                                    ts.set_value( giter,4,col1)
                                 else:
                                     ts.set_value( giter,4,None)
                                 foo = ts.prepend( giter, [ name ] + [ state, descr, dir, col1, col2 ] )
@@ -227,14 +226,19 @@ class chooser_updater(threading.Thread):
             #        state, descr, dir = tree[owner][group][name]
             #        n_iter = self.regd_treestore.append( g_iter, [ name, state, descr, dir, col, col ] )
 
-            # TO DO: THE FOLLOWING HAS BEEN DISABLED (if True:) AND NEEDS TO LIKE THE ABOVE BUT WITHOUT OWNER
+            # TO DO: THE FOLLOWING HAS BEEN DISABLED (if True:) ...
+            # state changes cause tree collapse..?
+
             owner = self.owner
+
             for group in newtree[owner]:
                 if owner not in oldtree or group not in oldtree[owner]:
                     # new group: insert all of its data
                     giter = ts.append( None, [ group, None, None, None, None, None ] )
                     for name in newtree[owner][group]:
-                        niter = ts.append( giter, [name] + newtree[owner][group][name] + ['white', 'white'])
+                        state, descr, dir = newtree[owner][group][name]
+                        col1, col2 = self.statecol( state )
+                        niter = ts.append( giter, [name] + [state, descr, dir, col1, col2 ])
                     continue
 
                 # group already in the treemodel, find it
@@ -243,20 +247,24 @@ class chooser_updater(threading.Thread):
                 for name in newtree[owner][group]:
                     if name not in oldtree[owner][group]:
                         # new name, insert it and its data
-                        niter = ts.append( giter, [name] + newtree[owner][group][name] + ['white', 'white'])
+                        state, descr, dir = newtree[owner][group][name]
+                        col1, col2 = self.statecol( state )
+                        niter = ts.append( giter, [name] + [ state, descr, dir, col1, col2 ])
                         continue
-    
+
+
+   
     def statecol( self, state ):
-        grn = '#29de3a'
-        grn2 = '#19ae0a'
+        grnbg = '#bdf'
+        grnfg = '#00a'
         #red = '#ff1a45'
         red = '#845'
         white = '#fff'
         black='#000'
         if state == 'dormant':
-            return (red, white)
+            return (black, white)
         else:
-            return (black, grn)
+            return (grnfg, grnbg)
 
     def search_level( self, model, iter, func, data ):
         while iter:
