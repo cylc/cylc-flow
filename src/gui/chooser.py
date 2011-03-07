@@ -89,7 +89,7 @@ class chooser_updater(threading.Thread):
             if suite in ports:
                 state = 'port ' + str(ports[suite])
             else:
-                state = 'dormant'
+                state = '-'
             if self.is_cdb:
                 owner, group, name = re.split( ':', suite )
             else:
@@ -222,7 +222,7 @@ class chooser_updater(threading.Thread):
                                #print '    changing reg ', name
                                state, descr, dir = newtree[owner][group][name]
                                col1, col2 = self.statecol( state )
-                               if state != 'dormant':
+                               if state != '-':
                                    ts.set_value( giter,4,col2)
                                else:
                                    ts.set_value( giter,4,None)
@@ -315,7 +315,7 @@ class chooser_updater(threading.Thread):
         red = '#845'
         white = '#fff'
         black='#000'
-        if state == 'dormant':
+        if state == '-':
             return (black, None)
         else:
             return (grnfg, grnbg)
@@ -678,6 +678,9 @@ The cylc forecast suite metascheduler.
         self.cdb = True
         if self.filter_window:
             self.filter_window.destroy()
+        # note treeview.modify_base() doesn't have same effect on all
+        # installations ... it either colours the full background or
+        # just inside the expander triangles!
         self.regd_treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#bdf" ))
         new_menu_item.set_sensitive( False )
         self.start_updater()
@@ -832,7 +835,7 @@ The cylc forecast suite metascheduler.
             else:
                 reg = group + ':' + name
             if not self.cdb:
-                #if state == 'dormant':
+                #if state == '-':
                 title = '_Control'
                 #else:
                 #    title = 'Connect'

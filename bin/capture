@@ -10,6 +10,7 @@ from optparse import OptionParser
 from warning_dialog import warning_dialog, info_dialog
 import subprocess
 import threading
+import helpwindow
 
 """Run a command as a subprocess and capture the resulting stdout and
 stderr to display in a dialog. Examples:
@@ -21,7 +22,7 @@ class info(object):
     def __init__( self, command_list, stdout, stderr, width=400, height=400 ):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_border_width( 5 )
-        window.set_title( 'command capture' )
+        window.set_title( 'subprocess output capture' )
         window.connect("delete_event", self.quit)
         window.set_size_request(width, height)
 
@@ -40,13 +41,18 @@ class info(object):
         tb.insert_with_tags( tb.get_end_iter(), command + '\n\n', blue )
 
         vbox = gtk.VBox()
+        hbox = gtk.HBox()
         sw.add(textview)
         vbox.add(sw)
-        ok_button = gtk.Button( "_Close" )
-        ok_button.connect("clicked", self.quit, None, None )
-        vbox.pack_start(ok_button, False)
+        close_button = gtk.Button( "_Close" )
+        close_button.connect("clicked", self.quit, None, None )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.capture )
+        hbox.pack_end(close_button, False)
+        hbox.pack_end(help_button, False)
+        vbox.pack_start( hbox, False )
         window.add(vbox)
-        ok_button.grab_focus()
+        close_button.grab_focus()
         window.show_all()
 
         proc = subprocess.Popen( command_list,
@@ -102,5 +108,3 @@ Arguments:
     info( command_list, tmp_stdout, tmp_stderr, 
             width=int(options.width), height=int(options.height) )
     gtk.main()
-
-

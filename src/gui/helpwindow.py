@@ -195,7 +195,7 @@ Unregister a suite (this does not delete the suite definition directory).""")
     help.show()
 
 def filter( b ):
-    help = helpwindow( "Filter Window Help", 300, """
+    help = helpwindow( "Filter Help", 300, """
 Change suite visibility by filtering on group and/or name with
 (Python-style) regular expressions (so, for example, the
 wildcard is '.*, not '*' as in a shell glob expression).
@@ -211,7 +211,7 @@ no implicit string end character ('$'). Examples:
     help.show()
 
 def edit( b ):
-    help = helpwindow( "Edit Window Help", 400, """
+    help = helpwindow( "Edit Help", 400, """
 By default ('Edit') this changes the current working directory to
 your suite definition directory (so that you can easily open include 
 files and suite bin scripts) and spawns your $GEDITOR on the suite.rc
@@ -240,7 +240,7 @@ process has to know when you exit from the editor).
     help.show()
  
 def graph( b ):
-    help = helpwindow( "Graph Window Help", 200, """
+    help = helpwindow( "Graph Help", 200, """
 Plot the suite dependency graph.  The graph viewer will update in real
 time if you edit the suite definition 'dependencies' or 'visualization'
 sections.  If you enter an Output File name an image file, type
@@ -250,11 +250,11 @@ available file types.""")
     help.show()
 
 def search( b ):
-    help = helpwindow( "Search Window Help", 300, """
+    help = helpwindow( "Search Help", 300, """
 Search for matches to a (Python-style) regular expression in a suite
 definition directory (i.e. suite.rc file and include-files, and any
 scripts in the suite bin directory). Suite.rc matches are reported by
-suite defintion Section and filename  (in case of include-files).
+suite definition Section and filename  (in case of include-files).
 
 Partial matches are allowed (i.e. there is no implicit string start
 ('^') or end ('$') character in the pattern. Examples:
@@ -266,7 +266,7 @@ Partial matches are allowed (i.e. there is no implicit string start
     help.show()
 
 def copy( b ):
-    help = helpwindow( "Copy Window Help", 200, """
+    help = helpwindow( "Copy Help", 200, """
 Copy the defintion of a registered suite to the specified location and
 register it under the new group:name.  If you click 'Reference
 Only' the suite definition will not be copied and the new registration
@@ -274,7 +274,7 @@ will point to the original suite.""")
     help.show()
 
 def copy_group( b ):
-    help = helpwindow( "Copy Group Window Help", 200, """
+    help = helpwindow( "Copy Group Help", 200, """
 Copy an entire group of registered suites into sub-directories of the
 specified location and register each group member under the new group
 name. If you click 'Reference Only', the member suite definitions will
@@ -282,32 +282,40 @@ not be copied and the new registrations will point to the original suites.""")
     help.show()
 
 def unregister( b ):
-    help = helpwindow( "Unregister Window Help", 200, """
+    help = helpwindow( "Unregister Help", 200, """
 Delete a suite or group of suites from the registration database. Note
 that this does not delete suite definition directories.""")
     help.show()
 
 def reregister( b ):
-    help = helpwindow( "Reregister Window Help", 200, """
+    help = helpwindow( "Reregister Help", 200, """
 Change the group and/or name (or group) under which a suite (or group of
 suites) is registered.""")
     help.show()
 
 def register( b ):
-    help = helpwindow( "Register Window Help", 200, """
+    help = helpwindow( "Register Help", 200, """
 Register a suite under a given group and name. This has to be done
 before you can run a suite, because all cylc commands refer to suites by
 their registered group:name.""")
     help.show()
 
 def importx( b ):
-    help = helpwindow( "Import Window Help", 200, """
+    help = helpwindow( "Import Help", 200, """
 Import a suite (or group of suites) from the central database, making it
 (them) available to you to modify and use.""")
     help.show()
 
 def export( b ):
-    help = helpwindow( "Export Window Help", 200, """
+    help = helpwindow( "Export Help", 200, """
 Export a suite (or group of suites) to the central database to make it
 (them) available to others.""")
+    help.show()
+
+def capture( b ):
+    help = helpwindow( "Subprocess Capture Help", 200, """
+This window captures stdout and stderr messages, in real time, from
+subprocesses spawned by the gcylc GUI. You can close this window without
+adversely affecting the subprocess itself, but if you do you will lose
+access to the standard output streams.""")
     help.show()
