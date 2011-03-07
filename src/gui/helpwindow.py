@@ -7,12 +7,12 @@ import string
 from color_rotator import rotator
 
 class helpwindow_base( object ):
-    def __init__( self, title ):
+    def __init__( self, title, height=400 ):
         self.window = gtk.Window()
         #window.set_border_width( 10 )
         self.window.set_title( title )
 
-        self.window.set_size_request(600, 400)
+        self.window.set_size_request(600, int(height))
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
@@ -25,7 +25,7 @@ class helpwindow_base( object ):
 
         textview = gtk.TextView()
         textview.set_border_width(5)
-        textview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#cef" ))
+        textview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#def" ))
         textview.set_editable( False )
         textview.set_wrap_mode( gtk.WRAP_WORD )
         sw.add( textview )
@@ -64,8 +64,8 @@ class helpwindow_base( object ):
         self.window.show_all()
 
 class helpwindow( helpwindow_base ):
-    def __init__( self, title, text ):
-        helpwindow_base.__init__(self, title )
+    def __init__( self, title, height, text ):
+        helpwindow_base.__init__(self, title, height )
         self.parse( text )
 
     def parse( self, text ):
@@ -89,7 +89,7 @@ class helpwindow( helpwindow_base ):
 
 ##########
 def main( b ):
-    help = helpwindow( "Gcylc Main Window Help", """%h2 Overview
+    help = helpwindow( "Gcylc Main Window Help", 500, """%h2 Overview
 
 The gcylc main window initially shows your privately registered suites.
 
@@ -133,6 +133,9 @@ you will lose access to the output). The Control subprocess is a
 self-contained GUI application for suite control and montoring, while
 the others are cylc commandline programs. The options available depend
 on whether you have right-clicked on a suite or a group of suites.
+Registration groups are created and deleted automatically as required
+(you don't need to explicitly create group 'foo' before registering 
+a suite 'foo:bar', for example).
 
 %h3 Control
 
@@ -179,7 +182,7 @@ Unregister a suite (this does not delete the suite definition directory).""")
     help.show()
 
 def filter( b ):
-    help = helpwindow( "Filter Window Help", """
+    help = helpwindow( "Filter Window Help", 300, """
 Change suite visibility by filtering on group and/or name with
 (Python-style) regular expressions (so, for example, the
 wildcard is '.*, not '*' as in a shell glob expression).
@@ -195,7 +198,7 @@ no implicit string end character ('$'). Examples:
     help.show()
 
 def edit( b ):
-    help = helpwindow( "Edit Window Help", """
+    help = helpwindow( "Edit Window Help", 400, """
 By default ('Edit') this changes the current working directory to
 your suite definition directory (so that you can easily open include 
 files and suite bin scripts) and spawns your $EDITOR on the suite.rc
@@ -220,8 +223,18 @@ process has to know when you exit from the editor).
 """)
     help.show()
  
+def graph( b ):
+    help = helpwindow( "Graph Window Help", 200, """
+Plot the suite dependency graph.  The graph viewer will update in real
+time if you edit the suite definition 'dependencies' or 'visualization'
+sections.  If you enter an Output File name an image file, type
+determined by file extension, will be written (and rewritten if the
+graph changes). See 'cylc prep graph --help' for more information on
+available file types.""")
+    help.show()
+
 def search( b ):
-    help = helpwindow( "Search Window Help", """
+    help = helpwindow( "Search Window Help", 300, """
 Search for matches to a (Python-style) regular expression in a suite
 definition directory (i.e. suite.rc file and include-files, and any
 scripts in the suite bin directory). Suite.rc matches are reported by
@@ -236,4 +249,49 @@ Partial matches are allowed (i.e. there is no implicit string start
 %i (foo|bar) - match 'foo' or 'bar' preceded or followed by anything""")
     help.show()
 
+def copy( b ):
+    help = helpwindow( "Copy Window Help", 200, """
+Copy the defintion of a registered suite to the specified location and
+register it under the new group:name.  If you click 'Reference
+Only' the suite definition will not be copied and the new registration
+will point to the original suite.""")
+    help.show()
 
+def copy_group( b ):
+    help = helpwindow( "Copy Group Window Help", 200, """
+Copy an entire group of registered suites into sub-directories of the
+specified location and register each group member under the new group
+name. If you click 'Reference Only', the member suite definitions will
+not be copied and the new registrations will point to the original suites.""")
+    help.show()
+
+def unregister( b ):
+    help = helpwindow( "Unregister Window Help", 200, """
+Delete a suite or group of suites from the registration database. Note
+that this does not delete suite definition directories.""")
+    help.show()
+
+def reregister( b ):
+    help = helpwindow( "Reregister Window Help", 200, """
+Change the group and/or name (or group) under which a suite (or group of
+suites) is registered.""")
+    help.show()
+
+def register( b ):
+    help = helpwindow( "Register Window Help", 200, """
+Register a suite under a given group and name. This has to be done
+before you can run a suite, because all cylc commands refer to suites by
+their registered group:name.""")
+    help.show()
+
+def importx( b ):
+    help = helpwindow( "Import Window Help", 200, """
+Import a suite (or group of suites) from the central database, making it
+(them) available to you to modify and use.""")
+    help.show()
+
+def export( b ):
+    help = helpwindow( "Export Window Help", 200, """
+Export a suite (or group of suites) to the central database to make it
+(them) available to others.""")
+    help.show()

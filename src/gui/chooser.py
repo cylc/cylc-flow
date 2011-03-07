@@ -523,13 +523,13 @@ class chooser(object):
         apply_button = gtk.Button( "_Register" )
         apply_button.connect("clicked", self.new_reg, window, dir, group_entry, name_entry )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", self.filter_guide )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.register )
 
         hbox = gtk.HBox()
         hbox.pack_start( apply_button, False )
-        hbox.pack_start( cancel_button, False )
-        #hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -814,17 +814,17 @@ class chooser(object):
         ok_button = gtk.Button( "_Unregister" )
         ok_button.connect("clicked", self.unregister_group, window, owner, group )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", self.stop_guide )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.unregister )
 
         label = gtk.Label( "Unregister the entire " + group + " group?" + """
 Note that this will not delete any suite definition directories.""" )
         vbox.pack_start( label )
 
         hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
         hbox.pack_start( ok_button, False )
-        #hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -849,17 +849,17 @@ Note that this will not delete any suite definition directories.""" )
         ok_button = gtk.Button( "_Unregister" )
         ok_button.connect("clicked", self.unregister_suite, window, reg )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", self.stop_guide )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.unregister )
 
         label = gtk.Label( "Unregister suite " + reg + "?" + """
 Note that this will not delete the suite definition directory.""" )
         vbox.pack_start( label )
 
         hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
         hbox.pack_start( ok_button, False )
-        #hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -891,19 +891,19 @@ Note that this will not delete the suite definition directory.""" )
         box.pack_start (def_entry, True)
         vbox.pack_start(box)
 
-        cancel_button = gtk.Button( "_Close" )
+        cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Import" )
         ok_button.connect("clicked", self.import_group, window, owner, group, group_entry, def_entry )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", self.stop_guide )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.importx )
 
         hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
         hbox.pack_start( ok_button, False )
-        #hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -957,13 +957,13 @@ Note that this will not delete the suite definition directory.""" )
         ok_button = gtk.Button( "_Import" )
         ok_button.connect("clicked", self.import_suite, window, reg, group_entry, name_entry, def_entry )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", self.stop_guide )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.importx )
 
         hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
         hbox.pack_start( ok_button, False )
-        #hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -1005,19 +1005,19 @@ Note that this will not delete the suite definition directory.""" )
         box.pack_start (name_entry, True)
         vbox.pack_start(box)
 
-        cancel_button = gtk.Button( "_Close" )
+        cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Export" )
         ok_button.connect("clicked", self.export_suite, window, reg, group_entry, name_entry )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", self.stop_guide )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.export )
 
         hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
         hbox.pack_start( ok_button, False )
-        #hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -1068,13 +1068,13 @@ Note that this will not delete the suite definition directory.""" )
         ok_button = gtk.Button( "_Reregister" )
         ok_button.connect("clicked", self.reregister_suite, window, reg, group_entry, name_entry )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", self.stop_guide )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.reregister )
 
         hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
         hbox.pack_start( ok_button, False )
-        #hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -1110,13 +1110,13 @@ Note that this will not delete the suite definition directory.""" )
         ok_button = gtk.Button( "_Reregister" )
         ok_button.connect("clicked", self.reregister_group, window, group, new_group_entry )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", self.stop_guide )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.reregister )
 
         hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
         hbox.pack_start( ok_button, False )
-        #hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -1151,13 +1151,13 @@ Note that this will not delete the suite definition directory.""" )
         ok_button = gtk.Button( "_Export" )
         ok_button.connect("clicked", self.export_group, window, group, group_entry )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", self.stop_guide )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.export )
 
         hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
         hbox.pack_start( ok_button, False )
-        #hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -1202,13 +1202,13 @@ Note that this will not delete the suite definition directory.""" )
         ok_button = gtk.Button( "_Copy" )
         ok_button.connect("clicked", self.copy_group, window, group, group_entry, refonly_cb, def_entry )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", self.stop_guide )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.copy_group )
 
         hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
         hbox.pack_start( ok_button, False )
-        #hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -1272,13 +1272,13 @@ Note that this will not delete the suite definition directory.""" )
         ok_button = gtk.Button( "_Copy" )
         ok_button.connect("clicked", self.copy_suite, window, reg, group_entry, name_entry, refonly_cb, def_entry )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", self.stop_guide )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.copy )
 
         hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
         hbox.pack_start( ok_button, False )
-        #hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -1350,7 +1350,7 @@ Note that this will not delete the suite definition directory.""" )
 
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Suite Graph Options for '" + reg + "'")
+        window.set_title( "Dependency Graph '" + reg + "'")
 
         vbox = gtk.VBox()
 
@@ -1387,13 +1387,13 @@ Note that this will not delete the suite definition directory.""" )
         ok_button.connect("clicked", self.graph_suite, reg,
                 warm_cb, outputfile_entry, start_entry, stop_entry )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", self.stop_guide )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.graph )
 
         hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
         hbox.pack_start( ok_button, False )
-        #hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
