@@ -17,7 +17,7 @@
 
 # TASK PROXY BASE CLASS:
 
-import sys
+import sys, re
 import datetime
 import task_state
 import logging
@@ -50,6 +50,8 @@ state_changed = True
 
 class task( Pyro.core.ObjBase ):
     
+    clock = None
+
     intercycle = False
 
     task_started_hook = None
@@ -131,10 +133,13 @@ class task( Pyro.core.ObjBase ):
             # default to the dummy task command (/bin/true).
             raise
 
-        self.submission_start_time = None
-        self.execution_start_time = None
+        self.submission_timer_start = None
+        self.execution_timer_start = None
 
-        self.set_execution_timer = False
+        self.submitted_time = None
+        self.started_time = None
+        self.finished_time = None
+        self.elapsed_time = None
 
         self.launcher = get_object( 'job_submit_methods', self.job_submit_method ) \
                 ( self.id, self.external_task, self.env_vars, self.directives, 
@@ -165,7 +170,7 @@ class task( Pyro.core.ObjBase ):
         # constraining the number of instances of each task type. 
         self.__class__.instance_count -= 1
 
-    def ready_to_run( self, current_time ):
+    def ready_to_run( self ):
         # ready if 'waiting' AND all prequisites satisfied
         ready = False
         if self.state.is_waiting() and self.prerequisites.all_satisfied(): 
@@ -179,11 +184,11 @@ class task( Pyro.core.ObjBase ):
             dep.append( satby[ label ] )
         return dep
 
-    def run_if_ready( self, current_time ):
-        if self.ready_to_run( current_time ):
+    def run_if_ready( self ):
+        if self.ready_to_run():
             print
             print self.id, ' READY TO RUN'
-            self.run_external_task( current_time )
+            self.run_external_task()
             return True
         else:
             return False
@@ -196,6 +201,8 @@ class task( Pyro.core.ObjBase ):
     def set_submitted( self ):
         self.state.set_status( 'submitted' )
         self.log( 'NORMAL', "job submitted" )
+        self.submitted_time = task.clock.get_datetime()
+        self.submission_timer_start = self.submitted_time
         if self.task_submitted_hook:
             self.log( 'NORMAL', 'calling task submitted hook' )
             command = ' '.join( [self.task_submitted_hook, 'submitted', self.name, self.c_time, "'(task submitted)'"] )
@@ -203,6 +210,8 @@ class task( Pyro.core.ObjBase ):
 
     def set_running( self ):
         self.state.set_status( 'running' )
+        self.started_time = task.clock.get_datetime()
+        self.execution_timer_start = self.started_time
         if self.task_started_hook:
             self.log( 'NORMAL', 'calling task started hook' )
             command = ' '.join( [self.task_started_hook, 'started', self.name, self.c_time, "'(task running)'"] )
@@ -211,6 +220,7 @@ class task( Pyro.core.ObjBase ):
     def set_finished( self ):
         self.outputs.set_all_complete()
         self.state.set_status( 'finished' )
+        self.finished_time = task.clock.get_datetime()
 
     def set_finished_hook( self ):
         # (set_finished() is used by remote switch)
@@ -238,45 +248,33 @@ class task( Pyro.core.ObjBase ):
             command = ' '.join( [self.task_submission_failed_hook, 'submit_failed', self.name, self.c_time, "'" + reason + "'"] )
             subprocess.call( command, shell=True )
 
-    def run_external_task( self, current_time=None, dry_run=False ):
+    def run_external_task( self, dry_run=False ):
         self.log( 'DEBUG',  'submitting task script' )
         if self.launcher.submit( dry_run ):
             self.set_submitted()
-            if current_time:
-                self.submission_start_time = current_time
+            self.submission_timer_start = task.clock.get_datetime()
         else:
             self.set_submit_failed()
 
-    def check_timeout( self, current_time ):
+    def check_timeout( self ):
         if not self.task_timeout_hook:
             # no script defined (in suite.rc) to process timeouts
             return
         if not self.state.is_submitted() and not self.state.is_running():
             # task submission and execution timeouts only
             return
-        if self.set_execution_timer:
-            # this indicates that the task has started and we need to 
-            # start the execution timer now (current_time is not
-            # available in the incoming message receiver as this 
-            # is the accelerated clock if in dummy mode ... we need a
-            # way to make the accelerated clock available anywhere).
-            self.execution_start_time = current_time
-            self.set_execution_timer = False
-            # cancel job submission timer
-            self.submission_start_time = None
-            return
-
-        if self.task_submission_timeout_minutes and self.submission_start_time:
-            timeout = self.submission_start_time + datetime.timedelta( minutes=self.task_submission_timeout_minutes )
+        current_time = task.clock.get_datetime()
+        if self.task_submission_timeout_minutes and self.submission_timer_start:
+            timeout = self.submission_timer_start + datetime.timedelta( minutes=self.task_submission_timeout_minutes )
             if current_time > timeout:
                 msg = 'submitted ' + str( self.task_submission_timeout_minutes ) + ' minutes ago but has not started'
                 self.log( 'WARNING', msg )
                 command = ' '.join( [ self.task_timeout_hook, 'submission', self.name, self.c_time, "'" + msg + "'" ] )
                 subprocess.call( command, shell=True )
-                self.submission_start_time = None
+                self.submission_timer_start = None
 
-        if self.execution_timeout_minutes and self.execution_start_time:
-            timeout = self.execution_start_time + datetime.timedelta( minutes=self.execution_timeout_minutes )
+        if self.execution_timeout_minutes and self.execution_timer_start:
+            timeout = self.execution_timer_start + datetime.timedelta( minutes=self.execution_timeout_minutes )
             if current_time > timeout:
                 if self.reset_execution_timeout_on_incoming_messages:
                     msg = 'last message ' + str( self.execution_timeout_minutes ) + ' minutes ago, not finished'
@@ -285,7 +283,7 @@ class task( Pyro.core.ObjBase ):
                 self.log( 'WARNING', msg )
                 command = ' '.join( [ self.task_timeout_hook, 'execution', self.name, self.c_time, "'" + msg + "'" ] )
                 subprocess.call( command, shell=True )
-                self.execution_start_time = None
+                self.execution_timer_start = None
 
     def set_all_internal_outputs_completed( self ):
         if self.reject_if_failed( 'set_all_internal_outputs_completed' ):
@@ -323,7 +321,7 @@ class task( Pyro.core.ObjBase ):
             return
 
         if self.reset_execution_timeout_on_incoming_messages:
-            self.set_execution_timer = True
+            self.execution_timer_start = task.clock.get_datetime()
 
         # receive all incoming pyro messages for this task 
         self.latest_message = message
@@ -341,7 +339,6 @@ class task( Pyro.core.ObjBase ):
         state_changed = True
 
         if message == self.id + ' started':
-            self.set_execution_timer = True
             self.set_running()
 
         if not self.state.is_running():
@@ -359,6 +356,7 @@ class task( Pyro.core.ObjBase ):
 
                 if message == self.id + ' finished':
                     # TASK HAS FINISHED
+                    self.finished_time = task.clock.get_datetime()
                     if not self.outputs.all_satisfied():
                         self.set_failed( 'finished before all outputs were completed' )
                     else:
@@ -371,11 +369,9 @@ class task( Pyro.core.ObjBase ):
 
         elif message == self.id + ' failed':
             # process task failure messages
-
+            self.finished_time = task.clock.get_datetime()
             state_changed = True
-
             self.set_failed( message )
-
             try:
                 # is there another task lined up for a retry?
                 self.external_task = self.external_tasks.popleft()
@@ -384,7 +380,7 @@ class task( Pyro.core.ObjBase ):
                 self.outputs.add( message )
                 self.outputs.set_satisfied( message )
             else:
-                # yes, do retry.
+                # yes, retry.
                 if not self.launcher.dummy_mode:
                     self.log( 'CRITICAL',  'Retrying with next command' )
                     self.launcher.task = self.external_task
@@ -450,6 +446,32 @@ class task( Pyro.core.ObjBase ):
         summary[ 'latest_message' ] = self.latest_message
         summary[ 'latest_message_priority' ] = self.latest_message_priority
 
+        if self.submitted_time:
+            #summary[ 'submitted_time' ] = self.submitted_time.strftime("%Y/%m/%d %H:%M:%S" )
+            summary[ 'submitted_time' ] = self.submitted_time.strftime("%H:%M:%S" )
+        else:
+            summary[ 'submitted_time' ] = '*'
+
+        if self.started_time:
+            #summary[ 'started_time' ] =  self.started_time.strftime("%Y/%m/%d %H:%M:%S" )
+            summary[ 'started_time' ] =  self.started_time.strftime("%H:%M:%S" )
+        else:
+            summary[ 'started_time' ] =  '*'
+
+        if self.finished_time:
+            #summary[ 'finished_time' ] =  self.finished_time.strftime("%Y/%m/%d %H:%M:%S" )
+            summary[ 'finished_time' ] =  self.finished_time.strftime("%H:%M:%S" )
+        else:
+            summary[ 'finished_time' ] =  '*'
+
+        if self.started_time and self.finished_time:
+            delta = str( self.finished_time - self.started_time )
+            # e.g.: "1 day, 23:59:55.903937"
+            # strip off fraction of seconds
+            delta = re.sub( '\.\d*$', '', delta )
+            summary[ 'elapsed_time' ] =  delta
+        else:
+            summary[ 'elapsed_time' ] =  '*'
 
         summary[ 'logfiles' ] = self.logfiles.get_paths()
  

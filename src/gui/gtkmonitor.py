@@ -20,6 +20,7 @@ from execute import execute
 from option_group import option_group, controlled_option_group
 from config import config
 from color_rotator import rotator
+import datetime
 
 class monitor(object):
     # visibility determined by state matching active toggle buttons
@@ -31,15 +32,14 @@ class monitor(object):
         if state:
             p = re.compile( r'<.*?>')
             state = re.sub( r'<.*?>', '', state )
-
         return state not in self.filter_states
 
     def check_filter_buttons(self, tb):
         del self.filter_states[:]
         for b in self.filter_buttonbox.get_children():
             if not b.get_active():
-                self.filter_states.append(b.get_label())
-
+                # sub '_' from button label keyboard mnemonics
+                self.filter_states.append( re.sub('_', '', b.get_label()))
         self.modelfilter.refilter()
         return
 
@@ -260,7 +260,7 @@ The cylc forecast suite metascheduler.
         return sw
     
     def create_tree_panel( self ):
-        self.ttreestore = gtk.TreeStore(str, str, str )
+        self.ttreestore = gtk.TreeStore(str, str, str, str, str, str, str )
         tms = gtk.TreeModelSort( self.ttreestore )
         tms.set_sort_column_id(0, gtk.SORT_ASCENDING)
         treeview = gtk.TreeView()
@@ -270,10 +270,11 @@ The cylc forecast suite metascheduler.
 
         treeview.connect( 'button_press_event', self.on_treeview_button_pressed, False )
 
-        headings = ['task', 'state', 'latest message' ]
+        headings = ['task', 'state', 'latest message', 'Tsubmit', 'Tstart', 'Tfinish', 'Telapsed' ]
         for n in range(len(headings)):
             cr = gtk.CellRendererText()
             tvc = gtk.TreeViewColumn( headings[n], cr, markup=n )
+            tvc.set_resizable(True)
             #tvc = gtk.TreeViewColumn( headings[n], cr, text=n )
             treeview.append_column(tvc)
             tvc.set_sort_column_id(n)
@@ -339,6 +340,10 @@ The cylc forecast suite metascheduler.
         return False
 
     def on_treeview_button_pressed( self, treeview, event, flat=True ):
+        # DISPLAY MENU ONLY ON RIGHT CLICK ONLY
+        if event.button != 3:
+            return False
+
         # the following sets selection to the position at which the
         # right click was done (otherwise selection lags behind the
         # right click):
@@ -371,12 +376,6 @@ The cylc forecast suite metascheduler.
                 return
 
         task_id = name + '%' + ctime
-
-        # HERE'S HOW TO DISPLAY MENU ONLY ON RIGHT CLICK
-        # (and show task log viewer otherwise):
-        #if event.button != 3:
-        #    self.show_log( task_id )
-        #    return False
 
         menu = gtk.Menu()
 
@@ -442,7 +441,7 @@ The cylc forecast suite metascheduler.
         return True
 
     def create_flatlist_panel( self ):
-        self.fl_liststore = gtk.ListStore(str, str, str, str)
+        self.fl_liststore = gtk.ListStore(str, str, str, str, str, str, str, str )
         self.modelfilter = self.fl_liststore.filter_new()
         self.modelfilter.set_visible_func(self.visible_cb, 2)
         tms = gtk.TreeModelSort( self.modelfilter )
@@ -455,15 +454,16 @@ The cylc forecast suite metascheduler.
 
         treeview.connect( 'button_press_event', self.on_treeview_button_pressed )
 
-        headings = ['cycle', 'name', 'state', 'latest message' ]
-        bkgcols = ['#def', '#fff', '#fff', '#fff' ]
+        headings = ['cycle', 'name', 'state', 'latest message', 'Tsubmit', 'Tstart', 'Tfinish', 'Telapsed' ]
+        bkgcols  = ['#def',  '#fff', '#fff',  '#fff',           '#fff', '#fff', '#fff', '#fff' ]
 
         # create the TreeViewColumn to display the data
         for n in range(len(headings)):
             # add columns to treeview
             cr = gtk.CellRendererText()
-            cr.set_property( 'cell-background', bkgcols[ n] )
+            cr.set_property( 'cell-background', bkgcols[n] )
             tvc = gtk.TreeViewColumn( headings[n], cr, markup=n )
+            tvc.set_resizable(True)
             #tvc = gtk.TreeViewColumn( headings[n], cr, text=n )
             tvc.set_sort_column_id(n)
             treeview.append_column(tvc)
@@ -1361,7 +1361,7 @@ The cylc forecast suite metascheduler.
         else:
             self.window.set_title("cylc control <" + self.suite + ">" )
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
-        self.window.set_size_request(600, 500)
+        self.window.set_size_request(800, 500)
         self.window.connect("delete_event", self.delete_event)
 
         self.log_colors = rotator()

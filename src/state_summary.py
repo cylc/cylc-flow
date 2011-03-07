@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 import Pyro.core
 import logging
 

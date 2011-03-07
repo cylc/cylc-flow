@@ -42,7 +42,7 @@ class catchup_clocktriggered( clocktriggered ):
         # self.real_time_delay, for clocktriggered:
         clocktriggered.__init__( self )
 
-    def ready_to_run( self, current_time ):
+    def ready_to_run( self ):
         # ready IF waiting AND all prerequisites satisfied AND if my
         # delayed start time is up.
         ready = False
@@ -60,7 +60,7 @@ class catchup_clocktriggered( clocktriggered ):
                     caughtup = True
                     caughtup_rt = self.c_time
                      
-            if self.start_time_reached( current_time ):
+            if self.start_time_reached():
                 # READY TO RUN
                 ready = True
 

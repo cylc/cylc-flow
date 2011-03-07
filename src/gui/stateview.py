@@ -164,6 +164,7 @@ class updater(threading.Thread):
             #print "STATE UNCHANGED"
             return False
         else:
+            #print "STATE CHANGED"
             self.state_summary = states
             return True
 
@@ -209,9 +210,13 @@ class updater(threading.Thread):
             message = self.state_summary[ id ][ 'latest_message' ]
             priority = self.state_summary[ id ][ 'latest_message_priority' ]
             message = markup( get_col_priority(priority), message )
+            tsub = self.state_summary[ id ][ 'submitted_time' ]
+            tstt = self.state_summary[ id ][ 'started_time' ]
+            tfin = self.state_summary[ id ][ 'finished_time' ]
+            tela = self.state_summary[ id ][ 'elapsed_time' ]
             state = markup( get_col(state), state )
-            new_data[id] = [ state, message ]
-
+            new_data[id] = [ state, message, tsub, tstt, tfin, tela ]
+ 
         list_data = {}
         iter = self.fl_liststore.get_iter_first()
         while iter:
@@ -219,9 +224,9 @@ class updater(threading.Thread):
             for col in range( self.fl_liststore.get_n_columns() ):
                 row.append( self.fl_liststore.get_value( iter, col) )
 
-            [ctime, name, state, message] = row
+            [ctime, name, state, message, tsub, tstt, tfin, tela ] = row
             id = name + '%' + ctime 
-            list_data[ id ] = [ state, message ]
+            list_data[ id ] = [ state, message, tsub, tstt, tfin, tela ]
 
             if id not in new_data:
                 # id no longer in suite, remove from view
@@ -229,7 +234,6 @@ class updater(threading.Thread):
                 result = self.fl_liststore.remove( iter )
                 if not result:
                     iter = None
-
             elif new_data[ id ] != list_data[ id ]:
                 #print "CHANGING", id
                 # id still in suite but data changed, so replace it
@@ -237,7 +241,6 @@ class updater(threading.Thread):
                 result = self.fl_liststore.remove( iter )
                 if not result:
                     iter = None
-
             else:
                 # id still exists and data has not changed
                 #print "UNCHANGED", id
@@ -251,7 +254,6 @@ class updater(threading.Thread):
                 self.fl_liststore.append( [ ctime, name ] + new_data[ id ] )
 
         # EXPANDING TREE VIEW
-
         new_data = {}
         for id in self.state_summary:
             name, ctime = id.split( '%' )
@@ -259,10 +261,14 @@ class updater(threading.Thread):
                 new_data[ ctime ] = {}
             state = self.state_summary[ id ][ 'state' ]
             message = self.state_summary[ id ][ 'latest_message' ]
+            tsub = self.state_summary[ id ][ 'submitted_time' ]
+            tstt = self.state_summary[ id ][ 'started_time' ]
+            tfin = self.state_summary[ id ][ 'finished_time' ]
+            tela = self.state_summary[ id ][ 'elapsed_time' ]
             priority = self.state_summary[ id ][ 'latest_message_priority' ]
             message = markup( get_col_priority( priority ), message )
             state = markup( get_col(state), state )
-            new_data[ ctime ][ name ] = [ state, message ]
+            new_data[ ctime ][ name ] = [ state, message, tsub, tstt, tfin, tela ]
 
         # print existing tree:
         #print
@@ -293,7 +299,7 @@ class updater(threading.Thread):
             row = []
             for col in range( self.ttreestore.get_n_columns() ):
                 row.append( self.ttreestore.get_value( iter, col) )
-            [ ctime, state, message ] = row
+            [ ctime, state, message, tsub, tstt, tfin, tela ] = row
             # state is empty string for parent row
 
             tree_data[ ctime ] = {}
@@ -312,8 +318,8 @@ class updater(threading.Thread):
                     ch_row = []
                     for col in range( self.ttreestore.get_n_columns() ):
                         ch_row.append( self.ttreestore.get_value( iterch, col) )
-                    [ name, state, message ] = ch_row
-                    tree_data[ ctime ][name] = [ state, message ]
+                    [ name, state, message, tsub, tstt, tfin, tela ] = ch_row
+                    tree_data[ ctime ][name] = [ state, message, tsub, tstt, tfin, tela ]
 
                     if name not in new_data[ ctime ]:
                         #print "  removing", name, "from", ctime
@@ -341,7 +347,7 @@ class updater(threading.Thread):
             if ctime not in tree_data:
                 # add new ctime tree
                 #print "ADDING", ctime
-                piter = self.ttreestore.append(None, [ctime, None, None ])
+                piter = self.ttreestore.append(None, [ctime, None, None, None, None, None, None ])
                 for name in new_data[ ctime ]:
                     #print "  adding", name, "to", ctime
                     self.ttreestore.append( piter, [ name ] + new_data[ctime][name] )

@@ -2,7 +2,7 @@
 
 ##### TO DO: self.config.check_task_groups() #####
 
-import task
+import task, clocktriggered
 import socket
 import logging
 import datetime
@@ -257,6 +257,11 @@ class scheduler(object):
         rate = self.config['dummy mode']['clock rate in seconds per dummy hour']
         offset = self.config['dummy mode']['clock offset from initial cycle time in hours']
         self.clock = accelerated_clock.clock( int(rate), int(offset), self.dummy_mode ) 
+
+        # nasty kludge to give the dummy mode clock to task classes:
+        task.task.clock = self.clock
+        clocktriggered.clocktriggered.clock = self.clock
+
         self.pyro.connect( self.clock, 'clock' )
 
         self.failout_task_id = self.options.failout_task_id
@@ -391,7 +396,7 @@ class scheduler(object):
                 self.log.critical( "ALL RUNNING TASKS FINISHED" )
                 break
 
-            self.check_timeouts(self.clock.get_datetime())
+            self.check_timeouts()
 
             # REMOTE METHOD HANDLING; with no timeout and single- threaded pyro,
             # handleRequests() returns after one or more remote method
@@ -423,7 +428,7 @@ class scheduler(object):
             # reset the remote control flag
             self.remote.process_tasks = False
             
-        if self.waiting_clocktriggered_task_ready( self.clock.get_datetime() ):
+        if self.waiting_clocktriggered_task_ready():
             # This method actually returns True if ANY task is ready to run,
             # not just clock-triggered tasks (but this should not matter).
             # For a clock-triggered task, this means its time offset is
@@ -575,9 +580,7 @@ class scheduler(object):
                     if int( itask.c_time ) > int( self.pause_time ):
                         self.log.debug( 'not asking ' + itask.id + ' to run (' + self.pause_time + ' hold in place)' )
                         continue
-
-                current_time = self.clock.get_datetime()
-                if itask.run_if_ready( current_time ):
+                if itask.run_if_ready():
                     if not graphing_disabled and not self.graph_finalized:
                         self.update_graph( itask )
 
@@ -1083,8 +1086,7 @@ class scheduler(object):
             self.negotiate()
             something_triggered = False
             for itask in self.tasks:
-                current_time = self.clock.get_datetime()
-                if itask.ready_to_run( current_time ) and int( itask.c_time ) <= int( stop ):
+                if itask.ready_to_run() and int( itask.c_time ) <= int( stop ):
                     something_triggered = True
                     itask.set_finished()
                     foo = self.force_spawn( itask )
@@ -1099,17 +1101,17 @@ class scheduler(object):
         # finally, purge all tasks marked as depending on the target
         self.kill( die, dump_state=False )
 
-    def check_timeouts( self, current_time ):
+    def check_timeouts( self ):
         for itask in self.tasks:
-            itask.check_timeout(current_time)
+            itask.check_timeout()
 
-    def waiting_clocktriggered_task_ready( self, current_time ):
+    def waiting_clocktriggered_task_ready( self ):
         # This method actually returns True if ANY task is ready to run,
         # not just clocktriggered tasks. However, this should not be a problem.
         result = False
         for itask in self.tasks:
-            #print itask.id, current_time
-            if itask.ready_to_run(current_time):
+            #print itask.id
+            if itask.ready_to_run():
                 result = True
                 break
         return result
