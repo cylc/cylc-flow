@@ -12,7 +12,7 @@ import cycle_time
 import pimp_my_logger
 import accelerated_clock 
 import re, os, sys, shutil
-from registration import regsplit
+from registration import regsplit, qualify
 from execute import execute
 from rolling_archive import rolling_archive
 from cylc_pyro_server import pyro_server
