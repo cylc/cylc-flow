@@ -359,7 +359,7 @@ class chooser(object):
             self.window.set_title("Registered Suites (READONLY)" )
         else:
             self.window.set_title("Registered Suites" )
-        self.window.set_size_request(800, 400)
+        self.window.set_size_request(600, 400)
         #self.window.set_border_width( 5 )
         self.window.connect("delete_event", self.delete_all_event)
 
@@ -441,22 +441,26 @@ class chooser(object):
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn( 'Suite', cr, text=0, foreground=4, background=5 )
+        tvc.set_resizable(True)
         tvc.set_sort_column_id(0)
         self.regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn( 'State', cr, text=1, foreground=4, background=5 )
+        tvc.set_resizable(True)
         # not sure how this sorting works
         #tvc.set_sort_column_id(1)
         self.regd_treeview.append_column( tvc ) 
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn( 'Title', cr, text=2, foreground=4, background=5 )
+        tvc.set_resizable(True)
         #vc.set_sort_column_id(2)
         self.regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn( 'Suite Definition', cr, text=3, foreground=4, background=5 )
+        tvc.set_resizable(True)
         #vc.set_sort_column_id(3)
         self.regd_treeview.append_column( tvc )
 
@@ -1637,7 +1641,7 @@ Note that this will not delete the suite definition directory.""" )
         # get suite logging directory
         # logging_dir = os.path.join( config(name)['top level logging directory'], name ) 
         #return False
-        call( 'capture "gcylc ' + name  + '" --width=700 --height=400 &', shell=True )
+        call( 'capture "gcylc ' + name  + '" --width=800 --height=400 &', shell=True )
 
     def check_entries( self, entries ):
         # note this check retrieved entry values
