@@ -4,6 +4,7 @@ import re
 import gtk
 import pango
 import string
+from color_rotator import rotator
 
 class helpwindow_base( object ):
     def __init__( self, title ):
@@ -11,10 +12,7 @@ class helpwindow_base( object ):
         #window.set_border_width( 10 )
         self.window.set_title( title )
 
-        self.window.set_size_request(600, 600)
-
-        #self.window.modify_bg( gtk.STATE_NORMAL, 
-        #       gtk.gdk.color_parse( self.log_colors.get_color()))
+        self.window.set_size_request(600, 400)
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
@@ -27,7 +25,7 @@ class helpwindow_base( object ):
 
         textview = gtk.TextView()
         textview.set_border_width(5)
-        textview.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#fff" ))
+        textview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#cef" ))
         textview.set_editable( False )
         textview.set_wrap_mode( gtk.WRAP_WORD )
         sw.add( textview )
@@ -222,3 +220,20 @@ process has to know when you exit from the editor).
 """)
     help.show()
  
+def search( b ):
+    help = helpwindow( "Search Window Help", """
+Search for matches to a (Python-style) regular expression in a suite
+definition directory (i.e. suite.rc file and include-files, and any
+scripts in the suite bin directory). Suite.rc matches are reported by
+suite defintion Section and filename  (in case of include-files).
+
+Partial matches are allowed (i.e. there is no implicit string start
+('^') or end ('$') character in the pattern. Examples:
+
+%i foo - matches 'foo', 'foobar', 'barfoo', ...
+%i ^foo$ - matches 'foo' only
+%i (?i)foo - case-insensitive (matches 'foo', 'Food', 'bFOOb',...)
+%i (foo|bar) - match 'foo' or 'bar' preceded or followed by anything""")
+    help.show()
+
+

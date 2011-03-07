@@ -1328,13 +1328,13 @@ Note that this will not delete the suite definition directory.""" )
         ok_button = gtk.Button( "_Search" )
         ok_button.connect("clicked", self.search_suite, reg, nobin_cb, pattern_entry )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", self.stop_guide )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.search )
 
         hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
         hbox.pack_start( ok_button, False )
-        #hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
