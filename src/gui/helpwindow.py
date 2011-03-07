@@ -91,38 +91,51 @@ class helpwindow( helpwindow_base ):
 def main( b ):
     help = helpwindow( "Gcylc Main Window Help", 500, """%h2 Overview
 
-The gcylc main window initially shows your privately registered suites.
+Gcylc initially shows your privately registered suites.
 
-Using the available buttons and right-click menu items you can register
-new suites; copy, reregister, and unregister existing suites; start
-suites running or connect a controller to suites that are already
-running; edit, search, validate, and graph suite definitions; and import
-suites from, or export them to, the central suite registration database
+Using the menu bar and right-click menu items you can register new
+suites; copy, reregister, and unregister existing suites; start suites
+running or connect a controller to suites that are already running;
+edit, search, validate, and graph suite definitions; and import suites
+from, or export them to, the central suite registration database
 (which is seen by all users). You can't run suites directly from the
 central database (they may be owned by others after all) but you can
 view, search, validate, and graph them when considering whether to
 import them for your own use.
 
-%h2 Buttons
+%h2 Menu Bar
 
-%h3 Switch To Local/Central DB
+%h3 File > New
 
-Toggle between the local and central suite registration databases.
+Register another suite. This opens a file chooser dialog configured to
+filter for cylc suite definition (suite.rc) files.
 
-%h3 Filter
+%h3 File > Exit
+
+This quits the application but does not close down any suite editing or
+control windows, etc., that you have opened.
+
+%h3 View > Filter
 
 Change which suites are visible by searching on group and name match
 patterns.
 
-%h3 Register Another Suite
+%h3 View > Expand
 
-Open a file chooser dialog to load a cylc suite definition (suite.rc)
-file and thereby register a suite.
+Expand the registration database treeview.
 
-%h3 Quit
+%h3 View > Collapse
 
-This quits the application but does not close down any suite editing or
-control windows, etc., that you have opened.
+Collapse the registration database treeview.
+
+%h3 View > LocalDB
+
+View the local (user-specific) suite registration database.
+
+%h3 View > CentralDB
+
+View the central (all users) suite registration database.
+
 
 %h2 Right Click Menu Options
 

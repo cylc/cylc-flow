@@ -171,10 +171,10 @@ class monitor(object):
                 about.set_program_name( "cylc" )
         cylc_version = 'THIS IS NOT A VERSIONED RELEASE'
         about.set_version( cylc_version )
-        about.set_copyright( "(c) Hilary Oliver, NIWA" )
+        about.set_copyright( "(c) Hilary Oliver, NIWA, 2008-2010" )
         about.set_comments( 
 """
-A real time suite control and monitoring tool for cylc.
+The cylc forecast suite metascheduler.
 """ )
         about.set_website( "http://www.niwa.co.nz" )
         about.set_logo( gtk.gdk.pixbuf_new_from_file( self.imagedir + "/dew.jpg" ))

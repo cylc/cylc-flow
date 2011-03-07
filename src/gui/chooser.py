@@ -360,7 +360,7 @@ class chooser(object):
         else:
             self.window.set_title("Registered Suites" )
         self.window.set_size_request(800, 400)
-        self.window.set_border_width( 5 )
+        #self.window.set_border_width( 5 )
         self.window.connect("delete_event", self.delete_all_event)
 
         sw = gtk.ScrolledWindow()
@@ -375,12 +375,59 @@ class chooser(object):
         self.regd_treeview.connect( 'button_press_event', self.on_suite_select )
         self.regd_treeview.set_search_column(0)
 
-        newreg_button = gtk.Button( "_Register Another Suite" )
-        newreg_button.connect("clicked", self.newreg_popup )
+        file_menu = gtk.Menu()
+        file_menu_root = gtk.MenuItem( '_File' )
+        file_menu_root.set_submenu( file_menu )
 
-        self.db_button = gtk.Button( "_Local/Central DB" )
-        self.db_button.connect("clicked", self.switchdb, newreg_button )
-        self.main_label = gtk.Label( "Local Suite Registrations" )
+        new_item = gtk.MenuItem( '_New' )
+        new_item.connect( 'activate', self.newreg_popup )
+        file_menu.append( new_item )
+
+        exit_item = gtk.MenuItem( 'E_xit' )
+        exit_item.connect( 'activate', self.delete_all_event )
+        file_menu.append( exit_item )
+
+        view_menu = gtk.Menu()
+        view_menu_root = gtk.MenuItem( '_View' )
+        view_menu_root.set_submenu( view_menu )
+
+        filter_item = gtk.MenuItem( '_Filter' )
+        view_menu.append( filter_item )
+        filter_item.connect( 'activate', self.filter_popup )
+
+        expand_item = gtk.MenuItem( 'E_xpand' )
+        view_menu.append( expand_item )
+        expand_item.connect( 'activate', self.expand_all, self.regd_treeview )
+
+        collapse_item = gtk.MenuItem( 'C_ollapse' )
+        view_menu.append( collapse_item )
+        collapse_item.connect( 'activate', self.collapse_all, self.regd_treeview )
+
+        local_item = gtk.MenuItem( '_LocalDB' )
+        view_menu.append( local_item )
+
+        central_item = gtk.MenuItem( '_CentralDB' )
+        view_menu.append( central_item )
+
+        local_item.connect( 'activate', self.localdb, new_item, central_item )
+        central_item.connect( 'activate', self.centraldb, new_item, local_item )
+
+        help_menu = gtk.Menu()
+        help_menu_root = gtk.MenuItem( '_Help' )
+        help_menu_root.set_submenu( help_menu )
+
+        guide_item = gtk.MenuItem( '_Quick Guide' )
+        help_menu.append( guide_item )
+        guide_item.connect( 'activate', helpwindow.main )
+ 
+        about_item = gtk.MenuItem( '_About' )
+        help_menu.append( about_item )
+        about_item.connect( 'activate', self.about )
+ 
+        self.menu_bar = gtk.MenuBar()
+        self.menu_bar.append( file_menu_root )
+        self.menu_bar.append( view_menu_root )
+        self.menu_bar.append( help_menu_root )
 
         # Start updating the liststore now, as we need values in it
         # immediately below (it may be possible to delay this till the
@@ -412,65 +459,54 @@ class chooser(object):
         #vc.set_sort_column_id(3)
         self.regd_treeview.append_column( tvc )
 
-        # NOTE THAT WE CANNOT LEAVE ANY SUITE CONTROL WINDOWS OPEN WHEN
-        # WE CLOSE THE CHOOSER WINDOW: when launched by the chooser 
-        # they are all under the same gtk main loop (?) and do not
-        # call gtk_main.quit() unless launched as standalone viewers.
-        quit_all_button = gtk.Button( "_Quit" )
-        quit_all_button.connect("clicked", self.delete_all_event, None, None )
-
-        filter_button = gtk.Button( "_Filter" )
-        filter_button.connect("clicked", self.filter_popup, None, None )
-
-        expand_button = gtk.Button( "_Expand/Collapse")
-        expand_button.connect( 'clicked', self.toggle_expand, self.regd_treeview )
-    
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.main )
-
         vbox = gtk.VBox()
         hbox = gtk.HBox()
-        hbox.pack_start( self.main_label )
+        #hbox.pack_start( self.main_label )
         vbox.pack_start( hbox, False )
 
         sw.add( self.regd_treeview )
+
+        vbox.pack_start( self.menu_bar, False )
         vbox.pack_start( sw, True )
-
-        hbox = gtk.HBox()
-        hbox_l = gtk.HBox()
-        hbox_r = gtk.HBox()
-        hbox_r.pack_start( help_button, False )
-        hbox_r.pack_start( quit_all_button, False )
-        hbox_l.pack_start( filter_button, False )
-        hbox_l.pack_start( expand_button, False )
-        hbox_l.pack_start( self.db_button, False )
-        hbox_l.pack_start( newreg_button, False )
-        hbox.pack_start( hbox_l, False )
-        hbox.pack_end( hbox_r, False )
-
-        vbox.pack_start( hbox, False )
 
         self.window.add(vbox)
         self.window.show_all()
-        # grab focus after adding to window
-        quit_all_button.grab_focus()
+
         #self.regd_treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#f00" ))
 
-    def toggle_expand( self, widget, view ):
-        if view.row_expanded(0):
-            view.collapse_all()
-        else:
-            view.expand_all()
+    def about( self, bt ):
+        about = gtk.AboutDialog()
+        if gtk.gtk_version[0] ==2:
+            if gtk.gtk_version[1] >= 12:
+                # set_program_name() was added in PyGTK 2.12
+                about.set_program_name( "cylc" )
+        cylc_version = 'THIS IS NOT A VERSIONED RELEASE'
+        about.set_version( cylc_version )
+        about.set_copyright( "(c) Hilary Oliver, NIWA, 2008-2011" )
+        about.set_comments( 
+"""
+The cylc forecast suite metascheduler.
+""" )
+        about.set_website( "http://www.niwa.co.nz" )
+        about.set_logo( gtk.gdk.pixbuf_new_from_file( self.imagedir + "/dew.jpg" ))
+        about.run()
+        about.destroy()
+
+
+    def expand_all( self, w, view ):
+        view.expand_all()
+    def collapse_all( self, w, view ):
+        view.collapse_all()
 
     def start_updater(self, ownerfilt=None, groupfilt=None, namefilt=None):
         if self.cdb:
             db = centraldb()
-            self.db_button.set_label( "_Local/Central DB" )
-            self.main_label.set_text( "Central Suite Registrations" )
+            #self.db_button.set_label( "_Local/Central DB" )
+            #self.main_label.set_text( "Central Suite Registrations" )
         else:
             db = localdb()
-            self.db_button.set_label( "_Local/Central DB" )
-            self.main_label.set_text( "Local Suite Registrations" )
+            #self.db_button.set_label( "_Local/Central DB" )
+            #self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:
             self.updater.quit = True # does this take effect?
         #not necessary: self.regd_treestore.clear()
@@ -568,7 +604,7 @@ class chooser(object):
         name_e.set_text('')
         self.start_updater()
 
-    def filter_popup(self, w, e, data=None):
+    def filter_popup(self, w):
         self.filter_window = gtk.Window()
         self.filter_window.set_border_width(5)
         self.filter_window.set_title( "Filter" )
@@ -620,20 +656,32 @@ class chooser(object):
         self.filter_window.add( vbox )
         self.filter_window.show_all()
 
-    def switchdb( self, w, newreg ):
+    def localdb( self, w, new_menu_item, other_w ):
+        if not self.cdb:
+            return
+        w.set_sensitive(False)
+        other_w.set_sensitive(True)
+        self.cdb = False
         if self.filter_window:
             self.filter_window.destroy()
-        self.cdb = not self.cdb
-        if self.cdb:
-            self.regd_treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#bdf" ))
-            newreg.set_sensitive( False )
-        else:
-            # setting base color to None should return it to the default
-            self.regd_treeview.modify_base( gtk.STATE_NORMAL, None)
-            newreg.set_sensitive( True )
+        # setting base color to None should return it to the default
+        self.regd_treeview.modify_base( gtk.STATE_NORMAL, None)
+        new_menu_item.set_sensitive( True )
         self.start_updater()
 
-    def delete_all_event( self, w, e, data=None ):
+    def centraldb( self, w, new_menu_item, other_w ):
+        if self.cdb:
+            return
+        w.set_sensitive(False)
+        other_w.set_sensitive(True)
+        self.cdb = True
+        if self.filter_window:
+            self.filter_window.destroy()
+        self.regd_treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#bdf" ))
+        new_menu_item.set_sensitive( False )
+        self.start_updater()
+
+    def delete_all_event( self, w ):
         self.updater.quit = True
         gtk.main_quit()      
         # Uncommenting the following makes the window stay around until

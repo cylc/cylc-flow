@@ -41,6 +41,7 @@ chmod +x suites/distributed/scripts/*
 chmod +x suites/scs-demo/scripts/*
 
 echo "SETTING VERSION TAG IN MAIN COMMAND AND USERGUIDE"
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" src/view/chooser.py
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" src/view/gtkmonitor.py
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" bin/cylc
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" doc/userguide.tex
