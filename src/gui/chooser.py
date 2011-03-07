@@ -372,6 +372,7 @@ class chooser(object):
         self.regd_treeview.set_model(self.regd_treestore)
         self.regd_treeview.set_rules_hint(True)
         # search column zero (Ctrl-F)
+        self.regd_treeview.connect( 'key_press_event', self.on_suite_select )
         self.regd_treeview.connect( 'button_press_event', self.on_suite_select )
         self.regd_treeview.set_search_column(0)
 
@@ -697,23 +698,49 @@ The cylc forecast suite metascheduler.
         #print 'BYE'
 
     def on_suite_select( self, treeview, event ):
-        # DISPLAY MENU ON RIGHT CLICK ONLY
-        if event.button != 3:
-            return False
-
-        # the following sets selection to the position at which the
-        # right click was done (otherwise selection lags behind the
-        # right click):
-
-        x = int( event.x )
-        y = int( event.y )
-        time = event.time
-        pth = treeview.get_path_at_pos(x,y)
-        if pth is None:
-            return False
-        treeview.grab_focus()
-        path, col, cellx, celly = pth
-        treeview.set_cursor( path, col, 0 )
+        # popup menu on right click or 'Return' key only
+        try:
+            event.button
+        except AttributeError:
+            # not called by button click
+            try:
+                event.keyval
+            except AttributeError:
+                # not called by key press
+                pass
+            else:
+                # called by key press
+                keyname = gtk.gdk.keyval_name(event.keyval)
+                if keyname != 'Return':
+                    return False
+                path, focus_col = treeview.get_cursor()
+                if not path:
+                    # no selection (prob treeview heading selected)
+                    return False
+                if not treeview.row_expanded(path):
+                    # row not expanded or not expandable
+                    iter = self.regd_treestore.get_iter(path)
+                    if self.regd_treestore.iter_children(iter):
+                        # has children so is expandable
+                        treeview.expand_row(path, False )
+                        return False
+        else:
+            # called by button click
+            if event.button != 3:
+                return False
+            # the following sets selection to the position at which the
+            # right click was done (otherwise selection lags behind the
+            # right click):
+            x = int( event.x )
+            y = int( event.y )
+            time = event.time
+            pth = treeview.get_path_at_pos(x,y)
+            if pth is None:
+                return False
+            treeview.grab_focus()
+            path, col, cellx, celly = pth
+            treeview.set_cursor( path, col, 0 )
+ 
         selection = treeview.get_selection()
 
         model, iter = selection.get_selected()
@@ -771,27 +798,27 @@ The cylc forecast suite metascheduler.
         if group_clicked:
             # MENU OPTIONS FOR GROUPS
             if not self.cdb:
-                copy_item = gtk.MenuItem( 'Copy' )
+                copy_item = gtk.MenuItem( 'C_opy' )
                 menu.append( copy_item )
                 copy_item.connect( 'activate', self.copy_group_popup, group )
 
             if self.cdb:
-                imp_item = gtk.MenuItem( 'Import' )
+                imp_item = gtk.MenuItem( 'I_mport' )
                 menu.append( imp_item )
                 imp_item.connect( 'activate', self.import_group_popup, owner, group )
             else:
-                exp_item = gtk.MenuItem( 'Export' )
+                exp_item = gtk.MenuItem( 'E_xport' )
                 menu.append( exp_item )
                 exp_item.connect( 'activate', self.export_group_popup, group )
 
-            reregister_item = gtk.MenuItem( 'Reregister' )
+            reregister_item = gtk.MenuItem( '_Reregister' )
             menu.append( reregister_item )
             reregister_item.connect( 'activate', self.reregister_group_popup, group)
             if self.cdb:
                 if owner != self.owner:
                     reregister_item.set_sensitive( False )
 
-            del_item = gtk.MenuItem( 'Unregister' )
+            del_item = gtk.MenuItem( '_Unregister' )
             menu.append( del_item )
             del_item.connect( 'activate', self.unregister_group_popup, owner, group )
             if self.cdb:
@@ -806,7 +833,7 @@ The cylc forecast suite metascheduler.
                 reg = group + ':' + name
             if not self.cdb:
                 #if state == 'dormant':
-                title = 'Control'
+                title = '_Control'
                 #else:
                 #    title = 'Connect'
                 con_item = gtk.MenuItem( title )
@@ -815,46 +842,46 @@ The cylc forecast suite metascheduler.
     
                 menu.append( gtk.SeparatorMenuItem() )
     
-            edit_item = gtk.MenuItem( 'Edit' )
+            edit_item = gtk.MenuItem( '_Edit' )
             menu.append( edit_item )
             edit_item.connect( 'activate', self.edit_suite_popup, reg )
     
-            graph_item = gtk.MenuItem( 'Graph' )
+            graph_item = gtk.MenuItem( '_Graph' )
             menu.append( graph_item )
             graph_item.connect( 'activate', self.graph_suite_popup, reg )
     
-            search_item = gtk.MenuItem( 'Search' )
+            search_item = gtk.MenuItem( '_Search' )
             menu.append( search_item )
             search_item.connect( 'activate', self.search_suite_popup, reg )
 
-            val_item = gtk.MenuItem( 'Validate' )
+            val_item = gtk.MenuItem( '_Validate' )
             menu.append( val_item )
             val_item.connect( 'activate', self.validate_suite, reg )
     
             menu.append( gtk.SeparatorMenuItem() )
     
             if not self.cdb:
-                copy_item = gtk.MenuItem( 'Copy' )
+                copy_item = gtk.MenuItem( 'Co_py' )
                 menu.append( copy_item )
                 copy_item.connect( 'activate', self.copy_suite_popup, reg )
     
             if self.cdb:
-                imp_item = gtk.MenuItem( 'Import' )
+                imp_item = gtk.MenuItem( 'I_mport' )
                 menu.append( imp_item )
                 imp_item.connect( 'activate', self.import_suite_popup, reg )
             else:
-                exp_item = gtk.MenuItem( 'Export' )
+                exp_item = gtk.MenuItem( 'E_xport' )
                 menu.append( exp_item )
                 exp_item.connect( 'activate', self.export_suite_popup, reg )
     
-            reregister_item = gtk.MenuItem( 'Reregister' )
+            reregister_item = gtk.MenuItem( '_Reregister' )
             menu.append( reregister_item )
             reregister_item.connect( 'activate', self.reregister_suite_popup, reg )
             if self.cdb:
                 if owner != self.owner:
                     reregister_item.set_sensitive( False )
     
-            del_item = gtk.MenuItem( 'Unregister' )
+            del_item = gtk.MenuItem( '_Unregister' )
             menu.append( del_item )
             del_item.connect( 'activate', self.unregister_suite_popup, reg )
             if self.cdb:
@@ -862,7 +889,11 @@ The cylc forecast suite metascheduler.
                     del_item.set_sensitive( False )
 
         menu.show_all()
-        menu.popup( None, None, None, event.button, event.time )
+        # button only:
+        #menu.popup( None, None, None, event.button, event.time )
+        # this seems to work with keypress and button:
+        menu.popup( None, None, None, 0, event.time )
+
         # TO DO: POPUP MENU MUST BE DESTROY()ED AFTER EVERY USE AS
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
         return True
@@ -1265,7 +1296,7 @@ Note that this will not delete the suite definition directory.""" )
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        ok_button = gtk.Button( "_Copy" )
+        ok_button = gtk.Button( "Co_py" )
         ok_button.connect("clicked", self.copy_group, window, group, group_entry, refonly_cb, def_entry )
 
         help_button = gtk.Button( "_Help" )
@@ -1335,7 +1366,7 @@ Note that this will not delete the suite definition directory.""" )
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        ok_button = gtk.Button( "_Copy" )
+        ok_button = gtk.Button( "Co_py" )
         ok_button.connect("clicked", self.copy_suite, window, reg, group_entry, name_entry, refonly_cb, def_entry )
 
         help_button = gtk.Button( "_Help" )
