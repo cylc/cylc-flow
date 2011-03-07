@@ -126,7 +126,10 @@ elif len( hour ) > 2:
 # fake a full cycle time
 ctime = '29990101' + hour
 window = MyDotWindow( suite, ctime, stop, raw, options.outputfile )
-window.parse_graph()
+try:
+    window.parse_graph()
+except config.SuiteConfigError, x:
+    raise SystemExit(x)
 window.connect( 'destroy', gtk.main_quit)
 gobject.timeout_add(1000, window.update)
 gtk.main()

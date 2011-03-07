@@ -97,7 +97,6 @@ class chooser_updater(threading.Thread):
         # change any old data that is different in the new data
         # (later we'll add any new data not found in the old data)
         if self.is_cdb:
-
             oldtree = {}
             ts = self.regd_treestore
             oiter = ts.get_iter_first()
@@ -153,13 +152,9 @@ class chooser_updater(threading.Thread):
                                         niter = None
                                 elif oldtree[owner][group][name] != newtree[owner][group][name]:
                                     # data changed
-                                    print '    changing reg ', name
+                                    # print '    changing reg ', name
                                     state, descr, dir = newtree[owner][group][name]
                                     col1, col2 = self.statecol( state )
-                                    if state != 'dormant':
-                                        ts.set_value( giter,4,col1)
-                                    else:
-                                        ts.set_value( giter,4,None)
                                     foo = ts.prepend( giter, [ name ] + [ state, descr, dir, col1, col2 ] )
                                     result = ts.remove(niter)
                                     if not result:
@@ -217,7 +212,7 @@ class chooser_updater(threading.Thread):
                                state, descr, dir = newtree[owner][group][name]
                                col1, col2 = self.statecol( state )
                                if state != 'dormant':
-                                   ts.set_value( giter,4,col1)
+                                   ts.set_value( giter,4,col2)
                                else:
                                    ts.set_value( giter,4,None)
                                foo = ts.prepend( giter, [ name ] + [ state, descr, dir, col1, col2 ] )
@@ -303,8 +298,8 @@ class chooser_updater(threading.Thread):
                             continue
     
     def statecol( self, state ):
-        grnbg = '#bdf'
-        grnfg = '#00a'
+        grnbg = '#19ae0a'
+        grnfg = '#030'
         #red = '#ff1a45'
         red = '#845'
         white = '#fff'

@@ -1,9 +1,25 @@
 _______
 GENERAL
 
-* for gcylc, use GUI_EDITOR, default to EDITOR?
+* chooser: setting group color fails if multiple suites are running.
+  Need to parse each group member and check if any are running.
 
-* in registration copy or import, unregister if the final copy fails.
+* allow startup in paused state, for immediate manual suite surgery.
+
+* Consider possible changes to cylc internals in light of the fact
+  that as of cylc-3 we know all task dependencies in advance, thanks
+  to the suite.rc dependency graph.  E.g. we may be able to remove many
+  finished tasks ahead of the generic cleanup cut off.
+
+* Consider: instead of keeping finished tasks around, maintain a
+  database of finished outputs from which old data could "roll off"
+  at said cutoff. This would probably have a performance advantage 
+  for very large suites because it would eliminate the large numbers of
+  finished tasks that potentially have to stay in the task pool
+  for a while. This database would have to be written to file with every
+  change with the state dump file, to allow valid suite restarts.
+
+* for gcylc, use GUI_EDITOR, default to EDITOR?
 
 * suite db locking: document, and provide info via command response, 
   what to do in the unlikely event that a lock is in place when a
@@ -65,12 +81,7 @@ GENERAL
 * document that continuation lines and include-files are cylc-specific
   extensions to ConfigObj.
 
-* DOCUMENT: export PYTHONUNBUFFERED=true
-  before running cylc via nohup, to prevent output buffering (results in 
-  only stderr going to nohup.out until at the last moment when the suite
-  is shut down).
-
-* show conditional and suicide prerequisites in requisite dumps.
+* explain conditional prerequisites (and suicide ones...) in requisite dumps.
 
 * put roadmap into documentation. 
 
@@ -175,7 +186,8 @@ and restart.
   ignored when applying the max runahead limit?
 
 * dot-file graph output assumes that task families are internally
-  cotemporal - is this necessarily the case? (is this still true?)
+  cotemporal - is this necessarily the case? (is this still true - since
+  rewritting the graphing code to use pygraphviz?)
 
 * check all open( file, mode ) statements for mode 'rb' etc. 
 
@@ -218,8 +230,9 @@ and restart.
   stop time but tasks that previously reached the stop time will not
   respawn -although this can be rectified by task insertion).
 
-* current method of setting task commands is not very transparent: each new
-  command in a retry list is set in jobsubmit.py "remotely" from task.py
+* a minor redesign of jobsumit / launcher class to avoid the current
+  clunky method of setting some class parameters directly instead of by
+  instance initialization or method call? e.g. job_submit.env = env.
 
 * --fail=TASKID: check that TASKID exists in the target suite.
 
@@ -345,7 +358,7 @@ LOCKSERVER
 ___
 GUI
 
-* chooser fails if an invalid registration is click on.
+* chooser fails if an invalid registration is clicked on.
 
 * use top level exception handling to prevent any failure that 
   leave zombie threads running? 

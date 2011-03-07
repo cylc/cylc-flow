@@ -146,6 +146,9 @@ class config( CylcConfigObj ):
             self.suite = os.environ[ 'CYLC_SUITE_NAME' ]
             self.file = os.path.join( os.environ[ 'CYLC_SUITE_DIR' ], 'suite.rc' ),
 
+        if not os.path.isfile( self.file ):
+            raise SuiteConfigError, 'File not found: ' + self.file
+
         self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc.spec')
 
         # load config
