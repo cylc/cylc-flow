@@ -6,12 +6,14 @@ from optparse import OptionParser
 from OrderedDict import OrderedDict
 from config import config
 from mkdir_p import mkdir_p
-from registration import localdb, unqualify, RegistrationError
+from registration import getdb, unqualify, RegistrationError
 from execute import execute
 from job_submit import job_submit
 import cycle_time, pimp_my_logger
 from suite_lock import suite_lock
 from lockserver import lockserver
+import task, clocktriggered
+import accelerated_clock 
 
 usage = """cylc [task] submit [options] SUITE TASK_ID
 
@@ -57,17 +59,14 @@ if len( args ) != 2:
     parser.error( "suite name and task ID required." )
 
 # get input args------------------------------------------------------
-try:
-    suite = unqualify(args[0])
-except RegistrationError, x:
-    raise SystemExit(x)
-
+suite = unqualify(args[0])
 task_id = args[1]
 
 host = socket.getfqdn()
 
 # find location of the suite definition directory --------------------
-reg = localdb()
+reg = getdb(suite)
+reg.load_from_file()
 try:
     suite_dir,descr = reg.get( suite )
 except RegistrationError,x:
@@ -115,9 +114,16 @@ cylcenv[ 'CYLC_SUITE_HOST' ] = host
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
 cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
 cylcenv[ 'CYLC_SUITE_DIR' ] = suite_dir
+cylcenv[ 'CYLC_SUITE' ] = suite
+cylcenv[ 'CYLC_SUITE_NAME' ] = suite
 cylcenv[ 'CYLC_SUITE_NAME' ] = suite
 cylcenv[ 'CYLC_SUITE_OWNER' ] = owner
 cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
+
+dclock = accelerated_clock.clock( None, None, False ) 
+# nasty kludge to give the dummy mode clock to task classes:
+task.task.clock = dclock
+clocktriggered.clocktriggered.clock = dclock
 
 # USER DEFINED GLOBAL ENVIRONMENT
 globalenv = OrderedDict()
