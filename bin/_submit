@@ -6,7 +6,7 @@ from optparse import OptionParser
 from OrderedDict import OrderedDict
 from config import config
 from mkdir_p import mkdir_p
-from registration import getdb, unqualify, RegistrationError
+from registration import getdb, regsplit, qualify, unqualify, RegistrationError
 from execute import execute
 from job_submit import job_submit
 import cycle_time, pimp_my_logger
@@ -114,9 +114,10 @@ cylcenv[ 'CYLC_SUITE_HOST' ] = host
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
 cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
 cylcenv[ 'CYLC_SUITE_DIR' ] = suite_dir
-cylcenv[ 'CYLC_SUITE' ] = suite
-cylcenv[ 'CYLC_SUITE_NAME' ] = suite
-cylcenv[ 'CYLC_SUITE_NAME' ] = suite
+cylcenv[ 'CYLC_SUITE' ] = qualify(suite)
+suite_owner, suite_group, suite_name = regsplit( suite ).get()
+cylcenv[ 'CYLC_SUITE_GROUP' ] = suite_group
+cylcenv[ 'CYLC_SUITE_NAME' ] = suite_name
 cylcenv[ 'CYLC_SUITE_OWNER' ] = owner
 cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 
