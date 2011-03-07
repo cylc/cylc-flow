@@ -136,16 +136,19 @@ you expect, and (b) you can easily back out in case of disaster.
 NOTE: in the inlined edit mode you must save and exit the editor
 before your changes are applied to the actual suite config files!
 
-The editing process is spawned in the foreground as follows:
-  (usage 1/): $EDITOR suite.rc
-  (usage 3/): $EDITOR <inlined-suite.rc-file in $TMPDIR>
-
-The $EDITOR and $TMPDIR variables must be defined. Tested with:
+The edit process is spawned in the foreground as follows:
+  (usage 1/): $(G)EDITOR suite.rc
+  (usage 3/): $(G)EDITOR <inlined-suite.rc-file in $TMPDIR>
+$GEDITOR or $EDITOR, and $TMDPIR, must be defined in your environment. 
+Examples:
    export EDITOR=vim
-   export EDITOR='gvim -f'       # -f: do not detach from parent shell!!
+   export GEDITOR='gvim -f'      # -f: do not detach from parent shell!!
    export EDITOR='xterm -e vim'  # for gcylc, if gvim is not available
-   export EDITOR=emacs
+   export GEDITOR=emacs
    export EDITOR='emacs -nw'
+You can set both $GEDITOR and $EDITOR to a GUI editor if you like, but
+$GEDITOR at least *must* be a GUI editor (or an in-terminal invocation 
+of a non-GUI editor) if you want to invoke edit sessions via the gcylc GUI.
 
 See also:
     cylc prep search 
@@ -163,6 +166,11 @@ parser.add_option( "--cleanup",
         help="Remove backup files left by previous inlined edit sessions.",
         action="store_true", default=False, dest="cleanup" )
 
+parser.add_option( "--gui-editor", "-g", 
+        help="Try $GEDITOR before $EDITOR. The opposite order is the "
+        "default except when this command is invoked via gcylc.",
+        action="store_true", default=False, dest="geditor" )
+
 ( options, args ) = parser.parse_args()
 
 if len(args) != 1:
@@ -170,10 +178,21 @@ if len(args) != 1:
 
 suite = args[0]
 
-try:
-    editor = os.environ['EDITOR']
-except KeyError:
-    raise SystemExit( 'export $EDITOR before using this command' )
+editor = None
+editor_vars = [ 'EDITOR', 'GEDITOR' ]
+if options.geditor:
+    editor_vars = [ 'GEDITOR', 'EDITOR' ]
+
+for ed_var in editor_vars:
+    try:
+        editor = os.environ[ed_var]
+    except KeyError:
+        print >> sys.stderr, '$' + ed_var + ' is not defined'
+    else:
+        print '$' + ed_var, 'evaluates to "' + editor + '"'
+        break
+if not editor:
+    raise SystemExit( 'export $GEDITOR and/or $EDITOR before using this command' )
 
 # find location of the suite definition directory
 global suitedir

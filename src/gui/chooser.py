@@ -1497,13 +1497,13 @@ Note that this will not delete the suite definition directory.""" )
                 extra += ' -l'
             if sngcb.get_active():
                 extra += ' -s'
-            call( 'capture "cylc inline ' + extra + ' ' + reg + '" &', shell=True  )
+            call( 'capture "cylc inline -g ' + extra + ' ' + reg + '" &', shell=True  )
         else:
             if edit_inlined_rb.get_active():
                 extra = '-i '
             else:
                 extra = ''
-            call( 'capture "cylc edit ' + extra + ' ' + reg + '" &', shell=True  )
+            call( 'capture "cylc edit -g ' + extra + ' ' + reg + '" &', shell=True  )
         return False
 
 

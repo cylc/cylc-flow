@@ -201,7 +201,7 @@ def edit( b ):
     help = helpwindow( "Edit Window Help", 400, """
 By default ('Edit') this changes the current working directory to
 your suite definition directory (so that you can easily open include 
-files and suite bin scripts) and spawns your $EDITOR on the suite.rc
+files and suite bin scripts) and spawns your $GEDITOR on the suite.rc
 file.
 
 Choosing 'Edit Inlined' lets you edit a copy of the suite.rc file with
@@ -212,10 +212,13 @@ for more information).
 Note that for gcylc, as opposed to the command line 'cylc edit', you
 must use a GUI editor such as emacs or gvim, or else run your editor in
 a terminal:
-%i export EDITOR=emacs
-%i export EDITOR=xemacs
-%i export EDITOR='gvim -f'       # (*) see below
-%i export EDITOR='xterm -e vim'  # run vim in a new xterminal
+%i export GEDITOR=emacs
+%i export GEDITOR=xemacs
+%i export GEDITOR='gvim -f'       # (*) see below
+%i export GEDITOR='xterm -e vim'  # run vim in a new xterminal
+
+If $GEDITOR is not defined, $EDITOR will be tried, but this will fail
+if it is not a GUI editor or an in-terminal invocation as shown above.
 
 (*) The '-f' option is required to prevent gvim detaching from the
 parent process, which is important for inlined editing (the parent 
