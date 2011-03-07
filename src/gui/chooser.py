@@ -12,9 +12,15 @@ from warning_dialog import warning_dialog, info_dialog
 from subprocess import call
 import helpwindow 
 
+#debug = True
+debug = False
+
 class chooser_updater(threading.Thread):
+    count = 0
     def __init__(self, owner, regd_treestore, db, is_cdb, host, 
             ownerfilt=None, groupfilt=None, namefilt=None ):
+        self.__class__.count += 1
+        self.me = self.__class__.count
         self.ownerfilt = ownerfilt
         self.groupfilt = groupfilt
         self.namefilt = namefilt
@@ -32,12 +38,17 @@ class chooser_updater(threading.Thread):
         self.regd_choices = self.db.get_list( self.ownerfilt, self.groupfilt, self.namefilt ) 
     
     def run( self ):
+        global debug
+        if debug:
+            print '* thread', self.me, 'starting'
         while not self.quit:
             if self.running_choices_changed() or self.regd_choices_changed():
                 gobject.idle_add( self.update_liststore )
             time.sleep(1)
         else:
-            pass
+            if debug:
+                print '* thread', self.me, 'quitting'
+            self.__class__.count -= 1
     
     def running_choices_changed( self ):
         # (name, owner, port)
@@ -355,14 +366,14 @@ class chooser(object):
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
-        regd_treeview = gtk.TreeView()
+        self.regd_treeview = gtk.TreeView()
         # [owner>]group>name, state, title, dir, color1, color2
         self.regd_treestore = gtk.TreeStore( str, str, str, str, str, str, )
-        regd_treeview.set_model(self.regd_treestore)
-        regd_treeview.set_rules_hint(True)
+        self.regd_treeview.set_model(self.regd_treestore)
+        self.regd_treeview.set_rules_hint(True)
         # search column zero (Ctrl-F)
-        regd_treeview.connect( 'button_press_event', self.on_suite_select )
-        regd_treeview.set_search_column(0)
+        self.regd_treeview.connect( 'button_press_event', self.on_suite_select )
+        self.regd_treeview.set_search_column(0)
 
         newreg_button = gtk.Button( "_Register Another Suite" )
         newreg_button.connect("clicked", self.newreg_popup )
@@ -377,29 +388,29 @@ class chooser(object):
         self.cdb = False # start with local reg db
         self.start_updater()
 
-        regd_ts = regd_treeview.get_selection()
+        regd_ts = self.regd_treeview.get_selection()
         regd_ts.set_mode( gtk.SELECTION_SINGLE )
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn( 'Suite', cr, text=0, foreground=4, background=5 )
         tvc.set_sort_column_id(0)
-        regd_treeview.append_column( tvc )
+        self.regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn( 'State', cr, text=1, foreground=4, background=5 )
         # not sure how this sorting works
         #tvc.set_sort_column_id(1)
-        regd_treeview.append_column( tvc ) 
+        self.regd_treeview.append_column( tvc ) 
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn( 'Title', cr, text=2, foreground=4, background=5 )
         #vc.set_sort_column_id(2)
-        regd_treeview.append_column( tvc )
+        self.regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn( 'Suite Definition', cr, text=3, foreground=4, background=5 )
         #vc.set_sort_column_id(3)
-        regd_treeview.append_column( tvc )
+        self.regd_treeview.append_column( tvc )
 
         # NOTE THAT WE CANNOT LEAVE ANY SUITE CONTROL WINDOWS OPEN WHEN
         # WE CLOSE THE CHOOSER WINDOW: when launched by the chooser 
@@ -412,7 +423,7 @@ class chooser(object):
         filter_button.connect("clicked", self.filter_popup, None, None )
 
         expand_button = gtk.Button( "_Expand/Collapse")
-        expand_button.connect( 'clicked', self.toggle_expand, regd_treeview )
+        expand_button.connect( 'clicked', self.toggle_expand, self.regd_treeview )
     
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.main )
@@ -422,7 +433,7 @@ class chooser(object):
         hbox.pack_start( self.main_label )
         vbox.pack_start( hbox, False )
 
-        sw.add( regd_treeview )
+        sw.add( self.regd_treeview )
         vbox.pack_start( sw, True )
 
         hbox = gtk.HBox()
@@ -443,7 +454,7 @@ class chooser(object):
         self.window.show_all()
         # grab focus after adding to window
         quit_all_button.grab_focus()
-        self.viewer_list = []
+        #self.regd_treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#f00" ))
 
     def toggle_expand( self, widget, view ):
         if view.row_expanded(0):
@@ -462,7 +473,7 @@ class chooser(object):
             self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:
             self.updater.quit = True # does this take effect?
-        self.regd_treestore.clear()
+        #not necessary: self.regd_treestore.clear()
         self.updater = chooser_updater( self.owner, self.regd_treestore, 
                 db, self.cdb, self.host, ownerfilt, groupfilt, namefilt )
         self.updater.update_liststore()
@@ -614,16 +625,28 @@ class chooser(object):
             self.filter_window.destroy()
         self.cdb = not self.cdb
         if self.cdb:
+            self.regd_treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#bdf" ))
             newreg.set_sensitive( False )
         else:
+            # setting base color to None should return it to the default
+            self.regd_treeview.modify_base( gtk.STATE_NORMAL, None)
             newreg.set_sensitive( True )
         self.start_updater()
 
     def delete_all_event( self, w, e, data=None ):
         self.updater.quit = True
-        for item in self.viewer_list:
-            item.click_exit( None )
-        gtk.main_quit()
+        gtk.main_quit()      
+        # Uncommenting the following makes the window stay around until
+        # all updater threads have exited (put a 5s sleep in scan_my_ports
+        # to slow them down so you can see this). Otherwise, the window
+        # and threads seem to be killed instantly when this method
+        # returns.
+        #while True:
+        #    print  self.updater.__class__.count
+        #    if self.updater.__class__.count == 0:
+        #        break
+        #    time.sleep(1)
+        #print 'BYE'
 
     def on_suite_select( self, treeview, event ):
         # DISPLAY MENU ON RIGHT CLICK ONLY
@@ -1531,10 +1554,6 @@ Note that this will not delete the suite definition directory.""" )
             port = m.groups()[0]
         # get suite logging directory
         # logging_dir = os.path.join( config(name)['top level logging directory'], name ) 
-        # TO LAUNCH A CONTROL GUI AS PART OF THIS APP:
-        #tv = monitor(name, self.owner, self.host, port, suite_dir,
-        #    logging_dir, self.imagedir, self.readonly )
-        #self.viewer_list.append( tv )
         #return False
         call( 'capture "gcylc ' + name  + '" --width=700 --height=400 &', shell=True )
 

@@ -3,6 +3,7 @@
 from registration import localdb
 from passphrase import passphrase as pphrase
 import os
+#from time import sleep
 import Pyro.errors, Pyro.core
 from cylc_pyro_server import pyro_base_port, pyro_port_range
 
@@ -138,15 +139,22 @@ def scan_my_suites( host ):
             # loop through cylc ports
             try:
                 name, owner = port_interrogator( host, port, passphrase=passphrase ).interrogate()
-            except Pyro.errors.ProtocolError:
+            except Pyro.errors.ProtocolError, x:
                 # connection failed: no pyro server listening at this port
+                #print port, 'ProtocolError', x
                 pass
-            except Pyro.errors.NamingError:
+            except Pyro.errors.NamingError, x:
                 # pyro server here, but it's not a cylc suite or lockserver
+                #print port, 'NamingError', x
                 pass
             else:
                 # found a suite
                 if name == reg_suite and owner == os.environ['USER']:
                     # found this registered suite
                     suites.append( ( name, port ) )
+
+    #print 'sleeping ...',
+    #sleep(5)
+    #print 'done'
+    
     return suites
