@@ -32,7 +32,7 @@ echo " + Setting central database permissions"
 
 # Make it writeable by all.
 # (could be just g+w if all cylc users are in the same group).
-chmod go+rx $CYLC_DIR/CentralDB
+chmod go+rwx $CYLC_DIR/CentralDB
 chmod go+rw $CYLC_DIR/CentralDB/registrations
 
 echo "DONE"
