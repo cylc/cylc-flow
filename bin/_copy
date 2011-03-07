@@ -7,25 +7,30 @@ from optparse import OptionParser
 from registration import localdb, regsplit, RegistrationError
 from regprompt import prompt
 
-parser = OptionParser( usage = """cylc [db] copy [OPTIONS] FROM TO DIR
+parser = OptionParser( usage = """cylc [db] copy [OPTIONS] FROM TO [DIR]
 
-TO DO: CLARIFY OR CHANGE DESTINATION DIR HANDLING (SHOULD WE IMPOSE A 
-GROUP/NAME DIRECTORY STRUCTURE?)
-
-copy local suites or groups.
+Copy local suites or groups.
     One suite: GROUP:NAME into DIR
-    A whole group: GROUP: into DIR/GROUP
+    A whole group: GROUP:(name1,name2...) into DIR/(name1,name2,...)
 
+If DIR is not given, a new reference to the original source suite will
+be created (i.e. the suite definition directory will not be copied).
+ 
 Arguments:
-    DIR  - destination for the copied suite definition (must not exist).
+    [DIR]  - destination for the copied suite definition (must not exist).
              or top level directory for copied suite definitions.""" )
 
 ( options, args ) = parser.parse_args()
 
-if len(args) != 3:
+if len(args) < 2 or len(args) > 3:
     parser.error('Wrong number of arguments')
 
-arg_from, arg_to, arg_dir = args
+arg_from = args[0]
+arg_to = args[1]
+copy_dir = False
+if len(args) == 3:
+    arg_dir = args[2]
+    copy_dir = True
 
 local = localdb()
 
@@ -38,8 +43,6 @@ if m:
         togroup = n.groups()[0]
     else:
         raise SystemExit( 'Inconsistent command arguments' )
-
-    topdir = arg_dir
 
     # retrieve registrations
     local.load_from_file()
@@ -66,11 +69,14 @@ if m:
         lgroup = togroup
         lname = cname
 
-        #ldir = os.path.join( topdir, lgroup, lname )
-        ldir = os.path.join( topdir, lname )
-        if os.path.exists( ldir ):
-            print >> sys.stderr, 'WARNING: skipping copy, directory already exists: ' + ldir
-            continue
+        if not copy_dir:
+            ldir = cdir
+        else:
+            ldir = os.path.join( arg_dir, lname )
+            if os.path.exists( ldir ):
+                print >> sys.stderr, 'WARNING: skipping copy, directory already exists: ' + ldir
+                continue
+
         lreg = lgroup + ':' + lname
         try:
             local.register( lreg, ldir, cdescr )
@@ -78,36 +84,43 @@ if m:
             print >> sys.stderr, x
             local.unregister( lreg )
         else:
-            try:
-                mkdir_p( os.path.dirname(ldir))
-            except Exception,x:
-                print >> sys.stderr, x
-                local.unregister(lreg)
+            if not copy_dir:
+                changed = True
             else:
                 try:
-                    copytree( cdir, ldir )
-                except OSError, x:
-                    print >> sys.stderr,x
-                    local.unregister( lreg )
+                    mkdir_p( os.path.dirname(ldir))
+                except Exception,x:
+                    print >> sys.stderr, x
+                    local.unregister(lreg)
                 else:
-                    changed = True
+                    print 'Copying suite definition for', lreg 
+                    try:
+                        copytree( cdir, ldir )
+                    except OSError, x:
+                        print >> sys.stderr,x
+                        local.unregister( lreg )
+                    else:
+                        changed = True
     if changed:
         local.dump_to_file()
     local.unlock()
 
 else:
     # single suite
-    freg, lreg, ldir = args
 
     # retrieve registration
     local.load_from_file()
     try:
-        cdir, cdescr = local.get( freg )
+        cdir, cdescr = local.get( arg_from )
     except RegistrationError, x:
         raise SystemExit(x)
 
-    if os.path.exists( ldir ):
-        raise SystemExit( 'ERROR, destination directory already exists: ' + ldir )
+    if not copy_dir:
+        ldir = cdir
+    else:
+        ldir = arg_dir
+        if os.path.exists( ldir ):
+            raise SystemExit( 'ERROR, destination directory already exists: ' + ldir )
 
     # import to local
     try:
@@ -117,26 +130,30 @@ else:
     local.load_from_file()
  
     try:
-        local.register( lreg, ldir, cdescr )
+        local.register( arg_to, ldir, cdescr )
     except RegistrationError, x:
         local.unlock()
         raise SystemExit(x)
     else:
-        print 'Copying suite definition'
-        try:
-            mkdir_p( os.path.dirname(ldir))
-        except Exception,x:
-            print >> sys.stderr, x
-            local.unregister( lreg )
+        if not copy_dir:
+            local.dump_to_file()
             local.unlock()
-        else: 
+        else:
+            print 'Copying suite definition'
             try:
-                copytree( cdir, ldir )
-            except OSError, x:
-                print >> sys.stderr,x
-                local.unregister( lreg )
+                mkdir_p( os.path.dirname(ldir))
+            except Exception,x:
+                print >> sys.stderr, x
+                local.unregister( arg_to )
                 local.unlock()
-            else:
-                local.dump_to_file()
-                local.unlock()
+            else: 
+                try:
+                    copytree( cdir, ldir )
+                except OSError, x:
+                    print >> sys.stderr,x
+                    local.unregister( arg_to )
+                    local.unlock()
+                else:
+                    local.dump_to_file()
+                    local.unlock()
 

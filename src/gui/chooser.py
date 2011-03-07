@@ -1191,11 +1191,16 @@ Note that this will not delete the suite definition directory.""" )
         box.pack_start (def_entry, True)
         vbox.pack_start(box)
 
+        refonly_cb = gtk.CheckButton( "Reference Only" )
+        refonly_cb.set_active(False)
+        vbox.pack_start (refonly_cb, True)
+        refonly_cb.connect( "toggled", self.refonly_toggled, def_entry )
+
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Copy" )
-        ok_button.connect("clicked", self.copy_group, window, group, group_entry, def_entry )
+        ok_button.connect("clicked", self.copy_group, window, group, group_entry, refonly_cb, def_entry )
 
         #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -1209,11 +1214,18 @@ Note that this will not delete the suite definition directory.""" )
         window.add( vbox )
         window.show_all()
 
-    def copy_group( self, b, w, g_from, g_to_entry, dir_entry ):
+    def copy_group( self, b, w, g_from, g_to_entry, refonly_cb, dir_entry ):
         g_to = g_to_entry.get_text()
+        chk = [g_to]
+        if not refonly_cb.get_active():
+            dir = dir_entry.get_text()
+            chk.append( dir )
+        else:
+            dir = ''
+        if not self.check_entries( chk ):
+            return False
         g_to += ':'
         g_from += ':'
-        dir = dir_entry.get_text()
         call( 'capture "cylc copy ' + g_from + ' ' + g_to + ' ' + dir + '" --width=600 &', shell=True )
         w.destroy()
 
@@ -1249,11 +1261,16 @@ Note that this will not delete the suite definition directory.""" )
         box.pack_start (def_entry, True)
         vbox.pack_start(box)
 
+        refonly_cb = gtk.CheckButton( "Reference Only" )
+        refonly_cb.set_active(False)
+        vbox.pack_start (refonly_cb, True)
+        refonly_cb.connect( "toggled", self.refonly_toggled, def_entry )
+
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Copy" )
-        ok_button.connect("clicked", self.copy_suite, window, reg, group_entry, name_entry, def_entry )
+        ok_button.connect("clicked", self.copy_suite, window, reg, group_entry, name_entry, refonly_cb, def_entry )
 
         #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -1267,12 +1284,24 @@ Note that this will not delete the suite definition directory.""" )
         window.add( vbox )
         window.show_all()
 
-    def copy_suite( self, b, w, reg, group_entry, name_entry, def_entry ):
+    def refonly_toggled( self, w, entry ):
+        if w.get_active():
+            entry.set_sensitive( False )
+        else:
+            entry.set_sensitive( True )
+
+    def copy_suite( self, b, w, reg, group_entry, name_entry, refonly_cb, def_entry ):
         group = group_entry.get_text()
         name  = name_entry.get_text()
-        dir = def_entry.get_text()
-        if not self.check_entries( [group, name, dir] ):
+        chk = [ group, name ]
+        if not refonly_cb.get_active():
+            dir = def_entry.get_text()
+            chk.append( dir )
+        else:
+            dir = ''
+        if not self.check_entries( chk ):
             return False
+
         call( 'capture "cylc copy ' + reg + ' ' + group + ':' + name + ' ' + dir + '" --width=600 &', shell=True )
         w.destroy()
  
@@ -1521,7 +1550,7 @@ Note that this will not delete the suite definition directory.""" )
             if entry == '':
                 bad = True
         if bad:
-            warning_dialog( "Complete all text entry panels" ).warn()
+            warning_dialog( "Please complete all required text entry panels!" ).warn()
             return False
         else:
             return True
