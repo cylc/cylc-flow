@@ -42,10 +42,11 @@ class info(object):
         vbox = gtk.VBox()
         sw.add(textview)
         vbox.add(sw)
-        ok_button = gtk.Button( "Close" )
+        ok_button = gtk.Button( "_Close" )
         ok_button.connect("clicked", self.quit, None, None )
         vbox.pack_start(ok_button, False)
         window.add(vbox)
+        ok_button.grab_focus()
         window.show_all()
 
         proc = subprocess.Popen( command_list,
