@@ -165,8 +165,8 @@ class chooser_updater(threading.Thread):
                                     # data changed
                                     # print '    changing reg ', name
                                     state, descr, dir = newtree[owner][group][name]
-                                    col1, col2 = self.statecol( state )
-                                    foo = ts.prepend( giter, [ name ] + [ state, descr, dir, col1, col2 ] )
+                                    col1, col2, col3  = self.statecol( state )
+                                    foo = ts.prepend( giter, [ name ] + [ state, descr, dir, col1, col2, col3  ] )
                                     result = ts.remove(niter)
                                     if not result:
                                         niter = None
@@ -221,12 +221,12 @@ class chooser_updater(threading.Thread):
                                # data changed
                                #print '    changing reg ', name
                                state, descr, dir = newtree[owner][group][name]
-                               col1, col2 = self.statecol( state )
+                               col1, col2, col3  = self.statecol( state )
                                if state != '-':
                                    ts.set_value( giter,4,col2)
                                else:
                                    ts.set_value( giter,4,None)
-                               foo = ts.prepend( giter, [ name ] + [ state, descr, dir, col1, col2 ] )
+                               foo = ts.prepend( giter, [ name ] + [ state, descr, dir, col1, col2, col3  ] )
                                result = ts.remove(niter)
                                if not result:
                                    niter = None
@@ -238,13 +238,13 @@ class chooser_updater(threading.Thread):
             for owner in newtree:
                 if owner not in oldtree:
                     # new owner: insert all of its data
-                    oiter = ts.append( None, [owner, None, None, None, None, None ] )
+                    oiter = ts.append( None, [owner, None, None, None, None, None, None ] )
                     for group in newtree[owner]:
-                        giter = ts.append( oiter, [group, None, None, None, None, None ] )
+                        giter = ts.append( oiter, [group, None, None, None, None, None, None ] )
                         for name in newtree[owner][group]:
                             state, descr, dir = newtree[owner][group][name]
-                            col1, col2 = self.statecol( state )
-                            niter = ts.append( giter, [name] + [state, descr, dir, col1, col2])
+                            col1, col2, col3 = self.statecol( state )
+                            niter = ts.append( giter, [name] + [state, descr, dir, col1, col2, col3 ])
                     continue
 
                 # owner already in the treemodel, find it
@@ -253,11 +253,11 @@ class chooser_updater(threading.Thread):
                 for group in newtree[owner]:
                     if group not in oldtree[owner]:
                         # new group: insert all of its data
-                        giter = ts.append( oiter, [ group, None, None, None, None, None ] )
+                        giter = ts.append( oiter, [ group, None, None, None, None, None, None ] )
                         for name in newtree[owner][group]:
                             state, descr, dir = newtree[owner][group][name]
-                            col1, col2 = self.statecol( state )
-                            niter = ts.append( giter, [name] + [state, descr, dir, col1, col2 ])
+                            col1, col2, col3 = self.statecol( state )
+                            niter = ts.append( giter, [name] + [state, descr, dir, col1, col2, col3 ])
                         continue
 
                     # group already in the treemodel, find it
@@ -267,8 +267,8 @@ class chooser_updater(threading.Thread):
                         if name not in oldtree[owner][group]:
                             # new name, insert it and its data
                             state, descr, dir = newtree[owner][group][name]
-                            col1, col2 = self.statecol( state )
-                            niter = ts.append( giter, [name] + [ state, descr, dir, col1, col2 ])
+                            col1, col2, col3  = self.statecol( state )
+                            niter = ts.append( giter, [name] + [ state, descr, dir, col1, col2, col3 ])
                             continue
 
         else:
@@ -276,11 +276,11 @@ class chooser_updater(threading.Thread):
                 if owner not in oldtree:
                     # new owner: insert all of its data
                     for group in newtree[owner]:
-                        giter = ts.append( None, [group, None, None, None, None, None ] )
+                        giter = ts.append( None, [group, None, None, None, None, None, None ] )
                         for name in newtree[owner][group]:
                             state, descr, dir = newtree[owner][group][name]
-                            col1, col2 = self.statecol( state )
-                            niter = ts.append( giter, [name] + [state, descr, dir, col1, col2])
+                            col1, col2, col3 = self.statecol( state )
+                            niter = ts.append( giter, [name] + [state, descr, dir, col1, col2, col3 ])
                     continue
 
                 # owner already in the treemodel, find it
@@ -290,11 +290,11 @@ class chooser_updater(threading.Thread):
                 for group in newtree[owner]:
                     if owner not in oldtree or group not in oldtree[owner]:
                         # new group: insert all of its data
-                        giter = ts.append( None, [ group, None, None, None, None, None ] )
+                        giter = ts.append( None, [ group, None, None, None, None, None, None ] )
                         for name in newtree[owner][group]:
                             state, descr, dir = newtree[owner][group][name]
-                            col1, col2 = self.statecol( state )
-                            niter = ts.append( giter, [name] + [state, descr, dir, col1, col2 ])
+                            col1, col2, col3  = self.statecol( state )
+                            niter = ts.append( giter, [name] + [state, descr, dir, col1, col2, col3  ])
                         continue
 
                     # group already in the treemodel, find it
@@ -304,8 +304,8 @@ class chooser_updater(threading.Thread):
                         if name not in oldtree[owner][group]:
                             # new name, insert it and its data
                             state, descr, dir = newtree[owner][group][name]
-                            col1, col2 = self.statecol( state )
-                            niter = ts.append( giter, [name] + [ state, descr, dir, col1, col2 ])
+                            col1, col2, col3  = self.statecol( state )
+                            niter = ts.append( giter, [name] + [ state, descr, dir, col1, col2, col3  ])
                             continue
     
     def statecol( self, state ):
@@ -315,8 +315,9 @@ class chooser_updater(threading.Thread):
         red = '#845'
         white = '#fff'
         black='#000'
+        hilight = '#faf'
         if state == '-':
-            return (black, None)
+            return (black, None, hilight)
         else:
             return (grnfg, grnbg)
 
@@ -367,8 +368,8 @@ class chooser(object):
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
         self.regd_treeview = gtk.TreeView()
-        # [owner>]group>name, state, title, dir, color1, color2
-        self.regd_treestore = gtk.TreeStore( str, str, str, str, str, str, )
+        # [owner>]group>name, state, title, dir, color1, color2, color3
+        self.regd_treestore = gtk.TreeStore( str, str, str, str, str, str, str )
         self.regd_treeview.set_model(self.regd_treestore)
         self.regd_treeview.set_rules_hint(True)
         # search column zero (Ctrl-F)
@@ -453,7 +454,7 @@ class chooser(object):
         self.regd_treeview.append_column( tvc ) 
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'Title', cr, text=2, foreground=4, background=5 )
+        tvc = gtk.TreeViewColumn( 'Title', cr, text=2, foreground=4, background=6 )
         tvc.set_resizable(True)
         #vc.set_sort_column_id(2)
         self.regd_treeview.append_column( tvc )
