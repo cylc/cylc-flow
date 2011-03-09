@@ -1,7 +1,8 @@
 _______
 GENERAL
 
-* "save to file" for command capture window.
+
+* raise SystemExit() in config.py, cylcconfigobj, (and anywhere else?) NO GOOD FOR GUI!
 
 * chooser: setting group color fails if multiple suites are running.
   Need to parse each group member and check if any are running.

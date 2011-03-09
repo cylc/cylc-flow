@@ -1,2 +1,0 @@
-
-raise SystemExit() in config.py, cylcconfigobj, (and anywhere else?) NO GOOD FOR GUI!

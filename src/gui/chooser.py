@@ -1657,7 +1657,7 @@ Note that this will not delete the suite definition directory.""" )
         call( 'capture "cylc describe ' + name  + '" --width=600 --height=400&', shell=True )
 
     def list_suite( self, w, name ):
-        call( 'capture "cylc list ' + name  + '" --width=600 &', shell=True )
+        call( 'capture "cylc list ' + name  + '" --width=300 --height=400&', shell=True )
 
     def launch_controller( self, w, name, state, suite_dir ):
         m = re.match( 'RUNNING \(port (\d+)\)', state )

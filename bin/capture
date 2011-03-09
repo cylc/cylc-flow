@@ -29,11 +29,11 @@ class info(object):
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
 
-        textview = gtk.TextView()
-        textview.set_editable(False)
-        textview.set_wrap_mode( gtk.WRAP_WORD )
+        self.textview = gtk.TextView()
+        self.textview.set_editable(False)
+        self.textview.set_wrap_mode( gtk.WRAP_WORD )
 
-        tb = textview.get_buffer()
+        tb = self.textview.get_buffer()
         blue = tb.create_tag( None, foreground = "darkblue" )
         red = tb.create_tag( None, foreground = "red" )
        
@@ -42,14 +42,29 @@ class info(object):
 
         vbox = gtk.VBox()
         hbox = gtk.HBox()
-        sw.add(textview)
+        sw.add(self.textview)
         vbox.add(sw)
+
+        #save_entry = gtk.Entry()
+        #save_entry.set_text( "$HOME/foo.txt" )
+        #save_entry.connect( "activate", self.save, save_entry.get_text() )
+ 
+        save_button = gtk.Button( "_Save To File" )
+        #save_button.connect("clicked", self.save, save_entry.get_text() )
+        save_button.connect("clicked", self.save )
+
         close_button = gtk.Button( "_Close" )
         close_button.connect("clicked", self.quit, None, None )
+
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.capture )
+
         hbox.pack_end(close_button, False)
         hbox.pack_end(help_button, False)
+
+        #hbox.pack_start( save_entry, False )
+        hbox.pack_start( save_button, False )
+
         vbox.pack_start( hbox, False )
         window.add(vbox)
         close_button.grab_focus()
@@ -58,12 +73,44 @@ class info(object):
         proc = subprocess.Popen( command_list,
             stdout=stdout, stderr=stderr, shell=True )
 
-        self.stdout_updater = tailer( textview, stdout.name, proc=proc )
+        self.stdout_updater = tailer( self.textview, stdout.name, proc=proc )
         self.stdout_updater.start()
 
-        self.stderr_updater = tailer( textview, stderr.name, proc=proc, tag=red )
+        self.stderr_updater = tailer( self.textview, stderr.name, proc=proc, tag=red )
         self.stderr_updater.start()
 
+    def save( self, w ):
+        tb = self.textview.get_buffer()
+        start = tb.get_start_iter()
+        end = tb.get_end_iter()
+        txt = tb.get_text( start, end )
+
+        dialog = gtk.FileChooserDialog(title='Save As',
+                action=gtk.FILE_CHOOSER_ACTION_SAVE,
+                buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,
+                    gtk.STOCK_SAVE,gtk.RESPONSE_OK))
+        filter = gtk.FileFilter()
+        filter.set_name("any")
+        filter.add_pattern("*")
+        dialog.add_filter( filter )
+
+        response = dialog.run()
+
+        if response != gtk.RESPONSE_OK:
+            dialog.destroy()
+            return False
+
+        fname = dialog.get_filename()
+        dialog.destroy()
+
+        try:
+            f = open( fname, 'wb' )
+        except IOError, x:
+            warning_dialog( str(x) ).warn()
+        else:
+            f.write( txt )
+            f.close()
+            info_dialog( "Buffer saved to " + fname ).inform()
 
     def quit( self, w, e, data=None ):
         self.stdout_updater.quit = True
