@@ -226,7 +226,7 @@ class chooser_updater(threading.Thread):
                                    ts.set_value( giter,4,col2)
                                else:
                                    ts.set_value( giter,4,None)
-                               foo = ts.prepend( giter, [ name ] + [ state, descr, dir, col1, col2, col3  ] )
+                               foo = ts.prepend( giter, [ name ] + [ state, '<i>' + descr + '</i>', dir, col1, col2, col3  ] )
                                result = ts.remove(niter)
                                if not result:
                                    niter = None
@@ -244,7 +244,7 @@ class chooser_updater(threading.Thread):
                         for name in newtree[owner][group]:
                             state, descr, dir = newtree[owner][group][name]
                             col1, col2, col3 = self.statecol( state )
-                            niter = ts.append( giter, [name] + [state, descr, dir, col1, col2, col3 ])
+                            niter = ts.append( giter, [name] + [state, '<i>' + descr + '</i>', dir, col1, col2, col3 ])
                     continue
 
                 # owner already in the treemodel, find it
@@ -257,7 +257,7 @@ class chooser_updater(threading.Thread):
                         for name in newtree[owner][group]:
                             state, descr, dir = newtree[owner][group][name]
                             col1, col2, col3 = self.statecol( state )
-                            niter = ts.append( giter, [name] + [state, descr, dir, col1, col2, col3 ])
+                            niter = ts.append( giter, [name] + [state, '<i>' + descr +'</i>', dir, col1, col2, col3 ])
                         continue
 
                     # group already in the treemodel, find it
@@ -268,7 +268,7 @@ class chooser_updater(threading.Thread):
                             # new name, insert it and its data
                             state, descr, dir = newtree[owner][group][name]
                             col1, col2, col3  = self.statecol( state )
-                            niter = ts.append( giter, [name] + [ state, descr, dir, col1, col2, col3 ])
+                            niter = ts.append( giter, [name] + [ state, '<i>' + descr + '</i>', dir, col1, col2, col3 ])
                             continue
 
         else:
@@ -280,7 +280,7 @@ class chooser_updater(threading.Thread):
                         for name in newtree[owner][group]:
                             state, descr, dir = newtree[owner][group][name]
                             col1, col2, col3 = self.statecol( state )
-                            niter = ts.append( giter, [name] + [state, descr, dir, col1, col2, col3 ])
+                            niter = ts.append( giter, [name] + [state, '<i>' + descr + '</i>', dir, col1, col2, col3 ])
                     continue
 
                 # owner already in the treemodel, find it
@@ -294,7 +294,7 @@ class chooser_updater(threading.Thread):
                         for name in newtree[owner][group]:
                             state, descr, dir = newtree[owner][group][name]
                             col1, col2, col3  = self.statecol( state )
-                            niter = ts.append( giter, [name] + [state, descr, dir, col1, col2, col3  ])
+                            niter = ts.append( giter, [name] + [state, '<i>' + descr + '</i>', dir, col1, col2, col3  ])
                         continue
 
                     # group already in the treemodel, find it
@@ -305,7 +305,7 @@ class chooser_updater(threading.Thread):
                             # new name, insert it and its data
                             state, descr, dir = newtree[owner][group][name]
                             col1, col2, col3  = self.statecol( state )
-                            niter = ts.append( giter, [name] + [ state, descr, dir, col1, col2, col3  ])
+                            niter = ts.append( giter, [name] + [ state, '<i>' + descr + '</i>', dir, col1, col2, col3  ])
                             continue
     
     def statecol( self, state ):
@@ -374,7 +374,7 @@ class chooser(object):
         # [owner>]group>name, state, title, dir, color1, color2, color3
         self.regd_treestore = gtk.TreeStore( str, str, str, str, str, str, str )
         self.regd_treeview.set_model(self.regd_treestore)
-        #self.regd_treeview.set_rules_hint(True)
+        self.regd_treeview.set_rules_hint(True)
         # search column zero (Ctrl-F)
         self.regd_treeview.connect( 'key_press_event', self.on_suite_select )
         self.regd_treeview.connect( 'button_press_event', self.on_suite_select )
@@ -409,6 +409,7 @@ class chooser(object):
         collapse_item.connect( 'activate', self.collapse_all, self.regd_treeview )
 
         local_item = gtk.MenuItem( '_LocalDB' )
+        local_item.set_sensitive(False) # (already on local at startup)
         view_menu.append( local_item )
 
         central_item = gtk.MenuItem( '_CentralDB' )
@@ -444,7 +445,7 @@ class chooser(object):
         regd_ts.set_mode( gtk.SELECTION_SINGLE )
 
         cr = gtk.CellRendererText()
-        cr.set_property( 'cell-background', '#def' )
+        #cr.set_property( 'cell-background', '#def' )
         tvc = gtk.TreeViewColumn( 'Suite', cr, text=0, foreground=4, background=5 )
         tvc.set_resizable(True)
         tvc.set_sort_column_id(0)
@@ -458,8 +459,8 @@ class chooser(object):
         self.regd_treeview.append_column( tvc ) 
 
         cr = gtk.CellRendererText()
-        cr.set_property( 'cell-background', '#def' )
-        tvc = gtk.TreeViewColumn( 'Title', cr, text=2, foreground=4, background=6 )
+        #cr.set_property( 'cell-background', '#def' )
+        tvc = gtk.TreeViewColumn( 'Title', cr, markup=2, foreground=4, background=6 )
         tvc.set_resizable(True)
         #vc.set_sort_column_id(2)
         self.regd_treeview.append_column( tvc )
