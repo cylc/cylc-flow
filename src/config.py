@@ -283,7 +283,7 @@ class config( CylcConfigObj ):
         # unless specified as absolute paths already.
         self['top level logging directory'] = self.make_dir_absolute( self['top level logging directory'], home=True )
         self['top level state dump directory'] = self.make_dir_absolute( self['top level state dump directory'], home=True )
-        self['job submission log directory' ] = self.make_dir_absolute( jsld, home=True )
+        self['job submission log directory' ] = self.make_dir_absolute( self['job submission log directory' ], home=True )
         self['visualization']['run time graph directory'] = self.make_dir_absolute( self['visualization']['run time graph directory'] )
         self['experimental']['live graph directory path'] = self.make_dir_absolute( self['experimental']['live graph directory path'] )
 
