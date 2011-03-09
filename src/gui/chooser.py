@@ -316,10 +316,11 @@ class chooser_updater(threading.Thread):
         white = '#fff'
         black='#000'
         hilight = '#faf'
+        hilight2 = '#f98e3a'
         if state == '-':
             return (black, None, hilight)
         else:
-            return (grnfg, grnbg, grnbg )
+            return (grnfg, grnbg, hilight2 )
 
     def search_level( self, model, iter, func, data ):
         while iter:
