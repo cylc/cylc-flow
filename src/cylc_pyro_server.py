@@ -35,10 +35,7 @@ class pyro_server( object ):
 
     def shutdown( self ):
         print "Pyro daemon shutdown"
-        # The True arg here results in objects being unregistered from
-        # pyro-ns, which cylc no longer uses:
-        self.daemon.shutdown( True )
-
+        self.daemon.shutdown(True)
         # If a suite shuts down via 'stop --now' or # Ctrl-C, etc., 
         # any existing client end connections will hang for a long time
         # unless we do the following (or cylc clients set a timeout,

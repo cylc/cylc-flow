@@ -2,12 +2,12 @@
 
 import gobject
 import threading
-import os
+import os, re
 import tail
 #from warning_dialog import warning_dialog
 
 class tailer(threading.Thread):
-    def __init__( self, logview, log, proc=None, tag=None ):
+    def __init__( self, logview, log, proc=None, tag=None, strip=False ):
         super( tailer, self).__init__()
         self.logview = logview
         self.logbuffer = logview.get_buffer()
@@ -16,6 +16,7 @@ class tailer(threading.Thread):
         self.tag = tag
         self.proc = proc
         self.freeze = False
+        self.strip = strip
 
     def clear( self ):
         s,e = self.logbuffer.get_bounds()
@@ -49,6 +50,8 @@ class tailer(threading.Thread):
         ###print "Disconnecting from log viewer thread"
  
     def update_gui( self, line ):
+        if self.strip and not re.match( '^\s*$', line):
+            line = re.sub( r'\n', ' ', line )
         if self.tag:
             self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.tag )
         else:

@@ -151,14 +151,14 @@ class lockserver( Pyro.core.ObjBase ):
         self.log.addHandler( h )
 
     def get_lock_id( self, lockgroup, task_id ):
-        return lockgroup + ':' + task_id
+        return lockgroup + '|' + task_id
 
     def get_lock_owner( self, lockgroup ):
         owner, suite = lockgroup.split( '.' )
         return owner
 
     def get_lockgroup( self, lock_id ):
-        (lockgroup, id) = lock_id.split(':')
+        (lockgroup, id) = lock_id.split('|')
         return lockgroup
 
     def get_suite_string( self, lockgroup, suite_dir ):
@@ -219,7 +219,7 @@ class lockserver( Pyro.core.ObjBase ):
         # release task locks with no associated suite lock
         # (acquired manually, or through 'cylc task submit').
         for lock in self.locked.keys():
-            ( group, id ) = lock.split( ':' )
+            ( group, id ) = lock.split( '|' )
             if self.get_lock_owner( group ) == user:
                 self.release( id, group )
 

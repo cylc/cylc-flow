@@ -393,11 +393,15 @@ class scheduler(object):
                     print "MAIN LOOP TIME TAKEN:", seconds, "seconds"
 
             if self.all_tasks_finished():
-                self.log.critical( "ALL TASKS FINISHED" )
+                self.log.info( "ALL TASKS FINISHED" )
                 break
 
-            if self.remote.halt_now or self.remote.halt and self.no_tasks_running():
-                self.log.critical( "ALL RUNNING TASKS FINISHED" )
+            if self.remote.halt and self.no_tasks_running():
+                self.log.info( "ALL RUNNING TASKS FINISHED" )
+                break
+
+            if self.remote.halt_now and not self.no_tasks_running():
+                self.log.critical( "STOP ORDERED WITH TASKS STILL RUNNING" )
                 break
 
             self.check_timeouts()
@@ -447,12 +451,6 @@ class scheduler(object):
     def shutdown( self ):
         print "\nSTOPPING"
 
-        if self.pyro:
-            self.pyro.shutdown()
-
-        if not graphing_disabled:
-            self.finalize_graph()
-
         if self.use_lockserver:
             # do this last
             if self.practice:
@@ -466,6 +464,11 @@ class scheduler(object):
                 if not lock.release_suite_access():
                     print >> sys.stderr, 'failed to release suite!'
 
+        if self.pyro:
+            self.pyro.shutdown()
+
+        if not graphing_disabled:
+            self.finalize_graph()
 
     def get_tasks( self ):
         return self.tasks
