@@ -278,7 +278,8 @@ def copy_group( b ):
     help = helpwindow( "Copy Group Help", 200, """
 Copy an entire group of registered suites into sub-directories of the
 specified location and register each group member under the new group
-name. If you click 'Reference Only', the member suite definitions will
+name. You can use environment variables such as '$HOME' in the directory
+path. If you click 'Reference Only', the member suite definitions will
 not be copied and the new registrations will point to the original suites.""")
     help.show()
 
