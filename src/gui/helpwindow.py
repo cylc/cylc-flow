@@ -268,7 +268,8 @@ Partial matches are allowed (i.e. there is no implicit string start
 def copy( b ):
     help = helpwindow( "Copy Help", 200, """
 Copy the defintion of a registered suite to the specified location and
-register it under the new group:name.  If you click 'Reference
+register it under the new group:name. You can use environment variables
+such as '$HOME' in the directory path. If you click 'Reference
 Only' the suite definition will not be copied and the new registration
 will point to the original suite.""")
     help.show()
@@ -303,7 +304,10 @@ their registered group:name.""")
 def importx( b ):
     help = helpwindow( "Import Help", 200, """
 Import a suite (or group of suites) from the central database, making it
-(them) available to you to modify and use.""")
+(them) available to you to modify and use. The suite definition directory
+will be copied from the registered location to the location your specify
+here.  You can use environment variables such as '$HOME' in the directory
+path.""")
     help.show()
 
 def export( b ):
