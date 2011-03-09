@@ -151,7 +151,7 @@ class chooser_updater(threading.Thread):
                                 chch_row = []
                                 for col in range( ts.get_n_columns()):
                                     chch_row.append( ts.get_value(niter,col))
-                                [name, state, descr, dir, junk, junk ] = chch_row
+                                [name, state, descr, dir, junk, junk, junk ] = chch_row
                                 oldtree[owner][group][name] = [state, descr, dir ]
                                 #print '    REG', name, state, descr, dir
 
@@ -207,7 +207,7 @@ class chooser_updater(threading.Thread):
                            chch_row = []
                            for col in range( ts.get_n_columns()):
                                chch_row.append( ts.get_value(niter,col))
-                           [name, state, descr, dir, junk, junk ] = chch_row
+                           [name, state, descr, dir, junk, junk, junk ] = chch_row
                            oldtree[owner][group][name] = [state, descr, dir ]
                            #print '    REG', name, state, descr, dir
 
