@@ -279,15 +279,6 @@ class config( CylcConfigObj ):
         # TO DO: check listed family members in the same way
 
     def process_configured_directories( self ):
-        # allow $CYLC_SUITE(|_GROUP|_NAME) in job submission log directory
-        jsld = self['job submission log directory' ] 
-        jsld = re.sub( '\${CYLC_SUITE_NAME}', os.environ['CYLC_SUITE_NAME'], jsld )
-        jsld = re.sub( '\$CYLC_SUITE_NAME', os.environ['CYLC_SUITE_NAME'], jsld )
-        jsld = re.sub( '\${CYLC_SUITE_GROUP}', os.environ['CYLC_SUITE_GROUP'], jsld )
-        jsld = re.sub( '\$CYLC_SUITE_GROUP', os.environ['CYLC_SUITE_GROUP'], jsld )
-        jsld = re.sub( '\${CYLC_SUITE}', os.environ['CYLC_SUITE'], jsld )
-        jsld = re.sub( '\$CYLC_SUITE', os.environ['CYLC_SUITE'], jsld )
-
         # Make directories relative to $HOME or $CYLC_SUITE_DIR,
         # unless specified as absolute paths already.
         self['top level logging directory'] = self.make_dir_absolute( self['top level logging directory'], home=True )

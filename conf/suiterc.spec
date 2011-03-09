@@ -1,8 +1,8 @@
 title = string( default="No suite title given" )
 description = string( default="No suite description supplied" )
-# all I/O relative to $HOME:
+# promise all I/O relative to $HOME:
 user portable = boolean( default=False )
-# all I/O includes $CYLC_SUITE_NAME
+# promise all I/O includes $CYLC_SUITE or $CYLC_SUITE_GROUP and $CYLC_SUITE_NAME
 allow multiple simultaneous suite instances = boolean( default=False )
 maximum runahead hours = integer( min=0, default=24 )
 number of state dump backups = integer( min=1, default=10 )
