@@ -119,20 +119,33 @@ class TextShape(Shape):
             # see http://lists.freedesktop.org/archives/cairo/2007-February/009688.html
             context = layout.get_context()
             fo = cairo.FontOptions()
-            fo.set_antialias(cairo.ANTIALIAS_DEFAULT)
-            fo.set_hint_style(cairo.HINT_STYLE_NONE)
-            fo.set_hint_metrics(cairo.HINT_METRICS_OFF)
+            try:
+                fo.set_antialias(cairo.ANTIALIAS_DEFAULT)
+                fo.set_hint_style(cairo.HINT_STYLE_NONE)
+                fo.set_hint_metrics(cairo.HINT_METRICS_OFF)
+            except AttributeError:
+                # HJO: handle crappy cairo installation on SLES11, e.g:
+                # AttributeError: 'cairo.FontOptions' object has no attribute 'set_antialias'
+                pass
+
             try:
                 pangocairo.context_set_font_options(context, fo)
             except TypeError:
                 # XXX: Some broken pangocairo bindings show the error
                 # 'TypeError: font_options must be a cairo.FontOptions or None'
                 pass
+            except AttributeError:
+                # HJO: handle crappy cairo installation on SLES11
+                pass
 
             # set font
             font = pango.FontDescription()
             font.set_family(self.pen.fontname)
-            font.set_absolute_size(self.pen.fontsize*pango.SCALE)
+            try:
+                font.set_absolute_size(self.pen.fontsize*pango.SCALE)
+            except:
+                # HJO: handle crappy cairo installation on SLES11
+                pass
             layout.set_font_description(font)
 
             # set text
