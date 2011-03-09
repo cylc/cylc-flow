@@ -318,9 +318,11 @@ class chooser_updater(threading.Thread):
         hilight = '#faf'
         hilight2 = '#f98e3a'
         if state == '-':
-            return (black, None, hilight)
+            #return (black, None, hilight)
+            return (None, None, None)
         else:
-            return (grnfg, grnbg, hilight2 )
+            #return (grnfg, grnbg, hilight2 )
+            return (grnfg, grnbg, grnbg )
 
     def search_level( self, model, iter, func, data ):
         while iter:
@@ -442,6 +444,7 @@ class chooser(object):
         regd_ts.set_mode( gtk.SELECTION_SINGLE )
 
         cr = gtk.CellRendererText()
+        cr.set_property( 'cell-background', '#def' )
         tvc = gtk.TreeViewColumn( 'Suite', cr, text=0, foreground=4, background=5 )
         tvc.set_resizable(True)
         tvc.set_sort_column_id(0)
@@ -455,6 +458,7 @@ class chooser(object):
         self.regd_treeview.append_column( tvc ) 
 
         cr = gtk.CellRendererText()
+        cr.set_property( 'cell-background', '#def' )
         tvc = gtk.TreeViewColumn( 'Title', cr, text=2, foreground=4, background=6 )
         tvc.set_resizable(True)
         #vc.set_sort_column_id(2)
