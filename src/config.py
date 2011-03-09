@@ -143,7 +143,7 @@ class config( CylcConfigObj ):
             self.dir = path
             self.file = os.path.join( path, 'suite.rc' )
         else:
-            self.suite = os.environ[ 'CYLC_SUITE_NAME' ]
+            self.suite = os.environ[ 'CYLC_SUITE' ]
             self.file = os.path.join( os.environ[ 'CYLC_SUITE_DIR' ], 'suite.rc' ),
 
         if not os.path.isfile( self.file ):
@@ -279,10 +279,14 @@ class config( CylcConfigObj ):
         # TO DO: check listed family members in the same way
 
     def process_configured_directories( self ):
-        # allow $CYLC_SUITE_NAME in job submission log directory
+        # allow $CYLC_SUITE(|_GROUP|_NAME) in job submission log directory
         jsld = self['job submission log directory' ] 
-        jsld = re.sub( '\${CYLC_SUITE_NAME}', self.suite, jsld )
-        jsld = re.sub( '\$CYLC_SUITE_NAME', self.suite, jsld )
+        jsld = re.sub( '\${CYLC_SUITE_NAME}', os.environ['CYLC_SUITE_NAME'], jsld )
+        jsld = re.sub( '\$CYLC_SUITE_NAME', os.environ['CYLC_SUITE_NAME'], jsld )
+        jsld = re.sub( '\${CYLC_SUITE_GROUP}', os.environ['CYLC_SUITE_GROUP'], jsld )
+        jsld = re.sub( '\$CYLC_SUITE_GROUP', os.environ['CYLC_SUITE_GROUP'], jsld )
+        jsld = re.sub( '\${CYLC_SUITE}', os.environ['CYLC_SUITE'], jsld )
+        jsld = re.sub( '\$CYLC_SUITE', os.environ['CYLC_SUITE'], jsld )
 
         # Make directories relative to $HOME or $CYLC_SUITE_DIR,
         # unless specified as absolute paths already.

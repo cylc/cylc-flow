@@ -40,12 +40,12 @@ class message(object):
             print >> sys.stderr, '$TASK_ID not defined'
             sys.exit(1)
 
-        if 'CYLC_SUITE_NAME' in os.environ.keys():
-            self.suite = os.environ[ 'CYLC_SUITE_NAME' ]
+        if 'CYLC_SUITE' in os.environ.keys():
+            self.suite = os.environ[ 'CYLC_SUITE' ]
         elif self.mode == 'raw':
             pass
         else:
-            print >> sys.stderr, '$CYLC_SUITE_NAME not defined'
+            print >> sys.stderr, '$CYLC_SUITE not defined'
             sys.exit(1)
 
         if 'CYLC_SUITE_OWNER' in os.environ.keys():
