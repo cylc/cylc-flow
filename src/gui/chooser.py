@@ -193,7 +193,7 @@ class chooser_updater(threading.Thread):
                    #print '  GROUP', group
 
                    oldtree[owner][group] = {}
-                   if group not in newtree[owner]:
+                   if owner not in newtree or group not in newtree[owner]:
                        # remove group
                        #print '  removing group ', group
                        result = ts.remove(giter)
