@@ -91,7 +91,7 @@ class helpwindow( helpwindow_base ):
 def main( b ):
     help = helpwindow( "Gcylc Main Window Help", 500, """%h2 Overview
 
-Gcylc initially shows your privately registered suites.
+Gcylc initially shows your <span foreground="red">privately</span> registered suites.
 
 Using the menu bar and right-click menu items you can register new
 suites; copy, reregister, and unregister existing suites; start suites
@@ -155,6 +155,10 @@ a suite 'foo:bar', for example).
 Launch a suite control GUI to start a suite running, or connect to a
 suite that is already running.
 
+%h3 Dump
+
+(Running suites only) Print the current state of each task in the suite.
+
 %h3 Edit
 
 Edit the suite config (suite.rc) file
@@ -172,6 +176,15 @@ Search in the suite config file and bin directory.
 
 Parse the suite config file, validate it against the spec, and report
 any errors.
+
+%h3 Describe
+
+Print the suite description.
+
+%h3 List Tasks
+
+Print the suite's configured task list.
+
 
 %h3 Copy
 

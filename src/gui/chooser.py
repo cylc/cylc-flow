@@ -374,7 +374,7 @@ class chooser(object):
         # [owner>]group>name, state, title, dir, color1, color2, color3
         self.regd_treestore = gtk.TreeStore( str, str, str, str, str, str, str )
         self.regd_treeview.set_model(self.regd_treestore)
-        self.regd_treeview.set_rules_hint(True)
+        #self.regd_treeview.set_rules_hint(True)
         # search column zero (Ctrl-F)
         self.regd_treeview.connect( 'key_press_event', self.on_suite_select )
         self.regd_treeview.connect( 'button_press_event', self.on_suite_select )
@@ -845,15 +845,27 @@ The cylc forecast suite metascheduler.
             else:
                 reg = group + ':' + name
             if not self.cdb:
-                #if state == '-':
                 title = '_Control'
-                #else:
-                #    title = 'Connect'
                 con_item = gtk.MenuItem( title )
                 menu.append( con_item )
                 con_item.connect( 'activate', self.launch_controller, reg, state, suite_dir )
+                if state != '-':
+                    # suite is running
+                    dump_item = gtk.MenuItem( 'D_ump' )
+                    menu.append( dump_item )
+                    dump_item.connect( 'activate', self.dump_suite, reg )
     
-                menu.append( gtk.SeparatorMenuItem() )
+            menu.append( gtk.SeparatorMenuItem() )
+
+            search_item = gtk.MenuItem( '_Describe' )
+            menu.append( search_item )
+            search_item.connect( 'activate', self.describe_suite, reg )
+
+            search_item = gtk.MenuItem( '_List Tasks' )
+            menu.append( search_item )
+            search_item.connect( 'activate', self.list_suite, reg )
+
+            menu.append( gtk.SeparatorMenuItem() )
     
             edit_item = gtk.MenuItem( '_Edit' )
             menu.append( edit_item )
@@ -1636,8 +1648,16 @@ Note that this will not delete the suite definition directory.""" )
         #    info_dialog( "Suite " + name + " validates OK." ).inform()
 
         # for now, launch external process via the cylc capture command:
-        options = ''
-        call( 'capture "cylc validate ' + options + name  + '" --width=600 &', shell=True )
+        call( 'capture "cylc validate ' + name  + '" --width=600 &', shell=True )
+
+    def dump_suite( self, w, name ):
+        call( 'capture "cylc dump ' + name  + '" --width=400 --height=400 &', shell=True )
+
+    def describe_suite( self, w, name ):
+        call( 'capture "cylc describe ' + name  + '" --width=600 --height=400&', shell=True )
+
+    def list_suite( self, w, name ):
+        call( 'capture "cylc list ' + name  + '" --width=600 &', shell=True )
 
     def launch_controller( self, w, name, state, suite_dir ):
         m = re.match( 'RUNNING \(port (\d+)\)', state )
