@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+
+import os, sys
+from optparse import OptionParser
+from config import config, SuiteConfigError
+
+parser = OptionParser( """cylc [prep] list [OPTIONS] SUITE
+
+Parse a suite config file and print the suite title and description.
+
+Arguments:
+   SUITE    - suite registration [OWNER:]GROUP:NAME""")
+
+parser.add_option( "-d", "--debug", help="print the "
+        "exception traceback for validation errors.",
+        action="store_true", default=False, dest="debug" )
+
+(options, args) = parser.parse_args()
+
+if len(args) != 1:
+    parser.error( "Wrong number or arguments" )
+else:
+    suite = args[0]
+
+try:
+    config = config( suite )
+except SuiteConfigError,x:
+    if options.debug:
+        raise
+    else:
+        raise SystemExit(x)
+
+print 'TITLE:'
+print config.get_title()
+print 'DESCRIPTION:'
+print config.get_description()

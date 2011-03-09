@@ -90,11 +90,18 @@ cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 categories = \
     [
     'db',
+    'information',
     'prepare',
     'discover',
     'control',
     'utility',
     'task',
+    ]
+
+information_commands = \
+    [
+    'list',
+    'describe',
     ]
 
 control_commands = \
@@ -147,7 +154,6 @@ prepare_commands = \
     'validate',
     'search',
     'graph',
-    'list',
     ]
 
 discover_commands = \
@@ -181,6 +187,7 @@ USAGE:
 # topic summaries
 catsum = OrderedDict()
 catsum['db'       ] = "manage local and central suite registration databases."
+catsum['information' ] = "retrieve and print information about a suite."
 catsum['prepare'  ] = "validation, editing, searching, and graphing of suites."
 catsum['discover' ] = "discovering what suites are running at the moment."
 catsum['control'  ] = "running, monitoring, and controlling suites."
@@ -229,7 +236,9 @@ comsum[ 'inline'     ] = 'View suite.rc files in $EDITOR, include-files inlined'
 comsum[ 'validate'   ] = 'Parse and validate a suite config (suite.rc) file'
 comsum[ 'search'     ] = 'An intelligent search tool for cylc suites'
 comsum[ 'graph'      ] = 'A dependency graph viewer that updates as you edit'
-comsum[ 'list'       ] = 'Print a suite\'s configured task list'
+# information
+comsum[ 'list'       ] = 'Print a suite\'s task list'
+comsum[ 'describe'   ] = 'Print a suite\'s title and description'
 # control
 comsum[ 'start'      ] = 'Cold, warm, or raw start a suite at a given cycle time'
 comsum[ 'stop'       ] = 'Shut down a running suite (now or later)'
