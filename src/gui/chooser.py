@@ -319,7 +319,7 @@ class chooser_updater(threading.Thread):
         if state == '-':
             return (black, None, hilight)
         else:
-            return (grnfg, grnbg)
+            return (grnfg, grnbg, grnbg )
 
     def search_level( self, model, iter, func, data ):
         while iter:
