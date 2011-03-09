@@ -1633,7 +1633,7 @@ Note that this will not delete the suite definition directory.""" )
 
         # for now, launch external process via the cylc capture command:
         options = ''
-        call( 'capture "cylc validate ' + options + name  + '" &', shell=True )
+        call( 'capture "cylc validate ' + options + name  + '" --width=600 &', shell=True )
 
     def launch_controller( self, w, name, state, suite_dir ):
         m = re.match( 'RUNNING \(port (\d+)\)', state )
