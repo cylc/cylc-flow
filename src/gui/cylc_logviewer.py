@@ -90,8 +90,12 @@ class cylc_logviewer( logviewer ):
         else:
             level -= 1
         if level < 0:
-            warning_dialog( "The active log is already displayed" ).warn()
-            return
+            warning_dialog( """
+At newest rotation; reloading in case 
+the suite has been restarted.""" ).warn()
+            level = 0
+            # update view anyway: user may have started suite after the gui
+            # was started.
         if self.current_log() not in os.listdir( self.dir ):
             warning_dialog( "Newer log not available" ).warn()
             return
