@@ -11,10 +11,6 @@ Parse a suite config file and print the configured task list.
 Arguments:
    SUITE    - suite registration [OWNER:]GROUP:NAME""")
 
-parser.add_option( "-a", "--all", help="also print the suite title "
-        "and description.", action="store_true", 
-        default=False, dest="print_all" )
-
 parser.add_option( "-d", "--debug", help="print the "
         "exception traceback for validation errors.",
         action="store_true", default=False, dest="debug" )
@@ -34,11 +30,10 @@ except SuiteConfigError,x:
     else:
         raise SystemExit(x)
 
-if options.print_all:
-    print 'TITLE:'
-    print config.get_title()
-    print 'DESCRIPTION:'
-    print config.get_description()
-    print 'TASK LIST:'
+#    print 'TITLE:'
+#    print config.get_title()
+#    print 'DESCRIPTION:'
+#    print config.get_description()
+print 'TASK LIST:'
 for task in config.get_task_name_list():
     print ' ', task
