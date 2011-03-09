@@ -271,8 +271,10 @@ The cylc forecast suite metascheduler.
         treeview.connect( 'button_press_event', self.on_treeview_button_pressed, False )
 
         headings = ['task', 'state', 'latest message', 'Tsubmit', 'Tstart', 'Tfinish', 'Telapsed' ]
+        bkgcols  = [ None,  '#def',  '#fff',           '#def',    '#fff',   '#def',    '#fff'     ]
         for n in range(len(headings)):
             cr = gtk.CellRendererText()
+            cr.set_property( 'cell-background', bkgcols[n] )
             tvc = gtk.TreeViewColumn( headings[n], cr, markup=n )
             tvc.set_resizable(True)
             #tvc = gtk.TreeViewColumn( headings[n], cr, text=n )
@@ -455,7 +457,7 @@ The cylc forecast suite metascheduler.
         treeview.connect( 'button_press_event', self.on_treeview_button_pressed )
 
         headings = ['cycle', 'name', 'state', 'latest message', 'Tsubmit', 'Tstart', 'Tfinish', 'Telapsed' ]
-        bkgcols  = ['#def',  '#fff', '#fff',  '#fff',           '#fff', '#fff', '#fff', '#fff' ]
+        bkgcols  = ['#def',  '#fff', '#def',  '#fff',           '#def',    '#fff',   '#def',    '#fff' ]
 
         # create the TreeViewColumn to display the data
         for n in range(len(headings)):

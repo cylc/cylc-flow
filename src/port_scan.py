@@ -100,7 +100,7 @@ def check_port( name, owner, host, port, passphrase=None ):
             print suiteid( name, owner, host, port )
             return True
         else:
-            raise OtherSuiteFoundError, "ERROR: Found " + suiteid( one, two, host, port )
+            raise OtherSuiteFoundError, "ERROR: Found " + suiteid( one, two, host, port ) + ' NOT ' + suiteid( name, owner, host, port )
  
 def scan( host, passphrase=None, verbose=True ):
     # scan all cylc Pyro ports for cylc suites, and return results
