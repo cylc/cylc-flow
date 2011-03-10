@@ -408,12 +408,16 @@ class chooser(object):
         view_menu.append( collapse_item )
         collapse_item.connect( 'activate', self.collapse_all, self.regd_treeview )
 
+        db_menu = gtk.Menu()
+        db_menu_root = gtk.MenuItem( '_Database' )
+        db_menu_root.set_submenu( db_menu )
+
         local_item = gtk.MenuItem( '_LocalDB' )
         local_item.set_sensitive(False) # (already on local at startup)
-        view_menu.append( local_item )
+        db_menu.append( local_item )
 
         central_item = gtk.MenuItem( '_CentralDB' )
-        view_menu.append( central_item )
+        db_menu.append( central_item )
 
         local_item.connect( 'activate', self.localdb, new_item, central_item )
         central_item.connect( 'activate', self.centraldb, new_item, local_item )
@@ -432,6 +436,7 @@ class chooser(object):
  
         self.menu_bar = gtk.MenuBar()
         self.menu_bar.append( file_menu_root )
+        self.menu_bar.append( db_menu_root )
         self.menu_bar.append( view_menu_root )
         self.menu_bar.append( help_menu_root )
 

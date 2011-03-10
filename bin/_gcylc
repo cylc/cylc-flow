@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# allow gcylc to be invoked via the command line interface
+# (cylc gcylc) and thereby allow it to be incorporated into
+# the commandline self-documentation.
+
+echo "Note that you can invoke gcylc directly."
+gcylc $@

@@ -4,7 +4,7 @@ import os, sys
 from optparse import OptionParser
 from config import config, SuiteConfigError
 
-parser = OptionParser( """cylc [prep] list [OPTIONS] SUITE
+parser = OptionParser( """cylc [info] list [OPTIONS] SUITE
 
 Parse a suite config file and print the configured task list.
 

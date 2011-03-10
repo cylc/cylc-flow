@@ -106,6 +106,7 @@ information_commands = \
 
 control_commands = \
     [
+    'gcylc',
     'start',
     'stop',
     'restart',
@@ -200,8 +201,8 @@ catsum['utility'  ] = "cycle time arithmetic, filename templating, etc."
 ##extent allowed by the suite dependency graph.
 
 usage = """
-This is the command line interface to the cylc ('silk') forecast suite
-metascheduler. ***The cylc graphical user interface is gcylc***.
+This is the cylc ('silk') metascheduler command line interface.
+       *** The graphical user interface is gcylc. ***
 
 Version: """ + cylc_version + """
 """ + general_usage + """
@@ -240,6 +241,7 @@ comsum[ 'graph'      ] = 'A dependency graph viewer that updates as you edit'
 comsum[ 'list'       ] = 'Print a suite\'s task list'
 comsum[ 'describe'   ] = 'Print a suite\'s title and description'
 # control
+comsum[ 'gcylc'      ] = 'The cylc Graphical User Interface'
 comsum[ 'start'      ] = 'Cold, warm, or raw start a suite at a given cycle time'
 comsum[ 'stop'       ] = 'Shut down a running suite (now or later)'
 comsum[ 'restart'    ] = 'Restart a suite from a previous state'
