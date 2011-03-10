@@ -283,9 +283,10 @@ class config( CylcConfigObj ):
         # unless specified as absolute paths already.
         self['top level logging directory'] = self.make_dir_absolute( self['top level logging directory'], home=True )
         self['top level state dump directory'] = self.make_dir_absolute( self['top level state dump directory'], home=True )
-        self['job submission log directory' ] = self.make_dir_absolute( self['job submission log directory' ], home=True )
         self['visualization']['run time graph directory'] = self.make_dir_absolute( self['visualization']['run time graph directory'] )
         self['experimental']['live graph directory path'] = self.make_dir_absolute( self['experimental']['live graph directory path'] )
+        ### CURRENTLY job submission log dir must be relative to $HOME for tasks with owners.
+        ### self['job submission log directory' ] = self.make_dir_absolute( self['job submission log directory' ], home=True )
 
     def make_dir_absolute( self, indir, home=False ):
         # make dir relative to $HOME or $CYLC_SUITE_DIR unless already absolute.

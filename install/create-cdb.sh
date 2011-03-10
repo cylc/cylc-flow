@@ -15,15 +15,15 @@ fi
 
 echo
 echo " + Registering examples suites"
-cylc register cylc:userguide $CYLC_DIR/examples/userguide
-cylc register cylc:simple $CYLC_DIR/examples/simple
-cylc register dev:userguide $CYLC_DIR/dev/suites/userguide
+cylc register CylcExamples:userguide $CYLC_DIR/examples/userguide
+cylc register CylcExamples:simple $CYLC_DIR/examples/simple
+#cylc register dev:userguide $CYLC_DIR/dev/suites/userguide
 
 echo
 echo " + Exporting examples suites to the central database"
 # Export the example suites to the central database.
 # This will create the new database file.
-cylc export -g cylc
+cylc export CylcExamples:
 
 echo
 echo " + Setting central database permissions"

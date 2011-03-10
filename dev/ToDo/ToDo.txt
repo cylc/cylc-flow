@@ -1,6 +1,11 @@
 _______
 GENERAL
 
+* job submission log directory for tasks with owners: MUST be relative
+  to $HOME, which is used as loadleveler @initialdir, not absolute, or 
+  the loadleveler stdout and stderr output file directives will end up
+  pointing to the suite owner's space and the job will hang. Need a more 
+  transparent way of doing this!
 
 * raise SystemExit() in config.py, cylcconfigobj, (and anywhere else?) NO GOOD FOR GUI!
 
