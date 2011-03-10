@@ -389,7 +389,7 @@ class chooser(object):
         file_menu.append( new_item )
 
         exit_item = gtk.MenuItem( 'E_xit' )
-        exit_item.connect( 'activate', self.delete_all_event )
+        exit_item.connect( 'activate', self.delete_all_event, None )
         file_menu.append( exit_item )
 
         view_menu = gtk.Menu()
@@ -696,7 +696,7 @@ The cylc forecast suite metascheduler.
         new_menu_item.set_sensitive( False )
         self.start_updater()
 
-    def delete_all_event( self, w ):
+    def delete_all_event( self, w, e ):
         self.updater.quit = True
         gtk.main_quit()      
         # Uncommenting the following makes the window stay around until
