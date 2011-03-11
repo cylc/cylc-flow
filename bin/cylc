@@ -31,49 +31,66 @@ def is_help( str ):
     else:
         return False
 
-def match_command( abbrev, commands, title ):
+def match_category( abbrev, categories ):
+    # allow any unique abbreviation to cylc categories
+    cats = categories.keys()
+    matches = []
+    for cat in cats:
+        if re.match( '^' + abbrev + '.*', cat ):
+            matches.append( cat )
+    if len( matches ) == 0:
+        raise CommandNotFoundError, 'Category not found: ' + abbrev
+    elif len( matches ) > 1:
+        # multiple matches, but they might be aliases for the same command
+        resolve = []
+        for match in matches:
+            res = categories[match]
+            if res not in resolve:
+                resolve.append(res)
+        if len( resolve ) > 1:
+            raise CommandNotUniqueError, 'Category not unique: ' + abbrev + ' -> ' + ', '.join( resolve )
+        else:
+            category = resolve[0]
+    else:
+        category = categories[matches[0]]
+    return category
+
+def match_command( abbrev, commands ):
     # allow any unique abbreviation to cylc topics and commands
     matches = []
     for com in commands:
         if re.match( '^' + abbrev + '.*', com ):
             matches.append( com )
     if len( matches ) == 0:
-        raise CommandNotFoundError, title + ' not found: ' + abbrev
+        raise CommandNotFoundError, 'Command not found: ' + abbrev
     elif len( matches ) > 1:
-        raise CommandNotUniqueError, title + ' not unique: ' + abbrev + ' -> ' + ', '.join( matches )
+        raise CommandNotUniqueError, 'Command not unique: ' + abbrev + ' -> ' + ', '.join( matches )
     else:
         return matches[0]
 
-def pretty_print( incom, choose = None, indent=True, numbered=False ):
+def pretty_print( incom, choose, indent=True, numbered=False ):
     # pretty print commands or topics from a dict:
     # (com[item] = description)
-    if choose != None:
-        if len(choose) == 0:
-            print " (none)"
-            return
-    com = OrderedDict()
-    for item in incom:
-        if choose:
-            if item not in choose:
-                continue
-        com[ item ] = incom[ item ]
-
+    
     if indent:
         spacer = ' '
     else:
         spacer = ''
 
-    items = com.keys()
-
-    longest = len(items[0])
-    for item in items:
+    longest = len(choose[0])
+    for item in choose:
         if len( item )> longest:
             longest = len( item )
+
     count = 0
     pad = False
-    if len(items) > 9:
+    if len(choose) > 9:
         pad = True
-    for item in items:
+
+    for item in choose:
+        if item not in incom:
+            raise SystemExit( "ERROR: summary for '" + item + "' not found" )
+
         print spacer,
         if numbered:
             count += 1
@@ -82,24 +99,27 @@ def pretty_print( incom, choose = None, indent=True, numbered=False ):
             else:
                 digit = str(count)
             print digit + '/', 
-        print item, '.'*(longest-len(item)) + '...', com[item]
+        print item, '.'*(longest-len(item)) + '...', incom[item]
 
 # auto-replace with version tag at build/install:
 cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 
-categories = \
-    [
-    'db',
-    'information',
-    'prepare',
-    'discover',
-    'control',
-    'utility',
-    'task',
-    ]
-
+# categories[ alias ] = category
+categories = {}
+categories[ 'db'          ] = 'database'
+categories[ 'database'    ] = 'database'
+categories[ 'information' ] = 'information'
+categories[ 'prepare'     ] = 'prepare'
+categories[ 'preparation' ] = 'prepare'
+categories[ 'discover'    ] = 'discover'
+categories[ 'control'     ] = 'control'
+categories[ 'utility'     ] = 'utility'
+categories[ 'utilities'   ] = 'utility'
+categories[ 'tasks'       ] = 'task'
+ 
 information_commands = \
     [
+    'gcylc',
     'list',
     'describe',
     ]
@@ -137,8 +157,9 @@ utility_commands = \
     'transfer',
     ]
 
-db_commands = \
+database_commands = \
     [
+    'gcylc',
     'register',
     'reregister',
     'unregister',
@@ -150,6 +171,7 @@ db_commands = \
 
 prepare_commands = \
     [
+    'gcylc',
     'edit',
     'inline',
     'validate',
@@ -182,18 +204,21 @@ USAGE:
   cylc help,--help,-h,?                           # this help page
   cylc -v,--version                               # release version
   cylc help CATEGORY                              # help by category
-  cylc [CATEGORY] COMMAND help,--help             # command-specific help
-  cylc [CATEGORY] COMMAND [options] SUITE [args]  # command usage syntax"""
+  cylc CATEGORY help                              # (ditto)
+  cylc help [CATEGORY] COMMAND                    # command help
+  cylc [CATEGORY] COMMAND help,--help             # (ditto)
+
+  cylc [CATEGORY] COMMAND [options] SUITE [args]  # command syntax"""
 
 # topic summaries
 catsum = OrderedDict()
-catsum['db'       ] = "manage local and central suite registration databases."
+catsum['database'  ]     = "(or db) local and central suite registration."
 catsum['information' ] = "retrieve and print information about a suite."
-catsum['prepare'  ] = "validation, editing, searching, and graphing of suites."
-catsum['discover' ] = "discovering what suites are running at the moment."
-catsum['control'  ] = "running, monitoring, and controlling suites."
-catsum['task'     ] = "running single tasks, task wrapping and messaging."
-catsum['utility'  ] = "cycle time arithmetic, filename templating, etc."
+catsum['prepare'  ]      = "suite editing, graphing, validiation etc."
+catsum['discover' ]      = "what suites are running at the moment?"
+catsum['control'  ]      = "running, monitoring, and controlling suites."
+catsum['task'     ]      = "running single tasks, task wrapping and messaging."
+catsum['utility'  ]      = "cycle time arithmetic, filename templating, etc."
 
 # was in help doc:
 ##Cylc suites are not artificially grouped by forecast cycle; tasks from
@@ -207,23 +232,24 @@ This is the cylc ('silk') metascheduler command line interface.
 Version: """ + cylc_version + """
 """ + general_usage + """
 
-The cylc command set is organised into categories to help elucidate
-available functionality. Categories can optionally be omitted in command
-invocation. Any unique abbreviation can be used for a COMMAND or CATEGORY: 
-  $ cylc help prep .......... (category: prepare)
-  $ cylc [prep] ed [ARGS] ... (category: prepare; command: edit) 
-  $ cylc ed [ARGS] .......... (category: prepare; command: edit) 
+CATEGORIES help to organise this documentation, but their use on the
+commandline is [optional]. Any unique abbreviation can be used for a
+COMMAND or CATEGORY, and some common typos (cylc|cycl) are corrected.
+  $ cylc help prep ........ (cylc help prepare)
+  $ cylc help [prep] ed ... (cylc help [prepare] edit)
+  $ cylc [prep] ed help ... (cylc [prepare] edit help)
+  $ cylc [info] li ARGS ... (cylc [information] list SUITE) 
 
 Command CATEGORIES (which include lists of relevant COMMANDS):"""
 
 if len(sys.argv) == 1:
     print usage
-    pretty_print( catsum )
+    pretty_print( catsum, catsum.keys() )
     sys.exit(1)
 
 # command summaries
 comsum = OrderedDict()
-# db
+# database
 comsum[ 'register'   ] = 'Add a suite to your local registration database'
 comsum[ 'reregister' ] = 'Reregister local or central suite registrations'
 comsum[ 'unregister' ] = 'Unregister suites from the local or central database'
@@ -263,7 +289,7 @@ comsum[ 'lockclient' ] = 'Manual suite and task lock management'
 comsum[ 'verbosity'  ] = 'Change a suite\'s logging verbosity level'
 # discover
 comsum[ 'ping'       ] = 'Check that a named suite is running'
-comsum[ 'scan'       ] = 'Scan a host for running cylc suites'
+comsum[ 'scan'       ] = 'Scan a host for running cylc suites and lockservers'
 # task
 comsum[ 'wrap'       ] = 'Use an existing script or program as a cylc task'
 comsum[ 'submit'     ] = 'Run a single task just as its parent suite would'
@@ -272,10 +298,10 @@ comsum[ 'message'    ] = 'Report completion of outputs, etc.'
 comsum[ 'finished'   ] = 'Release task lock and report finished'
 comsum[ 'failed'     ] = 'Release task lock and report failure'
 
-comsum[ 'task-started'    ] = 'DEPRECATED: use started'
-comsum[ 'task-message'    ] = 'DEPRECATED: use message.'
-comsum[ 'task-finished'   ] = 'DEPRECATED: use finished'
-comsum[ 'task-failed'     ] = 'DEPRECATED: use failed'
+comsum[ 'task-started'  ] = 'DEPRECATED: use started'
+comsum[ 'task-message'  ] = 'DEPRECATED: use message.'
+comsum[ 'task-finished' ] = 'DEPRECATED: use finished'
+comsum[ 'task-failed'   ] = 'DEPRECATED: use failed'
 
 # utility
 comsum[ 'cycletime'  ] = 'Cycle time arithmetic'
@@ -284,6 +310,18 @@ comsum[ 'template'   ] = 'Powerful cycle time offset filename templating'
 comsum[ 'housekeep'  ] = 'Parallel archiving and cleanup on cycle time offsets'
 comsum[ 'transfer'   ] = 'An scp-based file transfer tool'
  
+def category_help(category):
+    commands = eval( category + '_commands')
+    print 'CATEGORY: ' + category + ' - ' + catsum[ category ]
+    print
+    print 'USAGE: cylc [' + category + '] COMMAND help,--help'
+    print '  You can abbreviate "' + category + '" and COMMAND.'
+    print '  The category "' + category + '" may be omitted.'
+    print
+    print 'COMMANDS:'
+    commands = eval( category + '_commands')
+    pretty_print( comsum, commands )
+
 # check that the cylc core modules are accessible
 try:
     import cylc
@@ -292,85 +330,126 @@ except:
     print >> sys.stderr, "SOLUTION: source $CYLC_DIR/cylc-env.sh in your shell." 
     sys.exit(1)
 
-# main help
-if len( sys.argv ) == 2 and is_help( sys.argv[1] ):
+# manipulate command arguments
+
+args = sys.argv[1:]
+
+# cylc help
+if len( args ) == 1 and is_help( args[0] ):
     print usage
-    pretty_print( catsum )
+    pretty_print( catsum, catsum.keys() )
     sys.exit(0)
 
-# cylc release version
-if len( sys.argv ) == 2 and \
-        ( sys.argv[1] == '-v' or sys.argv[1] == '--version' ):
+# cylc -v,--version
+if len( args ) == 1 and \
+        ( args[0] == '-v' or args[0] == '--version' ):
     print cylc_version
     sys.exit(0)
 
 all_commands = comsum.keys()
+command_args = []
 
-if len( sys.argv ) == 3 and \
-        ( is_help( sys.argv[1] ) or is_help( sys.argv[2] )):
-    # cylc CATEGORY help
-    # cylc help CATEGORY
-    if is_help( sys.argv[1] ):
-        category = sys.argv[2]
+# TWO ARGUMENTS, one help
+# cylc help CATEGORY
+# cylc CATEGORY help
+# cylc help COMMAND
+# cylc COMMAND help
+
+if len( args ) == 2 and ( is_help(args[0]) or is_help(args[1])):
+    if is_help( args[1] ):
+        item = args[0]
     else:
-        category = sys.argv[1]
+        item = args[1]
     try:
-        category = match_command( category, categories, 'CATEGORY' )
-    #except CommandNotUniqueError, x:
-    #    raise SystemExit(x)
+        category = match_category( item, categories )
     except CommandError, x:
+        # no matching category, try command
         print x
-        # carry on in case the user omitted the category
-        ##print 'Available categories (cylc help):'
-        ##print categories
-        ##sys.exit(1)
-
+        print 'Trying Commands...'
+        try:
+            command = match_command( item, all_commands )
+        except CommandError, y:
+            raise SystemExit(y)
+        else:
+            # cylc COMMAND --help
+            command_args = [ '--help' ]
     else:
-        print 'CATEGORY: ' + category + ' - ' + catsum[ category ]
-        print
-        print 'USAGE: cylc [' + category + '] COMMAND help,--help'
-        print '  You can abbreviate "' + category + '" and COMMAND.'
-        print '  The category "' + category + '" may be omitted.'
-        print
-        print 'COMMANDS:'
-        commands = eval( category + '_commands')
-        pretty_print( comsum, choose=commands )
+        # cylc help CATEGORY
+        category_help( category )
         sys.exit(0)
 
-# cylc [CATEGORY] COMMAND ARGS
-arglist = []
-try:
-    category = match_command( sys.argv[1], categories, 'CATEGORY' )
-except CommandError, y:
-    # carry on in case the user omitted the category
-    ##print 'Available categories (cylc help):'
-    ##print categories
-    ##sys.exit(1)
-    try:
-        command = match_command( sys.argv[1], all_commands, ' COMMAND' )
-    except CommandError, x:
-        print y
-        print x
-        sys.exit(1)
+elif len( args ) == 3 and ( is_help(args[0]) or is_help(args[2])):
+    # cylc help CATEGORY COMMAND
+    # cylc CATEGORY COMMAND help
+    if is_help( args[2] ):
+        category = args[0]
+        command = args[1]
     else:
-        if len(sys.argv) > 2:
-            arglist = sys.argv[2:]
-else:
+        category = args[1]
+        command = args[2]
+    try:
+        category = match_category( category, categories )
+    except CommandError, x:
+        raise SystemExit(x)
+
     commands = eval( category + '_commands')
     try:
-        command = match_command( sys.argv[2], commands, category + ' COMMAND' )
+        command = match_command( command, commands )
     except CommandError, y:
         print y
-        print 'Available commands in category ' + category + ':'
+        print 'Commands available in category ' + category + ':'
         print commands
         sys.exit(1)
-    else:
-        if len(sys.argv) > 3:
-            arglist = sys.argv[3:]
+    
+    # cylc COMMAND --help
+    command_args = [ '--help' ]
 
-if len(arglist) > 0 and is_help( arglist[0] ):
-        # commands only take '--help'; extend this to help,-h,...
-        arglist[0] = '--help'
+else:
+    # two or more args, neither of first two are help
+    # cylc CATEGORY COMMAND [ARGS]
+    # cylc COMMAND [ARGS]
+    try:
+        category = args[0]
+        category = match_category( category, categories )
+    except CommandError, x:
+        # no matching category, try command
+        print x
+        print 'Trying Commands...'
+        try:
+            command = args[0]
+            command = match_command( command, all_commands )
+        except CommandError, y:
+            raise SystemExit(y)
+        else:
+            # cylc COMMAND [ARGS]
+            command_args = args[1:]
+    else:
+        # cylc CATEGORY COMMAND [ARGS]
+        commands = eval( category + '_commands')
+        command = args[1]
+        try:
+            command = match_command( command, commands )
+        except CommandError, y:
+            print y
+            print 'Commands available in category ' + category + ':'
+            print commands
+            sys.exit(1)
+ 
+        else:
+            # cylc COMMAND [ARGS]
+            if len(args) > 1:
+                command_args = args[2:]
+            else:
+                command_args = []
+
+# check for help anywhere in the arg list and transform to '--help'
+args_new = []
+for item in command_args:
+    if is_help( item ):
+        args_new.append( '--help' )
+    else:
+        args_new.append( item )
+args = args_new
 
 notify=False
 if command not in ['cycletime', 'template']:
@@ -383,8 +462,5 @@ if command not in ['cycletime', 'template']:
 # DEPRECATED TASK COMMANDS (backward compatibility):
 if command in [ 'task-started', 'task-finished', 'task-failed', 'task-message' ]:
     command = re.sub( '^task-', '', command )
-command = '_' + command 
-commandlist = [ command ]
-for f in arglist:
-    commandlist.append( f )
-execute( commandlist, notify=notify )
+
+execute( [ '_' + command ] + args, notify=notify )
