@@ -231,11 +231,6 @@ COMMAND or CATEGORY, and some common typos (cylc|cycl) are corrected.
 
 Command CATEGORIES (which include lists of relevant COMMANDS):"""
 
-if len(sys.argv) == 1:
-    print usage
-    pretty_print( catsum, categories )
-    sys.exit(1)
-
 # command summaries
 comsum = OrderedDict()
 # database
@@ -318,6 +313,23 @@ except:
     print >> sys.stderr, "ERROR: the cylc core modules are not accessible to Python"
     print >> sys.stderr, "SOLUTION: source $CYLC_DIR/cylc-env.sh in your shell." 
     sys.exit(1)
+
+# no arguments: print help and exit
+if len(sys.argv) == 1:
+    print usage
+    pretty_print( catsum, categories )
+    sys.exit(1)
+
+# secret arguments for document processing
+if len(sys.argv) == 2:
+    if sys.argv[1] == 'categories':
+        for key in catsum.keys():
+            print key
+        sys.exit(0)
+    if sys.argv[1] == 'commands':
+        for key in comsum.keys():
+            print key
+        sys.exit(0)
 
 # manipulate command arguments
 
