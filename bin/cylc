@@ -46,7 +46,7 @@ def match_dict( abbrev, categories, title ):
         res = ''
         for cat in matches:
             res += ' ' + '|'.join(categories[cat])
-        raise CommandNotUniqueError, abbrev + ' not unique:' + res
+        raise CommandNotUniqueError, title + ' ' + abbrev + ' not unique:' + res
     else:
         return matches[0]
 
@@ -54,12 +54,12 @@ def match_command( abbrev ):
     # allow any unique abbreviation to commands when no category is specified
     matches = []
     for dct in [ 
-        information_commands, 
-        control_commands, 
-        utility_commands, 
         database_commands, 
         preparation_commands, 
-        discover_commands, 
+        information_commands, 
+        discovery_commands, 
+        control_commands, 
+        utility_commands,
         task_commands ]:
         for com in dct.keys():
             for alias in dct[com]:
@@ -67,9 +67,13 @@ def match_command( abbrev ):
                     if com not in matches:
                         matches.append( com )
     if len( matches ) == 0:
-        raise CommandNotFoundError, 'Command not found: ' + abbrev
+        raise CommandNotFoundError, 'COMMAND not found: ' + abbrev
     elif len( matches ) > 1:
-        raise CommandNotUniqueError, 'Command not unique: ' + abbrev + ' -> ' + ', '.join( matches )
+        # multiple matches
+        res = ''
+        for com in matches:
+            res += ' ' + '|'.join(all_commands[com])
+        raise CommandNotUniqueError, 'COMMAND ' + abbrev + ' not unique:' + res
     else:
         return matches[0]
 
@@ -116,13 +120,14 @@ cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 
 # categories[ categorey ] = [ aliases ] 
 categories = OrderedDict()
+categories['all'         ] = ['all' ]
 categories['database'    ] = ['db', 'database' ]
+categories['preparation' ] = ['preparation' ]
 categories['information' ] = ['information'    ]
-categories['preparation' ] = ['prepare', 'preparation' ]
-categories['discover'    ] = ['discover' ]
+categories['discovery'   ] = ['discovery' ]
 categories['control'     ] = ['control' ]
-categories['utility'     ] = ['utility', 'utilities' ]
-categories['task'       ] = ['task' ]
+categories['utility'     ] = ['utilities' ]
+categories['task'        ] = ['task' ]
  
 information_commands = OrderedDict()
 information_commands['gcylc'    ] = [ 'gcylc' ]
@@ -155,7 +160,7 @@ utility_commands = OrderedDict()
 utility_commands['cycletime'] = ['cycletime' ]
 utility_commands['checkvars'] = ['checkvars'] 
 utility_commands['template' ] = ['template'] 
-utility_commands['housekeep'] = ['housekeep'] 
+utility_commands['housekeeping'] = ['housekeeping'] 
 utility_commands['transfer' ] = ['transfer'] 
 
 database_commands = OrderedDict()
@@ -176,9 +181,9 @@ preparation_commands['validate'] = [ 'validate'    ]
 preparation_commands['search'  ] = [ 'search', 'grep' ]
 preparation_commands['graph'   ] = [ 'graph'    ]
 
-discover_commands = OrderedDict()
-discover_commands['ping'] = [ 'ping' ]
-discover_commands['scan'] = [ 'scan' ]
+discovery_commands = OrderedDict()
+discovery_commands['ping'] = [ 'ping' ]
+discovery_commands['scan'] = [ 'scan' ]
 
 task_commands = OrderedDict()
 task_commands['wrap'] = [ 'wrap' ]
@@ -188,6 +193,18 @@ task_commands['message'] = [ 'message', 'task-message' ]
 task_commands['finished'] = [ 'finished', 'task-finished' ]
 task_commands['failed'] = [ 'failed', 'task-failed' ]
 
+all_commands = OrderedDict()
+for dct in [ 
+        database_commands, 
+        preparation_commands, 
+        information_commands, 
+        discovery_commands, 
+        control_commands, 
+        utility_commands,
+        task_commands ]:
+    for com in dct.keys():
+        all_commands[com] = dct[com]
+ 
 general_usage = """
 USAGE:
   cylc help,--help,-h,?                           # this help page
@@ -201,13 +218,14 @@ USAGE:
 
 # topic summaries
 catsum = OrderedDict()
-catsum['database'  ]     = "(or db) local and central suite registration."
-catsum['information' ] = "retrieve and print information about a suite."
-catsum['preparation'  ]      = "suite editing, graphing, validiation etc."
-catsum['discover' ]      = "what suites are running at the moment?"
-catsum['control'  ]      = "running, monitoring, and controlling suites."
-catsum['task'     ]      = "running single tasks, task wrapping and messaging."
-catsum['utility'  ]      = "cycle time arithmetic, filename templating, etc."
+catsum['all'    ]        = "the complete cylc command set"
+catsum['database'    ]   = "local and central suite registration."
+catsum['information' ]   = "retrieve and print information about a suite."
+catsum['preparation' ]   = "suite editing, graphing, validiation etc."
+catsum['discovery'   ]   = "what suites are running at the moment?"
+catsum['control'     ]   = "running, monitoring, and controlling suites."
+catsum['task'        ]   = "running single tasks, task wrapping and messaging."
+catsum['utility'     ]   = "cycle time arithmetic, filename templating, etc."
 
 # was in help doc:
 ##Cylc suites are not artificially grouped by forecast cycle; tasks from
@@ -221,9 +239,10 @@ This is the cylc ('silk') metascheduler command line interface.
 Version: """ + cylc_version + """
 """ + general_usage + """
 
-CATEGORIES help to organise this documentation, but their use on the
-commandline is [optional]. Any unique abbreviation can be used for a
-COMMAND or CATEGORY, and some common typos (cylc|cycl) are corrected.
+CATEGORIES help to organise this documentation. Any unique abbreviation
+can be used for a COMMAND or CATEGORY. Use of categories is optional in
+command invocation (they will disambiguate highly abbreviated commands).
+Some common typos are detected and corrected (e.g. cylc,cycl; help,hlep) 
   $ cylc help prep ......... (cylc help prepare)
   $ cylc help [prep] ed .... (cylc help [prepare] edit)
   $ cylc [prep] ed help .... (cylc [prepare] edit help)
@@ -271,7 +290,7 @@ comsum[ 'tmon'       ] = 'An in-terminal suite monitor (deprecated, see gcylc)'
 comsum[ 'lockserver' ] = 'The cylc lockserver daemon'
 comsum[ 'lockclient' ] = 'Manual suite and task lock management'
 comsum[ 'verbosity'  ] = 'Change a suite\'s logging verbosity level'
-# discover
+# discovery
 comsum[ 'ping'       ] = 'Check that a named suite is running'
 comsum[ 'scan'       ] = 'Scan a host for running cylc suites and lockservers'
 # task
@@ -286,7 +305,7 @@ comsum[ 'failed'     ] = 'Release task lock and report failure'
 comsum[ 'cycletime'  ] = 'Cycle time arithmetic'
 comsum[ 'checkvars'  ] = 'Check required environment variables en masse'
 comsum[ 'template'   ] = 'Powerful cycle time offset filename templating'
-comsum[ 'housekeep'  ] = 'Parallel archiving and cleanup on cycle time offsets'
+comsum[ 'housekeeping'  ] = 'Parallel archiving and cleanup on cycle time offsets'
 comsum[ 'transfer'   ] = 'An scp-based file transfer tool'
 
 def typo( str ):
@@ -386,16 +405,19 @@ elif len( args ) == 3 and ( is_help(args[0]) or is_help(args[2])):
         category = args[1]
         command = args[2]
     try:
-        category = match_dict( category, categories, category + ' COMMANDS' )
+        category = match_dict( category, categories, category + ' COMMAND' )
     except CommandError, x:
         raise SystemExit(x)
 
     coms = eval( category + '_commands')
     try:
-        command = match_dict( command, coms, category + ' COMMANDS' )
-    except CommandError, y:
+        command = match_dict( command, coms, category + ' COMMAND' )
+    except CommandNotUniqueError, y:
         print y
-        print 'Commands available in category ' + category + ':'
+        sys.exit(1)
+    except CommandNotFoundError, y:
+        print y
+        print 'COMMANDS available in CATEGORY "' + category + '":'
         print coms.keys()
         sys.exit(1)
     
@@ -426,9 +448,12 @@ else:
         command = args[1]
         try:
             command = match_dict( command, coms )
-        except CommandError, y:
+        except CommandNotUniqueError, y:
             print y
-            print 'Commands available in category ' + category + ':'
+            sys.exit(1)
+        except CommandNotFoundError, y:
+            print y
+            print 'COMMANDS available in CATEGORY "' + category + '":'
             print commands
             sys.exit(1)
  
