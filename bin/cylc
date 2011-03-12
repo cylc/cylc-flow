@@ -126,7 +126,7 @@ categories['preparation' ] = ['preparation' ]
 categories['information' ] = ['information'    ]
 categories['discovery'   ] = ['discovery' ]
 categories['control'     ] = ['control' ]
-categories['utility'     ] = ['utilities' ]
+categories['utility'     ] = ['utility' ]
 categories['task'        ] = ['task' ]
  
 information_commands = OrderedDict()
@@ -318,7 +318,7 @@ def category_help(category):
     coms = eval( category + '_commands')
     print 'CATEGORY: ' + category + ' - ' + catsum[ category ]
     print
-    print 'USAGE: cylc [' + category + '] COMMAND help,--help'
+    print 'SEE: cylc [' + category + '] COMMAND help,--help'
     print '  You can abbreviate "' + category + '" and COMMAND.'
     print '  The category "' + category + '" may be omitted.'
     print
@@ -339,32 +339,40 @@ if len(sys.argv) == 1:
     pretty_print( catsum, categories )
     sys.exit(1)
 
-# secret arguments for document processing
-if len(sys.argv) == 2:
-    if sys.argv[1] == 'categories':
+args = sys.argv[1:]
+
+if len(args) == 1:
+    if args[0] == 'categories':
+        # secret argument for document processing
         for key in catsum.keys():
             print key
         sys.exit(0)
-    if sys.argv[1] == 'commands':
+    if args[0] == 'commands':
+        # secret argument for document processing
         for key in comsum.keys():
             print key
         sys.exit(0)
+    if is_help( args[0] ):
+        # cylc help
+        print usage
+        pretty_print( catsum, categories)
+        sys.exit(0)
+    if ( args[0] == '-v' or args[0] == '--version' ):
+        # cylc -v,--version
+        print cylc_version
+        sys.exit(0)
 
+    # cylc CATEGORY with no args => category help
+    try:
+        category = match_dict( args[0], categories, 'CATEGORY' )
+    except CommandError, x:
+        # no matching category
+        raise SystemExit(x)
+    else:
+        category_help( category )
+        sys.exit(0)
+ 
 # manipulate command arguments
-
-args = sys.argv[1:]
-
-# cylc help
-if len( args ) == 1 and is_help( args[0] ):
-    print usage
-    pretty_print( catsum, categories)
-    sys.exit(0)
-
-# cylc -v,--version
-if len( args ) == 1 and \
-        ( args[0] == '-v' or args[0] == '--version' ):
-    print cylc_version
-    sys.exit(0)
 
 command_args = []
 
