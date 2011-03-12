@@ -66,6 +66,7 @@ sensitive=false,
 morecomment=[l]{Usage:},
 morecomment=[l]{USAGE:},
 morecomment=[l]{usage:},
+morecomment=[l]{SEE:},
 morecomment=[l]{CATEGORY:},
 morecomment=[l]{COMMANDs:},
 morecomment=[l]{Arguments:},
@@ -580,11 +581,13 @@ you may have tasks that start executing on one host and finish on
 another.
 
 The lockserver consists of a {\em daemon} process
-\lstinline=$CYLC_DIR/bin/cylclockd= and a
-command line user interface, \lstinline=cylc lockserver=
+\lstinline=cylc lockserver= and a
+command line user interface, 
+\lstinline=cylc lockclient=
 
 The lockserver daemon can be started at any time, and left running.
-See \lstinline=cylclockd help= for configuration and usage information.
+See \lstinline=cylc lockserver --help= for configuration and usage
+information.
 
 Alternatively, you can choose not to use the lockserver:
 
@@ -2326,17 +2329,6 @@ $CYLC_DIR/examples/userguide/
 \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 \lstset{language=usage}
 \input{commands.tex}
-\pagebreak
-
-\section{Lockserver Daemon Command Reference}
-\label{LockserverDaemonCommandReference}
-
-%The information in this section is auto-generated during document
-%processing.
-
-\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
-\lstset{language=usage}
-\input{commands-cylclockd.tex}
 \pagebreak
 
 

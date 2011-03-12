@@ -66,16 +66,6 @@ for COMMAND in $(cylc commands); do
     #echo "\pagebreak" >> doc/commands.tex
 done
 
-rm -rf doc/command-cylclockd-usage; mkdir -p doc/command-cylclockd-usage
-rm -f doc/commands-cylclockd.tex
-
-# direct command help into a txt file
-cylclockd --help >> doc/command-cylclockd-usage/cylclockd.txt
-# append to a latex file for inclusion in the userguide
-echo "\subsection{cylclockd}" >> doc/commands-cylclockd.tex
-echo "\label{cylclockd}" >> doc/commands-cylclockd.tex
-echo "\lstinputlisting{command-cylclockd-usage/cylclockd.txt}" >> doc/commands-cylclockd.tex
-
 #-----------------------------------------------------------------------
 
 cd doc

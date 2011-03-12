@@ -15,7 +15,7 @@ from lockserver import lockserver
 import task, clocktriggered
 import accelerated_clock 
 
-usage = """cylc [task] submit [options] SUITE TASK_ID
+usage = """cylc [task] submit|single [options] SUITE TASK_ID
 
 Submit a single task to run exactly as it would be run from within its 
 parent suite. This can be used as an easy way to run single tasks
