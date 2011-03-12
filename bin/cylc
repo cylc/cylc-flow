@@ -31,37 +31,41 @@ def is_help( str ):
     else:
         return False
 
-def match_dict( abbrev, categories ):
+def match_dict( abbrev, categories, title ):
     # allow any unique abbreviation to cylc categories
-    cats = categories.keys()
     matches = []
-    for cat in cats:
-        if re.match( '^' + abbrev + '.*', cat ):
-            matches.append( cat )
+    for cat in categories.keys():
+        for alias in categories[cat]:
+            if re.match( '^' + abbrev + '.*', alias ):
+                if cat not in matches:
+                    matches.append( cat )
     if len( matches ) == 0:
-        raise CommandNotFoundError, 'THING not found: ' + abbrev
+        raise CommandNotFoundError, title + ' not found: ' + abbrev
     elif len( matches ) > 1:
-        # multiple matches, but they might be aliases for the same command
-        resolve = []
-        for match in matches:
-            res = categories[match]
-            if res not in resolve:
-                resolve.append(res)
-        if len( resolve ) > 1:
-            #raise CommandNotUniqueError, 'THING not unique: ' + abbrev + ' -> ' + ', '.join( resolve )
-            raise CommandNotUniqueError, 'THING not unique: ' + abbrev + ' -> ' + ', '.join( matches )
-        else:
-            category = resolve[0]
+        # multiple matches
+        res = ''
+        for cat in matches:
+            res += ' ' + '|'.join(categories[cat])
+        raise CommandNotUniqueError, abbrev + ' not unique:' + res
     else:
-        category = categories[matches[0]]
-    return category
+        return matches[0]
 
-def match_list( abbrev, commands ):
-    # allow any unique abbreviation to cylc topics and commands
+def match_command( abbrev ):
+    # allow any unique abbreviation to commands when no category is specified
     matches = []
-    for com in commands:
-        if re.match( '^' + abbrev + '.*', com ):
-            matches.append( com )
+    for dct in [ 
+        information_commands, 
+        control_commands, 
+        utility_commands, 
+        database_commands, 
+        preparation_commands, 
+        discover_commands, 
+        task_commands ]:
+        for com in dct.keys():
+            for alias in dct[com]:
+                if re.match( '^' + abbrev + '.*', alias ):
+                    if com not in matches:
+                        matches.append( com )
     if len( matches ) == 0:
         raise CommandNotFoundError, 'Command not found: ' + abbrev
     elif len( matches ) > 1:
@@ -69,7 +73,7 @@ def match_list( abbrev, commands ):
     else:
         return matches[0]
 
-def pretty_print( incom, choose, indent=True, numbered=False ):
+def pretty_print( incom, choose_dict, indent=True, numbered=False ):
     # pretty print commands or topics from a dict:
     # (com[item] = description)
     
@@ -78,10 +82,15 @@ def pretty_print( incom, choose, indent=True, numbered=False ):
     else:
         spacer = ''
 
-    longest = len(choose[0])
-    for item in choose:
-        if len( item )> longest:
-            longest = len( item )
+    label = {}
+    choose = []
+    longest = 0
+    for item in choose_dict:
+        choose.append( item )
+        lbl = '|'.join(choose_dict[item])
+        label[item] = lbl
+        if len( lbl ) > longest:
+            longest = len( lbl )
 
     count = 0
     pad = False
@@ -100,102 +109,84 @@ def pretty_print( incom, choose, indent=True, numbered=False ):
             else:
                 digit = str(count)
             print digit + '/', 
-        print item, '.'*(longest-len(item)) + '...', incom[item]
+        print label[item], '.'*(longest-len(label[item])) + '...', incom[item]
 
 # auto-replace with version tag at build/install:
 cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 
-# categories[ alias ] = category
-categories = {}
-categories['db'          ] = 'database'
-categories['database'    ] = 'database'
-categories['information' ] = 'information'
-categories['prepare'     ] = 'prepare'
-categories['preparation' ] = 'prepare'
-categories['discover'    ] = 'discover'
-categories['control'     ] = 'control'
-categories['utility'     ] = 'utility'
-categories['utilities'   ] = 'utility'
-categories['tasks'       ] = 'task'
+# categories[ categorey ] = [ aliases ] 
+categories = OrderedDict()
+categories['database'    ] = ['db', 'database' ]
+categories['information' ] = ['information'    ]
+categories['preparation' ] = ['prepare', 'preparation' ]
+categories['discover'    ] = ['discover' ]
+categories['control'     ] = ['control' ]
+categories['utility'     ] = ['utility', 'utilities' ]
+categories['task'       ] = ['task' ]
  
-information_commands = {}
-information_commands['gcylc'    ] = 'gcycl'
-information_commands['gcycl'    ] = 'gcycl'
-information_commands['list'     ] = 'list'
-information_commands['ls'       ] = 'list'
-information_commands['describe' ] = 'describe'
+information_commands = OrderedDict()
+information_commands['gcylc'    ] = [ 'gcylc' ]
+information_commands['list'     ] = [ 'list', 'ls' ]
+information_commands['describe' ] = ['describe' ]
 
 control_commands = OrderedDict()
-control_commands['gcylc'  ] = 'gcylc'
-control_commands['gcycl'  ] = 'gcylc'
-control_commands['run'    ] = 'run' 
-control_commands['start'  ] = 'run' 
-control_commands['stop'   ] = 'stop' 
-control_commands['restart'] = 'restart' 
-control_commands['trigger'] = 'trigger' 
-control_commands['insert' ] = 'insert' 
-control_commands['remove' ] = 'remove' 
-control_commands['delete' ] = 'remove' 
-control_commands['kill'   ] = 'remove' 
-control_commands['purge'  ] = 'purge' 
-control_commands['pause'  ] = 'pause' 
-control_commands['resume' ] = 'resume' 
-control_commands['block'  ] = 'block' 
-control_commands['unblock'] = 'unblock' 
-control_commands['reset'  ] = 'reset' 
-control_commands['dump'   ] = 'dump' 
-control_commands['show'   ] = 'show' 
-control_commands['log'    ] = 'log' 
-control_commands['tmon'   ] = 'tmon' 
-control_commands['lockserver'] = 'lockserver' 
-control_commands['lockclient'] = 'lockclient' 
-control_commands['verbosity' ] = 'verbosity' 
+control_commands['gcylc'  ] = information_commands[ 'gcylc' ]
+control_commands['run'    ] = ['run', 'start' ]
+control_commands['stop'   ] = ['stop', 'shutdown' ]
+control_commands['restart'] = ['restart' ]
+control_commands['trigger'] = ['trigger' ]
+control_commands['insert' ] = ['insert' ]
+control_commands['remove' ] = ['remove', 'delete', 'kill' ]
+control_commands['purge'  ] = ['purge' ]
+control_commands['pause'  ] = ['pause' ]
+control_commands['resume' ] = ['resume' ]
+control_commands['block'  ] = ['block' ]
+control_commands['unblock'] = ['unblock' ] 
+control_commands['reset'  ] = ['reset'  ]
+control_commands['dump'   ] = ['dump'  ]
+control_commands['show'   ] = ['show'  ]
+control_commands['log'    ] = ['log'  ]
+control_commands['tmon'   ] = ['tmon'  ]
+control_commands['lockserver'] = ['lockserver' ]
+control_commands['lockclient'] = ['lockclient' ]
+control_commands['verbosity' ] = ['verbosity' ]
  
-utility_commands = {}
-utility_commands['cycletime'] = 'cycletime'
-utility_commands['checkvars'] = 'checkvars'
-utility_commands['template' ] = 'template'
-utility_commands['housekeep'] = 'housekeep'
-utility_commands['transfer' ] = 'transfer'
+utility_commands = OrderedDict()
+utility_commands['cycletime'] = ['cycletime' ]
+utility_commands['checkvars'] = ['checkvars'] 
+utility_commands['template' ] = ['template'] 
+utility_commands['housekeep'] = ['housekeep'] 
+utility_commands['transfer' ] = ['transfer'] 
 
-database_commands = {}
-database_commands['gcylc'     ] = 'gcylc'
-database_commands['register'  ] = 'register'
-database_commands['reregister'] = 'reregister'
-database_commands['unregister'] = 'unregister'
-database_commands['copy'      ] = 'copy'
-database_commands['cp'        ] = 'copy'
-database_commands['print'     ] = 'print'
-database_commands['export'    ] = 'export'
-database_commands['import'    ] = 'import'
+database_commands = OrderedDict()
+database_commands['gcylc'     ] = information_commands['gcylc']
+database_commands['register'  ] = [ 'register' ]
+database_commands['reregister'] = [ 'reregister' ]
+database_commands['unregister'] = [ 'unregister' ]
+database_commands['copy'      ] = [ 'copy', 'cp' ]
+database_commands['print'     ] = [ 'print' ]
+database_commands['export'    ] = [ 'export' ]
+database_commands['import'    ] = [ 'import' ]
 
-prepare_commands = {}
-prepare_commands['gcylc'   ] = 'gcylc'
-prepare_commands['gcycl'   ] = 'gcylc'
-prepare_commands['edit'    ] = 'edit'
-prepare_commands['inline'  ] = 'inline'
-prepare_commands['validate'] = 'validate'
-prepare_commands['search'  ] = 'search'
-prepare_commands['grep'    ] = 'search'
-prepare_commands['graph'   ] = 'graph'
+preparation_commands = OrderedDict()
+preparation_commands['gcylc'   ] = information_commands['gcylc']
+preparation_commands['edit'    ] = [ 'edit'    ]
+preparation_commands['inline'  ] = [ 'inline'    ]
+preparation_commands['validate'] = [ 'validate'    ]
+preparation_commands['search'  ] = [ 'search', 'grep' ]
+preparation_commands['graph'   ] = [ 'graph'    ]
 
-discover_commands = {}
-discover_commands['ping'] = 'ping'
-discover_commands['scan'] = 'scan'
+discover_commands = OrderedDict()
+discover_commands['ping'] = [ 'ping' ]
+discover_commands['scan'] = [ 'scan' ]
 
-task_commands = {}
-task_commands['wrap'] = 'wrap'
-task_commands['submit'] = 'submit'
-task_commands['single'] = 'submit'
-task_commands['started'] = 'started'
-task_commands['message'] = 'message'
-task_commands['finished'] = 'finished'
-task_commands['failed'] = 'failed'
-
-task_commands['task-started' ] = 'started'
-task_commands['task-finished'] = 'finished'
-task_commands['task-failed'  ] = 'failed'
-task_commands['task-message' ] = 'message'
+task_commands = OrderedDict()
+task_commands['wrap'] = [ 'wrap' ]
+task_commands['submit'] = [ 'submit', 'single' ]
+task_commands['started'] = [ 'started', 'task-started' ]
+task_commands['message'] = [ 'message', 'task-message' ]
+task_commands['finished'] = [ 'finished', 'task-finished' ]
+task_commands['failed'] = [ 'failed', 'task-failed' ]
 
 general_usage = """
 USAGE:
@@ -212,7 +203,7 @@ USAGE:
 catsum = OrderedDict()
 catsum['database'  ]     = "(or db) local and central suite registration."
 catsum['information' ] = "retrieve and print information about a suite."
-catsum['prepare'  ]      = "suite editing, graphing, validiation etc."
+catsum['preparation'  ]      = "suite editing, graphing, validiation etc."
 catsum['discover' ]      = "what suites are running at the moment?"
 catsum['control'  ]      = "running, monitoring, and controlling suites."
 catsum['task'     ]      = "running single tasks, task wrapping and messaging."
@@ -242,7 +233,7 @@ Command CATEGORIES (which include lists of relevant COMMANDS):"""
 
 if len(sys.argv) == 1:
     print usage
-    pretty_print( catsum, catsum.keys() )
+    pretty_print( catsum, categories )
     sys.exit(1)
 
 # command summaries
@@ -252,7 +243,6 @@ comsum[ 'register'   ] = 'Add a suite to your local registration database'
 comsum[ 'reregister' ] = 'Reregister local or central suite registrations'
 comsum[ 'unregister' ] = 'Unregister suites from the local or central database'
 comsum[ 'copy'       ] = 'Copy a suite or group of suites.'
-comsum[ 'cp'         ] = comsum['copy']
 comsum[ 'print'      ] = 'Print local or central suite registrations'
 comsum[ 'import'     ] = 'Import central registrations to your local database'
 comsum[ 'export'     ] = 'Export local registrations to the central database'
@@ -261,17 +251,13 @@ comsum[ 'edit'       ] = 'Edit a suite.rc file in $EDITOR, optionally inlined'
 comsum[ 'inline'     ] = 'View suite.rc files in $EDITOR, include-files inlined'
 comsum[ 'validate'   ] = 'Parse and validate a suite config (suite.rc) file'
 comsum[ 'search'     ] = 'An intelligent search tool for cylc suites'
-comsum[ 'grep'       ] = comsum['search']
 comsum[ 'graph'      ] = 'A dependency graph viewer that updates as you edit'
 # information
 comsum[ 'list'       ] = 'Print a suite\'s task list'
-comsum[ 'ls'         ] = comsum['list']
 comsum[ 'describe'   ] = 'Print a suite\'s title and description'
 # control
 comsum[ 'gcylc'      ] = 'The cylc Graphical User Interface'
-comsum[ 'gcycl'      ] = comsum['gcylc']
 comsum[ 'run'        ] = 'Cold, warm, or raw start a suite at a given cycle time'
-comsum[ 'start'      ] = comsum['run']
 comsum[ 'stop'       ] = 'Shut down a running suite (now or later)'
 comsum[ 'restart'    ] = 'Restart a suite from a previous state'
 comsum[ 'trigger'    ] = 'Manually trigger a task in a running suite'
@@ -296,16 +282,10 @@ comsum[ 'scan'       ] = 'Scan a host for running cylc suites and lockservers'
 # task
 comsum[ 'wrap'       ] = 'Use an existing script or program as a cylc task'
 comsum[ 'submit'     ] = 'Run a single task just as its parent suite would'
-comsum[ 'single'     ] = comsum['submit']
 comsum[ 'started'    ] = 'Acquire a task lock and report started'
 comsum[ 'message'    ] = 'Report completion of outputs, etc.'
 comsum[ 'finished'   ] = 'Release task lock and report finished'
 comsum[ 'failed'     ] = 'Release task lock and report failure'
-
-comsum[ 'task-started'  ] = 'DEPRECATED: use started'
-comsum[ 'task-message'  ] = 'DEPRECATED: use message.'
-comsum[ 'task-finished' ] = 'DEPRECATED: use finished'
-comsum[ 'task-failed'   ] = 'DEPRECATED: use failed'
 
 # utility
 comsum[ 'cycletime'  ] = 'Cycle time arithmetic'
@@ -313,10 +293,15 @@ comsum[ 'checkvars'  ] = 'Check required environment variables en masse'
 comsum[ 'template'   ] = 'Powerful cycle time offset filename templating'
 comsum[ 'housekeep'  ] = 'Parallel archiving and cleanup on cycle time offsets'
 comsum[ 'transfer'   ] = 'An scp-based file transfer tool'
+
+def typo( str ):
+    corrected = str
+    if str == 'gcycl':
+        corrected = 'gcylc'
+    return corrected
  
 def category_help(category):
     coms = eval( category + '_commands')
-    commands = coms.keys()
     print 'CATEGORY: ' + category + ' - ' + catsum[ category ]
     print
     print 'USAGE: cylc [' + category + '] COMMAND help,--help'
@@ -324,7 +309,7 @@ def category_help(category):
     print '  The category "' + category + '" may be omitted.'
     print
     print 'COMMANDS:'
-    pretty_print( comsum, commands )
+    pretty_print( comsum, coms )
 
 # check that the cylc core modules are accessible
 try:
@@ -341,7 +326,7 @@ args = sys.argv[1:]
 # cylc help
 if len( args ) == 1 and is_help( args[0] ):
     print usage
-    pretty_print( catsum, catsum.keys() )
+    pretty_print( catsum, categories)
     sys.exit(0)
 
 # cylc -v,--version
@@ -350,29 +335,26 @@ if len( args ) == 1 and \
     print cylc_version
     sys.exit(0)
 
-all_commands = comsum.keys()
 command_args = []
 
-# TWO ARGUMENTS, one help
-# cylc help CATEGORY
-# cylc CATEGORY help
-# cylc help COMMAND
-# cylc COMMAND help
-
 if len( args ) == 2 and ( is_help(args[0]) or is_help(args[1])):
+    # TWO ARGUMENTS, one help
+    # cylc help CATEGORY
+    # cylc CATEGORY help
+    # cylc help COMMAND
+    # cylc COMMAND help
     if is_help( args[1] ):
         item = args[0]
     else:
         item = args[1]
     try:
-        category = match_dict( item, categories )
+        category = match_dict( item, categories, 'CATEGORY' )
     except CommandError, x:
         # no matching category, try command
-        print x
-        print 'Trying Commands...'
         try:
-            command = match_list( item, all_commands )
+            command = match_command( typo(item) )
         except CommandError, y:
+            print x
             raise SystemExit(y)
         else:
             # cylc COMMAND --help
@@ -392,13 +374,13 @@ elif len( args ) == 3 and ( is_help(args[0]) or is_help(args[2])):
         category = args[1]
         command = args[2]
     try:
-        category = match_dict( category, categories )
+        category = match_dict( category, categories, category + ' COMMANDS' )
     except CommandError, x:
         raise SystemExit(x)
 
     coms = eval( category + '_commands')
     try:
-        command = match_dict( command, coms )
+        command = match_dict( command, coms, category + ' COMMANDS' )
     except CommandError, y:
         print y
         print 'Commands available in category ' + category + ':'
@@ -414,15 +396,14 @@ else:
     # cylc COMMAND [ARGS]
     try:
         category = args[0]
-        category = match_dict( category, categories )
+        category = match_dict( category, categories, 'CATEGORY' )
     except CommandError, x:
         # no matching category, try command
-        print x
-        print 'Trying Commands...'
         try:
             command = args[0]
-            command = match_list( command, all_commands )
+            command = match_command( typo(command) )
         except CommandError, y:
+            print x
             raise SystemExit(y)
         else:
             # cylc COMMAND [ARGS]

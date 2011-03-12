@@ -11,7 +11,7 @@ debug = True
 
 class start( scheduler ):
     def __init__( self ):
-        usage = """cylc [control] run [options] SUITE YYYYMMDDHHH
+        usage = """cylc [control] run|start [options] SUITE YYYYMMDDHHH
 
 COLD (default), WARM, or RAW START a suite at a specified cycle time.
 

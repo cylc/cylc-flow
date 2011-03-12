@@ -7,7 +7,7 @@ from optparse import OptionParser
 from registration import localdb, regsplit, RegistrationError
 from regprompt import prompt
 
-parser = OptionParser( usage = """cylc [db] copy [OPTIONS] FROM TO [DIR]
+parser = OptionParser( usage = """cylc [db] copy|cp [OPTIONS] FROM TO [DIR]
 
 Copy local suites or groups.
     One suite: GROUP:NAME into DIR
