@@ -54,7 +54,7 @@ export PYTHONPATH=src:$PYTHONPATH
 echo
 echo "LATEX PROCESSING 1/3"
 echo
-doc/process
+doc/process -c
 echo
 echo "LATEX PROCESSING 2/3"
 echo

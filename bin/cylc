@@ -221,7 +221,7 @@ catsum = OrderedDict()
 catsum['all'    ]        = "the complete cylc command set"
 catsum['database'    ]   = "local and central suite registration."
 catsum['information' ]   = "retrieve and print information about a suite."
-catsum['preparation' ]   = "suite editing, graphing, validiation etc."
+catsum['preparation' ]   = "suite editing, graphing, validation etc."
 catsum['discovery'   ]   = "what suites are running at the moment?"
 catsum['control'     ]   = "running, monitoring, and controlling suites."
 catsum['task'        ]   = "running single tasks, task wrapping and messaging."
@@ -318,7 +318,7 @@ def category_help(category):
     coms = eval( category + '_commands')
     print 'CATEGORY: ' + category + ' - ' + catsum[ category ]
     print
-    print 'SEE: cylc [' + category + '] COMMAND help,--help'
+    print 'HELP: cylc [' + category + '] COMMAND help,--help'
     print '  You can abbreviate "' + category + '" and COMMAND.'
     print '  The category "' + category + '" may be omitted.'
     print
