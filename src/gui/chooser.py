@@ -363,7 +363,7 @@ class chooser(object):
             self.window.set_title("Registered Suites (READONLY)" )
         else:
             self.window.set_title("Registered Suites" )
-        self.window.set_size_request(600, 400)
+        self.window.set_size_request(600, 300)
         #self.window.set_border_width( 5 )
         self.window.connect("delete_event", self.delete_all_event)
 
