@@ -419,8 +419,6 @@ class scheduler(object):
             self.pyro.handleRequests(timeout=1)
         # END MAIN LOOP
 
-        self.shutdown()
-
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
         answer = False
@@ -449,6 +447,7 @@ class scheduler(object):
         return answer
 
     def shutdown( self ):
+        # called by main command
         print "\nSTOPPING"
 
         if self.use_lockserver:
@@ -462,7 +461,7 @@ class scheduler(object):
                 print "Releasing suite lock"
                 lock = suite_lock( suitename, self.suite_dir, self.owner, self.host, self.lockserver_port, 'scheduler' )
                 if not lock.release_suite_access():
-                    print >> sys.stderr, 'failed to release suite!'
+                    print >> sys.stderr, 'WARNING failed to release suite lock!'
 
         if self.pyro:
             self.pyro.shutdown()

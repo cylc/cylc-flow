@@ -208,3 +208,6 @@ if __name__ == '__main__':
         print "ERROR CAUGHT; will clean up before exit"
         server.shutdown()
         raise
+    else:
+        # success!
+        server.shutdown()

@@ -326,7 +326,7 @@ class lockserver( Pyro.core.ObjBase ):
         result = True
         if suite_dir in self.exclusive:
             if lockgroup not in self.exclusive[ suite_dir ]:
-                #self.log.warning( "suite release group name error" )
+                self.log.warning( "suite release group name error" )
                 result = False
             else:
                 del self.exclusive[ suite_dir ]
@@ -334,7 +334,7 @@ class lockserver( Pyro.core.ObjBase ):
         elif suite_dir in self.inclusive:
             names = self.inclusive[ suite_dir ]
             if lockgroup not in names:
-                #self.log.warning( "suite release group name error" )
+                self.log.warning( "suite release group name error" )
                 result = False
             elif len( names ) == 1:
                 del self.inclusive[ suite_dir ]
@@ -343,7 +343,7 @@ class lockserver( Pyro.core.ObjBase ):
                 self.inclusive[ suite_dir ].remove( lockgroup )
                 result = True
         else:
-            #self.log.warning( "erroneous suite release request" )
+            self.log.warning( "erroneous suite release request: lock not found" )
             result = False
         if result:
             self.dump_state() 

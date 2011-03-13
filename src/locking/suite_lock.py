@@ -42,7 +42,6 @@ class suite_lock(object):
         server = lockserver( self.owner, self.host, self.port ).get()
         result = server.release_suite_access( self.suite_dir, self.lockgroup )
         if not result:
-            print >> sys.stderr, 'WARNING, failed to release suite access'
             return False
         else:
            return True
