@@ -15,10 +15,6 @@ parser.add_option( "-d", "--debug", help="print the "
         "exception traceback for validation errors.",
         action="store_true", default=False, dest="debug" )
 
-#parser.add_option( "--add-tags", help="Add simple markup tags "
-#"for the gycle command capture window.",
-#        action="store_true", default=False, dest="addtags" )
-
 (options, args) = parser.parse_args()
 
 if len(args) != 1:
