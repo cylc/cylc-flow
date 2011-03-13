@@ -12,20 +12,22 @@ from gtkmonitor import standalone_monitor
 
 import socket
 
-parser = OptionParser( """gcylc [SUITE]
+parser = OptionParser( """1/ gcylc [SUITE] &
 
-This is the cylc graphical user interface.
-See also 'cylc', the commandline interface.
+This is the cylc graphical user interface. It is functionally equivalent
+to the commandline interface ('cylc help') in most respects.
 
-If the SUITE argument is supplied you will get a direct control app for
-the specified suite, bypassing the suite registration database chooser.
+To start the main gcylc GUI from which you can access all functionality
+for any of your own suites, and those registered in the database:
+    1/ gcylc &
 
-WARNING: start important suites with:
+To launch just a suite control GUI for just the specified registered suite:
+    2/ gcylc SUITE &
+
+NOTE: daemonize important suites with the POSIX nohup command:
     $ nohup gcylc [options] [SUITE] &
-The 'nohup' command detaches from the parent shell so that the suite
-won't be killed when you log out.
 
-[SUITE]                  Registered name of a suite to run.""")
+[SUITE]                  Registered group:name of a suite to run.""")
 
 #parser.add_option( "--host",
 #        help="cylc suite host (defaults to localhost).",

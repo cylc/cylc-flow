@@ -52,8 +52,8 @@ from the suite. The cold start task list must be defined in the suite
 config file:
   SUITE.RC: [special tasks] -> coldstart = task1, task2, ...
  
-NOTE: to prevent a suite being killed when you log out: 
-  $ nohup cylc control warmstart SUITE YYYYMMDDHH
+NOTE: daemonize important suites with the POSIX nohup command:
+  $ nohup cylc [con] run SUITE YYYYMMDDHH > suite.out 2> suite.err &
 
 See also:
     cylc [control] restart
