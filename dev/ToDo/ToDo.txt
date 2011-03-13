@@ -1,6 +1,18 @@
 _______
 GENERAL
 
+
+ * FOR SUITES WITH OWNED TASKS:
+ replace suite owner with task owner in job submission log directory
+ (e.g. for 'sudo -u owner llsubmit task' the job log dir ends up in the
+ ll directives for stdout and stderr output; these must be writeable by
+ the owner or the job will be put on hold by loadleveler). CURRENTLY
+ this is hardwired into ll_basic.py job submission but needs to be made
+ more generally applicable. Also, can we provide a general mechanism for
+ owned tasks in case suite and task owner home directories are of
+ different structure? Perhaps owned tasks need to set a job log
+ directory in their suite.rc task section?
+
 * job submission log directory for tasks with owners: MUST be relative
   to $HOME, which is used as loadleveler @initialdir, not absolute, or 
   the loadleveler stdout and stderr output file directives will end up

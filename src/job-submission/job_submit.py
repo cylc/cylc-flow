@@ -264,6 +264,7 @@ class job_submit(object):
             new_dir = self.homedir
 
         if self.owner != self.cylc_owner:
+            # submit using sudo
             self.command = 'sudo -u ' + self.owner + ' ' + self.command
 
         # execute the local command to submit the job

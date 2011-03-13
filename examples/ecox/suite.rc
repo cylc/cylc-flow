@@ -1,6 +1,6 @@
 title = EcoConnect Operational Cylc Suite
 maximum runahead hours = 72
-job submission log directory = running/logs
+job submission log directory = $HOME/running/$CYLC_SUITE/logs
 number of state dump backups = 100
 
 job submission method = ll_basic_eco
@@ -8,7 +8,7 @@ job submission method = ll_basic_eco
 
 roll scheduler log at startup = True
 
-ignore task owners = True
+#ignore task owners = True
 use suite blocking = False
 use secure passphrase = False
 use lockserver = False

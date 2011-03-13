@@ -1,8 +1,9 @@
 title = string( default="No suite title given" )
 description = string( default="No suite description supplied" )
-# promise all I/O relative to $HOME:
+# declare all I/O relative to $HOME:
 user portable = boolean( default=False )
-# promise all I/O includes $CYLC_SUITE or $CYLC_SUITE_GROUP and $CYLC_SUITE_NAME
+# declare all I/O unique by suite registration (i.e. all I/O paths include 
+# either $CYLC_SUITE or $CYLC_SUITE_GROUP and $CYLC_SUITE_NAME:
 allow multiple simultaneous suite instances = boolean( default=False )
 maximum runahead hours = integer( min=0, default=24 )
 number of state dump backups = integer( min=1, default=10 )
@@ -20,10 +21,11 @@ use secure passphrase = boolean( default=False )
 use lockserver = boolean( default=False )
 use quick task elimination = boolean( default=True )
 
-# absolute, or relative to $HOME:
-top level state dump directory = string( default = '.cylc/state' )
-top level logging directory = string( default = '.cylc/logging' )
-job submission log directory = string( default='' )
+# directories: absolute path, but can use ~user, env vars ($HOME etc.):
+top level state dump directory = string( default = '$HOME/.cylc/state' )
+top level logging directory = string( default = '$HOME/.cylc/logging' )
+# for owned tasks, the suite owner's homedir is replaced by task owner's.
+job submission log directory = string( default='$HOME/CylcJobLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
 
 task submitted hook = string( default=None )
 task started hook = string( default=None )
@@ -65,13 +67,13 @@ write live graph = boolean( default=False )
 live graph movie = boolean( default=False )
 
 # absolute, or relative to $CYLC_SUITE_DIR for portability
-live graph directory path = string( default='graphing')
+live graph directory path = string( default='$CYLC_SUITE_DIR/graphing')
 
 [visualization]
 # hours after which to stop plotting the run time graph
 when to stop updating = integer( default=24 )
 # absolute, or relative to $CYLC_SUITE_DIR for portability
-run time graph directory = string( default='graphing')
+run time graph directory = string( default='$CYLC_SUITE_DIR/graphing')
 run time graph filename  = string( default='runtime.dot')
 # TO DO: USE SUB-GRAPH FOR FAMILY MEMBERS
 show family members = boolean( default=False )

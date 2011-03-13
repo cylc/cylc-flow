@@ -142,12 +142,24 @@ class config( CylcConfigObj ):
             self.suite = '(unknown)'
             self.dir = path
             self.file = os.path.join( path, 'suite.rc' )
-        else:
+        elif 'CYLC_SUITE' in os.environ:
             self.suite = os.environ[ 'CYLC_SUITE' ]
             self.file = os.path.join( os.environ[ 'CYLC_SUITE_DIR' ], 'suite.rc' ),
+        else:
+            raise SuiteConfigError, 'Suite Undefined Error'
 
         if not os.path.isfile( self.file ):
             raise SuiteConfigError, 'File not found: ' + self.file
+
+        # now export CYLC_SUITE, CYLC_SUITE_GROUP, and CYLC_SUITE_NAME
+        # to the local environment so that these variables can be used
+        # in directories defined in the suite config file (see use of 
+        # os.path.expandvars() below).
+        cylc_suite_group, cylc_suite_name = re.split( ':', self.suite )
+        os.environ['CYLC_SUITE'] = self.suite
+        os.environ['CYLC_SUITE_GROUP' ] = cylc_suite_group
+        os.environ['CYLC_SUITE_NAME'  ] = cylc_suite_name
+        os.environ['CYLC_SUITE_DIR'   ] = self.dir
 
         self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc.spec')
 
@@ -279,25 +291,17 @@ class config( CylcConfigObj ):
         # TO DO: check listed family members in the same way
 
     def process_configured_directories( self ):
-        # Make directories relative to $HOME or $CYLC_SUITE_DIR,
-        # unless specified as absolute paths already.
-        self['top level logging directory'] = self.make_dir_absolute( self['top level logging directory'], home=True )
-        self['top level state dump directory'] = self.make_dir_absolute( self['top level state dump directory'], home=True )
-        self['visualization']['run time graph directory'] = self.make_dir_absolute( self['visualization']['run time graph directory'] )
-        self['experimental']['live graph directory path'] = self.make_dir_absolute( self['experimental']['live graph directory path'] )
-        ### CURRENTLY job submission log dir must be relative to $HOME for tasks with owners.
-        ### self['job submission log directory' ] = self.make_dir_absolute( self['job submission log directory' ], home=True )
-
-    def make_dir_absolute( self, indir, home=False ):
-        # make dir relative to $HOME or $CYLC_SUITE_DIR unless already absolute.
-        if re.match( '^/', indir ):
-            # already absolute
-            return indir
-        if home:
-            prefix = os.environ['HOME']
-        else:
-            prefix = self.dir
-        return os.path.join( prefix, indir )
+        # absolute path, but can use ~user, env vars ($HOME etc.):
+        self['top level logging directory'] = \
+                os.path.expandvars( os.path.expanduser( self['top level logging directory']))
+        self['top level state dump directory'] =  \
+                os.path.expandvars( os.path.expanduser( self['top level state dump directory']))
+        self['job submission log directory' ] = \
+                os.path.expandvars( os.path.expanduser( self['job submission log directory' ]))
+        self['visualization']['run time graph directory'] = \
+                os.path.expandvars( os.path.expanduser( self['visualization']['run time graph directory']))
+        self['experimental']['live graph directory path'] = \
+                os.path.expandvars( os.path.expanduser( self['experimental']['live graph directory path'])) 
 
     def create_directories( self ):
         # create logging, state, and job log directories if necessary

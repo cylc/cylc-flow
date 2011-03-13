@@ -29,6 +29,14 @@ class ll_basic( job_submit ):
             out = self.task_id + '.out'
             err = self.task_id + '.err'
 
+
+        # if task is owned, replace suite owner with task owner in out
+        # and err file paths. TO DO: this will not have the desired
+        # effect if the suite and task owners' home directories are not
+        # of the same structure. TO DO: consider ssh'd remote tasks too.
+        out = re.sub( self.suite_owner, self.owner, out )
+        err = re.sub( self.suite_owner, self.owner, err )
+
         # default directives
         directives = {}
         directives[ 'shell'    ] = '/bin/bash'
