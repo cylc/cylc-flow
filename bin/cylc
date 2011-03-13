@@ -452,17 +452,17 @@ else:
             command_args = args[1:]
     else:
         # cylc CATEGORY COMMAND [ARGS]
-        commands = eval( category + '_commands')
+        coms = eval( category + '_commands')
         command = args[1]
         try:
-            command = match_dict( command, coms )
+            command = match_dict( command, coms, category + ' COMMAND' )
         except CommandNotUniqueError, y:
             print y
             sys.exit(1)
         except CommandNotFoundError, y:
             print y
             print 'COMMANDS available in CATEGORY "' + category + '":'
-            print commands
+            print coms
             sys.exit(1)
  
         else:
