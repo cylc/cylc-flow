@@ -79,7 +79,11 @@ if options.filename:
     file = options.filename
 
 if view_file:
-    window = xdot.DotWindow()
+    try:
+        from xdot import DotWindow
+    except:
+        raise SystemExit( "Failed to import the xdot viewer.")
+    window = DotWindow()
     try:
         window.update( file )
     except OSError, x:
