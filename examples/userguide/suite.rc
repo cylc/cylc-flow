@@ -35,7 +35,7 @@ use lockserver = True
                     prep => X & ColdA & ColdB & ColdC"""
 [environment]
     TASK_EXE_SECONDS = 5
-    WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
+    WORKSPACE = /tmp/$USER/$CYLC_SUITE/common
     RUNNING   = $WORKSPACE/running
 
 [tasks]

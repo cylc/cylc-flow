@@ -4,6 +4,7 @@ job submission log directory = running/logs
 number of state dump backups = 100
 
 job submission method = ll_basic_eco
+#job submission method = ll_basic
 
 roll scheduler log at startup = True
 

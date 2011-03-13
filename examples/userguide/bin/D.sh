@@ -16,7 +16,7 @@ for PRE in $ONE $TWO; do
     fi
 done
 
-echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_NAME"
+echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE"
 
 sleep $TASK_EXE_SECONDS
 
