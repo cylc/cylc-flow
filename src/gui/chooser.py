@@ -360,9 +360,10 @@ class chooser(object):
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         if self.readonly:
-            self.window.set_title("Registered Suites (READONLY)" )
+            # TO DO: READONLY IS NO LONGER USED?
+            self.window.set_title("Registered Suites (LOCAL DATABASE; READONLY)" )
         else:
-            self.window.set_title("Registered Suites" )
+            self.window.set_title("Registered Suites (LOCAL DATABASE)" )
         self.window.set_size_request(600, 300)
         #self.window.set_border_width( 5 )
         self.window.connect("delete_event", self.delete_all_event)
@@ -676,6 +677,7 @@ The cylc forecast suite metascheduler.
     def localdb( self, w, new_menu_item, other_w ):
         if not self.cdb:
             return
+        self.window.set_title("Registered Suites (LOCAL DATABASE)" )
         w.set_sensitive(False)
         other_w.set_sensitive(True)
         self.cdb = False
@@ -689,6 +691,7 @@ The cylc forecast suite metascheduler.
     def centraldb( self, w, new_menu_item, other_w ):
         if self.cdb:
             return
+        self.window.set_title("Registered Suites (CENTRAL DATABASE)" )
         w.set_sensitive(False)
         other_w.set_sensitive(True)
         self.cdb = True
