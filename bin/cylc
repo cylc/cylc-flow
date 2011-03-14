@@ -232,24 +232,21 @@ catsum['utility'     ]   = "cycle time arithmetic, filename templating, etc."
 ##multiple cycles run at once, during catchup operation, to the maximum
 ##extent allowed by the suite dependency graph.
 
-usage = """
-This is the cylc ('silk') metascheduler command line interface.
+usage = """This is the cylc ('silk') metascheduler command line interface.
        *** The graphical user interface is gcylc. ***
-
 Version: """ + cylc_version + """
 """ + general_usage + """
 
 CATEGORIES help to organise this documentation. Any unique abbreviation
 can be used for a COMMAND or CATEGORY. Use of categories is optional in
-command invocation (they will disambiguate highly abbreviated commands).
-Some commands have aliases (e.g. ls = list; cp = copy; run = start) and
-some common typos are detected and corrected (cylc,cycl; help,hlep;...) 
-  $ cylc help prep ......... (cylc help prepare)
-  $ cylc help [prep] ed .... (cylc help [prepare] edit)
-  $ cylc [prep] ed help .... (cylc [prepare] edit help)
-  $ cylc [info] ls SUITE ... (cylc [information] list SUITE) 
+command invocation (they will disambiguate highly abbreviated commands)
+Some commands are aliased (ls|list); common typos corrected (cylc,cycl).
+How to drill down to command usage help for a particular command:
+  $ cylc help ............... list all available categories (this page)
+  $ cylc help prep .......... list commands in category 'preparation'
+  $ cylc help [prep] edit ... command usage help for 'cylc [prep] edit'
 
-Command CATEGORIES (which include lists of relevant COMMANDS):"""
+Command CATEGORIES:"""
 
 # command summaries
 comsum = OrderedDict()
