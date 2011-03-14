@@ -2,8 +2,6 @@
 
 set -e; trap "echo 'TEST FAILED (see output log)'" ERR
 
-echo "SCRIPT UPGRADE IN PROCESS - CURRENTLY BROKEN!"
-
 SUITE_REG=Z1TtestQrX:foobar
 SUITE_DIR=${TMPDIR:-/tmp/$USER}/Z1TtestQrX/foobar
 
@@ -29,7 +27,7 @@ if [[ $# != 0 ]]; then
         echo "  - Purges the failed X and dependants through to 00Z (T0+18 hours)"
         echo "    inclusive, which allows the suite to get going again at 06Z;"
         echo "  - Waits for the suite to shut itself down at the 12Z stop time."
-        echo "  - Run a single task (startup) from the suite with submit." 
+        echo "  - Run a single task (called prep) from the suite with submit." 
         echo
         echo "Options:"
         echo "  -h, --help   Print this help message and exit."
@@ -47,7 +45,9 @@ fi
 
 # START FROM A CLEAN SLATE
 echo -n ">> pre-start cleanup..."
-cylc db unreg $SUITE_REG | true
+if cylc db unreg $SUITE_REG; then
+    echo "unregistered old suite"
+fi
 rm -rf $SUITE_DIR
 echo done
 
@@ -60,15 +60,14 @@ OUT=test.out; OUT_SCHED=test-sched.out
 rm -f $OUT $OUT_SCHED
 
 # suite log
-LOGDIR=$( cylc info log -p $SUITE_REG )
-LOG=$LOGDIR/log
+LOG=$( cylc info log -p $SUITE_REG )
 # remove old test log
-rm -rf $LOGDIR
+rm -rf $LOG
 
 # START UP THE TEST SUITE
 echo
 echo ">> STARTING at 2010010106, with TASK X to FAIL at 2010010112"
-export TEST_X_FAIL_TIME=2010101012
+export TEST_X_FAIL_TIME=2010010112
 
 # startup errors (e.g. due to lockserver denying access to the suite)
 # won't be trapped here because we run cylc in the background!
@@ -92,8 +91,10 @@ READY=false
 while ! $READY; do
     READY=true
     for TASK in A B C D E F; do
+        #! grep "${TASK}%2010010106 finished" $LOG && READY=false
         ! grep "${TASK}%2010010106 finished" $LOG > /dev/null 2>&1 && READY=false
     done
+    #! grep "X%2010010112 failed" $LOG && READY=false
     ! grep "X%2010010112 failed" $LOG > /dev/null 2>&1 && READY=false
     echo -n .
     sleep 1
@@ -109,12 +110,14 @@ echo done
 # INSERT A COLDSTART TASK AT 2010010206
 echo
 echo -n ">> INSERTING a coldstart task at 2010010206 ..."
-cylc insert -f $SUITE_REG coldstart%2010010206 >> $OUT 2>&1
+cylc insert -f $SUITE_REG ColdA%2010010206 >> $OUT 2>&1
+cylc insert -f $SUITE_REG ColdB%2010010206 >> $OUT 2>&1
+cylc insert -f $SUITE_REG ColdC%2010010206 >> $OUT 2>&1
 echo done
 
 # PURGE THE FAILED TASK AND ITS DEPENDANTS THROUGH TO 2010010200
 echo
-echo ">> PURGING X%2010010112 and all dependants, through to 2010010200"
+echo ">> PURGING X%2010010112 and all dependents, through to 2010010200"
 echo -n "   ... "
 cylc purge -f $SUITE_REG X%2010010112 2010010200 >> $OUT 2>&1
 echo done
@@ -136,8 +139,8 @@ echo done
 # can be one that completes successfully or fails, it doesn't matter.
 echo
 # PARSE OUTPUT FROM submit TO GET JOB LOG FILES:
-echo ">> RUN A SINGLE TASK (startup%2010010106) from the suite"
-FOO=$(cylc submit $SUITE_REG startup%2010010106 )
+echo ">> RUN A SINGLE TASK (prep%2010010106) from the suite"
+FOO=$(cylc submit $SUITE_REG prep%2010010106 )
 STDOUT=$( echo $FOO | sed -e 's/.*1> //' | sed -e 's/ 2>.*//' )
 STDERR=$( echo $FOO | sed -e 's/.*2> //' | sed -e 's/ &.*$//' )
 echo "TASK OUTPUT LOGS:"
@@ -146,7 +149,7 @@ echo "  $STDERR"
 echo -n "   ."
 READY=false
 while ! $READY; do
-    egrep 'cylc \(submit.*\): startup%2010010106 finished' $STDOUT 2> /dev/null && READY=true
+    egrep 'cylc \(submit.*\): prep%2010010106 finished' $STDOUT 2> /dev/null && READY=true
     echo -n .
     sleep 1
 done

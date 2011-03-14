@@ -11,8 +11,9 @@ sleep $TASK_EXE_SECONDS
 echo "XXXXXXXXXXX $TEST_X_FAIL_TIME"
 if [[ ! -z $TEST_X_FAIL_TIME ]]; then
     # required by the scheduler test script
+    echo $TEST_X_FAIL_TIME $CYCLE_TIME
     if [[ $TEST_X_FAIL_TIME = $CYCLE_TIME ]]; then
-        echo "ABORTING BY SUITE OWNER REQUEST!"
+        echo "ABORTING BY SUITE OWNER REQUEST!" >&2
         exit 1
     fi
 fi
