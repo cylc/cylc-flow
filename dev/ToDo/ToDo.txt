@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* note DO NOT USE a suite reg GROUP:NAME as a suite definition dir
+  as the colon screws up the PATH to the suite bin directory.
+
 * tasks that are not in the dep graph cannot even be run with 'submit';
   could we relax this requirement?
 

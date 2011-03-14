@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This is a thorough test of cylc suite registration database
+# functionality (local and central).
+
 # exit immediately on error
 set -e
 

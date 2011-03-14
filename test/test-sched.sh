@@ -1,29 +1,15 @@
 #!/bin/bash
 
-echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-echo "DISABLED: NEEDS UPDATING FOR NEW SUITE CONFIG AND ASSOCIATED CHANGES"
-echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-exit 1
-
 set -e; trap "echo 'TEST FAILED (see output log)'" ERR
 
-#          ________________________  
-#         |____C_O_P_Y_R_I_G_H_T___|
-#         |                        |
-#         |  (c) NIWA, 2008-2010   |
-#         | Contact: Hilary Oliver |
-#         |  h.oliver@niwa.co.nz   |
-#         |    +64-4-386 0461      |
-#         |________________________|
+echo "SCRIPT UPGRADE IN PROCESS - CURRENTLY BROKEN!"
 
+SUITE_REG=Z1TtestQrX:foobar
+SUITE_DIR=${TMPDIR:-/tmp/$USER}/Z1TtestQrX/foobar
 
-dummy_mode=false
 if [[ $# != 0 ]]; then
-    if [[ $1 == '-d' || $1 == '--dummy' ]]; then
-        dummy_mode=true
-
-    elif [[ $1 == '-h' || $1 == '--help' ]]; then
-        echo "Usage: cylc test [options]"
+    if [[ $1 == '-h' || $1 == '--help' ]]; then
+        echo "Usage: test-sched"
         echo 
         echo "Run an automated test of core cylc functionality using a new copy of"
         echo "the userguide example suite. This should be used to check that new"
@@ -34,7 +20,7 @@ if [[ $# != 0 ]]; then
         echo
         echo "Currently the test does the following:"
         echo "  - Copies the userguide example suite definition directory;"
-        echo "  - Registers the new suite as 'test';"
+        echo "  - Registers the new suite as $SUITE_REG;"
         echo "  - Starts the suite at T0=06Z, with task X set to fail at 12Z;"
         echo "  - Unlocks the running suite;"
         echo "  - Sets a stop time at 12Z (i.e. T0+30 hours);"
@@ -47,7 +33,6 @@ if [[ $# != 0 ]]; then
         echo
         echo "Options:"
         echo "  -h, --help   Print this help message and exit."
-        echo "  -d, --dummy  Run the test in dummy mode."
         exit 0
     else
         echo "ERROR, no arguments required."
@@ -55,71 +40,45 @@ if [[ $# != 0 ]]; then
     fi
 fi
 
-if [[ ! -x bin/cylc ]]; then
-    echo  "ERROR: run this test from the top level of a cylc installation."
-    exit 1
-fi
+#if [[ ! -x bin/cylc ]]; then
+#    echo  "ERROR: run this test from the top level of a cylc installation."
+#    exit 1
+#fi
 
-# TEST SUITE DIRECTORY
-SUITE_DIR=examples/TEST
+# START FROM A CLEAN SLATE
+echo -n ">> pre-start cleanup..."
+cylc db unreg $SUITE_REG | true
+rm -rf $SUITE_DIR
+echo done
+
+# COPY THE SUITE
+echo -n ">> COPYING userguide example suite to $SUITE_DIR ... "
+cylc db copy CylcExamples:userguide $SUITE_REG $SUITE_DIR
 
 # log file for stdout and stderr
 OUT=test.out; OUT_SCHED=test-sched.out
-
-# START FROM A CLEAN SLATE
-echo ">> CLEANING OUT any remnants of previous tests ... "
-  # remove any existing test suite
-[[ -d $SUITE_DIR ]] && rm -rf $SUITE_DIR
-  # unregister any existing registration for test
-  # 'register -d' fails if no Pyro nameserver!
-cylc register -g test && cylc register -d test >> $OUT 2>&1
-  # remove output files
 rm -f $OUT $OUT_SCHED
-echo done
 
 # suite log
-LOGRC=$( cylc log -p test | grep 'logging directory' )
-LOGDIR=${LOGRC#*= }
-LOG=$LOGDIR/test/log
+LOGDIR=$( cylc info log -p $SUITE_REG )
+LOG=$LOGDIR/log
 # remove old test log
-rm -rf $LOG
-
-# COPY THE USERGUIDE EXAMPLE SUITE
-echo
-echo -n ">> COPYING userguide example suite to $SUITE_DIR ... "
-cp -r examples/userguide $SUITE_DIR > $OUT 2>&1 
-echo done
-
-# REGISTER THE TEST SUITE
-echo
-echo -n ">> REGISTERING the test suite as 'test' ... "
-cylc register $SUITE_DIR test >> $OUT 2>&1
-echo done
+rm -rf $LOGDIR
 
 # START UP THE TEST SUITE
 echo
-if ! $dummy_mode; then
-    echo ">> STARTING at 2010010106, with FAIL_TASK=X%2010010112"
-    perl -pi -e 's/(\[global environment\])/\1\nFAIL_TASK=X%%2010010112/' $SUITE_DIR/suite.rc
-else
-    # use 36 hour clock offset, otherwise the suite will catch up to
-    # the clock before it finishes (=> longer time to wait for finish).
-    echo ">> STARTING at 2010010106, with --clock-offset=36 --fail=X%2010010112"
-fi
+echo ">> STARTING at 2010010106, with TASK X to FAIL at 2010010112"
+export TEST_X_FAIL_TIME=2010101012
 
 # startup errors (e.g. due to lockserver denying access to the suite)
 # won't be trapped here because we run cylc in the background!
-if $dummy_mode; then
-    cylc coldstart -d --clock-offset=36 --fail=X%2010010112 test 2010010106 >> $OUT_SCHED 2>&1 &
-else
-    cylc coldstart test 2010010106 >> $OUT_SCHED 2>&1 &
-fi
+cylc run $SUITE_REG 2010010106 >> $OUT_SCHED 2>&1 &
 echo -n "   Will wait 5 seconds for startup ... "
 sleep 5
 echo done
 
 # now check for startup errors, as just described.
-if grep '_start failed:  1' $OUT_SCHED  > /dev/null; then
+if grep '_run failed:  1' $OUT_SCHED  > /dev/null; then
     cat $OUT_SCHED
     munge 2> /dev/null # activate trap with a non-existent command
 fi
@@ -141,29 +100,23 @@ while ! $READY; do
 done
 echo done
 
-# UNLOCK THE SUITE
-echo
-echo -n ">> UNLOCKING the suite to allow intervention ..."
-cylc unlock -f test >> $OUT 2>&1
-echo done
-
 # SET A STOP TIME OF
 echo
 echo -n ">> SETTING STOP TIME 2010010212 ..."
-cylc stop -f test 2010010212 >> $OUT 2>&1
+cylc stop -f $SUITE_REG 2010010212 >> $OUT 2>&1
 echo done
 
 # INSERT A COLDSTART TASK AT 2010010206
 echo
 echo -n ">> INSERTING a coldstart task at 2010010206 ..."
-cylc insert -f test coldstart%2010010206 >> $OUT 2>&1
+cylc insert -f $SUITE_REG coldstart%2010010206 >> $OUT 2>&1
 echo done
 
 # PURGE THE FAILED TASK AND ITS DEPENDANTS THROUGH TO 2010010200
 echo
 echo ">> PURGING X%2010010112 and all dependants, through to 2010010200"
 echo -n "   ... "
-cylc purge -f test X%2010010112 2010010200 >> $OUT 2>&1
+cylc purge -f $SUITE_REG X%2010010112 2010010200 >> $OUT 2>&1
 echo done
 
 # WAIT FOR THE SUITE TO FINISH AT 2010010212
@@ -184,7 +137,7 @@ echo done
 echo
 # PARSE OUTPUT FROM submit TO GET JOB LOG FILES:
 echo ">> RUN A SINGLE TASK (startup%2010010106) from the suite"
-FOO=$(cylc submit test startup%2010010106 )
+FOO=$(cylc submit $SUITE_REG startup%2010010106 )
 STDOUT=$( echo $FOO | sed -e 's/.*1> //' | sed -e 's/ 2>.*//' )
 STDERR=$( echo $FOO | sed -e 's/.*2> //' | sed -e 's/ &.*$//' )
 echo "TASK OUTPUT LOGS:"
@@ -208,7 +161,7 @@ echo done
 # UNREGISTER THE test SUITE
 echo
 echo -n ">> UNREGISTERING suite test ..."
-cylc register -d test >> $OUT 2>&1
+cylc unregister $SUITE_REG >> $OUT 2>&1
 echo done
 
 # FINISHED
