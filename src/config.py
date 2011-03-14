@@ -21,7 +21,7 @@ from mkdir_p import mkdir_p
 from validate import Validator
 from configobj import get_extra_values, flatten_errors
 from cylcconfigobj import CylcConfigObj, ConfigObjError
-from registration import getdb, RegistrationError
+from registration import getdb, regsplit, RegistrationError
 from graphnode import graphnode
 
 try:
@@ -155,7 +155,7 @@ class config( CylcConfigObj ):
         # to the local environment so that these variables can be used
         # in directories defined in the suite config file (see use of 
         # os.path.expandvars() below).
-        cylc_suite_group, cylc_suite_name = re.split( ':', self.suite )
+        cylc_suite_owner, cylc_suite_group, cylc_suite_name = regsplit( self.suite ).get()
         os.environ['CYLC_SUITE'] = self.suite
         os.environ['CYLC_SUITE_GROUP' ] = cylc_suite_group
         os.environ['CYLC_SUITE_NAME'  ] = cylc_suite_name
