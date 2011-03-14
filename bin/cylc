@@ -130,9 +130,12 @@ categories['utility'     ] = ['utility' ]
 categories['task'        ] = ['task' ]
  
 information_commands = OrderedDict()
-information_commands['gcylc'    ] = [ 'gcylc' ]
-information_commands['list'     ] = [ 'list', 'ls' ]
-information_commands['describe' ] = ['describe' ]
+information_commands['gcylc'    ] = ['gcylc'      ]
+information_commands['list'     ] = ['list', 'ls' ]
+information_commands['describe' ] = ['describe'   ]
+information_commands['dump'     ] = ['dump'       ]
+information_commands['show'     ] = ['show'       ]
+information_commands['log'      ] = ['log'        ]
 
 control_commands = OrderedDict()
 control_commands['gcylc'  ] = information_commands[ 'gcylc' ]
@@ -148,9 +151,6 @@ control_commands['resume' ] = ['resume' ]
 control_commands['block'  ] = ['block' ]
 control_commands['unblock'] = ['unblock' ] 
 control_commands['reset'  ] = ['reset'  ]
-control_commands['dump'   ] = ['dump'  ]
-control_commands['show'   ] = ['show'  ]
-control_commands['log'    ] = ['log'  ]
 control_commands['tmon'   ] = ['tmon'  ]
 control_commands['lockserver'] = ['lockserver' ]
 control_commands['lockclient'] = ['lockclient' ]
@@ -480,10 +480,11 @@ for item in command_args:
 args = args_new
 
 notify=False
-if command not in ['cycletime', 'template']:
+if command not in ['cycletime', 'template', 'log']:
     # notify => print 'DONE' when command is completed, which is 
-    # helpful for gui command capture windows. But some utilities return
+    # helpful for gui command capture windows. But some commands return
     # specific results by stdout, which we don't want to contaminate.
+    # ('cylc log' output is used by the scheduler test script).
     notify=True
 
 # construct command to execute
