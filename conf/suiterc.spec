@@ -1,24 +1,35 @@
 title = string( default="No suite title given" )
 description = string( default="No suite description supplied" )
-# declare all I/O relative to $HOME:
-user portable = boolean( default=False )
+
+# declare all I/O relative to $HOME (not used yet)
+# user portable = boolean( default=False )
+
 # declare all I/O unique by suite registration (i.e. all I/O paths include 
 # either $CYLC_SUITE or $CYLC_SUITE_GROUP and $CYLC_SUITE_NAME:
+
 allow multiple simultaneous suite instances = boolean( default=False )
+
 maximum runahead hours = integer( min=0, default=24 )
+
 number of state dump backups = integer( min=1, default=10 )
+
 job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
+
 # The chosen job submission shell affects the suite.rc environment and
 # scripting sections; to allow Csh we'd just need to alter the hardwired
 # exports for TASK_NAME, CYCLE_TIME, etc. appropriately.
 job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=/bin/bash )
+
 roll scheduler log at startup = boolean( default=True )
 
 ignore task owners = boolean( default=False )
+
 use suite blocking = boolean( default=False )
+
 use secure passphrase = boolean( default=False )
 
 use lockserver = boolean( default=False )
+
 use quick task elimination = boolean( default=True )
 
 # directories: absolute path, but can use ~user, env vars ($HOME etc.):
@@ -40,6 +51,12 @@ tasks to include at startup = force_list( default=list())
 tasks to exclude at startup = force_list( default=list())
 
 [ dummy mode ]
+# dummy mode was most useful prior to cylc-3: it allowed us to get the
+# scheduling right without running real tasks when a suite was defined
+# entirely by a collection of distinct "task definition files" whose
+# prerequisites and outputs had to be consistent across the suite.
+# Now (post cylc-3) it is primarily useful for cylc development, and
+# for generating run-time dependency graphs very quickly.
 clock offset from initial cycle time in hours = integer( default=24 )
 clock rate in seconds per dummy hour = integer( default=10 )
 # exported as $CYLC_DUMMY_SLEEP in job submission file:

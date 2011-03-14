@@ -5,7 +5,7 @@ from optparse import OptionParser
 from registration import getdb, RegistrationError
 from config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc [db] unregister [OPTIONS] SUITE
+parser = OptionParser( usage = """cylc [db] unregister|delete [OPTIONS] SUITE
 
 Delete local or central suite or group registrations (this does not
 delete suite definition directories!).
@@ -18,7 +18,7 @@ reregister it under the same name to regain access to the suite.
 Arguments:
     SUITE - suite registrations:
             OWNER:GROUP:NAME, GROUP:NAME or [default:]NAME
-            or registration groups (not trailing colon!):
+            or registration groups (note trailing colon!):
             OWNER:GROUP: or GROUP:""" )
 
 # TO DO?

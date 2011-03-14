@@ -139,7 +139,7 @@ class config( CylcConfigObj ):
         elif path:
             # allow load by path so that suite title can be parsed for
             # new suite registrations.
-            self.suite = '(unknown)'
+            self.suite = 'fooWx_:barWx_'
             self.dir = path
             self.file = os.path.join( path, 'suite.rc' )
         elif 'CYLC_SUITE' in os.environ:

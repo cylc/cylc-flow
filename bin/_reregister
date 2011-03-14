@@ -12,7 +12,7 @@ reregister local or central suite registrations or registration groups.
 Arguments:
     FROM, TO    - suite registrations:
                 OWNER:GROUP:NAME, GROUP:NAME or [default:]NAME
-                  or registration groups (not trailing colon!):
+                  or registration groups (note trailing colon!):
                 OWNER:GROUP: or GROUP:""" )
 
 parser.add_option( "-v", "--verbose",

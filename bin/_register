@@ -39,7 +39,7 @@ if not os.path.isdir( rdir ):
 if not os.path.isdir( rdir ):
     raise SystemExit( 'ERROR: Suite definition PATH not valid' )
 
-#s I've done this dozens of times over the get suite title from config file
+# get suite title by parsing the config file
 try:
     config = config( path=rdir )
 except SuiteConfigError,x:
