@@ -242,11 +242,12 @@ Version: """ + cylc_version + """
 CATEGORIES help to organise this documentation. Any unique abbreviation
 can be used for a COMMAND or CATEGORY. Use of categories is optional in
 command invocation (they will disambiguate highly abbreviated commands).
-Some common typos are detected and corrected (e.g. cylc,cycl; help,hlep) 
+Some commands have aliases (e.g. ls = list; cp = copy; run = start) and
+some common typos are detected and corrected (cylc,cycl; help,hlep;...) 
   $ cylc help prep ......... (cylc help prepare)
   $ cylc help [prep] ed .... (cylc help [prepare] edit)
   $ cylc [prep] ed help .... (cylc [prepare] edit help)
-  $ cylc [info] li SUITE ... (cylc [information] list SUITE) 
+  $ cylc [info] ls SUITE ... (cylc [information] list SUITE) 
 
 Command CATEGORIES (which include lists of relevant COMMANDS):"""
 
