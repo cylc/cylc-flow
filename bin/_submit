@@ -143,7 +143,10 @@ job_submit.shell = config['job submission shell']
 job_submit.joblog_dir = config['job submission log directory']
 
 # intantiate the task--------------------------------------------------
-task_proxy = config.get_task_proxy( task_name, ctime, 'waiting', startup=True )
+try:
+    task_proxy = config.get_task_proxy( task_name, ctime, 'waiting', startup=True )
+except KeyError, x:
+    raise SystemExit( 'task not found: ' + task_name )
 
 #print '\nPREREQUISITES:\n'
 #for item in task_proxy.prerequisites.dump():

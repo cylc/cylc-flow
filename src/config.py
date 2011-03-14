@@ -267,7 +267,7 @@ class config( CylcConfigObj ):
                 print >> sys.stderr, 'WARNING: task "' + name + '" is defined by graph only.'
         for name in self['tasks']:
             if name not in self.taskdefs:
-                print >> sys.stderr, 'WARNING: task "' + name + '" is defined but not used.'
+                print >> sys.stderr, 'WARNING: task "' + name + '" is not currently used by the suite.'
         # warn if listed special tasks are not defined
         for type in self['special tasks']:
             for name in self['special tasks'][type]:

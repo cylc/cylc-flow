@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* tasks that are not in the dep graph cannot even be run with 'submit';
+  could we relax this requirement?
+
 * default group: make sure this is used consistently everywhere.  Should
   use explicit group name everywhere internally; only allow omission of 
   'default' for command line input.
