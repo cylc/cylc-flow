@@ -6,7 +6,7 @@
 " And put the following in .vimrc file, for file type recognition:
 
 "augroup filetype
-"  au! BufRead,BufnewFile *.rc   set filetype=cylc
+"  au! BufRead,BufnewFile suite.rc   set filetype=cylc
 "augroup END
 
 
