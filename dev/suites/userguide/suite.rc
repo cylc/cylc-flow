@@ -28,7 +28,6 @@ task submission timeout minutes = 0.1
 #use crude safety lock = True
 #ignore task owners = True
 #job submission method = ll_basic
-job submission log directory = running/${CYLC_SUITE_NAME}-logs
 
 #tasks to include at startup = prep, X, ColdA, A
 

@@ -3,6 +3,7 @@
 import os, sys
 from optparse import OptionParser
 from config import config, SuiteConfigError
+from registration import qualify 
 
 parser = OptionParser( """cylc [info] list|ls [OPTIONS] SUITE
 
@@ -20,7 +21,7 @@ parser.add_option( "-d", "--debug", help="print the "
 if len(args) != 1:
     parser.error( "Wrong number or arguments" )
 else:
-    suite = args[0]
+    suite = qualify(args[0])
 
 try:
     config = config( suite )

@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* default group: make sure this is used consistently everywhere.  Should
+  use explicit group name everywhere internally; only allow omission of 
+  'default' for command line input.
 
  * FOR SUITES WITH OWNED TASKS:
  replace suite owner with task owner in job submission log directory
@@ -38,8 +41,6 @@ GENERAL
   finished tasks that potentially have to stay in the task pool
   for a while. This database would have to be written to file with every
   change with the state dump file, to allow valid suite restarts.
-
-* for gcylc, use GUI_EDITOR, default to EDITOR?
 
 * suite db locking: document, and provide info via command response, 
   what to do in the unlikely event that a lock is in place when a
