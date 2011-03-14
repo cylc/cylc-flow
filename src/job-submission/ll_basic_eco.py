@@ -13,8 +13,8 @@ class ll_basic_eco( ll_basic ):
             raise SystemExit( "EcoConnect tasks require an owner: " + task_id )
 
         # cylc should be running as ecoconnect_(devel|test|oper)
-        cylc_owner = os.environ['USER']
-        m = re.match( '^(.*)_(devel|test|oper)$', cylc_owner )
+        suite_owner = os.environ['USER']
+        m = re.match( '^(.*)_(devel|test|oper)$', suite_owner )
         if m:
             (junk, ecoc_sys ) = m.groups()
         else:

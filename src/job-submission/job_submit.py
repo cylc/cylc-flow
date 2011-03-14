@@ -75,13 +75,13 @@ class job_submit(object):
         # task_env is needed by the call to inter_str() immediately below.
  
         # username under which the suite is running
-        self.cylc_owner = os.environ['USER']
+        self.suite_owner = os.environ['USER']
         # task owner
         if owner:
             # owner can be defined using environment variables
             self.owner = self.interp_str( owner )
         else:
-            self.owner = self.cylc_owner
+            self.owner = self.suite_owner
 
         # unique task identity
         self.task_id = task_id
@@ -130,7 +130,7 @@ class job_submit(object):
                 # ignore defined task owners in dummy mode, so that suites
                 # containing owned tasks can be tested in dummy mode outside
                 # of their normal execution environment.
-                self.owner = self.cylc_owner
+                self.owner = self.suite_owner
                 # ignore the scripting section in dummy mode
                 self.extra_scripting = ''
 
@@ -263,7 +263,7 @@ class job_submit(object):
             changed_dir = True
             new_dir = self.homedir
 
-        if self.owner != self.cylc_owner:
+        if self.owner != self.suite_owner:
             # submit using sudo
             self.command = 'sudo -u ' + self.owner + ' ' + self.command
 
