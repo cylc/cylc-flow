@@ -117,7 +117,7 @@ use lockserver = True
         models = "shape=septagon"
         post   = "style=unfilled", "shape=rectangle"
         cold   = "shape=egg", "fillcolor=slateblue"
-        data   = "shape=square", "fillcolor=lawngreen"
+        data   = "shape=box", "fillcolor=lawngreen"
         A      = "fillcolor=red"
         C      = "fillcolor=orange"
         B      = "fillcolor=magenta3"
