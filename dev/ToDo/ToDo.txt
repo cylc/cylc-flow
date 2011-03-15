@@ -33,8 +33,6 @@ GENERAL
 * chooser: setting group color fails if multiple suites are running.
   Need to parse each group member and check if any are running.
 
-* allow startup in paused state, for immediate manual suite surgery.
-
 * Consider possible changes to cylc internals in light of the fact
   that as of cylc-3 we know all task dependencies in advance, thanks
   to the suite.rc dependency graph.  E.g. we may be able to remove many

@@ -57,7 +57,7 @@ NOTE: daemonize important suites with the POSIX nohup command:
 
 See also:
     cylc [control] restart
-    cylc [control] stop
+    cylc [control] stop|shutdown
 
 Arguments:
    SUITE                Registered name of the suite to start.
@@ -70,6 +70,11 @@ Arguments:
 
         self.parser.add_option( "-r", "--raw", help="Raw start the suite",
         action="store_true", default=False, dest="raw" )
+
+        self.parser.add_option( "--paused", help="Pause immediately on "
+                "starting to allow intervention in the suite state "
+                "before resuming operation.",
+        action="store_true", default=False, dest="startpaused" )
 
         scheduler.__init__( self )
 
@@ -184,7 +189,7 @@ if __name__ == '__main__':
             print "(use --debug to see exception traceback)"
             sys.exit(1)
     try:
-        server.run()
+        server.run(start_paused=True)
         #   For profiling:
         #import cProfile
         #cProfile.run( 'server.run()', 'fooprof' )

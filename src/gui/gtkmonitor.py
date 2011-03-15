@@ -1021,11 +1021,13 @@ The cylc forecast suite metascheduler.
                 )
         dmode_group.pack( vbox )
         
-        dot_group = controlled_option_group( "Debug Mode", "--debug" )
-        #dot_group.add_entry( 'filename (absolute path or relative to $HOME)', 
-        #        '--graphfile=', max_chars=None, default=self.suite+'.dot' )
-        dot_group.pack( vbox )
-        optgroups = [ dmode_group, dot_group ]
+        debug_group = controlled_option_group( "Debug Mode", "--debug" )
+        debug_group.pack( vbox )
+
+        stpaused_group = controlled_option_group( "Pause Immediately", "--paused" )
+        stpaused_group.pack( vbox )
+
+        optgroups = [ dmode_group, debug_group, stpaused_group ]
 
         cancel_button = gtk.Button( "Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )

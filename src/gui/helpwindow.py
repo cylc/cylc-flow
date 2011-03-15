@@ -91,17 +91,15 @@ class helpwindow( helpwindow_base ):
 def main( b ):
     help = helpwindow( "Gcylc Main Window Help", 500, """%h2 Overview
 
-Gcylc initially shows your <span foreground="red">privately</span> registered suites.
-
-Using the menu bar and right-click menu items you can register new
-suites; copy, reregister, and unregister existing suites; start suites
-running or connect a controller to suites that are already running;
-edit, search, validate, and graph suite definitions; and import suites
-from, or export them to, the central suite registration database
-(which is seen by all users). You can't run suites directly from the
-central database (they may be owned by others after all) but you can
-view, search, validate, and graph them when considering whether to
-import them for your own use.
+Gcylc initially shows your local (privately registered) suites. Using
+the menu bar and right-click menu items you can register new suites;
+copy, reregister, and unregister existing suites; start suites running
+or connect a controller to suites that are already running; edit,
+search, validate, and graph suite definitions; and import suites from,
+or export them to, the central suite registration database (which is
+seen by all users). You can also view, search, validate, and graph
+suites in the central database when considering whether to import them
+for your own use.
 
 %h2 Menu Bar
 
@@ -139,16 +137,22 @@ View the central (all users) suite registration database.
 
 %h2 Right Click Menu Options
 
-Each right-click menu item runs a subprocess inside a GUI wrapper that
-captures stdout and stderr for display in real time. The output log
-window can be closed without affecting the associated subprocess (but
-you will lose access to the output). The Control subprocess is a
-self-contained GUI application for suite control and montoring, while
-the others are cylc commandline programs. The options available depend
-on whether you have right-clicked on a suite or a group of suites.
-Registration groups are created and deleted automatically as required
-(you don't need to explicitly create group 'foo' before registering 
-a suite 'foo:bar', for example).
+The Right-Click menu options available depend on whether you have
+clicked on a running suite, a dormant suite, or a group of suites.  For
+options relating to suite registration, registration groups are created
+and deleted as required (you don't need to explicitly create group 'foo'
+before registering a suite 'foo:bar', for example).
+
+Each right-click menu item invokes a subprocess inside a wrapper that
+captures the stdout and stderr streams for display in a log window that
+updates in real time. These output log windows can be closed without
+affecting the associated subprocess, but you will lose access to the
+output. The Control option invokes a self-contained GUI application for
+suite control and montoring (like 'gcylc SUITE') while the other options
+invoke cylc commandline programs. If you start a suite from within a
+control app you will see the suite stdout and stderr in the app's
+log window; otherwise, if you just connect to a suite that is
+already running, you won't. 
 
 %h3 Control
 

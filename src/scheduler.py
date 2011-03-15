@@ -67,7 +67,7 @@ class scheduler(object):
                 help="Shut down after all tasks have PASSED this cycle time.",
                 metavar="YYYYMMDDHH", action="store", dest="stop_time" )
 
-        self.parser.add_option( "--pause",
+        self.parser.add_option( "--pause-at",
                 help="Refrain from running tasks AFTER this cycle time.",
                 metavar="YYYYMMDDHH", action="store", dest="pause_time" )
 
@@ -343,7 +343,7 @@ class scheduler(object):
            except:
                raise SystemExit( "ERROR: State dump file copy failed" )
 
-    def run( self ):
+    def run( self, start_paused=False ):
         if self.use_lockserver:
             if self.practice:
                 suitename = self.suite + '-practice'
@@ -363,7 +363,12 @@ class scheduler(object):
             # TO DO: HANDLE STOP AND PAUSE TIMES THE SAME WAY?
             self.set_suite_hold( self.pause_time )
 
-        print "\nSTARTING\n"
+        if start_paused:
+            self.suite_hold_now = True
+            print "\nSTARTING in PAUSED state ('cylc resume' to continue)\n"
+            self.log.critical( "Starting PAUSED: no tasks will be submitted")
+        else:
+            print "\nSTARTING\n"
 
         while True: # MAIN LOOP
             # PROCESS ALL TASKS whenever something has changed that might
