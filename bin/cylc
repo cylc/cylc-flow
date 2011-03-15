@@ -136,6 +136,7 @@ information_commands['describe' ] = ['describe'   ]
 information_commands['dump'     ] = ['dump'       ]
 information_commands['show'     ] = ['show'       ]
 information_commands['log'      ] = ['log'        ]
+information_commands['monitor'  ] = ['monitor'  ]
 
 control_commands = OrderedDict()
 control_commands['gcylc'  ] = information_commands[ 'gcylc' ]
@@ -151,7 +152,6 @@ control_commands['resume' ] = ['resume' ]
 control_commands['block'  ] = ['block' ]
 control_commands['unblock'] = ['unblock' ] 
 control_commands['reset'  ] = ['reset'  ]
-control_commands['tmon'   ] = ['tmon'  ]
 control_commands['lockserver'] = ['lockserver' ]
 control_commands['lockclient'] = ['lockclient' ]
 control_commands['verbosity' ] = ['verbosity' ]
@@ -267,6 +267,10 @@ comsum[ 'graph'      ] = 'A dependency graph viewer that updates as you edit'
 # information
 comsum[ 'list'       ] = 'Print a suite\'s task list'
 comsum[ 'describe'   ] = 'Print a suite\'s title and description'
+comsum[ 'dump'       ] = 'Print the state of each task in a running suite'
+comsum[ 'show'       ] = 'Print task-specific information (prerequisites...)'
+comsum[ 'log'        ] = 'Print or view suite logs, with filtering'
+comsum[ 'monitor'    ] = 'An in-terminal suite monitor (DEPRECATED, see gcylc)'
 # control
 comsum[ 'gcylc'      ] = 'The cylc Graphical User Interface'
 comsum[ 'run'        ] = 'Cold, warm, or raw start a suite at a given cycle time'
@@ -281,10 +285,6 @@ comsum[ 'resume'     ] = 'Resume submitting tasks in a paused suite'
 comsum[ 'block'      ] = 'Do not comply with subsequent intervention commands'
 comsum[ 'unblock'    ] = 'Comply with subsequent intervention commands'
 comsum[ 'reset'      ] = 'Force a task to waiting, ready, or finished state'
-comsum[ 'dump'       ] = 'Print the state of each task in a running suite'
-comsum[ 'show'       ] = 'Print task-specific information (prerequisites...)'
-comsum[ 'log'        ] = 'Print or view suite logs, with filtering'
-comsum[ 'tmon'       ] = 'An in-terminal suite monitor (deprecated, see gcylc)'
 comsum[ 'lockserver' ] = 'The cylc lockserver daemon'
 comsum[ 'lockclient' ] = 'Manual suite and task lock management'
 comsum[ 'verbosity'  ] = 'Change a suite\'s logging verbosity level'
