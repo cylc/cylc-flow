@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import subprocess
+import helpwindow
 import pango
 from stateview import updater
 from combo_logviewer import combo_logviewer
@@ -720,7 +721,7 @@ The cylc forecast suite metascheduler.
                 "available via the cylc command line; see 'cylc help').")
 
         self.update_tb( tb, "\n\nMenu: File > ", [bold, red] )
-        self.update_tb( tb, "\n o Exit Suite GUI: ", [bold])
+        self.update_tb( tb, "\n o Exit: ", [bold])
         self.update_tb( tb, "Exit the GUI (this does not shut the suite down).")
 
         self.update_tb( tb, "\n\nMenu: View > ", [bold, red] )
@@ -961,9 +962,9 @@ The cylc forecast suite metascheduler.
         help_button.connect("clicked", self.stop_guide )
 
         hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
         hbox.pack_start( stop_button, False )
-        hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -1065,8 +1066,8 @@ The cylc forecast suite metascheduler.
 
         hbox = gtk.HBox()
         hbox.pack_start( start_button, False )
-        hbox.pack_start( cancel_button, False )
-        hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -1170,13 +1171,17 @@ The cylc forecast suite metascheduler.
         hbox.pack_start (entry_ctime, True)
         vbox.pack_start(hbox)
 
+        help_button = gtk.Button( "Help" )
+        help_button.connect("clicked", helpwindow.insertion )
+
         hbox = gtk.HBox()
         insert_button = gtk.Button( "Insert" )
         insert_button.connect("clicked", self.insert_task, window, entry_name, entry_ctime )
         cancel_button = gtk.Button( "Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
-        hbox.pack_start(cancel_button)
-        hbox.pack_start(insert_button)
+        hbox.pack_start(insert_button, False)
+        hbox.pack_end(cancel_button, False)
+        hbox.pack_end(help_button, False)
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -1237,12 +1242,12 @@ The cylc forecast suite metascheduler.
         file_menu_root = gtk.MenuItem( '_File' )
         file_menu_root.set_submenu( file_menu )
 
-        exit_item = gtk.MenuItem( 'E_xit ' + self.suite + ' GUI' )
+        exit_item = gtk.MenuItem( 'E_xit' )
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
 
         start_menu = gtk.Menu()
-        start_menu_root = gtk.MenuItem( '_Suite' )
+        start_menu_root = gtk.MenuItem( '_Control' )
         start_menu_root.set_submenu( start_menu )
 
         start_item = gtk.MenuItem( '_Start' )
@@ -1251,13 +1256,13 @@ The cylc forecast suite metascheduler.
         if self.readonly:
             start_item.set_sensitive(False)
 
-        stop_item = gtk.MenuItem( 'Sto_p' )
+        stop_item = gtk.MenuItem( 'St_op' )
         start_menu.append( stop_item )
         stop_item.connect( 'activate', self.stopsuite_popup )
         if self.readonly:
             stop_item.set_sensitive(False)
 
-        pause_item = gtk.MenuItem( 'Pa_use' )
+        pause_item = gtk.MenuItem( '_Pause' )
         start_menu.append( pause_item )
         pause_item.connect( 'activate', self.pause_suite )
         if self.readonly:
@@ -1385,7 +1390,7 @@ The cylc forecast suite metascheduler.
         if self.readonly:
             self.window.set_title("cylc view <" + self.suite + "> (READONLY)" )
         else:
-            self.window.set_title("cylc control <" + self.suite + ">" )
+            self.window.set_title("gcylc <" + self.suite + ">" )
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(800, 500)
         self.window.connect("delete_event", self.delete_event)

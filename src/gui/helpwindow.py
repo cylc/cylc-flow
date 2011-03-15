@@ -341,3 +341,14 @@ subprocesses spawned by the gcylc GUI. You can close this window without
 adversely affecting the subprocess itself, but if you do you will lose
 access to the standard output streams.""")
     help.show()
+
+def insertion( b ):
+    help = helpwindow( "Insertion Help", 250, """
+Insert the specified task or group into a running suite. Subsequent
+behaviour of the inserted task(s), as for any task, depends entirely on
+its type (a oneoff task will run once and not spawn a successor, and 
+so on).  Task insertion groups are just a convenience to allow insertion
+of multiple tasks at once (e.g. a handful of tasks required to cold
+start part of a suite after certain problems have occured). These must
+be defined in the suite.rc file [task insertion groups] section.""")
+    help.show()
