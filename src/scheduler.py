@@ -71,6 +71,11 @@ class scheduler(object):
                 help="Refrain from running tasks AFTER this cycle time.",
                 metavar="YYYYMMDDHH", action="store", dest="pause_time" )
 
+        self.parser.add_option( "--paused", help="Pause immediately on "
+                "starting to allow intervention in the suite state "
+                "before resuming operation.",
+                action="store_true", default=False, dest="startpaused" )
+
         self.parser.add_option( "-d", "--dummy-mode",
                 help="Use dummy tasks that masquerade as the real thing, "
                 "and accelerate the wall clock: get the scheduling right "
@@ -343,7 +348,7 @@ class scheduler(object):
            except:
                raise SystemExit( "ERROR: State dump file copy failed" )
 
-    def run( self, start_paused=False ):
+    def run( self ):
         if self.use_lockserver:
             if self.practice:
                 suitename = self.suite + '-practice'
@@ -363,7 +368,7 @@ class scheduler(object):
             # TO DO: HANDLE STOP AND PAUSE TIMES THE SAME WAY?
             self.set_suite_hold( self.pause_time )
 
-        if start_paused:
+        if self.options.startpaused:
             self.suite_hold_now = True
             print "\nSTARTING in PAUSED state ('cylc resume' to continue)\n"
             self.log.critical( "Starting PAUSED: no tasks will be submitted")

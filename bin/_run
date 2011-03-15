@@ -71,11 +71,6 @@ Arguments:
         self.parser.add_option( "-r", "--raw", help="Raw start the suite",
         action="store_true", default=False, dest="raw" )
 
-        self.parser.add_option( "--paused", help="Pause immediately on "
-                "starting to allow intervention in the suite state "
-                "before resuming operation.",
-        action="store_true", default=False, dest="startpaused" )
-
         scheduler.__init__( self )
 
     def parse_commandline( self ):
@@ -189,7 +184,7 @@ if __name__ == '__main__':
             print "(use --debug to see exception traceback)"
             sys.exit(1)
     try:
-        server.run(start_paused=True)
+        server.run()
         #   For profiling:
         #import cProfile
         #cProfile.run( 'server.run()', 'fooprof' )
