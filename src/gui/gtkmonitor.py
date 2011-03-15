@@ -117,15 +117,20 @@ class monitor(object):
             coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
             entry_ctime, stoptime_entry, statedump_entry, optgroups ):
 
-        command = 'cylc control start'
+        command = 'cylc control run'
         options = ''
+        method = ''
         if coldstart_rb.get_active():
+            method = 'coldstart'
             pass
         elif warmstart_rb.get_active():
+            method = 'warmstart'
             options += ' -w'
         elif rawstart_rb.get_active():
+            method = 'rawstart'
             options += ' -r'
         elif restart_rb.get_active():
+            method = 'restart'
             command = 'cylc control restart'
 
         command += ' ' + options + ' '
@@ -134,6 +139,11 @@ class monitor(object):
             command += ' --until=' + stoptime_entry.get_text()
 
         ctime = entry_ctime.get_text()
+
+        if method != 'restart':
+            if ctime == '':
+                warning_dialog( 'Error: an initial cycle time is required' ).warn()
+                return False
 
         for group in optgroups:
             command += group.get_options()
@@ -597,6 +607,18 @@ The cylc forecast suite metascheduler.
         self.update_tb( tb, "\n   Get a task to fail in order "
                 "to test the effect on the suite." )
 
+        self.update_tb( tb, "\n\n o Pause Immediately", [bold, red] )
+        self.update_tb( tb, " - OPTIONAL.", [bold,red2])
+        self.update_tb( tb, "\nStart a suite in the paused state to allow "
+                "immediate intervention in its state (e.g. inserting or "
+                "removing tasks) before resuming operation.")
+
+        self.update_tb( tb, "\n\n o Debug Mode", [bold, red] )
+        self.update_tb( tb, " - OPTIONAL.", [bold,red2])
+        self.update_tb( tb, "\nPrint exception tracebacks on error, rather than "
+                "just the error message.")
+
+
         window.show_all()
  
     def stop_guide( self, w ):
@@ -1021,11 +1043,11 @@ The cylc forecast suite metascheduler.
                 )
         dmode_group.pack( vbox )
         
-        debug_group = controlled_option_group( "Debug Mode", "--debug" )
-        debug_group.pack( vbox )
-
         stpaused_group = controlled_option_group( "Pause Immediately", "--paused" )
         stpaused_group.pack( vbox )
+
+        debug_group = controlled_option_group( "Debug Mode", "--debug" )
+        debug_group.pack( vbox )
 
         optgroups = [ dmode_group, debug_group, stpaused_group ]
 
