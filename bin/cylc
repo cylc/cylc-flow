@@ -46,7 +46,7 @@ def match_dict( abbrev, categories, title ):
         res = ''
         for cat in matches:
             res += ' ' + '|'.join(categories[cat])
-        raise CommandNotUniqueError, title + ' ' + abbrev + ' not unique:' + res
+        raise CommandNotUniqueError, title + ' "' + abbrev + '" not unique:' + res
     else:
         return matches[0]
 
@@ -73,7 +73,7 @@ def match_command( abbrev ):
         res = ''
         for com in matches:
             res += ' ' + '|'.join(all_commands[com])
-        raise CommandNotUniqueError, 'COMMAND ' + abbrev + ' not unique:' + res
+        raise CommandNotUniqueError, 'COMMAND "' + abbrev + '" not unique:' + res
     else:
         return matches[0]
 

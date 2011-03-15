@@ -1,6 +1,10 @@
 #!/bin/bash
 
-# catch a common commandline typo: gcylc -> gcycl
+# Catch a common commandline typo: 'gcycl'.
+# Could be done by shell alias, but this 
+# relieves the cylc user of the burden.
 
-echo "SPELLING ERROR: 'gcylc' not 'gcycl'."
+echo
+echo "TYPO ALERT: it's \"gcylc\", not \"gcycl\"!"
+echo
 gcylc $@

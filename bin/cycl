@@ -1,6 +1,10 @@
 #!/bin/bash
 
-# catch a common commandline typo: cylc -> cycl
+# Catch a common commandline typo: 'cycl'.
+# Could be done by shell alias, but this 
+# relieves the cylc user of the burden.
 
-echo "TYPO ALERT: 'cylc' not 'cycl'."
+echo
+echo "TYPO ALERT: it's \"cylc\", not \"cycl\"!"
+echo
 cylc $@
