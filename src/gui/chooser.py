@@ -1661,7 +1661,7 @@ Note that this will not delete the suite definition directory.""" )
         call( 'capture "cylc dump ' + name  + '" --width=400 --height=400 &', shell=True )
 
     def describe_suite( self, w, name ):
-        call( 'capture "cylc describe ' + name  + '" --width=600 --height=400&', shell=True )
+        call( 'capture "cylc describe ' + name  + '" --width=700 --height=400&', shell=True )
 
     def list_suite( self, w, name ):
         call( 'capture "cylc list ' + name  + '" --width=300 --height=400&', shell=True )
