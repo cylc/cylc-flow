@@ -29,13 +29,17 @@ def check_suite_spec( name ):
     return suite_dir
 
 def check_task_spec( task_spec ):
-    try:
-        (suite, task_id) = task_spec.split( ':' )
-    except:
+    # GROUP:NAME:TASK%T
+    # NAME:TASK%T (GROUP=default)
+    items = task_spec.split( ':' )
+    if len( items ) == 2:
+        suite, task_id = items
+    elif len( items ) == 3:
+        sgroup, sname, task_id = items
+        suite = sgroup + ':' + sname
+    else:
         raise SystemExit( task_spec + " - Please specify SUITE:TASK_NAME%CYCLE_TIME" )
-        
     check_suite_spec( suite )
-
     try:
         (name, cycle) = task_id.split( '%' )
     except ValueError:
