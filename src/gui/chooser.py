@@ -862,7 +862,7 @@ The cylc forecast suite metascheduler.
                     menu.append( dump_item )
                     dump_item.connect( 'activate', self.dump_suite, reg )
     
-            menu.append( gtk.SeparatorMenuItem() )
+                menu.append( gtk.SeparatorMenuItem() )
 
             search_item = gtk.MenuItem( '_Describe' )
             menu.append( search_item )
