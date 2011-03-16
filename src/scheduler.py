@@ -8,7 +8,6 @@ import logging
 import datetime
 import port_scan
 import cycle_time
-#import dead_letter
 import pimp_my_logger
 import accelerated_clock 
 import re, os, sys, shutil
@@ -221,11 +220,6 @@ class scheduler(object):
         # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
         self.suite_state = state_summary( self.config, self.dummy_mode )
         self.pyro.connect( self.suite_state, 'state_summary')
-
-        # REMOTELY ACCESSIBLE DEAD LETTER BOX
-        # --- NO LONGER USED ---
-        #self.dead_letter_box = dead_letter.letter_box()
-        #self.pyro.connect( self.dead_letter_box, 'dead_letter_box')
 
         # USE QUICK TASK ELIMINATION?
         self.use_quick = self.config['use quick task elimination'] 

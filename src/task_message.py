@@ -136,14 +136,4 @@ class message(object):
             self.get_proxy().set_all_internal_outputs_completed()
 
 
-# TO DO: REINSTATE THE DEAD LETTER BOX
-#    # nameserver not found, or object not registered with it?
-#    print "ERROR: failed to connect to " + task_id
-#    print "Trying dead letter box"
-#    try:
-#        dead_box = Pyro.core.getProxyForURI('PYRONAME://' + groupname + '.' + 'dead_letter_box' )
-#        dead_box.incoming( message )
-#    except:
-#        # nameserver not found, or object not registered with it?
-#        print "ERROR: failed to connect to pyro nameserver"
-#        sys.exit(1)
+
