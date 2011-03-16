@@ -46,8 +46,11 @@ else:
 
 gobject.threads_init()
 if options.fileprefix:
-    stdout = open( options.fileprefix + '.out', 'wb' )
-    stderr = open(options.fileprefix + '.err', 'wb' )
+    try:
+        stdout = open( options.fileprefix + '.out', 'wb' )
+        stderr = open(options.fileprefix + '.err', 'wb' )
+    except IOError, x:
+        raise SystemExit(x)
     gcapture( command, stdout, stderr, width=int(options.width), height=int(options.height), standalone=True ).run()
 else:
     gcapture_tmpfile( command, tmpdir, width=int(options.width), height=int(options.height), standalone=True ).run()

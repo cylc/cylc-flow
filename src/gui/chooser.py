@@ -11,7 +11,8 @@ from gtkmonitor import monitor
 from warning_dialog import warning_dialog, info_dialog
 from subprocess import call
 import helpwindow 
-from gcapture import gcapture
+from gcapture import gcapture, gcapture_tmpfile
+from mkdir_p import mkdir_p
 
 #debug = True
 debug = False
@@ -600,7 +601,7 @@ The cylc forecast suite metascheduler.
         name = name_e.get_text()
         reg = group + ':' + name
         command = "cylc register " + reg + ' ' + dir
-        gcapture( command, self.tmpdir, 600 ).run()
+        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
         w.destroy()
 
     def filter(self, w, owner_e, group_e, name_e ):
@@ -858,7 +859,7 @@ The cylc forecast suite metascheduler.
                 title = '_Control'
                 con_item = gtk.MenuItem( title )
                 menu.append( con_item )
-                con_item.connect( 'activate', self.launch_controller, reg, state, suite_dir )
+                con_item.connect( 'activate', self.launch_controller, reg, state )
                 if state != '-':
                     # suite is running
                     dump_item = gtk.MenuItem( 'D_ump' )
@@ -966,7 +967,7 @@ Note that this will not delete any suite definition directories.""" )
         if self.cdb:
             group = owner + ':' + group
         command = "cylc unregister " + group + ":"
-        gcapture( command, self.tmpdir, 600 ).run()
+        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
         w.destroy()
 
     def unregister_suite_popup( self, w, reg ):
@@ -1000,7 +1001,7 @@ Note that this will not delete the suite definition directory.""" )
 
     def unregister_suite( self, b, w, reg ):
         command = "cylc unregister " + reg
-        gcapture( command, self.tmpdir, 600 ).run()
+        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
         w.destroy()
 
     def import_group_popup( self, w, owner, group ):
@@ -1049,7 +1050,7 @@ Note that this will not delete the suite definition directory.""" )
         if not self.check_entries( [group, dir] ):
             return False
         command = "cylc import " + fowner + ':' + fgroup + ': ' + group + ': ' + dir
-        gcapture( command, self.tmpdir, 600 ).run()
+        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
         w.destroy()
  
     def import_suite_popup( self, w, reg ):
@@ -1111,7 +1112,7 @@ Note that this will not delete the suite definition directory.""" )
         if not self.check_entries( [group, name, dir] ):
             return False
         command = "cylc import " + reg + ' ' + group + ':' + name + ' ' + dir
-        gcapture( command, self.tmpdir, 600 ).run()
+        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
         w.destroy()
  
     def export_suite_popup( self, w, reg ):
@@ -1165,7 +1166,7 @@ Note that this will not delete the suite definition directory.""" )
         if not self.check_entries( [group, name] ):
             return False
         command = "cylc export " + reg + ' ' + group + ':' + name
-        gcapture( command, self.tmpdir, 600 ).run()
+        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
         w.destroy()
  
     def toggle_entry_sensitivity( self, w, entry ):
@@ -1225,7 +1226,7 @@ Note that this will not delete the suite definition directory.""" )
         if self.cdb:
             tto = reg_owner + ':' + tto
         command = "cylc reregister " + reg + ' ' + tto
-        gcapture( command, self.tmpdir, 600 ).run()
+        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
         w.destroy()
 
     def reregister_group_popup( self, w, group ):
@@ -1266,7 +1267,7 @@ Note that this will not delete the suite definition directory.""" )
             g_from = self.owner + ':' + g_from
             g_to = self.owner + ':' + g_to
         command = "cylc reregister " + g_from + ': ' + g_to + ":"
-        gcapture( command, self.tmpdir, 600 ).run()
+        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
         w.destroy()
 
     def export_group_popup( self, w, group ):
@@ -1307,7 +1308,7 @@ Note that this will not delete the suite definition directory.""" )
         if not self.check_entries( [group] ):
             return False
         command = "cylc export " + lgroup + ': ' + group + ":"
-        gcapture( command, self.tmpdir, 600 ).run()
+        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
         w.destroy()
  
     def copy_group_popup( self, w, group ):
@@ -1367,7 +1368,7 @@ Note that this will not delete the suite definition directory.""" )
         g_to += ':'
         g_from += ':'
         command = "cylc copy " + g_from + ' ' + g_to + ' ' + dir
-        gcapture( command, self.tmpdir, 600 ).run()
+        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
         w.destroy()
 
     def copy_suite_popup( self, w, reg ):
@@ -1443,7 +1444,7 @@ Note that this will not delete the suite definition directory.""" )
         if not self.check_entries( chk ):
             return False
         command = "cylc copy " + reg + ' ' + group + ':' + name + ' ' + dir
-        gcapture( command, self.tmpdir, 600 ).run()
+        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
         w.destroy()
  
     def search_suite_popup( self, w, reg ):
@@ -1546,7 +1547,7 @@ Note that this will not delete the suite definition directory.""" )
         if nobin_cb.get_active():
             options += ' -x '
         command = "cylc search " + options + ' ' + pattern + ' ' + reg 
-        gcapture( command, self.tmpdir, heigh=500 ).run()
+        gcapture_tmpfile( command, self.tmpdir, heigh=500 ).run()
 
     def graph_suite( self, w, reg, warm_cb, outputfile_entry, start_entry, stop_entry ):
         start = start_entry.get_text()
@@ -1572,7 +1573,7 @@ Note that this will not delete the suite definition directory.""" )
         # Would have to launch in own thread as xdot is interactive?
         # Probably not necessary ... same goes for controller actually?
         command = "cylc graph " + options + ' ' + reg + ' ' + start + ' ' + stop
-        gcapture( command, self.tmpdir ).run()
+        gcapture_tmpfile( command, self.tmpdir ).run()
 
     def view_inlined_toggled( self, w, rb, cbs ):
         cbs.set_sensitive( rb.get_active() )
@@ -1641,40 +1642,65 @@ Note that this will not delete the suite definition directory.""" )
             if sngcb.get_active():
                 extra += ' -s'
             command = "cylc inline -g " + extra + ' ' + reg
-            gcapture( command, self.tmpdir ).run()
+            gcapture_tmpfile( command, self.tmpdir ).run()
         else:
             if edit_inlined_rb.get_active():
                 extra = '-i '
             else:
                 extra = ''
             command = "cylc edit -g " + extra + ' ' + reg
-            gcapture( command, self.tmpdir ).run()
+            gcapture_tmpfile( command, self.tmpdir ).run()
         return False
 
 
     def validate_suite( self, w, name ):
         command = "cylc validate " + name 
-        gcapture( command, self.tmpdir, 600 ).run()
+        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
 
     def dump_suite( self, w, name ):
         command = "cylc dump " + name
-        gcapture( command, self.tmpdir, 400, 400 ).run()
+        gcapture_tmpfile( command, self.tmpdir, 400, 400 ).run()
 
     def describe_suite( self, w, name ):
         command = "cylc describe " + name  
-        gcapture( command, self.tmpdir, 500, 400 ).run()
+        gcapture_tmpfile( command, self.tmpdir, 500, 400 ).run()
 
     def list_suite( self, w, name ):
         command = "cylc list " + name
-        gcapture( command, self.tmpdir, 300, 400 ).run()
+        gcapture_tmpfile( command, self.tmpdir, 300, 400 ).run()
 
-    def launch_controller( self, w, name, state, suite_dir ):
+    def launch_controller( self, w, name, state ):
         m = re.match( 'RUNNING \(port (\d+)\)', state )
         port = None
         if m:
             port = m.groups()[0]
+
+        # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?
+        # a hard-wired prefix makes it possible for us to 
+        # reconnect to the output of a running suite. Some
+        # non-fatal textbuffer insertion warnings may occur if several
+        # control guis are open at once both trying to write to it.
+        prefix = os.path.join( '$HOME', name )
+
+        # environment variables allowed
+        prefix = os.path.expandvars( prefix )
+        # make parent directory if necessary
+        pdir = os.path.dirname( prefix )
+        try:
+            mkdir_p( pdir )
+        except Exception, x:
+            warning_dialog( str(x) ).warn()
+            return False
+
+        try:
+            stdout = open( prefix + '.out', 'wb' )
+            stderr = open( prefix + '.err', 'wb' )
+        except IOError,x:
+            warning_dialog( str(x) ).warn()
+            return False
+
         command = "gcylc " + name
-        gcapture( command, self.tmpdir, 800, 400 ).run()
+        gcapture( command, stdout, stderr, 800, 400 ).run()
 
     def check_entries( self, entries ):
         # note this check retrieved entry values
