@@ -1685,7 +1685,7 @@ Note that this will not delete the suite definition directory.""" )
         # reconnect to the output of a running suite. Some
         # non-fatal textbuffer insertion warnings may occur if several
         # control guis are open at once both trying to write to it.
-        prefix = os.path.join( '$HOME', name )
+        prefix = os.path.join( '$HOME', '.cylc', name )
 
         # environment variables allowed
         prefix = os.path.expandvars( prefix )

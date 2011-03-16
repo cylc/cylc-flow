@@ -322,7 +322,7 @@ their registered group:name.""")
 def importx( b ):
     help = helpwindow( "Import Help", 200, """
 Import a suite (or group of suites) from the central database, making it
-(them) available to you to modify and use. The suite definition directory
+(or them) available to you to modify and use. The suite definition directory
 will be copied from the registered location to the location your specify
 here.  You can use environment variables such as '$HOME' in the directory
 path.""")
@@ -331,7 +331,7 @@ path.""")
 def export( b ):
     help = helpwindow( "Export Help", 200, """
 Export a suite (or group of suites) to the central database to make it
-(them) available to others.""")
+(or them) available to others.""")
     help.show()
 
 def capture( b ):

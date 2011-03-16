@@ -40,7 +40,9 @@ Stderr is displayed in red.
         self.blue = tb.create_tag( None, foreground = "darkblue" )
         self.red = tb.create_tag( None, foreground = "red" )
        
-        tb.insert_with_tags( tb.get_end_iter(), command + '\n\n', self.blue )
+        tb.insert_with_tags( tb.get_end_iter(), 'command: ' + command + '\n', self.blue )
+        tb.insert_with_tags( tb.get_end_iter(), '>stdout: ' + stdoutfile.name + '\n', self.blue )
+        tb.insert_with_tags( tb.get_end_iter(), '>stderr: ' + stderrfile.name + '\n\n', self.blue )
 
         vbox = gtk.VBox()
         hbox = gtk.HBox()
