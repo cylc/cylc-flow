@@ -2,19 +2,15 @@
 
 from tailer import tailer
 import gtk
-import gobject
 import tempfile
-from time import sleep
 import os, re, sys
-from optparse import OptionParser
 from warning_dialog import warning_dialog, info_dialog
 import subprocess
-import threading
 import helpwindow
 
 # unit test: see the command $CYLC_DIR/bin/gcapture
 
-class gcapture():
+class gcapture(object):
     """Run a command as a subprocess and capture its stdout and stderr
 streams in real time to display in a GUI window. Examples:
     $ capture "echo foo"
@@ -50,12 +46,7 @@ Stderr is displayed in red.
         sw.add(self.textview)
         vbox.add(sw)
 
-        #save_entry = gtk.Entry()
-        #save_entry.set_text( "$HOME/foo.txt" )
-        #save_entry.connect( "activate", self.save, save_entry.get_text() )
- 
         save_button = gtk.Button( "_Save To File" )
-        #save_button.connect("clicked", self.save, save_entry.get_text() )
         save_button.connect("clicked", self.save )
 
         close_button = gtk.Button( "_Close" )
@@ -67,7 +58,6 @@ Stderr is displayed in red.
         hbox.pack_end(close_button, False)
         hbox.pack_end(help_button, False)
 
-        #hbox.pack_start( save_entry, False )
         hbox.pack_start( save_button, False )
 
         vbox.pack_start( hbox, False )

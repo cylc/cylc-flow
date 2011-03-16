@@ -1662,7 +1662,7 @@ Note that this will not delete the suite definition directory.""" )
 
     def describe_suite( self, w, name ):
         command = "cylc describe " + name  
-        gcapture( command, self.tmpdir, 700, 400 ).run()
+        gcapture( command, self.tmpdir, 500, 400 ).run()
 
     def list_suite( self, w, name ):
         command = "cylc list " + name
