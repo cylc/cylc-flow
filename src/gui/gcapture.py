@@ -12,7 +12,9 @@ import subprocess
 import threading
 import helpwindow
 
-class capture(object):
+# unit test: see the command $CYLC_DIR/bin/gcapture
+
+class gcapture():
     """Run a command as a subprocess and capture its stdout and stderr
 streams in real time to display in a GUI window. Examples:
     $ capture "echo foo"
@@ -20,12 +22,15 @@ streams in real time to display in a GUI window. Examples:
 Stderr is displayed in red.
     $ capture "echo foo && echox bar"
 """
-    def __init__( self, command, tmpdir, width=400, height=400 ):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_border_width( 5 )
-        window.set_title( 'subprocess output capture' )
-        window.connect("delete_event", self.quit)
-        window.set_size_request(width, height)
+    def __init__( self, command, tmpdir, width=400, height=400, standalone=False ):
+        self.standalone=standalone
+        self.tmpdir = tmpdir
+        self.command = command
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window.set_border_width( 5 )
+        self.window.set_title( 'subprocess output capture' )
+        self.window.connect("delete_event", self.quit)
+        self.window.set_size_request(width, height)
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
@@ -35,10 +40,10 @@ Stderr is displayed in red.
         self.textview.set_wrap_mode( gtk.WRAP_WORD )
 
         tb = self.textview.get_buffer()
-        blue = tb.create_tag( None, foreground = "darkblue" )
-        red = tb.create_tag( None, foreground = "red" )
+        self.blue = tb.create_tag( None, foreground = "darkblue" )
+        self.red = tb.create_tag( None, foreground = "red" )
        
-        tb.insert_with_tags( tb.get_end_iter(), command + '\n\n', blue )
+        tb.insert_with_tags( tb.get_end_iter(), command + '\n\n', self.blue )
 
         vbox = gtk.VBox()
         hbox = gtk.HBox()
@@ -66,19 +71,17 @@ Stderr is displayed in red.
         hbox.pack_start( save_button, False )
 
         vbox.pack_start( hbox, False )
-        window.add(vbox)
+        self.window.add(vbox)
         close_button.grab_focus()
-        window.show_all()
+        self.window.show_all()
 
-        stdout = tempfile.NamedTemporaryFile( dir = tmpdir )
-        stderr = tempfile.NamedTemporaryFile( dir = tmpdir )
-
-        proc = subprocess.Popen( command, stdout=stdout, stderr=stderr, shell=True )
-
+    def run( self ):
+        stdout = tempfile.NamedTemporaryFile( dir = self.tmpdir )
+        stderr = tempfile.NamedTemporaryFile( dir = self.tmpdir )
+        proc = subprocess.Popen( self.command, stdout=stdout, stderr=stderr, shell=True )
         self.stdout_updater = tailer( self.textview, stdout.name, proc=proc, format=True )
         self.stdout_updater.start()
-
-        self.stderr_updater = tailer( self.textview, stderr.name, proc=proc, tag=red )
+        self.stderr_updater = tailer( self.textview, stderr.name, proc=proc, tag=self.red )
         self.stderr_updater.start()
 
     def save( self, w ):
@@ -117,42 +120,7 @@ Stderr is displayed in red.
     def quit( self, w, e, data=None ):
         self.stdout_updater.quit = True
         self.stderr_updater.quit = True
-        gtk.main_quit()
-
-if __name__ == '__main__':
-
-    parser = OptionParser( """capture [options] COMMAND
-
-Run a command as a subprocess and capture the resulting stdout and
-stderr to display in a dialog. Examples:
-    $ capture "echo foo" &
-
-Arguments:
-   COMMAND    - the command line to run""")
-
-    parser.add_option( "--width", 
-        help="dialog window width in pixels (default 400)", 
-        metavar='INT', action="store", 
-        default=400, dest="width" )
-
-    parser.add_option( "--height", 
-        help="dialog window height in pixels (default 200)", 
-        metavar='INT', action="store", 
-        default=200, dest="height" )
-
-    (options, args) = parser.parse_args()
-
-    command = ' '.join(args)
-
-    if 'TMPDIR' in os.environ:
-        tmpdir = os.environ['TMPDIR']
-    elif 'SCRATCH' in os.environ:
-        tmpdir = os.environ['SCRATCH']
-    else:
-        x = 'You must export $TMPDIR or $SCRATCH before running this command' 
-        warning_dialog( x ).warn()
-        sys.exit(1)
-
-    gobject.threads_init()
-    capture( command, tmpdir, width=int(options.width), height=int(options.height) )
-    gtk.main()
+        if self.standalone:
+            gtk.main_quit()
+        else:
+            self.window.destroy()

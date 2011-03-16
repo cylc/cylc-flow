@@ -1,0 +1,46 @@
+#!/usr/bin/env python
+
+import gtk
+import gobject
+import os, sys
+from optparse import OptionParser
+from warning_dialog import warning_dialog
+from gcapture import gcapture
+
+# This is a unit test for $CYLC_DIR/src/gui/gcapture.py
+# but it may be more generally useful.
+
+parser = OptionParser( """gcapture [options] COMMAND
+Run a command as a subprocess and capture the resulting stdout and
+stderr to display in a dialog. Examples:
+    $ capture "echo foo" &
+
+Arguments:
+   COMMAND    - the command line to run""")
+
+parser.add_option( "--width", 
+    help="dialog window width in pixels (default 400)", 
+    metavar='INT', action="store", 
+    default=400, dest="width" )
+
+parser.add_option( "--height", 
+    help="dialog window height in pixels (default 200)", 
+    metavar='INT', action="store", 
+    default=200, dest="height" )
+
+(options, args) = parser.parse_args()
+
+command = ' '.join(args)
+
+if 'TMPDIR' in os.environ:
+    tmpdir = os.environ['TMPDIR']
+elif 'SCRATCH' in os.environ:
+    tmpdir = os.environ['SCRATCH']
+else:
+    x = 'You must export $TMPDIR or $SCRATCH before running this command' 
+    warning_dialog( x ).warn()
+    sys.exit(1)
+
+gobject.threads_init()
+gcapture( command, tmpdir, width=int(options.width), height=int(options.height), standalone=True ).run()
+gtk.main()

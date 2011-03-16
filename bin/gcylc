@@ -60,7 +60,7 @@ if len( args ) == 1:
         sys.exit(0)
 
 if len( args ) == 0:
-    app = chooser( host, imagedir )
+    app = chooser( host, tmpdir, imagedir )
     gtk.main()
     sys.exit(0)
 
