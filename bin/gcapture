@@ -5,7 +5,7 @@ import gobject
 import os, sys
 from optparse import OptionParser
 from warning_dialog import warning_dialog
-from gcapture import gcapture
+from gcapture import gcapture, gcapture_tmpfile
 
 # This is a unit test for $CYLC_DIR/src/gui/gcapture.py
 # but it may be more generally useful.
@@ -20,13 +20,16 @@ Arguments:
 
 parser.add_option( "--width", 
     help="dialog window width in pixels (default 400)", 
-    metavar='INT', action="store", 
-    default=400, dest="width" )
+    metavar='INT', action="store", default=400, dest="width" )
 
 parser.add_option( "--height", 
     help="dialog window height in pixels (default 200)", 
-    metavar='INT', action="store", 
-    default=200, dest="height" )
+    metavar='INT', action="store", default=200, dest="height" )
+
+parser.add_option( "--prefix", 
+    help="(optional) capture stdout and stderr in files PREFIX.out, PREFIX.err " 
+    "(full path, e.g. /path/to/foo/PREFIX).",
+    metavar='PREFIX', action="store", default=None, dest="fileprefix" )
 
 (options, args) = parser.parse_args()
 
@@ -42,5 +45,10 @@ else:
     sys.exit(1)
 
 gobject.threads_init()
-gcapture( command, tmpdir, width=int(options.width), height=int(options.height), standalone=True ).run()
+if options.fileprefix:
+    stdout = open( options.fileprefix + '.out', 'wb' )
+    stderr = open(options.fileprefix + '.err', 'wb' )
+    gcapture( command, stdout, stderr, width=int(options.width), height=int(options.height), standalone=True ).run()
+else:
+    gcapture_tmpfile( command, tmpdir, width=int(options.width), height=int(options.height), standalone=True ).run()
 gtk.main()

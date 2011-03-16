@@ -18,10 +18,11 @@ streams in real time to display in a GUI window. Examples:
 Stderr is displayed in red.
     $ capture "echo foo && echox bar"
 """
-    def __init__( self, command, tmpdir, width=400, height=400, standalone=False ):
+    def __init__( self, command, stdoutfile, stderrfile, width=400, height=400, standalone=False ):
         self.standalone=standalone
-        self.tmpdir = tmpdir
         self.command = command
+        self.stdout = stdoutfile
+        self.stderr = stderrfile
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_border_width( 5 )
         self.window.set_title( 'subprocess output capture' )
@@ -66,12 +67,10 @@ Stderr is displayed in red.
         self.window.show_all()
 
     def run( self ):
-        stdout = tempfile.NamedTemporaryFile( dir = self.tmpdir )
-        stderr = tempfile.NamedTemporaryFile( dir = self.tmpdir )
-        proc = subprocess.Popen( self.command, stdout=stdout, stderr=stderr, shell=True )
-        self.stdout_updater = tailer( self.textview, stdout.name, proc=proc, format=True )
+        proc = subprocess.Popen( self.command, stdout=self.stdout, stderr=self.stderr, shell=True )
+        self.stdout_updater = tailer( self.textview, self.stdout.name, proc=proc, format=True )
         self.stdout_updater.start()
-        self.stderr_updater = tailer( self.textview, stderr.name, proc=proc, tag=self.red )
+        self.stderr_updater = tailer( self.textview, self.stderr.name, proc=proc, tag=self.red )
         self.stderr_updater.start()
 
     def save( self, w ):
@@ -114,3 +113,10 @@ Stderr is displayed in red.
             gtk.main_quit()
         else:
             self.window.destroy()
+
+class gcapture_tmpfile( gcapture ):
+    def __init__( self, command, tmpdir, width=400, height=400, standalone=False ):
+        stdout = tempfile.NamedTemporaryFile( dir = tmpdir )
+        stderr = tempfile.NamedTemporaryFile( dir = tmpdir )
+        gcapture.__init__(self, command, stdout, stderr, width, height, standalone )
+ 
