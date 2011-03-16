@@ -360,6 +360,7 @@ class chooser(object):
         self.filter_window = None
         self.owner = os.environ['USER']
         self.readonly = readonly
+        self.gcapture_windows = []
 
         gobject.threads_init()
 
@@ -606,7 +607,9 @@ The cylc forecast suite metascheduler.
         name = name_e.get_text()
         reg = group + ':' + name
         command = "cylc register " + reg + ' ' + dir
-        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
         w.destroy()
 
     def filter(self, w, owner_e, group_e, name_e ):
@@ -712,7 +715,20 @@ The cylc forecast suite metascheduler.
         self.start_updater()
 
     def delete_all_event( self, w, e ):
+
         self.updater.quit = True
+
+        # call quit on any remaining gcapture windows, which contain
+        # tailer threads that need to be stopped). Currently we maintain
+        # a list of all gcapture windows opened
+        # since gcylc started up, hence the use of 'quit_already' to
+        # avoid calling window.destroy() on gcapture windows that have
+        # already been destroyed by the user closing them (although
+        # a second call to destroy() may be safe anyway?)...
+        for gwindow in self.gcapture_windows:
+            if not gwindow.quit_already:
+                gwindow.quit( None, None )
+
         gtk.main_quit()      
         # Uncommenting the following makes the window stay around until
         # all updater threads have exited (put a 5s sleep in scan_my_ports
@@ -972,7 +988,9 @@ Note that this will not delete any suite definition directories.""" )
         if self.cdb:
             group = owner + ':' + group
         command = "cylc unregister " + group + ":"
-        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
         w.destroy()
 
     def unregister_suite_popup( self, w, reg ):
@@ -1006,7 +1024,9 @@ Note that this will not delete the suite definition directory.""" )
 
     def unregister_suite( self, b, w, reg ):
         command = "cylc unregister " + reg
-        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
         w.destroy()
 
     def import_group_popup( self, w, owner, group ):
@@ -1055,7 +1075,9 @@ Note that this will not delete the suite definition directory.""" )
         if not self.check_entries( [group, dir] ):
             return False
         command = "cylc import " + fowner + ':' + fgroup + ': ' + group + ': ' + dir
-        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
         w.destroy()
  
     def import_suite_popup( self, w, reg ):
@@ -1117,7 +1139,9 @@ Note that this will not delete the suite definition directory.""" )
         if not self.check_entries( [group, name, dir] ):
             return False
         command = "cylc import " + reg + ' ' + group + ':' + name + ' ' + dir
-        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
         w.destroy()
  
     def export_suite_popup( self, w, reg ):
@@ -1171,7 +1195,9 @@ Note that this will not delete the suite definition directory.""" )
         if not self.check_entries( [group, name] ):
             return False
         command = "cylc export " + reg + ' ' + group + ':' + name
-        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
         w.destroy()
  
     def toggle_entry_sensitivity( self, w, entry ):
@@ -1231,7 +1257,9 @@ Note that this will not delete the suite definition directory.""" )
         if self.cdb:
             tto = reg_owner + ':' + tto
         command = "cylc reregister " + reg + ' ' + tto
-        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
         w.destroy()
 
     def reregister_group_popup( self, w, group ):
@@ -1272,7 +1300,9 @@ Note that this will not delete the suite definition directory.""" )
             g_from = self.owner + ':' + g_from
             g_to = self.owner + ':' + g_to
         command = "cylc reregister " + g_from + ': ' + g_to + ":"
-        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
         w.destroy()
 
     def export_group_popup( self, w, group ):
@@ -1313,7 +1343,9 @@ Note that this will not delete the suite definition directory.""" )
         if not self.check_entries( [group] ):
             return False
         command = "cylc export " + lgroup + ': ' + group + ":"
-        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
         w.destroy()
  
     def copy_group_popup( self, w, group ):
@@ -1373,7 +1405,9 @@ Note that this will not delete the suite definition directory.""" )
         g_to += ':'
         g_from += ':'
         command = "cylc copy " + g_from + ' ' + g_to + ' ' + dir
-        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
         w.destroy()
 
     def copy_suite_popup( self, w, reg ):
@@ -1449,7 +1483,9 @@ Note that this will not delete the suite definition directory.""" )
         if not self.check_entries( chk ):
             return False
         command = "cylc copy " + reg + ' ' + group + ':' + name + ' ' + dir
-        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
         w.destroy()
  
     def search_suite_popup( self, w, reg ):
@@ -1552,7 +1588,9 @@ Note that this will not delete the suite definition directory.""" )
         if nobin_cb.get_active():
             options += ' -x '
         command = "cylc search " + options + ' ' + pattern + ' ' + reg 
-        gcapture_tmpfile( command, self.tmpdir, heigh=500 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, heigh=500 )
+        self.gcapture_windows.append(foo)
+        foo.run()
 
     def graph_suite( self, w, reg, warm_cb, outputfile_entry, start_entry, stop_entry ):
         start = start_entry.get_text()
@@ -1578,7 +1616,9 @@ Note that this will not delete the suite definition directory.""" )
         # Would have to launch in own thread as xdot is interactive?
         # Probably not necessary ... same goes for controller actually?
         command = "cylc graph " + options + ' ' + reg + ' ' + start + ' ' + stop
-        gcapture_tmpfile( command, self.tmpdir ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir )
+        self.gcapture_windows.append(foo)
+        foo.run()
 
     def view_inlined_toggled( self, w, rb, cbs ):
         cbs.set_sensitive( rb.get_active() )
@@ -1647,32 +1687,44 @@ Note that this will not delete the suite definition directory.""" )
             if sngcb.get_active():
                 extra += ' -s'
             command = "cylc inline -g " + extra + ' ' + reg
-            gcapture_tmpfile( command, self.tmpdir ).run()
+            foo = gcapture_tmpfile( command, self.tmpdir )
+            self.gcapture_windows.append(foo)
+            foo.run()
         else:
             if edit_inlined_rb.get_active():
                 extra = '-i '
             else:
                 extra = ''
             command = "cylc edit -g " + extra + ' ' + reg
-            gcapture_tmpfile( command, self.tmpdir ).run()
+            foo = gcapture_tmpfile( command, self.tmpdir )
+            self.gcapture_windows.append(foo)
+            foo.run()
         return False
 
 
     def validate_suite( self, w, name ):
         command = "cylc validate " + name 
-        gcapture_tmpfile( command, self.tmpdir, 600 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
 
     def dump_suite( self, w, name ):
         command = "cylc dump " + name
-        gcapture_tmpfile( command, self.tmpdir, 400, 400 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, 400, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
 
     def describe_suite( self, w, name ):
         command = "cylc describe " + name  
-        gcapture_tmpfile( command, self.tmpdir, 500, 400 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, 500, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
 
     def list_suite( self, w, name ):
         command = "cylc list " + name
-        gcapture_tmpfile( command, self.tmpdir, 300, 400 ).run()
+        foo = gcapture_tmpfile( command, self.tmpdir, 300, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
 
     def launch_controller( self, w, name, state ):
         m = re.match( 'RUNNING \(port (\d+)\)', state )
@@ -1708,7 +1760,9 @@ Note that this will not delete the suite definition directory.""" )
             return False
 
         command = "gcylc " + name
-        gcapture( command, stdout, stderr, 800, 400 ).run()
+        foo = gcapture( command, stdout, stderr, 800, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
 
     def check_entries( self, entries ):
         # note this check retrieved entry values

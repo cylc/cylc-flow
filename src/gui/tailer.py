@@ -28,11 +28,12 @@ class tailer(threading.Thread):
 
     def run( self ):
         #gobject.idle_add( self.clear )
+        #print "Starting tailer thread"
 
         if not os.path.exists( self.logfile ):
             #gobject.idle_add( self.warn, "File not found: " + self.logfile )
-            #print "File not found: " + self.logfile
-            ###print "Disconnecting from log viewer thread"
+            print "File not found: " + self.logfile
+            #print "Disconnecting from tailer thread"
             return
 
         gen = tail.tail( open( self.logfile ))
@@ -47,7 +48,7 @@ class tailer(threading.Thread):
             #        gobject.idle_add( self.update_gui, '(process completed)\n' )
             #        #break
         
-        ###print "Disconnecting from log viewer thread"
+        #print "Disconnecting from tailer thread"
  
     def update_gui( self, line ):
         #if self.format:

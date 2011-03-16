@@ -28,6 +28,7 @@ Stderr is displayed in red.
         self.window.set_title( 'subprocess output capture' )
         self.window.connect("delete_event", self.quit)
         self.window.set_size_request(width, height)
+        self.quit_already = False
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
@@ -109,11 +110,18 @@ Stderr is displayed in red.
             info_dialog( "Buffer saved to " + fname ).inform()
 
     def quit( self, w, e, data=None ):
+        if self.quit_already:
+            # this is because gcylc currently maintains a list of *all*
+            # gcapture windows, including those the user has closed.
+            return
         self.stdout_updater.quit = True
         self.stderr_updater.quit = True
+        self.quit_already = True
         if self.standalone:
+            #print 'GTK MAIN QUIT'
             gtk.main_quit()
         else:
+            #print 'WINDOW DESTROY'
             self.window.destroy()
 
 class gcapture_tmpfile( gcapture ):
