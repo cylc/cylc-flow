@@ -17,6 +17,11 @@ from mkdir_p import mkdir_p
 #debug = True
 debug = False
 
+# NOTE, WHY WE LAUNCH CONTROL GUIS AS STANDALONE APPS (via gcapture)
+# instead of as part of the gcylc app: we can then capture out and err
+# streams into suite-specific log files rather than have it all come
+# out with the gcylc stdout and stderr streams.
+
 class chooser_updater(threading.Thread):
     count = 0
     def __init__(self, owner, regd_treestore, db, is_cdb, host, 
@@ -1693,8 +1698,11 @@ Note that this will not delete the suite definition directory.""" )
             return False
 
         try:
-            stdout = open( prefix + '.out', 'wb' )
-            stderr = open( prefix + '.err', 'wb' )
+            # open in append mode 'ab'. Else 'wb' file gets nuked with
+            # each new open - not good when we can have multiple control
+            # gui invocations while a suite runs.
+            stdout = open( prefix + '.out', 'ab' )
+            stderr = open( prefix + '.err', 'ab' )
         except IOError,x:
             warning_dialog( str(x) ).warn()
             return False
