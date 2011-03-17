@@ -281,9 +281,8 @@ The cylc forecast suite metascheduler.
 
         treeview.connect( 'button_press_event', self.on_treeview_button_pressed, False )
 
-        #headings = ['task', 'state', 'latest message', 'Tsubmit', 'Tstart', 'Tfinish', 'Telapsed' ]
-        headings = ['task', 'state', 'latest message', 'Tsubmit', 'Tstart', 'Tfinish', 'Teta' ]
-        bkgcols  = [ None,  '#def',  '#fff',           '#def',    '#fff',   '#def',    '#fff'     ]
+        headings = ['task', 'state', 'latest message', 'Tsubmit', 'Tstart', 'mean dT', 'ETC' ]
+        bkgcols  = [ None,  '#def',  '#fff',           '#def',    '#fff',   '#def',    '#fff']
         for n in range(len(headings)):
             cr = gtk.CellRendererText()
             cr.set_property( 'cell-background', bkgcols[n] )
@@ -468,9 +467,8 @@ The cylc forecast suite metascheduler.
 
         treeview.connect( 'button_press_event', self.on_treeview_button_pressed )
 
-        #headings = ['cycle', 'name', 'state', 'latest message', 'Tsubmit', 'Tstart', 'Tfinish', 'Telapsed' ]
-        headings = ['cycle', 'name', 'state', 'latest message', 'Tsubmit', 'Tstart', 'Tfinish', 'Teta' ]
-        bkgcols  = ['#def',  '#fff', '#def',  '#fff',           '#def',    '#fff',   '#def',    '#fff' ]
+        headings = ['cycle', 'name', 'state', 'latest message', 'Tsubmit', 'Tstart', 'mean dT', 'ETC' ]
+        bkgcols  = ['#def',  '#fff', '#def',  '#fff',           '#def',    '#fff',   '#def',    '#fff']
 
         # create the TreeViewColumn to display the data
         for n in range(len(headings)):

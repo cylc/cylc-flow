@@ -64,7 +64,7 @@ class task( Pyro.core.ObjBase ):
     task_submission_timeout_minutes = None
 
     elapsed_times = []
-    mean_elapsed_time = None
+    mean_total_elapsed_time = None
 
     @classmethod
     def describe( cls ):
@@ -103,13 +103,11 @@ class task( Pyro.core.ObjBase ):
             pass
 
     @classmethod
-    def update_mean_elapsed_time( cls, started, finished ):
+    def update_mean_total_elapsed_time( cls, started, finished ):
         cls.elapsed_times.append( finished - started )
-        #nums = [float(x) for x in cls.elapsed_times ] # (already float?)
-        #cls.mean_elapsed_time = sum( cls.elapsed_times ) / len( cls.elapsed_times )
-        # CANT DIVIDE TIME DELTAS - TEMP TESTING:
-        cls.mean_elapsed_time = cls.elapsed_times[-1]
-        print 'HELLO', cls.__name__, cls.mean_elapsed_time
+        elt_sec = [x.days * 86400 + x.seconds for x in cls.elapsed_times ]
+        mtet_sec = sum( elt_sec ) / len( elt_sec )
+        cls.mean_total_elapsed_time = datetime.timedelta( seconds=mtet_sec )
  
     def __init__( self, state ):
         # Call this AFTER derived class initialisation
@@ -151,7 +149,8 @@ class task( Pyro.core.ObjBase ):
         self.submitted_time = None
         self.started_time = None
         self.finished_time = None
-        self.elapsed_time = None
+        self.etc = None
+        self.to_go = None
 
         self.launcher = get_object( 'job_submit_methods', self.job_submit_method ) \
                 ( self.id, self.external_task, self.env_vars, self.directives, 
@@ -233,7 +232,7 @@ class task( Pyro.core.ObjBase ):
         self.outputs.set_all_complete()
         self.state.set_status( 'finished' )
         self.finished_time = task.clock.get_datetime()
-        self.__class__.update_mean_elapsed_time( self.started_time, self.finished_time )
+        # don't update mean total elapsed time if set_finished() was called
 
     def set_finished_hook( self ):
         # (set_finished() is used by remote switch)
@@ -370,7 +369,7 @@ class task( Pyro.core.ObjBase ):
                 if message == self.id + ' finished':
                     # TASK HAS FINISHED
                     self.finished_time = task.clock.get_datetime()
-                    self.__class__.update_mean_elapsed_time( self.started_time, self.finished_time )
+                    self.__class__.update_mean_total_elapsed_time( self.started_time, self.finished_time )
                     if not self.outputs.all_satisfied():
                         self.set_failed( 'finished before all outputs were completed' )
                     else:
@@ -478,29 +477,36 @@ class task( Pyro.core.ObjBase ):
         else:
             summary[ 'finished_time' ] =  '*'
 
-        if self.started_time and self.finished_time:
-            delta = str( self.finished_time - self.started_time )
-            # e.g.: "1 day, 23:59:55.903937"
-            # strip off fraction of seconds
-            delta = re.sub( '\.\d*$', '', delta )
-            summary[ 'elapsed_time' ] =  delta
-        else:
-            summary[ 'elapsed_time' ] =  '*'
+        # str(timedelta) => "1 day, 23:59:55.903937" (for example)
+        # to strip off fraction of seconds:
+        # timedelta = re.sub( '\.\d*$', '', timedelta )
 
-
-        summary[ 'ETA' ] = '*'
-        if self.__class__.mean_elapsed_time:
-            met = self.__class__.mean_elapsed_time
-            summary[ 'mean_elapsed_time' ] =  re.sub( '\.\d*$', '', str(met) )
+        # TO DO: the following section could probably be streamlined a bit
+        if self.__class__.mean_total_elapsed_time:
+            met = self.__class__.mean_total_elapsed_time
+            summary[ 'mean total elapsed time' ] =  re.sub( '\.\d*$', '', str(met) )
             if self.started_time:
-                current_time = task.clock.get_datetime()
-                run_time = current_time - self.started_time
-                to_go_time = met - run_time
-                #summary[ 'ETA' ] = re.sub( '\.\d*$', '', str( current_time + to_go_time ))
-                summary[ 'ETA' ] = re.sub( '\.\d*$', '', str( to_go_time ))
+                if not self.finished_time:
+                    # started but not finished yet, compute ETC
+                    current_time = task.clock.get_datetime()
+                    run_time = current_time - self.started_time
+                    self.to_go = met - run_time
+                    self.etc = current_time + self.to_go 
+                    summary[ 'Tetc' ] = self.etc.strftime( "%H:%M:%S" ) + '(' + re.sub( '\.\d*$', '', str(self.to_go) ) + ')'
+                elif self.etc:
+                    # the first time a task finishes self.etc is not defined
+                    # task finished; leave final prediction
+                    summary[ 'Tetc' ] = self.etc.strftime( "%H:%M:%S" ) + '(' + re.sub( '\.\d*$', '', str(self.to_go) ) + ')'
+                else:
+                    summary[ 'Tetc' ] = '*'
+            else:
+                # not started yet
+                summary[ 'Tetc' ] = '*'
         else:
-            summary[ 'mean_elapsed_time' ] =  '*'
-
+            # first instance: no mean time computed yet
+            summary[ 'mean total elapsed time' ] =  '*'
+            summary[ 'Tetc' ] = '*'
+ 
         summary[ 'logfiles' ] = self.logfiles.get_paths()
  
         return summary
