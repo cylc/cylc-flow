@@ -213,7 +213,8 @@ class updater(threading.Thread):
             tsub = self.state_summary[ id ][ 'submitted_time' ]
             tstt = self.state_summary[ id ][ 'started_time' ]
             tfin = self.state_summary[ id ][ 'finished_time' ]
-            tela = self.state_summary[ id ][ 'elapsed_time' ]
+            #tela = self.state_summary[ id ][ 'elapsed_time' ]
+            tela = self.state_summary[ id ][ 'ETA' ]
             state = markup( get_col(state), state )
             new_data[id] = [ state, message, tsub, tstt, tfin, tela ]
  
@@ -264,7 +265,8 @@ class updater(threading.Thread):
             tsub = self.state_summary[ id ][ 'submitted_time' ]
             tstt = self.state_summary[ id ][ 'started_time' ]
             tfin = self.state_summary[ id ][ 'finished_time' ]
-            tela = self.state_summary[ id ][ 'elapsed_time' ]
+            #tela = self.state_summary[ id ][ 'elapsed_time' ]
+            tela = self.state_summary[ id ][ 'ETA' ]
             priority = self.state_summary[ id ][ 'latest_message_priority' ]
             message = markup( get_col_priority( priority ), message )
             state = markup( get_col(state), state )

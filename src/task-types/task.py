@@ -63,6 +63,9 @@ class task( Pyro.core.ObjBase ):
     task_timeout_hook = None
     task_submission_timeout_minutes = None
 
+    elapsed_times = []
+    mean_elapsed_time = None
+
     @classmethod
     def describe( cls ):
         return cls.description 
@@ -99,6 +102,13 @@ class task( Pyro.core.ObjBase ):
             # class has no class_vars defined
             pass
 
+    @classmethod
+    def update_mean_elapsed_time( cls, started, finished ):
+        cls.elapsed_times.append( finished - started )
+        #nums = [float(x) for x in cls.elapsed_times ] # (already float?)
+        cls.mean_elapsed_time = sum( cls.elapsed_times ) / len( cls.elapsed_times )
+        print 'HELLO', cls.__name__, cls.mean_elapsed_time
+ 
     def __init__( self, state ):
         # Call this AFTER derived class initialisation
 
@@ -221,6 +231,7 @@ class task( Pyro.core.ObjBase ):
         self.outputs.set_all_complete()
         self.state.set_status( 'finished' )
         self.finished_time = task.clock.get_datetime()
+        self.__class__.update_mean_elapsed_time( self.started_time, self.finished_time )
 
     def set_finished_hook( self ):
         # (set_finished() is used by remote switch)
@@ -357,6 +368,7 @@ class task( Pyro.core.ObjBase ):
                 if message == self.id + ' finished':
                     # TASK HAS FINISHED
                     self.finished_time = task.clock.get_datetime()
+                    self.__class__.update_mean_elapsed_time( self.started_time, self.finished_time )
                     if not self.outputs.all_satisfied():
                         self.set_failed( 'finished before all outputs were completed' )
                     else:
@@ -472,6 +484,19 @@ class task( Pyro.core.ObjBase ):
             summary[ 'elapsed_time' ] =  delta
         else:
             summary[ 'elapsed_time' ] =  '*'
+
+
+        summary[ 'ETA' ] = '*'
+        if self.__class__.mean_elapsed_time:
+            met = self.__class__.mean_elapsed_time
+            summary[ 'mean_elapsed_time' ] =  re.sub( '\.\d*$', '', str(met) )
+            if self.started_time:
+                current_time = task.clock.get_datetime()
+                run_time = current_time - start_time
+                to_go_time = met - run_time
+                summary[ 'ETA' ] = re.sub( '\.\d*$', '', str( current_time + to_go_time ))
+        else:
+            summary[ 'mean_elapsed_time' ] =  '*'
 
         summary[ 'logfiles' ] = self.logfiles.get_paths()
  
