@@ -106,7 +106,9 @@ class task( Pyro.core.ObjBase ):
     def update_mean_elapsed_time( cls, started, finished ):
         cls.elapsed_times.append( finished - started )
         #nums = [float(x) for x in cls.elapsed_times ] # (already float?)
-        cls.mean_elapsed_time = sum( cls.elapsed_times ) / len( cls.elapsed_times )
+        #cls.mean_elapsed_time = sum( cls.elapsed_times ) / len( cls.elapsed_times )
+        # CANT DIVIDE TIME DELTAS - TEMP TESTING:
+        cls.mean_elapsed_time = cls.elapsed_times[-1]
         print 'HELLO', cls.__name__, cls.mean_elapsed_time
  
     def __init__( self, state ):
@@ -492,9 +494,10 @@ class task( Pyro.core.ObjBase ):
             summary[ 'mean_elapsed_time' ] =  re.sub( '\.\d*$', '', str(met) )
             if self.started_time:
                 current_time = task.clock.get_datetime()
-                run_time = current_time - start_time
+                run_time = current_time - self.started_time
                 to_go_time = met - run_time
-                summary[ 'ETA' ] = re.sub( '\.\d*$', '', str( current_time + to_go_time ))
+                #summary[ 'ETA' ] = re.sub( '\.\d*$', '', str( current_time + to_go_time ))
+                summary[ 'ETA' ] = re.sub( '\.\d*$', '', str( to_go_time ))
         else:
             summary[ 'mean_elapsed_time' ] =  '*'
 
