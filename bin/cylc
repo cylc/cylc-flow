@@ -153,7 +153,7 @@ control_commands['block'  ] = ['block' ]
 control_commands['unblock'] = ['unblock' ] 
 control_commands['reset'  ] = ['reset'  ]
 control_commands['lockserver'] = ['lockserver' ]
-control_commands['lockclient'] = ['lockclient' ]
+control_commands['lockclient'] = ['lockclient', 'lc' ]
 control_commands['verbosity' ] = ['verbosity' ]
  
 utility_commands = OrderedDict()

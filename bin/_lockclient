@@ -53,7 +53,7 @@ def check_task_spec( task_spec ):
 
 if __name__ == "__main__":
 
-    usage = """cylc [control] lockclient [options]
+    usage = """cylc [control] lockclient|lc [options]
 
 This is the command line interface to the cylc lockserver daemon, which
 brokers suite and task locks for cylc suites. 
