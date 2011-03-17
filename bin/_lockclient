@@ -7,7 +7,7 @@ from time import sleep
 
 import cycle_time
 from port_scan import SuiteNotFoundError
-from registration import localdb, RegistrationError
+from registration import localdb, qualify, RegistrationError
 from lockserver import lockserver
 from task_lock import task_lock
 from suite_lock import suite_lock
@@ -20,6 +20,7 @@ def print_heading( heading ):
         print heading
 
 def check_suite_spec( name ):
+    name = qualify(name)
     reg = localdb()
     reg.load_from_file()
     try:
@@ -31,19 +32,18 @@ def check_suite_spec( name ):
 def check_task_spec( task_spec ):
     # GROUP:NAME:TASK%T
     # NAME:TASK%T (GROUP=default)
-    items = task_spec.split( ':' )
-    if len( items ) == 2:
-        suite, task_id = items
-    elif len( items ) == 3:
-        sgroup, sname, task_id = items
-        suite = sgroup + ':' + sname
-    else:
-        raise SystemExit( task_spec + " - Please specify SUITE:TASK_NAME%CYCLE_TIME" )
+    try:
+        suite, task_id = task_spec.split( '|' )
+    except:
+        raise SystemExit( task_spec + " - Please specify SUITE|TASK_NAME%CYCLE_TIME" )
+
+    suite = qualify( suite )
     check_suite_spec( suite )
+
     try:
         (name, cycle) = task_id.split( '%' )
     except ValueError:
-        raise SystemExit( task_spec + " - Please specify SUITE:TASK_NAME%CYCLE_TIME" )
+        raise SystemExit( task_spec + " - Please specify SUITE|TASK_NAME%CYCLE_TIME" )
  
     if not cycle_time.is_valid( cycle ):
         raise SystemExit( "Invalid cycle time: " + cycle )
@@ -96,10 +96,10 @@ task owner."""
             metavar="HOSTNAME", action="store", dest="host" )
 
     parser.add_option( "--acquire-task", help="Acquire a task lock.",
-            metavar="SUITE:NAME%CYCLE", action="store", dest="acquire" )
+            metavar="SUITE|NAME%CYCLE", action="store", dest="acquire" )
 
     parser.add_option( "--release-task", help="Release a task lock.",
-            metavar="SUITE:NAME%CYCLE", action="store", dest="release" )
+            metavar="SUITE|NAME%CYCLE", action="store", dest="release" )
 
     parser.add_option( "--acquire-suite", help="Acquire an exclusive suite lock.",
             metavar="SUITE", action="store", dest="suite_acquire" )
@@ -163,19 +163,19 @@ task owner."""
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.release )
 
         elif options.suite_acquire:
-            suite = options.suite_acquire
+            suite = qualify(options.suite_acquire)
             suitedir = check_suite_spec( suite )
             if not suite_lock( suite, suitedir, owner, host, port, 'scheduler' ).request_suite_access( True ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire )
 
         elif options.suite_acquire_nonex:
-            suite = options.suite_acquire_nonex
+            suite = qualify(options.suite_acquire_nonex)
             suitedir = check_suite_spec( suite )
             if not suite_lock( suite, suitedir, owner, host, port, 'scheduler' ).request_suite_access( False ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire_nonex )
 
         elif options.suite_release:
-            suite = options.suite_release
+            suite = qualify(options.suite_release)
             suitedir = check_suite_spec( suite )
             if not suite_lock( suite, suitedir, owner, host, port, 'scheduler' ).release_suite_access():
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.suite_release )

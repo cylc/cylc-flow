@@ -82,8 +82,9 @@ class LServer( object ):
 
         #foo = open( "/home/oliverh/cylc/foo.txt", "a" )
 
-        qualified_name = self.owner + '.lockserver'
-        self.pyro_daemon.connect( locker, qualified_name )
+        # connect to pyro with owner name as an added safeguard against
+        # accessing lockservers owned by others.
+        self.pyro_daemon.connect( locker, self.owner + '.lockserver' )
 
         while True:
             self.pyro_daemon.handleRequests()

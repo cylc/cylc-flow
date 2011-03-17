@@ -6,7 +6,7 @@ from optparse import OptionParser
 from shutil import copy
 import tempfile
 import subprocess
-from registration import unqualify, RegistrationError
+from registration import qualify, RegistrationError
  
 parser = OptionParser( """cylc [info] log [options] SUITE 
 Print, or view in $EDITOR, local suite log files, with optional
@@ -44,7 +44,7 @@ if len(args) != 1:
     parser.error( "wrong number of arguments" )
 
 try:
-    suite = unqualify(args[0])
+    suite = qualify(args[0])
 except RegistrationError, x:
     raise SystemExit(x)
 
