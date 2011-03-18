@@ -11,7 +11,7 @@ import cycle_time
 import pimp_my_logger
 import accelerated_clock 
 import re, os, sys, shutil
-from registration import regsplit, qualify
+from registration import regsplit
 from execute import execute
 from rolling_archive import rolling_archive
 from cylc_pyro_server import pyro_server
@@ -243,7 +243,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
         cylcenv[ 'CYLC_SUITE_PORT' ] =  self.pyro.get_port()
         cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
-        cylcenv[ 'CYLC_SUITE' ] = qualify(self.suite)
+        cylcenv[ 'CYLC_SUITE' ] = self.suite
         suite_owner, suite_group, suite_name = regsplit( self.suite ).get()
         cylcenv[ 'CYLC_SUITE_GROUP' ] = suite_group
         cylcenv[ 'CYLC_SUITE_NAME' ] = suite_name

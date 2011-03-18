@@ -4,7 +4,7 @@ import os, sys, re
 import socket
 from optparse import OptionParser
 from passphrase import passphrase
-from registration import qualify, RegistrationError
+from registration import RegistrationError
 import port_scan
 
 parser = OptionParser( """cylc [discover] ping [options] SUITE
@@ -48,7 +48,7 @@ if len( args ) != 1:
     parser.error( "Wrong number of arguments" ) 
 
 try:
-    suite = qualify(args[0])
+    suite = args[0]
 except RegistrationError, x:
     raise SystemExit(x)
 

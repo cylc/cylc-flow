@@ -10,7 +10,8 @@ parser = OptionParser( usage = """cylc [db] export [OPTIONS] LOCAL [CENTRAL]
 Export local suite or group registrations to the central database.
 
 Arguments:
-    LOCAL, CENTRAL   - registrations, GROUP:NAME or NAME (default group).""" )  
+    LOCAL    - SUITE registration GROUP:NAME
+    CENTRAL  - SUITE registration, OWNER:GROUP:NAME""" )  
 
 ( options, args ) = parser.parse_args()
 

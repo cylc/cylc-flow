@@ -7,7 +7,7 @@ from time import sleep
 
 import cycle_time
 from port_scan import SuiteNotFoundError
-from registration import localdb, qualify, RegistrationError
+from registration import localdb, RegistrationError
 from lockserver import lockserver
 from task_lock import task_lock
 from suite_lock import suite_lock
@@ -20,7 +20,6 @@ def print_heading( heading ):
         print heading
 
 def check_suite_spec( name ):
-    name = qualify(name)
     reg = localdb()
     reg.load_from_file()
     try:
@@ -30,8 +29,7 @@ def check_suite_spec( name ):
     return suite_dir
 
 def check_task_spec( task_spec ):
-    # GROUP:NAME:TASK%T
-    # NAME:TASK%T (GROUP=default)
+    # GROUP:NAME:TASK%CYCLE_TIME
     try:
         group, name, task_id = task_spec.split( ':' )
     except:
@@ -162,19 +160,19 @@ task owner."""
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.release )
 
         elif options.suite_acquire:
-            suite = qualify(options.suite_acquire)
+            suite = options.suite_acquire
             suitedir = check_suite_spec( suite )
             if not suite_lock( suite, suitedir, host, port, 'scheduler' ).request_suite_access( True ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire )
 
         elif options.suite_acquire_nonex:
-            suite = qualify(options.suite_acquire_nonex)
+            suite = options.suite_acquire_nonex
             suitedir = check_suite_spec( suite )
             if not suite_lock( suite, suitedir, host, port, 'scheduler' ).request_suite_access( False ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire_nonex )
 
         elif options.suite_release:
-            suite = qualify(options.suite_release)
+            suite = options.suite_release
             suitedir = check_suite_spec( suite )
             if not suite_lock( suite, suitedir, host, port, 'scheduler' ).release_suite_access():
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.suite_release )

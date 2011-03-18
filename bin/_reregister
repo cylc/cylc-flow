@@ -10,10 +10,12 @@ parser = OptionParser( usage = """cylc [db] reregister [options] FROM TO
 reregister local or central suite registrations or registration groups.
 
 Arguments:
-    FROM, TO    - suite registrations:
-                OWNER:GROUP:NAME, GROUP:NAME or [default:]NAME
-                  or registration groups (note trailing colon!):
-                OWNER:GROUP: or GROUP:""" )
+    FROM, TO    - suite registrations: 
+    FROM, TO        - central OWNER:GROUP:NAME
+                    - local   GROUP:NAME
+                - OR registration groups:
+                    - central OWNER:GROUP: (note trailing colon!)
+                    - local   GROUP:       (note trailing colon!)""" )
 
 parser.add_option( "-v", "--verbose",
         help="Turn on verbose output.",

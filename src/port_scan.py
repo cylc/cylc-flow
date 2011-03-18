@@ -65,7 +65,6 @@ def get_port( name, owner, host, passphrase=None ):
     # - Ignore ports at which no suite is found.
     # - Print denied connections (secure passphrase required).
     # - Print non-cylc pyro servers found
-    # registration group required even for default group
     found = False
     for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
         try:

@@ -8,7 +8,6 @@ import os
 import re
 import socket
 from optparse import OptionParser
-from registration import unqualify
 
 #class NoPromptOptionParser( OptionParser ):
 class NoPromptOptionParser_u( OptionParser ):
@@ -62,11 +61,7 @@ Arguments:
         elif len( args ) > self.n_args:
             self.error( "Too many arguments" )
 
-        # suite name
-        try:
-            self.suite_name = unqualify(args[0])
-        except RegistrationError,x:
-            raise SystemExit(x)
+        self.suite_name = args[0]
 
         # user name 
         self.owner = options.owner  # see default above!
@@ -145,14 +140,8 @@ arguments:
         elif len( args ) > self.n_args:
             self.error( "Too many arguments" )
 
-        # suite name
-        try:
-            self.suite_name = unqualify(args[0])
-        except RegistrationError,x:
-            raise SystemExit(x)
-
+        self.suite_name = args[0]
         self.host = options.host   # see default above!
-
         self.practice = options.practice  # practice mode or not
 
         return ( options, args )

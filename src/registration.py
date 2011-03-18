@@ -53,42 +53,6 @@ class RegistrationNotValidError( RegistrationError ):
 class DatabaseLockedError( RegistrationError ):
     pass
 
-def qualify( suite, withowner=False ):
-    # restore the group name to suites in the 'default' group.
-    if re.match( '^(\w+):(\w+):(\w+)$', suite ):
-        # owner:group:name
-        pass
-    elif re.match( '^(\w+):(\w+)$', suite ):
-        # group:name
-        if withowner:
-            suite = os.environ['USER'] + ':' + suite
-    elif re.match( '^(\w+)$', suite ): 
-        # default group
-        suite = 'default:' + suite
-        if withowner:
-            suite = os.environ['USER'] + ':' + suite
-    else:
-        raise RegistrationError, 'Illegal suite name: ' + suite
-    return suite
-
-def unqualify( suite ):
-    # strip the owner from all suites,
-    # and the group from suites in the 'default' group.
-    m = re.match( '^(\w+):(\w+):(\w+)$', suite )
-    if m:
-        owner, group, name = m.groups()
-        suite = group + ':' + name
-    m = re.match( '^(\w+):(\w+)$', suite )
-    if m:
-        group, name = m.groups()
-        if group == 'default':
-            suite = name
-    elif re.match( '^(\w+)$', suite ): 
-        pass
-    else:
-        raise RegistrationError, 'Illegal suite name: ' + suite
-    return suite
-
 def regjoin( owner, group, name ):
     return owner + ':' + group + ':' + name
 
@@ -98,7 +62,6 @@ class regsplit( object ):
         # suite can be:
         # 1/ owner:group:name
         # 2/ group:name (owner is $USER)
-        # 3/ name (owner is $USER, group is 'default')
         m = re.match( '^(\w+):(\w+):(\w+)$', suite )
         if m:
             owner, group, name = m.groups()
@@ -108,12 +71,7 @@ class regsplit( object ):
                 group, name = m.groups()
                 owner = user
             else:
-                if re.match( '^\w+$', suite ):
-                    group = 'default'
-                    name = suite
-                    owner = user
-                else:
-                    raise RegistrationError, 'Illegal suite name: ' + suite
+                raise RegistrationError, 'Illegal suite name: ' + suite
         self.owner = owner
         self.group = group
         self.name = name
@@ -470,7 +428,7 @@ class localdb( regdb ):
     Local (user-specific) suite registration database.
     Internally, registration uses 'owner:group:name' 
     as for the central suite database, but for local
-    single-user use, owner and default group are stripped off.
+    single-user use, owner is stripped off.
     """
     def __init__( self, file=None ):
         if file:
@@ -484,10 +442,6 @@ class localdb( regdb ):
         regdb.__init__(self)
 
     def suiteid( self, owner, group, name ):
-        ## for local use, the user does not need the suite owner prefix
-        #if group == 'default':
-        #    return name
-        #else:
         return group + ':' + name
 
     def print_multi( self, ownerfilt=None, groupfilt=None, namefilt=None, verbose=False ):
@@ -553,9 +507,6 @@ def getdb( suite ):
             type = 'central'
         elif re.match( '^(\w+):(\w+)$', suite ): 
             # group:name
-            type = 'local'
-        elif re.match('^(\w+)$', suite ):
-            # [default:]name
             type = 'local'
         elif re.match('^(\w+):(\w+):$', suite ):
             # owner:group:

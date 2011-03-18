@@ -17,9 +17,9 @@ reregister it under the same name to regain access to the suite.
 
 Arguments:
     SUITE - suite registrations:
-            OWNER:GROUP:NAME, GROUP:NAME or [default:]NAME
+              OWNER:GROUP:NAME, GROUP:NAME
             or registration groups (note trailing colon!):
-            OWNER:GROUP: or GROUP:""" )
+              OWNER:GROUP: or GROUP:""" )
 
 # TO DO?
 #parser.add_option( "-d", "--delete-def-dir",
