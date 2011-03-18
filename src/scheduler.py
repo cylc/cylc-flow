@@ -199,7 +199,7 @@ class scheduler(object):
             # DO THIS BEFORE CONFIGURING PYRO FOR THE SUITE
             # (else scan etc. will hang on the partially started suite).
             try:
-                self.lockserver_port = lockserver( self.owner, self.host ).ping()
+                self.lockserver_port = lockserver( self.host ).ping()
             except port_scan.SuiteNotFoundError, x:
                 raise SystemExit( 'Lockserver not found; try \'cylc lockserver status\'')
  
@@ -350,7 +350,7 @@ class scheduler(object):
                 suitename = self.suite
 
             # request suite access from the lock server
-            if suite_lock( suitename, self.suite_dir, self.owner, self.host, self.lockserver_port, 'scheduler' ).request_suite_access( self.exclusive_suite_lock ):
+            if suite_lock( suitename, self.suite_dir, self.host, self.lockserver_port, 'scheduler' ).request_suite_access( self.exclusive_suite_lock ):
                self.lock_acquired = True
             else:
                raise SystemExit( "Failed to acquire a suite lock" )
@@ -463,7 +463,7 @@ class scheduler(object):
 
             if self.lock_acquired:
                 print "Releasing suite lock"
-                lock = suite_lock( suitename, self.suite_dir, self.owner, self.host, self.lockserver_port, 'scheduler' )
+                lock = suite_lock( suitename, self.suite_dir, self.host, self.lockserver_port, 'scheduler' )
                 if not lock.release_suite_access():
                     print >> sys.stderr, 'WARNING failed to release suite lock!'
 

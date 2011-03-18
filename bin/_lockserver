@@ -74,8 +74,7 @@ class LServer( object ):
         self.pyro_daemon = Pyro.core.Daemon()
         port = self.pyro_daemon.port
         print "Listening on port", port
-        locker = lockserver( self.owner, port, self.pid_file, self.log_file, self.state_file )
-
+        locker = lockserver( port, self.pid_file, self.log_file, self.state_file )
 
         lockserver_id = identifier( 'lockserver', self.owner )
         self.pyro_daemon.connect( lockserver_id, 'cylcid' )
@@ -90,12 +89,11 @@ class LServer( object ):
             self.pyro_daemon.handleRequests()
 
 class lockserver( Pyro.core.ObjBase ):
-    def __init__( self, owner, port, pid_file, log_file, state_file, loglevel=logging.INFO ):
+    def __init__( self, port, pid_file, log_file, state_file, loglevel=logging.INFO ):
         Pyro.core.ObjBase.__init__(self)
 
         # pid file is passed through to here purely so it can be
         # retrieved by user request, through 'cylc con lockclient -f'.
-        self.owner = owner
         self.port = port
         self.pid_file = pid_file
         self.log_file = log_file
@@ -110,8 +108,8 @@ class lockserver( Pyro.core.ObjBase ):
             # task locks
             self.locked = {}
             # suite locks
-            self.exclusive = {}       # exclusive[ suite_dir ] = [ groupname ]
-            self.inclusive = {}       # inclusive[ suite_dir ] = [ groupname, ... ]
+            self.exclusive = {}       # exclusive[ suite_dir ] = [ suite ]
+            self.inclusive = {}       # inclusive[ suite_dir ] = [ suite, ... ]
 
     def dump_state( self ):
         output = open( self.state_file, 'w' )
@@ -151,22 +149,18 @@ class lockserver( Pyro.core.ObjBase ):
         h.setFormatter(f)
         self.log.addHandler( h )
 
-    def get_lock_id( self, lockgroup, task_id ):
-        return lockgroup + '|' + task_id
+    def get_lock_id( self, suite, task_id ):
+        return suite + ':' + task_id
 
-    def get_lock_owner( self, lockgroup ):
-        owner, suite = lockgroup.split( '.' )
-        return owner
+    def get_suite( self, lock_id ):
+        (group, name, id) = lock_id.split(':')
+        return group + ':' + suite
 
-    def get_lockgroup( self, lock_id ):
-        (lockgroup, id) = lock_id.split('|')
-        return lockgroup
+    def get_suite_string( self, suite, suite_dir ):
+        return suite + '-->' + suite_dir
 
-    def get_suite_string( self, lockgroup, suite_dir ):
-        return lockgroup + '-->' + suite_dir
-
-    def acquire( self, task_id, lockgroup ):
-        id = self.get_lock_id( lockgroup, task_id )
+    def acquire( self, task_id, suite ):
+        id = self.get_lock_id( suite, task_id )
         if id not in self.locked:
             self.locked[ id ] = True
             self.log.info( "acquired task lock " + id ) 
@@ -176,8 +170,8 @@ class lockserver( Pyro.core.ObjBase ):
             self.log.warning( "refused task lock " + id ) 
             return False
 
-    def release( self, task_id, lockgroup ):
-        id = self.get_lock_id( lockgroup, task_id )
+    def release( self, task_id, suite ):
+        id = self.get_lock_id( suite, task_id )
         if id in self.locked:
             del self.locked[ id ]
             self.log.info( "released task lock " + id ) 
@@ -195,9 +189,9 @@ class lockserver( Pyro.core.ObjBase ):
          self.log.info( "Returning lock information") 
          return ( self.locked.keys(), self.exclusive, self.inclusive )
 
-    def clear( self, user ):
+    def clear( self ):
         # release all locks one at a time so each release gets logged
-        self.log.info( "Releasing ALL locks held by " + user ) 
+        self.log.info( "Releasing ALL locks" ) 
 
         # MUST USE .keys() here to avoid:
         # RuntimeError: dictionary changed size during iteration
@@ -207,40 +201,37 @@ class lockserver( Pyro.core.ObjBase ):
         # altered.
 
         for suitedir in self.exclusive.keys():
-            [ group ] = deepcopy( self.exclusive[ suitedir ] )
-            if self.get_lock_owner( group ) == user:
-                self.release_suite_access( suitedir, group )
+            [ suite ] = deepcopy( self.exclusive[ suitedir ] )
+            self.release_suite_access( suitedir, suite )
 
         for suitedir in self.inclusive.keys():
-            groups = deepcopy( self.inclusive[ suitedir ] )
-            for group in groups:
-                if self.get_lock_owner( group ) == user:
-                    self.release_suite_access( suitedir, group )
+            suites = deepcopy( self.inclusive[ suitedir ] )
+            for suite in suites:
+                self.release_suite_access( suitedir, suite )
 
         # release task locks with no associated suite lock
         # (acquired manually, or through 'cylc task submit').
         for lock in self.locked.keys():
-            ( group, id ) = lock.split( '|' )
-            if self.get_lock_owner( group ) == user:
-                self.release( id, group )
+            ( group, name, id ) = lock.split( ':' )
+            self.release( id, group + ':' + name )
 
         self.dump_state()
         return
 
-    def is_locked( self, task_id, lockgroup ):
-        id = self.get_lock_id( lockgroup, task_id )
+    def is_locked( self, task_id, suite ):
+        id = self.get_lock_id( suite, task_id )
         if id in self.locked:
             return True
         else:
             return False
 
-    def get_suite_access( self, suite_dir, lockgroup, cylc_mode, request_exclusive ):
+    def get_suite_access( self, suite_dir, suite, cylc_mode, request_exclusive ):
         # EXCLUSIVE: one only named suite can use suite_dir at once
         #   - submit can attempt to get a task lock IF via the same name
         # INCLUSIVE: multiple named suites can use suite_dir at once
         #   - submit can attempt to get a task lock always
 
-        suite_descr = self.get_suite_string( lockgroup, suite_dir ) 
+        suite_descr = self.get_suite_string( suite, suite_dir ) 
 
         result = True
         reason = "granted"
@@ -259,8 +250,8 @@ class lockserver( Pyro.core.ObjBase ):
                 already = self.get_suite_string( name, suite_dir )
 
                 if cylc_mode == 'submit':
-                    # grant access only if lockgroup is the same
-                    if lockgroup == name:
+                    # grant access only if suite is the same
+                    if suite == name:
                         pass
                     else:
                         result = False
@@ -276,7 +267,7 @@ class lockserver( Pyro.core.ObjBase ):
                     pass 
                 else: 
                     # grant exclusive access
-                    self.exclusive[ suite_dir ] = [ lockgroup ]
+                    self.exclusive[ suite_dir ] = [ suite ]
         else:
             # inclusive access requested
             if suite_dir in self.inclusive:
@@ -287,46 +278,46 @@ class lockserver( Pyro.core.ObjBase ):
                     pass
                 else:
                     # grant access unless same name already in use
-                    if lockgroup in names:
+                    if suite in names:
                         result = False
-                        reason =  lockgroup + '-->' + suite_dir + " already in use"
+                        reason =  suite + '-->' + suite_dir + " already in use"
                     else:
                         # granted
-                        self.inclusive[ suite_dir ].append( lockgroup )
+                        self.inclusive[ suite_dir ].append( suite )
             else:
                 if cylc_mode == 'submit':
                     # granted
                     pass
                 else:
                     # granted
-                    self.inclusive[ suite_dir ] = [ lockgroup ]
+                    self.inclusive[ suite_dir ] = [ suite ]
  
         if result:
             self.dump_state() 
             if cylc_mode == 'submit':
-                self.log.info( "granted suite access " + lockgroup + " --> " + suite_dir )
+                self.log.info( "granted suite access " + suite + " --> " + suite_dir )
             else:
-                self.log.info( "acquired suite lock " + lockgroup + " --> " + suite_dir )
+                self.log.info( "acquired suite lock " + suite + " --> " + suite_dir )
         else:
             if cylc_mode == 'submit':
-                self.log.warning( "refused suite access " + lockgroup + " --> " + suite_dir )
+                self.log.warning( "refused suite access " + suite + " --> " + suite_dir )
             else:
-                self.log.warning( "refused suite lock " + lockgroup + " --> " + suite_dir )
+                self.log.warning( "refused suite lock " + suite + " --> " + suite_dir )
             self.log.warning( " " + reason )
 
         return ( result, reason )
 
 
-    def release_suite_access( self, suite_dir, lockgroup ):
+    def release_suite_access( self, suite_dir, suite ):
         # first release any task locks held by the suite
         for id in self.locked.keys():
-            if self.get_lockgroup( id ) == lockgroup:
+            if self.get_suite( id ) == suite:
                 del self.locked[ id ]
                 self.log.info( "released task lock " + id ) 
 
         result = True
         if suite_dir in self.exclusive:
-            if lockgroup not in self.exclusive[ suite_dir ]:
+            if suite not in self.exclusive[ suite_dir ]:
                 self.log.warning( "suite release group name error" )
                 result = False
             else:
@@ -334,23 +325,23 @@ class lockserver( Pyro.core.ObjBase ):
                 result = True
         elif suite_dir in self.inclusive:
             names = self.inclusive[ suite_dir ]
-            if lockgroup not in names:
+            if suite not in names:
                 self.log.warning( "suite release group name error" )
                 result = False
             elif len( names ) == 1:
                 del self.inclusive[ suite_dir ]
                 result = True
             else:
-                self.inclusive[ suite_dir ].remove( lockgroup )
+                self.inclusive[ suite_dir ].remove( suite )
                 result = True
         else:
             self.log.warning( "erroneous suite release request: lock not found" )
             result = False
         if result:
             self.dump_state() 
-            self.log.info( "released suite lock " + lockgroup + " --> " + suite_dir )
+            self.log.info( "released suite lock " + suite + " --> " + suite_dir )
         else:
-            self.log.warning( "failed to release suite lock " + lockgroup + " --> " + suite_dir )
+            self.log.warning( "failed to release suite lock " + suite + " --> " + suite_dir )
 
         return result
 

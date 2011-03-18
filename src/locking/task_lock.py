@@ -19,7 +19,7 @@ class task_lock(object):
     # (a cylc message after that time will cause cylc to complain that
     # it has received a message from a task that has finished running). 
 
-    def __init__( self, task_id=None, suite=None, owner=None, host=None, port=None ):
+    def __init__( self, task_id=None, suite=None, host=None, port=None ):
         self.use_lock_server = False
         if 'CYLC_USE_LOCKSERVER' in os.environ:
             if os.environ[ 'CYLC_USE_LOCKSERVER' ] == 'True':
@@ -41,29 +41,16 @@ class task_lock(object):
                 print >> sys.stderr, '$TASK_ID not defined'
                 sys.exit(1)
 
-        if owner:
-            self.owner = owner
-        else:
-            if 'CYLC_SUITE_OWNER' in os.environ.keys():
-                self.owner = os.environ['CYLC_SUITE_OWNER']
-            elif self.mode == 'raw':
-                self.owner = os.environ['USER']
-            else:
-                print >> sys.stderr, '$CYLC_SUITE_OWNER not defined'
-                sys.exit(1)
-
         if suite:
-            self.suite_name = suite
+            self.suite = suite
         else:
             if 'CYLC_SUITE' in os.environ.keys():
-                self.suite_name = os.environ[ 'CYLC_SUITE' ]
+                self.suite = os.environ[ 'CYLC_SUITE' ]
             elif self.mode == 'raw':
                 pass
             else:
                 print >> sys.stderr, '$CYLC_SUITE not defined'
                 sys.exit(1)
-
-        self.lockgroup = self.owner + '.' + self.suite_name
 
         # IT IS ASSUMED THAT LOCKSERVER AND SUITE HOST ARE THE SAME
         if host:
@@ -95,14 +82,14 @@ class task_lock(object):
             print >> sys.stderr, "WARNING: you are not using the cylc lockserver." 
             return True
  
-        server = lockserver( self.owner, self.host, self.port ).get()
-        if server.acquire( self.task_id, self.lockgroup ):
+        server = lockserver( self.host, self.port ).get()
+        if server.acquire( self.task_id, self.suite ):
             print "Acquired task lock"
             return True
         else:
             print >> sys.stderr, "Failed to acquire task lock"
-            if server.is_locked( self.task_id, self.lockgroup ):
-                print >> sys.stderr, self.lockgroup + ':' + self.task_id, "is already locked!"
+            if server.is_locked( self.task_id, self.suite ):
+                print >> sys.stderr, self.suite + ':' + self.task_id, "is already locked!"
             return False
 
     def release( self ):
@@ -110,14 +97,14 @@ class task_lock(object):
             print >> sys.stderr, "WARNING: you are not using the cylc lockserver." 
             return True
 
-        server = lockserver( self.owner, self.host, self.port ).get()
-        if server.is_locked( self.task_id, self.lockgroup ):
-            if server.release( self.task_id, self.lockgroup ):
+        server = lockserver( self.host, self.port ).get()
+        if server.is_locked( self.task_id, self.suite ):
+            if server.release( self.task_id, self.suite ):
                 print "Released task lock"
                 return True
             else:
                 print >> sys.stderr, "Failed to release task lock"
                 return False
         else:
-            print >> sys.stderr, "WARNING", self.lockgroup + ':' + self.task_id, "was not locked!"
+            print >> sys.stderr, "WARNING", self.suite + ':' + self.task_id, "was not locked!"
             return True

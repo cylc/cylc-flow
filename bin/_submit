@@ -95,13 +95,13 @@ mkdir_p( logging_dir )
 use_lockserver = False
 if config[ 'use lockserver' ]:
     use_lockserver = True
-    lockserver_port = lockserver( owner, host ).ping()
+    lockserver_port = lockserver( host ).ping()
 
     # Request suite access from the lock server. If the task's parent
     # suite has an exclusive lock, we can use submit only via the
     # same suite registration. submit does not need to call
     # release_suite_access()
-    if not suite_lock( suite, suite_dir, owner, host, lockserver_port, 'submit' ).request_suite_access():
+    if not suite_lock( suite, suite_dir, host, lockserver_port, 'submit' ).request_suite_access():
         raise SystemExit( 'ERROR: failed to acquire a suite lock' )
 
 # CYLC EXECUTION ENVIRONMENT

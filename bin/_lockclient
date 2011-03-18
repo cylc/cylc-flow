@@ -33,17 +33,17 @@ def check_task_spec( task_spec ):
     # GROUP:NAME:TASK%T
     # NAME:TASK%T (GROUP=default)
     try:
-        suite, task_id = task_spec.split( '|' )
+        group, name, task_id = task_spec.split( ':' )
     except:
-        raise SystemExit( task_spec + " - Please specify SUITE|TASK_NAME%CYCLE_TIME" )
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK_NAME%CYCLE_TIME" )
 
-    suite = qualify( suite )
+    suite = group + ':' + name
     check_suite_spec( suite )
 
     try:
         (name, cycle) = task_id.split( '%' )
     except ValueError:
-        raise SystemExit( task_spec + " - Please specify SUITE|TASK_NAME%CYCLE_TIME" )
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK_NAME%CYCLE_TIME" )
  
     if not cycle_time.is_valid( cycle ):
         raise SystemExit( "Invalid cycle time: " + cycle )
@@ -82,8 +82,7 @@ task owner."""
 
     parser = OptionParser( usage )
 
-    parser.set_defaults( host=socket.getfqdn(), 
-            acquire=None, release=None, suite_acquire=None,
+    parser.set_defaults( acquire=None, release=None, suite_acquire=None,
             suite_acquire_nonex=None, suite_release=None, 
             list_all=False, get_filenames=False )
 
@@ -91,15 +90,15 @@ task owner."""
             help="Check that a lockserver is running.",
             action="store_true", default=False, dest="ping" )
 
-    parser.add_option( "--host",
-            help="Cylc lockserver host (default: localhost).",
-            metavar="HOSTNAME", action="store", dest="host" )
+    #parser.add_option( "--host",
+    #        help="Cylc lockserver host (default: localhost).",
+    #        metavar="HOSTNAME", action="store", dest="host" )
 
     parser.add_option( "--acquire-task", help="Acquire a task lock.",
-            metavar="SUITE|NAME%CYCLE", action="store", dest="acquire" )
+            metavar="SUITE:NAME%CYCLE", action="store", dest="acquire" )
 
     parser.add_option( "--release-task", help="Release a task lock.",
-            metavar="SUITE|NAME%CYCLE", action="store", dest="release" )
+            metavar="SUITE:NAME%CYCLE", action="store", dest="release" )
 
     parser.add_option( "--acquire-suite", help="Acquire an exclusive suite lock.",
             metavar="SUITE", action="store", dest="suite_acquire" )
@@ -144,44 +143,44 @@ task owner."""
         parser.error( "choose one option only!" )
     
     owner = os.environ[ 'USER' ]
-    host = options.host
+    host = socket.getfqdn()
     port = options.port
     os.environ[ 'CYLC_USE_LOCKSERVER' ] = 'True'
 
     try:
         if options.ping:
-            lockserver( owner, host ).ping()
+            lockserver( host ).ping()
 
         elif options.acquire:
             (suite, task_id) = check_task_spec( options.acquire )
-            if not task_lock( task_id, suite, owner, host, port ).acquire():
+            if not task_lock( task_id, suite, host, port ).acquire():
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.acquire )
 
         elif options.release:
             (suite, task_id) = check_task_spec( options.release )
-            if not task_lock( task_id, suite, owner, host, port ).release():
+            if not task_lock( task_id, suite, host, port ).release():
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.release )
 
         elif options.suite_acquire:
             suite = qualify(options.suite_acquire)
             suitedir = check_suite_spec( suite )
-            if not suite_lock( suite, suitedir, owner, host, port, 'scheduler' ).request_suite_access( True ):
+            if not suite_lock( suite, suitedir, host, port, 'scheduler' ).request_suite_access( True ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire )
 
         elif options.suite_acquire_nonex:
             suite = qualify(options.suite_acquire_nonex)
             suitedir = check_suite_spec( suite )
-            if not suite_lock( suite, suitedir, owner, host, port, 'scheduler' ).request_suite_access( False ):
+            if not suite_lock( suite, suitedir, host, port, 'scheduler' ).request_suite_access( False ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire_nonex )
 
         elif options.suite_release:
             suite = qualify(options.suite_release)
             suitedir = check_suite_spec( suite )
-            if not suite_lock( suite, suitedir, owner, host, port, 'scheduler' ).release_suite_access():
+            if not suite_lock( suite, suitedir, host, port, 'scheduler' ).release_suite_access():
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.suite_release )
 
         elif options.list_all:
-            (task_locks, suite_ex, suite_nonex ) = lockserver( owner, host ).dump()
+            (task_locks, suite_ex, suite_nonex ) = lockserver( host ).dump()
 
             print_heading( str( len( suite_ex ) ) + " exclusive suite locks" )
             for suitedir in suite_ex:
@@ -199,10 +198,10 @@ task owner."""
                 print " - ", lock
 
         elif options.clear_all:
-            lockserver( owner, host ).clear( owner )
+            lockserver( host ).clear()
 
         elif options.get_filenames:
-            pid, log, state = lockserver( owner, host ).get_filenames()
+            pid, log, state = lockserver( host ).get_filenames()
 
             print "lockserver files:"
             print "  PID ......", pid

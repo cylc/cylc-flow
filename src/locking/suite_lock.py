@@ -7,13 +7,12 @@ import os
 from lockserver import lockserver
 
 class suite_lock(object):
-    def __init__( self, suite, suite_dir, owner, host, port, cylc_mode ):
+    def __init__( self, suite, suite_dir, host, port, cylc_mode ):
         self.host = host
         self.port = port
         self.suite_dir = suite_dir
         self.cylc_mode = cylc_mode
-        self.owner = owner
-        self.lockgroup = owner + '.' + suite
+        self.suite = suite
 
     def request_suite_access( self, exclusive=True ):
         # Cylc suite name is user-specific (i.e. different users can
@@ -29,8 +28,8 @@ class suite_lock(object):
         # GET A NEW CONNECTION WITH EACH REQUEST
         # TO DO: OR GET A SINGLE CONNECTION IN INIT
 
-        server = lockserver( self.owner, self.host, self.port ).get()
-        (result, reason) = server.get_suite_access( self.suite_dir, self.lockgroup, self.cylc_mode, exclusive )
+        server = lockserver( self.host, self.port ).get()
+        (result, reason) = server.get_suite_access( self.suite_dir, self.suite, self.cylc_mode, exclusive )
         if not result:
             print >> sys.stderr, 'ERROR, failed to get suite access:'
             print >> sys.stderr, reason
@@ -39,8 +38,8 @@ class suite_lock(object):
            return True
 
     def release_suite_access( self):
-        server = lockserver( self.owner, self.host, self.port ).get()
-        result = server.release_suite_access( self.suite_dir, self.lockgroup )
+        server = lockserver( self.host, self.port ).get()
+        result = server.release_suite_access( self.suite_dir, self.suite )
         if not result:
             return False
         else:
