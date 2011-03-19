@@ -50,20 +50,9 @@ state_changed = True
 
 class task( Pyro.core.ObjBase ):
     
+    # TO DO: THE following two lines are not needed?
     clock = None
-
     intercycle = False
-
-    # TO DO: ARE THE FOLLOWING NEEDED?
-    # (THEY ARE DEFINED AT TASK __class__ level)
-    task_started_hook = None
-    task_finished_hook = None
-    task_failed_hook = None
-    task_warning_hook = None
-    task_submitted_hook = None
-    task_submission_failed_hook = None
-    task_timeout_hook = None
-    task_submission_timeout_minutes = None
 
     @classmethod
     def describe( cls ):
