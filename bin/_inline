@@ -65,11 +65,11 @@ def include_files( suitedir, inf, mark=False, single=False, label=False, level=N
 parser = OptionParser( """cylc [prep] inline [options] SUITE 
 
 View a temporary copy of a suite config (suite.rc) file in your $EDITOR
-exactly as the config file parser sees it: with include-files inlined
-and continuation lines joined. This can be used to get a quick global
-view of a suite that uses include-files, or to trace parsing errors by
-line number (suite validation is sufficiently informative, however, that
-you should not need to do this).
+(or GUI $GEDITOR) exactly as the config file parser sees it: with
+include-files inlined and continuation lines joined. This can be used to
+get a quick global view of a suite that uses include-files, or to trace
+parsing errors by line number (suite validation is sufficiently
+informative, however, that you should not need to do this).
 
 If you want to edit the suite, in inlined form or not, or to view it
 without inlined include-files, use the 'cylc prep edit' command.
@@ -84,8 +84,8 @@ Examples:
    export GEDITOR=emacs
    export EDITOR='emacs -nw'
 You can set both $GEDITOR and $EDITOR to a GUI editor if you like, but
-$GEDITOR at least *must* be a GUI editor (or an in-terminal invocation 
-of a non-GUI editor) if you want to invoke edit sessions via the gcylc GUI.
+$GEDITOR at least *must* be a GUI editor, or an in-terminal invocation 
+of a non-GUI editor, if you want to spawn editing sessions via gcylc.
 
 See also:
     cylc prep search
@@ -116,9 +116,9 @@ parser.add_option( "--single", "-s",
         "those reported by the parser).",
         action="store_true", default=False, dest="single" )
 
-parser.add_option( "--gui-editor", "-g", 
-        help="Try $GEDITOR before $EDITOR. The opposite order is the "
-        "default except when this command is invoked via gcylc.",
+parser.add_option( "--gui", "-g", 
+        help="Use GUI editor $GEDITOR instead of $EDITOR. This option is "
+        "automatically used when an editing session is spawned by gcylc.",
         action="store_true", default=False, dest="geditor" )
 
 ( options, args ) = parser.parse_args()
@@ -128,26 +128,20 @@ if len(args) != 1:
 
 suite = args[0]
 
-editor = None
-editor_vars = [ 'EDITOR', 'GEDITOR' ]
-if options.geditor:
-    editor_vars = [ 'GEDITOR', 'EDITOR' ]
-
-for ed_var in editor_vars:
-    try:
-        editor = os.environ[ed_var]
-    except KeyError:
-        print >> sys.stderr, '$' + ed_var + ' is not defined'
-    else:
-        print '$' + ed_var, 'evaluates to "' + editor + '"'
-        break
-if not editor:
-    raise SystemExit( 'export $GEDITOR and/or $EDITOR before using this command' )
-
 try:
     tmpdir = os.environ['TMPDIR']
 except KeyError:
     raise SystemExit( 'export $TMPDIR before using this command' )
+
+if options.geditor:
+    edvar = 'GEDITOR'
+else:
+    edvar = 'EDITOR'
+
+try:
+    editor = os.environ[edvar]
+except KeyError:
+    raise SystemExit( 'export $' + edvar + ' before using this command' )
 
 # find location of the suite definition directory
 try:
