@@ -176,6 +176,9 @@ class taskdef(object):
         tclass.instance_count = 0
         tclass.description = self.description
 
+        tclass.elapsed_times = []
+        tclass.mean_total_elapsed_time = None
+
         if self.owner:
             tclass.owner = self.owner
         else:

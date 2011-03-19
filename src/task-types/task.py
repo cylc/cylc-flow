@@ -54,6 +54,8 @@ class task( Pyro.core.ObjBase ):
 
     intercycle = False
 
+    # TO DO: ARE THE FOLLOWING NEEDED?
+    # (THEY ARE DEFINED AT TASK __class__ level)
     task_started_hook = None
     task_finished_hook = None
     task_failed_hook = None
@@ -62,9 +64,6 @@ class task( Pyro.core.ObjBase ):
     task_submission_failed_hook = None
     task_timeout_hook = None
     task_submission_timeout_minutes = None
-
-    elapsed_times = []
-    mean_total_elapsed_time = None
 
     @classmethod
     def describe( cls ):
@@ -104,6 +103,7 @@ class task( Pyro.core.ObjBase ):
 
     @classmethod
     def update_mean_total_elapsed_time( cls, started, finished ):
+        # the class variables here are defined in derived task classes
         cls.elapsed_times.append( finished - started )
         elt_sec = [x.days * 86400 + x.seconds for x in cls.elapsed_times ]
         mtet_sec = sum( elt_sec ) / len( elt_sec )
