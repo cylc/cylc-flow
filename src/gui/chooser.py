@@ -1592,7 +1592,7 @@ Note that this will not delete the suite definition directory.""" )
         if nobin_cb.get_active():
             options += ' -x '
         command = "cylc search " + options + ' ' + pattern + ' ' + reg 
-        foo = gcapture_tmpfile( command, self.tmpdir, heigh=500 )
+        foo = gcapture_tmpfile( command, self.tmpdir, height=500 )
         self.gcapture_windows.append(foo)
         foo.run()
 
