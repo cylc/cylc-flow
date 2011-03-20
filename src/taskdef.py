@@ -179,45 +179,21 @@ class taskdef(object):
         tclass.elapsed_times = []
         tclass.mean_total_elapsed_time = None
 
-        if self.owner:
-            tclass.owner = self.owner
-        else:
-            # TO DO: can we just just default None at init here?
-            tclass.owner = None
+        tclass.owner = self.owner
 
-        if self.execution_timeout_minutes:
-            tclass.execution_timeout_minutes = self.execution_timeout_minutes
-        else:
-            tclass.execution_timeout_minutes = None
+        tclass.execution_timeout_minutes = self.execution_timeout_minutes
 
         tclass.reset_execution_timeout_on_incoming_messages = self.reset_execution_timeout_on_incoming_messages
 
-        if self.task_submitted_hook:
-            tclass.task_submitted_hook = self.task_submitted_hook
+        tclass.task_submitted_hook = self.task_submitted_hook
+        tclass.task_started_hook = self.task_started_hook
+        tclass.task_finished_hook = self.task_finished_hook
+        tclass.task_failed_hook = self.task_failed_hook
+        tclass.task_warning_hook = self.task_warning_hook
+        tclass.task_submission_failed_hook = self.task_submission_failed_hook
+        tclass.task_timeout_hook = self.task_timeout_hook
 
-        if self.task_started_hook:
-            tclass.task_started_hook = self.task_started_hook
-
-        if self.task_finished_hook:
-            tclass.task_finished_hook = self.task_finished_hook
-
-        if self.task_failed_hook:
-            tclass.task_failed_hook = self.task_failed_hook
-
-        if self.task_warning_hook:
-            tclass.task_warning_hook = self.task_warning_hook
-
-        if self.task_submission_failed_hook:
-            tclass.task_submission_failed_hook = self.task_submission_failed_hook
-
-        if self.task_timeout_hook:
-            tclass.task_timeout_hook = self.task_timeout_hook
-
-        if self.host:
-            tclass.remote_host = self.host
-        else:
-            # TO DO: can we just just default None at init here?
-            tclass.remote_host = None
+        tclass.remote_host = self.host
 
         # TO DO: can this be moved into task base class?
         tclass.job_submit_method = self.job_submit_method
@@ -225,9 +201,7 @@ class taskdef(object):
         tclass.valid_hours = self.hours
 
         tclass.intercycle = self.intercycle
-        if self.follow_on_task:
-            # TO DO: can we just just default None at init here?
-            tclass.follow_on = self.follow_on_task
+        tclass.follow_on = self.follow_on_task
 
         if self.type == 'family':
             tclass.members = self.members
