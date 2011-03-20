@@ -31,6 +31,17 @@ from collections import deque
 global state_changed
 state_changed = True
 
+def displaytd( td ):
+    # Display a python timedelta sensibly.
+    # Default for str(td) of -5 sec is '-1 day, 23:59:55' !
+    d, s, m = td.days, td.seconds, td.microseconds
+    secs = d * 24 * 3600 + s + m / 10**6
+    if secs < 0:
+        res = '-' + str( datetime.timedelta( 0, - secs, 0 ))
+    else:
+        res = str(td)
+    return res
+
 # NOTE ON TASK STATE INFORMATION---------------------------------------
 
 # task attributes required for a system cold start are:
@@ -481,11 +492,11 @@ class task( Pyro.core.ObjBase ):
                     run_time = current_time - self.started_time
                     self.to_go = met - run_time
                     self.etc = current_time + self.to_go 
-                    summary[ 'Tetc' ] = self.etc.strftime( "%H:%M:%S" ) + '(' + re.sub( '\.\d*$', '', str(self.to_go) ) + ')'
+                    summary[ 'Tetc' ] = self.etc.strftime( "%H:%M:%S" ) + '(' + re.sub( '\.\d*$', '', displaytd(self.to_go) ) + ')'
                 elif self.etc:
                     # the first time a task finishes self.etc is not defined
                     # task finished; leave final prediction
-                    summary[ 'Tetc' ] = self.etc.strftime( "%H:%M:%S" ) + '(' + re.sub( '\.\d*$', '', str(self.to_go) ) + ')'
+                    summary[ 'Tetc' ] = self.etc.strftime( "%H:%M:%S" ) + '(' + re.sub( '\.\d*$', '', displaytd(self.to_go) ) + ')'
                 else:
                     summary[ 'Tetc' ] = '*'
             else:
