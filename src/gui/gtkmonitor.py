@@ -950,15 +950,15 @@ The cylc forecast suite metascheduler.
         stopat_rb.connect( "toggled", self.stop_method, "stopat", stoptime_entry )
         stopnow_rb.connect(   "toggled", self.stop_method, "stopnow", stoptime_entry )
 
-        cancel_button = gtk.Button( "Cancel" )
+        cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        stop_button = gtk.Button( "Stop" )
+        stop_button = gtk.Button( "_Stop" )
         stop_button.connect("clicked", self.stopsuite, 
                 window, stop_rb, stopat_rb, stopnow_rb,
                 stoptime_entry )
 
-        help_button = gtk.Button( "Help" )
+        help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", self.stop_guide )
 
         hbox = gtk.HBox()
@@ -1052,16 +1052,16 @@ The cylc forecast suite metascheduler.
 
         optgroups = [ dmode_group, debug_group, stpaused_group ]
 
-        cancel_button = gtk.Button( "Cancel" )
+        cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        start_button = gtk.Button( "Start" )
+        start_button = gtk.Button( "_Start" )
         start_button.connect("clicked", self.startsuite, 
                 window, coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
                 ctime_entry, stoptime_entry, 
                 statedump_entry, optgroups )
 
-        help_button = gtk.Button( "Help" )
+        help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", self.start_guide )
 
         hbox = gtk.HBox()
@@ -1097,10 +1097,10 @@ The cylc forecast suite metascheduler.
         hbox.pack_start (entry, True)
         vbox.pack_start( hbox )
 
-        cancel_button = gtk.Button( "Cancel" )
+        cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        start_button = gtk.Button( "Purge" )
+        start_button = gtk.Button( "_Purge" )
         start_button.connect("clicked", self.purge_cycle_button, entry, window, task_id )
 
         hbox = gtk.HBox()
@@ -1171,13 +1171,13 @@ The cylc forecast suite metascheduler.
         hbox.pack_start (entry_ctime, True)
         vbox.pack_start(hbox)
 
-        help_button = gtk.Button( "Help" )
+        help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.insertion )
 
         hbox = gtk.HBox()
-        insert_button = gtk.Button( "Insert" )
+        insert_button = gtk.Button( "_Insert" )
         insert_button.connect("clicked", self.insert_task, window, entry_name, entry_ctime )
-        cancel_button = gtk.Button( "Cancel" )
+        cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         hbox.pack_start(insert_button, False)
         hbox.pack_end(cancel_button, False)
