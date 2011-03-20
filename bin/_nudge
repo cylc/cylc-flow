@@ -3,14 +3,20 @@
 import os, sys
 import cylc_pyro_client
 import Pyro.errors
-from CylcOptionParsers import PromptOptionParser
+from CylcOptionParsers import NoPromptOptionParser
 
-parser = PromptOptionParser( """cylc nudge [options] SUITE 
+parser = NoPromptOptionParser( """cylc nudge [options] SUITE 
 
 Cause the cylc task processing loop to be invoked in a running suite.
-THIS COMMAND IS NO LONGER NECESSARY - THE TASK PROCESSING LOOP IS NOW
-INVOKED ON A ONE SECOND TIMEOUT AS WELL AS ON INCOMING TASK MESSAGES.
-""" )
+
+Normally this happens only when the state of a task changes such that
+task processing (dependency negotation etc.) is required, or if a
+clock-triggered task is ready to run.
+
+The main reason to use this command is to update task
+estimated-time-until-completion intervals, as shown in the gcylc suite
+monitor GUIs, during periods when nothing else is happening to invoke
+the task processing loop.""" )
 
 (options, args) = parser.parse_args()
 
@@ -23,9 +29,6 @@ try:
     proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
     raise SystemExit(x)
-
-if not parser.prompt( 'Nudge' ):
-    sys.exit(0)
 
 result = proxy.nudge()
 

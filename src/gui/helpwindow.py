@@ -163,6 +163,12 @@ suite that is already running.
 
 (Running suites only) Print the current state of each task in the suite.
 
+%h3 Nudge
+
+(Running suites only) Invoke the cylc task processing loop manually in 
+order to update the estimated task "time till completion" intervals
+shown in suite monitor windows.
+
 %h3 Edit
 
 Edit the suite config (suite.rc) file

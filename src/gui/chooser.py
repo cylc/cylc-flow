@@ -886,7 +886,11 @@ The cylc forecast suite metascheduler.
                     dump_item = gtk.MenuItem( 'D_ump' )
                     menu.append( dump_item )
                     dump_item.connect( 'activate', self.dump_suite, reg )
-    
+
+                    nudge_item = gtk.MenuItem( 'N_udge' )
+                    menu.append( nudge_item )
+                    nudge_item.connect( 'activate', self.nudge_suite, reg )
+     
                 menu.append( gtk.SeparatorMenuItem() )
 
             search_item = gtk.MenuItem( '_Describe' )
@@ -1701,7 +1705,6 @@ Note that this will not delete the suite definition directory.""" )
             foo.run()
         return False
 
-
     def validate_suite( self, w, name ):
         command = "cylc validate " + name 
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
@@ -1711,6 +1714,12 @@ Note that this will not delete the suite definition directory.""" )
     def dump_suite( self, w, name ):
         command = "cylc dump " + name
         foo = gcapture_tmpfile( command, self.tmpdir, 400, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
+    def nudge_suite( self, w, name ):
+        command = "cylc nudge " + name
+        foo = gcapture_tmpfile( command, self.tmpdir, 200, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
 
