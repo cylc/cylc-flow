@@ -125,32 +125,37 @@ def scan_my_suites( host ):
     # return a list of my suites running on host
     reg = localdb()
     reg.load_from_file()
-    suites = []
-    for reg_suite, dir, descr in reg.get_list():
-        # loop through all my registered suites
+    reg_suites = reg.get_list(name_only=True)
+    me = os.environ['USER']
+    # get passphrases if any
+    reg_pphrase = {}
+    for rs in reg_suites:
         try:
             # in case one is using a secure passphrase
-            passphrase = pphrase( reg_suite ).get()
+            passphrase = pphrase( rs ).get()
         except Exception, x:
             passphrase = None
+        reg_pphrase[ rs ] = passphrase
 
-        for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
-            # loop through cylc ports
-            try:
-                name, owner = port_interrogator( host, port, passphrase=passphrase ).interrogate()
-            except Pyro.errors.ProtocolError, x:
-                # connection failed: no pyro server listening at this port
-                #print port, 'ProtocolError', x
-                pass
-            except Pyro.errors.NamingError, x:
-                # pyro server here, but it's not a cylc suite or lockserver
-                #print port, 'NamingError', x
-                pass
-            else:
-                # found a suite
-                if name == reg_suite and owner == os.environ['USER']:
-                    # found this registered suite
-                    suites.append( ( name, port ) )
+    suites = []
+    # loop through cylc ports looking for my suites
+    for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
+        # loop through cylc ports
+        try:
+            name, owner = port_interrogator( host, port, passphrase=passphrase ).interrogate()
+        except Pyro.errors.ProtocolError, x:
+            # connection failed: no pyro server listening at this port
+            #print port, 'ProtocolError', x
+            pass
+        except Pyro.errors.NamingError, x:
+            # pyro server here, but it's not a cylc suite or lockserver
+            #print port, 'NamingError', x
+            pass
+        else:
+            # found a suite
+            if owner == me and name in reg_suites:
+                # found this registered suite
+                suites.append( ( name, port ) )
 
     #print 'sleeping ...',
     #sleep(5)

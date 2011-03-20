@@ -333,7 +333,7 @@ class regdb(object):
         else:
             return ( dir, descr )
 
-    def get_list( self, ownerfilt=None, groupfilt=None, namefilt=None ):
+    def get_list( self, ownerfilt=None, groupfilt=None, namefilt=None, name_only=False ):
         # return filtered list of tuples:
         # [( suite, dir, descr ), ...]
         regs = []
@@ -359,7 +359,10 @@ class regdb(object):
                         if not re.match( namefilt, name ):
                             continue
                     dir,descr = self.items[owner][group][name]
-                    regs.append( (self.suiteid(owner,group,name), dir, descr) )
+                    if name_only:
+                        regs.append( (self.suiteid(owner,group,name)))
+                    else:
+                        regs.append( (self.suiteid(owner,group,name), dir, descr))
         return regs
 
     def check_valid( self, suite ):
