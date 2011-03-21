@@ -33,11 +33,12 @@ class OtherServerFoundError( SuiteIdentificationError ):
 
 class port_interrogator(object):
     # find which suite or lockserver is running on a given port
-    def __init__( self, host, port, timeout=None, passphrase=None ):
+    def __init__( self, host, port, my_passphrases=None, timeout=None ):
         self.host = host
         self.port = port
         self.timeout = timeout
-        self.passphrase = passphrase
+        self.my_passphrases = my_passphrases
+        self.me = os.environ['USER']
 
     def interrogate( self ):
         # get a proxy to the cylcid object
@@ -45,10 +46,41 @@ class port_interrogator(object):
         uri = 'PYROLOC://' + self.host + ':' + str(self.port) + '/cylcid' 
         self.proxy = Pyro.core.getProxyForURI(uri)
         self.proxy._setTimeout(self.timeout)
-        if self.passphrase:
-            self.proxy._setIdentification( self.passphrase )
-        # this raises a TimeoutError if the connection times out
-        return self.proxy.id()
+
+        # note: get a TimeoutError if the connection times out
+
+        # first try access with no passphrase
+        name = owner = None
+        try:
+            name, owner = self.proxy.id()
+        except Pyro.errors.ConnectionDeniedError, x:
+            # must be a secure suite, try my passphrases
+            if not self.my_passphrases:
+                raise
+            for reg in self.my_passphrases:
+                self.proxy._setIdentification( self.my_passphrases[reg] )
+                try:
+                    name, owner = self.proxy.id()
+                except:
+                    # denied, try next passphrase
+                    continue
+                else:
+                    # got access
+                    if name == reg and owner == self.me:
+                        return name, owner, 'secure'
+                    else:
+                        # this indicates that one of my suites has an
+                        # identical passphrase to this other suite.
+                        raise Pyro.errors.ConnectionDeniedError, x
+                
+            # loop end without returning ID => all of my passphrases denied
+            raise Pyro.errors.ConnectionDeniedError, x
+        except:
+            # another error (other than ConnectionDenied)
+            raise
+        else:
+            # got access with no passphrase => not a secure suite
+            return name, owner, 'insecure'
 
 def portid( host, port ):
     return host + ":" + str(port)
@@ -101,64 +133,41 @@ def check_port( name, owner, host, port, passphrase=None ):
         else:
             raise OtherSuiteFoundError, "ERROR: Found " + suiteid( one, two, host, port ) + ' NOT ' + suiteid( name, owner, host, port )
  
-def scan( host, passphrase=None, verbose=True ):
-    # scan all cylc Pyro ports for cylc suites, and return results
+def scan( host, verbose=True ):
+    # scan all cylc Pyro ports for cylc suites
+
+    # load my passphrases in case any secure suites are encountered in the scan.
+    reg = localdb()
+    reg.load_from_file()
+    reg_suites = reg.get_list(name_only=True)
+    my_passphrases = {}
+    for reg in reg_suites:
+        try:
+            # in case one is using a secure passphrase
+            pp = pphrase( reg ).get()
+        except:
+            # we have no passphrase defined for this suite
+            pass
+        else:
+            my_passphrases[ reg ] = pp
+
     suites = []
     for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
         try:
-            name, owner = port_interrogator( host, port, passphrase=passphrase ).interrogate()
+            name, owner, security = port_interrogator( host, port, my_passphrases ).interrogate()
         except Pyro.errors.ConnectionDeniedError:
             print "Connection Denied at " + portid( host, port )
         except Pyro.errors.ProtocolError:
-            pass
             #print "No Suite Found at " + portid( host, port )
+            pass
         except Pyro.errors.NamingError:
             print "Non-cylc pyro server found at " + portid( host, port )
         else:
             if verbose:
-                print suiteid( name, owner, host, port )
+                if security == 'secure':
+                    print suiteid( name, owner, host, port ), security
+                else:
+                    print suiteid( name, owner, host, port )
             # found a cylc suite or lock server
             suites.append( ( name, owner, port ) )
-    return suites
-
-def scan_my_suites( host ):
-    # return a list of my suites running on host
-    reg = localdb()
-    reg.load_from_file()
-    reg_suites = reg.get_list(name_only=True)
-    me = os.environ['USER']
-    # get passphrases if any
-    reg_pphrase = {}
-    for rs in reg_suites:
-        try:
-            # in case one is using a secure passphrase
-            passphrase = pphrase( rs ).get()
-        except Exception, x:
-            passphrase = None
-        reg_pphrase[ rs ] = passphrase
-
-    suites = []
-    # loop through cylc ports looking for my suites
-    for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
-        # loop through cylc ports
-        try:
-            name, owner = port_interrogator( host, port, passphrase=passphrase ).interrogate()
-        except Pyro.errors.ProtocolError, x:
-            # connection failed: no pyro server listening at this port
-            #print port, 'ProtocolError', x
-            pass
-        except Pyro.errors.NamingError, x:
-            # pyro server here, but it's not a cylc suite or lockserver
-            #print port, 'NamingError', x
-            pass
-        else:
-            # found a suite
-            if owner == me and name in reg_suites:
-                # found this registered suite
-                suites.append( ( name, port ) )
-
-    #print 'sleeping ...',
-    #sleep(5)
-    #print 'done'
-    
     return suites

@@ -14,10 +14,10 @@ Check that SUITE is running.
 Arguments:
 SUITE             Target suite name.""" )
 
-parser.add_option( "-o", "--owner",
-        help="Cylc suite owner (defaults to $USER).",
-        metavar="USER", default=os.environ["USER"],
-        action="store", dest="owner" )
+#parser.add_option( "-o", "--owner",
+#        help="Cylc suite owner (defaults to $USER).",
+#        metavar="USER", default=os.environ["USER"],
+#        action="store", dest="owner" )
 
 parser.add_option( "--host",
         help="Cylc suite host (defaults to localhost).",
@@ -53,7 +53,8 @@ except RegistrationError, x:
     raise SystemExit(x)
 
 host = options.host
-owner = options.owner
+owner = os.environ["USER"]
+
 try:
     passphrase = passphrase( suite ).get()
 except:
