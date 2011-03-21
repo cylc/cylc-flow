@@ -57,7 +57,9 @@ reg.load_from_file()
 try:
     reg.register( suite, rdir, descr )
 except RegistrationError, x:
-    raise SystemExit(x)
+    print >> sys.stderr, x
+    reg.unlock()
+    sys.exit(1)
 reg.unlock()
 reg.dump_to_file()
 sys.exit(0)

@@ -210,12 +210,12 @@ if not options.inline:
     try:
         os.chdir( suitedir )
     except OSError, x:
-        print x
+        print >> sys.stderr, x
         sys.exit(1)
 
     # edit the suite.rc file
     if not os.path.isfile( suiterc ):
-        print 'ERROR, file not found: ', suiterc
+        print  >> sys.stderr, 'ERROR, file not found: ', suiterc
         sys.exit(1)
  
     # in case $EDITOR has options, e.g. 'emacs -nw':

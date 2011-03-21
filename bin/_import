@@ -129,8 +129,9 @@ else:
     try:
         local.register( lreg, ldir, cdescr )
     except RegistrationError, x:
+        print >> sys.stderr, x
         local.unlock()
-        raise SystemExit(x)
+        sys.exit(1)
     else:
         # Make path absolute in case user specified a single
         # component relative path such as "foo", in which case

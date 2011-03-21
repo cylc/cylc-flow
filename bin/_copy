@@ -136,8 +136,9 @@ else:
     try:
         local.register( arg_to, ldir, cdescr )
     except RegistrationError, x:
+        print >> sys.stderr, x
         local.unlock()
-        raise SystemExit(x)
+        sys.exit(1)
     else:
         if not copy_dir:
             local.dump_to_file()

@@ -56,16 +56,18 @@ if not reregister_group:
         if reg.reregister( arg_from, arg_to, verbose=options.verbose ):
             changed = True
     except RegistrationError, x:
+        print >> sys.stderr, x
         reg.unlock()
-        raise SystemExit(x)
+        sys.exit(1)
 
 else:
     try:
         if reg.reregister_group( group_from, group_to, verbose=options.verbose ):
             changed = True
     except RegistrationError, x:
+        print >> sys.stderr, x:
         reg.unlock()
-        raise SystemExit(x)
+        sys.exit(1)
 
 if changed:
     reg.dump_to_file()

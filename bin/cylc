@@ -368,7 +368,7 @@ if len(args) == 1:
         category = match_dict( args[0], categories, 'CATEGORY' )
     except CommandError, x:
         # No matching category
-        # print x # (no need to print this, the exception will recur below)
+        # print >> sys.stderr, x # (no need to print this, the exception will recur below)
         # Carry on in case of a no-argument command (e.g. 'cylc scan')
         pass
     else:
@@ -394,7 +394,7 @@ if len( args ) == 2 and ( is_help(args[0]) or is_help(args[1])):
         try:
             command = match_command( typo(item) )
         except CommandError, y:
-            print x
+            print >> sys.stderr, x
             raise SystemExit(y)
         else:
             # cylc COMMAND --help
@@ -446,7 +446,7 @@ else:
             command = args[0]
             command = match_command( typo(command) )
         except CommandError, y:
-            print x
+            print >> sys.stderr, x
             raise SystemExit(y)
         else:
             # cylc COMMAND [ARGS]

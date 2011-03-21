@@ -56,7 +56,7 @@ try:
         except SuiteIdentificationError, x:
             if not alerted:
                 print "\n\033[1;37;41mfailed to connect" + ctrl_end 
-                print x
+                print >> sys.stderr, x
                 alerted = True
             #raise
             # if no connection, try again to connect

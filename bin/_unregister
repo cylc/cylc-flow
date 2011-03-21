@@ -59,8 +59,9 @@ if group_unreg:
     try:
         reg.unregister_group_fast( group )
     except RegistrationError, x:
+        print >> sys.stderr, x
         reg.unlock()
-        raise SystemExit(x)
+        sys.exit(1)
     else:
         reg.dump_to_file()
         reg.unlock()
@@ -68,8 +69,9 @@ else:
     try:
         reg.unregister( suite, verbose=options.verbose )
     except RegistrationError, x:
+        print >> sys.stderr, x
         reg.unlock()
-        raise SystemExit(x)
+        sys.exit(1)
     else:
         reg.dump_to_file()
         reg.unlock()

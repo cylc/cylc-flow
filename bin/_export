@@ -78,14 +78,14 @@ else:
         local.load_from_file()
         dir, descr = local.get( source )
     except RegistrationError, x:
-        print x
+        print >> sys.stderr, x
     else:
         try:
             central.lock()
             central.load_from_file()
             central.register( target, dir, descr )
         except RegistrationError, x:
-            print x
+            print >> sys.stderr, x
             central.unlock()
         else:
             central.dump_to_file()

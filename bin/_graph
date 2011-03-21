@@ -67,7 +67,7 @@ if options.view_runtime:
     try:
         suiterc = config.config( suite )
     except config.SuiteConfigError, x:
-        print x
+        print >> sys.stderr, x
         sys.exit(1)
     file = os.path.join( suiterc['visualization']['run time graph directory'],
                           suiterc['visualization']['run time graph filename'] )
@@ -87,7 +87,7 @@ if view_file:
     try:
         window.update( file )
     except OSError, x:
-        print x
+        print >> sys.stderr, x
         sys.exit(1)
     window.connect( 'destroy', gtk.main_quit)
     # checking for file changed not necessary for the run time graph:

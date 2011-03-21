@@ -86,7 +86,7 @@ try:
     reg.load_from_file()
     reg.get( arg1 )
 except RegistrationError,x:
-    print x
+    print >> sys.stderr, x
     print "Trying reversed arguments..."
     try:
         reg = getdb( arg0 )

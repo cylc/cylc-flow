@@ -180,8 +180,8 @@ if __name__ == '__main__':
         if debug:
             raise
         else:
-            print x
-            print "(use --debug to see exception traceback)"
+            print >> sys.stderr, x
+            print >> sys.stderr, "(use --debug to see exception traceback)"
             sys.exit(1)
     try:
         server.run()
@@ -191,21 +191,21 @@ if __name__ == '__main__':
         #   and see Python docs "The Python Profilers"
         #   for how to display the resulting stats.
     except Exception, x:
-        print "ERROR CAUGHT, will clean up before exit"
+        print >> sys.stderr, "ERROR CAUGHT, will clean up before exit"
         # this assumes no exceptions in shutdown()
         server.shutdown()
 
         if debug:
             raise
         else:
-            print "THE ERROR WAS:"
-            print x
-            print "(use --debug to see exception traceback)"
+            print >> sys.stderr, "THE ERROR WAS:"
+            print >> sys.stderr, x
+            print >> sys.stderr, "(use --debug to see exception traceback)"
             sys.exit(1)
     except:
         # catch 'sys.exit(1)' and 'raise SystemExit("foo")'
         # TO DO: check these can actually be caught
-        print "ERROR CAUGHT; will clean up before exit"
+        print >> sys.stderr, "ERROR CAUGHT; will clean up before exit"
         server.shutdown()
         raise
     else:
