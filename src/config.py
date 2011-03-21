@@ -716,8 +716,10 @@ class config( CylcConfigObj ):
         self.__check_tasks()
         self.loaded = True
 
-    def get_taskdef( self, name, type=None, oneoff=False ):
+    def get_taskdef( self, name, strict=False ):
         if name not in self['tasks']:
+            if strict:
+                raise SuiteConfigError, 'Task not defined: ' + name
             # no [tasks][[name]] section defined: default dummy task
             return taskdef.taskdef(name)
 
@@ -778,9 +780,23 @@ class config( CylcConfigObj ):
         return taskd
 
     def get_task_proxy( self, name, ctime, state, startup ):
+        # get a proxy for a task in the dependency graph.
         if not self.loaded:
+            # load all tasks defined by the graph
             self.load_tasks()
         return self.taskdefs[name].get_task_class()( ctime, state, startup )
+
+    def get_task_proxy_raw( self, name, ctime, state, startup ):
+        # get a proxy for a task that may not be defined by
+        # dependency graph.  This allows us to 'cylc submit'
+        # single tasks that are defined in suite.rc but not currently in
+        # the running suite.  Because the graph defines valid 
+        # cycle times, however, we must assume that the requested 
+        # ctime is valid for the task.
+        td = self.get_taskdef( name, strict=True )
+        td.hours = [ int( ctime[8:10] ) ]
+        tdclass = td.get_task_class()( ctime, 'waiting', startup )
+        return tdclass
 
     def get_task_class( self, name ):
         if not self.loaded:
