@@ -154,7 +154,7 @@ class lockserver( Pyro.core.ObjBase ):
 
     def get_suite( self, lock_id ):
         (group, name, id) = lock_id.split(':')
-        return group + ':' + suite
+        return group + ':' + name
 
     def get_suite_string( self, suite, suite_dir ):
         return suite + '-->' + suite_dir
