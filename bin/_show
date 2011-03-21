@@ -18,9 +18,6 @@ start time has been reached.""",
 (options, args) = parser.parse_args()
 
 suite = parser.get_suite_name()
-owner = options.owner
-host = options.host
-port = options.port
 
 prnt_suite = False
 prnt_name = False
@@ -40,7 +37,7 @@ else:
     prnt_suite = True
  
 try:
-    proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite, owner ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 

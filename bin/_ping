@@ -1,40 +1,18 @@
 #!/usr/bin/env python
 
-import os, sys, re
-import socket
 from optparse import OptionParser
-from passphrase import passphrase
-from registration import RegistrationError
-import port_scan
+from port_scan import get_port, SuiteIdentificationError
 
 parser = OptionParser( """cylc [discover] ping [options] SUITE
     
 Check that SUITE is running. 
 
 Arguments:
-SUITE             Target suite name.""" )
-
-#parser.add_option( "-o", "--owner",
-#        help="Cylc suite owner (defaults to $USER).",
-#        metavar="USER", default=os.environ["USER"],
-#        action="store", dest="owner" )
-
-parser.add_option( "--host",
-        help="Cylc suite host (defaults to localhost).",
-        metavar="HOST", action="store", default=socket.getfqdn(),
-        dest="host" )
-
-parser.add_option( "--port",
-        help="Cylc suite port (default: scan all cylc ports).",
-        metavar="INT", action="store", default=None, dest="port" )
+SUITE             Target suite registration GROUP:NAME.""" )
 
 parser.add_option( "--print-ports",
         help="Print cylc's configured port range.",
         action="store_true",default=False, dest="print_ports" )
-
-parser.add_option( "-p", "--practice",
-        help="Target a suite running in practice mode.", 
-        action="store_true", default=False, dest="practice" )
 
 ( options, args ) = parser.parse_args()
 
@@ -47,29 +25,9 @@ if options.print_ports:
 if len( args ) != 1:
     parser.error( "Wrong number of arguments" ) 
 
-try:
-    suite = args[0]
-except RegistrationError, x:
-    raise SystemExit(x)
-
-host = options.host
-owner = os.environ["USER"]
+suite = args[0]
 
 try:
-    passphrase = passphrase( suite ).get()
-except:
-    passphrase = None
-
-if options.port:
-    port = options.port
-    try:
-        port_scan.check_port( suite, owner, host, port, passphrase=passphrase )
-    except port_scan.SuiteIdentificationError, x:
-        print x
-        sys.exit(1)
-else:
-    try:
-        port = port_scan.get_port( suite, owner, host, passphrase=passphrase )
-    except port_scan.SuiteIdentificationError, x:
-        print x
-        sys.exit(1)
+    port = get_port( suite )
+except SuiteIdentificationError, x:
+    raise SystemExit( x )

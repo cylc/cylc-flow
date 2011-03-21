@@ -5,7 +5,7 @@ import gtk
 import time, os, re
 import threading
 from config import config, SuiteConfigError
-from port_scan import scan_my_suites
+from port_scan import scan
 from registration import localdb, centraldb, regsplit, RegistrationError
 from gtkmonitor import monitor
 from warning_dialog import warning_dialog, info_dialog
@@ -58,8 +58,8 @@ class chooser_updater(threading.Thread):
             self.__class__.count -= 1
     
     def running_choices_changed( self ):
-        # (name, owner, port)
-        suites = scan_my_suites( self.host )
+        # (name, port)
+        suites = scan( self.host, mine=True, silent=True )
         if suites != self.running_choices:
             self.running_choices = suites
             return True

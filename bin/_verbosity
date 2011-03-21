@@ -30,7 +30,7 @@ host = options.host
 port = options.port
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 

@@ -15,11 +15,6 @@ class suite_lock(object):
         self.suite = suite
 
     def request_suite_access( self, exclusive=True ):
-        # Cylc suite name is user-specific (i.e. different users can
-        # register suites with the same name), but the cylc groupname
-        # (USERNAME^SUITENAME) is unique (because two users cannot have
-        # the same username).        
-
         # suite config files should specify whether or not a suite is
         # 'exclusive' - i.e. is it possible to run multiple copies (with
         # different registered group names) of the entire suite at

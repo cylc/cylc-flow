@@ -77,18 +77,14 @@ except RegistrationError, x:
 # get suite logging directory
 logging_dir = os.path.join( config( suite )['top level logging directory'], suite )
 
-# get secure passphrase
-try:
-    passphrase = passphrase( suite ).get()
-except:
-    passphrase = None
-
 # scan for suite port
 try:
-    port = port_scan.get_port( suite, owner, host, passphrase )
+    port = port_scan.get_port( suite )
 except:
     port = None
     print >> sys.stderr, "Suite " + suite + " is not running"
+else:
+    print "Suite " + suite + " is running on port " + str(port)
 
 app = standalone_monitor( suite, owner, host, port, suite_dir, logging_dir, imagedir )
 gtk.main()

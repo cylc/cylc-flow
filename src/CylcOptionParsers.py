@@ -27,19 +27,19 @@ Arguments:
 
         OptionParser.__init__( self, usage )
 
-        self.add_option( "-o", "--owner",
-                help="Owner of the target suite (defaults to $USER).",
-                metavar="USER", default=os.environ["USER"],
-                action="store", dest="owner" )
+        #self.add_option( "-o", "--owner",
+        #        help="Owner of the target suite (defaults to $USER).",
+        #        metavar="USER", default=os.environ["USER"],
+        #        action="store", dest="owner" )
 
-        self.add_option( "--host",
-                help="Cylc suite host (defaults to local host).",
-                metavar="HOST", action="store", default=socket.getfqdn(),
-                dest="host" )
+        #self.add_option( "--host",
+        #        help="Cylc suite host (defaults to local host).",
+        #        metavar="HOST", action="store", default=socket.getfqdn(),
+        #        dest="host" )
 
-        self.add_option( "--port",
-                help="Cylc suite port (default: scan cylc ports).",
-                metavar="INT", action="store", default=None, dest="port" )
+        #self.add_option( "--port",
+        #        help="Cylc suite port (default: scan cylc ports).",
+        #        metavar="INT", action="store", default=None, dest="port" )
 
         self.add_option( "-p", "--practice",
                 help="Target a suite running in practice mode.", 
@@ -64,10 +64,10 @@ Arguments:
         self.suite_name = args[0]
 
         # user name 
-        self.owner = options.owner  # see default above!
+        # self.owner = options.owner  # see default above!
 
         # cylc suite host
-        self.host = options.host   # see default above!
+        # self.host = options.host   # see default above!
 
         self.practice = options.practice  # practice mode or not
 
@@ -75,10 +75,6 @@ Arguments:
 
     def get_suite_name( self ):
        return self.suite_name
-
-    def get_host( self ):
-        # TO DO: GET RID OF THIS METHOD
-        return self.host
 
     def get_groupname( self ):
         # TO DO: USER PYREX MODULE HERE
@@ -108,14 +104,14 @@ arguments:
 
         OptionParser.__init__( self, usage )
 
-        self.add_option( "--host",
-                help="Cylc suite host (default: localhost).",
-                metavar="HOSTNAME", action="store", default=socket.getfqdn(),
-                dest="host" )
+        #self.add_option( "--host",
+        #        help="Cylc suite host (default: localhost).",
+        #        metavar="HOSTNAME", action="store", default=socket.getfqdn(),
+        #        dest="host" )
 
-        self.add_option( "--port",
-                help="Cylc suite port (default: scan cylc ports).",
-                metavar="INT", action="store", default=None, dest="port" )
+        #self.add_option( "--port",
+        #        help="Cylc suite port (default: scan cylc ports).",
+        #        metavar="INT", action="store", default=None, dest="port" )
 
         self.add_option( "-p", "--practice",
                 help="Target a suite running in practice mode.", 
@@ -141,16 +137,13 @@ arguments:
             self.error( "Too many arguments" )
 
         self.suite_name = args[0]
-        self.host = options.host   # see default above!
+        #self.host = options.host   # see default above!
         self.practice = options.practice  # practice mode or not
 
         return ( options, args )
 
     def get_suite_name( self ):
         return self.suite_name
-
-    def get_host( self ):
-        return self.host
 
     def get_groupname( self ):
         # TO DO: USER PYREX MODULE HERE

@@ -1344,27 +1344,27 @@ The cylc forecast suite metascheduler.
 
         return hbox
 
-    def check_connection( self ):
-        # called on a timeout in the gtk main loop, tell the log viewer
-        # to reload if the connection has been lost and re-established,
-        # which probably means the cylc suite was shutdown and
-        # restarted.
-        try:
-            cylc_pyro_client.ping( self.host, self.port )
-        except Pyro.errors.ProtocolError:
-            print "NO CONNECTION"
-            self.connection_lost = True
-        else:
-            print "CONNECTED"
-            if self.connection_lost:
-                #print "------>INITIAL RECON"
-                self.connection_lost = False
-                self.lvp.clear_and_reconnect()
-        # always return True so that we keep getting called
-        return True
+    #def check_connection( self ):
+    #    # called on a timeout in the gtk main loop, tell the log viewer
+    #    # to reload if the connection has been lost and re-established,
+    #    # which probably means the cylc suite was shutdown and
+    #    # restarted.
+    #    try:
+    #        cylc_pyro_client.ping( self.host, self.port )
+    #    except Pyro.errors.ProtocolError:
+    #        print "NO CONNECTION"
+    #        self.connection_lost = True
+    #    else:
+    #        print "CONNECTED"
+    #        if self.connection_lost:
+    #            #print "------>INITIAL RECON"
+    #            self.connection_lost = False
+    #            self.lvp.clear_and_reconnect()
+    #    # always return True so that we keep getting called
+    #    return True
 
     def get_pyro( self, object ):
-        return cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( object)
+        return cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( object )
  
     def preload_task_list( self ):
         # Load task list from suite config.
@@ -1435,7 +1435,6 @@ The cylc forecast suite metascheduler.
         self.quitters = []
 
         self.connection_lost = False
-        #gobject.timeout_add( 1000, self.check_connection )
 
         self.t = updater( self.suite, self.owner, self.host, self.port, self.imagedir, 
                 self.led_treeview.get_model(),

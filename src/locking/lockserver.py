@@ -14,9 +14,9 @@ class lockserver(object):
 
     def get_proxy( self ):
         if self.port:
-            check_port( "lockserver", self.owner, self.host, self.port )
+            check_port( "lockserver", self.port, host=self.host )
         else:
-            self.port = get_port( "lockserver", self.owner, self.host )
+            self.port = get_port( "lockserver", host=self.host )
 
         # lockservers are connected to Pyro with owner name
         # see comment in bin/_lockserver. TO DO: reuse code.

@@ -44,12 +44,9 @@ for cycle in [ start, stop ]:
         parser.error( "invalid cycle time: " + cycle )
 
 suite = parser.get_suite_name()
-owner = os.environ['USER']
-host = options.host
-port = options.port
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 
