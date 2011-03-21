@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 import os, sys
 import cycle_time
 import cylc_pyro_client
@@ -53,7 +52,7 @@ except SuiteIdentificationError, x:
 if not parser.prompt( 'Purge from ' + target + ' to ' + stop + ' in'):
     sys.exit(0)
 
-actioned, explanation = proxy.purge( target, stop, owner )
+actioned, explanation = proxy.purge( target, stop )
 
 print explanation
 if not actioned:

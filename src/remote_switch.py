@@ -18,15 +18,13 @@ class remote_switch( Pyro.core.ObjBase ):
     "class to take remote suite control requests" 
     # the task manager can take action on these when convenient.
 
-    def __init__( self, config, clock, suite_dir, owner, pool, failout_id = None ):
+    def __init__( self, config, clock, suite_dir, pool, failout_id = None ):
         self.log = logging.getLogger( "main" )
         Pyro.core.ObjBase.__init__(self)
 
-        self.owner = os.environ['USER']
         self.config = config
         self.clock = clock
         self.suite_dir = suite_dir
-        self.owner = owner
         self.insert_this = None
         self.failout_id = failout_id
 
@@ -189,9 +187,8 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def get_suite_info( self ):
         self._warning( "servicing remote suite info request" )
-        return [ self.config['title'], \
-                self.suite_dir, \
-                self.owner ]
+        owner = os.environ['USER']
+        return [ self.config['title'], self.suite_dir, owner ]
 
     def get_task_list( self ):
         self._warning( "servicing remote task list request" )
@@ -244,7 +241,7 @@ class remote_switch( Pyro.core.ObjBase ):
         else:
             return dump
     
-    def purge( self, task_id, stop, user ):
+    def purge( self, task_id, stop ):
         if self._suite_is_blocked():
             return False, reasons
 
@@ -256,7 +253,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return True, "OK"
 
-    def die( self, task_id, user ):
+    def die( self, task_id ):
         if self._suite_is_blocked():
             return False, reasons
 
@@ -268,7 +265,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return True, "OK"
 
-    def die_cycle( self, cycle, user ):
+    def die_cycle( self, cycle ):
         if self._suite_is_blocked():
             return False, reasons
 
@@ -277,7 +274,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return True, "OK"
 
-    def spawn_and_die( self, task_id, user ):
+    def spawn_and_die( self, task_id ):
         if self._suite_is_blocked():
             return False, reasons
 
@@ -289,7 +286,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return True, "OK"
 
-    def spawn_and_die_cycle( self, cycle, user ):
+    def spawn_and_die_cycle( self, cycle ):
         if self._suite_is_blocked():
             return False, reasons
         self._warning( "REMOTE: spawn and die cycle: " + cycle )
@@ -297,7 +294,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return True, "OK"
 
-    def set_verbosity( self, level, user ):
+    def set_verbosity( self, level ):
         if self._suite_is_blocked():
             return False, reasons
 

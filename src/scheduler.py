@@ -306,7 +306,7 @@ class scheduler(object):
         # TO DO: DO WE NEED TO LOAD TASK LIST FIRST?
         # TO DO: THIS IS CLUNKY - PASSING IN SELF TO GIVE ACCESS TO TASK
         # POOL METHODS.
-        self.remote = remote_switch( self.config, self.clock, self.suite_dir, self.owner, self, self.failout_task_id )
+        self.remote = remote_switch( self.config, self.clock, self.suite_dir, self, self.failout_task_id )
         self.pyro.connect( self.remote, 'remote' )
 
     def print_banner( self ):
