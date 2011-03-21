@@ -807,12 +807,13 @@ The cylc forecast suite metascheduler.
         bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
  
         result = self.get_pyro( 'remote' ).get_task_requisites( [ task_id ] )
-
-        if task_id not in result:
-            warning_dialog( 
+        if result:
+            # (else no tasks were found at all -suite shutting down)
+            if task_id not in result:
+                warning_dialog( 
                     "Task proxy " + task_id + " not found in " + self.suite + \
                  ".\nTasks are removed once they are no longer needed.").warn()
-            return
+                return
         
         #self.update_tb( tb, 'Task ' + task_id + ' in ' +  self.suite + '\n\n', [bold])
         self.update_tb( tb, 'TASK ', [bold] )
