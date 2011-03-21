@@ -58,8 +58,8 @@ Stderr is displayed in red.
             tb.insert_with_tags( tb.get_end_iter(), 'command: ' + command + '\n', self.blue )
             tb2.insert_with_tags( tb2.get_end_iter(), 'command: ' + command + '\n', self.blue2 )
 
-        tb.insert_with_tags( tb.get_end_iter(), '>stdout: ' + stdoutfile.name + '\n', self.blue )
-        tb2.insert_with_tags( tb2.get_end_iter(), '>stderr: ' + stderrfile.name + '\n\n', self.blue2 )
+        tb.insert_with_tags( tb.get_end_iter(), ' stdout: ' + stdoutfile.name + '\n', self.blue )
+        tb2.insert_with_tags( tb2.get_end_iter(), ' stderr: ' + stderrfile.name + '\n\n', self.blue2 )
 
 
         vpanes = gtk.VPaned()
@@ -70,18 +70,23 @@ Stderr is displayed in red.
         sw.add(self.textview)
         sw2.add(self.textview2)
 
-        vbox.add(sw)
+        frame = gtk.Frame()
+        frame.add(sw)
+        vbox.add(frame)
 
-        vbox2.add(sw2)
+        frame2 = gtk.Frame()
+        frame2.add(sw2)
+        vbox2.add(frame2)
 
         save_button = gtk.Button( "_Save stdout To File" )
         save_button.connect("clicked", self.save, self.textview )
-        hbox = gtk.HBox()
-        hbox.pack_start( save_button, False )
-        vbox.pack_start( hbox, False )
-
         save_button2 = gtk.Button( "_Save stderr To File" )
         save_button2.connect("clicked", self.save, self.textview2 )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( save_button, False )
+        hbox.pack_start( save_button2, False )
+        vbox.pack_start( hbox, False )
 
         close_button = gtk.Button( "_Close" )
         close_button.connect("clicked", self.quit, None, None )
@@ -90,10 +95,6 @@ Stderr is displayed in red.
 
         hbox.pack_end(close_button, False)
         hbox.pack_end(help_button, False)
-
-        hbox2 = gtk.HBox()
-        hbox2.pack_start( save_button2, False )
-        vbox2.pack_start( hbox2, False )
 
         # stderr on top
         vpanes.add( vbox2 )
