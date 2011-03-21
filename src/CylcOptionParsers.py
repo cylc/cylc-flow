@@ -27,15 +27,15 @@ Arguments:
 
         OptionParser.__init__( self, usage )
 
-        #self.add_option( "-o", "--owner",
-        #        help="Owner of the target suite (defaults to $USER).",
-        #        metavar="USER", default=os.environ["USER"],
-        #        action="store", dest="owner" )
+        self.add_option( "-o", "--owner",
+                help="Owner of the target suite (defaults to $USER).",
+                metavar="USER", default=os.environ["USER"],
+                action="store", dest="owner" )
 
-        #self.add_option( "--host",
-        #        help="Cylc suite host (defaults to local host).",
-        #        metavar="HOST", action="store", default=socket.getfqdn(),
-        #        dest="host" )
+        self.add_option( "--host",
+                help="Cylc suite host (defaults to local host).",
+                metavar="HOST", action="store", default=socket.getfqdn(),
+                dest="host" )
 
         #self.add_option( "--port",
         #        help="Cylc suite port (default: scan cylc ports).",

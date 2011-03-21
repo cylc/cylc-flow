@@ -49,7 +49,7 @@ try:
     while True:
         # connect to remote state summary object
         try: 
-            proxy = cylc_pyro_client.client( suite ).get_proxy( 'state_summary' )
+            proxy = cylc_pyro_client.client( suite, owner=options.owner, host=options.host ).get_proxy( 'state_summary' )
 
         except SuiteIdentificationError, x:
             raise
