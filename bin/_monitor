@@ -54,7 +54,6 @@ try:
             proxy = cylc_pyro_client.client( suite, owner=options.owner, host=options.host ).get_proxy( 'state_summary' )
 
         except SuiteIdentificationError, x:
-            raise
             if not alerted:
                 print "\n\033[1;37;41mfailed to connect" + ctrl_end 
                 print x
