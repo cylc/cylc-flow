@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-from optparse import OptionParser
+#from optparse import OptionParser
+from CylcOptionParsers import NoPromptOptionParser_u
 from port_scan import get_port, SuiteIdentificationError
 
-parser = OptionParser( """cylc [discover] ping [options] SUITE
+parser = NoPromptOptionParser_u( """cylc [discover] ping [options] SUITE
     
 Check that SUITE is running. 
 
@@ -28,6 +29,6 @@ if len( args ) != 1:
 suite = args[0]
 
 try:
-    port = get_port( suite )
+    port = get_port( suite, owner=options.owner, host=options.host )
 except SuiteIdentificationError, x:
     raise SystemExit( x )

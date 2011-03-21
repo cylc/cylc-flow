@@ -3,6 +3,7 @@ host, using a --host=HOST option to all commands that act through a
 pyro server. However, the user interface currently does not allow this,
 except in the case of the passive commands,
     - scan
+    - ping
     - dump
     - monitor
     - show
