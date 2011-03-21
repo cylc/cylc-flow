@@ -156,8 +156,25 @@ already running, you won't.
 
 %h3 Control
 
-Launch a suite control GUI to start a suite running, or connect to a
-suite that is already running.
+Launch a control GUI to start a suite running, or to connect to a suite
+that is already running. 
+
+If you start the suite from within the control GUI, or if you connect to
+a suite that was started from a control GUI, the GUI subprocess output
+window will show suite stdout and stderr as redirected to the files
+$HOME/.cylc/GROUP:NAME.(out|err).
+
+If you start a suite from the commandline, however, stdout and stderr
+will go to the terminal, or to any files you care to redirect to yourself.
+Reconnecting to such a suite from a control GUI will not show this output.
+
+%h3 View Output
+
+This opens a new view of the suite stdout and stderr files
+$HOME/.cylc/GROUP:NAME.(out|err) used when suites are started from
+within gcylc (as opposed to the commandline) - useful if you closed 
+the original output window that opens with a new instance of the control
+GUI.
 
 %h3 Dump
 
