@@ -394,9 +394,9 @@ class chooser(object):
         file_menu_root = gtk.MenuItem( '_File' )
         file_menu_root.set_submenu( file_menu )
 
-        new_item = gtk.MenuItem( '_New' )
-        new_item.connect( 'activate', self.newreg_popup )
-        file_menu.append( new_item )
+        self.reg_new_item = gtk.MenuItem( '_New' )
+        self.reg_new_item.connect( 'activate', self.newreg_popup )
+        file_menu.append( self.reg_new_item )
 
         exit_item = gtk.MenuItem( 'E_xit' )
         exit_item.connect( 'activate', self.delete_all_event, None )
@@ -422,15 +422,16 @@ class chooser(object):
         db_menu_root = gtk.MenuItem( '_Database' )
         db_menu_root.set_submenu( db_menu )
 
-        local_item = gtk.MenuItem( '_LocalDB' )
-        local_item.set_sensitive(False) # (already on local at startup)
-        db_menu.append( local_item )
+        self.dblocal_item = gtk.MenuItem( '_LocalDB' )
+        db_menu.append( self.dblocal_item )
+        self.dblocal_item.set_sensitive(False) # (already on local at startup)
 
-        central_item = gtk.MenuItem( '_CentralDB' )
-        db_menu.append( central_item )
+        self.dbcentral_item = gtk.MenuItem( '_CentralDB' )
+        db_menu.append( self.dbcentral_item )
+        self.dbcentral_item.set_sensitive(True) # (on local at startup)
 
-        local_item.connect( 'activate', self.localdb, new_item, central_item )
-        central_item.connect( 'activate', self.centraldb, new_item, local_item )
+        self.dblocal_item.connect( 'activate', self.localdb )
+        self.dbcentral_item.connect( 'activate', self.centraldb )
 
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( '_Help' )
@@ -684,26 +685,26 @@ The cylc forecast suite metascheduler.
         self.filter_window.add( vbox )
         self.filter_window.show_all()
 
-    def localdb( self, w, new_menu_item, other_w ):
+    def localdb( self, w ):
         if not self.cdb:
             return
         self.window.set_title("Registered Suites (LOCAL DATABASE)" )
         w.set_sensitive(False)
-        other_w.set_sensitive(True)
+        self.dbcentral_item.set_sensitive(True)
         self.cdb = False
         if self.filter_window:
             self.filter_window.destroy()
         # setting base color to None should return it to the default
         self.regd_treeview.modify_base( gtk.STATE_NORMAL, None)
-        new_menu_item.set_sensitive( True )
+        self.reg_new_item.set_sensitive( True )
         self.start_updater()
 
-    def centraldb( self, w, new_menu_item, other_w ):
+    def centraldb( self, w ):
         if self.cdb:
             return
         self.window.set_title("Registered Suites (CENTRAL DATABASE)" )
         w.set_sensitive(False)
-        other_w.set_sensitive(True)
+        self.dblocal_item.set_sensitive(True)
         self.cdb = True
         if self.filter_window:
             self.filter_window.destroy()
@@ -711,13 +712,11 @@ The cylc forecast suite metascheduler.
         # on all platforms. It either colours the full background or
         # just inside (behind the treeeview?) the expander triangles.
         self.regd_treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#bdf" ))
-        new_menu_item.set_sensitive( False )
+        self.reg_new_item.set_sensitive( False )
         self.start_updater()
 
     def delete_all_event( self, w, e ):
-
         self.updater.quit = True
-
         # call quit on any remaining gcapture windows, which contain
         # tailer threads that need to be stopped). Currently we maintain
         # a list of all gcapture windows opened
