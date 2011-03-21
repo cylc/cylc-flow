@@ -1794,7 +1794,9 @@ Note that this will not delete the suite definition directory.""" )
             stdout = open( prefix + '.out', 'rb' )
             stderr = open( prefix + '.err', 'rb' )
         except IOError,x:
-            warning_dialog( str(x) ).warn()
+            msg = '''This probably means the suite has not yet been started via gcylc
+(if you start a suite on the commandline stdout and stderr redirection is up to you).'''
+            warning_dialog( str(x) + '\n' + msg ).warn()
             return False
 
         foo = gcapture( None, stdout, stderr, width=800, height=400, ignore_command=True )
