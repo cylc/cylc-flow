@@ -87,15 +87,17 @@ Stderr is displayed in red.
         close_button.connect("clicked", self.quit, None, None )
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.capture )
-        hbox2 = gtk.HBox()
-        hbox2.pack_end(close_button, False)
-        hbox2.pack_end(help_button, False)
 
+        hbox.pack_end(close_button, False)
+        hbox.pack_end(help_button, False)
+
+        hbox2 = gtk.HBox()
         hbox2.pack_start( save_button2, False )
         vbox2.pack_start( hbox2, False )
 
-        vpanes.add( vbox )
+        # stderr on top
         vpanes.add( vbox2 )
+        vpanes.add( vbox )
 
         self.window.add(vpanes)
         close_button.grab_focus()
