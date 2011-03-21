@@ -877,10 +877,14 @@ The cylc forecast suite metascheduler.
             else:
                 reg = group + ':' + name
             if not self.cdb:
-                title = '_Control'
-                con_item = gtk.MenuItem( title )
+                con_item = gtk.MenuItem( '_Control')
                 menu.append( con_item )
                 con_item.connect( 'activate', self.launch_controller, reg, state )
+
+                out_item = gtk.MenuItem( '_View Output')
+                menu.append( out_item )
+                out_item.connect( 'activate', self.view_output, reg )
+
                 if state != '-':
                     # suite is running
                     dump_item = gtk.MenuItem( 'D_ump' )
@@ -1560,7 +1564,7 @@ Note that this will not delete the suite definition directory.""" )
         hbox.pack_start(start_entry, True) 
         vbox.pack_start(hbox)
 
-        label = gtk.Label("Stop Hour" )
+        label = gtk.Label("Stop At (hours after start)" )
         stop_entry = gtk.Entry()
         stop_entry.set_text( '6' )
         hbox = gtk.HBox()
@@ -1770,6 +1774,30 @@ Note that this will not delete the suite definition directory.""" )
 
         command = "gcylc " + name
         foo = gcapture( command, stdout, stderr, 800, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
+
+    def view_output( self, w, name ):
+        # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?
+        # a hard-wired prefix makes it possible for us to 
+        # reconnect to the output of a running suite. Some
+        # non-fatal textbuffer insertion warnings may occur if several
+        # control guis are open at once both trying to write to it.
+        prefix = os.path.join( '$HOME', '.cylc', name )
+
+        # environment variables allowed
+        prefix = os.path.expandvars( prefix )
+
+        try:
+            # open existing out and err files
+            stdout = open( prefix + '.out', 'rb' )
+            stderr = open( prefix + '.err', 'rb' )
+        except IOError,x:
+            warning_dialog( str(x) ).warn()
+            return False
+
+        foo = gcapture( None, stdout, stderr, width=800, height=400, ignore_command=True )
         self.gcapture_windows.append(foo)
         foo.run()
 

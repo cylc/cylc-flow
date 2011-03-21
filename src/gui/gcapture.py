@@ -18,9 +18,10 @@ streams in real time to display in a GUI window. Examples:
 Stderr is displayed in red.
     $ capture "echo foo && echox bar"
 """
-    def __init__( self, command, stdoutfile, stderrfile, width=400, height=400, standalone=False ):
+    def __init__( self, command, stdoutfile, stderrfile, width=400, height=400, standalone=False, ignore_command=False ):
         self.standalone=standalone
         self.command = command
+        self.ignore_command = ignore_command
         self.stdout = stdoutfile
         self.stderr = stderrfile
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -41,7 +42,8 @@ Stderr is displayed in red.
         self.blue = tb.create_tag( None, foreground = "darkblue" )
         self.red = tb.create_tag( None, foreground = "red" )
        
-        tb.insert_with_tags( tb.get_end_iter(), 'command: ' + command + '\n', self.blue )
+        if not self.ignore_command:
+            tb.insert_with_tags( tb.get_end_iter(), 'command: ' + command + '\n', self.blue )
         tb.insert_with_tags( tb.get_end_iter(), '>stdout: ' + stdoutfile.name + '\n', self.blue )
         tb.insert_with_tags( tb.get_end_iter(), '>stderr: ' + stderrfile.name + '\n\n', self.blue )
 
@@ -70,10 +72,14 @@ Stderr is displayed in red.
         self.window.show_all()
 
     def run( self ):
-        proc = subprocess.Popen( self.command, stdout=self.stdout, stderr=self.stderr, shell=True )
-        self.stdout_updater = tailer( self.textview, self.stdout.name, proc=proc, format=True )
+        if not self.ignore_command:
+            proc = subprocess.Popen( self.command, stdout=self.stdout, stderr=self.stderr, shell=True )
+            self.stdout_updater = tailer( self.textview, self.stdout.name, proc=proc, format=True )
+            self.stderr_updater = tailer( self.textview, self.stderr.name, proc=proc, tag=self.red )
+        else:
+            self.stdout_updater = tailer( self.textview, self.stdout.name, format=True )
+            self.stderr_updater = tailer( self.textview, self.stderr.name, tag=self.red )
         self.stdout_updater.start()
-        self.stderr_updater = tailer( self.textview, self.stderr.name, proc=proc, tag=self.red )
         self.stderr_updater.start()
 
     def save( self, w ):
@@ -129,4 +135,3 @@ class gcapture_tmpfile( gcapture ):
         stdout = tempfile.NamedTemporaryFile( dir = tmpdir )
         stderr = tempfile.NamedTemporaryFile( dir = tmpdir )
         gcapture.__init__(self, command, stdout, stderr, width, height, standalone )
- 
