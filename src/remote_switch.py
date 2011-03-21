@@ -225,7 +225,7 @@ class remote_switch( Pyro.core.ObjBase ):
                 extra_info = {}
                 # extra info for clocktriggered tasks
                 try:
-                    extra_info[ 'delayed start time reached' ] = task.start_time_reached( self.clock.get_datetime() ) 
+                    extra_info[ 'delayed start time reached' ] = task.start_time_reached() 
                 except AttributeError:
                     # not a clocktriggered task
                     pass

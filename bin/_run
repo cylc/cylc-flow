@@ -43,15 +43,21 @@ file:
   SUITE.RC: [special tasks] -> coldstart = task1, task2, ...
 
 RAWSTART:
-    This starts the suite as if in mid run - any tasks that depend on
-previous cycles will have to be triggered manually. For a suite with no
-intercycle dependencies (=> no warm cycled forecast models) there is no
-distinction between the cold, warm, and raw start methods. Startup is as
-for a cold start, except that designated cold start tasks are excluded
-from the suite. The cold start task list must be defined in the suite
-config file:
+    This starts the suite as if in mid run without any special handling
+- any tasks that depend on previous cycles will have to be triggered
+manually. For a suite with no intercycle dependencies (=> no warm cycled
+forecast models) there is no distinction between the cold, warm, and raw
+start methods. Startup is as for a cold start, except that designated
+cold start tasks are excluded from the suite. The cold start task list
+must be defined in the suite config file:
   SUITE.RC: [special tasks] -> coldstart = task1, task2, ...
  
+NOTE:
+  SUITE.RC: [special tasks]-> startup = task1, task2, ...
+Any dependence on a "startup" task is only used for a suite coldstart.
+Startup tasks can be used to make everything wait on a task that clears
+out suite workspaces, for example, when a suite is started from scratch.
+
 NOTE: daemonize important suites with the POSIX nohup command:
   $ nohup cylc [con] run SUITE YYYYMMDDHH > suite.out 2> suite.err &
 
@@ -60,7 +66,7 @@ See also:
     cylc [control] stop|shutdown
 
 Arguments:
-   SUITE                Registered name of the suite to start.
+   SUITE                Registered GROUP:NAME of the suite to run.
    YYYYMMDDHH           Initial cycle time.""" 
 
         self.parser = OptionParser( usage )
@@ -125,9 +131,9 @@ Arguments:
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
         coldstart_tasks = self.config.get_coldstart_task_list()
+        startup_tasks = self.config.get_startup_task_list()
         if len( coldstart_tasks ) == 0:
             self.log.warning( "THIS SUITE HAS NOT DEFINED THE 'coldstart task list' CONFIG ITEM" )
-
         for name in task_list:
             # (startup=True is only for coldstart)
             itask = self.config.get_task_proxy( name, self.start_time, 'waiting', startup=False )
@@ -136,6 +142,11 @@ Arguments:
                 itask.state.set_status( 'finished' )
                 itask.prerequisites.set_all_satisfied()
                 itask.outputs.set_all_complete()
+            if name in startup_tasks:
+                itask.log( 'WARNING', "This is a warm start: I will self-destruct." )
+                itask.prepare_for_death()
+                del itask
+                continue
             # check stop time in case the user has set a very quick stop
             if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
                 # we've reached the stop time already: delete the new task 
@@ -153,13 +164,14 @@ Arguments:
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
         coldstart_tasks = self.config.get_coldstart_task_list()
+        startup_tasks = self.config.get_startup_task_list()
         if len( coldstart_tasks ) == 0:
             self.log.warning( "THIS SUITE HAS NOT DEFINED THE 'coldstart task list' CONFIG ITEM" )
 
         for name in task_list:
             # startup=True only for coldstart
             itask = self.config.get_task_proxy( name, self.start_time, 'waiting', startup=False )
-            if name in coldstart_tasks:
+            if name in coldstart_tasks or name in startup_tasks:
                 itask.log( 'WARNING', "This is a raw start: I will self-destruct." )
                 itask.prepare_for_death()
                 del itask
