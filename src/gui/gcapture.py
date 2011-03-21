@@ -34,40 +34,70 @@ Stderr is displayed in red.
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
 
+        sw2 = gtk.ScrolledWindow()
+        sw2.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
+
         self.textview = gtk.TextView()
         self.textview.set_editable(False)
         self.textview.set_wrap_mode( gtk.WRAP_WORD )
 
+        self.textview2 = gtk.TextView()
+        self.textview2.set_editable(False)
+        self.textview2.set_wrap_mode( gtk.WRAP_WORD )
+
         tb = self.textview.get_buffer()
+        tb2 = self.textview2.get_buffer()
+
         self.blue = tb.create_tag( None, foreground = "darkblue" )
         self.red = tb.create_tag( None, foreground = "red" )
        
+        self.blue2 = tb2.create_tag( None, foreground = "darkblue" )
+        self.red2 = tb2.create_tag( None, foreground = "red" )
+
         if not self.ignore_command:
             tb.insert_with_tags( tb.get_end_iter(), 'command: ' + command + '\n', self.blue )
+            tb2.insert_with_tags( tb2.get_end_iter(), 'command: ' + command + '\n', self.blue2 )
+
         tb.insert_with_tags( tb.get_end_iter(), '>stdout: ' + stdoutfile.name + '\n', self.blue )
-        tb.insert_with_tags( tb.get_end_iter(), '>stderr: ' + stderrfile.name + '\n\n', self.blue )
+        tb2.insert_with_tags( tb2.get_end_iter(), '>stderr: ' + stderrfile.name + '\n\n', self.blue2 )
+
+
+        vpanes = gtk.VPaned()
 
         vbox = gtk.VBox()
-        hbox = gtk.HBox()
+        vbox2 = gtk.VBox()
+
         sw.add(self.textview)
+        sw2.add(self.textview2)
+
         vbox.add(sw)
 
-        save_button = gtk.Button( "_Save To File" )
-        save_button.connect("clicked", self.save )
+        vbox2.add(sw2)
+
+        save_button = gtk.Button( "_Save stdout To File" )
+        save_button.connect("clicked", self.save, self.textview )
+        hbox = gtk.HBox()
+        hbox.pack_start( save_button, False )
+        vbox.pack_start( hbox, False )
+
+        save_button2 = gtk.Button( "_Save stderr To File" )
+        save_button2.connect("clicked", self.save, self.textview2 )
 
         close_button = gtk.Button( "_Close" )
         close_button.connect("clicked", self.quit, None, None )
-
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.capture )
+        hbox2 = gtk.HBox()
+        hbox2.pack_end(close_button, False)
+        hbox2.pack_end(help_button, False)
 
-        hbox.pack_end(close_button, False)
-        hbox.pack_end(help_button, False)
+        hbox2.pack_start( save_button2, False )
+        vbox2.pack_start( hbox2, False )
 
-        hbox.pack_start( save_button, False )
+        vpanes.add( vbox )
+        vpanes.add( vbox2 )
 
-        vbox.pack_start( hbox, False )
-        self.window.add(vbox)
+        self.window.add(vpanes)
         close_button.grab_focus()
         self.window.show_all()
 
@@ -75,18 +105,21 @@ Stderr is displayed in red.
         if not self.ignore_command:
             proc = subprocess.Popen( self.command, stdout=self.stdout, stderr=self.stderr, shell=True )
             self.stdout_updater = tailer( self.textview, self.stdout.name, proc=proc, format=True )
-            self.stderr_updater = tailer( self.textview, self.stderr.name, proc=proc, tag=self.red )
+            self.stderr_updater = tailer( self.textview2, self.stderr.name, proc=proc, tag=self.red2 )
         else:
             self.stdout_updater = tailer( self.textview, self.stdout.name, format=True )
-            self.stderr_updater = tailer( self.textview, self.stderr.name, tag=self.red )
+            self.stderr_updater = tailer( self.textview2, self.stderr.name, tag=self.red2 )
         self.stdout_updater.start()
         self.stderr_updater.start()
 
-    def save( self, w ):
-        tb = self.textview.get_buffer()
+    def save( self, w, tv ):
+        tb = tv.get_buffer()
+
         start = tb.get_start_iter()
         end = tb.get_end_iter()
         txt = tb.get_text( start, end )
+
+        print txt
 
         dialog = gtk.FileChooserDialog(title='Save As',
                 action=gtk.FILE_CHOOSER_ACTION_SAVE,
