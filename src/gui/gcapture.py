@@ -78,9 +78,9 @@ Stderr is displayed in red.
         frame2.add(sw2)
         vbox2.add(frame2)
 
-        save_button = gtk.Button( "_Save stdout To File" )
+        save_button = gtk.Button( "Save std_out" )
         save_button.connect("clicked", self.save, self.textview )
-        save_button2 = gtk.Button( "_Save stderr To File" )
+        save_button2 = gtk.Button( "Save std_err" )
         save_button2.connect("clicked", self.save, self.textview2 )
 
         hbox = gtk.HBox()

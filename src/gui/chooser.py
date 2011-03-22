@@ -410,7 +410,7 @@ class chooser(object):
         view_menu.append( filter_item )
         filter_item.connect( 'activate', self.filter_popup )
 
-        expand_item = gtk.MenuItem( '_Expand' )
+        expand_item = gtk.MenuItem( 'E_xpand' )
         view_menu.append( expand_item )
         expand_item.connect( 'activate', self.expand_all, self.regd_treeview )
 

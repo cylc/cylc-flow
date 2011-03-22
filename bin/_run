@@ -54,9 +54,11 @@ must be defined in the suite config file:
  
 NOTE:
   SUITE.RC: [special tasks]-> startup = task1, task2, ...
-Any dependence on a "startup" task is only used for a suite coldstart.
-Startup tasks can be used to make everything wait on a task that clears
-out suite workspaces, for example, when a suite is started from scratch.
+Startup tasks are oneoff tasks that are used only in a coldstart; any
+dependence on a startup task is ignored in subsequent cycles. This 
+allows you to make everything wait on one or more startup tasks that
+could, for example, clean out suite workspaces when a suite is started
+from scratch (cold start).
 
 NOTE: daemonize important suites with the POSIX nohup command:
   $ nohup cylc [con] run SUITE YYYYMMDDHH > suite.out 2> suite.err &

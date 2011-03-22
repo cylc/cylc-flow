@@ -17,18 +17,20 @@ parser = OptionParser( """gcylc [SUITE]
 This is the cylc graphical user interface. It is functionally equivalent
 to the commandline interface ('cylc help') in most respects.
 
-To start the main gcylc GUI from which you can access all functionality
-for any of your own suites, and those registered in the database:
     1/ gcylc &
+The gcylc main window displays suites in your private registration
+database, and in the central database available to all users. By right
+clicking on suites or registration groups you can access all cylc
+functionality.
 
-Or, to launch a suite control GUI for a registered suite:
     2/ gcylc SUITE &
+This invokes a control and monitoring application for a particular suite.
 
 NOTE: daemonize important suites with the POSIX nohup command:
     $ nohup gcylc [options] [SUITE] &
 
 Arguments:
-    [SUITE]                  GROUP:NAME of a registered suite.""")
+    [SUITE]                  registered GROUP:NAME of a suite.""")
 
 #parser.add_option( "--host",
 #        help="cylc suite host (defaults to localhost).",
