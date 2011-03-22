@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# NOTE: MAKE SURE THE LOCKSERVER IS ON IF THE TEST SUITE USES IT.
+
 set -e; trap "echo 'TEST FAILED (see output log)'" ERR
 
 SUITE_REG=Z1TtestQrX:foobar
