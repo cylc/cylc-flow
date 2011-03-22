@@ -14,9 +14,9 @@ class lockserver(object):
 
     def get_proxy( self ):
         if self.port:
-            check_port( "lockserver", self.port, host=self.host )
+            check_port( "lockserver", self.port, host=self.host, silent=True )
         else:
-            self.port = get_port( "lockserver", host=self.host )
+            self.port = get_port( "lockserver", host=self.host, silent=True )
 
         # lockservers are connected to Pyro with owner name
         # see comment in bin/_lockserver. TO DO: reuse code.
@@ -24,7 +24,7 @@ class lockserver(object):
         uri = 'PYROLOC://' + self.host + ':' + str(self.port) + '/' + qualified_name
         return Pyro.core.getProxyForURI(uri)
 
-    def ping( self ):
+    def get_port( self ):
         # check that a lockserver is running
         self.get_proxy()
         return self.port

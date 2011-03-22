@@ -94,7 +94,7 @@ def suiteid( name, owner, host, port=None ):
 def cylcid_uri( host, port ):
     return 'PYROLOC://' + host + ':' + str(port) + '/cylcid' 
 
-def get_port( suite, owner=os.environ['USER'], host=socket.getfqdn(), pphrase=None, timeout=None ):
+def get_port( suite, owner=os.environ['USER'], host=socket.getfqdn(), pphrase=None, timeout=None, silent=False ):
     # Scan ports until a particular suite is found.
 
     # does this suite have a secure passphrase defined?
@@ -127,7 +127,8 @@ def get_port( suite, owner=os.environ['USER'], host=socket.getfqdn(), pphrase=No
             pass
         else:
             if name == suite and xowner == owner:
-                print suiteid( suite, owner, host, port )
+                if not silent:
+                    print suiteid( suite, owner, host, port )
                 # RESULT
                 return port
             else:
@@ -136,7 +137,7 @@ def get_port( suite, owner=os.environ['USER'], host=socket.getfqdn(), pphrase=No
                 pass
     raise SuiteNotFoundError, "Suite not running: " + suiteid( suite, owner, host )
 
-def check_port( suite, port, owner=os.environ['USER'], host=socket.getfqdn(), timeout=None ):
+def check_port( suite, port, owner=os.environ['USER'], host=socket.getfqdn(), timeout=None, silent=False ):
     # is a particular suite running at host:port?
 
     # does this suite have a secure passphrase defined?
@@ -164,7 +165,8 @@ def check_port( suite, port, owner=os.environ['USER'], host=socket.getfqdn(), ti
         raise OtherServerFoundError, "ERROR: non-cylc pyro server found at " + portid( host, port )
     else:
         if name == suite and xowner == owner:
-            print suiteid( suite, owner, host, port )
+            if not silent:
+                print suiteid( suite, owner, host, port )
             # RESULT
             return True
         else:

@@ -199,9 +199,9 @@ class scheduler(object):
             # DO THIS BEFORE CONFIGURING PYRO FOR THE SUITE
             # (else scan etc. will hang on the partially started suite).
             try:
-                self.lockserver_port = lockserver( self.host ).ping()
+                self.lockserver_port = lockserver( self.host ).get_port()
             except port_scan.SuiteNotFoundError, x:
-                raise SystemExit( 'Lockserver not found; try \'cylc lockserver status\'')
+                raise SystemExit( 'Lockserver not found. See \'cylc lockserver status\'')
  
         # CONFIGURE SUITE PYRO SERVER
         if self.practice:

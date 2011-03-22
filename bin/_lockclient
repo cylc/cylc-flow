@@ -84,10 +84,6 @@ task owner."""
             suite_acquire_nonex=None, suite_release=None, 
             list_all=False, get_filenames=False )
 
-    parser.add_option( "--ping",
-            help="Check that a lockserver is running.",
-            action="store_true", default=False, dest="ping" )
-
     parser.add_option( "--acquire-task", help="Acquire a task lock.",
             metavar="SUITE:NAME%CYCLE", action="store", dest="acquire" )
 
@@ -123,7 +119,7 @@ task owner."""
     ( options, args ) = parser.parse_args()
 
     count = 0
-    for opt in [ options.ping, options.acquire, options.release,
+    for opt in [ options.acquire, options.release,
             options.suite_acquire, options.suite_acquire_nonex,
             options.suite_release, options.list_all, 
             options.clear_all, options.get_filenames ]:
@@ -138,10 +134,7 @@ task owner."""
     os.environ[ 'CYLC_USE_LOCKSERVER' ] = 'True'
 
     try:
-        if options.ping:
-            lockserver( host ).ping()
-
-        elif options.acquire:
+        if options.acquire:
             (suite, task_id) = check_task_spec( options.acquire )
             if not task_lock( task_id, suite, host ).acquire():
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.acquire )

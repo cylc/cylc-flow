@@ -14,6 +14,7 @@ from suite_lock import suite_lock
 from lockserver import lockserver
 import task, clocktriggered
 import accelerated_clock 
+from port_scan import SuiteIdentificationError
 
 usage = """cylc [task] submit|single [options] SUITE TASK_ID
 
@@ -95,7 +96,10 @@ mkdir_p( logging_dir )
 use_lockserver = False
 if config[ 'use lockserver' ]:
     use_lockserver = True
-    lockserver_port = lockserver( host ).ping()
+    try:
+        lockserver_port = lockserver( host ).get_port()
+    except SuiteIdentificationError, x:
+        raise SystemExit( 'Lockserver not found. See \'cylc lockserver status\'')
 
     # Request suite access from the lock server. If the task's parent
     # suite has an exclusive lock, we can use submit only via the
