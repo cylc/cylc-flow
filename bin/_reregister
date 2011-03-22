@@ -65,7 +65,7 @@ else:
         if reg.reregister_group( group_from, group_to, verbose=options.verbose ):
             changed = True
     except RegistrationError, x:
-        print >> sys.stderr, x:
+        print >> sys.stderr, x
         reg.unlock()
         sys.exit(1)
 
