@@ -5,10 +5,11 @@ import gtk
 import time, os, re
 import threading
 from config import config, SuiteConfigError
-from port_scan import scan
+import cylc_pyro_client
+from port_scan import scan, SuiteIdentificationError
 from registration import localdb, centraldb, regsplit, RegistrationError
 from gtkmonitor import monitor
-from warning_dialog import warning_dialog, info_dialog
+from warning_dialog import warning_dialog, info_dialog, question_dialog
 from subprocess import call
 import helpwindow 
 from gcapture import gcapture, gcapture_tmpfile
@@ -181,8 +182,6 @@ class chooser_updater(threading.Thread):
                                     niter = ts.iter_next( niter )
                             giter = ts.iter_next( giter )
                     oiter = ts.iter_next(oiter)  
-
-
         else:
             owner = self.owner
             oldtree = {}
@@ -517,7 +516,6 @@ The cylc forecast suite metascheduler.
         about.set_logo( gtk.gdk.pixbuf_new_from_file( self.imagedir + "/dew.jpg" ))
         about.run()
         about.destroy()
-
 
     def expand_all( self, w, view ):
         view.expand_all()
@@ -1739,43 +1737,98 @@ Note that this will not delete the suite definition directory.""" )
         foo.run()
 
     def launch_controller( self, w, name, state ):
-        m = re.match( 'RUNNING \(port (\d+)\)', state )
-        port = None
-        if m:
-            port = m.groups()[0]
+        running_already = False
+        if state != '-':
+            running_already = True
 
-        # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?
-        # a hard-wired prefix makes it possible for us to 
-        # reconnect to the output of a running suite. Some
-        # non-fatal textbuffer insertion warnings may occur if several
-        # control guis are open at once both trying to write to it.
-        prefix = os.path.join( '$HOME', '.cylc', name )
+            # was it started by gcylc?
+            try:
+                ssproxy = cylc_pyro_client.client( name ).get_proxy( 'state_summary' )
+            except SuiteIdentificationError, x:
+                warning_dialog( str(x) ).warn()
+                return False
 
-        # environment variables allowed
-        prefix = os.path.expandvars( prefix )
-        # make parent directory if necessary
-        pdir = os.path.dirname( prefix )
-        try:
-            mkdir_p( pdir )
-        except Exception, x:
-            warning_dialog( str(x) ).warn()
-            return False
+            [ glbl, states] = ssproxy.get_state_summary()
+            if glbl['started by gcylc']:
+                started_by_gcylc = True
+                #info_dialog( "This suite is running already. It was started by "
+                #    "gcylc, which redirects suite stdout and stderr to special files "
+                #    "so we can connect a new output capture window to those files.").inform()
+            else:
+                started_by_gcylc = False
+                info_dialog( "This suite is running but it was started from "
+                    "the commandline so gcylc does not have access its stdout "
+                    "and stderr streams.").inform()
 
-        try:
-            # open in append mode 'ab'. Else 'wb' file gets nuked with
-            # each new open - not good when we can have multiple control
-            # gui invocations while a suite runs.
-            stdout = open( prefix + '.out', 'ab' )
-            stderr = open( prefix + '.err', 'ab' )
-        except IOError,x:
-            warning_dialog( str(x) ).warn()
-            return False
+        if running_already and started_by_gcylc or not running_already:
+            # Use suite-specific special stdout and stderr files.
 
-        command = "gcylc " + name
-        foo = gcapture( command, stdout, stderr, 800, 400 )
-        self.gcapture_windows.append(foo)
-        foo.run()
+            # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?
+            # a hard-wired prefix makes it possible for us to 
+            # reconnect to the output of a running suite. Some
+            # non-fatal textbuffer insertion warnings may occur if several
+            # control guis are open at once both trying to write to it.
+            prefix = os.path.join( '$HOME', '.cylc', name )
 
+            # environment variables allowed
+            prefix = os.path.expandvars( prefix )
+            # make parent directory if necessary
+            pdir = os.path.dirname( prefix )
+            try:
+                mkdir_p( pdir )
+            except Exception, x:
+                warning_dialog( str(x) ).warn()
+                return False
+
+            stdoutf = prefix + '.out'
+            stderrf = prefix + '.err'
+
+            if not running_already:
+                # ask whether or not to delete existing output
+                stdout_exists = stderr_exists = False
+                if os.path.exists( stdoutf ):
+                    stdout_exists = True
+                if os.path.exists( stderrf ):
+                    stderr_exists = True
+                if stdout_exists or stderr_exists:
+                    response = question_dialog( 
+                        "Delete old stdout and stderr output for this suite?\n\n"
+                        "Output capture files exist from previous runs "
+                        "launched via gcylc; click Yes to delete them and start anew "
+                        "(Otherwise new output will be appended to the existing files)." ).ask()
+                    if response == gtk.RESPONSE_YES:
+                        try:
+                            if stdout_exists:
+                                os.unlink( stdoutf )
+                            if stderr_exists:
+                                os.unlink( stderrf )
+                        except OSError, x:
+                            warning_dialog( str(x) ).warn()
+                            return False
+
+            try:
+                # open in append mode 'ab' (write mode 'wb' nukes the files
+                # with  each new open, which isn't good when multiple
+                # controllers are opened).
+                stdout = open( stdoutf, 'ab' )
+                stderr = open( stderrf, 'ab' )
+            except IOError,x:
+                warning_dialog( str(x) ).warn()
+                return False
+
+            command = "gcylc " + name
+            foo = gcapture( command, stdout, stderr, 800, 400 )
+            self.gcapture_windows.append(foo)
+            foo.run()
+
+        else:
+            # connecting a controller to a running suite started by commandline
+            # so no point in connecting to the special stdout and stderr files.
+            # User was informed of this already by a dialog above.
+            command = "gcylc " + name
+            foo = gcapture_tmpfile( command, self.tmpdir, 400 )
+            self.gcapture_windows.append(foo)
+            foo.run()
 
     def view_output( self, w, name ):
         # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?

@@ -16,8 +16,21 @@ class info_dialog(object):
     def __init__( self, msg ):
         self.dialog = gtk.MessageDialog( None,
                 gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_INFO,
-                gtk.BUTTONS_CLOSE, msg )
+                gtk.BUTTONS_OK, msg )
 
     def inform( self ):
         self.dialog.run()
         self.dialog.destroy()
+
+class question_dialog(object):
+    def __init__( self, msg ):
+        self.dialog = gtk.MessageDialog( None,
+                gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_QUESTION,
+                gtk.BUTTONS_YES_NO, msg )
+
+    def ask( self ):
+        response = self.dialog.run()
+        self.dialog.destroy()
+        return response
+
+

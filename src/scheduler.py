@@ -100,6 +100,10 @@ class scheduler(object):
                 "for testing very large suites of 1000+ tasks.",
                 action="store_true", default=False, dest="timing" )
 
+        self.parser.add_option( "--started-by-gcylc", help=\
+                "(DO NOT USE: this is for invocation by gcylc only).",
+                action="store_true", default=False, dest="gcylc" )
+
         self.parse_commandline()
         self.check_not_running_already()
         self.configure_suite()
@@ -135,6 +139,11 @@ class scheduler(object):
             self.logging_level = logging.DEBUG
         else:
             self.logging_level = logging.INFO
+
+        if self.options.gcylc:
+            self.gcylc = True
+        else:
+            self.gcylc = False
 
     def check_not_running_already( self ):
         # CHECK SUITE IS NOT ALREADY RUNNING (unless practice mode)
@@ -218,7 +227,7 @@ class scheduler(object):
         self.pyro.connect( suite_id, 'cylcid', qualified = False )
 
         # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
-        self.suite_state = state_summary( self.config, self.dummy_mode )
+        self.suite_state = state_summary( self.config, self.dummy_mode, self.gcylc )
         self.pyro.connect( self.suite_state, 'state_summary')
 
         # USE QUICK TASK ELIMINATION?

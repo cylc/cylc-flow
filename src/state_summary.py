@@ -6,8 +6,9 @@ import logging
 class state_summary( Pyro.core.ObjBase ):
     """supply suite state summary and config information to remote cylc clients."""
 
-    def __init__( self, config, dummy_mode ):
+    def __init__( self, config, dummy_mode, gcylc=False ):
         Pyro.core.ObjBase.__init__(self)
+        self.gcylc = gcylc
         self.task_summary = {}
         self.global_summary = {}
         # external monitors should access config via methods in this
@@ -30,6 +31,7 @@ class state_summary( Pyro.core.ObjBase ):
         self.global_summary[ 'stopping' ] = stopping
         self.global_summary[ 'will_pause_at' ] = will_pause_at
         self.global_summary[ 'will_stop_at' ] = will_stop_at
+        self.global_summary[ 'started by gcylc' ] = self.gcylc
            
         # update deprecated old-style summary (DELETE WHEN NO LONGER NEEDED)
         #self.get_summary()
