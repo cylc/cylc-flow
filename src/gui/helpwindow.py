@@ -42,16 +42,16 @@ class helpwindow_base( object ):
         quit_button.grab_focus()
          
     def add_main_heading( self, text ):
-        self.tb.insert_with_tags( self.tb.get_end_iter(), text + '\n', self.tag_bold, self.tag_title )
+        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n' + text + '\n', self.tag_bold, self.tag_title )
 
     def add_heading( self, text ):
-        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n\n' + text + '\n', self.tag_bold, self.tag_heading )
+        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n' + text, self.tag_bold, self.tag_heading )
  
     def add_subheading( self, text ):
-        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n    ' + text, self.tag_bold, self.tag_subheading )
+        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n____' + text, self.tag_bold, self.tag_subheading )
 
     def add_text( self, text ):
-        self.tb.insert_with_tags( self.tb.get_end_iter(), text, self.tag_text )
+        self.tb.insert_with_tags( self.tb.get_end_iter(), text + '\n', self.tag_text )
  
     def add_text_bold( self, text ):
         self.tb.insert_with_tags( self.tb.get_end_iter(), text, self.tag_text, self.tag_bold )
@@ -70,11 +70,35 @@ class helpwindow( helpwindow_base ):
 
     def parse( self, text ):
         def strip( line ):
+            # strip '%' tags
             return re.sub( '%[\w\d]+ ', '', line )
 
-        lines = string.split( text, '\n' )
+        # pre-parse to concatenate paragraphs into a single string
+        # because textbuffer inserts seem to add a newline that 
+        # stop line wrapping from working properly...
+        lines = []
+        para = ''
+        for line in string.split( text, '\n' ):
+            if re.match( '^%', line ):
+                # tag
+                if para != '':
+                    lines.append( para )
+                    para = ''
+                lines.append(line)
+            elif re.match( '^\s*$', line ):
+                # blank
+                lines.append(line)
+                if para != '':
+                    lines.append( para )
+                    para = ''
+            else:
+                para += ' ' + line
+
         for line in lines:
-            if re.match( '^%h1', line ):
+            if re.match( '^\s*$', line ):
+                # blank line
+                self.add_text( '' )
+            elif re.match( '^%h1', line ):
                 self.add_main_heading( strip(line) )
             elif re.match( '^%h2', line ):
                 self.add_heading( strip(line) )
@@ -85,7 +109,7 @@ class helpwindow( helpwindow_base ):
             elif re.match( '^%i', line ):
                 self.add_list_item( strip(line ))
             else:
-                self.add_text( line + ' ')
+                self.add_text( line )
 
 ##########
 def main( b ):
@@ -104,34 +128,27 @@ for your own use.
 %h2 Menu Bar
 
 %h3 File > New
-
 Register another suite. This opens a file chooser dialog configured to
 filter for cylc suite definition (suite.rc) files.
 
 %h3 File > Exit
-
 This quits the application but does not close down any suite editing or
 control windows, etc., that you have opened.
 
 %h3 View > Filter
-
 Change which suites are visible by searching on group and name match
 patterns.
 
 %h3 View > Expand
-
 Expand the registration database treeview.
 
 %h3 View > Collapse
-
 Collapse the registration database treeview.
 
 %h3 View > LocalDB
-
 View the local (user-specific) suite registration database.
 
 %h3 View > CentralDB
-
 View the central (all users) suite registration database.
 
 
@@ -155,7 +172,6 @@ log window; otherwise, if you just connect to a suite that is
 already running, you won't. 
 
 %h3 Control
-
 Launch a control GUI to start a suite running, or to connect to a suite
 that is already running. 
 
@@ -169,7 +185,6 @@ will go to the terminal, or to any files you care to redirect to yourself.
 Reconnecting to such a suite from a control GUI will not show this output.
 
 %h3 View Output
-
 This opens a new view of the suite stdout and stderr files
 $HOME/.cylc/GROUP:NAME.(out|err) used when suites are started from
 within gcylc (as opposed to the commandline) - useful if you closed 
@@ -177,60 +192,47 @@ the original output window that opens with a new instance of the control
 GUI.
 
 %h3 Dump
-
 (Running suites only) Print the current state of each task in the suite.
 
 %h3 Nudge
-
 (Running suites only) Invoke the cylc task processing loop manually in 
 order to update the estimated task "time till completion" intervals
 shown in suite monitor windows.
 
 %h3 Edit
-
 Edit the suite config (suite.rc) file
 
 %h3 Graph
-
 Graph the suite. The graph will update in real time as you edit the
 suite.
 
 %h3 Search
-
 Search in the suite config file and bin directory.
 
 %h3 Validate
-
 Parse the suite config file, validate it against the spec, and report
 any errors.
 
 %h3 Describe
-
 Print the suite description.
 
 %h3 List Tasks
-
 Print the suite's configured task list.
 
 
 %h3 Copy
-
 Copy an existing suite and register it for use.
 
 %h3 Export
-
 Export a suite to the central database to make it available to others.
 
 %h3 Import
-
 Import a suite from the central database, to modify and use yourself.
 
 %h3 Reregister
-
 Reregister an existing suite under a different group:name.
 
 %h3 Unregister
-
 Unregister a suite (this does not delete the suite definition directory).""")
     help.show()
 
@@ -240,8 +242,11 @@ Change suite visibility by filtering on group and/or name with
 (Python-style) regular expressions (so, for example, the
 wildcard is '.*, not '*' as in a shell glob expression).
 
-Filter patterns have an implicit string start character ('^') but
-no implicit string end character ('$'). Examples:
+Leaving a filter entry blank is equivalent to '.*' (i.e. match
+anything).
+
+Filter patterns have an implicit string start character ('^')
+but no implicit string end character ('$'). Examples:
 
 %i foo - matches 'foo' and 'foobar', but not 'barfoo'
 %i foo$ - matches 'foo' only
