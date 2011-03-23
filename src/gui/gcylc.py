@@ -974,15 +974,18 @@ The cylc forecast suite metascheduler.
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
+        oblit_cb = gtk.CheckButton( "_Delete suite definition directories" )
+        oblit_cb.set_active(False)
+
         ok_button = gtk.Button( "_Unregister" )
-        ok_button.connect("clicked", self.unregister_group, window, owner, group )
+        ok_button.connect("clicked", self.unregister_group, window, owner, group, oblit_cb )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.unregister )
 
-        label = gtk.Label( "Unregister the entire " + group + " group?" + """
-Note that this will not delete any suite definition directories.""" )
+        label = gtk.Label( "Unregister the entire " + group + " group?" )
         vbox.pack_start( label )
+        vbox.pack_start( oblit_cb )
 
         hbox = gtk.HBox()
         hbox.pack_start( ok_button, False )
@@ -993,10 +996,19 @@ Note that this will not delete any suite definition directories.""" )
         window.add( vbox )
         window.show_all()
 
-    def unregister_group( self, b, w, owner, group ):
+    def unregister_group( self, b, w, owner, group, oblit_cb ):
         if self.cdb:
             group = owner + ':' + group
-        command = "cylc unregister " + group + ":"
+        options = ''
+        if oblit_cb.get_active():
+            res = question_dialog( "!DANGER! !DANGER! !DANGER!\n"
+                    "Are you sure you want to delete all group suite definition directories?\n\n"
+                    "Consider whether you have other copies of these suites, and\n"
+                    "whether other registrations refer to the same suites.").ask()
+            if res == gtk.RESPONSE_YES:
+                options = '--obliterate '
+ 
+        command = "cylc unregister --gcylc " + options + group + ":"
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1012,15 +1024,18 @@ Note that this will not delete any suite definition directories.""" )
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
+        oblit_cb = gtk.CheckButton( "_Delete suite definition directory" )
+        oblit_cb.set_active(False)
+
         ok_button = gtk.Button( "_Unregister" )
-        ok_button.connect("clicked", self.unregister_suite, window, reg )
+        ok_button.connect("clicked", self.unregister_suite, window, reg, oblit_cb )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.unregister )
 
-        label = gtk.Label( "Unregister suite " + reg + "?" + """
-Note that this will not delete the suite definition directory.""" )
+        label = gtk.Label( "Unregister suite " + reg + "?" )
         vbox.pack_start( label )
+        vbox.pack_start( oblit_cb )
 
         hbox = gtk.HBox()
         hbox.pack_start( ok_button, False )
@@ -1031,8 +1046,17 @@ Note that this will not delete the suite definition directory.""" )
         window.add( vbox )
         window.show_all()
 
-    def unregister_suite( self, b, w, reg ):
-        command = "cylc unregister " + reg
+    def unregister_suite( self, b, w, reg, oblit_cb ):
+        options = ''
+        if oblit_cb.get_active():
+            res = question_dialog( "!DANGER! !DANGER! !DANGER!\n"
+                    "Are you sure you want to delete the suite definition directory?\n\n"
+                    "Consider whether you have other copies of the suite, and\n"
+                    "whether other registrations refer to the same suite.").ask()
+            if res == gtk.RESPONSE_YES:
+                options = '--obliterate '
+ 
+        command = "cylc unregister --gcylc " + options + reg
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1808,7 +1832,6 @@ Note that this will not delete the suite definition directory.""" )
                         except OSError, x:
                             warning_dialog( str(x) ).warn()
                             return False
-
             try:
                 # open in append mode 'ab' (write mode 'wb' nukes the files
                 # with  each new open, which isn't good when multiple

@@ -26,7 +26,7 @@ parser.add_option( "--obliterate",
         help="Delete the suite definition directory too (!DANGEROUS!).",
         action="store_true", default=False, dest="obliterate" )
 
-parser.add_option( "--for-gcylc-use-only",
+parser.add_option( "--gcylc",
         help="DO NOT USE THIS OPTION.",
         action="store_true", default=False, dest="gcylc" )
 
@@ -41,12 +41,12 @@ if len(args) != 1:
 
 suite = args[0]
 
-reg = getdb( suite )
+db = getdb( suite )
 try:
-    reg.lock()
+    db.lock()
 except RegistrationError, x:
     raise SystemExit(x)
-reg.load_from_file()
+db.load_from_file()
 
 dirs = []
 
@@ -64,47 +64,54 @@ else:
 if group_unreg:
     if options.obliterate:
         try:
-            regs = local.get_list( groupfilt='^' + group + '$' )
+            regs = db.get_list( groupfilt='^' + group + '$' )
         except RegistrationError, x:
             raise SystemExit(x)
         else:
             for suite, dir, descr in regs:
                 dirs.append(dir)
     try:
-        reg.unregister_group_fast( group )
+        db.unregister_group_fast( group )
     except RegistrationError, x:
         print >> sys.stderr, x
-        reg.unlock()
+        db.unlock()
         sys.exit(1)
     else:
-        reg.dump_to_file()
-        reg.unlock()
+        db.dump_to_file()
+        db.unlock()
 else:
     if options.obliterate:
         try:
-            dir, descr = reg.get( suite )
+            dir, descr = db.get( suite )
         except RegistrationError, x:
             raise SystemExit(x)
         else:
             dirs.append(dir)
  
     try:
-        reg.unregister( suite, verbose=options.verbose )
+        db.unregister( suite, verbose=options.verbose )
     except RegistrationError, x:
         print >> sys.stderr, x
-        reg.unlock()
+        db.unlock()
         sys.exit(1)
     else:
-        reg.dump_to_file()
-        reg.unlock()
+        db.dump_to_file()
+        db.unlock()
 
 # TO DO: should this be inside the db lock in the case of
 # central copied registrations (probably not).
 if options.obliterate:
+    really_obliterate = False
     print "Suite(s) successfully unregistered."
-    if not options.gcylc:
+    if options.gcylc:
+        # confirmed by dialog
+        really_obliterate = True
+    else:
         response = raw_input( "DO YOU REALLY WANT TO DELETE THE SUITE DEFINITION DIRECTORIES (y/n)?" )
         if response == 'y':
-            for dir in dirs:
-                print '   deleting', dir
-                rmtree(dir)
+            really_obliterate = True
+    if really_obliterate and len(dirs)>0:
+        print "DELETING SUITE DEFINITIONS:"
+        for dir in dirs:
+            print '  - ', dir
+            rmtree(dir)
