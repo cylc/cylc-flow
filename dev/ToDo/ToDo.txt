@@ -1,11 +1,14 @@
 _______
 GENERAL
 
+* viewing job submit file in the GUI: should use a simple single-load
+  text viewer - the tailing log viewer is not necessary in this case.
+
 * note DO NOT USE a suite reg GROUP:NAME as a suite definition dir
   as the colon screws up the PATH to the suite bin directory.
 
-* tasks that are not in the dep graph cannot even be run with 'submit';
-  could we relax this requirement?
+* tasks that are not in the dep graph can now be run with 'submit';
+  should we allow insertion to?
 
 * default group: make sure this is used consistently everywhere.  Should
   use explicit group name everywhere internally; only allow omission of 
