@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* reg export, copy, import should take group: as target even for single
+  suites.
+
 * viewing job submit file in the GUI: should use a simple single-load
   text viewer - the tailing log viewer is not necessary in this case.
 

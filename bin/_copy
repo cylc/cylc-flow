@@ -82,7 +82,8 @@ if m:
             local.register( lreg, ldir, cdescr )
         except RegistrationError, x:
             print >> sys.stderr, x
-            local.unregister( lreg )
+            # not needed (failed to register)?:
+            #local.unregister( lreg )
         else:
             if not copy_dir:
                 changed = True

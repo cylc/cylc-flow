@@ -1,17 +1,25 @@
 #!/usr/bin/env python
 
+from mkdir_p import mkdir_p
 import os, re, sys
+from shutil import copytree
 from optparse import OptionParser
 from registration import localdb, centraldb, regsplit, RegistrationError
 from regprompt import prompt
 
 parser = OptionParser( usage = """cylc [db] export [OPTIONS] LOCAL [CENTRAL]
 
-Export local suite or group registrations to the central database.
+Export local suite or group registrations to the central database. The central
+database can be a reference to the owner's suite definition, or we can copy
+the suite definition to [CentralDB]/owner/group/name/.
 
 Arguments:
     LOCAL    - SUITE registration GROUP:NAME
     CENTRAL  - SUITE registration, OWNER:GROUP:NAME""" )  
+
+parser.add_option( "-c", "--copy",
+        help="Copy the suite definition directory to the central database.",
+        action="store_true", default=False, dest="copydir" )
 
 ( options, args ) = parser.parse_args()
 
@@ -31,7 +39,7 @@ else:
 m = re.match( '^(.*):$', source )
 n = re.match( '^(.*):$', target )
 if m:
-    # group export a whole group
+    # export a whole group
     fromgroup = m.groups()[0]
     if n:
         togroup = n.groups()[0]
@@ -41,14 +49,14 @@ if m:
     # retrieve registrations
     local.load_from_file()
     try:
-        csuites = local.get_list( groupfilt='^' + fromgroup + '$' )
+        lsuites = local.get_list( groupfilt='^' + fromgroup + '$' )
     except RegistrationError, x:
         raise SystemExit(x)
 
     print 'Matched:'
-    for csuite, cdir, cdescr in csuites:
-        cowner, cgroup, cname = regsplit( csuite ).get()
-        print '  ' + cgroup + ':' + cname
+    for lsuite, ldir, ldescr in lsuites:
+        lowner, lgroup, lname = regsplit( lsuite ).get()
+        print '  ' + lgroup + ':' + lname
 
     # export to central
     try:
@@ -58,35 +66,86 @@ if m:
     central.load_from_file()
     changed = False
  
-    for csuite, cdir, cdescr in csuites:
-        cowner, cgroup, cname = regsplit( csuite ).get()
-        lgroup = togroup
-        lname = cname
+    for lsuite, ldir, ldescr in lsuites:
+        lowner, lgroup, lname = regsplit( lsuite ).get()
+        cgroup = togroup
+        cname = lname
+        creg = lowner + ':' + cgroup + ':' + cname
+        if options.copydir:
+            cdir = os.path.join( central.dir, lowner, cgroup, cname )
+        else:
+            cdir = ldir
         try:
-            central.register( owner + ':' + lgroup + ':' + lname, cdir, cdescr )
+            central.register( creg, cdir, ldescr )
         except RegistrationError, x:
             print >> sys.stderr, x
         else:
-            changed = True
-    if changed:
-        central.dump_to_file()
-    central.unlock()
-
+            if not options.copydir:
+                changed = True
+            else:
+                if os.path.exists( cdir ):
+                    print >> sys.stderr, "Error, directory exists: " + cdir
+                    central.unregister( creg )
+                else:
+                    try:
+                        mkdir_p( os.path.dirname(cdir) )
+                    except Exception,x:
+                        print >> sys.stderr, x
+                        central.unregister(creg)
+                    else:
+                        print 'Copying suite definition for', creg 
+                        try:
+                            copytree( ldir, cdir )
+                        except OSError, x:
+                            print >> sys.stderr,x
+                            central.unregister( creg )
+                        else:
+                            changed = True
 else:
     # single suite
+    changed = False
     try:
         local.load_from_file()
-        dir, descr = local.get( source )
+        ldir, descr = local.get( source )
     except RegistrationError, x:
         print >> sys.stderr, x
     else:
+        lowner, lgroup, lname = regsplit( source ).get()
+        cowner, cgroup, cname = regsplit( target ).get()
+        if options.copydir:
+            cdir = os.path.join( central.dir, lowner, cgroup, cname )
+        else:
+            cdir = ldir
         try:
             central.lock()
             central.load_from_file()
-            central.register( target, dir, descr )
+            central.register( target, cdir, descr )
         except RegistrationError, x:
             print >> sys.stderr, x
             central.unlock()
         else:
-            central.dump_to_file()
-            central.unlock()
+            if not options.copydir:
+                changed = True
+            else:
+                if os.path.exists( cdir ):
+                    print >> sys.stderr, "Error, directory exists: " + cdir
+                    central.unregister( target )
+                else:
+                    try:
+                        mkdir_p( os.path.dirname(cdir) )
+                    except Exception,x:
+                        print >> sys.stderr, x
+                        central.unregister(target)
+                    else:
+                        print 'Copying suite definition for', target 
+                        try:
+                            copytree( ldir, cdir )
+                        except OSError, x:
+                            print >> sys.stderr,x
+                            central.unregister( target )
+                        else:
+                            changed = True
+ 
+if changed:
+    central.dump_to_file()
+central.unlock()
