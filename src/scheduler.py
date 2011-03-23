@@ -413,8 +413,9 @@ class scheduler(object):
                 self.log.info( "ALL RUNNING TASKS FINISHED" )
                 break
 
-            if self.remote.halt_now and not self.no_tasks_running():
-                self.log.critical( "STOP ORDERED WITH TASKS STILL RUNNING" )
+            if self.remote.halt_now:
+                if not self.no_tasks_running():
+                    self.log.critical( "STOP ORDERED WITH TASKS STILL RUNNING" )
                 break
 
             self.check_timeouts()
@@ -431,6 +432,7 @@ class scheduler(object):
             # incoming task messages set task.state_changed to True
             self.pyro.handleRequests(timeout=1)
         # END MAIN LOOP
+        self.log.critical( "SHUTTING DOWN" )
 
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?

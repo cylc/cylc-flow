@@ -179,7 +179,7 @@ class remote_switch( Pyro.core.ObjBase ):
     def shutdown_now( self ):
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )
-        self.hold()
+        self.pool.set_suite_hold()
         self.halt_now = True
         # process, to update state summary
         self.process_tasks = True
