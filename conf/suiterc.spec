@@ -46,6 +46,8 @@ task warning hook = string( default=None )
 task submission failed hook = string( default=None )
 task timeout hook = string( default=None )
 task submission timeout minutes = float( default=None )
+task execution timeout minutes = float( default=None )
+
 
 tasks to include at startup = force_list( default=list())
 tasks to exclude at startup = force_list( default=list())

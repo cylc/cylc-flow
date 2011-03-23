@@ -63,6 +63,8 @@ Stderr is displayed in red.
 
 
         vpanes = gtk.VPaned()
+        # set pane position in pixels (otherwise top too small initially)
+        vpanes.set_position(height/3)
 
         vbox = gtk.VBox()
         vbox2 = gtk.VBox()
