@@ -189,9 +189,11 @@ Reconnecting to such a suite from a control GUI will not show this output.
 %h3 View Output
 This opens a new view of the suite stdout and stderr files
 $HOME/.cylc/GROUP:NAME.(out|err) used when suites are started from
-within gcylc (as opposed to the commandline) - useful if you closed 
-the original output window that opens with a new instance of the control
-GUI.
+within gcylc (as opposed to the commandline).
+
+%h3 View Log
+This opens a searchable and filterable view of the log file that records
+all important events as the suite runs.
 
 %h3 Dump
 (Running suites only) Print the current state of each task in the suite.

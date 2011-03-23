@@ -97,7 +97,7 @@ the suite has been restarted.""" ).warn()
             # update view anyway: user may have started suite after the gui
             # was started.
         if self.current_log() not in os.listdir( self.dir ):
-            warning_dialog( "Newer log not available" ).warn()
+            warning_dialog( "Older log not available" ).warn()
             return
         self.level = level
         self.update_view()

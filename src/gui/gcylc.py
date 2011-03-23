@@ -13,6 +13,7 @@ from subprocess import call
 import helpwindow 
 from gcapture import gcapture, gcapture_tmpfile
 from mkdir_p import mkdir_p
+from cylc_logviewer import cylc_logviewer
 
 #debug = True
 debug = False
@@ -877,9 +878,13 @@ The cylc forecast suite metascheduler.
                 menu.append( con_item )
                 con_item.connect( 'activate', self.launch_controller, reg, state )
 
-                out_item = gtk.MenuItem( '_View Output')
+                out_item = gtk.MenuItem( 'View _Output')
                 menu.append( out_item )
                 out_item.connect( 'activate', self.view_output, reg, state )
+
+                out_item = gtk.MenuItem( 'View _Log')
+                menu.append( out_item )
+                out_item.connect( 'activate', self.view_log, reg, state )
 
                 if state != '-':
                     # suite is running
@@ -1827,6 +1832,25 @@ Note that this will not delete the suite definition directory.""" )
             foo = gcapture_tmpfile( command, self.tmpdir, 400 )
             self.gcapture_windows.append(foo)
             foo.run()
+
+    def close_log_window( self, w, e, window, clv ):
+        window.destroy()
+        clv.quit()
+
+    def view_log( self, w, suite, state ):
+        suiterc = config( suite )
+        logdir = os.path.join( suiterc['top level logging directory'], suite )
+        clv = cylc_logviewer( 'log', logdir, suiterc.get_task_name_list() )
+
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( suite + " log" )
+
+        window.connect("delete_event", self.close_log_window, window, clv )
+        # note: can't easily add a close button to this as a window can
+        # only hold one widget, which we're adding here:
+        window.add( clv.get_widget() )
+        window.show_all()
 
     def view_output( self, w, name, state ):
         running_already = False
