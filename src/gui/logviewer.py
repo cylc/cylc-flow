@@ -120,9 +120,6 @@ class logviewer(object):
         searchbox.pack_start (b, False)
 
         self.hbox = gtk.HBox()
-        self.log_label = gtk.Label( self.name )
-        #self.log_label.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#f00" ))
-        self.hbox.pack_start( self.log_label, True )
 
         self.freeze_button = gtk.ToggleButton( "Dis_connect" )
         self.freeze_button.set_active(False)
@@ -138,6 +135,11 @@ class logviewer(object):
         self.logview.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#fff" ))
 
         self.vbox = gtk.VBox()
+
+        self.log_label = gtk.Label( self.path() )
+        self.log_label.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#00a" ))
+        self.vbox.pack_start( self.log_label, False )
+
         self.vbox.pack_start( sw, True )
         self.vbox.pack_start( searchbox, False )
         self.vbox.pack_start( self.hbox, False )

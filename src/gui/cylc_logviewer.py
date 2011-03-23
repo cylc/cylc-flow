@@ -25,7 +25,7 @@ class cylc_logviewer( logviewer ):
         window.set_title( "log viewer" )
 
         combobox = gtk.combo_box_new_text()
-        combobox.append_text( 'Filter' ) 
+        combobox.append_text( 'Task' ) 
         combobox.append_text( 'all' ) 
         for task in self.task_list:
             combobox.append_text( task )
@@ -33,7 +33,6 @@ class cylc_logviewer( logviewer ):
         combobox.connect("changed", self.filter_log )
         combobox.set_active(0)
 
-        self.hbox.pack_end( combobox, False )
 
         newer = gtk.Button( "_newer" )
         newer.connect("clicked", self.rotate_log, False )
@@ -42,6 +41,8 @@ class cylc_logviewer( logviewer ):
         older = gtk.Button( "_older" )
         older.connect("clicked", self.rotate_log, True )
         self.hbox.pack_end( older, False )
+
+        self.hbox.pack_end( combobox, False )
 
         filterbox = gtk.HBox()
         entry = gtk.Entry()
@@ -53,7 +54,7 @@ class cylc_logviewer( logviewer ):
 
         close = gtk.Button( "_Close" )
         close.connect("clicked", self.shutdown, None, window )
-        self.hbox.pack_end( close, False )
+        self.hbox.pack_start( close, False )
 
         window.add( self.vbox )
         window.connect("delete_event", self.shutdown, window )
