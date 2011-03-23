@@ -879,7 +879,7 @@ The cylc forecast suite metascheduler.
 
                 out_item = gtk.MenuItem( '_View Output')
                 menu.append( out_item )
-                out_item.connect( 'activate', self.view_output, reg )
+                out_item.connect( 'activate', self.view_output, reg, state )
 
                 if state != '-':
                     # suite is running
@@ -1738,15 +1738,14 @@ Note that this will not delete the suite definition directory.""" )
     def launch_controller( self, w, name, state ):
         running_already = False
         if state != '-':
+            # suite running
             running_already = True
-
             # was it started by gcylc?
             try:
                 ssproxy = cylc_pyro_client.client( name ).get_proxy( 'state_summary' )
             except SuiteIdentificationError, x:
                 warning_dialog( str(x) ).warn()
                 return False
-
             [ glbl, states] = ssproxy.get_state_summary()
             if glbl['started by gcylc']:
                 started_by_gcylc = True
@@ -1756,7 +1755,7 @@ Note that this will not delete the suite definition directory.""" )
             else:
                 started_by_gcylc = False
                 info_dialog( "This suite is running but it was started from "
-                    "the commandline so gcylc does not have access its stdout "
+                    "the commandline, so gcylc does not have access its stdout "
                     "and stderr streams.").inform()
 
         if running_already and started_by_gcylc or not running_already:
@@ -1829,7 +1828,37 @@ Note that this will not delete the suite definition directory.""" )
             self.gcapture_windows.append(foo)
             foo.run()
 
-    def view_output( self, w, name ):
+    def view_output( self, w, name, state ):
+        running_already = False
+        if state != '-':
+            # suite running
+            running_already = True
+            # was it started by gcylc?
+            try:
+                ssproxy = cylc_pyro_client.client( name ).get_proxy( 'state_summary' )
+            except SuiteIdentificationError, x:
+                warning_dialog( str(x) ).warn()
+                return False
+            [ glbl, states] = ssproxy.get_state_summary()
+            if glbl['started by gcylc']:
+                started_by_gcylc = True
+                #info_dialog( "This suite is running already. It was started by "
+                #    "gcylc, which redirects suite stdout and stderr to special files "
+                #    "so we can connect a new output capture window to those files.").inform()
+            else:
+                started_by_gcylc = False
+                info_dialog( "This suite is running, but it was started from "
+                    "the commandline, so gcylc does not have access its stdout "
+                    "and stderr streams.").inform()
+                return False
+        else:
+            # suite not running
+            info_dialog( "This suite is not running, so "
+                    "the output capture window will show stdout and "
+                    "stderr from the previous time(s) that the suite was started "
+                    "from via the gcylc app (gcylc cannot access stdout "
+                    "and stderr for suites launched from the commandline).").inform()
+
         # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?
         # a hard-wired prefix makes it possible for us to 
         # reconnect to the output of a running suite. Some
