@@ -82,17 +82,19 @@ class helpwindow( helpwindow_base ):
             if re.match( '^%', line ):
                 # tag
                 if para != '':
-                    lines.append( para )
+                    lines.append(para)
                     para = ''
                 lines.append(line)
             elif re.match( '^\s*$', line ):
                 # blank
                 lines.append(line)
                 if para != '':
-                    lines.append( para )
+                    lines.append(para)
                     para = ''
             else:
                 para += ' ' + line
+        if para != '':
+            lines.append(para)
 
         for line in lines:
             if re.match( '^\s*$', line ):
