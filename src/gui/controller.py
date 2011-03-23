@@ -1210,6 +1210,16 @@ The cylc forecast suite metascheduler.
             else:
                 warning_dialog( result.reason ).warn()
 
+    def nudge_suite( self, w, suite ):
+        try:
+            proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )
+        except SuiteIdentificationError, x:
+            warning_dialog( str(x) ).warn()
+            return False
+        result = proxy.nudge()
+        if not result:
+            warning_dialog( 'Failed to nudge the suite' ).warn()
+
     def popup_logview( self, task_id, logfiles, jsonly ):
         # TO DO: jsonly is dirty hack to separate the job script from
         # task log files; we should do this properly by storing them
@@ -1436,6 +1446,9 @@ The cylc forecast suite metascheduler.
         view_button = gtk.ToggleButton( "_Task Names" )
         view_button.connect( 'toggled', self.toggle_headings )
     
+        nudge_button = gtk.Button( "_Nudge" )
+        nudge_button.connect( 'clicked', self.nudge_suite, self.suite  )
+
         self.led_headings = None 
         self.full_task_headings()
 
@@ -1444,6 +1457,7 @@ The cylc forecast suite metascheduler.
         hbox = gtk.HBox()
         hbox.pack_start( self.create_info_bar(), True )
         hbox.pack_start( view_button, False )
+        hbox.pack_start( nudge_button, False )
         bigbox.pack_start( hbox, False )
         bigbox.pack_start( main_panes, True )
         self.window.add( bigbox )
