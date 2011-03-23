@@ -323,10 +323,7 @@ The cylc forecast suite metascheduler.
 
         return vbox
 
-    def view_task_info( self, w, task_id ):
-        self.show_log( task_id )
-
-    def show_log( self, task_id ):
+    def view_task_info( self, w, task_id, jsonly ):
         [ glbl, states ] = self.get_pyro( 'state_summary').get_state_summary()
         view = True
         reasons = []
@@ -342,13 +339,12 @@ The cylc forecast suite metascheduler.
 
         if states[ task_id ][ 'state' ] == 'waiting':
             view = False
-            reasons.append( task_id + ' has not started' )
+            reasons.append( task_id + ' has not started yet' )
 
         if not view:
             warning_dialog( '\n'.join( reasons ) ).warn()
-            self.popup_requisites( None, task_id )
         else:
-            self.popup_logview( task_id, logfiles )
+            self.popup_logview( task_id, logfiles, jsonly )
 
         return False
 
@@ -395,9 +391,13 @@ The cylc forecast suite metascheduler.
         menu_root = gtk.MenuItem( task_id )
         menu_root.set_submenu( menu )
 
-        info_item = gtk.MenuItem( 'Live Output Feed' )
+        info_item = gtk.MenuItem( 'Live Output' )
         menu.append( info_item )
-        info_item.connect( 'activate', self.view_task_info, task_id )
+        info_item.connect( 'activate', self.view_task_info, task_id, False )
+
+        js_item = gtk.MenuItem( 'Job Submit Script' )
+        menu.append( js_item )
+        js_item.connect( 'activate', self.view_task_info, task_id, True )
 
         info_item = gtk.MenuItem( 'Prerequisites and Outputs' )
         menu.append( info_item )
@@ -1210,15 +1210,32 @@ The cylc forecast suite metascheduler.
             else:
                 warning_dialog( result.reason ).warn()
 
-    def popup_logview( self, task_id, logfiles ):
+    def popup_logview( self, task_id, logfiles, jsonly ):
+        # TO DO: jsonly is dirty hack to separate the job script from
+        # task log files; we should do this properly by storing them
+        # separately in the task proxy, or at least separating them in
+        # the suite state summary.
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title( task_id + ": Task Information Viewer" )
-        window.set_size_request(800, 300)
+        logs = []
+        js = []
+        for f in logfiles:
+            if re.search( 'cylc-', f ):
+                js.append(f)
+            else:
+                logs.append(f)
 
-        lv = combo_logviewer( task_id, logfiles )
+        window.set_size_request(800, 300)
+        if jsonly:
+            window.set_title( task_id + ": Task Job Submit Script" )
+            lv = combo_logviewer( task_id, js )
+        else:
+            # put '.out' before '.err'
+            logs.sort( reverse=True )
+            window.set_title( task_id + ": Task Logs" )
+            lv = combo_logviewer( task_id, logs )
         #print "ADDING to quitters: ", lv
         self.quitters.append( lv )
 
