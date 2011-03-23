@@ -198,11 +198,6 @@ all important events as the suite runs.
 %h3 Dump
 (Running suites only) Print the current state of each task in the suite.
 
-%h3 Nudge
-(Running suites only) Invoke the cylc task processing loop manually in 
-order to update the estimated task "time till completion" intervals
-shown in suite monitor windows.
-
 %h3 Edit
 Edit the suite config (suite.rc) file
 
@@ -225,19 +220,24 @@ Print the suite's configured task list.
 
 
 %h3 Copy
-Copy an existing suite and register it for use.
+Copy an existing suite (or group of suites) and register it (or them)
+for use.
 
 %h3 Export
-Export a suite to the central database to make it available to others.
+Export a suite (or group of suites) to the central database to make it
+(or them) available to others.
 
 %h3 Import
-Import a suite from the central database, to modify and use yourself.
+Import a suite (or group of suites) from the central database, to modify
+and use yourself.
 
 %h3 Reregister
-Reregister an existing suite under a different group:name.
+Reregister an existing suite under a different GROUP:NAME, or reregister
+a group of suites under a different GROUP:
 
 %h3 Unregister
-Unregister a suite (this does not delete the suite definition directory).""")
+Delete the registration of a suite (or group of suites) and optionally 
+delete its (or their) suite definition directory(s).""")
     help.show()
 
 def filter( b ):
@@ -334,21 +334,21 @@ not be copied and the new registrations will point to the original suites.""")
 
 def unregister( b ):
     help = helpwindow( "Unregister Help", 200, """
-Delete a suite or group of suites from the registration database. Note
-that this does not delete suite definition directories.""")
+Delete a suite or group of suites from the registration database, 
+optionally deleting their suite definition directories as well.""")
     help.show()
 
 def reregister( b ):
     help = helpwindow( "Reregister Help", 200, """
-Change the group and/or name (or group) under which a suite (or group of
-suites) is registered.""")
+Change the group and/or name (or group) under which a suite (or a group
+of suites) is registered.""")
     help.show()
 
 def register( b ):
     help = helpwindow( "Register Help", 200, """
 Register a suite under a given group and name. This has to be done
-before you can run a suite, because all cylc commands refer to suites by
-their registered group:name.""")
+before you can run a suite because all cylc commands refer to suites by
+their registered GROUP:NAME.""")
     help.show()
 
 def importx( b ):
@@ -363,7 +363,9 @@ path.""")
 def export( b ):
     help = helpwindow( "Export Help", 200, """
 Export a suite (or group of suites) to the central database to make it
-(or them) available to others.""")
+(or them) available to others. You can choose to copy the entire suite
+definition directory to the central database, or to have the central
+registration refer to your original suite definition directory.""")
     help.show()
 
 def capture( b ):

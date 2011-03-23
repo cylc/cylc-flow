@@ -1204,11 +1204,15 @@ The cylc forecast suite metascheduler.
         box.pack_start (name_entry, True)
         vbox.pack_start(box)
 
+        copy_cb = gtk.CheckButton( "Copy the suite definition directory" )
+        copy_cb.set_active(False)
+        vbox.pack_start(copy_cb)
+
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Export" )
-        ok_button.connect("clicked", self.export_suite, window, reg, group_entry, name_entry )
+        ok_button.connect("clicked", self.export_suite, window, reg, group_entry, name_entry, copy_cb )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.export )
@@ -1222,12 +1226,15 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def export_suite( self, b, w, reg, group_entry, name_entry ):
+    def export_suite( self, b, w, reg, group_entry, name_entry, copy_cb ):
         group = group_entry.get_text()
         name  = name_entry.get_text()
         if not self.check_entries( [group, name] ):
             return False
-        command = "cylc export " + reg + ' ' + group + ':' + name
+        options = ''
+        if copy_cb.get_active():
+            options = '--copy '
+        command = "cylc export " + options + reg + ' ' + group + ':' + name
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1353,11 +1360,15 @@ The cylc forecast suite metascheduler.
         box.pack_start (group_entry, True)
         vbox.pack_start( box )
 
+        copy_cb = gtk.CheckButton( "Copy the suite definition directories" )
+        copy_cb.set_active(False)
+        vbox.pack_start(copy_cb)
+
         cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Export" )
-        ok_button.connect("clicked", self.export_group, window, group, group_entry )
+        ok_button.connect("clicked", self.export_group, window, group, group_entry, copy_cb )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.export )
@@ -1371,11 +1382,14 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def export_group( self, b, w, lgroup, group_entry ):
+    def export_group( self, b, w, lgroup, group_entry, copy_cb ):
         group = group_entry.get_text()
         if not self.check_entries( [group] ):
             return False
-        command = "cylc export " + lgroup + ': ' + group + ":"
+        options = ''
+        if copy_cb.get_active():
+            options = '--copy '
+        command = "cylc export " + options + lgroup + ': ' + group + ":"
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
