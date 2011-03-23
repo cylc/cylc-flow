@@ -5,10 +5,10 @@ import port_scan
 import gtk
 from passphrase import passphrase
 from optparse import OptionParser
-from chooser import chooser
+from gcylc import MainApp
 from config import config
 from registration import localdb, RegistrationError
-from gtkmonitor import standalone_monitor
+from controller import StandaloneControlApp
 
 import socket
 
@@ -62,7 +62,7 @@ if len( args ) == 1:
         sys.exit(0)
 
 if len( args ) == 0:
-    app = chooser( host, tmpdir, imagedir )
+    app = MainApp( host, tmpdir, imagedir )
     gtk.main()
     sys.exit(0)
 
@@ -88,6 +88,6 @@ except:
 else:
     print "Suite " + suite + " is running on port " + str(port)
 
-app = standalone_monitor( suite, owner, host, port, suite_dir, logging_dir, imagedir )
+app = StandaloneControlApp( suite, owner, host, port, suite_dir, logging_dir, imagedir )
 gtk.main()
 

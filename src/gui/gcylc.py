@@ -8,7 +8,6 @@ from config import config, SuiteConfigError
 import cylc_pyro_client
 from port_scan import scan, SuiteIdentificationError
 from registration import localdb, centraldb, regsplit, RegistrationError
-from gtkmonitor import monitor
 from warning_dialog import warning_dialog, info_dialog, question_dialog
 from subprocess import call
 import helpwindow 
@@ -23,7 +22,7 @@ debug = False
 # streams into suite-specific log files rather than have it all come
 # out with the gcylc stdout and stderr streams.
 
-class chooser_updater(threading.Thread):
+class db_updater(threading.Thread):
     count = 0
     def __init__(self, owner, regd_treestore, db, is_cdb, host, 
             ownerfilt=None, groupfilt=None, namefilt=None ):
@@ -38,7 +37,7 @@ class chooser_updater(threading.Thread):
         self.quit = False
         self.host = host
         self.regd_treestore = regd_treestore
-        super(chooser_updater, self).__init__()
+        super(db_updater, self).__init__()
         self.running_choices = []
 
         self.db.load_from_file()
@@ -352,7 +351,7 @@ class chooser_updater(threading.Thread):
         value = model.get_value( iter, column )
         return value == key
 
-class chooser(object):
+class MainApp(object):
     def __init__(self, host, tmpdir, imagedir, readonly=False ):
         self.updater = None
         self.tmpdir = tmpdir
@@ -534,7 +533,7 @@ The cylc forecast suite metascheduler.
         if self.updater:
             self.updater.quit = True # does this take effect?
         #not necessary: self.regd_treestore.clear()
-        self.updater = chooser_updater( self.owner, self.regd_treestore, 
+        self.updater = db_updater( self.owner, self.regd_treestore, 
                 db, self.cdb, self.host, ownerfilt, groupfilt, namefilt )
         self.updater.update_liststore()
         self.updater.start()
@@ -1617,7 +1616,7 @@ Note that this will not delete the suite definition directory.""" )
             options += ' -w '
 
         # TO DO 1/ use non-shell non-blocking launch here?
-        # TO DO 2/ instead of external process make part of chooser app?
+        # TO DO 2/ instead of external process make part of this app?
         # Would have to launch in own thread as xdot is interactive?
         # Probably not necessary ... same goes for controller actually?
         command = "cylc graph " + options + ' ' + reg + ' ' + start + ' ' + stop

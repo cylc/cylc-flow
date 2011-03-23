@@ -23,7 +23,7 @@ from config import config
 from color_rotator import rotator
 import datetime
 
-class monitor(object):
+class ControlApp(object):
     # visibility determined by state matching active toggle buttons
     def visible_cb(self, model, iter, col ):
         # set visible if model value NOT in filter_states
@@ -1445,19 +1445,19 @@ The cylc forecast suite metascheduler.
         #print "Starting task state info thread"
         self.t.start()
 
-class standalone_monitor( monitor ):
-    # For a monitor not launched by the chooser: 
+class StandaloneControlApp( ControlApp ):
+    # For a ControlApp not launched by the gcylc main app: 
     # 1/ call gobject.threads_init() on startup
     # 2/ call gtk.main_quit() on exit
 
     def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
         gobject.threads_init()
-        monitor.__init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly )
+        ControlApp.__init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly )
  
     def delete_event(self, widget, event, data=None):
-        monitor.delete_event( self, widget, event, data )
+        ControlApp.delete_event( self, widget, event, data )
         gtk.main_quit()
 
     def click_exit( self, foo ):
-        monitor.click_exit( self, foo )
+        ControlApp.click_exit( self, foo )
         gtk.main_quit()
