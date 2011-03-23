@@ -114,4 +114,8 @@ if options.obliterate:
         print "DELETING SUITE DEFINITIONS:"
         for dir in dirs:
             print '  - ', dir
-            rmtree(dir)
+            try:
+                rmtree(dir)
+            except OSError, x:
+                print >> sys.stderr, "Failed to delete " + dir
+                print >> sys.stderr, x
