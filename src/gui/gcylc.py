@@ -1840,17 +1840,7 @@ Note that this will not delete the suite definition directory.""" )
     def view_log( self, w, suite, state ):
         suiterc = config( suite )
         logdir = os.path.join( suiterc['top level logging directory'], suite )
-        clv = cylc_logviewer( 'log', logdir, suiterc.get_task_name_list() )
-
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( suite + " log" )
-
-        window.connect("delete_event", self.close_log_window, window, clv )
-        # note: can't easily add a close button to this as a window can
-        # only hold one widget, which we're adding here:
-        window.add( clv.get_widget() )
-        window.show_all()
+        cylc_logviewer( 'log', logdir, suiterc.get_task_name_list() )
 
     def view_output( self, w, name, state ):
         running_already = False

@@ -20,6 +20,10 @@ class cylc_logviewer( logviewer ):
     def create_gui_panel( self ):
         logviewer.create_gui_panel( self )
         
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "log viewer" )
+
         combobox = gtk.combo_box_new_text()
         combobox.append_text( 'Filter' ) 
         combobox.append_text( 'all' ) 
@@ -31,21 +35,34 @@ class cylc_logviewer( logviewer ):
 
         self.hbox.pack_end( combobox, False )
 
-        previous = gtk.Button( "_newer rotation" )
-        previous.connect("clicked", self.rotate_log, False )
-        self.hbox.pack_end( previous, False )
+        newer = gtk.Button( "_newer" )
+        newer.connect("clicked", self.rotate_log, False )
+        self.hbox.pack_end( newer, False )
 
-        previous = gtk.Button( "_older rotation" )
-        previous.connect("clicked", self.rotate_log, True )
-        self.hbox.pack_end( previous, False )
+        older = gtk.Button( "_older" )
+        older.connect("clicked", self.rotate_log, True )
+        self.hbox.pack_end( older, False )
 
         filterbox = gtk.HBox()
         entry = gtk.Entry()
         entry.connect( "activate", self.custom_filter_log )
-        label = gtk.Label('Custom Filter (hit Enter)')
+        label = gtk.Label('Filter')
         filterbox.pack_start(label, True)
         filterbox.pack_start(entry, True)
         self.hbox.pack_end( filterbox, False )
+
+        close = gtk.Button( "_Close" )
+        close.connect("clicked", self.shutdown, None, window )
+        self.hbox.pack_end( close, False )
+
+        window.add( self.vbox )
+        window.connect("delete_event", self.shutdown, window )
+ 
+        window.show_all()
+
+    def shutdown( self, w, e, wind ):
+        self.quit()
+        wind.destroy()
 
     def filter_log( self, cb ):
         model = cb.get_model()
@@ -84,22 +101,27 @@ class cylc_logviewer( logviewer ):
             return self.main_log + '.' + str( self.level )
 
     def rotate_log( self, bt, go_older ):
-        level = self.level
         if go_older:
-            level += 1
+            self.level += 1
         else:
-            level -= 1
-        if level < 0:
+            self.level -= 1
+        if self.level < 0:
             warning_dialog( """
 At newest rotation; reloading in case 
 the suite has been restarted.""" ).warn()
-            level = 0
-            # update view anyway: user may have started suite after the gui
-            # was started.
+            self.level = 0
+            # but update view in case user started suite after gui
         if self.current_log() not in os.listdir( self.dir ):
-            warning_dialog( "Older log not available" ).warn()
-            return
-        self.level = level
+            if go_older:
+                warning_dialog( "Older log not available" ).warn()
+                self.level -= 1
+                return
+            else:
+                warning_dialog( "Newer log not available" ).warn()
+                self.level += 1
+                return
+        else:
+            self.file = self.current_log()
         self.update_view()
 
     def update_view( self ):

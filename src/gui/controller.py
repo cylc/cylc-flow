@@ -5,7 +5,6 @@ import helpwindow
 import pango
 from stateview import updater
 from combo_logviewer import combo_logviewer
-#from cylc_logviewer import cylc_logviewer
 from warning_dialog import warning_dialog, info_dialog
 from port_scan import SuiteIdentificationError
 import Pyro.errors
@@ -46,7 +45,6 @@ class ControlApp(object):
 
     # close the window and quit
     def delete_event(self, widget, event, data=None):
-        #self.lvp.quit()
         self.t.quit = True
         for q in self.quitters:
             #print "calling quit on ", q
@@ -193,7 +191,6 @@ The cylc forecast suite metascheduler.
         about.destroy()
 
     def click_exit( self, foo ):
-        #self.lvp.quit()
         self.t.quit = True
         for q in self.quitters:
             #print "calling quit on ", q
@@ -1387,7 +1384,6 @@ The cylc forecast suite metascheduler.
     #        if self.connection_lost:
     #            #print "------>INITIAL RECON"
     #            self.connection_lost = False
-    #            self.lvp.clear_and_reconnect()
     #    # always return True so that we keep getting called
     #    return True
 
@@ -1437,9 +1433,6 @@ The cylc forecast suite metascheduler.
         #main_panes.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ))
         main_panes.add1( self.create_led_panel())
         main_panes.add2( notebook )
-
-        #self.lvp = cylc_logviewer( 'log', self.logdir, self.task_list )
-        #notebook.append_page( self.lvp.get_widget(), gtk.Label("Cylc Log Viewer"))
 
         self.create_menu()
 
