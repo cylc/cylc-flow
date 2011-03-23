@@ -892,9 +892,9 @@ The cylc forecast suite metascheduler.
                     menu.append( dump_item )
                     dump_item.connect( 'activate', self.dump_suite, reg )
 
-                    nudge_item = gtk.MenuItem( 'N_udge' )
-                    menu.append( nudge_item )
-                    nudge_item.connect( 'activate', self.nudge_suite, reg )
+                    #nudge_item = gtk.MenuItem( 'N_udge' )
+                    #menu.append( nudge_item )
+                    #nudge_item.connect( 'activate', self.nudge_suite, reg )
      
                 menu.append( gtk.SeparatorMenuItem() )
 
@@ -1722,11 +1722,11 @@ Note that this will not delete the suite definition directory.""" )
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def nudge_suite( self, w, name ):
-        command = "cylc nudge " + name
-        foo = gcapture_tmpfile( command, self.tmpdir, 200, 400 )
-        self.gcapture_windows.append(foo)
-        foo.run()
+    #def nudge_suite( self, w, name ):
+    #    command = "cylc nudge " + name
+    #    foo = gcapture_tmpfile( command, self.tmpdir, 200, 400 )
+    #    self.gcapture_windows.append(foo)
+    #    foo.run()
 
     def describe_suite( self, w, name ):
         command = "cylc describe " + name  
