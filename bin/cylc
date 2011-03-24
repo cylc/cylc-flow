@@ -141,7 +141,7 @@ information_commands['nudge'    ] = ['nudge' ]
 
 control_commands = OrderedDict()
 control_commands['gcylc'  ] = information_commands[ 'gcylc' ]
-control_commands['run'    ] = ['run', 'start' ]
+control_commands['run'    ] = ['run' ]
 control_commands['stop'   ] = ['stop', 'shutdown' ]
 control_commands['restart'] = ['restart' ]
 control_commands['trigger'] = ['trigger' ]
