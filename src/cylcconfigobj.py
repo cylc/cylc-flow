@@ -7,8 +7,9 @@ class CylcConfigObj( ConfigObj ):
     """ This class overrides the _load() and parse() menthods of ConfigObj in 
     order to provide: continuation lines and include files (_load) and to 
     allow duplicate keywords (variable overriding) in cylc config
-    [environment] sections (parse). The class methods involved here are
-    quite long but the cylc code changes in them are quite small."""
+    environment and directives sections (parse). The class methods
+    involved here are quite long but the cylc code changes in them are
+    quite small."""
 
     def _load(self, infile, configspec):
         if isinstance(infile, basestring):
@@ -308,10 +309,10 @@ class CylcConfigObj( ConfigObj ):
                 key = self._unquote(key)
                 if key in this_section:
                     # CYLC CHANGE START: ALLOW DUPLICATE KEYWORDS TO OVERRIDE
-                    # PREVIOUS VALUES IN 'environment'SECTIONS.
+                    # PREVIOUS VALUES IN 'environment' AND 'directives' SECTIONS.
                     envoverride = False
                     try:
-                        if sect_name == 'environment':
+                        if sect_name == 'environment' or sect_name == 'directives':
                             print >> sys.stderr, 'WARNING: $' + key + ' redefined (line ' + str(cur_index) + ')'
                             envoverride = True
                     except UnboundLocalError:
