@@ -165,6 +165,9 @@ class scheduler(object):
 
         self.suite_dir = self.config.get_dirname()
 
+        if self.config['dummy mode only'] and not self.dummy_mode:
+            raise SystemExit( "ERROR: this suite can only run in dummy mode (see suite.rc)" )
+
         # DETERMINE SUITE LOGGING AND STATE DUMP DIRECTORIES
         self.logging_dir = os.path.join( self.config['top level logging directory'],    self.suite ) 
         self.state_dump_dir   = os.path.join( self.config['top level state dump directory'], self.suite )

@@ -4,6 +4,9 @@ description = string( default="No suite description supplied" )
 # declare all I/O relative to $HOME (not used yet)
 # user portable = boolean( default=False )
 
+# for demo suites that have no real task implementation
+dummy mode only = boolean( default=False )
+
 # declare all I/O unique by suite registration (i.e. all I/O paths include 
 # either $CYLC_SUITE or $CYLC_SUITE_GROUP and $CYLC_SUITE_NAME:
 

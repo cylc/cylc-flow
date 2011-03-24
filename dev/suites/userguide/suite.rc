@@ -13,6 +13,8 @@ functionality."""
 
 #job submission shell = /usr/bin/ksh
 
+#dummy mode only = True
+
 use lockserver = True
 use secure passphrase = True
 
