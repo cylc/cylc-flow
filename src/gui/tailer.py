@@ -42,12 +42,20 @@ class tailer(threading.Thread):
                 line = gen.next()
                 if line:
                     gobject.idle_add( self.update_gui, line )
-            # doesn't work:
-            #if self.proc != None:
-            #    if self.proc.poll() == None:
-            #        gobject.idle_add( self.update_gui, '(process completed)\n' )
-            #        #break
-        
+            if self.proc != None:
+                # poll the subprocess; this reaps its exit code and thus
+                # prevents the pid of the finished process staying in
+                # the OS process table (a "defunct process") until the
+                # parent process exits.
+                self.proc.poll()
+            # The following doesn't work, not sure why, perhaps because
+            # the top level subprocess finishes before the next one
+            # (shows terminated too soon). 
+            #    if self.proc.poll() != None:
+            #        (poll() returns None if process hasn't finished yet.)
+            #        #print 'process terminated'
+            #        gobject.idle_add( self.update_gui, '(PROCESS COMPLETED)\n' )
+            #        break
         #print "Disconnecting from tailer thread"
  
     def update_gui( self, line ):

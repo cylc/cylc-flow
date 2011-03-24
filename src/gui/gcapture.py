@@ -108,9 +108,9 @@ Stderr is displayed in red.
 
     def run( self ):
         if not self.ignore_command:
-            proc = subprocess.Popen( self.command, stdout=self.stdout, stderr=self.stderr, shell=True )
-            self.stdout_updater = tailer( self.textview, self.stdout.name, proc=proc, format=True )
-            self.stderr_updater = tailer( self.textview2, self.stderr.name, proc=proc, tag=self.red2 )
+            self.proc = subprocess.Popen( self.command, stdout=self.stdout, stderr=self.stderr, shell=True )
+            self.stdout_updater = tailer( self.textview, self.stdout.name, proc=self.proc, format=True )
+            self.stderr_updater = tailer( self.textview2, self.stderr.name, proc=self.proc, tag=self.red2 )
         else:
             self.stdout_updater = tailer( self.textview, self.stdout.name, format=True )
             self.stderr_updater = tailer( self.textview2, self.stderr.name, tag=self.red2 )
@@ -124,7 +124,7 @@ Stderr is displayed in red.
         end = tb.get_end_iter()
         txt = tb.get_text( start, end )
 
-        print txt
+        #print txt
 
         dialog = gtk.FileChooserDialog(title='Save As',
                 action=gtk.FILE_CHOOSER_ACTION_SAVE,
