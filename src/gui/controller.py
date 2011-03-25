@@ -21,6 +21,7 @@ from option_group import option_group, controlled_option_group
 from config import config
 from color_rotator import rotator
 import datetime
+from cylc_logviewer import cylc_logviewer
 
 class ControlApp(object):
     # visibility determined by state matching active toggle buttons
@@ -207,16 +208,18 @@ The cylc forecast suite metascheduler.
             view.expand_all()
  
     def toggle_headings( self, w ):
-        if w.get_active():
+        if self.task_headings_on:
             self.no_task_headings()
         else:
             self.full_task_headings()
 
     def no_task_headings( self ):
+        self.task_headings_on = False
         self.led_headings = ['Cycle Time' ] + [''] * len( self.task_list )
         self.reset_led_headings()
 
     def full_task_headings( self ):
+        self.task_headings_on = True
         self.led_headings = ['Cycle Time' ] + self.task_list
         self.reset_led_headings()
 
@@ -719,7 +722,7 @@ The cylc forecast suite metascheduler.
 
         self.update_tb( tb, "\n\nMenu: File > ", [bold, red] )
         self.update_tb( tb, "\n o Exit: ", [bold])
-        self.update_tb( tb, "Exit the GUI (this does not shut the suite down).")
+        self.update_tb( tb, "Exit the control GUI (does not shut the suite down).")
 
         self.update_tb( tb, "\n\nMenu: View > ", [bold, red] )
         self.update_tb( tb, "This affects only the top 'light panel'. "
@@ -1207,9 +1210,9 @@ The cylc forecast suite metascheduler.
             else:
                 warning_dialog( result.reason ).warn()
 
-    def nudge_suite( self, w, suite ):
+    def nudge_suite( self, w ):
         try:
-            proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.suite ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( str(x) ).warn()
             return False
@@ -1254,7 +1257,7 @@ The cylc forecast suite metascheduler.
         quit_button = gtk.Button( "_Close" )
         quit_button.connect("clicked", self.on_popup_quit, lv, window )
         
-        lv.hbox.pack_start( quit_button )
+        lv.hbox.pack_start( quit_button, False )
         #lv.hbox.pack_start( state_button )
 
         window.connect("delete_event", lv.quit_w_e)
@@ -1270,6 +1273,24 @@ The cylc forecast suite metascheduler.
         exit_item = gtk.MenuItem( 'E_xit' )
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
+
+        view_menu = gtk.Menu()
+        view_menu_root = gtk.MenuItem( '_View' )
+        view_menu_root.set_submenu( view_menu )
+
+        names_item = gtk.MenuItem( '_Toggle Names' )
+        view_menu.append( names_item )
+        names_item.connect( 'activate', self.toggle_headings )
+
+        nudge_item = gtk.MenuItem( "_Nudge (update times)" )
+        view_menu.append( nudge_item )
+        nudge_item.connect( 'activate', self.nudge_suite  )
+
+        log_item = gtk.MenuItem( '_Suite Log' )
+        view_menu.append( log_item )
+        log_item.connect( 'activate', self.view_log )
+
+
 
         start_menu = gtk.Menu()
         start_menu_root = gtk.MenuItem( '_Control' )
@@ -1331,6 +1352,7 @@ The cylc forecast suite metascheduler.
       
         self.menu_bar = gtk.MenuBar()
         self.menu_bar.append( file_menu_root )
+        self.menu_bar.append( view_menu_root )
         self.menu_bar.append( start_menu_root )
         self.menu_bar.append( help_menu_root )
 
@@ -1436,21 +1458,12 @@ The cylc forecast suite metascheduler.
 
         self.create_menu()
 
-        view_button = gtk.ToggleButton( "_Task Names" )
-        view_button.connect( 'toggled', self.toggle_headings )
-    
-        nudge_button = gtk.Button( "_Nudge" )
-        nudge_button.connect( 'clicked', self.nudge_suite, self.suite  )
-
-        self.led_headings = None 
         self.full_task_headings()
 
         bigbox = gtk.VBox()
         bigbox.pack_start( self.menu_bar, False )
         hbox = gtk.HBox()
         hbox.pack_start( self.create_info_bar(), True )
-        hbox.pack_start( view_button, False )
-        hbox.pack_start( nudge_button, False )
         bigbox.pack_start( hbox, False )
         bigbox.pack_start( main_panes, True )
         self.window.add( bigbox )
@@ -1468,6 +1481,12 @@ The cylc forecast suite metascheduler.
 
         #print "Starting task state info thread"
         self.t.start()
+
+    def view_log( self, w ):
+        suiterc = config( self.suite )
+        logdir = os.path.join( suiterc['top level logging directory'], self.suite )
+        foo = cylc_logviewer( 'log', logdir, suiterc.get_task_name_list() )
+        self.quitters.append(foo)
 
 class StandaloneControlApp( ControlApp ):
     # For a ControlApp not launched by the gcylc main app: 

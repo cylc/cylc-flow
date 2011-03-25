@@ -884,7 +884,7 @@ The cylc forecast suite metascheduler.
 
                 out_item = gtk.MenuItem( 'View _Log')
                 menu.append( out_item )
-                out_item.connect( 'activate', self.view_log, reg, state )
+                out_item.connect( 'activate', self.view_log, reg )
 
                 if state != '-':
                     # suite is running
@@ -1874,7 +1874,7 @@ The cylc forecast suite metascheduler.
         window.destroy()
         clv.quit()
 
-    def view_log( self, w, suite, state ):
+    def view_log( self, w, suite ):
         suiterc = config( suite )
         logdir = os.path.join( suiterc['top level logging directory'], suite )
         cylc_logviewer( 'log', logdir, suiterc.get_task_name_list() )
