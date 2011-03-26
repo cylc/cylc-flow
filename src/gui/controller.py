@@ -117,7 +117,7 @@ class ControlApp(object):
             coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
             entry_ctime, stoptime_entry, statedump_entry, optgroups ):
 
-        command = 'cylc control run --started-by-gcylc'
+        command = 'cylc control run --gcylc'
         options = ''
         method = ''
         if coldstart_rb.get_active():
@@ -131,7 +131,7 @@ class ControlApp(object):
             options += ' -r'
         elif restart_rb.get_active():
             method = 'restart'
-            command = 'cylc control restart --started-by-gcylc'
+            command = 'cylc control restart --gcylc'
 
         command += ' ' + options + ' '
 

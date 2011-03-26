@@ -100,8 +100,8 @@ class scheduler(object):
                 "for testing very large suites of 1000+ tasks.",
                 action="store_true", default=False, dest="timing" )
 
-        self.parser.add_option( "--started-by-gcylc", help=\
-                "(DO NOT USE: this is for invocation by gcylc only).",
+        self.parser.add_option( "--gcylc", help=\
+                "(DO NOT USE THIS OPTION).",
                 action="store_true", default=False, dest="gcylc" )
 
         self.parse_commandline()

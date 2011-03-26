@@ -27,7 +27,7 @@ parser.add_option( "--obliterate",
         action="store_true", default=False, dest="obliterate" )
 
 parser.add_option( "--gcylc",
-        help="DO NOT USE THIS OPTION.",
+        help="(DO NOT USE THIS OPTION).",
         action="store_true", default=False, dest="gcylc" )
 
 parser.add_option( "-v", "--verbose",
