@@ -307,8 +307,18 @@ class taskdef(object):
             # outputs
             sself.outputs = outputs( sself.id )
             for output in self.outputs:
-                # TO DO: $(CYCLE_TIME +/- HH )
-                out = re.sub( '\$\(CYCLE_TIME\)', sself.c_time, output )
+                m = re.search( '\$\(CYCLE_TIME\s*(\+|\-)\s*(\d+)\)', output )
+                if m:
+                    sign, offset = m.groups()
+                    if sign == '-':
+                        ctime = cycle_time.decrement( sself.c_time, offset )
+                    else:
+                        ctime = cycle_time.increment( sself.c_time, offset )
+
+                    out = re.sub( '\$\(CYCLE_TIME.*\)', ctime, output )
+                else:
+                    out = re.sub( '\$\(CYCLE_TIME\)', sself.c_time, output )
+
                 sself.outputs.add( out )
 
             sself.outputs.register()

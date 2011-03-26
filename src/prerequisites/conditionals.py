@@ -2,7 +2,7 @@
 
 # conditional prerequisites
 
-import re
+import re, sys
 
 # label1 => "foo ready for $CYCLE_TIME"
 # label2 => "bar%$CYCLE_TIME finished"
@@ -15,21 +15,29 @@ class conditional_prerequisites(object):
         self.satisfied = {}    # satisfied[ label ] = True/False
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
         self.auto_label = 0
+        self.excess_labels = []
 
     def add( self, message, label = None ):
         # Add a new prerequisite message in an UNSATISFIED state.
         if label:
+            # TO DO: autolabelling NOT USED? (and is broken because the
+            # supplied condition is necessarily expressed in terms of
+            # user labels?).
             pass
         else:
             self.auto_label += 1
             label = str( self.auto_label )
 
         if message in self.labels:
-            raise SystemExit( "Duplicate prerequisite: " + message )
+            #raise SystemExit( "Duplicate prerequisite: " + message )
+            print >> sys.stderr, "WARNING: duplicate prerequisite: " + message
+            self.excess_labels.append(label)
+            return
+
         #print '> ', label, message
         self.messages[ label ] = message
         self.labels[ message ] = label
-        self.satisfied[label] = False
+        self.satisfied[label]  = False
 
     def get_not_satisfied_list( self ):
         not_satisfied = []
@@ -48,6 +56,9 @@ class conditional_prerequisites(object):
         for label in self.messages:
             # match label start and end on on word boundary
             expr = re.sub( r'\b' + label + r'\b', 'self.satisfied[\'' + label + '\']', expr )
+        for label in self.excess_labels:
+            expr = re.sub( r'\b' + label + r'\b', 'True', expr )
+            self.raw_conditional_expression = re.sub( r'\b' + label + r'\b', 'True', self.raw_conditional_expression )
 
         self.conditional_expression = expr
 

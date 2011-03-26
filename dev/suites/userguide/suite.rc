@@ -66,7 +66,7 @@ task run time in seconds = 1
     
                     ColdA | A(T-6) => A
                     ColdB | B(T-6) => B
-                    ColdC | C(T-6) => C
+                    ColdC | C(T-18):r18 | C(T-12):r12 | C(T-6):r6 => C
 
                     prep => X & ColdA & ColdB & ColdC
                  """
@@ -122,13 +122,17 @@ echo bye
     [[C]]
         description = "model C - river flow forecast"
         #command = cylc wrap C.sh
-        command = C-no-wrap.sh
+        #command = C-no-wrap.sh
+        command = cylc wrap C-explicit.sh
         [[[environment]]]
             C_INPUT_DIR = $WORKSPACE
             C_OUTPUT_DIR = $WORKSPACE
 %include common/common-env.rc
         [[[outputs]]]
             foo = river flow outputs done for $(CYCLE_TIME)
+            r6  = restart files ready for $(CYCLE_TIME+6)
+            r12 = restart files ready for $(CYCLE_TIME+12)
+            r18 = restart files ready for $(CYCLE_TIME+18)
     [[D]]
         description = "combined post processing for models B and C"
         command = cylc wrap D.sh

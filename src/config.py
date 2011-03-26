@@ -250,7 +250,19 @@ class config( CylcConfigObj ):
         # now adjust for time offset
         if offset:
             trigger = re.sub( 'CYCLE_TIME', 'CYCLE_TIME - ' + str(offset), trigger )
+            # extract multiple offsets:
+            m = re.match( '(.*)\$\(CYCLE_TIME\s*(.*)\)(.*)', trigger )
+            if m:
+                pre, combo, post = m.groups()
+                combo = eval( combo )
+                if combo == 0:
+                    trigger = pre + '$(CYCLE_TIME)' + post
+                elif combo > 0:
+                    trigger = pre + '$(CYCLE_TIME + ' + str(combo) + ')' + post
+                else:
+                    trigger = pre + '$(CYCLE_TIME ' + str(combo) + ')' + post
 
+        #print trigger
         return trigger
 
     def __check_tasks( self ):
