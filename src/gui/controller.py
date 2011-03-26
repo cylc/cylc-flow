@@ -895,7 +895,7 @@ The cylc forecast suite metascheduler.
         if response != gtk.RESPONSE_OK:
             return
         proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
-        actioned, explanation = proxy.spawn_and_die( task_id, self.owner )
+        actioned, explanation = proxy.spawn_and_die( task_id )
  
     def kill_task_nospawn( self, b, task_id ):
         msg = "remove " + task_id + " (without spawning)?"
@@ -905,19 +905,19 @@ The cylc forecast suite metascheduler.
         if response != gtk.RESPONSE_OK:
             return
         proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
-        actioned, explanation = proxy.die( task_id, self.owner )
+        actioned, explanation = proxy.die( task_id )
 
     def purge_cycle_entry( self, e, w, task_id ):
         stop = e.get_text()
         w.destroy()
         proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-        actioned, explanation = proxy.purge( task_id, stop, self.owner )
+        actioned, explanation = proxy.purge( task_id, stop )
 
     def purge_cycle_button( self, b, e, w, task_id ):
         stop = e.get_text()
         w.destroy()
         proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-        actioned, explanation = proxy.purge( task_id, stop, self.owner )
+        actioned, explanation = proxy.purge( task_id, stop )
 
     def stopsuite_popup( self, b ):
         window = gtk.Window()

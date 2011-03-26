@@ -121,9 +121,8 @@ echo bye
 
     [[C]]
         description = "model C - river flow forecast"
-        #command = cylc wrap C.sh
+        command = cylc wrap C.sh
         #command = C-no-wrap.sh
-        command = cylc wrap C-explicit.sh
         [[[environment]]]
             C_INPUT_DIR = $WORKSPACE
             C_OUTPUT_DIR = $WORKSPACE
