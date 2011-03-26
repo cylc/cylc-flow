@@ -70,7 +70,7 @@ class port_interrogator(object):
                     else:
                         # this indicates that one of my suites has an
                         # identical passphrase to this other suite.
-                        raise Pyro.errors.ConnectionDeniedError, x
+                        continue
                 
             # loop end without returning ID => all of my passphrases denied
             raise Pyro.errors.ConnectionDeniedError, x
