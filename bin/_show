@@ -63,7 +63,7 @@ if prnt_id:
     # PREREQUISITES AND OUTPUTS
     result = proxy.get_task_requisites( [ id ] )
 
-    if id not in result:
+    if not result or id not in result:
         print "Task " + id + " not found in " + suite
         sys.exit(1)
 

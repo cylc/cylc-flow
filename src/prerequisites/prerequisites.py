@@ -55,7 +55,7 @@ class prerequisites(object):
         res = []
         for reqs in self.container:
             for key in reqs.satisfied:
-                res.append( [ reqs.messages[key], reqs.satisfied[ key ] ] )
+                res += reqs.dump()
         return res
 
     def set_all_satisfied( self ):

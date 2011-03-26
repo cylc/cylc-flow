@@ -3,13 +3,12 @@
 # conditional prerequisites
 
 import re
-from prerequisites import prerequisites
 
 # label1 => "foo ready for $CYCLE_TIME"
 # label2 => "bar%$CYCLE_TIME finished"
 # expr   => "( [label1] or [label2] )"
 
-class conditional_prerequisites(prerequisites):
+class conditional_prerequisites(object):
     def __init__( self, owner_id ):
         self.labels = {}   # labels[ message ] = label
         self.messages = {}   # messages[ label ] = message 
@@ -45,6 +44,7 @@ class conditional_prerequisites(prerequisites):
         # 'foo(T-6):out1 | baz'
 
         # make into a python expression
+        self.raw_conditional_expression = expr
         for label in self.messages:
             # match label start and end on on word boundary
             expr = re.sub( r'\b' + label + r'\b', 'self.satisfied[\'' + label + '\']', expr )
@@ -72,8 +72,10 @@ class conditional_prerequisites(prerequisites):
     def dump( self ):
         # return an array of strings representing each message and its state
         res = []
-        for key in self.satisfied:
-            res.append( [ self.messages[key], self.satisfied[ key ] ]  )
+        for label in self.satisfied:
+            msg = self.messages[label]
+            res.append( [ '    LABEL: ' + label + ' = ' + self.messages[label], self.satisfied[ label ] ]  )
+        res.append( [     'CONDITION: ' + self.raw_conditional_expression, self.all_satisfied() ] )
         return res
 
     def set_all_satisfied( self ):
