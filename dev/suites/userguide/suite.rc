@@ -126,6 +126,7 @@ echo bye
         [[[environment]]]
             C_INPUT_DIR = $WORKSPACE
             C_OUTPUT_DIR = $WORKSPACE
+            FAIL_CYCLE_TIME = 2010080812
 %include common/common-env.rc
         [[[outputs]]]
             foo = river flow outputs done for $(CYCLE_TIME)
