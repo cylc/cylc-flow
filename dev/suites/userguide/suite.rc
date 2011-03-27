@@ -170,7 +170,7 @@ echo bye
         command = cylc wrap ColdC.sh
 
     [[FOO]]
-    [[bar]]
+    [[bar-x]]
     [[baz]]
 
     [[wazza]]

@@ -10,6 +10,7 @@ import re, sys
 
 class conditional_prerequisites(object):
     def __init__( self, owner_id ):
+        self.owner_id = owner_id
         self.labels = {}   # labels[ message ] = label
         self.messages = {}   # messages[ label ] = message 
         self.satisfied = {}    # satisfied[ label ] = True/False
@@ -30,7 +31,7 @@ class conditional_prerequisites(object):
 
         if message in self.labels:
             #raise SystemExit( "Duplicate prerequisite: " + message )
-            print >> sys.stderr, "WARNING: duplicate prerequisite: " + message
+            print >> sys.stderr, "WARNING, " + self.owner_id + ": duplicate prerequisite: " + message
             self.excess_labels.append(label)
             return
 

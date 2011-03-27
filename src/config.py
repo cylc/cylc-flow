@@ -22,7 +22,7 @@ from validate import Validator
 from configobj import get_extra_values, flatten_errors
 from cylcconfigobj import CylcConfigObj, ConfigObjError
 from registration import getdb, regsplit, RegistrationError
-from graphnode import graphnode
+from graphnode import graphnode, GraphNodeError
 
 try:
     import graphing
@@ -108,10 +108,15 @@ class edge( object):
             #rightmost item
             left = options[-1]
 
-        m = re.search( '(\w+)\s*\(\s*T\s*-(\d+)\s*\)', left )
+        m = re.search( '(\w+)\s*\(\s*T\s*([+-])(\d+)\s*\)', left )
         if m: 
             task = m.groups()[0]
-            offset = m.groups()[1]
+            sign = m.groups()[1]
+            offset = m.groups()[2]
+            if sign != '-':
+                # TO DO: this check is redundant (already checked by
+                # graphnode processing).
+                raise SuiteConfigError, "Prerequisite offsets must be negative: " + left
             ctime = cycle_time.decrement( ctime, offset )
             res = task + '%' + ctime
         else:
@@ -356,6 +361,21 @@ class config( CylcConfigObj ):
         tasknames.sort(key=str.lower)  # case-insensitive sort
         return tasknames
 
+    def get_full_task_name_list( self ):
+        # return list of task names used in the dependency diagram,
+        # and task sections (self['tasks'].keys())
+        if not self.loaded:
+            self.load_tasks()
+        gtasknames = self.taskdefs.keys()
+        stasknames = self['tasks'].keys()
+        tasknames = {}
+        for tn in gtasknames + stasknames:
+            if tn not in tasknames:
+                tasknames[tn] = True
+        all_tasknames = tasknames.keys()
+        all_tasknames.sort(key=str.lower)  # case-insensitive sort
+        return all_tasknames
+
     def edges_from_graph_line( self, line, cycle_list_string ):
         # Extract dependent pairs from the suite.rc textual dependency
         # graph to use in constructing graphviz graphs.
@@ -475,7 +495,10 @@ class config( CylcConfigObj ):
 
         # initialise the task definitions
         for node in lefts + [right]:
-            name = graphnode( node ).name
+            try:
+                name = graphnode( node ).name
+            except GraphNodeError, x:
+                raise SuiteConfigError, str(x)
             if name not in self.taskdefs:
                 self.taskdefs[ name ] = self.get_taskdef( name )
             self.taskdefs[ name ].add_hours( hours )
@@ -489,7 +512,7 @@ class config( CylcConfigObj ):
             for left in lefts:
                 # strip off '*' plotting conditional indicator
                 l = re.sub( '\s*\*', '', left )
-                lnode = graphnode( l )
+                lnode = graphnode( l ) # (GraphNodeError checked above)
 
                 if lnode.name in self['special tasks']['startup']:
                     trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset )
@@ -517,7 +540,7 @@ class config( CylcConfigObj ):
 
             lefts = re.split( '\s*[\|&]\s*', l)
             for left in lefts:
-                lnode = graphnode(left)
+                lnode = graphnode(left)  # (GraphNodeError checked above)
                 if lnode.intercycle:
                     self.taskdefs[lnode.name].intercycle = True
                 trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset )

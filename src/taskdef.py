@@ -100,10 +100,6 @@ class taskdef(object):
             self.cond_triggers[ cycle_list_string ] = []
         self.cond_triggers[ cycle_list_string ].append( [ triggers, exp ] )
 
-    def check_name( self, name ):
-        if re.search( '[^\w]', name ):
-            raise DefinitionError( 'Task names may contain only a-z,A-Z,0-9,_' )
- 
     def add_hours( self, hours ):
         for hr in hours:
             hour = int( hr )
@@ -307,20 +303,18 @@ class taskdef(object):
             # outputs
             sself.outputs = outputs( sself.id )
             for output in self.outputs:
-                m = re.search( '\$\(CYCLE_TIME\s*(\+|\-)\s*(\d+)\)', output )
+                m = re.search( '\$\(CYCLE_TIME\s*([+-])\s*(\d+)\)', output )
                 if m:
                     sign, offset = m.groups()
                     if sign == '-':
-                        ctime = cycle_time.decrement( sself.c_time, offset )
+                        #ctime = cycle_time.decrement( sself.c_time, offset )
+                       raise DefinitionError, "ERROR, " + sself.id + ": Output offsets must be positive: " + output
                     else:
                         ctime = cycle_time.increment( sself.c_time, offset )
-
                     out = re.sub( '\$\(CYCLE_TIME.*\)', ctime, output )
                 else:
                     out = re.sub( '\$\(CYCLE_TIME\)', sself.c_time, output )
-
                 sself.outputs.add( out )
-
             sself.outputs.register()
 
             sself.env_vars = OrderedDict()

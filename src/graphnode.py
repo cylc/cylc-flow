@@ -2,6 +2,16 @@
 
 import re
 
+class GraphNodeError( Exception ):
+    """
+    Attributes:
+        message - what the problem is. 
+    """
+    def __init__( self, msg ):
+        self.msg = msg
+    def __str__( self ):
+        return repr(self.msg)
+
 class graphnode( object ):
     """A node in the cycle suite.rc dependency graph."""
 
@@ -38,7 +48,6 @@ class graphnode( object ):
             self.intercycle = True
             node, sign, self.offset = m.groups()
             if sign == '+':
-                raise SuiteConfigError, node_in + ": only negative offsets allowed (e.g. T-6)"
-
+                raise GraphNodeError, "Prerequisite offsets must be negative: " + node_in
         # only name left now
         self.name = node

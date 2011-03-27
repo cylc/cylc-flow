@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 
 import os, sys
+from job_submit import job_submit
 from optparse import OptionParser
 from config import config, SuiteConfigError
+from taskdef import DefinitionError
 
 parser = OptionParser( """cylc [prepare] validate [options] SUITE
 
-Parse and validate a suite config (suite.rc) file. This checks that
-entries in the file conform to $CYLC_DIR/conf/suiterc.spec, and that no
-error occurs when the suite's task proxy classes are defined and loaded.
+(a) Parse and validate a suite config (suite.rc) file to check that
+all entries conform to the $CYLC_DIR/conf/suiterc.spec specification.
+(b) Attempt to instantiate a proxy object for each task in the suite.
 
 IF THE SUITE.RC FILE USES INCLUDE-FILES: line numbers reported with 
 validation errors will be wrong because the parser sees an inlined
@@ -30,6 +32,7 @@ if len(args) != 1:
 else:
     suite = args[0]
 
+print "Parsing Suite Config File"
 try:
     config = config( suite )
     config.load_tasks()
@@ -38,5 +41,33 @@ except SuiteConfigError,x:
         raise
     else:
         raise SystemExit(x)
-else:
-    print "Suite " + suite + " validates OK."
+
+# Now instantiate each task
+# TO DO: TEST THE FOLLOWING WITH VARIOUS ERRORS AND CLEAN UP
+# THE RESULTING OUTPUT:
+job_submit.cylc_env = {}
+job_submit.global_env = {}
+ctime = '2999010112'
+print 'Instantiating Task Proxies:'
+for tn in config.get_full_task_name_list():
+    print '  - ', tn, '...', 
+    try:
+        # tasks used in the suite dependency graph
+        task_proxy = config.get_task_proxy( tn, ctime, 'waiting', startup=True )
+    except DefinitionError,x:
+        print x
+        print >> sys.stderr, x
+    except KeyError, x:
+        print '(not currently used)', '...',
+        try:
+            # tasks defined but not used in the suite graph
+            task_proxy = config.get_task_proxy_raw( tn, ctime, 'waiting', startup=True )
+        except:
+            print 'ERROR'
+            raise
+        else:
+            print 'OK'
+    else:
+        print 'OK'
+
+print "Suite " + suite + " validates OK."
