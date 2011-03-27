@@ -8,8 +8,8 @@ import datetime
 from optparse import OptionParser
 from housekeeping import config_file, config_line
 
-usage = """1/ cylc housekeeping [options] SOURCE MATCH OPER OFFSET [TARGET]
-Usage: 2/ cylc housekeeping [options] FILE
+usage = """1/ cylc [util] housekeeping [options] SOURCE MATCH OPER OFFSET [TARGET]
+Usage: 2/ cylc [util] housekeeping [options] FILE
 
 Parallel (as in spawning of multiple Unix processes at once) batch
 archiving and cleanup of files or directories with names that contain a

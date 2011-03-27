@@ -149,10 +149,6 @@ GENERAL
   check for non-essential port scanning, esp. in gui.
   (see GUI note below)
 
-* document task inclusion and exclusion, at startup, by commandline or
-suite.rc file: can be used separately or both at once, for cold, warm,
-and restart.
-
 * document how to re-run partial suite over existing data:
     - exclude some tasks
     - insert a new task to generate the outputs representing
