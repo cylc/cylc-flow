@@ -6,8 +6,8 @@
 #          CYCLE-TIME SECTIONS IN THE GRAPH.
 #        - SPECIAL OUTPUTS foo:out1
 #          - check outputs do not appear on right side of pairs, 
-#          - document: use foo(T-6):out1, not foo:out1 with $(T-6) in
-#          the output message - so the graph will plot correctly.
+#          - document: use foo(T-6):out1, not foo:out1 with $(CYCLE_TIME-6) in
+  #          the output message - so the graph will plot correctly.
 
 # IMPORTANT NOTE: configobj.reload() apparently does not revalidate
 # (list-forcing is not done, for example, on single value lists with

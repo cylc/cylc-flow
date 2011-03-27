@@ -22,6 +22,7 @@ from config import config
 from color_rotator import rotator
 import datetime
 from cylc_logviewer import cylc_logviewer
+from textload import textload
 
 class ControlApp(object):
     # visibility determined by state matching active toggle buttons
@@ -1230,17 +1231,16 @@ The cylc forecast suite metascheduler.
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         logs = []
-        js = []
         for f in logfiles:
             if re.search( 'cylc-', f ):
-                js.append(f)
+                js = f
             else:
                 logs.append(f)
 
         window.set_size_request(800, 300)
         if jsonly:
             window.set_title( task_id + ": Task Job Submit Script" )
-            lv = combo_logviewer( task_id, js )
+            lv = textload( task_id, js )
         else:
             # put '.out' before '.err'
             logs.sort( reverse=True )

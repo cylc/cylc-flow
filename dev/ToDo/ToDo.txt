@@ -4,8 +4,8 @@ GENERAL
 * reg export, copy, import should take group: as target even for single
   suites.
 
-* viewing job submit file in the GUI: should use a simple single-load
-  text viewer - the tailing log viewer is not necessary in this case.
+* clean up src/gui/textload.py and use of it: it was quickly hacked out
+  of the tailing logviewer and should be treated separately and more simply.
 
 * note DO NOT USE a suite reg GROUP:NAME as a suite definition dir
   as the colon screws up the PATH to the suite bin directory.
