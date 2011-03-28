@@ -1,6 +1,13 @@
 _______
 GENERAL
 
+* NEW (Trevor's mos spin up for new stations):
+    - a cycling task that stops at a given ctime? => foo(T)
+    - pause a task
+    - insert a prerequisite on the fly - e.g. trigger off foo when it reaches T
+
+*  suicide prerequisites in cylc-3?
+
 * reg export, copy, import should take group: as target even for single
   suites.
 
@@ -13,9 +20,8 @@ GENERAL
 * tasks that are not in the dep graph can now be run with 'submit';
   should we allow insertion to?
 
-* default group: make sure this is used consistently everywhere.  Should
-  use explicit group name everywhere internally; only allow omission of 
-  'default' for command line input.
+* clean up prerequisites classes - put all in one module? (same with
+  outputs + requisites?)
 
  * FOR SUITES WITH OWNED TASKS:
  replace suite owner with task owner in job submission log directory
