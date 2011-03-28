@@ -199,15 +199,12 @@ class regdb(object):
         # LOCKING HANDLED BY CALLERS
         from_owner, from_group, from_name = regsplit(suite_from).get()
         if from_owner != self.user:
-            #raise RegistrationError, 'You cannot reregister another user\'s suite'
             self.print_reg( suite_from )
-            print "(can't reregister, wrong suite owner)"
-            return
+            raise RegistrationError, "can't reregister, wrong owner"
         to_owner, to_group, to_name = regsplit(suite_to).get()
         if to_owner != self.user:
-            #raise RegistrationError, 'You cannot unregister as another user'
             self.print_reg( suite_to )
-            print "(can't reregister, wrong suite owner)"
+            raise RegistrationError, "can't reregister, wrong owner"
             return
         dir, descr = self.get( suite_from )
         self.unregister( suite_from )
@@ -247,10 +244,8 @@ class regdb(object):
         # LOCKING HANDLED BY CALLERS
         owner, group, name = regsplit(suite).get()
         if owner != self.user:
-            #raise RegistrationError, 'You cannot unregister as another user'
             self.print_reg( suite )
-            print "(can't unregister, wrong suite owner)"
-            return
+            raise RegistrationError, "can't unregister, wrong owner"
         self.print_reg(suite, prefix='UNREGISTERING', verbose=verbose )
         # delete it
         del self.items[owner][group][name]

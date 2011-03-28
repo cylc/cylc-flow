@@ -84,6 +84,7 @@ else:
         try:
             dir, descr = db.get( suite )
         except RegistrationError, x:
+            db.unlock()
             raise SystemExit(x)
         else:
             dirs.append(dir)
