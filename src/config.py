@@ -356,7 +356,7 @@ class config( CylcConfigObj ):
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
         for name in self.taskdefs:
             if name not in self['tasks']:
-                print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph (it will run as a dummy task).'
+                print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it will run as a dummy task.'
         for name in self['tasks']:
             if name not in self.taskdefs:
                 print >> sys.stderr, 'WARNING: task "' + name + '" is defined in [tasks] but not used in the graph.'
@@ -584,9 +584,10 @@ class config( CylcConfigObj ):
                     name = graphnode( node ).name
                 except GraphNodeError, x:
                     raise SuiteConfigError, str(x)
-                td = self.get_taskdef( name )
-                td.hours = hours
-                self.taskdefs[name] = td
+
+                if name not in self.taskdefs:
+                    self.taskdefs[ name ] = self.get_taskdef( name )
+                self.taskdefs[name].add_hours( hours )
             return
 
         # get list of pairs
@@ -975,7 +976,6 @@ class config( CylcConfigObj ):
         taskd.task_timeout_hook = taskconfig['task timeout hook']
         taskd.execution_timeout_minutes = taskconfig['execution timeout minutes']
         taskd.reset_execution_timeout_on_incoming_messages = taskconfig['reset execution timeout on incoming messages']
-
 
         taskd.logfiles    = taskconfig[ 'extra log files' ]
         taskd.commands    = taskconfig[ 'command' ]
