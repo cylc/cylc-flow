@@ -1,7 +1,7 @@
 title = string( default="No suite title given" )
 description = string( default="No suite description supplied" )
 
-# declare all I/O relative to $HOME (not used yet)
+# declare all suite I/O relative to $HOME (not used yet)
 # user portable = boolean( default=False )
 
 # for demo suites that have no real task implementation

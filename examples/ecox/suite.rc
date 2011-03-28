@@ -1,6 +1,10 @@
 title = EcoConnect Operational Cylc Suite
 maximum runahead hours = 72
 job submission log directory = $HOME/running/$CYLC_SUITE/logs
+
+# this is a demo suite with real task implementation stripped out:
+dummy mode only = True
+
 number of state dump backups = 100
 
 job submission method = ll_basic_eco
