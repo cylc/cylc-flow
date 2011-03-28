@@ -526,5 +526,6 @@ class task( Pyro.core.ObjBase ):
         raise SystemExit( "OVERRIDE ME" )
 
     def my_successor_still_needs_me( self, tasks ):
-        # overridden in mod_pid
+        # TO DO: THIS IS NO LONGER (OR NEVER WAS?) USED?
+        # overridden in pid
         return False

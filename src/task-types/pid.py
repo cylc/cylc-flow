@@ -60,13 +60,14 @@ class pid(object):
             # Ready only if all restart outputs are completed
             ready = True
             for message in self.outputs.satisfied.keys():
-                if re.search( 'restart files ready for', message ) and \
+                if re.search( 'restart', message ) and \
                         not self.outputs.satisfied[ message ]:
                     ready = False
                     break
         return ready
 
     def my_successor_still_needs_me( self, tasks ):
+        # TO DO: THIS IS NO LONGER (OR NEVER WAS?) USED?
         my_ct = self.c_time
         nx_ct = self.next_c_time()
         my_name = self.name

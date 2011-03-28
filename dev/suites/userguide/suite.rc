@@ -42,9 +42,10 @@ task run time in seconds = 1
 
 [special tasks]
     startup          = prep
-    sequential       = A, B, C
+    sequential       = A, B
     coldstart        = ColdA, ColdB, ColdC
     clock-triggered  = X(1)
+    models with explicit restart outputs = C
 
 [task families]
     FOO = bar, baz
@@ -121,8 +122,8 @@ echo bye
 
     [[C]]
         description = "model C - river flow forecast"
-        command = cylc wrap C.sh
-        #command = C-no-wrap.sh
+        #command = cylc wrap C.sh
+        command = C-no-wrap.sh
         [[[environment]]]
             C_INPUT_DIR = $WORKSPACE
             C_OUTPUT_DIR = $WORKSPACE
@@ -130,9 +131,9 @@ echo bye
 %include common/common-env.rc
         [[[outputs]]]
             foo = river flow outputs done for $(CYCLE_TIME)
-            r6  = restart files ready for $(CYCLE_TIME+6)
-            r12 = restart files ready for $(CYCLE_TIME+12)
-            r18 = restart files ready for $(CYCLE_TIME+18)
+            r6  = restart files done for $(CYCLE_TIME+6)
+            r12 = restart files done for $(CYCLE_TIME+12)
+            r18 = restart files done for $(CYCLE_TIME+18)
     [[D]]
         description = "combined post processing for models B and C"
         command = cylc wrap D.sh

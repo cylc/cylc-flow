@@ -360,15 +360,14 @@ class config( CylcConfigObj ):
         for name in self['tasks']:
             if name not in self.taskdefs:
                 print >> sys.stderr, 'WARNING: task "' + name + '" is defined in [tasks] but not used in the graph.'
+
         # warn if listed special tasks are not defined
         for type in self['special tasks']:
             for name in self['special tasks'][type]:
                 if type == 'clock-triggered':
                     name = re.sub('\(.*\)','',name)
-                if name not in self['tasks']:
-                    # No [tasks][[name]] section
-                    if name not in self.taskdefs and name not in self['tasks']:
-                        print >> sys.stderr, 'WARNING: ' + type + ' task "' + name + '" is not defined.'
+                if name not in self.taskdefs and name not in self['tasks']:
+                    print >> sys.stderr, 'WARNING: ' + type + ' task "' + name + '" is not defined in [tasks] or used in the graph.'
 
         # check task insertion groups contain valid tasks
         for group in self['task insertion groups']:
@@ -389,6 +388,10 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, name + ' in "tasks to exclude at startup" is not defined in [tasks] or graph.'
 
         # TO DO: check listed family members in the same way
+        # TO DO: check that any multiple appearance of same task  in
+        # 'special tasks' is valid. E.g. a task can be both
+        # 'sequential' and 'clock-triggered' at the time, but not both
+        # 'model' and 'sequential' at the same time.
 
     def process_configured_directories( self ):
         # absolute path, but can use ~user, env vars ($HOME etc.):
@@ -918,8 +921,13 @@ class config( CylcConfigObj ):
         if name in self['special tasks']['sequential']:
             taskd.modifiers.append( 'sequential' )
 
+        # SET MODEL TASK INDICATOR
+        if name in self['special tasks']['models with explicit restart outputs']:
+            taskd.type = 'tied'
+        else:
+            taskd.type = 'free'
+
         # ONLY USING FREE TASK FOR NOW (MODELS MUST BE SEQUENTIAL)
-        taskd.type = 'free'
 
         # SET CLOCK-TRIGGERED TASKS
         if name in self.clock_offsets:
