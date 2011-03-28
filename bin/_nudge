@@ -5,7 +5,7 @@ import cylc_pyro_client
 import Pyro.errors
 from CylcOptionParsers import NoPromptOptionParser
 
-parser = NoPromptOptionParser( """cylc nudge [options] SUITE 
+parser = NoPromptOptionParser( """cylc [control] nudge [options] SUITE 
 
 Cause the cylc task processing loop to be invoked in a running suite.
 

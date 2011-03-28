@@ -260,7 +260,7 @@ comsum[ 'copy'       ] = 'Copy a suite or group of suites.'
 comsum[ 'print'      ] = 'Print local or central suite registrations'
 comsum[ 'import'     ] = 'Import central registrations to your local database'
 comsum[ 'export'     ] = 'Export local registrations to the central database'
-# prepare
+# preparation
 comsum[ 'edit'       ] = 'Edit a suite.rc file in $EDITOR, optionally inlined'
 comsum[ 'inline'     ] = 'View suite.rc files in $EDITOR, include-files inlined'
 comsum[ 'validate'   ] = 'Parse and validate a suite config (suite.rc) file'
