@@ -281,10 +281,10 @@ class config( CylcConfigObj ):
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
         for name in self.taskdefs:
             if name not in self['tasks']:
-                print >> sys.stderr, 'WARNING: task "' + name + '" is defined by graph only.'
+                print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph (it will run as a dummy task).'
         for name in self['tasks']:
             if name not in self.taskdefs:
-                print >> sys.stderr, 'WARNING: task "' + name + '" is not currently used by the suite.'
+                print >> sys.stderr, 'WARNING: task "' + name + '" is defined in [tasks] but not used in the graph.'
         # warn if listed special tasks are not defined
         for type in self['special tasks']:
             for name in self['special tasks'][type]:

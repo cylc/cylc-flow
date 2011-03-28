@@ -55,13 +55,18 @@ for tn in config.get_full_task_name_list():
         # tasks used in the suite dependency graph
         task_proxy = config.get_task_proxy( tn, ctime, 'waiting', startup=True )
     except DefinitionError,x:
-        print x
-        print >> sys.stderr, x
+        msg = 'ERROR: ' + str(x)
+        print msg
+        raise SystemExit( msg )
     except KeyError, x:
         print '(not currently used)', '...',
         try:
             # tasks defined but not used in the suite graph
             task_proxy = config.get_task_proxy_raw( tn, ctime, 'waiting', startup=True )
+        except DefinitionError,x:
+            msg = 'ERROR: ' + str(x)
+            print msg
+            raise SystemExit( msg )
         except:
             print 'ERROR'
             raise
