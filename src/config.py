@@ -124,10 +124,85 @@ class edge( object):
             
         return res
 
+class node( object):
+    def __init__( self, n ):
+        self.group = n
+
+    def get( self, ctime, not_first_cycle, raw, startup_only ):
+        #if re.search( '\|', self.left_group ):
+        OR_list = re.split('\s*\|\s*', self.group )
+
+        first_cycle = not not_first_cycle
+
+        options = []
+        starred_index = -1
+        for item in OR_list:
+            # strip off special outputs
+            item = re.sub( ':\w+', '', item )
+
+            starred = False
+            if re.search( '\*$', item ):
+                starred = True
+                item = re.sub( '\*$', '', item )
+
+            m = re.search( '(\w+)\s*\(\s*T\s*-(\d+)\s*\)', item )
+            if m: 
+                if first_cycle:
+                    # ignore intercycle
+                    continue
+                else:
+                    # not first cycle
+                    options.append( item )
+                    if starred:
+                        starred_index = len(options)-1
+                    continue
+
+            if item in startup_only:
+                if not first_cycle:
+                    continue
+                else:
+                    # first cycle
+                    if not raw:
+                        options.append( item )
+                        if starred:
+                            starred_index = len(options)-1
+                        continue
+            else:
+                options.append( item )
+                if starred:
+                    starred_index = len(options)-1
+                continue
+
+        if len(options) == 0:
+            return None
+
+        if starred_index != -1:
+            left = options[ starred_index ]
+        else:
+            #rightmost item
+            left = options[-1]
+
+        m = re.search( '(\w+)\s*\(\s*T\s*([+-])(\d+)\s*\)', left )
+        if m: 
+            task = m.groups()[0]
+            sign = m.groups()[1]
+            offset = m.groups()[2]
+            if sign != '-':
+                # TO DO: this check is redundant (already checked by
+                # graphnode processing).
+                raise SuiteConfigError, "Prerequisite offsets must be negative: " + left
+            ctime = cycle_time.decrement( ctime, offset )
+            res = task + '%' + ctime
+        else:
+            res = left + '%' + ctime
+            
+        return res
+
 class config( CylcConfigObj ):
     def __init__( self, suite=None, dummy_mode=False, path=None ):
         self.dummy_mode = dummy_mode
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
+        self.lone_nodes = {} # nodes[ hour ] = [ A, B, ... ]
         self.taskdefs = {}
         self.loaded = False
         self.graph_loaded = False
@@ -418,6 +493,25 @@ class config( CylcConfigObj ):
         # split on arrows
         sequence = re.split( '\s*=>\s*', line )
 
+        # detect lone nodes
+        if len(sequence) == 1:
+            group = sequence[0]
+            # Parentheses are used for intercycle dependencies: (T-6)
+            # etc., so don't check for them as erroneous conditionals
+            # just yet. Now split on '&' (AND) and generate pairs
+            if re.search( '\|', group ):
+                raise SuiteConfigError, "Lone node groups cannot contain OR: " + group
+            items  = re.split( '\s*&\s*', group )
+            for item in items:
+                n = node( item )
+                # store nodes by hour
+                for hour in hours:
+                    if hour not in self.lone_nodes:
+                        self.lone_nodes[hour] = []
+                    if n not in self.lone_nodes[hour]:
+                        self.lone_nodes[hour].append( n )
+            return
+
         # get list of pairs
         for i in range( 0, len(sequence)-1 ):
             lgroup = sequence[i]
@@ -566,7 +660,6 @@ class config( CylcConfigObj ):
 
     def get_graph( self, start_ctime, stop, colored=True, raw=False ):
         # check if graphing is disabled in the calling method
-        hour = int( start_ctime[8:10] )
         if not self.graph_loaded:
             self.load_graph()
         if colored:
@@ -574,70 +667,103 @@ class config( CylcConfigObj ):
         else:
             graph = graphing.CGraphPlain( self.suite )
 
-        cycles = self.edges.keys()
-        cycles.sort()
-        ctime = start_ctime
-        i = cycles.index( hour )
-        started = False
-
         exclude_list = self.get_coldstart_task_list() + self.get_startup_task_list()
 
-        gr_edges = []
-
-        while True:
-            hour = cycles[i]
-            for e in self.edges[hour]:
-                right = e.get_right(ctime, started, raw, exclude_list )
-                left  = e.get_left( ctime, started, raw, exclude_list )
-                if left == None or right == None:
-                    continue
-
-                if self['visualization']['show family members']:
-                    lname, lctime = re.split( '%', left )
-                    rname, rctime = re.split( '%', right )
-                    if lname in self.members and rname in self.members:
-                        # both families
-                        for lmem in self.members[lname]:
-                            for rmem in self.members[rname]:
-                                lmemid = lmem + '%' + lctime
-                                rmemid = rmem + '%' + rctime
-                                gr_edges.append( (lmemid, rmemid ) )
-                    elif lname in self.members:
-                        # left family
-                        for mem in self.members[lname]:
-                            memid = mem + '%' + lctime
-                            gr_edges.append( (memid, right ) )
-                    elif rname in self.members:
-                        # right family
-                        for mem in self.members[rname]:
-                            memid = mem + '%' + rctime
-                            gr_edges.append( (left, memid ) )
-                    else:
-                        # no families
-                        gr_edges.append( (left, right) )
+        gr_lone_nodes = []
+        cycles = self.lone_nodes.keys()
+        if len(cycles) != 0:
+            cycles.sort()
+            ctime = start_ctime
+            hour = int( start_ctime[8:10] )
+            i = cycles.index( hour )
+            started = False
+            while True:
+                hour = cycles[i]
+                for n in self.lone_nodes[hour]:
+                    item = n.get(ctime, started, raw, exclude_list )
+                    if item == None:
+                        # TO DO: why this test?
+                        continue
+                    gr_lone_nodes.append( item )
+                # next cycle
+                started = True
+                if i == len(cycles) - 1:
+                    i = 0
+                    diff = 24 - hour + cycles[0]
                 else:
-                    gr_edges.append( (left, right) )
+                    i += 1
+                    diff = cycles[i] - hour
+                ctime = cycle_time.increment( ctime, diff )
+                if int( cycle_time.diff_hours( ctime, start_ctime )) >= int(stop):
+                    break
+ 
+        gr_edges = []
+        cycles = self.edges.keys()
+        if len(cycles) != 0:
+            cycles.sort()
+            ctime = start_ctime
+            hour = int( start_ctime[8:10] )
+            i = cycles.index( hour )
+            started = False
+            while True:
+                hour = cycles[i]
 
-            # next cycle
-            started = True
-            if i == len(cycles) - 1:
-                i = 0
-                diff = 24 - hour + cycles[0]
-            else:
-                i += 1
-                diff = cycles[i] - hour
-            ctime = cycle_time.increment( ctime, diff )
+                for e in self.edges[hour]:
+                    right = e.get_right(ctime, started, raw, exclude_list )
+                    left  = e.get_left( ctime, started, raw, exclude_list )
+                    if left == None or right == None:
+                        # TO DO: why this test?
+                        continue
 
-            if int( cycle_time.diff_hours( ctime, start_ctime )) >= int(stop):
-                break
+                    if self['visualization']['show family members']:
+                        lname, lctime = re.split( '%', left )
+                        rname, rctime = re.split( '%', right )
+                        if lname in self.members and rname in self.members:
+                            # both families
+                            for lmem in self.members[lname]:
+                                for rmem in self.members[rname]:
+                                    lmemid = lmem + '%' + lctime
+                                    rmemid = rmem + '%' + rctime
+                                    gr_edges.append( (lmemid, rmemid ) )
+                        elif lname in self.members:
+                            # left family
+                            for mem in self.members[lname]:
+                                memid = mem + '%' + lctime
+                                gr_edges.append( (memid, right ) )
+                        elif rname in self.members:
+                            # right family
+                            for mem in self.members[rname]:
+                                memid = mem + '%' + rctime
+                                gr_edges.append( (left, memid ) )
+                        else:
+                            # no families
+                            gr_edges.append( (left, right) )
+                    else:
+                        gr_edges.append( (left, right) )
+
+                # next cycle
+                started = True
+                if i == len(cycles) - 1:
+                    i = 0
+                    diff = 24 - hour + cycles[0]
+                else:
+                    i += 1
+                    diff = cycles[i] - hour
+                ctime = cycle_time.increment( ctime, diff )
+    
+                if int( cycle_time.diff_hours( ctime, start_ctime )) >= int(stop):
+                    break
                 
         # sort and then add edges in the hope that edges added in the
         # same order each time will result in the graph layout not
         # jumping around (does it work ...?)
         gr_edges.sort()
+        gr_lone_nodes.sort()
         for e in gr_edges:
             l, r = e
             graph.add_edge( l, r )
+        for n in gr_lone_nodes:
+            graph.add_node( n )
 
         return graph
 
