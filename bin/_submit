@@ -157,10 +157,6 @@ except KeyError, x:
         print >> sys.stderr, 'ERROR:', task_name, 'is not defined by graph or [tasks] section'
         print >> sys.stderr, x
         sys.exit(1)
-    else:
-        print >> sys.stderr, "WARNING: assuming ", ctime, "is valid for this task (it's not in the suite graph)."
-
-    #raise SystemExit( 'task not found: ' + task_name )
 
 #print '\nPREREQUISITES:\n'
 #for item in task_proxy.prerequisites.dump():

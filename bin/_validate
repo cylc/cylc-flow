@@ -62,7 +62,7 @@ for tn in config.get_full_task_name_list():
         print '(not currently used)', '...',
         try:
             # tasks defined but not used in the suite graph
-            task_proxy = config.get_task_proxy_raw( tn, ctime, 'waiting', startup=True )
+            task_proxy = config.get_task_proxy_raw( tn, ctime, 'waiting', startup=True, test=True )
         except DefinitionError,x:
             msg = 'ERROR: ' + str(x)
             print msg

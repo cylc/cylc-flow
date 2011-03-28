@@ -23,7 +23,7 @@ from lockserver import lockserver
 from suite_lock import suite_lock
 from suite_id import identifier
 from mkdir_p import mkdir_p
-from config import config 
+from config import config, SuiteConfigError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
 
@@ -1009,20 +1009,15 @@ class scheduler(object):
         # for remote insertion of a new task, or task group
         ( ins_name, ins_ctime ) = ins_id.split( '%' )
 
-        if ins_name in self.task_name_list:
-            self.log.info( "Servicing task insertion request" )
-            ids = [ ins_id ]
-        elif ins_name in ( self.config[ 'task insertion groups' ] ):
+        self.log.info( "Servicing task insertion request" )
+
+        if ins_name in ( self.config[ 'task insertion groups' ] ):
             self.log.info( "Servicing group insertion request" )
             ids = []
             for name in self.config[ 'task insertion groups' ][ins_name]:
-                if name not in self.task_name_list:
-                    self.log.warning( 'Insertion group member', name, 'is not defined: cannot insert.')
-                else:
-                    ids.append( name + '%' + ins_ctime )
+                ids.append( name + '%' + ins_ctime )
         else:
-            self.log.warning( '(insertion) No such task or group: ' + task_id )
-            raise TaskNotFoundError, "No such task or group: " + task_id
+            ids = [ ins_id ]
 
         rejected = []
         inserted = []
@@ -1031,7 +1026,15 @@ class scheduler(object):
             rject = False
             [ name, c_time ] = task_id.split( '%' )
             # Instantiate the task proxy object
-            itask = self.config.get_task_proxy( name, c_time, 'waiting', startup=False )
+            try:
+                itask = self.config.get_task_proxy( name, c_time, 'waiting', startup=False )
+            except KeyError, x:
+                try:
+                    itask = self.config.get_task_proxy_raw( name, c_time, 'waiting', startup=False )
+                except SuiteConfigError,x:
+                    self.log.warning( str(x) )
+                    rejected.append( name + '%' + c_time )
+ 
             # The task cycle time can be altered during task initialization
             # so we have to create the task before checking if the task
             # already exists in the system or the stop time has been reached.

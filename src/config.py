@@ -387,6 +387,23 @@ class config( CylcConfigObj ):
                 if name not in self['tasks'] and name not in self.taskdefs:
                     raise SuiteConfigError, name + ' in "tasks to exclude at startup" is not defined in [tasks] or graph.'
 
+        # check graphed hours are consistent with [tasks]->[[NAME]]->hours (if defined)
+        for name in self.taskdefs:
+            # task 'name' is in graph
+            if name in self['tasks']:
+                # [tasks][name] section exists
+                section_hours = [int(i) for i in self['tasks'][name]['hours'] ]
+                if len( section_hours ) == 0:
+                    # no hours defined in the task section
+                    break
+                graph_hours = self.taskdefs[name].hours
+                bad_hours = []
+                for hour in graph_hours:
+                    if hour not in section_hours:
+                        bad_hours.append(str(hour))
+                if len(bad_hours) > 0:
+                    raise SuiteConfigError, '[tasks]->[[' + name + ']]->hours disallows the graphed hour(s) ' + ','.join(bad_hours)
+
         # TO DO: check listed family members in the same way
         # TO DO: check that any multiple appearance of same task  in
         # 'special tasks' is valid. E.g. a task can be both
@@ -992,15 +1009,29 @@ class config( CylcConfigObj ):
             self.load_tasks()
         return self.taskdefs[name].get_task_class()( ctime, state, startup )
 
-    def get_task_proxy_raw( self, name, ctime, state, startup ):
-        # get a proxy for a task that may not be defined by
-        # dependency graph.  This allows us to 'cylc submit'
+    def get_task_proxy_raw( self, name, ctime, state, startup, test=False ):
+        # GET A PROXY FOR A TASK THAT IS NOT GRAPHED - i.e. call this
+        # only if get_task_proxy() raises a KeyError.
+
+        # This allows us to 'cylc submit'
         # single tasks that are defined in suite.rc but not currently in
         # the running suite.  Because the graph defines valid 
-        # cycle times, however, we must assume that the requested 
+        # cycle times, however, we must use [tasks][[name]]hours or, if
+        # the hours entry is not defined, assume that the requested 
         # ctime is valid for the task.
         td = self.get_taskdef( name, strict=True )
-        td.hours = [ int( ctime[8:10] ) ]
+        chour = int(ctime[8:10])
+        hours = self['tasks'][name]['hours']
+        if len(hours) == 0:
+            # no hours defined; instantiation will fail unless we assume
+            # the test hour is valid.
+            if not test:
+                # (test is used by the validate command to suppress this
+                # warning for the arbitrary test cycle time.)
+                print >> sys.stderr, 'WARNING: ' + name + ' has no defined hours => assuming ' + ctime + ' is valid.'
+            td.hours = [ chour ]
+        else:
+            td.hours = [ int(i) for i in hours ]
         tdclass = td.get_task_class()( ctime, 'waiting', startup )
         return tdclass
 

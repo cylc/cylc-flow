@@ -149,10 +149,12 @@ __many__ = string
     reset execution timeout on incoming messages = boolean( default=True )
     scripting = string( default='' )
     # default to dummy task:
-    command = force_list( default=list( cylc wrap -m "echo DUMMY MODE $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
+    command = force_list( default=list( cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
     owner = string( default=None )
     host = string( default=None )
-    intercycle = boolean( default=False )
+    # hours required to use ('submit' or 'insert') tasks not in the
+    # graph; if present graphed hours must not conflict with this.
+    hours = force_list( default=list())
     extra log files = force_list( default=list())
         [[[ environment ]]]
         __many__ = string

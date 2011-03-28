@@ -332,7 +332,7 @@ class remote_switch( Pyro.core.ObjBase ):
         if '%' in name_or_id:
             name, tag = name.split('%' )
         
-        if name in self.config.get_task_name_list():
+        if name in self.config.get_full_task_name_list():
             return True
         else:
             return False
