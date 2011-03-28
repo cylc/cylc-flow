@@ -559,6 +559,25 @@ class config( CylcConfigObj ):
         # split on arrows
         sequence = re.split( '\s*=>\s*', line )
 
+        # detect lone nodes
+        if len(sequence) == 1:
+            group = sequence[0]
+            # Parentheses are used for intercycle dependencies: (T-6)
+            # etc., so don't check for them as erroneous conditionals
+            # just yet. Now split on '&' (AND) and generate pairs
+            if re.search( '\|', group ):
+                raise SuiteConfigError, "Lone node groups cannot contain OR: " + group
+            nodes  = re.split( '\s*&\s*', group )
+            for node in nodes:
+                try:
+                    name = graphnode( node ).name
+                except GraphNodeError, x:
+                    raise SuiteConfigError, str(x)
+                td = self.get_taskdef( name )
+                td.hours = hours
+                self.taskdefs[name] = td
+            return
+
         # get list of pairs
         for i in range( 0, len(sequence)-1 ):
             lgroup = sequence[i]
@@ -878,17 +897,48 @@ class config( CylcConfigObj ):
         self.loaded = True
 
     def get_taskdef( self, name, strict=False ):
+        taskd = taskdef.taskdef( name )
+
+        # SET ONEOFF TASK INDICATOR
+        #   coldstart and startup tasks are automatically oneoff
+        if name in self['special tasks']['oneoff'] or \
+            name in self['special tasks']['startup'] or \
+            name in self['special tasks']['coldstart']:
+            taskd.modifiers.append( 'oneoff' )
+
+        # SET SEQUENTIAL TASK INDICATOR
+        if name in self['special tasks']['sequential']:
+            taskd.modifiers.append( 'sequential' )
+
+        # ONLY USING FREE TASK FOR NOW (MODELS MUST BE SEQUENTIAL)
+        taskd.type = 'free'
+
+        # SET CLOCK-TRIGGERED TASKS
+        if name in self.clock_offsets:
+            taskd.modifiers.append( 'clocktriggered' )
+            taskd.clocktriggered_offset = self.clock_offsets[name]
+
         if name not in self['tasks']:
             if strict:
                 raise SuiteConfigError, 'Task not defined: ' + name
             # no [tasks][[name]] section defined: default dummy task
-            return taskdef.taskdef(name)
+            if self.dummy_mode:
+                # use dummy mode specific job submit method for all tasks
+                taskd.job_submit_method = self['dummy mode']['job submission method']
+            else:
+                # suite default job submit method
+                taskd.job_submit_method = self['job submission method']
+            return taskd
 
         taskconfig = self['tasks'][name]
-        taskd = taskdef.taskdef( name )
         taskd.description = taskconfig['description']
+
+        for lbl in taskconfig['outputs']:
+            taskd.outputs.append( taskconfig['outputs'][lbl] )
+
         if not self['ignore task owners']:
             taskd.owner = taskconfig['owner']
+
         if self.dummy_mode:
             # use dummy mode specific job submit method for all tasks
             taskd.job_submit_method = self['dummy mode']['job submission method']
@@ -910,27 +960,6 @@ class config( CylcConfigObj ):
         taskd.execution_timeout_minutes = taskconfig['execution timeout minutes']
         taskd.reset_execution_timeout_on_incoming_messages = taskconfig['reset execution timeout on incoming messages']
 
-        # SET ONEOFF TASK INDICATOR
-        #   coldstart and startup tasks are automatically oneoff
-        if name in self['special tasks']['oneoff'] or \
-            name in self['special tasks']['startup'] or \
-            name in self['special tasks']['coldstart']:
-            taskd.modifiers.append( 'oneoff' )
-
-        # SET SEQUENTIAL TASK INDICATOR
-        if name in self['special tasks']['sequential']:
-            taskd.modifiers.append( 'sequential' )
-
-        # ONLY USING FREE TASK FOR NOW (MODELS MUST BE SEQUENTIAL)
-        taskd.type = 'free'
-
-        # SET CLOCK-TRIGGERED TASKS
-        if name in self.clock_offsets:
-            taskd.modifiers.append( 'clocktriggered' )
-            taskd.clocktriggered_offset = self.clock_offsets[name]
-
-        for lbl in self['tasks'][name]['outputs']:
-            taskd.outputs.append( self['tasks'][name]['outputs'][lbl] )
 
         taskd.logfiles    = taskconfig[ 'extra log files' ]
         taskd.commands    = taskconfig[ 'command' ]
