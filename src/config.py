@@ -380,6 +380,14 @@ class config( CylcConfigObj ):
                     # insert command.
                     print >> sys.stderr, 'WARNING: task "' + name + '" of insertion group "' + group + '" is not defined.'
 
+        # check 'tasks to exclude|include at startup' contains valid tasks
+        for name in self['tasks to include at startup']:
+                if name not in self['tasks'] and name not in self.taskdefs:
+                    raise SuiteConfigError, name + ' in "tasks to include at startup" is not defined in [tasks] or graph.'
+        for name in self['tasks to exclude at startup']:
+                if name not in self['tasks'] and name not in self.taskdefs:
+                    raise SuiteConfigError, name + ' in "tasks to exclude at startup" is not defined in [tasks] or graph.'
+
         # TO DO: check listed family members in the same way
 
     def process_configured_directories( self ):

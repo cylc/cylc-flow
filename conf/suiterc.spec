@@ -41,16 +41,24 @@ top level logging directory = string( default = '$HOME/.cylc/logging' )
 # for owned tasks, the suite owner's homedir is replaced by task owner's.
 job submission log directory = string( default='$HOME/CylcJobLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
 
+# script to call whenever a task is submitted
 task submitted hook = string( default=None )
+# script to call whenever a task reports it has started
 task started hook = string( default=None )
+# script to call whenever a task finishes successfully
 task finished hook = string( default=None )
+# script to call whenever a task reports failed
 task failed hook = string( default=None )
+# script to call whenever  a task emits a warning
 task warning hook = string( default=None )
+# script to call whenever the initial job submission for a task fails
 task submission failed hook = string( default=None )
+# script to call whenever a task times out (job submission or execution)
 task timeout hook = string( default=None )
+# call 'task timeout hook' script if submitted task does not start after
+# N minutes
 task submission timeout minutes = float( default=None )
 task execution timeout minutes = float( default=None )
-
 
 tasks to include at startup = force_list( default=list())
 tasks to exclude at startup = force_list( default=list())
