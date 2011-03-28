@@ -372,10 +372,12 @@ def capture( b ):
     help = helpwindow( "Subprocess Capture Help", 200, """
 This window captures stdout and stderr messages, in real time, from
 subprocesses spawned by the gcylc GUI. You can close this window without
-adversely affecting the subprocess itself, but if you do you will lose
-access to the output streams (except in the case of suites started 
-from within gcylc - in this case the output goes to a special file
-that can be reaccessed).""")
+adversely affecting the subprocess itself, BUT [1] when the subprocess 
+ends it will leave zombie entry in the system process table until you 
+close gcylc (however, these are not real processes and do not
+use system resources) and [2] you will lose access to the output streams
+(except in the case of suites started from from gcylc, in which case the
+output goes to special files that can be accessed again).""")
     help.show()
 
 def insertion( b ):
