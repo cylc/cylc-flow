@@ -198,6 +198,44 @@ class node( object):
             
         return res
 
+def get_suite_title( suite=None, path=None ):
+    # cheap suite title extraction for use by the registration
+    # database commands - uses very minimal parsing of suite.rc
+    if suite:
+        try:
+            reg = getdb( suite )
+            reg.load_from_file()
+            dir, descr = reg.get( suite )
+        except RegistrationError, x:
+            raise SuiteConfigError(str(x))
+        file = os.path.join( dir, 'suite.rc' )
+    elif path:
+        # allow load by path so that suite title can be parsed for
+        # new suite registrations.
+        suite = 'fooWx_:barWx_'
+        dir = path
+        file = os.path.join( path, 'suite.rc' )
+    elif 'CYLC_SUITE' in os.environ:
+        suite = os.environ[ 'CYLC_SUITE' ]
+        file = os.path.join( os.environ[ 'CYLC_SUITE_DIR' ], 'suite.rc' ),
+    else:
+        raise SuiteConfigError, 'ERROR: Suite Undefined'
+
+    if not os.path.isfile( file ):
+        raise SuiteConfigError, 'File not found: ' + file
+
+    title = 'No suite title supplied'
+    for line in open( file, 'rb' ):
+        m = re.match( '^\s*title\s*=\s*(.*)$', line )
+        if m:
+            title = m.groups()[0]
+            # strip trailing space
+            title = title.rstrip()
+            break
+    # NOTE: ANY TRAILING COMMENT WILL BE INCLUDED IN THE TITLE
+    # (but this doesn't really matter for our purposes?)
+    return title
+
 class config( CylcConfigObj ):
     def __init__( self, suite=None, dummy_mode=False, path=None ):
         self.dummy_mode = dummy_mode
@@ -214,7 +252,7 @@ class config( CylcConfigObj ):
                 reg.load_from_file()
                 self.dir, descr = reg.get( suite )
             except RegistrationError, x:
-                raise SystemExit(x)
+                raise SuiteConfigError(str(x))
             self.file = os.path.join( self.dir, 'suite.rc' )
         elif path:
             # allow load by path so that suite title can be parsed for
@@ -226,7 +264,7 @@ class config( CylcConfigObj ):
             self.suite = os.environ[ 'CYLC_SUITE' ]
             self.file = os.path.join( os.environ[ 'CYLC_SUITE_DIR' ], 'suite.rc' ),
         else:
-            raise SuiteConfigError, 'Suite Undefined Error'
+            raise SuiteConfigError, 'ERROR: Suite Undefined'
 
         if not os.path.isfile( self.file ):
             raise SuiteConfigError, 'File not found: ' + self.file

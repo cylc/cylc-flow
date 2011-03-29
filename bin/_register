@@ -3,7 +3,7 @@
 import os, re, sys
 from optparse import OptionParser
 from registration import localdb, RegistrationError
-from config import config, SuiteConfigError
+from config import get_suite_title, SuiteConfigError
 
 parser = OptionParser( usage = """cylc [db] register [options] SUITE PATH
 
@@ -41,11 +41,9 @@ if not os.path.isdir( rdir ):
 
 # get suite title by parsing the config file
 try:
-    config = config( path=rdir )
+    title = get_suite_title( path=rdir )
 except SuiteConfigError,x:
     raise SystemExit(x)
-else:
-    descr = config['title']
 
 reg = localdb()
 try:
@@ -55,7 +53,7 @@ except RegistrationError, x:
 
 reg.load_from_file()
 try:
-    reg.register( suite, rdir, descr )
+    reg.register( suite, rdir, title )
 except RegistrationError, x:
     print >> sys.stderr, x
     reg.unlock()

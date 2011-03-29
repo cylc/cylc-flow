@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+
+import os, re, sys
+from optparse import OptionParser
+from registration import localdb, RegistrationError
+from config import get_suite_title, SuiteConfigError
+
+parser = OptionParser( usage = """cylc [db] refresh|check [options]
+""" )
+
+parser.add_option( "-v", "--verbose",
+        help="Turn on verbose output.",
+        action="store_true", default=False, dest="verbose" )
+
+( options, args ) = parser.parse_args()
+
+reg = localdb()
+
+#try:
+#    reg.lock()
+#except RegistrationError, x:
+#    raise SystemExit(x)
+
+reg.load_from_file()
+
+for suite, dir, title in reg.get_list():
+    # get suite title by parsing the config file
+    try:
+        current_title = get_suite_title( suite )
+    except SuiteConfigError,x:
+        print >> sys.stderr, str(x)
+
+    if current_title != title:
+        print suite, 'TITLE CHANGED!'
+
+#reg.unlock()
+#reg.dump_to_file()

@@ -1,4 +1,4 @@
-title = string( default="No suite title given" )
+title = string( default="No suite title supplied" )
 description = string( default="No suite description supplied" )
 
 # declare all suite I/O relative to $HOME (not used yet)
