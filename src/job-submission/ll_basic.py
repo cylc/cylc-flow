@@ -16,7 +16,7 @@ class ll_basic( job_submit ):
             out = tempfile.mktemp(
                 prefix = task_id + '-', 
                 suffix = ".out",
-                dir= self.joblog_dir ) 
+                dir= self.__class__.joblog_dir ) 
 
             err = re.sub( '\.out$', '.err', out )
 

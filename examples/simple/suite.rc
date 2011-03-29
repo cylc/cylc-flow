@@ -1,6 +1,6 @@
 title = a simple example suite
 
-use lockserver = True
+#use lockserver = True
 
 description = """A clock-triggered data-gathering task, a warm-cycled
 model, and two post-processing tasks (one runs every second cycle). The
