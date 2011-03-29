@@ -152,7 +152,7 @@ try:
     task_proxy = config.get_task_proxy( task_name, ctime, 'waiting', startup=True )
 except KeyError, x:
     try:
-        task_proxy = config.get_task_proxy_raw( task_name, ctime, 'waiting', startup=True )
+        task_proxy = config.get_task_proxy_raw( task_name, ctime, 'waiting', startup=True, test=False, strict=False )
     except SuiteConfigError,x:
         print >> sys.stderr, 'ERROR:', task_name, 'is not defined by graph or [tasks] section'
         print >> sys.stderr, x

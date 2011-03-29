@@ -1,6 +1,16 @@
 ################################################################
 TO BE DOCUMENTED:
 
+* note 'cylc submit SUITE foo%T' results in T being adjusted to the next
+  nearest valid cycle time for the task IF valid hours are defined for 
+  the task by either graph or '[tasks][foo]hours'. If the latter is
+  defined for a graphed task, it will be used to check the legality of 
+  the graph, but only the graph hours will be used for the task (they
+  may be a subset of the legal hours).  Ungraphed tasks can be:
+   - inserted IFF [tasks][foo]hours is defined.
+   - submitted: [task][foo]hours is used to adjust as above if defined,
+                else the raw input T is used.
+
 * catch invalid regular expression (e.g. unbalanced paren) in custom
   filter.
 

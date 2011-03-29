@@ -1009,7 +1009,7 @@ class config( CylcConfigObj ):
             self.load_tasks()
         return self.taskdefs[name].get_task_class()( ctime, state, startup )
 
-    def get_task_proxy_raw( self, name, ctime, state, startup, test=False ):
+    def get_task_proxy_raw( self, name, ctime, state, startup, test=False, strict=True ):
         # GET A PROXY FOR A TASK THAT IS NOT GRAPHED - i.e. call this
         # only if get_task_proxy() raises a KeyError.
 
@@ -1025,10 +1025,19 @@ class config( CylcConfigObj ):
         if len(hours) == 0:
             # no hours defined; instantiation will fail unless we assume
             # the test hour is valid.
-            if not test:
-                # (test is used by the validate command to suppress this
-                # warning for the arbitrary test cycle time.)
-                print >> sys.stderr, 'WARNING: ' + name + ' has no defined hours => assuming ' + ctime + ' is valid.'
+            if strict:
+                # you cannot insert into a running suite a task that has
+                # no hours defined (what would the cycle time of its
+                # next instance be?).
+                raise SuiteConfigError, name + " has no hours defined in graph or [tasks]"
+            if test:
+                # used by the validate command
+                print >> sys.stderr, "WARNING: " + name + " has no hours defined in graph or [tasks], therefore"
+                print >> sys.stderr, "  it can be 'submit'ed alone but not 'insert'ed into a suite."
+            else:
+                # if 'submit'ed alone (see just above):
+                print >> sys.stderr, 'WARNING: ' + name + ' has no hours defined in graph or [tasks], therefore'
+                print >> sys.stderr, '  it will be submitted with the exact cycle time ' + ctime
             td.hours = [ chour ]
         else:
             td.hours = [ int(i) for i in hours ]

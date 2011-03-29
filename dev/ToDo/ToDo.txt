@@ -386,10 +386,9 @@ LOCKSERVER
 ___
 GUI
 
-* chooser fails if an invalid registration is clicked on.
-
-* use top level exception handling to prevent any failure that 
-  leave zombie threads running? 
+* dynamic reloading of the LED panel if the number of tasks in the
+  running suite change (currently we have to start with *all* tasks
+  including unused ones listed.
 
 * don't parse suite.rc if the suite is already running?
 
@@ -397,10 +396,6 @@ GUI
 
 * access to task stdout and stderr for remote tasks? In fact, more
   generally, current we assume the viewer is running locally.
-
-* more information about tasks in the prerequisites-and-outputs popup:
-  - HOURS
-  - type (and spawning behaviour)
 
 * VIEWING AND INTERACTING WITH REMOTE SUITES:
 THIS IS PROBABLY NO LONGER RELEVANT SINCE DITCHING THE PYRO NAMESERVER

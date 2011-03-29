@@ -1418,7 +1418,7 @@ The cylc forecast suite metascheduler.
         ### updating the viewed task list, we can retrieve the task list
         ### (etc.) from the suite's remote state summary object.
         suiterc = config( self.suite )
-        self.task_list = suiterc.get_task_name_list()
+        self.task_list = suiterc.get_full_task_name_list()
         self.use_block = suiterc['use suite blocking']
 
     def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
@@ -1485,7 +1485,7 @@ The cylc forecast suite metascheduler.
     def view_log( self, w ):
         suiterc = config( self.suite )
         logdir = os.path.join( suiterc['top level logging directory'], self.suite )
-        foo = cylc_logviewer( 'log', logdir, suiterc.get_task_name_list() )
+        foo = cylc_logviewer( 'log', logdir, suiterc.get_full_task_name_list() )
         self.quitters.append(foo)
 
 class StandaloneControlApp( ControlApp ):
