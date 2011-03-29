@@ -157,7 +157,7 @@ class regdb(object):
         pickle.dump( self.items, output )
         output.close()
 
-    def register( self, suite, dir, description='(no description supplied)' ):
+    def register( self, suite, dir, description='(no description supplied)', safe=False ):
         # remove trailing '/'
         dir = dir.rstrip( '/' )
         # remove leading './'
@@ -171,7 +171,7 @@ class regdb(object):
             dir = os.path.join( os.environ['PWD'], dir )
         # sleep(20)
         owner, group, name = regsplit( suite ).get()
-        if owner != self.user:
+        if owner != self.user and not safe:
             raise RegistrationError, 'You cannot register as another user'
         try:
             regdir, descr = self.items[owner][group][name]
@@ -195,21 +195,26 @@ class regdb(object):
         self.items[owner][group][name] = (dir, description)
         self.print_reg( suite, prefix='REGISTERED' )
 
-    def reregister( self, suite_from, suite_to, verbose=False ):
+    def reregister( self, suite_from, suite_to, title=None, verbose=False ):
         # LOCKING HANDLED BY CALLERS
         from_owner, from_group, from_name = regsplit(suite_from).get()
-        if from_owner != self.user:
+        if suite_from == suite_to and title != None:
+            safe = True
+        else:
+            safe = False
+        if from_owner != self.user and not safe:
             self.print_reg( suite_from )
             raise RegistrationError, "can't reregister, wrong owner"
         to_owner, to_group, to_name = regsplit(suite_to).get()
-        if to_owner != self.user:
+        if to_owner != self.user and not safe:
             self.print_reg( suite_to )
             raise RegistrationError, "can't reregister, wrong owner"
-            return
         dir, descr = self.get( suite_from )
-        self.unregister( suite_from )
-        self.register( suite_to, dir, descr )
-        return True
+        self.unregister( suite_from, safe )
+        if title:
+            self.register( suite_to, dir, title, safe )
+        else:
+            self.register( suite_to, dir, descr )
 
     def reregister_group( self, gfrom, gto, verbose=False, exclusive=False ):
         # move all group members to another (new or existing) group
@@ -240,10 +245,10 @@ class regdb(object):
             self.unregister( regjoin(owner,gfrom,name) )
         return True
 
-    def unregister( self, suite, verbose=False ):
+    def unregister( self, suite, safe=False, verbose=False ):
         # LOCKING HANDLED BY CALLERS
         owner, group, name = regsplit(suite).get()
-        if owner != self.user:
+        if owner != self.user and not safe:
             self.print_reg( suite )
             raise RegistrationError, "can't unregister, wrong owner"
         self.print_reg(suite, prefix='UNREGISTERING', verbose=verbose )

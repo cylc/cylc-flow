@@ -215,9 +215,6 @@ def get_suite_title( suite=None, path=None ):
         suite = 'fooWx_:barWx_'
         dir = path
         file = os.path.join( path, 'suite.rc' )
-    elif 'CYLC_SUITE' in os.environ:
-        suite = os.environ[ 'CYLC_SUITE' ]
-        file = os.path.join( os.environ[ 'CYLC_SUITE_DIR' ], 'suite.rc' ),
     else:
         raise SuiteConfigError, 'ERROR: Suite Undefined'
 
@@ -233,7 +230,8 @@ def get_suite_title( suite=None, path=None ):
             title = title.rstrip()
             break
     # NOTE: ANY TRAILING COMMENT WILL BE INCLUDED IN THE TITLE
-    # (but this doesn't really matter for our purposes?)
+    #     (but this doesn't really matter for our purposes)
+    # (stripping isn't trivial in general - what about strings?)
     return title
 
 class config( CylcConfigObj ):

@@ -261,7 +261,7 @@ comsum[ 'copy'       ] = 'Copy a suite or group of suites.'
 comsum[ 'print'      ] = 'Print local or central suite registrations'
 comsum[ 'import'     ] = 'Import central registrations to your local database'
 comsum[ 'export'     ] = 'Export local registrations to the central database'
-comsum[ 'refresh'    ] = 'Check registered suites still exist, update titles'
+comsum[ 'refresh'    ] = 'Check for invalid registrations and update titles'
 # preparation
 comsum[ 'edit'       ] = 'Edit a suite.rc file in $EDITOR, optionally inlined'
 comsum[ 'inline'     ] = 'View suite.rc files in $EDITOR, include-files inlined'

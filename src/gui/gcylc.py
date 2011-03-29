@@ -417,6 +417,10 @@ class MainApp(object):
         view_menu.append( collapse_item )
         collapse_item.connect( 'activate', self.collapse_all, self.regd_treeview )
 
+        refresh_item = gtk.MenuItem( '_Refresh' )
+        view_menu.append( refresh_item )
+        refresh_item.connect( 'activate', self.refresh )
+
         db_menu = gtk.Menu()
         db_menu_root = gtk.MenuItem( '_Database' )
         db_menu_root.set_submenu( db_menu )
@@ -610,6 +614,16 @@ The cylc forecast suite metascheduler.
         self.gcapture_windows.append(foo)
         foo.run()
         w.destroy()
+
+    def refresh( self, w ):
+        if self.cdb:
+            options = '-c'
+        else:
+            options = ''
+        command = "cylc refresh " + options
+        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
 
     def filter(self, w, owner_e, group_e, name_e ):
         ownerfilt = owner_e.get_text()

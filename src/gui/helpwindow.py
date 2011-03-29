@@ -147,6 +147,14 @@ Expand the registration database treeview.
 %h3 View > Collapse
 Collapse the registration database treeview.
 
+%h3 View > Refresh
+Check the database for invalid registrations (e.g. due to manual
+deletion of a suite definition directory) and update any suite
+titles that have changed. Note that changes to the database itself
+are automatically detected and updated by the GUI. Suite titles though,
+while held in the database, are originally parsed from suite config
+files. 
+
 %h3 View > LocalDB
 View the local (user-specific) suite registration database.
 
