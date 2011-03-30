@@ -416,7 +416,7 @@ elif len( args ) == 3 and ( is_help(args[0]) or is_help(args[2])):
         category = args[1]
         command = args[2]
     try:
-        category = match_dict( category, categories, category + ' COMMAND' )
+        category = match_dict( category, categories, 'CATEGORY' )
     except CommandError, x:
         raise SystemExit(x)
 
