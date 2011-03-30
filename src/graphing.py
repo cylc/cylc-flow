@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import re
+import xdot
 
 class GraphvizError( Exception ):
     """
@@ -18,13 +19,13 @@ try:
 except ImportError:
     # This allows us to carry on with graphing disabled if
     # pygraphviz is not installed.
-    raise GraphvizError, 'pygraphviz not available.'
+    raise GraphvizError, 'The Python pygraphviz module is not installed or not accessible.'
 
 try:
-    import xdot
-except ImportError:
-    raise GraphvizError, 'xdot not available.'
-
+    testG = pygraphviz.AGraph(directed=True)
+    testG.layout()  # this invokes the pygraphviz 'dot' program
+except ValueError:
+    raise GraphvizError, 'The graphviz package is not installed or not accessible'
 
 class CGraphPlain( pygraphviz.AGraph ):
     """Directed Acyclic Graph class for cylc dependency graphs."""

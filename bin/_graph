@@ -10,8 +10,9 @@ import config
 
 try:
     from cylc_xdot import MyDotWindow
-except:
-    raise SystemExit( "Graphing is not available; please install graphviz and pygraphviz.")
+except Exception, x:
+    print >> sys.stderr, str(x)
+    raise SystemExit( "Cylc graphing disabled" )
 
 parser = OptionParser( """1/ cylc [prep] graph [options] SUITE START [STOP]
      Plot the configured (suite.rc) dependency graph for SUITE.
