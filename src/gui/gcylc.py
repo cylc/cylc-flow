@@ -1588,8 +1588,8 @@ The cylc forecast suite metascheduler.
     def graph_suite_popup( self, w, reg ):
         try:
             from graphing import xdot
-        except:
-            warning_dialog( "Graphing is not available;\nplease install graphviz\nand pygraphviz.").warn()
+        except Exception, x:
+            warning_dialog( str(x) + "\nGraphing disabled.").warn()
             return False
 
         window = gtk.Window()
