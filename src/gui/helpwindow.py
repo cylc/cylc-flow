@@ -210,8 +210,9 @@ all important events as the suite runs.
 Edit the suite config (suite.rc) file
 
 %h3 Graph
-Graph the suite. The graph will update in real time as you edit the
-suite.
+Plot the configured (suite.rc) dependency graph, the most recent run time graph, 
+or the live suite graph. The suite.rc graph will update in real time as
+you edit the suite, the others will update as you run the suite.
 
 %h3 Search
 Search in the suite config file and bin directory.
@@ -297,13 +298,26 @@ process has to know when you exit from the editor).
     help.show()
  
 def graph( b ):
-    help = helpwindow( "Graph Help", 200, """
-Plot the suite dependency graph.  The graph viewer will update in real
-time if you edit the suite definition 'dependencies' or 'visualization'
-sections.  If you enter an Output File name an image file, type
-determined by file extension, will be written (and rewritten if the
-graph changes). See 'cylc prep graph --help' for more information on
-available file types.""")
+    help = helpwindow( "Graph Help", 600, """
+Plot suite dependency graphs:
+
+%h2 the configured (suite.rc) graph
+The graph viewer will update in
+real time as you edit the suite [dependencies] or [visualization] sections.
+
+%h2 the most recent run time graph
+this shows what tasks actually ran 
+in the first N hours (default 24) of the last suite run, or it updates
+in real time during the first N hours of the current run. 
+
+%h2 the live graph, an experimental visual suite monitoring tool that 
+updates in real time as the suite runs.
+
+
+%h3 Optional Output File
+an image file of type determined by the file extension will be written
+(and rewritten if the graph changes). See 'cylc [prep] graph --help' for
+more information on available file types.""")
     help.show()
 
 def search( b ):

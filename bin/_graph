@@ -91,8 +91,8 @@ if view_file:
         print >> sys.stderr, x
         sys.exit(1)
     window.connect( 'destroy', gtk.main_quit)
-    # checking for file changed not necessary for the run time graph:
-    # gobject.timeout_add(1000, window.update, file)
+    # checking periodically for file changed
+    gobject.timeout_add(1000, window.update, file)
     gtk.main()
     sys.exit(0)
 
@@ -136,5 +136,6 @@ try:
 except config.SuiteConfigError, x:
     raise SystemExit(x)
 window.connect( 'destroy', gtk.main_quit)
+# checking periodically for file changed
 gobject.timeout_add(1000, window.update)
 gtk.main()

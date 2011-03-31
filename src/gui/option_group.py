@@ -2,8 +2,6 @@
 
 import gtk
 
-# TO DO: derive from option_group:
-
 class controlled_option_group(object):
     def __init__( self, title, option=None ):
         self.title = title

@@ -4,9 +4,12 @@ description = NZLAM 3DVAR Suite
 # this is a demo suite with real task implementation stripped out.
 dummy mode only = True
 
-job submission log directory = running/logs/nzlam
+job submission log directory = $HOME/running/logs/nzlam
 job submission method = ll_basic
 use lockserver = True
+
+[experimental]
+    write live graph = True
 
 [special tasks]
     sequential = forecast

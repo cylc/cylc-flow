@@ -1,0 +1,14 @@
+Weird problem with multiple calls to pygraphviz.layout(prog='dot') 
+on the userguide suite:
+
+If I rewrite the runtime graph each time it is updated, instead of once
+at the end, with a call to layout() before each write, the cold start
+tasks get bigger and bigger with each write, but only if they are 'egg'
+shaped.
+
+????
+
+This may be a problem with the xdot viewer, on files that already have
+layout added. RESOLVED by not calling layout() before writing the graph.
+Calling layout() is not necessary if we're only writing to 'dot' format.
+

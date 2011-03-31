@@ -14,6 +14,7 @@ import helpwindow
 from gcapture import gcapture, gcapture_tmpfile
 from mkdir_p import mkdir_p
 from cylc_logviewer import cylc_logviewer
+from option_group import option_group, controlled_option_group
 
 #debug = True
 debug = False
@@ -928,8 +929,8 @@ The cylc forecast suite metascheduler.
     
             graph_item = gtk.MenuItem( '_Graph' )
             menu.append( graph_item )
-            graph_item.connect( 'activate', self.graph_suite_popup, reg )
-    
+            graph_item.connect( 'activate', self.graph_suite_popup, reg, suite_dir )
+
             search_item = gtk.MenuItem( '_Search' )
             menu.append( search_item )
             search_item.connect( 'activate', self.search_suite_popup, reg )
@@ -1584,8 +1585,7 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-
-    def graph_suite_popup( self, w, reg ):
+    def graph_suite_popup( self, w, reg, suite_dir ):
         try:
             from graphing import xdot
         except Exception, x:
@@ -1596,19 +1596,29 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "Dependency Graph '" + reg + "'")
 
+        box = gtk.HBox()
+        
+        suiterc_rb = gtk.RadioButton( None, "suite.rc" )
+        box.pack_start (suiterc_rb, True)
+        runtime_rb = gtk.RadioButton( suiterc_rb, "runtime" )
+        box.pack_start (runtime_rb, True)
+        live_rb = gtk.RadioButton( suiterc_rb, "live" )
+        box.pack_start (live_rb, True)
+        suiterc_rb.set_active(True)
+ 
         vbox = gtk.VBox()
+        vbox.pack_start(box, True)
 
-        warm_cb = gtk.CheckButton( "Warm Start" )
-        #runtime_cb = gtk.CheckButton( "Runtime Graph" )
-        vbox.pack_start (warm_cb, True)
-
-        label = gtk.Label("Output File" )
+        label = gtk.Label("Optional Output File" )
         outputfile_entry = gtk.Entry()
         hbox = gtk.HBox()
         hbox.pack_start( label )
         hbox.pack_start(outputfile_entry, True) 
         vbox.pack_start( hbox )
  
+        warm_cb = gtk.CheckButton( "Warm Start" )
+        vbox.pack_start (warm_cb, True)
+
         label = gtk.Label("Start Hour" )
         start_entry = gtk.Entry()
         start_entry.set_text( '0' )
@@ -1625,10 +1635,18 @@ The cylc forecast suite metascheduler.
         hbox.pack_start(stop_entry, True) 
         vbox.pack_start (hbox, True)
   
+        suiterc_rb.connect( "toggled", self.graph_type, "suiterc", 
+                warm_cb, start_entry, stop_entry )
+        runtime_rb.connect( "toggled", self.graph_type, "runtime", 
+                warm_cb, start_entry, stop_entry )
+        live_rb.connect( "toggled", self.graph_type, "live", 
+                warm_cb, start_entry, stop_entry )
+ 
         cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         ok_button = gtk.Button( "_Graph" )
-        ok_button.connect("clicked", self.graph_suite, reg,
+        ok_button.connect("clicked", self.graph_suite, reg, suite_dir,
+                suiterc_rb, runtime_rb, live_rb,
                 warm_cb, outputfile_entry, start_entry, stop_entry )
 
         help_button = gtk.Button( "_Help" )
@@ -1643,6 +1661,15 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
+    def graph_type( self, w, typ, warm_cb, start_ent, stop_ent ):
+        if typ == "suiterc" and w.get_active():
+            sensitive = True
+        else:
+            sensitive = False
+        warm_cb.set_sensitive(sensitive)
+        start_ent.set_sensitive(sensitive)
+        stop_ent.set_sensitive(sensitive)
+
     def search_suite( self, w, reg, nobin_cb, pattern_entry ):
         pattern = pattern_entry.get_text()
         options = ''
@@ -1653,30 +1680,44 @@ The cylc forecast suite metascheduler.
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def graph_suite( self, w, reg, warm_cb, outputfile_entry, start_entry, stop_entry ):
-        start = start_entry.get_text()
-        stop = stop_entry.get_text()
-        for h in start, stop:
-            try:
-                int(h)
-            except:
-                warning_dialog( "Hour must convert to integer: " + h ).warn()
-                return False
+    def graph_suite( self, w, reg, suite_dir, suiterc_rb, runtime_rb, live_rb,
+            warm_cb, outputfile_entry, start_entry, stop_entry ):
 
         options = ''
-
         ofile = outputfile_entry.get_text()
         if ofile != '':
             options += ' -o ' + ofile
 
-        if warm_cb.get_active():
-            options += ' -w '
+        if suiterc_rb.get_active():
+            start = start_entry.get_text()
+            stop = stop_entry.get_text()
+            for h in start, stop:
+                try:
+                    int(h)
+                except:
+                    warning_dialog( "Hour must convert to integer: " + h ).warn()
+                    return False
+            if warm_cb.get_active():
+                options += ' -w '
+            options += ' ' + reg + ' ' + start + ' ' + stop
 
-        # TO DO 1/ use non-shell non-blocking launch here?
-        # TO DO 2/ instead of external process make part of this app?
-        # Would have to launch in own thread as xdot is interactive?
-        # Probably not necessary ... same goes for controller actually?
-        command = "cylc graph " + options + ' ' + reg + ' ' + start + ' ' + stop
+        elif runtime_rb.get_active():
+            options += ' -r ' + reg
+
+        elif live_rb.get_active():
+            options += ' -f ' + os.path.join( suite_dir, 'graphing', 'live.dot' )
+
+        command = "cylc graph " + options
+        foo = gcapture_tmpfile( command, self.tmpdir )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
+    def graph_suite_runtime( self, w, reg, outputfile_entry ):
+        options = ''
+        ofile = outputfile_entry.get_text()
+        if ofile != '':
+            options += ' -o ' + ofile
+        command = "cylc graph -r " + options + ' ' + reg
         foo = gcapture_tmpfile( command, self.tmpdir )
         self.gcapture_windows.append(foo)
         foo.run()

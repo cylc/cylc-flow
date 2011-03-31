@@ -606,6 +606,8 @@ class scheduler(object):
                         continue
                 if itask.run_if_ready():
                     if not graphing_disabled and not self.graph_finalized:
+                        # add tasks to the runtime graph at the point
+                        # when they start running.
                         self.update_graph( itask )
 
     def spawn( self ):
@@ -1353,7 +1355,10 @@ class scheduler(object):
             #for id in task.get_resolved_dependencies():
             #        graph.add_edge( id, task.id )
 
-        graph.layout(prog="dot")
+        # layout adds positions to nodes etc.; this is not required if
+        # we're writing to the 'dot' format, which must be process later
+        # by the dot layout engine anyway.
+        # graph.layout(prog="dot")
         if self.config["experimental"]["live graph movie"]:
             self.live_graph_count += 1
             graph.write( os.path.join( self.suite_dir, 'graphing', 'live' + '-' + str( self.live_graph_count ) + '.dot' ))
@@ -1379,18 +1384,22 @@ class scheduler(object):
         if cycle_time.diff_hours( self.get_oldest_c_time(), self.start_time ) >= self.graph_cutoff:
             self.finalize_graph()
             return
-        # ignore task if its  ctime more than configured hrs beyond suite start time?
+        # ignore task if its ctime more than configured hrs beyond suite start time?
         if cycle_time.diff_hours( task.c_time, self.start_time ) >= self.graph_cutoff:
             return
         for id in task.get_resolved_dependencies():
             l = id
             r = task.id 
             self.graph.add_edge( l,r )
+            self.write_graph()
+
+    def write_graph( self ):
+        #print "Writing graph", self.graph_file
+        self.graph.write( self.graph_file )
 
     def finalize_graph( self ):
-        if self.graph_finalized:
-            return
-        print "Finalizing graph", self.graph_file
-        self.graph.layout(prog="dot")
-        self.graph.write( self.graph_file )
+        #if self.graph_finalized:
+        #    return
+        #print "Finalizing graph", self.graph_file
+        self.write_graph()
         self.graph_finalized = True

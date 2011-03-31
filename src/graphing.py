@@ -14,6 +14,8 @@ class GraphvizError( Exception ):
     def __str__( self ):
         return repr(self.msg)
 
+# TO DO: CONSOLIDATE THE FOLLOWING TESTS WITH THE OTHER GRAPH-DISABLING
+# TESTS IN CYLC.
 try:
     import pygraphviz
 except ImportError:
