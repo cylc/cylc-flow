@@ -33,6 +33,14 @@ Arguments:
   START   - Hour (HH) at which to start plotting.
   STOP    - Hours beyond START at which to stop plotting (default 6).
   """)
+
+parser.add_option( "-l", "--live", 
+    help="Update image in real time if the source file changes. Otherwise "
+    "the user can hit the viewer Refresh button.  This option is OFF by "
+    "default because the graph will recenter when refreshed, which is "
+    "unhelpful if you are studying a panned, zoomed image.",
+    action="store_true", default=False, dest="updatelive" )
+
 parser.add_option( "-w", "--warmstart", 
     help="Plot the raw start graph instead of cold start.",
     action="store_true", default=False, dest="rawstart" )
@@ -91,8 +99,9 @@ if view_file:
         print >> sys.stderr, x
         sys.exit(1)
     window.connect( 'destroy', gtk.main_quit)
-    # checking periodically for file changed
-    gobject.timeout_add(1000, window.update, file)
+    if options.updatelive:
+        # checking periodically for file changed
+        gobject.timeout_add(1000, window.update, file)
     gtk.main()
     sys.exit(0)
 
@@ -136,6 +145,7 @@ try:
 except config.SuiteConfigError, x:
     raise SystemExit(x)
 window.connect( 'destroy', gtk.main_quit)
-# checking periodically for file changed
-gobject.timeout_add(1000, window.update)
+if options.updatelive:
+    # checking periodically for file changed
+    gobject.timeout_add(1000, window.update)
 gtk.main()
