@@ -17,6 +17,8 @@ use suite blocking = False
 use secure passphrase = False
 use lockserver = False
 
+[experimental]
+    write live graph = True
 
 [task insertion groups]
 nzlam_coldstart_with_download = ext_check_dump_ukmet, ext_get_dump_ukmet, unpack_globaldump, UM_GLtoGL_recon, UM_GLtoNZ_recon, UM_nzlam_coldstart
