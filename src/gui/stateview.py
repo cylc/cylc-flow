@@ -30,6 +30,7 @@ def compare_dict_of_dict( one, two ):
     return True
 
 def markup( col, string ):
+    #return string
     return '<span foreground="' + col + '">' + string + '</span>'
 
 def get_col( state ):
@@ -60,7 +61,7 @@ def get_col_priority( priority ):
 class updater(threading.Thread):
 
     def __init__(self, suite, owner, host, port, imagedir,
-            led_liststore, fl_liststore, ttreestore, task_list,
+            led_liststore, ttreestore, task_list,
             label_mode, label_status, label_time ):
 
         super(updater, self).__init__()
@@ -77,7 +78,6 @@ class updater(threading.Thread):
         self.mode = "waiting..."
         self.dt = "waiting..."
 
-        self.fl_liststore = fl_liststore
         self.ttreestore = ttreestore
         self.led_liststore = led_liststore
         self.task_list = task_list
@@ -115,7 +115,6 @@ class updater(threading.Thread):
     def connection_lost( self ):
         #self.led_liststore.clear()
         self.ttreestore.clear()
-        self.fl_liststore.clear()
         self.status = "NO CONNECTION"
         self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
         self.label_status.set_text( self.status )
@@ -203,57 +202,6 @@ class updater(threading.Thread):
 
     def update_gui( self ):
         #print "Updating GUI"
-
-        new_data = {}
-        for id in self.state_summary:
-            state = self.state_summary[ id ][ 'state' ]
-            message = self.state_summary[ id ][ 'latest_message' ]
-            priority = self.state_summary[ id ][ 'latest_message_priority' ]
-            message = markup( get_col_priority(priority), message )
-            tsub = self.state_summary[ id ][ 'submitted_time' ]
-            tstt = self.state_summary[ id ][ 'started_time' ]
-            meant = self.state_summary[ id ][ 'mean total elapsed time' ]
-            tetc = self.state_summary[ id ][ 'Tetc' ]
-            state = markup( get_col(state), state )
-            new_data[id] = [ state, message, tsub, tstt, meant, tetc ]
- 
-        list_data = {}
-        iter = self.fl_liststore.get_iter_first()
-        while iter:
-            row = []
-            for col in range( self.fl_liststore.get_n_columns() ):
-                row.append( self.fl_liststore.get_value( iter, col) )
-
-            [ctime, name, state, message, tsub, tstt, meant, tetc ] = row
-            id = name + '%' + ctime 
-            list_data[ id ] = [ state, message, tsub, tstt, meant, tetc ]
-
-            if id not in new_data:
-                # id no longer in suite, remove from view
-                #print "REMOVING", id
-                result = self.fl_liststore.remove( iter )
-                if not result:
-                    iter = None
-            elif new_data[ id ] != list_data[ id ]:
-                #print "CHANGING", id
-                # id still in suite but data changed, so replace it
-                self.fl_liststore.append( [ ctime, name ] + new_data[ id ] )
-                result = self.fl_liststore.remove( iter )
-                if not result:
-                    iter = None
-            else:
-                # id still exists and data has not changed
-                #print "UNCHANGED", id
-                iter = self.fl_liststore.iter_next( iter )
-            
-        # add any new data    
-        for id in new_data:
-            name, ctime = id.split( '%' )
-            if id not in list_data:
-                #print "ADDING", id
-                self.fl_liststore.append( [ ctime, name ] + new_data[ id ] )
-
-        # EXPANDING TREE VIEW
         new_data = {}
         for id in self.state_summary:
             name, ctime = id.split( '%' )
@@ -366,7 +314,6 @@ class updater(threading.Thread):
                 if not ch_iter:
                     #print "  adding", name, "to", ctime
                     self.ttreestore.append( p_iter, [ name ] + new_data[ctime][name] )
-                    
 
         # LED VIEW
         self.led_liststore.clear()
