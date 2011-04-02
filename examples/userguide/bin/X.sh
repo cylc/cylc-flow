@@ -8,12 +8,10 @@ cylc checkvars -c OUTPUT_DIR
 echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE"
 sleep $TASK_EXE_SECONDS
 
-echo "XXXXXXXXXXX $TEST_X_FAIL_TIME"
 if [[ ! -z $TEST_X_FAIL_TIME ]]; then
-    # required by the scheduler test script
-    echo $TEST_X_FAIL_TIME $CYCLE_TIME
+    # THIS IS REQUIRED BY THE SCHEDULER TEST SCRIPT
     if [[ $TEST_X_FAIL_TIME = $CYCLE_TIME ]]; then
-        echo "ABORTING BY SUITE OWNER REQUEST!" >&2
+        echo "ABORTING SUITE BY REQUEST (\$TEST_X_FAIL_TIME)!" >&2
         exit 1
     fi
 fi
