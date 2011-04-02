@@ -52,7 +52,7 @@ class ControlApp(object):
 
     def check_tfilter_buttons(self, tb):
         del self.tfilter_states[:]
-        for b in self.tfilter_buttonbox.get_children():
+        for b in self.tfilterbox.get_children():
             if not b.get_active():
                 # sub '_' from button label keyboard mnemonics
                 self.tfilter_states.append( re.sub('_', '', b.get_label()))
@@ -334,7 +334,7 @@ The cylc forecast suite metascheduler.
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
         sw.add( self.ttreeview )
 
-        self.tfilter_buttonbox = gtk.HButtonBox()
+        self.tfilterbox = gtk.HBox()
 
         # allow filtering out of 'finished' and 'waiting'
         all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
@@ -349,15 +349,13 @@ The cylc forecast suite metascheduler.
         self.tfilter_states = [ 'waiting', 'finished' ]
 
         for st in all_states:
-            b = gtk.ToggleButton( labels[st] )
-            self.tfilter_buttonbox.pack_start(b)
+            b = gtk.CheckButton( labels[st] )
+            self.tfilterbox.pack_start(b)
             if st in self.tfilter_states:
                 b.set_active(False)
             else:
                 b.set_active(True)
             b.connect('toggled', self.check_tfilter_buttons)
-
-        self.tfilter_buttonbox.set_layout( gtk.BUTTONBOX_END )
 
         hbox = gtk.HBox()
         eb = gtk.EventBox()
@@ -382,7 +380,7 @@ The cylc forecast suite metascheduler.
         ahbox = gtk.HBox()
         ahbox.pack_start( bbox, True )
         ahbox.pack_start( self.filter_entry, True )
-        ahbox.pack_start( self.tfilter_buttonbox, True)
+        ahbox.pack_start( self.tfilterbox, True)
 
         vbox = gtk.VBox()
         vbox.pack_start( hbox, False )
