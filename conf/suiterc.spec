@@ -63,7 +63,7 @@ task execution timeout minutes = float( default=None )
 tasks to include at startup = force_list( default=list())
 tasks to exclude at startup = force_list( default=list())
 
-[ dummy mode ]
+[dummy mode]
 # dummy mode was most useful prior to cylc-3: it allowed us to get the
 # scheduling right without running real tasks when a suite was defined
 # entirely by a collection of distinct "task definition files" whose
@@ -76,7 +76,7 @@ clock rate in seconds per dummy hour = integer( default=10 )
 task run time in seconds = integer( default=10 )
 job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
 
-[ special tasks ]
+[special tasks]
     startup = force_list( default=list())
     coldstart = force_list( default=list())
     oneoff = force_list( default=list())
@@ -85,19 +85,18 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
     # outputs MUST contain the word 'restart':
     models with explicit restart outputs = force_list( default=list())
 
-[ task families ]
+[task families]
     __many__ = force_list( default=None )
 
-[ dependencies ]
+[dependencies]
     # dependency graphs under cycle time lists:
-    [[ __many__ ]]
+    [[__many__]]
     graph = string
 
 [experimental]
 # suite monitoring via dependency graph
 write live graph = boolean( default=False )
 live graph movie = boolean( default=False )
-
 # absolute, or relative to $CYLC_SUITE_DIR for portability
 live graph directory path = string( default='$CYLC_SUITE_DIR/graphing')
 
@@ -119,10 +118,10 @@ default edge attributes = force_list( default=list('color=black'))
     # item is task name or task group name
     __many__ = force_list( default=list())
 
-[ task insertion groups ]
+[task insertion groups]
  __many__ = force_list()
 
-[ environment ]
+[environment]
 __many__ = string
 
 # CONFIGOBJ or VALIDATE BUG? LIST CONSTRUCTOR FAILS IF LAST LIST ELEMENT
@@ -132,9 +131,9 @@ __many__ = string
 #   BAD:
 # bar = string_list( default=list('foo','bar' ))
 
-[ tasks ]
+[tasks]
     # new style suite definition: dependency graph plus minimal task info
-    [[ __many__ ]]
+    [[__many__]]
     description = string( default="No task description supplied" )
     job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=None)
     task submitted hook = string( default=None )
@@ -156,9 +155,9 @@ __many__ = string
     # graph; if present graphed hours must not conflict with this.
     hours = force_list( default=list())
     extra log files = force_list( default=list())
-        [[[ environment ]]]
+        [[[environment]]]
         __many__ = string
-        [[[ directives ]]]
+        [[[directives]]]
         __many__ = string
-          [[[ outputs ]]]
+          [[[outputs]]]
         __many__ = string
