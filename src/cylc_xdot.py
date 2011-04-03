@@ -109,3 +109,104 @@ class MyDotWindow( xdot.DotWindow ):
         return True
 
 
+class xdot_widgets(object):
+    def __init__(self):
+        self.graph = xdot.Graph()
+
+        self.vbox = gtk.VBox()
+
+        self.widget = xdot.DotWidget()
+
+        open_button = gtk.Button( 'Open' )
+        open_button.connect( 'clicked', self.on_open)
+        reload_button = gtk.Button( 'Reload' )
+        reload_button.connect('clicked', self.on_reload),
+        zoomin_button = gtk.Button( 'Zoom In' )
+        zoomin_button.connect('clicked', self.widget.on_zoom_in)
+        zoomout_button = gtk.Button( 'Zoom Out' )
+        zoomout_button.connect('clicked', self.widget.on_zoom_out)
+        zoomfit_button = gtk.Button( 'Best Fit' )
+        zoomfit_button.connect('clicked', self.widget.on_zoom_fit)
+        zoom100_button = gtk.Button( '1:1' )
+        zoom100_button.connect('clicked', self.widget.on_zoom_100)
+
+        bbox = gtk.HButtonBox()
+        bbox.add( open_button )
+        bbox.add( reload_button )
+        bbox.add( zoomin_button )
+        bbox.add( zoomout_button )
+        bbox.add( zoomfit_button )
+        bbox.add( zoom100_button )
+        bbox.set_layout(gtk.BUTTONBOX_START)
+
+        self.vbox.pack_start(bbox, False)
+        self.vbox.pack_start(self.widget)
+
+    def get( self ):
+        return self.vbox
+
+    def update(self, filename):
+        import os
+        if not hasattr(self, "last_mtime"):
+            self.last_mtime = None
+
+        current_mtime = os.stat(filename).st_mtime
+        if current_mtime != self.last_mtime:
+            self.last_mtime = current_mtime
+            self.open_file(filename)
+
+        return True
+
+    def set_filter(self, filter):
+        self.widget.set_filter(filter)
+
+    def set_dotcode(self, dotcode, filename='<stdin>'):
+        if self.widget.set_dotcode(dotcode, filename):
+            self.set_title(os.path.basename(filename) + ' - Dot Viewer')
+            self.widget.zoom_to_fit()
+
+    def set_xdotcode(self, xdotcode, filename='<stdin>'):
+        if self.widget.set_xdotcode(xdotcode):
+            self.set_title(os.path.basename(filename) + ' - Dot Viewer')
+            self.widget.zoom_to_fit()
+
+    def open_file(self, filename):
+        try:
+            fp = file(filename, 'rt')
+            self.set_dotcode(fp.read(), filename)
+            fp.close()
+        except IOError, ex:
+            dlg = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
+                                    message_format=str(ex),
+                                    buttons=gtk.BUTTONS_OK)
+            dlg.set_title('Dot Viewer')
+            dlg.run()
+            dlg.destroy()
+
+    def on_open(self, action):
+        chooser = gtk.FileChooserDialog(title="Open dot File",
+                                        action=gtk.FILE_CHOOSER_ACTION_OPEN,
+                                        buttons=(gtk.STOCK_CANCEL,
+                                                 gtk.RESPONSE_CANCEL,
+                                                 gtk.STOCK_OPEN,
+                                                 gtk.RESPONSE_OK))
+        chooser.set_default_response(gtk.RESPONSE_OK)
+        filter = gtk.FileFilter()
+        filter.set_name("Graphviz dot files")
+        filter.add_pattern("*.dot")
+        chooser.add_filter(filter)
+        filter = gtk.FileFilter()
+        filter.set_name("All files")
+        filter.add_pattern("*")
+        chooser.add_filter(filter)
+        if chooser.run() == gtk.RESPONSE_OK:
+            filename = chooser.get_filename()
+            chooser.destroy()
+            self.open_file(filename)
+        else:
+            chooser.destroy()
+
+    def on_reload(self, action):
+        self.widget.reload()
+
+

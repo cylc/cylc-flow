@@ -1,30 +1,89 @@
 #!/usr/bin/env python
 
+import gtk
+import pygtk
+#pygtk.require('2.0')
+import pango
+import os, re
+import Pyro.errors
+import gobject
 import subprocess
 import helpwindow
-import pango
 from stateview import updater
 from combo_logviewer import combo_logviewer
 from warning_dialog import warning_dialog, info_dialog
 from port_scan import SuiteIdentificationError
-import Pyro.errors
-import gobject
-import pygtk
-####pygtk.require('2.0')
-import gtk
-import time, os, re, sys
-from CylcOptionParsers import NoPromptOptionParser_u
 import cylc_pyro_client
-from cycle_time import _rt_to_dt, is_valid
+from cycle_time import is_valid
 from execute import execute
-from option_group import option_group, controlled_option_group
+from option_group import controlled_option_group
 from config import config
 from color_rotator import rotator
-import datetime
 from cylc_logviewer import cylc_logviewer
 from textload import textload
+from cylc_xdot import xdot_widgets
 
 class ControlApp(object):
+
+    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
+        self.readonly = readonly
+        self.logdir = logging_dir
+        self.suite_dir = suite_dir
+        self.tfilt = ''
+
+        self.suite = suite
+        self.host = host
+        self.port = port
+        self.owner = owner
+        self.imagedir = imagedir
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        #self.window.set_border_width( 5 )
+        if self.readonly:
+            self.window.set_title("cylc view <" + self.suite + "> (READONLY)" )
+        else:
+            self.window.set_title("gcylc <" + self.suite + ">" )
+        self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
+        self.window.set_size_request(800, 500)
+        self.window.connect("delete_event", self.delete_event)
+
+        self.log_colors = rotator()
+
+        # Get list of tasks in the suite
+        self.preload_task_list()
+
+        self.create_menu()
+        bigbox = gtk.VBox()
+        bigbox.pack_start( self.menu_bar, False )
+        hbox = gtk.HBox()
+        hbox.pack_start( self.create_info_bar(), True )
+        bigbox.pack_start( hbox, False )
+
+        main_panes = gtk.VPaned()
+        main_panes.set_position(200)
+        #main_panes.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ))
+        main_panes.add1( self.ledview_widgets())
+        main_panes.add2( self.treeview_widgets())
+
+        self.quitters = []
+        self.connection_lost = False
+        self.t = updater( self.suite, self.owner, self.host, self.port,
+                self.imagedir, self.led_treeview.get_model(),
+                self.ttreestore, self.task_list, self.label_mode,
+                self.label_status, self.label_time )
+
+        self.full_task_headings()
+        #print "Starting task state info thread"
+        self.t.start()
+
+        #if True:
+        if False:
+            bigbox.pack_start( main_panes, True )
+        else:
+            # embed
+            bigbox.pack_start( xdot_widgets().get(), True )
+
+        self.window.add( bigbox )
+        self.window.show_all()
 
     def visible_cb(self, model, iter ):
         # visibility determined by state matching active toggle buttons
@@ -252,8 +311,7 @@ The cylc forecast suite metascheduler.
         treeview = gtk.TreeView( liststore )
         treeview.get_selection().set_mode( gtk.SELECTION_NONE )
 
-        # this is how to set background color of the entire treeview to black
-        # (but we're not using a black background anymore)
+        # this is how to set background color of the entire treeview to black:
         #treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) ) 
 
         tvc = gtk.TreeViewColumn( 'Cycle Time' )
@@ -600,7 +658,6 @@ The cylc forecast suite metascheduler.
         self.update_tb( tb, 'red', [red] )
         self.update_tb( tb, '=> NOT completed)\n') 
 
-
         if len( out ) == 0:
             self.update_tb( tb, ' - (None)\n')
         for item in out:
@@ -716,7 +773,7 @@ The cylc forecast suite metascheduler.
                 stoptime_entry )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", help_window.stop_guide )
+        help_button.connect("clicked", helpwindow.stop_guide )
 
         hbox = gtk.HBox()
         hbox.pack_start( stop_button, False )
@@ -829,7 +886,6 @@ The cylc forecast suite metascheduler.
 
         window.add( vbox )
         window.show_all()
-
 
     def popup_purge( self, b, task_id ):
         window = gtk.Window()
@@ -1045,8 +1101,6 @@ The cylc forecast suite metascheduler.
         view_menu.append( log_item )
         log_item.connect( 'activate', self.view_log )
 
-
-
         start_menu = gtk.Menu()
         start_menu_root = gtk.MenuItem( '_Control' )
         start_menu_root.set_submenu( start_menu )
@@ -1175,64 +1229,6 @@ The cylc forecast suite metascheduler.
         suiterc = config( self.suite )
         self.task_list = suiterc.get_full_task_name_list()
         self.use_block = suiterc['use suite blocking']
-
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
-        self.readonly = readonly
-        self.logdir = logging_dir
-        self.suite_dir = suite_dir
-        self.tfilt = ''
-
-        self.suite = suite
-        self.host = host
-        self.port = port
-        self.owner = owner
-        self.imagedir = imagedir
-        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        #self.window.set_border_width( 5 )
-        if self.readonly:
-            self.window.set_title("cylc view <" + self.suite + "> (READONLY)" )
-        else:
-            self.window.set_title("gcylc <" + self.suite + ">" )
-        self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
-        self.window.set_size_request(800, 500)
-        self.window.connect("delete_event", self.delete_event)
-
-        self.log_colors = rotator()
-
-        # Get list of tasks in the suite
-        self.preload_task_list()
-
-        main_panes = gtk.VPaned()
-        main_panes.set_position(200)
-        #main_panes.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ))
-        main_panes.add1( self.ledview_widgets())
-        main_panes.add2( self.treeview_widgets())
-
-        self.create_menu()
-
-        self.full_task_headings()
-
-        bigbox = gtk.VBox()
-        bigbox.pack_start( self.menu_bar, False )
-        hbox = gtk.HBox()
-        hbox.pack_start( self.create_info_bar(), True )
-        bigbox.pack_start( hbox, False )
-        bigbox.pack_start( main_panes, True )
-        self.window.add( bigbox )
-
-        self.window.show_all()
-
-        self.quitters = []
-
-        self.connection_lost = False
-
-        self.t = updater( self.suite, self.owner, self.host, self.port,
-                self.imagedir, self.led_treeview.get_model(),
-                self.ttreestore, self.task_list, self.label_mode,
-                self.label_status, self.label_time )
-
-        #print "Starting task state info thread"
-        self.t.start()
 
     def view_log( self, w ):
         suiterc = config( self.suite )
