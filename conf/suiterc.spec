@@ -94,11 +94,8 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
     graph = string
 
 [experimental]
-# suite monitoring via dependency graph
-write live graph = boolean( default=False )
+# generate a distinct graph for each timestep
 live graph movie = boolean( default=False )
-# absolute, or relative to $CYLC_SUITE_DIR for portability
-live graph directory path = string( default='$CYLC_SUITE_DIR/graphing')
 
 [visualization]
 # hours after which to stop plotting the run time graph

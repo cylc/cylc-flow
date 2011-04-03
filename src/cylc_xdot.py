@@ -117,27 +117,28 @@ class xdot_widgets(object):
 
         self.widget = xdot.DotWidget()
 
-        open_button = gtk.Button( 'Open' )
-        open_button.connect( 'clicked', self.on_open)
-        reload_button = gtk.Button( 'Reload' )
-        reload_button.connect('clicked', self.on_reload),
-        zoomin_button = gtk.Button( 'Zoom In' )
+        #open_button = gtk.Button( stock=gtk.STOCK_OPEN )
+        #open_button.connect( 'clicked', self.on_open)
+        #reload_button = gtk.Button( stock=gtk.STOCK_REFRESH )
+        #reload_button.connect('clicked', self.on_reload),
+        zoomin_button = gtk.Button( stock=gtk.STOCK_ZOOM_IN )
         zoomin_button.connect('clicked', self.widget.on_zoom_in)
-        zoomout_button = gtk.Button( 'Zoom Out' )
+        zoomout_button = gtk.Button( stock=gtk.STOCK_ZOOM_OUT )
         zoomout_button.connect('clicked', self.widget.on_zoom_out)
-        zoomfit_button = gtk.Button( 'Best Fit' )
+        zoomfit_button = gtk.Button( stock=gtk.STOCK_ZOOM_FIT )
         zoomfit_button.connect('clicked', self.widget.on_zoom_fit)
-        zoom100_button = gtk.Button( '1:1' )
+        zoom100_button = gtk.Button( stock=gtk.STOCK_ZOOM_100 )
         zoom100_button.connect('clicked', self.widget.on_zoom_100)
 
         bbox = gtk.HButtonBox()
-        bbox.add( open_button )
-        bbox.add( reload_button )
+        #bbox.add( open_button )
+        #bbox.add( reload_button )
         bbox.add( zoomin_button )
         bbox.add( zoomout_button )
         bbox.add( zoomfit_button )
         bbox.add( zoom100_button )
-        bbox.set_layout(gtk.BUTTONBOX_START)
+        #bbox.set_layout(gtk.BUTTONBOX_END)
+        bbox.set_layout(gtk.BUTTONBOX_SPREAD)
 
         self.vbox.pack_start(bbox, False)
         self.vbox.pack_start(self.widget)
@@ -162,12 +163,12 @@ class xdot_widgets(object):
 
     def set_dotcode(self, dotcode, filename='<stdin>'):
         if self.widget.set_dotcode(dotcode, filename):
-            self.set_title(os.path.basename(filename) + ' - Dot Viewer')
+            #self.set_title(os.path.basename(filename) + ' - Dot Viewer')
             self.widget.zoom_to_fit()
 
     def set_xdotcode(self, xdotcode, filename='<stdin>'):
         if self.widget.set_xdotcode(xdotcode):
-            self.set_title(os.path.basename(filename) + ' - Dot Viewer')
+            #self.set_title(os.path.basename(filename) + ' - Dot Viewer')
             self.widget.zoom_to_fit()
 
     def open_file(self, filename):

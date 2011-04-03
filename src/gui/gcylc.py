@@ -1602,8 +1602,6 @@ The cylc forecast suite metascheduler.
         box.pack_start (suiterc_rb, True)
         runtime_rb = gtk.RadioButton( suiterc_rb, "runtime" )
         box.pack_start (runtime_rb, True)
-        live_rb = gtk.RadioButton( suiterc_rb, "live" )
-        box.pack_start (live_rb, True)
         suiterc_rb.set_active(True)
  
         vbox = gtk.VBox()
@@ -1639,14 +1637,12 @@ The cylc forecast suite metascheduler.
                 warm_cb, start_entry, stop_entry )
         runtime_rb.connect( "toggled", self.graph_type, "runtime", 
                 warm_cb, start_entry, stop_entry )
-        live_rb.connect( "toggled", self.graph_type, "live", 
-                warm_cb, start_entry, stop_entry )
  
         cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         ok_button = gtk.Button( "_Graph" )
         ok_button.connect("clicked", self.graph_suite, reg, suite_dir,
-                suiterc_rb, runtime_rb, live_rb,
+                suiterc_rb, runtime_rb, 
                 warm_cb, outputfile_entry, start_entry, stop_entry )
 
         help_button = gtk.Button( "_Help" )
@@ -1680,7 +1676,7 @@ The cylc forecast suite metascheduler.
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def graph_suite( self, w, reg, suite_dir, suiterc_rb, runtime_rb, live_rb,
+    def graph_suite( self, w, reg, suite_dir, suiterc_rb, runtime_rb, 
             warm_cb, outputfile_entry, start_entry, stop_entry ):
 
         options = ''
@@ -1703,9 +1699,6 @@ The cylc forecast suite metascheduler.
 
         elif runtime_rb.get_active():
             options += ' -r ' + reg
-
-        elif live_rb.get_active():
-            options += ' -f ' + os.path.join( suite_dir, 'graphing', 'live.dot' )
 
         command = "cylc graph " + options
         foo = gcapture_tmpfile( command, self.tmpdir )

@@ -64,26 +64,35 @@ class ControlApp(object):
         main_panes.add1( self.ledview_widgets())
         main_panes.add2( self.treeview_widgets())
 
+        self.graphw = xdot_widgets()
+
         self.quitters = []
         self.connection_lost = False
         self.t = updater( self.suite, self.owner, self.host, self.port,
                 self.imagedir, self.led_treeview.get_model(),
                 self.ttreestore, self.task_list, self.label_mode,
-                self.label_status, self.label_time )
+                self.label_status, self.label_time, self.graphw )
 
         self.full_task_headings()
         #print "Starting task state info thread"
         self.t.start()
+
+        #self.livegraph_file = os.path.join( self.suite_dir, 'graphing', 'live.dot')
 
         #if True:
         if False:
             bigbox.pack_start( main_panes, True )
         else:
             # embed
-            bigbox.pack_start( xdot_widgets().get(), True )
+            bigbox.pack_start( self.graphw.get(), True )
 
         self.window.add( bigbox )
         self.window.show_all()
+
+    def update_graph( self ):
+        if self.livegraph:
+            print self.livegraph.to_string()
+            self.graphw.set_dotcode( self.livegraph, 'foo' )
 
     def visible_cb(self, model, iter ):
         # visibility determined by state matching active toggle buttons

@@ -111,8 +111,8 @@ class scheduler(object):
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD (PROVIDED IN DERIVED CLASSES) 
         self.load_tasks()
         if not graphing_disabled:
-            self.initialize_graph()
-        self.live_graph_count = 0
+            self.initialize_runtime_graph()
+        self.live_graph_frame_count = 0
 
     def parse_commandline( self ):
         # SUITE NAME
@@ -314,12 +314,15 @@ class scheduler(object):
         arclen = self.config[ 'number of state dump backups' ]
         self.state_dump_archive = rolling_archive( self.state_dump_filename, arclen )
 
+        self.live_graph = graphing.CGraphPlain( self.suite )
+
         # REMOTE CONTROL INTERFACE
         # TO DO: DO WE NEED TO LOAD TASK LIST FIRST?
         # TO DO: THIS IS CLUNKY - PASSING IN SELF TO GIVE ACCESS TO TASK
         # POOL METHODS.
         self.remote = remote_switch( self.config, self.clock, self.suite_dir, self, self.failout_task_id )
         self.pyro.connect( self.remote, 'remote' )
+
 
     def print_banner( self ):
         print "_______________________________________________"
@@ -395,9 +398,8 @@ class scheduler(object):
                 self.cleanup()
                 self.spawn()
                 self.dump_state()
-                if self.config['experimental']['write live graph']:
-                    if not graphing_disabled:
-                        self.write_live_graph()
+                if not graphing_disabled:
+                    self.construct_live_graph()
 
                 self.suite_state.update( self.tasks, self.clock, \
                         self.paused(), self.will_pause_at(), \
@@ -485,7 +487,7 @@ class scheduler(object):
             self.pyro.shutdown()
 
         if not graphing_disabled:
-            self.finalize_graph()
+            self.finalize_runtime_graph()
 
     def get_tasks( self ):
         return self.tasks
@@ -533,11 +535,9 @@ class scheduler(object):
         for itask in self.tasks:
             #if itask.state.is_failed():  # uncomment for earliest NON-FAILED 
             #    continue
-
-            # avoid daemon tasks
             if hasattr( itask, 'daemon_task' ):
+                # avoid daemon tasks
                 continue
-
             if int( itask.c_time ) < int( oldest ):
                 oldest = itask.c_time
         return oldest
@@ -605,10 +605,10 @@ class scheduler(object):
                         self.log.debug( 'not asking ' + itask.id + ' to run (' + self.pause_time + ' hold in place)' )
                         continue
                 if itask.run_if_ready():
-                    if not graphing_disabled and not self.graph_finalized:
+                    if not graphing_disabled and not self.runtime_graph_finalized:
                         # add tasks to the runtime graph at the point
                         # when they start running.
-                        self.update_graph( itask )
+                        self.update_runtime_graph( itask )
 
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
@@ -1306,7 +1306,7 @@ class scheduler(object):
             outlist.append( name ) 
         return outlist
 
-    def write_live_graph( self ):
+    def construct_live_graph( self ):
         # To do: check edges against resolved ones
         # (adding new ones, and nodes, if necessary)
 
@@ -1319,17 +1319,17 @@ class scheduler(object):
             raw = False
 
         diffhrs = cycle_time.diff_hours( newest, oldest ) + 1
-        #if diffhrs < 25:
-        #    diffhrs = 25
-        graph = self.config.get_graph( oldest, diffhrs, colored=False, raw=raw ) 
+        if diffhrs < 25:
+            diffhrs = 25
+        self.live_graph = self.config.get_graph( oldest, diffhrs, colored=False, raw=raw ) 
 
         for task in self.tasks:
             #print task.id
             try:
-                node = graph.get_node( task.id )
+                node = self.live_graph.get_node( task.id )
             except KeyError:
                 if hasattr( task, 'member_of' ):
-                    # OK: mmember of a family
+                    # OK: member of a family
                     pass
                 else:
                     print 'WARNING: NOT IN GRAPH', task.id
@@ -1353,53 +1353,54 @@ class scheduler(object):
                 node.attr['fillcolor'] = 'red'
 
             #for id in task.get_resolved_dependencies():
-            #        graph.add_edge( id, task.id )
+            #        self.live_graph.add_edge( id, task.id )
 
         # layout adds positions to nodes etc.; this is not required if
         # we're writing to the 'dot' format, which must be process later
         # by the dot layout engine anyway.
-        # graph.layout(prog="dot")
+        # self.live_graph.layout(prog="dot")
         if self.config["experimental"]["live graph movie"]:
-            self.live_graph_count += 1
-            graph.write( os.path.join( self.suite_dir, 'graphing', 'live' + '-' + str( self.live_graph_count ) + '.dot' ))
-        else:
-            graph.write( os.path.join( self.suite_dir, 'graphing', 'live.dot' ))
+            self.live_graph_frame_count += 1
+            self.live_graph.write( self.config["visualization"]["run time graph directory"], 'live' + '-' + str( self.live_graph_frame_count ) + '.dot' )
 
-    def initialize_graph( self ):
+    def get_live_graph(self):
+        return self.live_graph.to_string()
+
+    def initialize_runtime_graph( self ):
         title = 'suite ' + self.suite + ' run-time dependency graph'
-        self.graph_file = \
+        self.runtime_graph_file = \
                 os.path.join( self.config['visualization']['run time graph directory'],
                               self.config['visualization']['run time graph filename'] )
-        self.graph = graphing.CGraph( title, self.config['visualization'] )
-        self.graph_finalized = False
+        self.runtime_graph = graphing.CGraph( title, self.config['visualization'] )
+        self.runtime_graph_finalized = False
         if not self.start_time:
             # only do cold and warmstarts for now.
-            self.graph_finalized = True
-        self.graph_cutoff = self.config['visualization']['when to stop updating']
+            self.runtime_graph_finalized = True
+        self.runtime_graph_cutoff = self.config['visualization']['when to stop updating']
 
-    def update_graph( self, task ):
-        if self.graph_finalized:
+    def update_runtime_graph( self, task ):
+        if self.runtime_graph_finalized:
             return
         # stop if all tasks are more than configured hours beyond suite start time
-        if cycle_time.diff_hours( self.get_oldest_c_time(), self.start_time ) >= self.graph_cutoff:
-            self.finalize_graph()
+        if cycle_time.diff_hours( self.get_oldest_c_time(), self.start_time ) >= self.runtime_graph_cutoff:
+            self.finalize_runtime_graph()
             return
         # ignore task if its ctime more than configured hrs beyond suite start time?
-        if cycle_time.diff_hours( task.c_time, self.start_time ) >= self.graph_cutoff:
+        if cycle_time.diff_hours( task.c_time, self.start_time ) >= self.runtime_graph_cutoff:
             return
         for id in task.get_resolved_dependencies():
             l = id
             r = task.id 
-            self.graph.add_edge( l,r )
-            self.write_graph()
+            self.runtime_graph.add_edge( l,r )
+            self.write_runtime_graph()
 
-    def write_graph( self ):
-        #print "Writing graph", self.graph_file
-        self.graph.write( self.graph_file )
+    def write_runtime_graph( self ):
+        #print "Writing graph", self.runtime_graph_file
+        self.runtime_graph.write( self.runtime_graph_file )
 
-    def finalize_graph( self ):
-        #if self.graph_finalized:
+    def finalize_runtime_graph( self ):
+        #if self.runtime_graph_finalized:
         #    return
-        #print "Finalizing graph", self.graph_file
-        self.write_graph()
-        self.graph_finalized = True
+        #print "Finalizing graph", self.runtime_graph_file
+        self.write_runtime_graph()
+        self.runtime_graph_finalized = True

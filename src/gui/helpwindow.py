@@ -210,9 +210,9 @@ all important events as the suite runs.
 Edit the suite config (suite.rc) file
 
 %h3 Graph
-Plot the configured (suite.rc) dependency graph, the most recent run time graph, 
-or the live suite graph. The suite.rc graph will update in real time as
-you edit the suite, the others will update as you run the suite.
+Plot the configured (suite.rc) dependency graph, or the most recent run
+time graph (if the suite has been run before). The suite.rc graph will
+update in real time as you edit the suite.
 
 %h3 Search
 Search in the suite config file and bin directory.
@@ -302,16 +302,13 @@ def graph( b ):
 Plot suite dependency graphs:
 
 %h2 the configured (suite.rc) graph
-The graph viewer will update in
-real time as you edit the suite [dependencies] or [visualization] sections.
+The graph viewer will update in real time as you edit the suite
+[dependencies] or [visualization] sections.
 
 %h2 the most recent run time graph
-this shows what tasks actually ran 
-in the first N hours (default 24) of the last suite run, or it updates
-in real time during the first N hours of the current run. 
-
-%h2 the live graph, an experimental visual suite monitoring tool that 
-updates in real time as the suite runs.
+this shows what tasks actually ran in the first N hours (default 24) of
+the last suite run, or it updates in real time during the first N hours
+of the current run. 
 
 
 %h3 Optional Output File

@@ -62,11 +62,12 @@ class updater(threading.Thread):
 
     def __init__(self, suite, owner, host, port, imagedir,
             led_liststore, ttreestore, task_list,
-            label_mode, label_status, label_time ):
+            label_mode, label_status, label_time, graphw ):
 
         super(updater, self).__init__()
 
         self.quit = False
+        self.graphw = graphw
 
         self.suite = suite
         self.owner = owner
@@ -104,6 +105,7 @@ class updater(threading.Thread):
     def reconnect( self ):
         try:
             self.god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'state_summary' )
+            self.remote = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
         except:
             return False
         else:
@@ -129,6 +131,16 @@ class updater(threading.Thread):
         except:
             gobject.idle_add( self.connection_lost )
             return False
+
+        try:
+            self.graph = self.remote.get_live_graph()
+        except:
+            # lost connection should be picked up just above
+            # (so this exception shouldn't happen?)
+            pass
+        else:
+            if self.graph:
+                self.graphw.set_dotcode( self.graph )
 
         # always update global info
 

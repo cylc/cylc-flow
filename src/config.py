@@ -456,8 +456,6 @@ class config( CylcConfigObj ):
                 os.path.expandvars( os.path.expanduser( self['job submission log directory' ]))
         self['visualization']['run time graph directory'] = \
                 os.path.expandvars( os.path.expanduser( self['visualization']['run time graph directory']))
-        self['experimental']['live graph directory path'] = \
-                os.path.expandvars( os.path.expanduser( self['experimental']['live graph directory path'])) 
 
     def create_directories( self ):
         # create logging, state, and job log directories if necessary
@@ -467,8 +465,6 @@ class config( CylcConfigObj ):
             self['job submission log directory'],
             self['visualization']['run time graph directory'] ]: 
             mkdir_p( dir )
-        if self['experimental']['write live graph']:
-            mkdir_p( self['experimental']['live graph directory path'] )
 
     def get_filename( self ):
         return self.file

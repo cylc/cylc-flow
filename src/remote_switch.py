@@ -359,4 +359,12 @@ class remote_switch( Pyro.core.ObjBase ):
             print "resetting failout on " + self.failout_id
             job_submit.failout_id = None
 
+    def get_live_graph( self ):
+        lg = self.pool.get_live_graph()
+        if lg:
+            return lg
+        else:
+            return None
+
+
 
