@@ -61,7 +61,7 @@ def get_col_priority( priority ):
 class updater(threading.Thread):
 
     def __init__(self, suite, owner, host, port, imagedir,
-            led_liststore, ttreestore, task_list,
+            led_liststore, ttreeview, task_list,
             label_mode, label_status, label_time, graphw ):
 
         super(updater, self).__init__()
@@ -80,7 +80,8 @@ class updater(threading.Thread):
         self.mode = "waiting..."
         self.dt = "waiting..."
 
-        self.ttreestore = ttreestore
+        self.ttreeview = ttreeview
+        self.ttreestore = ttreeview.get_model().get_model()
         self.led_liststore = led_liststore
         self.task_list = task_list
         self.label_mode = label_mode
@@ -218,6 +219,7 @@ class updater(threading.Thread):
 
     def update_gui( self ):
         #print "Updating GUI"
+        new_ctimes = []
         new_data = {}
         for id in self.state_summary:
             name, ctime = id.split( '%' )
@@ -312,6 +314,7 @@ class updater(threading.Thread):
                 # add new ctime tree
                 #print "ADDING", ctime
                 piter = self.ttreestore.append(None, [ctime, None, None, None, None, None, None ])
+                new_ctimes.append(piter)
                 for name in new_data[ ctime ]:
                     #print "  adding", name, "to", ctime
                     self.ttreestore.append( piter, [ name ] + new_data[ctime][name] )
@@ -367,6 +370,9 @@ class updater(threading.Thread):
                     state_list.append( self.empty_led )
 
             self.led_liststore.append( self.digitize( ctime ) + state_list )
+
+        for iter in new_ctimes:
+            self.ttreeview.expand_row(self.ttreestore.get_path(iter),False)
         return False
 
     def update_globals( self ):

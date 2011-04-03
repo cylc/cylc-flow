@@ -76,7 +76,7 @@ class ControlApp(object):
         self.connection_lost = False
         self.t = updater( self.suite, self.owner, self.host, self.port,
                 self.imagedir, self.led_treeview.get_model(),
-                self.ttreestore, self.task_list, self.label_mode,
+                self.ttreeview, self.task_list, self.label_mode,
                 self.label_status, self.label_time, self.graphw )
 
         self.full_task_headings()
