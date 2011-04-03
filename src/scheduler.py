@@ -1330,10 +1330,13 @@ class scheduler(object):
             except KeyError:
                 if hasattr( task, 'member_of' ):
                     # OK: member of a family
-                    pass
+                    #pass
+                    continue
                 else:
                     print 'WARNING: NOT IN GRAPH', task.id
                     continue
+
+            node.attr['URL'] = task.id
 
             if task.state.is_submitted():
                 node.attr['style'] = 'filled'

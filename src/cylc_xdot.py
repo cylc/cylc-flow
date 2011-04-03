@@ -116,6 +116,7 @@ class xdot_widgets(object):
         self.vbox = gtk.VBox()
 
         self.widget = xdot.DotWidget()
+        self.widget.connect( 'clicked', self.on_url_clicked )
 
         #open_button = gtk.Button( stock=gtk.STOCK_OPEN )
         #open_button.connect( 'clicked', self.on_open)
@@ -145,6 +146,9 @@ class xdot_widgets(object):
 
     def get( self ):
         return self.vbox
+
+    def on_url_clicked( self, widget, url, event ):
+        print 'URL:', url
 
     def update(self, filename):
         import os

@@ -836,7 +836,7 @@ class config( CylcConfigObj ):
                 
         # sort and then add edges in the hope that edges added in the
         # same order each time will result in the graph layout not
-        # jumping around (does it work ...?)
+        # jumping around (does this help? -if not discard)
         gr_edges.sort()
         gr_lone_nodes.sort()
         for e in gr_edges:
@@ -844,6 +844,10 @@ class config( CylcConfigObj ):
             graph.add_edge( l, r )
         for n in gr_lone_nodes:
             graph.add_node( n )
+
+        # set node URLs:
+        for n in graph.nodes():
+            n.attr['URL'] = 'foo'
 
         return graph
 
