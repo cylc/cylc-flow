@@ -132,16 +132,6 @@ class updater(threading.Thread):
             gobject.idle_add( self.connection_lost )
             return False
 
-        try:
-            self.graph = self.remote.get_live_graph()
-        except:
-            # lost connection should be picked up just above
-            # (so this exception shouldn't happen?)
-            pass
-        else:
-            if self.graph:
-                self.graphw.set_dotcode( self.graph )
-
         # always update global info
 
         if glbl['stopping']:
@@ -177,6 +167,17 @@ class updater(threading.Thread):
         else:
             #print "STATE CHANGED"
             self.state_summary = states
+            # only update live graph if state changed
+            # because update results in best-fitting.
+            try:
+                self.graph = self.remote.get_live_graph()
+            except:
+                # lost connection should be picked up above
+                # (so this exception shouldn't happen?)
+                pass
+            else:
+                if self.graph:
+                    self.graphw.set_dotcode( self.graph )
             return True
 
     def search_level( self, model, iter, func, data ):
