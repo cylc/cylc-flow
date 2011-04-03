@@ -68,6 +68,7 @@ class updater(threading.Thread):
 
         self.quit = False
         self.graphw = graphw
+        self.graph_disconnect = False
 
         self.suite = suite
         self.owner = owner
@@ -167,6 +168,8 @@ class updater(threading.Thread):
         else:
             #print "STATE CHANGED"
             self.state_summary = states
+            if self.graph_disconnect:
+                return True
             # only update live graph if state changed
             # because update results in best-fitting.
             try:

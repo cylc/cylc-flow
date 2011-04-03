@@ -70,6 +70,7 @@ class ControlApp(object):
 
         self.graphw = xdot_widgets()
         self.graphw.widget.connect( 'clicked', self.on_url_clicked )
+        self.graphw.graph_disconnect_button.connect( 'toggled', self.toggle_graph_disconnect )
 
         self.quitters = []
         self.connection_lost = False
@@ -88,6 +89,15 @@ class ControlApp(object):
         bigbox.pack_start( notebook, True )
         self.window.add( bigbox )
         self.window.show_all()
+
+    def toggle_graph_disconnect( self, w ):
+        if w.get_active():
+            self.t.graph_disconnect = True
+            w.set_label( 'REconnect' )
+        else:
+            self.t.graph_disconnect = False
+            w.set_label( 'DISconnect' )
+        return True
 
     def on_url_clicked( self, widget, url, event ):
         if event.button != 3:
@@ -431,7 +441,7 @@ The cylc forecast suite metascheduler.
 
         hbox = gtk.HBox()
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "BELOW: right click on tasks to control and interrogate" ) )
+        eb.add( gtk.Label( "BELOW: right-click on tasks to control and interrogate" ) )
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
         hbox.pack_start( eb, True )
 

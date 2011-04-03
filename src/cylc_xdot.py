@@ -131,6 +131,9 @@ class xdot_widgets(object):
         zoom100_button = gtk.Button( stock=gtk.STOCK_ZOOM_100 )
         zoom100_button.connect('clicked', self.widget.on_zoom_100)
 
+        self.graph_disconnect_button = gtk.ToggleButton( 'DISconnect' )
+        self.graph_disconnect_button.set_active(False)
+
         bbox = gtk.HButtonBox()
         #bbox.add( open_button )
         #bbox.add( reload_button )
@@ -138,10 +141,15 @@ class xdot_widgets(object):
         bbox.add( zoomout_button )
         bbox.add( zoomfit_button )
         bbox.add( zoom100_button )
+        bbox.add( self.graph_disconnect_button )
         #bbox.set_layout(gtk.BUTTONBOX_END)
         bbox.set_layout(gtk.BUTTONBOX_SPREAD)
 
         self.vbox.pack_start(self.widget)
+        eb = gtk.EventBox()
+        eb.add( gtk.Label( "ABOVE: right-click on tasks to control and interrogate" ) )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
+        self.vbox.pack_start(eb, False)
         self.vbox.pack_start(bbox, False)
 
     def get( self ):
