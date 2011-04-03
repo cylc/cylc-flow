@@ -47,7 +47,7 @@ def get_col( state ):
 
 def get_col_priority( priority ):
     if priority == 'NORMAL':
-        return '#4c8d93'
+        return '#006'
     elif priority == 'WARNING':
         return '#e400ff'
     elif priority == 'CRITICAL':

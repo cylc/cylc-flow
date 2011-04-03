@@ -441,7 +441,7 @@ The cylc forecast suite metascheduler.
 
         hbox = gtk.HBox()
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "BELOW: right-click on tasks to control and interrogate" ) )
+        eb.add( gtk.Label( "BELOW: right-click on tasks to control or interrogate" ) )
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
         hbox.pack_start( eb, True )
 

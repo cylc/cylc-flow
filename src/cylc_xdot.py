@@ -147,7 +147,7 @@ class xdot_widgets(object):
 
         self.vbox.pack_start(self.widget)
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "ABOVE: right-click on tasks to control and interrogate" ) )
+        eb.add( gtk.Label( "ABOVE: right-click on tasks to control or interrogate" ) )
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
         self.vbox.pack_start(eb, False)
         self.vbox.pack_start(bbox, False)
