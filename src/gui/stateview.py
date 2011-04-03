@@ -68,6 +68,7 @@ class updater(threading.Thread):
 
         self.quit = False
         self.graphw = graphw
+        self.first_update = True
         self.graph_disconnect = False
 
         self.suite = suite
@@ -182,6 +183,9 @@ class updater(threading.Thread):
             else:
                 if self.graph:
                     self.graphw.set_dotcode( self.graph )
+                    if self.first_update:
+                        self.graphw.widget.zoom_to_fit()
+                        self.first_update = False
             return True
 
     def search_level( self, model, iter, func, data ):

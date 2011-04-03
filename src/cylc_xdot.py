@@ -173,12 +173,16 @@ class xdot_widgets(object):
     def set_dotcode(self, dotcode, filename='<stdin>'):
         if self.widget.set_dotcode(dotcode, filename):
             #self.set_title(os.path.basename(filename) + ' - Dot Viewer')
-            self.widget.zoom_to_fit()
+            # disable automatic zoom-to-fit on update
+            #self.widget.zoom_to_fit()
+            pass
 
     def set_xdotcode(self, xdotcode, filename='<stdin>'):
         if self.widget.set_xdotcode(xdotcode):
             #self.set_title(os.path.basename(filename) + ' - Dot Viewer')
-            self.widget.zoom_to_fit()
+            # disable automatic zoom-to-fit on update
+            #self.widget.zoom_to_fit()
+            pass
 
     def open_file(self, filename):
         try:
