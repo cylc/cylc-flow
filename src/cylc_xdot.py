@@ -140,8 +140,8 @@ class xdot_widgets(object):
         #bbox.set_layout(gtk.BUTTONBOX_END)
         bbox.set_layout(gtk.BUTTONBOX_SPREAD)
 
-        self.vbox.pack_start(bbox, False)
         self.vbox.pack_start(self.widget)
+        self.vbox.pack_start(bbox, False)
 
     def get( self ):
         return self.vbox

@@ -52,6 +52,10 @@ class ControlApp(object):
         self.preload_task_list()
 
         self.create_menu()
+
+        notebook = gtk.Notebook()
+        notebook.set_tab_pos(gtk.POS_TOP)
+ 
         bigbox = gtk.VBox()
         bigbox.pack_start( self.menu_bar, False )
         hbox = gtk.HBox()
@@ -79,13 +83,10 @@ class ControlApp(object):
 
         #self.livegraph_file = os.path.join( self.suite_dir, 'graphing', 'live.dot')
 
-        #if True:
-        if False:
-            bigbox.pack_start( main_panes, True )
-        else:
-            # embed
-            bigbox.pack_start( self.graphw.get(), True )
+        notebook.append_page( main_panes, gtk.Label('traditional'))
+        notebook.append_page(self.graphw.get(), gtk.Label('live graph'))
 
+        bigbox.pack_start( notebook, True )
         self.window.add( bigbox )
         self.window.show_all()
 

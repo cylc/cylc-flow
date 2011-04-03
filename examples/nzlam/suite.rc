@@ -8,9 +8,6 @@ job submission log directory = $HOME/running/logs/nzlam
 job submission method = ll_basic
 use lockserver = True
 
-[experimental]
-    write live graph = True
-
 [special tasks]
     sequential = forecast
     coldstart = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
