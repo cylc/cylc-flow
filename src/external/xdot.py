@@ -1644,7 +1644,9 @@ class DotWidget(gtk.DrawingArea):
     def on_area_button_release(self, area, event):
         self.drag_action.on_button_release(event)
         self.drag_action = NullAction(self)
-        if event.button == 1 and self.is_click(event):
+        # HJO: need to allow right-click (button 3) in cylc:
+        #if event.button == 1 and self.is_click(event):
+        if self.is_click(event):
             x, y = int(event.x), int(event.y)
             url = self.get_url(x, y)
             if url is not None:

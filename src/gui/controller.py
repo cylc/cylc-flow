@@ -69,6 +69,7 @@ class ControlApp(object):
         main_panes.add2( self.treeview_widgets())
 
         self.graphw = xdot_widgets()
+        self.graphw.widget.connect( 'clicked', self.on_url_clicked )
 
         self.quitters = []
         self.connection_lost = False
@@ -81,14 +82,18 @@ class ControlApp(object):
         #print "Starting task state info thread"
         self.t.start()
 
-        #self.livegraph_file = os.path.join( self.suite_dir, 'graphing', 'live.dot')
-
         notebook.append_page( main_panes, gtk.Label('traditional'))
         notebook.append_page(self.graphw.get(), gtk.Label('live graph'))
 
         bigbox.pack_start( notebook, True )
         self.window.add( bigbox )
         self.window.show_all()
+
+    def on_url_clicked( self, widget, url, event ):
+        if event.button != 3:
+            return False
+        task_id = url
+        self.right_click_menu( event, task_id )
 
     def update_graph( self ):
         if self.livegraph:
@@ -513,6 +518,9 @@ The cylc forecast suite metascheduler.
 
         task_id = name + '%' + ctime
 
+        self.right_click_menu( event, task_id )
+
+    def right_click_menu( self, event, task_id ):
         menu = gtk.Menu()
 
         menu_root = gtk.MenuItem( task_id )
@@ -576,8 +584,7 @@ The cylc forecast suite metascheduler.
         menu.popup( None, None, None, event.button, event.time )
 
         # TO DO: POPUP MENU MUST BE DESTROY()ED AFTER EVERY USE AS
-        # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
-
+        # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)?????????
         return True
 
     def rearrange( self, col, n ):
