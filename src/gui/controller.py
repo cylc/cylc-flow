@@ -293,7 +293,6 @@ The cylc forecast suite metascheduler.
         #   tmf = tms.filter_new()                 #-- or other way round?
         #   tv = gtk.TreeView()
         #   tv.set_model(tms)
- 
         # failed to produce correct results (the data displayed was not 
         # consistently what should have been displayed given the
         # filtering in use) although the exact same code worked for a
@@ -533,247 +532,7 @@ The cylc forecast suite metascheduler.
         else:
             tb.insert( tb.get_end_iter(), line )
 
-    def start_guide( self, w ):
-        window = gtk.Window()
-        #window.set_border_width( 10 )
-        window.set_title( "Starting A Suite" )
-        #window.modify_bg( gtk.STATE_NORMAL, 
-        #       gtk.gdk.color_parse( self.log_colors.get_color()))
-        window.set_size_request(600, 600)
 
-        sw = gtk.ScrolledWindow()
-        sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
-
-        vbox = gtk.VBox()
-        quit_button = gtk.Button( "_Close" )
-        quit_button.connect("clicked", lambda x: window.destroy() )
-        vbox.pack_start( sw )
-        vbox.pack_start( quit_button, False )
-
-        textview = gtk.TextView()
-        textview.set_border_width(5)
-        textview.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#fff" ))
-        textview.set_editable( False )
-        sw.add( textview )
-        window.add( vbox )
-        tb = textview.get_buffer()
-
-        textview.set_wrap_mode( gtk.WRAP_WORD )
-
-        blue = tb.create_tag( None, foreground = "blue" )
-        red = tb.create_tag( None, foreground = "darkblue" )
-        red2 = tb.create_tag( None, foreground = "darkgreen" )
-        alert = tb.create_tag( None, foreground = "red" )
-        bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
-
-        self.update_tb( tb, "Help: Starting A Suite", [bold, blue] )
-
-        self.update_tb( tb, "\n\n o Start (YYYYMMDDHH)", [bold, red] )
-        self.update_tb( tb, " - Cold, Warm, and Raw start.", [bold, red2])
-        self.update_tb( tb, "\nInitial cycle time.")
-
-        self.update_tb( tb, "\n\n o Stop (YYYYMMDDHH)", [bold, red] )
-        self.update_tb( tb, " - OPTIONAL.", [bold,red2])
-        self.update_tb( tb, "\nFinal cycle time.")
-
-        self.update_tb( tb, "\n\n o Initial State (FILE)", [bold, red] )
-        self.update_tb( tb, " - Restart only.\n", [bold,red2] )
-        self.update_tb( tb, "The state dump file from which to load the initial suite state. " )
-        self.update_tb( tb, "The default file, " )
-        self.update_tb( tb, "<suite-state-dump-dir>/state", [bold] )
-        self.update_tb( tb, ", records "
-                "the most recent previous state. However, prior to "
-                "actioning any intervention, cylc dumps a "
-                "special state file and logs its name; to restart from "
-                "one of these files just cut-and-paste the filename from the "
-                "suite's cylc log. The suite's configured state dump directory "
-                "is assumed, unless you specify an absolute path.")
-
-        self.update_tb( tb, "\n\n o Dummy Mode", [bold, red] )
-        self.update_tb( tb, " - OPTIONAL.", [bold,red2])
-        self.update_tb( tb, "\nDummy mode simulates a suite by replacing "
-                "each real task with a small program that simply reports the "
-                "task's registered outputs completed and then returns success. "
-                "You can configure aspects of dummy mode scheduling in your "
-                "suite.rc file, for example the accelerated clock rate, and the "
-                "initial clock offset from the initial cycle time (this allows "
-                "you to simulate catch up to real time operation after a delay).")
-
-        self.update_tb( tb, "\n    + Fail Task (NAME%YYYYMMDDHH)", [bold, red] )
-        self.update_tb( tb, " - OPTIONAL, dummy mode only.", [bold,red2])
-        self.update_tb( tb, "\n   Get a task to fail in order "
-                "to test the effect on the suite." )
-
-        self.update_tb( tb, "\n\n o Pause Immediately", [bold, red] )
-        self.update_tb( tb, " - OPTIONAL.", [bold,red2])
-        self.update_tb( tb, "\nStart a suite in the paused state to allow "
-                "immediate intervention in its state (e.g. inserting or "
-                "removing tasks) before resuming operation.")
-
-        self.update_tb( tb, "\n\n o Debug Mode", [bold, red] )
-        self.update_tb( tb, " - OPTIONAL.", [bold,red2])
-        self.update_tb( tb, "\nPrint exception tracebacks on error, rather than "
-                "just the error message.")
-
-
-        window.show_all()
- 
-    def stop_guide( self, w ):
-        window = gtk.Window()
-        #window.set_border_width( 10 )
-        window.set_title( "Stopping A Suite" )
-        #window.modify_bg( gtk.STATE_NORMAL, 
-        #       gtk.gdk.color_parse( self.log_colors.get_color()))
-        window.set_size_request(600, 600)
-
-        sw = gtk.ScrolledWindow()
-        sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
-
-        vbox = gtk.VBox()
-        quit_button = gtk.Button( "_Close" )
-        quit_button.connect("clicked", lambda x: window.destroy() )
-        vbox.pack_start( sw )
-        vbox.pack_start( quit_button, False )
-
-        textview = gtk.TextView()
-        textview.set_border_width(5)
-        textview.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#fff" ))
-        textview.set_editable( False )
-        sw.add( textview )
-        window.add( vbox )
-        tb = textview.get_buffer()
-
-        textview.set_wrap_mode( gtk.WRAP_WORD )
-
-        blue = tb.create_tag( None, foreground = "blue" )
-        red = tb.create_tag( None, foreground = "darkblue" )
-        red2 = tb.create_tag( None, foreground = "darkgreen" )
-        alert = tb.create_tag( None, foreground = "red" )
-        bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
-
-        self.update_tb( tb, "Help: Stopping A Suite", [bold, blue] )
-
-        self.update_tb( tb, "\n\n o Stop", [bold, red] )
-        self.update_tb( tb, "\nDo not submit any new tasks to run, and "
-                "shut down as soon as currently running tasks have finished." )
-
-        self.update_tb( tb, "\n\n o Stop At (YYYYMMDDHH)", [bold, red] )
-        self.update_tb( tb, "\nStop the suite once all tasks have passed "
-                "the cycle time YYYYMMDDHH." )
-
-        self.update_tb( tb, "\n\n o Stop NOW", [bold, red] )
-        self.update_tb( tb, "\nStop the suite immediately, regardless of "
-                "tasks still running. WARNING: The final state dump file will "
-                "reflect the state of the suite at shutdown; any tasks that "
-                "run to completion post shutdown will thus be resubmitted, "
-                "by default, if the suite is restarted.")
-
-        window.show_all()
-
-    def userguide( self, w ):
-        window = gtk.Window()
-        #window.set_border_width( 10 )
-        if self.readonly:
-            window.set_title( "Cylc View Quick Guide" )
-        else:
-            window.set_title( "Cylc Control Quick Guide" )
-        #window.modify_bg( gtk.STATE_NORMAL, 
-        #       gtk.gdk.color_parse( self.log_colors.get_color()))
-        window.set_size_request(600, 600)
-
-        sw = gtk.ScrolledWindow()
-        sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
-
-        vbox = gtk.VBox()
-        quit_button = gtk.Button( "_Close" )
-        quit_button.connect("clicked", lambda x: window.destroy() )
-        vbox.pack_start( sw )
-        vbox.pack_start( quit_button, False )
-
-        textview = gtk.TextView()
-        textview.set_border_width(5)
-        textview.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#fff" ))
-        textview.set_editable( False )
-        sw.add( textview )
-        window.add( vbox )
-        tb = textview.get_buffer()
-
-        textview.set_wrap_mode( gtk.WRAP_WORD )
-
-        blue = tb.create_tag( None, foreground = "blue" )
-        red = tb.create_tag( None, foreground = "darkgreen" )
-        alert = tb.create_tag( None, foreground = "red" )
-        bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
-
-        if self.readonly:
-            self.update_tb( tb, "\n\nThis is 'cylc view', the read-only "
-                "version of the 'cylc control' GUI: all of the suite control "
-                "functionality documented below has been disabled.'\n\n", [bold, alert] )
-
-        self.update_tb( tb, "Cylc Control Quick Guide", [bold, blue] )
-
-        self.update_tb( tb, "\n\nCylc Control is a real time suite control and "
-                "monitoring tool for cylc. Note that same functionality is "
-                "available via the cylc command line; see 'cylc help').")
-
-        self.update_tb( tb, "\n\nMenu: File > ", [bold, red] )
-        self.update_tb( tb, "\n o Exit: ", [bold])
-        self.update_tb( tb, "Exit the control GUI (does not shut the suite down).")
-
-        self.update_tb( tb, "\n\nMenu: View > ", [bold, red] )
-        self.update_tb( tb, "This affects only the top 'light panel'. "
-                "You can change turn off task name headings in order to "
-                "maximize screen real estate.")
-
-        self.update_tb( tb, "\n\nMenu: Suite > ", [bold, red] )
-        self.update_tb( tb, "\n o Start: ", [bold])
-        self.update_tb( tb, "Cold Start, Warm Start, Raw Start, or Restart the suite.")
-        self.update_tb( tb, "\n o Stop: ", [bold])
-        self.update_tb( tb, "Shut down the suite now, or after a given cycle, or "
-                "when all currently running tasks have finished." )
-        self.update_tb( tb, "\n o Pause: ", [bold])
-        self.update_tb( tb, "Refrain from submitting tasks that are ready to run.")
-        self.update_tb( tb, "\n o Resume: ", [bold])
-        self.update_tb( tb, "Resume submitting tasks that are ready to run.")
-        self.update_tb( tb, "\n o Insert: ", [bold])
-        self.update_tb( tb, "Insert a task or task group into a running suite." )
-        self.update_tb( tb, "\n o Block (if suite is configured to use blocking): ", [bold])
-        self.update_tb( tb, "Tell cylc not to comply with subsequent intervention commands." )
-        self.update_tb( tb, "\n o Unblock (if suite is configured to use blocking): ", [bold])
-        self.update_tb( tb, "Tell cylc to comply with subsequent intervention commands." )
-
-        self.update_tb( tb, "\n\nTask Tree View Panel: Right-Click Menu > ", [bold, red] )
-
-        self.update_tb( tb, "\n o Live Output: ", [bold])
-        self.update_tb( tb, "View task stdout and stderr in real time." )
-        self.update_tb( tb, "\n o Job Submission Script: ", [bold])
-        self.update_tb( tb, "View the script used to submit this task to run." )
-        self.update_tb( tb, "\n o Prerequisites and Outputs: ", [bold])
-        self.update_tb( tb, "View the state of a task's prerequisites and outputs.")
-        self.update_tb( tb, "\n o Trigger Immediately: ", [bold])
-        self.update_tb( tb, "Reset the task to the 'ready' state (all prerequisites "
-                "satisfied). This will (re)trigger the task immediately if the suite "
-                "has not been paused (in which case it will trigger on resuming)." )
-        self.update_tb( tb, "\n o Reset To Waiting: ", [bold])
-        self.update_tb( tb, "Set all of a task's prerequisites unsatisfied." )
-        self.update_tb( tb, "\n o Reset To Finished: ", [bold])
-        self.update_tb( tb, "Set all of a task's outputs completed." )
-        self.update_tb( tb, "\n o Reset To Failed: ", [bold])
-        self.update_tb( tb, "Put the task in the 'failed' state." )
-        self.update_tb( tb, "\n o Remove (after spawning): ", [bold])
-        self.update_tb( tb, "Remove a task from the suite after ensuring that it has "
-                "spawned a successor." )
-        self.update_tb( tb, "\n o Remove (without spawning): ", [bold])
-        self.update_tb( tb, "Remove a task from the suite even if it has not "
-                "yet spawned a successor (in which case it will be removed "
-                "permanently unless re-inserted)." )
-        self.update_tb( tb, "\n o Recursive Purge: ", [bold])
-        self.update_tb( tb, "Remove a task from the suite, then remove any task "
-                "that would depend on it, then remove any tasks that would depend on "
-                "those tasks, and so on, through to a given stop cycle." )
-
-        window.show_all()
- 
     def popup_requisites( self, w, task_id ):
         window = gtk.Window()
         #window.set_border_width( 10 )
@@ -957,7 +716,7 @@ The cylc forecast suite metascheduler.
                 stoptime_entry )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.stop_guide )
+        help_button.connect("clicked", help_window.stop_guide )
 
         hbox = gtk.HBox()
         hbox.pack_start( stop_button, False )
@@ -1060,7 +819,7 @@ The cylc forecast suite metascheduler.
                 statedump_entry, optgroups )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.start_guide )
+        help_button.connect("clicked", helpwindow.start_guide )
 
         hbox = gtk.HBox()
         hbox.pack_start( start_button, False )
@@ -1340,7 +1099,7 @@ The cylc forecast suite metascheduler.
 
         guide_item = gtk.MenuItem( '_Quick Guide' )
         help_menu.append( guide_item )
-        guide_item.connect( 'activate', self.userguide )
+        guide_item.connect( 'activate', helpwindow.userguide )
  
         about_item = gtk.MenuItem( '_About' )
         help_menu.append( about_item )
