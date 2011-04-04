@@ -35,7 +35,6 @@ class conditional_prerequisites(object):
             self.excess_labels.append(label)
             return
 
-        #print '> ', label, message
         self.messages[ label ] = message
         self.labels[ message ] = label
         self.satisfied[label]  = False

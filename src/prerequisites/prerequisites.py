@@ -54,8 +54,7 @@ class prerequisites(object):
         # return an array of strings representing each message and its state
         res = []
         for reqs in self.container:
-            for key in reqs.satisfied:
-                res += reqs.dump()
+            res += reqs.dump()
         return res
 
     def set_all_satisfied( self ):
