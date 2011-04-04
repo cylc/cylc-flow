@@ -455,11 +455,19 @@ def start_guide(w):
 
     update_tb( tb, "\n\n o Start (YYYYMMDDHH)", [bold, red] )
     update_tb( tb, " - Cold, Warm, and Raw start.", [bold, red2])
-    update_tb( tb, "\nInitial cycle time.")
+    update_tb( tb, "\nInitial cycle time. Each configured task will be inserted "
+            "into the suite with this cycle time, or with the closest subsequent "
+            "cycle time that is valid for the task. How designated cold start "
+            "tasks are handled depends on the method (cold|warm|raw). "
+            "See 'cylc [con] run --help' for more information.")
 
     update_tb( tb, "\n\n o Stop (YYYYMMDDHH)", [bold, red] )
     update_tb( tb, " - OPTIONAL.", [bold,red2])
-    update_tb( tb, "\nFinal cycle time.")
+    update_tb( tb, "\nFinal cycle time. Each task will stop spawning "
+            "successors when it reaches this cycle time, and the suite "
+            "will shut down when all remaining tasks have reached it. "
+            "Note that if you set a stop time you can't change or cancel "
+            "it easily - see 'cylc [con] restart --help' for more information." )
 
     update_tb( tb, "\n\n o Initial State (FILE)", [bold, red] )
     update_tb( tb, " - Restart only.\n", [bold,red2] )
@@ -474,6 +482,11 @@ def start_guide(w):
             "suite's cylc log. The suite's configured state dump directory "
             "is assumed, unless you specify an absolute path.")
 
+    update_tb( tb, "\n\n o Don't reset failed tasks", [bold, red] )
+    update_tb( tb, " - OPTIONAL, restart only.", [bold,red2])
+    update_tb( tb, "\nAt startup, do not automatically reset failed tasks "
+            "to 'ready' (thereby triggering them immediately)." )
+ 
     update_tb( tb, "\n\n o Dummy Mode", [bold, red] )
     update_tb( tb, " - OPTIONAL.", [bold,red2])
     update_tb( tb, "\nDummy mode simulates a suite by replacing "

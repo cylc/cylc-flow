@@ -24,13 +24,24 @@ state dump, and logs its filename, before actioning any intervention
 command, and you can choose to restart from one of these (just
 cut-and-paste the filename from the log to the commandline).
 
-NOTE: to prevent a suite being killed when you log out: 
-    nohup cylc con warmstart SUITE YYYYMMDDHH
+NOTE: if you set a stop time it will be recorded in the suite state dump
+and you cannot then change or cancel that stop time at a restart. This
+is because any tasks that reached the stop time prior to shutdown will be
+stopped (recorded in the state dump file as 'finished' and 'spawned',
+but with no existing successor) and canceling the stop time or setting a
+later one will not bring these tasks back from the dead. If you need to
+continue operation after a set stop time you can either: (a) let the
+suite run to completion at the stop time and then warm start it, or (b)
+edit the state dump file to delete the stop time and then manually
+insert any 'stopped' tasks back into the suite, at run time or via the
+state dump file.
+
+NOTE: daemonize important suites with the POSIX nohup command:
+    nohup cylc [con] restart SUITE YYYYMMDDHH > suite.out 2> suite.err &
 
 See also:
-    cylc con coldstart
-    cylc con warmstart
-    cylc con rawstart
+    cylc [control] run
+    cylc [control] stop|shutdown
 
 Arguments:
    SUITE                Registered name of the suite to restart.
@@ -129,10 +140,24 @@ Arguments:
             [ time, rate ] = time_string.split( ',' )
             self.clock.reset( time, rate )
 
+        line2 = lines[1]
+        line2 = line2.rstrip()
+        [ junk, oldstoptime ] = line2.split(' : ')
+
+        if oldstoptime != '(none)':
+            if self.stop_time:
+                if self.stop_time != oldstoptime:
+                    print >> sys.stderr, "ERROR: you can't set a new stop time (" + self.stop_time + ") for a suite that already has a configured stop time (" + oldstoptime + ")."
+                    print >> sys.stderr, "To cancel the configured stop time, edit the state dump file (but note tasks that stopped prior to shutdown will need re-inserting)."  
+                    sys.exit(1)
+            else:
+                # reinstate the former stop time
+                self.stop_time = oldstoptime
+        
         # parse each line and create the task it represents
         tasknames = {}
         taskstates = {}
-        for line in lines[1:]:
+        for line in lines[2:]:
             # strip trailing newlines
             line = line.rstrip( '\n' )
 

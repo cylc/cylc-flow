@@ -1,13 +1,11 @@
 _______
 GENERAL
 
-* TO DOCUMENT: DO NOT restart a suite after running with a stop time
-unless you know what you're doing: tasks that reached the stop time in
-the previous run will have "stopped", i.e. finished without spawning.
-On a restart these tasks, if any are left, will be inserted in the
-finished state and will not spawn successors. 
-
-* TO DO: make restarts remember stop times.
+* TO DOCUMENT: why you can't change or cancel an existing stop time at
+restart (without editing the state dump, if you know what you're
+doing): tasks that reached the stop time prior to restart will be
+finished and unspawned, and cancelling or setting a later stop time
+will not automatically bring them back from the dead.
 
 * NEW (Trevor's mos spin up for new stations):
     - a cycling task that stops at a given ctime? => foo(T)
@@ -265,12 +263,6 @@ finished state and will not spawn successors.
 
 * note that prerequisites are no longer derived from requisites. Change
   documentation in the latter class (and elsewhere?) to reflect this.
-
-* RECORD STOP TIME IN STATE DUMP in case suite shutdown and
-  restarted before all tasks reach the stop time is reached. (currently
-  at restart those that did reach the stop time will be finished and
-  unspawned, while those that didn't will carry on as if there was no
-  stop time).
 
 * a minor redesign of jobsumit / launcher class to avoid the current
   clunky method of setting some class parameters directly instead of by

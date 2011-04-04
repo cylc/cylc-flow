@@ -672,6 +672,11 @@ class scheduler(object):
         else:
             FILE.write( 'suite time : ' + self.clock.dump_to_str() + '\n' )
 
+        if self.stop_time:
+            FILE.write( 'stop time : ' + self.stop_time + '\n' )
+        else:
+            FILE.write( 'stop time : (none)\n' )
+
         # FOR OLD STATIC TASK CLASS DEFS:
         ####for name in self.task_name_list:
         ####    mod = __import__( 'task_classes' )
