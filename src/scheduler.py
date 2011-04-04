@@ -1333,7 +1333,7 @@ class scheduler(object):
             # (show coldstart tasks) - TO DO: actual raw start
             raw = False
 
-        diffhrs = cycle_time.diff_hours( newest, oldest ) + 1
+        diffhrs = cycle_time.diff_hours( newest, oldest ) + 6 + 1
         #if diffhrs < 25:
         #    diffhrs = 25
         self.live_graph = self.config.get_graph( oldest, diffhrs, colored=False, raw=raw ) 
