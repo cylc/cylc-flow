@@ -102,8 +102,15 @@ class ControlApp(object):
     def on_url_clicked( self, widget, url, event ):
         if event.button != 3:
             return False
-        task_id = url
-        self.right_click_menu( event, task_id )
+        if url == '(none)':
+            # a default URL of '(none)' is set in config.get_graph()
+            # => this graph element has not been overridden by a task
+            # that actually exists in the suite at the moment.
+            warning_dialog( "This task is defined in the suite dependency graph\n" 
+                    "but does not exist in the running suite at the moment." ).warn()
+        else:
+            # URL is task ID
+            self.right_click_menu( event, url )
 
     def update_graph( self ):
         if self.livegraph:
