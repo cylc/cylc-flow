@@ -485,7 +485,9 @@ for item in command_args:
 args = args_new
 
 notify=False
-if command not in ['cycletime', 'template', 'log']:
+if command not in ['cycletime', 'template', 'log',
+        'message', 'started', 'finished', 'failed', 'submit', 'wrap',
+        'task-message', 'task-started', 'task-finished', 'task-failed']:
     # notify => print 'DONE' when command is completed, which is 
     # helpful for gui command capture windows. But some commands return
     # specific results by stdout, which we don't want to contaminate.
