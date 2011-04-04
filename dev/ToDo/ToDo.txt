@@ -1,6 +1,14 @@
 _______
 GENERAL
 
+* TO DOCUMENT: DO NOT restart a suite after running with a stop time
+unless you know what you're doing: tasks that reached the stop time in
+the previous run will have "stopped", i.e. finished without spawning.
+On a restart these tasks, if any are left, will be inserted in the
+finished state and will not spawn successors. 
+
+* TO DO: make restarts remember stop times.
+
 * NEW (Trevor's mos spin up for new stations):
     - a cycling task that stops at a given ctime? => foo(T)
     - pause a task
