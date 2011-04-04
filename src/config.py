@@ -402,6 +402,8 @@ class config( CylcConfigObj ):
             for name in self['special tasks'][type]:
                 if type == 'clock-triggered':
                     name = re.sub('\(.*\)','',name)
+                if re.search( '[^0-9a-zA-Z_]', name ):
+                    raise SuiteConfigError, 'Illegal ' + type + ' task name: ' + name
                 if name not in self.taskdefs and name not in self['tasks']:
                     print >> sys.stderr, 'WARNING: ' + type + ' task "' + name + '" is not defined in [tasks] or used in the graph.'
 
@@ -955,14 +957,18 @@ class config( CylcConfigObj ):
             # check that task names contain only word characters [0-9a-zA-Z_]
             # (use of r'\b' word boundary regex in conditional prerequisites
             # could fail if other characters are allowed).
-            if re.search( '[^\w]', name ):
+            if re.search( '[^0-9a-zA-Z_]', name ):
+                # (\w allows spaces)
                 raise SuiteConfigError, 'Illegal task name: ' + name
 
         self.__check_tasks()
         self.loaded = True
 
     def get_taskdef( self, name, strict=False ):
-        taskd = taskdef.taskdef( name )
+        try:
+            taskd = taskdef.taskdef( name )
+        except taskdef.DefinitionError, x:
+            raise SuiteConfigError, str(x)
 
         # SET ONEOFF TASK INDICATOR
         #   coldstart and startup tasks are automatically oneoff
