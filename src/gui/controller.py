@@ -219,7 +219,8 @@ class ControlApp(object):
 
     def startsuite( self, bt, window, 
             coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
-            entry_ctime, stoptime_entry, statedump_entry, optgroups ):
+            entry_ctime, stoptime_entry, no_reset_cb, statedump_entry,
+            optgroups ):
 
         command = 'cylc control run --gcylc'
         options = ''
@@ -236,6 +237,8 @@ class ControlApp(object):
         elif restart_rb.get_active():
             method = 'restart'
             command = 'cylc control restart --gcylc'
+            if no_reset_cb.get_active():
+                options += ' --no-reset'
 
         command += ' ' + options + ' '
 
@@ -817,13 +820,15 @@ The cylc forecast suite metascheduler.
         else:
             stoptime_entry.set_sensitive( True )
 
-    def startup_method( self, b, meth, ctime_entry, statedump_entry ):
+    def startup_method( self, b, meth, ctime_entry, statedump_entry, no_reset_cb ):
         if meth == 'cold' or meth == 'warm' or meth == 'raw':
             statedump_entry.set_sensitive( False )
             ctime_entry.set_sensitive( True )
         else:
+            # restart
             statedump_entry.set_sensitive( True )
             ctime_entry.set_sensitive( False )
+            no_reset_cb.set_sensitive(True)
 
     def startsuite_popup( self, b ):
         window = gtk.Window()
@@ -873,10 +878,15 @@ The cylc forecast suite metascheduler.
         box.pack_start (statedump_entry, True)
         vbox.pack_start(box)
 
-        coldstart_rb.connect( "toggled", self.startup_method, "cold", ctime_entry, statedump_entry )
-        warmstart_rb.connect( "toggled", self.startup_method, "warm", ctime_entry, statedump_entry )
-        rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ctime_entry, statedump_entry )
-        restart_rb.connect(   "toggled", self.startup_method, "re",   ctime_entry, statedump_entry )
+        no_reset_cb = gtk.CheckButton( "Don't reset failed tasks" )
+        no_reset_cb.set_active(False)
+        no_reset_cb.set_sensitive(False)
+        vbox.pack_start (no_reset_cb, True)
+
+        coldstart_rb.connect( "toggled", self.startup_method, "cold", ctime_entry, statedump_entry, no_reset_cb )
+        warmstart_rb.connect( "toggled", self.startup_method, "warm", ctime_entry, statedump_entry, no_reset_cb )
+        rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ctime_entry, statedump_entry, no_reset_cb )
+        restart_rb.connect(   "toggled", self.startup_method, "re",   ctime_entry, statedump_entry, no_reset_cb )
 
         dmode_group = controlled_option_group( "Dummy Mode", "--dummy-mode" )
         dmode_group.add_entry( 
@@ -899,7 +909,7 @@ The cylc forecast suite metascheduler.
         start_button = gtk.Button( "_Start" )
         start_button.connect("clicked", self.startsuite, 
                 window, coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
-                ctime_entry, stoptime_entry, 
+                ctime_entry, stoptime_entry, no_reset_cb, 
                 statedump_entry, optgroups )
 
         help_button = gtk.Button( "_Help" )
