@@ -62,6 +62,8 @@ class scheduler(object):
         # COMMANDLINE OPTIONS
         self.parser.set_defaults( dummy_mode=False, practice_mode=False, debug=False )
 
+        self.graph_warned = {}
+
         self.parser.add_option( "--until", 
                 help="Shut down after all tasks have PASSED this cycle time.",
                 metavar="YYYYMMDDHH", action="store", dest="stop_time" )
@@ -1341,12 +1343,15 @@ class scheduler(object):
             try:
                 node = self.live_graph.get_node( task.id )
             except KeyError:
+                # this task is not present in the live graph
                 if hasattr( task, 'member_of' ):
                     # OK: member of a family
-                    #pass
                     continue
                 else:
-                    print 'WARNING: NOT IN GRAPH', task.id
+                    if task.id not in self.graph_warned or \
+                            not self.graph_warned[task.id]:
+                        self.log.critical( 'WARNING: NOT IN GRAPH: '+ task.id )
+                        self.graph_warned[task.id] = True
                     continue
 
             node.attr['URL'] = task.id
