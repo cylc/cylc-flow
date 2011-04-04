@@ -394,11 +394,11 @@ class MainApp(object):
         file_menu_root = gtk.MenuItem( '_File' )
         file_menu_root.set_submenu( file_menu )
 
-        self.reg_new_item = gtk.MenuItem( '_New' )
+        self.reg_new_item = gtk.MenuItem( '_New Suite Registration' )
         self.reg_new_item.connect( 'activate', self.newreg_popup )
         file_menu.append( self.reg_new_item )
 
-        exit_item = gtk.MenuItem( 'E_xit' )
+        exit_item = gtk.MenuItem( 'E_xit gcylc' )
         exit_item.connect( 'activate', self.delete_all_event, None )
         file_menu.append( exit_item )
 
