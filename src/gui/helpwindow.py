@@ -603,11 +603,44 @@ def userguide( w ):
     #        "version of the 'cylc control' GUI: all of the suite control "
     #        "functionality documented below has been disabled.'\n\n", [bold, alert] )
 
-    update_tb( tb, "Cylc Control Quick Guide", [bold, blue] )
+    update_tb( tb, "Suite Control GUI Quick Guide", [bold, blue] )
 
-    update_tb( tb, "\n\nCylc Control is a real time suite control and "
-            "monitoring tool for cylc. Note that same functionality is "
-            "available via the cylc command line; see 'cylc help').")
+    update_tb( tb, "\n\nThis is a real time suite control "
+            "and monitoring application for cylc. See 'cylc help' for "
+            "the equivalent commandline functionality." )
+
+    update_tb( tb, "\n\nTab: Traditional > ", [bold, red] )
+    update_tb( tb, "This shows all task proxies that currently exist "
+            "in the running suite.  The upper 'light panel' is meant "
+            "to provide a quick visual overview of the current state "
+            "of the suite, with colours to indicate task state: "
+            "blue=waiting, orange=submitted, green=running, "
+            "gray=finished, red=failed. The lower panel is a cycle-time tree view "
+            "with more detail. You can filter on task state ('waiting', "
+            "'submitted', 'running', 'finished', and 'failed') and task "
+            "name, to quickly find the tasks you're interested in. " )
+    update_tb( tb, 
+            "Right-click on tasks in the lower panel for task control "
+            "and interrogation options.", [bold] )
+
+    update_tb( tb, "\n\nTab: Live Graph > ", [bold, red] )
+    update_tb( tb, "This is a new suite control interface based on "
+            "the suite dependency graph. Graph node colours indicate "
+            "task state, as above. The configured suite dependency "
+            "graph, with off-white nodes, is used as a base graph for "
+            "the displayed graph. Left-click on a task to center the "
+            "graph at that point; Left-drag to pan about; use the "
+            "mouse-wheel or Zoom buttons to zoom in and out. " )
+    update_tb( tb, 
+            "Right-click on nodes for task control "
+            "and interrogation options.\n", [bold] )
+    update_tb( tb, 
+            "Small changes in the task population as the suite evolves "
+            "may cause large jumps in the graph layout, because the "
+            "graphviz layout engine performs a global optimization "
+            "each time the graph is updated. The 'DIS|REconnect' "
+            "toggle button is therefore provided to freeze the view "
+            "temporarily." )
 
     update_tb( tb, "\n\nMenu: File > ", [bold, red] )
     update_tb( tb, "\n o Exit: ", [bold])
