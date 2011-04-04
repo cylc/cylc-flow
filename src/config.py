@@ -850,6 +850,8 @@ class config( CylcConfigObj ):
         # set node URLs:
         for n in graph.nodes():
             n.attr['URL'] = 'foo'
+            n.attr['style'] = 'filled'
+            n.attr['fillcolor'] = 'cornsilk'
 
         return graph
 

@@ -58,7 +58,6 @@ class CGraphPlain( pygraphviz.AGraph ):
         nl.attr[ 'label' ] = llabel
         nr.attr[ 'label' ] = rlabel
 
-
 class CGraph( CGraphPlain ):
     """Directed Acyclic Graph class for cylc dependency graphs.
     This class automatically adds node and edge attributes 
