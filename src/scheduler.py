@@ -510,9 +510,10 @@ class scheduler(object):
             self.log.critical( "UNHOLD: new tasks will run when ready")
             self.suite_hold_now = False
             self.pause_time = None
-        if self.stop_time:
-            self.log.critical( "UNSTOP: unsetting suite stop time")
-            self.stop_time = None
+        # TO DO: write a separate method for cancelling a stop time:
+        #if self.stop_time:
+        #    self.log.critical( "UNSTOP: unsetting suite stop time")
+        #    self.stop_time = None
 
     def will_stop_at( self ):
         return self.stop_time
