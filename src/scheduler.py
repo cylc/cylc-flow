@@ -1034,6 +1034,7 @@ class scheduler(object):
             rject = False
             [ name, c_time ] = task_id.split( '%' )
             # Instantiate the task proxy object
+            gotit = False
             try:
                 itask = self.config.get_task_proxy( name, c_time, 'waiting', startup=False )
             except KeyError, x:
@@ -1042,26 +1043,32 @@ class scheduler(object):
                 except SuiteConfigError,x:
                     self.log.warning( str(x) )
                     rejected.append( name + '%' + c_time )
- 
-            # The task cycle time can be altered during task initialization
-            # so we have to create the task before checking if the task
-            # already exists in the system or the stop time has been reached.
-            for task in self.tasks:
-                if itask.id == task.id:
-                    # task already in the suite
-                    rject = True
-                    break
-            if not rject and self.stop_time:
-                if int( itask.c_time ) > int( self.stop_time ):
-                    itask.log( 'WARNING', " STOPPING at " + self.stop_time )
-                    rject = True
-            if rject:
-                rejected.append( itask.id )
-                itask.prepare_for_death()
-                del itask
-            else:
-                inserted.append( itask.id )
-                to_insert.append(itask)
+                else:
+                    gotit = True
+            else: 
+                gotit = True
+
+            if gotit:
+                # The task cycle time can be altered during task initialization
+                # so we have to create the task before checking if the task
+                # already exists in the system or the stop time has been reached.
+                for task in self.tasks:
+                    if itask.id == task.id:
+                        # task already in the suite
+                        rject = True
+                        break
+                if not rject and self.stop_time:
+                    if int( itask.c_time ) > int( self.stop_time ):
+                        itask.log( 'WARNING', " STOPPING at " + self.stop_time )
+                        rject = True
+                if rject:
+                    rejected.append( itask.id )
+                    itask.prepare_for_death()
+                    del itask
+                else:
+                    inserted.append( itask.id )
+                    to_insert.append(itask)
+
         if len( to_insert ) > 0:
             self.log.warning( 'pre-insertion state dump: ' + self.dump_state( new_file = True ))
             for task in to_insert:

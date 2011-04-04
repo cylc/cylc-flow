@@ -1,12 +1,6 @@
 _______
 GENERAL
 
-* TO DOCUMENT: why you can't change or cancel an existing stop time at
-restart (without editing the state dump, if you know what you're
-doing): tasks that reached the stop time prior to restart will be
-finished and unspawned, and cancelling or setting a later stop time
-will not automatically bring them back from the dead.
-
 * NEW (Trevor's mos spin up for new stations):
     - a cycling task that stops at a given ctime? => foo(T)
     - pause a task
