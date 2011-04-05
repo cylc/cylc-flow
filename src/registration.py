@@ -3,6 +3,7 @@
 import pickle
 import datetime, time
 import os, sys, re
+from CylcGlobals import central_regdb_dir, local_regdb_dir
 # from time import sleep # use to testing locking
 
 # NOTE:ABSPATH (see below)
@@ -440,8 +441,8 @@ class localdb( regdb ):
             self.dir = os.path.dirname( file )
         else:
             # file in which to store suite registrations
-            self.dir = os.path.join( os.environ['HOME'], '.cylc', 'LocalDB' )
-            self.file = os.path.join( self.dir, 'registrations' )
+            self.dir = local_regdb_dir
+            self.file = os.path.join( self.dir, 'db' )
         regdb.__init__(self)
 
     def suiteid( self, owner, group, name ):
@@ -496,8 +497,8 @@ class centraldb( regdb ):
             self.dir = os.path.dirname( file )
         else:
             # file in which to store suite registrations
-            self.dir = os.path.join( os.environ['CYLC_DIR'], 'CentralDB' )
-            self.file = os.path.join( self.dir, 'registrations' )
+            self.dir = central_regdb_dir
+            self.file = os.path.join( self.dir, 'db' )
         regdb.__init__(self)
 
     def suiteid( self, owner, group, name ):
