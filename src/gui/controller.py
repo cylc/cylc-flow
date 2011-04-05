@@ -102,12 +102,17 @@ class ControlApp(object):
     def on_url_clicked( self, widget, url, event ):
         if event.button != 3:
             return False
-        if url == '(none)':
+        m = re.match( 'base:(.*)', url )
+        if m:
+            task_id = m.groups()[0]
             # a default URL of '(none)' is set in config.get_graph()
             # => this graph element has not been overridden by a task
             # that actually exists in the suite at the moment.
-            warning_dialog( "This task is defined in the suite dependency graph\n" 
-                    "but does not exist in the running suite at the moment." ).warn()
+            warning_dialog( 
+                    task_id + "\n"
+                    "This task is part of the base graph, taken from the\n"
+                    "suite config file (suite.rc) dependencies section, \n" 
+                    "but it does not currently exist in the running suite." ).warn()
         else:
             # URL is task ID
             self.right_click_menu( event, url )
@@ -546,55 +551,65 @@ The cylc forecast suite metascheduler.
         menu_root = gtk.MenuItem( task_id )
         menu_root.set_submenu( menu )
 
-        info_item = gtk.MenuItem( 'Live Output' )
-        menu.append( info_item )
-        info_item.connect( 'activate', self.view_task_info, task_id, False )
+        title_item = gtk.MenuItem( 'Task: ' + task_id )
+        title_item.set_sensitive(False)
+        menu.append( title_item )
 
-        js_item = gtk.MenuItem( 'Job Submission Script' )
+        menu.append( gtk.SeparatorMenuItem() )
+
+        js_item = gtk.MenuItem( 'View Job Script' )
         menu.append( js_item )
         js_item.connect( 'activate', self.view_task_info, task_id, True )
 
-        info_item = gtk.MenuItem( 'Prerequisites and Outputs' )
+        info_item = gtk.MenuItem( 'View Job Stdout & Stderr' )
+        menu.append( info_item )
+        info_item.connect( 'activate', self.view_task_info, task_id, False )
+
+        info_item = gtk.MenuItem( 'View Task Prerequisites & Outputs' )
         menu.append( info_item )
         info_item.connect( 'activate', self.popup_requisites, task_id )
 
-        reset_ready_item = gtk.MenuItem( 'Trigger Immediately' )
+        menu.append( gtk.SeparatorMenuItem() )
+
+        reset_ready_item = gtk.MenuItem( 'Trigger Task' )
         menu.append( reset_ready_item )
         reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
         if self.readonly:
             reset_ready_item.set_sensitive(False)
 
-        reset_waiting_item = gtk.MenuItem( 'Reset to Waiting' )
+        reset_waiting_item = gtk.MenuItem( 'Reset State to "waiting"' )
         menu.append( reset_waiting_item )
         reset_waiting_item.connect( 'activate', self.reset_task_state, task_id, 'waiting' )
         if self.readonly:
             reset_waiting_item.set_sensitive(False)
 
-        reset_finished_item = gtk.MenuItem( 'Reset to Finished' )
+        reset_finished_item = gtk.MenuItem( 'Reset State to "finished"' )
         menu.append( reset_finished_item )
         reset_finished_item.connect( 'activate', self.reset_task_state, task_id, 'finished' )
         if self.readonly:
             reset_finished_item.set_sensitive(False)
 
-        reset_failed_item = gtk.MenuItem( 'Reset to Failed' )
+        reset_failed_item = gtk.MenuItem( 'Reset State to "failed"' )
         menu.append( reset_failed_item )
         reset_failed_item.connect( 'activate', self.reset_task_state, task_id, 'failed' )
         if self.readonly:
             reset_failed_item.set_sensitive(False)
 
-        kill_item = gtk.MenuItem( 'Remove (after spawning)' )
+        menu.append( gtk.SeparatorMenuItem() )
+
+        kill_item = gtk.MenuItem( 'Remove Task (after spawning)' )
         menu.append( kill_item )
         kill_item.connect( 'activate', self.kill_task, task_id )
         if self.readonly:
             kill_item.set_sensitive(False)
 
-        kill_nospawn_item = gtk.MenuItem( 'Remove (without spawning)' )
+        kill_nospawn_item = gtk.MenuItem( 'Remove Task (without spawning)' )
         menu.append( kill_nospawn_item )
         kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
         if self.readonly:
             kill_nospawn_item.set_sensitive(False)
 
-        purge_item = gtk.MenuItem( 'Recursive Purge' )
+        purge_item = gtk.MenuItem( 'Remove Task (Recursive Purge)' )
         menu.append( purge_item )
         purge_item.connect( 'activate', self.popup_purge, task_id )
         if self.readonly:
@@ -1125,7 +1140,7 @@ The cylc forecast suite metascheduler.
         file_menu_root = gtk.MenuItem( '_File' )
         file_menu_root.set_submenu( file_menu )
 
-        exit_item = gtk.MenuItem( 'E_xit' )
+        exit_item = gtk.MenuItem( 'E_xit (Disconnect From Suite)' )
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
 
@@ -1133,59 +1148,59 @@ The cylc forecast suite metascheduler.
         view_menu_root = gtk.MenuItem( '_View' )
         view_menu_root.set_submenu( view_menu )
 
-        names_item = gtk.MenuItem( '_Toggle Names' )
+        names_item = gtk.MenuItem( '_Toggle Task Names (light panel)' )
         view_menu.append( names_item )
         names_item.connect( 'activate', self.toggle_headings )
 
-        nudge_item = gtk.MenuItem( "_Nudge (update times)" )
+        nudge_item = gtk.MenuItem( "_Nudge Suite (update times)" )
         view_menu.append( nudge_item )
         nudge_item.connect( 'activate', self.nudge_suite  )
 
-        log_item = gtk.MenuItem( '_Suite Log' )
+        log_item = gtk.MenuItem( 'View _Suite Log' )
         view_menu.append( log_item )
         log_item.connect( 'activate', self.view_log )
 
         start_menu = gtk.Menu()
-        start_menu_root = gtk.MenuItem( '_Control' )
+        start_menu_root = gtk.MenuItem( 'Suite _Control' )
         start_menu_root.set_submenu( start_menu )
 
-        start_item = gtk.MenuItem( '_Start' )
+        start_item = gtk.MenuItem( '_Run (cold-, warm-, raw-, re-start)' )
         start_menu.append( start_item )
         start_item.connect( 'activate', self.startsuite_popup )
         if self.readonly:
             start_item.set_sensitive(False)
 
-        stop_item = gtk.MenuItem( 'St_op' )
+        stop_item = gtk.MenuItem( '_Stop (soon, now, or later)' )
         start_menu.append( stop_item )
         stop_item.connect( 'activate', self.stopsuite_popup )
         if self.readonly:
             stop_item.set_sensitive(False)
 
-        pause_item = gtk.MenuItem( '_Pause' )
+        pause_item = gtk.MenuItem( '_Pause (stop submitting tasks)' )
         start_menu.append( pause_item )
         pause_item.connect( 'activate', self.pause_suite )
         if self.readonly:
             pause_item.set_sensitive(False)
 
-        resume_item = gtk.MenuItem( '_Resume' )
+        resume_item = gtk.MenuItem( '_Unpause (resume submitting tasks)' )
         start_menu.append( resume_item )
         resume_item.connect( 'activate', self.resume_suite )
         if self.readonly:
             resume_item.set_sensitive(False)
 
-        insert_item = gtk.MenuItem( '_Insert' )
+        insert_item = gtk.MenuItem( '_Insert a Task or Group' )
         start_menu.append( insert_item )
         insert_item.connect( 'activate', self.insert_task_popup )
         if self.readonly:
             insert_item.set_sensitive(False)
 
-        block_item = gtk.MenuItem( '_Block' )
+        block_item = gtk.MenuItem( '_Block (ignore intervention requests)' )
         start_menu.append( block_item )
         block_item.connect( 'activate', self.block_suite )
         if self.readonly or not self.use_block:
             block_item.set_sensitive(False)
 
-        unblock_item = gtk.MenuItem( '_Unblock' )
+        unblock_item = gtk.MenuItem( 'U_nblock (comply with intervention requests)' )
         start_menu.append( unblock_item )
         unblock_item.connect( 'activate', self.unblock_suite )
         if self.readonly or not self.use_block:

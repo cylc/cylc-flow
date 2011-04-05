@@ -58,6 +58,9 @@ class CGraphPlain( pygraphviz.AGraph ):
         nl.attr[ 'label' ] = llabel
         nr.attr[ 'label' ] = rlabel
 
+        nl.attr[ 'URL' ] = 'base:' + l
+        nr.attr[ 'URL' ] = 'base:' + r
+
 class CGraph( CGraphPlain ):
     """Directed Acyclic Graph class for cylc dependency graphs.
     This class automatically adds node and edge attributes 
@@ -111,6 +114,9 @@ class CGraph( CGraphPlain ):
         rlabel = re.sub( '%\d{8}(\d\d)', r'(\1)', r )
         nl.attr[ 'label' ] = llabel
         nr.attr[ 'label' ] = rlabel
+
+        nl.attr['URL'] = l
+        nr.attr['URL'] = r
 
         for item in self.node_attr_by_taskname( l ):
             attr, value = re.split( '\s*=\s*', item )

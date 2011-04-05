@@ -847,9 +847,7 @@ class config( CylcConfigObj ):
         for n in gr_lone_nodes:
             graph.add_node( n )
 
-        # set node URLs:
         for n in graph.nodes():
-            n.attr['URL'] = '(none)'
             if not colored:
                 n.attr['style'] = 'filled'
                 n.attr['fillcolor'] = 'cornsilk'

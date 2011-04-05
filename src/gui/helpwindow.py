@@ -670,30 +670,30 @@ def userguide( w ):
 
     update_tb( tb, "\n\nTask Tree View Panel: Right-Click Menu > ", [bold, red] )
 
-    update_tb( tb, "\n o Live Output: ", [bold])
-    update_tb( tb, "View task stdout and stderr in real time." )
-    update_tb( tb, "\n o Job Submission Script: ", [bold])
+    update_tb( tb, "\n o View Job Script: ", [bold])
     update_tb( tb, "View the script used to submit this task to run." )
-    update_tb( tb, "\n o Prerequisites and Outputs: ", [bold])
-    update_tb( tb, "View the state of a task's prerequisites and outputs.")
-    update_tb( tb, "\n o Trigger Immediately: ", [bold])
+    update_tb( tb, "\n o View Job Stdout & Stderr: ", [bold])
+    update_tb( tb, "View submitted task stdout and stderr in real time." )
+    update_tb( tb, "\n o View Prerequisites & Outputs: ", [bold])
+    update_tb( tb, "View the current state of a task's prerequisites and outputs.")
+    update_tb( tb, "\n o Trigger Task: ", [bold])
     update_tb( tb, "Reset the task to the 'ready' state (all prerequisites "
-            "satisfied). This will (re)trigger the task immediately if the suite "
-            "has not been paused (in which case it will trigger on resuming)." )
-    update_tb( tb, "\n o Reset To Waiting: ", [bold])
+            "satisfied), thereby causing it to (re)trigger immediately (if "
+            "the suite is not paused, in which case it will trigger on resuming)." )
+    update_tb( tb, "\n o Reset State to 'waiting': ", [bold])
     update_tb( tb, "Set all of a task's prerequisites unsatisfied." )
-    update_tb( tb, "\n o Reset To Finished: ", [bold])
+    update_tb( tb, "\n o Reset State to 'finished': ", [bold])
     update_tb( tb, "Set all of a task's outputs completed." )
-    update_tb( tb, "\n o Reset To Failed: ", [bold])
+    update_tb( tb, "\n o Reset State to 'failed': ", [bold])
     update_tb( tb, "Put the task in the 'failed' state." )
-    update_tb( tb, "\n o Remove (after spawning): ", [bold])
+    update_tb( tb, "\n o Remove Task (after spawning): ", [bold])
     update_tb( tb, "Remove a task from the suite after ensuring that it has "
             "spawned a successor." )
-    update_tb( tb, "\n o Remove (without spawning): ", [bold])
+    update_tb( tb, "\n o Remove Task (without spawning): ", [bold])
     update_tb( tb, "Remove a task from the suite even if it has not "
             "yet spawned a successor (in which case it will be removed "
             "permanently unless re-inserted)." )
-    update_tb( tb, "\n o Recursive Purge: ", [bold])
+    update_tb( tb, "\n o Remove Task (Recursive Purge): ", [bold])
     update_tb( tb, "Remove a task from the suite, then remove any task "
             "that would depend on it, then remove any tasks that would depend on "
             "those tasks, and so on, through to a given stop cycle." )
