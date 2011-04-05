@@ -4,7 +4,7 @@ import os, socket
 from registration import localdb
 from passphrase import passphrase
 import Pyro.errors, Pyro.core
-from cylc_pyro_server import pyro_base_port, pyro_port_range
+from CylcGlobals import pyro_base_port, pyro_port_range
 
 class SuiteIdentificationError( Exception ):
     """

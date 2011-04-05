@@ -45,6 +45,7 @@ PATH=$CYLC_DIR/bin:$CYLC_DIR/util:$PATH
 
 # export PYTHONPATH to cylc core source modules
 PYTHONPATH=$CYLC_DIR/src:$CYLC_DIR/src/job-submission:$CYLC_DIR/src/task-types:$CYLC_DIR/src/locking:$CYLC_DIR/src/gui:$CYLC_DIR/src/external:$CYLC_DIR/src/prerequisites/$PYTHONPATH
+PYTHONPATH=$CYLC_DIR/conf:$PYTHONPATH
 PYTHONPATH=$CYLC_DIR/extpy/lib64/python2.4/site-packages:$PYTHONPATH
 
 if [[ -n $CYLC_SUITE_DIR ]]; then

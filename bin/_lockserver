@@ -5,7 +5,7 @@ import os, sys, pwd, re
 import socket, pickle
 import logging, logging.handlers
 from optparse import OptionParser
-from cylc_pyro_server import pyro_base_port, pyro_port_range
+from CylcGlobals import pyro_base_port, pyro_port_range
 import Pyro.core, Pyro.errors, Pyro.naming
 from Pyro.ext.daemonizer import Daemonizer
 from ConfigParser import SafeConfigParser

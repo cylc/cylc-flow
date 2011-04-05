@@ -4,12 +4,7 @@ import os
 import socket
 import Pyro
 from passphrase import passphrase
-
-# base (lowest allowed) Pyro socket number
-pyro_base_port = 7766   # (7766 is the Pyro default)
-
-# max number of sockets starting at base
-pyro_port_range = 100 # (100 is the Pyro default)
+from CylcGlobals import pyro_base_port, pyro_port_range
 
 class pyro_server( object ):
     def __init__( self, suite, user=os.environ['USER'], use_passphrase=False ):
