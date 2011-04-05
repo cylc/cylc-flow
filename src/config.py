@@ -741,7 +741,6 @@ class config( CylcConfigObj ):
             self.taskdefs[right].add_conditional_trigger( ctrig, label, cycle_list_string )
 
     def get_graph( self, start_ctime, stop, colored=True, raw=False ):
-        # check if graphing is disabled in the calling method
         if not self.graph_loaded:
             self.load_graph()
         if colored:

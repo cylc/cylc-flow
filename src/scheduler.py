@@ -1377,7 +1377,7 @@ class scheduler(object):
             #        self.live_graph.add_edge( id, task.id )
 
         # layout adds positions to nodes etc.; this is not required if
-        # we're writing to the 'dot' format, which must be process later
+        # we're writing to the 'dot' format which must be processed later
         # by the dot layout engine anyway.
         # self.live_graph.layout(prog="dot")
         if self.config["experimental"]["live graph movie"]:

@@ -29,6 +29,8 @@ try:
 except ValueError:
     raise GraphvizError, 'The graphviz package is not installed or not accessible'
 
+ddmmhh = re.compile('%(\d{4})(\d{2})(\d{2})(\d{2})')
+
 class CGraphPlain( pygraphviz.AGraph ):
     """Directed Acyclic Graph class for cylc dependency graphs."""
 
@@ -53,8 +55,8 @@ class CGraphPlain( pygraphviz.AGraph ):
         nl = self.get_node( l )
         nr = self.get_node( r )
 
-        llabel = re.sub( '%(\d{4})(\d{2})(\d{2})(\d{2})', r'\\n\3/\2 \4Z', l )
-        rlabel = re.sub( '%(\d{4})(\d{2})(\d{2})(\d{2})', r'\\n\3/\2 \4Z', r )
+        llabel = re.sub( ddmmhh, r'\\n\3/\2 \4Z', l )
+        rlabel = re.sub( ddmmhh, r'\\n\3/\2 \4Z', r )
 
         nl.attr[ 'label' ] = llabel
         nr.attr[ 'label' ] = rlabel
@@ -111,8 +113,8 @@ class CGraph( CGraphPlain ):
         nl = self.get_node( l )
         nr = self.get_node( r )
 
-        llabel = re.sub( '%(\d{4})(\d{2})(\d{2})(\d{2})', r'\\n\3/\2 \4Z', l )
-        rlabel = re.sub( '%(\d{4})(\d{2})(\d{2})(\d{2})', r'\\n\3/\2 \4Z', r )
+        llabel = re.sub( ddmmhh, r'\\n\3/\2 \4Z', l )
+        rlabel = re.sub( ddmmhh, r'\\n\3/\2 \4Z', r )
  
         nl.attr[ 'label' ] = llabel
         nr.attr[ 'label' ] = rlabel
