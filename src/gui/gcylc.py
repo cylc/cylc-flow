@@ -1750,10 +1750,10 @@ The cylc forecast suite metascheduler.
 
         view_inlined_rb.connect( "toggled", self.view_inlined_toggled, view_inlined_rb, hbox )
 
-        cancel_button = gtk.Button( "_Close" )
+        cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         ok_button = gtk.Button( "_Edit" )
-        ok_button.connect("clicked", self.edit_suite, reg, edit_rb,
+        ok_button.connect("clicked", self.edit_suite, window, reg, edit_rb,
                 edit_inlined_rb, view_inlined_rb, mark_cb, label_cb, nojoin_cb, single_cb )
 
         help_button = gtk.Button( "_Help" )
@@ -1768,9 +1768,9 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def edit_suite( self, w, reg, edit_rb, edit_inlined_rb,
+    def edit_suite( self, w, window, reg, edit_rb, edit_inlined_rb,
             view_inlined_rb, markcb, lblcb, nojcb, sngcb ):
-
+        window.destroy()
         if view_inlined_rb.get_active():
             extra = ''
             if markcb.get_active():
