@@ -53,11 +53,8 @@ class CGraphPlain( pygraphviz.AGraph ):
         nl = self.get_node( l )
         nr = self.get_node( r )
 
-        #llabel = re.sub( '%\d{8}(\d\d)', r'(\1)', l )
-        #rlabel = re.sub( '%\d{8}(\d\d)', r'(\1)', r )
-
-        llabel = re.sub( '%', r'\\n', l )
-        rlabel = re.sub( '%', r'\\n', r )
+        llabel = re.sub( '%(\d{4})(\d{2})(\d{2})(\d{2})', r'\\n\3/\2 \4Z', l )
+        rlabel = re.sub( '%(\d{4})(\d{2})(\d{2})(\d{2})', r'\\n\3/\2 \4Z', r )
 
         nl.attr[ 'label' ] = llabel
         nr.attr[ 'label' ] = rlabel
@@ -114,11 +111,9 @@ class CGraph( CGraphPlain ):
         nl = self.get_node( l )
         nr = self.get_node( r )
 
-        #llabel = re.sub( '%\d{8}(\d\d)', r'(\1)', l )
-        #rlabel = re.sub( '%\d{8}(\d\d)', r'(\1)', r )
-        llabel = re.sub( '%', r'\\n', l )
-        rlabel = re.sub( '%', r'\\n', r )
-
+        llabel = re.sub( '%(\d{4})(\d{2})(\d{2})(\d{2})', r'\\n\3/\2 \4Z', l )
+        rlabel = re.sub( '%(\d{4})(\d{2})(\d{2})(\d{2})', r'\\n\3/\2 \4Z', r )
+ 
         nl.attr[ 'label' ] = llabel
         nr.attr[ 'label' ] = rlabel
 
