@@ -28,7 +28,7 @@ use lockserver = True
                     A => C => F
                     B & C => D
     
-                    ColdA | A(T-6) => A
+                    ColdA | A(T-6)* | A(T-12) | A(T-18) => A
                     ColdB | B(T-6) => B
                     ColdC | C(T-6) => C
 
