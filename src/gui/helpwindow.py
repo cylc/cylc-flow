@@ -628,9 +628,10 @@ def userguide( w ):
             "the suite dependency graph. Graph node colours indicate "
             "task state, as above. The configured suite dependency "
             "graph, with off-white nodes, is used as a base graph for "
-            "the displayed graph. Left-click on a task to center the "
-            "graph at that point; Left-drag to pan about; use the "
-            "mouse-wheel or Zoom buttons to zoom in and out. " )
+            "the displayed graph. Left-click to center the graph on a "
+            "node; left-drag to pan; Zoom buttons, mouse-wheel, or "
+            "ctrl-left-drag to zoom in and out, and shift-left-drag to "
+            "zoom in on a box." )
     update_tb( tb, 
             "Right-click on nodes for task control "
             "and interrogation options.\n", [bold] )
