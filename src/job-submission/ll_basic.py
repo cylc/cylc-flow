@@ -39,9 +39,12 @@ class ll_basic( job_submit ):
 
         # default directives
         directives = {}
-        directives[ 'shell'    ] = '/bin/bash'
-        #directives[ 'class'    ] = 'serial'
-        directives[ 'class'    ] = 'test_linux'
+        # WARNING: under loadleveler on AIX, '#@ shell = /bin/bash'
+        # results in the job executing in a non-login shell (.profile
+        # not sourced!) whereas /bin/ksh does get a login shell. WTF?!
+          #directives[ 'shell'    ] = '/bin/bash'
+          #directives[ 'class'    ] = 'serial'
+          #directives[ 'class'    ] = 'test_linux'
         directives[ 'job_name' ] = task_id
         directives[ 'output'   ] = out
         directives[ 'error'    ] = err
