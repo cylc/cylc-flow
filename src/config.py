@@ -221,17 +221,24 @@ def get_suite_title( suite=None, path=None ):
     if not os.path.isfile( file ):
         raise SuiteConfigError, 'File not found: ' + file
 
-    title = 'No suite title supplied'
+    found = False
     for line in open( file, 'rb' ):
         m = re.match( '^\s*title\s*=\s*(.*)$', line )
         if m:
             title = m.groups()[0]
             # strip trailing space
             title = title.rstrip()
+            # NOTE: ANY TRAILING COMMENT WILL BE INCLUDED IN THE TITLE
+            #     (but this doesn't really matter for our purposes)
+            # (stripping isn't trivial in general - what about strings?)
+            found = True
             break
-    # NOTE: ANY TRAILING COMMENT WILL BE INCLUDED IN THE TITLE
-    #     (but this doesn't really matter for our purposes)
-    # (stripping isn't trivial in general - what about strings?)
+
+    if not found:
+        # title may be in an include file, in which case we need to do a
+        # full parse of the config file.
+        title = config( suite ).get_title()
+
     return title
 
 class config( CylcConfigObj ):
