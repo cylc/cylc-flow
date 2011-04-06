@@ -1040,7 +1040,8 @@ class config( CylcConfigObj ):
         taskd.commands    = taskconfig[ 'command' ]
         taskd.environment = taskconfig[ 'environment' ]
         taskd.directives  = taskconfig[ 'directives' ]
-        taskd.scripting   = taskconfig[ 'scripting' ]
+        taskd.pre_scripting   = taskconfig[ 'pre command scripting' ]
+        taskd.post_scripting   = taskconfig[ 'post command scripting' ]
 
         return taskd
 

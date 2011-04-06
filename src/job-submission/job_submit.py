@@ -49,6 +49,8 @@ class job_submit(object):
     # class variables to be set by the task manager
     dummy_mode = False
     failout_id = None
+    global_pre_scripting = ''
+    global_post_scripting = ''
 
     def interp_str( self, str ):
         str = interp_other_str( str, self.task_env )
@@ -64,7 +66,7 @@ class job_submit(object):
         else: 
             self.task = dummy_command_fail
 
-    def __init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ): 
+    def __init__( self, task_id, ext_task, task_env, dirs, pre_scripting, post_scripting, logs, owner, host ): 
 
         # TO DO: The GLOBAL ENVIRONMENT is currently extracted just
         # before use in write_environment(). This WAS so that
@@ -106,9 +108,12 @@ class job_submit(object):
         # queueing system directives
         self.directives  = dirs
 
-        # extra scripting
-        self.extra_scripting = extra
+        self.pre_scripting = '# GLOBAL SCRIPTING:\n' + self.__class__.global_pre_scripting + \
+                               '# TASK SCRIPTING:\n' + pre_scripting
         
+        self.post_scripting = '# GLOBAL SCRIPTING:\n' + self.__class__.global_post_scripting + \
+                               '# TASK SCRIPTING:\n' + post_scripting
+
         # directive prefix, e.g. '#QSUB ' (qsub), or '#@ ' (loadleveler)
         # OVERRIDE IN DERIVED CLASSES
         self.directive_prefix = "# DIRECTIVE-PREFIX "
@@ -132,7 +137,8 @@ class job_submit(object):
                 # of their normal execution environment.
                 self.owner = self.suite_owner
                 # ignore the scripting section in dummy mode
-                self.extra_scripting = ''
+                self.pre_scripting = ''
+                self.post_scripting = ''
 
             # The job will be submitted from the owner's home directory,
             # in case the job submission method requires that the
@@ -193,8 +199,9 @@ class job_submit(object):
         FILE.write( '# Job Submission Method: ' + self.__class__.__name__ + '\n\n' )
         self.write_directives( FILE )
         self.write_environment( FILE )
-        self.write_extra_scripting( FILE )
+        self.write_pre_scripting( FILE )
         self.write_task_execute( FILE )
+        self.write_post_scripting( FILE )
         FILE.write( '#EOF' )
 
     def write_directives( self, FILE ):
@@ -230,11 +237,13 @@ class job_submit(object):
         for var in self.task_env:
             FILE.write( "export " + var + "=\"" + str( self.task_env[var] ) + "\"\n" )
 
-    def write_extra_scripting( self, FILE ):
-        # override if required
+    def write_pre_scripting( self, FILE ):
         FILE.write( "\n" )
-        FILE.write( "# SCRIPTING:\n" )
-        FILE.write( self.extra_scripting + '\n' )
+        FILE.write( self.pre_scripting + '\n' )
+
+    def write_post_scripting( self, FILE ):
+        FILE.write( "\n" )
+        FILE.write( self.post_scripting + '\n' )
 
     def write_task_execute( self, FILE ):
         FILE.write( "\n" )

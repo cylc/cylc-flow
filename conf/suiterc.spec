@@ -63,6 +63,10 @@ task execution timeout minutes = float( default=None )
 tasks to include at startup = force_list( default=list())
 tasks to exclude at startup = force_list( default=list())
 
+# global scripting section
+pre command scripting = string( default='' )
+post command scripting = string( default='' )
+ 
 [dummy mode]
 # dummy mode was most useful prior to cylc-3: it allowed us to get the
 # scheduling right without running real tasks when a suite was defined
@@ -143,7 +147,8 @@ __many__ = string
     task submission timeout minutes = float( default=None )
     execution timeout minutes = float( default=None )
     reset execution timeout on incoming messages = boolean( default=True )
-    scripting = string( default='' )
+    pre command scripting = string( default='' )
+    post command scripting = string( default='' )
     # default to dummy task:
     command = force_list( default=list( cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
     owner = string( default=None )

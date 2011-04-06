@@ -16,6 +16,13 @@ uses a private running directory for its restart files)."""
 #             /       \    
 #       Model(T-6)     > [6,18 UTC only] PostB(T)
 
+pre command scripting = '''
+echo hello world!
+'''
+post command scripting = '''
+echo goodbye world!
+'''
+
 [special tasks]
     startup         = Prep
     coldstart       = ColdModel
@@ -38,6 +45,12 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE/common
     [[Prep]]
         description = "prepare the suite workspace for a new run"
         command = cylc wrap clean-workspace.sh $WORKSPACE
+        pre command scripting = """
+echo tweet!
+"""
+        post command scripting = """
+echo twaat!
+"""
 
     [[GetData]]
         description = "retrieve data for the current cycle time"

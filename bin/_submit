@@ -131,10 +131,14 @@ dclock = accelerated_clock.clock( None, None, False )
 task.task.clock = dclock
 clocktriggered.clocktriggered.clock = dclock
 
-# USER DEFINED GLOBAL ENVIRONMENT
+# SUITE.RC GLOBAL ENVIRONMENT
 globalenv = OrderedDict()
 for var in config['environment']:
     globalenv[ var ] = config['environment'][var]
+
+# SUITE.RC GLOBAL SCRIPTING
+pre_scripting = config['pre command scripting']
+post_scripting = config['post command scripting']
 
 # create the log
 log = logging.getLogger()
@@ -146,6 +150,8 @@ job_submit.cylc_env = cylcenv
 job_submit.global_env = globalenv
 job_submit.shell = config['job submission shell'] 
 job_submit.joblog_dir = config['job submission log directory']
+job_submit.global_pre_scripting = pre_scripting
+job_submit.global_post_scripting = post_scripting
 
 # intantiate the task--------------------------------------------------
 try:

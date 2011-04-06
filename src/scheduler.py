@@ -265,10 +265,14 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner
         cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
 
-        # USER DEFINED GLOBAL ENVIRONMENT
+        # SUITE.RC GLOBAL ENVIRONMENT
         globalenv = OrderedDict()
         for var in self.config['environment']:
             globalenv[ var ] = self.config['environment'][var]
+
+        # SUITE.RC GLOBAL SCRIPTING
+        pre_scripting = self.config['pre command scripting']
+        post_scripting = self.config['post command scripting']
 
         # CLOCK (accelerated time in dummy mode)
         rate = self.config['dummy mode']['clock rate in seconds per dummy hour']
@@ -292,6 +296,8 @@ class scheduler(object):
         job_submit.joblog_dir = self.config[ 'job submission log directory' ]
         if self.dummy_mode and self.failout_task_id:
             job_submit.failout_id = self.failout_task_id
+        job_submit.global_pre_scripting = pre_scripting
+        job_submit.global_post_scripting = post_scripting
 
         # LOCAL ENVIRONMENT
         # Access to the suite bin directory required for direct job
