@@ -137,8 +137,8 @@ for var in config['environment']:
     globalenv[ var ] = config['environment'][var]
 
 # SUITE.RC GLOBAL SCRIPTING
-pre_scripting = config['pre command scripting']
-post_scripting = config['post command scripting']
+pre_scripting = config['pre-command scripting']
+post_scripting = config['post-command scripting']
 
 # create the log
 log = logging.getLogger()

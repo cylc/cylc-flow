@@ -271,8 +271,8 @@ class scheduler(object):
             globalenv[ var ] = self.config['environment'][var]
 
         # SUITE.RC GLOBAL SCRIPTING
-        pre_scripting = self.config['pre command scripting']
-        post_scripting = self.config['post command scripting']
+        pre_scripting = self.config['pre-command scripting']
+        post_scripting = self.config['post-command scripting']
 
         # CLOCK (accelerated time in dummy mode)
         rate = self.config['dummy mode']['clock rate in seconds per dummy hour']

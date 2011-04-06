@@ -33,8 +33,12 @@ task submission timeout minutes = 0.1
 
 #tasks to include at startup = prep, X, ColdA, A
 
-[experimental]
-#write live graph = True
+pre-command scripting = '''
+echo hello world!
+'''
+post-command scripting = '''
+echo goodbye world!
+'''
 
 [dummy mode]
 #clock offset from initial cycle time in hours = 0
@@ -90,6 +94,13 @@ task run time in seconds = 1
 [ tasks ]
     [[prep]]
         command = cylc wrap clean-workspace.sh $WORKSPACE
+        pre-command scripting = """
+echo tweet!
+"""
+        post-command scripting = """
+echo twaat!
+"""
+
     [[X]]
         description = "retrieve real time data for model A"
         task started hook = alert2.sh
