@@ -198,6 +198,24 @@ class node( object):
             
         return res
 
+def get_rcfiles ( suite ):
+    # return a list of all rc files for this suite
+    # (i.e. suite.rc plus any include-files it uses).
+    rcfiles = []
+    try:
+        reg = getdb( suite )
+        reg.load_from_file()
+        dir, descr = reg.get( suite )
+    except RegistrationError, x:
+        raise SuiteConfigError(str(x))
+    suiterc = os.path.join( dir, 'suite.rc' )
+    rcfiles.append( suiterc )
+    for line in open( suiterc, 'rb' ):
+        m = re.match( '^\s*%include\s+(.*)$', line )
+        if m:
+            rcfiles.append(os.path.join( dir, m.groups()[0]))
+    return rcfiles
+
 def get_suite_title( suite=None, path=None ):
     # cheap suite title extraction for use by the registration
     # database commands - uses very minimal parsing of suite.rc

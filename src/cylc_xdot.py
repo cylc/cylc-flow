@@ -2,12 +2,13 @@
 
 from graphing import xdot
 import gtk
+import time
 import gobject
 import config
 import os
 
 class MyDotWindow( xdot.DotWindow ):
-    """Override xdot to get rid of the Open and Refresh buttons"""
+    """Override xdot to get rid of some buttons and parse graph from suite.rc"""
 
     ui = '''
     <ui>
@@ -73,10 +74,24 @@ class MyDotWindow( xdot.DotWindow ):
 
         self.set_focus(self.widget)
 
+        # find all suite.rc include-files
+        self.rc_mtimes = {}
+        self.rc_last_mtimes = {}
+        for rc in config.get_rcfiles( self.suite ):
+            while True:
+                try:
+                    self.rc_last_mtimes[rc] = os.stat(rc).st_mtime
+                except OSError:
+                    # this happens occasionally when the file is being edited ... 
+                    print "Failed to get rc file mod time, trying again in 1 second"
+                    time.sleep(1)
+                else:
+                    #self.rc_mtimes[rc] = self.rc_last_mtimes[rc]
+                    break
+
         self.show_all()
 
     def parse_graph( self ):
-        #print 'ullo'
         # reparse the graph
         self.suiterc = config.config( self.suite )
         self.suitercfile = self.suiterc.get_filename()
@@ -90,22 +105,25 @@ class MyDotWindow( xdot.DotWindow ):
                 self.disable_output_image = True
 
     def update(self):
-        # if suite config file has changed, reparse the graph
-        if not hasattr(self, "last_mtime"):
-            self.last_mtime = None
+        # if any suite config file has changed, reparse the graph
+        reparse = False
+        for rc in self.rc_last_mtimes:
+            while True:
+                try:
+                    rct= os.stat(rc).st_mtime
+                except OSError:
+                    # this happens occasionally when the file is being edited ... 
+                    print "Failed to get rc file mod time, trying again in 1 second"
+                    time.sleep(1)
+                else:
+                    if rct != self.rc_last_mtimes[rc]:
+                        reparse = True
+                        print 'FILE CHANGED:', rc
+                        self.rc_last_mtimes[rc] = rct
+                    break
 
-        while True:
-            try:
-                current_mtime = os.stat(self.suitercfile).st_mtime
-            except OSError:
-                # this happens occasionally when the file is being edited ... 
-                print "Failed to get suite.rc file modification time, trying again in 1 second"
-                sleep(1)
-            else:
-                break
-
-        if current_mtime != self.last_mtime:
-            self.last_mtime = current_mtime
+        if reparse:
+            print 'Reparsing graph'
             self.parse_graph()
         return True
 
@@ -156,7 +174,6 @@ class xdot_widgets(object):
         return self.vbox
 
     def update(self, filename):
-        import os
         if not hasattr(self, "last_mtime"):
             self.last_mtime = None
 
