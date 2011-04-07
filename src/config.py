@@ -252,9 +252,8 @@ def get_suite_title( suite=None, path=None ):
             break
 
     if not found:
-        print >> sys.stderr, 'WARNING: suite title not found by simple search in the suite.rc file.'
-        print >> sys.stderr, 'This could be because it is defined in a suite.rc include-file, so '
-        print >> sys.stderr, 'we\'d better do a full parse...'
+        print >> sys.stderr, 'WARNING: ' + suite + ' title not found by suite.rc search. This could'
+        print >> sys.stderr, 'mean it is defined in an include-file, so we\'d best do a full parse.'
         try:
             if path:
                 title = config( path=path ).get_title()
