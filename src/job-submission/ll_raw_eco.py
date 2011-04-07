@@ -6,7 +6,7 @@ from ll_raw import ll_raw
 
 class ll_raw_eco( ll_raw ):
 
-    def __init__( self, task_id, ext_task, task_env, dirs, extra, owner, host ): 
+    def __init__( self, task_id, ext_task, task_env, dirs, pre_scr, post_scr, owner, host ): 
 
         # all ecoconnect tasks must be explicitly owned
         if not owner:
@@ -31,4 +31,4 @@ class ll_raw_eco( ll_raw ):
         # append the correct suite suffix
         owner = owner_name + '_' + ecoc_sys
 
-        ll_raw.__init__( self, task_id, ext_task, task_env, dirs, extra, owner, host ) 
+        ll_raw.__init__( self, task_id, ext_task, task_env, dirs, pre_scr, post_scr, owner, host ) 

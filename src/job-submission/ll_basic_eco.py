@@ -5,7 +5,7 @@ from ll_basic import ll_basic
 
 class ll_basic_eco( ll_basic ):
 
-    def __init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ): 
+    def __init__( self, task_id, ext_task, task_env, dirs, pre_scr, post_scr, logs, owner, host ): 
 
         # all ecoconnect tasks must be explicitly owned
         if not owner:
@@ -35,4 +35,4 @@ class ll_basic_eco( ll_basic ):
             # dirs[ 'class'    ] = self.suite !!!! TO DO: WHEN FINAL LL CLASSES CONFIGURED
             dirs[ 'class' ] = 'test_linux'
 
-        ll_basic.__init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ) 
+        ll_basic.__init__( self, task_id, ext_task, task_env, dirs, pre_scr, post_scr, logs, owner, host ) 
