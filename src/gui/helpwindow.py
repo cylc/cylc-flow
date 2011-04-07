@@ -218,15 +218,15 @@ update in real time as you edit the suite.
 Search in the suite config file and bin directory.
 
 %h3 Validate
-Parse the suite config file, validate it against the spec, and report
-any errors.
+Parse the suite config file, validating it against the suite config
+spec, then attempt to instantiate all suite task proxies, and report any
+errors.
 
 %h3 Describe
 Print the suite description.
 
 %h3 List Tasks
 Print the suite's configured task list.
-
 
 %h3 Copy
 Copy an existing suite (or group of suites) and register it (or them)
