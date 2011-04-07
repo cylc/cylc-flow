@@ -51,6 +51,7 @@ class job_submit(object):
     failout_id = None
     global_pre_scripting = ''
     global_post_scripting = ''
+    owned_task_execution_method = 'sudo'
 
     def interp_str( self, str ):
         str = interp_other_str( str, self.task_env )
@@ -120,6 +121,8 @@ class job_submit(object):
 
         # final directive, WITH PREFIX, e.g. '#@ queue' for loadleveler
         self.final_directive = ""
+
+        self.owned_task_execution_method = self.__class__.owned_task_execution_method
         
         if host and not self.__class__.dummy_mode:
             # REMOTE JOB SUBMISSION as owner
@@ -273,8 +276,13 @@ class job_submit(object):
             new_dir = self.homedir
 
         if self.owner != self.suite_owner:
-            # submit using sudo
-            self.command = 'sudo -u ' + self.owner + ' ' + self.command
+            if self.owned_task_execution_method == 'sudo':
+                self.command = 'sudo -u ' + self.owner + ' ' + self.command
+            elif self.owned_task_execution_method == 'ssh': 
+                self.command = 'ssh ' + self.owner + '@localhost ' + self.command
+            else:
+                # this should not happen
+                raise SystemExit( 'ERROR:, unknown owned task execution method: ' + self.owned_task_execution_method )
 
         # execute the local command to submit the job
         if dry_run:

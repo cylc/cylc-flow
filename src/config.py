@@ -333,7 +333,7 @@ class config( CylcConfigObj ):
                 else:
                     print result
  
-            raise SuiteConfigError, "Suite Config Validation Failed"
+            raise SuiteConfigError, "ERROR: suite.rc validation failed"
         
         extras = []
         for sections, name in get_extra_values(self):

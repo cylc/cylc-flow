@@ -270,10 +270,6 @@ class scheduler(object):
         for var in self.config['environment']:
             globalenv[ var ] = self.config['environment'][var]
 
-        # SUITE.RC GLOBAL SCRIPTING
-        pre_scripting = self.config['pre-command scripting']
-        post_scripting = self.config['post-command scripting']
-
         # CLOCK (accelerated time in dummy mode)
         rate = self.config['dummy mode']['clock rate in seconds per dummy hour']
         offset = self.config['dummy mode']['clock offset from initial cycle time in hours']
@@ -296,8 +292,9 @@ class scheduler(object):
         job_submit.joblog_dir = self.config[ 'job submission log directory' ]
         if self.dummy_mode and self.failout_task_id:
             job_submit.failout_id = self.failout_task_id
-        job_submit.global_pre_scripting = pre_scripting
-        job_submit.global_post_scripting = post_scripting
+        job_submit.global_pre_scripting = self.config['pre-command scripting']
+        job_submit.global_post_scripting = self.config['post-command scripting']
+        job_submit.owned_task_execution_method = self.config['owned task execution method']
 
         # LOCAL ENVIRONMENT
         # Access to the suite bin directory required for direct job
