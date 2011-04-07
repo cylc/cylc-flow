@@ -252,12 +252,17 @@ def get_suite_title( suite=None, path=None ):
             break
 
     if not found:
-        # title may be in an include file, in which case we need to do a
-        # full parse of the config file.
-        if path:
-            title = config( path=path ).get_title()
-        else:
-            title = config( suite ).get_title()
+        print >> sys.stderr, 'WARNING: suite title not found by simple search in the suite.rc file.'
+        print >> sys.stderr, 'This could be because it is defined in a suite.rc include-file, so '
+        print >> sys.stderr, 'we\'d better do a full parse...'
+        try:
+            if path:
+                title = config( path=path ).get_title()
+            else:
+                title = config( suite ).get_title()
+        except SuiteConfigError, x:
+            print >> sys.stderr, 'ERROR: suite.rc parse failure!'
+            raise
 
     return title
 
@@ -320,8 +325,9 @@ class config( CylcConfigObj ):
             failed_items = flatten_errors( self, test )
             for item in failed_items:
                 sections, key, result = item
+                print ' ',
                 for sec in sections:
-                    print sec, '::',
+                    print sec, '->',
                 print key
                 if result == False:
                     print "Required item missing."
@@ -333,8 +339,9 @@ class config( CylcConfigObj ):
         found_extra = False
         for sections, name in get_extra_values(self):
             # TEMPORARY
+            print ' ',
             for sec in sections:
-                print sec, '::',
+                print sec, '->',
             print name
             # !!! TO DO: THE FOLLOWING FROM CONFIGOBJ DOC SECTION 15.1 FAILS 
             ### this code gets the extra values themselves

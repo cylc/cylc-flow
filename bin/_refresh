@@ -32,7 +32,9 @@ reg.load_from_file()
 invalid = {}
 new_title = {}
 
+print 'Checking suite registrations...'
 for suite, dir, old_tit in reg.get_list():
+    print '  +', suite
     if not os.path.isdir( dir ):
         invalid[suite] = "Suite definition directory not found"
         continue
