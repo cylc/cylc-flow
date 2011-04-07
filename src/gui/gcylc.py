@@ -501,6 +501,11 @@ class MainApp(object):
         vbox.pack_start( self.menu_bar, False )
         vbox.pack_start( sw, True )
 
+        eb = gtk.EventBox()
+        eb.add( gtk.Label( "right-click on suites or groups for options" ) )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
+        vbox.pack_start( eb, False )
+
         self.window.add(vbox)
         self.window.show_all()
 
