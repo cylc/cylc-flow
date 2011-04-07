@@ -562,7 +562,7 @@ The cylc forecast suite metascheduler.
         suiterc = dialog.get_filename()
         dialog.destroy()
         dir = os.path.dirname( suiterc )
-        
+
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Add A Suite" )

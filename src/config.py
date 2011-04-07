@@ -230,11 +230,10 @@ def get_suite_title( suite=None, path=None ):
     elif path:
         # allow load by path so that suite title can be parsed for
         # new suite registrations.
-        suite = 'fooWx_:barWx_'
-        dir = path
+        suite = '(None)'
         file = os.path.join( path, 'suite.rc' )
     else:
-        raise SuiteConfigError, 'ERROR: Suite Undefined'
+        raise SuiteConfigError, 'ERROR, config.get_suite_title(): suite registration or path required'
 
     if not os.path.isfile( file ):
         raise SuiteConfigError, 'File not found: ' + file
@@ -255,7 +254,10 @@ def get_suite_title( suite=None, path=None ):
     if not found:
         # title may be in an include file, in which case we need to do a
         # full parse of the config file.
-        title = config( suite ).get_title()
+        if path:
+            title = config( path=path ).get_title()
+        else:
+            title = config( suite ).get_title()
 
     return title
 
