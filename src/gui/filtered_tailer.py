@@ -8,8 +8,8 @@ import tail
 #from warning_dialog import warning_dialog
 
 class filtered_tailer( tailer ):
-    def __init__( self, logview, log, filter ):
-        self.filter = filter
+    def __init__( self, logview, log, filters ):
+        self.filters = filters
         tailer.__init__( self, logview, log )
 
     def run( self ):
@@ -26,6 +26,12 @@ class filtered_tailer( tailer ):
             if not self.freeze:
                 line = gen.next()
                 if line:
-                    if re.search( self.filter, line ):
+                    match = True
+                    for filter in self.filters:
+                        if filter:
+                            if not re.search( filter, line ):
+                                match = False 
+                                break
+                    if match:
                         gobject.idle_add( self.update_gui, line )
         ###print "Disconnecting from log viewer thread"

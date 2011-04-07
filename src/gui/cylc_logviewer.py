@@ -14,16 +14,18 @@ class cylc_logviewer( logviewer ):
         self.task_list = task_list
         self.main_log = 'log'
         self.level = 0
-        self.filter = None
+        self.task_filter = None
+        self.custom_filter = None
         logviewer.__init__( self, name, dir, self.main_log )
 
     def create_gui_panel( self ):
         logviewer.create_gui_panel( self )
         
         window = gtk.Window()
-        window.set_border_width(5)
+        #window.set_border_width(5)
         window.set_title( "log viewer" )
-
+        window.set_size_request(800, 400)
+ 
         combobox = gtk.combo_box_new_text()
         combobox.append_text( 'Task' ) 
         combobox.append_text( 'all' ) 
@@ -77,7 +79,7 @@ class cylc_logviewer( logviewer ):
         else:
             filter = '\\[' + task + '%\d{10}\\]'
 
-        self.filter = filter
+        self.task_filter = filter
         self.update_view()
 
         # TO DO: CHECK ALL BOOLEAN RETURN VALUES THROUGHOUT THE GUI
@@ -90,7 +92,7 @@ class cylc_logviewer( logviewer ):
         else:
             filter = txt
 
-        self.filter = filter
+        self.custom_filter = filter
         self.update_view()
 
         return False
@@ -132,8 +134,9 @@ the suite has been restarted.""" ).warn()
         self.reset_logbuffer()
         logbuffer.delete( s, e )
         self.log_label.set_text( self.path() ) 
-        if self.filter:
-            self.t = filtered_tailer( self.logview, self.path(), self.filter )
+        if self.task_filter or self.custom_filter:
+            filters = [self.task_filter, self.custom_filter ]
+            self.t = filtered_tailer( self.logview, self.path(), filters )
         else:
             self.t = tailer( self.logview, self.path() )
         ###print "Starting log viewer thread"
