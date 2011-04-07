@@ -11,19 +11,19 @@ import helpwindow
 # unit test: see the command $CYLC_DIR/bin/gcapture
 
 class gcapture(object):
-    """Run a command as a subprocess and capture its stdout and stderr
-streams in real time to display in a GUI window. Examples:
+    """
+Run a command as a subprocess and capture its stdout and stderr in real
+time, to display in a GUI window. Examples:
     $ capture "echo foo"
     $ capture "echo hello && sleep 5 && echo bye"
-Stderr is displayed in red.
+Lines matching WARNING or ERROR are displayed in red.
     $ capture "echo foo && echox bar"
-"""
-    def __init__( self, command, stdoutfile, stderrfile, width=400, height=400, standalone=False, ignore_command=False ):
+    """
+    def __init__( self, command, stdoutfile, width=400, height=400, standalone=False, ignore_command=False ):
         self.standalone=standalone
         self.command = command
         self.ignore_command = ignore_command
         self.stdout = stdoutfile
-        self.stderr = stderrfile
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_border_width( 5 )
         self.window.set_title( 'subprocess output capture' )
@@ -31,64 +31,50 @@ Stderr is displayed in red.
         self.window.set_size_request(width, height)
         self.quit_already = False
 
+        self.find_current = None
+        self.find_current_iter = None
+        self.search_warning_done = False
+
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
-
-        sw2 = gtk.ScrolledWindow()
-        sw2.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
 
         self.textview = gtk.TextView()
         self.textview.set_editable(False)
         self.textview.set_wrap_mode( gtk.WRAP_WORD )
-
-        self.textview2 = gtk.TextView()
-        self.textview2.set_editable(False)
-        self.textview2.set_wrap_mode( gtk.WRAP_WORD )
-
         tb = self.textview.get_buffer()
-        tb2 = self.textview2.get_buffer()
 
         self.blue = tb.create_tag( None, foreground = "darkblue" )
         self.red = tb.create_tag( None, foreground = "red" )
-       
-        self.blue2 = tb2.create_tag( None, foreground = "darkblue" )
-        self.red2 = tb2.create_tag( None, foreground = "red" )
 
         if not self.ignore_command:
             tb.insert_with_tags( tb.get_end_iter(), 'command: ' + command + '\n', self.blue )
-            tb2.insert_with_tags( tb2.get_end_iter(), 'command: ' + command + '\n', self.blue2 )
-
-        tb.insert_with_tags( tb.get_end_iter(), ' stdout: ' + stdoutfile.name + '\n', self.blue )
-        tb2.insert_with_tags( tb2.get_end_iter(), ' stderr: ' + stderrfile.name + '\n\n', self.blue2 )
-
-
-        vpanes = gtk.VPaned()
-        # set pane position in pixels (otherwise top too small initially)
-        vpanes.set_position(height/3)
+        tb.insert_with_tags( tb.get_end_iter(),     'output : ' + stdoutfile.name + '\n\n', self.blue )
 
         vbox = gtk.VBox()
-        vbox2 = gtk.VBox()
-
         sw.add(self.textview)
-        sw2.add(self.textview2)
 
         frame = gtk.Frame()
         frame.add(sw)
         vbox.add(frame)
 
-        frame2 = gtk.Frame()
-        frame2.add(sw2)
-        vbox2.add(frame2)
-
-        save_button = gtk.Button( "Save std_out" )
+        save_button = gtk.Button( "Save As" )
         save_button.connect("clicked", self.save, self.textview )
-        save_button2 = gtk.Button( "Save std_err" )
-        save_button2.connect("clicked", self.save, self.textview2 )
 
         hbox = gtk.HBox()
         hbox.pack_start( save_button, False )
-        hbox.pack_start( save_button2, False )
-        vbox.pack_start( hbox, False )
+
+        self.freeze_button = gtk.ToggleButton( "_Disconnect" )
+        self.freeze_button.set_active(False)
+        self.freeze_button.connect("toggled", self.freeze )
+
+        searchbox = gtk.HBox()
+        entry = gtk.Entry()
+        entry.connect( "activate", self.enter_clicked )
+        searchbox.pack_start (entry, True)
+        b = gtk.Button ("Find Next")
+        b.connect_object ('clicked', self.on_find_clicked, entry)
+        searchbox.pack_start (b, False)
+        searchbox.pack_start( self.freeze_button, False )
 
         close_button = gtk.Button( "_Close" )
         close_button.connect("clicked", self.quit, None, None )
@@ -98,24 +84,38 @@ Stderr is displayed in red.
         hbox.pack_end(close_button, False)
         hbox.pack_end(help_button, False)
 
-        # stderr on top
-        vpanes.add( vbox2 )
-        vpanes.add( vbox )
+        vbox.pack_start( searchbox, False )
+        vbox.pack_start( hbox, False )
 
-        self.window.add(vpanes)
+        self.window.add(vbox)
         close_button.grab_focus()
         self.window.show_all()
 
     def run( self ):
         if not self.ignore_command:
-            self.proc = subprocess.Popen( self.command, stdout=self.stdout, stderr=self.stderr, shell=True )
-            self.stdout_updater = tailer( self.textview, self.stdout.name, proc=self.proc, format=True )
-            self.stderr_updater = tailer( self.textview2, self.stderr.name, proc=self.proc, tag=self.red2 )
+            self.proc = subprocess.Popen( self.command, stdout=self.stdout, stderr=subprocess.STDOUT, shell=True )
+            self.stdout_updater = tailer( self.textview, self.stdout.name, proc=self.proc, err_tag=self.red, format=True )
         else:
             self.stdout_updater = tailer( self.textview, self.stdout.name, format=True )
-            self.stderr_updater = tailer( self.textview2, self.stderr.name, tag=self.red2 )
         self.stdout_updater.start()
-        self.stderr_updater.start()
+
+    def reset_buffer( self ):
+        # Clear log buffer iters and tags
+        # TO DO: this also wipes out warning and error coloring
+        buffer = self.textview.get_buffer()
+        s,e = buffer.get_bounds()
+        buffer.remove_all_tags( s,e )
+        self.find_current_iter = None
+        self.find_current = None
+
+    def freeze( self, b ):
+        if b.get_active():
+            self.stdout_updater.freeze = True
+            b.set_label( '_Reconnect' )
+            self.reset_buffer()
+        else:
+            self.stdout_updater.freeze = True
+            b.set_label( '_Disconnect' )
 
     def save( self, w, tv ):
         tb = tv.get_buffer()
@@ -123,8 +123,6 @@ Stderr is displayed in red.
         start = tb.get_start_iter()
         end = tb.get_end_iter()
         txt = tb.get_text( start, end )
-
-        #print txt
 
         dialog = gtk.FileChooserDialog(title='Save As',
                 action=gtk.FILE_CHOOSER_ACTION_SAVE,
@@ -159,7 +157,6 @@ Stderr is displayed in red.
             # gcapture windows, including those the user has closed.
             return
         self.stdout_updater.quit = True
-        self.stderr_updater.quit = True
         self.quit_already = True
         if self.standalone:
             #print 'GTK MAIN QUIT'
@@ -168,8 +165,43 @@ Stderr is displayed in red.
             #print 'WINDOW DESTROY'
             self.window.destroy()
 
+    def enter_clicked( self, e ):
+        self.on_find_clicked( e )
+
+    def on_find_clicked( self, e ):
+        tv = self.textview
+        needle = e.get_text ()
+        if not needle:
+            return
+
+        self.stdout_updater.freeze = True
+        self.freeze_button.set_active(True)
+        self.freeze_button.set_label('_Reconnect')
+        if not self.search_warning_done:
+            warning_dialog( "Find Next disconnects the live feed. Click Reconnect when you're done." ).warn()
+            self.search_warning_done = True
+
+        tb = tv.get_buffer ()
+
+        if needle == self.find_current:
+            s = self.find_current_iter
+        else:
+            s,e = tb.get_bounds()
+            tb.remove_all_tags( s,e )
+            s = tb.get_end_iter()
+            tv.scroll_to_iter( s, 0 )
+        try:
+            f, l = s.backward_search (needle, gtk.TEXT_SEARCH_TEXT_ONLY) 
+        except:
+            warning_dialog( '"' + needle + '"' + " not found" ).warn()
+        else:
+            tag = tb.create_tag( None, background="#70FFA9" )
+            tb.apply_tag( tag, f, l )
+            self.find_current_iter = f
+            self.find_current = needle
+            tv.scroll_to_iter( f, 0 )
+
 class gcapture_tmpfile( gcapture ):
     def __init__( self, command, tmpdir, width=400, height=400, standalone=False ):
         stdout = tempfile.NamedTemporaryFile( dir = tmpdir )
-        stderr = tempfile.NamedTemporaryFile( dir = tmpdir )
-        gcapture.__init__(self, command, stdout, stderr, width, height, standalone )
+        gcapture.__init__(self, command, stdout, width=width, height=height, standalone=standalone )

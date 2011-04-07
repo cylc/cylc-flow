@@ -39,7 +39,7 @@ class DefinitionError( Error ):
 class taskdef(object):
     def __init__( self, name ):
         if re.search( '[^\w]', name ):
-            raise DefinitionError, "Illegal taskname: " + name
+            raise DefinitionError, "ERROR: Illegal taskname: " + name
         self.name = name
         self.type = 'free'
         self.job_submit_method = 'background'
@@ -107,21 +107,21 @@ class taskdef(object):
         for hr in hours:
             hour = int( hr )
             if hour < 0 or hour > 23:
-                raise DefinitionError( 'Hour must be 0<hour<23' )
+                raise DefinitionError( 'ERROR: Hour ' + str(hour) + ' must be between 0 and 23' )
             if hour not in self.hours: 
                 self.hours.append( hour )
             self.hours.sort( key=int )
 
     def check_consistency( self ):
         if len( self.hours ) == 0:
-            raise DefinitionError( 'no hours specified' )
+            raise DefinitionError( 'ERROR: no hours specified' )
 
         if 'clocktriggered' in self.modifiers:
             if self.clocktriggered_offset == None:
-                raise DefinitionError( 'clock-triggered tasks must specify a time offset' )
+                raise DefinitionError( 'ERROR: clock-triggered tasks must specify a time offset' )
 
         if self.member_of and len( self.members ) > 0:
-            raise DefinitionError( 'nested task families are not allowed' )
+            raise DefinitionError( 'ERROR: nested task families are not allowed' )
 
     def time_trans( self, strng, hours=False ):
         # translate a time of the form:

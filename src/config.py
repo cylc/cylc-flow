@@ -252,8 +252,8 @@ def get_suite_title( suite=None, path=None ):
             break
 
     if not found:
-        print >> sys.stderr, 'WARNING: ' + suite + ' title not found by suite.rc search. This could'
-        print >> sys.stderr, 'mean it is defined in an include-file, so we\'d best do a full parse.'
+        print >> sys.stderr, 'WARNING: ' + suite + ' title not found by suite.rc search. This could\n'
+        'mean it is defined in an include-file, so we\'d best do a full parse.'
         try:
             if path:
                 title = config( path=path ).get_title()
@@ -335,13 +335,8 @@ class config( CylcConfigObj ):
  
             raise SuiteConfigError, "Suite Config Validation Failed"
         
-        found_extra = False
+        extras = []
         for sections, name in get_extra_values(self):
-            # TEMPORARY
-            print ' ',
-            for sec in sections:
-                print sec, '->',
-            print name
             # !!! TO DO: THE FOLLOWING FROM CONFIGOBJ DOC SECTION 15.1 FAILS 
             ### this code gets the extra values themselves
             ##the_section = self
@@ -356,10 +351,15 @@ class config( CylcConfigObj ):
           
             ##section_string = ', '.join(sections) or "top level"
             ##print 'Extra entry in section: %s. Entry %r is a %s' % (section_string, name, section_or_value)
-            found_extra = True
+            extra = ' '
+            for sec in sections:
+                extra += sec + ' -> '
+            extras.append( extra + name )
         
-        if found_extra:
-            raise SuiteConfigError, "Illegal suite.rc entry(s) found"
+        if len(extras) != 0:
+            for extra in extras:
+                print >> sys.stderr, '  ERROR: Illegal entry:', extra 
+            raise SuiteConfigError, "ERROR: Illegal suite.rc entry(s) found"
 
         self.process_configured_directories()
 
@@ -372,9 +372,9 @@ class config( CylcConfigObj ):
                 try:
                     self.clock_offsets[ task ] = float( offset )
                 except ValueError:
-                    raise SuiteConfigError, "Illegal clock-trigger offset: " + offset
+                    raise SuiteConfigError, "ERROR: Illegal clock-trigger offset: " + offset
             else:
-                raise SuiteConfigError, "Illegal clock-triggered task spec: " + item
+                raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
         # parse families
         self.member_of = {}
@@ -392,7 +392,7 @@ class config( CylcConfigObj ):
                 if output_name == 'fail':
                     trigger = task_name + '%$(CYCLE_TIME) failed'
                 else:
-                    raise SuiteConfigError, "Task '" + lnode.name + "' does not define output '" + lnode.output  + "'"
+                    raise SuiteConfigError, "ERROR: Task '" + lnode.name + "' does not define output '" + lnode.output  + "'"
         else:
             trigger = task_name + '%$(CYCLE_TIME) finished'
 
@@ -436,7 +436,7 @@ class config( CylcConfigObj ):
                 if type == 'clock-triggered':
                     name = re.sub('\(.*\)','',name)
                 if re.search( '[^0-9a-zA-Z_]', name ):
-                    raise SuiteConfigError, 'Illegal ' + type + ' task name: ' + name
+                    raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
                 if name not in self.taskdefs and name not in self['tasks']:
                     print >> sys.stderr, 'WARNING: ' + type + ' task "' + name + '" is not defined in [tasks] or used in the graph.'
 
@@ -453,10 +453,10 @@ class config( CylcConfigObj ):
         # check 'tasks to exclude|include at startup' contains valid tasks
         for name in self['tasks to include at startup']:
                 if name not in self['tasks'] and name not in self.taskdefs:
-                    raise SuiteConfigError, name + ' in "tasks to include at startup" is not defined in [tasks] or graph.'
+                    raise SuiteConfigError, "ERROR: " + name + ' in "tasks to include at startup" is not defined in [tasks] or graph.'
         for name in self['tasks to exclude at startup']:
                 if name not in self['tasks'] and name not in self.taskdefs:
-                    raise SuiteConfigError, name + ' in "tasks to exclude at startup" is not defined in [tasks] or graph.'
+                    raise SuiteConfigError, "ERROR: " + name + ' in "tasks to exclude at startup" is not defined in [tasks] or graph.'
 
         # check graphed hours are consistent with [tasks]->[[NAME]]->hours (if defined)
         for name in self.taskdefs:
@@ -473,7 +473,7 @@ class config( CylcConfigObj ):
                     if hour not in section_hours:
                         bad_hours.append(str(hour))
                 if len(bad_hours) > 0:
-                    raise SuiteConfigError, '[tasks]->[[' + name + ']]->hours disallows the graphed hour(s) ' + ','.join(bad_hours)
+                    raise SuiteConfigError, 'ERROR: [tasks]->[[' + name + ']]->hours disallows the graphed hour(s) ' + ','.join(bad_hours)
 
         # TO DO: check listed family members in the same way
         # TO DO: check that any multiple appearance of same task  in
@@ -595,7 +595,7 @@ class config( CylcConfigObj ):
             # etc., so don't check for them as erroneous conditionals
             # just yet. Now split on '&' (AND) and generate pairs
             if re.search( '\|', group ):
-                raise SuiteConfigError, "Lone node groups cannot contain OR: " + group
+                raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR: " + group
             items  = re.split( '\s*&\s*', group )
             for item in items:
                 n = node( item )
@@ -617,7 +617,7 @@ class config( CylcConfigObj ):
 
             # '|' (OR) is not allowed on the right side
             if re.search( '\|', rgroup ):
-                raise SuiteConfigError, "OR '|' conditionals are illegal on the right: " + rgroup
+                raise SuiteConfigError, "ERROR: OR '|' conditionals are illegal on the right: " + rgroup
 
             # now split on '&' (AND) and generate corresponding pairs
             rights = re.split( '\s*&\s*', rgroup )
@@ -661,7 +661,7 @@ class config( CylcConfigObj ):
             # etc., so don't check for them as erroneous conditionals
             # just yet. Now split on '&' (AND) and generate pairs
             if re.search( '\|', group ):
-                raise SuiteConfigError, "Lone node groups cannot contain OR: " + group
+                raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR: " + group
             nodes  = re.split( '\s*&\s*', group )
             for node in nodes:
                 try:
@@ -685,7 +685,7 @@ class config( CylcConfigObj ):
 
             # '|' (OR) is not allowed on the right side
             if re.search( '\|', rgroup ):
-                raise SuiteConfigError, "OR '|' conditionals are illegal on the right: " + rgroup
+                raise SuiteConfigError, "ERROR: OR '|' conditionals are illegal on the right: " + rgroup
 
             # now split on '&' (AND) and generate corresponding pairs
             rights = re.split( '\s*&\s*', rgroup )

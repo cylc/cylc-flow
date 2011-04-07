@@ -7,13 +7,14 @@ import tail
 #from warning_dialog import warning_dialog
 
 class tailer(threading.Thread):
-    def __init__( self, logview, log, proc=None, tag=None, format=False ):
+    def __init__( self, logview, log, proc=None, tag=None, err_tag=None, format=False ):
         super( tailer, self).__init__()
         self.logview = logview
         self.logbuffer = logview.get_buffer()
         self.logfile = log
         self.quit = False
         self.tag = tag
+        self.err_tag = err_tag
         self.proc = proc
         self.freeze = False
         self.format = format
@@ -66,7 +67,9 @@ class tailer(threading.Thread):
         #        pass
         #    else:
         #        line = re.sub( r'\n', ' ', line )
-        if self.tag:
+        if self.err_tag and re.search( 'WARNING|ERROR', line ):
+            self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.err_tag )
+        elif self.tag:
             self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.tag )
         else:
             self.logbuffer.insert( self.logbuffer.get_end_iter(), line )
