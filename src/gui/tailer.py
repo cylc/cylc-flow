@@ -67,7 +67,7 @@ class tailer(threading.Thread):
         #        pass
         #    else:
         #        line = re.sub( r'\n', ' ', line )
-        if self.err_tag and re.search( 'WARNING|ERROR', line ):
+        if self.err_tag and re.search( 'WARNING|ERROR|CRITICAL', line ):
             self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.err_tag )
         elif self.tag:
             self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.tag )
