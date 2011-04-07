@@ -45,6 +45,7 @@ Lines matching WARNING or ERROR are displayed in red.
 
         self.blue = tb.create_tag( None, foreground = "darkblue" )
         self.red = tb.create_tag( None, foreground = "red" )
+        self.ftag = tb.create_tag( None, background="#70FFA9" )
 
         if not self.ignore_command:
             tb.insert_with_tags( tb.get_end_iter(), 'command: ' + command + '\n', self.blue )
@@ -96,23 +97,13 @@ Lines matching WARNING or ERROR are displayed in red.
             self.proc = subprocess.Popen( self.command, stdout=self.stdout, stderr=subprocess.STDOUT, shell=True )
             self.stdout_updater = tailer( self.textview, self.stdout.name, proc=self.proc, err_tag=self.red, format=True )
         else:
-            self.stdout_updater = tailer( self.textview, self.stdout.name, format=True )
+            self.stdout_updater = tailer( self.textview, self.stdout.name, err_tag=self.red, format=True )
         self.stdout_updater.start()
-
-    def reset_buffer( self ):
-        # Clear log buffer iters and tags
-        # TO DO: this also wipes out warning and error coloring
-        buffer = self.textview.get_buffer()
-        s,e = buffer.get_bounds()
-        buffer.remove_all_tags( s,e )
-        self.find_current_iter = None
-        self.find_current = None
 
     def freeze( self, b ):
         if b.get_active():
             self.stdout_updater.freeze = True
             b.set_label( '_Reconnect' )
-            self.reset_buffer()
         else:
             self.stdout_updater.freeze = True
             b.set_label( '_Disconnect' )
@@ -170,8 +161,12 @@ Lines matching WARNING or ERROR are displayed in red.
 
     def on_find_clicked( self, e ):
         tv = self.textview
-        needle = e.get_text ()
+        tb = tv.get_buffer ()
+        needle = e.get_text()
+
         if not needle:
+            s,e = tb.get_bounds()
+            tb.remove_tag( self.ftag, s,e )
             return
 
         self.stdout_updater.freeze = True
@@ -181,22 +176,19 @@ Lines matching WARNING or ERROR are displayed in red.
             warning_dialog( "Find Next disconnects the live feed. Click Reconnect when you're done." ).warn()
             self.search_warning_done = True
 
-        tb = tv.get_buffer ()
-
         if needle == self.find_current:
             s = self.find_current_iter
         else:
             s,e = tb.get_bounds()
-            tb.remove_all_tags( s,e )
+            tb.remove_tag( self.ftag, s,e )
             s = tb.get_end_iter()
             tv.scroll_to_iter( s, 0 )
         try:
-            f, l = s.backward_search (needle, gtk.TEXT_SEARCH_TEXT_ONLY) 
+            f, l = s.backward_search(needle, gtk.TEXT_SEARCH_VISIBLE_ONLY) 
         except:
             warning_dialog( '"' + needle + '"' + " not found" ).warn()
         else:
-            tag = tb.create_tag( None, background="#70FFA9" )
-            tb.apply_tag( tag, f, l )
+            tb.apply_tag( self.ftag, f, l )
             self.find_current_iter = f
             self.find_current = needle
             tv.scroll_to_iter( f, 0 )
