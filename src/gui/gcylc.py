@@ -964,7 +964,7 @@ The cylc forecast suite metascheduler.
     
             del_item = gtk.MenuItem( '_Unregister' )
             menu.append( del_item )
-            del_item.connect( 'activate', self.unregister_suite_popup, reg )
+            del_item.connect( 'activate', self.unregister_suite_popup, reg, suite_dir )
             if self.cdb:
                 if owner != self.owner:
                     del_item.set_sensitive( False )
@@ -1016,20 +1016,19 @@ The cylc forecast suite metascheduler.
             group = owner + ':' + group
         options = ''
         if oblit_cb.get_active():
-            res = question_dialog( "!DANGER! !DANGER! !DANGER!\n"
-                    "Are you sure you want to delete all group suite definition directories?\n\n"
-                    "Consider whether you have other copies of these suites, and\n"
-                    "whether other registrations refer to the same suites.").ask()
+            res = question_dialog( "!DANGER! !DANGER! !DANGER! !DANGER! !DANGER! !DANGER!\n"
+                    "?Do you REALLY want to delete ALL suite definition directories in group '" + group + "'?").ask()
             if res == gtk.RESPONSE_YES:
                 options = '--obliterate '
- 
+            else:
+                return False
         command = "cylc unregister --gcylc " + options + group + ":"
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
         w.destroy()
 
-    def unregister_suite_popup( self, w, reg ):
+    def unregister_suite_popup( self, w, reg, dir ):
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Unregister '" + reg + "'")
@@ -1043,7 +1042,7 @@ The cylc forecast suite metascheduler.
         oblit_cb.set_active(False)
 
         ok_button = gtk.Button( "_Unregister" )
-        ok_button.connect("clicked", self.unregister_suite, window, reg, oblit_cb )
+        ok_button.connect("clicked", self.unregister_suite, window, reg, dir, oblit_cb )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.unregister )
@@ -1061,15 +1060,15 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def unregister_suite( self, b, w, reg, oblit_cb ):
+    def unregister_suite( self, b, w, reg, dir, oblit_cb ):
         options = ''
         if oblit_cb.get_active():
-            res = question_dialog( "!DANGER! !DANGER! !DANGER!\n"
-                    "Are you sure you want to delete the suite definition directory?\n\n"
-                    "Consider whether you have other copies of the suite, and\n"
-                    "whether other registrations refer to the same suite.").ask()
+            res = question_dialog( "!DANGER! !DANGER! !DANGER! !DANGER! !DANGER! !DANGER!\n"
+                    "?Do you REALLY want to delete " + dir + '?').ask()
             if res == gtk.RESPONSE_YES:
                 options = '--obliterate '
+            else:
+                return False
  
         command = "cylc unregister --gcylc " + options + reg
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
