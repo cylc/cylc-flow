@@ -1874,18 +1874,15 @@ The cylc forecast suite metascheduler.
                 return False
 
             stdoutf = prefix + '.out'
-            stderrf = prefix + '.err'
 
             if not running_already:
                 # ask whether or not to delete existing output
-                stdout_exists = stderr_exists = False
+                stdout_exists = False
                 if os.path.exists( stdoutf ):
                     stdout_exists = True
-                if os.path.exists( stderrf ):
-                    stderr_exists = True
-                if stdout_exists or stderr_exists:
+                if stdout_exists:
                     response = question_dialog( 
-                        "Delete old stdout and stderr output for this suite?\n\n"
+                        "Delete old output (stdout and stderr) for this suite?\n\n"
                         "Output capture files exist from previous runs "
                         "launched via gcylc; click Yes to delete them and start anew "
                         "(Otherwise new output will be appended to the existing files)." ).ask()
@@ -1893,8 +1890,6 @@ The cylc forecast suite metascheduler.
                         try:
                             if stdout_exists:
                                 os.unlink( stdoutf )
-                            if stderr_exists:
-                                os.unlink( stderrf )
                         except OSError, x:
                             warning_dialog( str(x) ).warn()
                             return False
@@ -1903,13 +1898,12 @@ The cylc forecast suite metascheduler.
                 # with  each new open, which isn't good when multiple
                 # controllers are opened).
                 stdout = open( stdoutf, 'ab' )
-                stderr = open( stderrf, 'ab' )
             except IOError,x:
                 warning_dialog( str(x) ).warn()
                 return False
 
             command = "gcylc " + name
-            foo = gcapture( command, stdout, stderr, 800, 400 )
+            foo = gcapture( command, stdout, 800, 400 )
             self.gcapture_windows.append(foo)
             foo.run()
 
@@ -1945,20 +1939,20 @@ The cylc forecast suite metascheduler.
             [ glbl, states] = ssproxy.get_state_summary()
             if glbl['started by gcylc']:
                 started_by_gcylc = True
-                #info_dialog( "This suite is running already. It was started by "
-                #    "gcylc, which redirects suite stdout and stderr to special files "
-                #    "so we can connect a new output capture window to those files.").inform()
+                # suite is running already, started by gcylc, which
+                # redirects output to a special file that we can
+                # reconnect to.
             else:
                 started_by_gcylc = False
                 info_dialog( "This suite is running, but it was started from "
-                    "the commandline, so gcylc does not have access its stdout "
-                    "and stderr streams.").inform()
+                    "the commandline, so gcylc does not have access its output "
+                    "file.").inform()
                 return False
         else:
             # suite not running
             info_dialog( "This suite is not running, so "
-                    "the output capture window will show stdout and "
-                    "stderr from the previous time(s) that the suite was started "
+                    "the output capture window will show output (stdout and "
+                    "stderr) from the previous time(s) that the suite was started "
                     "from via the gcylc app (gcylc cannot access stdout "
                     "and stderr for suites launched from the commandline).").inform()
 
@@ -1975,14 +1969,13 @@ The cylc forecast suite metascheduler.
         try:
             # open existing out and err files
             stdout = open( prefix + '.out', 'rb' )
-            stderr = open( prefix + '.err', 'rb' )
         except IOError,x:
             msg = '''This probably means the suite has not yet been started via gcylc
 (if you start a suite on the commandline stdout and stderr redirection is up to you).'''
             warning_dialog( str(x) + '\n' + msg ).warn()
             return False
 
-        foo = gcapture( None, stdout, stderr, width=800, height=400, ignore_command=True )
+        foo = gcapture( None, stdout, width=800, height=400, ignore_command=True )
         self.gcapture_windows.append(foo)
         foo.run()
 
