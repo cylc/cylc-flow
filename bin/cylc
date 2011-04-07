@@ -321,11 +321,12 @@ def typo( str ):
  
 def category_help(category):
     coms = eval( category + '_commands')
-    print 'CATEGORY: ' + category + ' - ' + catsum[ category ]
+    alts = '|'.join(categories[category])
+    print 'CATEGORY: ' + alts + ' - ' + catsum[ category ]
     print
-    print 'HELP: cylc [' + category + '] COMMAND help,--help'
-    print '  You can abbreviate "' + category + '" and COMMAND.'
-    print '  The category "' + category + '" may be omitted.'
+    print 'HELP: cylc [' + alts + '] COMMAND help,--help'
+    print '  You can abbreviate ' + alts + ' and COMMAND.'
+    print '  The category ' + alts + ' may be omitted.'
     print
     print 'COMMANDS:'
     pretty_print( comsum, coms )
