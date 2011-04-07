@@ -211,7 +211,7 @@ def get_rcfiles ( suite ):
     suiterc = os.path.join( dir, 'suite.rc' )
     rcfiles.append( suiterc )
     for line in open( suiterc, 'rb' ):
-        m = re.match( '^\s*%include\s+(.*)$', line )
+        m = re.match( '^\s*%include\s+([\w\-\.]+)', line )
         if m:
             rcfiles.append(os.path.join( dir, m.groups()[0]))
     return rcfiles

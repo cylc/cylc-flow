@@ -325,7 +325,7 @@ class regdb(object):
         return changed
 
     def get( self, suite, owner=None ):
-        # return suite definition directory
+        # return suite definition directory and description
         owner, group, name = regsplit( suite ).get()
         try:
             dir, descr = self.items[owner][group][name]

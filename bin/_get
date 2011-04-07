@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+
+import os, re, sys
+from optparse import OptionParser
+from registration import getdb, RegistrationError
+from config import config, SuiteConfigError
+
+parser = OptionParser( usage = """cylc [db] get SUITE
+
+Retrieve and print a suite definition directory path.
+How to move to a suite definition directory, for the lazy: 
+  $ cd $(cylc get SUITE)
+
+Arguments:
+    SUITE - registered GROUP:NAME of a suite.""" )
+
+( options, args ) = parser.parse_args()
+
+if len(args) != 1:
+    parser.error( "Wrong number of arguments" )
+
+suite = args[0]
+
+reg = getdb(suite)
+reg.load_from_file()
+try:
+    dir, title = reg.get( suite )
+except RegistrationError, x:
+    raise SystemExit(x)
+else:
+    print dir

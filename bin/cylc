@@ -172,6 +172,7 @@ database_commands['reregister'] = [ 'reregister' ]
 database_commands['unregister'] = [ 'unregister', 'delete' ]
 database_commands['copy'      ] = [ 'copy', 'cp' ]
 database_commands['print'     ] = [ 'print' ]
+database_commands['get'       ] = [ 'get' ]
 database_commands['export'    ] = [ 'export' ]
 database_commands['import'    ] = [ 'import' ]
 database_commands['refresh'   ] = [ 'refresh', 'check' ]
@@ -259,6 +260,7 @@ comsum[ 'reregister' ] = 'Reregister local or central suite registrations'
 comsum[ 'unregister' ] = 'Unregister suites from the local or central database'
 comsum[ 'copy'       ] = 'Copy a suite or group of suites.'
 comsum[ 'print'      ] = 'Print local or central suite registrations'
+comsum[ 'get'        ] = 'Print a suite definition directory path'
 comsum[ 'import'     ] = 'Import central registrations to your local database'
 comsum[ 'export'     ] = 'Export local registrations to the central database'
 comsum[ 'refresh'    ] = 'Check for invalid registrations and update titles'
@@ -485,7 +487,7 @@ for item in command_args:
 args = args_new
 
 notify=False
-if command not in ['cycletime', 'template', 'log', 'checkvars',
+if command not in ['cycletime', 'template', 'log', 'checkvars', 'get',
         'message', 'started', 'finished', 'failed', 'submit', 'wrap',
         'task-message', 'task-started', 'task-finished', 'task-failed']:
     # notify => print 'DONE' when command is completed, which is 
