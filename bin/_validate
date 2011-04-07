@@ -51,30 +51,29 @@ job_submit.shell = config['job submission shell']
 job_submit.joblog_dir = config['job submission log directory']
 ctime = '2999010112'
 print 'Instantiating Task Proxies:'
+valid = True
 for tn in config.get_full_task_name_list():
     print '  - ', tn, '...', 
     try:
         # tasks used in the suite dependency graph
         task_proxy = config.get_task_proxy( tn, ctime, 'waiting', startup=True )
-    except DefinitionError,x:
-        msg = 'ERROR: ' + str(x)
-        print msg
-        raise SystemExit( msg )
+    except SuiteConfigError or DefinitionError,x:
+        print >> sys.stderr, x
+        valid = False
     except KeyError, x:
-        print '(not currently used)', '...',
+        # task not used (not in graph - already warned above)
         try:
             # tasks defined but not used in the suite graph
             task_proxy = config.get_task_proxy_raw( tn, ctime, 'waiting', startup=True, test=True, strict=False )
-        except DefinitionError,x:
-            msg = 'ERROR: ' + str(x)
-            print msg
-            raise SystemExit( msg )
-        except:
-            print 'ERROR'
-            raise
+        except SuiteConfigError or DefinitionError, x:
+            print >> sys.stderr, x
+            valid = False
         else:
             print 'OK'
     else:
         print 'OK'
 
-print "Suite " + suite + " validates OK."
+if valid:
+    print "Suite " + suite + " validates OK."
+else:
+    print >> sys.stderr, "ERROR: Suite validation failed (errors detected)"

@@ -56,7 +56,7 @@
     # task, which is named to look as if it can from the warmstart f/c)
     description = warm cycle forecast
     command = UM-wrapper.sh
-    scripting = """
+    pre-command scripting = """
 if [[ $( cylc cycletime --hour ) == 00 ]]; then
     export ASTART=$RCF_RESTARTDUMP
 else
