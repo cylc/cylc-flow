@@ -43,6 +43,7 @@ class taskdef(object):
         self.name = name
         self.type = 'free'
         self.job_submit_method = 'background'
+        self.job_submit_log_directory = None
         self.modifiers = []
 
         self.owner = None
@@ -196,6 +197,7 @@ class taskdef(object):
 
         # TO DO: can this be moved into task base class?
         tclass.job_submit_method = self.job_submit_method
+        tclass.job_submit_log_directory = self.job_submit_log_directory
 
         tclass.valid_hours = self.hours
 

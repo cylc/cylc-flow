@@ -1058,6 +1058,8 @@ class config( CylcConfigObj ):
             # suite default job submit method
             taskd.job_submit_method = self['job submission method']
 
+        taskd.job_submit_log_directory = taskconfig['job submission log directory']
+
         # alerts and timeouts
         taskd.task_submitted_hook = taskconfig['task submitted hook']
         taskd.task_started_hook = taskconfig['task started hook']

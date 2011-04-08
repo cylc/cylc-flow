@@ -155,6 +155,7 @@ class task( Pyro.core.ObjBase ):
         self.launcher = get_object( 'job_submit_methods', self.job_submit_method ) \
                 ( self.id, self.external_task, self.env_vars, self.directives, 
                         self.pre_scripting, self.post_scripting, self.logfiles, 
+                        self.job_submit_log_directory,
                         self.__class__.owner, self.__class__.remote_host )
 
     def log( self, priority, message ):

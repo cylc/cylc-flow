@@ -35,6 +35,7 @@ import pwd
 import re, os, sys
 import tempfile, stat
 import cycle_time
+from mkdir_p import mkdir_p
 from dummy import dummy_command, dummy_command_fail
 from interp_env import interp_self, interp_other, interp_local, interp_local_str, replace_delayed, interp_other_str, replace_delayed_str
 
@@ -67,7 +68,7 @@ class job_submit(object):
         else: 
             self.task = dummy_command_fail
 
-    def __init__( self, task_id, ext_task, task_env, dirs, pre_scripting, post_scripting, logs, owner, host ): 
+    def __init__( self, task_id, ext_task, task_env, dirs, pre_scripting, post_scripting, logs, joblog_dir, owner, host ): 
 
         # TO DO: The GLOBAL ENVIRONMENT is currently extracted just
         # before use in write_environment(). This WAS so that
@@ -165,6 +166,14 @@ class job_submit(object):
         logs.interpolate( self.task_env )
         logs.interpolate()
         self.logfiles = logs
+
+        if joblog_dir:
+            jldir = os.path.expandvars( os.path.expanduser(joblog_dir))
+            mkdir_p( jldir )
+            self.joblog_dir = jldir
+        else:
+            # global joblog_dir is created in config.py
+            self.joblog_dir = self.__class__.joblog_dir
 
     def submit( self, dry_run ):
         # CALL THIS TO SUBMIT THE TASK

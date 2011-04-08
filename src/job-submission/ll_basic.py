@@ -7,16 +7,16 @@ from job_submit import job_submit
 class ll_basic( job_submit ):
     # Submit a job to run via loadleveler (llsubmit)
 
-    def __init__( self, task_id, ext_task, task_env, dirs, pre_scr, post_scr, logs, owner, host ): 
+    def __init__( self, task_id, ext_task, task_env, dirs, pre_scr, post_scr, logs, joblog_dir, owner, host ): 
         # parent class init first
-        job_submit.__init__( self, task_id, ext_task, task_env, dirs, pre_scr, post_scr, logs, owner, host ) 
+        job_submit.__init__( self, task_id, ext_task, task_env, dirs, pre_scr, post_scr, logs, joblog_dir, owner, host ) 
 
         if self.local_job_submit:
             # can uniquify the name locally
             out = tempfile.mktemp(
                 prefix = task_id + '-', 
                 suffix = ".out",
-                dir= self.__class__.joblog_dir ) 
+                dir=self.joblog_dir ) 
 
             err = re.sub( '\.out$', '.err', out )
 
