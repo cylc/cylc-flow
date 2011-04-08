@@ -487,7 +487,11 @@ The cylc forecast suite metascheduler.
         return vbox
 
     def view_task_info( self, w, task_id, jsonly ):
-        [ glbl, states ] = self.get_pyro( 'state_summary').get_state_summary()
+        try:
+            [ glbl, states ] = self.get_pyro( 'state_summary').get_state_summary()
+        except SuiteIdentificationError, x:
+            warning_dialog( str(x) ).warn()
+            return
         view = True
         reasons = []
         try:
@@ -644,6 +648,20 @@ The cylc forecast suite metascheduler.
 
 
     def popup_requisites( self, w, task_id ):
+        try:
+            result = self.get_pyro( 'remote' ).get_task_requisites( [ task_id ] )
+        except SuiteIdentificationError,x:
+            warning_dialog(str(x)).warn()
+            return
+
+        if result:
+            # (else no tasks were found at all -suite shutting down)
+            if task_id not in result:
+                warning_dialog( 
+                    "Task proxy " + task_id + " not found in " + self.suite + \
+                 ".\nTasks are removed once they are no longer needed.").warn()
+                return
+
         window = gtk.Window()
         #window.set_border_width( 10 )
         window.set_title( task_id + ": Prerequisites and Outputs" )
@@ -671,15 +689,6 @@ The cylc forecast suite metascheduler.
         blue = tb.create_tag( None, foreground = "blue" )
         red = tb.create_tag( None, foreground = "red" )
         bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
- 
-        result = self.get_pyro( 'remote' ).get_task_requisites( [ task_id ] )
-        if result:
-            # (else no tasks were found at all -suite shutting down)
-            if task_id not in result:
-                warning_dialog( 
-                    "Task proxy " + task_id + " not found in " + self.suite + \
-                 ".\nTasks are removed once they are no longer needed.").warn()
-                return
         
         #self.update_tb( tb, 'Task ' + task_id + ' in ' +  self.suite + '\n\n', [bold])
         self.update_tb( tb, 'TASK ', [bold] )
@@ -759,7 +768,11 @@ The cylc forecast suite metascheduler.
         prompt.destroy()
         if response != gtk.RESPONSE_OK:
             return
-        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+        try:
+            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+        except SuiteIdentificationError, x:
+            warning_dialog(str(x)).warn()
+            return
         actioned, explanation = proxy.spawn_and_die( task_id )
  
     def kill_task_nospawn( self, b, task_id ):
@@ -769,19 +782,31 @@ The cylc forecast suite metascheduler.
         prompt.destroy()
         if response != gtk.RESPONSE_OK:
             return
-        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+        try:
+            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+        except SuiteIdentificationError, x:
+            warning_dialog(str(x)).warn()
+            return
         actioned, explanation = proxy.die( task_id )
 
     def purge_cycle_entry( self, e, w, task_id ):
         stop = e.get_text()
         w.destroy()
-        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+        try:
+            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+        except SuiteIdentificationError, x:
+            warning_dialog(str(x)).warn()
+            return
         actioned, explanation = proxy.purge( task_id, stop )
 
     def purge_cycle_button( self, b, e, w, task_id ):
         stop = e.get_text()
         w.destroy()
-        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+        try:
+            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+        except SuiteIdentificationError, x:
+            warning_dialog(str(x)).warn()
+            return
         actioned, explanation = proxy.purge( task_id, stop )
 
     def stopsuite_popup( self, b ):
