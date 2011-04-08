@@ -105,7 +105,7 @@ Lines matching WARNING or ERROR are displayed in red.
             self.stdout_updater.freeze = True
             b.set_label( '_Reconnect' )
         else:
-            self.stdout_updater.freeze = True
+            self.stdout_updater.freeze = False
             b.set_label( '_Disconnect' )
 
     def save( self, w, tv ):
