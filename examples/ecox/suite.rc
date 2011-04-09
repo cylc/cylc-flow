@@ -7,12 +7,12 @@ dummy mode only = True
 
 number of state dump backups = 100
 
-job submission method = ll_basic_eco
+#job submission method = ll_basic_eco
 #job submission method = ll_basic
+ignore task owners = True
 
 roll scheduler log at startup = True
 
-#ignore task owners = True
 use suite blocking = False
 use secure passphrase = False
 use lockserver = False
@@ -339,7 +339,7 @@ output is considered usable."""
         description = "Reconfigure the NZLAM model restart dump"
         owner = nwp
         command = UMrecon-wrapper.sh
-        scripting = """
+        pre-command scripting = """
 export UMRECON_INPUTDUMP=$( cylc template -s 6 TEMPLATE_RESTART_DUMP ) 
 export UMRECON_OUTPUTDUMP=$( cylc template -s 6 TEMPLATE_RECONFIGURED_RESTART_DUMP ) 
 export UMRECON_LOGDIR=$( cylc template  TEMPLATE_LOGFILE_DIR )"""
@@ -350,7 +350,7 @@ export UMRECON_LOGDIR=$( cylc template  TEMPLATE_LOGFILE_DIR )"""
         description = "Reconfigure the cold start dump for the NZLAM"
         owner = nwp
         command = UMrecon-wrapper.sh
-        scripting = """
+        pre-command scripting = """
 export UMRECON_INPUTDUMP=$(  cylc template -s 6 TEMPLATE_GLOBAL_DUMP ) 
 export UMRECON_OUTPUTDUMP=$( cylc template -s 6 TEMPLATE_RESTART_DUMP ) 
 export UMRECON_LOGDIR=$(     cylc template      TEMPLATE_LOGFILE_DIR )"""
@@ -361,7 +361,7 @@ export UMRECON_LOGDIR=$(     cylc template      TEMPLATE_LOGFILE_DIR )"""
         description = "NZLAM warm cycle forecast"
         owner = nwp
         command = UM-wrapper.sh
-        scripting = """
+        pre-command scripting = """
 export UM_PPVARFILE=$( cylc template TEMPLATE_PPVAR_FILE )
 export UM_PP7CXFILE=$( cylc template TEMPLATE_PP7CX_FILE )
 export UM_DATAMDIR=$(  cylc template TEMPLATE_DATAM_DIR  )
@@ -383,7 +383,7 @@ in global ancillary fields and generate a full sized UM global global
 start dump."""
         owner = nwp
         command = UMrecon-wrapper.sh
-        scripting = """
+        pre-command scripting = """
 export UMRECON_INPUTDUMP=$(  cylc template -s 6 TEMPLATE_REDUCED_GLOBAL_DUMP ) 
 export UMRECON_OUTPUTDUMP=$( cylc template -s 6 TEMPLATE_GLOBAL_DUMP ) 
 export UMRECON_LOGDIR=$(     cylc template      TEMPLATE_LOGFILE_DIR )"""
@@ -394,7 +394,7 @@ export UMRECON_LOGDIR=$(     cylc template      TEMPLATE_LOGFILE_DIR )"""
         description = NZLAM initial forecast from global model start dump.
         owner = nwp
         command = UM-wrapper.sh
-        scripting = """
+        pre-command scripting = """
 export UM_STARTDUMP=$( cylc template -s 6 $TEMPLATE_RESTART_DUMP )
 export UM_PPVARFILE=$( cylc template -s 6 TEMPLATE_PPVAR_FILE   )
 export UM_PP7CXFILE=$( cylc template -s 6 TEMPLATE_PP7CX_FILE   )
@@ -592,7 +592,7 @@ directories to the suite output directory, renaming them appropriately."""
         description = "Convert NZLAM frames to an ALABC (boundary condition) file"
         owner = nwp
         command = cylc wrap make_alabc.sh --keep
-        scripting = """
+        pre-command scripting = """
 # This is required for access to the standard makebc executable in
 # the UM installation. UM jobs at NIWA, on the other hand, require
 # this in $HOME/.profile, which gets sourced inside the secondary
@@ -719,7 +719,7 @@ useless.  Topnet needs at least 2 weeks of spinup."""
     [[sls_globalwind_copy]]
         description = "Copy the converted SLS wind file to the required directory."
         owner = wave 
-        scripting = cp ${SRCE_LOC}/${SRCE_FILENAME} ${DEST_LOC}/${DEST_FILENAME} 
+        pre-command scripting = cp ${SRCE_LOC}/${SRCE_FILENAME} ${DEST_LOC}/${DEST_FILENAME} 
         [[[environment]]]
             SRCE_FILENAME = sls_${CYCLE_TIME}_utc_global_sfcwind.nc
             SRCE_LOC   = /${SYS}/ecoconnect/ecoconnect_${SYS}/output
@@ -770,7 +770,7 @@ available on their ftp site"""
     [[sls_globalice_copy]]
         description = "Copy the converted SLS ice file to the required directory."
         owner = wave 
-        scripting = cp ${SRCE_LOC}/${SRCE_FILENAME} ${DEST_LOC}/${DEST_FILENAME} 
+        pre-command scripting = cp ${SRCE_LOC}/${SRCE_FILENAME} ${DEST_LOC}/${DEST_FILENAME} 
         [[[environment]]]
             SRCE_FILENAME = sls_${CYCLE_TIME}_utc_global_seaice.nc
             SRCE_LOC   = /${SYS}/ecoconnect/ecoconnect_${SYS}/output

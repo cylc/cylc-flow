@@ -12,6 +12,7 @@ import cycle_time
 ####pygtk.require('2.0')
 
 def compare_dict_of_dict( one, two ):
+    # return True if one == two, else return False.
     for key in one:
         if key not in two:
             return False
@@ -20,7 +21,6 @@ def compare_dict_of_dict( one, two ):
                 return False
             if one[key][subkey] != two[key][subkey]:
                 return False
-
     for key in two:
         if key not in one:
             return False
@@ -29,7 +29,6 @@ def compare_dict_of_dict( one, two ):
                 return False
             if two[key][subkey] != one[key][subkey]:
                 return False
-
     return True
 
 class xupdater(threading.Thread):
@@ -40,9 +39,12 @@ class xupdater(threading.Thread):
         super(xupdater, self).__init__()
 
         self.quit = False
+        self.start_ctime = None
+        self.stop_ctime = None
         self.xdot = xdot
         self.first_update = True
         self.graph_disconnect = False
+        self.action_required = True
 
         self.suite = suite
         self.owner = owner
@@ -64,7 +66,7 @@ class xupdater(threading.Thread):
         self.config = config( self.suite )
         self.graph_warned = {}
 
-        self.ungraph = []
+        self.collapse = []
 
     def reconnect( self ):
         try:
@@ -122,19 +124,20 @@ class xupdater(threading.Thread):
         dt = glbl[ 'last_updated' ]
         self.dt = dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
 
-        # only update states if a change occurred
-        if compare_dict_of_dict( states, self.state_summary ):
-            #print "STATE UNCHANGED"
-            # only update if state changed
-            return False
-        else:
-            #print "STATE CHANGED"
+        # only update states if a change occurred, or action required
+        if self.action_required:
             self.state_summary = states
             return True
+        if not compare_dict_of_dict( states, self.state_summary ):
+            # state changed
+            self.state_summary = states
+            return True
+        else:
+            return False
 
     def update_gui( self ):
         if not self.graph_disconnect: 
-            print "Updating GRAPH"
+            #print "Updating GRAPH"
             self.update_xdot()
         return False
 
@@ -151,6 +154,7 @@ class xupdater(threading.Thread):
             if self.update():
                 self.update_graph()
                 #self.update_gui()
+                # use of idle_add not necessary due to internals of xdot?
                 gobject.idle_add( self.update_gui )
             # TO DO: only update globals if they change, as for tasks
             gobject.idle_add( self.update_globals )
@@ -160,7 +164,7 @@ class xupdater(threading.Thread):
             ####print "Disconnecting task state info thread"
 
     def update_xdot(self):
-        print 'Updating xdot'
+        #print 'Updating xdot'
         self.xdot.set_dotcode( self.graphw.to_string())
         if self.first_update:
             self.xdot.widget.zoom_to_fit()
@@ -169,8 +173,13 @@ class xupdater(threading.Thread):
     def update_graph( self ):
         # To do: check edges against resolved ones
         # (adding new ones, and nodes, if necessary)
-        oldest = self.global_summary['oldest cycle time']
-        newest = self.global_summary['newest cycle time']
+        if self.start_ctime:
+            oldest = self.start_ctime
+            newest = self.stop_ctime
+        else:
+            oldest = self.global_summary['oldest cycle time']
+            newest = self.global_summary['newest cycle time']
+
         start_time = self.global_summary['start time']
 
         if start_time == None or oldest > start_time:
@@ -179,7 +188,7 @@ class xupdater(threading.Thread):
             # (show coldstart tasks) - TO DO: actual raw start
             raw = False
 
-        diffhrs = cycle_time.diff_hours( newest, oldest ) + 6 + 1
+        diffhrs = cycle_time.diff_hours( newest, oldest ) + 1
         #if diffhrs < 25:
         #    diffhrs = 25
         self.graphw = self.config.get_graph( oldest, diffhrs, colored=False, raw=raw ) 
@@ -227,30 +236,73 @@ class xupdater(threading.Thread):
         #    self.live_graph_frame_count += 1
         #    self.live_graph.write( self.config["visualization"]["run time graph directory"], 'live' + '-' + str( self.live_graph_frame_count ) + '.dot' )
 
-        self.removed_nodes = False
-        for id in self.ungraph:
+        #self.removed_nodes = False
+        for id in self.collapse:
             try:
-                n = self.graphw.get_node( id )
+                node = self.graphw.get_node( id )
             except:
                 # node no longer in graph
-                self.ungraph.remove(id)
+                self.collapse.remove(id)
                 continue
 
+            self.feedins = []
+            self.collapsems = []
             for n in self.graphw.successors( id ):
                 self.remove_tree( id )
 
-        if self.removed_nodes:
-            gobject.idle_add( self.update_gui )
+            # replace collapsed node with a stand-in
+            new_node_label = 'SUBTREE:' + id
+            self.graphw.add_node( new_node_label )
+            new_node = self.graphw.get_node( new_node_label )
+            #new_node.attr['shape'] = 'doublecircle'
+            new_node.attr['shape'] = 'tripleoctagon'
+            new_node.attr['style'] = 'filled'
+            new_node.attr['color'] = 'magenta'
+            new_node.attr['fillcolor'] = 'yellow'
+            new_node.attr['URL'] = new_node_label
+
+            for n in self.graphw.predecessors( node ):
+                self.graphw.add_edge( n, new_node )
+
+            name, topctime = id.split('%')
+            for n in self.feedins:
+                #self.feedintops = []
+                #self.follow_up(n,topctime)
+                #if n not in self.collapsems and n not in self.feedintops:
+                if n not in self.collapsems:
+                    self.graphw.add_edge( n, new_node )
+                #for m in self.feedintops:
+                #    self.graphw.remove_node( m )
+
+            for n in self.collapsems:
+                self.graphw.remove_node( n )
+
+            self.graphw.remove_node( node )
+
+        self.action_required = False
+
+    #def follow_up( self, id, topctime ):
+    #    name, ctime = id.split('%')
+    #    if int(ctime) < int(topctime):
+    #        return
+    #    pred = self.graphw.predecessors( id )
+    #    if len(pred) == 0:
+    #        # id has no predecessors
+    #        self.feedintops.append(id)
+    #        return
+    #    for m in pred:
+    #        self.follow_up(m,topctime)
+
 
     def remove_tree(self, id ):
+        node = self.graphw.get_node(id)
         for n in self.graphw.successors( id ):
+            for m in self.graphw.predecessors( n ):
+                if m != node:
+                    self.feedins.append(m)
+                #else:
+                #    print 'EQUAL'
             self.remove_tree( n )
-            try:
-                self.graphw.remove_node( n )
-            except:
-                pass
-            else:
-                self.removed_nodes = True
-
-
+            if n not in self.collapsems:
+                self.collapsems.append(n)
 

@@ -108,20 +108,29 @@ class ControlApp(object):
     def on_url_clicked( self, widget, url, event ):
         if event.button != 3:
             return False
+
+        m = re.match( 'base:SUBTREE:(.*)', url )
+        if m:
+            #print 'SUBTREE'
+            task_id = m.groups()[0]
+            self.right_click_menu( event, task_id, type='collapsed subtree' )
+            return
+
         m = re.match( 'base:(.*)', url )
         if m:
+            #print 'BASE GRAPH'
             task_id = m.groups()[0]
-            # a default URL of '(none)' is set in config.get_graph()
-            # => this graph element has not been overridden by a task
-            # that actually exists in the suite at the moment.
-            warning_dialog( 
-                    task_id + "\n"
-                    "This task is part of the base graph, taken from the\n"
-                    "suite config file (suite.rc) dependencies section, \n" 
-                    "but it does not currently exist in the running suite." ).warn()
-        else:
-            # URL is task ID
-            self.right_click_menu( event, url )
+            #warning_dialog( 
+            #        task_id + "\n"
+            #        "This task is part of the base graph, taken from the\n"
+            #        "suite config file (suite.rc) dependencies section, \n" 
+            #        "but it does not currently exist in the running suite." ).warn()
+            self.right_click_menu( event, task_id, type='base graph task' )
+            return
+
+        # URL is task ID
+        #print 'LIVE TASK'
+        self.right_click_menu( event, url, type='live task' )
 
     def visible_cb(self, model, iter ):
         # visibility determined by state matching active toggle buttons
@@ -552,91 +561,110 @@ The cylc forecast suite metascheduler.
 
         self.right_click_menu( event, task_id )
 
-    def right_click_menu( self, event, task_id ):
+    def right_click_menu( self, event, task_id, type='live task' ):
         menu = gtk.Menu()
 
         menu_root = gtk.MenuItem( task_id )
         menu_root.set_submenu( menu )
 
-        title_item = gtk.MenuItem( 'Task: ' + task_id )
-        title_item.set_sensitive(False)
-        menu.append( title_item )
+        if type == 'collapsed subtree':
+            title_item = gtk.MenuItem( 'Subtree: ' + task_id )
+            title_item.set_sensitive(False)
+            menu.append( title_item )
 
-        menu.append( gtk.SeparatorMenuItem() )
+            menu.append( gtk.SeparatorMenuItem() )
+            expand_item = gtk.MenuItem( 'Expand Subtree' )
+            menu.append( expand_item )
+            expand_item.connect( 'activate', self.expand_subtree, task_id )
+    
+        else:
+            title_item = gtk.MenuItem( 'Task: ' + task_id )
+            title_item.set_sensitive(False)
+            menu.append( title_item )
 
-        js_item = gtk.MenuItem( 'View Job Script' )
-        menu.append( js_item )
-        js_item.connect( 'activate', self.view_task_info, task_id, True )
+            menu.append( gtk.SeparatorMenuItem() )
+            collapse_item = gtk.MenuItem( 'Collapse Subtree' )
+            menu.append( collapse_item )
+            collapse_item.connect( 'activate', self.collapse_subtree, task_id )
 
-        info_item = gtk.MenuItem( 'View Job Stdout & Stderr' )
-        menu.append( info_item )
-        info_item.connect( 'activate', self.view_task_info, task_id, False )
+            menu.append( gtk.SeparatorMenuItem() )
 
-        info_item = gtk.MenuItem( 'View Task Prerequisites & Outputs' )
-        menu.append( info_item )
-        info_item.connect( 'activate', self.popup_requisites, task_id )
+            js_item = gtk.MenuItem( 'View Job Script' )
+            menu.append( js_item )
+            js_item.connect( 'activate', self.view_task_info, task_id, True )
 
-        menu.append( gtk.SeparatorMenuItem() )
+            info_item = gtk.MenuItem( 'View Job Stdout & Stderr' )
+            menu.append( info_item )
+            info_item.connect( 'activate', self.view_task_info, task_id, False )
 
-        reset_ready_item = gtk.MenuItem( 'Trigger Task' )
-        menu.append( reset_ready_item )
-        reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
-        if self.readonly:
-            reset_ready_item.set_sensitive(False)
+            info_item = gtk.MenuItem( 'View Task Prerequisites & Outputs' )
+            menu.append( info_item )
+            info_item.connect( 'activate', self.popup_requisites, task_id )
 
-        reset_waiting_item = gtk.MenuItem( 'Reset State to "waiting"' )
-        menu.append( reset_waiting_item )
-        reset_waiting_item.connect( 'activate', self.reset_task_state, task_id, 'waiting' )
-        if self.readonly:
-            reset_waiting_item.set_sensitive(False)
+            menu.append( gtk.SeparatorMenuItem() )
 
-        reset_finished_item = gtk.MenuItem( 'Reset State to "finished"' )
-        menu.append( reset_finished_item )
-        reset_finished_item.connect( 'activate', self.reset_task_state, task_id, 'finished' )
-        if self.readonly:
-            reset_finished_item.set_sensitive(False)
+            reset_ready_item = gtk.MenuItem( 'Trigger Task' )
+            menu.append( reset_ready_item )
+            reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
+            if self.readonly:
+                reset_ready_item.set_sensitive(False)
 
-        reset_failed_item = gtk.MenuItem( 'Reset State to "failed"' )
-        menu.append( reset_failed_item )
-        reset_failed_item.connect( 'activate', self.reset_task_state, task_id, 'failed' )
-        if self.readonly:
-            reset_failed_item.set_sensitive(False)
+            reset_waiting_item = gtk.MenuItem( 'Reset State to "waiting"' )
+            menu.append( reset_waiting_item )
+            reset_waiting_item.connect( 'activate', self.reset_task_state, task_id, 'waiting' )
+            if self.readonly:
+                reset_waiting_item.set_sensitive(False)
 
-        menu.append( gtk.SeparatorMenuItem() )
+            reset_finished_item = gtk.MenuItem( 'Reset State to "finished"' )
+            menu.append( reset_finished_item )
+            reset_finished_item.connect( 'activate', self.reset_task_state, task_id, 'finished' )
+            if self.readonly:
+                reset_finished_item.set_sensitive(False)
 
-        kill_item = gtk.MenuItem( 'Remove Task (after spawning)' )
-        menu.append( kill_item )
-        kill_item.connect( 'activate', self.kill_task, task_id )
-        if self.readonly:
-            kill_item.set_sensitive(False)
+            reset_failed_item = gtk.MenuItem( 'Reset State to "failed"' )
+            menu.append( reset_failed_item )
+            reset_failed_item.connect( 'activate', self.reset_task_state, task_id, 'failed' )
+            if self.readonly:
+                reset_failed_item.set_sensitive(False)
 
-        kill_nospawn_item = gtk.MenuItem( 'Remove Task (without spawning)' )
-        menu.append( kill_nospawn_item )
-        kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
-        if self.readonly:
-            kill_nospawn_item.set_sensitive(False)
+            menu.append( gtk.SeparatorMenuItem() )
+    
+            kill_item = gtk.MenuItem( 'Remove Task (after spawning)' )
+            menu.append( kill_item )
+            kill_item.connect( 'activate', self.kill_task, task_id )
+            if self.readonly:
+                kill_item.set_sensitive(False)
 
-        purge_item = gtk.MenuItem( 'Remove Task (Recursive Purge)' )
-        menu.append( purge_item )
-        purge_item.connect( 'activate', self.popup_purge, task_id )
-        if self.readonly:
-            purge_item.set_sensitive(False)
+            kill_nospawn_item = gtk.MenuItem( 'Remove Task (without spawning)' )
+            menu.append( kill_nospawn_item )
+            kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
+            if self.readonly:
+                kill_nospawn_item.set_sensitive(False)
 
-        menu.append( gtk.SeparatorMenuItem() )
-
-        ungraph_item = gtk.MenuItem( 'UNGRAPH' )
-        menu.append( ungraph_item )
-        ungraph_item.connect( 'activate', self.ungraph, task_id )
+            purge_item = gtk.MenuItem( 'Remove Task (Recursive Purge)' )
+            menu.append( purge_item )
+            purge_item.connect( 'activate', self.popup_purge, task_id )
+            if self.readonly:
+                purge_item.set_sensitive(False)
 
         menu.show_all()
         menu.popup( None, None, None, event.button, event.time )
 
-        # TO DO: POPUP MENU MUST BE DESTROY()ED AFTER EVERY USE AS
-        # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)?????????
+        # TO DO: POPUP MENU MUST BE DESTROYED AFTER EVERY USE AS
+        # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)???????
         return True
 
-    def ungraph( self, w, id ):
-        self.x.ungraph.append(id)
+    def collapse_subtree( self, w, id ):
+        self.x.collapse.append(id)
+        self.x.action_required = True
+
+    def expand_subtree( self, w, id ):
+        self.x.collapse.remove(id)
+        self.x.action_required = True
+
+    def expand_all_subtrees( self, w ):
+        del self.x.collapse[:]
+        self.x.action_required = True
 
     def rearrange( self, col, n ):
         cols = self.ttreeview.get_columns()
@@ -1185,6 +1213,18 @@ The cylc forecast suite metascheduler.
         view_menu_root = gtk.MenuItem( '_View' )
         view_menu_root.set_submenu( view_menu )
 
+        expand_item = gtk.MenuItem( '_Expand All Subtrees' )
+        view_menu.append( expand_item )
+        expand_item.connect( 'activate', self.expand_all_subtrees )
+
+        graph_range_item = gtk.MenuItem( '_Restrict Graph Range' )
+        view_menu.append( graph_range_item )
+        graph_range_item.connect( 'activate', self.restrict_graph_range_popup )
+
+        #autocollapse_item = gtk.MenuItem( '_Autocollapse Subtrees' )
+        #view_menu.append( autocollapse_item )
+        #autocollapse_item.connect( 'activate', self.autocollapse_subtrees )
+
         names_item = gtk.MenuItem( '_Toggle Task Names (light panel)' )
         view_menu.append( names_item )
         names_item.connect( 'activate', self.toggle_headings )
@@ -1260,6 +1300,55 @@ The cylc forecast suite metascheduler.
         self.menu_bar.append( view_menu_root )
         self.menu_bar.append( start_menu_root )
         self.menu_bar.append( help_menu_root )
+
+    def restrict_graph_range_popup( self, w ):
+        window = gtk.Window()
+        window.modify_bg( gtk.STATE_NORMAL, 
+                gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_border_width(5)
+        window.set_title( "Retrict Graph Range")
+
+        vbox = gtk.VBox()
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Start (YYYYMMDDHH)' )
+        box.pack_start( label, True )
+        start_entry = gtk.Entry()
+        start_entry.set_max_length(10)
+        box.pack_start (start_entry, True)
+        vbox.pack_start( box )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Stop (YYYYMMDDHH)' )
+        box.pack_start( label, True )
+        stop_entry = gtk.Entry()
+        stop_entry.set_max_length(10)
+        box.pack_start (stop_entry, True)
+        vbox.pack_start( box )
+
+        cancel_button = gtk.Button( "_Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        stop_button = gtk.Button( "_Apply" )
+        stop_button.connect("clicked", self.restrict_graph_range, 
+                start_entry, stop_entry )
+
+        #help_button = gtk.Button( "_Help" )
+        #help_button.connect("clicked", helpwindow.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( stop_button, False )
+        hbox.pack_end( cancel_button, False )
+        #hbox.pack_end( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def restrict_graph_range(self, w, start_e, stop_e):
+        self.x.start_ctime = start_e.get_text()
+        self.x.stop_ctime = stop_e.get_text()
+        self.x.action_required = True
 
     def create_info_bar( self ):
         self.label_status = gtk.Label( "status..." )

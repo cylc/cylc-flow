@@ -499,6 +499,7 @@ class config( CylcConfigObj ):
             self['top level state dump directory'],
             self['job submission log directory'],
             self['visualization']['run time graph directory'] ]: 
+            print '-----', dir
             mkdir_p( dir )
 
     def get_filename( self ):
