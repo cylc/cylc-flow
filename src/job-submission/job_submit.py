@@ -21,6 +21,9 @@
 
 # If OWNER is defined and REMOTE_HOST is not, submit locally by:
 #  sudo -u OWNER submit(FILE) 
+# OR
+#  ssh OWNER@localhost submit(FILE)
+# so passwordless ssh to localhost as OWNER must be configured.
  
 # If REMOTE_HOST is defined and OWNER is not, the job file is submitted
 # by copying it to the remote host with scp, and executing the defined
@@ -28,8 +31,8 @@
 # host must be configured. 
 
 # If REMOTE_HOST and OWNER are defined, we scp and ssh to
-# 'OWNER@REMOTE_HOST', thus passwordless ssh to remote host as OWNER
-# must be configured.
+# 'OWNER@REMOTE_HOST'
+# so passwordless ssh to remote host as OWNER must be configured.
 
 import pwd
 import re, os, sys
@@ -169,11 +172,15 @@ class job_submit(object):
 
         if joblog_dir:
             jldir = os.path.expandvars( os.path.expanduser(joblog_dir))
-            mkdir_p( jldir )
             self.joblog_dir = jldir
+            if self.local_job_submit and not self.owner:
+                mkdir_p( jldir )
         else:
             # global joblog_dir is created in config.py
             self.joblog_dir = self.__class__.joblog_dir
+
+        # now make joblog_dir relative to $HOME for owned or remote tasks
+        self.relative_joblog_dir = re.sub( os.environ['HOME'], '', self.joblog_dir )
 
     def submit( self, dry_run ):
         # CALL THIS TO SUBMIT THE TASK
@@ -288,6 +295,9 @@ class job_submit(object):
             if self.owned_task_execution_method == 'sudo':
                 self.command = 'sudo -u ' + self.owner + ' ' + self.command
             elif self.owned_task_execution_method == 'ssh': 
+                # TO DO: to allow remote hangup we must use: 
+                # 'ssh foo@bar baz </dev/null &'
+                # (only for direct exec? OK if baz is llsubmit, qsub, etc.?
                 self.command = 'ssh ' + self.owner + '@localhost ' + self.command
             else:
                 # this should not happen

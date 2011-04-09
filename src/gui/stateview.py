@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 
+from config import config
+import sys
 import gobject
 import time
 import threading
 import cylc_pyro_client
 import gtk
 import pygtk
+import cycle_time
 ####pygtk.require('2.0')
 
 def compare_dict_of_dict( one, two ):
@@ -62,14 +65,12 @@ class updater(threading.Thread):
 
     def __init__(self, suite, owner, host, port, imagedir,
             led_liststore, ttreeview, task_list,
-            label_mode, label_status, label_time, graphw ):
+            label_mode, label_status, label_time ):
 
         super(updater, self).__init__()
 
         self.quit = False
-        self.graphw = graphw
         self.first_update = True
-        self.graph_disconnect = False
 
         self.suite = suite
         self.owner = owner
@@ -77,6 +78,7 @@ class updater(threading.Thread):
         self.port = port
 
         self.state_summary = {}
+        self.global_summary = {}
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
@@ -105,10 +107,11 @@ class updater(threading.Thread):
             self.led_digits_one.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-" + str(i) + ".xpm" ))
             self.led_digits_two.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/two/digit-" + str(i) + ".xpm" ))
 
+        self.config = config( self.suite )
+
     def reconnect( self ):
         try:
             self.god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'state_summary' )
-            self.remote = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
         except:
             return False
         else:
@@ -136,6 +139,7 @@ class updater(threading.Thread):
             return False
 
         # always update global info
+        self.global_summary = glbl
 
         if glbl['stopping']:
             self.status = 'STOPPING'
@@ -166,26 +170,11 @@ class updater(threading.Thread):
         # only update states if a change occurred
         if compare_dict_of_dict( states, self.state_summary ):
             #print "STATE UNCHANGED"
+            # only update if state changed
             return False
         else:
             #print "STATE CHANGED"
             self.state_summary = states
-            if self.graph_disconnect:
-                return True
-            # only update live graph if state changed
-            # because update results in best-fitting.
-            try:
-                self.graph = self.remote.get_live_graph()
-            except:
-                # lost connection should be picked up above
-                # (so this exception shouldn't happen?)
-                pass
-            else:
-                if self.graph:
-                    self.graphw.set_dotcode( self.graph )
-                    if self.first_update:
-                        self.graphw.widget.zoom_to_fit()
-                        self.first_update = False
             return True
 
     def search_level( self, model, iter, func, data ):
@@ -377,6 +366,7 @@ class updater(threading.Thread):
 
         for iter in new_ctimes:
             self.ttreeview.expand_row(self.ttreestore.get_path(iter),False)
+
         return False
 
     def update_globals( self ):
@@ -385,7 +375,6 @@ class updater(threading.Thread):
         self.label_time.set_text( self.dt )
         return False
  
-
     def run(self):
         glbl = None
         states = {}

@@ -114,7 +114,6 @@ class scheduler(object):
         self.load_tasks()
         if not graphing_disabled:
             self.initialize_runtime_graph()
-        self.live_graph_frame_count = 0
 
     def parse_commandline( self ):
         # SUITE NAME
@@ -232,7 +231,7 @@ class scheduler(object):
         self.pyro.connect( suite_id, 'cylcid', qualified = False )
 
         # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
-        self.suite_state = state_summary( self.config, self.dummy_mode, self.gcylc )
+        self.suite_state = state_summary( self.config, self.dummy_mode, self.start_time, self.gcylc )
         self.pyro.connect( self.suite_state, 'state_summary')
 
         # USE QUICK TASK ELIMINATION?
@@ -319,8 +318,6 @@ class scheduler(object):
         arclen = self.config[ 'number of state dump backups' ]
         self.state_dump_archive = rolling_archive( self.state_dump_filename, arclen )
 
-        self.live_graph = graphing.CGraphPlain( self.suite )
-
         # REMOTE CONTROL INTERFACE
         # TO DO: DO WE NEED TO LOAD TASK LIST FIRST?
         # TO DO: THIS IS CLUNKY - PASSING IN SELF TO GIVE ACCESS TO TASK
@@ -403,10 +400,9 @@ class scheduler(object):
                 self.cleanup()
                 self.spawn()
                 self.dump_state()
-                if not graphing_disabled:
-                    self.construct_live_graph()
 
                 self.suite_state.update( self.tasks, self.clock, \
+                        self.get_oldest_c_time(), self.get_newest_c_time(),
                         self.paused(), self.will_pause_at(), \
                         self.remote.halt, self.will_stop_at() )
 
@@ -1323,72 +1319,6 @@ class scheduler(object):
                     continue
             outlist.append( name ) 
         return outlist
-
-    def construct_live_graph( self ):
-        # To do: check edges against resolved ones
-        # (adding new ones, and nodes, if necessary)
-
-        oldest = self.get_oldest_c_time()
-        newest = self.get_newest_c_time()
-        if self.start_time == None or oldest > self.start_time:
-            raw = True
-        else:
-            # (show coldstart tasks) - TO DO: actual raw start
-            raw = False
-
-        diffhrs = cycle_time.diff_hours( newest, oldest ) + 6 + 1
-        #if diffhrs < 25:
-        #    diffhrs = 25
-        self.live_graph = self.config.get_graph( oldest, diffhrs, colored=False, raw=raw ) 
-
-        for task in self.tasks:
-            #print task.id
-            try:
-                node = self.live_graph.get_node( task.id )
-            except KeyError:
-                # this task is not present in the live graph
-                if hasattr( task, 'member_of' ):
-                    # OK: member of a family
-                    continue
-                else:
-                    if task.id not in self.graph_warned or \
-                            not self.graph_warned[task.id]:
-                        self.log.critical( 'WARNING: NOT IN GRAPH: '+ task.id )
-                        self.graph_warned[task.id] = True
-                    continue
-
-            node.attr['URL'] = task.id
-
-            if task.state.is_submitted():
-                node.attr['style'] = 'filled'
-                node.attr['fillcolor'] = 'orange'
-            elif task.state.is_running():
-                node.attr['style'] = 'filled'
-                node.attr['fillcolor'] = 'green'
-            elif task.state.is_waiting():
-                node.attr['style'] = 'filled'
-                node.attr['fillcolor'] = 'cadetblue2'
-            elif task.state.is_finished():
-                node.attr['style'] = 'filled'
-                node.attr['fillcolor'] = 'grey'
-                pass
-            elif task.state.is_failed():
-                node.attr['style'] = 'filled'
-                node.attr['fillcolor'] = 'red'
-
-            #for id in task.get_resolved_dependencies():
-            #        self.live_graph.add_edge( id, task.id )
-
-        # layout adds positions to nodes etc.; this is not required if
-        # we're writing to the 'dot' format which must be processed later
-        # by the dot layout engine anyway.
-        # self.live_graph.layout(prog="dot")
-        if self.config["experimental"]["live graph movie"]:
-            self.live_graph_frame_count += 1
-            self.live_graph.write( self.config["visualization"]["run time graph directory"], 'live' + '-' + str( self.live_graph_frame_count ) + '.dot' )
-
-    def get_live_graph(self):
-        return self.live_graph.to_string()
 
     def initialize_runtime_graph( self ):
         title = 'suite ' + self.suite + ' run-time dependency graph'

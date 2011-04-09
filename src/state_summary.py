@@ -6,7 +6,7 @@ import logging
 class state_summary( Pyro.core.ObjBase ):
     """supply suite state summary and config information to remote cylc clients."""
 
-    def __init__( self, config, dummy_mode, gcylc=False ):
+    def __init__( self, config, dummy_mode, start_time, gcylc=False ):
         Pyro.core.ObjBase.__init__(self)
         self.gcylc = gcylc
         self.task_summary = {}
@@ -16,14 +16,19 @@ class state_summary( Pyro.core.ObjBase ):
         # remote control
         self.config = config
         self.dummy_mode = dummy_mode
+        self.start_time = start_time
  
-    def update( self, tasks, clock, paused, will_pause_at, stopping, will_stop_at ):
+    def update( self, tasks, clock, oldest, newest,
+            paused, will_pause_at, stopping, will_stop_at ):
         self.task_summary = {}
         self.global_summary = {}
 
         for task in tasks:
             self.task_summary[ task.id ] = task.get_state_summary()
 
+        self.global_summary[ 'start time' ] = self.start_time
+        self.global_summary[ 'oldest cycle time' ] = oldest
+        self.global_summary[ 'newest cycle time' ] = newest
         self.global_summary[ 'last_updated' ] = clock.get_datetime()
         self.global_summary[ 'dummy_mode' ] = self.dummy_mode
         self.global_summary[ 'dummy_clock_rate' ] = clock.get_rate()

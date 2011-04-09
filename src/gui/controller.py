@@ -10,6 +10,7 @@ import gobject
 import subprocess
 import helpwindow
 from stateview import updater
+from xstateview import xupdater
 from combo_logviewer import combo_logviewer
 from warning_dialog import warning_dialog, info_dialog
 from port_scan import SuiteIdentificationError
@@ -68,23 +69,28 @@ class ControlApp(object):
         main_panes.add1( self.ledview_widgets())
         main_panes.add2( self.treeview_widgets())
 
-        self.graphw = xdot_widgets()
-        self.graphw.widget.connect( 'clicked', self.on_url_clicked )
-        self.graphw.graph_disconnect_button.connect( 'toggled', self.toggle_graph_disconnect )
+        self.xdot = xdot_widgets()
+        self.xdot.widget.connect( 'clicked', self.on_url_clicked )
+        self.xdot.graph_disconnect_button.connect( 'toggled', self.toggle_graph_disconnect )
 
         self.quitters = []
         self.connection_lost = False
         self.t = updater( self.suite, self.owner, self.host, self.port,
                 self.imagedir, self.led_treeview.get_model(),
                 self.ttreeview, self.task_list, self.label_mode,
-                self.label_status, self.label_time, self.graphw )
+                self.label_status, self.label_time )
+
+        self.x = xupdater( self.suite, self.owner, self.host, self.port,
+                self.label_mode, self.label_status, self.label_time, self.xdot )
 
         self.full_task_headings()
-        #print "Starting task state info thread"
+        #print "Starting traditional view thread"
         self.t.start()
+        #print "Starting live graph thread"
+        self.x.start()
 
         notebook.append_page( main_panes, gtk.Label('traditional'))
-        notebook.append_page(self.graphw.get(), gtk.Label('live graph'))
+        notebook.append_page(self.xdot.get(), gtk.Label('live graph'))
 
         bigbox.pack_start( notebook, True )
         self.window.add( bigbox )
@@ -92,10 +98,10 @@ class ControlApp(object):
 
     def toggle_graph_disconnect( self, w ):
         if w.get_active():
-            self.t.graph_disconnect = True
+            self.x.graph_disconnect = True
             w.set_label( 'REconnect' )
         else:
-            self.t.graph_disconnect = False
+            self.x.graph_disconnect = False
             w.set_label( 'DISconnect' )
         return True
 
@@ -116,11 +122,6 @@ class ControlApp(object):
         else:
             # URL is task ID
             self.right_click_menu( event, url )
-
-    def update_graph( self ):
-        if self.livegraph:
-            print self.livegraph.to_string()
-            self.graphw.set_dotcode( self.livegraph, 'foo' )
 
     def visible_cb(self, model, iter ):
         # visibility determined by state matching active toggle buttons
@@ -163,6 +164,7 @@ class ControlApp(object):
     # close the window and quit
     def delete_event(self, widget, event, data=None):
         self.t.quit = True
+        self.x.quit = True
         for q in self.quitters:
             #print "calling quit on ", q
             q.quit()
@@ -312,6 +314,7 @@ The cylc forecast suite metascheduler.
 
     def click_exit( self, foo ):
         self.t.quit = True
+        self.x.quit = True
         for q in self.quitters:
             #print "calling quit on ", q
             q.quit()
