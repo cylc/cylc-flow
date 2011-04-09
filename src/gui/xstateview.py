@@ -32,35 +32,6 @@ def compare_dict_of_dict( one, two ):
 
     return True
 
-def markup( col, string ):
-    #return string
-    return '<span foreground="' + col + '">' + string + '</span>'
-
-def get_col( state ):
-    if state == 'waiting':
-        return '#38a'
-    elif state == 'submitted':
-        return '#f83'
-    elif state == 'running':
-        return '#0a0'
-    elif state == 'failed':
-        return '#f00'
-    else:
-        return '#000'
-
-def get_col_priority( priority ):
-    if priority == 'NORMAL':
-        return '#006'
-    elif priority == 'WARNING':
-        return '#e400ff'
-    elif priority == 'CRITICAL':
-        return '#ff0072'
-    elif priority == 'DEBUG':
-        return '#d2ff00'
-    else:
-        # not needed
-        return '#f0f'
-
 class xupdater(threading.Thread):
 
     def __init__(self, suite, owner, host, port, 
@@ -92,6 +63,8 @@ class xupdater(threading.Thread):
 
         self.config = config( self.suite )
         self.graph_warned = {}
+
+        self.ungraph = []
 
     def reconnect( self ):
         try:
@@ -252,3 +225,26 @@ class xupdater(threading.Thread):
         #if self.config["experimental"]["live graph movie"]:
         #    self.live_graph_frame_count += 1
         #    self.live_graph.write( self.config["visualization"]["run time graph directory"], 'live' + '-' + str( self.live_graph_frame_count ) + '.dot' )
+
+        for id in self.ungraph:
+            try:
+                n = self.graphw.get_node( id )
+            except:
+                # node no longer in graph
+                self.ungraph.remove(id)
+                continue
+
+            self.remove_tree( id )
+            self.update_gui()
+
+    def remove_tree(self, id ):
+        for n in self.graphw.successors( id ):
+            for m in self.graphw.successors( n ):
+                self.remove_tree( m )
+            try:
+                self.graphw.remove_node( n )
+            except:
+                pass
+
+
+

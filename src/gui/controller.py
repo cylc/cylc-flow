@@ -622,12 +622,21 @@ The cylc forecast suite metascheduler.
         if self.readonly:
             purge_item.set_sensitive(False)
 
+        menu.append( gtk.SeparatorMenuItem() )
+
+        ungraph_item = gtk.MenuItem( 'UNGRAPH' )
+        menu.append( ungraph_item )
+        ungraph_item.connect( 'activate', self.ungraph, task_id )
+
         menu.show_all()
         menu.popup( None, None, None, event.button, event.time )
 
         # TO DO: POPUP MENU MUST BE DESTROY()ED AFTER EVERY USE AS
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)?????????
         return True
+
+    def ungraph( self, w, id ):
+        self.x.ungraph.append(id)
 
     def rearrange( self, col, n ):
         cols = self.ttreeview.get_columns()
