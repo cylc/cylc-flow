@@ -134,7 +134,7 @@ class xupdater(threading.Thread):
 
     def update_gui( self ):
         if not self.graph_disconnect: 
-            #print "Updating GRAPH"
+            print "Updating GRAPH"
             self.update_xdot()
         return False
 
@@ -160,6 +160,7 @@ class xupdater(threading.Thread):
             ####print "Disconnecting task state info thread"
 
     def update_xdot(self):
+        print 'Updating xdot'
         self.xdot.set_dotcode( self.graphw.to_string())
         if self.first_update:
             self.xdot.widget.zoom_to_fit()
@@ -226,6 +227,7 @@ class xupdater(threading.Thread):
         #    self.live_graph_frame_count += 1
         #    self.live_graph.write( self.config["visualization"]["run time graph directory"], 'live' + '-' + str( self.live_graph_frame_count ) + '.dot' )
 
+        self.removed_nodes = False
         for id in self.ungraph:
             try:
                 n = self.graphw.get_node( id )
@@ -234,17 +236,21 @@ class xupdater(threading.Thread):
                 self.ungraph.remove(id)
                 continue
 
-            self.remove_tree( id )
-            self.update_gui()
+            for n in self.graphw.successors( id ):
+                self.remove_tree( id )
+
+        if self.removed_nodes:
+            gobject.idle_add( self.update_gui )
 
     def remove_tree(self, id ):
         for n in self.graphw.successors( id ):
-            for m in self.graphw.successors( n ):
-                self.remove_tree( m )
+            self.remove_tree( n )
             try:
                 self.graphw.remove_node( n )
             except:
                 pass
+            else:
+                self.removed_nodes = True
 
 
 
