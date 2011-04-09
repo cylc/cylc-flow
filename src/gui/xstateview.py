@@ -45,6 +45,8 @@ class xupdater(threading.Thread):
         self.first_update = True
         self.graph_disconnect = False
         self.action_required = True
+        self.oldest_ctime = None
+        self.newest_ctime = None
 
         self.suite = suite
         self.owner = owner
@@ -173,12 +175,15 @@ class xupdater(threading.Thread):
     def update_graph( self ):
         # To do: check edges against resolved ones
         # (adding new ones, and nodes, if necessary)
+        self.oldest_ctime = self.global_summary['oldest cycle time']
+        self.newest_ctime = self.global_summary['newest cycle time']
+
         if self.start_ctime:
             oldest = self.start_ctime
             newest = self.stop_ctime
         else:
-            oldest = self.global_summary['oldest cycle time']
-            newest = self.global_summary['newest cycle time']
+            oldest = self.oldest_ctime
+            newest = self.newest_ctime
 
         start_time = self.global_summary['start time']
 

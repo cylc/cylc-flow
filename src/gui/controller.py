@@ -15,7 +15,7 @@ from combo_logviewer import combo_logviewer
 from warning_dialog import warning_dialog, info_dialog
 from port_scan import SuiteIdentificationError
 import cylc_pyro_client
-from cycle_time import is_valid
+import cycle_time
 from execute import execute
 from option_group import controlled_option_group
 from config import config
@@ -216,7 +216,7 @@ class ControlApp(object):
             if stoptime == '':
                 warning_dialog( "No stop time entered" ).warn()
                 return
-            if not is_valid( stoptime ):
+            if not cycle_time.is_valid( stoptime ):
                 warning_dialog( "Invalid stop time: " + stoptime ).warn()
                 return
         elif stopnow_rb.get_active():
@@ -567,6 +567,9 @@ The cylc forecast suite metascheduler.
         menu_root = gtk.MenuItem( task_id )
         menu_root.set_submenu( menu )
 
+        timezoom_item = gtk.MenuItem( 'Graph Time Zoom' )
+        timezoom_item.connect( 'activate', self.focused_timezoom_popup, task_id )
+
         if type == 'collapsed subtree':
             title_item = gtk.MenuItem( 'Subtree: ' + task_id )
             title_item.set_sensitive(False)
@@ -577,6 +580,7 @@ The cylc forecast suite metascheduler.
             menu.append( expand_item )
             expand_item.connect( 'activate', self.expand_subtree, task_id )
     
+            menu.append( timezoom_item )
         else:
             title_item = gtk.MenuItem( 'Task: ' + task_id )
             title_item.set_sensitive(False)
@@ -586,6 +590,8 @@ The cylc forecast suite metascheduler.
             collapse_item = gtk.MenuItem( 'Collapse Subtree' )
             menu.append( collapse_item )
             collapse_item.connect( 'activate', self.collapse_subtree, task_id )
+
+            menu.append( timezoom_item )
 
             menu.append( gtk.SeparatorMenuItem() )
 
@@ -1127,8 +1133,8 @@ The cylc forecast suite metascheduler.
     def insert_task( self, w, window, entry_name, entry_ctime ):
         name = entry_name.get_text()
         ctime = entry_ctime.get_text()
-        if not is_valid( ctime ):
-            warning_dialog( "Cycle time not valid: " + ctime).warn()
+        if not cycle_time.is_valid( ctime ):
+            warning_dialog( "Cycle time not valid: " + ctime ).warn()
             return
         if name == '':
             warning_dialog( "Enter task or group name" ).warn()
@@ -1217,9 +1223,9 @@ The cylc forecast suite metascheduler.
         view_menu.append( expand_item )
         expand_item.connect( 'activate', self.expand_all_subtrees )
 
-        graph_range_item = gtk.MenuItem( '_Restrict Graph Range' )
+        graph_range_item = gtk.MenuItem( '_Time Zoom' )
         view_menu.append( graph_range_item )
-        graph_range_item.connect( 'activate', self.restrict_graph_range_popup )
+        graph_range_item.connect( 'activate', self.graph_time_zoom_popup )
 
         #autocollapse_item = gtk.MenuItem( '_Autocollapse Subtrees' )
         #view_menu.append( autocollapse_item )
@@ -1301,20 +1307,74 @@ The cylc forecast suite metascheduler.
         self.menu_bar.append( start_menu_root )
         self.menu_bar.append( help_menu_root )
 
-    def restrict_graph_range_popup( self, w ):
+    def focused_timezoom_popup( self, w, id ):
+
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title( "Retrict Graph Range")
+        window.set_title( "Time Zoom")
 
         vbox = gtk.VBox()
 
+        name, ctime = id.split('%')
+        # TO DO: do we need to check that oldeset_ctime is defined yet?
+        diff_pre = cycle_time.diff_hours( ctime, self.x.oldest_ctime )
+        diff_post = cycle_time.diff_hours( self.x.newest_ctime, ctime )
+
+        # TO DO: error checking on date range given
+        box = gtk.HBox()
+        label = gtk.Label( 'Pre (hours)' )
+        box.pack_start( label, True )
+        start_entry = gtk.Entry()
+        start_entry.set_text(str(diff_pre))
+        box.pack_start (start_entry, True)
+        vbox.pack_start( box )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Post (hours)' )
+        box.pack_start( label, True )
+        stop_entry = gtk.Entry()
+        stop_entry.set_text(str(diff_post))
+        box.pack_start (stop_entry, True)
+        vbox.pack_start( box )
+
+        cancel_button = gtk.Button( "_Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        stop_button = gtk.Button( "_Apply" )
+        stop_button.connect("clicked", self.focused_timezoom, 
+               ctime, start_entry, stop_entry )
+
+        #help_button = gtk.Button( "_Help" )
+        #help_button.connect("clicked", helpwindow.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( stop_button, False )
+        hbox.pack_end( cancel_button, False )
+        #hbox.pack_end( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def graph_time_zoom_popup( self, w ):
+        window = gtk.Window()
+        window.modify_bg( gtk.STATE_NORMAL, 
+                gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_border_width(5)
+        window.set_title( "Time Zoom")
+
+        vbox = gtk.VBox()
+
+        # TO DO: error checking on date range given
         box = gtk.HBox()
         label = gtk.Label( 'Start (YYYYMMDDHH)' )
         box.pack_start( label, True )
         start_entry = gtk.Entry()
         start_entry.set_max_length(10)
+        if self.x.oldest_ctime:
+            start_entry.set_text(self.x.oldest_ctime)
         box.pack_start (start_entry, True)
         vbox.pack_start( box )
 
@@ -1323,6 +1383,8 @@ The cylc forecast suite metascheduler.
         box.pack_start( label, True )
         stop_entry = gtk.Entry()
         stop_entry.set_max_length(10)
+        if self.x.newest_ctime:
+            stop_entry.set_text(self.x.newest_ctime)
         box.pack_start (stop_entry, True)
         vbox.pack_start( box )
 
@@ -1330,7 +1392,7 @@ The cylc forecast suite metascheduler.
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         stop_button = gtk.Button( "_Apply" )
-        stop_button.connect("clicked", self.restrict_graph_range, 
+        stop_button.connect("clicked", self.graph_time_zoom, 
                 start_entry, stop_entry )
 
         #help_button = gtk.Button( "_Help" )
@@ -1345,9 +1407,16 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def restrict_graph_range(self, w, start_e, stop_e):
+    def graph_time_zoom(self, w, start_e, stop_e):
         self.x.start_ctime = start_e.get_text()
         self.x.stop_ctime = stop_e.get_text()
+        self.x.action_required = True
+
+    def focused_timezoom(self, w, focus_ctime, start_e, stop_e):
+        pre_hours = start_e.get_text()
+        post_hours = stop_e.get_text()
+        self.x.start_ctime = cycle_time.decrement( focus_ctime, pre_hours )
+        self.x.stop_ctime = cycle_time.increment( focus_ctime, post_hours )
         self.x.action_required = True
 
     def create_info_bar( self ):
