@@ -251,9 +251,14 @@ class xupdater(threading.Thread):
                         not self.graph_warned[id]:
                     print >> sys.stderr, 'WARNING: SUITE TASK NOT GRAPHED: ' + id
                     self.graph_warned[id] = True
-                continue
 
-            node.attr['URL'] = id
+                if self.state_summary[id]['state'] == 'submitted' or \
+                        self.state_summary[id]['state'] == 'running' or \
+                        self.state_summary[id]['state'] == 'failed':
+                            self.graphw.add_node( id )
+                            node = self.graphw.get_node( id )
+                else:
+                    continue
 
             if self.state_summary[id]['state'] == 'submitted':
                 node.attr['style'] = 'filled'
