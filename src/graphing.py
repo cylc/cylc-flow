@@ -29,7 +29,10 @@ try:
 except ValueError:
     raise GraphvizError, 'The graphviz package is not installed or not accessible'
 
-ddmmhh = re.compile('%(\d{4})(\d{2})(\d{2})(\d{2})')
+#ddmmhh = re.compile('%(\d{4})(\d{2})(\d{2})(\d{2})')
+# allow literal 'YYYYMMDDHH'
+ddmmhh = re.compile('%(\w{4})(\w{2})(\w{2})(\w{2})')
+
 
 class CGraphPlain( pygraphviz.AGraph ):
     """Directed Acyclic Graph class for cylc dependency graphs."""
@@ -48,21 +51,30 @@ class CGraphPlain( pygraphviz.AGraph ):
         else:
             return []
 
-    def add_edge( self, l, r ):
+    def add_node( self, n, autoURL=True ):
+        pygraphviz.AGraph.add_node( self, n )
+        node = self.get_node(n)
+        label = re.sub( ddmmhh, r'\\n\2/\3 \4', n )
+        node.attr[ 'label' ] = label
+        if autoURL:
+            node.attr['URL'] = n
+
+    def add_edge( self, l, r, autoURL=True, **attr ):
         # l and r are cylc task IDs 
-        pygraphviz.AGraph.add_edge( self, l, r )
+        pygraphviz.AGraph.add_edge( self, l, r, **attr )
 
         nl = self.get_node( l )
         nr = self.get_node( r )
 
-        llabel = re.sub( ddmmhh, r'\\n\3/\2 \4Z', l )
-        rlabel = re.sub( ddmmhh, r'\\n\3/\2 \4Z', r )
+        llabel = re.sub( ddmmhh, r'\\n\2/\3 \4', l )
+        rlabel = re.sub( ddmmhh, r'\\n\2/\3 \4', r )
 
         nl.attr[ 'label' ] = llabel
         nr.attr[ 'label' ] = rlabel
 
-        nl.attr[ 'URL' ] = 'base:' + l
-        nr.attr[ 'URL' ] = 'base:' + r
+        if autoURL:
+            nl.attr[ 'URL' ] = 'base:' + l
+            nr.attr[ 'URL' ] = 'base:' + r
 
 class CGraph( CGraphPlain ):
     """Directed Acyclic Graph class for cylc dependency graphs.
@@ -106,21 +118,36 @@ class CGraph( CGraphPlain ):
                         self.task_attr[item] = []
                     self.task_attr[item].append( attr )
 
-    def add_edge( self, l, r ):
+    def add_node( self, n, autoURL=True ):
+        pygraphviz.AGraph.add_node( self, n )
+        node = self.get_node(n)
+        label = re.sub( ddmmhh, r'\\n\2/\3 \4', n )
+        node.attr[ 'label' ] = label
+        if autoURL:
+            node.attr['URL'] = n
+        for item in self.node_attr_by_taskname( l ):
+            attr, value = re.split( '\s*=\s*', item )
+            nl.attr[ attr ] = value
+        for item in self.node_attr_by_taskname( r ):
+            attr, value = re.split( '\s*=\s*', item )
+            nr.attr[ attr ] = value
+
+    def add_edge( self, l, r, autoURL=True ):
         # l and r are cylc task IDs 
         pygraphviz.AGraph.add_edge( self, l, r )
 
         nl = self.get_node( l )
         nr = self.get_node( r )
 
-        llabel = re.sub( ddmmhh, r'\\n\3/\2 \4Z', l )
-        rlabel = re.sub( ddmmhh, r'\\n\3/\2 \4Z', r )
+        llabel = re.sub( ddmmhh, r'\\n\2/\3 \4', l )
+        rlabel = re.sub( ddmmhh, r'\\n\2/\3 \4', r )
  
         nl.attr[ 'label' ] = llabel
         nr.attr[ 'label' ] = rlabel
 
-        nl.attr['URL'] = l
-        nr.attr['URL'] = r
+        if autoURL:
+            nl.attr['URL'] = l
+            nr.attr['URL'] = r
 
         for item in self.node_attr_by_taskname( l ):
             attr, value = re.split( '\s*=\s*', item )

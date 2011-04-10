@@ -108,6 +108,9 @@ class ControlApp(object):
     def on_url_clicked( self, widget, url, event ):
         if event.button != 3:
             return False
+        if url == 'KEY':
+            # graph key node
+            return
 
         m = re.match( 'base:SUBTREE:(.*)', url )
         if m:
@@ -562,6 +565,9 @@ The cylc forecast suite metascheduler.
         self.right_click_menu( event, task_id )
 
     def right_click_menu( self, event, task_id, type='live task' ):
+
+        name, ctime = task_id.split('%')
+
         menu = gtk.Menu()
 
         menu_root = gtk.MenuItem( task_id )
@@ -581,6 +587,7 @@ The cylc forecast suite metascheduler.
             expand_item.connect( 'activate', self.expand_subtree, task_id )
     
             menu.append( timezoom_item )
+
         else:
             title_item = gtk.MenuItem( 'Task: ' + task_id )
             title_item.set_sensitive(False)
@@ -647,7 +654,7 @@ The cylc forecast suite metascheduler.
             if self.readonly:
                 kill_nospawn_item.set_sensitive(False)
 
-            purge_item = gtk.MenuItem( 'Remove Task (Recursive Purge)' )
+            purge_item = gtk.MenuItem( 'Remove Tree (Recursive Purge)' )
             menu.append( purge_item )
             purge_item.connect( 'activate', self.popup_purge, task_id )
             if self.readonly:
@@ -1244,7 +1251,7 @@ The cylc forecast suite metascheduler.
         log_item.connect( 'activate', self.view_log )
 
         start_menu = gtk.Menu()
-        start_menu_root = gtk.MenuItem( 'Suite _Control' )
+        start_menu_root = gtk.MenuItem( '_Control' )
         start_menu_root.set_submenu( start_menu )
 
         start_item = gtk.MenuItem( '_Run (cold-, warm-, raw-, re-start)' )

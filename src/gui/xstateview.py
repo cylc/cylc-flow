@@ -172,7 +172,46 @@ class xupdater(threading.Thread):
             self.xdot.widget.zoom_to_fit()
             self.first_update = False
 
-    def update_graph( self ):
+    def add_graph_key(self):
+        self.graphw.add_node( 'waiting%YYYYMMDDHH' )
+        self.graphw.add_node( 'submitted%YYYYMMDDHH' )
+        self.graphw.add_node( 'running%YYYYMMDDHH' )
+        self.graphw.add_node( 'finished%YYYYMMDDHH' )
+        self.graphw.add_node( 'failed%YYYYMMDDHH' )
+        self.graphw.add_node( 'base%YYYYMMDDHH' )
+
+        waiting = self.graphw.get_node( 'waiting%YYYYMMDDHH' )
+        submitted = self.graphw.get_node( 'submitted%YYYYMMDDHH' )
+        running = self.graphw.get_node( 'running%YYYYMMDDHH' )
+        finished = self.graphw.get_node( 'finished%YYYYMMDDHH' )
+        failed = self.graphw.get_node( 'failed%YYYYMMDDHH' )
+        base = self.graphw.get_node( 'base%YYYYMMDDHH' )
+
+        for node in [ waiting, submitted, running, finished, failed, base ]:
+            node.attr['style'] = 'filled'
+            node.attr['shape'] = 'box'
+            node.attr['URL'] = 'KEY'
+
+        waiting.attr['fillcolor'] = 'cadetblue2'
+        waiting.attr['color'] = 'cadetblue4'
+        submitted.attr['fillcolor'] = 'orange'
+        submitted.attr['color'] = 'darkorange3'
+        running.attr['fillcolor'] = 'green'
+        running.attr['color'] = 'darkgreen'
+        finished.attr['fillcolor'] = 'grey'
+        finished.attr['color'] = 'black'
+        failed.attr['fillcolor'] = 'red'
+        failed.attr['color'] = 'firebrick3'
+        base.attr['fillcolor'] = 'cornsilk'
+        base.attr['color'] = 'black'
+
+        self.graphw.add_edge( base, waiting, autoURL=False, color=None)
+        self.graphw.add_edge( waiting, submitted, autoURL=False, color=None)
+        self.graphw.add_edge( submitted, running, autoURL=False, color=None)
+        self.graphw.add_edge( running, finished, autoURL=False, color=None)
+        self.graphw.add_edge( finished, failed, autoURL=False, color=None)
+ 
+    def update_graph(self):
         # To do: check edges against resolved ones
         # (adding new ones, and nodes, if necessary)
         self.oldest_ctime = self.global_summary['oldest cycle time']
@@ -210,7 +249,7 @@ class xupdater(threading.Thread):
                 #else:
                 if id not in self.graph_warned or \
                         not self.graph_warned[id]:
-                    print >> sys.stderr, 'WARNING: NOT IN GRAPH: ' + id
+                    print >> sys.stderr, 'WARNING: SUITE TASK NOT GRAPHED: ' + id
                     self.graph_warned[id] = True
                 continue
 
@@ -284,6 +323,7 @@ class xupdater(threading.Thread):
 
             self.graphw.remove_node( node )
 
+        self.add_graph_key()
         self.action_required = False
 
     #def follow_up( self, id, topctime ):
