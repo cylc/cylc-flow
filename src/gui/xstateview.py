@@ -53,6 +53,8 @@ class xupdater(threading.Thread):
         self.show_key = True
         self.best_fit = False
         self.crop = False
+        self.filter_include = None
+        self.filter_exclude = None
 
         self.suite = suite
         self.owner = owner
@@ -198,7 +200,7 @@ class xupdater(threading.Thread):
 
         for node in [ waiting, submitted, running, finished, failed, base ]:
             node.attr['style'] = 'filled'
-            node.attr['shape'] = 'box'
+            node.attr['shape'] = 'ellipse'
             node.attr['URL'] = 'KEY'
 
         waiting.attr['fillcolor'] = 'cadetblue2'
@@ -220,7 +222,7 @@ class xupdater(threading.Thread):
         self.graphw.add_edge( running, finished, autoURL=False, style='invis')
         self.graphw.add_edge( finished, failed, autoURL=False, style='invis')
 
-    def set_live_node_attr( self, node, id ):
+    def set_live_node_attr( self, node, id, shape=None ):
         # override base graph URL to distinguish live tasks
         node.attr['URL'] = id
         if self.state_summary[id]['state'] == 'submitted':
@@ -238,6 +240,9 @@ class xupdater(threading.Thread):
         elif self.state_summary[id]['state'] == 'failed':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'red'
+
+        if shape:
+            node.attr['shape'] = shape
 
     def update_graph(self):
         # To do: check edges against resolved ones
@@ -267,8 +272,10 @@ class xupdater(threading.Thread):
         #    diffhrs = 25
         self.graphw = self.config.get_graph( oldest, diffhrs, colored=False, raw=raw ) 
 
+        self.rem_nodes = []
+
+        # CROPPING
         if self.crop:
-            self.rem_nodes = []
             for node in self.graphw.nodes():
                 #if node in self.rem_nodes:
                 #    continue
@@ -278,13 +285,21 @@ class xupdater(threading.Thread):
                 if node.get_name() not in self.state_summary:
                     self.rem_nodes.append(node)
                     continue
-                # TEST - FILTERING:
-                #name, ctime = node.get_name().split('%')
-                #if re.search( '^(ext_|ecan)', name ):
-                #    self.rem_nodes.append(node)
 
-            for node in self.rem_nodes:
-                    self.graphw.remove_node( node )
+        # FILTERING:
+        for node in self.graphw.nodes():
+            name, ctime = node.get_name().split('%')
+            if self.filter_exclude:
+                if re.match( self.filter_exclude, name ):
+                    if node not in self.rem_nodes:
+                        self.rem_nodes.append(node)
+            if self.filter_include:
+                if not re.match( self.filter_include, name ):
+                    if node not in self.rem_nodes:
+                        self.rem_nodes.append(node)
+
+        for node in self.rem_nodes:
+            self.graphw.remove_node( node )
 
         for id in self.state_summary:
             try:
@@ -380,7 +395,7 @@ class xupdater(threading.Thread):
         for state in extra_node_ids:
             for id in extra_node_ids[state]:
                 self.graphw.add_node( id )
-                self.set_live_node_attr( self.graphw.get_node(id), id)
+                self.set_live_node_attr( self.graphw.get_node(id), id, shape='box')
             # add invisible edges to force vertical alignment
             for i in range( 0, len(extra_node_ids[state])):
                if i == len(extra_node_ids[state]) -1:

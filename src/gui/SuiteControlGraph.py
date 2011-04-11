@@ -177,6 +177,10 @@ Dependency graph based GUI suite control interface.
         self.view_menu.append( crop_item )
         crop_item.connect( 'activate', self.toggle_crop )
 
+        filter_item = gtk.MenuItem( 'Task _Filter' )
+        self.view_menu.append( filter_item )
+        filter_item.connect( 'activate', self.filter_popup )
+
         expand_item = gtk.MenuItem( '_Expand All Subtrees' )
         self.view_menu.append( expand_item )
         expand_item.connect( 'activate', self.expand_all_subtrees )
@@ -191,6 +195,77 @@ Dependency graph based GUI suite control interface.
         
     def toggle_key( self, w ):
         self.x.show_key = not self.x.show_key
+        self.x.action_required = True
+
+    def filter_popup( self, w ):
+        window = gtk.Window()
+        window.modify_bg( gtk.STATE_NORMAL, 
+                gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_border_width(5)
+        window.set_title( "Task Filtering")
+
+        vbox = gtk.VBox()
+
+        # TO DO: error checking on date range given
+        box = gtk.HBox()
+        label = gtk.Label( 'Exclude (regex)' )
+        box.pack_start( label, True )
+        exclude_entry = gtk.Entry()
+        box.pack_start (exclude_entry, True)
+        vbox.pack_start( box )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Include (regex)' )
+        box.pack_start( label, True )
+        include_entry = gtk.Entry()
+        box.pack_start (include_entry, True)
+        vbox.pack_start( box )
+
+        cancel_button = gtk.Button( "_Close" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        reset_button = gtk.Button( "_Reset (No Filtering)" )
+        reset_button.connect("clicked", self.filter_reset )
+
+        apply_button = gtk.Button( "_Apply" )
+        apply_button.connect("clicked", self.filter,
+                exclude_entry, include_entry)
+
+        #help_button = gtk.Button( "_Help" )
+        #help_button.connect("clicked", helpwindow.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( apply_button, False )
+        hbox.pack_start( reset_button, False )
+        hbox.pack_end( cancel_button, False )
+        #hbox.pack_end( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def filter_reset( self, w):
+        self.x.filter_include = None
+        self.x.filter_exclude = None
+        self.x.action_required = True
+
+    def filter( self, w, excl_e, incl_e ):
+        excl = excl_e.get_text()
+        incl = incl_e.get_text()
+        if excl == '':
+            excl = None
+        if incl == '':
+            incl == None
+        for filt in excl, incl:
+            if not filt:
+                continue
+            try:
+                re.compile( filt )
+            except:
+                warning_dialog( "Bad Expression: " + filt ).warn()
+                return
+        self.x.filter_include = incl
+        self.x.filter_exclude = excl
         self.x.action_required = True
 
     def focused_timezoom_popup( self, w, id ):
@@ -224,7 +299,7 @@ Dependency graph based GUI suite control interface.
         box.pack_start (stop_entry, True)
         vbox.pack_start( box )
 
-        cancel_button = gtk.Button( "_Cancel" )
+        cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         reset_button = gtk.Button( "_Reset (No Zoom)" )
@@ -283,7 +358,7 @@ Dependency graph based GUI suite control interface.
         box.pack_start (stop_entry, True)
         vbox.pack_start( box )
 
-        cancel_button = gtk.Button( "_Cancel" )
+        cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         reset_button = gtk.Button( "_Reset (No Zoom)" )
