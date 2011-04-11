@@ -157,9 +157,12 @@ class xupdater(threading.Thread):
         while not self.quit:
             if self.update():
                 self.update_graph()
-                #self.update_gui()
-                # use of idle_add not necessary due to internals of xdot?
-                gobject.idle_add( self.update_gui )
+                # DO NOT USE gobject.idle_add() HERE - IT DRASTICALLY
+                # AFFECTS PERFORMANCE FOR LARGE SUITES and appears to
+                # be unnecessary (due to xdot internals?)
+                ###### gobject.idle_add( self.update_gui )
+                self.update_gui()
+                 
             # TO DO: only update globals if they change, as for tasks
             gobject.idle_add( self.update_globals )
             time.sleep(1)
