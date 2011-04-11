@@ -2,8 +2,6 @@
 
 from SuiteControl import ControlAppBase
 import gtk
-#import pygtk
-#pygtk.require('2.0')
 import os, re
 import gobject
 from stateview import updater

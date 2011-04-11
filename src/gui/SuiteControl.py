@@ -1,22 +1,18 @@
 #!/usr/bin/env python
 
 import gtk
-import pygtk
+#import pygtk
 #pygtk.require('2.0')
 import pango
 import os, re
 import Pyro.errors
-import gobject
 import subprocess
 import helpwindow
-from stateview import updater
-from xstateview import xupdater
 from combo_logviewer import combo_logviewer
 from warning_dialog import warning_dialog, info_dialog
 from port_scan import SuiteIdentificationError
 import cylc_pyro_client
 import cycle_time
-from execute import execute
 from option_group import controlled_option_group
 from config import config
 from color_rotator import rotator
@@ -547,6 +543,7 @@ The cylc forecast suite metascheduler.
         if meth == 'cold' or meth == 'warm' or meth == 'raw':
             statedump_entry.set_sensitive( False )
             ctime_entry.set_sensitive( True )
+            no_reset_cb.set_sensitive(False)
         else:
             # restart
             statedump_entry.set_sensitive( True )
