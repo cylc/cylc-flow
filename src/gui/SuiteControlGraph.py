@@ -48,7 +48,7 @@ Dependency graph based GUI suite control interface.
             # graph key node
             return
 
-        m = re.match( 'base:SUBTREE:(.*)', url )
+        m = re.match( 'SUBTREE:(.*)', url )
         if m:
             #print 'SUBTREE'
             task_id = m.groups()[0]

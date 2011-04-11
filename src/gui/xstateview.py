@@ -11,6 +11,9 @@ import pygtk
 import cycle_time
 ####pygtk.require('2.0')
 
+# TO DO: consider using pygraphviz methods such as 'remove_nodes_from(
+# nbunch )' where nbunch can be any iterable container.
+
 def compare_dict_of_dict( one, two ):
     # return True if one == two, else return False.
     for key in one:
@@ -426,4 +429,12 @@ class xupdater(threading.Thread):
             self.remove_tree( n )
             if n not in self.collapsems:
                 self.collapsems.append(n)
+
+    def get_leaves( self ):
+        od = self.graphw.out_degree(with_labels=True)
+        leaves = []
+        for id in od:
+            if od[id] == 0:
+                leaves.append(id)
+        return leaves
 
