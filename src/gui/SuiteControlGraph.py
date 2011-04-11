@@ -80,7 +80,6 @@ Dependency graph based GUI suite control interface.
         return ControlAppBase.click_exit(self, foo )
 
     def right_click_menu( self, event, task_id, type='live task' ):
-        print '------------>', type
         name, ctime = task_id.split('%')
 
         menu = gtk.Menu()
@@ -173,19 +172,17 @@ Dependency graph based GUI suite control interface.
 
         graph_range_item = gtk.MenuItem( 'Cycle-Time _Zoom' )
         self.view_menu.append( graph_range_item )
-        graph_range_item.connect( 'activate', self.graph_time_zoom_popup )
+        graph_range_item.connect( 'activate', self.graph_timezoom_popup )
 
         key_item = gtk.MenuItem( 'Toggle Graph _Key' )
         self.view_menu.append( key_item )
         key_item.connect( 'activate', self.toggle_key )
-
 
     def toggle_key( self, w ):
         self.x.show_key = not self.x.show_key
         self.x.action_required = True
 
     def focused_timezoom_popup( self, w, id ):
-
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
@@ -219,15 +216,19 @@ Dependency graph based GUI suite control interface.
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        stop_button = gtk.Button( "_Apply" )
-        stop_button.connect("clicked", self.focused_timezoom, 
+        reset_button = gtk.Button( "_Reset (No Zoom)" )
+        reset_button.connect("clicked", self.focused_timezoom_direct, None )
+
+        apply_button = gtk.Button( "_Apply" )
+        apply_button.connect("clicked", self.focused_timezoom, 
                ctime, start_entry, stop_entry )
 
         #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", helpwindow.stop_guide )
 
         hbox = gtk.HBox()
-        hbox.pack_start( stop_button, False )
+        hbox.pack_start( apply_button, False )
+        hbox.pack_start( reset_button, False )
         hbox.pack_end( cancel_button, False )
         #hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
@@ -241,7 +242,7 @@ Dependency graph based GUI suite control interface.
         self.x.action_required = True
         self.x.best_fit = True
 
-    def graph_time_zoom_popup( self, w ):
+    def graph_timezoom_popup( self, w ):
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
@@ -274,15 +275,19 @@ Dependency graph based GUI suite control interface.
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        stop_button = gtk.Button( "_Apply" )
-        stop_button.connect("clicked", self.graph_time_zoom, 
+        reset_button = gtk.Button( "_Reset (No Zoom)" )
+        reset_button.connect("clicked", self.focused_timezoom_direct, None )
+
+        apply_button = gtk.Button( "_Apply" )
+        apply_button.connect("clicked", self.graph_timezoom, 
                 start_entry, stop_entry )
 
         #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", helpwindow.stop_guide )
 
         hbox = gtk.HBox()
-        hbox.pack_start( stop_button, False )
+        hbox.pack_start( apply_button, False )
+        hbox.pack_start( reset_button, False )
         hbox.pack_end( cancel_button, False )
         #hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
@@ -290,7 +295,7 @@ Dependency graph based GUI suite control interface.
         window.add( vbox )
         window.show_all()
 
-    def graph_time_zoom(self, w, start_e, stop_e):
+    def graph_timezoom(self, w, start_e, stop_e):
         self.x.start_ctime = start_e.get_text()
         self.x.stop_ctime = stop_e.get_text()
         self.x.action_required = True
