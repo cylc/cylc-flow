@@ -92,6 +92,9 @@ Dependency graph based GUI suite control interface.
         timezoom_item = gtk.MenuItem( 'Cycle-Time Zoom to Range' )
         timezoom_item.connect( 'activate', self.focused_timezoom_popup, task_id )
 
+        timezoom_item = gtk.MenuItem( 'Cycle-Time Zoom Reset' )
+        timezoom_item.connect( 'activate', self.focused_timezoom_direct, None )
+
         if type == 'collapsed subtree':
             title_item = gtk.MenuItem( 'Subtree: ' + task_id )
             title_item.set_sensitive(False)

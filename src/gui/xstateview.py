@@ -176,7 +176,7 @@ class xupdater(threading.Thread):
         #print 'Updating xdot'
         self.xdot.set_dotcode( self.graphw.to_string())
         if self.first_update:
-            self.xdot.widget.zoom_to_fit()
+            #self.xdot.widget.zoom_to_fit()
             self.first_update = False
         elif self.best_fit:
             self.xdot.widget.zoom_to_fit()
