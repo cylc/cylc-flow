@@ -1,6 +1,6 @@
 import gobject
-import pygtk
-####pygtk.require('2.0')
+#import pygtk
+#pygtk.require('2.0')
 import gtk
 import time, os, re
 import threading
@@ -894,9 +894,13 @@ The cylc forecast suite metascheduler.
             else:
                 reg = group + ':' + name
             if not self.cdb:
-                con_item = gtk.MenuItem( '_Control')
+                con_item = gtk.MenuItem( '_Control (traditional)')
                 menu.append( con_item )
                 con_item.connect( 'activate', self.launch_controller, reg, state )
+
+                cong_item = gtk.MenuItem( '_Control (graph based)')
+                menu.append( cong_item )
+                cong_item.connect( 'activate', self.launch_controller, reg, state, True )
 
                 out_item = gtk.MenuItem( 'View _Output')
                 menu.append( out_item )
@@ -1830,7 +1834,7 @@ The cylc forecast suite metascheduler.
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def launch_controller( self, w, name, state ):
+    def launch_controller( self, w, name, state, depgraph=False ):
         running_already = False
         if state != '-':
             # suite running
@@ -1902,7 +1906,10 @@ The cylc forecast suite metascheduler.
                 warning_dialog( str(x) ).warn()
                 return False
 
-            command = "gcylc " + name
+            if depgraph:
+                command = "gcylc --graph " + name
+            else:
+                command = "gcylc " + name
             foo = gcapture( command, stdout, 800, 400 )
             self.gcapture_windows.append(foo)
             foo.run()

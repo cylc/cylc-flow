@@ -22,166 +22,54 @@ from config import config
 from color_rotator import rotator
 from cylc_logviewer import cylc_logviewer
 from textload import textload
-from cylc_xdot import xdot_widgets
 
-class ControlApp(object):
-
+class ControlAppBase(object):
+    """
+Base class for suite control GUI functionality.
+Derived classes must provide:
+  self.get_control_widgets()
+and associated methods for their control widgets.
+    """
     def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
         self.readonly = readonly
         self.logdir = logging_dir
         self.suite_dir = suite_dir
-        self.tfilt = ''
-
         self.suite = suite
         self.host = host
         self.port = port
         self.owner = owner
         self.imagedir = imagedir
+
+        self.suiterc = config( self.suite )
+        self.use_block = self.suiterc['use suite blocking']
+
+        self.connection_lost = False # (not used)
+        self.quitters = []
+
+        self.log_colors = rotator()
+
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        #self.window.set_border_width( 5 )
         if self.readonly:
-            self.window.set_title("cylc view <" + self.suite + "> (READONLY)" )
+            self.window.set_title("gcylc <" + self.suite + "> (READONLY)" )
         else:
             self.window.set_title("gcylc <" + self.suite + ">" )
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(800, 500)
         self.window.connect("delete_event", self.delete_event)
 
-        self.log_colors = rotator()
+        self.create_main_menu()
 
-        # Get list of tasks in the suite
-        self.preload_task_list()
-
-        self.create_menu()
-
-        notebook = gtk.Notebook()
-        notebook.set_tab_pos(gtk.POS_TOP)
- 
         bigbox = gtk.VBox()
         bigbox.pack_start( self.menu_bar, False )
         hbox = gtk.HBox()
+
         hbox.pack_start( self.create_info_bar(), True )
         bigbox.pack_start( hbox, False )
 
-        main_panes = gtk.VPaned()
-        main_panes.set_position(200)
-        #main_panes.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ))
-        main_panes.add1( self.ledview_widgets())
-        main_panes.add2( self.treeview_widgets())
+        bigbox.pack_start( self.get_control_widgets(), True )
 
-        self.xdot = xdot_widgets()
-        self.xdot.widget.connect( 'clicked', self.on_url_clicked )
-        self.xdot.graph_disconnect_button.connect( 'toggled', self.toggle_graph_disconnect )
-
-        self.quitters = []
-        self.connection_lost = False
-        self.t = updater( self.suite, self.owner, self.host, self.port,
-                self.imagedir, self.led_treeview.get_model(),
-                self.ttreeview, self.task_list, self.label_mode,
-                self.label_status, self.label_time )
-
-        self.x = xupdater( self.suite, self.owner, self.host, self.port,
-                self.label_mode, self.label_status, self.label_time, self.xdot )
-
-        self.full_task_headings()
-        #print "Starting traditional view thread"
-        self.t.start()
-        #print "Starting live graph thread"
-        self.x.start()
-
-        notebook.append_page( main_panes, gtk.Label('traditional'))
-        notebook.append_page(self.xdot.get(), gtk.Label('live graph'))
-
-        bigbox.pack_start( notebook, True )
         self.window.add( bigbox )
         self.window.show_all()
-
-    def toggle_graph_disconnect( self, w ):
-        if w.get_active():
-            self.x.graph_disconnect = True
-            w.set_label( 'REconnect' )
-        else:
-            self.x.graph_disconnect = False
-            w.set_label( 'DISconnect' )
-        return True
-
-    def on_url_clicked( self, widget, url, event ):
-        if event.button != 3:
-            return False
-        if url == 'KEY':
-            # graph key node
-            return
-
-        m = re.match( 'base:SUBTREE:(.*)', url )
-        if m:
-            #print 'SUBTREE'
-            task_id = m.groups()[0]
-            self.right_click_menu( event, task_id, type='collapsed subtree' )
-            return
-
-        m = re.match( 'base:(.*)', url )
-        if m:
-            #print 'BASE GRAPH'
-            task_id = m.groups()[0]
-            #warning_dialog( 
-            #        task_id + "\n"
-            #        "This task is part of the base graph, taken from the\n"
-            #        "suite config file (suite.rc) dependencies section, \n" 
-            #        "but it does not currently exist in the running suite." ).warn()
-            self.right_click_menu( event, task_id, type='base graph task' )
-            return
-
-        # URL is task ID
-        #print 'LIVE TASK'
-        self.right_click_menu( event, url, type='live task' )
-
-    def visible_cb(self, model, iter ):
-        # visibility determined by state matching active toggle buttons
-        # set visible if model value NOT in filter_states
-        state = model.get_value(iter, 1 ) 
-        # strip formatting tags
-        if state:
-            state = re.sub( r'<.*?>', '', state )
-            sres = state not in self.tfilter_states
-            # AND if taskname matches filter entry text
-            if self.tfilt == '':
-                nres = True
-            else:
-                tname = model.get_value(iter, 0)
-                tname = re.sub( r'<.*?>', '', tname )
-                if re.search( self.tfilt, tname ):
-                    nres = True
-                else:
-                    nres = False
-        else:
-            # this must be a cycle-time line (not state etc.)
-            sres = True
-            nres = True
-        return sres and nres
-
-    def check_tfilter_buttons(self, tb):
-        del self.tfilter_states[:]
-        for b in self.tfilterbox.get_children():
-            if not b.get_active():
-                # sub '_' from button label keyboard mnemonics
-                self.tfilter_states.append( re.sub('_', '', b.get_label()))
-        self.tmodelfilter.refilter()
-
-    def check_filter_entry( self, e ):
-        ftxt = self.filter_entry.get_text()
-        if ftxt != '(task name filter)':
-            self.tfilt = self.filter_entry.get_text()
-        self.tmodelfilter.refilter()
-
-    # close the window and quit
-    def delete_event(self, widget, event, data=None):
-        self.t.quit = True
-        self.x.quit = True
-        for q in self.quitters:
-            #print "calling quit on ", q
-            q.quit()
-        #print "BYE from main thread"
-        return False
 
     def pause_suite( self, bt ):
         try:
@@ -324,182 +212,16 @@ The cylc forecast suite metascheduler.
         about.run()
         about.destroy()
 
-    def click_exit( self, foo ):
-        self.t.quit = True
-        self.x.quit = True
+    def delete_event(self, widget, event, data=None):
         for q in self.quitters:
-            #print "calling quit on ", q
             q.quit()
-
-        #print "BYE from main thread"
-        self.window.destroy()
         return False
 
-    def toggle_headings( self, w ):
-        if self.task_headings_on:
-            self.no_task_headings()
-        else:
-            self.full_task_headings()
-
-    def no_task_headings( self ):
-        self.task_headings_on = False
-        self.led_headings = ['Cycle Time' ] + [''] * len( self.task_list )
-        self.reset_led_headings()
-
-    def full_task_headings( self ):
-        self.task_headings_on = True
-        self.led_headings = ['Cycle Time' ] + self.task_list
-        self.reset_led_headings()
-
-    def reset_led_headings( self ):
-        tvcs = self.led_treeview.get_columns()
-        for n in range( 1,1+len( self.task_list) ):
-            heading = self.led_headings[n]
-            # double on underscores or they get turned into underlines
-            # (may be related to keyboard mnemonics for button labels?)
-            heading = re.sub( '_', '__', heading )
-            tvcs[n].set_title( heading )
-
-    def ledview_widgets( self ):
-        types = tuple( [gtk.gdk.Pixbuf]* (10 + len( self.task_list)))
-        liststore = gtk.ListStore( *types )
-        treeview = gtk.TreeView( liststore )
-        treeview.get_selection().set_mode( gtk.SELECTION_NONE )
-
-        # this is how to set background color of the entire treeview to black:
-        #treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) ) 
-
-        tvc = gtk.TreeViewColumn( 'Cycle Time' )
-        for i in range(10):
-            cr = gtk.CellRendererPixbuf()
-            #cr.set_property( 'cell-background', 'black' )
-            tvc.pack_start( cr, False )
-            tvc.set_attributes( cr, pixbuf=i )
-        treeview.append_column( tvc )
-
-        # hardwired 10px lamp image width!
-        lamp_width = 10
-
-        for n in range( 10, 10+len( self.task_list )):
-            cr = gtk.CellRendererPixbuf()
-            #cr.set_property( 'cell_background', 'black' )
-            cr.set_property( 'xalign', 0 )
-            tvc = gtk.TreeViewColumn( ""  )
-            tvc.set_min_width( lamp_width )  # WIDTH OF LED PIXBUFS
-            tvc.pack_end( cr, True )
-            tvc.set_attributes( cr, pixbuf=n )
-            treeview.append_column( tvc )
-
-        sw = gtk.ScrolledWindow()
-        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
-
-        self.led_treeview = treeview
-        sw.add( treeview )
-        return sw
-    
-    def treeview_widgets( self ):
-        # Treeview of current suite state, with filtering and sorting.
-        # sorting is handled somewhat manually because the simple method 
-        # of interposing a TreeModelSort at the top:
-        #   treestore = gtk.TreeStore(str, ...)
-        #   tms = gtk.TreeModelSort( treestore )   #\ 
-        #   tmf = tms.filter_new()                 #-- or other way round?
-        #   tv = gtk.TreeView()
-        #   tv.set_model(tms)
-        # failed to produce correct results (the data displayed was not 
-        # consistently what should have been displayed given the
-        # filtering in use) although the exact same code worked for a
-        # liststore.
-
-        self.ttreestore = gtk.TreeStore(str, str, str, str, str, str, str )
-        self.tmodelfilter = self.ttreestore.filter_new()
-        self.tmodelfilter.set_visible_func(self.visible_cb)
-        self.ttreeview = gtk.TreeView()
-        self.ttreeview.set_model(self.tmodelfilter)
-
-        ts = self.ttreeview.get_selection()
-        ts.set_mode( gtk.SELECTION_SINGLE )
-
-        self.ttreeview.connect( 'button_press_event', self.on_treeview_button_pressed )
-
-        headings = ['task', 'state', 'message', 'Tsubmit', 'Tstart', 'mean dT', 'ETC' ]
-        bkgcols  = [ None,  '#def',  '#fff',    '#def',    '#fff',   '#def',    '#fff']
-        for n in range(len(headings)):
-            cr = gtk.CellRendererText()
-            cr.set_property( 'cell-background', bkgcols[n] )
-            #tvc = gtk.TreeViewColumn( headings[n], cr, text=n )
-            tvc = gtk.TreeViewColumn( headings[n], cr, markup=n )
-            tvc.set_resizable(True)
-            if n == 0:
-                # allow click sorting only on first column (cycle time
-                # and task name) as I don't understand the effect of
-                # sorting on other columns in a treeview (it doesn't
-                # seem to work as expected).
-                tvc.set_clickable(True)
-                tvc.connect("clicked", self.rearrange, n )
-                tvc.set_sort_order(gtk.SORT_ASCENDING)
-                tvc.set_sort_indicator(True)
-                self.ttreestore.set_sort_column_id(n, gtk.SORT_ASCENDING ) 
-            self.ttreeview.append_column(tvc)
- 
-        sw = gtk.ScrolledWindow()
-        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
-        sw.add( self.ttreeview )
-
-        self.tfilterbox = gtk.HBox()
-
-        # allow filtering out of 'finished' and 'waiting'
-        all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
-        labels = {}
-        labels[ 'waiting'   ] = '_waiting'
-        labels[ 'submitted' ] = 's_ubmitted'
-        labels[ 'running'   ] = '_running'
-        labels[ 'finished'  ] = 'f_inished'
-        labels[ 'failed'    ] = 'f_ailed'
- 
-        # initially filter out 'finished' and 'waiting' tasks
-        self.tfilter_states = [ 'waiting', 'finished' ]
-
-        for st in all_states:
-            b = gtk.CheckButton( labels[st] )
-            self.tfilterbox.pack_start(b)
-            if st in self.tfilter_states:
-                b.set_active(False)
-            else:
-                b.set_active(True)
-            b.connect('toggled', self.check_tfilter_buttons)
-
-        hbox = gtk.HBox()
-        eb = gtk.EventBox()
-        eb.add( gtk.Label( "BELOW: right-click on tasks to control or interrogate" ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
-        hbox.pack_start( eb, True )
-
-        bbox = gtk.HButtonBox()
-        expand_button = gtk.Button( "E_xpand" )
-        expand_button.connect( 'clicked', lambda x: self.ttreeview.expand_all() )
-        collapse_button = gtk.Button( "_Collapse" )
-        collapse_button.connect( 'clicked', lambda x: self.ttreeview.collapse_all() )
-     
-        bbox.add( expand_button )
-        bbox.add( collapse_button )
-        bbox.set_layout( gtk.BUTTONBOX_START )
-
-        self.filter_entry = gtk.Entry()
-        self.filter_entry.set_text( '(task name filter)' )
-        self.filter_entry.connect( "activate", self.check_filter_entry )
-
-        ahbox = gtk.HBox()
-        ahbox.pack_start( bbox, True )
-        ahbox.pack_start( self.filter_entry, True )
-        ahbox.pack_start( self.tfilterbox, True)
-
-        vbox = gtk.VBox()
-        vbox.pack_start( hbox, False )
-        vbox.pack_start( sw, True )
-        vbox.pack_end( ahbox, False )
-
-        return vbox
+    def click_exit( self, foo ):
+        for q in self.quitters:
+            q.quit()
+        self.window.destroy()
+        return False
 
     def view_task_info( self, w, task_id, jsonly ):
         try:
@@ -530,175 +252,76 @@ The cylc forecast suite metascheduler.
 
         return False
 
-    def on_treeview_button_pressed( self, treeview, event ):
-        # DISPLAY MENU ONLY ON RIGHT CLICK ONLY
-        if event.button != 3:
-            return False
-
-        # the following sets selection to the position at which the
-        # right click was done (otherwise selection lags behind the
-        # right click):
-        x = int( event.x )
-        y = int( event.y )
-        time = event.time
-        pth = treeview.get_path_at_pos(x,y)
-
-        if pth is None:
-            return False
-
-        treeview.grab_focus()
-        path, col, cellx, celly = pth
-        treeview.set_cursor( path, col, 0 )
-
-        selection = treeview.get_selection()
-        treemodel, iter = selection.get_selected()
-        name = treemodel.get_value( iter, 0 )
-        iter2 = treemodel.iter_parent( iter )
-        try:
-            ctime = treemodel.get_value( iter2, 0 )
-        except TypeError:
-            # must have clicked on the top level ctime 
-            return
-
-        task_id = name + '%' + ctime
-
-        self.right_click_menu( event, task_id )
-
-    def right_click_menu( self, event, task_id, type='live task' ):
-
+    def get_right_click_menu_items( self, task_id ):
         name, ctime = task_id.split('%')
 
-        menu = gtk.Menu()
+        items = []
 
-        menu_root = gtk.MenuItem( task_id )
-        menu_root.set_submenu( menu )
+        js_item = gtk.MenuItem( 'View Job Script' )
+        items.append( js_item )
+        js_item.connect( 'activate', self.view_task_info, task_id, True )
 
-        timezoom_item = gtk.MenuItem( 'Graph Time Zoom' )
-        timezoom_item.connect( 'activate', self.focused_timezoom_popup, task_id )
+        info_item = gtk.MenuItem( 'View Job Stdout & Stderr' )
+        items.append( info_item )
+        info_item.connect( 'activate', self.view_task_info, task_id, False )
 
-        if type == 'collapsed subtree':
-            title_item = gtk.MenuItem( 'Subtree: ' + task_id )
-            title_item.set_sensitive(False)
-            menu.append( title_item )
+        info_item = gtk.MenuItem( 'View Task Prerequisites & Outputs' )
+        items.append( info_item )
+        info_item.connect( 'activate', self.popup_requisites, task_id )
 
-            menu.append( gtk.SeparatorMenuItem() )
-            expand_item = gtk.MenuItem( 'Expand Subtree' )
-            menu.append( expand_item )
-            expand_item.connect( 'activate', self.expand_subtree, task_id )
+        items.append( gtk.SeparatorMenuItem() )
+
+        reset_ready_item = gtk.MenuItem( 'Trigger Now (if suite not paused)' )
+        items.append( reset_ready_item )
+        reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
+        if self.readonly:
+            reset_ready_item.set_sensitive(False)
+
+        reset_waiting_item = gtk.MenuItem( 'Reset State to "waiting"' )
+        items.append( reset_waiting_item )
+        reset_waiting_item.connect( 'activate', self.reset_task_state, task_id, 'waiting' )
+        if self.readonly:
+            reset_waiting_item.set_sensitive(False)
+
+        reset_finished_item = gtk.MenuItem( 'Reset State to "finished"' )
+        items.append( reset_finished_item )
+        reset_finished_item.connect( 'activate', self.reset_task_state, task_id, 'finished' )
+        if self.readonly:
+            reset_finished_item.set_sensitive(False)
+
+        reset_failed_item = gtk.MenuItem( 'Reset State to "failed"' )
+        items.append( reset_failed_item )
+        reset_failed_item.connect( 'activate', self.reset_task_state, task_id, 'failed' )
+        if self.readonly:
+            reset_failed_item.set_sensitive(False)
+
+        items.append( gtk.SeparatorMenuItem() )
     
-            menu.append( timezoom_item )
+        kill_item = gtk.MenuItem( 'Remove Task (after spawning)' )
+        items.append( kill_item )
+        kill_item.connect( 'activate', self.kill_task, task_id )
+        if self.readonly:
+            kill_item.set_sensitive(False)
 
-        else:
-            title_item = gtk.MenuItem( 'Task: ' + task_id )
-            title_item.set_sensitive(False)
-            menu.append( title_item )
+        kill_nospawn_item = gtk.MenuItem( 'Remove Task (without spawning)' )
+        items.append( kill_nospawn_item )
+        kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
+        if self.readonly:
+            kill_nospawn_item.set_sensitive(False)
 
-            menu.append( gtk.SeparatorMenuItem() )
-            collapse_item = gtk.MenuItem( 'Collapse Subtree' )
-            menu.append( collapse_item )
-            collapse_item.connect( 'activate', self.collapse_subtree, task_id )
+        purge_item = gtk.MenuItem( 'Remove Tree (Recursive Purge)' )
+        items.append( purge_item )
+        purge_item.connect( 'activate', self.popup_purge, task_id )
+        if self.readonly:
+            purge_item.set_sensitive(False)
 
-            menu.append( timezoom_item )
-
-            menu.append( gtk.SeparatorMenuItem() )
-
-            js_item = gtk.MenuItem( 'View Job Script' )
-            menu.append( js_item )
-            js_item.connect( 'activate', self.view_task_info, task_id, True )
-
-            info_item = gtk.MenuItem( 'View Job Stdout & Stderr' )
-            menu.append( info_item )
-            info_item.connect( 'activate', self.view_task_info, task_id, False )
-
-            info_item = gtk.MenuItem( 'View Task Prerequisites & Outputs' )
-            menu.append( info_item )
-            info_item.connect( 'activate', self.popup_requisites, task_id )
-
-            menu.append( gtk.SeparatorMenuItem() )
-
-            reset_ready_item = gtk.MenuItem( 'Trigger Task' )
-            menu.append( reset_ready_item )
-            reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
-            if self.readonly:
-                reset_ready_item.set_sensitive(False)
-
-            reset_waiting_item = gtk.MenuItem( 'Reset State to "waiting"' )
-            menu.append( reset_waiting_item )
-            reset_waiting_item.connect( 'activate', self.reset_task_state, task_id, 'waiting' )
-            if self.readonly:
-                reset_waiting_item.set_sensitive(False)
-
-            reset_finished_item = gtk.MenuItem( 'Reset State to "finished"' )
-            menu.append( reset_finished_item )
-            reset_finished_item.connect( 'activate', self.reset_task_state, task_id, 'finished' )
-            if self.readonly:
-                reset_finished_item.set_sensitive(False)
-
-            reset_failed_item = gtk.MenuItem( 'Reset State to "failed"' )
-            menu.append( reset_failed_item )
-            reset_failed_item.connect( 'activate', self.reset_task_state, task_id, 'failed' )
-            if self.readonly:
-                reset_failed_item.set_sensitive(False)
-
-            menu.append( gtk.SeparatorMenuItem() )
-    
-            kill_item = gtk.MenuItem( 'Remove Task (after spawning)' )
-            menu.append( kill_item )
-            kill_item.connect( 'activate', self.kill_task, task_id )
-            if self.readonly:
-                kill_item.set_sensitive(False)
-
-            kill_nospawn_item = gtk.MenuItem( 'Remove Task (without spawning)' )
-            menu.append( kill_nospawn_item )
-            kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
-            if self.readonly:
-                kill_nospawn_item.set_sensitive(False)
-
-            purge_item = gtk.MenuItem( 'Remove Tree (Recursive Purge)' )
-            menu.append( purge_item )
-            purge_item.connect( 'activate', self.popup_purge, task_id )
-            if self.readonly:
-                purge_item.set_sensitive(False)
-
-        menu.show_all()
-        menu.popup( None, None, None, event.button, event.time )
-
-        # TO DO: POPUP MENU MUST BE DESTROYED AFTER EVERY USE AS
-        # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)???????
-        return True
-
-    def collapse_subtree( self, w, id ):
-        self.x.collapse.append(id)
-        self.x.action_required = True
-
-    def expand_subtree( self, w, id ):
-        self.x.collapse.remove(id)
-        self.x.action_required = True
-
-    def expand_all_subtrees( self, w ):
-        del self.x.collapse[:]
-        self.x.action_required = True
-
-    def rearrange( self, col, n ):
-        cols = self.ttreeview.get_columns()
-        for i_n in range(0,len(cols)):
-            if i_n == n: 
-                cols[i_n].set_sort_indicator(True)
-            else:
-                cols[i_n].set_sort_indicator(False)
-        # col is cols[n]
-        if col.get_sort_order() == gtk.SORT_ASCENDING:
-            col.set_sort_order(gtk.SORT_DESCENDING)
-        else:
-            col.set_sort_order(gtk.SORT_ASCENDING)
-        self.ttreestore.set_sort_column_id(n, col.get_sort_order()) 
+        return items
 
     def update_tb( self, tb, line, tags = None ):
         if tags:
             tb.insert_with_tags( tb.get_end_iter(), line, *tags )
         else:
             tb.insert( tb.get_end_iter(), line )
-
 
     def popup_requisites( self, w, task_id ):
         try:
@@ -1212,7 +835,7 @@ The cylc forecast suite metascheduler.
         window.show_all()
 
 
-    def create_menu( self ):
+    def create_main_menu( self ):
         file_menu = gtk.Menu()
 
         file_menu_root = gtk.MenuItem( '_File' )
@@ -1222,32 +845,16 @@ The cylc forecast suite metascheduler.
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
 
-        view_menu = gtk.Menu()
+        self.view_menu = gtk.Menu()
         view_menu_root = gtk.MenuItem( '_View' )
-        view_menu_root.set_submenu( view_menu )
-
-        expand_item = gtk.MenuItem( '_Expand All Subtrees' )
-        view_menu.append( expand_item )
-        expand_item.connect( 'activate', self.expand_all_subtrees )
-
-        graph_range_item = gtk.MenuItem( '_Time Zoom' )
-        view_menu.append( graph_range_item )
-        graph_range_item.connect( 'activate', self.graph_time_zoom_popup )
-
-        #autocollapse_item = gtk.MenuItem( '_Autocollapse Subtrees' )
-        #view_menu.append( autocollapse_item )
-        #autocollapse_item.connect( 'activate', self.autocollapse_subtrees )
-
-        names_item = gtk.MenuItem( '_Toggle Task Names (light panel)' )
-        view_menu.append( names_item )
-        names_item.connect( 'activate', self.toggle_headings )
+        view_menu_root.set_submenu( self.view_menu )
 
         nudge_item = gtk.MenuItem( "_Nudge Suite (update times)" )
-        view_menu.append( nudge_item )
+        self.view_menu.append( nudge_item )
         nudge_item.connect( 'activate', self.nudge_suite  )
 
         log_item = gtk.MenuItem( 'View _Suite Log' )
-        view_menu.append( log_item )
+        self.view_menu.append( log_item )
         log_item.connect( 'activate', self.view_log )
 
         start_menu = gtk.Menu()
@@ -1314,118 +921,6 @@ The cylc forecast suite metascheduler.
         self.menu_bar.append( start_menu_root )
         self.menu_bar.append( help_menu_root )
 
-    def focused_timezoom_popup( self, w, id ):
-
-        window = gtk.Window()
-        window.modify_bg( gtk.STATE_NORMAL, 
-                gtk.gdk.color_parse( self.log_colors.get_color()))
-        window.set_border_width(5)
-        window.set_title( "Time Zoom")
-
-        vbox = gtk.VBox()
-
-        name, ctime = id.split('%')
-        # TO DO: do we need to check that oldeset_ctime is defined yet?
-        diff_pre = cycle_time.diff_hours( ctime, self.x.oldest_ctime )
-        diff_post = cycle_time.diff_hours( self.x.newest_ctime, ctime )
-
-        # TO DO: error checking on date range given
-        box = gtk.HBox()
-        label = gtk.Label( 'Pre (hours)' )
-        box.pack_start( label, True )
-        start_entry = gtk.Entry()
-        start_entry.set_text(str(diff_pre))
-        box.pack_start (start_entry, True)
-        vbox.pack_start( box )
-
-        box = gtk.HBox()
-        label = gtk.Label( 'Post (hours)' )
-        box.pack_start( label, True )
-        stop_entry = gtk.Entry()
-        stop_entry.set_text(str(diff_post))
-        box.pack_start (stop_entry, True)
-        vbox.pack_start( box )
-
-        cancel_button = gtk.Button( "_Cancel" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
-        stop_button = gtk.Button( "_Apply" )
-        stop_button.connect("clicked", self.focused_timezoom, 
-               ctime, start_entry, stop_entry )
-
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", helpwindow.stop_guide )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( stop_button, False )
-        hbox.pack_end( cancel_button, False )
-        #hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def graph_time_zoom_popup( self, w ):
-        window = gtk.Window()
-        window.modify_bg( gtk.STATE_NORMAL, 
-                gtk.gdk.color_parse( self.log_colors.get_color()))
-        window.set_border_width(5)
-        window.set_title( "Time Zoom")
-
-        vbox = gtk.VBox()
-
-        # TO DO: error checking on date range given
-        box = gtk.HBox()
-        label = gtk.Label( 'Start (YYYYMMDDHH)' )
-        box.pack_start( label, True )
-        start_entry = gtk.Entry()
-        start_entry.set_max_length(10)
-        if self.x.oldest_ctime:
-            start_entry.set_text(self.x.oldest_ctime)
-        box.pack_start (start_entry, True)
-        vbox.pack_start( box )
-
-        box = gtk.HBox()
-        label = gtk.Label( 'Stop (YYYYMMDDHH)' )
-        box.pack_start( label, True )
-        stop_entry = gtk.Entry()
-        stop_entry.set_max_length(10)
-        if self.x.newest_ctime:
-            stop_entry.set_text(self.x.newest_ctime)
-        box.pack_start (stop_entry, True)
-        vbox.pack_start( box )
-
-        cancel_button = gtk.Button( "_Cancel" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
-        stop_button = gtk.Button( "_Apply" )
-        stop_button.connect("clicked", self.graph_time_zoom, 
-                start_entry, stop_entry )
-
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", helpwindow.stop_guide )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( stop_button, False )
-        hbox.pack_end( cancel_button, False )
-        #hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def graph_time_zoom(self, w, start_e, stop_e):
-        self.x.start_ctime = start_e.get_text()
-        self.x.stop_ctime = stop_e.get_text()
-        self.x.action_required = True
-
-    def focused_timezoom(self, w, focus_ctime, start_e, stop_e):
-        pre_hours = start_e.get_text()
-        post_hours = stop_e.get_text()
-        self.x.start_ctime = cycle_time.decrement( focus_ctime, pre_hours )
-        self.x.stop_ctime = cycle_time.increment( focus_ctime, post_hours )
-        self.x.action_required = True
-
     def create_info_bar( self ):
         self.label_status = gtk.Label( "status..." )
         self.label_mode = gtk.Label( "mode..." )
@@ -1482,34 +977,7 @@ The cylc forecast suite metascheduler.
     def get_pyro( self, object ):
         return cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( object )
  
-    def preload_task_list( self ):
-        # Load task list from suite config.
-        ### TO DO: For suites that are already running, or for dynamically
-        ### updating the viewed task list, we can retrieve the task list
-        ### (etc.) from the suite's remote state summary object.
-        suiterc = config( self.suite )
-        self.task_list = suiterc.get_full_task_name_list()
-        self.use_block = suiterc['use suite blocking']
-
     def view_log( self, w ):
-        suiterc = config( self.suite )
-        logdir = os.path.join( suiterc['top level logging directory'], self.suite )
-        foo = cylc_logviewer( 'log', logdir, suiterc.get_full_task_name_list() )
+        logdir = os.path.join( self.suiterc['top level logging directory'], self.suite )
+        foo = cylc_logviewer( 'log', logdir, self.suiterc.get_full_task_name_list() )
         self.quitters.append(foo)
-
-class StandaloneControlApp( ControlApp ):
-    # For a ControlApp not launched by the gcylc main app: 
-    # 1/ call gobject.threads_init() on startup
-    # 2/ call gtk.main_quit() on exit
-
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
-        gobject.threads_init()
-        ControlApp.__init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly )
- 
-    def delete_event(self, widget, event, data=None):
-        ControlApp.delete_event( self, widget, event, data )
-        gtk.main_quit()
-
-    def click_exit( self, foo ):
-        ControlApp.click_exit( self, foo )
-        gtk.main_quit()

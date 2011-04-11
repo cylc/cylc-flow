@@ -8,7 +8,6 @@ from optparse import OptionParser
 from gcylc import MainApp
 from config import config
 from registration import localdb, RegistrationError
-from controller import StandaloneControlApp
 
 import socket
 
@@ -18,13 +17,20 @@ This is the cylc graphical user interface. It is functionally equivalent
 to the commandline interface ('cylc help') in most respects.
 
     1/ gcylc &
-The gcylc main window displays suites in your private registration
-database, and in the central database available to all users. By right
-clicking on suites or registration groups you can access all cylc
-functionality.
+This invokes the gcylc main window, which displays suites in your
+private registration database, and in the central database available to
+all users. By right-clicking on suites or registration groups you can
+gain access all cylc functionality, from editing and graphing through
+to suite control and monitoring.
 
-    2/ gcylc SUITE &
-This invokes a control and monitoring application for a particular suite.
+    2/ gcylc [-g,--graph] SUITE &
+This directly invokes a suite control and monitoring application for a
+particular suite. Alternatively you can get this by right-clicking on 
+the suite in the main gcylc suite database viewer (1/ above).
+Without the -g,--graph option you'll get the standard filtered cycle
+time treeview suite control and monitoring interface; with it, the
+newer, and still somewhat experimental, dependency graph based
+interface.
 
 NOTE: daemonize important suites with the POSIX nohup command:
     $ nohup gcylc [options] [SUITE] &
@@ -36,6 +42,11 @@ Arguments:
 #        help="cylc suite host (defaults to localhost).",
 #        metavar="HOST", action="store", default=socket.getfqdn(),
 #        dest="host" )
+
+parser.add_option( "-g", "--graph",
+        help="With SUITE - invoked the new dependency graph based suite "
+        "control and monitoring interface.",
+        action="store_true", default=False, dest="depgraph" )
 
 ( options, args ) = parser.parse_args()
 
@@ -88,6 +99,10 @@ except:
 else:
     print "Suite " + suite + " is running on port " + str(port)
 
-app = StandaloneControlApp( suite, owner, host, port, suite_dir, logging_dir, imagedir )
+if options.depgraph:
+    from SuiteControlGraph import StandaloneControlGraphApp
+    app = StandaloneControlGraphApp( suite, owner, host, port, suite_dir, logging_dir, imagedir )
+else:
+    from SuiteControlTree import StandaloneControlTreeApp
+    app = StandaloneControlTreeApp( suite, owner, host, port, suite_dir, logging_dir, imagedir )
 gtk.main()
-
