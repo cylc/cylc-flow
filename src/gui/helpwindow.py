@@ -564,7 +564,7 @@ def stop_guide( w ):
 
     window.show_all()
 
-def userguide( w ):
+def userguide( w, graph=False ):
     window = gtk.Window()
     #window.set_border_width( 10 )
     #if readonly:
@@ -604,13 +604,12 @@ def userguide( w ):
 
     update_tb( tb, "Suite Control GUI Quick Guide", [bold, blue] )
 
-    update_tb( tb, "\n\nThis is a real time suite control "
-            "and monitoring application for cylc. See 'cylc help' for "
-            "the equivalent commandline functionality." )
+    if not graph:
+        update_tb( tb, "\n\nThis is a real time suite control "
+            "and monitoring application for cylc, traditional interface. "
+            "See 'cylc help' for the equivalent commandline functionality." )
 
-    update_tb( tb, "\n\nTab: Traditional > ", [bold, red] )
-    update_tb( tb, "This shows all task proxies that currently exist "
-            "in the running suite.  The upper 'light panel' is meant "
+        update_tb( tb, "The upper 'light panel' is meant "
             "to provide a quick visual overview of the current state "
             "of the suite, with colours to indicate task state: "
             "blue=waiting, orange=submitted, green=running, "
@@ -618,40 +617,66 @@ def userguide( w ):
             "with more detail. You can filter on task state ('waiting', "
             "'submitted', 'running', 'finished', and 'failed') and task "
             "name, to quickly find the tasks you're interested in. " )
-    update_tb( tb, 
+        update_tb( tb, 
             "Right-click on tasks in the lower panel for task control "
             "and interrogation options.", [bold] )
 
-    update_tb( tb, "\n\nTab: Live Graph > ", [bold, red] )
-    update_tb( tb, "This is a new suite control interface based on "
-            "the suite dependency graph. Graph node colours indicate "
-            "task state, as above. The configured suite dependency "
+    else:
+        update_tb( tb, "\n\nThis is a real time suite control "
+            "and monitoring application for cylc, using the new dependency "
+            "graph interface. "
+            "See 'cylc help' for the equivalent commandline functionality. " )
+
+        update_tb( tb, "Graph node colours indicate "
+            "task state. The configured suite dependency "
             "graph, with off-white nodes, is used as a base graph for "
             "the displayed graph. Left-click to center the graph on a "
             "node; left-drag to pan; Zoom buttons, mouse-wheel, or "
             "ctrl-left-drag to zoom in and out, and shift-left-drag to "
-            "zoom in on a box." )
-    update_tb( tb, 
+            "zoom in on a box. " )
+        update_tb( tb, 
             "Right-click on nodes for task control "
-            "and interrogation options.\n", [bold] )
-    update_tb( tb, 
-            "Small changes in the task population as the suite evolves "
-            "may cause large jumps in the graph layout, because the "
+            "and interrogation options. ", [bold] )
+        update_tb( tb, 
+            "NOTE that small changes in the task population as the suite evolves "
+            "may cause large jumps in the graph layout, particularly for large "
+            "complex suites, because the "
             "graphviz layout engine performs a global optimization "
-            "each time the graph is updated. The 'DIS|REconnect' "
-            "toggle button is therefore provided to freeze the view "
-            "temporarily." )
+            "each time the graph is plotted. The 'DIS|REconnect' "
+            "toggle button is provided to freeze the action "
+            "temporarily. The graph timezoom and tree-collapse " 
+            "mechanism can also be used to focus on particular parts of "
+            "a suite that you are interested in." )
 
     update_tb( tb, "\n\nMenu: File > ", [bold, red] )
     update_tb( tb, "\n o Exit: ", [bold])
     update_tb( tb, "Exit the control GUI (does not shut the suite down).")
 
     update_tb( tb, "\n\nMenu: View > ", [bold, red] )
-    update_tb( tb, "This affects only the top 'light panel'. "
-            "You can change turn off task name headings in order to "
-            "maximize screen real estate.")
+    update_tb( tb, "\n o Nudge: ", [bold])
+    update_tb( tb, "Invoke the cylc task processing loop when nothing else "
+            "is happening, in order to update estimated completion times." )
 
-    update_tb( tb, "\n\nMenu: Suite > ", [bold, red] )
+    update_tb( tb, "\n o View Suite Log: ", [bold])
+    update_tb( tb, "View the cylc log for this suite, updating the view "
+            "in real time if the suite is running." )
+
+    if graph:
+        update_tb( tb, "\n o Expand All Subtrees ", [bold])
+        update_tb( tb, "Expand any graph subtrees that you have "
+                "collapsed via the right-click popup menu.")
+
+        update_tb( tb, "\n o Cycle-time Zoom ", [bold])
+        update_tb( tb, "Restrict display to a specified range of cycle times.")
+
+        update_tb( tb, "\n o Toggle Graph Key ", [bold])
+        update_tb( tb, "Show or remove the dependency graph color key.")
+
+    else:
+        update_tb( tb, "\n o Toggle Task Names ", [bold])
+        update_tb( tb, "Show or remove task names in the upper \"light panel\" display.")
+
+    update_tb( tb, "\n\nMenu: Control > ", [bold, red] )
     update_tb( tb, "\n o Start: ", [bold])
     update_tb( tb, "Cold Start, Warm Start, Raw Start, or Restart the suite.")
     update_tb( tb, "\n o Stop: ", [bold])
@@ -668,8 +693,20 @@ def userguide( w ):
     update_tb( tb, "\n o Unblock (if suite is configured to use blocking): ", [bold])
     update_tb( tb, "Tell cylc to comply with subsequent intervention commands." )
 
-    update_tb( tb, "\n\nTask Tree View Panel: Right-Click Menu > ", [bold, red] )
+    if not graph:
+        update_tb( tb, "\n\nTask Tree View Panel: Right-Click Popup Menu > ", [bold, red] )
+    else:
+        update_tb( tb, "\n\nGraph Node: Right-Click Popup Menu > ", [bold, red] )
+            
+        update_tb( tb, "\n o Collapse Subtree: ", [bold])
+        update_tb( tb, "Collapse everything downstream of this task into a single node." )
 
+        update_tb( tb, "\n o Cycle-time Zoom to YYYYMMDDHH: ", [bold])
+        update_tb( tb, "Restrict the graph to just the cycle time of this node (task)." )
+ 
+        update_tb( tb, "\n o Cycle-time Zoom to Range: ", [bold])
+        update_tb( tb, "Restrict the graph to a specified range of cycle times." )
+ 
     update_tb( tb, "\n o View Job Script: ", [bold])
     update_tb( tb, "View the script used to submit this task to run." )
     update_tb( tb, "\n o View Job Stdout & Stderr: ", [bold])

@@ -7,6 +7,7 @@ import gtk
 import os, re
 import gobject
 from stateview import updater
+import helpwindow
 
 class ControlTree(ControlAppBase):
     """
@@ -17,6 +18,8 @@ Text treeview base GUI suite control interface.
 
         ControlAppBase.__init__(self, suite, owner, host, port,
                 suite_dir, logging_dir, imagedir, readonly=False )
+
+        self.userguide_item.connect( 'activate', helpwindow.userguide, False )
 
         self.tfilt = ''
         self.full_task_headings()

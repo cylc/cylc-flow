@@ -907,9 +907,8 @@ The cylc forecast suite metascheduler.
         help_menu_root = gtk.MenuItem( '_Help' )
         help_menu_root.set_submenu( help_menu )
 
-        guide_item = gtk.MenuItem( '_Quick Guide' )
-        help_menu.append( guide_item )
-        guide_item.connect( 'activate', helpwindow.userguide )
+        self.userguide_item = gtk.MenuItem( '_Quick Guide' )
+        help_menu.append( self.userguide_item )
  
         about_item = gtk.MenuItem( '_About' )
         help_menu.append( about_item )

@@ -4,25 +4,12 @@ from SuiteControl import ControlAppBase
 import gtk
 #import pygtk
 #pygtk.require('2.0')
-import pango
 import os, re
-import Pyro.errors
 import gobject
-import subprocess
 import helpwindow
-from stateview import updater
 from xstateview import xupdater
-from combo_logviewer import combo_logviewer
-from warning_dialog import warning_dialog, info_dialog
-from port_scan import SuiteIdentificationError
-import cylc_pyro_client
+#from warning_dialog import warning_dialog, info_dialog
 import cycle_time
-from execute import execute
-from option_group import controlled_option_group
-from config import config
-from color_rotator import rotator
-from cylc_logviewer import cylc_logviewer
-from textload import textload
 from cylc_xdot import xdot_widgets
 
 class ControlGraph(ControlAppBase):
@@ -34,6 +21,8 @@ Dependency graph based GUI suite control interface.
 
         ControlAppBase.__init__(self, suite, owner, host, port,
                 suite_dir, logging_dir, imagedir, readonly=False )
+
+        self.userguide_item.connect( 'activate', helpwindow.userguide, True )
 
         self.x = xupdater( self.suite, self.owner, self.host, self.port,
                 self.label_mode, self.label_status, self.label_time, self.xdot )
@@ -103,7 +92,7 @@ Dependency graph based GUI suite control interface.
         timezoom_item_direct = gtk.MenuItem( 'Cycle-Time Zoom to ' + ctime )
         timezoom_item_direct.connect( 'activate', self.focused_timezoom_direct, ctime )
 
-        timezoom_item = gtk.MenuItem( 'Cycle-Time Zoom to range' )
+        timezoom_item = gtk.MenuItem( 'Cycle-Time Zoom to Range' )
         timezoom_item.connect( 'activate', self.focused_timezoom_popup, task_id )
 
 
