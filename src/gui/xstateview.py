@@ -11,9 +11,6 @@ import pygtk
 import cycle_time
 ####pygtk.require('2.0')
 
-# TO DO: consider using pygraphviz methods such as 'remove_nodes_from(
-# nbunch )' where nbunch can be any iterable container.
-
 def compare_dict_of_dict( one, two ):
     # return True if one == two, else return False.
     for key in one:
@@ -298,8 +295,8 @@ class xupdater(threading.Thread):
                     if node not in self.rem_nodes:
                         self.rem_nodes.append(node)
 
-        for node in self.rem_nodes:
-            self.graphw.remove_node( node )
+        # remove_nodes_from( nbunch ) - nbunch is any iterable container.
+        self.graphw.remove_nodes_from( self.rem_nodes )
 
         for id in self.state_summary:
             try:
@@ -420,8 +417,8 @@ class xupdater(threading.Thread):
 
     def remove_empty_nodes( self, node ):
         # recursively remove base graph nodes whose predecessors are
-        # also not live nodes. ABANDONED in favor of completed base
-        # graph cropping. 
+        # also not live nodes. ABANDONED - this doesn't have the desired
+        # effect as we need to trace all branches encountered! 
         empty = True
         for n in self.graphw.predecessors( node ):
             if n in self.rem_nodes:
