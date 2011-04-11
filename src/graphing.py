@@ -125,12 +125,9 @@ class CGraph( CGraphPlain ):
         node.attr[ 'label' ] = label
         if autoURL:
             node.attr['URL'] = n
-        for item in self.node_attr_by_taskname( l ):
+        for item in self.node_attr_by_taskname( n ):
             attr, value = re.split( '\s*=\s*', item )
-            nl.attr[ attr ] = value
-        for item in self.node_attr_by_taskname( r ):
-            attr, value = re.split( '\s*=\s*', item )
-            nr.attr[ attr ] = value
+            node.attr[ attr ] = value
 
     def add_edge( self, l, r, autoURL=True ):
         # l and r are cylc task IDs 
