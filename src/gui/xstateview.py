@@ -280,7 +280,6 @@ class xupdater(threading.Thread):
                     self.graph_warned[id] = True
 
                 state = self.state_summary[id]['state']
-
                 if state == 'submitted' or state == 'running' or  state == 'failed':
                     if state not in extra_node_ids:
                         extra_node_ids[state] = [id] 
@@ -301,7 +300,6 @@ class xupdater(threading.Thread):
         #    self.live_graph_frame_count += 1
         #    self.live_graph.write( self.config["visualization"]["run time graph directory"], 'live' + '-' + str( self.live_graph_frame_count ) + '.dot' )
 
-        #self.removed_nodes = False
         for id in self.collapse:
             try:
                 node = self.graphw.get_node( id )
@@ -327,7 +325,7 @@ class xupdater(threading.Thread):
             new_node.attr['URL'] = new_node_label
 
             for n in self.graphw.predecessors( node ):
-                self.graphw.add_edge( n, new_node )
+                self.graphw.add_edge( n, new_node, autoURL=False )
 
             name, topctime = id.split('%')
             for n in self.feedins:
@@ -335,11 +333,20 @@ class xupdater(threading.Thread):
                 #self.follow_up(n,topctime)
                 #if n not in self.collapsems and n not in self.feedintops:
                 if n not in self.collapsems:
-                    self.graphw.add_edge( n, new_node )
+                    self.graphw.add_edge( n, new_node, autoURL=False )
                 #for m in self.feedintops:
                 #    self.graphw.remove_node( m )
 
             for n in self.collapsems:
+                id = n.get_name()
+                if id in self.state_summary:
+                    # (else is part of the base graph)
+                    state = self.state_summary[id]['state']
+                    if state == 'submitted' or state == 'running' or  state == 'failed':
+                        if state not in extra_node_ids:
+                            extra_node_ids[state] = [id] 
+                        else:
+                            extra_node_ids[state].append(id) 
                 self.graphw.remove_node( n )
 
             self.graphw.remove_node( node )
