@@ -240,6 +240,7 @@ Dependency graph based GUI suite control interface.
         self.x.start_ctime = ctime
         self.x.stop_ctime = ctime
         self.x.action_required = True
+        self.x.best_fit = True
 
     def graph_time_zoom_popup( self, w ):
         window = gtk.Window()

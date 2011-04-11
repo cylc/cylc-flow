@@ -48,6 +48,7 @@ class xupdater(threading.Thread):
         self.oldest_ctime = None
         self.newest_ctime = None
         self.show_key = False
+        self.best_fit = False
 
         self.suite = suite
         self.owner = owner
@@ -172,6 +173,10 @@ class xupdater(threading.Thread):
         if self.first_update:
             self.xdot.widget.zoom_to_fit()
             self.first_update = False
+        elif self.best_fit:
+            self.xdot.widget.zoom_to_fit()
+            self.best_fit = False
+
 
     def add_graph_key(self):
         self.graphw.add_node( 'waiting%YYYYMMDDHH' )
