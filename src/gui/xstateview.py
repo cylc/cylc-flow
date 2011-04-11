@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from config import config
-import sys
+import sys, re
 import gobject
 import time
 import threading
@@ -49,6 +49,7 @@ class xupdater(threading.Thread):
         self.newest_ctime = None
         self.show_key = True
         self.best_fit = False
+        self.crop = False
 
         self.suite = suite
         self.owner = owner
@@ -267,6 +268,25 @@ class xupdater(threading.Thread):
         #    diffhrs = 25
         self.graphw = self.config.get_graph( oldest, diffhrs, colored=False, raw=raw ) 
 
+        if self.crop:
+            self.rem_nodes = []
+            for node in self.graphw.nodes():
+                #if node in self.rem_nodes:
+                #    continue
+                #if node.get_name() not in self.state_summary and \
+                    # len( self.graphw.successors( node )) == 0:
+                    # self.remove_empty_nodes( node )
+                if node.get_name() not in self.state_summary:
+                    self.rem_nodes.append(node)
+                    continue
+                # TEST - FILTERING:
+                #name, ctime = node.get_name().split('%')
+                #if re.search( '^(ext_|ecan)', name ):
+                #    self.rem_nodes.append(node)
+
+            for node in self.rem_nodes:
+                    self.graphw.remove_node( node )
+
         for id in self.state_summary:
             try:
                 node = self.graphw.get_node( id )
@@ -384,6 +404,20 @@ class xupdater(threading.Thread):
     #    for m in pred:
     #        self.follow_up(m,topctime)
 
+    def remove_empty_nodes( self, node ):
+        # recursively remove base graph nodes whose predecessors are
+        # also not live nodes. ABANDONED in favor of completed base
+        # graph cropping. 
+        empty = True
+        for n in self.graphw.predecessors( node ):
+            if n in self.rem_nodes:
+                continue
+            if n.get_name() in self.state_summary.keys():
+                empty = False
+            else:
+                self.remove_empty_nodes( n )
+        if empty:
+            self.rem_nodes.append(node)
 
     def remove_tree(self, id ):
         node = self.graphw.get_node(id)

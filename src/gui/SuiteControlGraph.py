@@ -169,18 +169,26 @@ Dependency graph based GUI suite control interface.
     def create_main_menu( self ):
         ControlAppBase.create_main_menu(self)
 
-        expand_item = gtk.MenuItem( '_Expand All Subtrees' )
-        self.view_menu.append( expand_item )
-        expand_item.connect( 'activate', self.expand_all_subtrees )
-
         graph_range_item = gtk.MenuItem( 'Cycle-Time _Zoom' )
         self.view_menu.append( graph_range_item )
         graph_range_item.connect( 'activate', self.graph_timezoom_popup )
+
+        crop_item = gtk.MenuItem( 'Toggle _Cropping' )
+        self.view_menu.append( crop_item )
+        crop_item.connect( 'activate', self.toggle_crop )
+
+        expand_item = gtk.MenuItem( '_Expand All Subtrees' )
+        self.view_menu.append( expand_item )
+        expand_item.connect( 'activate', self.expand_all_subtrees )
 
         key_item = gtk.MenuItem( 'Toggle Graph _Key' )
         self.view_menu.append( key_item )
         key_item.connect( 'activate', self.toggle_key )
 
+    def toggle_crop( self, w ):
+        self.x.crop = not self.x.crop
+        self.x.action_required = True
+        
     def toggle_key( self, w ):
         self.x.show_key = not self.x.show_key
         self.x.action_required = True
