@@ -51,8 +51,8 @@ class CGraphPlain( pygraphviz.AGraph ):
         else:
             return []
 
-    def add_node( self, n, autoURL=True ):
-        pygraphviz.AGraph.add_node( self, n )
+    def add_node( self, n, autoURL=True, **attr ):
+        pygraphviz.AGraph.add_node( self, n, **attr )
         node = self.get_node(n)
         label = re.sub( ddmmhh, r'\\n\2/\3 \4', n )
         node.attr[ 'label' ] = label
@@ -103,7 +103,7 @@ class CGraph( CGraphPlain ):
         self.task_attr = {}
 
         for item in self.vizconfig['node attributes']:
-            if item in self.vizconfig['node groups']:  
+            if item in self.vizconfig['node groups']:
                 # item is a group of tasks
                 for task in self.vizconfig['node groups'][item]:
                     # for each task in the group
@@ -118,8 +118,8 @@ class CGraph( CGraphPlain ):
                         self.task_attr[item] = []
                     self.task_attr[item].append( attr )
 
-    def add_node( self, n, autoURL=True ):
-        pygraphviz.AGraph.add_node( self, n )
+    def add_node( self, n, autoURL=True, **attr ):
+        pygraphviz.AGraph.add_node( self, n, **attr )
         node = self.get_node(n)
         label = re.sub( ddmmhh, r'\\n\2/\3 \4', n )
         node.attr[ 'label' ] = label
@@ -129,9 +129,9 @@ class CGraph( CGraphPlain ):
             attr, value = re.split( '\s*=\s*', item )
             node.attr[ attr ] = value
 
-    def add_edge( self, l, r, autoURL=True ):
+    def add_edge( self, l, r, autoURL=True, **attr ):
         # l and r are cylc task IDs 
-        pygraphviz.AGraph.add_edge( self, l, r )
+        pygraphviz.AGraph.add_edge( self, l, r, **attr )
 
         nl = self.get_node( l )
         nr = self.get_node( r )

@@ -82,7 +82,7 @@ Dependency graph based GUI suite control interface.
         return ControlAppBase.click_exit(self, foo )
 
     def right_click_menu( self, event, task_id, type='live task' ):
-
+        print '------------>', type
         name, ctime = task_id.split('%')
 
         menu = gtk.Menu()
@@ -94,7 +94,6 @@ Dependency graph based GUI suite control interface.
 
         timezoom_item = gtk.MenuItem( 'Cycle-Time Zoom to Range' )
         timezoom_item.connect( 'activate', self.focused_timezoom_popup, task_id )
-
 
         if type == 'collapsed subtree':
             title_item = gtk.MenuItem( 'Subtree: ' + task_id )
@@ -123,6 +122,8 @@ Dependency graph based GUI suite control interface.
 
             menu.append( timezoom_item_direct )
             menu.append( timezoom_item )
+
+        if type == 'live task':
             menu.append( gtk.SeparatorMenuItem() )
 
             menu_items = self.get_right_click_menu_items( task_id )

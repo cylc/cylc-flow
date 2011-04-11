@@ -47,7 +47,7 @@ class xupdater(threading.Thread):
         self.action_required = True
         self.oldest_ctime = None
         self.newest_ctime = None
-        self.show_key = False
+        self.show_key = True
         self.best_fit = False
 
         self.suite = suite
@@ -211,12 +211,31 @@ class xupdater(threading.Thread):
         base.attr['fillcolor'] = 'cornsilk'
         base.attr['color'] = 'black'
 
-        self.graphw.add_edge( base, waiting, autoURL=False, color=None)
-        self.graphw.add_edge( waiting, submitted, autoURL=False, color=None)
-        self.graphw.add_edge( submitted, running, autoURL=False, color=None)
-        self.graphw.add_edge( running, finished, autoURL=False, color=None)
-        self.graphw.add_edge( finished, failed, autoURL=False, color=None)
- 
+        self.graphw.add_edge( base, waiting, autoURL=False, style='invis')
+        self.graphw.add_edge( waiting, submitted, autoURL=False, style='invis')
+        self.graphw.add_edge( submitted, running, autoURL=False, style='invis')
+        self.graphw.add_edge( running, finished, autoURL=False, style='invis')
+        self.graphw.add_edge( finished, failed, autoURL=False, style='invis')
+
+    def set_live_node_attr( self, node, id ):
+        # override base graph URL to distinguish live tasks
+        node.attr['URL'] = id
+        if self.state_summary[id]['state'] == 'submitted':
+            node.attr['style'] = 'filled'
+            node.attr['fillcolor'] = 'orange'
+        elif self.state_summary[id]['state'] == 'running':
+            node.attr['style'] = 'filled'
+            node.attr['fillcolor'] = 'green'
+        elif self.state_summary[id]['state'] == 'waiting':
+            node.attr['style'] = 'filled'
+            node.attr['fillcolor'] = 'cadetblue2'
+        elif self.state_summary[id]['state'] == 'finished':
+            node.attr['style'] = 'filled'
+            node.attr['fillcolor'] = 'grey'
+        elif self.state_summary[id]['state'] == 'failed':
+            node.attr['style'] = 'filled'
+            node.attr['fillcolor'] = 'red'
+
     def update_graph(self):
         # To do: check edges against resolved ones
         # (adding new ones, and nodes, if necessary)
@@ -237,6 +256,8 @@ class xupdater(threading.Thread):
         else:
             # (show coldstart tasks) - TO DO: actual raw start
             raw = False
+
+        extra_node_ids = []
 
         diffhrs = cycle_time.diff_hours( newest, oldest ) + 1
         #if diffhrs < 25:
@@ -261,27 +282,12 @@ class xupdater(threading.Thread):
                 if self.state_summary[id]['state'] == 'submitted' or \
                         self.state_summary[id]['state'] == 'running' or \
                         self.state_summary[id]['state'] == 'failed':
-                            self.graphw.add_node( id )
-                            node = self.graphw.get_node( id )
-                            node.attr['shape'] = 'octagon'
+                            extra_node_ids.append(id) 
+                            continue
                 else:
                     continue
 
-            if self.state_summary[id]['state'] == 'submitted':
-                node.attr['style'] = 'filled'
-                node.attr['fillcolor'] = 'orange'
-            elif self.state_summary[id]['state'] == 'running':
-                node.attr['style'] = 'filled'
-                node.attr['fillcolor'] = 'green'
-            elif self.state_summary[id]['state'] == 'waiting':
-                node.attr['style'] = 'filled'
-                node.attr['fillcolor'] = 'cadetblue2'
-            elif self.state_summary[id]['state'] == 'finished':
-                node.attr['style'] = 'filled'
-                node.attr['fillcolor'] = 'grey'
-            elif self.state_summary[id]['state'] == 'failed':
-                node.attr['style'] = 'filled'
-                node.attr['fillcolor'] = 'red'
+            self.set_live_node_attr( node, id )
 
         # layout adds positions to nodes etc.; this is not required if
         # we're writing to the 'dot' format which must be processed later
@@ -337,6 +343,17 @@ class xupdater(threading.Thread):
 
         if self.show_key:
             self.add_graph_key()
+
+        # process extra nodes (important nodes outside of focus range)
+        for id in extra_node_ids:
+            self.graphw.add_node( id )
+            self.set_live_node_attr( self.graphw.get_node(id), id)
+        # add invisible edges to force vertical alignment
+        for i in range( 0, len(extra_node_ids)):
+            if i == len(extra_node_ids) -1:
+                break
+            self.graphw.add_edge( extra_node_ids[i], extra_node_ids[i+1], autoURL=False, style='invis')
+
         self.action_required = False
 
     #def follow_up( self, id, topctime ):
