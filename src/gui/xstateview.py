@@ -257,7 +257,7 @@ class xupdater(threading.Thread):
             # (show coldstart tasks) - TO DO: actual raw start
             raw = False
 
-        extra_node_ids = []
+        extra_node_ids = {}
 
         diffhrs = cycle_time.diff_hours( newest, oldest ) + 1
         #if diffhrs < 25:
@@ -279,11 +279,14 @@ class xupdater(threading.Thread):
                     print >> sys.stderr, 'WARNING: SUITE TASK NOT GRAPHED: ' + id
                     self.graph_warned[id] = True
 
-                if self.state_summary[id]['state'] == 'submitted' or \
-                        self.state_summary[id]['state'] == 'running' or \
-                        self.state_summary[id]['state'] == 'failed':
-                            extra_node_ids.append(id) 
-                            continue
+                state = self.state_summary[id]['state']
+
+                if state == 'submitted' or state == 'running' or  state == 'failed':
+                    if state not in extra_node_ids:
+                        extra_node_ids[state] = [id] 
+                    else:
+                        extra_node_ids[state].append(id) 
+                    continue
                 else:
                     continue
 
@@ -345,14 +348,17 @@ class xupdater(threading.Thread):
             self.add_graph_key()
 
         # process extra nodes (important nodes outside of focus range)
-        for id in extra_node_ids:
-            self.graphw.add_node( id )
-            self.set_live_node_attr( self.graphw.get_node(id), id)
-        # add invisible edges to force vertical alignment
-        for i in range( 0, len(extra_node_ids)):
-            if i == len(extra_node_ids) -1:
-                break
-            self.graphw.add_edge( extra_node_ids[i], extra_node_ids[i+1], autoURL=False, style='invis')
+        for state in extra_node_ids:
+            for id in extra_node_ids[state]:
+                self.graphw.add_node( id )
+                self.set_live_node_attr( self.graphw.get_node(id), id)
+            # add invisible edges to force vertical alignment
+            for i in range( 0, len(extra_node_ids[state])):
+               if i == len(extra_node_ids[state]) -1:
+                   break
+               self.graphw.add_edge( extra_node_ids[state][i],
+                       extra_node_ids[state][i+1], autoURL=False,
+                       style='invis')
 
         self.action_required = False
 
