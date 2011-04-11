@@ -140,14 +140,17 @@ Dependency graph based GUI suite control interface.
     def collapse_subtree( self, w, id ):
         self.x.collapse.append(id)
         self.x.action_required = True
+        self.x.best_fit = True
 
     def expand_subtree( self, w, id ):
         self.x.collapse.remove(id)
         self.x.action_required = True
+        self.x.best_fit = True
 
     def expand_all_subtrees( self, w ):
         del self.x.collapse[:]
         self.x.action_required = True
+        self.x.best_fit = True
 
     def rearrange( self, col, n ):
         cols = self.ttreeview.get_columns()
@@ -298,6 +301,7 @@ Dependency graph based GUI suite control interface.
     def graph_timezoom(self, w, start_e, stop_e):
         self.x.start_ctime = start_e.get_text()
         self.x.stop_ctime = stop_e.get_text()
+        self.x.best_fit = True
         self.x.action_required = True
 
     def focused_timezoom(self, w, focus_ctime, start_e, stop_e):
@@ -305,6 +309,7 @@ Dependency graph based GUI suite control interface.
         post_hours = stop_e.get_text()
         self.x.start_ctime = cycle_time.decrement( focus_ctime, pre_hours )
         self.x.stop_ctime = cycle_time.increment( focus_ctime, post_hours )
+        self.x.best_fit = True
         self.x.action_required = True
 
 class StandaloneControlGraphApp( ControlGraph ):
