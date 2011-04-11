@@ -258,6 +258,7 @@ class xupdater(threading.Thread):
                         self.state_summary[id]['state'] == 'failed':
                             self.graphw.add_node( id )
                             node = self.graphw.get_node( id )
+                            node.attr['shape'] = 'octagon'
                 else:
                     continue
 
