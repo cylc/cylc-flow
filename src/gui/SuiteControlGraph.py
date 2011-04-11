@@ -100,8 +100,12 @@ Dependency graph based GUI suite control interface.
         menu_root = gtk.MenuItem( task_id )
         menu_root.set_submenu( menu )
 
-        timezoom_item = gtk.MenuItem( 'Cycle-Time Zoom' )
+        timezoom_item_direct = gtk.MenuItem( 'Cycle-Time Zoom to ' + ctime )
+        timezoom_item_direct.connect( 'activate', self.focused_timezoom_direct, ctime )
+
+        timezoom_item = gtk.MenuItem( 'Cycle-Time Zoom to range' )
         timezoom_item.connect( 'activate', self.focused_timezoom_popup, task_id )
+
 
         if type == 'collapsed subtree':
             title_item = gtk.MenuItem( 'Subtree: ' + task_id )
@@ -113,6 +117,7 @@ Dependency graph based GUI suite control interface.
             menu.append( expand_item )
             expand_item.connect( 'activate', self.expand_subtree, task_id )
     
+            menu.append( timezoom_item_direct )
             menu.append( timezoom_item )
 
         else:
@@ -127,6 +132,7 @@ Dependency graph based GUI suite control interface.
             menu.append( collapse_item )
             collapse_item.connect( 'activate', self.collapse_subtree, task_id )
 
+            menu.append( timezoom_item_direct )
             menu.append( timezoom_item )
             menu.append( gtk.SeparatorMenuItem() )
 
@@ -177,9 +183,18 @@ Dependency graph based GUI suite control interface.
         self.view_menu.append( expand_item )
         expand_item.connect( 'activate', self.expand_all_subtrees )
 
-        graph_range_item = gtk.MenuItem( '_Time Zoom' )
+        graph_range_item = gtk.MenuItem( 'Cycle-Time _Zoom' )
         self.view_menu.append( graph_range_item )
         graph_range_item.connect( 'activate', self.graph_time_zoom_popup )
+
+        key_item = gtk.MenuItem( 'Toggle Graph _Key' )
+        self.view_menu.append( key_item )
+        key_item.connect( 'activate', self.toggle_key )
+
+
+    def toggle_key( self, w ):
+        self.x.show_key = not self.x.show_key
+        self.x.action_required = True
 
     def focused_timezoom_popup( self, w, id ):
 
@@ -187,7 +202,7 @@ Dependency graph based GUI suite control interface.
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title( "Time Zoom")
+        window.set_title( "Cycle-Time Zoom")
 
         vbox = gtk.VBox()
 
@@ -231,6 +246,11 @@ Dependency graph based GUI suite control interface.
 
         window.add( vbox )
         window.show_all()
+
+    def focused_timezoom_direct( self, w, ctime ):
+        self.x.start_ctime = ctime
+        self.x.stop_ctime = ctime
+        self.x.action_required = True
 
     def graph_time_zoom_popup( self, w ):
         window = gtk.Window()

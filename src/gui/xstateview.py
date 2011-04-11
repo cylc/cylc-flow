@@ -47,6 +47,7 @@ class xupdater(threading.Thread):
         self.action_required = True
         self.oldest_ctime = None
         self.newest_ctime = None
+        self.show_key = False
 
         self.suite = suite
         self.owner = owner
@@ -328,7 +329,8 @@ class xupdater(threading.Thread):
 
             self.graphw.remove_node( node )
 
-        self.add_graph_key()
+        if self.show_key:
+            self.add_graph_key()
         self.action_required = False
 
     #def follow_up( self, id, topctime ):
