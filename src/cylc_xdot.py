@@ -149,7 +149,7 @@ class xdot_widgets(object):
         zoom100_button = gtk.Button( stock=gtk.STOCK_ZOOM_100 )
         zoom100_button.connect('clicked', self.widget.on_zoom_100)
 
-        self.graph_disconnect_button = gtk.ToggleButton( 'DISconnect' )
+        self.graph_disconnect_button = gtk.ToggleButton( '_DISconnect' )
         self.graph_disconnect_button.set_active(False)
 
         bbox = gtk.HButtonBox()

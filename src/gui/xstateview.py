@@ -133,18 +133,14 @@ class xupdater(threading.Thread):
         if self.action_required:
             self.state_summary = states
             return True
-        if not compare_dict_of_dict( states, self.state_summary ):
+        elif self.graph_disconnect:
+            return False
+        elif not compare_dict_of_dict( states, self.state_summary ):
             # state changed
             self.state_summary = states
             return True
         else:
             return False
-
-    def update_gui( self ):
-        if not self.graph_disconnect: 
-            #print "Updating GRAPH"
-            self.update_xdot()
-        return False
 
     def update_globals( self ):
         self.label_mode.set_text( self.mode )
@@ -159,10 +155,10 @@ class xupdater(threading.Thread):
             if self.update():
                 self.update_graph()
                 # DO NOT USE gobject.idle_add() HERE - IT DRASTICALLY
-                # AFFECTS PERFORMANCE FOR LARGE SUITES and appears to
-                # be unnecessary (due to xdot internals?)
-                ###### gobject.idle_add( self.update_gui )
-                self.update_gui()
+                # AFFECTS PERFORMANCE FOR LARGE SUITES? appears to
+                # be unnecessary anyway (due to xdot internals?)
+                ################ gobject.idle_add( self.update_xdot )
+                self.update_xdot()
                  
             # TO DO: only update globals if they change, as for tasks
             gobject.idle_add( self.update_globals )

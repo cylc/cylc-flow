@@ -35,10 +35,10 @@ Dependency graph based GUI suite control interface.
     def toggle_graph_disconnect( self, w ):
         if w.get_active():
             self.x.graph_disconnect = True
-            w.set_label( 'REconnect' )
+            w.set_label( '_REconnect' )
         else:
             self.x.graph_disconnect = False
-            w.set_label( 'DISconnect' )
+            w.set_label( '_DISconnect' )
         return True
 
     def on_url_clicked( self, widget, url, event ):
