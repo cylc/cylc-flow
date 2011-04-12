@@ -232,6 +232,27 @@ Dependency graph based GUI suite control interface.
         box.pack_start (include_entry, True)
         vbox.pack_start( box )
 
+        filterbox = gtk.HBox()
+        # allow filtering out of 'finished' and 'waiting'
+        all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
+        labels = {}
+        labels[ 'waiting'   ] = '_waiting'
+        labels[ 'submitted' ] = 's_ubmitted'
+        labels[ 'running'   ] = '_running'
+        labels[ 'finished'  ] = 'f_inished'
+        labels[ 'failed'    ] = 'f_ailed'
+        # initially filter out 'finished' and 'waiting' tasks
+        #filter_states = [ 'waiting', 'finished' ]
+        for st in all_states:
+            b = gtk.CheckButton( labels[st] )
+            filterbox.pack_start(b)
+            #if st in filter_states:
+            #    b.set_active(False)
+            #else:
+            b.set_active(True)
+
+        vbox.pack_start( filterbox )
+
         cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
@@ -240,7 +261,7 @@ Dependency graph based GUI suite control interface.
 
         apply_button = gtk.Button( "_Apply" )
         apply_button.connect("clicked", self.filter,
-                exclude_entry, include_entry)
+                exclude_entry, include_entry, filterbox)
 
         #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", helpwindow.stop_guide )
@@ -258,9 +279,10 @@ Dependency graph based GUI suite control interface.
     def filter_reset( self, w):
         self.x.filter_include = None
         self.x.filter_exclude = None
+        self.x.state_filter = None
         self.x.action_required = True
 
-    def filter( self, w, excl_e, incl_e ):
+    def filter( self, w, excl_e, incl_e, fbox ):
         excl = excl_e.get_text()
         incl = incl_e.get_text()
         if excl == '':
@@ -274,9 +296,19 @@ Dependency graph based GUI suite control interface.
                 re.compile( filt )
             except:
                 warning_dialog( "Bad Expression: " + filt ).warn()
-                return
         self.x.filter_include = incl
         self.x.filter_exclude = excl
+
+        fstates = []
+        for b in fbox.get_children():
+            if not b.get_active():
+                # sub '_' from button label keyboard mnemonics
+                fstates.append( re.sub('_', '', b.get_label()))
+        if len(fstates) > 0:
+            self.x.state_filter = fstates
+        else:
+            self.x.state_filter = None
+        
         self.x.action_required = True
 
     def focused_timezoom_popup( self, w, id ):

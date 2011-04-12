@@ -876,7 +876,7 @@ The cylc forecast suite metascheduler.
         if self.readonly:
             pause_item.set_sensitive(False)
 
-        resume_item = gtk.MenuItem( '_Unpause (resume submitting tasks)' )
+        resume_item = gtk.MenuItem( '_Resume submitting tasks (unpause)' )
         start_menu.append( resume_item )
         resume_item.connect( 'activate', self.resume_suite )
         if self.readonly:

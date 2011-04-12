@@ -52,6 +52,7 @@ class xupdater(threading.Thread):
         self.crop = False
         self.filter_include = None
         self.filter_exclude = None
+        self.state_filter = None
 
         self.suite = suite
         self.owner = owner
@@ -285,7 +286,8 @@ class xupdater(threading.Thread):
 
         # FILTERING:
         for node in self.graphw.nodes():
-            name, ctime = node.get_name().split('%')
+            id = node.get_name()
+            name, ctime = id.split('%')
             if self.filter_exclude:
                 if re.match( self.filter_exclude, name ):
                     if node not in self.rem_nodes:
@@ -294,6 +296,12 @@ class xupdater(threading.Thread):
                 if not re.match( self.filter_include, name ):
                     if node not in self.rem_nodes:
                         self.rem_nodes.append(node)
+            if self.state_filter:
+                if id in self.state_summary:
+                    state = self.state_summary[id]['state']
+                    if state in self.state_filter:
+                        if node not in self.rem_nodes:
+                            self.rem_nodes.append(node)
 
         # remove_nodes_from( nbunch ) - nbunch is any iterable container.
         self.graphw.remove_nodes_from( self.rem_nodes )
