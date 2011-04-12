@@ -31,8 +31,11 @@ except ValueError:
 
 #ddmmhh = re.compile('%(\d{4})(\d{2})(\d{2})(\d{2})')
 # allow literal 'YYYYMMDDHH'
-ddmmhh = re.compile('%(\w{4})(\w{2})(\w{2})(\w{2})')
-
+#ddmmhh = re.compile('%(\w{4})(\w{2})(\w{2})(\w{2})')
+#tformat = r'\\n\2/\3 \4'  # MM/DD HH
+#tformat = r'\\n\1\2\3\4'  # YYYYMMDDHH
+ddmmhh = re.compile('%')
+tformat = r'\\n'
 
 class CGraphPlain( pygraphviz.AGraph ):
     """Directed Acyclic Graph class for cylc dependency graphs."""
@@ -54,7 +57,7 @@ class CGraphPlain( pygraphviz.AGraph ):
     def add_node( self, n, autoURL=True, **attr ):
         pygraphviz.AGraph.add_node( self, n, **attr )
         node = self.get_node(n)
-        label = re.sub( ddmmhh, r'\\n\2/\3 \4', n )
+        label = re.sub( ddmmhh, tformat, n )
         node.attr[ 'label' ] = label
         if autoURL:
             node.attr['URL'] = n
@@ -66,8 +69,8 @@ class CGraphPlain( pygraphviz.AGraph ):
         nl = self.get_node( l )
         nr = self.get_node( r )
 
-        llabel = re.sub( ddmmhh, r'\\n\2/\3 \4', l )
-        rlabel = re.sub( ddmmhh, r'\\n\2/\3 \4', r )
+        llabel = re.sub( ddmmhh, tformat, l )
+        rlabel = re.sub( ddmmhh, tformat, r )
 
         nl.attr[ 'label' ] = llabel
         nr.attr[ 'label' ] = rlabel
@@ -121,7 +124,7 @@ class CGraph( CGraphPlain ):
     def add_node( self, n, autoURL=True, **attr ):
         pygraphviz.AGraph.add_node( self, n, **attr )
         node = self.get_node(n)
-        label = re.sub( ddmmhh, r'\\n\2/\3 \4', n )
+        label = re.sub( ddmmhh, tformat, n )
         node.attr[ 'label' ] = label
         if autoURL:
             node.attr['URL'] = n
@@ -136,8 +139,8 @@ class CGraph( CGraphPlain ):
         nl = self.get_node( l )
         nr = self.get_node( r )
 
-        llabel = re.sub( ddmmhh, r'\\n\2/\3 \4', l )
-        rlabel = re.sub( ddmmhh, r'\\n\2/\3 \4', r )
+        llabel = re.sub( ddmmhh, tformat, l )
+        rlabel = re.sub( ddmmhh, tformat, r )
  
         nl.attr[ 'label' ] = llabel
         nr.attr[ 'label' ] = rlabel
