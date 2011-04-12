@@ -127,6 +127,7 @@ Dependency graph based GUI suite control interface.
             menu.append( timezoom_item )
             menu.append( timezoom_reset_item )
 
+            menu.append( gtk.SeparatorMenuItem() )
             collapse_item = gtk.MenuItem( 'Collapse Subtree' )
             menu.append( collapse_item )
             collapse_item.connect( 'activate', self.collapse_subtree, task_id )
