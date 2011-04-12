@@ -92,8 +92,8 @@ Dependency graph based GUI suite control interface.
         timezoom_item = gtk.MenuItem( 'Cycle-Time Zoom to Range' )
         timezoom_item.connect( 'activate', self.focused_timezoom_popup, task_id )
 
-        timezoom_item = gtk.MenuItem( 'Cycle-Time Zoom Reset' )
-        timezoom_item.connect( 'activate', self.focused_timezoom_direct, None )
+        timezoom_reset_item = gtk.MenuItem( 'Cycle-Time Zoom Reset' )
+        timezoom_reset_item.connect( 'activate', self.focused_timezoom_direct, None )
 
         if type == 'collapsed subtree':
             title_item = gtk.MenuItem( 'Subtree: ' + task_id )
@@ -107,6 +107,7 @@ Dependency graph based GUI suite control interface.
     
             menu.append( timezoom_item_direct )
             menu.append( timezoom_item )
+            menu.append( timezoom_reset_item )
 
         else:
 
@@ -116,12 +117,13 @@ Dependency graph based GUI suite control interface.
 
             menu.append( gtk.SeparatorMenuItem() )
 
+            menu.append( timezoom_item_direct )
+            menu.append( timezoom_item )
+            menu.append( timezoom_reset_item )
+
             collapse_item = gtk.MenuItem( 'Collapse Subtree' )
             menu.append( collapse_item )
             collapse_item.connect( 'activate', self.collapse_subtree, task_id )
-
-            menu.append( timezoom_item_direct )
-            menu.append( timezoom_item )
 
         if type == 'live task':
             menu.append( gtk.SeparatorMenuItem() )
@@ -176,11 +178,11 @@ Dependency graph based GUI suite control interface.
         self.view_menu.append( graph_range_item )
         graph_range_item.connect( 'activate', self.graph_timezoom_popup )
 
-        crop_item = gtk.MenuItem( 'Toggle _Cropping' )
+        crop_item = gtk.MenuItem( 'Toggle _Crop Base Graph' )
         self.view_menu.append( crop_item )
         crop_item.connect( 'activate', self.toggle_crop )
 
-        filter_item = gtk.MenuItem( 'Task _Filter' )
+        filter_item = gtk.MenuItem( 'Task _Filtering' )
         self.view_menu.append( filter_item )
         filter_item.connect( 'activate', self.filter_popup )
 

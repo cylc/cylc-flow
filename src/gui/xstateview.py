@@ -385,6 +385,9 @@ class xupdater(threading.Thread):
 
             self.graphw.remove_node( node )
 
+        # TO DO: ?optional transitive reduction:
+        # self.graphw.tred()
+
         if self.show_key:
             self.add_graph_key()
 
