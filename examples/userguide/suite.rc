@@ -16,6 +16,9 @@ directories for the restart files of the warm-cycled models."""
 
 use lockserver = True
 
+[experimental]
+    live graph movie = False
+
 [special tasks]
     startup          = prep
     sequential       = A, B, C

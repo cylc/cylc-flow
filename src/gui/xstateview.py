@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-from config import config
-import sys, re
+import sys, os, re
 import gobject
 import time
 import threading
@@ -75,6 +74,8 @@ class xupdater(threading.Thread):
         self.graph_warned = {}
 
         self.collapse = []
+
+        self.graph_frame_count = 0
 
     def reconnect( self ):
         try:
@@ -268,7 +269,7 @@ class xupdater(threading.Thread):
         diffhrs = cycle_time.diff_hours( newest, oldest ) + 1
         #if diffhrs < 25:
         #    diffhrs = 25
-        self.graphw = self.config.get_graph( oldest, diffhrs, colored=False, raw=raw ) 
+        self.graphw = self.suiterc.get_graph( oldest, diffhrs, colored=False, raw=raw ) 
 
         self.rem_nodes = []
 
@@ -332,15 +333,6 @@ class xupdater(threading.Thread):
                     continue
 
             self.set_live_node_attr( node, id )
-
-        # layout adds positions to nodes etc.; this is not required if
-        # we're writing to the 'dot' format which must be processed later
-        # by the dot layout engine anyway.
-        # self.live_graph.layout(prog="dot")
-        # TO DO:
-        #if self.config["experimental"]["live graph movie"]:
-        #    self.live_graph_frame_count += 1
-        #    self.live_graph.write( self.config["visualization"]["run time graph directory"], 'live' + '-' + str( self.live_graph_frame_count ) + '.dot' )
 
         for id in self.collapse:
             try:
@@ -413,6 +405,10 @@ class xupdater(threading.Thread):
                        style='invis')
 
         self.action_required = False
+
+        if self.suiterc["experimental"]["live graph movie"]:
+            self.graph_frame_count += 1
+            self.graphw.write( os.path.join( self.suiterc["visualization"]["run time graph directory"], 'live' + '-' + str( self.graph_frame_count ) + '.dot' ))
 
     #def follow_up( self, id, topctime ):
     #    name, ctime = id.split('%')
