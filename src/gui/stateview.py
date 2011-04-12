@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from config import config
-import sys
+import sys, re
 import gobject
 import time
 import threading
@@ -212,7 +212,7 @@ class updater(threading.Thread):
 
     def update_gui( self ):
         #print "Updating GUI"
-        new_ctimes = []
+        expand_me = []
         new_data = {}
         for id in self.state_summary:
             name, ctime = id.split( '%' )
@@ -259,8 +259,7 @@ class updater(threading.Thread):
             for col in range( self.ttreestore.get_n_columns() ):
                 row.append( self.ttreestore.get_value( iter, col) )
             [ ctime, state, message, tsub, tstt, meant, tetc ] = row
-            # state is empty string for parent row
-
+            # note state etc. is empty string for parent row
             tree_data[ ctime ] = {}
 
             if ctime not in new_data:
@@ -293,9 +292,14 @@ class updater(threading.Thread):
                         #print "   changing", name, "at", ctime
                         self.ttreestore.append( iter, [ name ] + new_data[ctime][name] )
                         result = self.ttreestore.remove( iterch )
-                        if not result:
-                            # see above
-                            iterch = None
+                        if result:
+                            st = re.sub('<[^>]+>', '', state ) # remove tags
+                            if st == 'submitted' or st == 'running' or st == 'failed':
+                                # autoexpand this ctime
+                                expand_me.append( iter )
+                            else:
+                                # see above
+                                iterch = None
                     else:
                         iterch = self.ttreestore.iter_next( iterch )
 
@@ -307,10 +311,16 @@ class updater(threading.Thread):
                 # add new ctime tree
                 #print "ADDING", ctime
                 piter = self.ttreestore.append(None, [ctime, None, None, None, None, None, None ])
-                new_ctimes.append(piter)
+                # auto expand an new cycle time
+                # expand_me.append(piter)
                 for name in new_data[ ctime ]:
                     #print "  adding", name, "to", ctime
                     self.ttreestore.append( piter, [ name ] + new_data[ctime][name] )
+                    state = new_data[ ctime ][ name ][0]
+                    st = re.sub('<[^>]+>', '', state ) # remove tags
+                    if st == 'submitted' or st == 'running' or st == 'failed':
+                        # autoexpand this ctime
+                        expand_me.append( piter )
                 continue
 
             # this ctime tree is already in model
@@ -326,6 +336,11 @@ class updater(threading.Thread):
                 if not ch_iter:
                     #print "  adding", name, "to", ctime
                     self.ttreestore.append( p_iter, [ name ] + new_data[ctime][name] )
+                    state = new_data[ ctime ][ name ][0]
+                    st = re.sub('<[^>]+>', '', state ) # remove tags
+                    if st == 'submitted' or st == 'running' or st == 'failed':
+                        # autoexpand this ctime
+                        expand_me.append( p_iter )
 
         # LED VIEW
         self.led_liststore.clear()
@@ -364,7 +379,7 @@ class updater(threading.Thread):
 
             self.led_liststore.append( self.digitize( ctime ) + state_list )
 
-        for iter in new_ctimes:
+        for iter in expand_me:
             self.ttreeview.expand_row(self.ttreestore.get_path(iter),False)
 
         return False
