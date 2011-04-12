@@ -30,17 +30,23 @@ Dependency graph based GUI suite control interface.
         self.xdot = xdot_widgets()
         self.xdot.widget.connect( 'clicked', self.on_url_clicked )
         self.xdot.graph_disconnect_button.connect( 'toggled', self.toggle_graph_disconnect )
+        self.xdot.graph_update_button.connect( 'clicked', self.graph_update )
         return self.xdot.get()
 
     def toggle_graph_disconnect( self, w ):
         if w.get_active():
             self.x.graph_disconnect = True
             w.set_label( '_REconnect' )
+            self.xdot.graph_update_button.set_sensitive(True)
         else:
             self.x.graph_disconnect = False
             w.set_label( '_DISconnect' )
+            self.xdot.graph_update_button.set_sensitive(False)
         return True
 
+    def graph_update( self, w ):
+        self.x.action_required = True
+ 
     def on_url_clicked( self, widget, url, event ):
         if event.button != 3:
             return False

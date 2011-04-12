@@ -151,6 +151,8 @@ class xdot_widgets(object):
 
         self.graph_disconnect_button = gtk.ToggleButton( '_DISconnect' )
         self.graph_disconnect_button.set_active(False)
+        self.graph_update_button = gtk.Button( '_Update' )
+        self.graph_update_button.set_sensitive(False)
 
         bbox = gtk.HButtonBox()
         #bbox.add( open_button )
@@ -160,6 +162,7 @@ class xdot_widgets(object):
         bbox.add( zoomfit_button )
         bbox.add( zoom100_button )
         bbox.add( self.graph_disconnect_button )
+        bbox.add( self.graph_update_button )
         #bbox.set_layout(gtk.BUTTONBOX_END)
         bbox.set_layout(gtk.BUTTONBOX_SPREAD)
 
