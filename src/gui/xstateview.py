@@ -33,7 +33,7 @@ def compare_dict_of_dict( one, two ):
 
 class xupdater(threading.Thread):
 
-    def __init__(self, suite, owner, host, port, 
+    def __init__(self, suite, suiterc, owner, host, port, 
             label_mode, label_status, label_time, xdot ):
 
         super(xupdater, self).__init__()
@@ -71,7 +71,7 @@ class xupdater(threading.Thread):
 
         self.reconnect()
 
-        self.config = config( self.suite )
+        self.suiterc = suiterc
         self.graph_warned = {}
 
         self.collapse = []
