@@ -86,6 +86,9 @@ Text treeview base GUI suite control interface.
         self.t.quit = True
         return ControlAppBase.click_exit(self, foo )
 
+    def toggle_autoexpand( self, w ):
+        self.t.autoexpand = not self.t.autoexpand
+
     def toggle_headings( self, w ):
         if self.task_headings_on:
             self.no_task_headings()
@@ -335,6 +338,10 @@ Text treeview base GUI suite control interface.
         names_item = gtk.MenuItem( '_Toggle Task Names (light panel)' )
         self.view_menu.append( names_item )
         names_item.connect( 'activate', self.toggle_headings )
+
+        autoex_item = gtk.MenuItem( 'Toggle _Auto-Expand Tree' )
+        self.view_menu.append( autoex_item )
+        autoex_item.connect( 'activate', self.toggle_autoexpand )
 
 class StandaloneControlTreeApp( ControlTree ):
     def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):

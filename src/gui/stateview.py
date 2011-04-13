@@ -70,7 +70,7 @@ class updater(threading.Thread):
         super(updater, self).__init__()
 
         self.quit = False
-        self.first_update = True
+        self.autoexpand = True
 
         self.suite = suite
         self.owner = owner
@@ -345,8 +345,9 @@ class updater(threading.Thread):
                     if iter not in expand_me:
                         expand_me.append( p_iter )
 
-        for iter in expand_me:
-            self.ttreeview.expand_row(self.ttreestore.get_path(iter),False)
+        if self.autoexpand:
+            for iter in expand_me:
+                self.ttreeview.expand_row(self.ttreestore.get_path(iter),False)
 
         # LED VIEW
         self.led_liststore.clear()

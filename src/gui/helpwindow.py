@@ -676,6 +676,11 @@ def userguide( w, graph=False ):
         update_tb( tb, "\n o Toggle Task Names ", [bold])
         update_tb( tb, "Show or remove task names in the upper \"light panel\" display.")
 
+        update_tb( tb, "\n o Toggle Auto-Expand Tree ", [bold])
+        update_tb( tb, "If on, any cycle times containing submitted, running, or "
+                "failed tasks will be automatically expanded whenever the suite "
+                "state is updated.")
+
     update_tb( tb, "\n\nMenu: Control > ", [bold, red] )
     update_tb( tb, "\n o Start: ", [bold])
     update_tb( tb, "Cold Start, Warm Start, Raw Start, or Restart the suite.")
