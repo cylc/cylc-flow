@@ -1,6 +1,16 @@
 _______
 GENERAL
 
+* document lockserver hosting issues: on a global filesystem, could use
+  single lockserver across multiple machines (have to specify
+  CYLC_LOCKSERVER_HOST in all suites, however) OR allow a separate
+  lockserver on each host - but this won't prevent running the same
+  suite on different hosts at the same time, which would cause probs in
+  a global filesystem.  ALSO _THIS functionality is currently disabled
+  in cylc -it is assumed that CYLC_SUITE_HOST is also the lockserver host.
+
+* allow $CYLC_DIR/conf overrides by user in .cylc?
+
 * NEW (Trevor's mos spin up for new stations):
     - a cycling task that stops at a given ctime? => foo(T)
     - pause a task

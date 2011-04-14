@@ -52,7 +52,7 @@ class task_lock(object):
                 print >> sys.stderr, '$CYLC_SUITE not defined'
                 sys.exit(1)
 
-        # IT IS ASSUMED THAT LOCKSERVER AND SUITE HOST ARE THE SAME
+        # IT IS CURRENTLY ASSUMED THAT LOCKSERVER AND SUITE HOST ARE THE SAME
         if host:
             self.host = host
         else:

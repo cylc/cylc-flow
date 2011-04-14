@@ -31,3 +31,8 @@ that I'm sorting edges and nodes prior to adding them to the graph.
 Thus the random(?) reordering seems to be a feature of the internals
 of pygraphviz? (maybe it stores nodes in dicts in the underlying C
 library...?)
+
+CONSIDER ADDING LAYOUT ONCE to base graph, and thereafter only when new 
+tasks are added to the graph? 
+
+
