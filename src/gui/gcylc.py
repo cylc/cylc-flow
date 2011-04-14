@@ -178,7 +178,7 @@ class db_updater(threading.Thread):
                                     # print '    changing reg ', name
                                     state, descr, dir = newtree[owner][group][name]
                                     col1, col2, col3  = self.statecol( state )
-                                    foo = ts.prepend( giter, [ name ] + [ state, descr, dir, col1, col2, col3  ] )
+                                    foo = ts.prepend( giter, [ name ] + [ state, '<i>' + descr + '</i>', dir, col1, col2, col3  ] )
                                     res = ts.remove(niter)
                                     if not ts.iter_is_valid(niter):
                                         niter = None
