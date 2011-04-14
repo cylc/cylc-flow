@@ -8,6 +8,9 @@ job submission log directory = $HOME/running/logs/nzlam
 job submission method = ll_basic
 use lockserver = True
 
+[experimental]
+    live graph movie = True
+
 [dummy mode]
     clock offset from initial cycle time in hours = 0
 

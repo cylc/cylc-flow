@@ -181,7 +181,6 @@ class xupdater(threading.Thread):
             self.xdot.widget.zoom_to_fit()
             self.best_fit = False
 
-
     def add_graph_key(self):
         self.graphw.add_node( 'waiting%YYYYMMDDHH' )
         self.graphw.add_node( 'submitted%YYYYMMDDHH' )
@@ -391,7 +390,8 @@ class xupdater(threading.Thread):
         if self.show_key:
             self.add_graph_key()
 
-        # process extra nodes (important nodes outside of focus range)
+        # process extra nodes (important nodes outside of focus range,
+        # and family members that aren't plotted in the main graph).
         for state in extra_node_ids:
             for id in extra_node_ids[state]:
                 self.graphw.add_node( id )
