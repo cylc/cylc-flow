@@ -134,8 +134,8 @@ class db_updater(threading.Thread):
                 if owner not in newtree:
                     # remove owner
                     #print 'removing owner ', owner
-                    result = ts.remove(oiter)
-                    if not result:
+                    res = ts.remove(oiter)
+                    if not ts.iter_is_valid(oiter):
                         oiter = None
                 else:
                     # owner still exists, check it
@@ -152,8 +152,8 @@ class db_updater(threading.Thread):
                         if group not in newtree[owner]:
                             # remove group
                             #print '  removing group ', group
-                            result = ts.remove(giter)
-                            if not result:
+                            res = ts.remove(giter)
+                            if not ts.iter_is_valid(giter):
                                 giter = None
                         else:
                             # group still exists, check it
@@ -170,8 +170,8 @@ class db_updater(threading.Thread):
                                 if name not in newtree[owner][group]:
                                     # remove name
                                     #print '    removing reg ', name
-                                    result = ts.remove(niter)
-                                    if not result:
+                                    res = ts.remove(niter)
+                                    if not ts.iter_is_valid(niter):
                                         niter = None
                                 elif oldtree[owner][group][name] != newtree[owner][group][name]:
                                     # data changed
@@ -179,8 +179,8 @@ class db_updater(threading.Thread):
                                     state, descr, dir = newtree[owner][group][name]
                                     col1, col2, col3  = self.statecol( state )
                                     foo = ts.prepend( giter, [ name ] + [ state, descr, dir, col1, col2, col3  ] )
-                                    result = ts.remove(niter)
-                                    if not result:
+                                    res = ts.remove(niter)
+                                    if not ts.iter_is_valid(niter):
                                         niter = None
                                 else:
                                     niter = ts.iter_next( niter )
@@ -206,8 +206,8 @@ class db_updater(threading.Thread):
                    if owner not in newtree or group not in newtree[owner]:
                        # remove group
                        #print '  removing group ', group
-                       result = ts.remove(giter)
-                       if not result:
+                       res = ts.remove(giter)
+                       if not ts.iter_is_valid(giter):
                            giter = None
                    else:
                        # group still exists, check it
@@ -224,8 +224,8 @@ class db_updater(threading.Thread):
                            if name not in newtree[owner][group]:
                                # remove name
                                #print '    removing reg ', name
-                               result = ts.remove(niter)
-                               if not result:
+                               res = ts.remove(niter)
+                               if not ts.iter_is_valid(niter):
                                    niter = None
                            elif oldtree[owner][group][name] != newtree[owner][group][name]:
                                # data changed
@@ -237,8 +237,8 @@ class db_updater(threading.Thread):
                                else:
                                    ts.set_value( giter,4,None)
                                foo = ts.prepend( giter, [ name ] + [ state, '<i>' + descr + '</i>', dir, col1, col2, col3  ] )
-                               result = ts.remove(niter)
-                               if not result:
+                               res = ts.remove(niter)
+                               if not ts.iter_is_valid(niter):
                                    niter = None
                            else:
                                niter = ts.iter_next( niter )
