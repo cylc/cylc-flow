@@ -29,9 +29,9 @@ class client( object ):
     def get_proxy( self, target ):
         # callers need to check for port_scan.SuiteIdentificationError:
         if self.port:
-            check_port( self.suite, self.port, self.owner, self.host )
+            check_port( self.suite, self.port, self.owner, self.host, silent=True )
         else:
-            self.port = get_port( self.suite, self.owner, self.host, pphrase=self.passphrase )
+            self.port = get_port( self.suite, self.owner, self.host, silent=True, pphrase=self.passphrase )
 
         # get a pyro proxy for the target object
         objname = self.owner + '.' + self.suite + '.' + target
