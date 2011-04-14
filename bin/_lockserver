@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from mkdir_p import mkdir_p
 from copy import deepcopy
 import os, sys, pwd, re
 import socket, pickle
@@ -407,6 +408,13 @@ Arguments:
     state_file = config.get( 'main', 'state file' ) 
     #type = options.type
 
+    # interpolate environment variables (e.g. $HOSTNAME in the default
+    # lockserver config file $CYLC_DIR/conf/lockserver.conf).
+    pid_file = os.path.expandvars( pid_file )
+    log_file = os.path.expandvars( log_file )
+    state_file = os.path.expandvars( state_file )
+
+    # make absolute if necessary
     home = os.environ['HOME']
     if not os.path.isabs( pid_file ):
         pid_file = os.path.join( home, pid_file )
@@ -414,6 +422,14 @@ Arguments:
         log_file = os.path.join( home, log_file )
     if not os.path.isabs( state_file ):
         state_file = os.path.join( home, state_file )
+
+    for f in pid_file, log_file, state_file:
+        # make parent directory if necessary
+        pdir = os.path.dirname( f ) 
+        print pdir
+        if not os.path.isdir(pdir):
+            print 'creating it'
+            mkdir_p(pdir)
 
     print "PID File:        ", pid_file
     print "Logging To:      ", log_file
