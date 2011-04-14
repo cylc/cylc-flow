@@ -4,6 +4,7 @@ import gobject
 import gtk
 import time, os, re
 import threading
+import cycle_time
 from config import config, SuiteConfigError
 import cylc_pyro_client
 from port_scan import scan, SuiteIdentificationError
@@ -15,6 +16,7 @@ from gcapture import gcapture, gcapture_tmpfile
 from mkdir_p import mkdir_p
 from cylc_logviewer import cylc_logviewer
 from option_group import option_group, controlled_option_group
+from color_rotator import rotator
 
 #debug = True
 debug = False
@@ -45,7 +47,8 @@ class db_updater(threading.Thread):
         self.db.load_from_file()
         self.regd_choices = []
         self.regd_choices = self.db.get_list( self.ownerfilt, self.groupfilt, self.namefilt ) 
-    
+
+   
     def run( self ):
         global debug
         if debug:
@@ -509,6 +512,8 @@ class MainApp(object):
         self.window.add(vbox)
         self.window.show_all()
 
+        self.log_colors = rotator()
+
     def about( self, bt ):
         about = gtk.AboutDialog()
         if gtk.gtk_version[0] ==2:
@@ -916,9 +921,9 @@ The cylc forecast suite metascheduler.
                     menu.append( dump_item )
                     dump_item.connect( 'activate', self.dump_suite, reg )
 
-                    #nudge_item = gtk.MenuItem( 'N_udge' )
-                    #menu.append( nudge_item )
-                    #nudge_item.connect( 'activate', self.nudge_suite, reg )
+                    stop_item = gtk.MenuItem( 'Sto_p' )
+                    menu.append( stop_item )
+                    stop_item.connect( 'activate', self.stopsuite_popup, reg )
      
                 menu.append( gtk.SeparatorMenuItem() )
 
@@ -1816,11 +1821,101 @@ The cylc forecast suite metascheduler.
         self.gcapture_windows.append(foo)
         foo.run()
 
-    #def nudge_suite( self, w, name ):
-    #    command = "cylc nudge " + name
-    #    foo = gcapture_tmpfile( command, self.tmpdir, 200, 400 )
-    #    self.gcapture_windows.append(foo)
-    #    foo.run()
+    def stop_method( self, b, meth, stoptime_entry ):
+        if meth == 'stop' or meth == 'stopnow':
+            stoptime_entry.set_sensitive( False )
+        else:
+            stoptime_entry.set_sensitive( True )
+
+    def stopsuite_popup( self, b, suite ):
+        window = gtk.Window()
+        window.modify_bg( gtk.STATE_NORMAL, 
+                gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_border_width(5)
+        window.set_title( "Stop Suite '" + suite + "'")
+
+        vbox = gtk.VBox()
+
+        box = gtk.HBox()
+        stop_rb = gtk.RadioButton( None, "Stop" )
+        box.pack_start (stop_rb, True)
+        stopat_rb = gtk.RadioButton( stop_rb, "Stop At" )
+        box.pack_start (stopat_rb, True)
+        stopnow_rb = gtk.RadioButton( stop_rb, "Stop NOW" )
+        box.pack_start (stopnow_rb, True)
+        stop_rb.set_active(True)
+        vbox.pack_start( box )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Stop At (YYYYMMDDHH)' )
+        box.pack_start( label, True )
+        stoptime_entry = gtk.Entry()
+        stoptime_entry.set_max_length(10)
+        stoptime_entry.set_sensitive(False)
+        box.pack_start (stoptime_entry, True)
+        vbox.pack_start( box )
+
+        stop_rb.connect( "toggled", self.stop_method, "stop", stoptime_entry )
+        stopat_rb.connect( "toggled", self.stop_method, "stopat", stoptime_entry )
+        stopnow_rb.connect(   "toggled", self.stop_method, "stopnow", stoptime_entry )
+
+        cancel_button = gtk.Button( "_Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        stop_button = gtk.Button( "_Stop" )
+        stop_button.connect("clicked", self.stopsuite, 
+                window, suite, stop_rb, stopat_rb, stopnow_rb,
+                stoptime_entry )
+
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( stop_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def stopsuite( self, bt, window, suite, stop_rb, stopat_rb, stopnow_rb, stoptime_entry ):
+        stop = False
+        stopat = False
+        stopnow = False
+        if stop_rb.get_active():
+            stop = True
+        elif stopat_rb.get_active():
+            stopat = True
+            stoptime = stoptime_entry.get_text()
+            if stoptime == '':
+                warning_dialog( "No stop time entered" ).warn()
+                return
+            if not cycle_time.is_valid( stoptime ):
+                warning_dialog( "Invalid stop time: " + stoptime ).warn()
+                return
+        elif stopnow_rb.get_active():
+            stopnow = True
+
+        window.destroy()
+
+        try:
+            god = cylc_pyro_client.client( suite ).get_proxy( 'remote' )
+            if stop:
+                result = god.shutdown()
+            elif stopat:
+                result = god.set_stop_time( stoptime )
+            elif stopnow:
+                result = god.shutdown_now()
+        except SuiteIdentificationError, x:
+            warning_dialog( x.__str__() ).warn()
+        else:
+            if result.success:
+                info_dialog( result.reason ).inform()
+            else:
+                warning_dialog( result.reason ).warn()
+
+
 
     def describe_suite( self, w, name ):
         command = "cylc describe " + name  
