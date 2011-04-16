@@ -135,10 +135,6 @@ class job_submit(object):
             except:
                 raise SystemExit( "Task " + self.task_id + ", owner not found: " + self.owner )
 
-        # a job submit log can be defined using environment variables
-        logs.interpolate( self.__class__.global_env )
-        logs.interpolate( self.task_env )
-        logs.interpolate()
         self.logfiles = logs
 
         if joblog_dir:

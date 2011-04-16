@@ -2,8 +2,6 @@
 
 import re
 
-from interp_env import interp_local_str, interp_other_str
-
 class logfiles( object ):
     # we need task output logs file to be mutable (i.e. not just strings) so
     # that changes to log paths in the job submit class are reflected in
@@ -39,13 +37,3 @@ class logfiles( object ):
     def empty( self ):
         self.paths = []
 
-    def interpolate( self, env = None ):
-        new_paths = []
-        for log in self.paths:
-            if env:
-                log = interp_other_str( log, env )
-            else:
-                log = interp_local_str( log )
-            new_paths.append( log )
-
-        self.paths = new_paths
