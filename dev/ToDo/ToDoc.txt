@@ -1,6 +1,10 @@
 ################################################################
 TO BE DOCUMENTED:
 
+* new job submission method: derive a new class from the job_submit base
+  class which, to be accessed by cylc, must have the same class and
+  module name - used as: 'from new_js import new_js'.
+
 * note 'cylc submit SUITE foo%T' results in T being adjusted to the next
   nearest valid cycle time for the task IF valid hours are defined for 
   the task by either graph or '[tasks][foo]hours'. If the latter is

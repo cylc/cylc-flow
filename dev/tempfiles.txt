@@ -1,5 +1,5 @@
 
-Python temporary files:
+Python temporary files (as used mainly in the job submit classes):
 
 # tempfile.NamedTemporaryFile( delete=False ) creates a file and opens
 # it, but delete=False is post python 2.6 and we still currently run 2.4
