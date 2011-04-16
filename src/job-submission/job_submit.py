@@ -1,23 +1,12 @@
 #!/usr/bin/env python
 
-# TO DO: UPDATE, MOVE, OR DELETE THIS DOCUMENTATION:
-        # REMOTE TASKS MUST DEFINE (the remote) CYLC_DIR and
-        # CYLC_SUITE_DIR in the taskdef file %ENVIRONMENT key
-        # (full path with no interpolation).  The new (remote) values
-        # will will replace the original (local) values in big_env
-        # above (then full path to remote task script not required - if
-        # in the remote $CYLC_SUITE_DIR/scripts).
+# Job submission base class.
 
-# Job submission (external task execution) base class. Derived classes
-# must be added to job_submit_methods.py
-
-# Writes a temporary "job file" that sets the execution environment for 
-# access to cylc as well as task-specific environment variables defined
-# in the taskdef file before executing the task task script proper.
-
-# Derived job submission classes specify the means by which the job
-# file itself is executed. E.g. simplest case, local background
-# execution with no IO redirection or log file: 'FILE &'
+# Writes a temporary "job file" that exports the cylc execution
+# environment (so the executing task can access cylc commands), suite
+# global and task-specific environment variables, and then  
+# executes the task command.  Specific derived job submission classes
+# define the means by which the job file itself is executed.
 
 # If OWNER is defined and REMOTE_HOST is not, submit locally by:
 #  sudo -u OWNER submit(FILE) 
@@ -40,7 +29,6 @@ import tempfile, stat
 import cycle_time
 from mkdir_p import mkdir_p
 from dummy import dummy_command, dummy_command_fail
-from interp_env import interp_self, interp_other, interp_local, interp_local_str, replace_delayed, interp_other_str, replace_delayed_str
 
 import subprocess
  
@@ -51,13 +39,6 @@ class job_submit(object):
     global_pre_scripting = ''
     global_post_scripting = ''
     owned_task_execution_method = 'sudo'
-
-    def interp_str( self, str ):
-        str = interp_other_str( str, self.task_env )
-        str = interp_other_str( str, self.__class__.global_env )
-        str = interp_local_str( str )
-        str = replace_delayed_str( str )
-        return str
 
     def use_dummy_task( self ):
         # $CYLC_DUMMY_SLEEP is set at start up
@@ -80,8 +61,7 @@ class job_submit(object):
         self.suite_owner = os.environ['USER']
         # task owner
         if owner:
-            # owner can be defined using environment variables
-            self.owner = self.interp_str( owner )
+            self.owner = owner
         else:
             self.owner = self.suite_owner
 
@@ -101,9 +81,6 @@ class job_submit(object):
         # global cylc environment variables $FOO, ${FOO}, ${FOO#_*nc}
         # etc. Thus we ensure that the order of definition is preserved
         # and parse any such references through as-is to the job script.
-
-        ### INTERP OF TASK PATH NOT REQUIRED:
-        #### self.task = self.interp_str( self.task )
 
         # queueing system directives
         self.directives  = dirs
@@ -126,8 +103,7 @@ class job_submit(object):
         if host and not self.__class__.dummy_mode:
             # REMOTE JOB SUBMISSION as owner
             self.local_job_submit = False
-            # a remote host can be defined using environment variables
-            self.remote_host = self.interp_str( host )
+            self.remote_host = host
 
         else:
             # LOCAL JOB SUBMISSION as owner

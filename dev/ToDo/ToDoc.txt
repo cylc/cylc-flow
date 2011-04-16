@@ -1,6 +1,13 @@
 ################################################################
 TO BE DOCUMENTED:
 
+* REMOTE TASKS must define the remote CYLC_DIR and
+  CYLC_SUITE_DIR in their [tasks]->[[foo]]->[[[environment]]] section
+  (full path with no interpolation?); these will override the original
+  (local) values in the job script's global environment section.
+  Full path to remote task scripts not required - if they are in the
+  remote $CYLC_SUITE_DIR/bin directory.
+
 * new job submission method: derive a new class from the job_submit base
   class which, to be accessed by cylc, must have the same class and
   module name - used as: 'from new_js import new_js'.
