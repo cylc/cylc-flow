@@ -140,8 +140,8 @@ __many__ = string
     # new style suite definition: dependency graph plus minimal task info
     [[__many__]]
     description = string( default="No task description supplied" )
-    job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=None)
-    job submission log directory = string( default='$HOME/CylcJobLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+    job submission method = option( at_now, background, ll_raw, ll_raw_ecox, loadleveler, ll_ecox, default=None)
+    job submission log directory = string( default=None )
     task submitted hook = string( default=None )
     task started hook = string( default=None )
     task finished hook = string( default=None )
