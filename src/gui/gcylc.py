@@ -1630,17 +1630,17 @@ The cylc forecast suite metascheduler.
         warm_cb = gtk.CheckButton( "Warm Start" )
         vbox.pack_start (warm_cb, True)
 
-        label = gtk.Label("Start Hour" )
+        label = gtk.Label("Start Cycle Time" )
         start_entry = gtk.Entry()
-        start_entry.set_text( '0' )
+        start_entry.set_max_length(10)
         hbox = gtk.HBox()
         hbox.pack_start( label )
         hbox.pack_start(start_entry, True) 
         vbox.pack_start(hbox)
 
-        label = gtk.Label("Stop At (hours after start)" )
+        label = gtk.Label("Stop Cycle Time" )
         stop_entry = gtk.Entry()
-        stop_entry.set_text( '6' )
+        stop_entry.set_max_length(10)
         hbox = gtk.HBox()
         hbox.pack_start( label )
         hbox.pack_start(stop_entry, True) 
@@ -1700,11 +1700,9 @@ The cylc forecast suite metascheduler.
         if suiterc_rb.get_active():
             start = start_entry.get_text()
             stop = stop_entry.get_text()
-            for h in start, stop:
-                try:
-                    int(h)
-                except:
-                    warning_dialog( "Hour must convert to integer: " + h ).warn()
+            for ct in start, stop:
+                if not cycle_time.is_valid( ct ):
+                    warning_dialog( "Invalid cycle time (YYYYMMDDHH) " + ct ).warn()
                     return False
             if warm_cb.get_active():
                 options += ' -w '

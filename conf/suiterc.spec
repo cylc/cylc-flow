@@ -86,9 +86,12 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
     coldstart = force_list( default=list())
     oneoff = force_list( default=list())
     sequential = force_list( default=list())
-    clock-triggered = force_list( default=list())
     # outputs MUST contain the word 'restart':
     models with explicit restart outputs = force_list( default=list())
+    # offset can be a float:
+    clock-triggered = force_list( default=list())
+    # final cycle time must be specified:
+    final cycle times = force_list( default=list() )
 
 [task families]
     __many__ = force_list( default=None )

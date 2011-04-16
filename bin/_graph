@@ -2,6 +2,7 @@
 
 import os, re, sys
 from time import sleep
+import cycle_time
 import gtk
 import gtk.gdk
 import gobject
@@ -37,8 +38,8 @@ Graph viewer controls:
 
 Arguments:
   SUITE   - suite registration [OWNER:]GROUP:NAME
-  START   - Hour (HH) at which to start plotting.
-  STOP    - Hours beyond START at which to stop plotting (default 6).
+  START   - Initial cycle time (YYYYMMDDHH) to plot.
+  [STOP]  - Final cycle time (YYYYMMDDHH) to plot (default START+ 6 hours).
   """)
 
 #parser.add_option( "-l", "--live", 
@@ -118,35 +119,24 @@ if len(args) < 2 or len(args) > 3:
 
 suite = args[0]
 
-hour = args[1]
+start_ctime = args[1]
+if not cycle_time.is_valid(start_ctime):
+    parser.error( "Illegal START cycle time (YYYYMMDDHH): " + start_ctime )
+
 if len(args) == 3:
-    stop = args[2]
+    stop_ctime = args[2]
+    if not cycle_time.is_valid(stop_ctime):
+        parser.error( "Illegal STOP cycle time (YYYYMMDDHH): " + stop_ctime )
+    stop = cycle_time.diff_hours( stop_ctime, start_ctime )
 else:
     stop = 6
-
-try:
-    int(hour)
-except ValueError:
-    parser.error( "Illegal START hour (HH): " + hour )
-
-try:
-    int(stop)
-except ValueError:
-    parser.error( "Illegal STOP hours: " + stop )
 
 raw = False
 if options.rawstart:
     raw = True
 
-# pad hour if necessary:
-if len( hour ) == 1:
-    hour = '0' + hour
-elif len( hour ) > 2:
-    parser.error( "Illegal START hour (HH): " + hour )
-
-# fake a full cycle time
-ctime = '29990101' + hour
-window = MyDotWindow( suite, ctime, stop, raw, options.outputfile )
+print start_ctime, stop
+window = MyDotWindow( suite, start_ctime, stop, raw, options.outputfile )
 try:
     window.parse_graph()
 except config.SuiteConfigError, x:

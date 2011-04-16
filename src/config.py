@@ -47,14 +47,16 @@ class edge( object):
         self.left_group = l
         self.right = r
 
-    def get_right( self, ctime, not_first_cycle, raw, startup_only ):
+    def get_right( self, ctime, not_first_cycle, raw, startup_only, exclude ):
+        if self.right in exclude:
+            return None
         first_cycle = not not_first_cycle
         if self.right in startup_only:
             if not first_cycle or raw:
                 return None
         return self.right + '%' + ctime
 
-    def get_left( self, ctime, not_first_cycle, raw, startup_only ):
+    def get_left( self, ctime, not_first_cycle, raw, startup_only, exclude ):
         #if re.search( '\|', self.left_group ):
         OR_list = re.split('\s*\|\s*', self.left_group )
 
@@ -63,6 +65,7 @@ class edge( object):
         options = []
         starred_index = -1
         for item in OR_list:
+
             # strip off special outputs
             item = re.sub( ':\w+', '', item )
 
@@ -82,6 +85,9 @@ class edge( object):
                     if starred:
                         starred_index = len(options)-1
                     continue
+
+            if item in exclude:
+                continue
 
             if item in startup_only:
                 if not first_cycle:
@@ -128,7 +134,7 @@ class node( object):
     def __init__( self, n ):
         self.group = n
 
-    def get( self, ctime, not_first_cycle, raw, startup_only ):
+    def get( self, ctime, not_first_cycle, raw, startup_only, exclude ):
         #if re.search( '\|', self.left_group ):
         OR_list = re.split('\s*\|\s*', self.group )
 
@@ -156,6 +162,9 @@ class node( object):
                     if starred:
                         starred_index = len(options)-1
                     continue
+
+            if item in exclude:
+                continue
 
             if item in startup_only:
                 if not first_cycle:
@@ -376,6 +385,19 @@ class config( CylcConfigObj ):
             else:
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
+        # parse temporary tasks
+        self.final_cycle_times = {}
+        for item in self['special tasks']['final cycle times']:
+            m = re.match( '(\w+)\s*\(\s*([\d]{10})\s*\)', item )
+            if m:
+                task, offset = m.groups()
+                try:
+                    self.final_cycle_times[ task ] = int( offset )
+                except ValueError:
+                    raise SuiteConfigError, "ERROR: Illegal final cycle time: " + offset
+            else:
+                raise SuiteConfigError, "ERROR: Illegal temporary task spec: " + item
+
         # parse families
         self.member_of = {}
         self.members = {}
@@ -433,7 +455,7 @@ class config( CylcConfigObj ):
         # warn if listed special tasks are not defined
         for type in self['special tasks']:
             for name in self['special tasks'][type]:
-                if type == 'clock-triggered':
+                if type == 'clock-triggered' or 'temporary':
                     name = re.sub('\(.*\)','',name)
                 if re.search( '[^0-9a-zA-Z_]', name ):
                     raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
@@ -521,6 +543,13 @@ class config( CylcConfigObj ):
 
     def get_startup_task_list( self ):
         return self['special tasks']['startup']
+
+    def get_finalized_task_list( self, ctime ):
+        res = []
+        for name in self.final_cycle_times:
+            if int(self.final_cycle_times[name]) < int(ctime):
+                res.append(name)
+        return res
 
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
@@ -781,7 +810,8 @@ class config( CylcConfigObj ):
         else:
             graph = graphing.CGraphPlain( self.suite )
 
-        exclude_list = self.get_coldstart_task_list() + self.get_startup_task_list()
+        startup_exclude_list = self.get_coldstart_task_list() + \
+                self.get_startup_task_list()
 
         gr_lone_nodes = []
         cycles = self.lone_nodes.keys()
@@ -794,7 +824,7 @@ class config( CylcConfigObj ):
             while True:
                 hour = cycles[i]
                 for n in self.lone_nodes[hour]:
-                    item = n.get(ctime, started, raw, exclude_list )
+                    item = n.get(ctime, started, raw, startup_exclude_list, self.get_finalized_task_list( ctime ))
                     if item == None:
                         # TO DO: why this test?
                         continue
@@ -808,7 +838,7 @@ class config( CylcConfigObj ):
                     i += 1
                     diff = cycles[i] - hour
                 ctime = cycle_time.increment( ctime, diff )
-                if int( cycle_time.diff_hours( ctime, start_ctime )) >= int(stop):
+                if int( cycle_time.diff_hours( ctime, start_ctime )) > int(stop):
                     break
  
         gr_edges = []
@@ -823,8 +853,8 @@ class config( CylcConfigObj ):
                 hour = cycles[i]
 
                 for e in self.edges[hour]:
-                    right = e.get_right(ctime, started, raw, exclude_list )
-                    left  = e.get_left( ctime, started, raw, exclude_list )
+                    right = e.get_right(ctime, started, raw, startup_exclude_list, self.get_finalized_task_list(ctime))
+                    left  = e.get_left( ctime, started, raw, startup_exclude_list, self.get_finalized_task_list(ctime))
                     if left == None or right == None:
                         # TO DO: why this test?
                         continue
@@ -865,7 +895,7 @@ class config( CylcConfigObj ):
                     diff = cycles[i] - hour
                 ctime = cycle_time.increment( ctime, diff )
     
-                if int( cycle_time.diff_hours( ctime, start_ctime )) >= int(stop):
+                if int( cycle_time.diff_hours( ctime, start_ctime )) > int(stop):
                     break
                 
         # sort and then add edges in the hope that edges added in the
@@ -1026,6 +1056,11 @@ class config( CylcConfigObj ):
         if name in self.clock_offsets:
             taskd.modifiers.append( 'clocktriggered' )
             taskd.clocktriggered_offset = self.clock_offsets[name]
+
+        # SET TEMPORARY TASKS
+        if name in self.final_cycle_times:
+            taskd.modifiers.append( 'temporary' )
+            taskd.final_cycle_time = self.final_cycle_times[name]
 
         if name not in self['tasks']:
             if strict:

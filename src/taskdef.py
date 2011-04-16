@@ -69,6 +69,7 @@ class taskdef(object):
         self.follow_on_task = None
 
         self.clocktriggered_offset = None
+        self.final_cycle_time = None
 
         # triggers[0,6] = [ A, B:1, C(T-6), ... ]
         self.triggers = OrderedDict()         
@@ -120,6 +121,10 @@ class taskdef(object):
         if 'clocktriggered' in self.modifiers:
             if self.clocktriggered_offset == None:
                 raise DefinitionError( 'ERROR: clock-triggered tasks must specify a time offset' )
+
+        if 'temporary' in self.modifiers:
+            if self.final_cycle_time == None:
+                raise DefinitionError( 'ERROR: temporary tasks must specify a final cycle time' )
 
         if self.member_of and len( self.members ) > 0:
             raise DefinitionError( 'ERROR: nested task families are not allowed' )
@@ -282,6 +287,9 @@ class taskdef(object):
  
             if 'clocktriggered' in self.modifiers:
                 sself.real_time_delay =  float( self.clocktriggered_offset )
+
+            if 'temporary' in self.modifiers:
+                sself.final_cycle_time = self.final_cycle_time
 
             # prerequisites
             sself.prerequisites = prerequisites()
