@@ -3,6 +3,9 @@
 # environment variable interpolation functions
 # used mainly in the cylc job submission code.
 
+# TO DO: compare (and consider replacing) with expandvars() code 
+# from os.path.expandvars() (in std lib module posixpath.py).
+
 import os,re
 
 def interp_local_str( strng ):
