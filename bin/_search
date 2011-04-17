@@ -54,6 +54,8 @@ include-files, and in any files in the suite bin directory. For the
 suite.rc and include-files, matches are reported by file line number and
 suite section (even if include files are nested).
 
+An unquoted list of PATTERNs will be converted to an OR'd pattern.
+
 Note that the order of commandline arguments conforms to grep command usage
 ('grep PATTERN FILE') not normal cylc command usage ('command SUITE ARGS').
 However, if the second argument is not found to be a registered suite, an
@@ -66,25 +68,28 @@ See also:
   cylc prep inline 
 
 Arguments:
-  PATTERN - or Python-style regular expression or a raw string.
-  SUITE   - suite registration [OWNER:]GROUP:NAME.""")
+  SUITE   - suite registration [OWNER:]GROUP:NAME.
+  PATTERN - (list of) Python-style regular expression(s).
+  """)
 
 parser.add_option( "-x", help="Do not search in the suite bin directory",
         action="store_false", default=True, dest="search_bin" )
 
 ( options, args ) = parser.parse_args()
 
-if len(args) != 2:
-    parser.error( "wrong number of arguments" )
+#if len(args) != 2:
+#    parser.error( "wrong number of arguments" )
 
 arg0 = args[0]
-arg1 = args[1]
+arg1n = '|'.join(args[1:])
+argn = args[-1]
+argn1 = '|'.join(args[0:-1])
 
 # find location of the suite definition directory
 try:
-    reg = getdb( arg1 )
+    reg = getdb( argn )
     reg.load_from_file()
-    reg.get( arg1 )
+    reg.get( argn )
 except RegistrationError,x:
     print >> sys.stderr, x
     print "Trying reversed arguments..."
@@ -97,11 +102,15 @@ except RegistrationError,x:
     else:
         # cylc prep search SUITE PATTERN
         suite = arg0
-        pattern = arg1
+        pattern = arg1n
+        print 'SUITE:', suite
+        print 'PATTERN:', pattern
 else:
     # cylc prep search PATTERN SUITE
-    suite = arg1
-    pattern = arg0
+    suite = argn
+    pattern = argn1
+    print 'SUITE:', suite
+    print 'PATTERN:', pattern
 
 suitedir, descr = reg.get( suite )
 suiterc = os.path.join( suitedir, 'suite.rc' )
