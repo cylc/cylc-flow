@@ -7,7 +7,7 @@ from job_submit import job_submit
 class loadleveler( job_submit ):
     """
 Minimalist loadleveler job submission.
-    """"
+    """
     def set_directives( self ):
         self.directive_prefix = "# @ "
         self.final_directive  = "# @ queue"

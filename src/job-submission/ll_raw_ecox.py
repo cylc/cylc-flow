@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from ll_raw import ll_raw
-from ecox import ecox
+from _ecox import ecox
 
 class ll_raw_ecox( ecox, ll_raw ):
 

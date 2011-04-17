@@ -4,6 +4,9 @@ import os, re
 
 class ecox(object):
     def check( self, task_id, owner, dirs, ):
+        # check the ecoconnect environment (devel, test, oper), modify
+        # the task owner username appropriately, and (maybe) set some
+        # default loadleveler directives).
         if not owner:
             raise SystemExit( "EcoConnect tasks require an owner: " + task_id )
         suite_owner = os.environ['USER']
@@ -21,7 +24,11 @@ class ecox(object):
             owner_name = owner
         owner = owner_name + '_' + ecoc_sys
 
-        if 'class' not in dirs:
-            # DEFAULT ECOCONNECT LOADLEVELER DIRECTIVES
-            # dirs[ 'class'    ] = self.suite !!!! TO DO: WHEN FINAL LL CLASSES CONFIGURED
-            dirs[ 'class' ] = 'test_linux'
+        # NOT USING:
+        #if 'class' not in dirs:
+        #    # DEFAULT ECOCONNECT LOADLEVELER DIRECTIVES
+        #    # dirs[ 'class'    ] = self.suite !!!! TO DO: WHEN FINAL LL CLASSES CONFIGURED
+        #    dirs[ 'class' ] = 'test_linux'
+        #    # (this changes the external dirs structure)
+
+        return owner

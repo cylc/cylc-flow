@@ -64,11 +64,6 @@ class job_submit(object):
         else:
             self.task_owner = self.suite_owner
 
-        # Overrideable methods to be used by derived classes to modify stuff
-        self.set_directives()
-        self.set_scripting()
-        self.set_environment()
-       
         if remote_host:
             # Remote job submission
             if self.__class__.dummy_mode:
@@ -141,9 +136,14 @@ class job_submit(object):
             # Remote jobs are submitted from remote $HOME, via ssh.
             # Can't use tempfile remotely so generate a random string. 
             rnd = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6))
-            self.out = self.task_id + '-' + rnd + '.out'
-            self.err = self.task_id + '-' + rnd + '.err'
+            self.stdout_file = self.task_id + '-' + rnd + '.out'
+            self.stderr_file = self.task_id + '-' + rnd + '.err'
 
+        # Overrideable methods to be used by derived classes to modify stuff
+        self.set_directives()
+        self.set_scripting()
+        self.set_environment()
+ 
     def set_directives( self ):
         # OVERRIDE IN DERIVED CLASSES IF NECESSARY
         # self.directives['name'] = value

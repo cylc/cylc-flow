@@ -152,7 +152,7 @@ class task( Pyro.core.ObjBase ):
         self.etc = None
         self.to_go = None
 
-        self.launcher = get_object( self.job_submit_method, self.job_submit_method ) \
+        self.launcher = get_object( self.job_submit_method, self.job_submit_method )\
                 ( self.id, self.external_task, self.env_vars, self.directives, 
                         self.pre_scripting, self.post_scripting, self.logfiles, 
                         self.job_submit_log_directory,
