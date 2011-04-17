@@ -1146,12 +1146,12 @@ class config( CylcConfigObj ):
                 # next instance be?).
                 raise SuiteConfigError, name + " has no hours defined in graph or [tasks]"
             if test:
-                # used by the validate command
-                print >> sys.stderr, "WARNING: no hours for " + name + " in graph or [tasks]; it can be submitted alone but not inserted into the suite."
+                # used by the 'cylc validate' command
+                print >> sys.stderr, "WARNING: no hours in graph or [tasks][["+name+"]]; task can be 'submit'ed but not inserted into the suite."
             else:
                 # if 'submit'ed alone (see just above):
-                print >> sys.stderr, "WARNING: no hours for " + name + " in graph or [tasks]; it can be submitted alone but not inserted into the suite."
-                print >> sys.stderr, 'WARNING: no hours for ' + name + ' in graph or [tasks]; it will be submitted with the exact cycle time ' + ctime
+                print >> sys.stderr, "WARNING: " + name + ": no hours in graph or [tasks][["+name+"]]; task can be 'submit'ed but not inserted into the suite."
+                print >> sys.stderr, "WARNING: " + name + ": no hours defined - task will be submitted with the exact cycle time " + ctime
             td.hours = [ chour ]
         else:
             td.hours = [ int(i) for i in hours ]
@@ -1162,3 +1162,4 @@ class config( CylcConfigObj ):
         if not self.loaded:
             self.load_tasks()
         return self.taskdefs[name].get_task_class()
+
