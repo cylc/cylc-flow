@@ -16,7 +16,7 @@ maximum runahead hours = integer( min=0, default=24 )
 
 number of state dump backups = integer( min=1, default=10 )
 
-job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
+job submission method = option( at_now, background, ll_raw, ll_basic, loadleveler, ecox, default=background )
 owned task execution method = option( sudo, ssh, default=sudo )
 
 # The chosen job submission shell affects the suite.rc environment and
