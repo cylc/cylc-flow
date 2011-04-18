@@ -119,6 +119,7 @@ class task( Pyro.core.ObjBase ):
 
         class_vars = {}
         self.state = task_state.task_state( state )
+        self.launcher = None
 
         # count instances of each top level object derived from task
         # top level derived classes must define:
@@ -379,7 +380,9 @@ class task( Pyro.core.ObjBase ):
                         self.set_failed( 'finished before all outputs were completed' )
                     else:
                         self.set_finished_hook()
-                        self.launcher.cleanup()
+                        if self.launcher:
+                            # ('family' tasks have no launcher)
+                            self.launcher.cleanup()
             else:
                 # this output has already been satisfied
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already satisfied):" )
@@ -399,7 +402,8 @@ class task( Pyro.core.ObjBase ):
                 self.outputs.set_satisfied( message )
             else:
                 # yes, retry.
-                if not self.launcher.dummy_mode:
+                if self.launcher and not self.launcher.dummy_mode:
+                    # ('family' tasks have no launcher)
                     self.log( 'CRITICAL',  'Retrying with next command' )
                     self.launcher.task = self.external_task
                     self.state.set_status( 'waiting' )

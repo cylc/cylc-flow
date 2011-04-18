@@ -5,7 +5,7 @@ description = NZLAM 3DVAR Suite
 dummy mode only = True
 
 job submission log directory = $HOME/running/logs/nzlam
-job submission method = ll_basic
+job submission method = ll_ecox
 use lockserver = True
 
 [experimental]
