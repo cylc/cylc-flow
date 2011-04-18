@@ -52,6 +52,12 @@ class job_submit(object):
 
         self.task_id = task_id
         self.task_command = task_command
+        if self.__class__.dummy_mode:
+            if self.__class__.failout_id != self.task_id:
+                self.task_command = dummy_command
+            else: 
+                self.task_command = dummy_command_fail
+
         self.task_env = task_env
         self.directives  = directives
         self.task_pre_scripting = pre_scripting
@@ -134,7 +140,14 @@ class job_submit(object):
             else:
                 pass
 
-        # Generate stdout and stderr log files
+        self.set_logfile_names()
+        # Overrideable methods
+        self.set_directives()  # (logfiles used here!)
+        self.set_scripting()
+        self.set_environment()
+ 
+    def set_logfile_names( self ):
+         # Generate stdout and stderr log files
         if self.local_job_submit:
             # can get a unique name locally using tempfile
             self.stdout_file = tempfile.mktemp( 
@@ -149,11 +162,10 @@ class job_submit(object):
             self.stdout_file = self.task_id + '-' + rnd + '.out'
             self.stderr_file = self.task_id + '-' + rnd + '.err'
 
-        # Overrideable methods to be used by derived classes to modify stuff
-        self.set_directives()
-        self.set_scripting()
-        self.set_environment()
- 
+        # Record local logs for access by gcylc
+        self.logfiles.add_path( self.stdout_file )
+        self.logfiles.add_path( self.stderr_file )
+
     def set_directives( self ):
         # OVERRIDE IN DERIVED CLASSES IF NECESSARY
         # self.directives['name'] = value
@@ -180,19 +192,6 @@ class job_submit(object):
         raise SystemExit( 'ERROR: no job submission command defined!' )
 
     def submit( self, dry_run ):
-        if self.__class__.dummy_mode:
-            # do this in submit() so that a dummy mode failout task 
-            # can be reset on resubmission (TO DO - check this).
-            if self.__class__.failout_id != self.task_id:
-                self.task_command = dummy_command
-            else: 
-                self.task_command = dummy_command_fail
-
-        # Record local logs for access by gcylc (or replace existing
-        # ones in case the job is resubmitted by the suite operator)
-        self.logfiles.replace_path( '/.*/' + self.task_id + '-.*\.out', self.stdout_file )
-        self.logfiles.replace_path( '/.*/' + self.task_id + '-.*\.err', self.stderr_file )
-
         jf = jobfile( self.task_id, 
                 self.__class__.cylc_env, self.__class__.global_env, self.task_env, 
                 self.__class__.global_pre_scripting, self.__class__.global_post_scripting, 
@@ -214,7 +213,7 @@ class job_submit(object):
 
     def submit_jobfile_local( self, dry_run  ):
         # add local jobfile to list of viewable logfiles
-        self.logfiles.replace_path( '/.*/cylc-.*', self.jobfile_path )
+        self.logfiles.add_path( self.jobfile_path )
 
         # make sure the jobfile is executable
         os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )

@@ -152,12 +152,6 @@ class task( Pyro.core.ObjBase ):
         self.etc = None
         self.to_go = None
 
-        self.launcher = get_object( self.job_submit_method, self.job_submit_method )\
-                ( self.id, self.external_task, self.env_vars, self.directives, 
-                        self.pre_scripting, self.post_scripting, self.logfiles, 
-                        self.job_submit_log_directory,
-                        self.__class__.owner, self.__class__.remote_host )
-
     def log( self, priority, message ):
         logger = logging.getLogger( "main" ) 
         message = '[' + self.id + '] -' + message
@@ -264,6 +258,15 @@ class task( Pyro.core.ObjBase ):
 
     def run_external_task( self, dry_run=False ):
         self.log( 'DEBUG',  'submitting task script' )
+        # construct the job launcher here so that a new one is used if
+        # the task is re-triggered by the suite operator - so it will
+        # get new stdout/stderr logfiles and not overwrite the old ones.
+        self.launcher = get_object( self.job_submit_method, self.job_submit_method )\
+                ( self.id, self.external_task, self.env_vars, self.directives, 
+                        self.pre_scripting, self.post_scripting, self.logfiles, 
+                        self.job_submit_log_directory,
+                        self.__class__.owner, self.__class__.remote_host )
+
         if self.launcher.submit( dry_run ):
             self.set_submitted()
             self.submission_timer_start = task.clock.get_datetime()
