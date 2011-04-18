@@ -182,19 +182,19 @@ class xupdater(threading.Thread):
             self.best_fit = False
 
     def add_graph_key(self):
-        self.graphw.add_node( 'waiting%YYYYMMDDHH' )
-        self.graphw.add_node( 'submitted%YYYYMMDDHH' )
-        self.graphw.add_node( 'running%YYYYMMDDHH' )
-        self.graphw.add_node( 'finished%YYYYMMDDHH' )
-        self.graphw.add_node( 'failed%YYYYMMDDHH' )
-        self.graphw.add_node( 'base%YYYYMMDDHH' )
+        self.graphw.add_node( 'waiting' )
+        self.graphw.add_node( 'submitted' )
+        self.graphw.add_node( 'running' )
+        self.graphw.add_node( 'finished' )
+        self.graphw.add_node( 'failed' )
+        self.graphw.add_node( 'base' )
 
-        waiting = self.graphw.get_node( 'waiting%YYYYMMDDHH' )
-        submitted = self.graphw.get_node( 'submitted%YYYYMMDDHH' )
-        running = self.graphw.get_node( 'running%YYYYMMDDHH' )
-        finished = self.graphw.get_node( 'finished%YYYYMMDDHH' )
-        failed = self.graphw.get_node( 'failed%YYYYMMDDHH' )
-        base = self.graphw.get_node( 'base%YYYYMMDDHH' )
+        waiting = self.graphw.get_node( 'waiting' )
+        submitted = self.graphw.get_node( 'submitted' )
+        running = self.graphw.get_node( 'running' )
+        finished = self.graphw.get_node( 'finished' )
+        failed = self.graphw.get_node( 'failed' )
+        base = self.graphw.get_node( 'base' )
 
         for node in [ waiting, submitted, running, finished, failed, base ]:
             node.attr['style'] = 'filled'
