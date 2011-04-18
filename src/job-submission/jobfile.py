@@ -97,7 +97,7 @@ class jobfile(object):
                 self.FILE.write( "\nexport " + var + "=\"" + str( self.global_env[var] ) + "\"" )
 
         if len( self.task_env.keys()) > 0:
-            self.FILE.write( "\n\n# TASK LOCAL VARIABLES:\n" )
+            self.FILE.write( "\n\n# TASK LOCAL VARIABLES:" )
             for var in self.task_env:
                 self.FILE.write( "\nexport " + var + "=\"" + str( self.task_env[var] ) + "\"" )
 
