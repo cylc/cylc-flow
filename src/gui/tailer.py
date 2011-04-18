@@ -4,28 +4,25 @@ import gobject
 import threading
 import os, re
 import tail
-#from warning_dialog import warning_dialog
 
 class tailer(threading.Thread):
-    def __init__( self, logview, log, proc=None, tag=None, err_tag=None, format=False ):
+    def __init__( self, logview, log, proc=None, tag=None, warning_re=None, critical_re=None ):
         super( tailer, self).__init__()
         self.logview = logview
         self.logbuffer = logview.get_buffer()
         self.logfile = log
         self.quit = False
         self.tag = tag
-        self.err_tag = err_tag
         self.proc = proc
         self.freeze = False
-        self.format = format
-
+        self.warning_re = warning_re
+        self.critical_re = critical_re
+        self.warning_tag = self.logbuffer.create_tag( None, foreground = "orangered" )
+        self.critical_tag = self.logbuffer.create_tag( None, foreground = "magenta" )
+ 
     def clear( self ):
         s,e = self.logbuffer.get_bounds()
         self.logbuffer.delete( s,e )
-
-    #def warn( self, message ):
-    #    warning_dialog( message ).warn()
-    #    return False
 
     def run( self ):
         #gobject.idle_add( self.clear )
@@ -60,15 +57,10 @@ class tailer(threading.Thread):
         #print "Disconnecting from tailer thread"
  
     def update_gui( self, line ):
-        #if self.format:
-        #    if re.match( '.*:', line):
-        #        pass
-        #    elif re.match( '^\s*$', line):
-        #        pass
-        #    else:
-        #        line = re.sub( r'\n', ' ', line )
-        if self.err_tag and re.search( 'WARNING|ERROR|CRITICAL', line ):
-            self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.err_tag )
+        if self.critical_re and re.search( self.critical_re, line ):
+            self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.critical_tag )
+        elif self.warning_re and re.search( self.warning_re, line ):
+            self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.warning_tag )
         elif self.tag:
             self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.tag )
         else:

@@ -8,13 +8,14 @@ import tail
 #from warning_dialog import warning_dialog
 
 class filtered_tailer( tailer ):
-    def __init__( self, logview, log, filters ):
+    def __init__( self, logview, log, filters, tag=None,
+            warning_re=None, critical_re=None ):
         self.filters = filters
-        tailer.__init__( self, logview, log )
+        tailer.__init__( self, logview, log, tag=tag, 
+                warning_re=warning_re, critical_re=critical_re )
 
     def run( self ):
         #gobject.idle_add( self.clear )
-
         if not os.path.exists( self.logfile ):
             #gobject.idle_add( self.warn, "File not found: " + self.logfile )
             #print "File not found: " + self.logfile

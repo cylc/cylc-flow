@@ -2021,7 +2021,13 @@ The cylc forecast suite metascheduler.
         clv.quit()
 
     def view_log( self, w, suite ):
-        suiterc = config( suite )
+        try:
+            suiterc = config( suite )
+        except SuiteConfigError, x:
+            warning_dialog( str(x) + \
+                    '\n\nThe suite.rc file must be parsed\n'
+                    ' to determine the suite log path.' ).warn()
+            return
         logdir = os.path.join( suiterc['top level logging directory'], suite )
         cylc_logviewer( 'log', logdir, suiterc.get_task_name_list() )
 

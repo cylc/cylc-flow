@@ -16,7 +16,9 @@ class cylc_logviewer( logviewer ):
         self.level = 0
         self.task_filter = None
         self.custom_filter = None
-        logviewer.__init__( self, name, dir, self.main_log )
+
+        logviewer.__init__( self, name, dir, self.main_log, 
+                warning_re = 'WARNING', critical_re = 'CRITICAL' )
 
     def create_gui_panel( self ):
         logviewer.create_gui_panel( self )
@@ -136,9 +138,11 @@ the suite has been restarted.""" ).warn()
         self.log_label.set_text( self.path() ) 
         if self.task_filter or self.custom_filter:
             filters = [self.task_filter, self.custom_filter ]
-            self.t = filtered_tailer( self.logview, self.path(), filters )
+            self.t = filtered_tailer( self.logview, self.path(), filters, 
+                    warning_re = 'WARNING', critical_re = 'CRITICAL' )
         else:
-            self.t = tailer( self.logview, self.path() )
+            self.t = tailer( self.logview, self.path(), 
+                    warning_re = 'WARNING', critical_re = 'CRITICAL' )
         ###print "Starting log viewer thread"
         self.t.start()
 

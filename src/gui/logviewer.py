@@ -8,7 +8,7 @@ from warning_dialog import warning_dialog
 from tailer import tailer
 
 class logviewer(object):
-    def __init__( self, name, dir, file ):
+    def __init__( self, name, dir, file, warning_re=None, critical_re=None ):
         self.name = name
         self.dir = dir
         self.file = file
@@ -18,6 +18,10 @@ class logviewer(object):
         self.search_warning_done = False
 
         self.create_gui_panel()
+        logbuffer = self.logview.get_buffer()
+
+        self.critical_re = critical_re
+        self.warning_re = warning_re
 
         self.connect()
 
@@ -38,7 +42,8 @@ class logviewer(object):
             return self.file 
 
     def connect( self ):
-        self.t = tailer( self.logview, self.path() )
+        self.t = tailer( self.logview, self.path(),
+                warning_re=self.warning_re, critical_re=self.critical_re)
         ####print "Starting log viewer thread for " + self.name
         self.t.start()
    

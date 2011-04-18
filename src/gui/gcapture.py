@@ -16,7 +16,9 @@ Run a command as a subprocess and capture its stdout and stderr in real
 time, to display in a GUI window. Examples:
     $ capture "echo foo"
     $ capture "echo hello && sleep 5 && echo bye"
-Lines matching WARNING or ERROR are displayed in red.
+Lines containing:
+  'CRITICAL', 'WARNING', 'ERROR', 'error', 'failed'
+are displayed in red.
     $ capture "echo foo && echox bar"
     """
     def __init__( self, command, stdoutfile, width=400, height=400, standalone=False, ignore_command=False ):
@@ -44,8 +46,10 @@ Lines matching WARNING or ERROR are displayed in red.
         tb = self.textview.get_buffer()
 
         self.blue = tb.create_tag( None, foreground = "darkblue" )
-        self.red = tb.create_tag( None, foreground = "red" )
         self.ftag = tb.create_tag( None, background="#70FFA9" )
+
+        self.warning_re = 'WARNING'
+        self.critical_re = 'CRITICAL|ERROR|error|failed'
 
         if not self.ignore_command:
             tb.insert_with_tags( tb.get_end_iter(), 'command: ' + command + '\n', self.blue )
@@ -95,9 +99,9 @@ Lines matching WARNING or ERROR are displayed in red.
     def run( self ):
         if not self.ignore_command:
             self.proc = subprocess.Popen( self.command, stdout=self.stdout, stderr=subprocess.STDOUT, shell=True )
-            self.stdout_updater = tailer( self.textview, self.stdout.name, proc=self.proc, err_tag=self.red, format=True )
+            self.stdout_updater = tailer( self.textview, self.stdout.name, proc=self.proc, warning_re=self.warning_re, critical_re=self.critical_re )
         else:
-            self.stdout_updater = tailer( self.textview, self.stdout.name, err_tag=self.red, format=True )
+            self.stdout_updater = tailer( self.textview, self.stdout.name, warning_re=self.warning_re, critical_re=self.critical_re )
         self.stdout_updater.start()
 
     def freeze( self, b ):
