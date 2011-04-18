@@ -61,8 +61,10 @@ class job_submit(object):
         self.suite_owner = os.environ['USER']
         if task_owner:
             self.task_owner = task_owner
+            self.other_owner = True
         else:
             self.task_owner = self.suite_owner
+            self.other_owner = False
 
         if remote_host:
             # Remote job submission
@@ -118,11 +120,19 @@ class job_submit(object):
             # (created if necessary in config.py)
             self.joblog_dir = self.__class__.joblog_dir
 
-        # Make joblog_dir relative to $HOME for owned or remote tasks by
-        # cutting the suite owner's $HOME from the path (if it exists;
-        # if not - e.g. remote path specified absolutely - this will
-        # have no effect).
-        self.joblog_dir = re.sub( os.environ['HOME'] + '/', '', self.joblog_dir )
+        if not self.local_job_submit:
+            # Make joblog_dir relative to $HOME for remote tasks by
+            # cutting the suite owner's $HOME from the path (if it exists;
+            # if not - e.g. remote path specified absolutely - this will
+            # have no effect).
+            self.joblog_dir = re.sub( os.environ['HOME'] + '/', '', self.joblog_dir )
+        else:
+            # local jobs
+            if self.other_owner:
+                # make joblogdir relative to owner's home dir
+                self.joblog_dir = re.sub( os.environ['HOME'] + '/', self.homedir, self.joblog_dir )
+            else:
+                pass
 
         # Generate stdout and stderr log files
         if self.local_job_submit:
