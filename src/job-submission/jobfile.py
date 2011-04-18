@@ -8,7 +8,7 @@ class jobfile(object):
     def __init__( self, task_id, cylc_env, global_env, task_env, 
             global_pre_scripting, global_post_scripting, 
             task_pre_scripting, task_post_scripting, 
-            directive_prefix, directives, task_command, 
+            directive_prefix, directives, final_directive, task_command, 
             shell, dummy_mode, job_submission_method):
 
         self.task_id = task_id
@@ -20,6 +20,7 @@ class jobfile(object):
         self.task_pre_scripting = task_pre_scripting
         self.task_post_scripting = task_post_scripting
         self.directive_prefix = directive_prefix
+        self.final_directive = final_directive
         self.directives = directives
         self.task_command = task_command
         self.shell = shell

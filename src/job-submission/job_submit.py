@@ -197,7 +197,8 @@ class job_submit(object):
                 self.__class__.cylc_env, self.__class__.global_env, self.task_env, 
                 self.__class__.global_pre_scripting, self.__class__.global_post_scripting, 
                 self.task_pre_scripting, self.task_post_scripting, 
-                self.directive_prefix, self.directives, self.task_command, 
+                self.directive_prefix, self.directives,
+                self.final_directive, self.task_command, 
                 self.__class__.shell, self.__class__.dummy_mode,
                 self.__class__.__name__ )
         self.jobfile_path = jf.write()
