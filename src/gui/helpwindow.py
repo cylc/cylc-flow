@@ -409,6 +409,13 @@ start part of a suite after certain problems have occured). These must
 be defined in the suite.rc file [task insertion groups] section.""")
     help.show()
 
+def submit( b ):
+    help = helpwindow( "Submit Task Help", 200, """
+Submit a single task to run exactly as it would be submitted from within
+a running suite.""")
+    help.show()
+
+
 #-----------------------------------------------------------------------
 # TO DO: THE FOLLOWING HELP WINDOWS SHOULD BE REDONE IN FORMATTED STRING 
 # FORM, AS ABOVE.

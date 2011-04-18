@@ -907,6 +907,10 @@ The cylc forecast suite metascheduler.
                 menu.append( cong_item )
                 cong_item.connect( 'activate', self.launch_controller, reg, state, True )
 
+                subm_item = gtk.MenuItem( '_Submit (single task)')
+                menu.append( subm_item )
+                subm_item.connect( 'activate', self.submit_task_popup, reg )
+
                 out_item = gtk.MenuItem( 'View _Output')
                 menu.append( out_item )
                 out_item.connect( 'activate', self.view_output, reg, state )
@@ -1913,7 +1917,49 @@ The cylc forecast suite metascheduler.
             else:
                 warning_dialog( result.reason ).warn()
 
+    def submit_task_popup( self, w, reg ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Submit Task from Suite '" + reg + "'")
 
+        vbox = gtk.VBox()
+
+        dryrun_cb = gtk.CheckButton( "Dry Run (just generate the job script)" )
+        vbox.pack_start (dryrun_cb, True)
+
+        label = gtk.Label("Task ID (NAME%YYYYMMDDHH)" )
+        task_entry = gtk.Entry()
+        hbox = gtk.HBox()
+        hbox.pack_start( label, True )
+        hbox.pack_start(task_entry, True) 
+        vbox.pack_start( hbox )
+ 
+        cancel_button = gtk.Button( "_Close" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        ok_button = gtk.Button( "_Submit" )
+        ok_button.connect("clicked", self.submit_task, reg, dryrun_cb, task_entry )
+
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.submit )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( ok_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def submit_task( self, w, reg, dryrun_cb, task_entry ):
+        options = ''
+        if dryrun_cb.get_active():
+            options = '--dry-run'
+        command = "cylc submit " + options + " " + reg + " " + task_entry.get_text()
+        foo = gcapture_tmpfile( command, self.tmpdir, 500, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
 
     def describe_suite( self, w, name ):
         command = "cylc describe " + name  
