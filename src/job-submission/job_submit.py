@@ -130,7 +130,7 @@ class job_submit(object):
             # local jobs
             if self.other_owner:
                 # make joblogdir relative to owner's home dir
-                self.joblog_dir = re.sub( os.environ['HOME'] + '/', self.homedir, self.joblog_dir )
+                self.joblog_dir = re.sub( os.environ['HOME'], self.homedir, self.joblog_dir )
             else:
                 pass
 
