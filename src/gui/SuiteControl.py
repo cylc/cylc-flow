@@ -741,12 +741,20 @@ The cylc forecast suite metascheduler.
         hbox.pack_start (entry_ctime, True)
         vbox.pack_start(hbox)
 
+        hbox = gtk.HBox()
+        label = gtk.Label( 'Optional Final Cycle Time' )
+        hbox.pack_start( label, True )
+        entry_stopctime = gtk.Entry()
+        entry_stopctime.set_max_length(10)
+        hbox.pack_start (entry_stopctime, True)
+        vbox.pack_start(hbox)
+ 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.insertion )
 
         hbox = gtk.HBox()
         insert_button = gtk.Button( "_Insert" )
-        insert_button.connect("clicked", self.insert_task, window, entry_name, entry_ctime )
+        insert_button.connect("clicked", self.insert_task, window, entry_name, entry_ctime, entry_stopctime )
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         hbox.pack_start(insert_button, False)
@@ -757,7 +765,7 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def insert_task( self, w, window, entry_name, entry_ctime ):
+    def insert_task( self, w, window, entry_name, entry_ctime, entry_stopctime ):
         name = entry_name.get_text()
         ctime = entry_ctime.get_text()
         if not cycle_time.is_valid( ctime ):
@@ -766,11 +774,18 @@ The cylc forecast suite metascheduler.
         if name == '':
             warning_dialog( "Enter task or group name" ).warn()
             return
+        stopctime = entry_stopctime.get_text()
+        if not cycle_time.is_valid( stopctime ):
+            warning_dialog( "Cycle time not valid: " + stopctime ).warn()
+            return
         window.destroy()
-        task_id = name + '%' + ctime
+        if stopctime == '':
+            stop = None
+        else:
+            stop = stopctime
         proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
         try:
-            result = proxy.insert( task_id )
+            result = proxy.insert( name + '%' + ctime, stop )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
         else:
