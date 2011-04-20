@@ -48,6 +48,7 @@ class edge( object):
         self.right = r
 
     def get_right( self, ctime, not_first_cycle, raw, startup_only, exclude ):
+        # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
         if self.right in exclude:
             return None
         first_cycle = not not_first_cycle
@@ -57,6 +58,7 @@ class edge( object):
         return self.right + '%' + ctime
 
     def get_left( self, ctime, not_first_cycle, raw, startup_only, exclude ):
+        # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
         #if re.search( '\|', self.left_group ):
         OR_list = re.split('\s*\|\s*', self.left_group )
 
@@ -135,6 +137,7 @@ class node( object):
         self.group = n
 
     def get( self, ctime, not_first_cycle, raw, startup_only, exclude ):
+        # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
         #if re.search( '\|', self.left_group ):
         OR_list = re.split('\s*\|\s*', self.group )
 
@@ -387,19 +390,6 @@ class config( CylcConfigObj ):
             else:
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
-        # parse temporary tasks
-        self.final_cycle_times = {}
-        for item in self['special tasks']['final cycle times']:
-            m = re.match( '(\w+)\s*\(\s*([\d]{10})\s*\)', item )
-            if m:
-                task, offset = m.groups()
-                try:
-                    self.final_cycle_times[ task ] = int( offset )
-                except ValueError:
-                    raise SuiteConfigError, "ERROR: Illegal final cycle time: " + offset
-            else:
-                raise SuiteConfigError, "ERROR: Illegal temporary task spec: " + item
-
         # parse families
         self.member_of = {}
         self.members = {}
@@ -457,7 +447,7 @@ class config( CylcConfigObj ):
         # warn if listed special tasks are not defined
         for type in self['special tasks']:
             for name in self['special tasks'][type]:
-                if type == 'clock-triggered' or 'temporary':
+                if type == 'clock-triggered':
                     name = re.sub('\(.*\)','',name)
                 if re.search( '[^0-9a-zA-Z_]', name ):
                     raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
@@ -545,13 +535,6 @@ class config( CylcConfigObj ):
 
     def get_startup_task_list( self ):
         return self['special tasks']['startup']
-
-    def get_finalized_task_list( self, ctime ):
-        res = []
-        for name in self.final_cycle_times:
-            if int(self.final_cycle_times[name]) < int(ctime):
-                res.append(name)
-        return res
 
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
@@ -826,7 +809,7 @@ class config( CylcConfigObj ):
             while True:
                 hour = cycles[i]
                 for n in self.lone_nodes[hour]:
-                    item = n.get(ctime, started, raw, startup_exclude_list, self.get_finalized_task_list( ctime ))
+                    item = n.get(ctime, started, raw, startup_exclude_list, [])
                     if item == None:
                         # TO DO: why this test?
                         continue
@@ -855,8 +838,8 @@ class config( CylcConfigObj ):
                 hour = cycles[i]
 
                 for e in self.edges[hour]:
-                    right = e.get_right(ctime, started, raw, startup_exclude_list, self.get_finalized_task_list(ctime))
-                    left  = e.get_left( ctime, started, raw, startup_exclude_list, self.get_finalized_task_list(ctime))
+                    right = e.get_right(ctime, started, raw, startup_exclude_list, [])
+                    left  = e.get_left( ctime, started, raw, startup_exclude_list, [])
                     if left == None or right == None:
                         # TO DO: why this test?
                         continue
@@ -1059,11 +1042,6 @@ class config( CylcConfigObj ):
             taskd.modifiers.append( 'clocktriggered' )
             taskd.clocktriggered_offset = self.clock_offsets[name]
 
-        # SET TEMPORARY TASKS
-        if name in self.final_cycle_times:
-            taskd.modifiers.append( 'temporary' )
-            taskd.final_cycle_time = self.final_cycle_times[name]
-
         if name not in self['tasks']:
             if strict:
                 raise SuiteConfigError, 'Task not defined: ' + name
@@ -1117,20 +1095,21 @@ class config( CylcConfigObj ):
 
         return taskd
 
-    def get_task_proxy( self, name, ctime, state, startup ):
+    def get_task_proxy( self, name, ctime, state, stopctime, startup ):
         # get a proxy for a task in the dependency graph.
         if not self.loaded:
             # load all tasks defined by the graph
             self.load_tasks()
-        return self.taskdefs[name].get_task_class()( ctime, state, startup )
+        return self.taskdefs[name].get_task_class()( ctime, state, stopctime, startup )
 
-    def get_task_proxy_raw( self, name, ctime, state, startup, test=False, strict=True ):
+    def get_task_proxy_raw( self, name, ctime, state, stopctime,
+            startup, test=False, strict=True ):
         # GET A PROXY FOR A TASK THAT IS NOT GRAPHED - i.e. call this
         # only if get_task_proxy() raises a KeyError.
 
         # This allows us to 'cylc submit'
-        # single tasks that are defined in suite.rc but not currently in
-        # the running suite.  Because the graph defines valid 
+        # single tasks that are defined in suite.rc but not in
+        # the suite graph.  Because the graph defines valid 
         # cycle times, however, we must use [tasks][[name]]hours or, if
         # the hours entry is not defined, assume that the requested 
         # ctime is valid for the task.
@@ -1155,7 +1134,7 @@ class config( CylcConfigObj ):
             td.hours = [ chour ]
         else:
             td.hours = [ int(i) for i in hours ]
-        tdclass = td.get_task_class()( ctime, 'waiting', startup )
+        tdclass = td.get_task_class()( ctime, 'waiting', startup, stopctime )
         return tdclass
 
     def get_task_class( self, name ):

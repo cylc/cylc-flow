@@ -631,15 +631,23 @@ class scheduler(object):
 
                 # dynamic task object creation by task and module name
                 new_task = itask.spawn( 'waiting' )
+                stop_me = False
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
-                    # we've reached the stop time: delete the new task 
-                    new_task.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
+                    # we've reached the suite stop time: delete the new task 
+                    new_task.log( 'WARNING', "STOPPING at configured suite stop time " + self.stop_time )
+                    stop_me = True
+                if itask.stop_c_time and int( new_task.c_time ) > int( itask.stop_c_time ):
+                    # this task has a stop time configured, and we've reached it: delete the new task 
+                    new_task.log( 'WARNING', "STOPPING at configured task stop time " + itask.stop_c_time )
+                    stop_me = True
+                if stop_me:
                     new_task.prepare_for_death()
                     del new_task
                 else:
+                    # perpetuate the task stop time, if there is one
+                    new_task.stop_c_time = itask.stop_c_time
                     # no stop time, or we haven't reached it yet.
                     self.insert( new_task )
-
 
     def force_spawn( self, itask ):
         if itask.state.has_spawned():
@@ -1011,7 +1019,7 @@ class scheduler(object):
                 # the task had no "failed" output
                 pass
 
-    def insertion( self, ins_id ):
+    def insertion( self, ins_id, stop_c_time=None ):
         #import pdb
         #pdb.set_trace()
 
@@ -1037,10 +1045,10 @@ class scheduler(object):
             # Instantiate the task proxy object
             gotit = False
             try:
-                itask = self.config.get_task_proxy( name, c_time, 'waiting', startup=False )
+                itask = self.config.get_task_proxy( name, c_time, 'waiting', stopctime, startup=False )
             except KeyError, x:
                 try:
-                    itask = self.config.get_task_proxy_raw( name, c_time, 'waiting', startup=False )
+                    itask = self.config.get_task_proxy_raw( name, c_time, 'waiting', stopctime, startup=False )
                 except SuiteConfigError,x:
                     self.log.warning( str(x) )
                     rejected.append( name + '%' + c_time )

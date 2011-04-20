@@ -123,7 +123,7 @@ Arguments:
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
     
         for name in task_list:
-            itask = self.config.get_task_proxy( name, self.start_time, 'waiting', startup=True )
+            itask = self.config.get_task_proxy( name, self.start_time, 'waiting', stopctime=None, startup=True )
             # check stop time in case the user has set a very quick stop
             if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
                 # we've reached the stop time already: delete the new task 
@@ -146,7 +146,7 @@ Arguments:
             self.log.warning( "THIS SUITE HAS NOT DEFINED THE 'coldstart task list' CONFIG ITEM" )
         for name in task_list:
             # (startup=True is only for coldstart)
-            itask = self.config.get_task_proxy( name, self.start_time, 'waiting', startup=False )
+            itask = self.config.get_task_proxy( name, self.start_time, 'waiting', stopctime=None, startup=False )
             if name in coldstart_tasks:
                 itask.log( 'WARNING', "warm start: starting in finished state" )
                 itask.state.set_status( 'finished' )
@@ -180,7 +180,7 @@ Arguments:
 
         for name in task_list:
             # startup=True only for coldstart
-            itask = self.config.get_task_proxy( name, self.start_time, 'waiting', startup=False )
+            itask = self.config.get_task_proxy( name, self.start_time, 'waiting', stopctime=None, startup=False )
             if name in coldstart_tasks or name in startup_tasks:
                 itask.log( 'WARNING', "This is a raw start: I will self-destruct." )
                 itask.prepare_for_death()
