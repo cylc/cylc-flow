@@ -387,18 +387,18 @@ class config( CylcConfigObj ):
             else:
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
-        # parse spinup tasks
-        self.spinup_offsets = {}
-        for item in self['special tasks']['spinup']:
-            m = re.match( '(\w+)\s*\(\s*([\d]+)\s*\)', item )
+        # parse temporary tasks
+        self.final_cycle_times = {}
+        for item in self['special tasks']['final cycle times']:
+            m = re.match( '(\w+)\s*\(\s*([\d]{10})\s*\)', item )
             if m:
                 task, offset = m.groups()
                 try:
-                    self.spinup_offsets[ task ] = int( offset )
+                    self.final_cycle_times[ task ] = int( offset )
                 except ValueError:
-                    raise SuiteConfigError, "ERROR: Illegal spinup offset: " + offset
+                    raise SuiteConfigError, "ERROR: Illegal final cycle time: " + offset
             else:
-                raise SuiteConfigError, "ERROR: Illegal spinup task spec: " + item
+                raise SuiteConfigError, "ERROR: Illegal temporary task spec: " + item
 
         # parse families
         self.member_of = {}
@@ -457,7 +457,7 @@ class config( CylcConfigObj ):
         # warn if listed special tasks are not defined
         for type in self['special tasks']:
             for name in self['special tasks'][type]:
-                if type == 'clock-triggered' or type == 'spinup':
+                if type == 'clock-triggered' or 'temporary':
                     name = re.sub('\(.*\)','',name)
                 if re.search( '[^0-9a-zA-Z_]', name ):
                     raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
@@ -546,10 +546,10 @@ class config( CylcConfigObj ):
     def get_startup_task_list( self ):
         return self['special tasks']['startup']
 
-    def get_spinup_task_list( self, ctime ):
+    def get_finalized_task_list( self, ctime ):
         res = []
-        for name in self.spinup_offsets:
-            if int(self.spinup_offsets[name]) < int(ctime):
+        for name in self.final_cycle_times:
+            if int(self.final_cycle_times[name]) < int(ctime):
                 res.append(name)
         return res
 
@@ -826,7 +826,7 @@ class config( CylcConfigObj ):
             while True:
                 hour = cycles[i]
                 for n in self.lone_nodes[hour]:
-                    item = n.get(ctime, started, raw, startup_exclude_list, self.get_spinup_task_list( ctime ))
+                    item = n.get(ctime, started, raw, startup_exclude_list, self.get_finalized_task_list( ctime ))
                     if item == None:
                         # TO DO: why this test?
                         continue
@@ -855,8 +855,8 @@ class config( CylcConfigObj ):
                 hour = cycles[i]
 
                 for e in self.edges[hour]:
-                    right = e.get_right(ctime, started, raw, startup_exclude_list, self.get_spinup_task_list(ctime))
-                    left  = e.get_left( ctime, started, raw, startup_exclude_list, self.get_spinup_task_list(ctime))
+                    right = e.get_right(ctime, started, raw, startup_exclude_list, self.get_finalized_task_list(ctime))
+                    left  = e.get_left( ctime, started, raw, startup_exclude_list, self.get_finalized_task_list(ctime))
                     if left == None or right == None:
                         # TO DO: why this test?
                         continue
@@ -1059,10 +1059,10 @@ class config( CylcConfigObj ):
             taskd.modifiers.append( 'clocktriggered' )
             taskd.clocktriggered_offset = self.clock_offsets[name]
 
-        # SET SPINUP TASKS
-        if name in self.spinup_offsets:
-            taskd.modifiers.append( 'spinup' )
-            taskd.spinup_offset = self.spinup_offsets[name]
+        # SET TEMPORARY TASKS
+        if name in self.final_cycle_times:
+            taskd.modifiers.append( 'temporary' )
+            taskd.final_cycle_time = self.final_cycle_times[name]
 
         if name not in self['tasks']:
             if strict:

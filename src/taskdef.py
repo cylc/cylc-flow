@@ -69,6 +69,7 @@ class taskdef(object):
         self.follow_on_task = None
 
         self.clocktriggered_offset = None
+        self.final_cycle_time = None
 
         # triggers[0,6] = [ A, B:1, C(T-6), ... ]
         self.triggers = OrderedDict()         
@@ -121,9 +122,9 @@ class taskdef(object):
             if self.clocktriggered_offset == None:
                 raise DefinitionError( 'ERROR: clock-triggered tasks must specify a time offset' )
 
-        #if 'spinup' in self.modifiers:
-        #    if self.spinup_offset == None:
-        #        raise DefinitionError( 'ERROR: spinup tasks must specify a cycle time offset' )
+        if 'temporary' in self.modifiers:
+            if self.final_cycle_time == None:
+                raise DefinitionError( 'ERROR: temporary tasks must specify a final cycle time' )
 
         if self.member_of and len( self.members ) > 0:
             raise DefinitionError( 'ERROR: nested task families are not allowed' )
@@ -177,10 +178,7 @@ class taskdef(object):
 
         tclass = type( self.name, tuple( base_types), dict())
         tclass.name = self.name        # TO DO: NOT NEEDED, USED class.__name__
-
         tclass.instance_count = 0
-        tclass.final_cycle_time = None
-
         tclass.description = self.description
 
         tclass.elapsed_times = []
@@ -276,18 +274,9 @@ class taskdef(object):
         # class init function
         def tclass_init( sself, c_time, initial_state, startup = False ):
             # adjust cycle time to next valid for this task
-
-            if 'spinup' in self.modifiers and tclass.instance_count == 0:
-                tclass.final_cycle_time = sself.nearest_c_time( c_time )
-                sself.c_time = cycle_time.decrement( tclass.final_cycle_time,  self.spinup_offset )
-            else:
-                sself.c_time = sself.nearest_c_time( c_time )
-
+            sself.c_time = sself.nearest_c_time( c_time )
             sself.tag = sself.c_time
             sself.id = sself.name + '%' + sself.c_time
-
-            print sself.id, tclass.final_cycle_time
-
             sself.c_hour = sself.c_time[8:10]
             sself.orig_c_hour = c_time[8:10]
  
@@ -298,6 +287,9 @@ class taskdef(object):
  
             if 'clocktriggered' in self.modifiers:
                 sself.real_time_delay =  float( self.clocktriggered_offset )
+
+            if 'temporary' in self.modifiers:
+                sself.final_cycle_time = self.final_cycle_time
 
             # prerequisites
             sself.prerequisites = prerequisites()
@@ -355,8 +347,6 @@ class taskdef(object):
                 catchup_clocktriggered.__init__( sself )
  
             super( sself.__class__, sself ).__init__( initial_state ) 
-
-            tclass.instance_count += 1
 
         tclass.__init__ = tclass_init
 

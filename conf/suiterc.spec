@@ -91,7 +91,7 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
     # offset can be a float:
     clock-triggered = force_list( default=list())
     # final cycle time must be specified:
-    spinup = force_list( default=list() )
+    final cycle times = force_list( default=list() )
 
 [task families]
     __many__ = force_list( default=None )
