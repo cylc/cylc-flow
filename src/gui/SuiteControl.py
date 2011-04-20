@@ -618,7 +618,7 @@ The cylc forecast suite metascheduler.
         stpaused_group = controlled_option_group( "Pause Immediately", "--paused" )
         stpaused_group.pack( vbox )
 
-        debug_group = controlled_option_group( "Debug Mode", "--debug" )
+        debug_group = controlled_option_group( "Debug", "--debug" )
         debug_group.pack( vbox )
 
         optgroups = [ dmode_group, debug_group, stpaused_group ]

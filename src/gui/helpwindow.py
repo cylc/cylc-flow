@@ -514,10 +514,10 @@ def start_guide(w):
             "immediate intervention in its state (e.g. inserting or "
             "removing tasks) before resuming operation.")
 
-    update_tb( tb, "\n\n o Debug Mode", [bold, red] )
+    update_tb( tb, "\n\n o Debug", [bold, red] )
     update_tb( tb, " - OPTIONAL.", [bold,red2])
-    update_tb( tb, "\nPrint exception tracebacks on error, rather than "
-            "just the error message.")
+    update_tb( tb, "\nPrint exception tracebacks if an error occurs (otherwise just "
+            "the error message is printed).")
 
     window.show_all()
  

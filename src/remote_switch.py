@@ -86,7 +86,7 @@ class remote_switch( Pyro.core.ObjBase ):
             self.process_tasks = True
             return result( True )
 
-    def insert( self, ins_id ):
+    def insert( self, ins_id, stop_c_time=None ):
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )
         ins_name = self._name_from_id( ins_id )
@@ -99,7 +99,7 @@ class remote_switch( Pyro.core.ObjBase ):
             # TO DO: DOES EQUALITY TEST FAIL IF INS IS A GROUP?
             self._reset_failout()
         try:
-            inserted, rejected = self.pool.insertion( ins )
+            inserted, rejected = self.pool.insertion( ins, stop_c_time )
         except Exception, x:
             self._warning( 'Remote insert failed: ' + x.__str__() )
             return result( False, "Action failed: "  + x.__str__() )

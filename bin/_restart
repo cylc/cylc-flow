@@ -187,7 +187,7 @@ Arguments:
                 continue
 
             # startup=True only for coldstart
-            itask = self.config.get_task_proxy( name, c_time, state, startup=False )
+            itask = self.config.get_task_proxy( name, c_time, state, stopctime=None, startup=False )
 
             if itask.state.is_finished():  
                 # must have satisfied prerequisites and completed outputs

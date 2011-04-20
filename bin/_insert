@@ -6,14 +6,15 @@ import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 
-parser = PromptOptionParser( """cylc [control] insert [options] SUITE ID
+parser = PromptOptionParser( """cylc [control] insert [options] SUITE TASK[%STOP]
 
 Insert a single task or a task group into a running suite. Task groups must be
 defined in the suite config (suite.rc) file.
 
 Inserted tasks will spawn successors as normal, unless they are 'oneoff' tasks.
 See also 'cylc task submit', for running single tasks without a scheduler.""",
-[ 'ID                   Identity of a task or group to insert (NAME%YYYYMMDDHH)']
+[ 'TASK                   Identity of a task or group to insert (NAME%YYYYMMDDHH)',
+  'STOP                   Optional stop cycle for an inserted task (YYYYMMDDHH)' ]
 )
 
 (options, args) = parser.parse_args()
@@ -26,7 +27,7 @@ target = args[1]
 suite = parser.get_suite_name()
 
 try:
-    ( name, cycle ) = target.split('%')
+    ( name, cycle, stop ) = target.split('%')
 except ValueError:
     parser.error( "Task or Group ID must be NAME%YYYYMMDDHH")
 if not cycle_time.is_valid( cycle ):
@@ -40,7 +41,7 @@ except SuiteIdentificationError, x:
 if not parser.prompt( 'Insert ' + target + ' in'):
     sys.exit(0)
 
-result = proxy.insert( target )
+result = proxy.insert( name + '%' + cycle, stop )
 
 if result.success:
     print result.reason

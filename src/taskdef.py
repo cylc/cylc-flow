@@ -270,8 +270,7 @@ class taskdef(object):
         def tclass_init( sself, start_c_time, initial_state, stop_c_time=None, startup=False ):
             # adjust cycle time to next valid for this task
             sself.c_time = sself.nearest_c_time( start_c_time )
-            if stop_c_time:
-                sself.stop_c_time = stop_c_time
+            sself.stop_c_time = stop_c_time
             sself.tag = sself.c_time
             sself.id = sself.name + '%' + sself.c_time
             sself.c_hour = sself.c_time[8:10]

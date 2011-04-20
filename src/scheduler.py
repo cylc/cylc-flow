@@ -1045,10 +1045,10 @@ class scheduler(object):
             # Instantiate the task proxy object
             gotit = False
             try:
-                itask = self.config.get_task_proxy( name, c_time, 'waiting', stopctime, startup=False )
+                itask = self.config.get_task_proxy( name, c_time, 'waiting', stop_c_time, startup=False )
             except KeyError, x:
                 try:
-                    itask = self.config.get_task_proxy_raw( name, c_time, 'waiting', stopctime, startup=False )
+                    itask = self.config.get_task_proxy_raw( name, c_time, 'waiting', stop_c_time, startup=False )
                 except SuiteConfigError,x:
                     self.log.warning( str(x) )
                     rejected.append( name + '%' + c_time )
