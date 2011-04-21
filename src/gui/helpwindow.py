@@ -415,6 +415,18 @@ Submit a single task to run exactly as it would be submitted from within
 a running suite.""")
     help.show()
 
+def add_prerequisite( b ):
+    help = helpwindow( "Add a Prerequisite Help", 200, """
+Add a dependency on the fly to a task in a running suite. If you
+specify a task ID (NAME%YYYYMMDDHH) the target TASK will depend on
+it finishing, otherwise you can specify an explicit prerequisite message
+such as "Data files uploaded for 2011080806" (presumably there will be
+another task in the suite, or you will insert one, that reports that
+message as an output). Note that prerequisites added on the fly will not
+be propagated to the successors of TASK, and they will not persist in
+TASK across a suite restart.""")
+    help.show()
+
 
 #-----------------------------------------------------------------------
 # TO DO: THE FOLLOWING HELP WINDOWS SHOULD BE REDONE IN FORMATTED STRING 

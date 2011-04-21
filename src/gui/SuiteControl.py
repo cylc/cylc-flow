@@ -313,7 +313,7 @@ The cylc forecast suite metascheduler.
 
         items.append( gtk.SeparatorMenuItem() )
     
-        addprereq_item = gtk.MenuItem( 'Add A Prerequisite' )
+        addprereq_item = gtk.MenuItem( 'Add a Prerequisite' )
         items.append( addprereq_item )
         addprereq_item.connect( 'activate', self.add_prerequisite_popup, task_id )
         if self.readonly:
@@ -333,7 +333,7 @@ The cylc forecast suite metascheduler.
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
         vbox = gtk.VBox()
-        label = gtk.Label( 'Task (YYYYMMDDHH) or message' )
+        label = gtk.Label( 'Task (NAME%YYYYMMDDHH) or prerequisite message' )
 
         entry = gtk.Entry()
         #entry.connect( "activate", self.add_prerequisite_entry, window, task_id )
@@ -354,9 +354,8 @@ The cylc forecast suite metascheduler.
         hbox.pack_start(start_button, True)
         vbox.pack_start( hbox )
 
-        # TO DO:
-        #help_button = gtk.Button( "Help" )
-        #help_button.connect("clicked", self.purge_guide )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.add_prerequisite )
 
         window.add( vbox )
         window.show_all()
