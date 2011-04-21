@@ -311,7 +311,86 @@ The cylc forecast suite metascheduler.
         if self.readonly:
             purge_item.set_sensitive(False)
 
+        items.append( gtk.SeparatorMenuItem() )
+    
+        addprereq_item = gtk.MenuItem( 'Add A Prerequisite' )
+        items.append( addprereq_item )
+        addprereq_item.connect( 'activate', self.add_prerequisite_popup, task_id )
+        if self.readonly:
+            addprereq_item.set_sensitive(False)
+
         return items
+
+    def add_prerequisite_popup( self, b, task_id ):
+        window = gtk.Window()
+        window.modify_bg( gtk.STATE_NORMAL, 
+                gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_border_width(5)
+        window.set_title( "Add A Prequisite To " + task_id )
+        #window.set_size_request(800, 300)
+
+        sw = gtk.ScrolledWindow()
+        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+
+        vbox = gtk.VBox()
+        label = gtk.Label( 'Task (YYYYMMDDHH) or message' )
+
+        entry = gtk.Entry()
+        #entry.connect( "activate", self.add_prerequisite_entry, window, task_id )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( label, True )
+        hbox.pack_start (entry, True)
+        vbox.pack_start( hbox )
+
+        cancel_button = gtk.Button( "_Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        start_button = gtk.Button( "_Add" )
+        start_button.connect("clicked", self.add_prerequisite, entry, window, task_id )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, True )
+        hbox.pack_start(start_button, True)
+        vbox.pack_start( hbox )
+
+        # TO DO:
+        #help_button = gtk.Button( "Help" )
+        #help_button.connect("clicked", self.purge_guide )
+
+        window.add( vbox )
+        window.show_all()
+
+    def add_prerequisite( self, w, entry, window, task_id ):
+        dep = entry.get_text()
+        m = re.match( '^(\w+)%(\w+)$', dep )
+        if m:
+            #name, ctime = m.groups()
+            msg = dep + ' finished'
+        else:
+            msg = dep
+
+        try:
+            (name, cycle ) = task_id.split('%')
+        except ValueError:
+            warning_dialog( "Task or Group ID must be NAME%YYYYMMDDHH").warn()
+            return
+        if not cycle_time.is_valid( cycle ):
+            warning_dialog( "invalid cycle time: " + cycle ).warn()
+            return
+
+        window.destroy()
+        proxy = cylc_pyro_client.client( self.suite, self.owner,
+                self.host, self.port ).get_proxy( 'remote' )
+        try:
+            result = proxy.add_prerequisite( task_id, msg )
+        except SuiteIdentificationError, x:
+            warning_dialog( x.__str__() ).warn()
+        else:
+            if result.success:
+                info_dialog( result.reason ).inform()
+            else:
+                warning_dialog( result.reason ).warn()
 
     def update_tb( self, tb, line, tags = None ):
         if tags:
@@ -775,9 +854,10 @@ The cylc forecast suite metascheduler.
             warning_dialog( "Enter task or group name" ).warn()
             return
         stopctime = entry_stopctime.get_text()
-        if not cycle_time.is_valid( stopctime ):
-            warning_dialog( "Cycle time not valid: " + stopctime ).warn()
-            return
+        if stopctime != '':
+            if not cycle_time.is_valid( stopctime ):
+                warning_dialog( "Cycle time not valid: " + stopctime ).warn()
+                return
         window.destroy()
         if stopctime == '':
             stop = None

@@ -3,6 +3,7 @@
 ##### TO DO: self.config.check_task_groups() #####
 
 import task, clocktriggered
+from plain_prerequisites import plain_prerequisites
 import socket
 import logging
 import datetime
@@ -1018,6 +1019,21 @@ class scheduler(object):
             except:
                 # the task had no "failed" output
                 pass
+
+    def add_prerequisite( self, task_id, message ):
+        # find the task to reset
+        found = False
+        for itask in self.tasks:
+            if itask.id == task_id:
+                found = True
+                break
+        if not found:
+            raise TaskNotFoundError, "Task not present in suite: " + task_id
+
+        pp = plain_prerequisites( task_id ) 
+        pp.add( message )
+
+        itask.prerequisites.add_requisites(pp)
 
     def insertion( self, ins_id, stop_c_time=None ):
         #import pdb

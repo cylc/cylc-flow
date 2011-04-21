@@ -899,11 +899,11 @@ The cylc forecast suite metascheduler.
             else:
                 reg = group + ':' + name
             if not self.cdb:
-                con_item = gtk.MenuItem( '_Control (traditional)')
+                con_item = gtk.MenuItem( '_Control (original)')
                 menu.append( con_item )
                 con_item.connect( 'activate', self.launch_controller, reg, state )
 
-                cong_item = gtk.MenuItem( '_Control (graph based)')
+                cong_item = gtk.MenuItem( '_Control (graph)')
                 menu.append( cong_item )
                 cong_item.connect( 'activate', self.launch_controller, reg, state, True )
 

@@ -86,6 +86,23 @@ class remote_switch( Pyro.core.ObjBase ):
             self.process_tasks = True
             return result( True )
 
+    def add_prerequisite( self, task_id, message ):
+        if self._suite_is_blocked():
+            return result( False, "Suite Blocked" )
+        try:
+            self.pool.add_prerequisite( task_id, message )
+        except TaskNotFoundError, x:
+            self._warning( 'Refused remote reset: task not found' )
+            return result( False, x.__str__() )
+        except Exception, x:
+            # do not let a remote request bring the suite down for any reason
+            self._warning( 'Remote reset failed: ' + x.__str__() )
+            return result( False, "Action failed: "  + x.__str__() )
+        else:
+            # report success
+            self.process_tasks = True
+            return result( True )
+
     def insert( self, ins_id, stop_c_time=None ):
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )

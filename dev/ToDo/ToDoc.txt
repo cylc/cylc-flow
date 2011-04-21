@@ -1,6 +1,8 @@
 ################################################################
 TO BE DOCUMENTED:
 
+* prerequisites added on the fly will not persist across a restart.
+
 * REMOTE TASKS must define the remote CYLC_DIR and
   CYLC_SUITE_DIR in their [tasks]->[[foo]]->[[[environment]]] section
   (full path with no interpolation?); these will override the original
