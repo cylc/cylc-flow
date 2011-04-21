@@ -1,6 +1,8 @@
 _______
 GENERAL
 
+* log a warning for remote change to runahead limit.
+
 * config(suite) writes to stdout/stderr (gcylc parent terminal) - see
   gcylc:view_log() for a non-validating suite.
 

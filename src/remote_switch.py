@@ -55,6 +55,12 @@ class remote_switch( Pyro.core.ObjBase ):
         self.blocked = False
         return result( True, "the suite has been unblocked" )
 
+    def set_runahead( self, hours=None ):
+        # change the suite maximum runahead limit
+        self.pool.runahead = hours
+        self.process_tasks = True
+        return result( True, "Action succeeded" )
+
     def nudge( self ):
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )

@@ -415,8 +415,17 @@ Submit a single task to run exactly as it would be submitted from within
 a running suite.""")
     help.show()
 
+def change_runahead( b ):
+    help = helpwindow( "Change Suite Runahead Limit Help", 200, """
+This changes the number of hours that the fastest task is allowed to get
+ahead of the slowest. If a task spawns beyond that limit it will be held
+back from running until the slowest tasks catch up enough. WARNING: if
+you enter nothing, no limit will be used!""")
+    help.show()
+
+
 def add_prerequisite( b ):
-    help = helpwindow( "Add a Prerequisite Help", 200, """
+    help = helpwindow( "Add a Prerequisite Help", 250, """
 Add a dependency on the fly to a task in a running suite. If you
 specify a task ID (NAME%YYYYMMDDHH) the target TASK will depend on
 it finishing, otherwise you can specify an explicit prerequisite message

@@ -321,6 +321,71 @@ The cylc forecast suite metascheduler.
 
         return items
 
+    def change_runahead_popup( self, b ):
+        window = gtk.Window()
+        window.modify_bg( gtk.STATE_NORMAL, 
+                gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_border_width(5)
+        window.set_title( "Change Suite Runahead Limit" )
+        #window.set_size_request(800, 300)
+
+        sw = gtk.ScrolledWindow()
+        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+
+        vbox = gtk.VBox()
+        label = gtk.Label( 'Limit in HOURS (omit for no limit)' )
+
+        entry = gtk.Entry()
+        #entry.connect( "activate", self.change_runahead_entry, window, task_id )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( label, True )
+        hbox.pack_start (entry, True)
+        vbox.pack_start( hbox )
+
+        cancel_button = gtk.Button( "_Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        start_button = gtk.Button( "_Change" )
+        start_button.connect("clicked", self.change_runahead, entry, window )
+
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.change_runahead )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, True )
+        hbox.pack_start( start_button, True)
+        hbox.pack_start( help_button, True)
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def change_runahead( self, w, entry, window ):
+        ent = entry.get_text()
+        if ent == '':
+            limit = None
+        else:
+            try:
+                int( ent )
+            except ValueError:
+                warning_dialog( 'Hours value must be integer!' ).warn()
+                return
+            else:
+                limit = ent
+        window.destroy()
+        proxy = cylc_pyro_client.client( self.suite, self.owner,
+                self.host, self.port ).get_proxy( 'remote' )
+        try:
+            result = proxy.set_runahead( limit )
+        except SuiteIdentificationError, x:
+            warning_dialog( x.__str__() ).warn()
+        else:
+            if result.success:
+                info_dialog( result.reason ).inform()
+            else:
+                warning_dialog( result.reason ).warn()
+
     def add_prerequisite_popup( self, b, task_id ):
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
@@ -796,7 +861,7 @@ The cylc forecast suite metascheduler.
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title( "Insert a task or task group" )
+        window.set_title( "Insert a Task or Group" )
         #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
@@ -970,7 +1035,7 @@ The cylc forecast suite metascheduler.
         if self.readonly:
             pause_item.set_sensitive(False)
 
-        resume_item = gtk.MenuItem( '_Resume submitting tasks (unpause)' )
+        resume_item = gtk.MenuItem( '_Unpause (resume submitting tasks)' )
         start_menu.append( resume_item )
         resume_item.connect( 'activate', self.resume_suite )
         if self.readonly:
@@ -981,6 +1046,12 @@ The cylc forecast suite metascheduler.
         insert_item.connect( 'activate', self.insert_task_popup )
         if self.readonly:
             insert_item.set_sensitive(False)
+
+        runahead_item = gtk.MenuItem( '_Change Runahead Limit' )
+        start_menu.append( runahead_item )
+        runahead_item.connect( 'activate', self.change_runahead_popup )
+        if self.readonly:
+            runahead_item.set_sensitive(False)
 
         block_item = gtk.MenuItem( '_Block (ignore intervention requests)' )
         start_menu.append( block_item )

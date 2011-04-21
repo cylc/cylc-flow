@@ -110,6 +110,10 @@ class scheduler(object):
         self.parse_commandline()
         self.check_not_running_already()
         self.configure_suite()
+
+        # MAXIMUM RUNAHEAD HOURS
+        self.runahead = self.config['maximum runahead hours']
+
         self.print_banner()
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD (PROVIDED IN DERIVED CLASSES) 
         self.load_tasks()
@@ -621,11 +625,13 @@ class scheduler(object):
         # update oldest suite cycle time
         oldest_c_time = self.get_oldest_c_time()
         for itask in self.tasks:
-            tdiff = cycle_time.decrement( itask.c_time, self.config['maximum runahead hours'])
-            if int( tdiff ) > int( oldest_c_time ):
-                # too far ahead: don't spawn this task.
-                itask.log( 'DEBUG', "delaying spawning (too far ahead)" )
-                continue
+            if self.runahead:
+                # if a runahead limit is defined, check for violations
+                tdiff = cycle_time.decrement( itask.c_time, self.runahead )
+                if int( tdiff ) > int( oldest_c_time ):
+                    # too far ahead: don't spawn this task.
+                    itask.log( 'DEBUG', "delaying spawning (too far ahead)" )
+                    continue
 
             if itask.ready_to_spawn():
                 itask.log( 'DEBUG', 'spawning')
