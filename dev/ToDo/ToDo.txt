@@ -14,11 +14,6 @@ GENERAL
 
 * allow $CYLC_DIR/conf overrides by user in .cylc?
 
-* NEW (Trevor's mos spin up for new stations):
-    - a cycling task that stops at a given ctime? => foo(T)
-    - pause a task
-    - insert a prerequisite on the fly - e.g. trigger off foo when it reaches T
-
 *  suicide prerequisites in cylc-3?
 
 * reg export, copy, import should take group: as target even for single
