@@ -2057,7 +2057,10 @@ The cylc forecast suite metascheduler.
             # connecting a controller to a running suite started by commandline
             # so no point in connecting to the special stdout and stderr files.
             # User was informed of this already by a dialog above.
-            command = "gcylc " + name
+            if depgraph:
+                command = "gcylc --graph " + name
+            else:
+                command = "gcylc " + name
             foo = gcapture_tmpfile( command, self.tmpdir, 400 )
             self.gcapture_windows.append(foo)
             foo.run()
