@@ -30,15 +30,9 @@ echo "SETTING EXECUTABLE PERMISSIONS"
 
 chmod +x bin/*
 chmod +x util/*
-chmod +x admin/cylclockd
 chmod +x doc/process
-chmod +x suites/conditional/scripts/*
-chmod +x suites/trivial/scripts/*
-chmod +x suites/trivial-remote/scripts/*
-chmod +x suites/userguide/scripts/*
-chmod +x suites/nested/scripts/*
-chmod +x suites/distributed/scripts/*
-chmod +x suites/scs-demo/scripts/*
+chmod +x examples/simple/bin/*
+chmod +x examples/userguide/bin/*
 
 echo "SETTING VERSION TAG IN MAIN COMMAND AND USERGUIDE"
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" src/view/chooser.py

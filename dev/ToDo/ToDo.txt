@@ -1,6 +1,8 @@
 _______
 GENERAL
 
+* temporary job file location should be configurable.
+
 * update cylc xdot code from latest version in the external directory.
 
 * log a warning for remote change to runahead limit.
