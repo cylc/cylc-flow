@@ -79,7 +79,7 @@ export CYCLE_TIME=$CYCLE_TIME
 export TASK_NAME=$TASK_NAME
 export TASK_ID=$TASK_ID
 export CYLC_DIR=$CYLC_DIR
-. $CYLC_DIR/cylc-env.sh
+. $CYLC_DIR/environmenet.sh
 
 eof
 

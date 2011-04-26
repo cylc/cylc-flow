@@ -84,7 +84,7 @@ class jobfile(object):
         for var in self.cylc_env:
             self.FILE.write( "\nexport " + var + "=\"" + str( self.cylc_env[var] ) + "\"" )
         self.FILE.write( "\n\n# CYLC ENVIRONMENT:" )
-        self.FILE.write( "\n. $CYLC_DIR/cylc-env.sh" )
+        self.FILE.write( "\n. $CYLC_DIR/environment.sh" )
 
         self.FILE.write( "\n\n# TASK IDENTITY:" )
         self.FILE.write( "\nexport TASK_ID=" + self.task_id )

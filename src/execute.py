@@ -43,8 +43,6 @@ def execute( command_list, ignore_output=False, notify=False ):
         except OSError:
             # the command was not invoked
             print >> sys.stderr, 'ERROR: unable to execute ', ' '.join(command_list)
-            #print >> sys.stderr, ' * Have you sourced $CYLC_DIR/cylc-env.sh?'
-            #print >> sys.stderr, " * Are all cylc scripts executable?"
             sys.exit(1)
     else:
         command = ' '.join(command_list)

@@ -18,7 +18,8 @@ elif [[ ! -z $CYLC_DIR ]]; then
         return 1
     fi
 else
-    echo "ERROR: source from top level cylc, or set CYLC_DIR"
+    echo "ERROR: you must export \$CYLC_DIR before sourcing me,"
+    echo "  OR otherwise move to \$CYLC_DIR before sourcing me."
     return 1
 fi
 

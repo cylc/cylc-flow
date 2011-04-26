@@ -19,12 +19,12 @@
 % prevent double digit sub-sections crowding the toc line
 \addtolength\cftsubsecnumwidth{0.5em}  % see tocloft manual
 
-\definecolor{codeblock}{rgb}{0.95,0.98,1.0}
+\definecolor{codeblock}{rgb}{0.98,0.95,0.9}
 %\definecolor{keywords}{rgb}{1.0,0.3,0.0}
 \definecolor{keywords}{rgb}{1.0,0.1,1.0}
 %\definecolor{comments}{rgb}{0.0,0.7,0.8}
 \definecolor{comments}{rgb}{1.0,0.0,0.0}
-\definecolor{identifiers}{rgb}{0.1,0.0,1.0}
+\definecolor{identifiers}{rgb}{0.1,0.15,0.2}
 \definecolor{strings}{rgb}{0.0,0.6,0.0}
 \definecolor{basic}{rgb}{0.0,0.4,0.0}
 
@@ -80,7 +80,7 @@ numbers=none,
 }
 
 \title{Cylc \linebreak 
-A Self-Organising Optimal Adaptive Metascheduler \linebreak 
+An Optimal Adaptive Metascheduler \linebreak 
 For Complex Forecasting Suites \linebreak 
 {\em \small Version THIS IS NOT A VERSIONED RELEASE} \linebreak
 {\small Copyright (c) NIWA, 2008-2010} }
@@ -479,62 +479,70 @@ therein are entirely hidden from the user.
 
 
 \pagebreak
-\section{Installation And Testing} 
+\section{Installing Cylc} 
 \label{InstallationAndTesting}
 
 \subsection{Requirements} 
 \label{Requirements}
 
 \begin{itemize}
-    \item Unix or Linux
-    \item Python
+    \item A Unix-like OS\footnote{The cylc codebase still assumes
+        Unix-style file paths in places, but it could easily made more
+        portable if necessary.} 
+    \item Python 2.5 or later\footnote{Not Python 3.x as yet.}
     \item Pyro (Python Remote Objects)
-    \item graphviz
+    \item graphviz and pygraphviz\footnote{graphviz is a graph layout 
+        engine, used by cylc for dependency graph plotting and the
+        graph-based suite control interface, but otherwise not required.}
 \end{itemize}
 
-\subsection{Getting Cylc} 
-\label{GettingCylc}
-
-See Appendix~\ref{Pyro} for Pyro download directions.
-
-Cylc is currently maintained using {\em darcs} (http://darcs.net), a
-distributed revision control system. If you need to develop cylc you can
-request a clone of the repository, otherwise you will receive a cylc
-release tarball. 
+%\subsection{Getting Cylc} 
+%\label{GettingCylc}
+%
+%See Appendix~\ref{Pyro} for Pyro download directions.
+%
+%Cylc is currently maintained using {\em darcs} (http://darcs.net), a
+%distributed revision control system. If you need to develop cylc you can
+%request a clone of the repository, otherwise you will receive a cylc
+%release tarball. 
 
 \subsection{Installation} 
 \label{Installation}
 
-Pyro has its own very simple installation instructions; basically, it
-installs into the standard Python module path.
+Cylc is currently designed to be installed into a normal user account; 
+other users can then gain access to cylc by sourcing a simple
+environment script. Simply unpack the cylc release tarball to the
+location of your choice. There is no ``build'' step.
 
-Cylc is designed to be installed into a normal user account: simply
-unpack the tarball, or move the repository, to the location of your
-choice. There is no ``build'' step.
+\subsubsection{Pyro}
+Pyro has its own very simple installation instructions; it installs into
+the standard Python module path.
+\subsubsection{Graphviz }
+TO DO
+\subsubsection{Pygraphviz }
+TO DO
 
-\subsection{Environment} 
+\subsection{User Environment} 
 \label{Environment}
 
 \lstset{language=bash} 
 
-The cylc bin directory must be in your executable search path and the
-cylc source directories must be in your Python module search path. To
-configure your current command shell for cylc, source the environment
-script \lstinline=cylc-env.sh= from the directory it resides in (i.e.\
-the top level of your cylc installation):
+The cylc \lstinline=bin= directory must be in your executable search
+path, and the cylc source modules must be in your Python module search
+path. The cylc environment script, \lstinline=$CYLC_DIR/environment.sh=,
+does this for you - execute the following scripting in your current
+command shell, or paste it into your (sh-style) login script:
 
 \begin{lstlisting}
-$ cd $HOME/cylc            # (the install location)
-$ . cylc-env.sh
+# configure shell environment for access to cylc
+export CYLC_DIR=/path/to/cylc/installation/
+. $CYLC_DIR/environment.sh
 \end{lstlisting}
 
-Or put the following in your (sh-style) login script:
+If you are working with multiple versions of cylc on the same host
+you only need to source the right cylc environment script to switch
+between them.
 
-\begin{lstlisting}
-# CYLC
-export CYLC_DIR=$HOME/cylc  # (the install location)
-. $CYLC_DIR/cylc-env.sh
-\end{lstlisting}
 
 \subsection{Testing} 
 \label{Testing}
@@ -1424,7 +1432,7 @@ export TASK_ID="A%2010010106"
 export CYCLE_TIME="2010010106"
 
 # CONFIGURE THE ENVIRONMENT FOR CYLC.
-. $CYLC_DIR/cylc-env.sh
+. $CYLC_DIR/environment.sh
 
 # SCRIPTING.
 # (None)
@@ -1630,7 +1638,7 @@ CYLC_SUITE_DIR  /path/to/suite/definition/directory
 \end{lstlisting}
 
 (\lstinline=CYLC_DIR=  and \lstinline=CYLC_SUITE_DIR= are inserted
-into your \lstinline=PATH= by \lstinline=cylc-env.sh=, which is sourced
+into your \lstinline=PATH= by \lstinline=environment.sh=, which is sourced
 in the job script before executing the task).
 
 Alternatively, you could specify the full path to the task script:

@@ -340,7 +340,7 @@ try:
     import cylc
 except:
     print >> sys.stderr, "ERROR: the cylc core modules are not accessible to Python"
-    print >> sys.stderr, "SOLUTION: source $CYLC_DIR/cylc-env.sh in your shell." 
+    print >> sys.stderr, "SOLUTION: source $CYLC_DIR/environment.sh in your shell." 
     sys.exit(1)
 
 # no arguments: print help and exit
