@@ -9,7 +9,7 @@ SUITE_DIR=${TMPDIR:-/tmp/$USER}/Z1TtestQrX/foobar
 
 if [[ $# != 0 ]]; then
     if [[ $1 == '-h' || $1 == '--help' ]]; then
-        echo "Usage: test-sched"
+        echo "Usage: test-suite.sh"
         echo 
         echo "Run an automated test of core cylc functionality using a new copy of"
         echo "the userguide example suite. This should be used to check that new"
@@ -58,7 +58,7 @@ echo -n ">> COPYING userguide example suite to $SUITE_DIR ... "
 cylc db copy CylcExamples:userguide $SUITE_REG $SUITE_DIR
 
 # log file for stdout and stderr
-OUT=test.out; OUT_SCHED=test-sched.out
+OUT=test.out; OUT_SCHED=test-suite.out
 rm -f $OUT $OUT_SCHED
 
 # suite log
