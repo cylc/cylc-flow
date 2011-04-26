@@ -1,11 +1,15 @@
 #!/bin/bash
 
-# register example suites
-# create central database
-# export the example suites
+set -e
 
-# TO DO: use src/registrations to determine name of the central database
-# in case it ever changes.
+# This script should be used after the initial cylc installation to 
+# create the central suite database for all users, and then to register 
+# the cylc examples suites in it.
+
+# Steps:
+# 1/ register the example suites in the cylc owner's local db
+# 2/ export the example suites to the central database
+# 3/ set central db file permissions appropriately
 
 if [[ -z CYLC_DIR ]]; then
     echo "export \$CYLC_DIR and source \$CYLC_DIR/cylc-env.sh"
@@ -15,24 +19,25 @@ fi
 
 echo
 echo " + Registering examples suites"
-cylc register CylcExamples:userguide $CYLC_DIR/examples/userguide
-cylc register CylcExamples:simple $CYLC_DIR/examples/simple
+cylc register examples:userguide $CYLC_DIR/examples/userguide
+cylc register examples:simple $CYLC_DIR/examples/simple
 #cylc register dev:userguide $CYLC_DIR/dev/suites/userguide
 
 echo
 echo " + Exporting examples suites to the central database"
 # Export the example suites to the central database.
 # This will create the new database file.
-cylc export CylcExamples:
+cylc export examples:
+
+# determine CDB directory location
+CDB=$(python -c 'from CylcGlobals import central_regdb_dir; print central_regdb_dir\n')
 
 echo
 echo " + Setting central database permissions"
-# The central database is currently hardwired to:
-#   $CYLC_DIR/CentralDB/registrations.
 
-# Make it writeable by all.
+# Make the central db writeable by all.
 # (could be just g+w if all cylc users are in the same group).
-chmod go+rwx $CYLC_DIR/CentralDB
-chmod go+rw $CYLC_DIR/CentralDB/registrations
+chmod go+rwx $CDB
+chmod go+rw $CDB/db
 
 echo "DONE"

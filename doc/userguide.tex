@@ -489,7 +489,13 @@ therein are entirely hidden from the user.
     \item A Unix-like OS\footnote{The cylc codebase still assumes
         Unix-style file paths in places, but it could easily made more
         portable if necessary.} 
-    \item Python 2.5 or later\footnote{Not Python 3.x as yet.}
+    \item Python 2.4 or later\footnote{Python 2.4 was released in
+        November 2004.  Python 3 is the future of Python, but it is
+        not entirely backward compatible and consequently still
+        has significantly less library and 3rd party support than 2.x.
+        As of mid 2011 Python 2.7 is standard issue for new Linux
+        distributions and so on, so cylc has not been ported to Python 3
+        as yet.}
     \item Pyro (Python Remote Objects)
     \item graphviz and pygraphviz\footnote{graphviz is a graph layout 
         engine, used by cylc for dependency graph plotting and the
@@ -544,18 +550,18 @@ you only need to source the right cylc environment script to switch
 between them.
 
 
-\subsection{Testing} 
-\label{Testing}
-
-You can test the new installation by running the packaged ``userguide''
-example suite (which implements the simple six-task suite used to 
-illustrate the first section of the userguide). The example suite
-should work ``out of the box'' in real and dummy mode, using the simple
-sequence of commands presented in the Quick Start Guide. 
-For more information on the various example suites that come with cylc
-refer to {\em A Complete Working Example}
-(Section~\ref{ACompleteWorkingExample}), and {\em Other Working
-Examples} (Section~\ref{OtherWorkingExamples}).  
+%\subsection{Testing} 
+%\label{Testing}
+%
+%You can test the new installation by running the packaged ``userguide''
+%example suite (which implements the simple six-task suite used to 
+%illustrate the first section of the userguide). The example suite
+%should work ``out of the box'' in real and dummy mode, using the simple
+%sequence of commands presented in the Quick Start Guide. 
+%For more information on the various example suites that come with cylc
+%refer to {\em A Complete Working Example}
+%(Section~\ref{ACompleteWorkingExample}), and {\em Other Working
+%Examples} (Section~\ref{OtherWorkingExamples}).  
 
 \pagebreak
 \section{Quick Start Guide} 
