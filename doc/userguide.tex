@@ -2378,11 +2378,21 @@ $CYLC_DIR/examples/userguide/
 \section{Annotated Task Script}
 \label{AnnotatedTaskScript}
 
-\input{../templates/scripts/README.tex}
+See also {\em Task Wrapping} (Section~\ref{TaskWrapping}), which allows
+cylc to control unmodified external tasks.
 
 \lstset{language=bash}
 
-\lstinputlisting{../templates/scripts/annotated.sh}
+The cylc task messaging commands read the task name and cycle time from
+their execution environment and use these to target the correct task
+proxy object in the running scheduler.
+
+If a task is executed manually or by \lstinline=cylc submit=, the cylc
+messaging interface just prints messages to stdout or stderr.
+
+\lstset{language=bash}
+
+\lstinputlisting{annotated-task-script.sh}
 
 \pagebreak
 \appendix
