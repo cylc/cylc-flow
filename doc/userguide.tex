@@ -486,20 +486,21 @@ therein are entirely hidden from the user.
 \label{Requirements}
 
 \begin{itemize}
-    \item A Unix-like OS\footnote{The cylc codebase still assumes
+    \item A Unix-like OS\footnote{The cylc codebase assumes
         Unix-style file paths in places, but it could easily made more
         portable if necessary.} 
     \item Python 2.4 or later\footnote{Python 2.4 was released in
-        November 2004.  Python 3 is the future of Python, but it is
-        not entirely backward compatible and consequently still
-        has significantly less library and 3rd party support than 2.x.
-        As of mid 2011 Python 2.7 is standard issue for new Linux
-        distributions and so on, so cylc has not been ported to Python 3
+        November 2004. Python 3 is the future of Python, but it is
+        not backward compatible with 2.x and consequently still
+        has significantly less library and third party support.
+        As of mid 2011, Python 2.7 is still the standard for new Linux
+        distributions, so cylc has not been ported to Python 3
         as yet.}
     \item Pyro (Python Remote Objects)
     \item graphviz and pygraphviz\footnote{graphviz is a graph layout 
         engine, used by cylc for dependency graph plotting and the
-        graph-based suite control interface, but otherwise not required.}
+        graph-based suite control interface, but is otherwise not
+        required (you can run cylc without these features).}
 \end{itemize}
 
 %\subsection{Getting Cylc} 
@@ -515,10 +516,17 @@ therein are entirely hidden from the user.
 \subsection{Installation} 
 \label{Installation}
 
-Cylc is currently designed to be installed into a normal user account; 
-other users can then gain access to cylc by sourcing a simple
-environment script. Simply unpack the cylc release tarball to the
-location of your choice. There is no ``build'' step.
+Cylc is currently designed to be installed into a location
+\lstinline=$CYLC_DIR= under a normal user account (called `admin'
+here); other users then gain access to cylc by sourcing the 
+script \lstinline=$CYLC_DIR/environment.sh=.\footnote{A system-level
+install is easy, however: just inspect
+\lstinline=$CYLC_DIR/environment.sh= for the few critical executable and
+module paths, and install the contents therein in standard system
+locations. Users would then not need to source the cylc environment
+script before using cylc.}. Simply unpack the cylc
+release tarball into your chosen location. There is 
+no ``build'' step required.
 
 \subsubsection{Pyro}
 Pyro has its own very simple installation instructions; it installs into
@@ -533,35 +541,54 @@ TO DO
 
 \lstset{language=bash} 
 
-The cylc \lstinline=bin= directory must be in your executable search
-path, and the cylc source modules must be in your Python module search
-path. The cylc environment script, \lstinline=$CYLC_DIR/environment.sh=,
-does this for you - execute the following scripting in your current
-command shell, or paste it into your (sh-style) login script:
+To use cylc, the cylc \lstinline=bin= and \lstinline=util= directories
+must be in your executable search path, and the cylc source modules must
+be in your Python module search path. To configure your environment in
+this way, execute the following scripting in your current command shell,
+or paste it into your (sh-style) login script:
 
 \begin{lstlisting}
 # configure shell environment for access to cylc
-export CYLC_DIR=/path/to/cylc/installation/
-. $CYLC_DIR/environment.sh
+admin> export CYLC_DIR=/path/to/cylc/installation/
+admin> . $CYLC_DIR/environment.sh
 \end{lstlisting}
 
-If you are working with multiple versions of cylc on the same host
-you only need to source the right cylc environment script to switch
-between them.
+If you need to work with multiple versions of cylc on the same host,
+just source the appropriate environment script to switch between them.
 
+\subsection{Create the Central Suite Database}
 
-%\subsection{Testing} 
-%\label{Testing}
-%
-%You can test the new installation by running the packaged ``userguide''
-%example suite (which implements the simple six-task suite used to 
-%illustrate the first section of the userguide). The example suite
-%should work ``out of the box'' in real and dummy mode, using the simple
-%sequence of commands presented in the Quick Start Guide. 
-%For more information on the various example suites that come with cylc
-%refer to {\em A Complete Working Example}
-%(Section~\ref{ACompleteWorkingExample}), and {\em Other Working
-%Examples} (Section~\ref{OtherWorkingExamples}).  
+Cylc suites must be registered in a local (user-specific) database 
+before they can be used. Suites can also be exported to a central
+database visible to all users. Run the following script to 
+create the central database and export several example suites to
+it:
+
+\begin{lstlisting}
+admin> $CYLC_DIR/install/create_db.sh
+\end{lstlisting}
+
+(You must have installed cylc and configured your environment as above
+before doing this).
+
+\subsection{Suite Database Test} 
+\label{Testing}
+
+Run the script \lstinline=$CYLC_DIR/test/test-db.sh= to give 
+the suite database functionality a work out - it registers the userguide
+example suite under a new name and then manipulates it (by copying the
+suite in various ways, exporting it to the central database, and so on,
+before finally deleting the test registration). This process should
+complete in a few seconds.
+
+\subsection{Suite Scheduling Test} 
+
+Run the \lstinline=$CYLC_DIR/test/test-suite.sh= to test the cylc 
+scheduler itself by running the userguide example suite, configured
+to fail a specific task, and then doing some advanced failure recovery
+intervention on it (see ``recursive purge''). This process should 
+complete in 2-3 minutes, and can be watched in real time by firing 
+up a gcylc suite controller instance.
 
 \pagebreak
 \section{Quick Start Guide} 
