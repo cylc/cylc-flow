@@ -30,6 +30,7 @@ echo "SETTING EXECUTABLE PERMISSIONS"
 
 chmod +x bin/*
 chmod +x util/*
+chmod +x test/*
 chmod +x doc/process
 chmod +x examples/simple/bin/*
 chmod +x examples/userguide/bin/*
