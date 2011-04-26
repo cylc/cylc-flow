@@ -55,7 +55,7 @@ echo done
 
 # COPY THE SUITE
 echo -n ">> COPYING userguide example suite to $SUITE_DIR ... "
-cylc db copy CylcExamples:userguide $SUITE_REG $SUITE_DIR
+cylc db copy examples:userguide $SUITE_REG $SUITE_DIR
 
 # log file for stdout and stderr
 OUT=test.out; OUT_SCHED=test-suite.out
