@@ -2,9 +2,8 @@
 
 set -e
 
-# This script should be used after the initial cylc installation to 
-# create the central suite database for all users, and then to register 
-# the cylc examples suites in it.
+# This script creates the central suite database and registers the
+# cylc example suites in it. Rerunning it will cause no ill effects.
 
 # Steps:
 # 1/ register the example suites in the cylc owner's local db
@@ -12,7 +11,7 @@ set -e
 # 3/ set central db file permissions appropriately
 
 if [[ -z CYLC_DIR ]]; then
-    echo "export \$CYLC_DIR and source \$CYLC_DIR/cylc-env.sh"
+    echo "export \$CYLC_DIR and source \$CYLC_DIR/environment.sh"
     echo "before running this script."
     exit 1
 fi
@@ -30,7 +29,7 @@ echo " + Exporting examples suites to the central database"
 cylc export examples:
 
 # determine CDB directory location
-CDB=$(python -c 'from CylcGlobals import central_regdb_dir; print central_regdb_dir\n')
+CDB=$(python -c 'from CylcGlobals import central_regdb_dir; print central_regdb_dir')
 
 echo
 echo " + Setting central database permissions"
