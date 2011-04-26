@@ -68,13 +68,11 @@ echo "DELETING DOCUMENTATION SOURCE"
 # (2 and 3 are required by 'cylc configure', which copies them into
 # suite defintion directores for the endless edification of users).
 cp doc/userguide.pdf .
-cp doc/suite.rc.README .
 cp doc/SuiteDesign.txt .
 rm -r doc
 mkdir doc
 mv userguide.pdf doc
 mv SuiteDesign.txt doc
-mv suite.rc.README doc
 
 echo "DELETING DEV DIRECTORY"
 rm -r dev
