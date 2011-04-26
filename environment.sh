@@ -35,7 +35,7 @@ if [[ ! -x $CYLC_DIR/bin/cylc ]]; then
 fi
 
 echo "CONFIGURING THIS SHELL FOR $CYLC_DIR/bin/cylc"
-export CYLC_DIR  # in case not exported already
+export CYLC_DIR
 
 # remove any previous cylc path settings 
 PATH=$($CYLC_DIR/bin/_clean-path $PATH)
@@ -47,7 +47,8 @@ PATH=$CYLC_DIR/bin:$CYLC_DIR/util:$PATH
 # export PYTHONPATH to cylc core source modules
 PYTHONPATH=$CYLC_DIR/src:$CYLC_DIR/src/job-submission:$CYLC_DIR/src/task-types:$CYLC_DIR/src/locking:$CYLC_DIR/src/gui:$CYLC_DIR/src/external:$CYLC_DIR/src/prerequisites/$PYTHONPATH
 PYTHONPATH=$CYLC_DIR/conf:$PYTHONPATH
-PYTHONPATH=$CYLC_DIR/extpy/lib64/python2.4/site-packages:$PYTHONPATH
+
+#PYTHONPATH=$CYLC_DIR/extpy/lib64/python2.4/site-packages:$PYTHONPATH
 
 if [[ -n $CYLC_SUITE_DIR ]]; then
     # caller must be a cylc job script; add suite-specific paths as well
@@ -58,5 +59,5 @@ export PATH
 export PYTHONPATH
 
 # Python stdout buffering delays appearance of output when not directed
-# to a terminal.
+# to a terminal (e.g. when running a suite via the poxix nohup command).
 export PYTHONUNBUFFERED=true

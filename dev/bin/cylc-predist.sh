@@ -35,8 +35,8 @@ chmod +x examples/simple/bin/*
 chmod +x examples/userguide/bin/*
 
 echo "SETTING VERSION TAG IN MAIN COMMAND AND USERGUIDE"
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" src/view/chooser.py
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" src/view/gtkmonitor.py
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" src/gui/gcylc.py
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" src/gui/SuiteControl.py
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" bin/cylc
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" doc/userguide.tex
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" README.txt
@@ -76,14 +76,8 @@ mv userguide.pdf doc
 mv SuiteDesign.txt doc
 mv suite.rc.README doc
 
-echo "DELETING UNUSED IMAGE FILES"
-rm -r images/not-active
-
-echo "DELETING DEV STUFF"
+echo "DELETING DEV DIRECTORY"
 rm -r dev
 
-echo "DELETING EXPERIMENTAL SUITES"
-rm -rf suites/experimental
-
-echo "REMOVING ANY PYC FILES"
+echo "REMOVING .pyc FILES"
 find . -name '*.pyc' | xargs rm
