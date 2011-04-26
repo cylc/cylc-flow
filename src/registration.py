@@ -216,6 +216,7 @@ class regdb(object):
             self.register( suite_to, dir, title, safe )
         else:
             self.register( suite_to, dir, descr )
+        return True
 
     def reregister_group( self, gfrom, gto, verbose=False, exclusive=False ):
         # move all group members to another (new or existing) group
