@@ -4,6 +4,12 @@ from OrderedDict import OrderedDict
 import os, re, sys
 from execute import execute
 
+# check Pyro is installed
+try:
+    import Pyro.constants
+except Exception, x:
+    raise SystemExit('ERROR: Pyro is not installed (or not accessible)')
+
 class CommandError( Exception ):
     """
     Attributes:
