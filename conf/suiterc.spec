@@ -124,7 +124,13 @@ default edge attributes = force_list( default=list('color=black'))
 [task insertion groups]
  __many__ = force_list()
 
+# Global environment
 [environment]
+__many__ = string
+
+# Global directives.
+# Prefix ('# @') and final directive ('# @ queue') supplied by job submission method.
+[directives]
 __many__ = string
 
 # CONFIGOBJ or VALIDATE BUG? LIST CONSTRUCTOR FAILS IF LAST LIST ELEMENT
@@ -163,6 +169,8 @@ __many__ = string
         [[[environment]]]
         __many__ = string
         [[[directives]]]
+        # Prefix ('# @') and final directive ('# @ queue') supplied 
+        # by job submission method.
         __many__ = string
           [[[outputs]]]
         __many__ = string

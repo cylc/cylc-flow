@@ -43,6 +43,7 @@ class job_submit(object):
     global_pre_scripting = None
     global_post_scripting = None
     global_env = None
+    global_dvs = None
     cylc_env = None
     owned_task_execution_method = None
 
@@ -196,7 +197,7 @@ class job_submit(object):
                 self.__class__.cylc_env, self.__class__.global_env, self.task_env, 
                 self.__class__.global_pre_scripting, self.__class__.global_post_scripting, 
                 self.task_pre_scripting, self.task_post_scripting, 
-                self.directive_prefix, self.directives,
+                self.directive_prefix, self.__class__.global_dvs, self.directives,
                 self.final_directive, self.task_command, 
                 self.__class__.shell, self.__class__.dummy_mode,
                 self.__class__.__name__ )

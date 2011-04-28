@@ -274,6 +274,11 @@ class scheduler(object):
         for var in self.config['environment']:
             globalenv[ var ] = self.config['environment'][var]
 
+        # SUITE.RC GLOBAL DIRECTIVES
+        globaldvs = OrderedDict()
+        for var in config['directives']:
+            globaldvs[ var ] = config['directives'][var]
+
         # CLOCK (accelerated time in dummy mode)
         rate = self.config['dummy mode']['clock rate in seconds per dummy hour']
         offset = self.config['dummy mode']['clock offset from initial cycle time in hours']
@@ -292,6 +297,7 @@ class scheduler(object):
         job_submit.dummy_mode = self.dummy_mode
         job_submit.cylc_env = cylcenv
         job_submit.global_env = globalenv
+        job_submit.global_dvs = globaldvs
         job_submit.shell = self.config['job submission shell']
         job_submit.joblog_dir = self.config[ 'job submission log directory' ]
         if self.dummy_mode and self.failout_task_id:

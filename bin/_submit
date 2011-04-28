@@ -136,6 +136,11 @@ globalenv = OrderedDict()
 for var in config['environment']:
     globalenv[ var ] = config['environment'][var]
 
+# SUITE.RC GLOBAL DIRECTIVES
+globaldvs = OrderedDict()
+for var in config['directives']:
+    globaldvs[ var ] = config['directives'][var]
+
 # create the log
 log = logging.getLogger()
 pimp_my_logger.pimp_it( log, logging_dir, \
@@ -144,6 +149,7 @@ pimp_my_logger.pimp_it( log, logging_dir, \
 
 job_submit.cylc_env = cylcenv
 job_submit.global_env = globalenv
+job_submit.global_dvs = globaldvs
 job_submit.shell = config['job submission shell'] 
 job_submit.joblog_dir = config['job submission log directory']
 job_submit.global_pre_scripting = config['pre-command scripting']

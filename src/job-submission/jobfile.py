@@ -2,13 +2,14 @@
 
 import tempfile
 import cycle_time
+from OrderedDict import OrderedDict
 
 class jobfile(object):
 
     def __init__( self, task_id, cylc_env, global_env, task_env, 
             global_pre_scripting, global_post_scripting, 
             task_pre_scripting, task_post_scripting, 
-            directive_prefix, directives, final_directive, task_command, 
+            directive_prefix, global_dvs, directives, final_directive, task_command, 
             shell, dummy_mode, job_submission_method):
 
         self.task_id = task_id
@@ -21,6 +22,7 @@ class jobfile(object):
         self.task_post_scripting = task_post_scripting
         self.directive_prefix = directive_prefix
         self.final_directive = final_directive
+        self.global_dvs = global_dvs
         self.directives = directives
         self.task_command = task_command
         self.shell = shell
@@ -58,11 +60,19 @@ class jobfile(object):
         self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'')
 
     def write_directives( self ):
-        if len( self.directives.keys() ) == 0:
+        # override global with task-specific directives
+        dvs = OrderedDict()
+        if self.global_dvs:
+            for var in self.global_dvs.keys():
+                dvs[var] = self.global_dvs[var]
+        if self.directives:
+            for var in self.directives:
+                dvs[var] = self.directives[var]
+        if len( dvs.keys() ) == 0:
             return
         self.FILE.write( "\n\n# BATCH QUEUE SCHEDULER DIRECTIVES:" )
-        for d in self.directives:
-            self.FILE.write( '\n' + self.directive_prefix + d + " = " + self.directives[ d ] )
+        for d in dvs:
+            self.FILE.write( '\n' + self.directive_prefix + d + " = " + dvs[ d ] )
         self.FILE.write( '\n' + self.final_directive )
 
     def write_environment( self ):
