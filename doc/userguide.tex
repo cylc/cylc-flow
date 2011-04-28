@@ -234,10 +234,11 @@ Now the question arises, what happens if the external driving data for
 upcoming cycles is available in advance, as it would be after a
 significant delay in operations, or when running a historical case
 study?  While the forecast model {\em a} appears to depend only on the
-external data {\em x} at this stage of the discussion, in fact it also
-depends on its own previous instance for a model {em background state}
-used in initializing the new forecast. Thus, as alluded to in
-Figure~\ref{fig-dep-two-linked}, task {\em a} could in principle start
+external data {\em x} at this stage of the discussion, in fact it would 
+typically also depend on its own previous instance for the model {\em
+background state} used in initializing the new forecast. Thus, as
+alluded to in Figure~\ref{fig-dep-two-linked}, task {\em a} could in
+principle start
 immediately its predecessor has finished.  Figure~\ref{fig-overlap}
 shows, however, that starting a whole new cycle at this point is
 dangerous - it results in dependency violations in half of the tasks in
@@ -250,14 +251,16 @@ the next cycle early, as is illustrated in Figure~\ref{fig-job-no-overlap}.
 \subsection{Intercycle Dependencies} 
 \label{IntercycleDependencies}
 
-In any non-trivial suite dependencies between tasks in different cycles
-exist. Forecast models typically depend on their own most recent
-previous forecast for an initial ``background state'', and different
-types of tasks in different forecast cycles can also be linked (e.g.\
-the complicated relationship between the weather and river models in
-EcoConnect). In real time operation these intercycle dependencies
+In most suites dependencies between tasks in different cycles
+exist. Forecast models, as above, typically depend on their own most
+recent previous forecast for a background state, and different
+types of tasks in different forecast cycles can also be linked (in an 
+atmospheric forecast analysis suite, for instance, the weather model 
+may also generate background states for use by the observation
+processing and data-assimilation systems in the next cycle). In real
+time operation these intercycle dependencies
 can be ignored because they are automatically satisfied when each cycle
-necessarily finishes before the next one begins. This is just as well
+finishes before the next one begins. This is just as well
 because they dramatically increase the complexity of the dependency
 graph of even the simplest suites, by destroying the clean boundary
 between forecast cycles. Figure~\ref{fig-dep-multi} illustrates the
@@ -266,7 +269,7 @@ intercycle dependence: the forecast models ($a$, $b$, and $c$) each
 depend on their own previous instances.
 
 For this reason, and because we tend to imagine that forecasting suites
-always run in distinct cycles, existing schedulers (as far as the author
+always run in distinct cycles, existing metaschedulers (as far as the author
 is aware!) ignore intercycle dependencies and therefore {\em require} a
 series of distinct cycles at all times. While this does not affect
 normal real time operation it can be a serious impediment when advance
@@ -284,10 +287,10 @@ to zero as shown in Figure~\ref{fig-job-no-overlap}. A limited crude
 overlap of the single cycle job schedule may be possible for specific
 task sets but the allowable overlap may change if new tasks are added,
 and it is still dangerous: it amounts to running different parts of a
-dependant system as if they were not dependant and as such it cannot be
-guaranteed that any unforeseen delay occuring in one cycle after the 
-next has begun (e.g.\ due to resource contention or task failures) won't
-result in dependency violations in the next.
+dependent system as if they were not dependent and as such it cannot be
+guaranteed that some unforeseen delay in one cycle, after the 
+next cycle has begun, (e.g.\ due to resource contention or task
+failures) won't result in dependency violations.
 
 \begin{figure}
     \begin{center}
@@ -314,10 +317,9 @@ result in dependency violations in the next.
 
 Figure~\ref{fig-optimal-two} shows, in contrast to
 Figure~\ref{fig-overlap}, the optimal two cycle job schedule obtained by
-respecting all intercycle dependencies. It must be noted, however, that
-this job schedule assumes ideal conditions with no delays due to
-resource contention or anything else - i.e.\ every task is able to run
-in its alotted time as soon as it is ready to run. The scheduler running
+respecting all intercycle dependencies.  This assumes no delays due to
+resource contention or otherwise - i.e.\ every task runs
+as soon as it is ready to run. The scheduler running
 this suite must be able to adapt dynamically to external conditions 
 that impact on multicycle scheduling in the presence of
 intercycle dependencies or else, again, risk bringing the system down
@@ -388,10 +390,10 @@ instances of the forecast models could overlap as well (because model
 restart outputs are generally be completed early in the forecast) for an
 even more efficient job schedule. 
 
-Finally, we note again that a good job scheduler should be able to
-dynamically adapt to delays in any part of the suite due to resource
-contention, varying run times, or anything else that will inevitably
-modify the depicted job schedules. 
+%Finally, we note again that a good job scheduler should be able to
+%dynamically adapt to delays in any part of the suite due to resource
+%contention, varying run times, or anything else that will inevitably
+%modify the depicted job schedules. 
 
 \subsection{The Cylc Scheduling Algorithm} 
 \label{TheCylcSchedulingAlgorithm}
@@ -409,23 +411,23 @@ This section explains how cylc achieves the optimal multicycle
 scheduling described above. 
 
 Cylc manages a pool of proxy objects that represent real tasks in the
-forecasting system. A task proxy object can run the real task when its
+forecasting suite. A task proxy object can run the real task when its
 prerequisites are satisfied, and can receive reports of completed
 outputs from the real task as it runs. There is no global cycling
-mechanism to advance the system in time; instead each individual task
+mechanism to advance the suite in time; instead each individual task
 proxy has a private cycle time and spawns its own successor at the right
 time (which depends only on the task's own type and state). Task proxies
-are self-contained and do not know what other tasks exist in the system,
+are self-contained and do not know what other tasks exist in the suite,
 they just know their own prerequisites and outputs.  Prerequisites can
 equally represent intra- and intercycle dependencies, and the task pool
 can be populated with tasks having many different cycles. Now,
 whenever any task proxy changes state (as a result of an output
 completion message, for example) cylc gets the entire pool to interact
-indiscriminately, {\em regardless of cycle times}, in an attempt to
+indiscriminately, {\em regardless of cycle time}, in an attempt to
 match unsatisfied prerequisites with completed outputs.\footnote{In fact
 this dependency negotiation goes through a middleman or broker object,
 which reduces the interaction scaling from $n^2$ to $n$, where $n$ is
-the number of task proxies.} 
+the number of task proxies in the suite.} 
 
 Thus without using global cycling mechanisms, and treating all
 dependencies equally, cylc in effect gets a set of individual tasks to
@@ -433,50 +435,23 @@ self-organise by negotiating their own dependencies: optimal scheduling,
 as illustrated in the previous section, emerges naturally at run time.
 
 In addition, cylc makes no distinction between delayed and real time
-operation. In delayed operation the tasks that gather the system's
+operation. In delayed operation the tasks that gather the suite's
 external driving data will return immediately (because the data is
-already available) and the system will only be constrained by its
+already available) and the suite will only be constrained by its
 internal dependencies. In real time operation, the data gathering tasks
-will return only when the external data becomes available (normally at
-some known time interval after the task's nominal cycle time), delaying
+will return only when the external data becomes available (at
+some defined offset with respect to the task's cycle time), delaying
 downstream tasks until then, by which time the previous forecast cycle
 will have completed. A cylc suite thus transitions seamlessly from
-optimal multicycle scheduling to ``normal'' distinct forecast cycles as
-it catches up to real time operation.
+optimal multicycle scheduling to a sequence of distinct forecast cycles
+as it catches up to real time operation.
 
-Note that in addition to achieving optimal scheduling, this algorithm is
-extremely simple. The operator does not have to construct a special
-``suite'' in which order of execution or explicit dependency
-relationships are specified (except implicitly, in that each task's
-prerequisites must be matched by someone's outputs). Instead the entire
-forecasting system is defined by a simple list of tasks each of which,
-in effect, thinks it is alone in the world (even a standalone task must
-know its own prerequisites and outputs).
-
-%\footnote{However, you can still use explicit task dependence if you
-%wish: just make a task depend on an explicitly named upstream supplier
-%{\em finishing} rather than on the upstream output that is the actual
-%prerequisite of interest. However, framing prerequisites in terms of
-%required input filenames, or similar, results in a more flexible
-%system: tasks can easily be ``hot replaced'' by others that generate
-%similar outputs.}
-
-Perhaps the most difficult problem encountered during cylc
-implementation was how to arrange that every task proxy object exists by
-the time it is needed, but not too much earlier, and does not die too
-long after it is no longer needed. This engendered no small amount
-of hair pulling and teeth gnashing, but once achieved the complexities
-therein are entirely hidden from the user.
-
-%In other words the task pool must include waiting tasks whose
-%prerequisites may {\em soon} be satisfied (but preferably no waiting
-%tasks whose prerequisites will not be satisfied for some time yet),
-%tasks that are currently running, and finished tasks whose outputs
-%could still be needed by any current or future waiting task (but
-%preferably not any finished tasks whose output will no longer be needed
-%by anyone). 
-
-
+%Perhaps the most difficult problem encountered during cylc
+%implementation was how to arrange that every task proxy object exists by
+%the time it is needed, but not too much earlier, and does not die too
+%long after it is no longer needed. This engendered no small amount
+%of hair pulling and teeth gnashing, but once achieved the complexities
+%therein are entirely hidden from the user.
 
 \pagebreak
 \section{Installing Cylc} 
