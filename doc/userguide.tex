@@ -845,12 +845,13 @@ except for prerequisites (embodied in the suite dependency graph) that
 it has no choice but to depend on. If this rule is followed, your suite
 will be as flexible as possible in terms of being able to run single
 tasks, or subsets of the suite, whilst debugging or developing new
-features.\footnote{The 'cylc submit' command runs a single task exactly
+features.\footnote{The `cylc submit' command runs a single task exactly
 as its parent suite would, in terms of both job submission method and
 execution environment.}  For example, if all tasks create their own
 output directories where necessary instead of assuming their existence
 due to the action of another task, you will be able to run single tasks
-without having to manually create their output directories first. 
+without having to manually create their output directories first (this 
+can be annoying if the directory path contains the cycle time). 
 
 \begin{lstlisting}
 # manual task scripting:
