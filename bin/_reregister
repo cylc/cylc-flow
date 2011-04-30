@@ -7,15 +7,15 @@ from config import config, SuiteConfigError
 
 parser = OptionParser( usage = """cylc [db] reregister [options] FROM TO
 
-reregister local or central suite registrations or registration groups.
+Change the registration of a particular suite, or group of suites.
 
 Arguments:
-    FROM, TO    - suite registrations: 
-    FROM, TO        - central OWNER:GROUP:NAME
-                    - local   GROUP:NAME
-                - OR registration groups:
-                    - central OWNER:GROUP: (note trailing colon!)
-                    - local   GROUP:       (note trailing colon!)""" )
+    FROM, TO  - suite registrations: 
+                  OWNER:GROUP:NAME (Central DB), or
+                        GROUP:NAME (Local DB)
+                or registration group (note trailing colon!):
+                  OWNER:GROUP: (Central DB), or
+                        GROUP: (Local DB)""" )
 
 parser.add_option( "-v", "--verbose",
         help="Turn on verbose output.",

@@ -264,8 +264,8 @@ Command CATEGORIES:"""
 comsum = OrderedDict()
 # database
 comsum[ 'register'   ] = 'Add a suite to your local registration database'
-comsum[ 'reregister' ] = 'Reregister local or central suite registrations'
-comsum[ 'unregister' ] = 'Unregister suites from the local or central database'
+comsum[ 'reregister' ] = 'Change local or central suite registrations'
+comsum[ 'unregister' ] = 'Remove suites from the local or central database'
 comsum[ 'copy'       ] = 'Copy a suite or group of suites.'
 comsum[ 'print'      ] = 'Print local or central suite registrations'
 comsum[ 'get'        ] = 'Print a suite definition directory path'

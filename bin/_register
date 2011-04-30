@@ -7,16 +7,14 @@ from config import get_suite_title, SuiteConfigError
 
 parser = OptionParser( usage = """cylc [db] register [options] SUITE PATH
 
-Add a new local cylc suite registration, which associates a suite name with
-a suite definition directory (stored in $HOME/.cylc/registrations). Cylc
-commands target a particular suite using its registered name.
+Register a suite in your local suite database. Suite registrations
+associate a GROUP and a NAME with a suite definition directory. This 
+must be done before you can use a suite - cylc commands reference a
+particular suite by its GROUP:NAME.
 
 Arguments:
-     SUITE  -  local registration GROUP:NAME
-     PATH   -  A cylc suite definition directory location.
-    
-If you accidentally delete the registration of a running suite, just
-reregister it under the same name to regain access to the suite.""" )
+     SUITE  -  local suite registration GROUP:NAME
+     PATH   -  A cylc suite definition directory location.""" )
 
 parser.add_option( "-v", "--verbose",
         help="Turn on verbose output.",
