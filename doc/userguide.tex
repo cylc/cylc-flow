@@ -79,6 +79,11 @@ morecomment=[l]{options:},
 numbers=none,
 }
 
+% allow \paragraph as subsubsubsection
+% and \subparagraph as subsubsubsubsection
+\setcounter{secnumdepth}{5}
+\setcounter{tocdepth}{5}
+
 \title{Cylc \linebreak 
 An Optimal Adaptive Metascheduler \linebreak 
 For Complex Forecasting Suites \linebreak 
@@ -694,7 +699,7 @@ pre-intervention state in case of disaster). See {\em Restarts}
 
 \pagebreak
 
-\section{Suite Design Principles and Suggestions}
+\section{Suite Design - Principles and Recommendations}
 
 This section highlights some concepts and questions, not necessarily
 cylc-specific, that should be considered when developing your own
@@ -939,7 +944,7 @@ control files (etc.) required by the suite are stored in the suite
 definition directory instead of having the suite reference external
 build directories (etc.), you can turn the directory into a revision
 control repository and be virtually assured of the ability to exactly
-reproduce earlier versions of the suite as required, regardless of their
+reproduce earlier versions of the suite as required, regardless of its
 complexity.
 
 Note that if your suite includes remote tasks that refer to files in the
@@ -952,78 +957,221 @@ tasks, must point to the remote cylc installation).
 \pagebreak
 
 
-\section{Suite Design - Details} 
-\label{SuiteDesign}
+\section{Suite Design - Reference} 
+\label{SuiteDesignReference}
 
 \subsection{History}
 \subsubsection{Cylc 0.0 to 2.x}
 Prior to version 3.0 a cylc suite was defined by a collection of
 self-contained ``task definition files'' that specified prerequisites
-and outputs, and several other parameters, for each task. This was a 
-direct reflection of cylc's internals (there was a one-to-one
-mapping between taskdef files and the internal task proxy objects used
-by the scheduling algorithm), it exposed cylc's self organising
-nature to the user, and had some nice features - for instance a group of
-tasks from one suite could be imported into another suite by simply
-copying the taskdef files over. However, ensuring consistency of
-prerequisites and outputs across a large suite could be tedious, a few 
-``edge cases'' associated with suite startup did require some cross-task
-configuration, and global suite structure was not readily apparent from
-the suite definition (to counter this we run-time dependency
-graphing and a fast dummy mode that avoided running the real tasks).
+and outputs, and several other parameters, for each task. This directly
+reflected cylc internals (taskdef files mapped directly to the internal
+task proxy objects used by the scheduling algorithm), it exposed cylc's
+self organising nature to the user, and had some nice features - for
+instance a group of tasks from one suite could be imported into another
+suite by simply copying the taskdef files over. However, ensuring
+consistency of prerequisites and outputs across a large suite could be
+tedious, a few ``edge case'' task types associated with suite startup
+were less than transparent, and global suite structure was not
+readily apparent from the suite definition (although to counter this
+cylc could generate run-time resolved dependency graphs very quickly
+in fast dummy mode, which doesn't run the real tasks).
 
-\subsubsection{Cylc 3.0+}
-At version 3.0 we switched to an entirely new suite design interface: 
-a single suite config file that defines the suite dependency graph in
-concise form and the commandline and execution environment for each
-task. This made suite structure apparent at a glance and also quite
-drastically reduced the number of task configuration parameters required
-from the user (because much of that information could be parsed from the
-dependency graph). 
+\subsubsection{Cylc 3.0+} At version 3.0 we switched to an entirely new
+suite design interface: a single config file that concisely defines the
+suite dependency graph, and then the commandline and execution
+environment for each task. This makes suite structure apparent at a
+glance, quite drastically reduces the amount of task-specific
+configuration required (because much of that information can be
+determined from the dependency graph), and enables many other new
+features (as detailed in the rest of this section). 
 
-\subsection{The Cylc Suite Definition Directory}
+\subsection{Cylc Suite Definition Directories}
 
 \begin{lstlisting}
+/path/to/my/suite   # suite definition directory
 
-/path/to/my/suite   # example suite definition directory
-    suite.rc          # suite config file
-    bin/              # (optional, somewhat) suite bin directory
-        foo.sh           # task scripts
+    suite.rc           # ! SUITE CONFIG FILE !
+
+    bin/               # suite bin directory (technically optional)
+        foo.sh         # task scripts
         bar.sh
         ...
-    inc/              # (OPTIONAL) suite.rc include-files
+
+    # everything else is OPTIONAL, e.g.:
+    inc/               # suite.rc include-files
         nwp-tasks.rc
         globals.rc
-    foo/bar           # (OPTIONAL) anything else suite-related
-    baz               # ...
+        ...
+    doc/               # documentation
+    control/           # control files
+    ancil/             # ancillary files
+    ...                # anything suite-related
 \end{lstlisting}
 
 A {\em cylc suite definition directory} contains, at the least, a single
-{\em suite.rc} file that defines the suite dependency graph and the
+\lstinline=suite.rc= file that defines the suite dependency graph and the
 properties of all the tasks in it, and global settings such as the 
 default job submission method. See \ref{SuiteRCFiles}.
 
-It should also contain a {\em bin} sub-directory for scripts and
-executables that implement, or are used by, the suite tasks. However,
-this is optional because tasks can also execute externally held
-programs.  The suite automatically has access to files in the suite
-\lstinline=bin= directory, but you need to use the full path to external
-files, or otherwise ensure that your \lstinline=$PATH= is configured
-appropriately.
+It will likely also contain a \lstinline=bin= sub-directory for scripts
+and executables that implement, or are used by, the suite tasks. This is
+optional because every task in a suite {\em could}, in principle,
+call some external command, script, or executable. However, suite
+tasks automatically have access to anything in the suite \lstinline=bin=
+directory, whereas you'll need to use the full path to external files,
+or otherwise ensure that your \lstinline=$PATH= is configured
+appropriately, and there are clear advantages to putting all 
+suite-related files in one place (revision control \dots).
 
 The \lstinline=suite.rc= file may use any number of ``include
 files'' which can be stored wherever you like under the suite
 definition directory. See \ref{SuiteRCIncludeFiles}.
 
 Finally, you can store any other suite-related files in the suite
-definition directory - documentation, for example, task configuration
-data and control files, etc. These will be ignored by cylc but can be
-accessed by suite tasks via the \lstinline=$CYLC_SUITE_DIR= environment
+definition directory - documentation, task configuration data and
+control files, etc. These are ignored by cylc but can be accessed by
+suite tasks via the \lstinline=$CYLC_SUITE_DIR= environment
 variable. Putting everything used by a suite under its definition
-directory (i.e.  avoiding any use of external executables, control
-files, etc.) makes suite version control easy and powerful: you'll be
+directory makes suite revision control easy and powerful: you'll be
 able to revert to an earlier version of the entire suite with confidence
 that the result, at run-time, is reproducible. 
+
+\subsection{The suite.rc File Format}
+
+A cylc suite is defined entirely by its \lstinline=suite.rc= file. The
+file format used is a slightly modified variant of ConfigObj, 
+an open source project.\footnote{Cylc modifies the ConfigObj module
+to allow continuation lines and include-files, and variable overrides
+in task environment and directives sections.} The following is a
+stripped-down \lstinline=suite.rc= pseudo-listing for cylc's {\em
+``simple''} example suite. Some entries have been omitted in order to
+clearly show the global structure of the file:
+
+\begin{lstlisting}
+# GLOBAL SETTINGS
+title = a simple example suite
+job submission method = loadleveler
+ 
+[special tasks]
+    # LIST TASKS WITH UNUSUAL BEHAVIOR
+    startup         = Prep
+    coldstart       = ColdA
+    sequential      = ModelA
+    clock-triggered = GetData(1)
+
+[dependencies]
+    # DEFINE THE SUITE DEPENDENCY GRAPH
+    [[ 0,6,12,18 ]]
+        graph  =  """Prep => GetData & ColdModel
+                     GetData => Model => PostA
+                     ColdModel | Model(T-6) => Model"""
+    [[ 6,18 ]]
+        graph = "Model => PostB"
+
+[environment]
+    # ENVIRONMENT VARIABLES AVAILABLE TO ALL TASKS
+    WORKSPACE = /$TMPDIR/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME
+
+[tasks]
+    # COMMAND AND EXECUTION ENVIRONMENT FOR EACH TASK
+    [[GetData]]
+        description = "retrieve data for the current cycle time"
+        command = cylc wrap GetData.sh
+        [[[environment]]]
+            # ENVIRONMENT VARIABLES AVAILABLE TO THIS TASK
+            GETDATA_OUTPUT_DIR = $WORKSPACE
+
+    # ... other tasks ...
+
+[visualization]
+    # COLORS, LINE STYLES, ETC. FOR DEPENDENCY GRAPH PLOTTING ...
+\end{lstlisting}
+
+Cylc \lstinline=suite.rc= files are automatically validated against a 
+comprehensive specification (see below) on parsing, and are translated
+directly into a nested dictionary data structure in the cylc source code.
+This makes it very easy to add new user configuration items to cylc.
+
+\begin{itemize}
+    \item {\bf Section level} is determined by the number of square brackets;
+        leading white space is ignored but can be used for clarity.
+    \item {\bf Continuation lines} are indicated by a trailing backslash
+        character.
+    \item {\bf Comments} are indicated by a hash (`\#') character.
+    \item Quotes can usually be omitted for single line string values.
+    \item {\bf Multiline string values} must be enclosed in triple quotes.
+    \item {\bf Dependency graph strings} (see
+        Section~\ref{SuitercDependencyGraph}) may contain blank lines
+        and inline comments.
+    \item {\bf Include files} can be used, even multiply-included and
+        nested; see Section~\ref{IncludeFiles}. 
+\end{itemize}
+
+The dependency graph defined above is plotted, via gcylc or the
+\lstinline=cylc graph= command, in Figure~\ref{fig-simple-graph}.
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=12cm]{../images/screenshots/simple-graph.eps}]
+    \end{center}
+    \caption[Simple example dependency graph]{\small The dependency graph
+    defined in the 'simple' example suite.rc file.}
+    \label{fig-simple-graph} 
+\end{figure} 
+
+\subsubsection{Syntax Highlighting}
+
+Cylc comes with a syntax file, \lstinline=$CYLC_DIR/conf/cylc.vim=,
+which defines \lstinline=suite.rc= syntax highlighting and section
+folding for the {\em vim} editor, as shown in Figure~\ref{fig-cylc-vim}.
+To use this, just copy the syntax file to your
+\lstinline=$HOME/.vim/syntax/= directory and make some minor
+modifications, as described in the file, to your
+\lstinline=$HOME/.vimrc= file.
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=12cm]{../images/screenshots/simple-suiterc.eps}]
+    \end{center}
+    \caption[Cylc suite.rc syntax highlighting in vim]{
+    Cylc suite.rc syntax highlighting and folding in the vim editior.}
+    \label{fig-cylc-vim} 
+\end{figure} 
+
+\subsection{Suite Validation}
+
+Validation, via the command line or gcylc gui, comprehensively
+checks suite validity on two fronts, so that you don't have to 
+wait till run time to find errors:
+
+\begin{itemize}
+    \item Firstly, the \lstinline=suite.rc= file is parsed and validated
+        against the \lstinline=$CYLC_DIR/conf/suiterc.spec=
+        specification.  This detects any formatting errors (e.g.\
+        unmatched section nesting brackets), misspelled or
+        illegal entries, and illegal values.
+    \item Secondly, it does some cross-entry consistency checking, and
+        attempts to create all task proxy objects for the
+        suite, according to information parsed from the file.
+\end{itemize}
+
+Warnings are also emitted for non-fatal conditions that may or may not
+be errors, such defining tasks that are not used in the suite dependency
+graph, or using tasks in the dependency graph that have not been defined
+(this may be valid - it creates a dummy task).
+
+\subsubsection{The suiterc.spec File}
+
+The file \lstinline=$CYLC_DIR/conf/suiterc.spec= is the ultimate
+arbiter of what's allowed in a cylc \lstinline=suite.rc= file. It
+defines every legal entry and, where appropriate, legal values and
+default values. It's use in the suite validation process is automatic.
+
+\section{Suite.rc Entry Reference}
+
+\input{suiterc.spec.tex}
+
 
 \subsection{Clock-triggered Tasks Should Wait On External Data}
 
@@ -2828,5 +2976,13 @@ frequent tasks if required.
 %insterval). Where this matters an external task can detect whether or
 %not it has caught up (and signal this to its proxy object in cylc) by
 %comparing its cycle time (and offset) to the wall clock time.  
+
+
+\section{Acknowledgements}
+
+I'd like to thank Bernard Miville and Phil Andrews (NIWA) and Dave
+Matthews (Met Office UK) for much discussion and debugging, and for many
+valuable suggestions that have greatly improved cylc's usability and
+functionality.
 
 \end{document}

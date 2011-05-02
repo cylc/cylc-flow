@@ -243,7 +243,7 @@ class scheduler(object):
         self.use_quick = self.config['use quick task elimination'] 
 
        # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
-        self.exclusive_suite_lock = not self.config[ 'allow multiple simultaneous suite instances' ]
+        self.exclusive_suite_lock = not self.config[ 'allow multiple simultaneous instances' ]
 
         # TASK EVENT HOOKS (may be overridden per task)
         task.task.task_submitted_hook = self.config['task submitted hook']
@@ -322,7 +322,7 @@ class scheduler(object):
         # PIMP THE SUITE LOG
         self.log = logging.getLogger( 'main' )
         pimp_my_logger.pimp_it( \
-             self.log, self.logging_dir, self.config['roll scheduler log at startup'], \
+             self.log, self.logging_dir, self.config['roll log at startup'], \
                 self.logging_level, self.dummy_mode, self.clock )
 
         # STATE DUMP ROLLING ARCHIVE

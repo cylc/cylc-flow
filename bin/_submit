@@ -144,7 +144,7 @@ for var in config['directives']:
 # create the log
 log = logging.getLogger()
 pimp_my_logger.pimp_it( log, logging_dir, \
-        config['roll scheduler log at startup'], \
+        config['roll log at startup'], \
         logging.INFO, False, None, True )
 
 job_submit.cylc_env = cylcenv
