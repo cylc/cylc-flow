@@ -56,7 +56,7 @@ for tn in config.get_full_task_name_list():
     print '  - ', tn, '...', 
     try:
         # tasks used in the suite dependency graph
-        task_proxy = config.get_task_proxy( tn, ctime, 'waiting', startup=True )
+        task_proxy = config.get_task_proxy( tn, ctime, 'waiting', stopctime=None, startup=True )
     except SuiteConfigError or DefinitionError,x:
         print >> sys.stderr, x
         valid = False
