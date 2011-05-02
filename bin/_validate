@@ -64,7 +64,7 @@ for tn in config.get_full_task_name_list():
         # task not used (not in graph - already warned above)
         try:
             # tasks defined but not used in the suite graph
-            task_proxy = config.get_task_proxy_raw( tn, ctime, 'waiting', startup=True, test=True, strict=False )
+            task_proxy = config.get_task_proxy_raw( tn, ctime, 'waiting', stopctime=None, startup=True, test=True, strict=False )
         except SuiteConfigError or DefinitionError, x:
             print >> sys.stderr, x
             valid = False
