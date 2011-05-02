@@ -276,8 +276,8 @@ class scheduler(object):
 
         # SUITE.RC GLOBAL DIRECTIVES
         globaldvs = OrderedDict()
-        for var in config['directives']:
-            globaldvs[ var ] = config['directives'][var]
+        for var in self.config['directives']:
+            globaldvs[ var ] = self.config['directives'][var]
 
         # CLOCK (accelerated time in dummy mode)
         rate = self.config['dummy mode']['clock rate in seconds per dummy hour']
