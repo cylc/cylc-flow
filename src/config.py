@@ -804,27 +804,32 @@ class config( CylcConfigObj ):
             cycles.sort()
             ctime = start_ctime
             hour = int( start_ctime[8:10] )
-            i = cycles.index( hour )
-            started = False
-            while True:
-                hour = cycles[i]
-                for n in self.lone_nodes[hour]:
-                    item = n.get(ctime, started, raw, startup_exclude_list, [])
-                    if item == None:
-                        # TO DO: why this test?
-                        continue
-                    gr_lone_nodes.append( item )
-                # next cycle
-                started = True
-                if i == len(cycles) - 1:
-                    i = 0
-                    diff = 24 - hour + cycles[0]
-                else:
-                    i += 1
-                    diff = cycles[i] - hour
-                ctime = cycle_time.increment( ctime, diff )
-                if int( cycle_time.diff_hours( ctime, start_ctime )) > int(stop):
-                    break
+            try:
+                i = cycles.index( hour )
+            except ValueError:
+                # no lone nodes at this hour?
+                pass
+            else:
+                started = False
+                while True:
+                    hour = cycles[i]
+                    for n in self.lone_nodes[hour]:
+                        item = n.get(ctime, started, raw, startup_exclude_list, [])
+                        if item == None:
+                            # TO DO: why this test?
+                            continue
+                        gr_lone_nodes.append( item )
+                    # next cycle
+                    started = True
+                    if i == len(cycles) - 1:
+                        i = 0
+                        diff = 24 - hour + cycles[0]
+                    else:
+                        i += 1
+                        diff = cycles[i] - hour
+                    ctime = cycle_time.increment( ctime, diff )
+                    if int( cycle_time.diff_hours( ctime, start_ctime )) > int(stop):
+                        break
  
         gr_edges = []
         cycles = self.edges.keys()
