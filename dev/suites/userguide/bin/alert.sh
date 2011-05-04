@@ -17,8 +17,6 @@
 # email if a task fails; or update a general monitoring system such as
 # Nagios according to whether a task has started, finished, or failed.
 
-# Put alerting script(s) in your suite bin directory.
-
 HOOK=$1
 NAME=$2
 CTIME=$3
