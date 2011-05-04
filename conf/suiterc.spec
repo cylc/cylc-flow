@@ -11,8 +11,8 @@ title = string( default="No suite title given" )
 #> suite database window, and can also be retrieved from a suite at run
 #> time using the \lstinline=cylc show= command.
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em default:} ``No suite title given''
 #>\end{myitemize}
 
@@ -20,8 +20,8 @@ description = string( default="No suite description given" )
 #>The suite description can be retrieved by 
 #>gcylc right-click menu and the \lstinline=cylc show= command.
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em default:} ``No suite description given''
 #>\end{myitemize}
 
@@ -30,8 +30,8 @@ job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw
 #>determines how cylc job scripts are executed when a task is
 #>ready to run. See Section~\ref{JobSubmissionMethods}.
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em legal values:} 
 #>   \begin{myitemize}
 #>       \item \lstinline=background= - direct subshell execution in the background 
@@ -54,8 +54,8 @@ use lockserver = boolean( default=True )
 #> capable of that (see \lstinline=suite.rc= item
 #> ``allow multiple simultaneous instances'').
 #>\begin{myitemize}
-#>\item {\em type:} boolean
 #>\item {\em section:} (top level)
+#>\item {\em type:} boolean
 #>\item {\em default:} True
 #>\end{myitemize}
 
@@ -70,8 +70,8 @@ use secure passphrase = boolean( default=False )
 #> across the network (a secure MD5 checksum is).  This guarantees
 #> security so long as your user account isn't breached.
 #>\begin{myitemize}
-#>\item {\em type:} boolean
 #>\item {\em section:} (top level)
+#>\item {\em type:} boolean
 #>\item {\em default:} False
 #>\end{myitemize}
 
@@ -83,8 +83,8 @@ tasks to exclude at startup = force_list( default=list())
 #> not been removed from the dependency graph, can still be depended on
 #> by other tasks, in which case some manual triggering may be required.
 #>\begin{myitemize}
-#>\item {\em type:} list of task names
 #>\item {\em section:} (top level)
+#>\item {\em type:} list of task names
 #>\item {\em default:} empty
 #>\end{myitemize}
 
@@ -96,8 +96,8 @@ tasks to include at startup = force_list( default=list() )
 #> not been removed from the dependency graph, can still be depended on
 #> by other tasks, in which case some manual triggering may be required.
 #>\begin{myitemize}
-#>\item {\em type:} list of task names
 #>\item {\em section:} (top level)
+#>\item {\em type:} list of task names
 #>\item {\em default:} empty
 #>\end{myitemize}
 
@@ -109,8 +109,9 @@ maximum runahead hours = integer( min=0, default=24 )
 #> Clock-triggered tasks with no other prerequisites (most suites will
 #> have some of these) will do the same, but only in catchup operation.
 #>\begin{myitemize}
-#>\item {\em type:} integer, minimum 0
 #>\item {\em section:} (top level)
+#>\item {\em type:} integer
+#>\item {\em legal values:} $>= 0$
 #>\item {\em default:} 24
 #>\end{myitemize}
 
@@ -118,8 +119,8 @@ top level logging directory = string( default = '$HOME/.cylc/logging' )
 #>The top-level directory under which cylc 
 #> stores suite-specific scheduler log files.
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
 #>\item {\em default:} \lstinline=$HOME/.cylc/logging=.
@@ -129,8 +130,8 @@ roll log at startup = boolean( default=True )
 #>Roll (i.e. relabel ordered backups and start anew)
 #>the cylc suite log file, every time the suite is started or restarted.
 #>\begin{myitemize}
-#>\item {\em type:} boolean
 #>\item {\em section:} (top level)
+#>\item {\em type:} boolean
 #>\item {\em default:} True
 #>\end{myitemize}
 
@@ -139,8 +140,8 @@ top level state dump directory = string( default = '$HOME/.cylc/state' )
 #> stores suite-specific state dump files (which can be used to restart
 #> a suite from an earlier state).
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
 #>\item {\em default:} \lstinline=$HOME/.cylc/state=
@@ -158,8 +159,9 @@ number of state dump backups = integer( min=1, default=10 )
 #> state dumps are written out prior to actioning any suite
 #> intervention command.
 #>\begin{myitemize}
-#>\item {\em type:} integer, minimum 1
 #>\item {\em section:} (top level)
+#>\item {\em type:} integer
+#>\item {\em legal values:} $>= 1$
 #>\item {\em default:} 10
 #>\end{myitemize}
 
@@ -170,8 +172,8 @@ job submission log directory = string( default='$HOME/CylcLogs/$CYLC_SUITE_GROUP
 #> be the complete job logs for the task.  For owned tasks, the suite
 #> owner's home directory will be replaced by the task owner's.
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)  
+#>\item {\em type:} string
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
 #>\item {\em default:} \lstinline=$HOME/CylcLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME=
@@ -185,8 +187,8 @@ pre-command scripting = string( default='' )
 #> ``task started'' message so an abort here will not register as a task
 #> failure - it will appear that the task is stuck in the submitted state.
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em default:} empty
 #>\item {\em individual task override:} yes
 #>\end{myitemize}
@@ -199,93 +201,118 @@ post-command scripting = string( default='' )
 #> ``task finished'' message so an abort here will not register as a task
 #> failure - it will appear that the task finished successfully.
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em default:} empty
 #>\item {\em individual task override:} yes
 #>\end{myitemize}
 
 task submitted hook = string( default=None )
-#>Script to call whenever a task is submitted.
+#>A script to call whenever a task has been submitted. Called as: 
+#> \begin{lstlisting}
+#> <script> 'submitted' TASK CYCLE_TIME MESSAGE
+#> \end{lstlisting}
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em default:} None
 #>\item {\em individual task override:} yes
 #>\end{myitemize}
 
 task started hook = string( default=None )
-#> Script to call whenever a task reports that it has started running.
+#>A script to call whenever a task reports it has started. Called as: 
+#> \begin{lstlisting}
+#> <script> 'started' TASK CYCLE_TIME MESSAGE
+#> \end{lstlisting}
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:}  (top level)
+#>\item {\em type:} string
 #>\item {\em default:} None
 #>\item {\em individual task override:} yes
 #>\end{myitemize}
 
 task finished hook = string( default=None )
-#>Script to call whenever a task reports that it has finished successfully.
+#>A script to call whenever a task reports it has finished. Called as: 
+#> \begin{lstlisting}
+#> <script> 'finished' TASK CYCLE_TIME MESSAGE
+#> \end{lstlisting}
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em default:} None
 #>\item {\em individual task override:} yes
 #>\end{myitemize}
 
 task failed hook = string( default=None )
-#>Script to call whenever a task reports that it has failed.
+#>A script to call whenever a task reports it has failed. Called as: 
+#> \begin{lstlisting}
+#> <script> 'failed' TASK CYCLE_TIME MESSAGE
+#> \end{lstlisting}
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em default:} None
 #>\item {\em individual task override:} yes
 #>\end{myitemize}
 
 task warning hook = string( default=None )
-#>script to call whenever a task reports a warning message.
+#>A script to call whenever a task reports a warning message. Called as: 
+#> \begin{lstlisting}
+#> <script> 'warning' TASK CYCLE_TIME MESSAGE
+#> \end{lstlisting}
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em default:} None
 #>\item {\em individual task override:} yes
 #>\end{myitemize}
 
 task submission failed hook = string( default=None )
-#>Script to call whenever job submission fails
-#> for a task (in which case it will not start running).
+#>A script to call whenever a task job submission fails. Called as: 
+#> \begin{lstlisting}
+#> <script> 'submit_failed' TASK CYCLE_TIME MESSAGE
+#> \end{lstlisting}
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em default:} None
 #>\item {\em individual task override:} yes
 #>\end{myitemize}
 
 task timeout hook = string( default=None )
-#>Script to call whenever a task times out (in job submission or execution).
+#>A script to call whenever a task times out after job submission or 
+#> after it has started running. Called as: 
+#> \begin{lstlisting}
+#> <script> HOOK TASK CYCLE_TIME MESSAGE
+#> \end{lstlisting}
+#>Where HOOK is either 'submission' or 'execution'.
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em default:} None
 #>\item {\em individual task override:} yes
 #>\end{myitemize}
 
 task submission timeout minutes = float( default=None )
-#>If a task fails to report that it has started 
-#> this long after it was submitted, call the task timeout hook script.
+# TO DO: should this have a sensible default, say 5 min.
+
+#>How long to wait after a task was submitted before calling the 
+#>timeout hook script, if one is defined, and if the task has not 
+#> reported that it has started running.
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} float
 #>\item {\em default:} None
 #>\item {\em individual task override:} yes
 #>\end{myitemize}
 
 task execution timeout minutes = float( default=None )
-#> If a task fails to report that it has completed
-#> (or failed) this long after it reported that it had started running,
-#> call the task timeout hook script.
+#>How long to wait after a task has reported starting before
+#> calling the execution timeout hook script, if one is defined, and if
+#> the task has not reported that it has finished.
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em default:} None
 #>\item {\em individual task override:} yes
 #>\end{myitemize}
@@ -298,8 +325,8 @@ pre-command scripting = string( default='' )
 #> ``task started'' message so an abort here will not register as a task
 #> failure - it will appear that the task is stuck in the submitted state.
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em default:} empty
 #>\item {\em individual task override:} yes
 #>\end{myitemize}
@@ -312,8 +339,8 @@ post-command scripting = string( default='' )
 #> ``task finished'' message so an abort here will not register as a task
 #> failure - it will appear that the task finished successfully.
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em default:} empty
 #>\item {\em individual task override:} yes
 #>\end{myitemize}
@@ -329,8 +356,8 @@ use suite blocking = boolean( default=False )
 #> results in a special state dump from which you can restart the suite 
 #> if you decide the intervention was a mistake).
 #>\begin{myitemize}
-#>\item {\em type:} boolean
 #>\item {\em section:} (top level) 
+#>\item {\em type:} boolean
 #>\item {\em default:} False
 #>\end{myitemize}
 
@@ -338,8 +365,8 @@ owned task execution method = option( sudo, ssh, default=sudo )
 #>The means by which the chosen job submission method is invoked for
 #> tasks owned by users other than the suite owner.
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>        \item sudo
@@ -354,8 +381,8 @@ ignore task owners = boolean( default=False )
 #> Can be useful when testing such a suite outside of its normal operational
 #> environment.
 #>\begin{myitemize}
-#>\item {\em type:} boolean
 #>\item {\em section:} (top level)
+#>\item {\em type:} boolean
 #>\item {\em default:} False
 #>\end{myitemize}
 
@@ -364,8 +391,8 @@ use quick task elimination = boolean( default=True )
 #> early as possible, take account of tasks known to have no downstream
 #> dependents in later (as opposed to its own) forecast cycles.
 #>\begin{myitemize}
-#>\item {\em type:} boolean
 #>\item {\em section:} (top level)
+#>\item {\em type:} boolean
 #>\item {\em default:} True
 #>\end{myitemize}
 
@@ -375,8 +402,8 @@ dummy mode only = boolean( default=False )
 #> can't run for real because they've been copied out of their operational
 #> environment.
 #>\begin{myitemize}
-#>\item {\em type:} boolean
 #>\item {\em section:} (top level)
+#>\item {\em type:} boolean
 #>\item {\em default:} False
 #>\end{myitemize}
 
@@ -388,8 +415,8 @@ allow multiple simultaneous instances = boolean( default=False )
 #> (under different registrations) without interference. If not, 
 #> the lockserver will not allow a second instance of the suite to start.
 #>\begin{myitemize}
-#>\item {\em type:} boolean
 #>\item {\em section:} (top level)
+#>\item {\em type:} boolean
 #>\item {\em default:} False
 #>\end{myitemize}
 
@@ -401,8 +428,8 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #> in cylc - would need to change this to use csh for example), and how
 #> the user writes \lstinline=suite.rc= {\em scripting} sections.
 #>\begin{myitemize}
-#>\item {\em type:} string
 #>\item {\em section:} (top level)
+#>\item {\em type:} string
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>        \item \lstinline=/bin/bash=
@@ -414,50 +441,43 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\end{myitemize}
 
 [dummy mode]
-# dummy mode was most useful prior to cylc-3: it allowed us to get the
-# scheduling right without running real tasks when a suite was defined
-# entirely by a collection of distinct "task definition files" whose
-# prerequisites and outputs had to be consistent across the suite.
-# Now (post cylc-3) it is primarily useful for cylc development, and
-# for generating run-time dependency graphs very quickly.
+#> Configure dummy mode behavior; used only if a suite runs in dummy mode.
 clock offset from initial cycle time in hours = integer( default=24 )
+#> Specify a clock offset of 0 to simulate real time operation, greater 
+#> than zero to simulate catch up and transition to real time operation.
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:} [dummy mode]
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em type:} integer
+#>\item {\em legal values:} $>=0$
+#>\item {\em default:} 24
 #>\end{myitemize}
 
 clock rate in seconds per dummy hour = integer( default=10 )
+#> This determines the speed at which dummy mode suites run. A value
+#> of 10, for example, means it will take 10 dummy seconds to simulate
+#> one hour of real time operation.
 #>\begin{myitemize}
-#>\item {\em type:}
-#>\item {\em section:}  [dummy mode]
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em section:} [dummy mode]
+#>\item {\em type:} integer
+#>\item {\em legal values:} $>= 0$
+#>\item {\em default:} 10
 #>\end{myitemize}
 
 # exported as $CYLC_DUMMY_SLEEP in job submission file:
 task run time in seconds = integer( default=10 )
+#> Set the approximate number of dummy seconds that a dummy task
+#> takes to execute.
 #>\begin{myitemize}
-#>\item {\em type:}
-#>\item {\em section:}  [dummy mode]
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em section:} [dummy mode]
+#>\item {\em type:} integer
+#>\item {\em legal values:} $>=0$
+#>\item {\em default:} 10
 #>\end{myitemize}
 
 job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [dummy mode]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -469,8 +489,8 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 [special tasks]
     startup = force_list( default=list())
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:} [special tasks]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -480,8 +500,8 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 
     coldstart = force_list( default=list())
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [special tasks]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -491,8 +511,8 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 
     oneoff = force_list( default=list())
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [special tasks]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -502,8 +522,8 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 
     sequential = force_list( default=list())
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [special tasks]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -514,8 +534,8 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
     # outputs MUST contain the word 'restart':
     models with explicit restart outputs = force_list( default=list())
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [special tasks]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -526,8 +546,8 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
     # offset can be a float:
     clock-triggered = force_list( default=list())
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [special tasks]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -539,8 +559,8 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 [task families]
     __many__ = force_list( default=None )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:} [task families]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -554,8 +574,8 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
     [[__many__]]
     graph = string
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:} [dependencies][[(hours)]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -568,8 +588,8 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 # generate a distinct graph for each timestep
 live graph movie = boolean( default=False )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:} [experimental]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -582,8 +602,8 @@ live graph movie = boolean( default=False )
 # hours after which to stop plotting the run time graph
 when to stop updating = integer( default=24 )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:} [visualization]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -594,8 +614,8 @@ when to stop updating = integer( default=24 )
 # absolute, or relative to $CYLC_SUITE_DIR for portability
 run time graph directory = string( default='$CYLC_SUITE_DIR/graphing')
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [visualization]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -605,8 +625,8 @@ run time graph directory = string( default='$CYLC_SUITE_DIR/graphing')
 
 run time graph filename  = string( default='runtime.dot')
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [visualization]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -617,8 +637,8 @@ run time graph filename  = string( default='runtime.dot')
 # TO DO: USE SUB-GRAPH FOR FAMILY MEMBERS
 show family members = boolean( default=False )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [visualization]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -628,8 +648,8 @@ show family members = boolean( default=False )
 
 use node color for edges = boolean( default=True )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [visualization]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -639,8 +659,8 @@ use node color for edges = boolean( default=True )
 
 default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=ellipse'))
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [visualization]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -650,8 +670,8 @@ default node attributes = force_list( default=list('style=unfilled', 'color=blac
 
 default edge attributes = force_list( default=list('color=black'))
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [visualization]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -663,8 +683,8 @@ default edge attributes = force_list( default=list('color=black'))
 [[node groups]]
     __many__ = force_list( default=list())
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [visualization][[node groups]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -676,8 +696,8 @@ default edge attributes = force_list( default=list('color=black'))
     # item is task name or task group name
     __many__ = force_list( default=list())
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:} [visualization][[node attributes]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -689,8 +709,8 @@ default edge attributes = force_list( default=list('color=black'))
 [task insertion groups]
  __many__ = force_list()
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:} [task insertion groups]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -702,8 +722,8 @@ default edge attributes = force_list( default=list('color=black'))
 [environment]
 __many__ = string
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:} [environment]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -717,8 +737,8 @@ __many__ = string
 [directives]
 __many__ = string
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:} [directives]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -739,8 +759,8 @@ __many__ = string
     [[__many__]]
     description = string( default="No task description supplied" )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:} [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -750,8 +770,8 @@ __many__ = string
 
     job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=None )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -761,8 +781,8 @@ __many__ = string
 
     job submission log directory = string( default=None )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -772,23 +792,23 @@ __many__ = string
 
     pre-command scripting = string( default='' )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em default:} empty
 #>\end{myitemize}
 
     post-command scripting = string( default='' )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em default:} empty
 #>\end{myitemize}
 
 
     task submitted hook = string( default=None )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -798,8 +818,8 @@ __many__ = string
 
     task started hook = string( default=None )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -809,8 +829,8 @@ __many__ = string
 
     task finished hook = string( default=None )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -820,8 +840,8 @@ __many__ = string
 
     task failed hook = string( default=None )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -831,8 +851,8 @@ __many__ = string
 
     task warning hook = string( default=None )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -842,8 +862,8 @@ __many__ = string
 
     task submission failed hook = string( default=None )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -853,8 +873,8 @@ __many__ = string
 
     task timeout hook = string( default=None )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -864,8 +884,8 @@ __many__ = string
 
     task submission timeout minutes = float( default=None )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -875,8 +895,8 @@ __many__ = string
 
     execution timeout minutes = float( default=None )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -886,8 +906,8 @@ __many__ = string
 
     reset execution timeout on incoming messages = boolean( default=True )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -898,8 +918,8 @@ __many__ = string
     # default to dummy task:
     command = force_list( default=list( cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -909,8 +929,8 @@ __many__ = string
 
     owner = string( default=None )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -920,8 +940,8 @@ __many__ = string
 
     host = string( default=None )
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -933,8 +953,8 @@ __many__ = string
     # graph; if present graphed hours must not conflict with this.
     hours = force_list( default=list())
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -944,8 +964,8 @@ __many__ = string
 
     extra log files = force_list( default=list())
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -956,8 +976,8 @@ __many__ = string
         [[[environment]]]
         __many__ = string
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]][[[environment]]]
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -970,8 +990,8 @@ __many__ = string
         # by job submission method.
         __many__ = string
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:} 
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 
@@ -982,8 +1002,8 @@ __many__ = string
           [[[outputs]]]
         __many__ = string
 #>\begin{myitemize}
-#>\item {\em type:}
 #>\item {\em section:} 
+#>\item {\em type:}
 #>\item {\em legal values:}
 #>   \begin{myitemize}
 #>       \item 

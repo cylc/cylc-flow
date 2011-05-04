@@ -1219,22 +1219,21 @@ every legal \lstinline=suite.rc= entry.
 \pagebreak
 \section{Suite.rc Entry Reference}
 
-This section documents all legal entries in a \lstinline=suite.rc= file. 
+This section documents all legal entries in a \lstinline=suite.rc= file.
 During userguide source processing this information is extracted from
-the spec file itself, \lstinline=$CYLC_DIR/conf/suiterc.spec=,
-to ensure that it remains up to date. Section headings are generated for
-each item so that the information can be accessed quickly by clicking
-on entries in the userguide (PDF) contents page. Note that many
-of the available items have default values that should be sufficient
-(e.g.\ logging directories and the entire visualization section),
-some may only be needed for critical operational suites (e.g.\ secure
-passphrases and task failure hooks for centralised alerting), some 
-are primarily aimed at cylc development (e.g.\ the dummy mode section),
-and many entries are repeated in the global and task-specific sections
-of the file (so that specific tasks can override global settings).
-Generally speaking your \lstinline=suite.rc= files should not be any
-more complicated than those of the cylc example suites (see the example
-listing in the previous section) - but they may contain more tasks.
+the spec file itself, \lstinline=$CYLC_DIR/conf/suiterc.spec=, to ensure
+that it remains up to date. Section headings are generated for each item
+so that the information can be accessed quickly by clicking on entries
+in the userguide (PDF) contents page. Note that many of the available
+items have default values that should be sufficient (e.g.\ logging
+directories and the entire visualization section), some may only be
+needed for critical operational suites (e.g.\ secure passphrases and
+task failure hooks for centralised alerting), some are primarily aimed
+at cylc development (e.g.\ the dummy mode section), and many global
+entries are repeated in the task-specific sections to allow task
+override. Generally your \lstinline=suite.rc= files shouldn't be
+a whole lot more complicated than those of the cylc example suites (see
+the example listing in the previous section).
 
 \input{suiterc.spec.tex}
 
@@ -2459,23 +2458,22 @@ size should be configurable, but it is currently hardwired in
 \subsection{Dummy Mode} 
 \label{DummyMode}
 
-If you start a suite in dummy mode, e.g.\:
-
-\begin{lstlisting}
-cylc coldstart --dummy-mode userguide 2009081118
-\end{lstlisting}
-
-then in place of each real task cylc will launch an external program
-that masquerades as the real thing by reporting that task's registered
-outputs complete one at a time, after a short interval. This is
-essentially indistinguishable, to cylc, from real operation, and is a
-complete test of scheduling for the configured task set (so long as the
-real tasks report their registered outputs completed as they are
-supposed to). 
-
-This is a powerful aid in constructing new suites, because it allows
-you to get the scheduling right without having to deal with all the
-complications of running the real tasks.
+If you start a suite in dummy mode (a command line option for the cold-,
+warm-, raw-, and re-start commands, and a checkbutton in the gcylc suite
+start panel) then cylc will run on an accelerated clock and submit dummy
+programs instead of the real tasks. These masquerade as the real tasks
+by reporting the correct outputs complete after a short interval,
+reporting success, and then exiting. This is essentially
+indistinguishable, to cylc, from real operation. Dummy mode was, and
+remains, a critical aid to cylc development because it because it
+enables testing every aspect of scheduling without having to run real
+tasks in real time. Prior to cylc-3 it was also a useful aid to suite
+development - a dummy run would quickly identify any mismatch between
+the user-defined prerequisites and outputs across the suite, so you
+could get the scheduling right without running the real tasks. Post
+cylc-3.0 this is less important because task prerequisites and outputs
+are implicitly defined by the dependency graph and, short of a bug in
+cylc, the suite will run according to the graph.
 
 \subsubsection{Clock Rate and Offset}
 

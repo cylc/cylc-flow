@@ -285,7 +285,7 @@ class task( Pyro.core.ObjBase ):
         if self.task_submission_timeout_minutes and self.submission_timer_start:
             timeout = self.submission_timer_start + datetime.timedelta( minutes=self.task_submission_timeout_minutes )
             if current_time > timeout:
-                msg = 'submitted ' + str( self.task_submission_timeout_minutes ) + ' minutes ago but has not started'
+                msg = 'submitted ' + str( self.task_submission_timeout_minutes ) + ' minutes ago, but has not started'
                 self.log( 'WARNING', msg )
                 command = ' '.join( [ self.task_timeout_hook, 'submission', self.name, self.c_time, "'" + msg + "'" ] )
                 subprocess.call( command, shell=True )
@@ -295,9 +295,9 @@ class task( Pyro.core.ObjBase ):
             timeout = self.execution_timer_start + datetime.timedelta( minutes=self.execution_timeout_minutes )
             if current_time > timeout:
                 if self.reset_execution_timeout_on_incoming_messages:
-                    msg = 'last message ' + str( self.execution_timeout_minutes ) + ' minutes ago, not finished'
+                    msg = 'last message ' + str( self.execution_timeout_minutes ) + ' minutes ago, but has not finished'
                 else:
-                    msg = 'started ' + str( self.execution_timeout_minutes ) + ' minutes ago, not finished'
+                    msg = 'started ' + str( self.execution_timeout_minutes ) + ' minutes ago, but has not finished'
                 self.log( 'WARNING', msg )
                 command = ' '.join( [ self.task_timeout_hook, 'execution', self.name, self.c_time, "'" + msg + "'" ] )
                 subprocess.call( command, shell=True )
