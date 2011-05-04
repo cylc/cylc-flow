@@ -92,6 +92,16 @@ For Complex Forecasting Suites \linebreak
 
 \author{Hilary Oliver}
 
+
+% define a more compact itemized list environment
+\newenvironment{myitemize} {
+\begin{itemize}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{0pt}
+    \setlength{\topsep}{0pt}
+    }{\end{itemize}}
+
 \begin{document}
 
 \maketitle
@@ -465,7 +475,7 @@ as it catches up to real time operation.
 \subsection{Requirements} 
 \label{Requirements}
 
-\begin{itemize}
+\begin{myitemize}
     \item A Unix-like OS\footnote{The cylc codebase assumes
         Unix-style file paths in places, but it could easily made more
         portable if necessary.} 
@@ -481,7 +491,7 @@ as it catches up to real time operation.
         engine, used by cylc for dependency graph plotting and the
         graph-based suite control interface, but is otherwise not
         required (you can run cylc without these features).}
-\end{itemize}
+\end{myitemize}
 
 %\subsection{Getting Cylc} 
 %\label{GettingCylc}
@@ -720,7 +730,7 @@ large number of small, simple tasks; or anything in between. Cylc can
 easily handle a large number of tasks, however, so there are definite
 advantages to fine-graining:
 
-\begin{itemize}
+\begin{myitemize}
     \item a more modular and transparent suite.
 
     \item better functional parallelism (multiple tasks running
@@ -733,7 +743,7 @@ advantages to fine-graining:
         command with differing task-specific input parameters
         (consider tasks that move files around, for example).
 
-\end{itemize}
+\end{myitemize}
 
 \subsection{Don't Overuse Task Families}
 
@@ -997,7 +1007,7 @@ features (see below).
         bar.sh
         ...
 
-    # Any suite-related files (OPTIONAL) for example:
+    # (OPTIONAL) any other suite-related files, for example:
     inc/               # suite.rc include-files
         nwp-tasks.rc
         globals.rc
@@ -1008,44 +1018,95 @@ features (see below).
     ...
 \end{lstlisting}
 
-A {\em cylc suite definition directory} contains, at the least, a
+A cylc {\em suite definition directory} contains, at the least, a
 \lstinline=suite.rc= file that defines the suite dependency graph and
-the properties of all the tasks in it, and global settings such as the 
-default job submission method. See \ref{SuiteRCFiles}.
+the properties of all the tasks in it, and global settings such as the
+default job submission method. See \ref{SuiteRCFiles}. It should also
+contain a \lstinline=bin= sub-directory for scripts and executables that
+implement, or are used by, the suite tasks; but this is optional because
+every task in a suite could, in principle, call external commands,
+scripts, or executables. Cylc automatically adds the suite
+\lstinline=bin= directory to \lstinline=$PATH= in the task execution
+environment, but the suite designer has to do this for external files,
+or else use explicit paths in task command lines.
 
-It should also contain a \lstinline=bin= sub-directory for scripts
-and executables that implement, or are used by, the suite tasks;
-although this is optional because every task in a suite could, in
-principle, call some external command, script, or executable.  Suite
-tasks automatically have access to anything in the suite \lstinline=bin=
-directory, whereas you'll need to use the full path to external files,
-or otherwise ensure that your \lstinline=$PATH= is configured
-appropriately, and there are clear advantages to putting all 
-suite-related files in one place (revision control \dots).
+Finally, you can store anything you like in the suite definition
+directory - documentation, task configuration data and control files,
+etc. These will ignored by cylc but can be accessed via the
+\lstinline=$CYLC_SUITE_DIR= variable that is exported into the execution
+environment of every task. Holding {\em everything} suite-related in the
+one place makes suite revision control easy and powerful.
 
-The \lstinline=suite.rc= file may use any number of ``include
-files'' which can be stored wherever you like under the suite
-definition directory. See \ref{SuiteRCIncludeFiles}.
 
-Finally, you can store any other suite-related files in the suite
-definition directory - documentation, task configuration data and
-control files, etc. These are ignored by cylc but can be accessed by
-suite tasks via the \lstinline=$CYLC_SUITE_DIR= environment
-variable. Putting everything used by a suite under its definition
-directory makes suite revision control easy and powerful: you'll be
-able to revert to an earlier version of the entire suite with confidence
-that the result, at run-time, is reproducible. 
+\subsection{The Cylc suite.rc File Format}
 
-\subsection{The suite.rc File Format}
+Cylc suite configuration is handled by a somewhat modified version of
+the powerful open source {\em ConfigObj} and {\em Validate}
+modules.\footnote{http://www.voidspace.org.uk/python/configobj.html,
+BSD licence. Cylc modifies ConfigObj to allow continuation lines and
+include-files, and variable overrides in task environment and directives
+sections.} Cylc \lstinline=suite.rc= files are automatically validated
+against a specification, and they translate directly into nested
+dictionary data structures inside the program - making it very
+easy to add new configuration items to cylc.
 
-A cylc suite is defined entirely by its \lstinline=suite.rc= file. The
-file format used is a slightly modified variant of ConfigObj, 
-an open source project.\footnote{Cylc modifies the ConfigObj module
-to allow continuation lines and include-files, and variable overrides
-in task environment and directives sections.} The following is a
-stripped-down \lstinline=suite.rc= pseudo-listing for cylc's {\em
-``simple''} example suite. Some entries have been omitted in order to
-clearly show the global structure of the file:
+ The following pseudo-listing illustrates the file format:
+
+\begin{lstlisting}
+# comment
+item = value # trailing comment
+a string item = the quick brown fox
+another string item = "the quick brown fox"
+yet another string item = """the quick brown fox
+jumped over the lazy dog"""
+a list item = foo, bar, baz
+a list item with continuation = a, b, c, \
+                                d, e, f
+[section]
+    item = value
+%include inc/vars/foo.inc
+
+    [[subsection]]
+        item = value
+
+        [[[subsubsection]]]
+            item = value
+
+[another section]
+    [[another subsection]]
+        # ...
+    # ...
+# ...
+\end{lstlisting}
+
+In words:
+
+\begin{myitemize}
+    \item {\bf Section Level} is determined by number of square brackets.
+    \item {\bf Leading White Space} is ignored but can be used for clarity.
+    \item {\bf Comment:} follows hash character.
+    \item {\bf String:} quotes can often be omitted in single-line strings.
+    \item {\bf Multiline String:} triple-quoted.
+    \item {\bf List:} comma separated (a,b,c OR a, b, c)
+\end{myitemize}
+
+And cylc-specific features:
+
+\begin{myitemize}
+    \item {\bf Continuation lines:} trailing backslash.
+    \item {\bf Dependency Graph Strings:} may contain blank lines
+        and inline comments (see Section~\ref{SuitercDependencyGraph}).
+    \item {\bf Include Files:} % \lstinline=%include inc/foo/bar.rc=, 
+        can span section boundaries, may be multiply-included and nested; see
+        Section~\ref{IncludeFiles}. Include-file paths should be specified
+        relative to the suite definition directory.
+\end{myitemize}
+
+\subsubsection{A Simple Example}
+
+The following is a stripped-down \lstinline=suite.rc=
+listing of cylc's {\em ``simple''} example suite, with some entries
+omitted to show the file structure clearly:
 
 \begin{lstlisting}
 # GLOBAL SETTINGS
@@ -1053,17 +1114,18 @@ title = a simple example suite
 job submission method = loadleveler
  
 [special tasks]
-    # LIST TASKS WITH UNUSUAL BEHAVIOR
+    # TASKS WITH UNUSUAL BEHAVIOR
     startup         = Prep
     coldstart       = ColdA
     sequential      = ModelA
     clock-triggered = GetData(1)
 
 [dependencies]
-    # DEFINE THE SUITE DEPENDENCY GRAPH
+    # THE SUITE DEPENDENCY GRAPH
     [[ 0,6,12,18 ]]
         graph  =  """Prep => GetData & ColdModel
                      GetData => Model => PostA
+           # model depends on its previous f/c, or a cold start f/c
                      ColdModel | Model(T-6) => Model"""
     [[ 6,18 ]]
         graph = "Model => PostB"
@@ -1080,42 +1142,23 @@ job submission method = loadleveler
         [[[environment]]]
             # ENVIRONMENT VARIABLES AVAILABLE TO THIS TASK
             GETDATA_OUTPUT_DIR = $WORKSPACE
-
-    # ... other tasks ...
-
-[visualization]
-    # COLORS, LINE STYLES, ETC. FOR DEPENDENCY GRAPH PLOTTING ...
+    [[Model]]
+        # ...
+    [[PostA]]
+        # ...
+    # ...
+# ...
 \end{lstlisting}
 
-Cylc \lstinline=suite.rc= files are automatically validated against a 
-comprehensive specification (see below) on parsing, and are translated
-directly into a nested dictionary data structure in the cylc source code.
-This makes it very easy to add new user configuration items to cylc.
-
-\begin{itemize}
-    \item {\bf Section level} is determined by the number of square brackets;
-        leading white space is ignored but can be used for clarity.
-    \item {\bf Continuation lines} are indicated by a trailing backslash
-        character.
-    \item {\bf Comments} are indicated by a hash (`\#') character.
-    \item Quotes can usually be omitted for single line string values.
-    \item {\bf Multiline string values} must be enclosed in triple quotes.
-    \item {\bf Dependency graph strings} (see
-        Section~\ref{SuitercDependencyGraph}) may contain blank lines
-        and inline comments.
-    \item {\bf Include files} can be used, even multiply-included and
-        nested; see Section~\ref{IncludeFiles}. 
-\end{itemize}
-
-The dependency graph defined above is plotted, via gcylc or the
-\lstinline=cylc graph= command, in Figure~\ref{fig-simple-graph}.
+The dependency graph defined here can be plotted by gcylc or the
+\lstinline=cylc graph= command, as is shown in Figure~\ref{fig-simple-graph}.
 
 \begin{figure}
     \begin{center}
         \includegraphics[width=12cm]{../images/screenshots/simple-graph.eps}]
     \end{center}
     \caption[Simple example dependency graph]{\small The dependency graph
-    defined in the 'simple' example suite.rc file.}
+    defined in the `simple' example suite.rc file.}
     \label{fig-simple-graph} 
 \end{figure} 
 
@@ -1144,21 +1187,25 @@ Validation, via the command line or gcylc, comprehensively
 checks suite validity on two fronts, so that you don't have to 
 wait till run time to find errors:
 
-\begin{itemize}
-    \item Firstly, the \lstinline=suite.rc= file is parsed and validated
+\begin{myitemize}
+    \item Firstly, the file is parsed and validated
         against the \lstinline=$CYLC_DIR/conf/suiterc.spec=
         specification.  This detects any formatting errors (e.g.\
-        unmatched section nesting brackets), misspelled or
+        unmatched section heading brackets), misspelled or
         illegal entries, and illegal values.
-    \item Secondly, it does some cross-entry consistency checking, and
-        attempts to create all task proxy objects for the
-        suite, according to information parsed from the file.
-\end{itemize}
+    \item Secondly, it does some cross-entry consistency checking and
+        attempts to create the suite's task proxy objects according to
+        the information parsed from the file.
+\end{myitemize}
 
-Warnings are also emitted for non-fatal conditions that may or may not
-be errors, such defining tasks that are not used in the suite dependency
-graph, or using tasks in the dependency graph that have not been defined
-(this may be valid - it creates a dummy task).
+\subsubsection{Warnings}
+
+Warnings are emitted if any tasks in the dependency graph are not
+defined in the [tasks] section, or if any tasks defined in the [tasks]
+section are not used in the dependency graph.  These are not errors unless
+done inadvertantly (a task defined by graph alone will run as a dummy task; 
+and you can temporarily remove a defined task by commenting it out of, or 
+removing it from, the dependency graph).
 
 \subsubsection{The suiterc.spec File}
 
@@ -1166,8 +1213,28 @@ The file \lstinline=$CYLC_DIR/conf/suiterc.spec= is the ultimate
 arbiter of what's allowed in a cylc \lstinline=suite.rc= file. It
 defines every legal entry and, where appropriate, legal values and
 default values. It's use in the suite validation process is automatic.
+Section~\ref{SuiteRCEntryReference}, Suite.rc Entry Reference, defines
+every legal \lstinline=suite.rc= entry.
 
+\pagebreak
 \section{Suite.rc Entry Reference}
+
+This section documents all legal entries in a \lstinline=suite.rc= file. 
+During userguide source processing this information is extracted from
+the spec file itself, \lstinline=$CYLC_DIR/conf/suiterc.spec=,
+to ensure that it remains up to date. Section headings are generated for
+each item so that the information can be accessed quickly by clicking
+on entries in the userguide (PDF) contents page. Note that many
+of the available items have default values that should be sufficient
+(e.g.\ logging directories and the entire visualization section),
+some may only be needed for critical operational suites (e.g.\ secure
+passphrases and task failure hooks for centralised alerting), some 
+are primarily aimed at cylc development (e.g.\ the dummy mode section),
+and many entries are repeated in the global and task-specific sections
+of the file (so that specific tasks can override global settings).
+Generally speaking your \lstinline=suite.rc= files should not be any
+more complicated than those of the cylc example suites (see the example
+listing in the previous section) - but they may contain more tasks.
 
 \input{suiterc.spec.tex}
 
@@ -1240,7 +1307,7 @@ environment of a specific task, can be made task-specific.
 %the form of {\em literal text strings - messages that running tasks 
 %send to their proxy objects inside the scheduler}.
 %
-%\begin{itemize}
+%\begin{myitemize}
 %    \item A task proxy considers a registered output ``completed''
 %        if it has received a matching message from its external task.
 %
@@ -1248,7 +1315,7 @@ environment of a specific task, can be made task-specific.
 %        if another task proxy reports that it has a matching completed
 %        output.
 %
-%\end{itemize}
+%\end{myitemize}
 %
 %A task with no prerequisites can start running immediately (i.e.\ as soon
 %as the proxy object is created) {\em unless} it is a ``contact task''
@@ -1345,7 +1412,7 @@ parsing the suite taskdef files (see \lstinline=cylc configure=).
 Each task, via the taskdef \lstinline=TYPE= key, must declare itself to
 be derived from one of two base classes that define its main properties:
 
-\begin{itemize} 
+\begin{myitemize} 
     
     \item A \lstinline=free= task does not depend on outputs generated
         by a previous instance of its own class, which means successive
@@ -1394,7 +1461,7 @@ be derived from one of two base classes that define its main properties:
 %    # instance could come into existence and trigger before the the
 %    # current instance, and so on, in normal operation). 
  
-\end{itemize}
+\end{myitemize}
 
 
 \subsubsection{Task Type Modifiers} 
@@ -1402,7 +1469,7 @@ be derived from one of two base classes that define its main properties:
 A task may also declare one or more {\em modifiers}, after the main
 type, that alter its behaviour to some extent:
 
-\begin{itemize}
+\begin{myitemize}
     \item A \lstinline=oneoff= task never spawns a successor; once it
         has finished and is no longer needed it will be removed from the
         system. This can be used for tasks that clean out a suite 
@@ -1446,7 +1513,7 @@ type, that alter its behaviour to some extent:
         by some external means (perhaps a long ``spin up'' process)
         prior to starting the whole suite.
 
-\end{itemize}
+\end{myitemize}
 
 
 
@@ -1550,7 +1617,7 @@ their previous instances have finished, so any restart prerequisites
 will be implicitly satisfied. However, use of either the tied task type
 or explicit restart dependencies does have the following advantages:
 
-\begin{itemize}
+\begin{myitemize}
 
     \item a more efficient system: forecast models can start up before
         their previous instances have finished, other prerequisites
@@ -1568,7 +1635,7 @@ or explicit restart dependencies does have the following advantages:
         predecessors from several cycles ago, before the gap caused by
         the failure.
 
-\end{itemize}
+\end{myitemize}
 
 \subsection{Task Scripts}
 \label{TaskScripts}
@@ -1685,21 +1752,21 @@ file transfer script for this purpose,
 %
 %Each external task must:
 %
-%\begin{itemize}
+%\begin{myitemize}
 %\item report (to cylc) when the task has started
 %\item report when the task has finished
 %\item report when every other registered task output has
 %completed
-%\end{itemize}
+%\end{myitemize}
 %
 %(Technically, the `started' and `finished' messages are just
 %outputs too, but they are special in that every task
 %must have them). In addition, tasks can optionally:
 %
-%\begin{itemize}
+%\begin{myitemize}
 %\item report any arbitrary unregistered (i.e.\ non-output)
 %messages, for debugging, logging, or progress monitoring purposes.
-%\end{itemize}
+%\end{myitemize}
 %
 %All incoming messages are logged by cylc, but only output messages can
 %affect the state of other task objects.
@@ -1857,7 +1924,7 @@ There are two basic methods, available on any platform, that are
 sufficient for running cylc's example suites (and they could also be
 used for small tasks in a real forecasting system): 
 
-\begin{itemize}
+\begin{myitemize}
 
     \item \lstinline=background= - run a task in a background shell
         (\lstinline=foo &=). 
@@ -1865,7 +1932,7 @@ used for small tasks in a real forecasting system):
      \item \lstinline=at_now= - submit a task to run immediately via the
          unix \lstinline=at= command (the rudimentary unix scheduler).
 
-\end{itemize}
+\end{myitemize}
 
 Tasks in a real forecasting system should be submitted to a batch queue
 scheduler or cross-platform resource manager such as {\em loadleveler}
@@ -1873,7 +1940,7 @@ scheduler or cross-platform resource manager such as {\em loadleveler}
 
 \lstset{language=cylctaskdef}
 
-\begin{itemize} 
+\begin{myitemize} 
     
     \item \lstinline=ll_basic= - submit a non-loadleveler-specific task
         to loadleveler. Some default loadleveler directives are
@@ -1893,7 +1960,7 @@ scheduler or cross-platform resource manager such as {\em loadleveler}
         areas in which task owner username and home directory vary
         accordingly.
 
-\end{itemize}
+\end{myitemize}
 
 \subsection{Custom Task Wrappers}
 
@@ -2005,7 +2072,7 @@ cylc-user% ssh OWNER@REMOTE_HOST hostname
 
 \subsubsection{Remote Host Requirements}
 
-\begin{itemize}
+\begin{myitemize}
 
     \item Cylc (and Pyro) must be installed on the remote host, so that 
         the task can communicate with its parent scheduler.
@@ -2018,7 +2085,7 @@ cylc-user% ssh OWNER@REMOTE_HOST hostname
         script, must provide access to the remote cylc
         installation and to the remote task.
 
-\end{itemize}
+\end{myitemize}
 
 \lstset{language=cylctaskdef}
 
@@ -2454,7 +2521,7 @@ A less automated way to ``practice'' on a copy of an existing suite
 that starts up from the current (or previous) state of that suite, 
 \lstinline=cylc coldstart --practice= is this:
 
-\begin{itemize}
+\begin{myitemize}
     \item register your suite again under a different name. This allows
         you to run a dummy mode copy of the same suite without
         interfering with the original suite (it also allows you to run
@@ -2473,7 +2540,7 @@ cylc restart --dummy-mode SUITE PATH
         different suites don't interfere with each other's state
         dumps).
 
-\end{itemize}
+\end{myitemize}
 
 \subsection{Diagnosing A Stalled Suite}
 \label{DiagnosingAStalledSuite}
@@ -2482,7 +2549,7 @@ In certain situations a suite may appear to be ``stuck'', i.e.\ no
 tasks are running and nothing appears to be happening. There are several 
 possible reasons for this (it does not necessarily indicate a problem!):
 
-\begin{itemize}
+\begin{myitemize}
     \item In {\em normal real time operation}, when all running tasks
         have finished for the most recent cycle, nothing will happen
         until the one or more contact tasks in the suite trigger at the
@@ -2495,7 +2562,7 @@ possible reasons for this (it does not necessarily indicate a problem!):
         model) tasks without the corresponding oneoff coldstart tasks to
         satisfy their initial restart prerequisites.
 
-\end{itemize}
+\end{myitemize}
 
 The following problems will eventually cause a suite to get stuck at
 the {\em runahead limit} (which by default is 24 hours: i.e.\ the
@@ -2508,7 +2575,7 @@ at the runahead limit, then to get things moving again the operator must
 either remove the failed task or reset (and thereby rerun) it after
 fixing the problem that cause the failure.
 
-\begin{itemize}
+\begin{myitemize}
     \item If the system operator, perhaps in a post-task-failure
     intervention, kills some tasks that are required to satisfy the
     prerequisites of other tasks that still exist in the system, then 
@@ -2545,7 +2612,7 @@ fixing the problem that cause the failure.
         Solution: ensure all external tasks report their outputs
         correctly.
 
-\end{itemize}
+\end{myitemize}
 
 To confirm that the runahead limit is causing a stall, you can use 
 \lstinline=cylc verbosity= to set the debug logging level: any task
@@ -2556,7 +2623,7 @@ runahead limit will report that to the log.
 \subsection{Failure Recovery Scenarios}
 \label{FailureRecoveryScenarios}
 
-\begin{itemize}
+\begin{myitemize}
     \item {\em One forecast cycle runs into the next, after a delay in
         operations}. This is never a problem for cylc; every task runs
         as soon as it can run, regardless of forecast cycle, and any
@@ -2601,7 +2668,7 @@ runahead limit will report that to the log.
         configured suite state dump directory).  Then {\em retry your
         intervention in practice mode} before doing it for real!
 
-\end{itemize}
+\end{myitemize}
 
 \subsection{Dead Suite Cleanup}
 \label{DeadSuiteCleanup}
@@ -2715,7 +2782,7 @@ If your product presentation or delivery system demands that all
 products for one cycle time are uploaded before any from the next
 cycle, then:
 
-\begin{itemize}
+\begin{myitemize}
     \item this is inefficient because cylc is capable of generating products 
         for each part of your suite independently at the earliest
         possible time - maybe you should fix your delivery system!
@@ -2725,7 +2792,7 @@ cycle, then:
         than others.  One way of doing this would be to have a final
         ``product upload'' task that depends on completion of all the
         real product generation tasks at the same cycle time.
-\end{itemize}
+\end{myitemize}
 
 %\pagebreak
 \section{How Cylc Interacts With Batch Queue Schedulers}
@@ -2749,7 +2816,7 @@ Cylc can control tasks on a distributed system (multiple hosts).  If you
 do have a distributed suite, in any or all of these ways, be aware of
 the following issues: 
 
-\begin{itemize}
+\begin{myitemize}
 
     \item In addition to the cylc host, cylc must be installed on all
         task hosts; and the remote task scripts must
@@ -2763,7 +2830,7 @@ the following issues:
          compatibility by attempting to run one of the cylc example
          system.
         
-\end{itemize}
+\end{myitemize}
 
 Other notes relevant to the last point above: the \lstinline=--host=
 cylc command option defaults to Python \lstinline=socket.getfqdn()=,
@@ -2773,7 +2840,7 @@ just the hostname, which locally may resolve to the local-only IP
 address that is not accessible on the network.  Short of reconfiguring
 the hosts file, you may be able to workaround these problems by:
 
-\begin{itemize}
+\begin{myitemize}
 
     \item and, get cylc to configure the Pyro daemon 
         with \lstinline@Pyro.config.PYRO_DNS_URI = True@ 
@@ -2781,7 +2848,7 @@ the hosts file, you may be able to workaround these problems by:
     \item and, use the \lstinline=--host= cylc command option where
         required.
 
-\end{itemize}
+\end{myitemize}
 
         
 \section{Pyro} 
@@ -2920,7 +2987,7 @@ without modification (other than deriving the new subclass itself).
 %taskdef files {\em en masse}, e.g.\ to make them compatible with a new
 %version of cylc that is not backward compatible in this respect:
 %
-%\begin{itemize}
+%\begin{myitemize}
 %    \item record all pending changes to the suite repository
 %    \item make bulk changes in-place using perl's powerful regex 
 %       substitution mechanism, e.g.:
@@ -2930,13 +2997,13 @@ without modification (other than deriving the new subclass itself).
 %   \item check this had the desired effect with 
 %       \lstinline=darcs whatsnew= (or the equivalent in your chosen
 %       revision control system). If not, revert and try again.
-%\end{itemize}
+%\end{myitemize}
 
 
 %\pagebreak
 \section{Cylc- Current Limitations}
 
-\begin{itemize}
+\begin{myitemize}
 
         \item {\em The minimum cycle time granularity for a task is currently one hour}.
 
@@ -2956,7 +3023,7 @@ Valid cycles times for a task are specified in the taskdef
 \lstinline=HOURS= key.  It would be easy to extend this to allow less
 frequent tasks if required. 
 
-\end{itemize}
+\end{myitemize}
 
 %\section{Miscellaneous Notes}
 %\label{MiscellaneousNotes}

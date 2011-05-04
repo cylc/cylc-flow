@@ -1,0 +1,11 @@
+xdot
+    LGPL - can be in closed source project if xdot itself remains open.
+
+Pyro
+    MIT - permissive
+
+pygraphviz
+    BSD - permissive
+
+ConfigObj and Validate
+    BSD
