@@ -1,6 +1,12 @@
 _______
 GENERAL
 
+* Practice mode:
+    * message command (command line usage only) lock and practice mode?
+    * practice mode should be allowed even for exclusive suite locks. 
+    * check that practice mode suites initialise with the same clock time
+      as the original suite.
+
 * temporary job file location should be configurable.
 
 * update cylc xdot code from latest version in the external directory.
@@ -259,8 +265,6 @@ GENERAL
   evolution that occurs in the purge algorithm, get unsatisfied again at
   the end of it.
 
-* practice mode should be allowed even for exclusive suite locks. 
-
 * stop (without --now) won't cause shutdown if a task family (but not
   it's members!) has just triggered.
 
@@ -313,14 +317,9 @@ GENERAL
 * daemon and asynchronous task: initial tests done; go back, check, and
   complete, for new versions of cylc.
 
-* message command (command line usage only) lock and practice mode?
-
 * consider reset --no-spawn (Bernard tried to reset a waiting unspawned
   task to finished, which made it spawn ... is this the desired
   behaviour?)
-
-* check that practice mode suites initialise with the same clock time
-  as the original suite!
 
 * DOCUMENT or CHANGE: cotemporal peers of failed tasks are not deleted
   automatically because we USED TO restart with failed tasks in the 
