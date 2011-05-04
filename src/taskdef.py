@@ -49,6 +49,7 @@ class taskdef(object):
         self.owner = None
         self.host = None
 
+        self.submission_timeout_minutes = None
         self.execution_timeout_minutes = None
         self.reset_execution_timeout_on_incoming_messages = True
         self.task_submitted_hook = None
@@ -181,6 +182,7 @@ class taskdef(object):
 
         tclass.owner = self.owner
 
+        tclass.submission_timeout_minutes = self.submission_timeout_minutes
         tclass.execution_timeout_minutes = self.execution_timeout_minutes
 
         tclass.reset_execution_timeout_on_incoming_messages = self.reset_execution_timeout_on_incoming_messages
