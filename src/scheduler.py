@@ -1361,14 +1361,13 @@ class scheduler(object):
     def initialize_runtime_graph( self ):
         title = 'suite ' + self.suite + ' run-time dependency graph'
         self.runtime_graph_file = \
-                os.path.join( self.config['visualization']['run time graph directory'],
-                              self.config['visualization']['run time graph filename'] )
+                os.path.join( self.config['visualization']['run time graph directory'], 'runtime-graph.dot' )
         self.runtime_graph = graphing.CGraph( title, self.config['visualization'] )
         self.runtime_graph_finalized = False
         if not self.start_time:
             # only do cold and warmstarts for now.
             self.runtime_graph_finalized = True
-        self.runtime_graph_cutoff = self.config['visualization']['when to stop updating']
+        self.runtime_graph_cutoff = self.config['visualization']['run time graph cutoff hours']
 
     def update_runtime_graph( self, task ):
         if self.runtime_graph_finalized:

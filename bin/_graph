@@ -86,8 +86,7 @@ if options.view_runtime:
     except config.SuiteConfigError, x:
         print >> sys.stderr, x
         sys.exit(1)
-    file = os.path.join( suiterc['visualization']['run time graph directory'],
-                          suiterc['visualization']['run time graph filename'] )
+    file = os.path.join( suiterc['visualization']['run time graph directory'], 'runtime-graph.dot')
 if options.filename:
     if len(args) != 0:
         parser.error( 'file graphing arguments: \'-f FILE\' or \'--file=FILE\'' )

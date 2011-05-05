@@ -828,8 +828,17 @@ __many__ = string
 #>\item {\em default:} None
 #>\end{myitemize}
 
-          [[[outputs]]]
+        [[[outputs]]]
         __many__ = string
+#> List explicit task output messages, e.g.:
+#> \begin{lstlisting}
+#> foo = "sea state products ready for $(CYCLE_TIME)"
+#> r6  = "nwp restart files ready for $(CYCLE_TIME+6)"
+#> r12 = "nwp restart files ready for $(CYCLE_TIME+12)"
+#> \end{lstlisting}
+#> where the item name must match the output label associated with this task
+#> in the suite dependency graph. {\em Note, explicit outputs are not
+#> needed if you just trigger off finished tasks.}
 #>\begin{myitemize}
 #>\item {\em section:} 
 #>\item {\em type:}
@@ -886,51 +895,33 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 #>\end{myitemize}
 
 [visualization]
-# hours after which to stop plotting the run time graph
-when to stop updating = integer( default=24 )
+runtime graph cutoff hours = integer( default=24 )
+#> Cylc generates a run time graph of resolved dependencies, from the
+#> start of every run until each task has passed this cutoff. Use 
+#> dummy mode to generate run time graphs quickly.
 #>\begin{myitemize}
 #>\item {\em section:} [visualization]
-#>\item {\em type:}
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em type:} integer
+#>\item {\em legal values:} $>=0$
+#>\item {\em default:} 24
 #>\end{myitemize}
 
-# absolute, or relative to $CYLC_SUITE_DIR for portability
 run time graph directory = string( default='$CYLC_SUITE_DIR/graphing')
+#> Where to put the run time graph file, called \lstinline=runtime-graph.dot=.
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization]
-#>\item {\em type:}
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em type:} string
+#>\item {\em legal values:} a valid local file path
+#>\item {\em default:} \lstinline=$CYLC_SUITE_DIR/graphing=
 #>\end{myitemize}
 
-run time graph filename  = string( default='runtime.dot')
-#>\begin{myitemize}
-#>\item {\em section:}  [visualization]
-#>\item {\em type:}
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
-#>\end{myitemize}
-
-# TO DO: USE SUB-GRAPH FOR FAMILY MEMBERS?
 show family members = boolean( default=False )
+# TO DO: USE SUB-GRAPH FOR FAMILY MEMBERS?
+#> Whether to plot members tasks of a family, or just the group.
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization]
-#>\item {\em type:}
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em type:} boolean
+#>\item {\em default:} False
 #>\end{myitemize}
 
 use node color for edges = boolean( default=True )
