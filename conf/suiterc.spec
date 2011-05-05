@@ -57,8 +57,9 @@ use lockserver = boolean( default=True )
 #>Use of the cylc lockserver prevents
 #> invocation of multiple instances of the same
 #> suite at the same time, or invocation of a task (using
-#> \lstinline=cylc submit=) if the same task is already running in its
-#> suite. It will only allow multiple instances of a suite to run under
+#> \lstinline=cylc submit=) if the same task is already running (in its
+#> suite or by \lstinline=cylc submit=). It will only allow multiple
+#> instances of a suite to run under
 #> different registration GROUP:NAMEs if the suite declares itself
 #> capable of that (see \lstinline=suite.rc= item
 #> ``allow multiple simultaneous instances'').
@@ -136,8 +137,9 @@ top level logging directory = string( default = '$HOME/.cylc/logging' )
 #>\end{myitemize}
 
 roll log at startup = boolean( default=True )
-#>Roll (i.e. relabel ordered backups and start anew)
-#>the cylc suite log file, every time the suite is started or restarted.
+#>Roll the suite's cylc log archive (i.e.\ relabel ordered backups
+#> and start the main file anew), every time the suite is started or
+#> restarted.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
@@ -296,8 +298,8 @@ post-command scripting = string( default='' )
 #>\end{myitemize}
 
 use suite blocking = boolean( default=False )
-#>A `blocked' suite will refuse to
-#> comply with subsequent intervention commands until deliberately
+#>A `blocked' suite refuses to
+#> comply with intervention commands until deliberately
 #> `unblocked'. This is a crude security measure to guard against
 #> accidental intervention in your own suites. It may be useful when
 #> running multiple suites at once, or when running particularly
