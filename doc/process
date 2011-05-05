@@ -38,6 +38,14 @@ open BAR, ">", "doc/suiterc.spec.tex" or die \$!;
 \$depth = 1;
 while( <FOO> ) {
     chomp;
+    if ( m/^#>IGNORE$/ ) {
+        \$ignore = 1;
+    } elsif ( m/^#>RESUME$/ ) {
+        \$ignore = 0;
+    }
+    if ( \$ignore == 1 ) {
+        next;
+    }
     if ( m/^\s*\[\[\[.*\]\]\]\s*\$/ ) {
         \$depth = 3;
     } elsif ( m/^\s*\[\[.*\]\]\s*\$/ ) {
@@ -48,16 +56,17 @@ while( <FOO> ) {
     if ( \$depth == 1) {
         s@^([\w \-\_]+)=.*@\\\subsubsection{\1}@;
     } elsif ( \$depth == 2 ) {
-        s@^([\w \-\_]+)=.*@\\\paragraph{\1}@;
+        s@^([\w \-\_]+)=.*@\\\paragraph{\1\\\newline}@;
     } elsif ( \$depth == 3 ) {
-        s@^([\w \-\_]+)=.*@\\\subparagraph{\1}@;
+        s@^([\w \-\_]+)=.*@\\\subparagraph{\1\\\newline}@;
     }
 
-    s@^\s*(\[\[\[.*\]\]\])\s*\$@\\\paragraph{\1}@; 
+    s@^\s*(\[\[\[.*\]\]\])\s*\$@\\\paragraph{\1\\\newline}@; 
     s@^\s*(\[\[.*\]\])\s*\$@\\\subsubsection{\1}@; 
     s@^\s*(\[.*\])\s*\$@\\\subsection{\1}@; 
 
     s@^(.*)__many__(.*)@\1MANY\2@;
+    s@^#>RESUME@@;
     s@^#>@@;
     s@^\s*#.*@@;
 
