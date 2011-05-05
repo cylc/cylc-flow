@@ -255,6 +255,7 @@ class scheduler(object):
         task.task.task_timeout_hook = self.config['task timeout hook']
         task.task.task_submission_timeout_minutes = self.config['task submission timeout minutes']
         task.task.task_execution_timeout_minutes = self.config['task execution timeout minutes']
+        task.task.reset_execution_timeout_on_incoming_messages = self.config['reset execution timeout on incoming messages']
 
         # CYLC EXECUTION ENVIRONMENT
         cylcenv = OrderedDict()
