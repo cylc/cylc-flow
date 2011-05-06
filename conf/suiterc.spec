@@ -45,12 +45,13 @@ job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw
 #>   \begin{myitemize}
 #>       \item \lstinline=background= - direct subshell execution in the background 
 #>       \item \lstinline=at_now= - the rudimentary Unix `at' scheduler
-#>       \item \lstinline=loadleveler= - loadleveler generic
-#>       \item \lstinline=ll_ecox= - loadleveler, NIWA EcoConnect environment
-#>       \item \lstinline=ll_raw= - loadleveler for prepared script
+#>       \item \lstinline=loadleveler= - loadleveler, generic
+#>       \item \lstinline=ll_ecox= - loadleveler, customized for
+#>                    EcoConnect triplicate environment at NIWA
+#>       \item \lstinline=ll_raw= - loadleveler, for existing job scripts
 #>   \end{myitemize}
 #>\item {\em default:} \lstinline=background=
-#>\item {\em specific task override:} yes
+#>\item {\em task override:} yes
 #>\end{myitemize}
 
 use lockserver = boolean( default=True )
@@ -212,7 +213,9 @@ task timeout hook = string( default=None )
 #>\item {\bf task failed hook}
 #>\item {\bf task timeout hook}
 #>\end{myitemize}
-#> These set global defaults that can be overridden by specific tasks.
+#> These items set global defaults that can be overridden by specific
+#> tasks; or you can omit the defaults and just handle alerts for
+#> certain critical tasks.
 #> Hook scripts are called with the following arguments supplied by cylc:
 #> \begin{lstlisting}
 #> <script> [EVENT] TASK CYCLE_TIME MESSAGE
@@ -222,7 +225,7 @@ task timeout hook = string( default=None )
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
 #>\item {\em default:} None
-#>\item {\em specific task override:} yes
+#>\item {\em task override:} yes
 #>\end{myitemize}
 
 #>IGNORE
@@ -231,7 +234,7 @@ task execution timeout minutes = float( default=None )
 #>RESUME
 
 #> \subsubsection{task ACTION timeout minutes}
-#>You can set timeout intervals for submission or execution with
+#>You can set timeout intervals for task submission or execution with
 #>the following items:
 #>\begin{myitemize}
 #>\item {\bf task submission timeout minutes}
@@ -250,7 +253,7 @@ task execution timeout minutes = float( default=None )
 #>\item {\em section:} (top level)
 #>\item {\em type:} float (minutes)
 #>\item {\em default:} None
-#>\item {\em specific task override:} yes
+#>\item {\em task override:} yes
 #>\end{myitemize}
 
 reset execution timeout on incoming messages = boolean( default=True )
@@ -258,43 +261,43 @@ reset execution timeout on incoming messages = boolean( default=True )
 #> reset to zero every time a message is received from a running task.
 #> Otherwise, the task will timeout if it does not finish in time,
 #> even if it last sent a message (and was therefore still alive) 
-#> within the initial timeout interval.
+#> within the timeout interval.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
 #>\item {\em default:} True
-#>\item {\em specific task override:} yes
+#>\item {\em task override:} yes
 #>\end{myitemize}
 
 pre-command scripting = string( default='' )
 #> Verbatim scripting to be executed, in the task execution environment,
-#> immediately {\em before} the task command, for every task. If 
-#> used at all, this scripting should be simple and reliable (anything
-#> complex should go in the task itself) - it executes before the 
-#> ``task started'' message so an abort here will not register as a task
-#> failure - it will appear that the task is stuck in the submitted state.
+#> before the task command, for every task. If 
+#> used, this scripting should be simple and reliable (anything
+#> complex should go in the task itself) because it executes before the 
+#> ``task started'' message (thus an error here will not register as a task
+#> failure - it will appear that the task is stuck in the submitted state).
 #> If task-specific pre-command scripting is also defined for particular
 #> tasks, the global scripting will be executed first.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
-#>\item {\em type:} string
+#>\item {\em type:} multiline string
 #>\item {\em default:} empty
 #>\end{myitemize}
 
 post-command scripting = string( default='' )
 #> Verbatim scripting to be executed, in the task execution environment,
 #> immediately {\em after} the task command. If 
-#> used at all, this scripting should be simple and reliable (anything
-#> complex should go in the task itself) - it executes after the 
-#> ``task finished'' message so an abort here will not register as a task
-#> failure - it will appear that the task finished successfully.
+#> used, this scripting should be simple and reliable (anything
+#> complex should go in the task itself) because it executes after the 
+#> ``task finished'' message (thus an error here will not register as a task
+#> failure - it will appear that the task finished successfully).
 #> If task-specific post-command scripting is also defined for particular
 #> tasks, the global scripting will be executed first.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
-#>\item {\em type:} string
+#>\item {\em type:} multiline string
 #>\item {\em default:} empty
-#>\item {\em specific task override:} yes
+#>\item {\em task override:} yes
 #>\end{myitemize}
 
 use suite blocking = boolean( default=False )
@@ -305,8 +308,8 @@ use suite blocking = boolean( default=False )
 #> running multiple suites at once, or when running particularly
 #> important suites, but is disabled by default because it is
 #> fundamentally annoying. (Consider also that any intervention
-#> results in a special state dump from which you can restart the suite 
-#> if you decide the intervention was a mistake).
+#> in a suite results in a special pre-intervention state dump from
+#> which the suite can be restarted if you decide you made a mistake).
 #>\begin{myitemize}
 #>\item {\em section:} (top level) 
 #>\item {\em type:} boolean
@@ -314,8 +317,13 @@ use suite blocking = boolean( default=False )
 #>\end{myitemize}
 
 owned task execution method = option( sudo, ssh, default=sudo )
-#>The means by which the chosen job submission method is invoked for
-#> tasks owned by users other than the suite owner.
+#>This specifies the means by which the chosen job submission method is
+#> invoked for tasks that are owned by a user other than the suite
+#> owner.\footnote{Why would you want to do this? At NIWA, parts of our complex
+#> multi-model operational suite are deployed into, and run from, role
+#> accounts that (at least in the development and test environments)
+#> are managed by the experts on the associated scientific model or
+#> subsystem.}  
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
@@ -324,14 +332,19 @@ owned task execution method = option( sudo, ssh, default=sudo )
 #>        \item sudo
 #>        \item ssh
 #>   \end{myitemize}
-#>\item {\em default:} \lstinline=sudo=
+#>\item {\em default:} sudo
 #>\end{myitemize}
+#>To use sudo with loadleveler, for example, \lstinline=/etc/sudoers=
+#> must be configured to allow the suite owner to execute the
+#> \lstinline=llsubmit= command as the designated task owner.
+#>To use ssh, passwordless ssh must be configured between the accounts
+#> of the suite and task owners.
 
 ignore task owners = boolean( default=False )
-#>This turns off special treatment of owned tasks
-#> (namely invocation of the job submission method via sudo or ssh as owner).
-#> Can be useful when testing such a suite outside of its normal operational
-#> environment.
+#>This item allows you to turn off the special treatment of owned tasks
+#> (namely invocation of the task job submission method via sudo or ssh
+#> as task owner), which can be useful when testing parts of a suite
+#> containing owned tasks outside of its normal operational environment.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
@@ -339,9 +352,10 @@ ignore task owners = boolean( default=False )
 #>\end{myitemize}
 
 use quick task elimination = boolean( default=True )
-#>When removing finished tasks from the suite as
-#> early as possible, take account of tasks known to have no downstream
-#> dependents in later (as opposed to its own) forecast cycles.
+#>If this item is switch on (it is by default) cylc will remove spent
+#> tasks from the suite sooner if they are known to have no downstream
+#> dependents in subsequent forecast cycles. Otherwise only the generic
+#> spent task elimination algorithm will be used.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
@@ -350,9 +364,9 @@ use quick task elimination = boolean( default=True )
 
 dummy mode only = boolean( default=False )
 #>If True, cylc will abort cleanly if you try to run
-#>the suite in real mode. Can be used for demo suites, for example, that
-#> can't run for real because they've been copied out of their operational
-#> environment.
+#>the suite in real mode. This can be used for demo suites that
+#>can't run for real because they've been copied out of their
+#>normal operational environment.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
@@ -360,12 +374,12 @@ dummy mode only = boolean( default=False )
 #>\end{myitemize}
 
 allow multiple simultaneous instances = boolean( default=False )
-#>Declares that all suite is I/O unique per
-#> suite registration - i.e.\ all I/O paths include the suite registration 
-#> group and name so
-#> that multiple instances of the same suite can be run at once 
-#> (under different registrations) without interference. If not, 
-#> the lockserver will not allow a second instance of the suite to start.
+#>If True, the lockserver will allow multiple instances of this 
+#> suite to run at the same time, so long as they are 
+#> registered under different names. Use this if the I/O paths 
+#> of every task in the suite are dynamically configured to be suite
+#> specific (i.e.\ they must all contain the suite registration group
+#> and name).
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
@@ -373,12 +387,15 @@ allow multiple simultaneous instances = boolean( default=False )
 #>\end{myitemize}
 
 job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=/bin/bash )
-#>The shell used to interpret
-#>job scripts (i.e.\ the scripts submitted by cylc when a task is ready 
-#>to run).  This potentially affects the way that \lstinline=suite.rc= 
-#> environment sections are converted to scripting (currently hardwired
-#> in cylc - would need to change this to use csh for example), and how
-#> the user writes \lstinline=suite.rc= {\em scripting} sections.
+#>This specifies which shell is used to interpret cylc job scripts
+#> (i.e.\ the scripts submitted by cylc when a task is ready to run).
+#> The pre- and post-command scripting items, if used, must be valid
+#> for this shell - this is entirely under the user's control. The suite
+#> environment sections must also be converted into valid scripting for
+#> this shell, and cylc is currently hardwired to use 
+#> \lstinline@export item=value@ - this works for both bash and ksh
+#> (because \lstinline=value= is entirely user-defined). But if anyone
+#> desperately wants to use csh, cylc will need to be modified slightly.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
@@ -393,27 +410,27 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\end{myitemize}
 
 [special tasks]
-#> The purpose of this section is to identify any tasks in the suite
-#> with special behaviour.
+#> This section is used to identify any tasks with special behaviour.
 
     clock-triggered = force_list( default=list())
 #> Clock-triggered tasks wait on a wall clock time specified
-#> as an offset relative to their own cycle time, in addition to any
-#> dependence they have on other tasks. Generally speaking, only tasks
-#> that wait on external real time data need to be clock-triggered.
+#> as an offset {\em in hours} relative to their own cycle time, in
+#> addition to any dependence they have on other tasks. Generally
+#> speaking, only tasks that wait on external real time data need to be
+#> clock-triggered.
 #>\begin{myitemize}
 #>\item {\em section:}  [special tasks]
-#>\item {\em type:} list of `taskname(offset)'
-#>\item {\em legal values:} offset in hours, e.g.\ 1.5
+#>\item {\em type:} list of tasknames followed by parenthesized offsets, in hours
+#>\item {\em example:} foo(1.5), bar(2.25)
 #>\item {\em default:} None
 #>\end{myitemize}
 
     startup = force_list( default=list())
 #> Startup tasks are oneoff tasks that are only used when {\em cold
-#> starting a suite}, i.e.\ when starting without assuming any previous
+#> starting a suite}, i.e.\ when starting up without assuming any previous
 #> cycle. A startup task can be used to clean out or prepare a suite
 #> workspace, for example, before other tasks run. Note that {\em cold
-#> start tasks} (next item, below) are different beasts. 
+#> start tasks} (next item, below) are quite different beasts. 
 #>\begin{myitemize}
 #>\item {\em section:} [special tasks]
 #>\item {\em type:} list of task names
@@ -424,14 +441,14 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #> A coldstart task (or possibly a sequence of them) is used to satisfy
 #> the dependence of an associated task with the same cycle time, on 
 #> outputs from a previous cycle - when those outputs are not
-#> available. The primary use for this is to ``cold start'' a warm-cycled
-#> forecast model, which normally depends on restart files (e.g.\ a 
-#> ``model background'') generated by its previous forecast, in
-#> circumstances where there is no previous forecast. 
-#> This is required when cold starting the suite as a whole, but a cold
-#> start task can also be inserted into a running suite in order 
-#> to cold start a single model that had to skip a few cycles because of
-#> problems.
+#> available. The primary use for this is to cold start a warm-cycled
+#> forecast model that normally depends on restart files (e.g.\ 
+#> model background fields) generated by its previous forecast, in
+#> circumstances whereby there is no previous forecast. 
+#> This is required when cold starting the suite as a whole, but cold
+#> start tasks can also be inserted into a running suite to restart a
+#> model, for example, that has had to skip some cycles after running
+#> into a serious problem (e.g.\ critical inputs not available).
 #>\begin{myitemize}
 #>\item {\em section:} [special tasks]
 #>\item {\em type:} list of task names
@@ -491,40 +508,62 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\end{myitemize}
 
 [task families]
+#> A task family is a named group of tasks that appears as a single task
+#> in the suite dependency graph. Thus the entire family triggers as a group,
+#> and downstream tasks can trigger off the entire family finishing. 
+#> Task families can have internal dependencies, and family members
+#> can also appear in the graph as non-family tasks, although you're not
+#> likely to need either of these features.
     __many__ = force_list( default=None )
+#> Repeat this item to list each task family by name.
 #>\begin{myitemize}
 #>\item {\em section:} [task families]
-#>\item {\em type:}
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em type:} list of task names (the family members)
+#>\item {\em default:} None
 #>\end{myitemize}
-
 
 [dependencies]
-    # dependency graphs under cycle time lists:
+#> This is where to define the suite dependency graph.
     [[__many__]]
-    graph = string
+#> This subsection heading should list the hours for which the accompanying
+#> piece of the dependency graph is valid. Repeat the hours list, and
+#> graph, as required if there are differing dependencies at different hours.
 #>\begin{myitemize}
-#>\item {\em section:} [dependencies][[(hours)]]
-#>\item {\em type:}
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em section:} [dependencies]
+#>\item {\em type:} list of integer hour
+#>\item {\em legal values:} $0 \leq hour \leq 23$
+#>\item {\em example:} [[0,6,12,18]]
+#>\item {\em default:} None
 #>\end{myitemize}
 
+    graph = string
+#> Define the dependency graph that is valid for specified list of hours.
+#> You can use the \lstinline=cylc graph= command, or the gcylc
+#> ``Graph'' right-click menu item, to plot the dependency graph as you
+#> work on it.
+#> See Section~\ref{DependencyGraph} for details.
+#>\begin{myitemize}
+#>\item {\em section:} [dependencies] $\rightarrow$ [[HOURS]]
+#>\item {\em type:} multiline string
+#>\item {\em legal values:} {\em refer to section~\ref{DependencyGraph}}
+#>\item {\em example:}
+#>  \begin{lstlisting}
+#>graph = """
+#>   foo => bar => baz & waz   # baz and waz both trigger off foo
+#>   baz:out1 => faz           # triggering off an internal output
+#>   ColdFoo | foo(T-6) => foo # cold start or restart foo
+#>   """
+#>  \end{lstlisting}
+#>\item {\em default:} None
+#>\end{myitemize}
 
 [environment]
 #> Use this section to define the global task execution environment, i.e.\
-#> environment variables made available to all tasks. Order of definition 
-#> is preserved. See ``Task Execution Environment'', 
-#> Section~\ref{TaskExecutionEnvironment} for more information.
+#> variables made available to all tasks. Order of definition 
+#> is preserved. See Section~\ref{TaskExecutionEnvironment}, Task
+#> Execution Environment, for more information.
 __many__ = string
-#> Repeat for as many variables as you need.
+#> Repeat for as many environment variables as you need.
 #>\begin{myitemize}
 #>\item {\em section:} [environment]
 #>\item {\em type:} string
@@ -566,7 +605,7 @@ __many__ = string
 #> Repeat this section for every task in the suite.
 
     description = string( default="No description supplied" )
-#> A description of what this task does; it can be retrieved at run time
+#> Describe what this task does. The description can be retrieved at run time
 #> by the \lstinline=cylc show= command.
 #>\begin{myitemize}
 #>\item {\em section:} [tasks] $\rightarrow$ [[TASK]]
@@ -575,13 +614,13 @@ __many__ = string
 #>\end{myitemize}
 
     command = force_list( default=list( cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
-#> The commandline to execute when this task is ready to run. It may reference variables in the
-#> present in the task execution environment. If the command is omitted
-#> or commented out the task will run as a dummy task.
+#> The commandline to execute, in the task execution environment, when
+#> the task is ready to run. If the command is omitted or commented out
+#> the task will run as a dummy task.
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
-#>\item {\em default:} \lstinline=cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_DUMMY_SLEEP= (dummy task)
+#>\item {\em default:} \lstinline=cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_DUMMY_SLEEP"=
 #>\end{myitemize}
 
     job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=None )
@@ -595,9 +634,10 @@ __many__ = string
 #>   \begin{myitemize}
 #>       \item \lstinline=background= - direct subshell execution in the background 
 #>       \item \lstinline=at_now= - the rudimentary Unix `at' scheduler
-#>       \item \lstinline=loadleveler= - loadleveler generic
-#>       \item \lstinline=ll_ecox= - loadleveler, NIWA EcoConnect environment
-#>       \item \lstinline=ll_raw= - loadleveler for prepared script
+#>       \item \lstinline=loadleveler= - loadleveler, generic
+#>       \item \lstinline=ll_ecox= - loadleveler, customized for
+#>                    EcoConnect triplicate environment at NIWA
+#>       \item \lstinline=ll_raw= - loadleveler, for existing job scripts
 #>   \end{myitemize}
 #>\item {\em default:} \lstinline=background=
 #>\end{myitemize}
@@ -619,31 +659,31 @@ __many__ = string
 
     pre-command scripting = string( default='' )
 #> Verbatim scripting to be executed, in the task execution environment,
-#> immediately {\em before} the task command. If 
-#> used at all, this scripting should be simple and reliable (anything
-#> complex should go in the task itself) - it executes before the 
-#> ``task started'' message so an abort here will not register as a task
-#> failure - it will appear that the task is stuck in the submitted state.
+#> immediately before the task command. If 
+#> used, this scripting should be simple and reliable (anything
+#> complex should go in the task itself) because it executes before the 
+#> ``task started'' message (thus an abort here will not register as a task
+#> failure - it will appear that the task is stuck in the submitted state).
 #> If global pre-command scripting is also defined, it will be executed
 #> first.
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
-#>\item {\em type:} string
+#>\item {\em type:} multiline string
 #>\item {\em default:} empty
 #>\end{myitemize}
 
     post-command scripting = string( default='' )
 #> Verbatim scripting to be executed, in the task execution environment,
 #> immediately {\em after} the task command. If 
-#> used at all, this scripting should be simple and reliable (anything
-#> complex should go in the task itself) - it executes after the 
-#> ``task finished'' message so an abort here will not register as a task
-#> failure - it will appear that the task finished successfully.
+#> used, this scripting should be simple and reliable (anything
+#> complex should go in the task itself) because it executes after the 
+#> ``task finished'' message (thus an abort here will not register as a task
+#> failure - it will appear that the task finished successfully).
 #> If global post-command scripting is also defined, it will be executed
 #> first.
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
-#>\item {\em type:} string
+#>\item {\em type:} multiline string
 #>\item {\em default:} empty
 #>\end{myitemize}
 
@@ -658,15 +698,16 @@ __many__ = string
 #>\end{myitemize}
 
     host = string( default=None )
-#> If a task has a defined host, cylc will attempt to execute the task on 
-#> that remote host using passwordless ssh. The relevant suite
+#> If a task specifies a remote host, cylc will attempt to execute the
+#> task on that host, using the specified job submission method, by
+#> passwordless ssh. The relevant suite
 #> task scripts and executables, and cylc itself, must be installed on the 
 #> remote host. The environment variables \lstinline=$CYLC_SUITE_DIR=
 #> and \lstinline=$CYLC_DIR= must be overridden with their remote values. 
 #> An {\em owner} must be defined if the task owner's username on the
 #> remote host is not the same as the local suite owner's. Passwordless
-#> ssh must be configured between the local suite owner and the remote
-#> task owner.
+#> ssh must be configured between the local suite owner and remote
+#> task owner accounts.
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
@@ -716,7 +757,7 @@ __many__ = string
 
 #> \paragraph{    task ACTION timeout minutes \newline}
 #> 
-#> You can set timeout intervals for submission' or execution with
+#> You can set timeout intervals for task submission or execution with
 #>the following items:
 #>\begin{myitemize}
 #>\item {\bf task submission timeout minutes}
@@ -742,7 +783,7 @@ __many__ = string
 #> reset to zero every time a message is received from a running task.
 #> Otherwise, the task will timeout if it does not finish in time,
 #> even if it last sent a message (and was therefore still alive) 
-#> within the initial timeout interval.
+#> within the timeout interval.
 #>\begin{myitemize}
 #>\item {\em section:} [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} boolean
@@ -810,12 +851,12 @@ __many__ = string
 
         [[[directives]]]
 #> Use this section to define task-specific batch queue
-#> scheduler `directives' (for {\em loadleveler} or {\em torque}, etc.).
+#> scheduler `directives' (for loadleveler, or torque, etc.).
 #> These end up near the top of the job script cylc submits when the
 #> task is ready to run. Whether or not items defined here are used
 #> depends on the task's job submission method. The job
 #> submission method should also define the directive comment prefix
-#> (`\lstinline=# @=' for loadleveler) and final directive ('\lstinline=# @ queue=').
+#> (`\lstinline=# @=' for loadleveler) and final directive (`\lstinline=# @ queue=').
         __many__ = string
 #> Repeat for as many directives as you need, e.g.:
 #> \begin{lstlisting}
@@ -829,6 +870,9 @@ __many__ = string
 #>\end{myitemize}
 
         [[[outputs]]]
+#> {\em This section is only required if you have tasks in the dependency graph 
+#> that trigger off specific labeled outputs of this task, rather 
+#> than just triggering off it finishing}.
         __many__ = string
 #> List explicit task output messages, e.g.:
 #> \begin{lstlisting}
@@ -837,27 +881,32 @@ __many__ = string
 #> r12 = "nwp restart files ready for $(CYCLE_TIME+12)"
 #> \end{lstlisting}
 #> where the item name must match the output label associated with this task
-#> in the suite dependency graph. {\em Note, explicit outputs are not
-#> needed if you just trigger off finished tasks.}
+#> in the suite dependency graph, e.g.:
+#> \begin{lstlisting}
+#> TaskA:foo => TaskB.
+#> \end{lstlisting}
+#> Finally, any task with specific outputs like this must do its own
+#> messaging instead of executing within \lstinline=cylc wrap=;
+#> specifically, in this context, it must send its output messages when
+#> the associated outputs have been achieved, by 
+#> calling the cylc messaging interface. See Section~\ref{Messaging} for details.
 #>\begin{myitemize}
-#>\item {\em section:} 
-#>\item {\em type:}
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em section:} [tasks] $\rightarrow$ [[TASK]] $\rightarrow$ [[[outputs]]]
+#>\item {\em type:} string
+#>\item {\em legal values:} a message containing
+#>           \lstinline=$(CYCLE_TIME)=, possibly with an offset as shown above.
+#>\item {\em default:} None
 #>\end{myitemize}
 
 [dummy mode]
-#> Configure dummy mode behavior; used only if a suite runs in dummy mode.
+#> Configure dummy mode behavior (used only you run the suite in dummy mode).
 clock offset from initial cycle time in hours = integer( default=24 )
 #> Specify a clock offset of 0 to simulate real time operation, greater 
 #> than zero to simulate catch up and transition to real time operation.
 #>\begin{myitemize}
 #>\item {\em section:} [dummy mode]
 #>\item {\em type:} integer
-#>\item {\em legal values:} $>=0$
+#>\item {\em legal values:} $\geq 0$
 #>\item {\em default:} 24
 #>\end{myitemize}
 
@@ -868,7 +917,7 @@ clock rate in seconds per dummy hour = integer( default=10 )
 #>\begin{myitemize}
 #>\item {\em section:} [dummy mode]
 #>\item {\em type:} integer
-#>\item {\em legal values:} $>= 0$
+#>\item {\em legal values:} $\geq 0$
 #>\item {\em default:} 10
 #>\end{myitemize}
 
@@ -879,22 +928,36 @@ task run time in seconds = integer( default=10 )
 #>\begin{myitemize}
 #>\item {\em section:} [dummy mode]
 #>\item {\em type:} integer
-#>\item {\em legal values:} $>=0$
+#>\item {\em legal values:} $\geq 0$
 #>\item {\em default:} 10
 #>\end{myitemize}
 
+#>IGNORE
 job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
+#> For testing purposes you can also choose to have dummy tasks executed
+#> job submission methods (you are unlikely to need this).
 #>\begin{myitemize}
 #>\item {\em section:}  [dummy mode]
-#>\item {\em type:}
-#>\item {\em legal values:}
+#>\item {\em type:} string
+#>\item {\em legal values:} 
 #>   \begin{myitemize}
-#>       \item 
+#>       \item \lstinline=background= - direct subshell execution in the background 
+#>       \item \lstinline=at_now= - the rudimentary Unix `at' scheduler
+#>       \item \lstinline=loadleveler= - loadleveler, generic
+#>       \item \lstinline=ll_ecox= - loadleveler, customized for
+#>                    EcoConnect triplicate environment at NIWA
+#>       \item \lstinline=ll_raw= - loadleveler, for existing job scripts
 #>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em default:} \lstinline=background=
+#>\item {\em task override:} yes
 #>\end{myitemize}
+#>RESUME
 
 [visualization]
+#> The settings in this setting affect \lstinline=suite.rc= graph plotting
+#> (via \lstinline=cylc graph= or gcylc) and the run time resolved
+#> dependency graph generated at the start of each suite run. They do not
+#> affect the graph suite control interface.
 runtime graph cutoff hours = integer( default=24 )
 #> Cylc generates a run time graph of resolved dependencies, from the
 #> start of every run until each task has passed this cutoff. Use 
@@ -917,7 +980,8 @@ run time graph directory = string( default='$CYLC_SUITE_DIR/graphing')
 
 show family members = boolean( default=False )
 # TO DO: USE SUB-GRAPH FOR FAMILY MEMBERS?
-#> Whether to plot members tasks of a family, or just the group.
+#> This item specifies whether to plot members tasks of a family, or the group
+#> as a whole. 
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization]
 #>\item {\em type:} boolean
@@ -927,84 +991,73 @@ show family members = boolean( default=False )
 use node color for edges = boolean( default=True )
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization]
-#>\item {\em type:}
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em type:} boolean
+#>\item {\em default:} True
 #>\end{myitemize}
 
 default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=ellipse'))
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization]
-#>\item {\em type:}
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em type:} list of {\em quoted} \lstinline@'attribute=value'@ pairs
+#>\item {\em legal values:} see graphviz or pygraphviz documentation
+#>\item {\em default:} \lstinline@'style=unfilled', 'color=black', 'shape=ellipse'@
 #>\end{myitemize}
 
 default edge attributes = force_list( default=list('color=black'))
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization]
-#>\item {\em type:}
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em type:} list of graph edge attributes
+#>\item {\em legal values:} see graphviz or pygraphviz documentation
+#>\item {\em default:} \lstinline@'color=black'@
 #>\end{myitemize}
 
 
 [[node groups]]
+#> Define named groups of graph nodes (tasks) that can have
+#> attributes assigned to them in the [[node attributes]] section.
     __many__ = force_list( default=list())
+#> Repeat item for each node group.  The same task can appear in
+#> multiple groups.
 #>\begin{myitemize}
-#>\item {\em section:}  [visualization][[node groups]]
-#>\item {\em type:}
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em section:}  [visualization] $\rightarrow$ [[node groups]]
+#>\item {\em type:} list of task names
+#>\item {\em default:} empty
 #>\end{myitemize}
 
 [[node attributes]]
-    # item is task name or task group name
+#> Here you can assign graph node attributes to specific tasks or named
+#> groups of tasks defined in the [[node groups]] section.
     __many__ = force_list( default=list())
+#> Repeat item for any specific tasks or named groups that you want to 
+#> assign attributes to.
 #>\begin{myitemize}
-#>\item {\em section:} [visualization][[node attributes]]
-#>\item {\em type:}
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em section:} [visualization] $\rightarrow$ [[node attributes]]
+#>\item {\em type:} list of {\em quoted} \lstinline@'attribute=value'@ pairs
+#>\item {\em legal values:} see graphviz or pygraphviz documentation
+#>\item {\em default:} None
 #>\end{myitemize}
 
 [task insertion groups]
+#> Define named groups of tasks that can be inserted into a suite en mass.
+#> May be useful for groups of related cold start tasks, for instance.
  __many__ = force_list()
+#> Repeat item for as many task insertion groups as you need.
 #>\begin{myitemize}
 #>\item {\em section:} [task insertion groups]
-#>\item {\em type:}
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em type:} list of task names
+#>\item {\em default:} None
 #>\end{myitemize}
 
 [experimental]
-# generate a distinct graph for each timestep
+#> Section for experimenting with new configuration items
 live graph movie = boolean( default=False )
+#> Turning this item on will result in a new dot file being written out to the 
+#> suite graphing directory every time the suite state changes. These
+#> can later be converted into movie frames and animated with appropriate 
+#> image processing tools.
 #>\begin{myitemize}
 #>\item {\em section:} [experimental]
-#>\item {\em type:}
-#>\item {\em legal values:}
-#>   \begin{myitemize}
-#>       \item 
-#>   \end{myitemize}
-#>\item {\em default:}
+#>\item {\em type:} boolean
+#>\item {\em default:} False
 #>\end{myitemize}
 
