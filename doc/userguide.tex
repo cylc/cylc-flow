@@ -402,7 +402,7 @@ different cycles can in principle run simultaneously at any given time.
 In fact, if our tasks are able to trigger off internal outputs of 
 upstream tasks, rather than waiting on full completion, successive
 instances of the forecast models could overlap as well (because model
-restart outputs are generally be completed early in the forecast) for an
+restart outputs are generally completed early in the forecast) for an
 even more efficient job schedule. 
 
 %Finally, we note again that a good job scheduler should be able to
@@ -487,11 +487,14 @@ as it catches up to real time operation.
         distributions, so cylc has not been ported to Python 3
         as yet.}
     \item Pyro (Python Remote Objects)
-    \item graphviz and pygraphviz\footnote{graphviz is a graph layout 
-        engine, used by cylc for dependency graph plotting and the
-        graph-based suite control interface, but is otherwise not
-        required (you can run cylc without these features).}
+    \item graphviz
+    \item pygraphviz
 \end{myitemize}
+
+Graphviz is a graph layout engine, and pygraphviz a Python interface to
+it. These are used by cylc for dependency graph plotting and the
+graph-based suite control interface, but are otherwise not required - 
+you can run cylc without them.
 
 %\subsection{Getting Cylc} 
 %\label{GettingCylc}
@@ -514,16 +517,15 @@ install is easy, however: just inspect
 \lstinline=$CYLC_DIR/environment.sh= for the few critical executable and
 module paths, and install the contents therein in standard system
 locations. Users would then not need to source the cylc environment
-script before using cylc.}. Simply unpack the cylc
-release tarball into your chosen location. There is 
-no ``build'' step required.
+script before using cylc.}. Simply unpack the cylc release tarball into
+your chosen location.
 
 \subsubsection{Pyro}
 Pyro has its own very simple installation instructions; it installs into
 the standard Python module path.
 \subsubsection{Graphviz }
 TO DO
-\subsubsection{Pygraphviz }
+\subsubsection{Pygraphviz}
 TO DO
 
 \subsection{User Environment} 
@@ -531,7 +533,7 @@ TO DO
 
 \lstset{language=bash} 
 
-To use cylc, the cylc \lstinline=bin= and \lstinline=util= directories
+The cylc \lstinline=bin= and \lstinline=util= directories
 must be in your executable search path, and the cylc source modules must
 be in your Python module search path. To configure your environment in
 this way, execute the following scripting in your current command shell,
@@ -586,72 +588,114 @@ up a gcylc suite controller instance.
 
 \lstset{language=bash}
 
-This section is intended as a quick introduction to, or reminder of,
-basic cylc functionality. The specific command line listings below use
-the packaged cylc ``userguide'' example suite. Refer to 
-\lstinline=cylc help=, the {\em Command Reference}
-(Section~\ref{CommandReference}), and
-upcoming sections of this document for more detailed information on
-available commands, options, and operations.  {\em A Complete Working
-Example} (Section~\ref{ACompleteWorkingExample}) describes the
-userguide example suite in detail.
+This section is intended as a quick introduction to basic cylc
+functionality. It uses the ``userguide'' example suite, which 
+implements the suite illustrated in the first chapter of the
+userguide. It is assumed that during installation the userguide
+example suite was registered in the central suite database as 
+``examples:userguide''. 
 
+Refer to \lstinline=cylc help=, the {\em Command Reference}
+(Section~\ref{CommandReference}), the gcylc Help menus, and 
+upcoming chapters of this document for more detailed information on
+available commands and options. 
 
-\subsection{Starting The Cylc Lockserver}
-\label{QuickStartingTheCylcLockserver}
+\subsection{Start Your Lockserver Daemon}
 
-Each cylc user should run his own lockserver. The cylc lockserver
-prevents a user from accidentally running multiple instances of the same
-suite, or the same task (at the same cycle time) at once, which could
-result in a corrupted system state (of your real forecasting system,
-that is, not cylc itself) or other problems. 
+Each cylc user should run their own lockserver to prevent accidental 
+invocation of multiple instances of the same suite or task at the same 
+time.  Suite and task locks are analogous to traditional lock files 
+but they work across a network, even for distributed suites containing
+tasks that start executing on one host and finish on another.
 
-Cylc suite and task locks are analogous to use of traditional ``lock
-files'' but they work across a network for distributed suites, wherein
-you may have tasks that start executing on one host and finish on
-another.
+The lockserver daemon can be started at any time and left running.
+\begin{lstlisting}
+prompt> cylc lockserver start
+\end{lstlisting}
 
-The lockserver consists of a {\em daemon} process
-\lstinline=cylc lockserver= and a
-command line user interface, 
+Check that it is running,
+\begin{lstlisting}
+prompt> cylc lockserver status
+\end{lstlisting}
+
+For detailed usage information,
+\begin{lstlisting}
+prompt> cylc lockserver --help 
+\end{lstlisting}
+
+There is a command line client interface, 
 \lstinline=cylc lockclient=
+for interrogating the lockserver and, if necessary, managing 
+locks manually (c.f.\ having to delete a lock file manually when the
+associated process died without cleaning up after itself).
 
-The lockserver daemon can be started at any time, and left running.
-See \lstinline=cylc lockserver --help= for configuration and usage
-information.
-
-Alternatively, you can choose not to use the lockserver:
-
+You can also choose not to use the lockserver for any suite:
 \begin{lstlisting}
 # SUITE.RC:
 use lockserver = False
 \end{lstlisting}
+but this is not recommended, for obvious reasons.
 
-\subsection{Defining A Suite} 
-\label{QuickDefiningASuite}
+\subsection{Configure Your Environment For Cylc}
 
-A cylc suite is defined by a single \lstinline=suite.rc= config file
-(Section~\ref{SuiteDesign})).
-
-The complete suite definition and implementation for the ``userguide
-example suite'' is provided in \lstinline=$CYLC_DIR/examples/userguide=. 
-
-\subsection{Suite Registration}
-\label{QuickSuiteRegistration}
-
+Put the following in your login script, or do the same at your terminal
+prompt before using cylc.
 \begin{lstlisting}
-cylc register $CYLC_DIR/examples/userguide userguide 
+prompt> export CYLC_DIR=/path/to/cylc/installation
+prompt> . $CYLC_DIR/environment.sh
 \end{lstlisting}
 
-This associates a suite definition directory with a {\em suite name}
-that will henceforth be used to target the suite via cylc commands. 
-\lstinline=cylc register --list= shows your suite registrations.
+\subsection{Copy The Example Suite} 
 
-\subsection{Starting The Suite}
-\label{QuickStartingTheSuite}
+Now we'll import a copy of the userguide example suite 
+from the central database to
+\lstinline=$HOME/cylc/examples/userguide=
+and register it as (GROUP:NAME) ``examples:userguide''.
+
+\subsubsection{gcylc}
+
+Start gcylc, switch to the central database view, right-click on the
+\lstinline=admin > examples > userguide= suite
+(where `admin' is the username of the cylc installation account),
+choose 'Import', and specify the registration GROUP and NAME, and 
+destination path as above. Check by switching the view back to your
+local database.
+
+\subsubsection{commandline}
+
+Check that the example suite is registered in the central database,
 
 \begin{lstlisting}
-cylc coldstart userguide 2009082312
+prompt> cylc db print --central | grep userguide # or:
+prompt> cylc db print --central --group=examples --name=userguide
+admin:examples:userguide  "userguide example suite" \
+    /home/admin/cylc/examples/userguide
+\end{lstlisting}
+
+Now import the suite,
+\begin{lstlisting}
+prompt> cylc db import admin:examples:userguide $HOME/cylc/examples/userguide
+\end{lstlisting}
+
+To register it under a different local name, ``foo:bar'', you would use:
+\begin{lstlisting}
+prompt> cylc db import admin:examples:userguide foo:bar $HOME/cylc/examples/userguide
+\end{lstlisting}
+
+Now check that the import was successful,
+\begin{lstlisting}
+prompt> cylc db print | grep userguide # or:
+prompt> cylc db print --group=examples --name=userguide
+examples:userguide  "userguide example suite" \
+    /home/oliverh/cylc/examples/userguide
+\end{lstlisting}
+
+
+
+\subsection{Running The Suite}
+
+\begin{lstlisting}
+cylc run userguide 2009082312
 \end{lstlisting}
 
 %See {\em Running Cylc Suites}, Section~\ref{RunningCylcSuites}.
