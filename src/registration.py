@@ -384,9 +384,9 @@ class regdb(object):
         owner, group, name = regsplit( suite ).get()
         dir,descr = self.get( suite )
         if not verbose:
-            print prefix, self.suiteid( owner,group,name )
-            print '    ' + descr 
-            print '    ' + dir 
+            print prefix, self.suiteid( owner,group,name ),
+            print ' "' + descr  + '" ',
+            print dir 
         else:
             print prefix, '     NAME '+ name + ':'
             print '        ' + descr 
