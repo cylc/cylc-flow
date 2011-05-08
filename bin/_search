@@ -219,6 +219,6 @@ for file in os.listdir( bin ):
         count += 1
         if re.search( pattern, line ):
             if new_file:
-                print '\nFILE:', file
+                print '\nFILE:', os.path.join( bin, file )
                 new_file = False
             print '   ['+str(count)+']: ' + line
