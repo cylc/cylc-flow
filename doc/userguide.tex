@@ -588,25 +588,49 @@ up a gcylc suite controller instance.
 
 \lstset{language=bash}
 
-This section is intended as a quick introduction to basic cylc
-functionality. It uses the ``userguide'' example suite, which 
-implements the suite illustrated in the first chapter of the
-userguide. It is assumed that during installation the userguide
-example suite was registered in the central suite database as 
-``examples:userguide''. 
+This is an introduction to basic cylc functionality using the example
+suite illustrated in the first chapter, which should have been
+registered in the central suite database during cylc installation  as
+``examples:userguide''. For more detailed information on available
+commands and options refer to \lstinline=cylc help= or the {\em Command
+Reference} (Section~\ref{CommandReference}), gcylc help menus, and
+upcoming chapters of this document. 
 
-Refer to \lstinline=cylc help=, the {\em Command Reference}
-(Section~\ref{CommandReference}), the gcylc Help menus, and 
-upcoming chapters of this document for more detailed information on
-available commands and options. 
+{\bf The cylc commandline is used in this section. To accomplish the same things 
+with the gcylc graphical interface, from copying, searching, editing,
+and validating suite definitions through to starting, interrogating, and
+intervening in the operation of running suites: {\em right-click on a
+suite in the local suite database window; and use the top menu items and
+right-click task menus in the suite control interface}}.
+
+\subsection{Configure Your Environment For Cylc}
+
+To gain access to cylc you just need to source the cylc environment
+script. Put the following in your login script, or do the same at the
+terminal prompt before using cylc.\footnote{To switch between different
+cylc installations on the same host, just source the appropriate 
+environment script.}
+\begin{lstlisting}
+prompt> export CYLC_DIR=/path/to/cylc/installation
+prompt> . $CYLC_DIR/environment.sh
+\end{lstlisting}
+
+You should also indicate the graphical and terminal editors you want to
+use to edit suites, by setting the following environment variables in
+your \lstinline=.profile=:
+\begin{lstlisting}
+export GEDITOR='gvim -f'  # GUI editor launched by gcylc
+export EDITOR=vim         # terminal editor launched by 'cylc edit'
+\end{lstlisting}
 
 \subsection{Start Your Lockserver Daemon}
 
-Each cylc user should run their own lockserver to prevent accidental 
+Each cylc user should run a lockserver to prevent accidental 
 invocation of multiple instances of the same suite or task at the same 
-time.  Suite and task locks are analogous to traditional lock files 
-but they work across a network, even for distributed suites containing
-tasks that start executing on one host and finish on another.
+time.  The suite and task locks brokered by the lockserver are analogous
+to traditional lock files, but they work across a network, even for
+distributed suites containing tasks that start executing on one host and
+finish on another.
 
 The lockserver daemon can be started at any time and left running.
 \begin{lstlisting}
@@ -624,44 +648,46 @@ prompt> cylc lockserver --help
 \end{lstlisting}
 
 There is a command line client interface, 
-\lstinline=cylc lockclient=
-for interrogating the lockserver and, if necessary, managing 
+\lstinline=cylc lockclient=,
+for interrogating the lockserver and managing 
 locks manually (c.f.\ having to delete a lock file manually when the
 associated process died without cleaning up after itself).
 
-You can also choose not to use the lockserver for any suite:
+You can also choose not to use the lockserver for a particular suite, by
+setting the following switch in its \lstinline=suite.rc= (suite
+definition) file,
 \begin{lstlisting}
 # SUITE.RC:
-use lockserver = False
-\end{lstlisting}
-but this is not recommended, for obvious reasons.
-
-\subsection{Configure Your Environment For Cylc}
-
-Put the following in your login script, or do the same at your terminal
-prompt before using cylc.
-\begin{lstlisting}
-prompt> export CYLC_DIR=/path/to/cylc/installation
-prompt> . $CYLC_DIR/environment.sh
+use lockserver = False  # not recommended!
 \end{lstlisting}
 
 \subsection{Copy The Example Suite} 
 
-Now we'll import a copy of the userguide example suite 
-from the central database to
-\lstinline=$HOME/cylc/examples/userguide=
-and register it as (GROUP:NAME) ``examples:userguide''.
+Now we'll import the example suite from the central database to,
+\begin{lstlisting}
+$HOME/cylc/examples/userguide
+\end{lstlisting}
+and register it as,
+\begin{lstlisting}
+examples:userguide
+\end{lstlisting}
 
-\subsubsection{gcylc}
+\subsubsection{via gcylc}
 
-Start gcylc, switch to the central database view, right-click on the
-\lstinline=admin > examples > userguide= suite
+This is the only part of the Quick Start Guide that we'll explicitly
+mention how to operate on a suite using the gcylc GUI, since the
+procedure - choose a right-click menu option - is basically the same in
+every case. 
+
+Start gcylc, switch to the central database view, right-click on
+\lstinline=admin > examples > userguide= 
 (where `admin' is the username of the cylc installation account),
-choose 'Import', and specify the registration GROUP and NAME, and 
-destination path as above. Check by switching the view back to your
-local database.
+choose `Import', and specify the registration GROUP and NAME, and 
+destination path, as above. Check that the import was successful
+by inspecting the command output window, and switching the view back to
+your local database, which should now contain your copy of the suite.
 
-\subsubsection{commandline}
+\subsubsection{via commandline}
 
 Check that the example suite is registered in the central database,
 
@@ -682,7 +708,7 @@ To register it under a different local name, ``foo:bar'', you would use:
 prompt> cylc db import admin:examples:userguide foo:bar $HOME/cylc/examples/userguide
 \end{lstlisting}
 
-Now check that the import was successful,
+Check that the import was successful,
 \begin{lstlisting}
 prompt> cylc db print | grep userguide # or:
 prompt> cylc db print --group=examples --name=userguide
@@ -690,26 +716,98 @@ examples:userguide  "userguide example suite" \
     /home/oliverh/cylc/examples/userguide
 \end{lstlisting}
 
+Now that you've registered your own copy of the suite, you can edit,
+search, validate, plot, run it, etc., using gcylc or the commandline.
+In gcylc, just right-click on the suite, in your local database, and
+choose the option you want. On the commandline type
+\lstinline=cylc help= and drill down to the command you want.
 
+\subsection{Searching, Editing, and Plotting the Suite}
+
+In gcylc, right-click on the suite and choose `Edit'; this moves to
+the suite definition directory (so that you can easily open other suite
+files in the same edit session) and opens the \lstinline=suite.rc=
+file in your chosen editor. For \lstinline=suite.rc= files that contain
+include files (even nested ones) you can optionally edit the file
+inlined - it will be split back into include-files when you save and
+exit the editor. 
+
+Right-click again and choose 'Graph' to plot the suite dependency graph
+defined in the suite.rc file. You'll need to enter an initial and final
+cycle time (YYYYMMDDHH) for the plot range - enter the same cycle time
+for both to plot a single cycle.  If you edit the dependency graph, the
+viewer should update when you save the \lstinline=suite.rc= file.
+
+To edit a suite from the commandline,
+\begin{lstlisting}
+prompt> cylc edit examples:userguide
+\end{lstlisting}
+and to graph it,
+\begin{lstlisting}
+prompt> cylc graph examples:userguide 2011042506 2011042606 &
+\end{lstlisting}
+
+Here's how to use the suite search tool, which reports matches in the
+\lstinline=suite.rc= by line number, suite section, and file (even if
+nested include-files are used) and by file and line number for matches
+in the suite bin directory,
+
+\begin{lstlisting}
+prompt> cylc grep OUTPUT_DIR examples:userguide
+
+FILE: /home/oliverh/cylc/examples/userguide/suite.rc
+   SECTION: [tasks]->[[X]]->[[[environment]]]
+      [53]:             OUTPUT_DIR = $WORKSPACE
+   SECTION: [tasks]->[[A]]->[[[environment]]]
+      [59]:             OUTPUT_DIR = $WORKSPACE
+
+<...snip...>
+
+FILE: /home/oliverh/cylc/examples/userguide/bin/E.sh
+   [7]: cylc checkvars -c OUTPUT_DIR
+   [21]: touch $OUTPUT_DIR/sea-state.products
+
+FILE: /home/oliverh/cylc/examples/userguide/bin/D.sh
+   [7]: cylc checkvars -c OUTPUT_DIR
+   [24]: touch $OUTPUT_DIR/combined.products
+
+<...snip...>
+\end{lstlisting}
+
+See the gcylc right-click menu, or \lstinline=cylc prep help= for other
+commands in the ``suite preparation''.
+
+Note that the suite title held by the database is only parsed from the
+\lstinline=suite.rc= file at registration time; if you change the title
+use \lstinline=cylc db refresh= or gcylc 
+\lstinline=View > Refresh= to update the database.
+
+After editing a suite, always validate it to check for errors prior to
+running it (gcylc right-click or \lstinline=cylc validate SUITE:GROUP=)
 
 \subsection{Running The Suite}
 
 \begin{lstlisting}
-cylc run userguide 2009082312
+cylc run userguide 2011042506
 \end{lstlisting}
 
-%See {\em Running Cylc Suites}, Section~\ref{RunningCylcSuites}.
+You should now start up a suite control interface to follow progress.
+\begin{lstlisting}
+gcylc examples:userguide &
+\end{lstlisting}
+
+Or, if you already have the gcylc database front end running, right click on the 
+suite and choose one of the `Control' options.  Note 
+that the control GUI can also be used to start and stop the suite.
 
 In real mode operation (as opposed to {\em dummy mode},
 Section~\ref{DummyMode}) {\em do not choose an initial cycle time in the
 future} or nothing will happen until that time arrives!
 
-You can run multiple instances of the userguide example suite at once,
-under different names; the suite name is used in all I/O file paths so
-the different instances will not interfere. 
-
-\subsection{Following Suite Progress}
-\label{QuickFollowingSuiteProgress}
+The lockserver will let you run multiple instances of the userguide
+example suite at once, under different registrations, because the
+\lstinline=suite.rc= file allows that (in turn, because the suite
+group:name is used in all I/O file paths).
 
 \begin{figure}
     \begin{center}
@@ -720,28 +818,19 @@ the different instances will not interfere.
     \label{fig-monitor} 
 \end{figure} 
 
-{\em cylc control} is a real time monitoring and suite control GUI
-(the same results can be achieved via the commandline interface).
-
-\begin{lstlisting}
-# to choose from among your registered suites:
-$ cylc control &
-# or, to control a particular suite:
-$ cylc control userguide &
-\end{lstlisting}
-
 \subsection{Shutdown And Restart}
-\label{QuickShutdownAndRestart}
 
 \lstset{language=bash}
 
-Before shutting a suite down - or indeed using any of the other cylc
-commands that can change the state of a running suite but are not 
-covered in this Quick Start Guide (reset, insert, remove, purge, pause,
-etc.).
+\begin{lstlisting}
+cylc stop userguide
+\end{lstlisting}
 
-You can restart a suite from its most recent previous state:
+This will cause the suite to stop once any currently running tasks have finished. To stop
+the suite immediately use the \lstinline=--now= option, but be aware that this will 
+orphan any tasks that are still running.  
 
+You can now restart the  suite from its most recent previous state, if you like:
 \begin{lstlisting}
 cylc restart userguide
 \end{lstlisting}
@@ -750,6 +839,23 @@ or from the state recorded in a particular named state dump file
 suite intervention so that you can easily revert to the
 pre-intervention state in case of disaster). See {\em Restarts}
 (Section~\ref{Restarts}) for more information.
+
+\subsection{Suggestions}
+
+\begin{itemize}
+
+    \item Use the example suites to learn about cylc.
+
+    \item  You can test changes to a suite safely by making a quick copy
+        of it with gcylc, perhaps copying the suite definition to
+        \lstinline=$TMPDIR=, then changing and running the copy (it is 
+        a good idea to make suites portable so that you can run them
+        immediately after copying to a new location). Then delete the
+        copy when you're finished.
+
+    \item 
+
+\end{itemize}
 
 \pagebreak
 
