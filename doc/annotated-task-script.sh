@@ -1,56 +1,45 @@
 #!/bin/bash
 
-# THIS IS AN ANNOTATED CYLC TASK SCRIPT
-
-# A cylc "task" must:
-#  + send a "task started" message at startup
-#  + report registered outputs completed, any time before it finishes 
-#  + send a "task finished" message on successful completion
-#  + send a "task failed" message in case of failure
-
-# This example is a single monolithic script, but it does not have to
-# be - so long as the first script invoked sends the started message
-# and the last the finished message.  
+# THIS ANNOTATED CYLC TASK SCRIPT shows how to handle cylc messaging
+# manually, which is only required for (a) tasks with internal outputs
+# that have to be reported complete before the task is finished, and (b)
+# tasks that are not started and finished by the same process, in which
+# case the process that finishes the job must do the final messaging.
 
 # TRAP ERRORS: automatically report failure and release my task lock
 # (means we don't have to check success of all operations manually)
-set -e; trap 'cylc task-failed "error trapped"' ERR
+set -e; trap 'cylc task failed "error trapped"' ERR
 
 # ACQUIRE A TASK LOCK AND REPORT STARTED 
-# inline error checking avoids the ERR trap (here 'cylc task-started'
+# inline error checking avoids the ERR trap (here 'cylc task started'
 # reports failure to cylc itself so we don't want to invoke the trap).
-cylc task-started || exit 1
+cylc task started || exit 1
 
-# Scripting errors etc will be caught by the ERR trap
-mkdir /illegal/dir/path
+# Scripting errors etc will be caught by the ERR trap:
+mkdir /illegal/dir/path  # trapped!
 
-# Cylc-aware scripts or exes call 'task-failed' themselves on error
-cylc-aware-script || exit 1
+# Cylc-aware subprocesses that call 'task failed' on error:
+cylc-aware-script || exit 1  # just exit on error
 
-# DO NOT DO THIS:
-cylc-aware-script
-if [[ $? != 0 ]]; then
-    # this line will never be reached because of the ERR trap above
-fi
-
-# Non-cylc-aware scripts or exes 'exit 1' on error - leave to the trap.
-non-cylc-aware-script_1            
-
-# or inline manual check if you prefer:
-if ! non-cylc-aware-script_2; then
-    cylc task-failed "non-cylc-aware-script_2 failed"
+# Non-cylc-aware subprocess that just 'exit 1' on error:
+non-cylc-aware || { # INLINE CHECK
+    # handle error ...
+    cylc task failed "non-cylc-aware script failed"
     exit 1
+}
+non-cylc-aware      # trap will abort on failure here ...
+if [[ $? != 0 ]]; then # ... and this code will not be reached!
+    # ...
 fi
 
-# send a progress message
-cylc task-message "Hello World"
+# send a progress message to my parent suite:
+cylc task message "Hello World"
 
-# REPORT OUTPUTS (just messages that are registered as task outputs)
-cylc task-message "sent one progress message for $CYCLE_TIME"
+# REPORT ANY EXPLICIT OUTPUTS (TaskA:foo in dependency graph):
+# one at a time:
+cylc task message "File foo completed for for $CYCLE_TIME"
+# ... or all at once: 
+cylc task message --all-outputs-completed
 
-# If model does not report its own outputs as it runs we can cheat now
-cylc task-message --all-outputs-completed
-
-# FINISH
-# release the task lock and report finished
-cylc task-finished
+# RELEASE TASK LOCK AND REPORT FINISHED:
+cylc task finished

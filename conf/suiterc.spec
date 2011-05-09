@@ -387,15 +387,18 @@ allow multiple simultaneous instances = boolean( default=False )
 #>\end{myitemize}
 
 job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=/bin/bash )
-#>This specifies which shell is used to interpret cylc job scripts
-#> (i.e.\ the scripts submitted by cylc when a task is ready to run).
+#>This specifies the shell used to interpret the temporary job
+#> scripts submitted by cylc when a task is ready to run.
+#> {\em It has no bearing on the shell you use to write task scripts.}
 #> The pre- and post-command scripting items, if used, must be valid
-#> for this shell - this is entirely under the user's control. The suite
-#> environment sections must also be converted into valid scripting for
-#> this shell, and cylc is currently hardwired to use 
-#> \lstinline@export item=value@ - this works for both bash and ksh
-#> (because \lstinline=value= is entirely user-defined). But if anyone
-#> desperately wants to use csh, cylc will need to be modified slightly.
+#> for the job submission shell; this is entirely up to the user. The
+#> suite environment sections must be converted similarly;
+#> this is currently hardwired into cylc as 
+#> \lstinline@export item=value@ (which works for both bash and ksh
+#> because \lstinline=value= is entirely user-defined) so cylc would
+#> have to be modified slightly if other shells are needed (probably not
+#> necessary as the scripting items should not be heavily used anyway
+#> (see the warnings in the documentation for those items).
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
@@ -462,18 +465,6 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em default:} empty list
 #>\end{myitemize}
 
-    oneoff = force_list( default=list())
-#> Oneoff tasks do not spawn a successor. After finishing, and once
-#> they're no longer required to satisfy the prerequisites of others,
-#> they are removed from the suite.  {\em Startup} and {\em
-#> coldstart} tasks are automatically oneoff tasks and do not need
-#> to be listed here.
-#>\begin{myitemize}
-#>\item {\em section:} [special tasks]
-#>\item {\em type:} list of task names
-#>\item {\em default:} empty list
-#>\end{myitemize}
-
     sequential = force_list( default=list())
 #> By default, cylc tasks spawn a successor at the instant they start
 #> running, so that successive instances of the same task can run in
@@ -498,16 +489,31 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em default:} empty list
 #>\end{myitemize}
 
+    oneoff = force_list( default=list())
+#> Oneoff tasks do not spawn a successor. After finishing, and once
+#> they're no longer required to satisfy the prerequisites of others,
+#> they are removed from the suite.  {\em Startup} and {\em
+#> coldstart} tasks are automatically oneoff tasks and do not need
+#> to be listed here.
+#>\begin{myitemize}
+#>\item {\em section:} [special tasks]
+#>\item {\em type:} list of task names
+#>\item {\em default:} empty list
+#>\end{myitemize}
+
     models with explicit restart outputs = force_list( default=list())
+# TO DO: THESE TASKS COULD BE IDENTIFIED FROM THE GRAPH?
+
 #> {\em This is only required in the unlikely event that you want a warm
 #> cycled forecast model to be able to start at the instant its restart
-#> files are ready (if other prerequisites are satisfied) BEFORE
-#> its previous instance has finished.}  If so, the task has to depend
+#> files are ready (if other prerequisites are satisfied) {\bf before
+#> its previous instance has finished}.}  If so, the task has to depend
 #> on a special output message emitted by the previous instance as soon as
 #> its restart files are ready, instead of just on the previous instance
-#> finishing. Tasks so identified here must define the output messages
-#> in the task outputs section - see Section~\ref{ExplicitOutputs}.
-# TO DO: THESE TASKS COULD BE IDENTIFIED FROM THE GRAPH?
+#> finishing. {\em Tasks in this category must define their restart
+#> output messages, {\bf which must contain the word ``restart''}}, in
+#> [tasks] $\rightarrow$ [[TASK]] $\rightarrow$ [[[outputs]]] - see
+#> Section~\ref{outputs}.
 #>\begin{myitemize}
 #>\item {\em section:} [special tasks]
 #>\item {\em type:} list of task names
@@ -880,22 +886,25 @@ __many__ = string
 #>\end{myitemize}
 
         [[[outputs]]]
-#> {\em This section is only required if you have tasks in the dependency graph 
-#> that trigger off specific labeled outputs of this task, rather 
-#> than just triggering off it finishing}.
+#> \label{outputs}
+#> {\em This section is only required if other tasks 
+#> trigger off specific labeled outputs of this task} (as opposed to 
+#> triggering off it finishing). Tasks with explicit outputs 
+#> would generally do their own cylc messaging so that they can report
+#> said outputs complete as soon as they are ready (the cylc
+#> task wrapper does report such explicit outputs complete when the task
+#> finishes, but then you might as well not bother with explicit outputs
+#> and just trigger off the task finishing).
         __many__ = string
 #> Repeast MANY (output message definition) for any explicit output
 #> messages emitted by this task.
-#> Any task with explicit outputs must do its own
-#> messaging instead of executing within \lstinline=cylc wrap=;
-#> specifically, in this context, it must send its output messages when
-#> the associated outputs have been achieved, by 
-#> calling the cylc messaging interface. See Section~\ref{Messaging} for details.
 #>\begin{myitemize}
 #>\item {\em section:} [tasks] $\rightarrow$ [[TASK]] $\rightarrow$ [[[outputs]]]
 #>\item {\em type:} string
 #>\item {\em legal values:} a message containing
-#>           \lstinline=$(CYCLE_TIME)=, possibly with an offset as shown above.
+#>           \lstinline=$(CYCLE_TIME)=, possibly with an offset as shown
+#> below. {\bf Note the round parentheses in \lstinline=$(CYCLE_TIME)=} 
+#> - the \lstinline=suite.rc= file is not a shell script.
 #>\item {\em default:} None
 #>\item{ \em examples:}
 #> \begin{lstlisting}
@@ -906,7 +915,9 @@ __many__ = string
 #> where the item name must match the output label associated with this task
 #> in the suite dependency graph, e.g.:
 #> \begin{lstlisting}
-#> TaskA:foo => TaskB.
+#> [dependencies]
+#>    [[6,18]]
+#>        graph = TaskA:foo => TaskB
 #> \end{lstlisting}
 #>\end{myitemize}
 
@@ -1001,6 +1012,9 @@ show family members = boolean( default=False )
 #>\end{myitemize}
 
 use node color for edges = boolean( default=True )
+#> Outgoing graph edges can be plotted in the same color as the
+#> parent node, which makes it easier to follow a path through a complex
+#> graph. 
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization]
 #>\item {\em type:} boolean
@@ -1008,6 +1022,7 @@ use node color for edges = boolean( default=True )
 #>\end{myitemize}
 
 default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=ellipse'))
+#> Set the default attributes (color and style etc.) of task nodes.
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization]
 #>\item {\em type:} list of {\em quoted} \lstinline@'attribute=value'@ pairs
@@ -1016,13 +1031,13 @@ default node attributes = force_list( default=list('style=unfilled', 'color=blac
 #>\end{myitemize}
 
 default edge attributes = force_list( default=list('color=black'))
+#> Set the default attributes (color and style etc.) of graph edges.
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization]
 #>\item {\em type:} list of graph edge attributes
 #>\item {\em legal values:} see graphviz or pygraphviz documentation
 #>\item {\em default:} \lstinline@'color=black'@
 #>\end{myitemize}
-
 
 [[node groups]]
 #> Define named groups of graph nodes (tasks) that can have

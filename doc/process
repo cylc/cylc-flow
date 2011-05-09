@@ -56,12 +56,12 @@ while( <FOO> ) {
     if ( \$depth == 1) {
         s@^([\w \-\_]+)=.*@\\\subsubsection{\1}@;
     } elsif ( \$depth == 2 ) {
-        s@^([\w \-\_]+)=.*@\\\paragraph{\1\\\newline}@;
+        s@^([\w \-\_]+)=.*@\\\paragraph{\1}@;
     } elsif ( \$depth == 3 ) {
-        s@^([\w \-\_]+)=.*@\\\subparagraph{\1\\\newline}@;
+        s@^([\w \-\_]+)=.*@\\\subparagraph{\1}@;
     }
 
-    s@^\s*(\[\[\[.*\]\]\])\s*\$@\\\paragraph{\1\\\newline}@; 
+    s@^\s*(\[\[\[.*\]\]\])\s*\$@\\\paragraph{\1}@; 
     s@^\s*(\[\[.*\]\])\s*\$@\\\subsubsection{\1}@; 
     s@^\s*(\[.*\])\s*\$@\\\subsection{\1}@; 
 
@@ -118,15 +118,15 @@ fi
 
 cd doc
 
-cd inkscape-svg
-for F in *.eps; do
-    [[ ! -f ${F%eps}pdf ]] || $FORCE && {
-        echo converting $F to PDF
-        epstopdf $F
-    }
-done
-cd ..
+#cd inkscape-svg
+#for F in *.eps; do
+#    [[ ! -f ${F%eps}pdf ]] || $FORCE && {
+#        echo converting $F to PDF
+#        epstopdf $F
+#    }
+#done
+#cd ..
 
-#pdflatex userguide.tex
-latex userguide.tex
-dvipdf userguide.dvi
+pdflatex userguide.tex
+#latex userguide.tex
+#dvipdf userguide.dvi

@@ -9,24 +9,31 @@
   \usepackage{courier}
 \usepackage{amsmath}
 \usepackage{verbatim}
-\usepackage{graphicx}             % latex, eps
-%\usepackage[pdftex]{graphicx}    % pdflatex, png, jpg, pdf
-\usepackage[dvips,usenames,dvipsnames]{color}   % dvips here screws up graphicx png version, above
+%\usepackage{graphicx}             % latex, eps
+\usepackage[pdftex]{graphicx}    % pdflatex, png, jpg, pdf
+%\usepackage[dvips,usenames,dvipsnames]{color}   % dvips here screws up graphicx png version, above
+\usepackage[usenames]{color}   % dvips here screws up graphicx png version, above
 \usepackage{hyperref}
 %\usepackage{titletoc}
-\usepackage{tocloft}
 
+\usepackage{tocloft}
 % prevent double digit sub-sections crowding the toc line
 \addtolength\cftsubsecnumwidth{0.5em}  % see tocloft manual
 
-\definecolor{codeblock}{rgb}{0.98,0.95,0.9}
+\definecolor{codeblock}{rgb}{0.95,0.95,0.95}
 %\definecolor{keywords}{rgb}{1.0,0.3,0.0}
 \definecolor{keywords}{rgb}{1.0,0.1,1.0}
 %\definecolor{comments}{rgb}{0.0,0.7,0.8}
 \definecolor{comments}{rgb}{1.0,0.0,0.0}
-\definecolor{identifiers}{rgb}{0.1,0.15,0.2}
+\definecolor{identifiers}{rgb}{0.0,0.1,0.3}
 \definecolor{strings}{rgb}{0.0,0.6,0.0}
-\definecolor{basic}{rgb}{0.0,0.4,0.0}
+\definecolor{basic}{rgb}{0.0,0.2,0.8}
+
+% hyperlink color:
+%\definecolor{linkc}{rgb}{0,0.2,0.68}
+% colored hyperlink instead of boxed
+%\hypersetup{colorlinks=true, linkcolor=linkc}
+\hypersetup{colorlinks=true, linkcolor=red}
 
 \definecolor{shadecolor}{rgb}{0.9,0.9,0.1}
 
@@ -83,6 +90,25 @@ numbers=none,
 % and \subparagraph as subsubsubsubsection
 \setcounter{secnumdepth}{5}
 \setcounter{tocdepth}{5}
+
+% the follow makes \paragraph{} be followed 
+% by a newline, as for section headings.
+\makeatletter
+\renewcommand\paragraph{%
+   \@startsection{paragraph}{4}{0mm}%
+      {-\baselineskip}%
+      {.5\baselineskip}%
+      {\normalfont\normalsize\bfseries}}
+\makeatother
+% and similarly for \subparagraph{} 
+\makeatletter
+\renewcommand\subparagraph{%
+   \@startsection{subparagraph}{4}{0mm}%
+      {-\baselineskip}%
+      {.5\baselineskip}%
+      {\normalfont\normalsize\bfseries}}
+\makeatother
+
 
 \title{Cylc \linebreak 
 An Optimal Adaptive Metascheduler \linebreak 
@@ -180,7 +206,7 @@ upstream tasks.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=6cm]{inkscape-svg/dep-one-cycle} 
+        \includegraphics[width=6cm]{inkscape-svg/dep-one-cycle.pdf} 
     \end{center}
     \caption[Single cycle dependency graph for a simple suite]{\small
     The dependency graph for a single forecast cycle of a simple example
@@ -193,7 +219,7 @@ upstream tasks.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=8cm]{inkscape-svg/timeline-one}
+        \includegraphics[width=8cm]{inkscape-svg/timeline-one.pdf}
     \end{center}
     \caption[Single cycle job schedules for real time operation]{\small
     The optimal job schedule for two consecutive cycles of our example
@@ -215,7 +241,7 @@ diagrams.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=10cm]{inkscape-svg/dep-two-cycles-linked} 
+        \includegraphics[width=10cm]{inkscape-svg/dep-two-cycles-linked.pdf} 
     \end{center}
     \caption[What if the external data is available early?]{\small If
     the external driving data is available in advance, can we start
@@ -225,7 +251,7 @@ diagrams.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=6cm]{inkscape-svg/timeline-one-c} 
+        \includegraphics[width=6cm]{inkscape-svg/timeline-one-c.pdf} 
     \end{center}
     \caption[Attempted overlap of consective single-cycle job
     schedules]{\small A naive attempt to overlap two consecutive cycles
@@ -237,7 +263,7 @@ diagrams.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=8cm]{inkscape-svg/timeline-one-a} 
+        \includegraphics[width=8cm]{inkscape-svg/timeline-one-a.pdf} 
     \end{center}
     \caption[The only safe multicycle job schedule?]{\small The best that
     can be done {\em in general} when intercycle dependencies are
@@ -309,7 +335,7 @@ failures) won't result in dependency violations.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=8cm]{inkscape-svg/dep-multi-cycle} 
+        \includegraphics[width=8cm]{inkscape-svg/dep-multi-cycle.pdf} 
     \end{center}
     \caption[Complete multicycle dependency graph]{\small The complete
     dependency graph for the example suite, assuming the least possible
@@ -321,7 +347,7 @@ failures) won't result in dependency violations.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=6cm]{inkscape-svg/timeline-two-cycles-optimal} 
+        \includegraphics[width=6cm]{inkscape-svg/timeline-two-cycles-optimal.pdf} 
     \end{center}
     \caption[Optimal two-cycle job schedule]{\small Optimal two cycle
     job schedule when the next cycle's driving data is available in
@@ -342,7 +368,7 @@ with dependency violations.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=12cm]{inkscape-svg/timeline-three} 
+        \includegraphics[width=12cm]{inkscape-svg/timeline-three.pdf} 
     \end{center}
     \caption[Post delay comparison of job schedules]{\small Job
     schedules for the example suite after a delay of almost one whole
@@ -356,7 +382,7 @@ with dependency violations.
 
 \begin{figure}
     \begin{center} 
-        \includegraphics[width=8cm]{inkscape-svg/timeline-two}
+        \includegraphics[width=8cm]{inkscape-svg/timeline-two.pdf}
     \end{center} 
     \caption[Optimal job schedule when all external data is
     available]{\small Job schedules for the example suite in case study
@@ -415,7 +441,7 @@ even more efficient job schedule.
 
 \begin{figure}
     \begin{center} 
-        \includegraphics[width=8cm]{inkscape-svg/task-pool}
+        \includegraphics[width=8cm]{inkscape-svg/task-pool.pdf}
     \end{center} 
     \caption[The cylc task pool]{\small How cylc sees the task pool, in
     contrast to the full dependency diagram of Figure~\ref{fig-dep-multi}.} 
@@ -433,12 +459,12 @@ mechanism to advance the suite in time; instead each individual task
 proxy has a private cycle time and spawns its own successor at the right
 time (which depends only on the task's own type and state). Task proxies
 are self-contained and do not know what other tasks exist in the suite,
-they just know their own prerequisites and outputs.  Prerequisites can
-equally represent intra- and intercycle dependencies, and the task pool
-can be populated with tasks having many different cycles. Now,
+they just know their own prerequisites and outputs. Intercycle
+dependencies are not treated specially, and the task pool
+can be populated with tasks from many different cycle times. Now,
 whenever any task proxy changes state (as a result of an output
 completion message, for example) cylc gets the entire pool to interact
-indiscriminately, {\em regardless of cycle time}, in an attempt to
+indiscriminately ({\em regardless of cycle time}) in an attempt to
 match unsatisfied prerequisites with completed outputs.\footnote{In fact
 this dependency negotiation goes through a middleman or broker object,
 which reduces the interaction scaling from $n^2$ to $n$, where $n$ is
@@ -476,17 +502,19 @@ as it catches up to real time operation.
 \label{Requirements}
 
 \begin{myitemize}
-    \item A Unix-like OS\footnote{The cylc codebase assumes
-        Unix-style file paths in places, but it could easily made more
-        portable if necessary.} 
-    \item Python 2.4 or later\footnote{Python 2.4 was released in
-        November 2004. Python 3 is the future of Python, but it is
-        not backward compatible with 2.x and consequently still
-        has significantly less library and third party support.
-        As of mid 2011, Python 2.7 is still the standard for new Linux
-        distributions, so cylc has not been ported to Python 3
-        as yet.}
-    \item Pyro (Python Remote Objects)
+    \item Operating System: Linux or Unix \footnote{The cylc codebase
+        assumes Unix-style file paths in places, but it could easily
+        made more portable if necessary.} 
+    \item Python Version: 2.4 or later, but not Python
+        3.\footnote{Python 2.4 was released in November 2004. Python 3
+        is the future of Python, but it is not backward compatible with
+        2.x and consequently still has significantly less library and
+        third party support.  As of mid 2011, Python 2.7 is still the
+        standard for new Linux distributions, so cylc has not been
+        ported to Python 3 as yet.}
+    \item Pyro 3 (Python Remote Objects)\footnote{As of 
+        April 2011, Pyro 4 is in development, and is compatible with
+        Python 3, but is still not recommended for production use.} 
     \item graphviz
     \item pygraphviz
 \end{myitemize}
@@ -563,8 +591,10 @@ admin> $CYLC_DIR/install/create_db.sh
 (You must have installed cylc and configured your environment as above
 before doing this).
 
-\subsection{Suite Database Test} 
+\subsection{Testing}
 \label{Testing}
+
+\subsubsection{Suite Database Test} 
 
 Run the script \lstinline=$CYLC_DIR/test/test-db.sh= to give 
 the suite database functionality a work out - it registers the userguide
@@ -573,7 +603,7 @@ suite in various ways, exporting it to the central database, and so on,
 before finally deleting the test registration). This process should
 complete in a few seconds.
 
-\subsection{Suite Scheduling Test} 
+\subsubsection{Suite Scheduler Test} 
 
 Run the \lstinline=$CYLC_DIR/test/test-suite.sh= to test the cylc 
 scheduler itself by running the userguide example suite, configured
@@ -809,14 +839,14 @@ example suite at once, under different registrations, because the
 \lstinline=suite.rc= file allows that (in turn, because the suite
 group:name is used in all I/O file paths).
 
-\begin{figure}
-    \begin{center}
-        %\includegraphics[width=12cm]{monitor} 
-        \includegraphics[width=12cm]{cylc-view-ecoconnect} 
-    \end{center}
-    \caption{\small {\em cylc view} screenshot}
-    \label{fig-monitor} 
-\end{figure} 
+%\begin{figure}
+%    \begin{center}
+%        %\includegraphics[width=12cm]{monitor} 
+%        %\includegraphics[width=12cm]{cylc-view-ecoconnect.pdf} 
+%    \end{center}
+%    \caption{\small {\em cylc view} screenshot}
+%    \label{fig-monitor} 
+%\end{figure} 
 
 \subsection{Shutdown And Restart}
 
@@ -859,8 +889,8 @@ pre-intervention state in case of disaster). See {\em Restarts}
 
 \pagebreak
 
-\section{Suite Design - Overview} 
-\label{SuiteDesignOverview}
+\section{Suite Design} 
+\label{SuiteDesign}
 
 \subsection{History}
 \subsubsection{Cylc pre-3.0}
@@ -1004,10 +1034,10 @@ And cylc-specific features:
     \item {\bf Continuation lines} follow a trailing backslash.
     \item {\bf Dependency Graph Strings} may contain blank lines
         and inline comments (see Section~\ref{SuitercDependencyGraph}).
-    \item {\bf Include Files} can span section boundaries, and may be
+    \item {\bf Include File} paths specified relative to the suite
+        definition directory; can span section boundaries, and may be
         multiply-included and nested; see
-        Section~\ref{IncludeFiles}. Include-file paths should be specified
-        relative to the suite definition directory.
+        Section~\ref{IncludeFiles}. 
 \end{myitemize}
 
 \subsubsection{A Simple Example}
@@ -1065,18 +1095,18 @@ The dependency graph defined here can be plotted by gcylc or the
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=12cm]{../images/screenshots/simple-graph.eps}]
+        \includegraphics[width=14cm]{../images/screenshots/simple-graph.png}]
     \end{center}
     \caption[Simple example dependency graph]{\small The dependency graph
     defined in the `simple' example suite.rc file.}
     \label{fig-simple-graph} 
 \end{figure} 
 
-\subsubsection{Syntax Highlighting}
+\subsubsection{Editor Syntax Highlighting}
 
 Cylc comes with a syntax file, \lstinline=$CYLC_DIR/conf/cylc.vim=,
-which defines \lstinline=suite.rc= syntax highlighting and section
-folding for the {\em vim} editor, as shown in Figure~\ref{fig-cylc-vim}.
+for \lstinline=suite.rc= syntax highlighting and section
+folding in the {\em vim} editor, as shown in Figure~\ref{fig-cylc-vim}.
 To use this, just copy the syntax file to your
 \lstinline=$HOME/.vim/syntax/= directory and make some minor
 modifications, as described in the file, to your
@@ -1084,7 +1114,7 @@ modifications, as described in the file, to your
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=12cm]{../images/screenshots/simple-suiterc.eps}]
+        \includegraphics[width=14cm]{../images/screenshots/simple-suiterc.png}]
     \end{center}
     \caption[Cylc suite.rc syntax highlighting in vim]{
     Cylc suite.rc syntax highlighting and folding in the vim editior.}
@@ -1127,58 +1157,20 @@ Section~\ref{SuiteRCReference}, Suite.rc Reference, defines
 every legal \lstinline=suite.rc= entry.
 
 \pagebreak
-\section{Suite Design - Suite.rc Reference}
-\label{SuiteRCReference}
-
-This chapter documents all legal entries in a \lstinline=suite.rc= file.
-The information is extracted from the specification file
-\lstinline=$CYLC_DIR/conf/suiterc.spec= during document processing, so
-that the userguide is automatically kept up to date.  Section and
-subsections are generated in the same nested structure as the file (and
-note that entries in the contents page of the PDF document are
-hyperlinks).
-
-Most suites will only need a few of these settings - many items have
-sensible default values, some are only needed for critical operational
-suites (e.g.\ secure passphrases and task event hooks), and some are
-primarily used for cylc development (e.g.\ dummy mode configuration). In
-general your \lstinline=suite.rc= files shouldn't be a whole lot more
-complicated than those of the cylc example suites (see the example
-listing in the previous section).
-
-\subsection{Overview}
-
-Details of \lstinline=suite.rc= syntax are described in
-Section~\ref{SuiteRCFile}. For this section it suffices to say that
-every entry in the file is of the form:
-\begin{lstlisting}
-item = value
-\end{lstlisting}
-where \lstinline=item= may be a phrase containing spaces, and
-\lstinline=value= may be an integer, float, boolean (True/False),
-string, multiline string, or a comma-separated list of any of the
-former.  \lstinline=suite.rc= files are validated against
-\lstinline=$CYLC_DIR/conf/suiterc.spec=, which defines what
-items are allowed, and places constraints on what values are legal for
-each item.
-
-\input{suiterc.spec.tex}
-
-\pagebreak
-\section{Suite Design - Principles And Suggestions}
+\subsection{Principles And Suggestions}
 
 This section highlights some issues, not necessarily
 cylc-specific, that should be considered when developing your own
 suites. See Section~\ref{SuiteDesignReference} (Suite Design Reference)
 for the details of how to construct a cylc suite.
 
-\subsection{There Is No ``Current Suite Cycle Time''}
+\subsubsection{There Is No ``Current Suite Cycle Time''}
 
 In cylc, each task has its own private cycle time and can run when its
 prerequisites are satisfied regardless of what is going on elsewhere in
 the suite. Keep this in mind!
 
-\subsection{Make Fine-Grained Suites} 
+\subsubsection{Make Fine-Grained Suites} 
 \label{Granularity}
 
 A suite can contain a small number of large, internally complex tasks; a
@@ -1201,7 +1193,7 @@ advantages to fine-graining:
 
 \end{myitemize}
 
-\subsection{Don't Overuse Task Families}
+\subsubsection{Don't Overuse Task Families}
 
 Cylc allows you to group tasks into families in which all members
 trigger at once off the same prerequisites, and then other downstream
@@ -1219,7 +1211,7 @@ catching up from a long delay.
 
 \label{SuiteTaskGuidelines}
 
-\subsection{Make Tasks Rerunnable}
+\subsubsection{Make Tasks Rerunnable}
 
 It should be possible to rerun a task by simply resubmitting it for the
 same cycle time. In other words, failure at any point during execution
@@ -1243,7 +1235,7 @@ utilities can easily do this for you). Then, given availability of
 any external inputs, you can easily rerun the task for any cycle still
 in the restart archive.
 
-\subsection{Limit Previous-Instance Dependence} 
+\subsubsection{Limit Previous-Instance Dependence} 
 
 Cylc does not require that successive instances of the same task run 
 sequentially. In order to task advantage of this and achieve maximum
@@ -1269,7 +1261,7 @@ Section~\ref{SuiteDesignReference}).
 %has completed its restart prerequisites (minimal previous instance
 %dependence, maximal throughput).
 
-\subsection{Put Cycle Time in all Output File Paths}
+\subsubsection{Put Cycle Time In All Output File Paths}
 \label{PutCycleTimeinIO}
 
 Having all filenames, or perhaps the names of their containing
@@ -1280,21 +1272,21 @@ overwrite of important files from one cycle to the next. Cylc has a
 powerful utilities for cycle time offset based filename templating and
 housekeeping.
 
-\subsection{How to Manage Input/Output File Dependencies}
+\subsubsection{How To Manage Input/Output File Dependencies}
 \label{HandlingDependencies}
 
 Dependencies between tasks usually, though not always, take the form
 of files generated by one task and used by other tasks. There are 
 several ways to manage these files across a suite.
 
-\subsubsection{(a) Use a Common I/O Workspace}
+\paragraph{(a) Use A Common I/O Workspace}
 
 This may be the easiest way to run small suites: have all tasks read and
 write from a common workspace.  Don't hardwire the workspace location
 into the tasks; have them take it dynamically from an environment
 variable defined in the \lstinline=suite.rc= file. 
 
-\subsubsection{(b) Make the Tasks Responsible }
+\paragraph{(b) Make The Tasks Responsible }
 
 Perhaps the obvious way to do this is to configure each task with
 knowledge of its role in the suite: e.g.\ to have task B know to read
@@ -1306,7 +1298,7 @@ confine the common I/O directory configuration to the
 \lstinline=suite.rc= file (i.e.\ task I/O must be configured dynamically
 by the suite).
 
-\subsubsection{(b) Add Connector Tasks to the Suite} 
+\paragraph{(c) Add Connector Tasks To The Suite} 
 
 If your tasks have idiosyncratic default I/O locations that are not easy
 to change (this would hardly be unprecented when it comes to large
@@ -1320,7 +1312,7 @@ call the same generic file-transfer script or command, with differing
 task-specific input parameters, and their cross-task configuration can
 be confined to the \lstinline=suite.rc= file.
 
-\subsubsection{(c) Dynamic Configuration Of I/O Paths}
+\paragraph{(d) Dynamic Configuration Of I/O Paths}
 
 The best solution is probably to have all tasks take common I/O paths
 from common environment variables defined once in the
@@ -1346,8 +1338,18 @@ URLs for the common I/O locations instead of local paths).
 %automatically pass on changes to the external input / output config of
 %the system.
 
+\subsubsection{Use Generic Task Scripts}
 
-\subsection{Make Suites Portable}
+If your suite contains multiple logically distinct tasks that actually
+have similar functionality (for moving files around, for instance, or
+running the same kind of postprocessing over the output of different
+models, \dots) have the corresponding cylc tasks all call the same
+command, script, or executable - just provide different input parameters
+via the commandline and/or execution environment (both defined in the
+\lstinline=suite.rc= file.
+
+
+\subsubsection{Make Suites Portable}
 
 If every task in a suite is configured to put its output under
 `\lstinline=$HOME=' (i.e.\ the environment variable, literally, not the
@@ -1365,9 +1367,9 @@ $HOME/output/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/
 (these variables are automatically exported to the task execution
 environment by cylc). Then you can run multiple instances of the suite
 at once (even under the same user account) without changing anything,
-and there will be no interference between them.
+and they will not interfere with each other.
 
-\subsection{Make Tasks As Self-Contained As Possible}
+\subsubsection{Make Tasks As Self-Contained As Possible}
 
 Where possible, no task should rely on the action of another task,
 except for the prerequisites embodied in the suite dependency graph that
@@ -1396,7 +1398,7 @@ directories first.
   cylc util checkvars -p OUTFILE
 \end{lstlisting}
 
-\subsection{Make Suites As Self-Contained As Possible}
+\subsubsection{Make Suites As Self-Contained As Possible}
 
 The only compulsory content of a cylc suite definition directory is the
 \lstinline=suite.rc= file (and you'll almost certainly have a suite
@@ -1422,11 +1424,32 @@ sections of the remote tasks, override \lstinline=$CYLC_SUITE_DIR= with
 the remote path - just as for \lstinline=$CYLC_DIR= which, for remote
 tasks, must point to the remote cylc installation).
 
-\pagebreak
+\subsubsection{Orderly Product Generation?}
+\label{OrderlyProductGeneration}
 
+Note that ``correct scheduling'' is not equivalent to ``orderly
+generation of products by cycle time''.  Under cylc, a product
+generation task will trigger as soon as its prerequisites are satisfied
+(i.e.\ when its input files are ready, generally) regardless of whether
+other tasks with the same cycle time have finished or have yet to run. 
 
-\section{Next Section}
-\subsection{Clock-triggered Tasks Should Wait On External Data}
+If your product delivery or presentation system demands that all
+products for one cycle time are uploaded (or whatever) before any from
+the next cycle, then:
+
+\begin{myitemize}
+    \item this is inefficient because cylc is capable of generating products 
+        for each part of your suite independently at the earliest
+        possible time - maybe the system needs fixing!
+    \item if you must, you can introduce artificial dependencies into
+        your suite to ensure that the final forecast products are never
+        delivered ``out of sequence'' even if some are available early
+        than others.  One way of doing this would be to have a final
+        ``product upload'' task that depends on completion of all the
+        real product generation tasks at the same cycle time.
+\end{myitemize}
+
+\subsubsection{Clock-triggered Tasks Should Wait On External Data}
 
 Most tasks in a cylc suite know their own cycle time, but they don't
 care about the wall clock time, they just run when their prerequisites
@@ -1441,6 +1464,10 @@ reason; only when it has been successfully detected or retrieved should
 the task report success and exit (or perhaps report failure and exit if
 the data does not arrive by some cutoff time). 
 
+
+\pagebreak
+
+\section{Tasks and Task Execution}
 \subsection{Providing Input Parameters to Tasks}
 
 Cylc tasks can take input from commandline arguments (as specified in
@@ -1468,14 +1495,14 @@ can reference the following special cylc environment variables:
   $CYLC_SUITE         # foo:bar
   $CYLC_SUITE_GROUP   # foo 
   $CYLC_SUITE_NAME    # bar
-  $CYLC_SUITE_DIR     # /path/to/suite/definition
-  $CYLC_SUITE_OWNER   # username of person running the suite
-  $CYLC_DIR           # /path/to/cylc/installation
+  $CYLC_SUITE_DIR     # /path/to/suite/definition on the suite host
+  $CYLC_SUITE_OWNER   # username of the account running the suite
+  $CYLC_DIR           # /path/to/cylc/installation on the suite host
   $CYLC_SUITE_HOST    # hostname of machine running the suite
-  $CYLC_SUITE_PORT    # port (on the suite host) the suite is listening at
-  $TASK_ID            # task NAME%YYYYMMDDHH
-  $TASK_NAME          # task NAME
-  $CYCLE_TIME         # task cycle time (YYYYMMDDHH)
+  $CYLC_SUITE_PORT    # host port on which the suite is listening
+  $TASK_NAME          # TASK
+  $CYCLE_TIME         # YYYYMMDDHH
+  $TASK_ID            # $TASK_NAME%$CYCLE_TIME
 \end{lstlisting}
 
 Note that this means even global variables, when evaluated in the execution
@@ -1590,245 +1617,27 @@ environment of a specific task, can be made task-specific.
 %particular output will trigger off the first task to provide it.
 %
 
-\subsection{Task Types} 
-\label{TaskTypes}
-
-In cylc, every task (sans cycle time, which is a task type parameter) is
-a member of its own class, defined by python modules generated on
-parsing the suite taskdef files (see \lstinline=cylc configure=).
-Each task, via the taskdef \lstinline=TYPE= key, must declare itself to
-be derived from one of two base classes that define its main properties:
-
-\begin{myitemize} 
-    
-    \item A \lstinline=free= task does not depend on outputs generated
-        by a previous instance of its own class, which means successive
-        instances of it can run in parallel if the opportunity arises
-        (i.e.\ prerequisites allowing).  To allow this to happen, a free
-        task spawns a successor as soon as it enters the {\em running}
-        state\footnote{Spawning any earlier than this would bring no
-        advantage, in terms of parallel execution, at the cost of
-        unrestrained task breeding.}. Most non-forecast model tasks (pre
-        and post processing tasks, etc.) should be of this type.
-
-    \item A \lstinline=tied= task {\em does} depend on outputs generated
-        by a previous instance of its own class. These are typically
-        warm cycled forecast models which depend on ``restart'' files
-        generated by the previous forecast, e.g.\ ``model background''
-        data used in part to initialise the new forecast.
-        Other prerequisites allowing, cylc can run successive forecast
-        models as soon their restart files are available {\em if}
-        those restart outputs are reported as soon as they are
-        generated. However, successive instances of a forecast model will
-        often run in sequence at best because of resource limitations,
-        or because the model executable has not been modified to report
-        mid-run outputs back to cylc at the time they occur (in which
-        case all restart outputs will be reported complete at once when
-        the model run finishes).
-
-%    # *(2) A FORECAST_MODEL depends on a previous instance of the same
-%    # task to provide special `restart' prerequisites: during a
-%%    # forecast, a warm-cycling model will write out a state dump valid
-%    # at the start time of the next forecast, for use in initialising
-%    # it. Multiple restart outputs may be generated to allow one or more
-%    # subsequent forecasts to be omitted if necessary. A forecast_model
-%    # registers how many of these are generated, which cylc assumes are
-%    # intended for use by the next N valid start times for the task and
-%    # automatically adds special outputs and prerequisites to represent
-%    # them in the suite. 
-%    # A forecast model cannot start running until
-%    # its restart prerequisite is satisfied, but the same prerequisite
-%    # can potentially be satisfied by a restart output from any of the
-%    # previous N forecasts. This allows cylc to continue running when
-%    # one or more cycles of a particular model have to be omitted
-%    # because of problems. But in normal operation we only want a model
-%    # to trigger off the most recent previous forecast, which means that
-%    # a forecast model cannot spawn a successor until its *last* restart
-%    # output is completed (otherwise there is a chance the next-plus-one
-%    # instance could come into existence and trigger before the the
-%    # current instance, and so on, in normal operation). 
- 
-\end{myitemize}
 
 
-\subsubsection{Task Type Modifiers} 
+   
+% automatic post-intervention recovery from nasty 
+%        failures, because cylc will know about the actual restart
+%        dependencies of your real tasks. For example, in the userguide
+%        example suite, if the weather model (task A) fails requiring a
+%        cold start 12 hours later, insert the cold start task into the
+%        suite (at failure time + 12) and purge all downstream dependants of 
+%        the failed task through to the cold start cycle. Then, tasks
+%        B and C will carry on as normal because their restart
+%        prerequisites will be satisfied automatically by their
+%        predecessors from several cycles ago, before the gap caused by
+%        the failure.
 
-A task may also declare one or more {\em modifiers}, after the main
-type, that alter its behaviour to some extent:
-
-\begin{myitemize}
-    \item A \lstinline=oneoff= task never spawns a successor; once it
-        has finished and is no longer needed it will be removed from the
-        system. This can be used for tasks that clean out a suite 
-        workspace, for example, and {\em cold start} tasks that supply
-        initial restart inputs to warm cycled forecast models. See also
-        the \lstinline=COLDSTART_PREREQUISITES= task definition key, below.
-
-    \item A \lstinline=sequential= task does not spawn a successor until it is
-        finished. You can use this to force successive instances of a
-        free or tied task to run in sequence if multiple instances of
-        the real external task cannot be allowed to run at the same
-        time (perhaps because they would interfere with each other
-        through use of the same temporary files, or similar).
-
-    \item A \lstinline=contact= task waits on an external event, such as
-        incoming external data, i.e.\ it ``makes contact'' with the
-        external world.  The event is expected at some defined time
-        interval after the task cycle time (e.g.\ observational data
-        might come 3.5 hours after its nominal validity time); see
-        \lstinline=CONTACT_DELAY= below. In real time operation a contact task will
-        not begin running until the clock time has reached this delayed
-        start time. In catchup operation a contact task will begin
-        running immediately (other prerequisites allowing) because the
-        delayed start time has already passed.  
-        
-
-    % TO DO: PUT IN AN ``ADVANCED'' SECTION
-    %\item A \lstinline=catchup_contact= task maintains awareness,
-    %    through a class variable (i.e.\ not per instance), of whether or
-    %    not it has `caught up' yet.  This can be used for rare occasions
-    %    when some dependant task needs to behave differently according
-    %    to whether its upstream contact task has caught up or not (in
-    %    EcoConnect, only the TopNet river model).
-
-    \item A \lstinline=dummy= task always invokes the cylc dummy task
-        program, even when operating in real mode.  The dummy task
-        program masquerades as the task it represents by reporting its
-        registered outputs completed after a short interval. This can be
-        used to ``fake'' provision of initial restart prerequisites to a
-        forecast model whose real initial inputs have been put in place
-        by some external means (perhaps a long ``spin up'' process)
-        prior to starting the whole suite.
-
-\end{myitemize}
-
-
-
-\subsection{Automatic Started And Finished Outputs}
-
-Special {\em started} and {\em finished} outputs are automatically
-registered for every task: 
-
-\begin{lstlisting}
-"foo%$(CYCLE_TIME) started"
-"foo%$(CYCLE_TIME) finished"
-\end{lstlisting}
-
-Be aware that triggering off these messages introduces explicit
-dependence on specific tasks, rather than on outputs that could be
-provided, in principle, by any task, so this makes the suite somewhat
-less flexible.
-
-
-\subsection{Failure Messages}
-
-\lstinline=cylc task-failed= should be used to report critical task
-failures. A failed task will remain in the system until explicitly dealt
-with by the operator.
-
-\subsection{Completion Messages}
-
-A special {\em task completed} message is sent whenever a tasks reports
-success {\em or} failure:
-\begin{lstlisting}
-"foo completed for $(CYCLE_TIME)"
-\end{lstlisting}
- 
-This can be useful if you want to trigger off an upstream task whether
-or not it succeeded (e.g.: a data assimilation program that triggers
-when a handful of separate obs processing programs have finished or
-failed, where failure occurs if no obs of a particular type happen to be
-available for the forecast cycle in question).
-
-
-\subsection{Forecast Model Restart Outputs}
-
-Task of the {\em tied} type (i.e.\ warm-cycled forecast models) must
-declare, in their task definition files, the number of restart outputs
-that they generate to satisfy the previous-instance dependence of their
-successors. Cylc uses this information to automatically register special
-restart outputs and prerequisites for the task. For example, if a
-forecast model task called {\em foo} has a 6 hour cycle and generates
-restart files for the next 2 cycles, the following prerequisite:
-
-\begin{lstlisting}
-"foo restart files ready for $(CYCLE_TIME)"
-\end{lstlisting}
-
-and the following two outputs:
-
-\begin{lstlisting}
-"foo restart files ready for $(CYCLE_TIME + 6)"
-"foo restart files ready for $(CYCLE_TIME + 12)"
-\end{lstlisting}
-
-will be automatically registered for the task.
-
-%\lstinline=cylc task-message= also has special options for reporting
-%restart outputs so that you do not have to worry about typos in the
-%message. 
-
-\subsubsection{Restart Prerequisites at Suite Startup}
-
-Note that while cylc automates registration of restart prerequisites and 
-outputs for convenience, these are still nothing more than ordinary cylc
-output messages, and there is one situation in which you still need to
-register them explicitly in the taskdef file: {\em oneoff cold start
-tasks} that provide the initial restart inputs to {\em other} tasks.
-The userguide example suite shows this clearly.
-
-% TO DO:
-%    a task that behaves differently at different times should be 
-%        handled using conditional prerequisites and outputs. For
-%        example, a forecast model that does a long forecast at 06 and
-%        18Z and a short forecast at other times. An alternative approach
-%        though would be to split the task into two separate tasks that 
-%        run in different cycles. If you want to do it this way then one
-%        task will be providing restart outputs for the other, and vice
-%        versa, which can be achieved by manually registering the same
-%        restart output messages in the two tasks. 
-
-
-\subsubsection{Use Of Tied Tasks Is Optional}
-
-Tied tasks are merely a convenience to the suite designer in that they
-automatically register the prerequisites and outputs that determine
-forecast model intercycle restart dependencies. However, these automatic
-prerequisites and outputs are just normal cylc messages; you could
-easily use all {\em free} tasks and explicitly define the restart
-prerequisites and outputs for your forecast models.
-
-Alternatively, you could declare your forecast models to be
-\lstinline=%TYPE free, sequential=.  Sequential tasks cannot start until
-their previous instances have finished, so any restart prerequisites
-will be implicitly satisfied. However, use of either the tied task type
-or explicit restart dependencies does have the following advantages:
-
-\begin{myitemize}
-
-    \item a more efficient system: forecast models can start up before
-        their previous instances have finished, other prerequisites
-        allowing.  
-    
-    \item automatic post-intervention recovery from nasty 
-        failures, because cylc will know about the actual restart
-        dependencies of your real tasks. For example, in the userguide
-        example suite, if the weather model (task A) fails requiring a
-        cold start 12 hours later, insert the cold start task into the
-        suite (at failure time + 12) and purge all downstream dependants of 
-        the failed task through to the cold start cycle. Then, tasks
-        B and C will carry on as normal because their restart
-        prerequisites will be satisfied automatically by their
-        predecessors from several cycles ago, before the gap caused by
-        the failure.
-
-\end{myitemize}
 
 \subsection{Task Scripts}
 \label{TaskScripts}
 
 Cylc tasks automatically get access (via \lstinline=$PATH=) to
-executable files in the \lstinline=scripts= suite definition
+executable files in the \lstinline=bin= suite definition
 sub-directory. It is a central location in which to keep scripts that
 execute external tasks (models etc.), which often have an independent
 existence outside of the forecasting system, within the context of the
@@ -1842,7 +1651,7 @@ definition file, in which case the external script will have to be
 modified to do the cylc messaging, OR use cylc's task wrapping
 mechanism, which automatically handles the former case but sets all
 outputs, including internal ones, completed only after the external
-script finishes. Executable files in the suite \lstinline=scripts=
+script finishes. Executable files in the suite \lstinline=bin=
 sub-directory are accessible, via the task execution environment, to
 tasks launched by cylc. 
 
@@ -1998,7 +1807,7 @@ task messages (and even outputs) to be logged by cylc if you like).
 %parser is not currently aware of (hence the custom Python taskdef).
 
 \pagebreak
-\section{Job Submission}
+\subsection{Job Submission}
 \label{JobSubmission}
 
 Cylc can submit different tasks to run by different methods.  A default
@@ -2019,7 +1828,7 @@ which can be overridden for specific tasks as required:
 self.items['job_submit_overrides']['at_now'] = [ 'A', 'B', 'D' ]
 \end{lstlisting}
 
-\subsection{How It Works}
+\subsubsection{How It Works}
 \label{HowItWorks}
 
 \lstset{language=cylctaskdef}
@@ -2102,7 +1911,7 @@ A.sh
 #EOF
 \end{lstlisting}
 
-\subsection{Available Methods}
+\subsubsection{Available Methods}
 \label{AvailableMethods}
 
 \lstset{language=bash}
@@ -2149,7 +1958,7 @@ scheduler or cross-platform resource manager such as {\em loadleveler}
 
 \end{myitemize}
 
-\subsection{Custom Task Wrappers}
+\subsubsection{Custom Task Wrappers}
 
 For large scientific models with extremely convoluted native
 job-submission processes you may need to use a custom wrapper, 
@@ -2161,7 +1970,7 @@ inserting a few cylc messaging calls) before invoking them.
 Any available cylc job submission method can then be used to submit the
 custom wrapper that initiates the whole process.
 
-\subsection{Defining New Methods}
+\subsubsection{Defining New Methods}
 
 New job submission methods should be derived from cylc's
 \lstinline=job_submit= base class in:
@@ -2202,7 +2011,7 @@ Take a look at the source code for the loadleveler job submit classes,
 and make sure you understand {\em How Job Submission Works},
 Section~\ref{HowItWorks}.
 
-\subsection{Running Local Tasks Under Other Usernames}
+\subsubsection{Running Local Tasks Under Other Usernames}
 \label{RunningLocalTasksUnderOtherUsernames}
 
 \lstset{language=cylctaskdef}
@@ -2225,7 +2034,7 @@ otherwise easy to do: for the \lstinline=at_now= or loadleveler methods,
 for instance, the cylc user only needs \lstinline=sudo= access, as the
 task owner, to \lstinline=at= or \lstinline=llsubmit= respectively.
 
-\subsection{Running Tasks On A Remote Host}
+\subsubsection{Running Tasks On A Remote Host}
 \label{RunningTasksOnARemoteHost}
 
 {\em You will not need this functionality if you have a cross-platform
@@ -2257,7 +2066,7 @@ cylc-user% ssh OWNER@REMOTE_HOST hostname
 \end{lstlisting}
 
 
-\subsubsection{Remote Host Requirements}
+\paragraph{Remote Host Requirements}
 
 \begin{myitemize}
 
@@ -2320,12 +2129,12 @@ Environment}, Section~\ref{TaskExecutionEnvironment}):
     PATH     /remote/path:$PATH
 \end{lstlisting}
 
-\subsubsection{Remote Host Example}
+\paragraph{Remote Host Example}
 
 See cylc's ``Distributed'' example suite, Section~\ref{Distributed}.
 
 
-\subsection{Task stdout And stderr}
+\subsubsection{Task stdout And stderr}
 \label{TaskstdoutAndstderr}
 
 Where job stdout and stderr end up depends is configurable via the
@@ -2333,7 +2142,7 @@ Where job stdout and stderr end up depends is configurable via the
 cylc job submission method using the chosen location.
 
 \pagebreak
-\section{Task Execution Environment}
+\subsection{Task Execution Environment}
 \label{TaskExecutionEnvironment}
 
 As described in Section~\ref{JobSubmission}, {\em Job Submission}, cylc
@@ -2347,10 +2156,10 @@ defines any environment variables required by cylc, global
 environment variables defined in the suite config file, and 
 task-specific environment variables defined in the taskdef file.
 
-\subsection{Global Variables}
+\subsubsection{Global Variables}
 \lstset{language=bash}
 
-\subsubsection{Automatic}
+\paragraph{Automatic}
 The following environment variables are automatically defined by cylc
 for all tasks:
 
@@ -2369,7 +2178,7 @@ overridden (using the taskdef ENVIRONMENT key) to point at the remote
 cylc installation; see Section~\ref{RunningTasksOnARemoteHost}, {\em
 Running Tasks On A Remote Host}. 
 
-\subsubsection{User Defined}
+\paragraph{User Defined}
 \label{SuiteWideVariables}
 
 Environment variables defined in the suite config file are made
@@ -2383,11 +2192,11 @@ self.items['environment']['MY_TMPDIR'] = '/tmp/${CYLC_SUITE_NAME}'
 \end{lstlisting}
 
 
-\subsection{Task-specific Variables}
+\subsubsection{Task-specific Variables}
 \label{TaskSpecificVariables}
 \lstset{language=bash}
 
-\subsubsection{Automatic}
+\paragraph{Automatic}
 
 The following task-specific environment variables are automatically
 defined by cylc:
@@ -2406,7 +2215,7 @@ needed. It used by the cylc messaging interface to identify which task
 is sending a message, however, and therefore which task proxy object to
 communicate the message to in the scheduler.
 
-\subsubsection{User Defined}
+\paragraph{User Defined}
 \lstset{language=cylctaskdef}
 
 Environment variables defined in a task definition file
@@ -2423,7 +2232,7 @@ to just the one task, e.g.:
 
 \lstset{language=bash}
 
-\subsection{Referring To Other Variables}
+\subsubsection{Referring To Other Variables}
 \label{ReferringToOtherVariables}
 
 \lstset{language=bash}
@@ -2438,7 +2247,7 @@ I/O sub-directories underneath a top level working directory that is
 defined by a global environment variable that includes the registered
 suite name.
 
-\subsection{Extra Scripting}
+\subsubsection{Extra Scripting}
 
 The \lstinline=%SCRIPTING= taskdef section provides ultimate
 control over the task execution environment, allowing you to source
@@ -2452,7 +2261,7 @@ external scripts, execute cylc utilities, and so on.
 
 \pagebreak
 
-\section{Running Cylc Suites}
+\section{Running, Monitoring, and Controlling Suites}
 \label{RunningCylcSuites}
 
 \subsection{Cold Starts}
@@ -2878,38 +2687,6 @@ orphaned processes that need to be killed manually.
 (To Do, check: currently no ill effects - maybe sockets (ports) remain
 tied up until they time out?).
 
-\section{A Complete Working Example}
-\label{ACompleteWorkingExample}
-
-This section contains the complete implementation of the example suite
-used to illustrate the scheduling discussion in {\em How Cylc Works}
-(Section~\ref{HowCylcWorks}). The example suite is located in:
-
-\begin{lstlisting}
-$CYLC_DIR/examples/userguide/
-\end{lstlisting}
-
- While clearly not a real forecasting system, it does have the
- properties of a real system as far as scheduling is concerned.  
-
-%\input{../examples/userguide/doc/README.tex}
-
-%\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
-
-%\pagebreak
-%\input{example-suite.tex}
-
-\pagebreak
-\section{Command Reference}
-\label{CommandReference}
-
-%This section is auto-generated from the self-documenting command set.
-  
-\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
-\lstset{language=usage}
-\input{commands.tex}
-\pagebreak
-
 
 
 \pagebreak
@@ -2935,51 +2712,56 @@ messaging interface just prints messages to stdout or stderr.
 \pagebreak
 \appendix
 
-\section{Monitoring And Alerting}
-\label{SuiteMonitor}
+\section{Suite.rc Entry Reference}
+\label{SuiteRCReference}
 
-Cylc registers a {\em suite state summary} object, which is constantly
-updated as the suite evolves, with Pyro. This provides a
-general interface for remote suite monitoring. Monitor programs can
-connect to state summary object, extract whatever information they want
-from it, and ignore the rest. A suite monitor screenshot can be seen in
-Figure~\ref{fig-monitor}.
+This chapter documents all legal entries in a \lstinline=suite.rc= file.
+The information is extracted from the specification file
+\lstinline=$CYLC_DIR/conf/suiterc.spec= during document processing, so
+that the userguide is automatically kept up to date.  Section 
+headings are generated with the same nested structure as the file itself
+to make it easy to get to documentation of the item you're interested in
+by clicking on the right hyperlink in the PDF document contents page.
 
-A real forecasting system probably needs an automated alerting system
-to let the system operators know of task failures or timeouts by pager,
-SMS, email, etc.  EcoConnect currently uses {\em Nagios}
-(http://www.nagios.org) for this purpose. Each part of the forecasting
-system can communicate with Nagios itself {\em or} alerting could be
-handled centrally through cylc via a minor change to the messaging
-interface - i.e.\ \lstinline=cylc task-message= could contact Nagios
-whenever a CRITICAL message comes in.
+Most suites will only need a few of these settings - many items have
+sensible default values, some are only needed for critical operational
+suites (e.g.\ secure passphrases and task event hooks), and some are
+primarily used for cylc development (e.g.\ dummy mode configuration). In
+general your \lstinline=suite.rc= files shouldn't be a whole lot more
+complicated than those of the cylc example suites (see the example
+listing in the previous chapter).
 
-\section{Orderly Product Generation}
-\label{OrderlyProductGeneration}
+\subsection{Overview}
 
-Note that ``correct scheduling'' is not equivalent to ``orderly
-generation of products by cycle time''.  Under cylc, a product
-generation task will trigger as soon as its prerequisites are satisfied 
-(i.e.\ as soon as its input files are available) regardless of
-whether other tasks with the same cycle time have finished or have yet
-to run. 
+Details of \lstinline=suite.rc= syntax are described in
+Section~\ref{SuiteRCFile}. For this section it suffices to say that
+every entry in the file is of the form:
+\begin{lstlisting}
+item = value
+\end{lstlisting}
+where \lstinline=item= may be a phrase containing spaces, and
+\lstinline=value= may be an integer, float, boolean (True/False),
+string, multiline string, or a comma-separated list of any of the
+former.  \lstinline=suite.rc= files are validated against
+\lstinline=$CYLC_DIR/conf/suiterc.spec=, which defines what
+items are allowed, and places constraints on what values are legal for
+each item.
 
-If your product presentation or delivery system demands that all
-products for one cycle time are uploaded before any from the next
-cycle, then:
+\input{suiterc.spec.tex}
 
-\begin{myitemize}
-    \item this is inefficient because cylc is capable of generating products 
-        for each part of your suite independently at the earliest
-        possible time - maybe you should fix your delivery system!
-    \item if you must, you can introduce artificial dependencies into
-        your suite to ensure that the final forecast products are never
-        delivered ``out of sequence'' even if some are available early
-        than others.  One way of doing this would be to have a final
-        ``product upload'' task that depends on completion of all the
-        real product generation tasks at the same cycle time.
-\end{myitemize}
+\pagebreak
 
+\section{Command Reference}
+\label{CommandReference}
+
+%This section is auto-generated from the self-documenting command set.
+  
+\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
+\lstset{language=usage}
+\input{commands.tex}
+\pagebreak
+
+\pagebreak
 %\pagebreak
 \section{How Cylc Interacts With Batch Queue Schedulers}
 \label{HowCylcInteractsWithBatchQueueSchedulers}
@@ -3078,120 +2860,16 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                                           
-\subsection{Single- or Multi-Threaded Pyro?}
-\label{Single-orMulti-ThreadedPyro?}
 
-In single threaded mode Pyro's \lstinline=handleRequests()= returns
-after at least one request (i.e.\ remote method call) was
-handled, or after a timeout. Using \lstinline|timeout = None| 
-allows us to process tasks only when remote method invocations
-come in.  Further, we can detect the remote calls that actually change
-task states, and thereby drop into the task processing code only when
-necessary, which eliminates a lot of extraneous output when debugging
-the task processing loop (e.g.\ in dummy mode there are a lot of remote
-calls on the dummy clock object, which does not alter tasks at all). 
-
-In multithreaded mode, \lstinline=handleRequests()= returns immediately
-after creating a new request handling thread for a single remote object,
-and thereafter remote method calls on that object come in asynchronously
-in the dedicated thread. This is not good for cylc's scheduling
-algorithm because tasks are only set running in the task processing
-block which can be delayed while \lstinline=handleRequests()= blocks waiting
-for a new connection to be established, even as messages that warrant
-task processing are coming in on existing connections. The only way
-around this seems to be to do task processing on \lstinline=handleRequests()=
-timeouts which results in a lot of unnecessary processing when nothing
-important is happening.
-
-Addendum, we now use a timeout on \lstinline=handleRequests()= because
-contact tasks can trigger purely on the wall clock, so we delaying task
-processing when no messages are coming in may prevent these contact
-tasks from triggering.   So\dots we may want to revist Multithreading\dots
+%\pagebreak
 
 
 %\pagebreak
-\section{Object Oriented Programming}
-\label{ObjectOrientedProgramming}
-
-Cylc relies heavily on Object Oriented Programming (OOP) concepts,
-particularly the {\em polymorphic} nature of the task proxy objects.
-An absolutely minimal explanation of this follows; 
-please refer to an OOP reference for more detail.
-
-A {\bf class} is a generalisation of data type to include behaviour
-(i.e.\ functions or methods) as well as state. 
-
-%For example, a $shape$ class could define a $position$ data member to
-%hold the location of a shape object, a $move()$ method that by which
-%a shape object can alter its position, and a $draw()$ method that
-%causes it to display itself on screen.
-
-An {\bf object} is a more or less self contained specific instance
-of a class. This is analagous to specific integer variables being 
-instances of the integer data type.
-
-A {\bf derived class} or {\bf subclass} {\em inherits} the properties
-(methods and data members) of its parent class. It can also override
-specific properties, or add new properties that aren't present in the
-parent. Calling a particular method on an object invokes the object's
-own method if one is defined, otherwise the parent class is searched,
-and so on down to the root of the inheritance graph. 
-
-%For example, we could derive a $circle$ class from $shape$, adding a
-%`radius' data member and overriding the $draw()$ to get circle objects
-%to display themselves as actual circles.  Because we didn't override the
-%$move()$ method, calling $circle.move()$ would invoke the base class
-%method, $shape.move()$. 
-
-
-{\bf Polymorphism} is the ability of one type to appear as and be used
-like another type.  In OOP languages with inheritance, this usually
-refers to the ability to treat derived/sub-class objects as if they were
-members of a common base class. In particular, a group of mixed-type
-objects can all be treated as members of a common base class. 
-%For example, a group of %$circles$, $triangles$, and $squares$ could 
-%be manipulated by code designed entirely to handel $shapes$; calling
-%$[shape].draw()$ will invoke the right derived class $draw()$ method. 
-This is a powerful mechanism because it allows existing old code,
-without modification, to manipulate new objects so long as they 
-derive from the original base class.
-%If we later derive an entirely new kind of shape ($hexagon$, say) with
-%it's own unique behaviour, the existing program, without modification,
-%will process the new objects in the proper hexagon-specific way.  
-
-In cylc, all task proxy objects are derived from a base class that 
-embodies the properties and behaviour common to all task proxies. 
-The scheduling algorithm works with instances of the base class so that
-any current or future derived task object can be handled by the program
-without modification (other than deriving the new subclass itself).
-
-
-%\pagebreak
-%\section{Upgrading Taskdefs}
-%
-%A suggested relatively painless way to make textual changes to many
-%taskdef files {\em en masse}, e.g.\ to make them compatible with a new
-%version of cylc that is not backward compatible in this respect:
-%
-%\begin{myitemize}
-%    \item record all pending changes to the suite repository
-%    \item make bulk changes in-place using perl's powerful regex 
-%       substitution mechanism, e.g.:
-%       \begin{lstlisting}
-%for F in *.def; do perl -pi -e 's/OLD/NEW/g' $F; done
-%       \end{lstlisting}
-%   \item check this had the desired effect with 
-%       \lstinline=darcs whatsnew= (or the equivalent in your chosen
-%       revision control system). If not, revert and try again.
-%\end{myitemize}
-
-
-%\pagebreak
-\section{Cylc- Current Limitations}
+\section{Known Limitations}
 
 \begin{myitemize}
-
-        \item {\em The minimum cycle time granularity for a task is currently one hour}.
+    \item {\em The minimum cycle time granularity for a task is
+        currently one hour}.
 
 Note that this is only loosely connected to when, or how frequently, a
 task actually runs, and then only in real time operation: the system's
@@ -3232,9 +2910,8 @@ frequent tasks if required.
 
 \section{Acknowledgements}
 
-I'd like to thank Bernard Miville and Dr Phil Andrews (NIWA), and Dr David
-Matthews (Met Office UK) for much discussion and bug finding, and for many
-valuable suggestions that have greatly improved cylc's usability and
-functionality.
+Bernard Miville and Dr Phil Andrews (NIWA), and Dr David Matthews (Met
+Office UK), for much discussion and bug finding, and for many
+suggestions that have improved cylc's usability and functionality.
 
 \end{document}

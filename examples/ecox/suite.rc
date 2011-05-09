@@ -11,7 +11,7 @@ number of state dump backups = 100
 #job submission method = ll_basic
 ignore task owners = True
 
-roll scheduler log at startup = True
+roll log at startup = True
 
 use suite blocking = False
 use secure passphrase = False
@@ -104,7 +104,7 @@ nzlam_coldstart_without_download = unpack_globaldump, UM_GLtoGL_recon, UM_GLtoNZ
 
     # restart and cold start for the downstream models
     nzwave_cold | nzwave(T-6)* | nzwave(T-12) | nzwave(T-18) | nzwave(T-24) | nzwave(T-30) | nzwave(T-36) | nzwave(T-42) | nzwave(T-48) => nzwave 
-    ricom_cold | ricom(T-6)* | ricom(T-12) | ricom(T-18) | ricom(T-24) => ricom
+    ricom_cold | ricom(T-12)*  | ricom(T-24) => ricom
     topnet_cold | topnet(T-6)* | topnet(T-12) => topnet"""
 
     [[0,12]]
@@ -112,7 +112,6 @@ nzlam_coldstart_without_download = unpack_globaldump, UM_GLtoGL_recon, UM_GLtoNZ
     # NZWAVE restart and cold start (short forecast at 0,12 UTC)
     nzwave_cold | nzwave(T-6)* => nzwave
     # Do ricom and topnet run short forecasts at 0,12?
-    ricom_cold | ricom(T-6)* | ricom(T-12) | ricom(T-18) | ricom(T-24) => ricom
     topnet_cold | topnet(T-6)* | topnet(T-12) => topnet"""
 
     [[0]]

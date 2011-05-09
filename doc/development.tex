@@ -1,0 +1,86 @@
+\section{Object Oriented Programming}
+\label{ObjectOrientedProgramming}
+
+Cylc relies heavily on Object Oriented Programming (OOP) concepts,
+particularly the {\em polymorphic} nature of the task proxy objects.
+An absolutely minimal explanation of this follows; 
+please refer to an OOP reference for more detail.
+
+A {\bf class} is a generalisation of data type to include behaviour
+(i.e.\ functions or methods) as well as state. 
+
+%For example, a $shape$ class could define a $position$ data member to
+%hold the location of a shape object, a $move()$ method that by which
+%a shape object can alter its position, and a $draw()$ method that
+%causes it to display itself on screen.
+
+An {\bf object} is a more or less self contained specific instance
+of a class. This is analagous to specific integer variables being 
+instances of the integer data type.
+
+A {\bf derived class} or {\bf subclass} {\em inherits} the properties
+(methods and data members) of its parent class. It can also override
+specific properties, or add new properties that aren't present in the
+parent. Calling a particular method on an object invokes the object's
+own method if one is defined, otherwise the parent class is searched,
+and so on down to the root of the inheritance graph. 
+
+%For example, we could derive a $circle$ class from $shape$, adding a
+%`radius' data member and overriding the $draw()$ to get circle objects
+%to display themselves as actual circles.  Because we didn't override the
+%$move()$ method, calling $circle.move()$ would invoke the base class
+%method, $shape.move()$. 
+
+
+{\bf Polymorphism} is the ability of one type to appear as and be used
+like another type.  In OOP languages with inheritance, this usually
+refers to the ability to treat derived/sub-class objects as if they were
+members of a common base class. In particular, a group of mixed-type
+objects can all be treated as members of a common base class. 
+%For example, a group of %$circles$, $triangles$, and $squares$ could 
+%be manipulated by code designed entirely to handel $shapes$; calling
+%$[shape].draw()$ will invoke the right derived class $draw()$ method. 
+This is a powerful mechanism because it allows existing old code,
+without modification, to manipulate new objects so long as they 
+derive from the original base class.
+%If we later derive an entirely new kind of shape ($hexagon$, say) with
+%it's own unique behaviour, the existing program, without modification,
+%will process the new objects in the proper hexagon-specific way.  
+
+In cylc, all task proxy objects are derived from a base class that 
+embodies the properties and behaviour common to all task proxies. 
+The scheduling algorithm works with instances of the base class so that
+any current or future derived task object can be handled by the program
+without modification (other than deriving the new subclass itself).
+
+\subsection{Single- or Multi-Threaded Pyro?}
+\label{Single-orMulti-ThreadedPyro?}
+
+In single threaded mode Pyro's \lstinline=handleRequests()= returns
+after at least one request (i.e.\ remote method call) was
+handled, or after a timeout. Using \lstinline|timeout = None| 
+allows us to process tasks only when remote method invocations
+come in.  Further, we can detect the remote calls that actually change
+task states, and thereby drop into the task processing code only when
+necessary, which eliminates a lot of extraneous output when debugging
+the task processing loop (e.g.\ in dummy mode there are a lot of remote
+calls on the dummy clock object, which does not alter tasks at all). 
+
+In multithreaded mode, \lstinline=handleRequests()= returns immediately
+after creating a new request handling thread for a single remote object,
+and thereafter remote method calls on that object come in asynchronously
+in the dedicated thread. This is not good for cylc's scheduling
+algorithm because tasks are only set running in the task processing
+block which can be delayed while \lstinline=handleRequests()= blocks waiting
+for a new connection to be established, even as messages that warrant
+task processing are coming in on existing connections. The only way
+around this seems to be to do task processing on \lstinline=handleRequests()=
+timeouts which results in a lot of unnecessary processing when nothing
+important is happening.
+
+Addendum, we now use a timeout on \lstinline=handleRequests()= because
+contact tasks can trigger purely on the wall clock, so we delaying task
+processing when no messages are coming in may prevent these contact
+tasks from triggering.   So\dots we may want to revist Multithreading\dots
+
+

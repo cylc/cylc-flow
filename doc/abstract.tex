@@ -17,16 +17,17 @@
     outputs (and a few other parameters) for each task; now one specifies
     the suite dependency graph up front.} its novel scheduling algorithm
     allows an evolving pool of
-    task proxy objects to resolve dependencies amongst themselves so
-    that correct scheduling emerges naturally at run time.  Cylc does
-    not group tasks artificially by forecast cycle,\footnote{For our
+    task proxy objects to resolve dependencies amongst themselves, 
+    within and between forecast cycles\footnote{For our
     purposes a {\em forecast cycle} comprises all tasks with a common
     {\em cycle time}, i.e.\ the analysis time or nominal start time of a
     forecast model, or that of the forecast model(s) associated with the
-    other tasks.} and its task proxies are individually self-spawning
-    (i.e.\ there is no ``global suite forecast cycle'') so that tasks
-    from multiple forecast cycles can run at once to the full extent
-    allowed by the real intercycle dependencies. This matters in
+    other tasks.} so that correct scheduling emerges naturally at run
+    time.  Cylc does not group tasks artificially by forecast cycle, and
+    its task proxies are individually self-spawning (i.e.\ there is no
+    ``global suite forecast cycle'') so that tasks from multiple
+    cycles can run at once to the full extent allowed by the
+    real dependencies in the suite. This matters in
     particular whenever the external driving data\footnote{Forecast
     systems are typically driven by observational data and/or timely
     model fields from an external forecasting system.} for upcoming
@@ -45,13 +46,13 @@
     quickly as possible). Cylc's handling of forecast model restart
     dependencies, and ability to recursively remove entire sub-trees of
     tasks, allows continued operation, with very little operator
-    intervention, over major failures that require skipping cycles in
+    intervention, over major failures that require omitted cycles in
     the driving models. Cylc can control tasks distributed across a
     heterogenous network. Cylc has comprehensive graphical and command
-    line interfaces, and many advanced userspace features: job
-    databases, simulation mode, suite validation, dependency graph
-    plotting, centralised alert hooks for failures and timeouts,
-    cryptographically secure suites, \ldots
+    line interfaces, and many advanced userspace features including job
+    databases, a fast simulation mode, suite validation, dependency
+    graph plotting, centralised alert hooks for failures and timeouts,
+    and cryptographic suite security.
 
     %\footnote{Cylc also
     %enables new modes of real time operation, for example a catchment
