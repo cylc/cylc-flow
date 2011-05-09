@@ -2246,6 +2246,22 @@ external scripts, execute cylc utilities, and so on.
 \section{Running, Monitoring, and Controlling Suites}
 \label{RunningCylcSuites}
 
+\subsection{Stopping A Suite}
+
+\begin{myitemize}
+    \item {\bf stop} - stop when all currently running tasks, if any,
+        have finished: implemented by not running any more tasks
+    \item {\bf stop at STOPCYCLE} - when each task gets to STOPCYCLE its next
+        instance enters the `stopped' state. If you shut down the suite before STOPCYCLE,
+        you can choose to keep STOPCYCLE (or enter a different one) on restart. By default,
+        on restart, STOPCYCLE is cancelled and stopped tasks are released.
+    \item {\bf stop NOW} - shut the suite down immediately - beware ophaned tasks.
+    \item {\bf stop at CLOCKTIME} - TO DO - when CLOCKTIME is reached, stop as soon as 
+        all running tasks, if any, have finished.
+    \item {\bf stop after TASK finished} - TO DO - once TASK is
+        finished, shut down as soon as any running tasks have finished. 
+\end{myitemize}
+
 \subsection{Cold Starts}
 
 Once a suite is running, the prerequisites of any tasks with intercycle
