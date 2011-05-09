@@ -266,7 +266,7 @@ class remote_switch( Pyro.core.ObjBase ):
     
     def purge( self, task_id, stop ):
         if self._suite_is_blocked():
-            return False, reasons
+            return False, "Suite is blocked"
 
         if not self._task_type_exists( task_id ):
             return False, "No such task type: " + self._name_from_id( task_id )
@@ -278,7 +278,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def die( self, task_id ):
         if self._suite_is_blocked():
-            return False, reasons
+            return False, "Suite is blocked"
 
         if not self._task_type_exists( task_id ):
             return False, "No such task type: " + self._name_from_id( task_id )
@@ -290,7 +290,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def die_cycle( self, cycle ):
         if self._suite_is_blocked():
-            return False, reasons
+            return False, "Suite is blocked"
 
         self._warning( "REMOTE: kill cycle: " + cycle )
         self.pool.kill_cycle( cycle )
@@ -299,7 +299,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def spawn_and_die( self, task_id ):
         if self._suite_is_blocked():
-            return False, reasons
+            return False, "Suite is blocked"
 
         if not self._task_type_exists( task_id ):
             return False, "No such task type: " + self._name_from_id( task_id )
@@ -311,7 +311,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def spawn_and_die_cycle( self, cycle ):
         if self._suite_is_blocked():
-            return False, reasons
+            return False, "Suite is blocked"
         self._warning( "REMOTE: spawn and die cycle: " + cycle )
         self.pool.spawn_and_die_cycle( cycle )
         self.process_tasks = True
@@ -319,7 +319,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def set_verbosity( self, level ):
         if self._suite_is_blocked():
-            return False, reasons
+            return False, "Suite is blocked"
 
         # change the verbosity of all the logs:
         #   debug, info, warning, error, critical
@@ -389,5 +389,49 @@ class remote_switch( Pyro.core.ObjBase ):
         else:
             return None
 
+    def stop_task( self, task_id ):
+        if self._suite_is_blocked():
+            return result( False, "Suite is blocked" )
+
+        if not self._task_type_exists( task_id ):
+            return result(  False, "No such task type: " + self._name_from_id( task_id ) )
+
+        self._warning( "REMOTE: stop task: " + task_id )
+        found = False
+        was_waiting = False
+        for itask in self.tasks:
+            if itask.id == task_id:
+                found = True
+                print itask.state.state['status']
+                if itask.state.is_waiting():
+                    was_waiting = True
+                    itask.state.set_status( 'stopped' )
+                break
+        if found:
+            if was_waiting:
+                return result( True, "OK" )
+            else:
+                return result( False, "Task not in the 'waiting' state" )
+        else:
+            return result( False, "Task not found" )
+
+    def unstop_task( self, task_id ):
+        if self._suite_is_blocked():
+            return result( False, "Suite is blocked" )
+
+        if not self._task_type_exists( task_id ):
+            return result( False, "No such task type: " + self._name_from_id( task_id ) )
+
+        self._warning( "REMOTE: unstop task: " + task_id )
+        found = False
+        for itask in self.tasks:
+            if itask.id == task_id:
+                itask.state.set_status( 'waiting' )
+                found = True
+                break
+        if found:
+            return result( True, "OK" )
+        else:
+            return result( False, "Task not found" )
 
 
