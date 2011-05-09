@@ -23,7 +23,7 @@ import task_state
 import logging
 import Pyro.core
 import subprocess
-from copy import deepcopy
+#from copy import deepcopy
 from dynamic_instantiation import get_object
 from collections import deque
 
@@ -61,7 +61,7 @@ def displaytd( td ):
 
 class task( Pyro.core.ObjBase ):
     
-    # TO DO: THE following two lines are not needed?
+    # TO DO: are the following two lines still needed?
     clock = None
     intercycle = False
 
@@ -152,6 +152,10 @@ class task( Pyro.core.ObjBase ):
         self.finished_time = None
         self.etc = None
         self.to_go = None
+
+        # A final stop time can be set by 'cylc insert' to create
+        # a temporary task.
+        self.stop_c_time = None
 
     def log( self, priority, message ):
         logger = logging.getLogger( "main" ) 

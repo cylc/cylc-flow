@@ -187,6 +187,7 @@ class xupdater(threading.Thread):
         self.graphw.add_node( 'running' )
         self.graphw.add_node( 'finished' )
         self.graphw.add_node( 'failed' )
+        self.graphw.add_node( 'stopped' )
         self.graphw.add_node( 'base' )
 
         waiting = self.graphw.get_node( 'waiting' )
@@ -194,9 +195,10 @@ class xupdater(threading.Thread):
         running = self.graphw.get_node( 'running' )
         finished = self.graphw.get_node( 'finished' )
         failed = self.graphw.get_node( 'failed' )
+        stopped = self.graphw.get_node( 'stopped' )
         base = self.graphw.get_node( 'base' )
 
-        for node in [ waiting, submitted, running, finished, failed, base ]:
+        for node in [ waiting, submitted, running, finished, failed, stopped, base ]:
             node.attr['style'] = 'filled'
             node.attr['shape'] = 'ellipse'
             node.attr['URL'] = 'KEY'
@@ -213,12 +215,15 @@ class xupdater(threading.Thread):
         failed.attr['color'] = 'firebrick3'
         base.attr['fillcolor'] = 'cornsilk'
         base.attr['color'] = 'black'
+        stopped.attr['fillcolor'] = 'yellow'
+        stopped.attr['color'] = 'black'
 
         self.graphw.add_edge( base, waiting, autoURL=False, style='invis')
         self.graphw.add_edge( waiting, submitted, autoURL=False, style='invis')
         self.graphw.add_edge( submitted, running, autoURL=False, style='invis')
         self.graphw.add_edge( running, finished, autoURL=False, style='invis')
         self.graphw.add_edge( finished, failed, autoURL=False, style='invis')
+        self.graphw.add_edge( failed, stopped, autoURL=False, style='invis')
 
     def set_live_node_attr( self, node, id, shape=None ):
         # override base graph URL to distinguish live tasks
@@ -238,6 +243,9 @@ class xupdater(threading.Thread):
         elif self.state_summary[id]['state'] == 'failed':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'red'
+        elif self.state_summary[id]['state'] == 'stopped':
+            node.attr['style'] = 'filled'
+            node.attr['fillcolor'] = 'yellow'
 
         if shape:
             node.attr['shape'] = shape
@@ -322,7 +330,7 @@ class xupdater(threading.Thread):
                     self.graph_warned[id] = True
 
                 state = self.state_summary[id]['state']
-                if state == 'submitted' or state == 'running' or  state == 'failed':
+                if state == 'submitted' or state == 'running' or  state == 'failed' or state == 'stopped':
                     if state not in extra_node_ids:
                         extra_node_ids[state] = [id] 
                     else:
@@ -375,7 +383,7 @@ class xupdater(threading.Thread):
                 if id in self.state_summary:
                     # (else is part of the base graph)
                     state = self.state_summary[id]['state']
-                    if state == 'submitted' or state == 'running' or  state == 'failed':
+                    if state == 'submitted' or state == 'running' or  state == 'failed' or state == 'stopped':
                         if state not in extra_node_ids:
                             extra_node_ids[state] = [id] 
                         else:

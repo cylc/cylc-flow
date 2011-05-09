@@ -424,12 +424,12 @@ class scheduler(object):
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     print "MAIN LOOP TIME TAKEN:", seconds, "seconds"
 
-            if self.all_tasks_finished():
-                self.log.info( "ALL TASKS FINISHED" )
+            if self.all_tasks_finished_or_stopped():
+                self.log.warning( "ALL TASKS FINISHED OR STOPPED" )
                 break
 
             if self.remote.halt and self.no_tasks_running():
-                self.log.info( "ALL RUNNING TASKS FINISHED" )
+                self.log.warning( "ALL RUNNING TASKS FINISHED" )
                 break
 
             if self.remote.halt_now:
@@ -576,14 +576,16 @@ class scheduler(object):
                 return False
         return True
 
-    def all_tasks_finished( self ):
-        # return True if all tasks have finished AND spawned
+    def all_tasks_finished_or_stopped( self ):
+        # return True if every task has either finished-and-spawned OR stopped.
         #--
+        res = True
         for itask in self.tasks:
             if not itask.state.is_finished() or not itask.state.has_spawned():
-                return False
-        return True
-
+                if not itask.state.is_stopped():
+                    res = False
+                    break
+        return res
 
     def negotiate( self ):
         # run time dependency negotiation: tasks attempt to get their
@@ -648,21 +650,16 @@ class scheduler(object):
                 new_task = itask.spawn( 'waiting' )
                 stop_me = False
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
-                    # we've reached the suite stop time: delete the new task 
+                    # we've reached the suite stop time
                     new_task.log( 'WARNING', "STOPPING at configured suite stop time " + self.stop_time )
-                    stop_me = True
+                    new_task.state.set_status('stopped')
                 if itask.stop_c_time and int( new_task.c_time ) > int( itask.stop_c_time ):
-                    # this task has a stop time configured, and we've reached it: delete the new task 
+                    # this task has a stop time configured, and we've reached it
                     new_task.log( 'WARNING', "STOPPING at configured task stop time " + itask.stop_c_time )
-                    stop_me = True
-                if stop_me:
-                    new_task.prepare_for_death()
-                    del new_task
-                else:
-                    # perpetuate the task stop time, if there is one
-                    new_task.stop_c_time = itask.stop_c_time
-                    # no stop time, or we haven't reached it yet.
-                    self.insert( new_task )
+                    new_task.state.set_status('stopped')
+                # perpetuate the task stop time, if there is one
+                new_task.stop_c_time = itask.stop_c_time
+                self.insert( new_task )
 
     def force_spawn( self, itask ):
         if itask.state.has_spawned():
@@ -673,13 +670,16 @@ class scheduler(object):
             # dynamic task object creation by task and module name
             new_task = itask.spawn( 'waiting' )
             if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
-                # we've reached the stop time: delete the new task 
-                new_task.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
-                new_task.prepare_for_death()
-                del new_task
-            else:
-                # no stop time, or we haven't reached it yet.
-                self.insert( new_task )
+                # we've reached the suite stop time
+                new_task.log( 'WARNING', "STOPPING at configured suite stop time " + self.stop_time )
+                new_task.state.set_status('stopped')
+            if itask.stop_c_time and int( new_task.c_time ) > int( itask.stop_c_time ):
+                # this task has a stop time configured, and we've reached it
+                new_task.log( 'WARNING', "STOPPING at configured task stop time " + itask.stop_c_time )
+                new_task.state.set_status('stopped')
+            # perpetuate the task stop time, if there is one
+            new_task.stop_c_time = itask.stop_c_time
+            self.insert( new_task )
             return new_task
 
     def dump_state( self, new_file = False ):
@@ -989,7 +989,7 @@ class scheduler(object):
             self.trash( itask, 'general' )
 
     def reset_task_state( self, task_id, state ):
-        if state not in [ 'ready', 'waiting', 'finished', 'failed' ]:
+        if state not in [ 'ready', 'waiting', 'finished', 'failed', 'stopped' ]:
             raise TaskStateError, 'Illegal reset state: ' + state
         # find the task to reset
         found = False
@@ -1025,6 +1025,8 @@ class scheduler(object):
             itask.state.set_status( 'failed' )
             itask.prerequisites.set_all_satisfied()
             itask.outputs.set_all_incomplete()
+        elif state == 'stopped':
+            itask.state.set_status( 'stopped' )
 
         if state != 'failed':
             try:
@@ -1070,7 +1072,6 @@ class scheduler(object):
         inserted = []
         to_insert = []
         for task_id in ids:
-            rject = False
             [ name, c_time ] = task_id.split( '%' )
             # Instantiate the task proxy object
             gotit = False
@@ -1091,20 +1092,24 @@ class scheduler(object):
                 # The task cycle time can be altered during task initialization
                 # so we have to create the task before checking if the task
                 # already exists in the system or the stop time has been reached.
+                rject = False
                 for task in self.tasks:
                     if itask.id == task.id:
                         # task already in the suite
                         rject = True
                         break
-                if not rject and self.stop_time:
-                    if int( itask.c_time ) > int( self.stop_time ):
-                        itask.log( 'WARNING', " STOPPING at " + self.stop_time )
-                        rject = True
                 if rject:
                     rejected.append( itask.id )
                     itask.prepare_for_death()
                     del itask
-                else:
+                else: 
+                    if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+                        itask.log( 'WARNING', " STOPPING at configured suite stop time " + self.stop_time )
+                        itask.state.set_status('stopped')
+                    if itask.stop_c_time and int( itask.c_time ) > int( itask.stop_c_time ):
+                        # this task has a stop time configured, and we've reached it
+                        itask.log( 'WARNING', "STOPPING at configured task stop time " + itask.stop_c_time )
+                        itask.state.set_status('stopped')
                     inserted.append( itask.id )
                     to_insert.append(itask)
 
@@ -1249,13 +1254,12 @@ class scheduler(object):
                 new_task = itask.spawn( 'waiting' )
  
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
-                    # we've reached the stop time: delete the new task 
-                    new_task.log( 'WARNING', 'STOPPING at configured stop time' )
-                    new_task.prepare_for_death()
-                    del new_task
-                else:
-                    # no stop time, or we haven't reached it yet.
-                    self.insert( new_task )
+                    # we've reached the stop time
+                    new_task.log( 'WARNING', 'STOPPING at configured suite stop time' )
+                    new_task.state.set_status('stopped')
+                # perpetuate the task stop time, if there is one
+                new_task.stop_c_time = itask.stop_c_time
+                self.insert( new_task )
             else:
                 # already spawned: the successor already exists
                 pass

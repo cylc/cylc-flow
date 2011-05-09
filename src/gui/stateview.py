@@ -45,6 +45,8 @@ def get_col( state ):
         return '#0a0'
     elif state == 'failed':
         return '#f00'
+    elif state == 'stopped':
+        return '#bb0'
     else:
         return '#000'
 
@@ -97,6 +99,7 @@ class updater(threading.Thread):
         self.submitted_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-submitted-glow.xpm" )
         self.running_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-running-glow.xpm" )
         self.failed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-failed-glow.xpm" )
+        self.stopped_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-stopped-glow.xpm" )
         self.finished_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-finished.xpm" )
 
         self.empty_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-empty.xpm" )
@@ -296,14 +299,14 @@ class updater(threading.Thread):
                             iterch = None
 
                         st = re.sub('<[^>]+>', '', state ) # remove tags
-                        if st == 'submitted' or st == 'running' or st == 'failed':
+                        if st == 'submitted' or st == 'running' or st == 'failed' or st == 'stopped':
                             if iter not in expand_me:
                                 expand_me.append( iter )
                     else:
                         # row unchanged
                         iterch = self.ttreestore.iter_next( iterch )
                         st = re.sub('<[^>]+>', '', state ) # remove tags
-                        if st == 'submitted' or st == 'running' or st == 'failed':
+                        if st == 'submitted' or st == 'running' or st == 'failed' or st == 'stopped':
                             if iter not in expand_me:
                                 expand_me.append( iter )
 
@@ -320,7 +323,7 @@ class updater(threading.Thread):
                     self.ttreestore.append( piter, [ name ] + new_data[ctime][name] )
                     state = new_data[ ctime ][ name ][0]
                     st = re.sub('<[^>]+>', '', state ) # remove tags
-                    if st == 'submitted' or st == 'running' or st == 'failed':
+                    if st == 'submitted' or st == 'running' or st == 'failed' or st == 'stopped':
                         if iter not in expand_me:
                             expand_me.append( piter )
                 continue
@@ -341,7 +344,7 @@ class updater(threading.Thread):
                 state = new_data[ ctime ][ name ][0]
                 # expand whether new or old data
                 st = re.sub('<[^>]+>', '', state ) # remove tags
-                if st == 'submitted' or st == 'running' or st == 'failed':
+                if st == 'submitted' or st == 'running' or st == 'failed' or st == 'stopped':
                     if iter not in expand_me:
                         expand_me.append( p_iter )
 
@@ -381,6 +384,8 @@ class updater(threading.Thread):
                         state_list.append( self.finished_led )
                     elif state == 'failed':
                         state_list.append( self.failed_led )
+                    elif state == 'stopped':
+                        state_list.append( self.stopped_led )
                 else:
                     state_list.append( self.empty_led )
 

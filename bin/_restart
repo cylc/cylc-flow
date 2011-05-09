@@ -15,7 +15,10 @@ class restart( scheduler ):
 
 Restart a cylc suite from a previous state. Tasks in the 'submitted',
 'running', or 'failed' states will immediately be resubmitted at
-startup unless you specity the '--no-reset' option.
+startup unless you specity the '--no-reset' option. Any stopped
+tasks (this happens when the suite was in the process of, or had
+finished, shutting down at a prescribed stop time) will be unstopped,
+and the stop time unset, unless you specify the '--no-unstop' option.
 
 By default the suite will restart from the suite state dump file, which is
 updated whenever a task changes state and thus records the most recent
@@ -53,7 +56,10 @@ Arguments:
         self.parser.add_option( "--no-reset", 
             help="Do not automatically reset failed tasks at startup "
             "(this option is the default in practice mode).",
-            action="store_true", dest="no_reset" )
+            action="store_true", default=False, dest="no_reset" )
+        self.parser.add_option( "--no-unstop", 
+            help="Do not unset a suite stop time and unstop stopped tasks.",
+            action="store_true", default=False, dest="no_unstop" )
         self.start_time = None  # used in scheduler.py:initialize_graph()
         scheduler.__init__( self )
 
@@ -145,14 +151,17 @@ Arguments:
         [ junk, oldstoptime ] = line2.split(' : ')
 
         if oldstoptime != '(none)':
+            # the suite had a prescribed stop time when it shut down
             if self.stop_time:
+                # a stop time was given on the restart commandline
                 if self.stop_time != oldstoptime:
-                    print >> sys.stderr, "ERROR: you can't set a new stop time (" + self.stop_time + ") for a suite that already has a configured stop time (" + oldstoptime + ")."
-                    print >> sys.stderr, "To cancel the configured stop time, edit the state dump file (but note tasks that stopped prior to shutdown will need re-inserting)."  
-                    sys.exit(1)
-            else:
-                # reinstate the former stop time
-                self.stop_time = oldstoptime
+                    # OK, override the old stop time with the new
+                    if self.options.no_unstop:
+                        print >> sys.stderr, "ERROR: new stop time incompatible with --no-unstop."
+                        sys.exit(1)
+            elif self.options.no_unstop:
+                    # reinstate the former stop time
+                    self.stop_time = oldstoptime
         
         # parse each line and create the task it represents
         tasknames = {}
@@ -213,14 +222,25 @@ Arguments:
                     itask.state.set_status( 'waiting' )
                     itask.prerequisites.set_all_satisfied()
 
+            elif itask.state.is_stopped() and not self.options.no_unstop:
+                # Release stopped tasks unless the suite operator says not to. 
+                #if self.no_reset:
+                #    itask.log( 'WARNING', "starting in FAILED state: manual reset required" )
+                #    itask.prerequisites.set_all_satisfied()
+                #else:
+                itask.log( 'NORMAL', "releasing from STOPPED state" )
+                itask.state.set_status( 'waiting' )
+                itask.prerequisites.set_all_unsatisfied()
+
             # check stop time in case the user has set a very quick stop
             if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
                 # we've reached the stop time already: delete the new task 
                 itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
-                itask.prepare_for_death()
-                del itask
-            else:
-                self.insert( itask )
+                #itask.prepare_for_death()
+                #del itask
+                itask.state.set_status('stopped')
+            #else:
+            self.insert( itask )
 
 if __name__ == '__main__':
     try:
