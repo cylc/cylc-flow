@@ -411,7 +411,14 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 
 [special tasks]
 #> This section is used to identify any tasks with special behaviour.
-
+#> By default tasks,
+#> \begin{myitemize}
+#> \item start running as soon as their prerequisites are satisfied
+#> \item spawn a successor at the next valid cycle time as soon as they
+#> enter the running state\footnote{Spawning any earlier than this would
+#> bring no advantage in terms of functional parallelism, at the cost of
+#> unrestrained task breeding.}
+#> \end{myitemize}
     clock-triggered = force_list( default=list())
 #> Clock-triggered tasks wait on a wall clock time specified
 #> as an offset {\em in hours} relative to their own cycle time, in
@@ -515,19 +522,20 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #> can also appear in the graph as non-family tasks, although you're not
 #> likely to need either of these features.
     __many__ = force_list( default=None )
-#> Repeat this item to list each task family by name.
+#> Repeat MANY (task family name) to list each task family by name.
 #>\begin{myitemize}
 #>\item {\em section:} [task families]
 #>\item {\em type:} list of task names (the family members)
+#>\item {\em example:} ObsProc = ObsSurface, ObsSonde, ObsAircraft, ObsSat
 #>\item {\em default:} None
 #>\end{myitemize}
 
 [dependencies]
 #> This is where to define the suite dependency graph.
     [[__many__]]
-#> This subsection heading should list the hours for which the accompanying
-#> piece of the dependency graph is valid. Repeat the hours list, and
-#> graph, as required if there are differing dependencies at different hours.
+#> Repeat MANY (list of hours for which the following chunk
+#> of dependency graph is valid) as required for differing 
+#> dependencies at different hours.
 #>\begin{myitemize}
 #>\item {\em section:} [dependencies]
 #>\item {\em type:} list of integer hour
@@ -563,7 +571,8 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #> is preserved. See Section~\ref{TaskExecutionEnvironment}, Task
 #> Execution Environment, for more information.
 __many__ = string
-#> Repeat for as many environment variables as you need.
+#> Repeat MANY (environment variable definition) for any environment
+#> variables you need.
 #>\begin{myitemize}
 #>\item {\em section:} [environment]
 #>\item {\em type:} string
@@ -589,7 +598,8 @@ __many__ = string
 #> submission method should also define the directive comment prefix
 #> (`\lstinline=# @=' for loadleveler) and final directive ('\lstinline=# @ queue=').
 __many__ = string
-#> Repeat for as many directives as you need, e.g.:
+#> Repeat MANY (batch queue scheduler directive) for any directives
+#> you need, e.g.:
 #> \begin{lstlisting}
 #>    class = parallel
 #> \end{lstlisting}
@@ -602,7 +612,7 @@ __many__ = string
 
 [tasks]
     [[__many__]]
-#> Repeat this section for every task in the suite.
+#> Repeat MANY (task name) for every task in the suite.
 
     description = string( default="No description supplied" )
 #> Describe what this task does. The description can be retrieved at run time
@@ -725,7 +735,7 @@ __many__ = string
     task timeout hook = string( default=None )
 #>RESUME
 
-#> \paragraph{    task EVENT hooks \newline}
+#> \paragraph{    task EVENT hooks}
 #>
 #> Task event hooks facilitate centralized alerting for critical events
 #> in operational suites. You can name script(s) to attach to various 
@@ -755,7 +765,7 @@ __many__ = string
     task execution timeout minutes = float( default=None )
 #>RESUME
 
-#> \paragraph{    task ACTION timeout minutes \newline}
+#> \paragraph{    task ACTION timeout minutes}
 #> 
 #> You can set timeout intervals for task submission or execution with
 #>the following items:
@@ -832,7 +842,8 @@ __many__ = string
 #> Execution Environment'', Section~\ref{TaskExecutionEnvironment} for
 #> more information.
         __many__ = string
-#> Repeat for as many variables as you need.
+#> Repeat MANY (environment variable definition) for any 
+#> task-specific environment variables you need.
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]] $\rightarrow$ [[[environment]]]
 #>\item {\em type:} string
@@ -858,15 +869,14 @@ __many__ = string
 #> submission method should also define the directive comment prefix
 #> (`\lstinline=# @=' for loadleveler) and final directive (`\lstinline=# @ queue=').
         __many__ = string
-#> Repeat for as many directives as you need, e.g.:
-#> \begin{lstlisting}
-#>    class = parallel
-#> \end{lstlisting}
+#> Repeat MANY (batch queue scheduler directive) for any directives 
+#> you need.
 #>\begin{myitemize}
 #>\item {\em section:} [tasks] $\rightarrow$ [[TASK]] $\rightarrow$ [[[directives]]]
 #>\item {\em type:} string
 #>\item {\em legal values:} any legal directive for your batch scheduler
 #>\item {\em default:} None
+#>\item {\em example:} \lstinline@class = parallel@
 #>\end{myitemize}
 
         [[[outputs]]]
@@ -874,18 +884,9 @@ __many__ = string
 #> that trigger off specific labeled outputs of this task, rather 
 #> than just triggering off it finishing}.
         __many__ = string
-#> List explicit task output messages, e.g.:
-#> \begin{lstlisting}
-#> foo = "sea state products ready for $(CYCLE_TIME)"
-#> r6  = "nwp restart files ready for $(CYCLE_TIME+6)"
-#> r12 = "nwp restart files ready for $(CYCLE_TIME+12)"
-#> \end{lstlisting}
-#> where the item name must match the output label associated with this task
-#> in the suite dependency graph, e.g.:
-#> \begin{lstlisting}
-#> TaskA:foo => TaskB.
-#> \end{lstlisting}
-#> Finally, any task with specific outputs like this must do its own
+#> Repeast MANY (output message definition) for any explicit output
+#> messages emitted by this task.
+#> Any task with explicit outputs must do its own
 #> messaging instead of executing within \lstinline=cylc wrap=;
 #> specifically, in this context, it must send its output messages when
 #> the associated outputs have been achieved, by 
@@ -896,6 +897,17 @@ __many__ = string
 #>\item {\em legal values:} a message containing
 #>           \lstinline=$(CYCLE_TIME)=, possibly with an offset as shown above.
 #>\item {\em default:} None
+#>\item{ \em examples:}
+#> \begin{lstlisting}
+#> foo = "sea state products ready for $(CYCLE_TIME)"
+#> r6  = "nwp restart files ready for $(CYCLE_TIME+6)"
+#> r12 = "nwp restart files ready for $(CYCLE_TIME+12)"
+#> \end{lstlisting}
+#> where the item name must match the output label associated with this task
+#> in the suite dependency graph, e.g.:
+#> \begin{lstlisting}
+#> TaskA:foo => TaskB.
+#> \end{lstlisting}
 #>\end{myitemize}
 
 [dummy mode]
@@ -1016,7 +1028,7 @@ default edge attributes = force_list( default=list('color=black'))
 #> Define named groups of graph nodes (tasks) that can have
 #> attributes assigned to them in the [[node attributes]] section.
     __many__ = force_list( default=list())
-#> Repeat item for each node group.  The same task can appear in
+#> Repeat MANY for each node group.  The same task can appear in
 #> multiple groups.
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization] $\rightarrow$ [[node groups]]
@@ -1028,7 +1040,7 @@ default edge attributes = force_list( default=list('color=black'))
 #> Here you can assign graph node attributes to specific tasks or named
 #> groups of tasks defined in the [[node groups]] section.
     __many__ = force_list( default=list())
-#> Repeat item for any specific tasks or named groups that you want to 
+#> Repeat MANY for any specific tasks or named groups that you want to 
 #> assign attributes to.
 #>\begin{myitemize}
 #>\item {\em section:} [visualization] $\rightarrow$ [[node attributes]]
@@ -1041,7 +1053,7 @@ default edge attributes = force_list( default=list('color=black'))
 #> Define named groups of tasks that can be inserted into a suite en mass.
 #> May be useful for groups of related cold start tasks, for instance.
  __many__ = force_list()
-#> Repeat item for as many task insertion groups as you need.
+#> Repeat MANY for any task insertion groups you need.
 #>\begin{myitemize}
 #>\item {\em section:} [task insertion groups]
 #>\item {\em type:} list of task names
