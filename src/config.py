@@ -870,12 +870,13 @@ class config( CylcConfigObj ):
                         right = e.get_right(ctime, started, raw, startup_exclude_list, [])
                         left  = e.get_left( ctime, started, raw, startup_exclude_list, [])
                         if left == None or right == None:
-                            # TO DO: why this test?
                             continue
-
+                        lname, lctime = re.split( '%', left )
+                        rname, rctime = re.split( '%', right )
+                        if int( cycle_time.diff_hours( start_ctime, lctime )) > 0:
+                            # check that left is not earlier than start time
+                            continue
                         if self['visualization']['show family members']:
-                            lname, lctime = re.split( '%', left )
-                            rname, rctime = re.split( '%', right )
                             if lname in self.members and rname in self.members:
                                 # both families
                                 for lmem in self.members[lname]:
