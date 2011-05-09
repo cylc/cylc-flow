@@ -83,4 +83,19 @@ contact tasks can trigger purely on the wall clock, so we delaying task
 processing when no messages are coming in may prevent these contact
 tasks from triggering.   So\dots we may want to revist Multithreading\dots
 
+%\subsubsection{Handling File Dependencies: Possible Alternative Method}
+%
+%In principle extra information could be attached to cylc output
+%messages so that actual file locations could be passed dynamically from
+%to whichever tasks use the output. Cylc currently cannot do this (you
+%can put actual file locations in the messages, but the receiver has to
+%have the exact matching message and therefore would have to know the
+%location in advance). This is a possible future development, but is 
+%probably not worth the effort because configuring the external tasks 
+%to report this information takes more effort than putting the same
+%information into the cylc task definition files. The cylc setup
+%would remain entirely context-independent, which is nice, and would
+%automatically pass on changes to the external input / output config of
+%the system.
+
 
