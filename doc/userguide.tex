@@ -623,15 +623,23 @@ suite illustrated in the first chapter, which should have been
 registered in the central suite database during cylc installation  as
 ``examples:userguide''. For more detailed information on available
 commands and options refer to \lstinline=cylc help= or the {\em Command
-Reference} (Section~\ref{CommandReference}), gcylc help menus, and
+Reference} (Appendix~\ref{CommandReference}), gcylc help menus, and
 upcoming chapters of this document. 
 
-{\bf The cylc commandline is used in this section. To accomplish the same things 
-with the gcylc graphical interface, from copying, searching, editing,
-and validating suite definitions through to starting, interrogating, and
-intervening in the operation of running suites: {\em right-click on a
-suite in the local suite database window; and use the top menu items and
-right-click task menus in the suite control interface}}.
+{\bf For the most part, only the cylc commandline is used in this
+chapter, but cylc also has a graphical interface, gcylc, from which you
+can do everything from copying, searching, editing, and validating suite
+definitions; through to starting, interrogating, and intervening in the
+operation of running suites:}
+
+\begin{lstlisting}
+prompt> gcylc &                  # generic suite database viewer.
+prompt> gcylc [-g] group:name &  # to control a named suite.
+\end{lstlisting}
+
+The gcylc modus operandi, in addition to the usual top menu bar, is:
+{\em right-click on suites in the database viewer, and on tasks in the
+suite control interface, to get a popup menu of available options}.
 
 \subsection{Configure Your Environment For Cylc}
 
@@ -645,13 +653,14 @@ prompt> export CYLC_DIR=/path/to/cylc/installation
 prompt> . $CYLC_DIR/environment.sh
 \end{lstlisting}
 
-You should also indicate the graphical and terminal editors you want to
+You should also specify the graphical and terminal editors you want to
 use to edit suites, by setting the following environment variables in
 your \lstinline=.profile=:
 \begin{lstlisting}
 export GEDITOR='gvim -f'  # GUI editor launched by gcylc
 export EDITOR=vim         # terminal editor launched by 'cylc edit'
 \end{lstlisting}
+(see \lstinline=cylc edit help= for other tested editors).
 
 \subsection{Start Your Lockserver Daemon}
 
@@ -702,12 +711,7 @@ and register it as,
 examples:userguide
 \end{lstlisting}
 
-\subsubsection{via gcylc}
-
-This is the only part of the Quick Start Guide that we'll explicitly
-mention how to operate on a suite using the gcylc GUI, since the
-procedure - choose a right-click menu option - is basically the same in
-every case. 
+\subsubsection{using gcylc}
 
 Start gcylc, switch to the central database view, right-click on
 \lstinline=admin > examples > userguide= 
@@ -717,7 +721,7 @@ destination path, as above. Check that the import was successful
 by inspecting the command output window, and switching the view back to
 your local database, which should now contain your copy of the suite.
 
-\subsubsection{via commandline}
+\subsubsection{using the commandline}
 
 Check that the example suite is registered in the central database,
 
@@ -733,35 +737,21 @@ Now import the suite,
 prompt> cylc db import admin:examples:userguide $HOME/cylc/examples/userguide
 \end{lstlisting}
 
-To register it under a different local name, ``foo:bar'', you would use:
-\begin{lstlisting}
-prompt> cylc db import admin:examples:userguide foo:bar $HOME/cylc/examples/userguide
-\end{lstlisting}
-
 Check that the import was successful,
 \begin{lstlisting}
 prompt> cylc db print | grep userguide # or:
 prompt> cylc db print --group=examples --name=userguide
-examples:userguide  "userguide example suite" \
-    /home/oliverh/cylc/examples/userguide
+examples:userguide "userguide example suite" /home/oliverh/cylc/examples/userguide
 \end{lstlisting}
 
-Now that you've registered your own copy of the suite, you can edit,
-search, validate, plot, run it, etc., using gcylc or the commandline.
-In gcylc, just right-click on the suite, in your local database, and
-choose the option you want. On the commandline type
-\lstinline=cylc help= and drill down to the command you want.
+You can now edit, search, validate, plot, run, etc., your copy of the
+example suite, using the commandline or gcylc (right-click on the suite
+as described above). On the commandline type \lstinline=cylc help= and
+drill down to the command you want.
 
 \subsection{Searching, Editing, and Plotting the Suite}
 
-In gcylc, right-click on the suite and choose `Edit'; this moves to
-the suite definition directory (so that you can easily open other suite
-files in the same edit session) and opens the \lstinline=suite.rc=
-file in your chosen editor. For \lstinline=suite.rc= files that contain
-include files (even nested ones) you can optionally edit the file
-inlined - it will be split back into include-files when you save and
-exit the editor. 
-
+In gcylc, right-click on the suite and choose `Edit'; 
 Right-click again and choose 'Graph' to plot the suite dependency graph
 defined in the suite.rc file. You'll need to enter an initial and final
 cycle time (YYYYMMDDHH) for the plot range - enter the same cycle time
@@ -772,15 +762,24 @@ To edit a suite from the commandline,
 \begin{lstlisting}
 prompt> cylc edit examples:userguide
 \end{lstlisting}
-and to graph it,
+This moves to the suite definition directory (so that you can easily
+open other suite files in the same edit session) and opens the
+\lstinline=suite.rc= file in your chosen editor. You can of course
+do this entirely manually, but using the edit command has some advantages. 
+For example, you don't have to remember the suite definition directory
+location, and for \lstinline=suite.rc= files that contain include files
+(even nested ones) you can optionally edit the file inlined - it will be
+split back into include-files {\em when you save and exit the editor}. 
+
+To graph the suite,
 \begin{lstlisting}
 prompt> cylc graph examples:userguide 2011042506 2011042606 &
 \end{lstlisting}
 
-Here's how to use the suite search tool, which reports matches in the
-\lstinline=suite.rc= by line number, suite section, and file (even if
-nested include-files are used) and by file and line number for matches
-in the suite bin directory,
+And here's how to use the suite search tool, which reports matches in
+the \lstinline=suite.rc= by line number, suite section, and file (even
+if nested include-files are used) and by file and line number for
+matches in the suite bin directory,
 
 \begin{lstlisting}
 prompt> cylc grep OUTPUT_DIR examples:userguide
