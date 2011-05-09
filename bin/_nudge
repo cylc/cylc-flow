@@ -2,6 +2,7 @@
 
 import os, sys
 import cylc_pyro_client
+from port_scan import SuiteIdentificationError
 import Pyro.errors
 from CylcOptionParsers import NoPromptOptionParser
 
