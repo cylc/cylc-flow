@@ -266,60 +266,60 @@ class remote_switch( Pyro.core.ObjBase ):
     
     def purge( self, task_id, stop ):
         if self._suite_is_blocked():
-            return False, "Suite is blocked"
+            return result( False, "Suite is blocked" )
 
         if not self._task_type_exists( task_id ):
-            return False, "No such task type: " + self._name_from_id( task_id )
+            return result( False, "No such task type: " + self._name_from_id( task_id ))
 
         self._warning( "REMOTE: purge " + task_id + ' to ' + stop )
         self.pool.purge( task_id, stop )
         self.process_tasks = True
-        return True, "OK"
+        return result( True, "OK" )
 
     def die( self, task_id ):
         if self._suite_is_blocked():
-            return False, "Suite is blocked"
+            return result(False, "Suite is blocked")
 
         if not self._task_type_exists( task_id ):
-            return False, "No such task type: " + self._name_from_id( task_id )
+            return result(False, "No such task type: " + self._name_from_id( task_id ))
 
         self._warning( "REMOTE: die: " + task_id )
         self.pool.kill( [ task_id ] )
         self.process_tasks = True
-        return True, "OK"
+        return result(True, "OK")
 
     def die_cycle( self, cycle ):
         if self._suite_is_blocked():
-            return False, "Suite is blocked"
+            return result(False, "Suite is blocked")
 
         self._warning( "REMOTE: kill cycle: " + cycle )
         self.pool.kill_cycle( cycle )
         self.process_tasks = True
-        return True, "OK"
+        return result(True, "OK")
 
     def spawn_and_die( self, task_id ):
         if self._suite_is_blocked():
-            return False, "Suite is blocked"
+            return result(False, "Suite is blocked")
 
         if not self._task_type_exists( task_id ):
-            return False, "No such task type: " + self._name_from_id( task_id )
+            return result(False, "No such task type: " + self._name_from_id( task_id ))
 
         self._warning( "REMOTE: spawn and die: " + task_id )
         self.pool.spawn_and_die( [ task_id ] )
         self.process_tasks = True
-        return True, "OK"
+        return result(True, "OK")
 
     def spawn_and_die_cycle( self, cycle ):
         if self._suite_is_blocked():
-            return False, "Suite is blocked"
+            return result(False, "Suite is blocked")
         self._warning( "REMOTE: spawn and die cycle: " + cycle )
         self.pool.spawn_and_die_cycle( cycle )
         self.process_tasks = True
-        return True, "OK"
+        return result(True, "OK")
 
     def set_verbosity( self, level ):
         if self._suite_is_blocked():
-            return False, "Suite is blocked"
+            return result(False, "Suite is blocked")
 
         # change the verbosity of all the logs:
         #   debug, info, warning, error, critical
@@ -337,11 +337,11 @@ class remote_switch( Pyro.core.ObjBase ):
             new_level = logging.CRITICAL
         else:
             self._warning( "Illegal logging level: " + level )
-            return False, "Illegal logging level: " + level
+            return result( False, "Illegal logging level: " + level)
 
         self.config[ 'logging level' ] = new_level
         self.log.setLevel( new_level )
-        return True, 'OK'
+        return result(True, 'OK')
 
     def should_i_die( self, task_id ):
         if self.halt:

@@ -38,6 +38,8 @@ if not parser.prompt( 'Stop task ' + target + ' in'):
 
 result = proxy.stop_task( target )
 
-print result.reason
-if not result.success:
+if result.success:
+    print result.reason
+else:
+    print 'ERROR:', result.reason
     sys.exit(1)

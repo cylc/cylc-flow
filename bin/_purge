@@ -52,8 +52,10 @@ except SuiteIdentificationError, x:
 if not parser.prompt( 'Purge from ' + target + ' to ' + stop + ' in'):
     sys.exit(0)
 
-actioned, explanation = proxy.purge( target, stop )
+result = proxy.purge( target, stop )
 
-print explanation
-if not actioned:
+if result.success:
+    print result.reason
+else:
+    print 'ERROR:', result.reason
     sys.exit(1)

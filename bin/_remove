@@ -55,18 +55,20 @@ if kill_cycle:
     if not parser.prompt( 'Kill ALL tasks in ' + target + ' in' ):
         sys.exit(0)
     if options.no_spawn:
-        actioned, explanation = proxy.die_cycle( target )
+        result = proxy.die_cycle( target )
     else:
-        actioned, explanation = proxy.spawn_and_die_cycle( target )
+        result = proxy.spawn_and_die_cycle( target )
 
 if kill_task:
     if not parser.prompt( 'Kill task ' + target + ' in'):
         sys.exit(0)
     if options.no_spawn:
-       actioned, explanation = proxy.die( target )
+       result = proxy.die( target )
     else:
-       actioned, explanation = proxy.spawn_and_die( target )
+       result = proxy.spawn_and_die( target )
 
-print explanation
-if not actioned:
+if result.success:
+    print result.reason
+else:
+    print 'ERROR:', result.reason
     sys.exit(1)

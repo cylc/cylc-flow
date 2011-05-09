@@ -34,8 +34,10 @@ except SuiteIdentificationError, x:
 if not parser.prompt( "Set logging level to " + verbosity + " in " + suite ):
     sys.exit(0)
 
-actioned, explanation = proxy.set_verbosity( verbosity )
+result = proxy.set_verbosity( verbosity )
 
-print explanation
-if not actioned:
+if result.success:
+    print result.reason
+else:
+    print 'ERROR:', result.reason
     sys.exit(1)
