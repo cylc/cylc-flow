@@ -6,7 +6,7 @@ import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 
-parser = PromptOptionParser( """cylc [control] stop|shutdown [options] SUITE [YYYYMMDDHH]
+parser = PromptOptionParser( """cylc [control] shutdown [options] SUITE [YYYYMMDDHH]
 
 1/ Do not submit any more tasks to run, and shut down as soon as all
    tasks that are currently running have finished (this is the default).
@@ -17,7 +17,7 @@ parser = PromptOptionParser( """cylc [control] stop|shutdown [options] SUITE [YY
    WARNING: the final state dump file will reflect the state of the
    suite at shutdown; any tasks that run to completion post shutdown
    will thus be resubmitted, by default, if the suite is restarted.""", 
-[ """YYYYMMDDHH           Future cycle time after which to stop.""" ] )
+[ """YYYYMMDDHH           Future cycle time after which to shutdown.""" ] )
 
 parser.add_option( "--now", 
         help="Shut down immediately; see WARNING above.",
@@ -25,10 +25,10 @@ parser.add_option( "--now",
 
 (options, args) = parser.parse_args()
 
-stop_at = False
+shutdown_at = False
 if len( args ) == 2:
-    stop_at = True
-    stop_time = args[1] 
+    shutdown_at = True
+    shutdown_time = args[1] 
 
 suite = parser.get_suite_name()
 
@@ -37,12 +37,12 @@ try:
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 
-if stop_at:
-    if not cycle_time.is_valid( stop_time ):
-        parser.error( "invalid cycle time: " + stop_time )
-    if not parser.prompt( 'Set stop time ' + stop_time + ' for'):
+if shutdown_at:
+    if not cycle_time.is_valid( shutdown_time ):
+        parser.error( "invalid cycle time: " + shutdown_time )
+    if not parser.prompt( 'Set shutdown time ' + shutdown_time + ' for'):
         sys.exit(0)
-    result = proxy.set_stop_time( stop_time )
+    result = proxy.set_stop_time( shutdown_time )
 
 elif options.shutdownnow:
     if not parser.prompt( 'Shut down NOW' ):

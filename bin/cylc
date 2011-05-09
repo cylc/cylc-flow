@@ -148,7 +148,7 @@ information_commands['nudge'    ] = ['nudge' ]
 control_commands = OrderedDict()
 control_commands['gcylc'  ] = information_commands[ 'gcylc' ]
 control_commands['run'    ] = ['run' ]
-control_commands['stop'   ] = ['stop', 'shutdown' ]
+control_commands['shutdown'] = ['shutdown' ]
 control_commands['restart'] = ['restart' ]
 control_commands['trigger'] = ['trigger' ]
 control_commands['insert' ] = ['insert' ]
@@ -288,7 +288,7 @@ comsum[ 'monitor'    ] = 'An in-terminal suite monitor (DEPRECATED, see gcylc)'
 # control
 comsum[ 'gcylc'      ] = 'The cylc Graphical User Interface'
 comsum[ 'run'        ] = 'Cold, warm, or raw start a suite at a given cycle time'
-comsum[ 'stop'       ] = 'Shut down a running suite (now or later)'
+comsum[ 'shutdown'   ] = 'Stop a running suite (now or later)'
 comsum[ 'restart'    ] = 'Restart a suite from a previous state'
 comsum[ 'trigger'    ] = 'Manually trigger a task in a running suite'
 comsum[ 'insert'     ] = 'Insert a task or group into a running suite'
