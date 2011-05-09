@@ -134,7 +134,7 @@ raw = False
 if options.rawstart:
     raw = True
 
-print start_ctime, stop
+#print start_ctime, stop
 window = MyDotWindow( suite, start_ctime, stop, raw, options.outputfile )
 try:
     window.parse_graph()

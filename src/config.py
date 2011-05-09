@@ -804,12 +804,22 @@ class config( CylcConfigObj ):
             cycles.sort()
             ctime = start_ctime
             hour = int( start_ctime[8:10] )
+            found = True
             try:
                 i = cycles.index( hour )
             except ValueError:
-                # no lone nodes at this hour?
-                pass
-            else:
+                # no lone nodes at this hour; find index of next hour
+                # that does have 'em, and adjust ctime accordingly.
+                found = False
+                for i in range(0,len(cycles)):
+                    if cycles[i] > hour:
+                        found = True
+                        diff = cycles[i] - hour
+                        ctime = cycle_time.increment( ctime, diff )
+                        if int( cycle_time.diff_hours( ctime, start_ctime )) > int(stop):
+                            found = False
+                        break
+            if found:
                 started = False
                 while True:
                     hour = cycles[i]
@@ -837,56 +847,70 @@ class config( CylcConfigObj ):
             cycles.sort()
             ctime = start_ctime
             hour = int( start_ctime[8:10] )
-            i = cycles.index( hour )
-            started = False
-            while True:
-                hour = cycles[i]
+            found = True
+            try:
+                i = cycles.index( hour )
+            except ValueError:
+                # nothing at this hour; find index of next hour that
+                # appears in the graph, and adjust ctime accordingly.
+                found = False
+                for i in range(0,len(cycles)):
+                    if cycles[i] > hour:
+                        found = True
+                        diff = cycles[i] - hour
+                        ctime = cycle_time.increment( ctime, diff )
+                        if int( cycle_time.diff_hours( ctime, start_ctime )) > int(stop):
+                            found = False
+                        break
+            if found:
+                started = False
+                while True:
+                    hour = cycles[i]
+                    for e in self.edges[hour]:
+                        right = e.get_right(ctime, started, raw, startup_exclude_list, [])
+                        left  = e.get_left( ctime, started, raw, startup_exclude_list, [])
+                        if left == None or right == None:
+                            # TO DO: why this test?
+                            continue
 
-                for e in self.edges[hour]:
-                    right = e.get_right(ctime, started, raw, startup_exclude_list, [])
-                    left  = e.get_left( ctime, started, raw, startup_exclude_list, [])
-                    if left == None or right == None:
-                        # TO DO: why this test?
-                        continue
-
-                    if self['visualization']['show family members']:
-                        lname, lctime = re.split( '%', left )
-                        rname, rctime = re.split( '%', right )
-                        if lname in self.members and rname in self.members:
-                            # both families
-                            for lmem in self.members[lname]:
-                                for rmem in self.members[rname]:
-                                    lmemid = lmem + '%' + lctime
-                                    rmemid = rmem + '%' + rctime
-                                    gr_edges.append( (lmemid, rmemid ) )
-                        elif lname in self.members:
-                            # left family
-                            for mem in self.members[lname]:
-                                memid = mem + '%' + lctime
-                                gr_edges.append( (memid, right ) )
-                        elif rname in self.members:
-                            # right family
-                            for mem in self.members[rname]:
-                                memid = mem + '%' + rctime
-                                gr_edges.append( (left, memid ) )
+                        if self['visualization']['show family members']:
+                            lname, lctime = re.split( '%', left )
+                            rname, rctime = re.split( '%', right )
+                            if lname in self.members and rname in self.members:
+                                # both families
+                                for lmem in self.members[lname]:
+                                    for rmem in self.members[rname]:
+                                        lmemid = lmem + '%' + lctime
+                                        rmemid = rmem + '%' + rctime
+                                        gr_edges.append( (lmemid, rmemid ) )
+                            elif lname in self.members:
+                                # left family
+                                for mem in self.members[lname]:
+                                    memid = mem + '%' + lctime
+                                    gr_edges.append( (memid, right ) )
+                            elif rname in self.members:
+                                # right family
+                                for mem in self.members[rname]:
+                                    memid = mem + '%' + rctime
+                                    gr_edges.append( (left, memid ) )
+                            else:
+                                # no families
+                                gr_edges.append( (left, right) )
                         else:
-                            # no families
                             gr_edges.append( (left, right) )
-                    else:
-                        gr_edges.append( (left, right) )
 
-                # next cycle
-                started = True
-                if i == len(cycles) - 1:
-                    i = 0
-                    diff = 24 - hour + cycles[0]
-                else:
-                    i += 1
-                    diff = cycles[i] - hour
-                ctime = cycle_time.increment( ctime, diff )
+                    # next cycle
+                    started = True
+                    if i == len(cycles) - 1:
+                        i = 0
+                        diff = 24 - hour + cycles[0]
+                    else:
+                        i += 1
+                        diff = cycles[i] - hour
+                    ctime = cycle_time.increment( ctime, diff )
     
-                if int( cycle_time.diff_hours( ctime, start_ctime )) > int(stop):
-                    break
+                    if int( cycle_time.diff_hours( ctime, start_ctime )) > int(stop):
+                        break
                 
         # sort and then add edges in the hope that edges added in the
         # same order each time will result in the graph layout not
