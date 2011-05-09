@@ -958,7 +958,7 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 #> (via \lstinline=cylc graph= or gcylc) and the run time resolved
 #> dependency graph generated at the start of each suite run. They do not
 #> affect the graph suite control interface.
-runtime graph cutoff hours = integer( default=24 )
+run time graph cutoff hours = integer( default=24 )
 #> Cylc generates a run time graph of resolved dependencies, from the
 #> start of every run until each task has passed this cutoff. Use 
 #> dummy mode to generate run time graphs quickly.
