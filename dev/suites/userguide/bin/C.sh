@@ -20,7 +20,7 @@ echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_NAME"
 
 if [[ $CYCLE_TIME == $FAIL_CYCLE_TIME ]]; then
     echo "ARRRRRGH!"
-    exit 1
+    #exit 1
 fi
 
 sleep $TASK_EXE_SECONDS

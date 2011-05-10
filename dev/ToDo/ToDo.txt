@@ -7,6 +7,9 @@ GENERAL
     * check that practice mode suites initialise with the same clock time
       as the original suite.
 
+* stop-at-cycle-time won't shutdown if there are any tasks stuck in
+  'waiting', even if they are all passed the stop cycle.
+
 * temporary job file location should be configurable.
 
 * update cylc xdot code from latest version in the external directory.

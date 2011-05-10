@@ -194,6 +194,7 @@ class scheduler(object):
 
         # STOP TIME?
         self.stop_time = None
+        self.stop_clock_time = None
         if self.options.stop_time:
             self.stop_time = self.options.stop_time
             if not cycle_time.is_valid( self.stop_time ):
@@ -448,6 +449,15 @@ class scheduler(object):
                     self.log.critical( "STOP ORDERED WITH TASKS STILL RUNNING" )
                 break
 
+            if self.stop_clock_time:
+                now = self.clock.get_datetime()
+                if now > self.stop_clock_time:
+                    self.log.critical( "SUITE HAS REACHED STOP TIME " + self.stop_clock_time.isoformat() )
+                    self.set_suite_hold()
+                    self.remote.halt = True
+                    # now reset self.stop_clock_time so we don't do this check again.
+                    self.stop_clock_time = None
+
             self.check_timeouts()
 
             # REMOTE METHOD HANDLING; with no timeout and single- threaded pyro,
@@ -517,9 +527,13 @@ class scheduler(object):
     def get_tasks( self ):
         return self.tasks
 
-    def set_stop_time( self, stop_time ):
-        self.log.debug( "Setting stop time: " + stop_time )
+    def set_stop_ctime( self, stop_time ):
+        self.log.warning( "Setting stop cycle time: " + stop_time )
         self.stop_time = stop_time
+
+    def set_stop_clock( self, dtime ):
+        self.log.warning( "Setting stop clock time: " + dtime.isoformat() )
+        self.stop_clock_time = dtime
 
     def set_suite_hold( self, ctime = None ):
         self.log.warning( 'pre-hold state dump: ' + self.dump_state( new_file = True ))
@@ -547,7 +561,7 @@ class scheduler(object):
         return self.suite_hold_now
 
     def stopping( self ):
-        if self.stop_time:
+        if self.stop_time or self.stop_clock_time:
             return True
         else:
             return False

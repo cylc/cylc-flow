@@ -7,6 +7,7 @@ import logging
 import sys, os
 from CylcError import TaskNotFoundError, TaskStateError
 from job_submit import job_submit
+from datetime import datetime
 
 class result:
     def __init__( self, success, reason="Action succeeded", value=None ):
@@ -174,13 +175,30 @@ class remote_switch( Pyro.core.ObjBase ):
         self.halt = False
         return result( True, "Tasks will be submitted when they are ready to run" )
 
-    def set_stop_time( self, ctime ):
+    def set_stop_ctime( self, ctime ):
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )
-        self.pool.set_stop_time( ctime )
+        self.pool.set_stop_ctime( ctime )
         # process, to update state summary
         self.process_tasks = True
         return result( True, "The suite will shutdown when all tasks have passed " + ctime )
+
+    def set_stop_clock( self, in_dtime ):
+        if self._suite_is_blocked():
+            return result( False, "Suite Blocked" )
+        # check datetime format YYYY/MM/DD-HH:mm
+        try:
+            date, time = in_dtime.split('-')
+            yyyy, mm, dd = date.split('/')
+            HH,MM = time.split(':')
+            dtime = datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
+        except:
+            return result( False, "Bad datetime: " + in_dtime )
+
+        self.pool.set_stop_clock( dtime )
+        # process, to update state summary
+        self.process_tasks = True
+        return result( True, "The suite will shutdown after " + in_dtime )
 
     def set_hold_time( self, ctime ):
         if self._suite_is_blocked():

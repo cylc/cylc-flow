@@ -38,11 +38,26 @@ except SuiteIdentificationError, x:
     raise SystemExit(x)
 
 if shutdown_at:
-    if not cycle_time.is_valid( shutdown_time ):
-        parser.error( "invalid cycle time: " + shutdown_time )
+    if cycle_time.is_valid( shutdown_time ):
+        shutdown_by_clock = False
+    else:
+        try:
+            # YYYY/MM/DD-HH:mm
+            date, time = shutdown_time.split('-')
+            yyyy, mm, dd = date.split('/')
+            HH,MM = time.split(':')
+        except:
+            parser.error( "invalid shutdown time argument: " + shutdown_time )
+        else:
+            shutdown_by_clock = True
+
     if not parser.prompt( 'Set shutdown time ' + shutdown_time + ' for'):
         sys.exit(0)
-    result = proxy.set_stop_time( shutdown_time )
+
+    if shutdown_by_clock:
+        result = proxy.set_stop_clock( shutdown_time )
+    else:
+        result = proxy.set_stop_ctime( shutdown_time )
 
 elif options.shutdownnow:
     if not parser.prompt( 'Shut down NOW' ):

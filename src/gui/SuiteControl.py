@@ -116,7 +116,7 @@ and associated methods for their control widgets.
             if stop:
                 result = god.shutdown()
             elif stopat:
-                result = god.set_stop_time( stoptime )
+                result = god.set_stop_ctime( stoptime )
             elif stopnow:
                 result = god.shutdown_now()
         except SuiteIdentificationError, x:
