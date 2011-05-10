@@ -23,7 +23,7 @@ Dependency graph based GUI suite control interface.
         self.userguide_item.connect( 'activate', helpwindow.userguide, True )
 
         self.x = xupdater( self.suite, self.suiterc, self.owner, self.host, self.port,
-                self.label_mode, self.label_status, self.label_time, self.xdot )
+                self.label_mode, self.label_status, self.label_time, self.label_block, self.xdot )
         self.x.start()
 
     def get_control_widgets(self ):

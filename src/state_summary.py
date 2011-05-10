@@ -4,7 +4,7 @@ import Pyro.core
 import logging
 
 class state_summary( Pyro.core.ObjBase ):
-    """supply suite state summary and config information to remote cylc clients."""
+    """supply suite state summary information to remote cylc clients."""
 
     def __init__( self, config, dummy_mode, start_time, gcylc=False ):
         Pyro.core.ObjBase.__init__(self)
@@ -19,7 +19,7 @@ class state_summary( Pyro.core.ObjBase ):
         self.start_time = start_time
  
     def update( self, tasks, clock, oldest, newest,
-            paused, will_pause_at, stopping, will_stop_at ):
+            paused, will_pause_at, stopping, will_stop_at, blocked ):
         self.task_summary = {}
         self.global_summary = {}
 
@@ -37,7 +37,8 @@ class state_summary( Pyro.core.ObjBase ):
         self.global_summary[ 'will_pause_at' ] = will_pause_at
         self.global_summary[ 'will_stop_at' ] = will_stop_at
         self.global_summary[ 'started by gcylc' ] = self.gcylc
-           
+        self.global_summary[ 'blocked' ] = blocked
+            
         # update deprecated old-style summary (DELETE WHEN NO LONGER NEEDED)
         #self.get_summary()
 

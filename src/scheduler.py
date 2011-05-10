@@ -60,6 +60,8 @@ class scheduler(object):
 
         self.lock_acquired = False
 
+        self.blocked = True 
+
         # COMMANDLINE OPTIONS
         self.parser.set_defaults( dummy_mode=False, practice_mode=False, debug=False )
 
@@ -119,6 +121,7 @@ class scheduler(object):
         self.load_tasks()
         if not graphing_disabled:
             self.initialize_runtime_graph()
+
 
     def parse_commandline( self ):
         # SUITE NAME
@@ -205,6 +208,14 @@ class scheduler(object):
             if not cycle_time.is_valid( self.pause_time ):
                 self.parser.error( "invalid cycle time: " + self.pause_time )
             self.banner[ 'Pausing at' ] = self.pause_time
+
+        # USE BLOCKING?
+        self.use_blocking = self.config['use blocking']
+        if not self.use_blocking:
+            self.blocked = False
+        else:
+            # start in blocked state
+            self.blocked = True
 
         # USE LOCKSERVER?
         self.use_lockserver = self.config['use lockserver']
@@ -417,7 +428,7 @@ class scheduler(object):
                 self.suite_state.update( self.tasks, self.clock, \
                         self.get_oldest_c_time(), self.get_newest_c_time(),
                         self.paused(), self.will_pause_at(), \
-                        self.remote.halt, self.will_stop_at() )
+                        self.remote.halt, self.will_stop_at(), self.blocked )
 
                 if self.options.timing:
                     delta = datetime.datetime.now() - main_loop_start_time

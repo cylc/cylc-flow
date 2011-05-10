@@ -37,7 +37,7 @@ and associated methods for their control widgets.
         self.imagedir = imagedir
 
         self.suiterc = config( self.suite )
-        self.use_block = self.suiterc['use suite blocking']
+        self.use_block = self.suiterc['use blocking']
 
         self.connection_lost = False # (not used)
         self.quitters = []
@@ -1086,6 +1086,7 @@ The cylc forecast suite metascheduler.
         self.label_status = gtk.Label( "status..." )
         self.label_mode = gtk.Label( "mode..." )
         self.label_time = gtk.Label( "time..." )
+        self.label_block = gtk.Label( "block..." )
         self.label_suitename = gtk.Label( self.suite )
 
         hbox = gtk.HBox()
@@ -1113,6 +1114,11 @@ The cylc forecast suite metascheduler.
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#6ab7b4' ) ) 
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fa87a4' ) ) 
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#bbddff' ) ) 
+        hbox.pack_start( eb, True )
+
+        eb = gtk.EventBox()
+        eb.add( self.label_block )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dddddd' ) ) 
         hbox.pack_start( eb, True )
 
         return hbox

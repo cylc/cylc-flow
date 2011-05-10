@@ -24,7 +24,7 @@ Text treeview base GUI suite control interface.
         self.t = updater( self.suite, self.owner, self.host, self.port,
                 self.imagedir, self.led_treeview.get_model(),
                 self.ttreeview, self.task_list, self.label_mode,
-                self.label_status, self.label_time )
+                self.label_status, self.label_time, self.label_block )
         self.t.start()
 
     def get_control_widgets( self ):

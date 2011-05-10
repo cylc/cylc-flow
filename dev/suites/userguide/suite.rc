@@ -33,6 +33,8 @@ task submission timeout minutes = 0.0
 
 #tasks to include at startup = prep, X, ColdA, A
 
+#use suite blocking = True
+
 pre-command scripting = '''
 echo hello world!
 '''

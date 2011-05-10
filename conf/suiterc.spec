@@ -300,7 +300,7 @@ post-command scripting = string( default='' )
 #>\item {\em task override:} yes
 #>\end{myitemize}
 
-use suite blocking = boolean( default=False )
+use blocking = boolean( default=False )
 #>A `blocked' suite refuses to
 #> comply with intervention commands until deliberately
 #> `unblocked'. This is a crude security measure to guard against

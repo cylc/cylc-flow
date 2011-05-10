@@ -36,23 +36,24 @@ class remote_switch( Pyro.core.ObjBase ):
         self.halt_now = False
 
         # if using the suite block start in the BLOCKED state.
-        self.using_block = self.config['use suite blocking']
-        self.blocked = True
+        self.using_block = self.config['use blocking']
 
     def block( self ):
         if not self.using_block:
             return result( False, "This suite is not using blocking" )
-        if self.blocked:
+        if self.pool.blocked:
             return result( True, "(the suite is already blocked)" )
-        self.blocked = True
+        self.pool.blocked = True
+        self.process_tasks = True # to update monitor
         return result( True, "the suite has been blocked" )
 
     def unblock( self ):
         if not self.using_block:
             return result( False, "This suite is not using a safety block" )
-        if not self.blocked:
+        if not self.pool.blocked:
             return result( True, "(the suite is not blocked)" )
-        self.blocked = False
+        self.pool.blocked = False
+        self.process_tasks = True # to update monitor
         return result( True, "the suite has been unblocked" )
 
     def set_runahead( self, hours=None ):
@@ -361,7 +362,7 @@ class remote_switch( Pyro.core.ObjBase ):
             return False
 
     def _suite_is_blocked( self ):
-        if self.using_block and self.blocked:
+        if self.using_block and self.pool.blocked:
             self._warning( "Refusing remote request (suite blocked)" )
             return True
         else:

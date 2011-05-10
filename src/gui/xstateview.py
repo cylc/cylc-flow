@@ -33,7 +33,7 @@ def compare_dict_of_dict( one, two ):
 class xupdater(threading.Thread):
 
     def __init__(self, suite, suiterc, owner, host, port, 
-            label_mode, label_status, label_time, xdot ):
+            label_mode, label_status, label_time, label_block, xdot ):
 
         super(xupdater, self).__init__()
 
@@ -63,10 +63,12 @@ class xupdater(threading.Thread):
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
+        self.block = "waiting ..."
 
         self.label_mode = label_mode
         self.label_status = label_status
         self.label_time = label_time
+        self.label_block = label_block
 
         self.reconnect()
 
@@ -130,6 +132,11 @@ class xupdater(threading.Thread):
         else:
             self.mode = 'operation'
 
+        if glbl[ 'blocked' ]:
+            self.block = 'blocked'
+        else:
+            self.block = 'unblocked'
+
         dt = glbl[ 'last_updated' ]
         self.dt = dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
 
@@ -150,6 +157,13 @@ class xupdater(threading.Thread):
         self.label_mode.set_text( self.mode )
         self.label_status.set_text( self.status )
         self.label_time.set_text( self.dt )
+
+        self.label_block.set_text( self.block )
+        if self.block == 'blocked':
+            self.label_block.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
+        else:
+            self.label_block.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
+
         return False
  
     def run(self):
