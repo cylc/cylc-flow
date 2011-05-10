@@ -542,7 +542,7 @@ def start_guide(w):
 
     window.show_all()
  
-def stop_guide( w ):
+def shutdown_guide( w ):
     window = gtk.Window()
     #window.set_border_width( 10 )
     window.set_title( "Shutting A Suite Down" )

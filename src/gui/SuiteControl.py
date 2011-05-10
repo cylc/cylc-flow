@@ -665,7 +665,7 @@ The cylc forecast suite metascheduler.
                 stoptime_entry )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.stop_guide )
+        help_button.connect("clicked", helpwindow.shutdown_guide )
 
         hbox = gtk.HBox()
         hbox.pack_start( stop_button, False )

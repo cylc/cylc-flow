@@ -83,7 +83,7 @@ task run time in seconds = 1
                    bar => baz"""
 
 [environment]
-    TASK_EXE_SECONDS = 5
+    TASK_EXE_SECONDS = 15
     WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
     RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
     # each of these is used by ModelA and ColdA etc.:
