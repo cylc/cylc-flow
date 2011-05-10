@@ -1095,13 +1095,13 @@ The cylc forecast suite metascheduler.
         view_menu_root = gtk.MenuItem( '_View' )
         view_menu_root.set_submenu( self.view_menu )
 
-        nudge_item = gtk.MenuItem( "_Nudge Suite (update times)" )
-        self.view_menu.append( nudge_item )
-        nudge_item.connect( 'activate', self.nudge_suite  )
-
         log_item = gtk.MenuItem( 'View _Suite Log' )
         self.view_menu.append( log_item )
         log_item.connect( 'activate', self.view_log )
+
+        nudge_item = gtk.MenuItem( "_Nudge Suite (update times)" )
+        self.view_menu.append( nudge_item )
+        nudge_item.connect( 'activate', self.nudge_suite  )
 
         start_menu = gtk.Menu()
         start_menu_root = gtk.MenuItem( '_Control' )
