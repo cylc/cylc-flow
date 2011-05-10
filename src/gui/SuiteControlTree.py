@@ -203,13 +203,14 @@ Text treeview base GUI suite control interface.
         self.tfilterbox = gtk.HBox()
 
         # allow filtering out of 'finished' and 'waiting'
-        all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
+        all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed', 'stopped' ]
         labels = {}
         labels[ 'waiting'   ] = '_waiting'
         labels[ 'submitted' ] = 's_ubmitted'
         labels[ 'running'   ] = '_running'
         labels[ 'finished'  ] = 'f_inished'
         labels[ 'failed'    ] = 'f_ailed'
+        labels[ 'stopped'   ] = 'sto_pped'
  
         # initially filter out 'finished' and 'waiting' tasks
         self.tfilter_states = [ 'waiting', 'finished' ]
