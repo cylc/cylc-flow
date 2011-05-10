@@ -1071,7 +1071,11 @@ The cylc forecast suite metascheduler.
 
         self.userguide_item = gtk.MenuItem( '_Quick Guide' )
         help_menu.append( self.userguide_item )
- 
+
+        self.todo_item = gtk.MenuItem( '_To Do' )
+        help_menu.append( self.todo_item )
+        self.todo_item.connect( 'activate', helpwindow.todo )
+  
         about_item = gtk.MenuItem( '_About' )
         help_menu.append( about_item )
         about_item.connect( 'activate', self.about )
