@@ -1630,7 +1630,7 @@ The cylc forecast suite metascheduler.
         warm_cb = gtk.CheckButton( "Warm Start" )
         vbox.pack_start (warm_cb, True)
 
-        label = gtk.Label("Start Cycle Time" )
+        label = gtk.Label("First Cycle Time" )
         start_entry = gtk.Entry()
         start_entry.set_max_length(10)
         hbox = gtk.HBox()
@@ -1638,14 +1638,17 @@ The cylc forecast suite metascheduler.
         hbox.pack_start(start_entry, True) 
         vbox.pack_start(hbox)
 
-        label = gtk.Label("Stop Cycle Time" )
+        label = gtk.Label("Last Cycle Time" )
         stop_entry = gtk.Entry()
         stop_entry.set_max_length(10)
         hbox = gtk.HBox()
         hbox.pack_start( label )
         hbox.pack_start(stop_entry, True) 
         vbox.pack_start (hbox, True)
-  
+
+        label = gtk.Label("(last cycle time is optional)" )
+        vbox.pack_start (label, True)
+   
         suiterc_rb.connect( "toggled", self.graph_type, "suiterc", 
                 warm_cb, start_entry, stop_entry )
         runtime_rb.connect( "toggled", self.graph_type, "runtime", 
@@ -1699,11 +1702,10 @@ The cylc forecast suite metascheduler.
 
         if suiterc_rb.get_active():
             start = start_entry.get_text()
-            stop = stop_entry.get_text()
-            for ct in start, stop:
-                if not cycle_time.is_valid( ct ):
-                    warning_dialog( "Invalid cycle time (YYYYMMDDHH) " + ct ).warn()
-                    return False
+            stop = stop_entry.get_text()  # optional
+            if not cycle_time.is_valid( start ):
+                warning_dialog( "Invalid cycle time (YYYYMMDDHH) " + start ).warn()
+                return False
             if warm_cb.get_active():
                 options += ' -w '
             options += ' ' + reg + ' ' + start + ' ' + stop
