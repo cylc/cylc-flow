@@ -4,6 +4,7 @@
 
 import Pyro.core
 import logging
+import cycle_time
 import sys, os
 from CylcError import TaskNotFoundError, TaskStateError
 from job_submit import job_submit
@@ -175,30 +176,37 @@ class remote_switch( Pyro.core.ObjBase ):
         self.halt = False
         return result( True, "Tasks will be submitted when they are ready to run" )
 
-    def set_stop_ctime( self, ctime ):
+    def set_stop( self, arg, method ):
+        # TO DO: the following checks are already done in the shutdown command
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )
-        self.pool.set_stop_ctime( ctime )
+
+        if method == 'stop after cycle time':
+            if cycle_time.is_valid( arg ):
+                self.pool.set_stop_ctime( ctime )
+            else:
+                return result( False, "Bad cycle time (YYYYMMDDHH): " + arg )
+
+        elif method == 'stop after clock time':
+            try:
+                date, time = arg.split('-')
+                yyyy, mm, dd = date.split('/')
+                HH,MM = time.split(':')
+                dtime = datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
+            except:
+                return result( False, "Bad datetime (YYYY/MM/DD-HH:mm): " + arg )
+            self.pool.set_stop_clock( dtime )
+
+        elif method == 'stop after task finishes':
+            try:
+                name, ctime = arg.split('%')
+            except:
+                return result( False, "Invalid stop task ID: " + arg )
+            self.pool.set_stop_task( arg )
+
         # process, to update state summary
         self.process_tasks = True
-        return result( True, "The suite will shutdown when all tasks have passed " + ctime )
-
-    def set_stop_clock( self, in_dtime ):
-        if self._suite_is_blocked():
-            return result( False, "Suite Blocked" )
-        # check datetime format YYYY/MM/DD-HH:mm
-        try:
-            date, time = in_dtime.split('-')
-            yyyy, mm, dd = date.split('/')
-            HH,MM = time.split(':')
-            dtime = datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
-        except:
-            return result( False, "Bad datetime: " + in_dtime )
-
-        self.pool.set_stop_clock( dtime )
-        # process, to update state summary
-        self.process_tasks = True
-        return result( True, "The suite will shutdown after " + in_dtime )
+        return result( True, "The suite will shutdown when requested: " + arg )
 
     def set_hold_time( self, ctime ):
         if self._suite_is_blocked():

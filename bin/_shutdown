@@ -6,18 +6,23 @@ import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 
-parser = PromptOptionParser( """cylc [control] shutdown [options] SUITE [YYYYMMDDHH]
+parser = PromptOptionParser( """cylc [control] shutdown [options] SUITE [STOP]
 
-1/ Do not submit any more tasks to run, and shut down as soon as all
-   tasks that are currently running have finished (this is the default).
+1/ Shut down when all currently running tasks have finished (default). 
+   No other tasks will be submitted to run in the meantime.
 
-2/ Shut down after all tasks have passed the cycle time YYYYMMDDHH.
+2/ Shut down AFTER the following event occurs:
+    a/ all tasks have passed the cycle time STOP (YYYYMMDDHH)
+    b/ the clock time has reached STOP (YYYY/MM/DD-HH:mm)
+    c/ the task STOP (TASK%YYYYMMDDHH) has finished
 
 3/ [--now] shut down immediately, regardless of tasks still running.
    WARNING: the final state dump file will reflect the state of the
    suite at shutdown; any tasks that run to completion post shutdown
    will thus be resubmitted, by default, if the suite is restarted.""", 
-[ """YYYYMMDDHH           Future cycle time after which to shutdown.""" ] )
+   [ """STOP                 YYYYMMDDHH (cycle time), or
+                         YYYY/MM/DD-HH:mm (clock time), or
+                          TASK%YYYYMMDDHH (task ID).""" ] )
 
 parser.add_option( "--now", 
         help="Shut down immediately; see WARNING above.",
@@ -28,7 +33,7 @@ parser.add_option( "--now",
 shutdown_at = False
 if len( args ) == 2:
     shutdown_at = True
-    shutdown_time = args[1] 
+    shutdown_arg = args[1] 
 
 suite = parser.get_suite_name()
 
@@ -37,27 +42,34 @@ try:
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 
+method = None
 if shutdown_at:
-    if cycle_time.is_valid( shutdown_time ):
-        shutdown_by_clock = False
+    # STOP argument detected
+    if cycle_time.is_valid( shutdown_arg ):
+        # STOP is a cycle time
+        method = 'stop after cycle time'
     else:
         try:
             # YYYY/MM/DD-HH:mm
-            date, time = shutdown_time.split('-')
+            date, time = shutdown_arg.split('-')
             yyyy, mm, dd = date.split('/')
             HH,MM = time.split(':')
         except:
-            parser.error( "invalid shutdown time argument: " + shutdown_time )
+            try:
+                name, ctime = shutdown_arg.split('%')
+            except:
+                parser.error( "invalid STOP argument: " + shutdown_arg )
+            else:
+                # STOP is a task ID
+                method = 'stop after task finishes'
         else:
-            shutdown_by_clock = True
+            # STOP is a clock time
+            method = 'stop after clock time'
 
-    if not parser.prompt( 'Set shutdown time ' + shutdown_time + ' for'):
+    if not parser.prompt( 'Set shutdown time ' + shutdown_arg + ' for'):
         sys.exit(0)
 
-    if shutdown_by_clock:
-        result = proxy.set_stop_clock( shutdown_time )
-    else:
-        result = proxy.set_stop_ctime( shutdown_time )
+    result = proxy.set_stop( shutdown_arg, method )
 
 elif options.shutdownnow:
     if not parser.prompt( 'Shut down NOW' ):

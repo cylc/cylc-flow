@@ -192,9 +192,10 @@ class scheduler(object):
         # state dump file
         self.state_dump_filename = os.path.join( self.state_dump_dir, 'state' )
 
-        # STOP TIME?
+        # STOP TIME (etc.)
         self.stop_time = None
         self.stop_clock_time = None
+        self.stop_task = None
         if self.options.stop_time:
             self.stop_time = self.options.stop_time
             if not cycle_time.is_valid( self.stop_time ):
@@ -458,6 +459,23 @@ class scheduler(object):
                     # now reset self.stop_clock_time so we don't do this check again.
                     self.stop_clock_time = None
 
+            if self.stop_task:
+                name, ctime = self.stop_task.split('%')
+                # shut down if task type name has entirely passed ctime
+                stop = True
+                for itask in self.tasks:
+                    if itask.name == name:
+                        if not itask.state.is_finished():
+                            iname, ictime = itask.id.split('%')
+                            if int(ictime) <= int(ctime):
+                                stop = False
+                if stop:
+                    self.log.critical( "No unfinished " + name + "older than " + ctime + " remains" )
+                    self.set_suite_hold()
+                    self.remote.halt = True
+                    # now reset self.stop_task so we don't do this check again.
+                    self.stop_task = None
+
             self.check_timeouts()
 
             # REMOTE METHOD HANDLING; with no timeout and single- threaded pyro,
@@ -534,6 +552,10 @@ class scheduler(object):
     def set_stop_clock( self, dtime ):
         self.log.warning( "Setting stop clock time: " + dtime.isoformat() )
         self.stop_clock_time = dtime
+
+    def set_stop_task( self, taskid ):
+        self.log.warning( "Setting stop task: " + taskid )
+        self.stop_task = taskid
 
     def set_suite_hold( self, ctime = None ):
         self.log.warning( 'pre-hold state dump: ' + self.dump_state( new_file = True ))
