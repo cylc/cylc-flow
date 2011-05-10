@@ -82,14 +82,14 @@ and associated methods for their control widgets.
     def resume_suite( self, bt ):
         try:
             god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-            result = god.resume()
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
+            return
+        result = god.resume()
+        if result.success:
+            info_dialog( result.reason ).inform()
         else:
-            if result.success:
-                info_dialog( result.reason ).inform()
-            else:
-                warning_dialog( result.reason ).warn()
+            warning_dialog( result.reason ).warn()
 
     def stopsuite( self, bt, window,
             stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
@@ -223,15 +223,15 @@ and associated methods for their control widgets.
         try:
             god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
             god.unblock()
-        except Pyro.errors.NamingError:
-            warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
+        except SuiteIdentificationError, x:
+            warning_dialog( 'ERROR: ' + str(x) ).warn()
 
     def block_suite( self, bt ):
         try:
             god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
             god.block()
-        except Pyro.errors.NamingError:
-            warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
+        except SuiteIdentificationError, x:
+            warning_dialog( 'ERROR: ' + str(x) ).warn()
 
     def about( self, bt ):
         about = gtk.AboutDialog()
@@ -417,17 +417,17 @@ The cylc forecast suite metascheduler.
             else:
                 limit = ent
         window.destroy()
-        proxy = cylc_pyro_client.client( self.suite, self.owner,
-                self.host, self.port ).get_proxy( 'remote' )
         try:
-            result = proxy.set_runahead( limit )
+            proxy = cylc_pyro_client.client( self.suite, self.owner,
+                self.host, self.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
+            return
+        result = proxy.set_runahead( limit )
+        if result.success:
+            info_dialog( result.reason ).inform()
         else:
-            if result.success:
-                info_dialog( result.reason ).inform()
-            else:
-                warning_dialog( result.reason ).warn()
+            warning_dialog( result.reason ).warn()
 
     def add_prerequisite_popup( self, b, task_id ):
         window = gtk.Window()
@@ -487,17 +487,17 @@ The cylc forecast suite metascheduler.
             return
 
         window.destroy()
-        proxy = cylc_pyro_client.client( self.suite, self.owner,
-                self.host, self.port ).get_proxy( 'remote' )
         try:
-            result = proxy.add_prerequisite( task_id, msg )
+            proxy = cylc_pyro_client.client( self.suite, self.owner,
+                self.host, self.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
+            return
+        result = proxy.add_prerequisite( task_id, msg )
+        if result.success:
+            info_dialog( result.reason ).inform()
         else:
-            if result.success:
-                info_dialog( result.reason ).inform()
-            else:
-                warning_dialog( result.reason ).warn()
+            warning_dialog( result.reason ).warn()
 
     def update_tb( self, tb, line, tags = None ):
         if tags:
@@ -631,7 +631,11 @@ The cylc forecast suite metascheduler.
         except SuiteIdentificationError, x:
             warning_dialog(str(x)).warn()
             return
-        actioned, explanation = proxy.spawn_and_die( task_id )
+        result = proxy.spawn_and_die( task_id )
+        if result.success:
+            info_dialog( result.reason ).inform()
+        else:
+            warning_dialog( result.reason ).warn()
  
     def kill_task_nospawn( self, b, task_id ):
         msg = "remove " + task_id + " (without spawning)?"
@@ -645,7 +649,11 @@ The cylc forecast suite metascheduler.
         except SuiteIdentificationError, x:
             warning_dialog(str(x)).warn()
             return
-        actioned, explanation = proxy.die( task_id )
+        result = proxy.die( task_id )
+        if result.success:
+            info_dialog( result.reason ).inform()
+        else:
+            warning_dialog( result.reason ).warn()
 
     def purge_cycle_entry( self, e, w, task_id ):
         stop = e.get_text()
@@ -655,7 +663,11 @@ The cylc forecast suite metascheduler.
         except SuiteIdentificationError, x:
             warning_dialog(str(x)).warn()
             return
-        actioned, explanation = proxy.purge( task_id, stop )
+        result = proxy.purge( task_id, stop )
+        if result.success:
+            info_dialog( result.reason ).inform()
+        else:
+            warning_dialog( result.reason ).warn()
 
     def purge_cycle_button( self, b, e, w, task_id ):
         stop = e.get_text()
@@ -665,7 +677,11 @@ The cylc forecast suite metascheduler.
         except SuiteIdentificationError, x:
             warning_dialog(str(x)).warn()
             return
-        actioned, explanation = proxy.purge( task_id, stop )
+        result = proxy.purge( task_id, stop )
+        if result.success:
+            info_dialog( result.reason ).inform()
+        else:
+            warning_dialog( result.reason ).warn()
 
     def stopsuite_popup( self, b ):
         window = gtk.Window()
@@ -1001,16 +1017,16 @@ The cylc forecast suite metascheduler.
             stop = None
         else:
             stop = stopctime
-        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
         try:
-            result = proxy.insert( name + '%' + ctime, stop )
+            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
+            return
+        result = proxy.insert( name + '%' + ctime, stop )
+        if result.success:
+            info_dialog( result.reason ).inform()
         else:
-            if result.success:
-                info_dialog( result.reason ).inform()
-            else:
-                warning_dialog( result.reason ).warn()
+            warning_dialog( result.reason ).warn()
 
     def nudge_suite( self, w ):
         try:

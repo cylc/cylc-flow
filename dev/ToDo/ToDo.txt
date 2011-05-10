@@ -6,6 +6,8 @@ GENERAL
   tasks that have gone out to the runhead limit, there will be
   finished and unspawned tasks to subvert this test.
 
+* GUI: check for suite block before popping up entry dialogs?
+
 * Practice mode:
     * message command (command line usage only) lock and practice mode?
     * practice mode should be allowed even for exclusive suite locks. 
