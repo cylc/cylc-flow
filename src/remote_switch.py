@@ -170,7 +170,8 @@ class remote_switch( Pyro.core.ObjBase ):
         return result( True, "Tasks will be submitted when they are ready to run" )
 
     def set_stop( self, arg, method ):
-        # TO DO: the following checks are already done in the shutdown command
+        # first clear any existing stop times
+        self.pool.clear_stop_times()
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )
 

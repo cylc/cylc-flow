@@ -589,8 +589,20 @@ class scheduler(object):
         #    self.stop_time = None
 
     def will_stop_at( self ):
-        return self.stop_time
+        if self.stop_time:
+            return self.stop_time
+        elif self.stop_clock_time:
+            return self.stop_clock_time.isoformat()
+        elif self.stop_task:
+            return self.stop_task
+        else:
+            return None
 
+    def clear_stop_times( self ):
+        self.stop_time = None
+        self.stop_clock_time = None
+        self.stop_task = None
+ 
     def paused( self ):
         return self.suite_hold_now
 
