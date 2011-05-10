@@ -183,7 +183,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if method == 'stop after cycle time':
             if cycle_time.is_valid( arg ):
-                self.pool.set_stop_ctime( ctime )
+                self.pool.set_stop_ctime( arg )
             else:
                 return result( False, "Bad cycle time (YYYYMMDDHH): " + arg )
 
@@ -199,7 +199,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         elif method == 'stop after task finishes':
             try:
-                name, ctime = arg.split('%')
+                arg.split('%')
             except:
                 return result( False, "Invalid stop task ID: " + arg )
             self.pool.set_stop_task( arg )

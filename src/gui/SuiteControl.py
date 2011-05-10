@@ -18,6 +18,7 @@ from config import config
 from color_rotator import rotator
 from cylc_logviewer import cylc_logviewer
 from textload import textload
+from datetime import datetime
 
 class ControlAppBase(object):
     """
@@ -91,12 +92,18 @@ and associated methods for their control widgets.
             else:
                 warning_dialog( result.reason ).warn()
 
-    def stopsuite( self, bt, window, stop_rb, stopat_rb, stopnow_rb, stoptime_entry ):
+    def stopsuite( self, bt, window,
+            stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
+            stoptime_entry, stopclock_entry, stoptask_entry ):
         stop = False
         stopat = False
         stopnow = False
+        stopclock = False
+        stoptask = False
+
         if stop_rb.get_active():
             stop = True
+
         elif stopat_rb.get_active():
             stopat = True
             stoptime = stoptime_entry.get_text()
@@ -106,8 +113,41 @@ and associated methods for their control widgets.
             if not cycle_time.is_valid( stoptime ):
                 warning_dialog( "Invalid stop time: " + stoptime ).warn()
                 return
+
         elif stopnow_rb.get_active():
             stopnow = True
+
+        elif stopct_rb.get_active():
+            stopclock = True
+            stopclock_time = stopclock_entry.get_text()
+            if stopclock_time == '':
+                warning_dialog( "No stop time entered" ).warn()
+                return
+            try:
+                # YYYY/MM/DD-HH:mm
+                date, time = stopclock_time.split('-')
+                yyyy, mm, dd = date.split('/')
+                HH,MM = time.split(':')
+                stop_dtime = datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
+            except:
+                warning_dialog( "Bad datetime (YYYY/MM/DD-HH:mm): " + stopclock_time ).warn()
+                return
+
+        elif stoptt_rb.get_active():
+            stoptask = True
+            stoptask_id = stoptask_entry.get_text()
+            if stoptask_id == '':
+                warning_dialog( "No stop task ID entered" ).warn()
+                return
+            try:
+                stoptask_id.split('%')
+            except:
+                warning_dialog( "Bad task ID (TASK%YYYYMMDDHH): " + stoptask_id ).warn()
+                return
+        else:
+            # SHOULD NOT BE REACHED
+            warning_dialog( "Bug in GUI?" ).warn()
+            return
 
         window.destroy()
 
@@ -116,9 +156,13 @@ and associated methods for their control widgets.
             if stop:
                 result = god.shutdown()
             elif stopat:
-                result = god.set_stop_ctime( stoptime )
+                result = god.set_stop( stoptime, 'stop after cycle time' )
             elif stopnow:
                 result = god.shutdown_now()
+            elif stopclock:
+                result = god.set_stop( stopclock_time, 'stop after clock time' )
+            elif stoptask:
+                result = god.set_stop( stoptask_id, 'stop after task finishes' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
         else:
@@ -633,15 +677,14 @@ The cylc forecast suite metascheduler.
 
         vbox = gtk.VBox()
 
-        box = gtk.VBox()
-        stop_rb = gtk.RadioButton( None, "Shutdown after running tasks have finished" )
-        box.pack_start (stop_rb, True)
-        stopnow_rb = gtk.RadioButton( stop_rb, "Shutdown NOW (beware of orphaned tasks)" )
-        box.pack_start (stopnow_rb, True)
-        stopat_rb = gtk.RadioButton( stop_rb, "Shutdown after cycle time " )
-        box.pack_start (stopat_rb, True)
-        stop_rb.set_active(True)
-        vbox.pack_start( box )
+        flabel = gtk.Label( "Shut down the suite WHEN?" )
+        vbox.pack_start (flabel, True)
+        stop_rb = gtk.RadioButton( None, "After currently running tasks have finished" )
+        vbox.pack_start (stop_rb, True)
+        stopnow_rb = gtk.RadioButton( stop_rb, "Immediately (careful: orphaned tasks!)" )
+        vbox.pack_start (stopnow_rb, True)
+        stopat_rb = gtk.RadioButton( stop_rb, "After all tasks have passed a given cycle time" )
+        vbox.pack_start (stopat_rb, True)
 
         box = gtk.HBox()
         label = gtk.Label( 'YYYYMMDDHH' )
@@ -652,17 +695,44 @@ The cylc forecast suite metascheduler.
         box.pack_start (stoptime_entry, True)
         vbox.pack_start( box )
 
-        stop_rb.connect( "toggled", self.stop_method, "stop", stoptime_entry )
-        stopat_rb.connect( "toggled", self.stop_method, "stopat", stoptime_entry )
-        stopnow_rb.connect(   "toggled", self.stop_method, "stopnow", stoptime_entry )
+        stopct_rb = gtk.RadioButton( stop_rb, "After a given wall clock time" )
+        vbox.pack_start (stopct_rb, True)
+
+        box = gtk.HBox()
+        label = gtk.Label( 'YYYY/MM/DD-HH:mm' )
+        box.pack_start( label, True )
+        stopclock_entry = gtk.Entry()
+        stopclock_entry.set_max_length(16)
+        stopclock_entry.set_sensitive(False)
+        box.pack_start (stopclock_entry, True)
+        vbox.pack_start( box )
+
+        stoptt_rb = gtk.RadioButton( stop_rb, "After a given task finishes" )
+        vbox.pack_start (stoptt_rb, True)
+  
+        stop_rb.set_active(True)
+
+        box = gtk.HBox()
+        label = gtk.Label( 'TASK%YYYYMMDDHH' )
+        box.pack_start( label, True )
+        stoptask_entry = gtk.Entry()
+        stoptask_entry.set_sensitive(False)
+        box.pack_start (stoptask_entry, True)
+        vbox.pack_start( box )
+
+        stop_rb.connect( "toggled", self.stop_method, "stop", stoptime_entry, stopclock_entry, stoptask_entry)
+        stopat_rb.connect( "toggled", self.stop_method, "stopat", stoptime_entry, stopclock_entry, stoptask_entry)
+        stopnow_rb.connect( "toggled", self.stop_method, "stopnow", stoptime_entry, stopclock_entry, stoptask_entry)
+        stopct_rb.connect( "toggled", self.stop_method, "stopclock", stoptime_entry, stopclock_entry, stoptask_entry)
+        stoptt_rb.connect( "toggled", self.stop_method, "stoptask", stoptime_entry, stopclock_entry, stoptask_entry)
 
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         stop_button = gtk.Button( "_Shutdown" )
-        stop_button.connect("clicked", self.stopsuite, 
-                window, stop_rb, stopat_rb, stopnow_rb,
-                stoptime_entry )
+        stop_button.connect("clicked", self.stopsuite, window,
+                stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
+                stoptime_entry, stopclock_entry, stoptask_entry )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.shutdown_guide )
@@ -676,11 +746,16 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def stop_method( self, b, meth, stoptime_entry ):
-        if meth == 'stop' or meth == 'stopnow':
-            stoptime_entry.set_sensitive( False )
-        else:
+    def stop_method( self, b, meth, stoptime_entry, stopclock_entry, stoptask_entry ):
+        stoptime_entry.set_sensitive( False )
+        stopclock_entry.set_sensitive( False )
+        stoptask_entry.set_sensitive( False )
+        if meth == 'stopat':
             stoptime_entry.set_sensitive( True )
+        elif meth == 'stopclock':
+            stopclock_entry.set_sensitive( True )
+        elif meth == 'stoptask':
+            stoptask_entry.set_sensitive( True )
 
     def startup_method( self, b, meth, ctime_entry, statedump_entry, no_reset_cb ):
         if meth == 'cold' or meth == 'warm' or meth == 'raw':

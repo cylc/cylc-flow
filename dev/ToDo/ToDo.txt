@@ -1,6 +1,11 @@
 _______
 GENERAL
 
+* all_tasks_finished_or_stopped() needs fixing: it tests for
+  finished-and-spawned, but if a stop ctime is set behind some
+  tasks that have gone out to the runhead limit, there will be
+  finished and unspawned tasks to subvert this test.
+
 * Practice mode:
     * message command (command line usage only) lock and practice mode?
     * practice mode should be allowed even for exclusive suite locks. 

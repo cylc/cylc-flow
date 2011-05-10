@@ -470,7 +470,7 @@ class scheduler(object):
                             if int(ictime) <= int(ctime):
                                 stop = False
                 if stop:
-                    self.log.critical( "No unfinished " + name + "older than " + ctime + " remains" )
+                    self.log.critical( "No unfinished STOP TASK (" + name + ") older than " + ctime + " remains" )
                     self.set_suite_hold()
                     self.remote.halt = True
                     # now reset self.stop_task so we don't do this check again.
