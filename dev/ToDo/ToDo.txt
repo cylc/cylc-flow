@@ -1,11 +1,6 @@
 _______
 GENERAL
 
-* all_tasks_finished_or_stopped() needs fixing: it tests for
-  finished-and-spawned, but if a stop ctime is set behind some
-  tasks that have gone out to the runhead limit, there will be
-  finished and unspawned tasks to subvert this test.
-
 * GUI: check for suite block before popping up entry dialogs?
 
 * Practice mode:
