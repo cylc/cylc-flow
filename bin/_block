@@ -7,11 +7,10 @@ from port_scan import SuiteIdentificationError
 
 parser = PromptOptionParser("""cylc [control] block [options] SUITE 
 
-Tell a running suite, that is explicitly configured to use blocking, not
-to comply with subsequent intervention commands. The block/unblock
-commands are a simple safety device intended to guard against
-inadvertent interventions (accidentally stopping the wrong suite, say,
-when you are running multiple suites at the same time).
+A blocked suite refuses to comply with intervention commands until
+deliberately unblocked. This is a crude security measure to guard
+against accidental intervention in your own suites. It may be useful
+when running important suites, or multiple suites at once.
 
 (These commands are 'block/unblock' rather than 'lock/unlock' in order
 to distinguish them from the functionality of the cylc lockserver

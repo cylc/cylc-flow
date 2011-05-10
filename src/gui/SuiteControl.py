@@ -38,7 +38,6 @@ and associated methods for their control widgets.
         self.imagedir = imagedir
 
         self.suiterc = config( self.suite )
-        self.use_block = self.suiterc['use blocking']
 
         self.connection_lost = False # (not used)
         self.quitters = []
@@ -1131,13 +1130,13 @@ The cylc forecast suite metascheduler.
         block_item = gtk.MenuItem( '_Block (ignore intervention requests)' )
         start_menu.append( block_item )
         block_item.connect( 'activate', self.block_suite )
-        if self.readonly or not self.use_block:
+        if self.readonly:
             block_item.set_sensitive(False)
 
         unblock_item = gtk.MenuItem( 'U_nblock (comply with intervention requests)' )
         start_menu.append( unblock_item )
         unblock_item.connect( 'activate', self.unblock_suite )
-        if self.readonly or not self.use_block:
+        if self.readonly:
             unblock_item.set_sensitive(False)
 
         help_menu = gtk.Menu()

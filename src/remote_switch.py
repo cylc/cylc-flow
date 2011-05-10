@@ -37,12 +37,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.halt = False
         self.halt_now = False
 
-        # if using the suite block start in the BLOCKED state.
-        self.using_block = self.config['use blocking']
-
     def block( self ):
-        if not self.using_block:
-            return result( False, "This suite is not using blocking" )
         if self.pool.blocked:
             return result( True, "(the suite is already blocked)" )
         self.pool.blocked = True
@@ -50,8 +45,6 @@ class remote_switch( Pyro.core.ObjBase ):
         return result( True, "the suite has been blocked" )
 
     def unblock( self ):
-        if not self.using_block:
-            return result( False, "This suite is not using a safety block" )
         if not self.pool.blocked:
             return result( True, "(the suite is not blocked)" )
         self.pool.blocked = False
@@ -388,7 +381,7 @@ class remote_switch( Pyro.core.ObjBase ):
             return False
 
     def _suite_is_blocked( self ):
-        if self.using_block and self.pool.blocked:
+        if self.pool.blocked:
             self._warning( "Refusing remote request (suite blocked)" )
             return True
         else:

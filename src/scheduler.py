@@ -211,13 +211,8 @@ class scheduler(object):
                 self.parser.error( "invalid cycle time: " + self.pause_time )
             self.banner[ 'Pausing at' ] = self.pause_time
 
-        # USE BLOCKING?
-        self.use_blocking = self.config['use blocking']
-        if not self.use_blocking:
-            self.blocked = False
-        else:
-            # start in blocked state
-            self.blocked = True
+        # start in unblocked state
+        self.blocked = False
 
         # USE LOCKSERVER?
         self.use_lockserver = self.config['use lockserver']

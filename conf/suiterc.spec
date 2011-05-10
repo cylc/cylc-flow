@@ -300,22 +300,6 @@ post-command scripting = string( default='' )
 #>\item {\em task override:} yes
 #>\end{myitemize}
 
-use blocking = boolean( default=False )
-#>A `blocked' suite refuses to
-#> comply with intervention commands until deliberately
-#> `unblocked'. This is a crude security measure to guard against
-#> accidental intervention in your own suites. It may be useful when
-#> running multiple suites at once, or when running particularly
-#> important suites, but is disabled by default because it is
-#> fundamentally annoying. (Consider also that any intervention
-#> in a suite results in a special pre-intervention state dump from
-#> which the suite can be restarted if you decide you made a mistake).
-#>\begin{myitemize}
-#>\item {\em section:} (top level) 
-#>\item {\em type:} boolean
-#>\item {\em default:} False
-#>\end{myitemize}
-
 owned task execution method = option( sudo, ssh, default=sudo )
 #>This specifies the means by which the chosen job submission method is
 #> invoked for tasks that are owned by a user other than the suite

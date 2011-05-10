@@ -741,10 +741,10 @@ def userguide( w, graph=False ):
     update_tb( tb, "Resume submitting tasks that are ready to run.")
     update_tb( tb, "\n o Insert: ", [bold])
     update_tb( tb, "Insert a task or task group into a running suite." )
-    update_tb( tb, "\n o Block (if suite is configured to use blocking): ", [bold])
-    update_tb( tb, "Tell cylc not to comply with subsequent intervention commands." )
-    update_tb( tb, "\n o Unblock (if suite is configured to use blocking): ", [bold])
-    update_tb( tb, "Tell cylc to comply with subsequent intervention commands." )
+    update_tb( tb, "\n o Block: ", [bold])
+    update_tb( tb, "Refuse to comply with subsequent intervention commands." )
+    update_tb( tb, "\n o Unblock: ", [bold])
+    update_tb( tb, "Comply with subsequent intervention commands." )
 
     if not graph:
         update_tb( tb, "\n\nTask Tree View Panel: Right-Click Popup Menu > ", [bold, red] )
