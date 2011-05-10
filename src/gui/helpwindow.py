@@ -545,7 +545,7 @@ def start_guide(w):
 def stop_guide( w ):
     window = gtk.Window()
     #window.set_border_width( 10 )
-    window.set_title( "Stopping A Suite" )
+    window.set_title( "Shutting A Suite Down" )
     window.set_size_request(600, 600)
 
     sw = gtk.ScrolledWindow()
@@ -573,22 +573,28 @@ def stop_guide( w ):
     alert = tb.create_tag( None, foreground = "red" )
     bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
 
-    update_tb( tb, "Help: Stopping A Suite", [bold, blue] )
+    update_tb( tb, "Help: Shutting A Suite Down", [bold, blue] )
 
-    update_tb( tb, "\n\n o Stop", [bold, red] )
-    update_tb( tb, "\nDo not submit any new tasks to run, and "
+    update_tb( tb, "\n\n o Shutdown after running tasks have finished", [bold, red] )
+    update_tb( tb, "\nDo not submit any new tasks to run and "
             "shut down as soon as currently running tasks have finished." )
 
-    update_tb( tb, "\n\n o Stop At (YYYYMMDDHH)", [bold, red] )
-    update_tb( tb, "\nStop the suite once all tasks have passed "
-            "the cycle time YYYYMMDDHH." )
-
-    update_tb( tb, "\n\n o Stop NOW", [bold, red] )
+    update_tb( tb, "\n\n o Shutdown NOW (beware of orphaned tasks)", [bold, red] )
     update_tb( tb, "\nStop the suite immediately, regardless of "
-            "tasks still running. WARNING: The final state dump file will "
+            "tasks still running. WARNING: (a) you may need to manually "
+            "kill any tasks that are still running; (b) The final "
+            "state dump file will "
             "reflect the state of the suite at shutdown; any tasks that "
             "run to completion post shutdown will thus be resubmitted, "
             "by default, if the suite is restarted.")
+
+    update_tb( tb, "\n\n o Shutdown After Cycle Time (YYYYMMDDHH)", [bold, red] )
+    update_tb( tb, "\nStop the suite once all tasks have passed "
+            "the cycle time YYYYMMDDHH. This results in tasks "
+            "entering a 'stopped' state once they have spawned "
+            "passed the designated cycle time. If you later "
+            "restart the suite, stopped tasks will be unstopped "
+            "by default." )
 
     window.show_all()
 

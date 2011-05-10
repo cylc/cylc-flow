@@ -629,22 +629,22 @@ The cylc forecast suite metascheduler.
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title( "Stop Suite '" + self.suite + "'")
+        window.set_title( "Shutdown Suite '" + self.suite + "'")
 
         vbox = gtk.VBox()
 
-        box = gtk.HBox()
-        stop_rb = gtk.RadioButton( None, "Stop" )
+        box = gtk.VBox()
+        stop_rb = gtk.RadioButton( None, "Shutdown after running tasks have finished" )
         box.pack_start (stop_rb, True)
-        stopat_rb = gtk.RadioButton( stop_rb, "Stop At" )
-        box.pack_start (stopat_rb, True)
-        stopnow_rb = gtk.RadioButton( stop_rb, "Stop NOW" )
+        stopnow_rb = gtk.RadioButton( stop_rb, "Shutdown NOW (beware of orphaned tasks)" )
         box.pack_start (stopnow_rb, True)
+        stopat_rb = gtk.RadioButton( stop_rb, "Shutdown after cycle time " )
+        box.pack_start (stopat_rb, True)
         stop_rb.set_active(True)
         vbox.pack_start( box )
 
         box = gtk.HBox()
-        label = gtk.Label( 'Stop At (YYYYMMDDHH)' )
+        label = gtk.Label( 'YYYYMMDDHH' )
         box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(10)
@@ -659,7 +659,7 @@ The cylc forecast suite metascheduler.
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        stop_button = gtk.Button( "_Stop" )
+        stop_button = gtk.Button( "_Shutdown" )
         stop_button.connect("clicked", self.stopsuite, 
                 window, stop_rb, stopat_rb, stopnow_rb,
                 stoptime_entry )
@@ -724,7 +724,7 @@ The cylc forecast suite metascheduler.
         vbox.pack_start( box )
 
         box = gtk.HBox()
-        label = gtk.Label( 'Stop (YYYYMMDDHH)' )
+        label = gtk.Label( 'Until (YYYYMMDDHH)' )
         box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(10)
@@ -1023,7 +1023,7 @@ The cylc forecast suite metascheduler.
         if self.readonly:
             start_item.set_sensitive(False)
 
-        stop_item = gtk.MenuItem( '_Stop (soon, now, or later)' )
+        stop_item = gtk.MenuItem( '_Shutdown (soon, now, or later)' )
         start_menu.append( stop_item )
         stop_item.connect( 'activate', self.stopsuite_popup )
         if self.readonly:
