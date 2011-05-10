@@ -346,7 +346,6 @@ class scheduler(object):
         self.remote = remote_switch( self.config, self.clock, self.suite_dir, self, self.failout_task_id )
         self.pyro.connect( self.remote, 'remote' )
 
-
     def print_banner( self ):
         print "_______________________________________________"
         print "_ Cylc Self Organising Adaptive Metascheduler _"
@@ -432,7 +431,25 @@ class scheduler(object):
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     print "MAIN LOOP TIME TAKEN:", seconds, "seconds"
 
-            if self.all_tasks_finished_or_stopped():
+            # SHUT DOWN IF ALL TASKS ARE FINISHED OR STOPPED
+            stop_now = True
+            for itask in self.tasks:
+                if not itask.state.is_finished() and not itask.state.is_stopped():
+                    # don't stop if any tasks are waiting, submitted, or running
+                    stop_now = False
+                if itask.state.is_finished() and not itask.state.has_spawned():
+                    # Check for tasks that are finished but not spawned.
+                    # If they are older than the suite stop time they
+                    # must be about to spawn. Otherwise they must be 
+                    # stalled at the runahead limit, in which case we
+                    # can stop.
+                    if self.stop_time:
+                        print itask.c_time, self.stop_time
+                        if int(itask.c_time) < int(self.stop_time):
+                            stop_now = False
+                if not stop_now:
+                    break
+            if stop_now:
                 self.log.warning( "ALL TASKS FINISHED OR STOPPED" )
                 break
 
@@ -617,17 +634,6 @@ class scheduler(object):
             if itask.state.is_running() or itask.state.is_submitted():
                 return False
         return True
-
-    def all_tasks_finished_or_stopped( self ):
-        # return True if every task has either finished-and-spawned OR stopped.
-        #--
-        res = True
-        for itask in self.tasks:
-            if not itask.state.is_finished() or not itask.state.has_spawned():
-                if not itask.state.is_stopped():
-                    res = False
-                    break
-        return res
 
     def negotiate( self ):
         # run time dependency negotiation: tasks attempt to get their

@@ -805,7 +805,7 @@ The cylc forecast suite metascheduler.
         vbox.pack_start( box )
 
         box = gtk.HBox()
-        label = gtk.Label( 'Start (YYYYMMDDHH)' )
+        label = gtk.Label( 'From (YYYYMMDDHH)' )
         box.pack_start( label, True )
         ctime_entry = gtk.Entry()
         ctime_entry.set_max_length(10)
@@ -822,6 +822,9 @@ The cylc forecast suite metascheduler.
         box.pack_start (stoptime_entry, True)
         vbox.pack_start( box )
 
+        label = gtk.Label( '(the final cycle is optional)' )
+        vbox.pack_start( label )
+ 
         box = gtk.HBox()
         label = gtk.Label( 'Initial State (FILE)' )
         box.pack_start( label, True )
