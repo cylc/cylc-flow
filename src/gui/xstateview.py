@@ -91,7 +91,7 @@ class xupdater(threading.Thread):
             return True
 
     def connection_lost( self ):
-        self.status = "NO CONNECTION"
+        self.status = "NOT RUNNING"
         self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
         self.label_status.set_text( self.status )
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES

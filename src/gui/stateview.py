@@ -138,7 +138,7 @@ class updater(threading.Thread):
         # Keep LED panel to show what state the suite was in at shutdown
         #self.led_liststore.clear()
 
-        self.status = "NO CONNECTION"
+        self.status = "NOT RUNNING"
         self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
         self.label_status.set_text( self.status )
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
