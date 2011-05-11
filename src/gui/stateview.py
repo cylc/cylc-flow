@@ -126,8 +126,18 @@ class updater(threading.Thread):
             return True
 
     def connection_lost( self ):
-        #self.led_liststore.clear()
+        # clear the ttreestore ...
         self.ttreestore.clear()
+        # ... and the data structure used to populate it (otherwise 
+        # we'll get a blank treeview after a shutdown and restart via
+        # the same gui when nothing is changing (e.g. all tasks waiting
+        # on a clock trigger - because we only update the tree after
+        # changes in the state summary)
+        self.state_summary = {}
+
+        # Keep LED panel to show what state the suite was in at shutdown
+        #self.led_liststore.clear()
+
         self.status = "NO CONNECTION"
         self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
         self.label_status.set_text( self.status )
