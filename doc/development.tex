@@ -98,4 +98,27 @@ tasks from triggering.   So\dots we may want to revist Multithreading\dots
 %automatically pass on changes to the external input / output config of
 %the system.
 
+%\subsection{Unusual Task Behaviour}
+%\label{UnusualTaskBehaviour}
+%
+%If you require task behaviour that cannot be represented in the current 
+%task definition files you will need to derive a new task class manually.
+%Use the auto-generated task classes as a starting point. Raw Python 
+%task class definitions can be kept in the suite taskdef sub-directory
+%alongside the taskdef files; they will be copied verbatim to the
+%\lstinline=configured= sub-directory when the suite is configured.
+%
+%Out of the entire EcoConnect operation, only the highly unusual
+%scheduling behaviour of the TopNet river model requires a custom task
+%class (it keeps up with real time streamflow observations and uses
+%the {\em most recent} regional weather forecast output). 
+
+%\subsubsection{Fuzzy Prerequisites}
+%
+%EcoConnect's Topnet model (mentioned just above) runs hourly and
+%triggers off the most recent regional weather forecast available.
+%The cycle time interval between the two tasks can vary. This makes 
+%use of cylc's {\em fuzzy prerequisites}, which the task definition
+%parser is not currently aware of (hence the custom Python taskdef).
+
 

@@ -87,12 +87,13 @@ use secure passphrase = boolean( default=False )
 #>\end{myitemize}
 
 tasks to exclude at startup = force_list( default=list())
-#> If specified, {\em tasks in the list will be excluded at startup} (or
-#> restart). If an {\em inclusion} list is also specified,
-#> only included tasks that are not excluded will be used. Excluded
-#> tasks can still be inserted at run time. Excluded tasks, if they have
-#> not been removed from the dependency graph, can still be depended on
-#> by other tasks, in which case some manual triggering may be required.
+#> Any task listed here will be excluded from the initial task pool 
+#> (this goes for restarts too). If an {\em inclusion} list is also
+#> specified, the initial pool will contain only included tasks
+#> that have not been excluded. Excluded tasks can still be inserted at
+#> run time. Other tasks may still depend on excluded tasks if they
+#> have not been removed from the suite dependency graph (in which case
+#> some manual triggering may be required).
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} list of task names
@@ -100,12 +101,13 @@ tasks to exclude at startup = force_list( default=list())
 #>\end{myitemize}
 
 tasks to include at startup = force_list( default=list() )
-#> If specified, {\em tasks NOT in the list will be excluded at startup} (or
-#> restart). If an {\em exclusion} list is also specified,
-#> only included tasks that are not excluded will be used. Excluded
-#> tasks can still be inserted at run time. Excluded tasks, if they have
-#> not been removed from the dependency graph, can still be depended on
-#> by other tasks, in which case some manual triggering may be required.
+#> If this list is not empty, any task NOT listed in it will be
+#> excluded from the initial task pool (this goes for restarts too). If
+#> an {\em exclusion} list is also specified, the initial pool will
+#> contain only included tasks that have not been excluded. Excluded
+#> tasks can still be inserted at run time. Other tasks may still depend
+#> on excluded tasks if they have not been removed from the suite
+#> dependency graph (in which case some manual triggering may be required).
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} list of task names
