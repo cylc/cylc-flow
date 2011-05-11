@@ -114,7 +114,7 @@ class scheduler(object):
         self.configure_suite()
 
         # MAXIMUM RUNAHEAD HOURS
-        self.runahead = self.config['maximum runahead hours']
+        self.runahead = self.config['runahead limit in hours']
 
         self.print_banner()
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD (PROVIDED IN DERIVED CLASSES) 

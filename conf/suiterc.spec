@@ -112,13 +112,14 @@ tasks to include at startup = force_list( default=list() )
 #>\item {\em default:} empty
 #>\end{myitemize}
 
-maximum runahead hours = integer( min=0, default=24 )
-#>This is the maximum difference in cycle time
-#>that cylc allows between the fastest and slowest task in the suite.
+runahead limit in hours = integer( min=0, default=24 )
+#>This is the maximum difference (in cycle time)
+#>that cylc allows between the fastest and slowest tasks in the suite.
 #>Cycling tasks with no prerequisites (most suites will not have any 
 #>of these) will rapidly spawn ahead to the runahead limit. 
 #> Clock-triggered tasks with no other prerequisites (most suites will
-#> have some of these) will do the same, but only in catchup operation.
+#> have some of these) will do the same if sufficiently far behind
+#> the real time clock.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} integer
