@@ -1627,8 +1627,13 @@ The cylc forecast suite metascheduler.
         hbox.pack_start(outputfile_entry, True) 
         vbox.pack_start( hbox )
  
-        warm_cb = gtk.CheckButton( "Warm Start" )
-        vbox.pack_start (warm_cb, True)
+        cold_rb = gtk.RadioButton( None, "Cold Start" )
+        cold_rb.set_active( True )
+        warm_rb = gtk.RadioButton( cold_rb, "Warm Start" )
+        hbox = gtk.HBox()
+        hbox.pack_start (cold_rb, True)
+        hbox.pack_start (warm_rb, True)
+        vbox.pack_start( hbox, True )
 
         label = gtk.Label("First Cycle Time" )
         start_entry = gtk.Entry()
@@ -1650,16 +1655,16 @@ The cylc forecast suite metascheduler.
         vbox.pack_start (label, True)
    
         suiterc_rb.connect( "toggled", self.graph_type, "suiterc", 
-                warm_cb, start_entry, stop_entry )
+                warm_rb, start_entry, stop_entry )
         runtime_rb.connect( "toggled", self.graph_type, "runtime", 
-                warm_cb, start_entry, stop_entry )
+                warm_rb, start_entry, stop_entry )
  
         cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         ok_button = gtk.Button( "_Graph" )
         ok_button.connect("clicked", self.graph_suite, reg, suite_dir,
                 suiterc_rb, runtime_rb, 
-                warm_cb, outputfile_entry, start_entry, stop_entry )
+                warm_rb, outputfile_entry, start_entry, stop_entry )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.graph )
@@ -1673,12 +1678,12 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def graph_type( self, w, typ, warm_cb, start_ent, stop_ent ):
+    def graph_type( self, w, typ, warm_rb, start_ent, stop_ent ):
         if typ == "suiterc" and w.get_active():
             sensitive = True
         else:
             sensitive = False
-        warm_cb.set_sensitive(sensitive)
+        warm_rb.set_sensitive(sensitive)
         start_ent.set_sensitive(sensitive)
         stop_ent.set_sensitive(sensitive)
 
@@ -1693,7 +1698,7 @@ The cylc forecast suite metascheduler.
         foo.run()
 
     def graph_suite( self, w, reg, suite_dir, suiterc_rb, runtime_rb, 
-            warm_cb, outputfile_entry, start_entry, stop_entry ):
+            warm_rb, outputfile_entry, start_entry, stop_entry ):
 
         options = ''
         ofile = outputfile_entry.get_text()
@@ -1706,7 +1711,7 @@ The cylc forecast suite metascheduler.
             if not cycle_time.is_valid( start ):
                 warning_dialog( "Invalid cycle time (YYYYMMDDHH) " + start ).warn()
                 return False
-            if warm_cb.get_active():
+            if warm_rb.get_active():
                 options += ' -w '
             options += ' ' + reg + ' ' + start + ' ' + stop
 
