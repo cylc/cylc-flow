@@ -1,6 +1,8 @@
 _______
 GENERAL
 
+* add 'stopped' task coloring to the old terminal monitor program.
+
 * GUI: check for suite block before popping up entry dialogs?
 
 * Practice mode:

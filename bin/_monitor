@@ -286,4 +286,4 @@ try:
         sleep( 1 )
 
 except KeyboardInterrupt:
-    raise SystemExit( 'ok, whatever' )
+    raise SystemExit( 'OK, whatever' )

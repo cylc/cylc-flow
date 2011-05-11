@@ -191,7 +191,10 @@ observations and using the most recent available regional weather
 forecast.  EcoConnect runs on heterogenous distributed hardware,
 including a massively parallel supercomputer and several Linux servers. 
 
-\subsection{Intracycle Dependencies} 
+
+\subsection{Dependencies Between Tasks}
+
+\subsubsection{Intracycle Dependencies} 
 \label{IntracycleDependencies}
 
 Most inter-task dependencies exist within a single forecast cycle.
@@ -289,7 +292,7 @@ the example suite. In fact the situation is even worse than this
 handling intercycle dependencies explicitly or else agree not to start
 the next cycle early, as is illustrated in Figure~\ref{fig-job-no-overlap}.
 
-\subsection{Intercycle Dependencies} 
+\subsubsection{Intercycle Dependencies} 
 \label{IntercycleDependencies}
 
 In most suites dependencies between tasks in different cycles

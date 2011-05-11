@@ -444,7 +444,6 @@ class scheduler(object):
                     # stalled at the runahead limit, in which case we
                     # can stop.
                     if self.stop_time:
-                        print itask.c_time, self.stop_time
                         if int(itask.c_time) < int(self.stop_time):
                             stop_now = False
                 if not stop_now:
