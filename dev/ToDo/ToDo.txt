@@ -1,6 +1,10 @@
 _______
 GENERAL
 
+* errors caught be validate should also be caught cleanly if the user
+  tries to start the suite. E.g. misspell a task in 'tasks to exclude at
+  startup'
+
 * add 'stopped' task coloring to the old terminal monitor program.
 
 * GUI: check for suite block before popping up entry dialogs?

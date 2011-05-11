@@ -17,7 +17,7 @@ Minimalist loadleveler job submission.
         defaults[ 'output'   ] = self.stdout_file
         defaults[ 'error'    ] = self.stderr_file
 
-        # NOTE OF SHELL DIRECTIVE: on AIX, '#@ shell = /bin/bash'
+        # NOTE ON SHELL DIRECTIVE: on AIX, '#@ shell = /bin/bash'
         # results in the job executing in a non-login shell (.profile
         # not sourced) whereas /bin/ksh does get a login shell. WTF?! In
         # any case this directive appears to affect only the shell *from
@@ -32,7 +32,7 @@ Minimalist loadleveler job submission.
         # because cylc job scripts are always submitted from $HOME.
         # add (or override with) taskdef directives
 
-        # Now override defaults (potentially) with task directives:
+        # Now, in case the user want to override these defaults:
         for d in self.directives:
             defaults[ d ] = self.directives[ d ]
         self.directives = defaults
