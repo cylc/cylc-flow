@@ -197,11 +197,12 @@ Reconnecting to such a suite from a control GUI will not show this output.
 %h3 View Output
 This opens a new view of the suite stdout and stderr files
 $HOME/.cylc/GROUP:NAME.(out|err) used when suites are started from
-within gcylc (as opposed to the commandline).
+within gcylc (if you start a suite from the commandline, where its
+stdout and stderr end up is entirely up to you).
 
 %h3 View Log
-This opens a searchable and filterable view of the log file that records
-all important events as the suite runs.
+This opens a searchable and filterable view of the log file that records,
+timestamped, all important events as the suite runs.
 
 %h3 Dump
 (Running suites only) Print the current state of each task in the suite.
@@ -223,10 +224,10 @@ spec, then attempt to instantiate all suite task proxies, and report any
 errors.
 
 %h3 Describe
-Print the suite description.
+Print the suite description, parsed from the suite.rc file.
 
 %h3 List Tasks
-Print the suite's configured task list.
+Print the suite's configured task list, parsed from the suite.rc file.
 
 %h3 Copy
 Copy an existing suite (or group of suites) and register it (or them)
