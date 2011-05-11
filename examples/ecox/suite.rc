@@ -1,5 +1,5 @@
 title = EcoConnect Operational Cylc Suite
-maximum runahead hours = 24
+runahead limit in hours = 24
 job submission log directory = $HOME/running/$CYLC_SUITE/logs
 
 # this is a demo suite with real task implementation stripped out:

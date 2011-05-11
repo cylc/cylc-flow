@@ -986,6 +986,31 @@ against a specification, and they translate directly into nested
 dictionary data structures inside the program - making it very
 easy to add new configuration items to cylc.
 
+\begin{myitemize}
+    \item {\bf All Entries} are of the form \lstinline@item = value@.
+    \item {\bf [Section] and [[Subsection]] Headings} use nested square brackets.
+    \item {\bf \#Comments} follow a hash character.
+    \item {\bf ``Strings''} are quoted (but quotes can usually be omited).
+    \item {\bf ``````Multiline \newline Strings''''''} are triple-quoted.
+    \item {\bf L,i,s,t,s} are comma separated (and space may follow the comma)
+    \item {\bf White Space} is ignored, but indenting can be used for clarity.
+    \item {\bf Sections are closed by the next section heading},
+        so within a section all top level items must be defined before
+        any subsections (and similarly for lower levels of nesting).
+\end{myitemize}
+
+And the following are cylc-specific additions to the ConfigObj format:
+
+\begin{myitemize}
+    \item {\bf Continuation \textbackslash \newline lines} follow a trailing backslash.
+    \item {\bf Dependency Graph Strings} may contain blank lines
+        and inline comments (see Section~\ref{SuitercDependencyGraph}).
+    \item {\bf \%include path/to/incfile } Include-file can be used; 
+        paths are specified, portably, relative to the suite
+        definition directory; they can span section boundaries, and may
+        be multiply-included and nested. 
+\end{myitemize}
+
  The following pseudo-listing illustrates the file format:
 
 \begin{lstlisting}
@@ -1015,32 +1040,6 @@ a list item with continuation = a, b, c, \
 # ...
 \end{lstlisting}
 
-In words:
-
-\begin{myitemize}
-    \item {\bf Section Level} is determined by number of square brackets.
-    \item {\bf Leading White Space} is ignored but can be used for clarity.
-    \item {\bf Comments} follow a hash character.
-    \item {\bf Strings} are quoted (but quotes can usually be omited from single line strings).
-    \item {\bf Multiline Strings} are triple-quoted.
-    \item {\bf Lists} are comma separated: \lstinline=a,b,c= or \lstinline=a, b, c=
-    \item {\bf Section Closing} only occurs when another section heading is encountered,
-        so within any section, top level items must be defined before
-        any further subsections. This is a restriction, but it forces
-        some additional structure and clarity on the file format.
-\end{myitemize}
-
-And cylc-specific features:
-
-\begin{myitemize}
-    \item {\bf Continuation lines} follow a trailing backslash.
-    \item {\bf Dependency Graph Strings} may contain blank lines
-        and inline comments (see Section~\ref{SuitercDependencyGraph}).
-    \item {\bf Include File} paths specified relative to the suite
-        definition directory; can span section boundaries, and may be
-        multiply-included and nested; see
-        Section~\ref{IncludeFiles}. 
-\end{myitemize}
 
 \subsubsection{A Simple Example}
 
@@ -1132,31 +1131,46 @@ wait till run time to find errors:
 \begin{myitemize}
     \item Firstly, the file is parsed and validated
         against the \lstinline=$CYLC_DIR/conf/suiterc.spec=
-        specification.  This detects any formatting errors (e.g.\
-        unmatched section heading brackets), misspelled or
-        illegal entries, and illegal values.
-    \item Secondly, it does some cross-entry consistency checking and
-        attempts to create the suite's task proxy objects according to
+        specification to detect formatting errors, misspelled or
+        illegal entries, and illegal values. This is in fact done
+        automatically every time a \lstinline=suite.rc= file is parsed. 
+    \item Secondly, some cross-entry consistency checking is done, and
+        the suite's task proxy objects will be created according to
         the information parsed from the file.
 \end{myitemize}
 
 \subsubsection{Warnings}
 
-Warnings are emitted if any tasks in the dependency graph are not
-defined in the [tasks] section, or if any tasks defined in the [tasks]
-section are not used in the dependency graph.  These are not errors unless
-done inadvertantly (a task defined by graph alone will run as a dummy task; 
-and you can temporarily remove a defined task by commenting it out of, or 
-removing it from, the dependency graph).
+Warnings are emitted during validation if,
+\begin{myitemize}
+    \item any tasks in the dependency graph are not defined in the
+        [tasks] section
+    \item any tasks defined in the [tasks] section are not used in the
+        dependency graph.
+\end{myitemize}
+
+These are not necessarily errors - a task defined by graph alone will
+run as a dummy task, and you can temporarily disable a defined task by
+commenting it out of the dependency graph.  Note that you can also 
+temporarily disable tasks using the following config items:
+\begin{lstlisting}
+tasks to include at startup = foo, bar, baz
+task to exclude at startup = oof, rab, zab
+\end{lstlisting}
+(this has a different effect however, because any task still in the 
+dependency graph will featuring in the dependencies of other tasks
+even if ``excluded at startup'' - thus some manual triggering may
+be required).
+
 
 \subsubsection{The suiterc.spec File}
 
 The file \lstinline=$CYLC_DIR/conf/suiterc.spec= is the ultimate
 arbiter of what's allowed in a cylc \lstinline=suite.rc= file. It
 defines every legal entry and, where appropriate, legal values and
-default values. It's use in the suite validation process is automatic.
-Section~\ref{SuiteRCReference}, Suite.rc Reference, defines
-every legal \lstinline=suite.rc= entry.
+default values. Validation against the spec file is automatically done 
+every time a suite.rc is parsed. Section~\ref{SuiteRCReference},
+Suite.rc Reference, defines every legal \lstinline=suite.rc= entry.
 
 \pagebreak
 \subsection{Principles And Suggestions}
