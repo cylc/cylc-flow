@@ -25,7 +25,7 @@ task failed hook            = alert.sh
 task warning hook           = alert.sh
 task submission failed hook = alert.sh
 task timeout hook           = timeout.sh
-task submission timeout minutes = 0.0
+task submission timeout in minutes = 0.0
 
 #use crude safety lock = True
 #ignore task owners = True
@@ -152,7 +152,7 @@ echo bye
         command = cylc wrap D.sh
         #command = D-no-wrap.sh
         #command = cylc wrap D-fail.sh, cylc wrap D.sh,
-        task execution timeout minutes = 0.0
+        task execution timeout in minutes = 0.0
         #reset execution timeout on incoming messages = False
         # job submission method = ll_basic
         [[[environment]]]

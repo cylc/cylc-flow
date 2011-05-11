@@ -261,8 +261,8 @@ class scheduler(object):
         task.task.task_warning_hook = self.config['task warning hook']
         task.task.task_submission_failed_hook = self.config['task submission failed hook']
         task.task.task_timeout_hook = self.config['task timeout hook']
-        task.task.task_submission_timeout_minutes = self.config['task submission timeout minutes']
-        task.task.task_execution_timeout_minutes = self.config['task execution timeout minutes']
+        task.task.task_submission_timeout_minutes = self.config['task submission timeout in minutes']
+        task.task.task_execution_timeout_minutes = self.config['task execution timeout in minutes']
         task.task.reset_execution_timeout_on_incoming_messages = self.config['reset execution timeout on incoming messages']
 
         # CYLC EXECUTION ENVIRONMENT
@@ -1430,7 +1430,7 @@ class scheduler(object):
         if not self.start_time:
             # only do cold and warmstarts for now.
             self.runtime_graph_finalized = True
-        self.runtime_graph_cutoff = self.config['visualization']['run time graph cutoff hours']
+        self.runtime_graph_cutoff = self.config['visualization']['run time graph cutoff in hours']
 
     def update_runtime_graph( self, task ):
         if self.runtime_graph_finalized:

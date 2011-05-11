@@ -230,16 +230,16 @@ task timeout hook = string( default=None )
 #>\end{myitemize}
 
 #>IGNORE
-task submission timeout minutes = float( default=None )
-task execution timeout minutes = float( default=None )
+task submission timeout in minutes = float( default=None )
+task execution timeout in minutes = float( default=None )
 #>RESUME
 
-#> \subsubsection{task ACTION timeout minutes}
+#> \subsubsection{task ACTION timeout in minutes}
 #>You can set timeout intervals for task submission or execution with
 #>the following items:
 #>\begin{myitemize}
-#>\item {\bf task submission timeout minutes}
-#>\item {\bf task execution timeout minutes}
+#>\item {\bf task submission timeout in minutes}
+#>\item {\bf task execution timeout in minutes}
 #>\end{myitemize}
 #> If a task has not started (or finished) N minutes after it was submitted 
 #> (or started), the task timeout hook script will be called with the
@@ -752,17 +752,17 @@ __many__ = string
 #>\end{myitemize}
 
 #>IGNORE
-    task submission timeout minutes = float( default=None )
-    task execution timeout minutes = float( default=None )
+    task submission timeout in minutes = float( default=None )
+    task execution timeout in minutes = float( default=None )
 #>RESUME
 
-#> \paragraph{    task ACTION timeout minutes}
+#> \paragraph{    task ACTION timeout in minutes}
 #> 
 #> You can set timeout intervals for task submission or execution with
 #>the following items:
 #>\begin{myitemize}
-#>\item {\bf task submission timeout minutes}
-#>\item {\bf task execution timeout minutes}
+#>\item {\bf task submission timeout in minutes}
+#>\item {\bf task execution timeout in minutes}
 #>\end{myitemize}
 #> If a task has not started (or finished) N minutes after it was submitted 
 #> (or started), the task timeout hook script will be called with the
@@ -966,7 +966,7 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 #> (via \lstinline=cylc graph= or gcylc) and the run time resolved
 #> dependency graph generated at the start of each suite run. They do not
 #> affect the graph suite control interface.
-run time graph cutoff hours = integer( default=24 )
+run time graph cutoff in hours = integer( default=24 )
 #> Cylc generates a run time graph of resolved dependencies, from the
 #> start of every run until each task has passed this cutoff. Use 
 #> dummy mode to generate run time graphs quickly.

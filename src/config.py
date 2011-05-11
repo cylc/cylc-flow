@@ -1114,8 +1114,8 @@ class config( CylcConfigObj ):
         taskd.task_warning_hook = taskconfig['task warning hook']
         taskd.task_submission_failed_hook = taskconfig['task submission failed hook']
         taskd.task_timeout_hook = taskconfig['task timeout hook']
-        taskd.execution_timeout_minutes = taskconfig['task execution timeout minutes']
-        taskd.submission_timeout_minutes = taskconfig['task submission timeout minutes']
+        taskd.execution_timeout_minutes = taskconfig['task execution timeout in minutes']
+        taskd.submission_timeout_minutes = taskconfig['task submission timeout in minutes']
         taskd.reset_execution_timeout_on_incoming_messages = taskconfig['reset execution timeout on incoming messages']
 
         taskd.logfiles    = taskconfig[ 'extra log files' ]
