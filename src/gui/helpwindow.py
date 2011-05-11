@@ -298,16 +298,11 @@ process has to know when you exit from the editor).
     help.show()
  
 def todo( b) :
-    help = helpwindow( "Commands not yet implemented in the GUI", 300, """
+    help = helpwindow( "Commands or options not yet implemented in the GUI", 300, """
 
-%h2 Task stop and unstop
-The 'cylc (un)stop SUITE TASK' commands allow you to stop a single task
-from running until unstopped again. This can be used to hold a single
-task while diagnosis or repair work is done, so you don't need to pause
-or shutdown the entire suite. A task must be in the 'waiting' state   
-prior to being stopped. Stopped tasks display as yellow in suite
-control panels, and they will be unstopped if the suite
-is restarted, by default.""")
+%h2 restart a suite with the '--no-unstop' option.
+By default, any tasks in the 'stopped' state will be unstopped on
+restarting a suite.""")
     help.show()
 
 def graph( b ):

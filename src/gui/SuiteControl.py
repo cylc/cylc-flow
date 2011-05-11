@@ -334,6 +334,18 @@ The cylc forecast suite metascheduler.
         if self.readonly:
             reset_failed_item.set_sensitive(False)
 
+        stoptask_item = gtk.MenuItem( 'Stop task' )
+        items.append( stoptask_item )
+        stoptask_item.connect( 'activate', self.stop_task, task_id, True )
+        if self.readonly:
+            stoptask_item.set_sensitive(False)
+
+        unstoptask_item = gtk.MenuItem( 'Unstop task' )
+        items.append( unstoptask_item )
+        unstoptask_item.connect( 'activate', self.stop_task, task_id, False )
+        if self.readonly:
+            unstoptask_item.set_sensitive(False)
+
         items.append( gtk.SeparatorMenuItem() )
     
         kill_item = gtk.MenuItem( 'Remove Task (after spawning)' )
@@ -599,6 +611,29 @@ The cylc forecast suite metascheduler.
         lv.quit()
         self.quitters.remove( lv )
         w.destroy()
+
+    def stop_task( self, b, task_id, stop=True ):
+        msg = "stop " + task_id + "?"
+        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+        response = prompt.run()
+        prompt.destroy()
+        if response != gtk.RESPONSE_OK:
+            return
+        try:
+            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+        except SuiteIdentificationError, x:
+            # the suite was probably shut down by another process
+            warning_dialog( x.__str__() ).warn()
+            return
+        if stop:
+            result = proxy.stop_task( task_id )
+        else:
+            result = proxy.unstop_task( task_id )
+
+        if result.success:
+            info_dialog( result.reason ).inform()
+        else:
+            warning_dialog( result.reason ).warn()
 
     def reset_task_state( self, b, task_id, state ):
         msg = "reset " + task_id + " to " + state +"?"
