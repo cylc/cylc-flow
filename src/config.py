@@ -1013,7 +1013,12 @@ class config( CylcConfigObj ):
         members = []
         my_family = {}
         for name in self['task families']:
-            self.taskdefs[name].type="family"
+            try:
+                self.taskdefs[name].type="family"
+            except KeyError:
+                print >> sys.stderr, 'WARNING: family ' + name + ' is not used in the graph'
+                continue
+ 
             mems = self['task families'][name]
             self.taskdefs[name].members = mems
             for mem in mems:
