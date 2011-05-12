@@ -8,9 +8,10 @@ GENERAL
   no more looping through the pool to find specific tasks.
 
 * task families:
-  1/ allow optional family finish even if member(s) fails
-  2/ manual family definition (with dummy PRE and POST tasks) - is this
+  1/ manual family definition (with dummy PRE and POST tasks) - is this
   any better than not using a family?
+  2/ alternative implementation as a proper container of tasks? 
+  
 
 * IMPORTANT: rationalize suite shutdown criteria in main loop.
 

@@ -1199,13 +1199,12 @@ commenting it out of the dependency graph.
 
 \subsubsection{Task Families}
 
-When one or more family members starts running, the family will show running.
-If a family member fails, the family will fail.  If the failed member is
-reset to 'finished', the family will automatically show finished, allowing
-downstream tasks to trigger off it.
-If the failed member is re-triggered, the family will not revert to the 
-running state, but will show failed until the member finishes successfully
-at which point the family will finish too.
+While any  family member is running, the family will show running. Once
+every member has either finished or failed, the family will show 
+finished if all members were successful, or failed if some weren't.
+It does not show failed as soon as the first member fails, thus
+downstream tasks can trigger off (FAM:finished or FAM:failed) without
+fear of missing task output from a successful member.
 
 \subsection{Principles And Suggestions}
 
