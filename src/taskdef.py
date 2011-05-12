@@ -298,11 +298,18 @@ class taskdef(object):
                 foo.add( self.member_of + '%' + sself.c_time + ' started' )
                 sself.prerequisites.add_requisites( foo )
 
-            # familyfinished prerequisites
             if self.type == 'family':
+                # familyfinished prerequisites
                 sself.familyfinished_prerequisites = plain_prerequisites( sself.id )
                 for member in self.members:
                     sself.familyfinished_prerequisites.add( member + '%' + sself.c_time + ' finished' )
+                # familyfailed prerequisites
+                sself.familyfailed_prerequisites = conditional_prerequisites( sself.id )
+                expr = ''
+                for member in self.members:
+                    expr += member + ' | '
+                    sself.familyfailed_prerequisites.add( member + '%' + sself.c_time + ' failed', member )
+                sself.familyfailed_prerequisites.set_condition( expr.rstrip('| ') )
 
             sself.logfiles = logfiles()
             for lfile in self.logfiles:

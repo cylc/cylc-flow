@@ -4,11 +4,18 @@ GENERAL
 * LONG TERM: consider replacing finished tasks with a data structure
   that remembers what happened. More efficient for very large suites?
 
-* task families: 1/ make family fail if a member fails. 
-  2/ allow optional family complete even if a member fails
-  3/ document manual family definition via dummy PRE and POST tasks.
+* consider changing task pool to a dictionary indexed by task ID =>
+  no more looping through the pool to find specific tasks.
+
+* task families:
+  1/ allow optional family finish even if member(s) fails
+  2/ manual family definition (with dummy PRE and POST tasks) - is this
+  any better than not using a family?
 
 * IMPORTANT: rationalize suite shutdown criteria in main loop.
+
+* IMPORTANT a task family that is not in the graph causes validation
+  abort, KeyError in config.py:load_tasks() line 1016.
 
 * exclude failed tasks from runahead limit check?  This may depend on
   the next item:
@@ -127,9 +134,6 @@ GENERAL
 * inlined suite.rc: avoid comments ending in line continuation marker
   (2D textual dependency graph in comments at start of e.g. suite.rc)
 
-* DOCUMENT: cylc.rc: BARE STRINGS ARE OK ONLY IF THEY DON'T CONTAIN
-  COMMAS, which makes them look like lists to the configobj validator.
-
 * document insertion danger: if you insert task A(T+N) ahead of A(T),
   the suite will shut down if A(T) catches up with A(T+N): 'task has 
   already registered its outputs'
@@ -185,9 +189,7 @@ GENERAL
   + Ability to reset (or otherwise operate on) all members of a family.
   + Check effect of 'reset to waiting' on task families - need to reset
     the special finished prerequisites too?
-  + Task family needs to be set 'failed' if all (or any?) members fail
   + use with --include and --exclude?
-  + task owner should not be required with families
 
 * IMPORTANT: check that the user-defined task names do not clash with
   parent class or attribute names.

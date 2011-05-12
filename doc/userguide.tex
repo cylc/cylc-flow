@@ -990,7 +990,9 @@ easy to add new configuration items to cylc.
     \item {\bf All Entries} are of the form \lstinline@item = value@.
     \item {\bf [Section] and [[Subsection]] Headings} use nested square brackets.
     \item {\bf \#Comments} follow a hash character.
-    \item {\bf ``Strings''} are quoted (but quotes can usually be omitted).
+    \item {\bf ``Strings''} are quoted.\footnote{quotes can actually be
+        omitted in single line strings, so long they don't contain
+        commas, which turn unquoted strings into lists.}
     \item {\bf ``````Multiline \newline Strings''''''} are triple-quoted.
     \item {\bf L,i,s,t,s} are comma separated (and space may follow the comma)
     \item {\bf White Space} is ignored, but indenting can be used for clarity.
@@ -1192,6 +1194,19 @@ run as a dummy task, and you can temporarily disable a defined task by
 commenting it out of the dependency graph. 
 
 \pagebreak
+
+\subsection{The Suite Dependency Graph}
+
+\subsubsection{Task Families}
+
+When one or more family members starts running, the family will show running.
+If a family member fails, the family will fail.  If the failed member is
+reset to 'finished', the family will automatically show finished, allowing
+downstream tasks to trigger off it.
+If the failed member is re-triggered, the family will not revert to the 
+running state, but will show failed until the member finishes successfully
+at which point the family will finish too.
+
 \subsection{Principles And Suggestions}
 
 Matters pertaining to simplicity, flexibility,

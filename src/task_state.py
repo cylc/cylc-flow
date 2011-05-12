@@ -16,7 +16,7 @@ dump file.
 
 class task_state(object):
 
-    allowed_status = [ 'waiting', 'submitted', 'running', 'finished', 'failed', 'stopped' ]
+    allowed_status = [ 'waiting', 'submitted', 'running', 'finished', 'failed', 'stopped', 'neutral' ]
     # INTERNALLY TO THIS CLASS, SPAWNED STATUS IS A STRING
     allowed_bool = [ 'true', 'false' ]
 
