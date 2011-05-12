@@ -1,7 +1,20 @@
 _______
 GENERAL
 
+* LONG TERM: consider replacing finished tasks with a data structure
+  that remembers what happened. More efficient for very large suites?
+
+* task families: 1/ make family fail if a member fails. 
+  2/ allow optional family complete even if a member fails
+  3/ document manual family definition via dummy PRE and POST tasks.
+
 * IMPORTANT: rationalize suite shutdown criteria in main loop.
+
+* exclude failed tasks from runahead limit check?  This may depend on
+  the next item:
+* cleanup algorithm and failed tasks: test with userguide suite in dummy
+  mode, failing C and F. In case of F, why do none of A,B,C get
+  removed? 
 
 * don't consider failed tasks in the cleanup or runahead algorithms.
   Failed mean prereqs were satisfied so we don't need to keep 
