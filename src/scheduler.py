@@ -698,7 +698,7 @@ class scheduler(object):
         # update oldest suite cycle time
         oldest_c_time = self.get_oldest_c_time()
         for itask in self.tasks:
-            if self.runahead and not itask.state.is_failed():
+            if self.runahead:
                 # if a runahead limit is defined, check for violations
                 tdiff = cycle_time.decrement( itask.c_time, self.runahead )
                 if int( tdiff ) > int( oldest_c_time ):

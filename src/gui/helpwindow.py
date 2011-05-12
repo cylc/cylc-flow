@@ -784,22 +784,22 @@ def userguide( w, graph=False ):
     update_tb( tb, "\n o Reset State to 'failed': ", [bold])
     update_tb( tb, "Put the task in the 'failed' state." )
 
-    update_tb( tb, "\n o Hold task: ", [bold])
-    update_tb( tb, "Put the task in the 'stopped' state; "
+    update_tb( tb, "\n o Hold: ", [bold])
+    update_tb( tb, "Put a task in the 'stopped' state; "
             "it won't run or spawn until released." )
 
-    update_tb( tb, "\n o Release task: ", [bold])
-    update_tb( tb, "Release task from the 'stopped' state "
+    update_tb( tb, "\n o Release: ", [bold])
+    update_tb( tb, "Release a task from the 'stopped' state "
             "so that it can run again as normal." )
 
-    update_tb( tb, "\n o Remove Task (after spawning): ", [bold])
+    update_tb( tb, "\n o Remove (after spawning): ", [bold])
     update_tb( tb, "Remove a task from the suite after ensuring that it has "
             "spawned a successor." )
-    update_tb( tb, "\n o Remove Task (without spawning): ", [bold])
+    update_tb( tb, "\n o Remove (without spawning): ", [bold])
     update_tb( tb, "Remove a task from the suite even if it has not "
             "yet spawned a successor (in which case it will be removed "
             "permanently unless re-inserted)." )
-    update_tb( tb, "\n o Remove Task (Recursive Purge): ", [bold])
+    update_tb( tb, "\n o Remove Tree (Recursive Purge): ", [bold])
     update_tb( tb, "Remove a task from the suite, then remove any task "
             "that would depend on it, then remove any tasks that would depend on "
             "those tasks, and so on, through to a given stop cycle." )

@@ -336,13 +336,13 @@ The cylc forecast suite metascheduler.
 
         items.append( gtk.SeparatorMenuItem() )
 
-        stoptask_item = gtk.MenuItem( 'Hold task' )
+        stoptask_item = gtk.MenuItem( 'Hold' )
         items.append( stoptask_item )
         stoptask_item.connect( 'activate', self.stop_task, task_id, True )
         if self.readonly:
             stoptask_item.set_sensitive(False)
 
-        unstoptask_item = gtk.MenuItem( 'Release task' )
+        unstoptask_item = gtk.MenuItem( 'Release' )
         items.append( unstoptask_item )
         unstoptask_item.connect( 'activate', self.stop_task, task_id, False )
         if self.readonly:
@@ -350,13 +350,13 @@ The cylc forecast suite metascheduler.
 
         items.append( gtk.SeparatorMenuItem() )
     
-        kill_item = gtk.MenuItem( 'Remove Task (after spawning)' )
+        kill_item = gtk.MenuItem( 'Remove (after spawning)' )
         items.append( kill_item )
         kill_item.connect( 'activate', self.kill_task, task_id )
         if self.readonly:
             kill_item.set_sensitive(False)
 
-        kill_nospawn_item = gtk.MenuItem( 'Remove Task (without spawning)' )
+        kill_nospawn_item = gtk.MenuItem( 'Remove (without spawning)' )
         items.append( kill_nospawn_item )
         kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
         if self.readonly:
