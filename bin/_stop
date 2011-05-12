@@ -1,42 +1,89 @@
 #!/usr/bin/env python
 
-import os, sys, re
+import os, sys
 import cycle_time
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 
-parser = PromptOptionParser( """cylc [control] stop [options] SUITE TASK_ID
+parser = PromptOptionParser( """cylc [control] stop|shutdown [options] SUITE [STOP]
 
-Put a waiting task into the 'stopped' state - it will not run until unstopped.
-See also 'cylc [control] unstop'.""",
-["""TASK_ID              Task to stop (NAME%YYYYMMDDHH)"""])
+1/ Shut down a suite when all currently running tasks have finished. 
+   No other tasks will be submitted to run in the meantime.
+
+2/ With [STOP], shut down a suite AFTER on of the following events:
+    a/ all tasks have passed the cycle time STOP (YYYYMMDDHH)
+    b/ the clock time has reached STOP (YYYY/MM/DD-HH:mm)
+    c/ the task STOP (TASK%YYYYMMDDHH) has finished running
+
+3/ With [--now], shut down immediately, regardless of tasks still running.
+   WARNING: beware of orphaning tasks that are still running at shutdown;
+   these may need to be killed manually, and they will (by default) be
+   resubmitted if the suite is restarted.
+
+See also:
+    cylc [control] start|run
+    cylc [control] restart""", 
+   [ """STOP                 YYYYMMDDHH (cycle time), or
+                         YYYY/MM/DD-HH:mm (clock time), or
+                          TASK%YYYYMMDDHH (task ID).""" ] )
+
+parser.add_option( "--now", 
+        help="Shut down immediately; see WARNING above.",
+        action="store_true", default=False, dest="shutdownnow" )
 
 (options, args) = parser.parse_args()
 
-if len(args) != 2:
-    parser.error( "Task ID or cycle time required" )
+shutdown_at = False
+if len( args ) == 2:
+    shutdown_at = True
+    shutdown_arg = args[1] 
 
 suite = parser.get_suite_name()
-
-target = args[1]
-
-try:
-    ( name, cycle ) = target.split('%')
-except ValueError:
-    parser.error( "Task ID must be NAME%YYYYMMDDHH")
-if not cycle_time.is_valid( cycle ):
-    parser.error( "invalid cycle time: " + cycle )
 
 try:
     proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 
-if not parser.prompt( 'Stop task ' + target + ' in'):
-    sys.exit(0)
+method = None
+if shutdown_at:
+    # STOP argument detected
+    if cycle_time.is_valid( shutdown_arg ):
+        # STOP is a cycle time
+        method = 'stop after cycle time'
+    else:
+        try:
+            # YYYY/MM/DD-HH:mm
+            date, time = shutdown_arg.split('-')
+            yyyy, mm, dd = date.split('/')
+            HH,MM = time.split(':')
+        except:
+            try:
+                name, ctime = shutdown_arg.split('%')
+            except:
+                parser.error( "invalid STOP argument: " + shutdown_arg )
+            else:
+                # STOP is a task ID
+                method = 'stop after task finishes'
+        else:
+            # STOP is a clock time
+            method = 'stop after clock time'
 
-result = proxy.stop_task( target )
+    if not parser.prompt( 'Set shutdown time ' + shutdown_arg + ' for'):
+        sys.exit(0)
+
+    result = proxy.set_stop( shutdown_arg, method )
+
+elif options.shutdownnow:
+    if not parser.prompt( 'Shut down NOW' ):
+        sys.exit(0)
+    result = proxy.shutdown_now()
+
+else:
+    if not parser.prompt( 'Shut down' ):
+        sys.exit(0)
+    result = proxy.shutdown()
 
 if result.success:
     print result.reason

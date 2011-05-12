@@ -302,8 +302,8 @@ def todo( b) :
     help = helpwindow( "Commands or options not yet implemented in the GUI", 300, """
 
 %h2 restart a suite with the '--no-unstop' option.
-By default, any tasks in the 'stopped' state will be unstopped on
-restarting a suite.""")
+By default, any tasks in the 'stopped' state (by 'cylc hold SUITE TASK' )
+will be unstopped on restarting a suite.""")
     help.show()
 
 def graph( b ):
@@ -583,13 +583,13 @@ def shutdown_guide( w ):
     alert = tb.create_tag( None, foreground = "red" )
     bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
 
-    update_tb( tb, "Help: Shutting A Suite Down", [bold, blue] )
+    update_tb( tb, "Help: Stopping A Suite From Running", [bold, blue] )
 
-    update_tb( tb, "\n\n o Shutdown after running tasks have finished", [bold, red] )
+    update_tb( tb, "\n\n o Stop after running tasks have finished", [bold, red] )
     update_tb( tb, "\nDo not submit any new tasks to run and "
             "shut down as soon as currently running tasks have finished." )
 
-    update_tb( tb, "\n\n o Shutdown NOW (beware of orphaned tasks)", [bold, red] )
+    update_tb( tb, "\n\n o Stop NOW (beware of orphaned tasks)", [bold, red] )
     update_tb( tb, "\nStop the suite immediately, regardless of "
             "tasks still running. WARNING: (a) you may need to manually "
             "kill any tasks that are still running; (b) The final "
@@ -598,7 +598,7 @@ def shutdown_guide( w ):
             "run to completion post shutdown will thus be resubmitted, "
             "by default, if the suite is restarted.")
 
-    update_tb( tb, "\n\n o Shutdown After Cycle Time (YYYYMMDDHH)", [bold, red] )
+    update_tb( tb, "\n\n o Stop After Cycle Time (YYYYMMDDHH)", [bold, red] )
     update_tb( tb, "\nStop the suite once all tasks have passed "
             "the cycle time YYYYMMDDHH. This results in tasks "
             "entering a 'stopped' state once they have spawned "
@@ -606,6 +606,17 @@ def shutdown_guide( w ):
             "restart the suite, stopped tasks will be unstopped "
             "by default." )
 
+    update_tb( tb, "\n\n o Stop After Wall Clock Time (YYYY/MM/DD/HH-HH:mm)", [bold, red] )
+    update_tb( tb, "\nAt the specified clock time, the suite will refrain "
+            "from submitting any tasks to run, and will shut down as soon "
+            "as all currently running tasks have finished.")
+ 
+    update_tb( tb, "\n\n o Stop After A Task Has Finished (NAME%YYYYMMDDHH)", [bold, red] )
+    update_tb( tb, "\nOnce no unfinished task of type NAME exists in the suite "
+            "for cycles prior to YYYYMMDDHH, the suite will refrain from "
+            "submitting any tasks to run, and will shut down as soon "
+            "as all currently running tasks have finished.")
+ 
     window.show_all()
 
 def userguide( w, graph=False ):

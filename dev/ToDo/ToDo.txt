@@ -1,6 +1,12 @@
 _______
 GENERAL
 
+* IMPORTANT: rationalize suite shutdown criteria in main loop.
+
+* don't consider failed tasks in the cleanup or runahead algorithms.
+  Failed mean prereqs were satisfied so we don't need to keep 
+  upstream tasks around.
+
 * errors caught be validate should also be caught cleanly if the user
   tries to start the suite. E.g. misspell a task in 'tasks to exclude at
   startup'
@@ -249,9 +255,6 @@ GENERAL
 * dummy mode restart: clock-rate is set by state dump file, so no point 
   in having rate as a commandline option unless it overrides. (and what
   about offset? should it be in the state dump too?).
-
-* a new task type modifier that allows failed "non-critical" tasks to be
-  ignored when applying the max runahead limit?
 
 * dot-file graph output assumes that task families are internally
   cotemporal - is this necessarily the case? (is this still true - since

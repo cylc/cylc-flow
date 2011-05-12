@@ -11,7 +11,7 @@ debug = True
 
 class start( scheduler ):
     def __init__( self ):
-        usage = """cylc [control] run [options] SUITE YYYYMMDDHHH
+        usage = """cylc [control] start|run [options] SUITE YYYYMMDDHHH
 
 Start a suite running at a specified initial cycle time. To restart a
 suite from a previous state (which may contain tasks at multiple cycle

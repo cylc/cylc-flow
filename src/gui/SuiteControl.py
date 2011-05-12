@@ -175,7 +175,7 @@ and associated methods for their control widgets.
             entry_ctime, stoptime_entry, no_reset_cb, statedump_entry,
             optgroups ):
 
-        command = 'cylc control run --gcylc'
+        command = 'cylc control start --gcylc'
         options = ''
         method = ''
         if coldstart_rb.get_active():
@@ -310,7 +310,7 @@ The cylc forecast suite metascheduler.
 
         items.append( gtk.SeparatorMenuItem() )
 
-        reset_ready_item = gtk.MenuItem( 'Trigger Now (if suite not paused)' )
+        reset_ready_item = gtk.MenuItem( 'Trigger Now (if suite not held)' )
         items.append( reset_ready_item )
         reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
         if self.readonly:
@@ -334,13 +334,13 @@ The cylc forecast suite metascheduler.
         if self.readonly:
             reset_failed_item.set_sensitive(False)
 
-        stoptask_item = gtk.MenuItem( 'Stop task' )
+        stoptask_item = gtk.MenuItem( 'Hold task' )
         items.append( stoptask_item )
         stoptask_item.connect( 'activate', self.stop_task, task_id, True )
         if self.readonly:
             stoptask_item.set_sensitive(False)
 
-        unstoptask_item = gtk.MenuItem( 'Unstop task' )
+        unstoptask_item = gtk.MenuItem( 'Unhold task' )
         items.append( unstoptask_item )
         unstoptask_item.connect( 'activate', self.stop_task, task_id, False )
         if self.readonly:
@@ -613,7 +613,10 @@ The cylc forecast suite metascheduler.
         w.destroy()
 
     def stop_task( self, b, task_id, stop=True ):
-        msg = "stop " + task_id + "?"
+        if stop:
+            msg = "hold " + task_id + "?"
+        else:
+            msg = "release " + task_id + "?"
         prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
         response = prompt.run()
         prompt.destroy()
@@ -723,7 +726,7 @@ The cylc forecast suite metascheduler.
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title( "Shutdown Suite '" + self.suite + "'")
+        window.set_title( "Stop Suite '" + self.suite + "'")
 
         vbox = gtk.VBox()
 
@@ -779,7 +782,7 @@ The cylc forecast suite metascheduler.
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        stop_button = gtk.Button( "_Shutdown" )
+        stop_button = gtk.Button( "_Stop" )
         stop_button.connect("clicked", self.stopsuite, window,
                 stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
                 stoptime_entry, stopclock_entry, stoptask_entry )
@@ -1151,19 +1154,19 @@ The cylc forecast suite metascheduler.
         if self.readonly:
             start_item.set_sensitive(False)
 
-        stop_item = gtk.MenuItem( '_Shutdown (soon, now, or later)' )
+        stop_item = gtk.MenuItem( '_Stop (soon, now, or later)' )
         start_menu.append( stop_item )
         stop_item.connect( 'activate', self.stopsuite_popup )
         if self.readonly:
             stop_item.set_sensitive(False)
 
-        pause_item = gtk.MenuItem( '_Pause (stop submitting tasks)' )
+        pause_item = gtk.MenuItem( '_Hold (stop submitting tasks)' )
         start_menu.append( pause_item )
         pause_item.connect( 'activate', self.pause_suite )
         if self.readonly:
             pause_item.set_sensitive(False)
 
-        resume_item = gtk.MenuItem( '_Unpause (resume submitting tasks)' )
+        resume_item = gtk.MenuItem( '_Release (resume submitting tasks)' )
         start_menu.append( resume_item )
         resume_item.connect( 'activate', self.resume_suite )
         if self.readonly:

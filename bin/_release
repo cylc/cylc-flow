@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+
+import os, sys, re
+import cycle_time
+import cylc_pyro_client
+from CylcOptionParsers import PromptOptionParser
+from port_scan import SuiteIdentificationError
+
+parser = PromptOptionParser( """cylc [control] release|unhold [options] SUITE [TASK]
+
+Release a suite or a single task from a hold, allowing it run as normal.
+Putting a suite on hold stops it from submitting any tasks that are
+ready to run, until it is released. Putting a waiting task on hold
+prevents it from running and spawning successors, until it is released.  
+
+See also 'cylc [control] hold'.""",
+["""TASK                 Task to release (NAME%YYYYMMDDHH)"""])
+
+(options, args) = parser.parse_args()
+
+if len(args) > 2:
+    parser.error("too many arguments")
+
+suite = parser.get_suite_name()
+
+suite = parser.get_suite_name()
+task_only = False
+if len(args) == 2:
+    task_only == True
+    task = args[1]
+
+    try:
+        ( name, cycle ) = task.split('%')
+    except ValueError:
+        parser.error( "Task ID must be NAME%YYYYMMDDHH")
+    if not cycle_time.is_valid( cycle ):
+        parser.error( "invalid cycle time: " + cycle )
+
+    if not parser.prompt( 'Release task ' + task + ' in'):
+        sys.exit(0)
+else:
+    if not parser.prompt( 'Release suite ' ):
+        sys.exit(0)
+
+try:
+    proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )
+except SuiteIdentificationError, x:
+    raise SystemExit(x)
+
+if task_only:
+    result = proxy.unstop_task( task )
+else:
+    result = proxy.resume()
+
+if result.success:
+    print result.reason
+else:
+    print 'ERROR:', result.reason
+    sys.exit(1)

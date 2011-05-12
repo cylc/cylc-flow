@@ -432,11 +432,13 @@ class scheduler(object):
                     print "MAIN LOOP TIME TAKEN:", seconds, "seconds"
 
             # SHUT DOWN IF ALL TASKS ARE FINISHED OR STOPPED
-            stop_now = True
+            stop_now = True  # assume stopping
             for itask in self.tasks:
+                # find any reason not to stop
                 if not itask.state.is_finished() and not itask.state.is_stopped():
                     # don't stop if any tasks are waiting, submitted, or running
                     stop_now = False
+                    break
                 if itask.state.is_finished() and not itask.state.has_spawned():
                     # Check for tasks that are finished but not spawned.
                     # If they are older than the suite stop time they
@@ -446,8 +448,10 @@ class scheduler(object):
                     if self.stop_time:
                         if int(itask.c_time) < int(self.stop_time):
                             stop_now = False
-                if not stop_now:
-                    break
+                            break
+                    else:
+                        stop_now = False
+                        break
             if stop_now:
                 self.log.warning( "ALL TASKS FINISHED OR STOPPED" )
                 break
@@ -694,7 +698,7 @@ class scheduler(object):
         # update oldest suite cycle time
         oldest_c_time = self.get_oldest_c_time()
         for itask in self.tasks:
-            if self.runahead:
+            if self.runahead and not itask.state.is_failed():
                 # if a runahead limit is defined, check for violations
                 tdiff = cycle_time.decrement( itask.c_time, self.runahead )
                 if int( tdiff ) > int( oldest_c_time ):
