@@ -1551,14 +1551,13 @@ running at once).
 \subsection{Task Names}
 
 To rename a task you just need to change its name in the
-\lstinline=suite.rc= file. The real suite task scripts don't need to
+\lstinline=suite.rc= file. The real task scripts don't need to
 know the name by which cylc refers to them, although they can extract
-it from the task execution environment if they wish
-(\lstinline=$TASK_NAME=). Strictly speaking all cylc task messaging 
-calls do have to know the name of the calling task, in order to 
-target the right task proxy inside their suite, but the messaging
-interface automatically extracts the name from the environment
-so it does not need to be supplied explicitly by the caller.
+it from their execution environment if they wish (actually 
+cylc task messaging calls do need to know the name of the calling task
+in order to target the right task proxy inside the parent suite, but the
+messaging commands automatically extract the name from the environment,
+so it's transparent to the caller).
 
 
 \subsection{How Tasks Are Invoked}
@@ -1569,7 +1568,7 @@ that (a) configures the execution environment for the task, and then
 the new job script to run by the chosen job submission method for the
 task.
 
-\subsection{Wrapping: Using Unmodified Existing Scripts}
+\subsection{Task Wrapping: Most Scripts Can Be Used Unmodified}
 \label{TaskWrapping}
 
 {\em Any process, or group of processes, whose execution is overseen
@@ -1596,7 +1595,7 @@ cylc wrap -m "sleep 30; /bin/false"
 \end{lstlisting}
 
 
-\subsection{Some Scripts May Require Modification}
+\subsection{Not Wrapping: Some Scripts May Require Modification}
 \label{AnnotatedTaskScript}
 
 Tasks that cannot be wrapped need to be modified slightly. This is 
@@ -1610,9 +1609,7 @@ a few calls to the cylc task messaging interface must be inserted
 in the appropriate places (probably not all in the same script given 
 the aforementioned internal complexity) to report task startup, finish,
 failure, and completion of any registered outputs (none if other tasks
-just trigger off it finishing).  
-
-To report startup, for instance:
+just trigger off it finishing).  To report startup, for instance:
 \begin{lstlisting}
 cylc task started
 \end{lstlisting}
@@ -1659,7 +1656,7 @@ Task commandlines obviously execute in the environment configured by the
 job script submitted to invoke the task (true even if the task spawns
 subprocesses, because the environment is exported). But {\em if 
 any part of task processing that has to make cylc messaging calls executes
-outside of that environment, you have to fix that. This could happen, 
+outside of that environment, you have to fix that}. This could happen, 
 for instance, if an internally complex task submits (internally) a final
 task processing job, say, to loadleveler, which by default does not copy
 the calling environment.  In this case one could modify the internal

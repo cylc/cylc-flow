@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # THIS ANNOTATED CYLC TASK SCRIPT shows how to handle cylc messaging
-# manually, which is only required for (a) tasks with internal outputs
+# manually. THIS IS ONLY REQUIRED for (a) tasks with internal outputs
 # that have to be reported complete before the task is finished, and (b)
 # tasks that are not started and finished by the same process, in which
 # case the process that finishes the job must do the final messaging.
