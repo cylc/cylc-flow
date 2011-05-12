@@ -175,7 +175,7 @@ and associated methods for their control widgets.
             entry_ctime, stoptime_entry, no_reset_cb, statedump_entry,
             optgroups ):
 
-        command = 'cylc control start --gcylc'
+        command = 'cylc control run --gcylc'
         options = ''
         method = ''
         if coldstart_rb.get_active():

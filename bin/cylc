@@ -147,7 +147,10 @@ information_commands['nudge'    ] = ['nudge' ]
 
 control_commands = OrderedDict()
 control_commands['gcylc'  ] = information_commands[ 'gcylc' ]
-control_commands['start'    ] = ['start', 'run' ]
+# NOTE: don't change 'run' to 'start' or the category [control]
+# becomes compulsory to disambiguate from 'cylc [task] started'.
+# Keeping 'start' as an alias however: 'cylc con start'.
+control_commands['run'    ] = ['run', 'start' ]
 control_commands['stop'] = ['stop', 'shutdown' ]
 control_commands['restart'] = ['restart' ]
 control_commands['trigger'] = ['trigger' ]
@@ -287,7 +290,7 @@ comsum[ 'log'        ] = 'Print or view suite logs, with filtering'
 comsum[ 'monitor'    ] = 'An in-terminal suite monitor (DEPRECATED, see gcylc)'
 # control
 comsum[ 'gcylc'      ] = 'The cylc Graphical User Interface'
-comsum[ 'start'      ] = 'Start a suite running at a specified cycle time'
+comsum[ 'run'        ] = 'Start a suite running at a specified cycle time'
 comsum[ 'stop'       ] = 'Stop a suite running by various means'
 comsum[ 'restart'    ] = 'Restart a suite from a previous state'
 comsum[ 'trigger'    ] = 'Cause a task to trigger immediately'
