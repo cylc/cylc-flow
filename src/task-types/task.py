@@ -261,6 +261,32 @@ class task( Pyro.core.ObjBase ):
             command = ' '.join( [self.task_submission_failed_hook, 'submit_failed', self.name, self.c_time, "'" + reason + "'"] )
             subprocess.call( command, shell=True )
 
+    def reset_state_ready( self ):
+        self.state.set_status( 'waiting' )
+        self.prerequisites.set_all_satisfied()
+        self.outputs.set_all_incomplete()
+
+    def reset_state_waiting( self ):
+        # waiting and all prerequisites UNsatisified.
+        self.state.set_status( 'waiting' )
+        self.prerequisites.set_all_unsatisfied()
+        self.outputs.set_all_incomplete()
+
+    def reset_state_finished( self ):
+        # all prerequisites satisified and all outputs complete
+        self.state.set_status( 'finished' )
+        self.prerequisites.set_all_satisfied()
+        self.outputs.set_all_complete()
+
+    def reset_state_failed( self ):
+        # all prerequisites satisified and no outputs complete
+        itask.state.set_status( 'failed' )
+        itask.prerequisites.set_all_satisfied()
+        itask.outputs.set_all_incomplete()
+
+    def reset_state_stopped( self ):
+        itask.state.set_status( 'stopped' )
+
     def run_external_task( self, dry_run=False ):
         self.log( 'DEBUG',  'submitting task script' )
         # construct the job launcher here so that a new one is used if

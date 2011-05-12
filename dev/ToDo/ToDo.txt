@@ -7,16 +7,7 @@ GENERAL
 * consider changing task pool to a dictionary indexed by task ID =>
   no more looping through the pool to find specific tasks.
 
-* task families:
-  1/ manual family definition (with dummy PRE and POST tasks) - is this
-  any better than not using a family?
-  2/ alternative implementation as a proper container of tasks? 
-  
-
 * IMPORTANT: rationalize suite shutdown criteria in main loop.
-
-* IMPORTANT a task family that is not in the graph causes validation
-  abort, KeyError in config.py:load_tasks() line 1016.
 
 * exclude failed tasks from runahead limit check?  This may depend on
   the next item:
@@ -186,12 +177,6 @@ GENERAL
 * in the new config format, what happens if we restart after suite.rc
   tasks changed?
 
-* TASK FAMILIES:
-  + Ability to reset (or otherwise operate on) all members of a family.
-  + Check effect of 'reset to waiting' on task families - need to reset
-    the special finished prerequisites too?
-  + use with --include and --exclude?
-
 * IMPORTANT: check that the user-defined task names do not clash with
   parent class or attribute names.
 
@@ -272,10 +257,6 @@ GENERAL
   in having rate as a commandline option unless it overrides. (and what
   about offset? should it be in the state dump too?).
 
-* dot-file graph output assumes that task families are internally
-  cotemporal - is this necessarily the case? (is this still true - since
-  rewritting the graphing code to use pygraphviz?)
-
 * check all open( file, mode ) statements for mode 'rb' etc. 
 
 * wherever I've used this:
@@ -300,7 +281,7 @@ GENERAL
   the end of it.
 
 * stop (without --now) won't cause shutdown if a task family (but not
-  it's members!) has just triggered.
+  it's members!) has just triggered?
 
 * task state at initialization: there's no point in giving initial
   state of "finished" for example, if this does not result in setting

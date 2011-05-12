@@ -5,54 +5,79 @@ import task
 from free import free
 from sequential import sequential
 
-#class family( sequential, free ):
 class family( free ):
+    """
+Task family implementation in cylc: a task that just enters the running
+state when ready, without running anything for real, so that it's members
+can trigger off it.  Also it has two special prerequisite types: 
+    1/ "family finished prerequisites" - these express dependence on all
+    family members finishing successfully.
+    2/ "family OR prerequisites" - conditional prerequisites that express
+    dependence on (member1 finished OR failed) AND (member2 finished OR failed) AND ...
+    If these are all satisfied it means that all members have either finished 
+    successfully or failed. They cannot be all satisfied while any task is
+    yet to finish or fail.
+Thus, we can tell by 1/ if ALL members finished successfully => family finished successfully;
+and by 2/, if ALL members have either finished sucessfully OR failed, i.e. no members 
+are still waiting, submitted, or running. if 1/ is not all satisifed but two is => at
+least one member failed => the family failed.  Downstream tasks can thus trigger off
+a family finishing or failing, with no danger of triggering before some members may
+still finish successfully, as could happen if the family entered the 'failed' state 
+as soon as any one member failed.
+    """
 
     def run_external_task( self, dry_run=False ):
-        self.log( 'DEBUG',  'entering running state' )
+        # just report started and enter the 'running' state
+        # (only the family members run real tasks).
         self.incoming( 'NORMAL', self.id + ' started' )
 
     def satisfy_me( self, task ):
         free.satisfy_me( self, task )
         self.familyfinished_prerequisites.satisfy_me( task )
-        #self.familyfailed_prerequisites.satisfy_me( task )
         self.familyOR_prerequisites.satisfy_me( task )
 
     def check_requisites( self ):
-        if not self.state.is_finished():
-            if self.familyfinished_prerequisites.all_satisfied():
-                self.set_all_internal_outputs_completed()
-                self.set_finished()
-                task.state_changed = True
-        if not self.state.is_failed():
-            if self.familyOR_prerequisites.all_satisfied():
-                self.outputs.set_all_incomplete()
-                #self.incoming( 'NORMAL', self.id + ' failed' )
-                self.set_failed('family member(s) failed' )
-                task.state_changed = True
+        if self.familyfinished_prerequisites.all_satisfied():
+            # all members completed successfully
+            self.set_all_internal_outputs_completed()
+            self.incoming( 'NORMAL', 'all family members finished' )
+            self.incoming( 'NORMAL', self.id + ' finished' )
+            #self.set_finished()
+            #task.state_changed = True
+        elif self.familyOR_prerequisites.all_satisfied():
+            # all members completed successfully OR failed
+            # so the 'elif' => one or more members failed.
+            self.outputs.set_all_incomplete()
+            #self.set_failed('family member(s) failed' )
+            self.incoming( 'CRITICAL', 'family member(s) failed' )
+            self.incoming( 'CRITICAL', self.id + ' failed' )
 
-    #def XXXXcheck_requisites( self ):
-    #    if not self.state.is_finished():
-    #        if self.familyfinished_prerequisites.all_satisfied():
-    #            if self.state.is_failed():
-    #                # suite operator has reset failed family members so
-    #                # I need to change state accordingly.
-    #                self.log('WARNING', 'Resetting from failed to finished' )
-    #                self.prerequisites.set_all_unsatisfied()
-    #                self.familyfailed_prerequisites.set_all_unsatisfied()
-    #                self.state.set_status('neutral')
-    #            self.set_all_internal_outputs_completed()
-    #            #self.incoming( 'NORMAL', self.id + ' finished' )
-    #            self.set_finished()
-    #            task.state_changed = True
-    #    if not self.state.is_failed():
-    #        if self.familyfailed_prerequisites.all_satisfied():
-    #            self.outputs.set_all_incomplete()
-    #            #self.incoming( 'NORMAL', self.id + ' failed' )
-    #            self.set_failed('family member(s) failed' )
-    #            task.state_changed = True
+    def reset_state_finished( self ):
+        free.reset_state_finished( self )
+        self.familyfinished_prerequisites.set_all_satisfied()
+        self.familyOR_prerequisites.set_all_unsatisfied()
+
+    def reset_state_failed( self ):
+        free.reset_state_failed( self )
+        self.familyfinished_prerequisites.set_all_unsatisfied()
+        self.familyOR_prerequisites.set_all_satisfied()
+
+    def reset_state_waiting( self ):
+        free.reset_state_waiting( self )
+        self.familyfinished_prerequisites.set_all_unsatisfied()
+        self.familyOR_prerequisites.set_all_unsatisfied()
+
+    def reset_state_ready( self ):
+        free.reset_state_ready( self )
+        self.familyfinished_prerequisites.set_all_unsatisfied()
+        self.familyOR_prerequisites.set_all_unsatisfied()
 
     def not_fully_satisfied( self ):
-        if not self.familyfinished_prerequisites.all_satisfied() or \
-                free.not_fully_satisfied( self ):
+        # keep negotiating until all family members have finished or failed.
+        if self.familyfinished_prerequisites.all_satisfied() or \
+            self.familyOR_prerequisites.all_satisfied():
+            # we are fully satisfied
+            return False
+        else:
+            # we're not
             return True

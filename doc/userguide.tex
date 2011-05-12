@@ -1199,12 +1199,47 @@ commenting it out of the dependency graph.
 
 \subsubsection{Task Families}
 
-While any  family member is running, the family will show running. Once
-every member has either finished or failed, the family will show 
-finished if all members were successful, or failed if some weren't.
-It does not show failed as soon as the first member fails, thus
-downstream tasks can trigger off (FAM:finished or FAM:failed) without
-fear of missing task output from a successful member.
+FamilyX = Foo, Bar, Baz
+
+A task family is a group of tasks that behave as a single unit - the
+suite triggers the whole group at once, and downstream tasks can trigger
+off the group as a whole.
+
+Implementation: the "family" itself is an abstract task type that just
+enters the 'running' state when its prerequisites are satisfied; members
+automatically trigger off their family starting up; the family's final
+state (finished or failed) is not determined until all of its members
+have either finished or failed. If *all* members finish successfully the
+family enters the 'finished' state, otherwise it enters the 'failed'
+state.
+
+Task families can be declared 'sequential', in which case their members 
+will run sequentially even if not sequential themselves.
+
+Families can have internal dependencies amongst members, and family 
+members can be part of other non-family relationships (e.g. a non-member
+task can trigger off a single member rather than the whole group); 
+however, the utility of this is not entirely clear. 
+
+{\bf How to recover from a family member (and therefore family) failure:} 
+\begin{myitemize}
+    \item 1/ fix the problem that caused the failure
+    \item 2/ then reset the failed member task to 'waiting' (or retrigger it)
+    \item 3/ then reset the family state to 'waiting' (or retrigger it)
+\end{myitemize}
+When the family triggers again, the reset member task will follow suit. If the
+member then completes successfully this time, so will the family, and downstream
+processing can proceed as normal.
+
+To trigger downstream processing off a family even if one or more of its 
+members failed (e.g.\ a family of obs processing tasks wherein you still
+want to use the obs that were successfully processed, even if some were not),
+using a conditional trigger:
+
+\begin{lstlisting}
+    graph = familyX | familyX:fail => PostProc
+\end{lstlisting}
+
 
 \subsection{Principles And Suggestions}
 

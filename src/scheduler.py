@@ -668,7 +668,17 @@ class scheduler(object):
                 self.broker.negotiate( itask )
 
         for itask in self.tasks:
-            itask.check_requisites()
+            # This decides whether task families have finished or failed
+            # based on the state of their members.
+            if itask.state.is_finished() or itask.state.is_failed():
+                # already decided
+                continue
+            if not itask.not_fully_satisfied():
+                # families are not fully satisfied until all their
+                # members have finished or failed. Only then can
+                # we decide on the final family state, by checking
+                # on its special family member prerequisites.
+                itask.check_requisites()
 
     def run_tasks( self ):
         # tell each task to run if it is ready
@@ -1069,27 +1079,15 @@ class scheduler(object):
         self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
 
         if state == 'ready':
-            # waiting and all prerequisites satisified.
-            itask.state.set_status( 'waiting' )
-            itask.prerequisites.set_all_satisfied()
-            itask.outputs.set_all_incomplete()
+            itask.reset_state_ready()
         elif state == 'waiting':
-            # waiting and all prerequisites UNsatisified.
-            itask.state.set_status( 'waiting' )
-            itask.prerequisites.set_all_unsatisfied()
-            itask.outputs.set_all_incomplete()
+            itask.reset_state_waiting()
         elif state == 'finished':
-            # all prerequisites satisified and all outputs complete
-            itask.state.set_status( 'finished' )
-            itask.prerequisites.set_all_satisfied()
-            itask.outputs.set_all_complete()
+            itask.reset_state_finished()
         elif state == 'failed':
-            # all prerequisites satisified and no outputs complete
-            itask.state.set_status( 'failed' )
-            itask.prerequisites.set_all_satisfied()
-            itask.outputs.set_all_incomplete()
+            itask.reset_state_failed()
         elif state == 'stopped':
-            itask.state.set_status( 'stopped' )
+            itask.reset_state_stopped()
 
         if state != 'failed':
             try:
