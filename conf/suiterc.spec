@@ -617,9 +617,11 @@ __many__ = string
 #>\end{myitemize}
 
     command = force_list( default=list( cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
-#> The commandline to execute, in the task execution environment, when
+#> The commandline, or {\em list of commandlines}, to execute when
 #> the task is ready to run. If the command is omitted or commented out
-#> the task will run as a dummy task.
+#> the task will run as a dummy task. If a list of commandlines is
+#> supplied, the task will automatically resubmit with the second
+#> commandline if the first fails (and so on).
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
