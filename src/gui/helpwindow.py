@@ -783,6 +783,15 @@ def userguide( w, graph=False ):
     update_tb( tb, "Set all of a task's outputs completed." )
     update_tb( tb, "\n o Reset State to 'failed': ", [bold])
     update_tb( tb, "Put the task in the 'failed' state." )
+
+    update_tb( tb, "\n o Hold task: ", [bold])
+    update_tb( tb, "Put the task in the 'stopped' state; "
+            "it won't run or spawn until released." )
+
+    update_tb( tb, "\n o Release task: ", [bold])
+    update_tb( tb, "Release task from the 'stopped' state "
+            "so that it can run again as normal." )
+
     update_tb( tb, "\n o Remove Task (after spawning): ", [bold])
     update_tb( tb, "Remove a task from the suite after ensuring that it has "
             "spawned a successor." )

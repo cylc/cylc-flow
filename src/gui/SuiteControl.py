@@ -334,13 +334,15 @@ The cylc forecast suite metascheduler.
         if self.readonly:
             reset_failed_item.set_sensitive(False)
 
+        items.append( gtk.SeparatorMenuItem() )
+
         stoptask_item = gtk.MenuItem( 'Hold task' )
         items.append( stoptask_item )
         stoptask_item.connect( 'activate', self.stop_task, task_id, True )
         if self.readonly:
             stoptask_item.set_sensitive(False)
 
-        unstoptask_item = gtk.MenuItem( 'Unhold task' )
+        unstoptask_item = gtk.MenuItem( 'Release task' )
         items.append( unstoptask_item )
         unstoptask_item.connect( 'activate', self.stop_task, task_id, False )
         if self.readonly:
