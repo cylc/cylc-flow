@@ -107,10 +107,10 @@ and associated methods for their control widgets.
             stopat = True
             stoptime = stoptime_entry.get_text()
             if stoptime == '':
-                warning_dialog( "No stop time entered" ).warn()
+                warning_dialog( "ERROR: No stop time entered" ).warn()
                 return
             if not cycle_time.is_valid( stoptime ):
-                warning_dialog( "Invalid stop time: " + stoptime ).warn()
+                warning_dialog( "ERROR: Invalid stop time: " + stoptime ).warn()
                 return
 
         elif stopnow_rb.get_active():
@@ -120,7 +120,7 @@ and associated methods for their control widgets.
             stopclock = True
             stopclock_time = stopclock_entry.get_text()
             if stopclock_time == '':
-                warning_dialog( "No stop time entered" ).warn()
+                warning_dialog( "ERROR: No stop time entered" ).warn()
                 return
             try:
                 # YYYY/MM/DD-HH:mm
@@ -129,23 +129,23 @@ and associated methods for their control widgets.
                 HH,MM = time.split(':')
                 stop_dtime = datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
             except:
-                warning_dialog( "Bad datetime (YYYY/MM/DD-HH:mm): " + stopclock_time ).warn()
+                warning_dialog( "ERROR: Bad datetime (YYYY/MM/DD-HH:mm): " + stopclock_time ).warn()
                 return
 
         elif stoptt_rb.get_active():
             stoptask = True
             stoptask_id = stoptask_entry.get_text()
             if stoptask_id == '':
-                warning_dialog( "No stop task ID entered" ).warn()
+                warning_dialog( "ERROR: No stop task ID entered" ).warn()
                 return
             try:
                 stoptask_id.split('%')
             except:
-                warning_dialog( "Bad task ID (TASK%YYYYMMDDHH): " + stoptask_id ).warn()
+                warning_dialog( "ERROR: Bad task ID (TASK%YYYYMMDDHH): " + stoptask_id ).warn()
                 return
         else:
             # SHOULD NOT BE REACHED
-            warning_dialog( "Bug in GUI?" ).warn()
+            warning_dialog( "ERROR: Bug in GUI?" ).warn()
             return
 
         window.destroy()
@@ -195,10 +195,20 @@ and associated methods for their control widgets.
 
         command += ' ' + options + ' '
 
-        if stoptime_entry.get_text():
+        ste = stoptime_entry.get_text()
+        if ste:
+            if not cycle_time.is_valid( ste ):
+                warning_dialog( "ERROR: invalid cycle time: " + ste ).warn()
+                return
             command += ' --until=' + stoptime_entry.get_text()
 
         ctime = entry_ctime.get_text()
+        if ctime == '':
+            warning_dialog( "ERROR: initial cycle time required" ).warn()
+            return
+        elif not cycle_time.is_valid( ctime ):
+            warning_dialog( "ERROR: invalid cycle time: " + ctime ).warn()
+            return
 
         if method != 'restart':
             if ctime == '':
@@ -494,10 +504,10 @@ The cylc forecast suite metascheduler.
         try:
             (name, cycle ) = task_id.split('%')
         except ValueError:
-            warning_dialog( "Task or Group ID must be NAME%YYYYMMDDHH").warn()
+            warning_dialog( "ERROR, Task or Group ID must be NAME%YYYYMMDDHH").warn()
             return
         if not cycle_time.is_valid( cycle ):
-            warning_dialog( "invalid cycle time: " + cycle ).warn()
+            warning_dialog( "ERROR, invalid cycle time: " + cycle ).warn()
             return
 
         window.destroy()
