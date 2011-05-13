@@ -490,7 +490,7 @@ def start_guide(w):
 
     update_tb( tb, "Help: Starting A Suite", [bold, blue] )
 
-    update_tb( tb, "\n\n o Start (YYYYMMDDHH)", [bold, red] )
+    update_tb( tb, "\n\n o From (YYYYMMDDHH)", [bold, red] )
     update_tb( tb, " - Cold, Warm, and Raw start.", [bold, red2])
     update_tb( tb, "\nInitial cycle time. Each configured task will be inserted "
             "into the suite with this cycle time, or with the closest subsequent "
@@ -498,7 +498,7 @@ def start_guide(w):
             "tasks are handled depends on the method (cold|warm|raw). "
             "See 'cylc [con] run --help' for more information.")
 
-    update_tb( tb, "\n\n o Stop (YYYYMMDDHH)", [bold, red] )
+    update_tb( tb, "\n\n o Until (YYYYMMDDHH)", [bold, red] )
     update_tb( tb, " - OPTIONAL.", [bold,red2])
     update_tb( tb, "\nFinal cycle time. Each task will stop spawning "
             "successors when it reaches this cycle time, and the suite "
@@ -512,17 +512,18 @@ def start_guide(w):
     update_tb( tb, "The default file, " )
     update_tb( tb, "<suite-state-dump-dir>/state", [bold] )
     update_tb( tb, ", records "
-            "the most recent previous state. However, prior to "
-            "actioning any intervention, cylc dumps a "
+            "the most recent previous state. Prior to "
+            "actioning any intervention, cylc also dumps a "
             "special state file and logs its name; to restart from "
             "one of these files just cut-and-paste the filename from the "
             "suite's cylc log. The suite's configured state dump directory "
             "is assumed, unless you specify an absolute path.")
 
-    update_tb( tb, "\n\n o Don't reset failed tasks", [bold, red] )
+    update_tb( tb, "\n\n o Don't reset failed tasks to the 'ready' state", [bold, red] )
     update_tb( tb, " - OPTIONAL, restart only.", [bold,red2])
     update_tb( tb, "\nAt startup, do not automatically reset failed tasks "
-            "to 'ready' (thereby triggering them immediately)." )
+            "to 'ready', which will result in them triggering immediately "
+            "if the suite is not on hold." )
  
     update_tb( tb, "\n\n o Dummy Mode", [bold, red] )
     update_tb( tb, " - OPTIONAL.", [bold,red2])
@@ -534,21 +535,21 @@ def start_guide(w):
             "initial clock offset from the initial cycle time (this allows "
             "you to simulate catch up to real time operation after a delay).")
 
-    update_tb( tb, "\n    + Fail Task (NAME%YYYYMMDDHH)", [bold, red] )
+    update_tb( tb, "\n    + Fail A Task (NAME%YYYYMMDDHH)", [bold, red] )
     update_tb( tb, " - OPTIONAL, dummy mode only.", [bold,red2])
     update_tb( tb, "\n   Get a task to fail in order "
             "to test the effect on the suite." )
 
-    update_tb( tb, "\n\n o Pause Immediately", [bold, red] )
+    update_tb( tb, "\n\n o Hold (pause) on startup", [bold, red] )
     update_tb( tb, " - OPTIONAL.", [bold,red2])
-    update_tb( tb, "\nStart a suite in the paused state to allow "
-            "immediate intervention in its state (e.g. inserting or "
-            "removing tasks) before resuming operation.")
+    update_tb( tb, "\nStart a suite in the held state: tasks that are "
+            "ready to run will not be submitted until you release the "
+            "hold.")
 
     update_tb( tb, "\n\n o Debug", [bold, red] )
     update_tb( tb, " - OPTIONAL.", [bold,red2])
-    update_tb( tb, "\nPrint exception tracebacks if an error occurs (otherwise just "
-            "the error message is printed).")
+    update_tb( tb, "\nIn debug mode, cylc uses the most verbose logging level "
+            "and will print full exception tracebacks if an error occurs.")
 
     window.show_all()
  
@@ -589,7 +590,7 @@ def shutdown_guide( w ):
     update_tb( tb, "\nDo not submit any new tasks to run and "
             "shut down as soon as currently running tasks have finished." )
 
-    update_tb( tb, "\n\n o Stop NOW (beware of orphaned tasks)", [bold, red] )
+    update_tb( tb, "\n\n o Stop immediately (beware of orphaned tasks)", [bold, red] )
     update_tb( tb, "\nStop the suite immediately, regardless of "
             "tasks still running. WARNING: (a) you may need to manually "
             "kill any tasks that are still running; (b) The final "
@@ -598,24 +599,24 @@ def shutdown_guide( w ):
             "run to completion post shutdown will thus be resubmitted, "
             "by default, if the suite is restarted.")
 
-    update_tb( tb, "\n\n o Stop After Cycle Time (YYYYMMDDHH)", [bold, red] )
+    update_tb( tb, "\n\n o Stop after all tasks have passed a given cycle time", [bold, red] )
     update_tb( tb, "\nStop the suite once all tasks have passed "
             "the cycle time YYYYMMDDHH. This results in tasks "
-            "entering a 'stopped' state once they have spawned "
-            "passed the designated cycle time. If you later "
+            "entering a 'stopped' (held) state once they have spawned "
+            "beyond the designated cycle time. If you later "
             "restart the suite, stopped tasks will be unstopped "
-            "by default." )
+            "(by default)." )
 
-    update_tb( tb, "\n\n o Stop After Wall Clock Time (YYYY/MM/DD/HH-HH:mm)", [bold, red] )
+    update_tb( tb, "\n\n o Stop after a given wall clock time", [bold, red] )
     update_tb( tb, "\nAt the specified clock time, the suite will refrain "
             "from submitting any tasks to run, and will shut down as soon "
-            "as all currently running tasks have finished.")
+            "as any running tasks have finished.")
  
-    update_tb( tb, "\n\n o Stop After A Task Has Finished (NAME%YYYYMMDDHH)", [bold, red] )
+    update_tb( tb, "\n\n o Stop after a given task finishes (NAME%YYYYMMDDHH)", [bold, red] )
     update_tb( tb, "\nOnce no unfinished task of type NAME exists in the suite "
             "for cycles prior to YYYYMMDDHH, the suite will refrain from "
             "submitting any tasks to run, and will shut down as soon "
-            "as all currently running tasks have finished.")
+            "as any running tasks have finished.")
  
     window.show_all()
 
@@ -664,14 +665,14 @@ def userguide( w, graph=False ):
             "and monitoring application for cylc, traditional interface. "
             "See 'cylc help' for the equivalent commandline functionality." )
 
-        update_tb( tb, "The upper 'light panel' is meant "
-            "to provide a quick visual overview of the current state "
+        update_tb( tb, "The upper 'light panel' "
+            "provides a quick visual overview of the current state "
             "of the suite, with colours to indicate task state: "
             "blue=waiting, orange=submitted, green=running, "
-            "gray=finished, red=failed. The lower panel is a cycle-time tree view "
-            "with more detail. You can filter on task state ('waiting', "
-            "'submitted', 'running', 'finished', and 'failed') and task "
-            "name, to quickly find the tasks you're interested in. " )
+            "gray=finished, red=failed, yellow=stopped (held). "
+            "The lower panel is a cycle-time tree view "
+            "with more detail on each task. You can filter on task state or task "
+            "name to quickly find the tasks you're interested in. " )
         update_tb( tb, 
             "Right-click on tasks in the lower panel for task control "
             "and interrogation options.", [bold] )
@@ -777,11 +778,11 @@ def userguide( w, graph=False ):
     update_tb( tb, "Reset the task to the 'ready' state (all prerequisites "
             "satisfied), thereby causing it to (re)trigger immediately (if "
             "the suite is not paused, in which case it will trigger on resuming)." )
-    update_tb( tb, "\n o Reset State to 'waiting': ", [bold])
+    update_tb( tb, "\n o Reset to 'waiting': ", [bold])
     update_tb( tb, "Set all of a task's prerequisites unsatisfied." )
-    update_tb( tb, "\n o Reset State to 'finished': ", [bold])
+    update_tb( tb, "\n o Reset to 'finished': ", [bold])
     update_tb( tb, "Set all of a task's outputs completed." )
-    update_tb( tb, "\n o Reset State to 'failed': ", [bold])
+    update_tb( tb, "\n o Reset to 'failed': ", [bold])
     update_tb( tb, "Put the task in the 'failed' state." )
 
     update_tb( tb, "\n o Hold: ", [bold])

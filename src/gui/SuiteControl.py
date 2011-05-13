@@ -316,19 +316,19 @@ The cylc forecast suite metascheduler.
         if self.readonly:
             reset_ready_item.set_sensitive(False)
 
-        reset_waiting_item = gtk.MenuItem( 'Reset State to "waiting"' )
+        reset_waiting_item = gtk.MenuItem( 'Reset to "waiting"' )
         items.append( reset_waiting_item )
         reset_waiting_item.connect( 'activate', self.reset_task_state, task_id, 'waiting' )
         if self.readonly:
             reset_waiting_item.set_sensitive(False)
 
-        reset_finished_item = gtk.MenuItem( 'Reset State to "finished"' )
+        reset_finished_item = gtk.MenuItem( 'Reset to "finished"' )
         items.append( reset_finished_item )
         reset_finished_item.connect( 'activate', self.reset_task_state, task_id, 'finished' )
         if self.readonly:
             reset_finished_item.set_sensitive(False)
 
-        reset_failed_item = gtk.MenuItem( 'Reset State to "failed"' )
+        reset_failed_item = gtk.MenuItem( 'Reset to "failed"' )
         items.append( reset_failed_item )
         reset_failed_item.connect( 'activate', self.reset_task_state, task_id, 'failed' )
         if self.readonly:
@@ -734,11 +734,11 @@ The cylc forecast suite metascheduler.
 
         flabel = gtk.Label( "Shut down the suite WHEN?" )
         vbox.pack_start (flabel, True)
-        stop_rb = gtk.RadioButton( None, "After currently running tasks have finished" )
+        stop_rb = gtk.RadioButton( None, "Stop after currently running tasks have finished" )
         vbox.pack_start (stop_rb, True)
-        stopnow_rb = gtk.RadioButton( stop_rb, "Immediately (careful: orphaned tasks!)" )
+        stopnow_rb = gtk.RadioButton( stop_rb, "Stop immediately (beware of orphaned tasks!)" )
         vbox.pack_start (stopnow_rb, True)
-        stopat_rb = gtk.RadioButton( stop_rb, "After all tasks have passed a given cycle time" )
+        stopat_rb = gtk.RadioButton( stop_rb, "Stop after all tasks have passed a given cycle time" )
         vbox.pack_start (stopat_rb, True)
 
         box = gtk.HBox()
@@ -750,7 +750,7 @@ The cylc forecast suite metascheduler.
         box.pack_start (stoptime_entry, True)
         vbox.pack_start( box )
 
-        stopct_rb = gtk.RadioButton( stop_rb, "After a given wall clock time" )
+        stopct_rb = gtk.RadioButton( stop_rb, "Stop after a given wall clock time" )
         vbox.pack_start (stopct_rb, True)
 
         box = gtk.HBox()
@@ -762,7 +762,7 @@ The cylc forecast suite metascheduler.
         box.pack_start (stopclock_entry, True)
         vbox.pack_start( box )
 
-        stoptt_rb = gtk.RadioButton( stop_rb, "After a given task finishes" )
+        stoptt_rb = gtk.RadioButton( stop_rb, "Stop after a given task finishes" )
         vbox.pack_start (stoptt_rb, True)
   
         stop_rb.set_active(True)
@@ -874,7 +874,7 @@ The cylc forecast suite metascheduler.
         box.pack_start (statedump_entry, True)
         vbox.pack_start(box)
 
-        no_reset_cb = gtk.CheckButton( "Don't reset failed tasks" )
+        no_reset_cb = gtk.CheckButton( "Don't reset failed tasks to the 'ready' state" )
         no_reset_cb.set_active(False)
         no_reset_cb.set_sensitive(False)
         vbox.pack_start (no_reset_cb, True)
@@ -886,12 +886,12 @@ The cylc forecast suite metascheduler.
 
         dmode_group = controlled_option_group( "Dummy Mode", "--dummy-mode" )
         dmode_group.add_entry( 
-                'Fail Task (NAME%YYYYMMDDHH)',
+                'Fail A Task (NAME%YYYYMMDDHH)',
                 '--fail='
                 )
         dmode_group.pack( vbox )
         
-        stpaused_group = controlled_option_group( "Pause Immediately", "--paused" )
+        stpaused_group = controlled_option_group( "Hold (pause) on startup", "--paused" )
         stpaused_group.pack( vbox )
 
         debug_group = controlled_option_group( "Debug", "--debug" )

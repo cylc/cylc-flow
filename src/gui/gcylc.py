@@ -1934,10 +1934,12 @@ The cylc forecast suite metascheduler.
                     stdout_exists = True
                 if stdout_exists:
                     response = question_dialog( 
-                        "Delete old output (stdout and stderr) for this suite?\n\n"
-                        "Output capture files exist from previous runs "
-                        "launched via gcylc; click Yes to delete them and start anew "
-                        "(Otherwise new output will be appended to the existing files)." ).ask()
+                        "Delete old CYLC OUTPUT from this suite?\n\n"
+                        "  + " + stdoutf + "\n\n"
+                        "(Deleting this file is safe - it only contains cylc stdout "
+                        "and stderr messages from previous runs launched via gcylc. "
+                        "Click 'Yes' to delete it and start anew, or 'No' to append "
+                        "new output to the existing file)." ).ask()
                     if response == gtk.RESPONSE_YES:
                         try:
                             if stdout_exists:
