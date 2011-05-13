@@ -49,16 +49,14 @@ class taskdef(object):
         self.owner = None
         self.host = None
 
-        self.submission_timeout_minutes = None
-        self.execution_timeout_minutes = None
-        self.reset_execution_timeout_on_incoming_messages = True
-        self.task_submitted_hook = None
-        self.task_started_hook = None
-        self.task_finished_hook = None
-        self.task_failed_hook = None
-        self.task_warning_hook = None
-        self.task_submission_failed_hook = None
-        self.task_timeout_hook = None
+        self.hook_scripts = {}
+        for event in [ 'submitted', 'submission failed', 'started', 
+                'warning', 'finished', 'failed', 'timeout' ]:
+            self.hook_scripts[ event ] = None
+
+        self.timeouts = {}
+        for item in [ 'submission', 'execution', 'reset on incoming' ]:
+            self.timeouts[ item ] = None
 
         self.intercycle = False
         self.hours = []
@@ -182,18 +180,19 @@ class taskdef(object):
 
         tclass.owner = self.owner
 
-        tclass.submission_timeout_minutes = self.submission_timeout_minutes
-        tclass.execution_timeout_minutes = self.execution_timeout_minutes
+        tclass.timeouts = self.timeouts
+        #tclass.submission_timeout_minutes = self.submission_timeout_minutes
+        #tclass.execution_timeout_minutes = self.execution_timeout_minutes
+        #tclass.reset_execution_timeout_on_incoming_messages = self.reset_execution_timeout_on_incoming_messages
 
-        tclass.reset_execution_timeout_on_incoming_messages = self.reset_execution_timeout_on_incoming_messages
-
-        tclass.task_submitted_hook = self.task_submitted_hook
-        tclass.task_started_hook = self.task_started_hook
-        tclass.task_finished_hook = self.task_finished_hook
-        tclass.task_failed_hook = self.task_failed_hook
-        tclass.task_warning_hook = self.task_warning_hook
-        tclass.task_submission_failed_hook = self.task_submission_failed_hook
-        tclass.task_timeout_hook = self.task_timeout_hook
+        tclass.hook_scripts = self.hook_scripts
+        #tclass.task_submitted_hook = self.task_submitted_hook
+        #tclass.task_started_hook = self.task_started_hook
+        #tclass.task_finished_hook = self.task_finished_hook
+        #tclass.task_failed_hook = self.task_failed_hook
+        #tclass.task_warning_hook = self.task_warning_hook
+        #tclass.task_submission_failed_hook = self.task_submission_failed_hook
+        #tclass.task_timeout_hook = self.task_timeout_hook
 
         tclass.remote_host = self.host
 

@@ -253,17 +253,18 @@ class scheduler(object):
        # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
         self.exclusive_suite_lock = not self.config[ 'allow multiple simultaneous instances' ]
 
-        # TASK EVENT HOOKS (may be overridden per task)
-        task.task.task_submitted_hook = self.config['task submitted hook']
-        task.task.task_started_hook = self.config['task started hook']
-        task.task.task_finished_hook = self.config['task finished hook']
-        task.task.task_failed_hook = self.config['task failed hook']
-        task.task.task_warning_hook = self.config['task warning hook']
-        task.task.task_submission_failed_hook = self.config['task submission failed hook']
-        task.task.task_timeout_hook = self.config['task timeout hook']
-        task.task.task_submission_timeout_minutes = self.config['task submission timeout in minutes']
-        task.task.task_execution_timeout_minutes = self.config['task execution timeout in minutes']
-        task.task.reset_execution_timeout_on_incoming_messages = self.config['reset execution timeout on incoming messages']
+        # GLOBAL EVENT HOOK SCRIPTS
+        task.task.global_hook_scripts[ 'submitted' ]         = self.config['task submitted hook script']
+        task.task.global_hook_scripts[ 'submission failed' ] = self.config['task submission failed hook script']
+        task.task.global_hook_scripts[ 'started'   ]         = self.config['task started hook script'  ]
+        task.task.global_hook_scripts[ 'warning'   ]         = self.config['task warning hook script'  ]
+        task.task.global_hook_scripts[ 'finished'  ]         = self.config['task finished hook script' ]
+        task.task.global_hook_scripts[ 'failed'    ]         = self.config['task failed hook script'   ]
+        task.task.global_hook_scripts[ 'timeout'   ]         = self.config['task timeout hook script'  ]
+        # GLOBAL TIMEOUT HOOK SCRIPTS
+        task.task.global_timeouts[ 'submission'    ]     = self.config['task submission timeout in minutes']
+        task.task.global_timeouts[ 'execution'     ]     = self.config['task execution timeout in minutes' ]
+        task.task.global_timeouts[ 'reset on incoming' ] = self.config['reset execution timeout on incoming messages']
 
         # CYLC EXECUTION ENVIRONMENT
         cylcenv = OrderedDict()

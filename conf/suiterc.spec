@@ -195,26 +195,26 @@ job submission log directory = string( default='$HOME/CylcLogs/$CYLC_SUITE_GROUP
 #>\end{myitemize}
 
 #>IGNORE
-task submitted hook = string( default=None )
-task submission failed hook = string( default=None )
-task started hook = string( default=None )
-task finished hook = string( default=None )
-task failed hook = string( default=None )
-task warning hook = string( default=None )
-task timeout hook = string( default=None )
+task submitted hook script = string( default=None )
+task submission failed hook script = string( default=None )
+task started hook script = string( default=None )
+task finished hook script = string( default=None )
+task failed hook script = string( default=None )
+task warning hook script = string( default=None )
+task timeout hook script = string( default=None )
 #>RESUME
 
-#> \subsubsection{task EVENT hooks}
+#> \subsubsection{task EVENT hook scripts}
 #> Task event hooks facilitate centralized alerting for critical events
 #> in operational suites. You can name script(s) to attach to various 
 #> events using one or more of the following items:
 #>\begin{myitemize}
-#>\item {\bf task submitted hook}
-#>\item {\bf task submission failed hook}
-#>\item {\bf task started hook}
-#>\item {\bf task finished hook}
-#>\item {\bf task failed hook}
-#>\item {\bf task timeout hook}
+#>\item {\bf task submitted hook script}
+#>\item {\bf task submission failed hook script}
+#>\item {\bf task started hook script}
+#>\item {\bf task finished hook script}
+#>\item {\bf task failed hook script}
+#>\item {\bf task timeout hook script}
 #>\end{myitemize}
 #> These items set global defaults that can be overridden by specific
 #> tasks; or you can omit the defaults and just handle alerts for
@@ -236,7 +236,7 @@ task submission timeout in minutes = float( default=None )
 task execution timeout in minutes = float( default=None )
 #>RESUME
 
-#> \subsubsection{task ACTION timeout in minutes}
+#> \subsubsection{task EVENT timeout in minutes}
 #>You can set timeout intervals for task submission or execution with
 #>the following items:
 #>\begin{myitemize}
@@ -247,10 +247,10 @@ task execution timeout in minutes = float( default=None )
 #> (or started), the task timeout hook script will be called with the
 #> following arguments supplied by cylc:
 #> \begin{lstlisting}
-#> <script> [ACTION] TASK CYCLE_TIME MESSAGE
+#> <script> [EVENT] TASK CYCLE_TIME MESSAGE
 #> \end{lstlisting}
-#> where ACTION is `submission' or `execution'.
-#> As for the hook scripts themselves, these global settings
+#> where EVENT is `submission' or `execution'.
+#> Like the hook scripts themselves, these global settings
 #> can be overridden by specific tasks.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
@@ -721,27 +721,27 @@ __many__ = string
 #>\end{myitemize}
 
 #>IGNORE
-    task submitted hook = string( default=None )
-    task submission failed hook = string( default=None )
-    task started hook = string( default=None )
-    task finished hook = string( default=None )
-    task failed hook = string( default=None )
-    task warning hook = string( default=None )
-    task timeout hook = string( default=None )
+    task submitted hook script = string( default=None )
+    task submission failed hook script = string( default=None )
+    task started hook script = string( default=None )
+    task finished hook script = string( default=None )
+    task failed hook script = string( default=None )
+    task warning hook script = string( default=None )
+    task timeout hook script = string( default=None )
 #>RESUME
 
-#> \paragraph{    task EVENT hooks}
+#> \paragraph{    task EVENT hook scripts}
 #>
 #> Task event hooks facilitate centralized alerting for critical events
 #> in operational suites. You can name script(s) to attach to various 
 #> events using one or more of the following items:
 #>\begin{myitemize}
-#>\item {\bf task submitted hook}
-#>\item {\bf task submission failed hook}
-#>\item {\bf task started hook}
-#>\item {\bf task finished hook}
-#>\item {\bf task failed hook}
-#>\item {\bf task timeout hook}
+#>\item {\bf task submitted hook script}
+#>\item {\bf task submission failed hook script}
+#>\item {\bf task started hook script}
+#>\item {\bf task finished hook script}
+#>\item {\bf task failed hook script}
+#>\item {\bf task timeout hook script}
 #>\end{myitemize}
 #> These are task-specific settings; you can also set global defaults.
 #> Hook scripts are called with the following arguments supplied by cylc:
@@ -760,7 +760,7 @@ __many__ = string
     task execution timeout in minutes = float( default=None )
 #>RESUME
 
-#> \paragraph{    task ACTION timeout in minutes}
+#> \paragraph{    task EVENT timeout in minutes}
 #> 
 #> You can set timeout intervals for task submission or execution with
 #>the following items:
@@ -772,9 +772,9 @@ __many__ = string
 #> (or started), the task timeout hook script will be called with the
 #> following arguments supplied by cylc:
 #> \begin{lstlisting}
-#> <script> [ACTION] TASK CYCLE_TIME MESSAGE
+#> <script> [EVENT] TASK CYCLE_TIME MESSAGE
 #> \end{lstlisting}
-#> where ACTION is `submission' or `execution'.
+#> where EVENT is `submission' or `execution'.
 #> As for the hook scripts, these are task-specific settings; you can also
 #> set global defaults.
 #>\begin{myitemize}

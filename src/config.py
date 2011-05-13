@@ -1111,17 +1111,18 @@ class config( CylcConfigObj ):
 
         taskd.job_submit_log_directory = taskconfig['job submission log directory']
 
-        # alerts and timeouts
-        taskd.task_submitted_hook = taskconfig['task submitted hook']
-        taskd.task_started_hook = taskconfig['task started hook']
-        taskd.task_finished_hook = taskconfig['task finished hook']
-        taskd.task_failed_hook = taskconfig['task failed hook']
-        taskd.task_warning_hook = taskconfig['task warning hook']
-        taskd.task_submission_failed_hook = taskconfig['task submission failed hook']
-        taskd.task_timeout_hook = taskconfig['task timeout hook']
-        taskd.execution_timeout_minutes = taskconfig['task execution timeout in minutes']
-        taskd.submission_timeout_minutes = taskconfig['task submission timeout in minutes']
-        taskd.reset_execution_timeout_on_incoming_messages = taskconfig['reset execution timeout on incoming messages']
+        # task-specific event hook scripts
+        taskd.hook_scripts[ 'submitted' ]         = taskconfig['task submitted hook script']
+        taskd.hook_scripts[ 'submission failed' ] = taskconfig['task submission failed hook script']
+        taskd.hook_scripts[ 'started'   ]         = taskconfig['task started hook script'  ]
+        taskd.hook_scripts[ 'warning'   ]         = taskconfig['task warning hook script'  ]
+        taskd.hook_scripts[ 'finished'  ]         = taskconfig['task finished hook script' ]
+        taskd.hook_scripts[ 'failed'    ]         = taskconfig['task failed hook script'   ]
+        taskd.hook_scripts[ 'timeout'   ]         = taskconfig['task timeout hook script'  ]
+        # task-specific timeout hook scripts
+        taskd.timeouts[ 'submission'    ]     = taskconfig['task submission timeout in minutes']
+        taskd.timeouts[ 'execution'     ]     = taskconfig['task execution timeout in minutes' ]
+        taskd.timeouts[ 'reset on incoming' ] = taskconfig['reset execution timeout on incoming messages']
 
         taskd.logfiles    = taskconfig[ 'extra log files' ]
         taskd.commands    = taskconfig[ 'command' ]
