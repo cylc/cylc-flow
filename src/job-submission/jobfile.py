@@ -35,7 +35,7 @@ class jobfile(object):
             self.cycle_time = tag
 
     def write( self ):
-        # Get a new temp filename, open it, and write the job script to it.
+        # Get a new temp filename, open it, and write the task execution script to it.
 
         # TO DO: use [,dir=] argument and allow user to configure the
         # temporary directory (default reads $TMPDIR, $TEMP, or $TMP)
@@ -55,7 +55,7 @@ class jobfile(object):
 
     def write_header( self ):
         self.FILE.write( '#!' + self.shell )
-        self.FILE.write( '\n\n# ++++ THIS IS A CYLC TASK JOB SUBMISSION FILE ++++' )
+        self.FILE.write( '\n\n# ++++ THIS IS A CYLC TASK EXECUTION SCRIPT ++++' )
         self.FILE.write( '\n# Task: ' + self.task_id )
         self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'')
 
@@ -79,7 +79,7 @@ class jobfile(object):
         # Task-specific variables may reference other previously-defined
         # task-specific variables, or global variables. Thus we ensure
         # that the order of definition is preserved (and pass any such
-        # references through as-is to the job script).
+        # references through as-is to the task execution script).
 
         # If the task overrides $CYLC_DIR and CYLC_SUITE_DIR
         # replace them in the global cylc environment (used by tasks

@@ -179,7 +179,7 @@ except KeyError, x:
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------
 if options.dry_run:
-    print "DRY RUN: create task execution script, show how it would be submitted."
+    print "DRY RUN: create the task execution script and show how it would be executed."
 else:
     print "Logging directory: " + logging_dir
     print

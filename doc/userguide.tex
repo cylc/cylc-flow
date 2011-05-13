@@ -1216,49 +1216,132 @@ using a conditional trigger:
 \section{Cylc Tasks}
 
 A {\em task} is a single schedulable unit in a cylc suite, uniquely
-identified by name and cycle time, and represented by a single task
-proxy object in the suite task pool.  Once submitted, a task must,
-\begin{myitemize}
-    \item report that it has started executing
-    \item report completion of any outputs that other tasks depend on
-        (this is automatic if they just depend on it finishing)
-    \item report successful finish, OR
-    \item report failure in case of error
-\end{myitemize}
-where ``report'' is short for ``send an appropriate message to the cylc
-instance that is running the suite'' (there may be multiple suites
-running at once).
+identified by name and cycle time.
+
+\subsection{Task Scripts}
+
+Behind every task lies a {\em task script} (or {\em task command} or
+{\em task program}) - the real script (or command or program) that
+implements, or at least initiates, the processing represented by the
+suite task. 
 
 \subsection{Task Names}
 
-To rename a task, just change its name in the suite.rc file.
-The real task scripts don't need to know the name by which cylc refers
-to them, although they can extract it from their execution environment
-if they wish (actually the cylc task messaging commands do need to know
-the name of the calling task, in order to target the right task proxy
-inside the parent suite, but they automatically extract this information
-from the task execution environment - so no explicit use of tasks names 
-is required outside of the suite.rc file).
+To rename a task, just change its name in the suite.rc file. Different
+suites can use the same task scripts by different names. (The cylc task
+messaging commands, below, do need to know the name of their calling
+task in order to target the right task proxy inside the right suite, but
+they automatically extract this information from the environment in which
+the task is executing, which is configured by the suite, so no explicit
+use of tasks names is required outside of the suite.rc file).
 
+\subsection{How Task Scripts Are Invoked By Cylc}
 
-\subsection{How Tasks Are Invoked}
+When a task is ready to run, cylc writes and then executes, via the job
+submission method specified for the task (see
+Section~\ref{JobSubmission}), a special {\em task execution script} that
+configures the environment for the task, and then executes the
+commandline specified for the task. The commandline for the task
+executes the {\em task script} or {\em task command}, which is the
+command or script 
 
-When a task is ready to run cylc writes a temporary {\em job script}
-that configures the execution environment for the task and then
-executes the commandline specified for the task. Finally, cylc submits
-the new job script to run by the chosen job submission method for the
-task.  For remote tasks, the job script is copied to the remote host 
-and executed there.
+%In more detail, the temporary ``task execution script'' contains:
+%\begin{myitemize}
+%    \item scripting to configure the execution environment for the task
+%        This includes user-defined environment variables:
+%        \begin{myitemize}
+%            \item global environment variables
+%            \item task-specific environment variables
+%            \item pre- and post-command scripting
+%            \item any batch queue scheduler directives
+%        \end{myitemize}
+%        and cylc-defined environment variables:
+%        \begin{myitemize}
+%            \item to identify the task and cycle time, etc.
+%            \item to portably locate the suite definition directory
+%            \item for access to cylc itself
+%        \end{myitemize}
+%    \item scripting to call the commandline defined for the task.
+%\end{myitemize}
+        
+Cylc writes the exact command used to submit each task to the suite
+stdout stream, so you can see the task script location, and any output
+redirection used, etc. The following is an excerpt from example suite
+stdout, running with the \lstinline=background= job submission method:
+
+\begin{lstlisting}
+# CYLC STDOUT
+ColdB%2011101300  READY TO RUN
+SUBMITTING TASK: /tmp/cylc-ColdB%2011101300-5gRx61 </dev/null 
+    1> /home/oliverh/CylcLogs/examples/userguide/ColdB%2011101300-N3pBYv.out 
+    2> /home/oliverh/CylcLogs/examples/userguide/ColdB%2011101300-N3pBYv.err &
+\end{lstlisting}
+
+You can also use \lstinline=cylc submit --dry-run= to generate a task
+execution script for inspection. Here's a simple example:
+
+\begin{lstlisting}
+prompt> cylc submit --dry-run examples:userguide A%2010080806 
+DRY RUN: create the task execution script and show how it would be executed.
+  * TASK EXECUTION SCRIPT: /tmp/cylc-A%2010080806-VXQusn
+  * JOB SUBMISSION METHOD: /tmp/cylc-A%2010080806-VXQusn </dev/null \
+    1> /home/oliverh/CylcLogs/examples/userguide/A%2010080806-CWYM68.out
+    2> /home/oliverh/CylcLogs/examples/userguide/A%2010080806-CWYM68.err &
+
+prompt> cat /tmp/cylc-A%2010080806-VXQusn
+#!/bin/bash
+
+# ++++ THIS IS A CYLC TASK EXECUTION SCRIPT ++++
+# Task: A%2010080806
+# To be submitted by method: 'background'
+
+# CYLC SUITE ENVIRONMENT:
+export CYLC_MODE="submit"
+export CYLC_SUITE_HOST="oliverh-33586DL.greta.niwa.co.nz"
+export CYLC_SUITE_PORT="NONE"
+export CYLC_DIR="/home/oliverh/cylc"
+export CYLC_SUITE_DIR="/home/oliverh/cylc/examples/userguide"
+export CYLC_SUITE="examples:userguide"
+export CYLC_SUITE_GROUP="examples"
+export CYLC_SUITE_NAME="userguide"
+export CYLC_SUITE_OWNER="oliverh"
+export CYLC_USE_LOCKSERVER="True"
+export CYLC_DUMMY_SLEEP="10"
+
+# CYLC ENVIRONMENT:
+. $CYLC_DIR/environment.sh
+
+# TASK IDENTITY:
+export TASK_ID=A%2010080806
+export TASK_NAME=A
+export CYCLE_TIME=2010080806
+
+# SUITE GLOBAL VARIABLES:
+export TASK_EXE_SECONDS="10"
+export WORKSPACE="/tmp/$USER/$CYLC_SUITE/common"
+export RUNNING="$WORKSPACE/running"
+
+# TASK LOCAL VARIABLES:
+export INPUT_DIR="$WORKSPACE"
+export OUTPUT_DIR="$WORKSPACE"
+export RUNNING_DIR="$RUNNING/A"
+export OPTIONS="-w $WORKSPACE -r $RUNNING_DIR"
+
+# EXECUTE THE TASK:
+cylc wrap A.sh $OPTIONS
+
+#EOF
+\end{lstlisting}
 
 \subsection{Task Wrapping: Using Existing Scripts As Cylc Tasks}
 \label{TaskWrapping}
 
-{\em Most existing pre- and post-processing jobs, models, etc., can
-be used as cylc tasks without modification.}
+{\em Most pre- and post-processing scripts, models, etc., can be used 
+by cylc without modification.}
 
 Specifically, any process or group of processes whose execution is
 overseen from start to finish by a single control script can be
-conscripted as a cylc task by simply executing it through the cylc task
+used as a cylc task by simply executing it through the cylc task
 wrapper:
 \begin{lstlisting}
 # SUITE.RC
@@ -1272,9 +1355,9 @@ The wrapped script does not need to be ``cylc-aware'' because the
 wrapper knows the identity of the task it represents, and its parent
 suite, through the task execution environment configured by the suite,
 and it automatically reports startup; success or failure according
-to the exit status of the wrapped script; and on finishing, completion
-of any specific outputs registered for the task in the suite.rc file
-(usually there are none, if other tasks just trigger off it finishing). 
+to the exit status of the wrapped script; and, on finishing, completion
+of any specific outputs registered for the task (if other tasks just
+trigger off it finishing, there will be none of these). 
 
 For simple tasks that don't warrant an entire script of their own, 
 a series of commands can be wrapped as a single cylc task. For example,
@@ -1297,52 +1380,62 @@ Fri May 13 10:34:29 NZST 2011
 Goodbye cruel world
 cylc (raw - 2011/05/13 10:34:29): CRITICAL TASK_ID failed
 \end{lstlisting}
-(when not invoked by a suite the messaging interface just writes to stdout).
+(when not invoked by a suite, the messaging interface just writes to stdout).
+You can also use the {\em pre-command scripting} and {\em post-command
+scripting}  suite.rc entries to construct simple tasks that are entirely
+scripted within the suite.rc file. However, use of this feature should be 
+restricted to simple, fast, and reliable scripting because it gets executed
+outside of the task started and finished messages.
 
-\subsubsection{Exceptions: Scripts That Require Modification}
+\subsubsection{Scripts That Require Modification For Cylc}
 \label{Unwrapping}
 
-The only tasks that can't be wrapped are:
+{\em Tasks with initiating scripts that do not see all processing
+through from start to finish} because they detach and exit immediately
+after spawning internal background or batch jobs, cannot be wrapped
+because the wrapper would assume the task is finished when the task
+script exits. 
 
-\begin{myitemize}
+{\em Tasks with internal outputs that have to be reported complete 
+before the task is finished}, so that others can trigger off them
+early, cannot be wrapped because the wrapper only reports outputs
+complete when the task is finished. 
 
-    \item those with initiating scripts that do not see subsequent
-        processing through until the end - e.g.\ scripts that spawn
-        background sub-processes or submit internal batch jobs and then
-        detach and exit before those jobs are complete. These cannot be
-        wrapped because the wrapper has no way of knowing when the task
-        is actually finished.
-    \item those with internal outputs that have to be reported complete
-        {\em before the task is finished} so that others can trigger off
-        them early (tasks with internal outputs can be wrapped, but the
-        internal outputs will only be reported complete by the cylc
-        wrapper when the task is finished).
-
-\end{myitemize}
-
-Scripts that can't be wrapped have to be modified slightly for cylc, 
-by inserting a few calls to the cylc task messaging interface in 
-appropriate places. For details, refer to the next section, {\em Task
-Messaging}.
+Non-wrapped tasks have to be modified slightly for cylc, by inserting 
+calls to the cylc task messaging interface in appropriate places (see
+the next section, {\em Task Messaging}).
 
 \subsection{Task Messaging}
 
-As noted previously, {\em explicit use of task messaging is only 
-required for the minority of tasks that cannot be wrapped, or those
-with internal outputs that have to be reported before the 
-task is finished.} 
+Once submitted, a task must,
+\begin{myitemize}
+    \item Report that it has started executing
+    \item Report completion of any outputs that other tasks depend on
+        (this is automatic if they just depend on it finishing)
+    \item Report successful finish, OR
+    \item Report failure in case of error
+\end{myitemize}
+where ``report'' is short for {\em send an appropriate message to the cylc
+instance that is running my suite} (there may be multiple suites
+running at once).
 
+
+As noted in the previous section, {\em explicit task messaging is only
+for the minority of tasks that cannot be wrapped, or those with internal
+outputs that have to be reported before the task is finished.} 
 To report startup, a script should call,
 \begin{lstlisting}
 # acquire a task lock and report that I've started
 cylc task started
+# OR
+cylc started
+# (the command category 'task' is optional; see 'cylc help')
 \end{lstlisting}
 
-Note the lack of any sender identification or targetting address for the
-message. The task messaging commands automatically deduce the calling
+Note the lack of any sender identification or targetting information in
+the command. Task messaging commands automatically deduce the calling
 task's name and cycle time, and the target suite (and its host and
 port), and so on, from the execution environment supplied by the suite.
-
 To report registered outputs, progress messages, warnings, etc.,
 \begin{lstlisting}
 # send a warning message (it will be logged by the suite):
@@ -1352,7 +1445,6 @@ cylc task message "foo products uploaded for $CYCLE_TIME"
 # report all outputs completed at once:
 cylc task message --all-outputs-completed
 \end{lstlisting}
-
 To report finished or failed (e.g.):
 \begin{lstlisting}
 if $FILES_FOUND; then
@@ -1366,37 +1458,24 @@ else
 fi
 \end{lstlisting}
 
-The task messaging commands have commandline help, see 
-\lstinline=cylc task help= and \lstinline=cylc task message help=, etc.;
-and Appendix~\ref{AnnotatedTaskScript} illustrates the kinds of 
-scripting required, including automatic error trapping, in more 
-detail.
-
-\subsubsection{Tasks With Internal Outputs}
-
-Tasks with internal outputs can be wrapped because the wrapper reports
-any registered outputs, even internal ones, complete when the wrapped
-script finishes successfully. However, the wrapper can only do this
-once the script has completed. Consequently dependent tasks won't
-be able to trigger until the wrapped task finishes, so they might
-as well just depend on it finishing (which is trivially expressed 
-in the suite.rc file).
-
+Appendix~\ref{AnnotatedTaskScript} provides more detailed information on
+task scripts.
 
 \subsubsection{Custom Task Wrappers}
 
 For large scientific models with idiosyncratic native job-submission
 processes that are difficult to understand or change, you may need to
-write a custom wrapper that modifies the native script(s) according
+write a custom wrapper that takes input parameters from the environment 
+and its commandline, and then modifies the native scripts according
 to task and cycle time, and to insert cylc messaging in the appropriate 
-places, before invoking the (now modified) native process. Any cylc job
-submission method can then be used to submit the custom wrapper that
-initiates the native process.
+places, before invoking the (now modified) native process. The task 
+command would then just invoke the custom wrapper.
 
 \subsubsection{Propagating The Task Execution Environment}
 
 Task commandlines obviously execute in the environment configured by the
-job script submitted to invoke the task (true even if the task spawns
+task execution script submitted to invoke the task (true even if
+the task spawns
 subprocesses, because the environment is exported). But {\em if 
 any part of task processing that has to make cylc messaging calls executes
 outside of that environment, you have to fix that}. This could happen, 
@@ -1417,7 +1496,8 @@ TO DO: explain environment propagation for remote tasks.
 \label{TaskExecutionEnvironment}
 
 As described in Section~\ref{JobSubmission}, {\em Job Submission}, cylc
-tasks are executed by means of submitting a temporary {\em job script}
+tasks are executed by means of submitting a temporary {\em cylc task
+execution script}
 that configures the execution environment before
 executing the task itself. The task execution environment provides
 access to the task so that the full path is not required in the
@@ -1498,7 +1578,7 @@ communicate the message to in the scheduler.
 You can refer to other environment variables in the values of
 suite-wide or task-specific environment variables, and in task command
 line arguments, as shown in the examples above. These will be explicitly
-interpolated by cylc prior to writting the job script (i.e.
+interpolated by cylc prior to writting the task execution script (i.e.
 the variables will be replaced by their values).  The distributed example
 suite (Section~\ref{Distributed}) exploits this to define task-specific
 I/O sub-directories underneath a top level working directory that is
@@ -1838,7 +1918,7 @@ sudo -u OWNER [SUBMISSION-COMMAND]
 For this to work \lstinline=/etc/sudoers= must be configured to allow
 the cylc user to invoke the relevant job submission commands as the task
 owner.  This might be difficult to arrange for the background execution
-method (wherein job scripts are invoked directly) but is
+method (wherein task execution scripts are invoked directly) but is
 otherwise easy to do: for the \lstinline=at_now= or loadleveler methods,
 for instance, the cylc user only needs \lstinline=sudo= access, as the
 task owner, to \lstinline=at= or \lstinline=llsubmit= respectively.
@@ -1865,7 +1945,7 @@ cylc-user% ssh REMOTE_HOST hostname
 \end{lstlisting}
 
 If the task additionally declares an \lstinline=%OWNER= section in the
-taskdef file owner, the job script will be copied to and
+taskdef file owner, the task execution script will be copied to and
 invoked on the remote host as the task owner; thus {\em you must have
 passwordless ssh configured, as the cylc user, to the remote host, as
 the task owner}:
@@ -1904,7 +1984,7 @@ If you have installed your entire suite definition directory on the
 remote platform (it is not necessary to do this, but it may be
 convenient) then you can also override \lstinline=$CYLC_SUITE_DIR= to
 point to that location. Then, if the remote task script resides in the
-suite definition scripts sub-directory, the job script will
+suite definition scripts sub-directory, the task execution script will
 automatically be able to find it after the cylc environment is
 configured.
 
@@ -1914,7 +1994,7 @@ CYLC_SUITE_DIR  /path/to/suite/definition/directory
 
 (\lstinline=CYLC_DIR=  and \lstinline=CYLC_SUITE_DIR= are inserted
 into your \lstinline=PATH= by \lstinline=environment.sh=, which is sourced
-in the job script before executing the task).
+in the task execution script before executing the task).
 
 Alternatively, you could specify the full path to the task script:
 
@@ -1936,10 +2016,6 @@ Environment}, Section~\ref{TaskExecutionEnvironment}):
     PATH     /remote/path:$PATH
 \end{lstlisting}
 
-\paragraph{Remote Host Example}
-
-See cylc's ``Distributed'' example suite, Section~\ref{Distributed}.
-
 
 \subsection{Job Submission Methods}
 \label{JobSubmission}
@@ -1960,50 +2036,6 @@ job submission method = loadleveler  # suite default
 
 \subsubsection{How Job Submission Works}
 \label{HowJobSubmissionWorks}
-
-When a task is ready to run cylc generates a temporary ``job script''
-that contains:
-\begin{myitemize}
-    \item scripting to configure the execution environment for the task
-        (see Section~\ref{TaskExecutionEnvironment}).This includes
-        user-defined:
-        \begin{myitemize}
-            \item global environment variables
-            \item task-specific environment variables
-            \item pre- and post-command scripting
-            \item batch queue scheduler directives (depending on method)
-        \end{myitemize}
-        and some cylc-defined environment settings:
-        \begin{myitemize}
-            \item to identify the task and cycle time, etc.
-            \item to portably locate the suite definition directory
-            \item for access to cylc itself
-        \end{myitemize}
-    \item scripting to call the commandline defined for the task.
-\end{myitemize}
-        
-The temporary job script is then submitted to run by the job submission
-method specified for the task. 
-
-Cylc writes the exact command used to submit each task to the suite
-stdout stream, so you can see the task script location, and any output
-redirection used, etc. The following is an excerpt from example suite
-stdout, running with the \lstinline=background= job submission method:
-
-\begin{lstlisting}
-# CYLC STDOUT
-ColdB%2011101300  READY TO RUN
-SUBMITTING TASK: /tmp/cylc-ColdB%2011101300-5gRx61 </dev/null 
-    1> /home/oliverh/CylcLogs/examples/userguide/ColdB%2011101300-N3pBYv.out 
-    2> /home/oliverh/CylcLogs/examples/userguide/ColdB%2011101300-N3pBYv.err &
-\end{lstlisting}
-
-%The filename of the temporary job script is reported to
-%stdout. It is deleted automatically if the task completes successfully,
-%but otherwise remains available for inspection.  
-
-You can also use \lstinline=cylc submit --dry-run= to generate a job script
-for inspection.
 
 \subsubsection{Available Methods}
 \label{AvailableMethods}
@@ -2033,14 +2065,14 @@ scheduler or cross-platform resource manager such as {\em loadleveler}
         (non loadleveler-specific) task scripts to loadleveler. 
         Any {\em directives} you provide in the 
         suite.rc file 
-        will be written to the cylc job script, which will then 
+        will be written to the task execution script, which will then 
         be submitted to run via \lstinline=llsubmit=. 
 
     \item \lstinline=ll_raw= - This method submits loadleveler-ready
         scripts (i.e.\ scripts containing hardwired directives) to
         loadleveler.  This may be necessary for complex (e.g.\
         multi-step) jobs. The original script is copied to
-        make the temporary job script, and cylc environment
+        make the temporary task execution script, and cylc environment
         scripting is inserted into it immediately after the loadleveler
         directives.
 
@@ -2096,7 +2128,7 @@ $CYLC_DIR/src/job-submission/job_submit.py
 \end{lstlisting}
 with reference to how it is done by the existing methods. This should be 
 easy to do. It may just be a matter of defining the commandline used
-to execute the aforementioned cylc job scripts, using the provided stdout 
+to execute the aforementioned task execution scripts, using the provided stdout 
 and stderr file paths. For example, here is the entire class code for 
 the \lstinline=background= method:
 
@@ -2111,7 +2143,7 @@ from job_submit import job_submit
 
 class background( job_submit ):
     """
-Run the job script directly in a background shell. 
+Run the task execution script directly in a background shell. 
     """
     def construct_jobfile_submission_command( self ):
         # stdin redirection allows background execution on remote hosts
@@ -2131,7 +2163,7 @@ from job_submit import job_submit
 
 class at_now( job_submit ):
     """
-Submit the job script to the 'at' scheduler, to run 'now'.
+Submit the task execution script to the 'at' scheduler, to run 'now'.
     """
     def construct_jobfile_submission_command( self ):
         self.command = 'at now <<EOF\n' + self.jobfile_path + \
@@ -3004,8 +3036,8 @@ this is only required for tasks that are not overseen by a single
 script that sees all processing through from start to finish; and
 tasks with internal outputs that have to be reported complete before the
 task is finished so that other tasks can trigger off them early.} 
-Otherwise, save yourself the trouble and just use the cylc task wrapper 
-(Section~\ref{TaskWrapping}).
+Otherwise save yourself the trouble (not that it is very difficult) and
+just use the cylc task wrapper (Section~\ref{TaskWrapping}).
 
 \lstset{language=bash}
 \lstinputlisting{annotated-task-script.sh}

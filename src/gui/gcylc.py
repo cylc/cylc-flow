@@ -1833,7 +1833,7 @@ The cylc forecast suite metascheduler.
 
         vbox = gtk.VBox()
 
-        dryrun_cb = gtk.CheckButton( "Dry Run (just generate the job script)" )
+        dryrun_cb = gtk.CheckButton( "Dry Run (just generate the task execution script)" )
         vbox.pack_start (dryrun_cb, True)
 
         label = gtk.Label("Task ID (NAME%YYYYMMDDHH)" )

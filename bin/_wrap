@@ -44,8 +44,8 @@ usage2() {
     echo 
     echo "A task whose initial process detaches and returns immediately"
     echo "after spawning other processes to complete the job cannot be"
-    echo "wrapped - the job scripts of such a task must be modified to add"
-    echo "a few cylc messaging calls (see the cylc userguide for more info)."
+    echo "wrapped - such tasks must be modified to add a few cylc"
+    echo "messaging calls (see the cylc userguide for details)."
     echo
     echo "Note that addition of messaging calls is also required if you"
     echo "want something to trigger off an internal output before the"

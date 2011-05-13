@@ -21,15 +21,15 @@ Minimalist loadleveler job submission.
         # results in the job executing in a non-login shell (.profile
         # not sourced) whereas /bin/ksh does get a login shell. WTF?! In
         # any case this directive appears to affect only the shell *from
-        # which the job script is executed*, NOT the shell *in which it
+        # which the task execution script is executed*, NOT the shell *in which it
         # is executed* (that is determined by the '#!' at the top of the
-        # job script).
+        # task execution script).
         defaults[ 'shell'    ] = '/bin/ksh'
 
         # NOTE ON INITIALDIR directive: if the initial "running dir"
         # does not exist (or is not writable by the user?) loadleveler
         # will hold the job. However, this is not an issue for us
-        # because cylc job scripts are always submitted from $HOME.
+        # because cylc task execution scripts are always submitted from $HOME.
         # add (or override with) taskdef directives
 
         # Now, in case the user has overridden the above defaults:

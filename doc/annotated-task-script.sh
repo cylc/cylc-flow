@@ -4,6 +4,10 @@
 # (so we don't have to check success of all operations manually)
 set -e; trap 'cylc task failed "error trapped"' ERR
 
+# ACQUIRE A TASK LOCK AND REPORT STARTED 
+# Just 'exit 1' on failure as 'task started' calls 'task failed' itself.
+cylc task started || exit 1
+
 # When using 'set -e' (abort on error) EXPLICIT CHECKS MUST BE INLINE:
 /bin/false
 if [[ $? != 0 ]]; then  # WRONG: this will never be executed.
@@ -14,18 +18,16 @@ fi
     # handle error
 }
 
-# ACQUIRE A TASK LOCK AND REPORT STARTED 
-# Just 'exit 1' on failure as 'task started' calls 'task failed' itself.
-cylc task started || exit 1
-
-# Scripting errors etc will be caught and reported by the ERR trap:
+# errors not explicitly handled will be caught by trapping:
 mkdir /illegal/dir/path  # trapped!
 
-# Cylc-aware subprocesses that call 'task failed' themselves on error:
-cylc-aware-script || exit 1  # just exit on error
+# Cylc-aware subprocesses that call 'task failed' themselves on error
+# should not be left to the trap (it would call 'task failed' again):
+cylc-aware-script || exit 1 
 
-# Non-cylc-aware subprocesses that just 'exit 1' on error:
-non-cylc-aware || { 
+# For non cylc-aware subprocesses that just 'exit 1' on error:
+non-cylc-aware          # leave it to the trap
+non-cylc-aware || {     # or handle explicitly
     cylc task failed "non-cylc-aware script failed"
     exit 1
 }
