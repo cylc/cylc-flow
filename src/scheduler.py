@@ -18,6 +18,7 @@ from rolling_archive import rolling_archive
 from cylc_pyro_server import pyro_server
 from state_summary import state_summary
 from remote_switch import remote_switch
+from passphrase import SecurityError
 from OrderedDict import OrderedDict
 from job_submit import job_submit
 from lockserver import lockserver
@@ -235,7 +236,11 @@ class scheduler(object):
             suitename = self.suite + "-practice"
         else:
             suitename = self.suite
-        self.pyro = pyro_server( suitename, use_passphrase=self.config['use secure passphrase'] )
+        try:
+            self.pyro = pyro_server( suitename, use_passphrase=self.config['use secure passphrase'] )
+        except SecurityError, x:
+            print >> sys.stderr, 'SECURITY ERROR (secure passphrase problem)'
+            raise SystemExit( str(x) )
         self.port = self.pyro.get_port()
         self.banner[ 'Listening on port' ] = self.port
 
