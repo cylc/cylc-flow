@@ -244,7 +244,7 @@ class job_submit(object):
 
         # execute the local command to submit the job
         if dry_run:
-            print " > TASK EXECUTION SCRIPT: " + self.jobfile_path
+            print " > TASK JOB SCRIPT: " + self.jobfile_path
             print " > JOB SUBMISSION METHOD: " + self.command
             success = True
         else:
@@ -284,7 +284,7 @@ class job_submit(object):
         # copy file to $HOME for owner on remote machine
         command_1 = 'scp ' + self.jobfile_path + ' ' + self.destination + ':'
         if dry_run:
-            print " > LOCAL TASK EXECUTION SCRIPT:  " + self.jobfile_path
+            print " > LOCAL TASK JOB SCRIPT:  " + self.jobfile_path
             print " > WOULD COPY TO REMOTE HOST AS: " + command_1
             success = True
         else:
@@ -319,7 +319,7 @@ class job_submit(object):
 
         # execute the local command to submit the job
         if dry_run:
-            print " > REMOTE TASK EXECUTION SCRIPT: " + self.jobfile_path
+            print " > REMOTE TASK JOB SCRIPT: " + self.jobfile_path
             print " > REMOTE JOB SUBMISSION METHOD: " + command_2
         else:
             print " > SUBMITTING TASK: " + command_2

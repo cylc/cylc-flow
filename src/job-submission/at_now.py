@@ -6,7 +6,7 @@ from job_submit import job_submit
 
 class at_now( job_submit ):
     """
-Submit the task execution script to the simple 'at' scheduler. The 'atd' daemon
+Submit the task job script to the simple 'at' scheduler. The 'atd' daemon
 service must be running. For owned tasks run via sudo, /etc/sudoers must
 be configured to allow the suite owner to execute 'sudo -u TASK-OWNER at'.
     """

@@ -768,7 +768,7 @@ def userguide( w, graph=False ):
         update_tb( tb, "\n o Cycle-time Zoom to Range: ", [bold])
         update_tb( tb, "Restrict the graph to a specified range of cycle times." )
  
-    update_tb( tb, "\n o View Task Execution Script: ", [bold])
+    update_tb( tb, "\n o View Task Job Script: ", [bold])
     update_tb( tb, "View the script used to submit this task to run." )
     update_tb( tb, "\n o View Job Stdout & Stderr: ", [bold])
     update_tb( tb, "View submitted task stdout and stderr in real time." )

@@ -306,7 +306,7 @@ The cylc forecast suite metascheduler.
 
         items = []
 
-        js_item = gtk.MenuItem( 'View Task Execution Script' )
+        js_item = gtk.MenuItem( 'View Task Job Script' )
         items.append( js_item )
         js_item.connect( 'activate', self.view_task_info, task_id, True )
 
@@ -1092,7 +1092,7 @@ The cylc forecast suite metascheduler.
             warning_dialog( 'Failed to nudge the suite' ).warn()
 
     def popup_logview( self, task_id, logfiles, jsonly ):
-        # TO DO: jsonly is dirty hack to separate the task execution script from
+        # TO DO: jsonly is dirty hack to separate the task Job script from
         # task log files; we should do this properly by storing them
         # separately in the task proxy, or at least separating them in
         # the suite state summary.
