@@ -128,7 +128,7 @@ if len(args) == 3:
         parser.error( "Illegal STOP cycle time (YYYYMMDDHH): " + stop_ctime )
     stop = cycle_time.diff_hours( stop_ctime, start_ctime )
 else:
-    stop = 6
+    stop = 0
 
 raw = False
 if options.rawstart:
