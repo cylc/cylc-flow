@@ -90,10 +90,10 @@ class jobfile(object):
         if 'CYLC_SUITE_DIR' in self.task_env:
             self.cylc_env['CYLC_SUITE_DIR'] = self.task_env['CYLC_SUITE_DIR']
 
-        self.FILE.write( "\n\n# CYLC SUITE ENVIRONMENT:" )
+        self.FILE.write( "\n\n# SUITE IDENTITY:" )
         for var in self.cylc_env:
             self.FILE.write( "\nexport " + var + "=\"" + str( self.cylc_env[var] ) + "\"" )
-        self.FILE.write( "\n\n# CYLC ENVIRONMENT:" )
+        self.FILE.write( "\n\n# ACCESS TO CYLC:" )
         self.FILE.write( "\n. $CYLC_DIR/environment.sh" )
 
         self.FILE.write( "\n\n# TASK IDENTITY:" )
@@ -102,12 +102,12 @@ class jobfile(object):
         self.FILE.write( "\nexport CYCLE_TIME=" + self.cycle_time )
 
         if len( self.global_env.keys()) > 0:
-            self.FILE.write( "\n\n# SUITE GLOBAL VARIABLES:" )
+            self.FILE.write( "\n\n# GLOBAL VARIABLES:" )
             for var in self.global_env:
                 self.FILE.write( "\nexport " + var + "=\"" + str( self.global_env[var] ) + "\"" )
 
         if len( self.task_env.keys()) > 0:
-            self.FILE.write( "\n\n# TASK LOCAL VARIABLES:" )
+            self.FILE.write( "\n\n# LOCAL VARIABLES:" )
             for var in self.task_env:
                 self.FILE.write( "\nexport " + var + "=\"" + str( self.task_env[var] ) + "\"" )
 
