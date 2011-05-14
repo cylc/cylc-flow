@@ -32,7 +32,7 @@ if len(args) != 1:
 else:
     suite = args[0]
 
-print "Parsing Suite Config File"
+print "Parsing Suite Definition"
 try:
     config = config( suite )
     config.load_tasks()

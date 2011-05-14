@@ -247,16 +247,22 @@ catsum['utility'     ]   = "cycle time arithmetic, filename templating, etc."
 ##multiple cycles run at once, during catchup operation, to the maximum
 ##extent allowed by the suite dependency graph.
 
-usage = """This is the cylc ('silk') metascheduler command line interface.
-       *** The graphical user interface is gcylc. ***
-Version: """ + cylc_version + """
+usage = """Welcome to the cylc metascheduler commandline interface.
+The cylc graphical user interface is gcylc.
+Cylc release version: """ + cylc_version + """
 """ + general_usage + """
 
-CATEGORIES help to organise this documentation. Any unique abbreviation
-can be used for a COMMAND or CATEGORY. Use of categories is optional in
-command invocation (they will disambiguate highly abbreviated commands)
-Some commands are aliased (ls|list); common typos corrected (cylc,cycl).
-How to drill down to command usage help for a particular command:
+Any unique abbreviation can be used for a COMMAND or CATEGORY, e.g.:
+  $ cylc control trigger SUITE TASK  # manually trigger TASK in SUITE
+  $ cylc con trig SUITE TASK         # ditto
+  $ cylc c t SUITE TASK              # ditto!
+Use of categories is optional,
+  $ cylc trig SUITE TASK             # ditto
+but they provide structure to the command set, and they disambiguate
+highly abbreviated commands. Some commands are aliased (ls|list), and 
+some common typos are automatically corrected (cylc,cycl; help,hlep).
+
+How to drill down to usage help for a particular command:
   $ cylc help ............... list all available categories (this page)
   $ cylc help prep .......... list commands in category 'preparation'
   $ cylc help [prep] edit ... command usage help for 'cylc [prep] edit'
@@ -287,7 +293,7 @@ comsum[ 'describe'   ] = 'Print a suite\'s title and description'
 comsum[ 'dump'       ] = 'Print the state of each task in a running suite'
 comsum[ 'show'       ] = 'Print task-specific information (prerequisites...)'
 comsum[ 'log'        ] = 'Print or view suite logs, with filtering'
-comsum[ 'monitor'    ] = 'An in-terminal suite monitor (DEPRECATED, see gcylc)'
+comsum[ 'monitor'    ] = 'An in-terminal suite monitor (see also gcylc)'
 # control
 comsum[ 'gcylc'      ] = 'The cylc Graphical User Interface'
 comsum[ 'run'        ] = 'Start a suite running at a specified cycle time'
