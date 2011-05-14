@@ -20,26 +20,25 @@ times), see 'cylc restart SUITE'.
 There are three startup modes that differ in how initial intercycle
 dependencies are handled (at startup there is no previous cycle for
 tasks, such as warm cycled forecast models, that normally depend on
-outputs generated in previous cycles): 
-  1/ Cold start (the default) -- start "from scratch" 
-  2/ Warm start (-w,--warm)   -- assumes the existence of a previous cycle 
-  3/ Raw  start (-r,--raw)    -- assumes the existence of a previous cycle 
+tasks in previous cycles): 
+  1/ Cold start (the default) -- start from scratch with special tasks 
+  2/ Warm start (-w,--warm)   -- assume a previous cycle 
+  3/ Raw  start (-r,--raw)    -- assume nothing
 (These are all the same for a suite that has no intercycle dependencies).
 
-1/ COLDSTART -- start from scratch with special oneoff tasks to satisfy
-the initial restart dependencies of models, and any other intercycle
-dependencies. There should a oneoff cold start task for every task that
-normally depends on outputs from a previous cycle (principally the
-restart dependencies of warm cycled forecast models).  Cold start tasks
+1/ COLDSTART -- start from scratch, with special oneoff "coldstart
+tasks" to satisfy the initial dependencies of any tasks that normally
+depend on tasks from a previous cycle (most notably the restart
+dependencies of warm cycled forecast models). Coldstart tasks
 can run real processes (e.g. a special forecast to generate the initial
 restart files for a warm cycled model) or, with no task command defined,
 just act as a dummy proxy for some external process that has to occur
-before the suite is started (e.g. a spinup experiment of some kind).
-For a suite with no intercycle dependencies there is no distinction
-between the cold, warm, and raw start methods. Each cylc task proxy
-starts in the 'waiting' state (i.e. prerequisites not satisfied) at the
-initial cycle time, or at the next valid cycle time for the task,
-including designated cold start tasks:
+before the suite is started (e.g. a spinup run of some kind). For a
+suite with no intercycle dependencies there is no distinction between
+the cold, warm, and raw start methods. For a coldstart, each task,
+including designated cold start tasks, starts in the 'waiting' state
+(i.e. prerequisites not satisfied) at the initial cycle time or at the
+next valid cycle time thereafter for the task. 
   SUITE.RC: [special tasks] -> coldstart = task1, task2, ...
 
 2/ WARMSTART:

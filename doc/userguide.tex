@@ -938,7 +938,7 @@ that is exported into the execution environment of every task. {\em
 Holding everything suite-related in the one place makes suite revision
 control easy and powerful.}
 
-\subsection{suite.rc Files}
+\subsection{The suite.rc File}
 \label{SuiteRCFile}
 
 Cylc suite definition is handled by a somewhat modified version of
@@ -949,7 +949,37 @@ include-files, and variable overrides in task environment and directives
 sections.} Cylc suite.rc files are automatically validated
 against a specification, and they translate directly into nested
 dictionary data structures inside the program - making it very
-easy to add new configuration items to cylc.
+easy to add new configuration items to cylc. The following
+pseudo-listing illustrates the file format:
+
+\begin{lstlisting}
+# comment
+item = value # trailing comment
+a string item = the quick brown fox
+another string item = "the quick brown fox"
+yet another string item = """the quick brown fox
+jumped over the lazy dog"""
+a list item = foo, bar, baz
+a list item with continuation = a, b, c, \
+                                d, e, f
+[section]
+    item = value
+%include inc/vars/foo.inc  # include file
+
+    [[subsection]]
+        item = value
+
+        [[[subsubsection]]]
+            item = value
+
+[another section]
+    [[another subsection]]
+        # ...
+    # ...
+# ...
+\end{lstlisting}
+
+In words,
 
 \begin{myitemize}
     \item {\bf All Entries} are of the form \lstinline@item = value@.
@@ -978,34 +1008,6 @@ And the following are cylc-specific additions to the ConfigObj format:
         multiply-included and nested. 
 \end{myitemize}
 
- The following pseudo-listing illustrates the file format:
-
-\begin{lstlisting}
-# comment
-item = value # trailing comment
-a string item = the quick brown fox
-another string item = "the quick brown fox"
-yet another string item = """the quick brown fox
-jumped over the lazy dog"""
-a list item = foo, bar, baz
-a list item with continuation = a, b, c, \
-                                d, e, f
-[section]
-    item = value
-%include inc/vars/foo.inc  # include file
-
-    [[subsection]]
-        item = value
-
-        [[[subsubsection]]]
-            item = value
-
-[another section]
-    [[another subsection]]
-        # ...
-    # ...
-# ...
-\end{lstlisting}
 
 
 \subsubsection{A Simple Example}
