@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     usage = """cylc [control] lockclient|lc [options]
 
-This is the manual command line client interface to the cylc lockserver
+This is the manual commandline client interface to the cylc lockserver
 daemon, which brokers suite and task locks for cylc suites. 
 
 Use of the cylc lockserver is optional - see suite config documentation.

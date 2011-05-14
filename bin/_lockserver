@@ -354,7 +354,7 @@ if __name__ == "__main__":
     usage = """Usage: cylc [control] lockserver [-f CONFIG] ACTION 
 
 The cylc lockserver daemon brokers suite and task locks for a single
-user.  The command line user interface for interrogating the daemon, and
+user.  The commandline user interface for interrogating the daemon, and
 for manual lock management, is 'cylc lockclient'.
 
 The lockserver reads a config file that specifies the location of the

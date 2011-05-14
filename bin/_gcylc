@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# allow gcylc to be invoked via the command line interface
+# allow gcylc to be invoked via the commandline interface
 # (cylc gcylc) and thereby allow it to be incorporated into
 # the commandline self-documentation.
 

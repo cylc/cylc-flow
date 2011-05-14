@@ -16,7 +16,7 @@ stderr to display in a dialog. Examples:
     $ capture "echo foo" &
 
 Arguments:
-   COMMAND    - the command line to run""")
+   COMMAND    - the commandline to run""")
 
 parser.add_option( "--width", 
     help="dialog window width in pixels (default 400)", 
