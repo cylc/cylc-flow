@@ -870,55 +870,47 @@ pre-intervention state in case of disaster). See {\em Restarts}
 \subsection{History}
 \subsubsection{Cylc pre-3.0}
 
-Early versions of cylc were focused on developing, refining, and testing
-the scheduling algorithm, and the suite design interface at the
-time was essentially the quickest route to cylc internals - a suite
-was defined by a collection of distinct ``task definition files'' that
-were a direct reflection of the task proxy objects that negotiate
-dependencies inside cylc. This way of defining suites exposed cylc's
-self-organising nature to the user, and it did actually have
-some nice properties. For instance a group of tasks could be transferred
-directly from one suite to another by simply copying the taskdef files
-over (and checking that prerequisite and output messages where
-consistent with the new suite). However, ensuring consistency of
-prerequisites and outputs across a large suite could be tedious; a few
-``edge cases'' associated with suite startup and forecast model restart
-dependencies were, arguably, difficult to understand; and the global
-structure of a suite was not easy to see prior to run time
+Early versions of cylc were focused on developing and testing the new 
+scheduling algorithm, and the suite design interface at the time was
+essentially the quickest route to that end. A suite was a collection
+of ``task definition files'' that encoded the prerequisites and outputs
+of each task in a direct reflection of cylc's internal task proxies. 
+This way of defining suites exposed cylc's self-organising nature to the
+user, and it did have some nice properties. For instance a group of
+tasks could be transferred directly from one suite to another by simply
+copying the taskdef files over (and checking that prerequisite and
+output messages where consistent with the new suite). However, ensuring
+consistency of prerequisites and outputs across a large suite could be
+tedious; a few edge cases associated with suite startup and forecast
+model restart dependencies were, arguably, difficult to understand; and
+the global structure of a suite was not readily apparent until run time
 (although to counter this cylc could generate run-time resolved
 dependency graphs very quickly in dummy mode).
 
 \subsubsection{Cylc post-3.0}
 
-At version 3.0 we implemented an entirely new suite design interface: a
-single, structured, validated, config file that, sans a few details, (a)
-concisely defines the suite dependency graph, and then (b) specifies the
-commandline and execution environment for each task. The principal
-advantages of this method are:
-\begin{myitemize}
-    \item it defines the whole suite in one structured, validated, file,
-    \item it {\em really} makes suite structure apparent at a glance, and
-    \item it quite drastically reduced the amount of task-specific
-        configuration required because much of that information
-        can be determined from the suite dependency graph. 
-\end{myitemize}
+At version 3.0 we implemented an entirely new suite design interface
+that, in essence, defines the suite dependency graph and the commandline
+and execution environment for each task, in a single, structured,
+validated, config file (suite.rc).  This {\em really} makes suite
+structure apparent at a glance, and task prerequisites and outputs (and
+other important parameters besides) no longer need to be specified by
+the user because they are implied by the graph.
 
 
 \subsection{Suite Definition Directories}
 
 A cylc {\em suite definition directory} contains, at the least, a
-suite.rc file (defining the suite dependency graph and
-the properties of the tasks in it, and global settings such as the
-default job submission method) and a \lstinline=bin= sub-directory for
-scripts and executables that implement, or are used by, suite tasks.
+suite.rc file (the suite definition) and a \lstinline=bin= sub-directory
+(scripts and programs that implement, or are used by, suite tasks).
 
 \begin{lstlisting}
 /path/to/my/suite   # suite definition directory
 
-    suite.rc           # ! SUITE CONFIG FILE !
+    suite.rc           # ! SUITE DEFINITION !
 
-    bin/               # bin directory (optional but recommended)
-        foo.sh         # task scripts
+    bin/               # bin directory (scripts, programs)
+        foo.sh
         bar.sh
         ...
 
@@ -934,15 +926,17 @@ scripts and executables that implement, or are used by, suite tasks.
 \end{lstlisting}
 
 Strictly speaking the suite bin directory is optional because every task
-could, in principle, call external commands, scripts, or executables.
-However, suite tasks automatically get access to the suite bin
-directory, and there are advantages to keeping everything in one place.
-Finally, you can store anything else suite-related in the suite
-definition directory - documentation, configuration data, control files,
-etc. These will ignored by cylc but can be accessed via the
-\lstinline=$CYLC_SUITE_DIR= variable that is exported into the execution
-environment of every task. Holding {\em everything} suite-related in the
-one place makes suite revision control easy and powerful.
+could, in principle, call external commands, scripts, or programs.
+However, tasks automatically get access to their suite bin directory,
+and there are definite advantages to keeping everything in one place.
+
+Aside from the suite.rc file and bin directory, you can store anything
+you like in the suite definition directory - documentation,
+configuration data, control files, etc. These will ignored by cylc but
+can be accessed by tasks via the \lstinline=$CYLC_SUITE_DIR= variable
+that is exported into the execution environment of every task. {\em
+Holding everything suite-related in the one place makes suite revision
+control easy and powerful.}
 
 \subsection{suite.rc Files}
 \label{SuiteRCFile}
@@ -978,10 +972,10 @@ And the following are cylc-specific additions to the ConfigObj format:
     \item {\bf Continuation \textbackslash \newline lines} follow a trailing backslash.
     \item {\bf Dependency Graph Strings} may contain blank lines
         and inline comments (see Section~\ref{SuitercDependencyGraph}).
-    \item {\bf \%include path/to/incfile } Include-file can be used; 
-        paths are specified, portably, relative to the suite
-        definition directory; they can span section boundaries, and may
-        be multiply-included and nested. 
+    \item {\bf Include-files} \lstinline=%include path/to/incfile= -
+        paths specified, portably, relative to the suite definition
+        directory; they can span section boundaries, and may be
+        multiply-included and nested. 
 \end{myitemize}
 
  The following pseudo-listing illustrates the file format:
@@ -1068,12 +1062,29 @@ The dependency graph defined here can be plotted by gcylc or the
 \lstinline=cylc graph= command, as is shown in Figure~\ref{fig-simple-graph}.
 
 \begin{figure}
+\begin{minipage}[t]{0.5\textwidth}
     \begin{center}
-        \includegraphics[width=14cm]{../images/screenshots/simple-graph.png}]
+        \includegraphics[width=0.4\textwidth]{../images/screenshots/simple-6-cold.png}
     \end{center}
-    \caption[Simple example dependency graph]{\small The dependency graph
-    defined in the `simple' example suite.rc file.}
-    \label{fig-simple-graph} 
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\textwidth}
+    \begin{center}
+        \includegraphics[width=0.4\textwidth]{../images/screenshots/simple-6-warm.png}
+    \end{center}
+\end{minipage}
+\caption[Dependency graphs for the simple example suite]{\small Two dependency graphs
+plotted by `cylc graph' from the {\em simple} example suite.rc file; cold
+start on the left, warm start on the right.}
+\end{figure} 
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.8\textwidth]{../images/screenshots/simple-18-cold.png}
+    \end{center}
+\caption[Three cycle cold start dependency graph for the simple example
+suite]{\small Three cycle cold start dependency graph plotted by `cylc
+graph' from the {\em simple} example suite.rc file, showing variation between cycles.}
 \end{figure} 
 
 \subsubsection{Syntax Highlighting}
@@ -1218,34 +1229,33 @@ using a conditional trigger:
 A {\em task} is a single schedulable unit in a cylc suite, uniquely
 identified by name and cycle time.
 
-\subsection{Task Scripts}
-
-Behind every task lies a {\em task script} (or {\em task command} or
-{\em task program}) - the real script (or command or program) that
-implements, or at least initiates, the processing represented by the
-suite task. 
-
 \subsection{Task Names}
 
-To rename a task, just change its name in the suite.rc file. Different
-suites can use the same task scripts by different names. (The cylc task
-messaging commands, below, do need to know the name of their calling
-task in order to target the right task proxy inside the right suite, but
-they automatically extract this information from the environment in which
-the task is executing, which is configured by the suite, so no explicit
-use of tasks names is required outside of the suite.rc file).
+Tasks are an in-suite abstraction so to rename a task, just change
+its name in the suite.rc file (different suites can run the same
+processing under different task names).\footnote{Cylc task messaging
+commands, which report task progress back to the suite, do need to know
+the task name, and the target suite, but they automatically extract this
+information from the task execution environment, which is configured by
+the suite, so no explicit use of tasks names is required outside of the
+suite.rc file.}
 
-\subsection{How Task Scripts Are Invoked By Cylc}
+\subsection{Task Commandline and Environment}
 
-When a task is ready to run, cylc writes and then executes, via the job
+Every task has an associated commandline that initiates the processing
+that it represents. The commandline and the environment in which it
+executes is specified for each task in the suite.rc file.
+
+\subsection{Task Job Scripts (How Tasks Are Invoked By Cylc)}
+
+When a task is ready to run, cylc writes, and then executes via the job
 submission method specified for the task (see
-Section~\ref{JobSubmission}), a special {\em task execution script} that
-configures the environment for the task, and then executes the
-commandline specified for the task. The commandline for the task
-executes the {\em task script} or {\em task command}, which is the
-command or script 
+Section~\ref{JobSubmission}), a {\em job script} that
+configures the environment appropriately and then calls the commandline
+specified for the task, which in turn executes the {\em task script} 
+as described just above.
 
-%In more detail, the temporary ``task execution script'' contains:
+%In more detail, the temporary ``job script'' contains:
 %\begin{myitemize}
 %    \item scripting to configure the execution environment for the task
 %        This includes user-defined environment variables:
@@ -1265,9 +1275,10 @@ command or script
 %\end{myitemize}
         
 Cylc writes the exact command used to submit each task to the suite
-stdout stream, so you can see the task script location, and any output
-redirection used, etc. The following is an excerpt from example suite
-stdout, running with the \lstinline=background= job submission method:
+stdout stream, so you can see the job script location, and
+any output redirection used, etc. The following is an excerpt from
+example suite stdout, running with the \lstinline=background= job
+submission method:
 
 \begin{lstlisting}
 # CYLC STDOUT
@@ -1278,12 +1289,12 @@ SUBMITTING TASK: /tmp/cylc-ColdB%2011101300-5gRx61 </dev/null
 \end{lstlisting}
 
 You can also use \lstinline=cylc submit --dry-run= to generate a task
-execution script for inspection. Here's a simple example:
+job script for inspection. Here's a simple example:
 
 \begin{lstlisting}
 prompt> cylc submit --dry-run examples:userguide A%2010080806 
-DRY RUN: create the task execution script and show how it would be executed.
-  * TASK EXECUTION SCRIPT: /tmp/cylc-A%2010080806-VXQusn
+DRY RUN: create the job script and show how it would be executed.
+  * TASK JOB SCRIPT: /tmp/cylc-A%2010080806-VXQusn
   * JOB SUBMISSION METHOD: /tmp/cylc-A%2010080806-VXQusn </dev/null \
     1> /home/oliverh/CylcLogs/examples/userguide/A%2010080806-CWYM68.out
     2> /home/oliverh/CylcLogs/examples/userguide/A%2010080806-CWYM68.err &
@@ -1291,7 +1302,7 @@ DRY RUN: create the task execution script and show how it would be executed.
 prompt> cat /tmp/cylc-A%2010080806-VXQusn
 #!/bin/bash
 
-# ++++ THIS IS A CYLC TASK EXECUTION SCRIPT ++++
+# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++
 # Task: A%2010080806
 # To be submitted by method: 'background'
 
@@ -1474,7 +1485,7 @@ command would then just invoke the custom wrapper.
 \subsubsection{Propagating The Task Execution Environment}
 
 Task commandlines obviously execute in the environment configured by the
-task execution script submitted to invoke the task (true even if
+job script submitted to invoke the task (true even if
 the task spawns
 subprocesses, because the environment is exported). But {\em if 
 any part of task processing that has to make cylc messaging calls executes
@@ -1497,14 +1508,14 @@ TO DO: explain environment propagation for remote tasks.
 
 As described in Section~\ref{JobSubmission}, {\em Job Submission}, cylc
 tasks are executed by means of submitting a temporary {\em cylc task
-execution script}
+job script}
 that configures the execution environment before
 executing the task itself. The task execution environment provides
 access to the task so that the full path is not required in the
 taskdef file if the script resides in the suite definition
 \lstinline=scripts= sub-directory), and to cylc itself. It also
 defines any environment variables required by cylc, global
-environment variables defined in the suite config file, and 
+environment variables defined in the suite.rc file, and 
 task-specific environment variables defined in the taskdef file.
 
 \subsubsection{Global Variables}
@@ -1532,7 +1543,7 @@ Running Tasks On A Remote Host}.
 \paragraph{Global Variables}
 \label{SuiteWideVariables}
 
-Environment variables defined in the suite config file are made
+Environment variables defined in the suite.rc file are made
 available to all tasks, e.g.: 
 
 \lstset{language=Python}
@@ -1578,7 +1589,7 @@ communicate the message to in the scheduler.
 You can refer to other environment variables in the values of
 suite-wide or task-specific environment variables, and in task command
 line arguments, as shown in the examples above. These will be explicitly
-interpolated by cylc prior to writting the task execution script (i.e.
+interpolated by cylc prior to writting the job script (i.e.
 the variables will be replaced by their values).  The distributed example
 suite (Section~\ref{Distributed}) exploits this to define task-specific
 I/O sub-directories underneath a top level working directory that is
@@ -1918,7 +1929,7 @@ sudo -u OWNER [SUBMISSION-COMMAND]
 For this to work \lstinline=/etc/sudoers= must be configured to allow
 the cylc user to invoke the relevant job submission commands as the task
 owner.  This might be difficult to arrange for the background execution
-method (wherein task execution scripts are invoked directly) but is
+method (wherein job scripts are invoked directly) but is
 otherwise easy to do: for the \lstinline=at_now= or loadleveler methods,
 for instance, the cylc user only needs \lstinline=sudo= access, as the
 task owner, to \lstinline=at= or \lstinline=llsubmit= respectively.
@@ -1931,7 +1942,7 @@ resource manager, such as loadleveler, that allows you to submit a job
 locally to run on the remote host}.
 
 If a task declares a \lstinline=%REMOTE_HOST= section in the taskdef
-file, its execution script will be copied to the specified host by 
+file, its job script will be copied to the specified host by 
 \lstinline=scp=, and then invoked on the remote machine (using the
 correct job submission method for the task) by \lstinline=ssh=. 
 
@@ -1945,7 +1956,7 @@ cylc-user% ssh REMOTE_HOST hostname
 \end{lstlisting}
 
 If the task additionally declares an \lstinline=%OWNER= section in the
-taskdef file owner, the task execution script will be copied to and
+taskdef file owner, the job script will be copied to and
 invoked on the remote host as the task owner; thus {\em you must have
 passwordless ssh configured, as the cylc user, to the remote host, as
 the task owner}:
@@ -1963,7 +1974,7 @@ cylc-user% ssh OWNER@REMOTE_HOST hostname
         the task can communicate with its parent scheduler.
         
     \item The task itself must be installed on the remote host (the task
-        execution script that is copied to the remote host is what
+        job script that is copied to the remote host is what
         invokes the task, but is not the task itself. 
 
     \item The task execution environment, as specified in the job
@@ -1984,7 +1995,7 @@ If you have installed your entire suite definition directory on the
 remote platform (it is not necessary to do this, but it may be
 convenient) then you can also override \lstinline=$CYLC_SUITE_DIR= to
 point to that location. Then, if the remote task script resides in the
-suite definition scripts sub-directory, the task execution script will
+suite definition scripts sub-directory, the job script will
 automatically be able to find it after the cylc environment is
 configured.
 
@@ -1994,7 +2005,7 @@ CYLC_SUITE_DIR  /path/to/suite/definition/directory
 
 (\lstinline=CYLC_DIR=  and \lstinline=CYLC_SUITE_DIR= are inserted
 into your \lstinline=PATH= by \lstinline=environment.sh=, which is sourced
-in the task execution script before executing the task).
+in the job script before executing the task).
 
 Alternatively, you could specify the full path to the task script:
 
@@ -2065,14 +2076,14 @@ scheduler or cross-platform resource manager such as {\em loadleveler}
         (non loadleveler-specific) task scripts to loadleveler. 
         Any {\em directives} you provide in the 
         suite.rc file 
-        will be written to the task execution script, which will then 
+        will be written to the job script, which will then 
         be submitted to run via \lstinline=llsubmit=. 
 
     \item \lstinline=ll_raw= - This method submits loadleveler-ready
         scripts (i.e.\ scripts containing hardwired directives) to
         loadleveler.  This may be necessary for complex (e.g.\
         multi-step) jobs. The original script is copied to
-        make the temporary task execution script, and cylc environment
+        make the temporary job script, and cylc environment
         scripting is inserted into it immediately after the loadleveler
         directives.
 
@@ -2128,7 +2139,7 @@ $CYLC_DIR/src/job-submission/job_submit.py
 \end{lstlisting}
 with reference to how it is done by the existing methods. This should be 
 easy to do. It may just be a matter of defining the commandline used
-to execute the aforementioned task execution scripts, using the provided stdout 
+to execute the aforementioned job scripts, using the provided stdout 
 and stderr file paths. For example, here is the entire class code for 
 the \lstinline=background= method:
 
@@ -2143,7 +2154,7 @@ from job_submit import job_submit
 
 class background( job_submit ):
     """
-Run the task execution script directly in a background shell. 
+Run the job script directly in a background shell. 
     """
     def construct_jobfile_submission_command( self ):
         # stdin redirection allows background execution on remote hosts
@@ -2163,7 +2174,7 @@ from job_submit import job_submit
 
 class at_now( job_submit ):
     """
-Submit the task execution script to the 'at' scheduler, to run 'now'.
+Submit the job script to the 'at' scheduler, to run 'now'.
     """
     def construct_jobfile_submission_command( self ):
         self.command = 'at now <<EOF\n' + self.jobfile_path + \
@@ -2915,8 +2926,8 @@ will be copied.} other files there will be ignored by cylc but
 suite tasks can access them via the
 \lstinline=$CYLC_SUITE_DIR= variable that cylc automatically 
 exports into the task execution environment. Disk space is cheap - if
-all executables, ancillary files,
-control files (etc.) required by the suite are stored in the suite
+all programs, ancillary files, control files (etc.) required by the
+suite are stored in the suite
 definition directory instead of having the suite reference external
 build directories (etc.), you can turn the directory into a revision
 control repository and be virtually assured of the ability to exactly

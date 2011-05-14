@@ -554,6 +554,7 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>   baz:out1 => faz           # faz triggers off an internal output of baz
 #>   ColdFoo | foo(T-6) => foo # cold start or restart for foo
 #>   X:fail => Y               # Y triggers if X fails
+#>   comment
 #>   X | X:fail => Z           # Z triggers if X finishes or fails
 #>   """
 #>  \end{lstlisting}
