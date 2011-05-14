@@ -93,8 +93,6 @@ class jobfile(object):
         self.FILE.write( "\n\n# SUITE IDENTITY:" )
         for var in self.cylc_env:
             self.FILE.write( "\nexport " + var + "=\"" + str( self.cylc_env[var] ) + "\"" )
-        self.FILE.write( "\n\n# ACCESS TO CYLC:" )
-        self.FILE.write( "\n. $CYLC_DIR/environment.sh" )
 
         self.FILE.write( "\n\n# TASK IDENTITY:" )
         self.FILE.write( "\nexport TASK_ID=" + self.task_id )
@@ -110,6 +108,9 @@ class jobfile(object):
             self.FILE.write( "\n\n# LOCAL VARIABLES:" )
             for var in self.task_env:
                 self.FILE.write( "\nexport " + var + "=\"" + str( self.task_env[var] ) + "\"" )
+
+        self.FILE.write( "\n\n# ACCESS TO CYLC:" )
+        self.FILE.write( "\n. $CYLC_DIR/environment.sh" )
 
     def write_pre_scripting( self ):
         if self.dummy_mode:
