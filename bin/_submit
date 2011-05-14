@@ -18,18 +18,19 @@ from port_scan import SuiteIdentificationError
 
 usage = """cylc [task] submit|single [options] SUITE TASK_ID
 
-Submit a single task to run exactly as it would be run from within its 
-parent suite. This can be used as an easy way to run single tasks
-for any reason, but it is particularly useful during suite development.
+Submit a single task to run exactly as it would be submitted by its 
+parent suite, in terms of both execution environment and job submission
+method. This can be used as an easy way to run single tasks for any
+reason, but it is particularly useful during suite development.
 
 If the parent suite is running at the same time and it has acquired an
 exclusive suite lock (which means you cannot running multiple instances
-of the suite at once under different registrations) then the lockserver
-will let you 'submit' a task from the suite only under the same
-registration, and only if the exact same task (NAME%CYCLE_TIME) is not
-running at the same time in the suite. 
+of the suite at once, even under different registrations) then the
+lockserver will let you 'submit' a task from the suite only under the
+same registration, and only if the task is not locked (which would mean
+the same task, NAME%CYCLE_TIME, is currently running in the suite). 
 
-arguments:
+Arguments:
    SUITE           Registered name of the target suite.
    TASK_ID         Identity of the task to run (NAME%YYYYMMDDHH).""" 
 

@@ -354,15 +354,27 @@ if __name__ == "__main__":
     usage = """Usage: cylc [control] lockserver [-f CONFIG] ACTION 
 
 The cylc lockserver daemon brokers suite and task locks for a single
-user.  The commandline user interface for interrogating the daemon, and
+user. These locks are analogous to traditional lock files, but they work
+even for tasks that start and finish executing on different hosts. Suite
+locks prevent multiple instances of the same suite from running at the
+same time (even if registered under different names) unless the suite
+allows that. Task locks do the same for individual tasks (even if
+submitted outside of their suite using 'cylc submit').
+
+The commandline user interface for interrogating the daemon, and
 for manual lock management, is 'cylc lockclient'.
+
+Use of the lockserver is optional:
+#_____________________
+# SUITE.RC
+use lockserver = False
+#---------------------
 
 The lockserver reads a config file that specifies the location of the
 daemon's process ID, state, and log files. The default config file 
 is '$CYLC_DIR/conf/lockserver.conf', but you can specify an alternative
 file on the command line (in which case all subsequent interaction with
 the daemon via the lockclient command must also specify the same file). 
-
 If the process ID, state, and log files, in the config file, are not
 specified as absolute paths, they are assumed to be relative to $HOME;
 the default config file uses '$HOME/.cylc/' so all users can simply use
@@ -370,8 +382,8 @@ the default config file unless they have reason not to do so.
 
 The state file records currently held locks and, if it exists at
 startup, is used to initialize the lockserver (i.e. suite and task locks
-are not lost if the lockserver is restarted). All locking activitiy is
-recorded in the log file. 
+are not lost if the lockserver is killed and restarted). All locking
+activitiy is recorded in the log file. 
 
 Arguments:
   ACTION   -  'start', 'stop', 'status', 'restart', or 'debug'

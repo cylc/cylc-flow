@@ -53,30 +53,21 @@ if __name__ == "__main__":
 
     usage = """cylc [control] lockclient|lc [options]
 
-This is the manual commandline client interface to the cylc lockserver
-daemon, which brokers suite and task locks for cylc suites. 
+This is the commandline client interface to the cylc lockserver daemon,
+for server interrogation and manual lock management.
 
-Use of the cylc lockserver is optional - see suite config documentation.
-
-TASK LOCKS prevent multiple instances of the same task (NAME%CYCLE) from
-running simultaneously, whether they are spawned by a cylc scheduler or
-by 'cylc task submit'. Traditional lock files cannot easily be used by cylc
-because it is possible for an external task that consists of multiple
-components to start and finish executing on different host machines.
-
-SUITE LOCKS prevent multiple instances of entire cylc suites from
-running simultaneously, even under different registered names (unless
-the suite config file states that suite is capable of doing this!).
+Use of the lockserver is optional:
+#_____________________
+# SUITE.RC
+use lockserver = False
+#---------------------
 
 Manual lock acquisition is mainly for testing purposes, but manual
-release may be required to remove stale locks if a suite or task
-is killed before it can release its locks.
+release may be required to remove stale locks if a suite or task dies
+without cleaning up after itself.
 
-Locks persist if the lockserver is restarted (to prevent this delete
-the Persistent State file reported by the lockserver stop command), and
-can only be released by the suite owner. In suites containing tasks
-owned by multiple users, task locks are held by the suite owner, not the
-task owner."""
+See also:
+    cylc lockserver"""
 
     parser = OptionParser( usage )
 
@@ -105,7 +96,7 @@ task owner."""
     parser.add_option( "-l", "--list", help="List all locks (same as -p).",
             action="store_true", dest="list_all" )
 
-    parser.add_option( "-c", "--clear", help="Release all locks owned by you.",
+    parser.add_option( "-c", "--clear", help="Release all locks.",
             action="store_true", dest="clear_all" )
 
     parser.add_option( "-f", "--filenames", 
