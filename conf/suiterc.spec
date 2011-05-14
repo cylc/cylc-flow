@@ -383,9 +383,9 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #> this is currently hardwired into cylc as 
 #> \lstinline@export item=value@ (which works for both bash and ksh
 #> because \lstinline=value= is entirely user-defined) so cylc would
-#> have to be modified slightly if other shells are needed (probably not
-#> necessary as the scripting items should not be heavily used anyway
-#> (see the warnings in the documentation for those items).
+#> have to be modified slightly if other shells are needed (this
+#> probably not necessary as the scripting items should not be heavily
+#> used anyway - see the warnings in the documentation for those items).
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
@@ -401,13 +401,13 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 
 [special tasks]
 #> This section is used to identify any tasks with special behaviour.
-#> By default tasks,
+#> The default task type does this:,
 #> \begin{myitemize}
-#> \item start running as soon as their prerequisites are satisfied
-#> \item spawn a successor at the next valid cycle time as soon as they
-#> enter the running state\footnote{Spawning any earlier than this would
-#> bring no advantage in terms of functional parallelism, at the cost of
-#> unrestrained task breeding.}
+#> \item it starts running as soon as its prerequisites are satisfied
+#> \item it spawns a successor (at the next valid cycle time for the
+#>       particular task) as soon as its enters the running 
+#> state\footnote{Spawning any earlier than this would
+#> brings no advantage in terms of functional parallelism.}
 #> \end{myitemize}
     clock-triggered = force_list( default=list())
 #> Clock-triggered tasks wait on a wall clock time specified
@@ -550,9 +550,11 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em example:}
 #>  \begin{lstlisting}
 #>graph = """
-#>   foo => bar => baz & waz   # baz and waz both trigger off foo
-#>   baz:out1 => faz           # triggering off an internal output
-#>   ColdFoo | foo(T-6) => foo # cold start or restart foo
+#>   foo => bar => baz & waz   # baz and waz both trigger off bar
+#>   baz:out1 => faz           # faz triggers off an internal output of baz
+#>   ColdFoo | foo(T-6) => foo # cold start or restart for foo
+#>   X:fail => Y               # Y triggers if X fails
+#>   X | X:fail => Z           # Z triggers if X finishes or fails
 #>   """
 #>  \end{lstlisting}
 #>\item {\em default:} None
