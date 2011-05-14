@@ -273,10 +273,10 @@ class scheduler(object):
 
         # CYLC EXECUTION ENVIRONMENT
         cylcenv = OrderedDict()
+        cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
         cylcenv[ 'CYLC_MODE' ] = 'scheduler'
         cylcenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
         cylcenv[ 'CYLC_SUITE_PORT' ] =  self.pyro.get_port()
-        cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
         cylcenv[ 'CYLC_SUITE' ] = self.suite
         suite_owner, suite_group, suite_name = regsplit( self.suite ).get()
         cylcenv[ 'CYLC_SUITE_GROUP' ] = suite_group

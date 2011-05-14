@@ -1238,127 +1238,37 @@ its name in the suite.rc file. Cylc's messaging commands, which
 report task progress back to the parent suite, do need to know the 
 name and suite of the calling task, but they automatically extract this
 information from the task execution environment (which is configured by
-the suite) so that no explicit use of task names is needed outside of
-the suite.rc file. Similarly, if a task wants to make use of its name,
-or that of its parent suite, (to make I/O paths task and suite-specific,
-for instance) the names should be extracted from the environment (below)
-rather than hardwired, so that the suite is flexible and portable.
+the suite; below) so that no explicit use of task names is needed
+outside of the suite.rc file. Similarly, if a task needs to make use of
+its own name, or that of its parent suite, (to make I/O paths task and
+suite-specific, for instance) these should be extracted from the
+execution environment (below) rather than hardwired, so that the suite
+is flexible and portable.
 
 \subsection{Task Commandline and Environment}
 \label{TaskExecutionEnvironment}
 
 Every task has an associated commandline to initiate the processing
 that it represents. The task commandline, and the environment in which
-it executes, is specified in the suite.rc file.
+it executes, is defined in the suite.rc file, and actioned by the 
+{\em task job script} that cylc uses to invoke the task.
 
 \subsubsection{Generic Task Scripts}
 
-If several tasks in a suite all perform a similar function, e.g.\ to
-move files around, they may all be able to invoke the same command,
-script, or program, with task-specific input parameters provided via the
-environment and/or commandline. The cylc file transfer and file
-housekeeping utility programs were designed with this in mind
-(see \lstinline=cylc util help=).
-
-\subsubsection{Global And Task-Specific Environment}
-
-\begin{lstlisting}
-# SUITE.RC
-[environment]
-    FOO = bar  # variables available to all tasks
-[tasks]
-    [[TaskX]]
-        command = cylc wrap RunTaskX.sh $FOO $BAZ
-        [[[environment]]] 
-            BAZ = waz    # variables available only to TaskX
-\end{lstlisting}
-
-As for any script, a task script can take input from commandline
-arguments, or from environment variables, or from both at the same time
-(by evaluating variables on the commandline). Generally speaking, 
-parameters common to several tasks should be defined once in the global
-environment section of the suite.rc file; and those needed by a single
-task, in the task-specific environment section.
-
-\subsubsection{Task And Suite Identity Variables}
-
-Cylc also configures the task execution environment to provide access 
-(for the executing task) to cylc itself, to the suite bin directory
-(through \lstinline=$PATH=), and to the suite definition directory.
-Variables are also defined to identify the task, cycle time, suite,
-suite host and port, and several other parameters (see the example task
-job script below). 
-
-Executing tasks will almost certainly need to run scripts in the suite
-bin directory, and make use of their own cycle time,
-\begin{myitemize}
-    \item \lstinline=$CYCLE_TIME= - 2011051118
-\end{myitemize}
-
-They may need to know the suite definition direction of their parent
-suite, to access files stored there,
-\begin{myitemize}
-    \item \lstinline=$CYLC_SUITE_DIR= - \lstinline=/path/to/suite/definition=
-\end{myitemize}
-
-And they may need to use the task and suite identity variables, to 
-make portable suites that write all output to suite-specific locations:
-\begin{myitemize}
-    \item \lstinline=$CYLC_SUITE=  - foo:bar
-    \item \lstinline=$CYLC_SUITE_GROUP=  - foo
-    \item \lstinline=$CYLC_SUITE_NAME=  - bar 
-    \item \lstinline=$TASK_NAME= - X
-    \item \lstinline=$TASK_ID= - X\%2011051118
-\end{myitemize}
-
-These variables are also used, automatically, by the task messaging
-interface, to target the right task proxy in the particular cylc
-instance that is running the task's parent suite. 
-
-\subsubsection{Order Of Environment Definition}
-
-As shown in the example {\em task job script} below, the order of 
-environment definition is,
-\begin{myitemize}
-    \item 1. suite identity
-    \item 2. access to cylc
-    \item 3. task identity
-    \item 4. global variables
-    \item 5. local variables
-\end{myitemize}
-
-Consequently, local variables can reference global ones, for example:
-\begin{lstlisting}
-# SUITE.RC
-[environment]
-    suite_workspace = $TMPDIR/$CYLC_SUITE/work
-[tasks]
-    command = clean-workspace $OUTPUT_DIR 
-    [[cleanup]]
-        OUTPUT_DIR = $WORKSPACE/$TASK_NAME
-\end{lstlisting}
-    
-Additionally, both global and local environment variables are defined
-in exactly the same order as they are listed in the suite.rc file, so 
-you can safely refer to previously defined variables when constructing
-task environments.
-
-Note also that task identity, which includes the task's private cycle
-time, is defined prior to the global variables, so even global variables
-can be made task-specific by referencing to these parameters. 
-
-\subsubsection{Delaying Evaluation Of Variables Till Run Time}
-
-E.g. for a task, having \lstinline=$HOME= evaluate to the remote home
-directory: {\em escape the dollar sign}. TBD: EXAMPLE.
+If several tasks in a suite perform a similar function, e.g.\ to
+move files around, they can invoke the same command, script, or program,
+with task-specific input parameters provided via the environment and/or
+commandline. The cylc file transfer and file housekeeping utility
+programs were designed with this in mind (see 
+\lstinline=cylc util help=).
 
 \subsection{Task Job Scripts (How Tasks Are Invoked By Cylc)}
 
 When a task is ready to run, cylc writes, and then executes via the job
 submission method specified for the task (see
-Section~\ref{JobSubmission}), a {\em job script} that
-configures the environment as specified for the task, and then calls the
-commandline defined for it.
+Section~\ref{JobSubmission}), a {\em task job script} that configures
+the environment for the task and then calls the commandline defined for
+it.
 
 %In more detail, the temporary ``job script'' contains:
 %\begin{myitemize}
@@ -1379,11 +1289,9 @@ commandline defined for it.
 %    \item scripting to call the commandline defined for the task.
 %\end{myitemize}
         
-Cylc writes the exact command used to submit each task to the suite
-stdout stream, so you can see the job script location, and
-any output redirection used, etc. The following is an excerpt from
-example suite stdout, running with the \lstinline=background= job
-submission method:
+Cylc writes the exact command used to submit each job script to the
+suite stdout stream. The following is an excerpt from example suite
+stdout, running with the \lstinline=background= job submission method:
 
 \begin{lstlisting}
 # CYLC STDOUT
@@ -1394,7 +1302,7 @@ SUBMITTING TASK: /tmp/cylc-ColdB%2011101300-5gRx61 </dev/null
 \end{lstlisting}
 
 You can also use \lstinline=cylc submit --dry-run= to generate a task
-job script for inspection. Here's a simple example:
+job script for inspection: 
 
 \begin{lstlisting}
 prompt> cylc submit --dry-run examples:userguide A%2010080806 
@@ -1403,7 +1311,11 @@ DRY RUN: create the job script and show how it would be executed.
   * JOB SUBMISSION METHOD: /tmp/cylc-A%2010080806-VXQusn </dev/null \
     1> /home/oliverh/CylcLogs/examples/userguide/A%2010080806-CWYM68.out
     2> /home/oliverh/CylcLogs/examples/userguide/A%2010080806-CWYM68.err &
+\end{lstlisting}
 
+And here the resulting job script:
+
+\begin{lstlisting}
 prompt> cat /tmp/cylc-A%2010080806-VXQusn
 #!/bin/bash
 
@@ -1411,11 +1323,11 @@ prompt> cat /tmp/cylc-A%2010080806-VXQusn
 # Task: A%2010080806
 # To be submitted by method: 'background'
 
-# SUITE IDENTITY:
+# CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY:
+export CYLC_DIR="/home/admin/cylc"
 export CYLC_MODE="submit"
 export CYLC_SUITE_HOST="oliverh-33586DL.greta.niwa.co.nz"
 export CYLC_SUITE_PORT="NONE"
-export CYLC_DIR="/home/oliverh/cylc"
 export CYLC_SUITE_DIR="/home/oliverh/cylc/examples/userguide"
 export CYLC_SUITE="examples:userguide"
 export CYLC_SUITE_GROUP="examples"
@@ -1423,9 +1335,6 @@ export CYLC_SUITE_NAME="userguide"
 export CYLC_SUITE_OWNER="oliverh"
 export CYLC_USE_LOCKSERVER="True"
 export CYLC_DUMMY_SLEEP="10"
-
-# ACCESS TO CYLC:
-. $CYLC_DIR/environment.sh
 
 # TASK IDENTITY:
 export TASK_ID=A%2010080806
@@ -1443,11 +1352,163 @@ export OUTPUT_DIR="$WORKSPACE"
 export RUNNING_DIR="$RUNNING/A"
 export OPTIONS="-w $WORKSPACE -r $RUNNING_DIR"
 
+# ACCESS TO CYLC:
+. $CYLC_DIR/environment.sh
+
 # EXECUTE THE TASK:
 cylc wrap A.sh $OPTIONS
 
 #EOF
 \end{lstlisting}
+
+\subsection{Task Execution Environment}
+
+This section explains the various sections of the task job script
+illustrated just above.
+
+\subsubsection{Global And Task-Specific Environment Variables}
+
+As for any script, a task script can take input from commandline
+arguments, or from environment variables, or from both at the same time
+(by evaluating variables on the commandline). Generally speaking, 
+parameters common to several tasks should be defined once in the global
+environment section of the suite.rc file; and those needed by a single
+task, in the task-specific environment section.
+
+\begin{lstlisting}
+# SUITE.RC
+[environment]
+    FOO = bar  # variables available to all tasks
+[tasks]
+    [[TaskX]]
+        command = cylc wrap RunTaskX.sh $FOO $BAZ
+        [[[environment]]] 
+            BAZ = waz    # variables available only to TaskX
+\end{lstlisting}
+
+\subsubsection{Order Of Environment Definition}
+
+As shown in the example job script above, the order of environment
+definition is,
+\begin{myitemize}
+    \item 1. cylc location, suite location, suite identity
+    \item 2. task identity
+    \item 3. global variables
+    \item 4. local variables
+    \item 5. access to cylc
+\end{myitemize}
+
+Consequently, local variables can reference global ones, for example:
+\begin{lstlisting}
+# SUITE.RC
+[environment]
+    suite_workspace = $TMPDIR/$CYLC_SUITE/work
+[tasks]
+    command = clean-workspace $OUTPUT_DIR 
+    [[cleanup]]
+        OUTPUT_DIR = $WORKSPACE/$TASK_NAME
+\end{lstlisting}
+    
+Additionally, both global and local environment variables are defined
+in exactly the same order as they are listed in the suite.rc file, so 
+you can safely refer to previously defined variables when constructing
+task environments.
+
+Note also that task identity, which includes the task's private cycle
+time, is defined prior to the global variables, so even global variables
+can be made task- and cycle-specific by referencing these variables. 
+
+\subsubsection{Task Access To Cylc Commands}
+
+Executing tasks need access to the cylc task messaging commands, and
+possibly to cylc utility commands. Task job scripts source the cylc
+environment script to allow this:
+
+\begin{lstlisting}
+# TASK JOB SCRIPT
+# CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY
+export CYLC_DIR=/path/to/cylc/installation
+# ...snip...
+# ACCESS TO CYLC
+. $CYLC_DIR/environment.sh   # environment.sh uses $CYLC_DIR
+\end{lstlisting}
+
+\paragraph{On Remote Hosts}
+
+In the job script, user (suite.rc) specified environment variables are
+defined prior to sourcing the cylc environment. To provide access to
+cylc on remote hosts you just need to override 
+\lstinline=$CYLC_DIR= with the cylc installation path on the remote 
+host, in the suite.rc task environment section. 
+
+\begin{lstlisting}
+# SUITE.RC
+[tasks]
+    [[foo]]
+        host = fitzroy.niwa.co.nz
+        [[[environment]]]
+            CYLC_DIR = /path/to/remote/cylc/installation
+            CYLC_SUITE_DIR = /path/to/remote/suite/definition # (see below)
+\end{lstlisting}
+
+\subsubsection{Task Access To The Suite Definition Directory}
+
+In case the task commandline runs a script or program in the suite bin 
+directory (or if any script therein is used as the task executes),
+the cylc environment script automatically configures \lstinline=$PATH=
+for access to \lstinline=$CYLC_SUITE_DIR/bin=. Task scripts can 
+also use \lstinline=$CYLC_SUITE_DIR= to portably access any files
+stored under the suite definition directory.
+
+\paragraph{On Remote Hosts}
+
+Similarly to \lstinline=$CYLC_DIR=, just above, if a task on a remote
+host needs to access scripts in the suite bin directory, or any files
+under the suite definition directory, just override 
+\lstinline=$CYLC_SUITE_DIR= with the remote suite directory location, in
+the suite.rc task environment section.
+
+\subsubsection{Task And Suite Identity Variables}
+
+The first section of the job script defines variables that identify the
+task name, task cycle time, suite registration (group and name), suite
+host and port, and several other parameters (see the example job script
+above). Executing tasks will almost certainly need to make use of their
+own cycle time,
+\begin{myitemize}
+    \item \lstinline=$CYCLE_TIME=
+\end{myitemize}
+
+They may also need to know the location of the suite definition
+directory, to access files stored there,
+\begin{myitemize}
+    \item \lstinline=$CYLC_SUITE_DIR= - \lstinline=/path/to/suite/definition=
+\end{myitemize}
+
+And they may need to use the task and suite identity variables (to 
+make portable suites that write all output to suite-specific locations,
+for instance):
+\begin{myitemize}
+    \item \lstinline=$CYLC_SUITE=  - e.g.\ foo:bar
+    \item \lstinline=$CYLC_SUITE_GROUP=  - foo
+    \item \lstinline=$CYLC_SUITE_NAME=  - bar 
+    \item \lstinline=$TASK_NAME= - X
+    \item \lstinline=$TASK_ID= - X\%2011051118
+\end{myitemize}
+
+These variables are also used, automatically, by the task messaging
+interface, to target the right task proxy in the particular cylc
+instance that is running the task's parent suite. 
+
+\subsubsection{When Are Environment Variables Evaluated?}
+
+Environment variables are {\em not} evaluated by cylc prior to 
+executing the task. They are written, in unevaluated form, to the job
+script that is submitted by cylc to run the task. Thus
+\lstinline=$HOME=, for instance, will evaluate, at run time, to the home
+directory of the account under which the task in question executes
+(which isn't necessarily the same account, or even the same host, that
+is running the suite). 
 
 \subsection{Task Wrapping: Using Existing Scripts As Cylc Tasks}
 \label{TaskWrapping}
@@ -1455,10 +1516,10 @@ cylc wrap A.sh $OPTIONS
 {\em Most pre- and post-processing scripts, models, etc., can be used 
 by cylc without modification.}
 
-Specifically, any process or group of processes whose execution is
-overseen from start to finish by a single control script can be
-used as a cylc task by simply executing it through the cylc task
-wrapper:
+Specifically, any existing script, command, or program that sees all
+of the processes that it initiates through from start to finish, 
+can be used as a cylc task by simply executing it through the task
+wrapper, \lstinline=cylc wrap=:
 \begin{lstlisting}
 # SUITE.RC
 [tasks]
@@ -1476,8 +1537,9 @@ of any specific outputs registered for the task (if other tasks just
 trigger off it finishing, there will be none of these). 
 
 For simple tasks that don't warrant an entire script of their own, 
-a series of commands can be wrapped as a single cylc task. For example,
-here's a simple task that deliberately fails 30 seconds into execution:
+a series of commands can be wrapped as a single cylc task, by using 
+the \lstinline=-m,--multi= option. For example, here's a simple task
+that deliberately fails 30 seconds into execution:
 
 \begin{lstlisting}
 # SUITE.RC

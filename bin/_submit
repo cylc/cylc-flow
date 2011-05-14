@@ -114,13 +114,13 @@ if config[ 'use lockserver' ]:
 
 # CYLC EXECUTION ENVIRONMENT
 cylcenv = OrderedDict()
+cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
 if options.sched:
     cylcenv[ 'CYLC_MODE' ] = 'scheduler'
 else:
     cylcenv[ 'CYLC_MODE' ] = 'submit'
 cylcenv[ 'CYLC_SUITE_HOST' ] = host
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
-cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
 cylcenv[ 'CYLC_SUITE_DIR' ] = suite_dir
 cylcenv[ 'CYLC_SUITE' ] = suite
 suite_owner, suite_group, suite_name = regsplit( suite ).get()

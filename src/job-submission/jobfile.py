@@ -90,7 +90,7 @@ class jobfile(object):
         if 'CYLC_SUITE_DIR' in self.task_env:
             self.cylc_env['CYLC_SUITE_DIR'] = self.task_env['CYLC_SUITE_DIR']
 
-        self.FILE.write( "\n\n# SUITE IDENTITY:" )
+        self.FILE.write( "\n\n# CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY:" )
         for var in self.cylc_env:
             self.FILE.write( "\nexport " + var + "=\"" + str( self.cylc_env[var] ) + "\"" )
 
