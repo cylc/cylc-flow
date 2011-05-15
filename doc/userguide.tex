@@ -1046,12 +1046,14 @@ job submission method = loadleveler
         # ...
     [[PostA]]
         # ...
-    # ...
-# ...
+[visualization]
+    # NODE AND EDGE PROPERTIES FOR DEPENDENCY GRAPH PLOTTING
 \end{lstlisting}
 
 The dependency graph plotted from this (by gcylc or 
 \lstinline=cylc graph=) is shown in Figure~\ref{fig-simple-graph}.
+How to define suite dependency graphs is covered in
+Section~\ref{DependencyGraphs}.
 
 \begin{figure}
 \begin{minipage}[t]{0.5\textwidth}
@@ -1076,207 +1078,9 @@ start on the left, warm start on the right.}
     \end{center}
 \caption[Three cycle cold start dependency graph for the simple example
 suite]{\small Three cycle cold start dependency graph plotted by `cylc
-graph' from the {\em simple} example suite.rc file, showing variation between cycles.}
+graph' from the {\em simple} example suite.rc file, showing variation
+between cycles.}
 \end{figure} 
-
-\subsubsection{The Dependency Graph}
- 
-The suite graph is defined with a concise, intuitive syntax within
-freeform multiline strings:
-
-\begin{lstlisting}
-# SUITE.RC
-[dependencies]
-    [[0,6,12,18]]   # hours of validity for the following graph section
-        graph = """
-            A => B & C   # B and C trigger off A
-            C => D       # D triggers off C
-                """
-    [[6,18]]
-        graph = "C => X" # at 6 and 18 hours, X also triggers off C.
-\end{lstlisting}
-
-(this listing, just as it is, is actually a valid suite that you can
-run; with no task properties specified cylc will just run dummy tasks
-with the relationships defined in the graph).
- 
-Here are the suite.rc graph syntax rules:
-\begin{myitemize}
-    \item blank lines, and arbitrary white space, are allowed
-    \item comments are allowed inside the graph string (\# character)
-    \item dependencies (triggers) are indicated by arrows (\lstinline@=>@)
-    \item conditional expressions:
-        \begin{myitemize}
-            \item operators \lstinline=&= (AND) and \lstinline=|= (OR)
-                are allowed on the left side of arrows.
-            \item only operator \lstinline=&= (AND) is allowed on the
-                right side of arrows.
-            \item each line within the graph string has an AND relationship
-                with the other lines.
-\begin{lstlisting}
-# SUITE.RC
-    graph = "A => B & C"
-    # is equivalent to
-    graph = """A => B
-               B => C"""
-\end{lstlisting}
-            \item {\em parenthesized expressions are not allowed} (but 
-                this should not be a problem; see below) 
-        \end{myitemize}
-    \item in a list of OR'd tasks, the left-most task will be plotted 
-        by default, but you can change this by appending an asterix 
-        to another task in the list.
-
-    \item triggering,
-        \begin{myitemize}
-            \item the default is to trigger off an upstream task finishing
-            \item to trigger of an upstream task failing,
-\begin{lstlisting}
-# SUITE.RC
-    graph = "A:fail => B"  # B triggers if A fails
-\end{lstlisting}
-            \item to trigger of a specific internal output:
-\begin{lstlisting}
-# SUITE.RC
-    graph = "A:out1 => B"  # B triggers output 'out1' of task A
-[tasks]
-    [[A]]
-        [[[outputs]]]
-            # task A must emit this message
-            out1 = "NWP products uploaded for $(CYCLE_TIME)"
-\end{lstlisting}
-
-    \item to trigger off tasks in previous cycles, use:
-\begin{lstlisting}
-# SUITE.RC
-[dependencies]
-    [[12,18]]
-        graph = "A(T-6) => B"  # B(12) triggers off A(6); B(18) triggers of A(12)
-\end{lstlisting}
-    \item all of the above can be combined:
-\begin{lstlisting}
-# SUITE.RC
-    graph = "A(T-6):fail => B"  # ...
-\end{lstlisting}
- 
-\end{myitemize}
-\end{myitemize}
-
-format: free form multiline strings
-containing task names with arrows between them, arbitrary blank space 
-and comments. In a typical suite most
-tasks run in every cycle (e.g.\ 6 hourly), and a few tasks run more or
-less frequently so that the full dependency tree does not repeat for a
-full 24 hours. Rather than define everything that happens in a full 24
-hour period, which could be a very large graph, the graph can be split
-into sections headed by a list of hours for which each graph section is
-valid.  For example, here is the graph for a suite with four tasks that
-run 6 hourly, and a fifth task that triggers off one of the others only
-twice daily:
-
-
-
-
-\subsubsection{Task Families}
-
-A task family is a named group of tasks that appears as a single task
-in the suite dependency graph. Thus the entire family triggers as a
-group, and downstream tasks can trigger off the entire family finishing
-or failing as a group. 
-
-Cylc task families are implemented as a special task type that does 
-not actually submit anything to run when it enters the `running' state
-(the task proxy object representing the family itself can be seen in 
-the suite control GUI). Family members
-automatically trigger off the family starting, and the family's final
-state (finished, if all members finish; or failed, if one or more
-members fail) is not determined until all of its members have either
-finished or failed.  
-
-Cylc task families can have internal dependencies, and members can also
-participate in dependent relationships outside of the family.\footnote{
-Help, call a shrink!}. 
-
-Task families can be declared `sequential', in which case they will
-will run sequentially even if their members are not sequential.
-
-To trigger downstream processing off a family even if one or more of its 
-members failed (e.g.\ a family of obs processing tasks wherein you want
-to use the obs that were successfully processed even if some members 
-fail) use a conditional trigger on the family:
-
-\begin{lstlisting}
-# SUITE.RC
-[dependencies]
-    [[ 0,6,12,18 ]]
-        graph  =  "Family | Family:fail => PostProc"
-\end{lstlisting}
-
-\paragraph{Defining Families}
-
-Task families are listed in the top level of the suite.rc file, and 
-then used in the suite graph just like ordinary tasks.
-
-\begin{lstlisting}
-# SUITE.RC
-[task families]
-    Family = one, two, three, four
-[dependencies]
-    [[ 0,6,12,18 ]]
-        graph  =  "PreProc => Family => PostProc"
-[visualization]
-    show family members = True
-    default node attributes = "shape=box", "color=black"
-\end{lstlisting}
-
-This simple suite is plotted, with and without family members, in
-Figure~\ref{fig-fam-eg-3}.
-
-\begin{figure}
-\begin{minipage}[t]{0.4\textwidth}
-    \begin{center}
-        \includegraphics[width=0.4\textwidth]{../images/screenshots/family-one.png}
-    \end{center}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.6\textwidth}
-    \begin{center}
-        \includegraphics[width=0.6\textwidth]{../images/screenshots/family-two.png}
-    \end{center}
-\end{minipage}
-\caption[A simple task family example]{\small A small suite with simple
-task family, showing the family task proxy on the left, and the real
-dependencies among the family members on the right (plotted with
-\lstinline@[visualization] -> show family members = True@).}
-\label{fig-fam-eg-3}
-\end{figure} 
-
-\paragraph{\bf Recovering From A Family Failure} 
-
-If a family member fails it will enter the `failed' state, and once 
-all members have finished or failed, the family itself will enter
-the failed state. To recover from this, assuming it is a fixable
-problem,
-
-\begin{myitemize}
-    \item 1/ fix the problem that caused the failure
-    \item 2/ reset the failed member task to the `waiting' state
-    \item 3/ retrigger the family itself
-\end{myitemize}
-When the family triggers, the reset member task will follow suit. If the
-member then completes successfully this time, so will the family,
-and downstream processing will proceed as normal.
-
-\paragraph{Warning!}
-
-Task families should really only be used as a convenient simplification
-for groups of tasks that would naturally trigger at the same time
-anyway, and whose outputs would all be put to use at a similar time
-(e.g.\ multiple tasks for processing different types of observations
-that are all made available at the same time). Otherwise a task family 
-will unnecessarily constrain cylc's ability to achieve maximum
-functional parallelism, because every member has to finish before
-downstream processing continues. 
 
 \subsubsection{Syntax Highlighting}
 
@@ -1365,6 +1169,221 @@ DONE
 These are not necessarily errors - a task defined by graph alone will
 run as a dummy task, and you can temporarily disable a defined task by
 commenting it out of the dependency graph. 
+
+
+
+\section{Dependency Graphs}
+\label{DependencyGraphs}
+ 
+Dependency graphs define the relationships between tasks in a suite. In
+cylc suite.rc files, dependency graphs are specified within freefrom
+multiline strings that closely mirror the actual graph, but are more
+concise because sections of the graph that repeat at different hours
+of the day only have to be defined once.
+
+
+\begin{figure}
+\begin{minipage}[t]{0.4\textwidth}
+\begin{lstlisting}
+# SUITE.RC
+[dependencies]
+    [[0,6,12,18]] # hours for graph section
+        graph = """
+            A => B & C   # B and C trigger off A
+            C => D       # D triggers off C
+            A(T-6) => A  # A has restart files
+                """
+    [[6,18]]
+        graph = "C => X" # X triggers off C
+\end{lstlisting}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\textwidth}
+    \begin{center}
+        \includegraphics[width=0.5\textwidth]{../images/screenshots/dep-example.png}
+    \end{center}
+\end{minipage}
+\end{figure}
+
+(this listing, just as it is, is actually a valid suite that you can
+run; with no task properties specified cylc will just run dummy tasks
+with the relationships defined in the graph).
+ 
+Here are the suite.rc graph syntax rules:
+\begin{myitemize}
+    \item blank lines, and arbitrary white space, are allowed
+    \item comments are allowed inside the graph string (\# character)
+    \item dependencies (triggers) are indicated by arrows (\lstinline@=>@)
+    \item conditional expressions:
+        \begin{myitemize}
+            \item operators \lstinline=&= (AND) and \lstinline=|= (OR)
+                are allowed on the left side of arrows.
+            \item only operator \lstinline=&= (AND) is allowed on the
+                right side of arrows.
+            \item each line within the graph string has an AND relationship
+                with the other lines.
+\begin{lstlisting}
+# SUITE.RC
+    graph = "A => B & C"
+    # is equivalent to
+    graph = """A => B
+               B => C"""
+\end{lstlisting}
+            \item {\em parenthesized expressions are not allowed} (but 
+                this should not be a problem; see below) 
+        \end{myitemize}
+    \item in a list of OR'd tasks, the left-most task will be plotted 
+        by default, but you can change this by appending an asterix 
+        to another task in the list.
+
+    \item triggering,
+        \begin{myitemize}
+            \item the default is to trigger off an upstream task finishing
+            \item to trigger of an upstream task failing,
+\begin{lstlisting}
+# SUITE.RC
+    graph = "A:fail => B"  # B triggers if A fails
+\end{lstlisting}
+            \item to trigger of a specific internal output:
+\begin{lstlisting}
+# SUITE.RC
+    graph = "A:out1 => B"  # B triggers output 'out1' of task A
+[tasks]
+    [[A]]
+        [[[outputs]]]
+            # task A must emit this message
+            out1 = "NWP products uploaded for $(CYCLE_TIME)"
+\end{lstlisting}
+
+    \item to trigger off tasks in previous cycles, use:
+\begin{lstlisting}
+# SUITE.RC
+[dependencies]
+    [[12,18]]
+        graph = "A(T-6) => B"  # B(12) triggers off A(6); B(18) triggers of A(12)
+\end{lstlisting}
+    \item all of the above can be combined:
+\begin{lstlisting}
+# SUITE.RC
+    graph = "A(T-6):fail => B"  # ...
+\end{lstlisting}
+ 
+\end{myitemize}
+\end{myitemize}
+
+format: free form multiline strings
+containing task names with arrows between them, arbitrary blank space 
+and comments. In a typical suite most
+tasks run in every cycle (e.g.\ 6 hourly), and a few tasks run more or
+less frequently so that the full dependency tree does not repeat for a
+full 24 hours. Rather than define everything that happens in a full 24
+hour period, which could be a very large graph, the graph can be split
+into sections headed by a list of hours for which each graph section is
+valid.  For example, here is the graph for a suite with four tasks that
+run 6 hourly, and a fifth task that triggers off one of the others only
+twice daily:
+
+
+\subsection{Task Families}
+
+A task family is a named group of tasks that appears as a single task
+in the suite dependency graph. Thus the entire family triggers as a
+group, and downstream tasks can trigger off the entire family finishing
+or failing as a group. 
+
+Cylc task families are implemented as a special task type that does 
+not actually submit anything to run when it enters the `running' state
+(the task proxy object representing the family itself can be seen in 
+the suite control GUI). Family members
+automatically trigger off the family starting, and the family's final
+state (finished, if all members finish; or failed, if one or more
+members fail) is not determined until all of its members have either
+finished or failed.  
+
+Cylc task families can have internal dependencies, and members can also
+participate in dependent relationships outside of the family.\footnote{
+Help, call a shrink!}. 
+
+Task families can be declared `sequential', in which case they will
+will run sequentially even if their members are not sequential.
+
+To trigger downstream processing off a family even if one or more of its 
+members failed (e.g.\ a family of obs processing tasks wherein you want
+to use the obs that were successfully processed even if some members 
+fail) use a conditional trigger on the family:
+
+\begin{lstlisting}
+# SUITE.RC
+[dependencies]
+    [[ 0,6,12,18 ]]
+        graph  =  "Family | Family:fail => PostProc"
+\end{lstlisting}
+
+\subsubsection{Defining Families}
+
+Task families are listed in the top level of the suite.rc file, and 
+then used in the suite graph just like ordinary tasks.
+
+\begin{lstlisting}
+# SUITE.RC
+[task families]
+    Family = one, two, three, four
+[dependencies]
+    [[ 0,6,12,18 ]]
+        graph  =  "PreProc => Family => PostProc"
+[visualization]
+    show family members = True
+    default node attributes = "shape=box", "color=black"
+\end{lstlisting}
+
+This simple suite is plotted, with and without family members, in
+Figure~\ref{fig-fam-eg-3}.
+
+\begin{figure}
+\begin{minipage}[t]{0.4\textwidth}
+    \begin{center}
+        \includegraphics[width=0.4\textwidth]{../images/screenshots/family-one.png}
+    \end{center}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.6\textwidth}
+    \begin{center}
+        \includegraphics[width=0.6\textwidth]{../images/screenshots/family-two.png}
+    \end{center}
+\end{minipage}
+\caption[A simple task family example]{\small A small suite with simple
+task family, showing the family task proxy on the left, and the real
+dependencies among the family members on the right (plotted with
+\lstinline@[visualization] -> show family members = True@).}
+\label{fig-fam-eg-3}
+\end{figure} 
+
+\paragraph{\bf Recovering From A Family Failure} 
+
+If a family member fails it will enter the `failed' state, and once 
+all members have finished or failed, the family itself will enter
+the failed state. To recover from this, assuming it is a fixable
+problem,
+
+\begin{myitemize}
+    \item 1/ fix the problem that caused the failure
+    \item 2/ reset the failed member task to the `waiting' state
+    \item 3/ retrigger the family itself
+\end{myitemize}
+When the family triggers, the reset member task will follow suit. If the
+member then completes successfully this time, so will the family,
+and downstream processing will proceed as normal.
+
+\paragraph{Warning!}
+
+Task families should really only be used as a convenient simplification
+for groups of tasks that would naturally trigger at the same time
+anyway, and whose outputs would all be put to use at a similar time
+(e.g.\ multiple tasks for processing different types of observations
+that are all made available at the same time). Otherwise a task family 
+will unnecessarily constrain cylc's ability to achieve maximum
+functional parallelism, because every member has to finish before
+downstream processing continues. 
 
 
 \section{Cylc Tasks}
