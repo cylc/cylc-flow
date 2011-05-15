@@ -898,7 +898,7 @@ other important parameters besides) no longer need to be specified by
 the user because they are implied by the graph.
 
 
-\subsection{Suite Definition Directories}
+\subsection{The Suite Definition Directory}
 
 A cylc {\em suite definition directory} contains, at the least, a
 suite.rc file (the suite definition) and a \lstinline=bin= sub-directory
@@ -1008,8 +1008,6 @@ And the following are cylc-specific additions to the ConfigObj format:
         multiply-included and nested. 
 \end{myitemize}
 
-
-
 \subsubsection{A Simple Example}
 
 This is the suite.rc file defining cylc's {\em ``simple''}
@@ -1088,6 +1086,56 @@ start on the left, warm start on the right.}
 suite]{\small Three cycle cold start dependency graph plotted by `cylc
 graph' from the {\em simple} example suite.rc file, showing variation between cycles.}
 \end{figure} 
+
+\subsubsection{Dependency Graphs}
+ 
+TBD.
+
+\subsubsection{Task Families}
+
+A task family is a named group of tasks that appears as a single task
+in the suite dependency graph. Thus the entire family triggers as a group,
+and downstream tasks can trigger off the entire family finishing or
+failing as a group.  Task families can have internal dependencies. 
+Family members can also have their own triggers, independent of the family,
+and downstream tasks can trigger off family members as if they weren't part 
+of a family. 
+
+Task families are implemented in cylc as a special abstract task type
+that just enters the 'running' state when its prerequisites are
+satisfied; members automatically trigger off their family starting;
+and the family's final state (finished, if all members finish; or
+failed, if one or more members fail) is not determined until all of its
+members have either finished or failed. 
+
+Task families can be declared 'sequential', in which case their members 
+will run sequentially even if not sequential themselves.
+
+{\bf How to recover from a family member (and therefore family) failure:} 
+\begin{myitemize}
+    \item 1/ fix the problem that caused the failure
+    \item 2/ then reset the failed member task to 'waiting' (or retrigger it)
+    \item 3/ then reset the family state to 'waiting' (or retrigger it)
+\end{myitemize}
+When the family triggers again, the reset member task will follow suit. If the
+member then completes successfully this time, so will the family, and downstream
+processing can proceed as normal.
+
+To trigger downstream processing off a family even if one or more of its 
+members failed (e.g.\ a family of obs processing tasks wherein you still
+want to use the obs that were successfully processed, even if some were not),
+using a conditional trigger on the family:
+
+\begin{lstlisting}
+    graph = """familyX | familyX:fail => PostProc"""
+\end{lstlisting}
+
+Task families should really only be used as a (very) convenient
+simplification for groups of tasks that should trigger at the same time
+regardless (e.g.\ multiple tasks for processing different types of
+observations that are all made available at the same time) because
+they otherwise artificially constrain cylc's ability to achieve maximum
+functional parallelism. 
 
 \subsubsection{Syntax Highlighting}
 
@@ -1177,54 +1225,6 @@ These are not necessarily errors - a task defined by graph alone will
 run as a dummy task, and you can temporarily disable a defined task by
 commenting it out of the dependency graph. 
 
-
-\subsection{The Suite Dependency Graph}
-
-\subsubsection{Task Families}
-
-FamilyX = Foo, Bar, Baz
-
-A task family is a group of tasks that behave as a single unit - the
-suite triggers the whole group at once, and downstream tasks can trigger
-off the group as a whole.
-
-Implementation: the "family" itself is an abstract task type that just
-enters the 'running' state when its prerequisites are satisfied; members
-automatically trigger off their family starting up; the family's final
-state (finished or failed) is not determined until all of its members
-have either finished or failed. If *all* members finish successfully the
-family enters the 'finished' state, otherwise it enters the 'failed'
-state.
-
-Task families can be declared 'sequential', in which case their members 
-will run sequentially even if not sequential themselves.
-
-Families can have internal dependencies amongst members, and family 
-members can be part of other non-family relationships (e.g. a non-member
-task can trigger off a single member rather than the whole group); 
-however, the utility of this is not entirely clear. 
-
-{\bf How to recover from a family member (and therefore family) failure:} 
-\begin{myitemize}
-    \item 1/ fix the problem that caused the failure
-    \item 2/ then reset the failed member task to 'waiting' (or retrigger it)
-    \item 3/ then reset the family state to 'waiting' (or retrigger it)
-\end{myitemize}
-When the family triggers again, the reset member task will follow suit. If the
-member then completes successfully this time, so will the family, and downstream
-processing can proceed as normal.
-
-To trigger downstream processing off a family even if one or more of its 
-members failed (e.g.\ a family of obs processing tasks wherein you still
-want to use the obs that were successfully processed, even if some were not),
-using a conditional trigger:
-
-\begin{lstlisting}
-    graph = familyX | familyX:fail => PostProc
-\end{lstlisting}
-
-
-\pagebreak
 
 \section{Cylc Tasks}
 
@@ -1510,6 +1510,29 @@ directory of the account under which the task in question executes
 (which isn't necessarily the same account, or even the same host, that
 is running the suite). 
 
+\subsection{Pre- and Post-command Scripting}
+
+The global and task-specific {\em pre-command scripting} and {\em
+post-command scripting} suite.rc items (not shown in the example 
+job script above, because they were not defined for that task) allow
+you to write arbitrary scripting in a multiline string in the suite.rc
+task sections, that will be executed verbatim immediately before, 
+or after, the task commandline. The can be used to 
+construct simple tasks that are entirely scripted within the suite.rc
+file, or for the occasional bit of more complex environment manipulation
+than can easily be achieved by exporting variables alone. However, use
+of this feature should be restricted to simple, fast, and reliable
+scripting, because it is executed outside of the task itself (i.e.\
+prior to the task started message, and after the task finished message).
+If pre-command scripting aborts, it will appear that the task is stuck 
+in the `submitted' state.  If post-command scripting fails, it will fail
+unnoticed by cylc (although evidence would be left in the task stdout or
+stderr logs) because the task would have reported in finished or failed
+before the scripting ran. Anything non-trivial should really go into
+the task itself. A better way of scripting simple tasks entirely in the
+suite.rc file is to wrap multiple commands on the task commandline using
+the cylc task wrapper (below).
+
 \subsection{Task Wrapping: Using Existing Scripts As Cylc Tasks}
 \label{TaskWrapping}
 
@@ -1535,6 +1558,22 @@ and it automatically reports startup; success or failure according
 to the exit status of the wrapped script; and, on finishing, completion
 of any specific outputs registered for the task (if other tasks just
 trigger off it finishing, there will be none of these). 
+
+To avoid scripting error checks for every mundane operation, wrapped
+tasks can use \lstinline=set -e= to abort on any error, and then
+rely on the cylc wrapper to report the failure to cylc:
+\begin{lstlisting}
+#!/bin/bash
+# wrapped task script (execute with: 'cylc wrap foo.sh')
+
+set -e  # abort on error
+
+mkdir /illegal/dir  # illegal operation: the script will abort and
+                    # the cylc wrapper will report the task failed.
+\end{lstlisting}
+
+Appendix~\ref{AnnotatedTaskScript} provides more information on
+task scripting.
 
 For simple tasks that don't warrant an entire script of their own, 
 a series of commands can be wrapped as a single cylc task, by using 
@@ -1562,10 +1601,7 @@ cylc (raw - 2011/05/13 10:34:29): CRITICAL TASK_ID failed
 You can also use the global and task-specific {\em pre-command
 scripting} and {\em post-command scripting} suite.rc items to
 construct simple tasks that are entirely scripted within the suite.rc
-file. However, use of these should be restricted to simple,
-fast, and reliable scripting, because it is executed outside of the task
-itself (i.e.\ prior to the task started message, and after the task
-finished message).
+file (see details above).
 
 \subsection{Non-wrapped Tasks: Modifying Scripts For Cylc}
 \label{Unwrapping}
@@ -1646,26 +1682,11 @@ error message can be logged on failure, e.g.:
 
 \begin{lstlisting}
 #!/bin/bash
-important.exe | {
-    cylc task failed ``important operation failed''
+important.exe || {
+    cylc task failed "important operation failed"
     exit 1
 }
 \end{lstlisting}
-
-To avoid scripting error checks for every mundane operation, however,
-wrapped tasks (see Section~\ref{SuiteDesignReference}) can use
-\lstinline=set -e= to abort on any error, and then rely on
-the cylc wrapper to report the failure to cylc:
-\begin{lstlisting}
-#!/bin/bash
-# wrapped task (execute with: 'cylc wrap foo.sh')
-
-set -e  # abort on error
-
-mkdir /illegal/dir  # illegal operation: the script will abort and
-                    # the cylc wrapper will report the task failed.
-\end{lstlisting}
-
 
 Non-wrapped tasks can combine this with error trapping to automatically
 alert cylc on any failure:
@@ -1674,7 +1695,7 @@ alert cylc on any failure:
 #!/bin/bash
 # non-wrapped task
 set -e
-trap 'cylc task failed \'error trapped\'' ERR
+trap 'cylc task failed "error trapped"' ERR
 
 cylc task started
 mkdir /illegal/dir   # illegal operation: will be trapped and reported
@@ -1700,9 +1721,8 @@ if [[ $? != 0 ]]; then  # so this line will not be reached.
 fi
 \end{lstlisting}
 
-
-Appendix~\ref{AnnotatedTaskScript} provides more detailed information on
-task scripts.
+Appendix~\ref{AnnotatedTaskScript} provides more information on
+task scripting.
 
 \subsubsection{Custom Task Wrappers}
 
@@ -1712,123 +1732,119 @@ write a custom wrapper that takes input parameters from the environment
 and its commandline, and then modifies the native scripts according
 to task and cycle time, and to insert cylc messaging in the appropriate 
 places, before invoking the (now modified) native process. The task 
-command would then just invoke the custom wrapper.
+commandline would then just invoke the custom wrapper.
 
-\subsubsection{Propagating The Task Execution Environment}
+\paragraph{Propagating The Task Execution Environment}
 
-Task commandlines obviously execute in the environment configured by the
-job script submitted to invoke the task (true even if
-the task spawns
-subprocesses, because the environment is exported). But {\em if 
-any part of task processing that has to make cylc messaging calls executes
-outside of that environment, you have to fix that}. This could happen, 
-for instance, if an internally complex task submits (internally) a final
-task processing job, say, to loadleveler, which by default does not copy
-the calling environment.  In this case one could modify the internal
-job submission to carry over the cylc task environment. Another solution
-would be a custom task wrapper that inserts, on the fly, scripting to 
-recreate the task execution environment inside the errant section.
+Task processing normally executes in the configured task execution
+environment, even in subprocesses because the environment is exported.
+However, if a task submits an internal job to a batch queue scheduler
+without passing its environment in, or if a tasks submits an internal
+job to a remote host by some means, then you must arrange for the
+relevant parts of the task execution environment to be propagated into
+those jobs {\em if they need to be able to report success or failure to
+cylc}. In the interests of simplicity and transparency it is best not to
+let your tasks indulge in this kind of complicated subterfuge (instead,
+divide the task up and have cylc submit each part of it as a distinct
+task, even to remote hosts). But, like the case for less extreme custom
+task wrappers, there are occasionally good reasons to hack the existing
+native job scripts rather than re-engineer them properly.
 
-\begin{lstlisting}
-echo ``export CYLC_DIR=$CYLC_DIR'' >> foo.sh 
-\end{lstlisting}
-
-TO DO: EXPLAIN ENVIRONMENT PROPAGATION FOR REMOTE TASKS.
-
-\subsection{Running Local Tasks Under Other Usernames}
-\label{RunningLocalTasksUnderOtherUsernames}
-
-A task that runs on the local host and declares an owner in the taskdef
-file \lstinline=%OWNER= section will be submitted via the Unix
-\lstinline=sudo= command:  
-
-\lstset{language=bash}
+So, if you have to modify a task's native job submission scripts for
+this kind of situation, you can write a custom task wrapper that
+inserts, at run time, code to recreate the environment in the right
+place in said scripting, before invoking the native scripting itself. 
+Here's a rough indication of how this sort of thing can be done:
 
 \begin{lstlisting}
-sudo -u OWNER [SUBMISSION-COMMAND]
+#/bin/bash
+# CustomFoo.sh, a custom wrapper for task foo.
+# (cylc messaging and error checking not shown).
+# Usage:
+#---------------------------------------------
+# SUITE.RC
+# [tasks]
+#   [[foo]]
+#      command = CustomFoo.sh $OPTIONS $ARGS
+#---------------------------------------------
+# ...
+# Copy original native scripts to $NATIVESCRIPTS_DIR
+# ...
+# Modify native script foobar.sh:
+echo "export CYCLE_TIME=$CYCLE_TIME" >> $NATIVESCRIPTS_DIR/foobar.sh 
+echo "export CYLC_DIR=$CYLC_DIR" >> $NATIVESCRIPTS_DIR/foobar.sh 
+# (you'll probably need more sophisticated search-and-replace 
+# scripting rather than simply appending to the end of the file).
+# ...
+# Finally, invoke the job in its own special way:
+foo.sh  # presumably this results in foobar.sh being executed ...
 \end{lstlisting}
 
-For this to work \lstinline=/etc/sudoers= must be configured to allow
-the cylc user to invoke the relevant job submission commands as the task
-owner.  This might be difficult to arrange for the background execution
-method (wherein job scripts are invoked directly) but is
-otherwise easy to do: for the \lstinline=at_now= or loadleveler methods,
-for instance, the cylc user only needs \lstinline=sudo= access, as the
-task owner, to \lstinline=at= or \lstinline=llsubmit= respectively.
+\subsection{Running Local Tasks Under Other User Accounts}
+
+If task declares an owner other than the suite owner, and does not
+declare a remote host:
+\begin{lstlisting}
+# SUITE.RC
+owned task execution method = sudo  # or ssh
+[tasks]
+    [[foo]]
+        owner = bob
+        job submission method = loadleveler
+\end{lstlisting}
+cylc will attempt to execute the task, by the configured 
+{\em job submission method} (e.g.\ loadleveler), as the specified owner,
+using the configured {\em owned task execution method}. To use sudo 
+with llsubmit (loadleveler), for example, \lstinline=/etc/sudoers= must
+be configured to allow the suite owner to execute the llsubmit command
+as the task owner.  For ssh, passwordless ssh must be configured between
+the suite owner and task owner accounts.
 
 \subsection{Running Tasks On A Remote Host}
 \label{RunningTasksOnARemoteHost}
 
-{\em You will not need this functionality if you have a cross-platform
+{\em You should not need this functionality if you have a cross-platform
 resource manager, such as loadleveler, that allows you to submit a job
 locally to run on the remote host}.
 
-If a task declares a \lstinline=%REMOTE_HOST= section in the taskdef
-file, its job script will be copied to the specified host by 
-\lstinline=scp=, and then invoked on the remote machine (using the
-correct job submission method for the task) by \lstinline=ssh=. 
-
-For this to work {\em you must have passwordless ssh configured, as 
-the cylc user, between the local and remote hosts}. Once so configured
-you should be able to do the following, on the command line, without
-supplying a password:
-
+If a task declares a remote host and owner in its suite.rc task section,
 \begin{lstlisting}
-cylc-user% ssh REMOTE_HOST hostname
+# SUITE.RC
+[tasks]
+    [[foo]]
+        owner = bob
+        host = fitzroy.niwa.co.nz
+        job submission method = loadleveler
 \end{lstlisting}
+cylc will copy the task job script to the remote host by
+\lstinline=scp=, and then run it on the remote host (using the
+specified job submission method for the task) by \lstinline=ssh=. 
+For this to work you must have passwordless ssh configured between the
+suite owner on the suite host and the task owner on the remote host.
 
-If the task additionally declares an \lstinline=%OWNER= section in the
-taskdef file owner, the job script will be copied to and
-invoked on the remote host as the task owner; thus {\em you must have
-passwordless ssh configured, as the cylc user, to the remote host, as
-the task owner}:
-
-\begin{lstlisting}
-cylc-user% ssh OWNER@REMOTE_HOST hostname
-\end{lstlisting}
-
-
-\paragraph{Remote Host Requirements}
+\subsubsection{Remote Host Requirements}
 
 \begin{myitemize}
 
     \item Cylc (and Pyro) must be installed on the remote host, so that 
-        the task can communicate with its parent scheduler.
+        the remote task can communicate with its parent suite. To give
+        the remote task access to the remote cylc installation just
+        override \lstinline=$CYLC_DIR= with the remote cylc location,
+        in the task's suite.rc environment section.
         
-    \item The task itself must be installed on the remote host (the task
-        job script that is copied to the remote host is what
-        invokes the task, but is not the task itself. 
-
-    \item The task execution environment, as specified in the job
-        script, must provide access to the remote cylc
-        installation and to the remote task.
+    \item Any external (non-suite) scripts, programs, and files used
+        by the task must obviously be installed on the remote host. 
+        
+    \item To give the remote task access to any files stored in the 
+        suite definition directory, including scripts in the suite
+        bin directory, just install the suite definition on the 
+        remote host and override \lstinline=$CYLC_SUITE_DIR= 
+        with the remote suite location, in the task's suite.rc 
+        environment section.
 
 \end{myitemize}
 
-To provide access to the remote cylc installation, override the 
-\lstinline=CYLC_DIR= environment variable in the taskdef
-\lstinline=%ENVIRONMENT= section:
-
-\begin{lstlisting}
-CYLC_DIR         /path/to/cylc/installation
-\end{lstlisting}
-
-If you have installed your entire suite definition directory on the
-remote platform (it is not necessary to do this, but it may be
-convenient) then you can also override \lstinline=$CYLC_SUITE_DIR= to
-point to that location. Then, if the remote task script resides in the
-suite definition scripts sub-directory, the job script will
-automatically be able to find it after the cylc environment is
-configured.
-
-\begin{lstlisting}
-CYLC_SUITE_DIR  /path/to/suite/definition/directory
-\end{lstlisting}
-
-(\lstinline=CYLC_DIR=  and \lstinline=CYLC_SUITE_DIR= are inserted
-into your \lstinline=PATH= by \lstinline=environment.sh=, which is sourced
-in the job script before executing the task).
-
+\pagebreak
 \section{Job Submission Methods}
 \label{JobSubmission}
 
@@ -2494,6 +2510,13 @@ TBD:
     \item recursive purge
     \item fuzzy prerequisites?
     \item asynchronous tasks?
+    \item sub-suites
+\begin{lstlisting}
+[tasks]
+    [[foo]]
+        command = cylc run --warm SUITE $CYCLE_TIME $CYCLE_TIME
+\end{lstlisting}
+
 \end{myitemize}
 
 \section{Principles And Suggestions}
@@ -2546,7 +2569,7 @@ specific member. This should really only be used as a (very) convenient
 simplification for groups of tasks that should trigger at the same time
 regardless (e.g.\ multiple tasks for processing different types of
 observations that are all made available at the same time) because
-otherwise it artificially constrains cylc's ability to achieve maximal
+it otherwise artificially constrains cylc's ability to achieve maximum
 functional parallelism. As an extreme example, imagine grouping all
 tasks in the same forecast cycle into a single family (cylc task
 families can have internal dependencies) - this would result in enforced
