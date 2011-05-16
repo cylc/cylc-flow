@@ -554,7 +554,6 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>   baz:out1 => faz           # faz triggers off an internal output of baz
 #>   ColdFoo | foo(T-6) => foo # cold start or restart for foo
 #>   X:fail => Y               # Y triggers if X fails
-#>   comment
 #>   X | X:fail => Z           # Z triggers if X finishes or fails
 #>   """
 #>  \end{lstlisting}
@@ -1072,8 +1071,9 @@ default edge attributes = force_list( default=list('color=black'))
 #> itself is running. These variables will be available to processes
 #> spawned directly by cylc itself, namely timeout and alert hook
 #> scripts. {\em Do not use this section to alter the task execution
-#> environment - that it will only have the desired affect for local
-#> direct job submission methods}. 
+#> environment - use the plain [environment] sections for that - 
+#> variables defined in this section will only be available 
+#> to tasks if local direct job submission methods are used}. 
 __many__ = string
 #> Repeat MANY (environment variable definition) for any environment
 #> variables you need.

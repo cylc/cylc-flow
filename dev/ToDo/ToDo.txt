@@ -18,15 +18,17 @@ GENERAL
 
 * IMPORTANT: rationalize suite shutdown criteria in main loop.
 
-* exclude failed tasks from runahead limit check?  This may depend on
-  the next item:
+* exclude failed tasks in the cleanup or runahead algorithms.
+  Failed mean prereqs were satisfied so we don't need to keep 
+  upstream tasks around. This may depend on the next item:
 * cleanup algorithm and failed tasks: test with userguide suite in dummy
   mode, failing C and F. In case of F, why do none of A,B,C get
   removed? 
-
-* don't consider failed tasks in the cleanup or runahead algorithms.
-  Failed mean prereqs were satisfied so we don't need to keep 
-  upstream tasks around.
+* exclude inserted spinup/temporary tasks from runahead check?
+  (or manually alter the check - this should be fine because the
+  catching up spinup task will be all alone out behind the 
+  caught-up operational tasks - so the suite won't get cluttered
+  with finished tasks as a result of the long runahead limit).
 
 * errors caught be validate should also be caught cleanly if the user
   tries to start the suite. E.g. misspell a task in 'tasks to exclude at
