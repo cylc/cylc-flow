@@ -74,8 +74,16 @@ try:
 except RegistrationError,x:
     raise SystemExit(x)
 
-# provide access to the suite bin directory
+# LOCAL ENVIRONMENT
+# Provide access to the suite bin directory. This is probably no longer
+# required for standalone task submit as we no longer execute task 
+# commands directly (it's now done by executing a temporary job script
+# that configures the suite bin path explicitly).  
 os.environ[ 'PATH' ] += ':' + suite_dir + '/bin'
+# user defined local variables. Also probably not required for
+# standalone task submit, but we'll do it for completeness.
+for var in self.config['cylc local environment']:
+    os.environ[var] = self.config['cylc local environment'][var]
 
 # check task ---------------------------------------------------------
 try:

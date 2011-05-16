@@ -323,14 +323,15 @@ class scheduler(object):
         job_submit.owned_task_execution_method = self.config['owned task execution method']
 
         # LOCAL ENVIRONMENT
-        # Access to the suite bin directory required for direct job
-        # submission methods (background, at_now). *Prepend* suite bin
-        # to $PATH in case this is a subsuite (the parent and sub suites
-        # may have task scripts with common names - NOTE that this is 
-        # still somewhat dangerous: if a subsuite task script is,
-        # erroneously, not executable, one in the parent suite, if it
-        # exists, will be, erroneously, invoked instead).
+        # Access to the suite bin directory may be required for alert
+        # scripts executed by the suite (it is no longer required for 
+        # direct job submission methods because we now submit a job
+        # script that source $CYLC_DIR/environment.sh prior to executing
+        # the task command.
         os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 
+        # user defined local variables that may be required by alert scripts
+        for var in self.config['cylc local environment']:
+            os.environ[var] = self.config['cylc local environment'][var]
 
         # LIST OF ALL TASK NAMES
         self.task_name_list = self.config.get_task_name_list()
