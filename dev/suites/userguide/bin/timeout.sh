@@ -3,11 +3,11 @@
 # This is an example cylc task timeout script.
 # Cylc supplies the following command line arguments:
 
-# <timeout script> HOOK TASK_NAME CYCLE_TIME MESSAGE
+# <timeout script> EVENT TASK_NAME CYCLE_TIME MESSAGE
 
-# where HOOK is either:
-#  'submission',
-#  'execution'
+# where EVENT is either:
+#  'submission'  # task timed out in job submission
+#  'execution'   # task timed out in execution
 
 # MESSAGE contains the timeout value, e.g.:
 #   "submitted 12 minutes ago, but has not started"
@@ -18,9 +18,9 @@
 # email if a task fails; or update a general monitoring system such as
 # Nagios.
 
-HOOK=$1
+EVENT=$1
 NAME=$2
 CTIME=$3
 MESSAGE="$4"  # quotes required: message contains spaces
 
-echo "!!${HOOK}!! $NAME $CTIME $MESSAGE"
+echo "!!${EVENT}!! $NAME $CTIME $MESSAGE"

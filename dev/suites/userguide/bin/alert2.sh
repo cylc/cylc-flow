@@ -3,9 +3,9 @@
 # This is an example cylc alert script.
 # Cylc supplies the following command line arguments:
 
-# <alert script> HOOK  TASK_NAME  CYCLE_TIME  MESSAGE
+# <alert script> EVENT  TASK_NAME  CYCLE_TIME  MESSAGE
 
-# where HOOK is either:
+# where EVENT is either:
 #  'submitted',
 #  'started',
 #  'finished',
@@ -17,9 +17,9 @@
 # email if a task fails; or update a general monitoring system such as
 # Nagios according to whether a task has started, finished, or failed.
 
-HOOK=$1
+EVENT=$1
 NAME=$2
 CTIME=$3
 MESSAGE="$4"  # quotes required: message contains spaces
 
-echo "<<${HOOK}>> $NAME $CTIME $MESSAGE"
+echo "<<${EVENT}>> $NAME $CTIME $MESSAGE"
