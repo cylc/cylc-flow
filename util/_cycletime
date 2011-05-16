@@ -4,7 +4,7 @@ import os, sys, re
 import cycle_time
 from optparse import OptionParser
 
-parser = OptionParser( usage = """cylc cycletime [options] [CYCLE]
+parser = OptionParser( usage = """cylc [util] cycletime [options] [CYCLE]
 
 Perform arithmetic operations on cycle times and print the results to 
 sdtout. Examples:

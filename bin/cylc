@@ -174,7 +174,7 @@ utility_commands['cycletime'] = ['cycletime' ]
 utility_commands['checkvars'] = ['checkvars'] 
 utility_commands['template' ] = ['template'] 
 utility_commands['housekeeping'] = ['housekeeping'] 
-utility_commands['transfer' ] = ['transfer'] 
+#utility_commands['transfer' ] = ['transfer'] 
 
 database_commands = OrderedDict()
 database_commands['gcylc'     ] = information_commands['gcylc']
@@ -330,7 +330,7 @@ comsum[ 'cycletime'    ] = 'Cycle time arithmetic'
 comsum[ 'checkvars'    ] = 'Check required environment variables en masse'
 comsum[ 'template'     ] = 'Powerful cycle time offset filename templating'
 comsum[ 'housekeeping' ] = 'Parallel archiving and cleanup on cycle time offsets'
-comsum[ 'transfer'     ] = 'An scp-based file transfer tool'
+#comsum[ 'transfer'     ] = 'An scp-based file transfer tool'
 
 def typo( str ):
     corrected = str
