@@ -61,7 +61,7 @@ use lockserver = boolean( default=True )
 #> \lstinline=cylc submit=) if the same task is already running (in its
 #> suite or by \lstinline=cylc submit=). It will only allow multiple
 #> instances of a suite to run under
-#> different registration GROUP:NAMEs if the suite declares itself
+#> different registrations if the suite declares itself
 #> capable of that (see \lstinline=suite.rc= item
 #> ``allow multiple simultaneous instances'').
 #>\begin{myitemize}
@@ -223,7 +223,9 @@ task timeout hook script = string( default=None )
 #> \begin{lstlisting}
 #> <script> [EVENT] TASK CYCLE_TIME MESSAGE
 #> \end{lstlisting}
-#> where MESSAGE will describe what has happened.
+#> where MESSAGE describes what has happened, and EVENT is the same 
+#> as in the item name except that `submission failed' becomes 
+#> `submit\_failed'.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
@@ -748,9 +750,11 @@ __many__ = string
 #> These are task-specific settings; you can also set global defaults.
 #> Hook scripts are called with the following arguments supplied by cylc:
 #> \begin{lstlisting}
-#> <script> [EVENT] TASK CYCLE_TIME MESSAGE
+#> <script> EVENT TASK CYCLE_TIME MESSAGE
 #> \end{lstlisting}
-#> where MESSAGE will describe what has happened.
+#> where MESSAGE describes what has happened, and EVENT is the same 
+#> as in the item name except that `submission failed' becomes 
+#> `submit\_failed'.
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string

@@ -585,9 +585,19 @@ it:
 \begin{lstlisting}
 admin> create_cdb.sh
 \end{lstlisting}
-
 (You must have installed cylc and configured your environment as above
-before doing this).
+before doing this). To view the contents of the central database,
+run gcylc and click on `Database' \lstinline@->@ `CentralDB', or 
+on the commandline:
+
+    \lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
+\begin{lstlisting}
+admin> cylc db print --central
+admin:examples:simple  "a simple example suite"  /home/admin/cylc/examples/simple
+admin:examples:userguide  "userguide example suite"  /home/admin/cylc/examples/userguide
+\end{lstlisting}
+    \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
+
 
 \subsection{Testing}
 \label{Testing}
@@ -595,20 +605,22 @@ before doing this).
 \subsubsection{Suite Database Test} 
 
 The script \lstinline=$CYLC_DIR/test/test-db.sh= gives
-the suite database functionality a work out - it registers the userguide
+suite database functionality a work out - it registers the userguide
 example suite under a new name and then manipulates it (by copying the
 suite in various ways, exporting it to the central database, and so on,
-before finally deleting the test registration). This process should
-complete in a few seconds.
+before finally deleting the test registrations). This process should
+complete in a few seconds without errors.
 
 \subsubsection{Suite Scheduler Test} 
 
 The script \lstinline=$CYLC_DIR/test/test-suite.sh= tests the cylc 
 scheduler itself by running an example suite, configuring it 
 to fail out a specific task, and then doing some advanced failure
-recovery intervention on it (recursive purge). This process
-should complete in 2-3 minutes, and can be watched in real time by
-firing up a gcylc suite controller instance.
+recovery intervention on it (recursive purge plus insertion of
+cold start tasks). This process should complete in 2-3 minutes, and can
+be watched in real time by right-clicking on the test suite, when it 
+appears in the gcylc local database window and opening up the 
+suite control GUI.
 
 \pagebreak
 \section{Quick Start Guide} 
