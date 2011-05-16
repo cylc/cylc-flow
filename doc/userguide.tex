@@ -1175,113 +1175,294 @@ commenting it out of the dependency graph.
 \section{Dependency Graphs}
 \label{DependencyGraphs}
  
-Dependency graphs define the relationships between tasks in a suite. In
-cylc suite.rc files, dependency graphs are specified within freefrom
-multiline strings that closely mirror the actual graph, but are more
-concise because sections of the graph that repeat at different hours
-of the day only have to be defined once.
+Dependency graphs define the relationships between tasks in a suite. 
+Cylc suite.rc dependency graph notation is intended to provide an
+intuitive textual representation of an actual graph, but is more concise
+than the real thing because sections of the graph that repeat at
+different hours of the day only have to be defined once.
 
+Figure~\ref{fig-dep-eg-1} shows a simple example alongside its graphical
+representation, plotted with,
+\begin{lstlisting}
+prompt> cylc graph dep:example1 2011052200 2011052206
+# (or use the `Graph' right-click menu item in gcylc)
+\end{lstlisting}
 
-\begin{figure}
-\begin{minipage}[t]{0.4\textwidth}
+Incidentally, the suite.rc file listed in Figure~\ref{fig-dep-eg-1} is 
+a complete valid suite definition that you can run (just import a copy
+from the central suite database and run it). Cylc will run dummy tasks,
+which sleep for a few seconds and emit an identifying messages,
+because no task properties have been defined. To run real tasks you just
+need to replace the default dummy task commandlines with real ones, 
 \begin{lstlisting}
 # SUITE.RC
+[tasks]
+    [[A]]
+        command = cylc wrap foo.sh
+\end{lstlisting}
+If you do try to run Example 1, be aware that you'll need to trigger
+task A manually to get the suite started. That's because A(T) depends on
+its own previous instance A(T-6), and at startup there is no previous
+cycle to satisfy that prerequisite.  How to handle a {\em cold start}
+properly is covered below.
+
+\begin{figure}
+\begin{minipage}[b]{0.5\textwidth}
+%    \lstset{basicstyle=\color{basic}\scriptsize\ttfamily}
+\begin{lstlisting}
+# SUITE.RC
+title = "Dependency Graph Example 1"
 [dependencies]
-    [[0,6,12,18]] # hours for graph section
+    [[0,6,12,18]] # hours
         graph = """
-            A => B & C   # B and C trigger off A
-            C => D       # D triggers off C
-            A(T-6) => A  # A has restart files
+A => B & C   # B and C trigger off A
+A(T-6) => A  # A has restart files
                 """
-    [[6,18]]
-        graph = "C => X" # X triggers off C
+    [[6,18]] # hours
+        graph = "C => X"
+[visualization]
+    [[node attributes]]
+        X = "color=red"
 \end{lstlisting}
 \end{minipage}
 \hfill
-\begin{minipage}[t]{0.5\textwidth}
+\begin{minipage}[b]{0.5\textwidth}
     \begin{center}
-        \includegraphics[width=0.5\textwidth]{../images/screenshots/dep-example.png}
+        \includegraphics[width=\textwidth]{../images/screenshots/dep-eg-1.png}
     \end{center}
 \end{minipage}
+\caption{Dependency Graph Example 1.}
+\label{fig-dep-eg-1}
 \end{figure}
 
-(this listing, just as it is, is actually a valid suite that you can
-run; with no task properties specified cylc will just run dummy tasks
-with the relationships defined in the graph).
- 
-Here are the suite.rc graph syntax rules:
-\begin{myitemize}
-    \item blank lines, and arbitrary white space, are allowed
-    \item comments are allowed inside the graph string (\# character)
-    \item dependencies (triggers) are indicated by arrows (\lstinline@=>@)
-    \item conditional expressions:
-        \begin{myitemize}
-            \item operators \lstinline=&= (AND) and \lstinline=|= (OR)
-                are allowed on the left side of arrows.
-            \item only operator \lstinline=&= (AND) is allowed on the
-                right side of arrows.
-            \item each line within the graph string has an AND relationship
-                with the other lines.
-\begin{lstlisting}
-# SUITE.RC
-    graph = "A => B & C"
-    # is equivalent to
-    graph = """A => B
-               B => C"""
-\end{lstlisting}
-            \item {\em parenthesized expressions are not allowed} (but 
-                this should not be a problem; see below) 
-        \end{myitemize}
-    \item in a list of OR'd tasks, the left-most task will be plotted 
-        by default, but you can change this by appending an asterix 
-        to another task in the list.
 
-    \item triggering,
-        \begin{myitemize}
-            \item the default is to trigger off an upstream task finishing
-            \item to trigger of an upstream task failing,
+\subsection{Graph Syntax}
+
+Multiline graph strings may contain:
+\begin{myitemize}
+    \item {\bf blank lines}
+    \item {\bf arbitrary white space}
+    \item {\bf task names}
+    \item {\bf arrows} (\lstinline@=>@) for dependencies (triggers)
+    \item {\bf comments} - follow the \# character
+    \item {\bf conditional operators}: \lstinline=&= (AND) and \lstinline=|= (OR)
+    \item {\bf task output labels} - \lstinline=foo:fail=, \lstinline=foo:out1=
+        (the default output is ``task finished'')
+    \item {\bf cycle time offsets} - \lstinline=T-6=
+\end{myitemize}
+
+\subsubsection{Chained Triggers}
+
+Dependencies may be chained together, but they don't have to be. 
+{\em Task names can appear multiple times}, but  {\em triggers 
+must be unique} (i.e.\ the connections between tasks must be unique).
+This means you can split a graph up however you like, for clarity's sake:
 \begin{lstlisting}
-# SUITE.RC
-    graph = "A:fail => B"  # B triggers if A fails
+# B triggers when A is finished, and then C triggers when B is finished:
+    graph = "A => B => C"
+# which is equivalent to this:
+    graph = """A => B
+            B => C"""
 \end{lstlisting}
-            \item to trigger of a specific internal output:
+
+\subsubsection{Conditional Expressions}
+
+AND operators (\lstinline=&=) can appear on both sides of an arrow. These
+are a convenient shortcut to defining multiple triggers separately:
 \begin{lstlisting}
-# SUITE.RC
-    graph = "A:out1 => B"  # B triggers output 'out1' of task A
+# 1/ this:
+    graph = "A & B => C"
+# is equivalent to:
+    graph = """A => C
+            B => C"""
+# 2/ this:
+    graph = "A => B & C"
+# is equivalent to:
+    graph = """A => B
+            A => C"""
+# 3/ and this:
+    graph = "A & B => C & D"
+# is equivalent to this:
+    graph = """A => C
+            B => C
+            A => D
+            B => D"""
+\end{lstlisting}
+
+OR operators (\lstinline=|=) can only appear on the left,\footnote{An OR
+operator on the right doesn't make much sense in the context of a
+forecasting suite:
+\begin{lstlisting}
+    graph = "A => B | C"  #? should cylc run B or C when A finishes?
+\end{lstlisting}
+}
+Triggers involving OR operators are true ``conditional triggers''.
+\begin{lstlisting}
+# C triggers when either A or B finishes:
+    graph = "A | B => C"
+\end{lstlisting}
+
+% TO DO: CURRENT GRAPHING BUG FOR A | B & C EXPRESSIONS!
+%Forecasting suites tend to have quite simple requirements for
+%conditional triggers, but if you need it cylc can do it:
+% The AND operator takes precedence over the OR operator,
+%\begin{lstlisting}
+%# C triggers when either A or (B and C) finish:
+%    graph = "A | B & C => C"
+%\end{lstlisting}
+%
+%, but if you want to use both AND and OR in the same expression,
+%read the following very carefully.
+%
+%{\bf Parenthesized expressions are illegal.}  Internally cylc can handle arbitrary 
+%conditional expressions on task prerequisites because it transforms them into 
+%equivalent python code and evaluates the resulting expression, BUT the
+%suite.rc graph parser cannot currently decode such expressions
+
+In a list of OR'd tasks, all members of the group are used to create 
+the conditional expression that determines run time behaviour, but 
+only the rightmost member will be plotted, by default. To change this,
+change the order or attach and asterisk to the task:
+\begin{lstlisting}
+# this will plot as C => D:
+    graph = "A | B | C => D"
+# but this will plot as A => D:
+    graph = "A* | B | C => D"
+\end{lstlisting}
+
+\subsection{ Trigger Types}
+
+The default behavior, as shown above, is to trigger off the upstream
+task {\em finishing}.  However, you can also trigger off a task 
+failing, or off ``internal outputs'' that are emitted before a task
+finishes, 
+
+\subsubsection{Triggering Off A Failed Task}
+
+This can be used for certain kinds of failure recovery,
+
+\begin{lstlisting}
+# B triggers if A fails:
+    graph = A:fail => B
+\end{lstlisting}
+
+If you don't care whether a task finishes or fails,
+
+\begin{lstlisting}
+# B triggers once A has either finished or failed:
+    graph = A | A:fail => B
+\end{lstlisting}
+
+\subsubsection{Triggering off Internal Outputs}
+
+{\em This is only required if you need to trigger downstream processing 
+before a task finishes, off some output it generates in mid stream.}
+
+\begin{lstlisting}
+[dependencies]
+    [[6,18]]
+        # B triggers off the output labelled "out1" of task A:
+        graph = A:out1 => B
 [tasks]
     [[A]]
         [[[outputs]]]
-            # task A must emit this message
             out1 = "NWP products uploaded for $(CYCLE_TIME)"
 \end{lstlisting}
 
-    \item to trigger off tasks in previous cycles, use:
+Task A must emit this message when the actual output has been completed,
+see Task Messaging (Section~\ref{TaskMessaging}).
+
+\subsection{Intercycle Triggers}
+
+By default tasks trigger off other tasks with the same cycle time. But
+some tasks necessarily depend on others with earlier cycle times. Most
+notably this applies to warm cycled forecast models which write out
+``restart files'' required in initializing the next forecast (or the
+next next, if a cycle has to be skipped, and so on according to the
+number of restart files generated throughout the forecast). 
+Here's how to express this kind of relationship:
 \begin{lstlisting}
 # SUITE.RC
 [dependencies]
-    [[12,18]]
-        graph = "A(T-6) => B"  # B(12) triggers off A(6); B(18) triggers of A(12)
+    [[0,6,12,18]]
+        # B(12) triggers off A(6), and
+        # B(18) triggers of A(12), etc.
+        graph = "A(T-6) => B"
 \end{lstlisting}
-    \item all of the above can be combined:
+
+
+This notation can be used with explicit outputs too:
 \begin{lstlisting}
 # SUITE.RC
-    graph = "A(T-6):fail => B"  # ...
+    graph = "A(T-6):fail => B"
 \end{lstlisting}
  
-\end{myitemize}
-\end{myitemize}
+\subsection{Cold Start Tasks}
 
-format: free form multiline strings
-containing task names with arrows between them, arbitrary blank space 
-and comments. In a typical suite most
-tasks run in every cycle (e.g.\ 6 hourly), and a few tasks run more or
-less frequently so that the full dependency tree does not repeat for a
-full 24 hours. Rather than define everything that happens in a full 24
-hour period, which could be a very large graph, the graph can be split
-into sections headed by a list of hours for which each graph section is
-valid.  For example, here is the graph for a suite with four tasks that
-run 6 hourly, and a fifth task that triggers off one of the others only
-twice daily:
+TBD.
+
+
+\subsection{Model Restart Dependencies}
+
+Warm cycled forecast models write out ``restart files'' used in initializing
+the next forecast. However, restart files may also be generated for a
+number of subsequent cycles with the expectation that they may be used
+in an emergency (if one or more cycles has to be skipped because of
+missing data, for example). 
+These restart dependencies are therefore unusual in that they can
+potentially be used by any one of a number of subsequent cycles (of the
+same model) {\em but} we only want to use the most recent ones (i.e.\
+those generated by the most recent previous cycle) unless they are not
+available, in which case we may have to use the older ones. 
+
+Here's a forecast model that generates restart files for the next four cycles,
+\begin{lstlisting}
+# SUITE.RC
+[special tasks]
+    sequential = A
+[dependencies]
+    [[0,6,12,18]]
+        # Model A restart dependencies:
+        graph = """
+A(T-6) | A(T-12) | A(T-18) | A(T-24) => A
+                """
+\end{lstlisting}
+
+{\em Note that Task A is declared to be `sequential'}. Sequential
+tasks do not spawn a successor until they have finished (they default is 
+to spawn when a task starts running), which means that A(T+6) will not
+be waiting around to trigger off an old restart file, from A(T-6) or
+worse, while A(T) is still running.  If A(T) fails though, it can be
+force-spawned and then removed from the suite by the operator. Then 
+if A(T+6) is inserted into the suite it will automatically have its
+restart dependencies satisfied by the older finished task. 
+
+{\em A model that only writes out restart files for the very next cycle
+does not need to be declared sequential} because the aforementioned 
+early triggering problem will not arise. if the restart dependency 
+relies on an explicit output trigger, instead of task finished,
+successive instances of the forecast model can overlap (running in
+parallel) if the opportunity arises.
+
+Finally, if you put a warm cycled model in the list of `models with explicit
+restart outputs', instead of the list of `sequential' tasks, you
+can use explicit labeled restart outputs, which must contain the 
+word `restart', then the task will not spawn until its last restart
+output is completed. This will allow successives instances of the 
+task to overlap, in spite of having multiple restart outputs, if the
+opportunity arises (whether this is worth the effort is up to you).
+
+\begin{lstlisting}
+# SUITE.RC
+[special tasks]
+    models with explicit restart outputs = A
+[dependencies]
+    [[0,6,12,18]]
+        graph = """
+A(T-6):res6 | A(T-12):res12 | A(T-18):res18 | A(T-24):res24 => A
+                """
+TBD: SHOW OUTPUTS (c.f. dev:usg)
+\end{lstlisting
 
 
 \subsection{Task Families}

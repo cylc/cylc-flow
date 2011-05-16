@@ -82,6 +82,8 @@ task run time in seconds = 1
                    F=>FOO => BAR
                    bar => baz"""
 
+[cylc local environment]
+    MUNGE = flunge
 [environment]
     TASK_EXE_SECONDS = 15
     WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common

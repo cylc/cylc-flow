@@ -1013,7 +1013,7 @@ use node color for edges = boolean( default=True )
 #>\item {\em default:} True
 #>\end{myitemize}
 
-default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=ellipse'))
+default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=box'))
 #> Set the default attributes (color and style etc.) of task nodes.
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization]
@@ -1064,6 +1064,31 @@ default edge attributes = force_list( default=list('color=black'))
 #>\begin{myitemize}
 #>\item {\em section:} [task insertion groups]
 #>\item {\em type:} list of task names
+#>\item {\em default:} None
+#>\end{myitemize}
+
+[cylc local environment]
+#> Use this section to add variables to the environment in which cylc
+#> itself is running. These variables will be available to processes
+#> spawned directly by cylc itself, namely timeout and alert hook
+#> scripts. {\em Do not use this section to alter the task execution
+#> environment - that it will only have the desired affect for local
+#> direct job submission methods}. 
+__many__ = string
+#> Repeat MANY (environment variable definition) for any environment
+#> variables you need.
+#>\begin{myitemize}
+#>\item {\em section:} [cylc local environment]
+#>\item {\em type:} string
+#>\item {\em legal values:} any valid environment variable assignment
+#> expression. Whitespace around the `$=$' is fine (the
+#> \lstinline=suite.rc= file is not a shell script). 
+#> E.g. for the bash shell: 
+#>   \begin{myitemize}
+#>       \item \lstinline@FOO = $HOME/bar/baz@
+#>       \item \lstinline@BAZ = $(echo "hello world")@
+#>       \item \lstinline@WAZ = ${FOO%.jpg}.png@
+#>   \end{myitemize}
 #>\item {\em default:} None
 #>\end{myitemize}
 

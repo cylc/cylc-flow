@@ -1,6 +1,15 @@
 _______
 GENERAL
 
+* CONDITIONAL EXPRESSIONS BUG:
+    A & B | C => D
+  A suite with an expression like this will run correctly but not plot correctly.
+  For plotting, it is parsed as "A and ( B or C )", whereas it should be 
+  "(A and B) or C"
+
+*  SUICIDE PREREQUISITES need to be re-instated in cylc-3
+
+
 * LONG TERM: consider replacing finished tasks with a data structure
   that remembers what happened. More efficient for very large suites?
 
@@ -58,8 +67,6 @@ GENERAL
   in cylc -it is assumed that CYLC_SUITE_HOST is also the lockserver host.
 
 * allow $CYLC_DIR/conf overrides by user in .cylc?
-
-*  suicide prerequisites in cylc-3?
 
 * reg export, copy, import should take group: as target even for single
   suites.
@@ -167,8 +174,6 @@ GENERAL
 
 * document that continuation lines and include-files are cylc-specific
   extensions to ConfigObj.
-
-* explain conditional prerequisites (and suicide ones...) in requisite dumps.
 
 * put roadmap into documentation. 
 

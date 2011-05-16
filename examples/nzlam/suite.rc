@@ -41,7 +41,7 @@ use lockserver = True
     [[6,12,18]]
         graph = """
         # trigger forecast of previous forecast, or cold start
-        forecast_cold | forecast(T-6) => forecast"""
+        forecast_cold | forecast(T-6) | forecast(T-12) => forecast"""
     [[0]]
         graph = """
         # at 0 UTC reconfigure the start dump
