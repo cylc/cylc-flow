@@ -654,13 +654,13 @@ suite control interface, to get a popup menu of available options}.
 \subsection{Configure Your Environment For Cylc}
 
 To gain access to cylc you just need to source the cylc environment
-script. Put the following in your login script, or do the same at the
+script. Put the following code in your login script, or do the same at the
 terminal prompt before using cylc.\footnote{To switch between different
 cylc installations on the same host, just source the appropriate 
 environment script.}
 \begin{lstlisting}
-prompt> export CYLC_DIR=/path/to/cylc/installation
-prompt> . $CYLC_DIR/environment.sh
+export CYLC_DIR=/path/to/cylc/installation
+. $CYLC_DIR/environment.sh
 \end{lstlisting}
 
 You should also specify the graphical and terminal editors you want to
@@ -670,7 +670,7 @@ your \lstinline=.profile=:
 export GEDITOR='gvim -f'  # GUI editor launched by gcylc
 export EDITOR=vim         # terminal editor launched by 'cylc edit'
 \end{lstlisting}
-(see \lstinline=cylc edit help= for other tested editors).
+See \lstinline=cylc edit help= (Appendix~\ref{edit}) for other editor examples.
 
 \subsection{Start Your Lockserver Daemon}
 

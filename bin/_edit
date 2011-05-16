@@ -110,36 +110,39 @@ def backup(src):
     backups[ src ] = bkp
 
 parser = OptionParser( """1/ cylc [prep] edit SUITE 
-       2/ cylc [prep] edit --cleanup SUITE
-       3/ cylc [prep] edit -i,--inline SUITE
+       2/ cylc [prep] edit -i,--inline SUITE
+       3/ cylc [prep] edit --cleanup SUITE
 
-1/ Change to the suite definition directory and execute '$EDITOR suite.rc'.
-This is merely a convenience so that you can edit the suite without
-having to remember or move to the suite definition location.
+1/ Change to the suite definition directory and load the suite.rc file
+in your $EDITOR. This is a convenience so that you can edit the suite
+without having to remember the suite definition location.
 
-2/ Remove backup files left by previous inlined edit sessions.
+2/ Edit suite config (suite.rc) files with include-files inlined between
+special markers. After the file is saved *and you exit the editor* 
+the file will be split into its constituent include-files again. 
+This can be used for quick global suite editing when parameters of
+interest span several include-files. Include-files can be nested or
+multiply-included (in which case only the first inclusion will be
+inlined).
 
-3/ Edit suite config (suite.rc) files with include-files inlined between
-special markers, and, after editing split the file up again. This can be
-used for quick global suite editing when parameters of interest span
-several include-files. Include-files can be nested or multiply-included
-(in which case only the first inclusion will be inlined).
+3/ Remove backup files left by previous *inlined* edit sessions.
 
-If any of the original files are found to have changed while the inlined
-file is being edited, you will be warned on exiting the editor and the
-affected files will be written to safe backup copies instead of
-overwriting the originals.  WARNING: this safety measure notwithstanding
-it is recommended that you manage suite definitions with a revision
-control system so that (a) you can easily check that new changes are as
-you expect, and (b) you can easily back out in case of disaster.
+SAFETY: If any of the original files are found to have changed while the
+inlined file is being edited, you will be warned on exiting the editor
+and the affected files will be written to safe backup copies instead of
+overwriting the originals.  This safety measure notwithstanding, it is
+recommended that you manage suite definitions with a revision control
+system so that (a) you can easily check that new changes are as you
+expect, and (b) you can easily back out in case of disaster.
 
 NOTE: in the inlined edit mode you must save and exit the editor
-before your changes are applied to the actual suite config files!
+before your changes are applied to the actual suite definition!
 
 The edit process is spawned in the foreground as follows:
   (usage 1/): $(G)EDITOR suite.rc
-  (usage 3/): $(G)EDITOR <inlined-suite.rc-file in $TMPDIR>
+  (usage 2/): $(G)EDITOR <inlined-suite.rc-file in $TMPDIR>
 $GEDITOR or $EDITOR, and $TMDPIR, must be defined in your environment. 
+
 Examples:
    export EDITOR=vim
    export GEDITOR='gvim -f'      # -f: do not detach from parent shell!!
@@ -156,7 +159,7 @@ See also:
     cylc prep validate
 
 Arguments:
-  SUITE   - registered name of the target suite.""")
+  SUITE   - registered GROUP:NAME of the target suite.""")
 
 parser.add_option( "--inline", "-i", 
         help="Edit with include-files inlined as described above.",
