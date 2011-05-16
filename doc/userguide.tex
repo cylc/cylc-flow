@@ -1291,11 +1291,8 @@ are a convenient shortcut to defining multiple triggers separately:
 
 OR operators (\lstinline=|=) can only appear on the left,\footnote{An OR
 operator on the right doesn't make much sense in the context of a
-forecasting suite:
-\begin{lstlisting}
-    graph = "A => B | C"  #? should cylc run B or C when A finishes?
-\end{lstlisting}
-}
+forecasting suite: if ``B or C'' triggers off A, should cylc run B or C
+when A finishes?}
 Triggers involving OR operators are true ``conditional triggers''.
 \begin{lstlisting}
 # C triggers when either A or B finishes:
