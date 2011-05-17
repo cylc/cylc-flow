@@ -203,17 +203,13 @@ and associated methods for their control widgets.
             command += ' --until=' + stoptime_entry.get_text()
 
         ctime = entry_ctime.get_text()
-        if ctime == '':
-            warning_dialog( "ERROR: initial cycle time required" ).warn()
-            return
-        elif not cycle_time.is_valid( ctime ):
-            warning_dialog( "ERROR: invalid cycle time: " + ctime ).warn()
-            return
-
         if method != 'restart':
             if ctime == '':
                 warning_dialog( 'Error: an initial cycle time is required' ).warn()
-                return False
+                return
+            elif not cycle_time.is_valid( ctime ):
+                warning_dialog( "ERROR: invalid cycle time: " + ctime ).warn()
+                return
 
         for group in optgroups:
             command += group.get_options()
