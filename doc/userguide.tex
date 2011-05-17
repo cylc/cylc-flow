@@ -644,7 +644,7 @@ operation of running suites:}
 
 \begin{lstlisting}
 prompt> gcylc &                  # generic suite database viewer.
-prompt> gcylc [-g] group:name &  # to control a named suite.
+prompt> gcylc [-g] GROUP:NAME &  # to control a specific suite.
 \end{lstlisting}
 
 The gcylc modus operandi, in addition to the usual top menu bar, is:
@@ -761,12 +761,10 @@ drill down to the command you want.
 
 \subsection{Searching, Editing, and Plotting the Suite}
 
-In gcylc, right-click on the suite and choose `Edit'; 
-Right-click again and choose 'Graph' to plot the suite dependency graph
-defined in the suite.rc file. You'll need to enter an initial and final
-cycle time (YYYYMMDDHH) for the plot range - enter the same cycle time
-for both to plot a single cycle.  If you edit the dependency graph, the
-viewer should update when you save the suite.rc file.
+To edit the suite definition via gcylc right-click on the suite and
+choose `Edit'; right-click again and choose `Graph' to plot the suite
+dependency graph that is defined in the suite.rc file. If you edit the
+suite.rc file the graph viewer will update whenever you save the file.
 
 To edit a suite from the commandline,
 \begin{lstlisting}
@@ -779,17 +777,18 @@ do this entirely manually, but using the edit command has some advantages.
 For example, you don't have to remember the suite definition directory
 location, and for suite.rc files that contain include files
 (even nested ones) you can optionally edit the file inlined - it will be
-split back into include-files {\em when you save and exit the editor}. 
+split back into its constituent include-files {\em when you save and
+exit the editor}. 
 
 To graph the suite,
 \begin{lstlisting}
 prompt> cylc graph examples:userguide 2011042506 2011042606 &
 \end{lstlisting}
 
-And here's how to use the suite search tool, which reports matches in
-the suite.rc by line number, suite section, and file (even
-if nested include-files are used) and by file and line number for
-matches in the suite bin directory,
+To use the suite search tool, which reports matches in the suite.rc file
+by line number, suite section, and file (even if nested include-files
+are used), and by file and line number for matches in the suite bin
+directory,
 
 \begin{lstlisting}
 prompt> cylc grep OUTPUT_DIR examples:userguide
@@ -814,7 +813,7 @@ FILE: /home/oliverh/cylc/examples/userguide/bin/D.sh
 \end{lstlisting}
 
 See the gcylc right-click menu, or \lstinline=cylc prep help= for other
-commands in the ``suite preparation''.
+commands in the ``suite preparation'' category.
 
 Note that the suite title held by the database is only parsed from the
 suite.rc file at registration time; if you change the title
@@ -826,27 +825,30 @@ running it (gcylc right-click or \lstinline=cylc validate SUITE:GROUP=)
 
 \subsection{Running The Suite}
 
+To run a suite from the commandline,
 \begin{lstlisting}
-cylc run userguide 2011042506
+prompt> cylc run examples:userguide 2011042506
 \end{lstlisting}
 
-You should now start up a suite control interface to follow progress.
+Start up a suite control interface to follow progress.
 \begin{lstlisting}
-gcylc examples:userguide &
+prompt> gcylc examples:userguide &
 \end{lstlisting}
 
-Or, if you already have the gcylc database front end running, right click on the 
-suite and choose one of the `Control' options.  Note 
-that the control GUI can also be used to start and stop the suite.
+Alternatively you can also start, stop, and control suites directly 
+from the gcylc GUI. Start the suite control interface as just described,
+or by right-clicking on the suite in the gcylc local database viewer,
+and choose an item from the `Control' menu.
 
-In real mode operation (as opposed to {\em dummy mode},
-Section~\ref{DummyMode}) {\em do not choose an initial cycle time in the
-future} or nothing will happen until that time arrives!
+{\em In real mode operation (as opposed to {\em dummy mode},
+Section~\ref{DummyMode}) do not choose an initial cycle time in the
+future or nothing will happen until that time.}
 
 The lockserver will let you run multiple instances of the userguide
 example suite at once, under different registrations, because the
-suite.rc file allows that (in turn, because the suite
-group:name is used in all I/O file paths).
+suite.rc file allows that (the suite GROUP and NAME is used in all 
+suite I/O paths so that different suite instances will not interfere
+with each other).
 
 %\begin{figure}
 %    \begin{center}
@@ -857,27 +859,24 @@ group:name is used in all I/O file paths).
 %    \label{fig-monitor} 
 %\end{figure} 
 
-\subsection{Shutdown And Restart}
+\subsection{Shutting Down And Restarting A Suite}
 
 \lstset{language=bash}
 
+The default shutdown mode causes the suite to stop once any currently
+running tasks have finished,
 \begin{lstlisting}
-cylc stop userguide
+prompt> cylc stop examples:userguide
 \end{lstlisting}
 
-This will cause the suite to stop once any currently running tasks have finished. To stop
-the suite immediately use the \lstinline=--now= option, but be aware that this will 
-orphan any tasks that are still running.  
+To stop the suite immediately use the \lstinline=--now= option, but be
+aware that this will orphan any tasks that are still running.  
 
-You can now restart the  suite from its most recent previous state, if you like:
+The suite can be restarted from its most recent previous state,
 \begin{lstlisting}
-cylc restart userguide
+prompt> cylc restart examples:userguide
 \end{lstlisting}
-or from the state recorded in a particular named state dump file 
-(cylc automatically dumps extra time-stamped state files prior to any
-suite intervention so that you can easily revert to the
-pre-intervention state in case of disaster). See {\em Restarts}
-(Section~\ref{Restarts}) for more information.
+or from other saved prior states (see Section~\ref{StateDumpFiles}).
 
 \pagebreak
 
@@ -992,12 +991,7 @@ legal entries, values, options, and defaults
         include-file).
 \end{myitemize}
 
-The definitive documentation of legal items, legal values and options,
-and default values, is the {\em Suite.rc Reference},
-Appendix~\ref{SuiteRCReference}.
-
-The following pseudo-listing illustrates many aspects of the file
-format:
+The following pseudo-listing illustrates the general suite.rc file structure:
 
 \begin{lstlisting}
 # comment
@@ -1023,14 +1017,14 @@ a list item with continuation = a, b, c, \
 # ...
 \end{lstlisting}
 
+The definitive reference for legal suite.rc items, values, options,
+and defaults, is Appendix~\ref{SuiteRCReference}.
+
+
 \subsubsection{A Simple Example}
 
 This is the suite.rc file from the ``simple'' example suite; a few
 entries have been omitted in order to show the file's structure clearly:
-For more information on legal items, legal values and options,
-and default values, see the {\em Suite.rc Reference},
-Appendix~\ref{SuiteRCReference}.
-
 
 \begin{lstlisting}
 # GLOBAL SETTINGS
@@ -1050,8 +1044,7 @@ job submission method = loadleveler
         graph  =  """
             Prep => GetData & ColdModel
             GetData => Model => PostA
-        # Model depends on its previous f/c, or a cold start f/c:
-            ColdModel | Model(T-6) => Model
+            ColdModel | Model(T-6) => Model  # cold start or restart
                   """
     [[ 6,18 ]]  # extra postprocessing at 6 and 18 UTC
         graph = "Model => PostB" 
@@ -1077,8 +1070,9 @@ job submission method = loadleveler
     # ...
 \end{lstlisting}
 
-The dependency graph plotted from this (by gcylc or 
-\lstinline=cylc graph=) is shown in Figure~\ref{fig-simple-graph}.
+Dependency graphs plotted from this (by gcylc or 
+\lstinline=cylc graph=) are shown in Figures~\ref{fig-simple-graph-1} 
+and~\ref{fig-simple-graph-2}.
 How to define suite dependency graphs is covered in
 Section~\ref{DependencyGraphs}.
 
@@ -1097,6 +1091,7 @@ Section~\ref{DependencyGraphs}.
 \caption[Dependency graphs for the simple example suite]{\small
 Dependency graphs (cold and warm start) plotted from the {\em simple}
 example suite.rc file.}
+\label{fig-simple-graph-1}
 \end{figure} 
 
 \begin{figure}
@@ -1107,6 +1102,7 @@ example suite.rc file.}
 suite]{\small Three cycle cold start dependency graph plotted by `cylc
 graph' from the {\em simple} example suite.rc file, showing variation
 between cycles.}
+\label{fig-simple-graph-2}
 \end{figure} 
 
 \subsubsection{Syntax Highlighting}
@@ -1136,9 +1132,9 @@ against the spec file \lstinline=$CYLC_DIR/conf/suiterc.spec=, which
 is the ultimate arbiter of what's legal in a cylc suite definition
 (see Section~\ref{SuiteRCReference}). This detects any formatting
 errors, misspelled or illegal items, and illegal values. Then some
-cross-entry consistency checking is done. And finally,
-an attempt is made to create all of the suite's task proxy objects
-according to the information parsed from the suite.rc file.
+cross-entry consistency checking is done, and finally cylc attempts to
+create all of the suite's task proxy objects according to information
+parsed from the suite.rc file.
 
 Here's an example of a successful validation,
 \begin{lstlisting}
@@ -1207,7 +1203,7 @@ commenting it out of the dependency graph.
 \label{DependencyGraphs}
  
 Dependency graphs define the relationships between tasks in a suite. 
-The cylc suite.rc dependency graph notation creates intuitive textual
+The cylc suite.rc dependency graph notation makes textual
 representations of actual graphs, but it is more concise
 than the real thing because sections of the graph that repeat at
 different hours of the day only have to be defined once.
@@ -1288,7 +1284,7 @@ into lines in the suite.rc graph string in any way you like.
 Entire paths through the graph can be written as a chain of 
 triggers on one line, or every trigger can go on a separate line, or 
 anything in between, with liberal use of white space and 
-comments to make the structure clear.
+comments to make the graph structure clear.
 
 The only rule is that each trigger must appear once, i.e.\ the
 connections between tasks, but not the tasks themselves, must be unique.
@@ -1298,13 +1294,13 @@ connections between tasks, but not the tasks themselves, must be unique.
 # B triggers when A is finished, then C and D trigger when B is finished:
     graph = "A => B => C & D"
 # which is equivalent to this:
+    graph = """A => B => C
+            B => D"""
+# and to this:
     graph = """A => B
                B => C
                B => D"""
-# or to this:
-    graph = """A => B => C
-            B => D"""
-#\end{lstlisting}
+\end{lstlisting}
 
 \subsection{Conditional Triggers}
 
@@ -1359,7 +1355,7 @@ of the tasks, or attach an asterisk to the chosen one:
 
 Forecasting suites tend to have quite simple requirements for
 conditional triggers, but if you need to use AND and OR operators in the
-same expression: AND takes precedence over OR, and {\em general
+same expression remember that AND takes precedence, and {\em general
 parenthesized conditional expressions are not currently
 allowed.}\footnote{Internally cylc can handle arbitrary 
 conditional expressions on task prerequisites because it transforms them
