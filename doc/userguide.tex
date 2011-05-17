@@ -1302,10 +1302,38 @@ connections between tasks, but not the tasks themselves, must be unique.
                B => D"""
 \end{lstlisting}
 
+\subsection{Task Finished Triggers}
+
+This is the default behaviour, 
+
+\begin{lstlisting}
+# SUITE.RC
+# B triggers when A FINISHES:
+    graph = A => B
+\end{lstlisting}
+
+\subsection{Task Failed Triggers}
+
+This can be used for certain kinds of failure recovery,
+
+\begin{lstlisting}
+# SUITE.RC
+# B triggers if A FAILS:
+    graph = A:fail => B
+\end{lstlisting}
+
+If you don't care whether a task finishes or fails,
+
+\begin{lstlisting}
+# SUITE.RC
+# B triggers once A has either FINISHED or FAILED:
+    graph = A | A:fail => B
+\end{lstlisting}
+
 \subsection{Conditional Triggers}
 
-AND operators (\lstinline=&=) can appear on both sides of an arrow. These
-are a concise alternative to defining multiple triggers separately:
+AND operators (\lstinline=&=) can appear on both sides of an arrow, and
+provide a concise alternative to defining multiple triggers separately:
 \begin{lstlisting}
 # SUITE.RC
 # 1/ this:
@@ -1338,11 +1366,13 @@ when A finishes?}
     graph = "A | B => C"
 \end{lstlisting}
 
+\subsubsection{Which Task Is Plotted?}
+
 In a list of alternative triggers separated by OR operators, the 
 full conditional expression determines run time behaviour, but one of
 the alternatives has to be singled out in order to plot the graph: the
-rightmost member is plotted by default; to change this, change the order
-of the tasks, or attach an asterisk to the chosen one:
+rightmost member is plotted by default; to change which task is
+plotted, change their order or attach an asterisk to the chosen one:
 \begin{lstlisting}
 # SUITE.RC
 # this will plot as C => D:
@@ -1353,17 +1383,18 @@ of the tasks, or attach an asterisk to the chosen one:
 
 % TO DO: !!!!! GRAPHING BUG FOR A | B & C EXPRESSIONS!!!!!!!!
 
-Forecasting suites tend to have quite simple requirements for
-conditional triggers, but if you need to use AND and OR operators in the
-same expression remember that AND takes precedence, and {\em general
-parenthesized conditional expressions are not currently
-allowed.}\footnote{Internally cylc can handle arbitrary 
-conditional expressions on task prerequisites because it transforms them
-directly into python code and evaluates the resulting expression, BUT
-the suite.rc graph parser cannot handle general conditionals yet.}
-This should not be a problem, however, because you can rely on 
-operator precedence, and split large expressions into multiple 
-small expressions on separate lines.
+\subsubsection{Complex Conditional Triggers}
+
+You can use AND and OR operators in the same expression, but 
+{\em parenthesized conditional expressions are not allowed.}
+Internally cylc can handle parenthesized conditional expressions on task
+prerequisites because it transforms them directly into Python code and
+evaluates the resulting expression, {\em but} the suite.rc graph parser cannot
+handle general conditionals yet.  This restriction should not be much of
+an impediment because forecasting suites tend to have very simple
+conditional triggers, and you can rely on operator precedence (AND
+before OR), and split large expressions into multiple small expressions
+on separate lines.
 
 \begin{lstlisting}
 # SUITE.RC
@@ -1371,43 +1402,16 @@ small expressions on separate lines.
     graph = "A | B & C => D"
 \end{lstlisting}
 
+\subsection{Internal Triggers}
 
-\subsection{ Trigger Types}
-
-The default behaviour, indicated by an arrow between two 
-unqualified task names, is for a downstream task to trigger off the
-upstream one {\em finishing}. However, a task can also trigger off 
-other tasks failing, or off ``internal outputs'' emitted before
-a task finishes.
-
-\subsubsection{Triggering Off A Failed Task}
-
-This can be used for certain kinds of failure recovery,
-
-\begin{lstlisting}
-# SUITE.RC
-# B triggers if A fails:
-    graph = A:fail => B
-\end{lstlisting}
-
-If you don't care whether a task finishes or fails,
-
-\begin{lstlisting}
-# SUITE.RC
-# B triggers once A has either finished or failed:
-    graph = A | A:fail => B
-\end{lstlisting}
-
-\subsubsection{Triggering Off Internal Outputs}
-
-{\em This is only required if a task needs to trigger early off 
-an output completed before the upstream task is finished.}
+{\em This is only needed if you want a task to trigger early off an
+output that the upstream task completes before it finishes.}
 
 \begin{lstlisting}
 # SUITE.RC
 [dependencies]
     [[6,18]]
-        # B triggers off the output labelled "out1" of task A:
+        # B triggers off specific OUTPUT "out1" of task A:
         graph = A:out1 => B
 [tasks]
     [[A]]
@@ -1416,86 +1420,101 @@ an output completed before the upstream task is finished.}
 \end{lstlisting}
 
 Task A must emit this message when the actual output has been completed,
-see Task Messaging (Section~\ref{TaskMessaging}).
+see Section~\ref{TaskMessaging}, {\em Task Messaging}.
 
-\subsubsection{Triggering Off Previous Cycles}
+\subsection{Intercycle Triggers}
 
-Most tasks in a typical suite will trigger off other tasks with the same
-cycle time. But some tasks necessarily depend on others with earlier
-cycle times. Most notably this applies to warm cycled forecast models
-which write out restart files or model backgrounds used to initialize
-the next forecast (or the next next one, if a cycle has to be skipped,
-and so on, depending on the number of restart files generated). In 
-NWP suites it is also common to have some non-model tasks in the
-observation processing subsystem that depend on model background fields
-generated by the previous forecast.  Here's how to express this kind of
-relationship:
+Most tasks in a typical suite will trigger off other cotemporal (same
+cycle time) tasks, but some may depend on tasks with earlier cycle
+times. This notably applies to warm cycled forecast models, which depend
+on their own previous instances (see below); but more general intercycle
+dependence is not uncommon.\footnote{In NWP forecast
+analysis suites parts of the the observation processing and data
+assimilation subsystem will typically also depend on model background
+fields generated by the previous forecast.} Here's how to express this
+kind of relationship in cylc:
 \begin{lstlisting}
 # SUITE.RC
 [dependencies]
     [[0,6,12,18]]
-        # B(12) triggers off A(6), and
-        # B(18) triggers of A(12), etc.
+        # B triggers off A in the previous cycle
         graph = "A(T-6) => B"
 \end{lstlisting}
 
 This notation can be used with explicit outputs too:
 \begin{lstlisting}
 # SUITE.RC
+    # B triggers if A in the previous cycle fails:
     graph = "A(T-6):fail => B"
 \end{lstlisting}
  
-\subsection{Cold Start Tasks}
+\subsection{Satisfying Intercycle Dependencies At Startup}
 
-Any task that depends on another task with an earlier cycle time has to
-be treated differently at startup, when there is no previous cycle; 
-otherwise nothing will happen unless the operator manually triggers
-the tasks that are waiting on the non-existent previous cycle.
+Considering the kind of intercycle dependence shown just above (tasks A
+and B), it is clear that some kind of boostrapping process will be
+required to get the suite going initially, because in the very first
+cycle there will be no previous instance of A to satisfies B's
+prerequisites. 
+ 
+\subsubsection{Cold Start Tasks}
 
-A cold start task is a special oneoff (non-spawning) task whose express
-purpose is to satisfy the prerequisites of a cotemporal task that are
-normally satisfied by another task in a previous cycle. Cold start tasks
-often run some kind of real processing to generate the required restart
-files by different means, or they may be dummy tasks that just stand in 
-for some external spin up process that has to be done before the suite
-is started.
+A {\em cold start task} is a special oneoff task used to satisfy the
+initial previous-cycle dependence of another cotemporal task. In effect, 
+the cold start task masquerades as its counterpart's normal
+previous-cycle upstream trigger.
 
-Here's how cold start tasks are expressed in cylc:
+A cold start task may invoke real processing (presumably to generate the
+files that are normally generated by the cycling task that it stands in
+for) or it may just be a dummy task that stands for some external spin
+up process which has to be completed before the suite is started (in this
+case the cold start task in cylc will just report itself successfully
+completed, thereby satisfying the aforementioned dependencies).
 
+We can express this kind of relationship with a conditional trigger:
 \begin{lstlisting}
 # SUITE.RC
 [special tasks]
     coldstart = ColdFoo
 [dependencies]
     [[0,6,12,18]]
-        graph = """
-    ColdFoo | Bar(T-6) => Foo
-                """
+        graph = "ColdFoo | Bar(T-6) => Foo"
 \end{lstlisting}
-In words, task Foo triggers off either the cotemporal cold start
-task ColdFoo, {\em or} task Bar from the previous cycle. So, if the
-suite is cold started, the first instance of Foo will automatically
-trigger when ColdFoo is finished, and in subsequent cycles it will
-trigger off the earlier instance of task Bar. ColdFoo has to be 
-identified as a cold start task for two reasons:
-\begin{myitemize}
-    \item cylc knows it is a oneoff (non-spawning) task
-    \item cold start tasks are automatically started in the finished
-        state if a suite is warm started (so they don't initiate 
-        any processing, but the get the suite going by standing 
-        in for the previous cycle, the existence of which is implied by
-        the warm start).
-\end{myitemize}
+In other words, Foo(T) can trigger off {\em either} Bar(T-6) {\em or} 
+ColdFoo(T). At startup ColdFoo will do the job, before being be eliminated 
+from the suite, and thereafter Bar(T-6) will do it.
 
-\subsection{Model Restart Dependencies}
+In cylc, a cold task can also be inserted into the suite at run time 
+to cold start just the task it is associated with, in case of problems
+that prevent continued normal cycling.
 
-Warm cycled forecast models write out restart files used in initializing
-the next forecast. However, these restart dependencies are unusual in 
-that they may also be generated for a number of subsequent cycles with
-the expectation that only the first ones will be used unless an
-emergency occurs (if one or more cycles has to be skipped because of
-missing data, for example).  Here's a forecast model that generates
-restart files for the next four cycles,
+\subsubsection{Warm Starting A Suite}
+
+Cold start tasks have to be declared as such in the suite.rc ``special
+tasks'' section so that cylc knows they are oneoff (non-spawning) tasks,
+but also because they play a critical role in warm starting cylc
+suites. 
+
+{\em Warm starting} a suite that has previously been shut down is an
+alternative to {\em restarting} it from a previous state. Warm starts
+assume the existence of a previous cycle (i.e.\ that any files from 
+the previous cycle that are required by the new cycle will be in place
+already). So no cold start tasks need to run {\em but} cylc itself 
+doesn't know the details of the previous cycle (if it did, it would
+be restarting from a previous state, not warm starting) so it still has
+to solve the bootstrapping problem to get the suite started. It does
+this by starting the suite with designated cold start tasks already in
+the finished state. In other words, the cold start tasks stand for the
+previous finished cycle rather, than actually running processes that
+masquerade as the previous cycle.
+
+\subsection{Intercycle Restart Dependencies (Models)}
+
+Warm cycled forecast models generate {\em restart files}, e.g.\ model
+background fields, that are required to initialize the next forecast
+(this is essentially the definition of ``warm cycling''). In fact
+restart files will often be written for a whole series of subsequent
+cycles in case the next (or more) cycle has to be omitted due to
+problems of some kind: 
 \begin{lstlisting}
 # SUITE.RC
 [special tasks]
@@ -1507,47 +1526,51 @@ restart files for the next four cycles,
    ColdA | A(T-6) | A(T-12) | A(T-18) | A(T-24) => A
                 """
 \end{lstlisting}
+In other words, task A can trigger off its cold start task, {\em or} off
+its own previous instance, {\em or} the instance before that, and so on.
+Restart dependencies are unusual because although A {\em could}
+trigger off A(T-12) we don't actually want it to do so unless A(T-6)
+fails and can't be fixed. {\em This is why Task A, above, is declared to be
+`sequential'}.\footnote{A warm cycling model that only writes out
+restart files for the very next cycle does not need to be declared
+sequential because this early triggering problem does not arise.}
 
-{\em Note that Task A is declared to be `sequential'}. Sequential
-tasks do not spawn a successor until they have finished (they default is 
-to spawn when a task starts running), which means that A(T+6) will not
-be waiting around to trigger off an old restart file, from A(T-6) or
-worse, while A(T) is still running. But if A(T) fails and is 
-forced to spawn and then removed from the suite by the operator, then 
-A(T+6) can be inserted into the suite - its restart dependencies will 
-automatically be satisfied by the older finished instance, A(T-6). 
+ Sequential tasks do not spawn a successor until they have
+finished (tasks spawn as soon as they start running, by default, in
+order to get maximum functional parallelism in a suite) which
+means that A(T+6) will not be waiting around to trigger off an older
+predecessor while A(T) is still running. If A(T) fails though, the
+operator can force it, on removal, to spawn A(T+6), whose restart
+dependencies will then automatically be satisfied by the older instance,
+A(T-6). 
 
-An alternative to handling restart dependencies properly like this 
-is to ignore them and make model tasks sequential so that the 
-implicit dependence on the previous instance can never be violated.
-But if ever a problem occurs that necessitates skipping one or more
-cycles, the suite operator will have to have a deeper understanding 
-of the real restart dependencies of the system in order to avoid
-violating them, since the suite itself no longer knows about them.
-Proper handling of restart dependencies really comes into its own
-in large multimodel suites where failures in the driving model 
-necessitate skipping cycles in the downstream models as well. 
-If all the models' restart dependencies are reflected in the suite, the
-operator can just do a recursive purge to rid the suite of all tasks
-that can never run due to the failure of the driving model, then 
-restart or cold start the driving model, and the suite will then
-carry on as normal because the downstream models will all handle their
-own restart prerequisites.
+Forcing a model to run sequentially means, of course, that its restart
+dependencies cannot be violated anyway, so we might just ignore them.
+This is certainly an option, but it should be noted that there are some 
+benefits to having your suite reflect all of the real dependencies
+between the tasks that it is managing, particularly for complex
+multi-model operational suites in which the suite operator might not be
+an expert on the models. Consider such a suite in which an unfixable
+failure in a driving model (e.g.\ weather) can preclude running some
+cycles of the downstream models (sea state, storm surge, river flow,
+\dots). If the real restart dependencies of each model are known to the
+suite, the operator can just do a recursive purge to remove the subtree
+of all tasks that can never run due to the failure, and then cold start
+the failed driving model after a gap (skipping as few cycles as possible
+to the point where the new cold start input data are available). After
+that the downstream models will kick off automatically so long as the 
+gap is spanned by their respective sets of restart files, because their
+restart dependencies will automatically be satisfied by the older
+pre-gap instances in the suite. Managing this kind of scenario manually
+in a complex suite can be quite difficult.
 
-{\em A model that only writes out restart files for the very next cycle
-does not need to be declared sequential} because the aforementioned 
-early triggering problem cannot not arise. Then, if the restart
-dependency relies on an explicit output trigger instead of task
-finished, successive instances of the forecast model can overlap
-(running in parallel) if the opportunity arises.
-
-Finally, if a warm cycled model is declared in the list of `models with
-explicit restart outputs', instead of with the `sequential' tasks, you
-can use explicit labeled restart outputs, {\em which must contain the 
-word `restart'} and the task will not spawn until its last restart
-output is completed. This will allow successives instances to overlap
-in spite of having multiple restart outputs, if the opportunity arises
-(whether this is worth the effort is up to you).
+Finally, if a warm cycled model is declared in `models with explicit
+restart outputs', instead of `sequential' tasks, and you use explicit
+labeled restart outputs {\em containing the word `restart'}, then 
+the task will not spawn until its last restart output is completed, and 
+successives instances of the task will be able to overlap (i.e.\ run in
+parallel) if the opportunity arises. Whether or not this is worth the
+effort depends on the situation, of course.
 
 \begin{lstlisting}
 # SUITE.RC
@@ -1569,10 +1592,10 @@ in spite of having multiple restart outputs, if the opportunity arises
 
 \subsection{Task Families}
 
-A task family is a named group of tasks that appears as a single task
-in the suite dependency graph. Thus the entire family triggers as a
-group, and downstream tasks can trigger off the entire family finishing
-or failing as a group. 
+A task family is a named group of tasks that functions as a single task
+in the suite dependency graph. The entire family triggers as a group,
+and downstream tasks can trigger off the entire family finishing or
+failing as a group. 
 
 Cylc task families are implemented as a special task type that does 
 not actually submit anything to run when it enters the `running' state
@@ -1584,8 +1607,8 @@ members fail) is not determined until all of its members have either
 finished or failed.  
 
 Cylc task families can have internal dependencies, and members can also
-participate in dependent relationships outside of the family.\footnote{
-Help, call a shrink!}. 
+participate in dependent relationships outside of the family.%\footnote{
+%Help, call a shrink!}. 
 
 Task families can be declared `sequential', in which case they will
 will run sequentially even if their members are not sequential.
@@ -1601,8 +1624,6 @@ fail) use a conditional trigger on the family:
     [[ 0,6,12,18 ]]
         graph  =  "Family | Family:fail => PostProc"
 \end{lstlisting}
-
-\subsubsection{Defining Families}
 
 Task families are listed in the top level of the suite.rc file, and 
 then used in the suite graph just like ordinary tasks.
@@ -1641,7 +1662,7 @@ dependencies among the family members on the right (plotted with
 \label{fig-fam-eg-3}
 \end{figure} 
 
-\paragraph{Recovering From A Family Failure} 
+\subsubsection{Family Failure Recovery} 
 
 If a family member fails it will enter the `failed' state, and once 
 all members have finished or failed, the family itself will enter
@@ -1657,17 +1678,16 @@ When the family triggers, the reset member task will follow suit. If the
 member completes successfully this time, so will the family,
 and downstream processing will proceed as normal.
 
-\paragraph{Warning!}
+\subsubsection{Use Families Sparingly}
 
 Task families should really only be used as a convenient simplification
-for groups of tasks that would naturally trigger at the same time
-anyway, and whose outputs would all be put to use at a similar time
+for groups of tasks that would naturally trigger at the same time anyway
 (e.g.\ multiple tasks for processing different types of observations
-that are all made available at the same time). Otherwise a task family 
-will unnecessarily constrain cylc's ability to achieve maximum
-functional parallelism, because every member has to finish before
-downstream processing continues. 
-
+that are all made available at the same time) and whose outputs would
+all be put to use at a similar time too. Otherwise task families will
+unnecessarily constrain cylc's ability to achieve maximum functional
+parallelism, because every member has to finish before downstream
+processing can continue. 
 
 
 \pagebreak
@@ -1712,8 +1732,7 @@ programs were designed with this in mind (see
 When a task is ready to run, cylc writes, and then executes via the job
 submission method specified for the task (see
 Section~\ref{JobSubmission}), a {\em task job script} that configures
-the environment for the task and then calls the commandline defined for
-it.
+the environment for the task and then calls its commandline.
 
 %In more detail, the temporary ``job script'' contains:
 %\begin{myitemize}
@@ -1736,7 +1755,7 @@ it.
         
 Cylc writes the exact command used to submit each job script to the
 suite stdout stream. The following is an excerpt from example suite
-stdout, running with the \lstinline=background= job submission method:
+stdout, with the \lstinline=background= job submission method:
 
 \begin{lstlisting}
 # CYLC STDOUT
@@ -1808,8 +1827,8 @@ cylc wrap A.sh $OPTIONS
 
 \subsection{Task Execution Environment}
 
-This section explains the various sections of the task job script
-illustrated just above.
+The following subsections explain the purpose of each part of the task
+job script, illustrated above, and how they are defined in the suite.rc file.
 
 \subsubsection{Global And Task-Specific Environment Variables}
 
@@ -1833,14 +1852,16 @@ task, in the task-specific environment section.
 
 \subsubsection{Order Of Environment Definition}
 
-As shown in the example job script above, the order of environment
-definition is,
+The ordering of the job script section is,
 \begin{myitemize}
     \item 1. cylc location, suite location, suite identity
     \item 2. task identity
     \item 3. global variables
     \item 4. local variables
     \item 5. access to cylc
+    \item 6. global and task-specific pre-command scripting (not shown)
+    \item 7. task commandline
+    \item 8. global and task-specific post-command scripting (not shown)
 \end{myitemize}
 
 Consequently, local variables can reference global ones, for example:
@@ -1859,9 +1880,9 @@ in exactly the same order as they are listed in the suite.rc file, so
 you can safely refer to previously defined variables when constructing
 task environments.
 
-Note also that task identity, which includes the task's private cycle
+{\em Note also that task identity, which includes the task's private cycle
 time, is defined prior to the global variables, so even global variables
-can be made task- and cycle-specific by referencing these variables. 
+can be made task- and cycle-specific by referencing these variables.} 
 
 \subsubsection{Task Access To Cylc Commands}
 
@@ -1898,8 +1919,7 @@ host, in the suite.rc task environment section.
 
 \subsubsection{Task Access To The Suite Definition Directory}
 
-In case the task commandline runs a script or program in the suite bin 
-directory (or if any script therein is used as the task executes),
+To allow tasks to run scripts or programs in the suite bin directory
 the cylc environment script automatically configures \lstinline=$PATH=
 for access to \lstinline=$CYLC_SUITE_DIR/bin=. Task scripts can 
 also use \lstinline=$CYLC_SUITE_DIR= to portably access any files
@@ -1908,7 +1928,7 @@ stored under the suite definition directory.
 \paragraph{On Remote Hosts}
 
 Similarly to \lstinline=$CYLC_DIR=, just above, if a task on a remote
-host needs to access scripts in the suite bin directory, or any files
+host needs to access scripts in the suite bin directory, or to any files
 under the suite definition directory, just override 
 \lstinline=$CYLC_SUITE_DIR= with the remote suite directory location, in
 the suite.rc task environment section.
@@ -1951,9 +1971,9 @@ Environment variables are {\em not} evaluated by cylc prior to
 executing the task. They are written, in unevaluated form, to the job
 script that is submitted by cylc to run the task. Thus
 \lstinline=$HOME=, for instance, will evaluate, at run time, to the home
-directory of the account under which the task in question executes
-(which isn't necessarily the same account, or even the same host, that
-is running the suite). 
+directory of the account under which the task executes (which isn't
+necessarily the same account, or even the same host, that is running the
+suite). 
 
 \subsection{Pre- and Post-command Scripting}
 
@@ -2066,6 +2086,7 @@ calls to the cylc task messaging interface in appropriate places (see
 the next section, {\em Task Messaging}).
 
 \subsubsection{Task Messaging}
+\label{TaskMessaging}
 
 Once submitted, a task must,
 \begin{myitemize}
@@ -2172,19 +2193,20 @@ task scripting.
 \subsubsection{Custom Task Wrappers}
 
 For large scientific models with idiosyncratic native job-submission
-processes that are difficult to understand or change, you may need to
-write a custom wrapper that takes input parameters from the environment 
-and its commandline, and then modifies the native scripts according
-to task and cycle time, and to insert cylc messaging in the appropriate 
-places, before invoking the (now modified) native process. The task 
-commandline would then just invoke the custom wrapper.
+processes that can't easily be re-engineered for the sake of simplicity
+and clarity, you may need to write a custom wrapper that takes input
+parameters from the environment and its commandline, and then modifies
+the native scripts according to task and cycle time, and to insert cylc
+messaging in the appropriate places, before invoking the (now modified)
+native process. The task commandline would then just invoke the custom
+wrapper.
 
 \paragraph{Propagating The Task Execution Environment}
 
 Task processing normally executes in the configured task execution
 environment, even in subprocesses because the environment is exported.
 However, if a task submits an internal job to a batch queue scheduler
-without passing its environment in, or if a tasks submits an internal
+without passing its environment in, or if a task submits an internal
 job to a remote host by some means, then you must arrange for the
 relevant parts of the task execution environment to be propagated into
 those jobs {\em if they need to be able to report success or failure to
@@ -2197,9 +2219,10 @@ native job scripts rather than re-engineer them properly.
 
 So, if you have to modify a task's native job submission scripts for
 this kind of situation, you can write a custom task wrapper that
-inserts, at run time, code to recreate the environment in the right
-place in said scripting, before invoking the native scripting itself. 
-Here's a rough indication of how this sort of thing can be done:
+inserts into the right place in the native scripts, at run time, code to
+reconstruct the environment when the native scripts run, before finally
+invoking the native job submission processes. Here's a rough indication
+of how this might be done:
 
 \begin{lstlisting}
 #/bin/bash
@@ -2213,7 +2236,8 @@ Here's a rough indication of how this sort of thing can be done:
 #      command = CustomFoo.sh $OPTIONS $ARGS
 #---------------------------------------------
 # ...
-# Copy original native scripts to $NATIVESCRIPTS_DIR
+# Copy native scripts to $NATIVESCRIPTS_DIR, on the fly, so we don't
+# have to hack the orginals
 # ...
 # Modify native script foobar.sh:
 echo "export CYCLE_TIME=$CYCLE_TIME" >> $NATIVESCRIPTS_DIR/foobar.sh 
@@ -2269,31 +2293,23 @@ suite owner on the suite host and the task owner on the remote host.
 
 \subsubsection{Remote Host Requirements}
 
-\begin{myitemize}
-
-    \item Cylc (and Pyro) must be installed on the remote host, so that 
-        the remote task can communicate with its parent suite. To give
-        the remote task access to the remote cylc installation just
-        override \lstinline=$CYLC_DIR= with the remote cylc location,
-        in the task's suite.rc environment section.
+Cylc (and Pyro) must be installed on the remote host, so that the remote
+task can communicate with its parent suite. To give the remote task
+access to the remote cylc installation just override
+\lstinline=$CYLC_DIR= with the remote cylc location, in the task's
+suite.rc environment section.
         
-    \item Any external (non-suite) scripts, programs, and files used
-        by the task must obviously be installed on the remote host. 
-        
-    \item To give the remote task access to any files stored in the 
-        suite definition directory, including scripts in the suite
-        bin directory, just install the suite definition on the 
-        remote host and override \lstinline=$CYLC_SUITE_DIR= 
-        with the remote suite location, in the task's suite.rc 
-        environment section.
-
-\end{myitemize}
+To give the remote task access to any files stored in the suite
+definition directory, including scripts in the suite bin directory, just
+install the suite definition on the remote host and override
+\lstinline=$CYLC_SUITE_DIR= with the remote suite location, in the
+task's suite.rc environment section.
 
 \pagebreak
 \section{Job Submission Methods}
 \label{JobSubmission}
 
-When a task is ready to run cylc writes special {\em job script} to
+When a task is ready to run cylc writes a special {\em job script} to
 run the processing that the task represents (see
 Section~\ref{JobScripts}), and executes that job script by means of a
 chosen {\em job submission method}. Most of the time this is entirely
