@@ -18,20 +18,20 @@ functionality."""
 use lockserver = True
 use secure passphrase = True
 
-task submitted hook script         = alert.sh
-task started hook script           = alert.sh
-task finished hook script          = alert.sh
-task failed hook script            = alert.sh
-task warning hook script           = alert.sh
-task submission failed hook script = alert.sh
+#task submitted hook script         = alert.sh
+#task started hook script           = alert.sh
+#task finished hook script          = alert.sh
+#task failed hook script            = alert.sh
+#task warning hook script           = alert.sh
+#task submission failed hook script = alert.sh
 task timeout hook script           = timeout.sh
-task submission timeout in minutes = 0.0
+task execution timeout in minutes = 0.2
 
 #use crude safety lock = True
 #ignore task owners = True
 #job submission method = ll_basic
 
-#tasks to include at startup = prep, X, ColdA, A
+tasks to include at startup = X
 
 #use suite blocking = True
 
@@ -108,7 +108,9 @@ echo twaat!
     [[X]]
         description = "retrieve real time data for model A"
         task started hook script = alert2.sh
+        task submission timeout in minutes = 0.5
         command = cylc wrap X.sh
+        #command = X.sh
         [[[ environment ]]]
             X_OUTPUT_DIR = $WORKSPACE
         scripting = \
@@ -154,7 +156,7 @@ echo bye
         command = cylc wrap D.sh
         #command = D-no-wrap.sh
         #command = cylc wrap D-fail.sh, cylc wrap D.sh,
-        task execution timeout in minutes = 0.0
+        #task execution timeout in minutes = 0.0
         #reset execution timeout on incoming messages = False
         # job submission method = ll_basic
         [[[environment]]]

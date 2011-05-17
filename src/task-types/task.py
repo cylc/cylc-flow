@@ -165,13 +165,22 @@ class task( Pyro.core.ObjBase ):
         # a temporary task.
         self.stop_c_time = None
 
-        # override 
+        # chose task-specific and then global hook scripts
         for event in [ 'submitted', 'submission failed', 'started', 
                 'warning', 'finished', 'failed', 'timeout' ]:
             if not self.hook_scripts[ event ]:
+                # if no task-specific event hook script specified
                 if self.__class__.global_hook_scripts[ event ]:
+                    # then override with the global one, if any
                     self.hook_scripts[ event ] = self.__class__.global_hook_scripts[ event ]
-                
+        # chose task-specific and then global timeouts
+        for event in [ 'submission', 'execution', 'reset on incoming' ]:
+            if self.timeouts[ event ] == None :                     # explicit None in case timeout is 0
+                # no task-specific event hook script specified
+                if self.__class__.global_timeouts[ event ] != None: # ditto
+                    # so override with the global one, if any
+                    self.timeouts[ event ] = self.__class__.global_timeouts[ event ]
+        
     def log( self, priority, message ):
         logger = logging.getLogger( "main" ) 
         message = '[' + self.id + '] -' + message
@@ -327,7 +336,7 @@ class task( Pyro.core.ObjBase ):
             # task submission and execution timeouts only
             return
         current_time = task.clock.get_datetime()
-        if self.timeouts['submission'] and self.submission_timer_start:
+        if self.timeouts['submission'] != None and self.submission_timer_start != None:
             timeout = self.submission_timer_start + datetime.timedelta( minutes=self.timeouts['submission'] )
             if current_time > timeout:
                 msg = 'submitted ' + str( self.timeouts['submission'] ) + ' minutes ago, but has not started'
@@ -336,7 +345,7 @@ class task( Pyro.core.ObjBase ):
                 subprocess.call( command, shell=True )
                 self.submission_timer_start = None
 
-        if self.timeouts['execution'] and self.execution_timer_start:
+        if self.timeouts['execution'] != None and self.execution_timer_start != None:
             timeout = self.execution_timer_start + datetime.timedelta( minutes=self.timeouts['execution'] )
             if current_time > timeout:
                 if self.timeouts['reset on incoming']:
