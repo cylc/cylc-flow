@@ -13,7 +13,6 @@ ignore task owners = True
 
 roll log at startup = True
 
-use suite blocking = False
 use secure passphrase = False
 use lockserver = False
 
