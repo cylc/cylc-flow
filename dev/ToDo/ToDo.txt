@@ -7,7 +7,8 @@ GENERAL
   For plotting, it is parsed as "A and ( B or C )", whereas it should be 
   "(A and B) or C"
 
-*  SUICIDE PREREQUISITES need to be re-instated in cylc-3
+*  Do suicide prerequisites need to be re-instated in cylc-3? Maybe they 
+   are not needed now that we have conditional prerequisites?
 
 * system level install of cylc - the (non-system-level) cylc environment 
   script is currently source automatically by cylc task job scripts.
