@@ -9,6 +9,8 @@ GENERAL
 
 *  SUICIDE PREREQUISITES need to be re-instated in cylc-3
 
+* system level install of cylc - the (non-system-level) cylc environment 
+  script is currently source automatically by cylc task job scripts.
 
 * LONG TERM: consider replacing finished tasks with a data structure
   that remembers what happened. More efficient for very large suites?

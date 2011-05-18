@@ -32,7 +32,7 @@ Minimalist loadleveler job submission.
         # because cylc task job scripts are always submitted from $HOME.
         # add (or override with) taskdef directives
 
-        # Now, in case the user has overridden the above defaults:
+        # In case the user wants to override the above defaults:
         for d in self.directives:
             defaults[ d ] = self.directives[ d ]
         self.directives = defaults

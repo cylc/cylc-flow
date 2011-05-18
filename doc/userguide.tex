@@ -129,6 +129,16 @@ Copyright NIWA, 2008-2011}
     \setlength{\topsep}{0pt}
     }{\end{itemize}}
 
+% define a more compact enumerate list environment
+\newenvironment{myenumerate} {
+\begin{enumerate}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{0pt}
+    \setlength{\topsep}{0pt}
+    }{\end{enumerate}}
+
+
 \begin{document}
 
 \maketitle
@@ -447,25 +457,27 @@ even more efficient job schedule.
     \begin{center} 
         \includegraphics[width=8cm]{inkscape-svg/task-pool.pdf}
     \end{center} 
-    \caption[The cylc task pool]{\small How cylc sees the task pool, in
-    contrast to the full dependency diagram of Figure~\ref{fig-dep-multi}.} 
+    \caption[The cylc task pool]{\small How cylc sees a suite, in
+    contrast to the multicycle dependency graph of Figure~\ref{fig-dep-multi}.
+    Task colors represent different cycle times, and the small squares
+    and circles represent different prerequisites and outputs. A task
+    can run when its prerequisites are satisfied by the outputs 
+    of other tasks in the pool.} 
     \label{fig-task-pool}
 \end{figure} 
-
-This section explains how cylc achieves the optimal multicycle
-scheduling described above. 
 
 Cylc manages a pool of proxy objects that represent real tasks in the
 forecasting suite. A task proxy object can run the real task when its
 prerequisites are satisfied, and can receive reports of completed
 outputs from the real task as it runs. There is no global cycling
 mechanism to advance the suite in time; instead each individual task
-proxy has a private cycle time and spawns its own successor at the right
-time (which depends only on the task's own type and state). Task proxies
+proxy has a private cycle time and spawns its own successor. Task proxies
 are self-contained and do not know what other tasks exist in the suite,
 they just know their own prerequisites and outputs. Intercycle
 dependencies are not treated specially, and the task pool
-can be populated with tasks from many different cycle times. Now,
+can be populated with tasks from many different cycle times. 
+How cylc sees the task pool is illustrated in
+Figure~\ref{fig-task-pool}. Now,
 whenever any task proxy changes state (as a result of an output
 completion message, for example) cylc gets the entire pool to interact
 indiscriminately ({\em regardless of cycle time}) in an attempt to
@@ -477,7 +489,7 @@ the number of task proxies in the suite.}
 Thus without using global cycling mechanisms, and treating all
 dependencies equally, cylc in effect gets a set of individual tasks to
 self-organise by negotiating their own dependencies: optimal scheduling,
-as illustrated in the previous section, emerges naturally at run time.
+as described in the previous section, emerges naturally at run time.
 
 In addition, cylc makes no distinction between delayed and real time
 operation. In delayed operation the tasks that gather the suite's
@@ -543,15 +555,15 @@ The gcylc GUI, central (all users) suite database view.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[height=0.4\textheight]{../images/screenshots/simple-suiterc.png}]
+        \includegraphics[height=0.45\textheight]{../images/screenshots/simple-suiterc.png}]
     \end{center}
-    \caption{A simple cylc suite definition in the vim editor}
+    \caption{A simple cylc suite definition being edited in {\em vim}}
     \label{fig-cylc-vim} 
 \end{figure} 
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.4\textheight]{../images/screenshots/simple-18-cold.png}
+        \includegraphics[width=0.35\textheight]{../images/screenshots/simple-18-cold.png}
     \end{center}
     \caption{The suite definition of Figure~\ref{fig-cylc-vim} graphed by cylc.}
 \label{fig-simple-graph-2}
@@ -561,8 +573,7 @@ The gcylc GUI, central (all users) suite database view.}
     \begin{center}
         \includegraphics[width=0.8\textwidth]{../images/screenshots/control-trad.png}
     \end{center}
-\caption[gcylc: Suite Control GUI, original interface]{\small
-The original gcylc treeview suite control interface.}
+\caption{\small The gcylc suite control GUI, treeview interface.}
 \label{fig-gcylc-original}
 \end{figure} 
 
@@ -570,8 +581,7 @@ The original gcylc treeview suite control interface.}
     \begin{center}
         \includegraphics[width=0.8\textwidth]{../images/screenshots/control-graph.png}
     \end{center}
-\caption[gcylc: Suite Control GUI, graph interface]{\small
-The gcylc graph suite control interface.}
+\caption{\small The gcylc suite control GUI, graph interface.}
 \label{fig-gcylc-graph}
 \end{figure} 
 
@@ -622,22 +632,21 @@ The gcylc graph suite control interface.}
         tested: 1.0rc6). %Open source license: BSD
 \end{myitemize}
 
-The software above is required by cylc, but is not part of cylc. Python
-and Pyro are absolutely essential. Graphviz and pygraphviz are required
-for dependency graph plotting and the graph-based suite control
-interface, but you can run cylc without them.
+Of the software listed above, Python and Pyro are essential; graphviz
+and pygraphviz are required for dependency graphing and the graph-based
+suite control interface, but you can run cylc without them.
 
 Cylc has also absorbed in modified form (so you don't need to install 
 them) the following open source software packages:
 \begin{myitemize}
-    \item The xdot graph viewer software 
-        (open source license: LGPL)
+    \item The xdot graph viewer 
+        (http://code.google.com/p/jrfonseca/wiki/XDot,
+        open source license: LGPL)
     \item The ConfigObj and Validate python modules \newline
         (http://www.voidspace.org.uk/python/configobj.html,
         open source license: BSD)
 
 \end{myitemize}
-
 
 \subsection{Installation} 
 \label{Installation}
@@ -655,13 +664,13 @@ admin> . $CYLC_DIR/environment.sh
 \end{lstlisting}
 
 Note that the variable \lstinline=$CYLC_DIR= is actually required by
-the environment script (you can't just skip that step and source the
-script directly).
+the environment script, so don't skip the export step.
 
-For a system-level install just inspect the environment script for the
-few critical executable and source module paths, and install the
-contents therein in standard system locations. Users would then not need
-to source the cylc environment script before using cylc. 
+% TO DO: SYSTEM LEVEL INSTALL INSTRUCTIONS
+%For a system-level install just inspect the environment script for the
+%few critical executable and source module paths, and install the
+%contents therein in standard system locations. Users would then not need
+%to source the environment script before using cylc. 
 
 \subsubsection{Other}
 
@@ -796,7 +805,7 @@ prompt> cylc lockserver --help
 There is a command line client interface, 
 \lstinline=cylc lockclient=,
 for interrogating the lockserver and managing 
-locks manually (c.f.\ having to delete a lock file manually when the
+locks manually (c.f.\ deleting a lock file manually if the
 associated process died without cleaning up after itself).
 
 You can also choose not to use the lockserver for a particular suite, by
@@ -807,9 +816,10 @@ definition) file,
 use lockserver = False  # not recommended!
 \end{lstlisting}
 
-\subsection{Copy The Example Suite} 
+\subsection{Import The Example Suite} 
 
-Now we'll import the example suite from the central database to,
+The following subsections desribe how to import a copy of the example
+suite from the central database to a local directory,
 \begin{lstlisting}
 $HOME/cylc/examples/userguide
 \end{lstlisting}
@@ -854,10 +864,9 @@ examples:userguide "userguide example suite" /home/oliverh/cylc/examples/usergui
 
 You can now edit, search, validate, plot, run, etc., your copy of the
 example suite, using the commandline or gcylc (right-click on the suite
-as described above). On the commandline type \lstinline=cylc help= and
-drill down to the command you want.
+as described above).
 
-\subsection{Searching, Editing, and Plotting the Suite}
+\subsection{Editing A Suite}
 
 To edit the suite definition via gcylc right-click on the suite and
 choose `Edit'; right-click again and choose `Graph' to plot the suite
@@ -878,12 +887,16 @@ location, and for suite.rc files that contain include files
 split back into its constituent include-files {\em when you save and
 exit the editor}. 
 
+\subsection{Graphing A Suite}
+
 To graph the suite,
 \begin{lstlisting}
 prompt> cylc graph examples:userguide 2011042506 2011042606 &
 \end{lstlisting}
 (this results in the graph of Figure~\ref{fig-simple-graph-2}, in the 
 Suite Design Overview chapter)
+
+\subsection{Searching A Suite}
 
 To use the suite search tool, which reports matches in the suite.rc file
 by line number, suite section, and file (even if nested include-files
@@ -923,7 +936,7 @@ use \lstinline=cylc db refresh= or gcylc
 After editing a suite, always validate it to check for errors prior to
 running it (gcylc right-click or \lstinline=cylc validate SUITE:GROUP=)
 
-\subsection{Running The Suite}
+\subsection{Starting A Suite}
 
 To run a suite from the commandline,
 \begin{lstlisting}
@@ -932,7 +945,8 @@ prompt> cylc run examples:userguide 2011042506
 
 {\em In real mode operation (as opposed to {\em dummy mode},
 Section~\ref{DummyMode}) do not choose an initial cycle time in the
-future or nothing will happen until that time.}
+future or nothing will happen until that time.}\footnote{For any 
+suite processing initiated by clock-triggered tasks, at least.}
 
 Then start up a suite control interface to follow progress:
 \begin{lstlisting}
@@ -961,32 +975,35 @@ with each other).
 %    \label{fig-monitor} 
 %\end{figure} 
 
-\subsection{Shutting Down And Restarting A Suite}
+\subsection{Shutting A Suite Down}
 
-\lstset{language=bash}
-
-The default shutdown mode causes the suite to stop once any currently
-running tasks have finished,
+To shut a suite down from the commandline, 
 \begin{lstlisting}
 prompt> cylc stop examples:userguide
 \end{lstlisting}
 
-To stop the suite immediately use the \lstinline=--now= option, but be
-aware that this will orphan any tasks that are still running.  
+This will cause the suite to shut down once any currently running tasks
+have finished. There are various other ways of stopping a suite too; see
+\lstinline=cylc stop help=.
 
-The suite can be restarted from its most recent previous state,
+\subsection{Restarting A Suite}
+
+To restart a suite from its most recent previous state, on the
+commandline,
 \begin{lstlisting}
 prompt> cylc restart examples:userguide
 \end{lstlisting}
-or from other saved prior states. % (see Section~\ref{StateDumpFiles}).
+
+You can also restart a suite from other saved prior states; 
+see \lstinline=cylc restart help=. 
 
 \pagebreak
 
-\section{Suite Design - Overview} 
+\section{Suite Design} 
 \label{SuiteDesign}
 
 \subsection{History}
-\subsubsection{Before Cylc 3.0}
+\subsubsection{Pre Cylc 3.0}
 
 Early versions of cylc were focused on developing and testing the new 
 scheduling algorithm, and the suite design interface at the time was
@@ -1002,25 +1019,26 @@ consistency of prerequisites and outputs across a large suite could be
 tedious; a few edge cases associated with suite startup and forecast
 model restart dependencies were, arguably, difficult to understand; and
 the global structure of a suite was not readily apparent until run time
-(although to counter this cylc could generate run-time resolved
+(although to counter this cylc 2.x could generate run-time resolved
 dependency graphs very quickly in dummy mode).
 
-\subsubsection{After Cylc 3.0}
+\subsubsection{Post Cylc 3.0}
 
 At version 3.0 we implemented an entirely new suite design interface
 that, in essence, defines the suite dependency graph and the commandline
 and execution environment for each task, in a single structured,
 validated, config file - the suite.rc file.  This {\em really} makes
 suite structure apparent at a glance, and task prerequisites and outputs
-(and other important parameters besides) no longer need to be specified
+(and some other important parameters besides) no longer need to be specified
 by the user because they are implied by the graph.
 
 
 \subsection{The Suite Definition Directory}
 
 A cylc {\em suite definition directory} contains, at the least, a
-suite.rc file (the suite definition) and a \lstinline=bin= sub-directory
-(scripts and programs that implement, or are used by, suite tasks).
+suite.rc file ({\em the} suite definition) and a \lstinline=bin=
+sub-directory for scripts and programs that implement, or are used by,
+suite tasks.
 
 \begin{lstlisting}
 /path/to/my/suite   # suite definition directory
@@ -1043,7 +1061,7 @@ suite.rc file (the suite definition) and a \lstinline=bin= sub-directory
     ...
 \end{lstlisting}
 
-Strictly speaking the suite bin directory is optional because every task
+Strictly speaking the bin directory is optional because every task
 could, in principle, call external commands, scripts, or programs.
 However, tasks automatically get access to their suite bin directory,
 and there are definite advantages to keeping everything in one place.
@@ -1060,11 +1078,19 @@ control easy.}
 \label{SuiteRCFile}
 
 Cylc uses a structured, validated, config file for suite definition.
-Suite.rc files parse directly into nested data structures inside cylc,
-making it very easy to add and use new configuration items, and they are
-automatically validated against a specification file that defines all
-legal entries, values, options, and defaults
+Entire suite.rc files parse directly into a nested data structure inside
+cylc, which makes it very easy to add and use new configuration items,
+and they are automatically validated against a specification file that
+defines all legal entries, values, options, and defaults
 (\lstinline=$CYLC_DIR/conf/suiterc.spec=). 
+
+{\em In this chapter we describe the format and general structure
+of a suite.rc file. The definitive reference for legal suite.rc entries,
+values, options, and defaults, is Appendix~\ref{SuiteRCReference}; for
+the ins and outs  of suite.rc dependency graph definition, see
+Chapter~\ref{DependencyGraphs}; task implementation is described in 
+Chapter~\ref{TaskImplementation}; and task job submission in 
+Chapter~\ref{JobSubmission}.}
 
 \begin{myitemize}
     \item {\bf Entries} take the form \lstinline@item = value@.
@@ -1119,9 +1145,6 @@ a list item with continuation = a, b, c, \
 # ...
 \end{lstlisting}
 
-The definitive reference for legal suite.rc items, values, options,
-and defaults, is Appendix~\ref{SuiteRCReference}.
-
 
 \subsubsection{A Simple Example}
 
@@ -1175,7 +1198,7 @@ job submission method = loadleveler
 Dependency graphs plotted from this (by gcylc or 
 \lstinline=cylc graph=) are shown in Figures~\ref{fig-simple-graph-1} 
 and~\ref{fig-simple-graph-2}.
-How to define suite dependency graphs is covered in
+How to define suite dependency graphs is described in
 Section~\ref{DependencyGraphs}.
 
 \begin{figure}
@@ -1217,14 +1240,14 @@ To use this, copy the syntax file to your
 modifications, as described in the file, to your
 \lstinline=$HOME/.vimrc=.
 
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=14cm]{../images/screenshots/simple-suiterc.png}]
-    \end{center}
-    \caption[Cylc suite.rc syntax highlighting in vim]{
-    Cylc suite.rc syntax highlighting and folding in the vim editior.}
-    \label{fig-cylc-vim} 
-\end{figure} 
+%\begin{figure}
+%    \begin{center}
+%        \includegraphics[width=14cm]{../images/screenshots/simple-suiterc.png}]
+%    \end{center}
+%    \caption[Cylc suite.rc syntax highlighting in vim]{
+%    Cylc suite.rc syntax highlighting and folding in the vim editior.}
+%    \label{fig-cylc-vim} 
+%\end{figure} 
 
 \subsection{Suite Validation}
 
@@ -1297,10 +1320,319 @@ These are not necessarily errors - a task defined by graph alone will
 run as a dummy task, and you can temporarily disable a defined task by
 commenting it out of the dependency graph. 
 
+\subsection{Principles And Suggestions}
+
+Matters pertaining to simplicity, flexibility,
+efficiency, and portability of cylc suites.
+
+\subsubsection{Use The Example Suites to Learn About Cylc}
+
+The example suites run quickly and are completely portable - you can run
+multiple copies of them at once without any interference between them.
+Make a quick copy of one from the central database and modify it to test
+things for yourself.
+
+\subsubsection{Remember: There Is No Suite Cycle Time}
+
+In cylc, each task has its own private cycle time and can run when its
+prerequisites are satisfied regardless of what is going on elsewhere in
+the suite.
+
+\subsubsection{Make Fine-Grained Suites} 
+\label{Granularity}
+
+A suite can contain a small number of large, internally complex tasks; a
+large number of small, simple tasks; or anything in between. Cylc can
+easily handle a large number of tasks, however, so there are definite
+advantages to fine-graining:
+
+\begin{myitemize}
+    \item a more modular and transparent suite.
+
+    \item better functional parallelism (multiple tasks running
+        at the same time).
+
+    \item faster debugging and failure recovery: rerun just the tasks(s)
+        that failed. 
+
+    \item code reuse: similar tasks can often call the same script or
+        command with differing task-specific input parameters
+        (consider tasks that move files around, for example).
+
+\end{myitemize}
+
+\subsubsection{Don't Overuse Task Families}
+
+Cylc allows you to group tasks into families such that all family
+members trigger at once off the same prerequisites, and other downstream
+tasks can trigger off the family as a whole rather than off each
+specific member. This should really only be used as a (very) convenient
+simplification for groups of tasks that should trigger at the same time
+regardless (e.g.\ multiple tasks for processing different types of
+observations that are all made available at the same time) because
+it otherwise artificially constrains cylc's ability to achieve maximum
+functional parallelism. As an extreme example, imagine grouping all
+tasks in the same forecast cycle into a single family (cylc task
+families can have internal dependencies) - this would result in enforced
+whole-suite sequential cycling even when catching up from a long delay.
+
+\subsubsection{Use Include-Files For Groups Of Related Tasks}
+
+Suite.rc include-files can be used just to help organise tasks into
+convenient groups in very large suites (and with \lstinline=cylc edit= 
+you can edit a temporarily inlined file to get a global view). 
+But they are most useful for handling the repetitive definition of
+groups of similar tasks, because the same inclusion can be used multiple
+times in the same suite.rc file. 
+
+\subsubsection{Make Tasks Rerunnable}
+
+It should be possible to rerun a task by simply resubmitting it for the
+same cycle time. In other words, failure at any point during execution
+of a task should not render a rerun impossible by corrupting the state
+of some internal-use file, or whatever. It's difficult to overstate the
+usefulness of being able to rerun the same task multiple times,
+either outside of the suite with \lstinline=cylc submit=, or by
+retriggering it within the running suite, when debugging a problem.
+
+\subsubsection{Make Models Rerunnable} 
+
+If a warm-cycled model simply overwrites its restart files in each
+run, the only cycle that can subsequently run is the next one. This
+is dangerous because if, accidentally or otherwise, the task runs for the
+wrong cycle time, its restart files will be corrupted such that the
+correct cycle can no longer run (probably necessitating a cold start).
+Instead, consider organising restart files by cycle time, through a file
+or directory naming convention, and keep them in a simple rolling
+archive (cylc's filename templating and housekeeping
+utilities can easily do this for you). Then, given availability of 
+any external inputs, you can easily rerun the task for any cycle still
+in the restart archive.
+
+\subsubsection{Limit Previous-Instance Dependence} 
+
+Cylc does not require that successive instances of the same task run 
+sequentially. In order to task advantage of this and achieve maximum
+functional parallelism whenever the opportunity arises (usually when 
+catching up from a delay) you should ensure that tasks which in
+principle do not depend on their own previous instances (the vast
+majority of tasks in most suites, in fact) do not do so in practice. In
+other words, they should be able to run as soon as their prerequisites
+are satisfied regardless of whether or not their predecessors have
+finished yet.  This generally just means ensuring that all file I/O
+contains the generating task's cycle time in the file or directory name
+so that there is no interference between successive instances. If this
+is difficult to achieve in particular cases, however, you can declare
+the offending tasks to be ``sequential'' (see
+Section~\ref{SuiteRCReference}). 
+
+% MAYBE SHOULD INCLUDE THE FOLLOWING HERE:
+%Warm-cycled forecast models {\em do} depend on their own previous
+%instances (through their ``model background'' restart prerequisites).
+%These can be made to run sequentially (i.e.\ with maximal previous
+%instance dependence) but you can have cylc suite launch the next model,
+%assuming other prerequisites are satisfied, as soon as the previous one
+%has completed its restart prerequisites (minimal previous instance
+%dependence, maximal throughput).
+
+\subsubsection{Put Cycle Time In All Output File Paths}
+\label{PutCycleTimeinIO}
+
+Having all filenames, or perhaps the names of their containing
+directories, stamped with the cycle time of the generating task greatly
+aids in managing suite disk usage, both for archiving and cleanup. It
+also enables the previous task rerunnability recommendation by avoiding
+overwrite of important files from one cycle to the next. Cylc has a
+powerful utilities for cycle time offset based filename templating and
+housekeeping.
+
+\subsubsection{How To Manage Input/Output File Dependencies}
+\label{HandlingDependencies}
+
+Dependencies between tasks usually, though not always, take the form of
+files generated by one task that are used by other tasks. There are
+several ways to manage these files across a suite.
+
+\begin{myitemize}
+
+\item {\bf Use A Common I/O Workspace}
+
+This may be the easiest way to run small suites: have all tasks read and
+write from a common workspace.  Don't hardwire the workspace location
+into the tasks; have them take it dynamically from an environment
+variable defined in the suite.rc file. 
+
+\item {\bf Add Connector Tasks To The Suite} 
+
+If your tasks have idiosyncratic default I/O locations that are not easy
+to change (this would hardly be unprecented when it comes to large
+scientific models) you could leave them alone and add additional tasks
+to the suite to move files around as needed (from A's output directory
+to B's input directory and so on). This is not ideal either because
+it could add many extra tasks to the suite.  However, it is a 
+relatively minor issue that the connector tasks require knowledge of
+suite context because they are very simple tasks: they can probably all
+call the same generic file-transfer script or command, with differing
+task-specific input parameters, and their cross-task configuration can
+be confined to the suite.rc file.
+
+\item {\bf Make The Tasks Responsible}
+
+Perhaps the obvious solution is to configure each task with
+knowledge of its role in the suite: i.e.\ to have task B know to read
+its input from A's output directory, or to have A know to write its
+output directly to B's input directory, and so on.  However, it is a bad
+idea to hardwire this information into the real tasks - requiring some
+tasks to know specific configuration details of other tasks ultimately
+makes the suite less flexible.
+
+\item {\bf Dynamic Configuration Of I/O Paths}
+
+The best solution is probably to have all tasks take common I/O paths
+from common environment variables defined once in the
+suite.rc file. Tasks can thus be configured as if to run
+standalone, with the knowledge of how they interact within the context of
+the suite confined to the suite.rc file, and no connector
+tasks have to be added to the suite. This can be implemented reasonably
+easily even if the tasks involved run on different hosts (use ssh or ftp
+URLs for the common I/O locations instead of local paths). 
+
+\end{myitemize}
+
+\subsubsection{Use Generic Task Scripts}
+
+If your suite contains multiple logically distinct tasks that actually
+have similar functionality (e.g.\ for moving files around, or for 
+generating similar products from the output of several similar models)
+have the corresponding cylc tasks all call the same command, script, or
+executable - just provide different input parameters
+via the commandline and/or execution environment (both defined in the
+suite.rc file.
+
+
+\subsubsection{Make Suites Portable}
+
+If every task in a suite is configured to put its output under
+`\lstinline=$HOME=' (i.e.\ the environment variable, literally, not the
+explicit path to your home directory; and similarly for temporary
+directories, etc.) then other users will be able to copy the suite and
+run it immediately, after merely ensuring that any external input files
+are in the right place.
+
+For the ultimate in portability, construct suites in which all task I/O
+paths are dynamically configured to be user and suite (registration)
+specific, e.g.
+\begin{lstlisting}
+$HOME/output/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/
+\end{lstlisting}
+(these variables are automatically exported to the task execution
+environment by cylc). Then you can run multiple instances of the suite
+at once (even under the same user account) without changing anything,
+and they will not interfere with each other.
+
+You can test changes to a portable suite safely by making a quick copy
+of it in a temporary directory, then modifying and running the test copy 
+without fear of corrupting the output directories, suite logs, and 
+suite state, of the original. 
+
+
+\subsubsection{Make Tasks As Self-Contained As Possible}
+
+Where possible, no task should rely on the action of another task,
+except for the prerequisites embodied in the suite dependency graph that
+it has no choice but to depend on. If this rule is followed, your suite
+will be as flexible as possible in terms of being able to run single
+tasks, or subsets of the suite, whilst debugging or developing new
+features.\footnote{The `cylc submit' command runs a single task exactly
+as its parent suite would, in terms of both job submission method and
+execution environment.}  For example, every task should create its own
+output directories if they do not already exist, instead of assuming
+their existence due to the action of some another task; then you will be
+able to run single tasks without having to manually create output
+directories first. 
+
+\begin{lstlisting}
+# manual task scripting:
+  # 1/ create $OUTDIR if it doesn't already exist:
+  mkdir -p $OUTDIR
+  # 2/ create the parent directory of $OUTFILE if it doesn't exist:
+  mkdir -p $( dirname $OUTFILE )
+
+# OR using the cylc checkvars utility:
+  # 1/ check vars are defined, and create directories if necessary:
+  cylc util checkvars -c OUTDIR1 OUTDIR2 #...
+  # 2/ check vars are defined, and create parent dirs if necessary:
+  cylc util checkvars -p OUTFILE1 OUTFILE2 #...
+\end{lstlisting}
+
+\subsubsection{Make Suites As Self-Contained As Possible}
+
+The only compulsory content of a cylc suite definition directory is the
+suite.rc file (and you'll almost certainly have a suite
+\lstinline=bin= sub-directory too). However, you can store whatever you
+like in a suite definition directory;\footnote{If you copy a suite using
+cylc commands or gcylc, the entire suite definition directory
+will be copied.} other files there will be ignored by cylc but
+suite tasks can access them via the
+\lstinline=$CYLC_SUITE_DIR= variable that cylc automatically 
+exports into the task execution environment. Disk space is cheap - if
+all programs, ancillary files, control files (etc.) required by the
+suite are stored in the suite
+definition directory instead of having the suite reference external
+build directories (etc.), you can turn the directory into a revision
+control repository and be virtually assured of the ability to exactly
+reproduce earlier versions as required, regardless of suite
+complexity.
+
+Note that if your suite includes remote tasks that refer to files in the
+suite definition directory you'll need to copy the directory to the
+remote host and, in the suite.rc task-specific environment
+sections of the remote tasks, override \lstinline=$CYLC_SUITE_DIR= with
+the remote path - just as for \lstinline=$CYLC_DIR= which, for remote
+tasks, must point to the remote cylc installation).
+
+\subsubsection{Orderly Product Generation?}
+\label{OrderlyProductGeneration}
+
+Correct scheduling is not equivalent to ``orderly generation of products
+by cycle time''.  Under cylc, a product generation task will trigger as
+soon as its prerequisites are satisfied (i.e.\ when its input files are
+ready, generally) regardless of whether other tasks with the same cycle
+time have finished or have yet to run. If your product delivery or
+presentation system demands that all products for one cycle time are
+uploaded (or whatever) before any from the next cycle, then be aware
+that this may be quite inefficient if your suite is ever faced with
+catching up from a significant delay or running over historical data.
+
+\paragraph{Use Of Artificial Dependencies}
+
+If you must, you can introduce artificial dependencies into
+your suite to ensure that the final products never arrive out of
+sequence.  One way of doing this would be to have a final ``product
+upload'' task that depends on completion of all the real product
+generation tasks at the same cycle time, and then declare that final
+task to be sequential so that successive instances of it cannot run out
+of sequence, or in parallel, even if the opportunity arises.
+
+\subsubsection{Clock-triggered Tasks Should Wait On External Data}
+
+All tasks in a cylc suite know their own private cycle time, but most
+don't care about the wall clock time - they just run when their
+prerequisites are satisfied. The exception to this is {\em
+clock-triggered} tasks, which wait on a wall clock time, expressed as an
+offset from their own cycle time, in addition to any other
+prerequisites. The usual purpose of these tasks is to retrieve real time
+data from the external world, triggering at roughly the expected time of
+availability of the data. Triggering the task at the right time is up to
+cylc, but the task itself should go into a check-and-wait loop in case
+the data is delayed; only on successful detection or retrieval should
+the task report success and then exit (or perhaps report failure and
+then exit if the data has not arrived by some cutoff time). 
 
 
 
 \pagebreak
+
 \section{Dependency Graphs}
 \label{DependencyGraphs}
  
@@ -1333,7 +1665,7 @@ If you do try to run Example 1, be aware that you'll need to trigger
 task A manually to get the suite started. That's because A(T) depends on
 its own previous instance A(T-6), and at startup there is no previous
 cycle to satisfy that prerequisite.  How to handle a {\em cold start}
-properly is covered below.
+properly is described below.
 
 \begin{figure}
 \begin{minipage}[b]{0.5\textwidth}
@@ -1406,7 +1738,9 @@ connections between tasks, but not the tasks themselves, must be unique.
 
 \subsection{Task Finished Triggers}
 
-This is the default behaviour, 
+If an upstream task name is unqualified, the downstream task will trigger 
+when it finishes (assuming it has no other triggers defined elsewhere in 
+the graph, of course),
 
 \begin{lstlisting}
 # SUITE.RC
@@ -1416,7 +1750,8 @@ This is the default behaviour,
 
 \subsection{Task Failed Triggers}
 
-This can be used for certain kinds of failure recovery,
+If an upstream task name is qualified by the suffix ``:fail'', the downstream
+task will trigger when it fails,
 
 \begin{lstlisting}
 # SUITE.RC
@@ -1424,6 +1759,7 @@ This can be used for certain kinds of failure recovery,
     graph = A:fail => B
 \end{lstlisting}
 
+This can be used for certain kinds of failure recovery.
 If you don't care whether a task finishes or fails,
 
 \begin{lstlisting}
@@ -1460,8 +1796,8 @@ provide a concise alternative to defining multiple triggers separately:
 OR operators (\lstinline=|=), for true ``conditional triggers'',
 can only appear on the left,\footnote{An OR
 operator on the right doesn't make much sense in the context of a
-forecasting suite: if ``B or C'' triggers off A, should cylc run B or C
-when A finishes?}
+forecasting suite: if ``B or C'' triggers off A, what exaclty should
+cylc do when A finishes?}
 \begin{lstlisting}
 # SUITE.RC
 # C triggers when either A or B finishes:
@@ -1473,8 +1809,8 @@ when A finishes?}
 In a list of alternative triggers separated by OR operators, the 
 full conditional expression determines run time behaviour, but one of
 the alternatives has to be singled out in order to plot the graph: the
-rightmost member is plotted by default; to change which task is
-plotted, change their order or attach an asterisk to the chosen one:
+rightmost task is plotted by default; to change this change the task
+order or attach an asterisk to the chosen task:
 \begin{lstlisting}
 # SUITE.RC
 # this will plot as C => D:
@@ -1561,8 +1897,7 @@ cycle there is no previous instance of A to satisfy B's prerequisites.
 
 A {\em cold start task} is a special oneoff task used to satisfy the
 initial previous-cycle dependence of another cotemporal task. In effect, 
-the cold start task masquerades as the previous-cycle trigger for its
-counterpart.
+the cold start task masquerades as its counterpart's previous-cycle trigger. 
 
 A cold start task may invoke real processing (to generate the files that
 are normally generated by the cycling task that it masquerades as) or it
@@ -1584,7 +1919,8 @@ trigger:
 \end{lstlisting}
 In other words, Foo(T) can trigger off {\em either} Bar(T-6) {\em or} 
 ColdFoo(T). At startup ColdFoo will do the job, before being be eliminated 
-from the suite, and thereafter Bar(T-6) will do it.
+from the suite (because coldstart tasks are non-spawning), and
+thereafter Bar(T-6) will do it.
 
 In cylc, a cold task can also be inserted into the suite at run time 
 to cold start just the task it is associated with, if a problem of 
@@ -1597,8 +1933,9 @@ tasks'' section so that cylc knows they are oneoff (non-spawning) tasks,
 but also because they play a critical role in warm starting cylc
 suites. 
 
-{\em Warm starting} a suite that has previously been shut down is an
-alternative to {\em restarting} it from a previous state. Warm starts
+{\em Warm starting} (at a particular cycle time) a suite that has
+previously been shut down is an alternative to {\em restarting} it from
+a previous state. Warm starts
 assume the existence of a previous cycle (i.e.\ that any files from 
 the previous cycle that are required by the new cycle will be in place
 already). So no cold start tasks need to run {\em but} cylc itself 
@@ -1616,7 +1953,8 @@ Warm cycled forecast models generate {\em restart files}, e.g.\ model
 background fields, that are required to initialize the next forecast
 (this is essentially the definition of ``warm cycling''). In fact
 restart files will often be written for a whole series of subsequent
-cycles in case the next (or more) cycle has to be omitted: 
+cycles in case the next cycle (or the next and the next-next, and so on)
+cycle has to be omitted: 
 \begin{lstlisting}
 # SUITE.RC
 [special tasks]
@@ -1634,8 +1972,8 @@ Restart dependencies are unusual because although A {\em could}
 trigger off A(T-12) we don't actually want it to do so unless A(T-6)
 fails and can't be fixed. {\em This is why Task A, above, is declared to be
 `sequential'}.\footnote{A warm cycling model that only writes out
-restart files for the very next cycle does not need to be declared
-sequential because this early triggering problem does not arise.}
+one set of restart files, for the very next cycle, does not need to be
+declared sequential because this early triggering problem cannot arise.}
 Sequential tasks do not spawn a successor until they have
 finished (by default, tasks spawn as soon as they start running in
 order to get maximum functional parallelism in a suite) which
@@ -1668,10 +2006,10 @@ in a complex suite can be quite difficult.
 Finally, if a warm cycled model is declared in `models with explicit
 restart outputs', instead of `sequential' tasks, and you use explicit
 labeled restart outputs {\em containing the word `restart'}, then 
-the task will not spawn until its last restart output is completed, and 
-successives instances of the task will be able to overlap (i.e.\ run in
-parallel) if the opportunity arises. Whether or not this is worth the
-effort depends on the situation, of course.
+the task will spawn as soon its last restart output is completed so 
+that successives instances of the task will be able to overlap (i.e.\
+run in parallel) if the opportunity arises. Whether or not this is worth
+the effort depends on the situation, of course.
 
 \begin{lstlisting}
 # SUITE.RC
@@ -1756,10 +2094,10 @@ Figure~\ref{fig-fam-eg-3}.
         \includegraphics[width=0.6\textwidth]{../images/screenshots/family-two.png}
     \end{center}
 \end{minipage}
-\caption[A simple task family example]{\small A small suite with simple
-task family, showing the family task proxy on the left, and the real
-dependencies among the family members on the right (plotted with
-\lstinline@[visualization] -> show family members = True@).}
+\caption[A simple task family example]{\small A very small suite with
+a simple task family, showing the family itself on the left, and the
+real dependencies amongst the family members on the right (plotted with
+\lstinline@SUITE.RC: [visualization] -> show family members = True@).}
 \label{fig-fam-eg-3}
 \end{figure} 
 
@@ -1770,11 +2108,11 @@ all members have finished or failed, the family itself will enter
 the failed state. To recover from this, assuming it is a fixable
 problem,
 
-\begin{myitemize}
-    \item 1/ fix the problem that caused the failure
-    \item 2/ reset the failed member task to the `waiting' state
-    \item 3/ retrigger the family itself
-\end{myitemize}
+\begin{myenumerate}
+    \item fix the problem that caused the failure
+    \item reset the failed member task to the `waiting' state
+    \item retrigger the family itself
+\end{myenumerate}
 When the family triggers, the reset member task will follow suit. If the
 member completes successfully this time, so will the family,
 and downstream processing will proceed as normal.
@@ -1792,7 +2130,8 @@ processing can continue.
 
 
 \pagebreak
-\section{Tasks}
+\section{Task Implementation}
+\label{TaskImplementation}
 
 A {\em task} is a single schedulable unit in a cylc suite, uniquely
 identified by name and cycle time.
@@ -1809,7 +2148,9 @@ outside of the suite.rc file. Similarly, if a task needs to make use of
 its own name, or that of its parent suite, (to make I/O paths task and
 suite-specific, for instance) these should be extracted from the
 execution environment (below) rather than hardwired, so that the suite
-is flexible and portable.
+is flexible and portable (see
+Section~\ref{TaskAndSuiteIdentityVariables}, {\em Task And Suite
+Identity Variables}).
 
 \subsection{Task Commandline and Environment}
 \label{TaskExecutionEnvironment}
@@ -1817,7 +2158,8 @@ is flexible and portable.
 Every task has an associated commandline to initiate the processing
 that it represents. The task commandline, and the environment in which
 it executes, is defined in the suite.rc file, and actioned by the 
-{\em task job script} that cylc uses to invoke the task.
+{\em task job script} that cylc uses to invoke the task (see
+Section~\ref{JobScripts}, {\em Task Job Scripts}).
 
 \subsubsection{Generic Task Scripts}
 
@@ -1862,8 +2204,8 @@ stdout, with the \lstinline=background= job submission method:
 \begin{lstlisting}
 # CYLC STDOUT
 ColdB%2011101300  READY TO RUN
-SUBMITTING TASK: /tmp/cylc-ColdB%2011101300-5gRx61 </dev/null 
-    1> /home/oliverh/CylcLogs/examples/userguide/ColdB%2011101300-N3pBYv.out 
+SUBMITTING TASK: /tmp/cylc-ColdB%2011101300-5gRx61 </dev/null \
+    1> /home/oliverh/CylcLogs/examples/userguide/ColdB%2011101300-N3pBYv.out \
     2> /home/oliverh/CylcLogs/examples/userguide/ColdB%2011101300-N3pBYv.err &
 \end{lstlisting}
 
@@ -1875,11 +2217,11 @@ prompt> cylc submit --dry-run examples:userguide A%2010080806
 DRY RUN: create the job script and show how it would be executed.
   * TASK JOB SCRIPT: /tmp/cylc-A%2010080806-VXQusn
   * JOB SUBMISSION METHOD: /tmp/cylc-A%2010080806-VXQusn </dev/null \
-    1> /home/oliverh/CylcLogs/examples/userguide/A%2010080806-CWYM68.out
+    1> /home/oliverh/CylcLogs/examples/userguide/A%2010080806-CWYM68.out \
     2> /home/oliverh/CylcLogs/examples/userguide/A%2010080806-CWYM68.err &
 \end{lstlisting}
 
-And here the resulting job script:
+And here is the resulting job script:
 
 \begin{lstlisting}
 prompt> cat /tmp/cylc-A%2010080806-VXQusn
@@ -1932,30 +2274,25 @@ cylc wrap A.sh $OPTIONS
 The following subsections explain the purpose of each part of the task
 job script, and how to specify the contents thereof in the suite.rc file.
 The ordering of the job script sections is,
-\begin{myitemize}
-    \item 1. cylc location, suite location, suite identity
-    \item 2. task identity
-    \item 3. global variables
-    \item 4. task-specific variables
-    \item 5. access to cylc
-    \item 6. global and task-specific pre-command scripting (not shown)
-    \item 7. task commandline
-    \item 8. global and task-specific post-command scripting (not shown)
-\end{myitemize}
+\begin{myenumerate}
+    \item  cylc location, suite location, suite identity
+    \item  task identity
+    \item  global variables
+    \item  task-specific variables
+    \item  access to cylc
+    \item  global and task-specific pre-command scripting (not shown)
+    \item  task commandline
+    \item  global and task-specific post-command scripting (not shown)
+\end{myenumerate}
 
-Consequently, task-specific variables can reference global variables.
-   
 {\em Note that the task identity variables are defined prior to the
 global variables, so even global variables can be made task- and
 cycle-specific by referencing the the task identity.} 
 
-Both global and task-specific environment variables are defined in
-exactly the same order as they are listed in the suite.rc file, so you
-can safely refer to previously defined variables.
+\subsubsection{Suite And Task Identity Variables}
+\label{TaskAndSuiteIdentityVariables}
 
-\subsubsection{Task And Suite Identity Variables}
-
-The first section of the job script defines variables that identify the
+The first sections of the job script defines variables that identify the
 task name, task cycle time, suite registration (group and name), suite
 host and port, and several other parameters (see the example job script
 above). Executing tasks will almost certainly need to make use of their
@@ -1990,6 +2327,11 @@ instance that is running the task's parent suite.
 Generally speaking, parameters common to several tasks should be defined
 once in the global environment section of the suite.rc file; and those
 needed by a single task, in the task-specific environment section.
+Task-specific variables can reference global variables.
+
+Both global and task-specific environment variables are exported in
+exactly the same order that they are defined in the suite.rc file, so
+you can safely refer to previously defined variables.
 
 \begin{lstlisting}
 # SUITE.RC
@@ -2032,10 +2374,13 @@ host, in the suite.rc task environment section.
 # SUITE.RC
 [tasks]
     [[foo]]
+        # run this task on a remote host
         host = fitzroy.niwa.co.nz
         [[[environment]]]
+            # override the cylc path:
             CYLC_DIR = /path/to/remote/cylc/installation
-            CYLC_SUITE_DIR = /path/to/remote/suite/definition # (see below)
+            # override the suite definition directory path:
+            CYLC_SUITE_DIR = /path/to/remote/suite/definition
 \end{lstlisting}
 
 \subsubsection{Task Access To The Suite Definition Directory}
@@ -2048,7 +2393,7 @@ stored under the suite definition directory.
 
 \paragraph{On Remote Hosts}
 
-Similarly to \lstinline=$CYLC_DIR=, just above, if a task on a remote
+As for \lstinline=$CYLC_DIR=, above, if a task on a remote
 host needs to access scripts in the suite bin directory, or to any files
 under the suite definition directory, just override 
 \lstinline=$CYLC_SUITE_DIR= with the remote suite directory location, in
@@ -2070,11 +2415,11 @@ The global and task-specific {\em pre-command scripting} and {\em
 post-command scripting} suite.rc items (not shown in the example 
 job script above, because they were not defined for that task) allow
 you to write arbitrary scripting in a multiline string in the suite.rc
-task sections, that will be executed verbatim immediately before, 
-or after, the task commandline. The can be used to 
+task sections, that will be written verbatim immediately before, 
+and after, the task commandline. This can be used to 
 construct simple tasks that are entirely scripted within the suite.rc
 file, or for the occasional bit of more complex environment manipulation
-than can easily be achieved by exporting variables alone. However, use
+than can't easily be achieved by exporting variables alone. However, use
 of this feature should be restricted to simple, fast, and reliable
 scripting, because it is executed outside of the task itself (i.e.\
 prior to the task started message, and after the task finished message).
@@ -2204,8 +2549,9 @@ cylc started
 Note the lack of any sender identification or targetting information in
 the command. Task messaging commands automatically deduce the calling
 task's name and cycle time, and the target suite (and its host and
-port), and so on, from the execution environment supplied by the suite.
-To report registered outputs, progress messages, warnings, etc.,
+port), and so on, from the execution environment supplied by the suite
+(through the task job script). To report registered outputs, progress
+messages, warnings, etc.,
 \begin{lstlisting}
 # send a warning message (it will be logged by the suite):
 cylc task message -p WARNING "oops, something's fishy here"
@@ -2265,13 +2611,13 @@ error checking must be done inline:
 set -e
 
 mkdir /illegal/dir | {  # inline error detection using OR operator
-    cylc task failed ``important operation failed''
+    cylc task failed "important operation failed"
     exit 1
 }
 
 mkdir /illegal/dir      # this will cause an immediate abort,
 if [[ $? != 0 ]]; then  # so this line will not be reached.
-    cylc task failed ``important operation failed''
+    cylc task failed "important operation failed"
     exit 1
 fi
 \end{lstlisting}
@@ -2301,7 +2647,7 @@ relevant parts of the task execution environment to be propagated into
 those jobs {\em if they need to be able to report success or failure to
 cylc}. In the interests of simplicity and transparency it is best not to
 let your tasks indulge in this kind of complicated subterfuge (instead,
-divide the task up and have cylc submit each part of it as a distinct
+divide the job up and have cylc submit each part of it as a distinct
 task, even to remote hosts). But, like the case for less extreme custom
 task wrappers, there are occasionally good reasons to hack the existing
 native job scripts rather than re-engineer them properly.
@@ -2377,7 +2723,7 @@ If a task declares a remote host and owner in its suite.rc task section,
 cylc will copy the task job script to the remote host by
 \lstinline=scp=, and then run it on the remote host (using the
 specified job submission method for the task) by \lstinline=ssh=. 
-For this to work you must have passwordless ssh configured between the
+For this to work passwordless ssh must be configured between the
 suite owner on the suite host and the task owner on the remote host.
 
 \subsubsection{Remote Host Requirements}
@@ -2395,7 +2741,7 @@ install the suite definition on the remote host and override
 task's suite.rc environment section.
 
 \pagebreak
-\section{Job Submission Methods}
+\section{Job Submission}
 \label{JobSubmission}
 
 When a task is ready to run cylc writes a special {\em job script} to
@@ -2405,7 +2751,8 @@ chosen {\em job submission method}. Most of the time this is entirely
 equivalent to executing the task itself by the chosen method (unless:
 the task submits internal sub-jobs). Different tasks can have different
 job submission methods: set a default in the suite.rc file (see
-Section~\ref{SuiteRCFile}) and override it for specific tasks:
+Section~\ref{SuiteRCFile}) and override it, if necessary, for specific
+tasks:
  
 \begin{lstlisting}
 # SUITE.RC
@@ -2462,8 +2809,8 @@ scheduler or cross-platform resource manager such as {\em loadleveler}
         task parameters (such as owner username) to NIWA's EcoConnect
         operational environment so that the same suite definition
         can be used in distinct {\em oper}, {\em test,} and {\em devel}
-        environments in which task owner username and home directory,
-        etc., vary accordingly.
+        environments in which the suite and task owners, and their home
+        directories, vary accordingly.
 
 \end{myitemize}
 
@@ -2483,14 +2830,15 @@ ColdB%2011101300-N3pBYv.err
 You can set the location for these task output logs in the
 suite.rc file; the default is,
 \begin{lstlisting}
-$HOME/CylcLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME
+# SUITE.RC
+job submission log directory = $HOME/CylcLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME
 \end{lstlisting}
 
 How the stdout and stderr streams are directed into these files depends
-on the job submission method. The \lstinline=background= method uses
-them in an output redirection expression on the commandline. The
+on the job submission method. The \lstinline=background= method just uses
+appropriate output redirection on the commandline. The
 \lstinline=loadleveler= method writes appropriate directives to the job
-script submitted to loadleveler.
+script submitted to that is submitted to loadleveler.
 
 Cylc obviously has no control over the stdout and stderr streams of
 complex tasks that do their own internal output management (e.g.\ tasks 
@@ -2501,16 +2849,16 @@ tasks, and they can be viewed in real time in the suite control GUI.
 \subsection{Defining New Job Submission Methods}
 
 Defining a new job submission method requires some minimal amount of
-Python programming.  You can derive (by inherittance - Object Oriented
-Programming) new methods from one of the existing ones, or for more 
-extreme changes you can derive from cylc's job submission base class
+Python programming.  You can derive (in the sense of object oriented
+programming inheritance) new methods from one of the existing ones, or
+directly from cylc's job submission base class,
 \begin{lstlisting}
 $CYLC_DIR/src/job-submission/job_submit.py
 \end{lstlisting}
-with reference to how it is done by the existing methods. This should be 
-easy to do. It may just be a matter of defining the commandline used
-to execute the aforementioned job scripts, using the provided stdout 
-and stderr file paths. For example, here is the entire class code for 
+using the existing methods as examples. Most often this should be
+merely be a matter of defining the commandline used to execute the
+aforementioned job scripts, using the provided stdout and stderr file
+paths appropriately. For example, here is the entire class code for 
 the \lstinline=background= method:
 
 \lstset{language=Python}
@@ -2533,7 +2881,7 @@ Run the job script directly in a background shell.
 # EOF
 \end{lstlisting}
 
-And here it is for the \lstinline=at_now= method:
+Here is the \lstinline=at_now= method:
 
 \begin{lstlisting}
 #!/usr/bin/env python
@@ -2552,8 +2900,7 @@ Submit the job script to the 'at' scheduler, to run 'now'.
 # EOF
 \end{lstlisting}
 
-And finally, even the \lstinline=loadleveler= method is hardly any more 
-difficult (note that it just sets the appropriate directives for the output log files):
+Finally, even the \lstinline=loadleveler= method is quite simple:
 
 \begin{lstlisting}
 #!/usr/bin/env python
@@ -2577,7 +2924,7 @@ Minimalist loadleveler job submission.
 
         defaults[ 'shell'    ] = '/bin/ksh'
 
-        # Now, in case the user has overriden the above defaults:
+        # in case the user wants to override the above defaults:
         for d in self.directives:
             defaults[ d ] = self.directives[ d ]
         self.directives = defaults
@@ -2587,7 +2934,7 @@ Minimalist loadleveler job submission.
 # EOF
 \end{lstlisting}
 
-To use your new method just save it in a source file with the same name
+To use your new method, save it in a source file with the same name
 as the job submission class (see examples above), install it in the cylc
 source tree,
 \begin{lstlisting}
@@ -2597,324 +2944,6 @@ and,  in the spec file \lstinline=$CYLC_DIR/conf/suiterc.spec=,
 add its name to the list of allowed values for the 
 {\em job submission method} items, at the top level and in the 
 tasks section.
-
-\pagebreak
-
-
-\section{Suite Design - Principles And Suggestions}
-
-Matters pertaining to simplicity, flexibility,
-efficiency, and portability of cylc suites.
-
-\subsection{Use The Example Suites to Learn About Cylc}
-
-The example suites run quickly and are completely portable - you can run
-multiple copies of them at once without any interference between them.
-Make a quick copy of one from the central database and modify it to test
-things for yourself.
-
-\subsection{There Is No ``Current Suite Cycle Time''}
-
-In cylc, each task has its own private cycle time and can run when its
-prerequisites are satisfied, regardless of what is going on elsewhere in
-the suite.
-
-\subsection{Make Fine-Grained Suites} 
-\label{Granularity}
-
-A suite can contain a small number of large, internally complex tasks; a
-large number of small, simple tasks; or anything in between. Cylc can
-easily handle a large number of tasks, however, so there are definite
-advantages to fine-graining:
-
-\begin{myitemize}
-    \item a more modular and transparent suite.
-
-    \item better functional parallelism (multiple tasks running
-        at the same time).
-
-    \item faster debugging and failure recovery: rerun just the tasks(s)
-        that failed. 
-
-    \item code reuse: similar tasks can often call the same script or
-        command with differing task-specific input parameters
-        (consider tasks that move files around, for example).
-
-\end{myitemize}
-
-\subsection{Don't Overuse Task Families}
-
-Cylc allows you to group tasks into families such that all family
-members trigger at once off the same prerequisites, and other downstream
-tasks can trigger off the family as a whole rather than off each
-specific member. This should really only be used as a (very) convenient
-simplification for groups of tasks that should trigger at the same time
-regardless (e.g.\ multiple tasks for processing different types of
-observations that are all made available at the same time) because
-it otherwise artificially constrains cylc's ability to achieve maximum
-functional parallelism. As an extreme example, imagine grouping all
-tasks in the same forecast cycle into a single family (cylc task
-families can have internal dependencies) - this would result in enforced
-whole-suite sequential cycling even when catching up from a long delay.
-
-
-\label{SuiteTaskGuidelines}
-
-
-\subsection{Use Include-Files For Groups Of Related Tasks}
-
-Suite.rc include-files can be used just to help organise tasks into
-convenient groups in very large suites (and with \lstinline=cylc edit= 
-you can edit a temporarily inlined file to get a global view). 
-But they are most useful for handling the repetitive definition of
-groups of similar tasks, because the same inclusion can be used multiple
-times in the same suite.rc file. 
-
-\subsection{Make Tasks Rerunnable}
-
-It should be possible to rerun a task by simply resubmitting it for the
-same cycle time. In other words, failure at any point during execution
-of a task should not render a rerun impossible by corrupting the state
-of some internal-use file, or whatever. It's difficult to overstate the
-usefulness of being able to rerun the same task multiple times,
-either outside of the suite with \lstinline=cylc submit=, or by
-retriggering it within the running suite, when debugging a problem.
-
-\subsection{Make Models Rerunnable} 
-
-If a warm-cycled model simply overwrites its restart files in each
-run, the only cycle that can subsequently run is the next one. This
-is dangerous because if, accidentally or otherwise, the task runs for the
-wrong cycle time, its restart files will be corrupted such that the
-correct cycle can no longer run (probably necessitating a cold start).
-Instead, consider organising restart files by cycle time, through a file
-or directory naming convention, and keep them in a simple rolling
-archive (cylc's filename templating and housekeeping
-utilities can easily do this for you). Then, given availability of 
-any external inputs, you can easily rerun the task for any cycle still
-in the restart archive.
-
-\subsection{Limit Previous-Instance Dependence} 
-
-Cylc does not require that successive instances of the same task run 
-sequentially. In order to task advantage of this and achieve maximum
-functional parallelism whenever the opportunity arises (usually when 
-catching up from a delay) you should ensure that tasks which in
-principle do not depend on their own previous instances (the vast
-majority of tasks in most suites, in fact) do not do so in practice. In
-other words, they should be able to run as soon as their prerequisites
-are satisfied regardless of whether or not their predecessors have
-finished yet.  This generally just means ensuring that all file I/O
-contains the generating task's cycle time in the file or directory name
-so that there is no interference between successive instances. If this
-is difficult to achieve in particular cases, however, you can declare
-the offending tasks to be ``sequential'' (see
-Section~\ref{SuiteRCReference}). 
-
-% MAYBE SHOULD INCLUDE THE FOLLOWING HERE:
-%Warm-cycled forecast models {\em do} depend on their own previous
-%instances (through their ``model background'' restart prerequisites).
-%These can be made to run sequentially (i.e.\ with maximal previous
-%instance dependence) but you can have cylc suite launch the next model,
-%assuming other prerequisites are satisfied, as soon as the previous one
-%has completed its restart prerequisites (minimal previous instance
-%dependence, maximal throughput).
-
-\subsection{Put Cycle Time In All Output File Paths}
-\label{PutCycleTimeinIO}
-
-Having all filenames, or perhaps the names of their containing
-directories, stamped with the cycle time of the generating task greatly
-aids in managing suite disk usage, both for archiving and cleanup. It
-also enables the previous task rerunnability recommendation by avoiding
-overwrite of important files from one cycle to the next. Cylc has a
-powerful utilities for cycle time offset based filename templating and
-housekeeping.
-
-\subsection{How To Manage Input/Output File Dependencies}
-\label{HandlingDependencies}
-
-Dependencies between tasks usually, though not always, take the form of
-files generated by one task that are used by other tasks. There are
-several ways to manage these files across a suite.
-
-\begin{myitemize}
-
-\item {\bf Use A Common I/O Workspace}
-
-This may be the easiest way to run small suites: have all tasks read and
-write from a common workspace.  Don't hardwire the workspace location
-into the tasks; have them take it dynamically from an environment
-variable defined in the suite.rc file. 
-
-\item {\bf Add Connector Tasks To The Suite} 
-
-If your tasks have idiosyncratic default I/O locations that are not easy
-to change (this would hardly be unprecented when it comes to large
-scientific models) you could leave them alone and add additional tasks
-to the suite to move files around as needed (from A's output directory
-to B's input directory and so on). This is not ideal either because
-it could add many extra tasks to the suite.  However, it is a 
-relatively minor issue that the connector tasks require knowledge of
-suite context because they are very simple tasks: they can probably all
-call the same generic file-transfer script or command, with differing
-task-specific input parameters, and their cross-task configuration can
-be confined to the suite.rc file.
-
-\item {\bf Make The Tasks Responsible}
-
-Perhaps the obvious solution is to configure each task with
-knowledge of its role in the suite: i.e.\ to have task B know to read
-its input from A's output directory, or to have A know to write its
-output directly to B's input directory, and so on.  However, it is a bad
-idea to hardwire this information into the real tasks - requiring some
-tasks to know specific configuration details of other tasks ultimately
-makes the suite less flexible.
-
-\item {\bf Dynamic Configuration Of I/O Paths}
-
-The best solution is probably to have all tasks take common I/O paths
-from common environment variables defined once in the
-suite.rc file. Tasks can thus be configured as if to run
-standalone, with the knowledge of how they interact within the context of
-the suite confined to the suite.rc file, and no connector
-tasks have to be added to the suite. This can be implemented reasonably
-easily even if the tasks involved run on different hosts (use ssh or ftp
-URLs for the common I/O locations instead of local paths). 
-
-\end{myitemize}
-
-\subsection{Use Generic Task Scripts}
-
-If your suite contains multiple logically distinct tasks that actually
-have similar functionality (e.g.\ for moving files around, or for 
-generating similar products from the output of several similar models)
-have the corresponding cylc tasks all call the same command, script, or
-executable - just provide different input parameters
-via the commandline and/or execution environment (both defined in the
-suite.rc file.
-
-
-\subsection{Make Suites Portable}
-
-If every task in a suite is configured to put its output under
-`\lstinline=$HOME=' (i.e.\ the environment variable, literally, not the
-explicit path to your home directory; and similarly for temporary
-directories, etc.) then other users will be able to copy the suite and
-run it immediately, after merely ensuring that any external input files
-are in the right place.
-
-For the ultimate in portability, construct suites in which all task I/O
-paths are dynamically configured to be user and suite (registration)
-specific, e.g.
-\begin{lstlisting}
-$HOME/output/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/
-\end{lstlisting}
-(these variables are automatically exported to the task execution
-environment by cylc). Then you can run multiple instances of the suite
-at once (even under the same user account) without changing anything,
-and they will not interfere with each other.
-
-You can test changes to a portable suite safely by making a quick copy
-of it in a temporary directory, then modifying and running the test copy 
-without fear of corrupting the output directories, suite logs, and 
-suite state, of the original. 
-
-
-\subsection{Make Tasks As Self-Contained As Possible}
-
-Where possible, no task should rely on the action of another task,
-except for the prerequisites embodied in the suite dependency graph that
-it has no choice but to depend on. If this rule is followed, your suite
-will be as flexible as possible in terms of being able to run single
-tasks, or subsets of the suite, whilst debugging or developing new
-features.\footnote{The `cylc submit' command runs a single task exactly
-as its parent suite would, in terms of both job submission method and
-execution environment.}  For example, every task should create its own
-output directories if they do not already exist, instead of assuming
-their existence due to the action of some another task; then you will be
-able to run single tasks without having to manually create output
-directories first. 
-
-\begin{lstlisting}
-# manual task scripting:
-  # 1/ create $OUTDIR if it doesn't already exist:
-  mkdir -p $OUTDIR
-  # 2/ create the parent directory of $OUTFILE if it doesn't exist:
-  mkdir -p $( dirname $OUTFILE )
-
-# OR using the cylc checkvars utility:
-  # 1/ check vars are defined, and create directories if necessary:
-  cylc util checkvars -c OUTDIR1 OUTDIR2 #...
-  # 2/ check vars are defined, and create parent dirs if necessary:
-  cylc util checkvars -p OUTFILE1 OUTFILE2 #...
-\end{lstlisting}
-
-\subsection{Make Suites As Self-Contained As Possible}
-
-The only compulsory content of a cylc suite definition directory is the
-suite.rc file (and you'll almost certainly have a suite
-\lstinline=bin= sub-directory too). However, you can store whatever you
-like in a suite definition directory;\footnote{If you copy a suite using
-cylc commands or gcylc, the entire suite definition directory
-will be copied.} other files there will be ignored by cylc but
-suite tasks can access them via the
-\lstinline=$CYLC_SUITE_DIR= variable that cylc automatically 
-exports into the task execution environment. Disk space is cheap - if
-all programs, ancillary files, control files (etc.) required by the
-suite are stored in the suite
-definition directory instead of having the suite reference external
-build directories (etc.), you can turn the directory into a revision
-control repository and be virtually assured of the ability to exactly
-reproduce earlier versions as required, regardless of suite
-complexity.
-
-Note that if your suite includes remote tasks that refer to files in the
-suite definition directory you'll need to copy the directory to the
-remote host and, in the suite.rc task-specific environment
-sections of the remote tasks, override \lstinline=$CYLC_SUITE_DIR= with
-the remote path - just as for \lstinline=$CYLC_DIR= which, for remote
-tasks, must point to the remote cylc installation).
-
-\subsection{Orderly Product Generation?}
-\label{OrderlyProductGeneration}
-
-Correct scheduling is not equivalent to ``orderly generation of products
-by cycle time''.  Under cylc, a product generation task will trigger as
-soon as its prerequisites are satisfied (i.e.\ when its input files are
-ready, generally) regardless of whether other tasks with the same cycle
-time have finished or have yet to run. If your product delivery or
-presentation system demands that all products for one cycle time are
-uploaded (or whatever) before any from the next cycle, then be aware
-that this may be quite inefficient if your suite is ever faced with
-catching up from a significant delay or running over historical data.
-
-\subsubsection{Use Of Artificial Dependencies}
-
-If you must, you can introduce artificial dependencies into
-your suite to ensure that the final products never arrive out of
-sequence.  One way of doing this would be to have a final ``product
-upload'' task that depends on completion of all the real product
-generation tasks at the same cycle time, and then declare that final
-task to be sequential so that successive instances of it cannot run out
-of sequence, or in parallel, even if the opportunity arises.
-
-\subsection{Clock-triggered Tasks Should Wait On External Data}
-
-All tasks in a cylc suite know their own private cycle time, but most
-don't care about the wall clock time - they just run when their
-prerequisites are satisfied. The exception to this is {\em
-clock-triggered} tasks, which wait on a wall clock time, expressed as an
-offset from their own cycle time, in addition to any other
-prerequisites. The usual purpose of these tasks is to retrieve real time
-data from the external world, triggering at roughly the expected time of
-availability of the data. Triggering the task at the right time is up to
-cylc, but the task itself should go into a check-and-wait loop in case
-the data is delayed; only on successful detection or retrieval should
-the task report success and then exit (or perhaps report failure and
-then exit if the data has not arrived by some cutoff time). 
-
-
 
 \pagebreak
 
@@ -3287,8 +3316,8 @@ TBD.
 TBD
 
 \begin{myitemize}
-    \item spin-up processes via temporary tasks and adding on-the-fly
-        prerequisites.
+    \item spin-up processes via temporary tasks and adding prerequisites
+        on-the-fly
     \item recursive purge
     \item instant dummy mode clones of a running suite
     \item fuzzy prerequisites
@@ -3312,16 +3341,15 @@ The information is extracted from the specification file
 \lstinline=$CYLC_DIR/conf/suiterc.spec= during document processing, so
 that the userguide is automatically kept up to date.  Section 
 headings are generated with the same nested structure as the file itself
-to make it easy to get to documentation of the item you're interested in
-by clicking on the right hyperlink in the PDF document contents page.
+to make it easy to get at the documentation you need by clicking on 
+hyperlinks in the PDF document contents page.
 
-Most suites will only need a few of these settings - many items have
-sensible default values, some are only needed for critical operational
-suites (e.g.\ secure passphrases and task event hooks), and some are
-primarily used for cylc development (e.g.\ dummy mode configuration). In
-general your suite.rc files shouldn't be a whole lot more
-complicated than those of the cylc example suites (see the example
-listing in the previous chapter).
+Most suites will only need a few of these settings - most items have
+default values that will be sufficient, some are probably only needed
+for critical operational suites (e.g.\ secure passphrases and task event
+hooks), and some are primarily used for cylc development (e.g.\ dummy
+mode configuration). In general your suite.rc files shouldn't be a whole
+lot more complicated than those of the cylc example suites.
 
 \subsection{Overview}
 
