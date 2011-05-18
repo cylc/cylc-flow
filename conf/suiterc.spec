@@ -37,7 +37,7 @@ description = string( default="No description supplied" )
 job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=background )
 #>The default job submission method for the suite. This
 #>determines how cylc job scripts are executed when a task is
-#>ready to run. See Section~\ref{JobSubmissionMethods}.
+#>ready to run. See Section~\ref{JobSubmission}.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
@@ -544,11 +544,11 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #> You can use the \lstinline=cylc graph= command, or the gcylc
 #> ``Graph'' right-click menu item, to plot the dependency graph as you
 #> work on it.
-#> See Section~\ref{DependencyGraph} for details.
+#> See Section~\ref{DependencyGraphs} for details.
 #>\begin{myitemize}
 #>\item {\em section:} [dependencies] $\rightarrow$ [[HOURS]]
 #>\item {\em type:} multiline string
-#>\item {\em legal values:} {\em refer to section~\ref{DependencyGraph}}
+#>\item {\em legal values:} {\em refer to section~\ref{DependencyGraphs}}
 #>\item {\em example:}
 #>  \begin{lstlisting}
 #>graph = """
@@ -635,7 +635,7 @@ __many__ = string
     job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=None )
 #>Set the job submission method for this task, overriding the suite default. This
 #>determines how cylc job scripts are executed when a task is
-#>ready to run. See Section~\ref{JobSubmissionMethods}.
+#>ready to run. See Section~\ref{JobSubmission}.
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string

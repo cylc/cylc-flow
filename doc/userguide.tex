@@ -735,13 +735,14 @@ your local database, which should now contain your copy of the suite.
 
 Check that the example suite is registered in the central database,
 
+\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
 \begin{lstlisting}
 prompt> cylc db print --central | grep userguide # or:
 prompt> cylc db print --central --group=examples --name=userguide
-admin:examples:userguide  "userguide example suite" \
-    /home/admin/cylc/examples/userguide
+admin:examples:userguide  "userguide example suite" /home/admin/cylc/examples/userguide
 \end{lstlisting}
 
+\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 Now import the suite,
 \begin{lstlisting}
 prompt> cylc db import admin:examples:userguide $HOME/cylc/examples/userguide
@@ -784,6 +785,8 @@ To graph the suite,
 \begin{lstlisting}
 prompt> cylc graph examples:userguide 2011042506 2011042606 &
 \end{lstlisting}
+(this results in the graph of Figure~\ref{fig-simple-graph-2}, in the 
+Suite Design Overview chapter)
 
 To use the suite search tool, which reports matches in the suite.rc file
 by line number, suite section, and file (even if nested include-files
@@ -830,19 +833,21 @@ To run a suite from the commandline,
 prompt> cylc run examples:userguide 2011042506
 \end{lstlisting}
 
-Start up a suite control interface to follow progress.
-\begin{lstlisting}
-prompt> gcylc examples:userguide &
-\end{lstlisting}
-
-Alternatively you can also start, stop, and control suites directly 
-from the gcylc GUI. Start the suite control interface as just described,
-or by right-clicking on the suite in the gcylc local database viewer,
-and choose an item from the `Control' menu.
-
 {\em In real mode operation (as opposed to {\em dummy mode},
 Section~\ref{DummyMode}) do not choose an initial cycle time in the
 future or nothing will happen until that time.}
+
+Then start up a suite control interface to follow progress:
+\begin{lstlisting}
+prompt> gcylc examples:userguide &
+# or:
+prompt> gcylc &
+# then right-click on the userguide suite and choose 'Control'
+\end{lstlisting}
+
+You can also start, stop, and control suites directly from the gcylc
+suite control interface (see options available under the `Control' 
+menu, and by right-clicking on tasks in the suite).
 
 The lockserver will let you run multiple instances of the userguide
 example suite at once, under different registrations, because the
@@ -876,7 +881,7 @@ The suite can be restarted from its most recent previous state,
 \begin{lstlisting}
 prompt> cylc restart examples:userguide
 \end{lstlisting}
-or from other saved prior states (see Section~\ref{StateDumpFiles}).
+or from other saved prior states. % (see Section~\ref{StateDumpFiles}).
 
 \pagebreak
 
@@ -1387,14 +1392,14 @@ plotted, change their order or attach an asterisk to the chosen one:
 
 You can use AND and OR operators in the same expression, but 
 {\em parenthesized conditional expressions are not allowed.}
-Internally cylc can handle parenthesized conditional expressions on task
-prerequisites because it transforms them directly into Python code and
-evaluates the resulting expression, {\em but} the suite.rc graph parser cannot
-handle general conditionals yet.  This restriction should not be much of
-an impediment because forecasting suites tend to have very simple
-conditional triggers, and you can rely on operator precedence (AND
-before OR), and split large expressions into multiple small expressions
-on separate lines.
+Internally cylc handles this perfectly well because it transforms 
+prerequisite conditions directly into Python code and gets the 
+interpreter to evaluate the result, {\em but} the cylc-3 suite.rc graph
+parser cannot handle general conditionals yet. This restriction should
+not be much of an impediment though because forecasting suites tend to
+have very simple conditional triggers, and you can rely on operator
+precedence (AND before OR) and split large expressions into multiple
+small expressions on separate lines.
 
 \begin{lstlisting}
 # SUITE.RC
@@ -1450,27 +1455,28 @@ This notation can be used with explicit outputs too:
  
 \subsection{Satisfying Intercycle Dependencies At Startup}
 
-Considering the kind of intercycle dependence shown just above (tasks A
-and B), it is clear that some kind of boostrapping process will be
+Considering the intercycle dependence shown just above, between tasks A
+and B, it is clear that some kind of boostrapping process will be
 required to get the suite going initially, because in the very first
-cycle there will be no previous instance of A to satisfies B's
-prerequisites. 
+cycle there is no previous instance of A to satisfy B's prerequisites. 
  
 \subsubsection{Cold Start Tasks}
 
 A {\em cold start task} is a special oneoff task used to satisfy the
 initial previous-cycle dependence of another cotemporal task. In effect, 
-the cold start task masquerades as its counterpart's normal
-previous-cycle upstream trigger.
+the cold start task masquerades as the previous-cycle trigger for its
+counterpart.
 
-A cold start task may invoke real processing (presumably to generate the
-files that are normally generated by the cycling task that it stands in
-for) or it may just be a dummy task that stands for some external spin
-up process which has to be completed before the suite is started (in this
-case the cold start task in cylc will just report itself successfully
-completed, thereby satisfying the aforementioned dependencies).
+A cold start task may invoke real processing (to generate the files that
+are normally generated by the cycling task that it masquerades as) or it
+could be a dummy task that represents some external spinup process
+(resulting in the same files) that has to be completed before the suite
+is started (in this case the cold start task in cylc will just report
+itself successfully completed, thereby satisfying the aforementioned
+dependencies).
 
-We can express this kind of relationship with a conditional trigger:
+This kind of relationship can easily be expressed with a conditional
+trigger:
 \begin{lstlisting}
 # SUITE.RC
 [special tasks]
@@ -1484,8 +1490,8 @@ ColdFoo(T). At startup ColdFoo will do the job, before being be eliminated
 from the suite, and thereafter Bar(T-6) will do it.
 
 In cylc, a cold task can also be inserted into the suite at run time 
-to cold start just the task it is associated with, in case of problems
-that prevent continued normal cycling.
+to cold start just the task it is associated with, if a problem of 
+some kind prevents continued normal cycling.
 
 \subsubsection{Warm Starting A Suite}
 
@@ -1504,17 +1510,16 @@ be restarting from a previous state, not warm starting) so it still has
 to solve the bootstrapping problem to get the suite started. It does
 this by starting the suite with designated cold start tasks already in
 the finished state. In other words, the cold start tasks stand for the
-previous finished cycle rather, than actually running processes that
+previous finished cycle, rather than actually running processes that
 masquerade as the previous cycle.
 
-\subsection{Intercycle Restart Dependencies (Models)}
+\subsection{Model Restart Dependencies}
 
 Warm cycled forecast models generate {\em restart files}, e.g.\ model
 background fields, that are required to initialize the next forecast
 (this is essentially the definition of ``warm cycling''). In fact
 restart files will often be written for a whole series of subsequent
-cycles in case the next (or more) cycle has to be omitted due to
-problems of some kind: 
+cycles in case the next (or more) cycle has to be omitted: 
 \begin{lstlisting}
 # SUITE.RC
 [special tasks]
@@ -1534,9 +1539,8 @@ fails and can't be fixed. {\em This is why Task A, above, is declared to be
 `sequential'}.\footnote{A warm cycling model that only writes out
 restart files for the very next cycle does not need to be declared
 sequential because this early triggering problem does not arise.}
-
- Sequential tasks do not spawn a successor until they have
-finished (tasks spawn as soon as they start running, by default, in
+Sequential tasks do not spawn a successor until they have
+finished (by default, tasks spawn as soon as they start running in
 order to get maximum functional parallelism in a suite) which
 means that A(T+6) will not be waiting around to trigger off an older
 predecessor while A(T) is still running. If A(T) fails though, the
@@ -1557,7 +1561,7 @@ cycles of the downstream models (sea state, storm surge, river flow,
 suite, the operator can just do a recursive purge to remove the subtree
 of all tasks that can never run due to the failure, and then cold start
 the failed driving model after a gap (skipping as few cycles as possible
-to the point where the new cold start input data are available). After
+until the new cold start input data are available). After
 that the downstream models will kick off automatically so long as the 
 gap is spanned by their respective sets of restart files, because their
 restart dependencies will automatically be satisfied by the older
@@ -1728,6 +1732,7 @@ programs were designed with this in mind (see
 \lstinline=cylc util help=).
 
 \subsection{Task Job Scripts (How Tasks Are Invoked By Cylc)}
+\label{JobScripts}
 
 When a task is ready to run, cylc writes, and then executes via the job
 submission method specified for the task (see
@@ -1828,61 +1833,80 @@ cylc wrap A.sh $OPTIONS
 \subsection{Task Execution Environment}
 
 The following subsections explain the purpose of each part of the task
-job script, illustrated above, and how they are defined in the suite.rc file.
-
-\subsubsection{Global And Task-Specific Environment Variables}
-
-As for any script, a task script can take input from commandline
-arguments, or from environment variables, or from both at the same time
-(by evaluating variables on the commandline). Generally speaking, 
-parameters common to several tasks should be defined once in the global
-environment section of the suite.rc file; and those needed by a single
-task, in the task-specific environment section.
-
-\begin{lstlisting}
-# SUITE.RC
-[environment]
-    FOO = bar  # variables available to all tasks
-[tasks]
-    [[TaskX]]
-        command = cylc wrap RunTaskX.sh $FOO $BAZ
-        [[[environment]]] 
-            BAZ = waz    # variables available only to TaskX
-\end{lstlisting}
-
-\subsubsection{Order Of Environment Definition}
-
-The ordering of the job script section is,
+job script, and how to specify the contents thereof in the suite.rc file.
+The ordering of the job script sections is,
 \begin{myitemize}
     \item 1. cylc location, suite location, suite identity
     \item 2. task identity
     \item 3. global variables
-    \item 4. local variables
+    \item 4. task-specific variables
     \item 5. access to cylc
     \item 6. global and task-specific pre-command scripting (not shown)
     \item 7. task commandline
     \item 8. global and task-specific post-command scripting (not shown)
 \end{myitemize}
 
-Consequently, local variables can reference global ones, for example:
+Consequently, task-specific variables can reference global variables.
+   
+{\em Note that the task identity variables are defined prior to the
+global variables, so even global variables can be made task- and
+cycle-specific by referencing the the task identity.} 
+
+Both global and task-specific environment variables are defined in
+exactly the same order as they are listed in the suite.rc file, so you
+can safely refer to previously defined variables.
+
+\subsubsection{Task And Suite Identity Variables}
+
+The first section of the job script defines variables that identify the
+task name, task cycle time, suite registration (group and name), suite
+host and port, and several other parameters (see the example job script
+above). Executing tasks will almost certainly need to make use of their
+own cycle time,
+\begin{myitemize}
+    \item \lstinline=$CYCLE_TIME=
+\end{myitemize}
+
+They may also need to know the location of the suite definition
+directory, to access files stored there,
+\begin{myitemize}
+    \item \lstinline=$CYLC_SUITE_DIR= - \lstinline=/path/to/suite/definition=
+\end{myitemize}
+
+And they may need to use the task and suite identity variables (to 
+make portable suites that write all output to suite-specific locations,
+for instance):
+\begin{myitemize}
+    \item \lstinline=$CYLC_SUITE=  - e.g.\ foo:bar
+    \item \lstinline=$CYLC_SUITE_GROUP=  - foo
+    \item \lstinline=$CYLC_SUITE_NAME=  - bar 
+    \item \lstinline=$TASK_NAME= - X
+    \item \lstinline=$TASK_ID= - X\%2011051118
+\end{myitemize}
+
+These variables are also used, automatically, by the task messaging
+interface, to target the right task proxy in the particular cylc
+instance that is running the task's parent suite. 
+
+\subsubsection{Global And Task-Specific Environment Variables}
+
+Generally speaking, parameters common to several tasks should be defined
+once in the global environment section of the suite.rc file; and those
+needed by a single task, in the task-specific environment section.
+
 \begin{lstlisting}
 # SUITE.RC
 [environment]
+    # variables available to all tasks
     suite_workspace = $TMPDIR/$CYLC_SUITE/work
 [tasks]
-    command = clean-workspace $OUTPUT_DIR 
-    [[cleanup]]
-        OUTPUT_DIR = $WORKSPACE/$TASK_NAME
+    [[TaskX]]
+        command = clean-workspace $OUTPUT_DIR 
+        [[[environment]]] 
+            # variables available only to TaskX
+            OUTPUT_DIR = $WORKSPACE/$TASK_NAME
+            # (task variables can reference global variables)
 \end{lstlisting}
-    
-Additionally, both global and local environment variables are defined
-in exactly the same order as they are listed in the suite.rc file, so 
-you can safely refer to previously defined variables when constructing
-task environments.
-
-{\em Note also that task identity, which includes the task's private cycle
-time, is defined prior to the global variables, so even global variables
-can be made task- and cycle-specific by referencing these variables.} 
 
 \subsubsection{Task Access To Cylc Commands}
 
@@ -1933,38 +1957,6 @@ under the suite definition directory, just override
 \lstinline=$CYLC_SUITE_DIR= with the remote suite directory location, in
 the suite.rc task environment section.
 
-\subsubsection{Task And Suite Identity Variables}
-
-The first section of the job script defines variables that identify the
-task name, task cycle time, suite registration (group and name), suite
-host and port, and several other parameters (see the example job script
-above). Executing tasks will almost certainly need to make use of their
-own cycle time,
-\begin{myitemize}
-    \item \lstinline=$CYCLE_TIME=
-\end{myitemize}
-
-They may also need to know the location of the suite definition
-directory, to access files stored there,
-\begin{myitemize}
-    \item \lstinline=$CYLC_SUITE_DIR= - \lstinline=/path/to/suite/definition=
-\end{myitemize}
-
-And they may need to use the task and suite identity variables (to 
-make portable suites that write all output to suite-specific locations,
-for instance):
-\begin{myitemize}
-    \item \lstinline=$CYLC_SUITE=  - e.g.\ foo:bar
-    \item \lstinline=$CYLC_SUITE_GROUP=  - foo
-    \item \lstinline=$CYLC_SUITE_NAME=  - bar 
-    \item \lstinline=$TASK_NAME= - X
-    \item \lstinline=$TASK_ID= - X\%2011051118
-\end{myitemize}
-
-These variables are also used, automatically, by the task messaging
-interface, to target the right task proxy in the particular cylc
-instance that is running the task's parent suite. 
-
 \subsubsection{When Are Environment Variables Evaluated?}
 
 Environment variables are {\em not} evaluated by cylc prior to 
@@ -1975,7 +1967,7 @@ directory of the account under which the task executes (which isn't
 necessarily the same account, or even the same host, that is running the
 suite). 
 
-\subsection{Pre- and Post-command Scripting}
+\subsubsection{Pre- and Post-command Scripting}
 
 The global and task-specific {\em pre-command scripting} and {\em
 post-command scripting} suite.rc items (not shown in the example 
@@ -2620,7 +2612,7 @@ contains the generating task's cycle time in the file or directory name
 so that there is no interference between successive instances. If this
 is difficult to achieve in particular cases, however, you can declare
 the offending tasks to be ``sequential'' (see
-Section~\ref{SuiteDesignReference}). 
+Section~\ref{SuiteRCReference}). 
 
 % MAYBE SHOULD INCLUDE THE FOLLOWING HERE:
 %Warm-cycled forecast models {\em do} depend on their own previous
