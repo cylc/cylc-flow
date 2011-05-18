@@ -880,8 +880,9 @@ prompt> cylc edit examples:userguide
 This moves to the suite definition directory (so that you can easily
 open other suite files in the same edit session) and opens the
 suite.rc file in your chosen editor. You can of course
-do this entirely manually, but using the edit command has some advantages. 
-For example, you don't have to remember the suite definition directory
+do this entirely manually, but using the edit command (or right-click Edit 
+suite in gcylc) has some advantages: it is very quick and convenient,
+you don't have to remember the suite definition directory
 location, and for suite.rc files that contain include files
 (even nested ones) you can optionally edit the file inlined - it will be
 split back into its constituent include-files {\em when you save and
@@ -3322,11 +3323,11 @@ TBD
     \item instant dummy mode clones of a running suite
     \item fuzzy prerequisites
     \item asynchronous tasks
-    \item sub-suites
+    \item subsuites:
 \begin{lstlisting}
 [tasks]
     [[foo]]
-        command = cylc run --warm SUITE $CYCLE_TIME $CYCLE_TIME
+        command = cylc wrap \"cylc run --warm SUITE $CYCLE_TIME $CYCLE_TIME\"
 \end{lstlisting}
 \end{myitemize}
 

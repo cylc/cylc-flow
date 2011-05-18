@@ -59,6 +59,15 @@ def displaytd( td ):
 # manager must instantiate each task with a flattened list of all the
 # state values found in the state dump file.
 
+# NOTE ON EXECUTION OF EVENT HOOK SCRIPTS: 
+# These have to be executed in the background because (a) they could
+# take a long time to execute, or (b) they could try to operate on the
+# suite in some way (e.g. to remove a failed task automatically) - this
+# would create a deadlock if cylc waited on them to complete before
+# carrying on. Consequently cylc cannot to detect failure of a hook
+# script (not easily at least ... could check on the process in a
+# background thread...?)
+
 class task( Pyro.core.ObjBase ):
     
     clock = None
@@ -231,7 +240,7 @@ class task( Pyro.core.ObjBase ):
 
     def call_warning_hook( self, message ):
         self.log( 'WARNING', 'calling task warning hook' )
-        command = ' '.join( [self.hook_scripts['warning'], 'warning', self.name, self.c_time, "'" + message + "'"] )
+        command = ' '.join( [self.hook_scripts['warning'], 'warning', self.name, self.c_time, "'" + message + "' &"] )
         subprocess.call( command, shell=True )
 
     def set_submitted( self ):
@@ -241,7 +250,7 @@ class task( Pyro.core.ObjBase ):
         self.submission_timer_start = self.submitted_time
         if self.hook_scripts['submitted']:
             self.log( 'NORMAL', 'calling task submitted hook script' )
-            command = ' '.join( [self.hook_scripts['submitted'], 'submitted', self.name, self.c_time, "'(task submitted)'"] )
+            command = ' '.join( [self.hook_scripts['submitted'], 'submitted', self.name, self.c_time, "'(task submitted)' &"] )
             subprocess.call( command, shell=True )
 
     def set_running( self ):
@@ -250,7 +259,7 @@ class task( Pyro.core.ObjBase ):
         self.execution_timer_start = self.started_time
         if self.hook_scripts['started']:
             self.log( 'NORMAL', 'calling task started hook script' )
-            command = ' '.join( [self.hook_scripts['started'], 'started', self.name, self.c_time, "'(task running)'"] )
+            command = ' '.join( [self.hook_scripts['started'], 'started', self.name, self.c_time, "'(task running)' &"] )
             subprocess.call( command, shell=True )
 
     def set_finished( self ):
@@ -265,7 +274,7 @@ class task( Pyro.core.ObjBase ):
         self.state.set_status( 'finished' )
         if self.hook_scripts['finished']:
             self.log( 'NORMAL', 'calling task finished hook script' )
-            command = ' '.join( [self.hook_scripts['finished'], 'finished', self.name, self.c_time, "'(task finished)'"] )
+            command = ' '.join( [self.hook_scripts['finished'], 'finished', self.name, self.c_time, "'(task finished)' &"] )
             subprocess.call( command, shell=True )
 
     def set_failed( self, reason ):
@@ -273,7 +282,7 @@ class task( Pyro.core.ObjBase ):
         self.log( 'CRITICAL', reason )
         if self.hook_scripts['failed']:
             self.log( 'WARNING', 'calling task failed hook script' )
-            command = ' '.join( [self.hook_scripts['failed'], 'failed', self.name, self.c_time, "'" + reason + "'"] )
+            command = ' '.join( [self.hook_scripts['failed'], 'failed', self.name, self.c_time, "'" + reason + "' &"] )
             subprocess.call( command, shell=True )
 
     def set_submit_failed( self ):
@@ -282,7 +291,7 @@ class task( Pyro.core.ObjBase ):
         self.log( 'CRITICAL', reason )
         if self.hook_scripts['submission failed']:
             self.log( 'WARNING', 'calling task submission failed hook script' )
-            command = ' '.join( [self.hook_scripts['submission failed'], 'submit_failed', self.name, self.c_time, "'" + reason + "'"] )
+            command = ' '.join( [self.hook_scripts['submission failed'], 'submit_failed', self.name, self.c_time, "'" + reason + "' &"] )
             subprocess.call( command, shell=True )
 
     def reset_state_ready( self ):
@@ -341,7 +350,7 @@ class task( Pyro.core.ObjBase ):
             if current_time > timeout:
                 msg = 'submitted ' + str( self.timeouts['submission'] ) + ' minutes ago, but has not started'
                 self.log( 'WARNING', msg )
-                command = ' '.join( [ self.hook_scripts['timeout'], 'submission', self.name, self.c_time, "'" + msg + "'" ] )
+                command = ' '.join( [ self.hook_scripts['timeout'], 'submission', self.name, self.c_time, "'" + msg + "' &" ] )
                 subprocess.call( command, shell=True )
                 self.submission_timer_start = None
 
@@ -353,7 +362,7 @@ class task( Pyro.core.ObjBase ):
                 else:
                     msg = 'started ' + str( self.timeouts['execution'] ) + ' minutes ago, but has not finished'
                 self.log( 'WARNING', msg )
-                command = ' '.join( [ self.hook_scripts['timeout'], 'execution', self.name, self.c_time, "'" + msg + "'" ] )
+                command = ' '.join( [ self.hook_scripts['timeout'], 'execution', self.name, self.c_time, "'" + msg + "' &" ] )
                 subprocess.call( command, shell=True )
                 self.execution_timer_start = None
 

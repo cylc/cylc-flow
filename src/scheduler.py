@@ -276,7 +276,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
         cylcenv[ 'CYLC_MODE' ] = 'scheduler'
         cylcenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
-        cylcenv[ 'CYLC_SUITE_PORT' ] =  self.pyro.get_port()
+        cylcenv[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
         cylcenv[ 'CYLC_SUITE' ] = self.suite
         suite_owner, suite_group, suite_name = regsplit( self.suite ).get()
         cylcenv[ 'CYLC_SUITE_GROUP' ] = suite_group
@@ -332,6 +332,17 @@ class scheduler(object):
         # user defined local variables that may be required by alert scripts
         for var in self.config['cylc local environment']:
             os.environ[var] = self.config['cylc local environment'][var]
+        # suite identity for alert scripts
+        os.environ[ 'CYLC_MODE' ] = 'scheduler'
+        os.environ[ 'CYLC_SUITE_HOST' ] =  str( self.host )
+        os.environ[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port() )
+        os.environ[ 'CYLC_SUITE' ] = self.suite
+        suite_owner, suite_group, suite_name = regsplit( self.suite ).get()
+        os.environ[ 'CYLC_SUITE_GROUP' ] = suite_group
+        os.environ[ 'CYLC_SUITE_NAME' ] = suite_name
+        os.environ[ 'CYLC_SUITE_DIR' ] = self.suite_dir
+        os.environ[ 'CYLC_SUITE_OWNER' ] = self.owner
+        os.environ[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
 
         # LIST OF ALL TASK NAMES
         self.task_name_list = self.config.get_task_name_list()
