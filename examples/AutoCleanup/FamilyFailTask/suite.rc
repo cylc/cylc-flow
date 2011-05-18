@@ -1,0 +1,27 @@
+title = family failure hook script example
+runahead limit in hours = 6
+
+description = """An example suite in which a special task is
+used to automatically clean up a failed task family."""
+
+[task families]
+    fammo = m_foo, m_bar, m_baz
+
+[special tasks]
+    sequential = A, fammo  # (just to slow the suite down)
+
+[dependencies]
+    [[0,6,12,18]]
+        graph =  """A => fammo
+                    fammo | fammo:fail => B
+                    fammo | fammo:fail => fammo_cleanup"""
+[tasks]
+    [[fammo_cleanup]]
+        command = cylc wrap fammo_cleanup.sh
+    [[m_foo]]
+        command = cylc wrap sleep 8 
+    [[m_bar]]
+        # This family member always fails
+        command = cylc wrap -m "sleep 5; /bin/false"
+    [[m_baz]]
+        command = cylc wrap sleep 10

@@ -16,7 +16,7 @@ used to automatically clean up a failed task family."""
                     fammo | fammo:fail => B"""
 [tasks]
     [[fammo]]
-        task failed hook script = family-failed.sh
+        task failed hook script = failhook.sh
     [[m_foo]]
         command = cylc wrap sleep 8 
     [[m_bar]]
