@@ -20,7 +20,9 @@ echo
 echo " + Registering examples suites"
 cylc register examples:userguide $CYLC_DIR/examples/userguide
 cylc register examples:simple $CYLC_DIR/examples/simple
-#cylc register dev:userguide $CYLC_DIR/dev/suites/userguide
+cylc register examples:DepGraphCh6 $CYLC_DIR/examples/DepGraphCh6
+cylc register examples:FamilyFailHook $CYLC_DIR/examples/AutoCleanup/FamilyFailHook
+cylc register examples:FamilyFailTask $CYLC_DIR/examples/AutoCleanup/FamilyFailTask
 
 echo
 echo " + Exporting examples suites to the central database"

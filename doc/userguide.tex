@@ -734,30 +734,12 @@ suite control GUI.
 
 \lstset{language=bash}
 
-This is an introduction to basic cylc functionality using the example
-suite illustrated in the first chapter, which should have been
-registered in the central suite database during cylc installation  as
-``examples:userguide''. For more detailed information on available
-commands and options refer to \lstinline=cylc help= or the {\em Command
-Reference} (Appendix~\ref{CommandReference}), gcylc help menus, and
-upcoming chapters of this document. 
+This chapter is a quick introduction to basic cylc functionality using
+the ``simple dependency graph example'' suite from Chapter 6, which
+should have been registered in the central suite database during cylc
+installation as ``examples:DepGraphCh6''. 
 
-{\bf For the most part, only the cylc commandline is used in this
-chapter, but cylc also has a graphical interface, gcylc, with which you
-can do everything from copying, searching, editing, and validating suite
-definitions; through to starting, interrogating, and intervening in the
-operation of running suites:}
-
-\begin{lstlisting}
-prompt> gcylc &                  # generic suite database viewer.
-prompt> gcylc [-g] GROUP:NAME &  # to control a specific suite.
-\end{lstlisting}
-
-The gcylc modus operandi, in addition to the usual top menu bar, is:
-{\em right-click on suites in the database viewer, and on tasks in the
-suite control interface, to get a popup menu of available options}.
-
-\subsection{Configure Your Environment For Cylc}
+\subsection{0. Cylc Environment}
 
 To gain access to cylc you just need to source the cylc environment
 script. Put the following code in your login script, or do the same at the
@@ -775,7 +757,8 @@ your \lstinline=.profile=:
 export GEDITOR='gvim -f'  # GUI editor launched by gcylc
 export EDITOR=vim         # terminal editor launched by 'cylc edit'
 \end{lstlisting}
-See \lstinline=cylc edit help= (Appendix~\ref{edit}) for other editor examples.
+See \lstinline=cylc edit help= (Appendix~\ref{edit}) for other editor
+examples.
 
 \subsection{Start Your Lockserver Daemon}
 
@@ -815,7 +798,32 @@ definition) file,
 use lockserver = False  # not recommended!
 \end{lstlisting}
 
+\subsection{Start The gcylc GUI}
+
+At the command prompt:
+\begin{lstlisting}
+prompt> gcylc &
+\end{lstlisting}
+
+Now use the `View' menu to switch to the central suite database, which 
+contains suites accessible to all users. You can view suites in the 
+central database (just right-click on them) but to run them you need
+to import them to your private suite database.
+
 \subsection{Import The Example Suite} 
+
+Right-click on the suite registered as `admin:examples:DepGraphCh6'
+and choose the `Import' option to copy the suite to your private
+suite database (replace `admin' with the name of the user account under
+which cylc was installed; and note that the suite owner, group, and
+name, are displayed in a tree view (admin $->$  examples $->$
+DepGraphCh6). A dialog box will pop up asking for the group 
+and name under which to register the suite in your private database,
+and a destination directory into which to copy the suite definition. 
+Leave the suite GROUP:NAME as examples:DepGraph6, and choose a 
+destination directory that you have permission to write to. Now
+use the `View' menu to switch back to your private database, and 
+check that you now have a copy of the example suite.
 
 The following subsections desribe how to import a copy of the example
 suite from the central database to a local directory,

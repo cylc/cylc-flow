@@ -373,9 +373,9 @@ class MainApp(object):
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         if self.readonly:
             # TO DO: READONLY IS NO LONGER USED?
-            self.window.set_title("Registered Suites (LOCAL DATABASE; READONLY)" )
+            self.window.set_title("Registered Suites (PRIVATE DATABASE; READONLY)" )
         else:
-            self.window.set_title("Registered Suites (LOCAL DATABASE)" )
+            self.window.set_title("Registered Suites (PRIVATE DATABASE)" )
         self.window.set_size_request(600, 300)
         #self.window.set_border_width( 5 )
         self.window.connect("delete_event", self.delete_all_event)
@@ -429,11 +429,11 @@ class MainApp(object):
         db_menu_root = gtk.MenuItem( '_Database' )
         db_menu_root.set_submenu( db_menu )
 
-        self.dblocal_item = gtk.MenuItem( '_LocalDB' )
+        self.dblocal_item = gtk.MenuItem( '_Private' )
         db_menu.append( self.dblocal_item )
         self.dblocal_item.set_sensitive(False) # (already on local at startup)
 
-        self.dbcentral_item = gtk.MenuItem( '_CentralDB' )
+        self.dbcentral_item = gtk.MenuItem( '_Central' )
         db_menu.append( self.dbcentral_item )
         self.dbcentral_item.set_sensitive(True) # (on local at startup)
 
@@ -711,7 +711,7 @@ The cylc forecast suite metascheduler.
     def localdb( self, w ):
         if not self.cdb:
             return
-        self.window.set_title("Registered Suites (LOCAL DATABASE)" )
+        self.window.set_title("Registered Suites (PRIVATE DATABASE)" )
         w.set_sensitive(False)
         self.dbcentral_item.set_sensitive(True)
         self.cdb = False
