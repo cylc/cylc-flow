@@ -21,6 +21,6 @@ for T in $FAILED_TASKS; do
 done
 if $found_failed_member; then
     # remove the family itself (use --force for non-interactive!)
-    echo cylc control remove --force $CYLC_SUITE fammo$CYCLE_TIME
-    cylc control remove --force $CYLC_SUITE $fammo$CYCLE_TIME
+    echo cylc control remove --force $CYLC_SUITE fammo%$CYCLE_TIME
+    cylc control remove --force $CYLC_SUITE fammo%$CYCLE_TIME
 fi
