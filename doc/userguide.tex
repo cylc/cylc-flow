@@ -931,6 +931,14 @@ commandline, you can:
     \item reregister the suite or group.
 \end{myenumerate}
 
+Note that the suite title shown in the database viewers is parsed
+from the suite.rc file at the time of initial registration; if you
+change the title when editing the suite.rc file, use 
+\lstinline=cylc db refresh= or gcylc 
+\lstinline=View $\rightarrow Refresh= 
+to update the database.
+
+
 \subsection{Edit The Suite}
 
 Right-click on the suite and choose `Edit', or use the edit command,
@@ -950,59 +958,73 @@ constituent include-files {\em when you save and exit the editor}.
 
 If you use the vim editor your can have nice cylc-specific syntax
 highlighting and section folding; see Section~\ref{SyntaxHighlighting}
-for a screenshot, and instructions. 
+for a screenshot and instructions. 
 
 Here is the suite.rc file for the DepGraphCh6 example suite:
 \begin{lstlisting}
 # SUITE.RC
 title = Dependency Graph Example (Ch.6)
-
+# This is a complete suite definition - run it!
 [dependencies]
-    [[0,6,12,18]] # hours
+    [[0,6,12,18]]
         graph = """
 A => B & C   # B and C trigger off A
-A(T-6) => A  # A has restart files
+A(T-6) => A  # A triggers off previous instance
                 """
-    [[6,18]] # hours
-        graph = "C => X"
+    [[6,18]]
+        graph = "C => X"  # X triggers off C just twice daily
 [visualization]
     [[node attributes]]
         X = "color=red"
 \end{lstlisting}
 
-This is a complete, valid, cylc suite definition that defines a suite
-you can run: each task will execute the default cylc dummy task
-commandline, which if defined explicitly in the suite.rc file would look
-like this:
+This is a complete, valid, runnable suite definition. Commandlines have
+not been defined for each task so cylc defaults to running {\em dummy
+tasks} that write an identifying message to stdout and sleep for a few
+seconds before exiting. If defined explicitly in the suite.rc file
+the dummy task commandlines would look like this:
 \begin{lstlisting}
 # SUITE.RC
 [tasks]
-    [[X]] # define properties of task X
+    [[X]]
         command = cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_DUMMY_SLEEP"
 \end{lstlisting}
-In other words, each task will emit an identifying message (e.g.\
-\lstinline=DUMMY X%2011052218=), sleep for a short period (10 seconds),
-and then exit. The wrapper, \lstinline=cylc wrap=, automatically reports the
-task started, and finished (or failed), to the suite.
+where \lstinline=$TASK_ID= is \lstinline=NAME%YYYYMMDDHH= and 
+\lstinline=$CYLC_DUMMY_SLEEP= defaults to 10 seconds.
+
+The task wrapper \lstinline=cylc wrap=, which allows cylc to run
+unmodified existing commands, scripts, or programs (see {\em Task
+Wrapping: Using Existing Scripts As Cylc Tasks},
+Section~\ref{TaskWrapping}), automatically reports the task started, and
+finished or failed, to the suite.
 
 \subsection{Graphing A Suite}
 
-To plot the dependency graph defined in the suite.rc file, use
-right-click $\rightarrow$ `Graph', or the commandline,
+To plot the dependency graph from the suite.rc file, use
+the gcylc Graph right-click menu item, or the commandline,
 \begin{lstlisting}
-prompt> cylc graph examples:DepGraphCh6 2011042506 2011042606 &
+prompt> cylc graph examples:DepGraphCh6 2011042500 2011042518 &
 \end{lstlisting}
 This will pop up a zoomable, pannable, graph viewer application showing
 Figure~\ref{fig-dep-graph-ch6}. If you edit the suite.rc file the graph
 viewer will update whenever you save the file.
 
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.5\textwidth]{../images/screenshots/dep-example.png}
+    \end{center}
+\caption{Example Suite DepGraphCh6 Plotted.}
+\label{fig-dep-graph-ch6}
+\end{figure}
+
 \subsection{Searching A Suite}
 
-To use the suite search tool, which reports matches in the suite.rc file
-by line number, suite section, and file (even if nested include-files
-are used), and by file and line number for matches in the suite bin
-directory,
-
+The cylc suite search tool or reports matches in the suite.rc file
+by line number, suite section, and file, even if nested include-files
+are used, and by file and line number for matches in the suite bin
+directory.  The following output listing is from a search of
+the examples:userguide suite, because the DepGraphCh6 suite is too 
+minimal to be of much use a demonstration here:
 \begin{lstlisting}
 prompt> cylc grep OUTPUT_DIR examples:userguide
 
@@ -1024,30 +1046,102 @@ FILE: /home/oliverh/suites/examples/userguide/bin/D.sh
 
 <...snip...>
 \end{lstlisting}
+(The same thing can of course be done via the gcylc right-click menu).
 
-See the gcylc right-click menu, or \lstinline=cylc prep help= for other
-commands in the ``suite preparation'' category.
+\subsection{Suite Validation}
 
-Note that the suite title held by the database is only parsed from the
-suite.rc file at registration time; if you change the title
-use \lstinline=cylc db refresh= or gcylc 
-\lstinline=View > Refresh= to update the database.
+After editing a suite always validate it to check for errors, via 
+gcylc or the \lstinline=cylc validate SUITE= command.
+Figure~\ref{fig-validate-eg} shows validation of 
+examples:DepGraphCh6. Note the warnings that the tasks 
+will be dummied out, as discussed above. 
 
-After editing a suite, always validate it to check for errors prior to
-running it (gcylc right-click or \lstinline=cylc validate SUITE:GROUP=)
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.5\textwidth]{../images/screenshots/validate-eg.png}
+    \end{center}
+\caption{Example Suite DepGraphCh6 Validation.}
+\label{fig-validate-eg}
+\end{figure}
 
-\subsection{Starting A Suite}
+For more information on suite validation see
+Section~\ref{SuiteValidation}.
+
+\subsection{Running A Suite}
+
+Right-click on examples:DepGraphCh6 and bring up a graph-based 
+suite controller, choose Run from the control menu, 
+enter an intial cycle time for a {\em cold start}, and hit the Run
+button. The suite should start up with a set of tasks in the waiting
+state, like either one of Figures~\ref{fig-graph-control-1} or
+Figures~\ref{fig-graph-control-2}.
+
+\begin{figure}
+\begin{minipage}[t]{0.5\textwidth}
+    \begin{center}
+        \includegraphics[width=\textwidth]{../images/screenshots/graph-control-1.png}
+    \end{center}
+    \caption{\small foo}
+    \label{fig-graph-control-1}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\textwidth}
+    \begin{center}
+        \includegraphics[width=\textwidth]{../images/screenshots/graph-control-2.png}
+    \end{center}
+    \caption{\small foo}
+    \label{fig-graph-control-2}
+\end{minipage}
+\end{figure} 
+
+When cylc starts up, every task is inserted into the suite {\em at the
+initial cycle time, or at the next valid cycle time for the task}. This
+explains the difference between the two figures. If the intial cycle 
+time is at 00Z, the next valid cylc for task X is at 06Z, and the 
+control GUI fills in the dependency graph between with blank tasks
+(the off-white colour).  Now, the reason why nothing is happening
+in the suite is that all the tasks are waiting for their prerequisites
+to be satisfied. In particular, task A is waiting on its own previous
+instance, which does not exist because this is the first cycle. 
+Right-click on task A and choose `View Prequisites and
+Outputs' to see this (Figure~ref{fig-view-prereq-eg}.
+
+\begin{figure}
+\begin{minipage}[t]{0.3\textwidth}
+    \begin{center}
+        \includegraphics[width=\textwidth]{../images/screenshots/view-prereq-eg.png}
+    \end{center}
+    \caption{\small foo}
+    \label{fig-view-prereq-eg}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.6\textwidth}
+    \begin{center}
+        \includegraphics[width=\textwidth]{../images/screenshots/graph-con-3.png}
+    \end{center}
+    \caption{\small foo}
+    \label{fig-graph-control-3}
+\end{minipage}
+\end{figure} 
+
+
+
+Normally a suite like this would have a special {\em cold start task}
+to satisfy task A's previous-cycle dependencies at startup, but for
+demonstration purposes is is convenient to have a suite that requires
+manual triggering to get it going, so that things don't happen too
+quickly.
 
 To run a suite from the commandline,
 \begin{lstlisting}
-prompt> cylc run examples:userguide 2011042506
+prompt> cylc run examples:DepGraphCh6 2011042506
 \end{lstlisting}
 
-{\em do not choose an initial cycle time in the future or nothing will
-happen until that time.}\footnote{For any suite processing initiated by
-clock-triggered tasks, at least.} In {\em dummy mode} suites run on an
-accelerated clock, and you can simulate catchup to real time,
-(Section~\ref{DummyMode}), 
+Note that {\em if} the suite contained any {\em clock-triggered} tasks
+(any real suite would) you would not choose an initial cycle time in
+the future, or nothing would happen until that time. As this suite
+does not contain any clock-triggered tasks, however, it's tasks are 
+not constained by the wall clock time at all.
 
 Then start up a suite control interface to follow progress:
 \begin{lstlisting}
@@ -1066,15 +1160,6 @@ example suite at once, under different registrations, because the
 suite.rc file allows that (the suite GROUP and NAME is used in all 
 suite I/O paths so that different suite instances will not interfere
 with each other).
-
-%\begin{figure}
-%    \begin{center}
-%        %\includegraphics[width=12cm]{monitor} 
-%        %\includegraphics[width=12cm]{cylc-view-ecoconnect.pdf} 
-%    \end{center}
-%    \caption{\small {\em cylc view} screenshot}
-%    \label{fig-monitor} 
-%\end{figure} 
 
 \subsection{Shutting A Suite Down}
 
@@ -1352,6 +1437,7 @@ modifications, as described in the file, to your
 %\end{figure} 
 
 \subsection{Suite Validation}
+\label{SuiteValidation}
 
 Suite validation is designed to catch most suite definition errors
 before run time.  First the suite.rc file is validated
@@ -1969,7 +2055,7 @@ cycle time) tasks, but some may depend on tasks with earlier cycle
 times. This notably applies to warm cycled forecast models, which depend
 on their own previous instances (see below); but more general intercycle
 dependence is not uncommon.\footnote{In NWP forecast
-analysis suites parts of the the observation processing and data
+analysis suites parts of the observation processing and data
 assimilation subsystem will typically also depend on model background
 fields generated by the previous forecast.} Here's how to express this
 kind of relationship in cylc:
@@ -2389,7 +2475,7 @@ The ordering of the job script sections is,
 
 {\em Note that the task identity variables are defined prior to the
 global variables, so even global variables can be made task- and
-cycle-specific by referencing the the task identity.} 
+cycle-specific by referencing the task identity.} 
 
 \subsubsection{Suite And Task Identity Variables}
 \label{TaskAndSuiteIdentityVariables}
