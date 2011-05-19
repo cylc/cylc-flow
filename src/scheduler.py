@@ -365,12 +365,19 @@ class scheduler(object):
         self.pyro.connect( self.remote, 'remote' )
 
     def print_banner( self ):
-        print "_______________________________________________"
-        print "_ Cylc Self Organising Adaptive Metascheduler _"
-        print "_\    (c) Hilary Oliver, NIWA, 2008-2011     /_"
-        print "__\        cylc is pronounced 'silk'        /__"
-        print "___\________________C_Y_L_C________________/___"
-        print
+        #Nice, but doesn't print well in gui windows with non-monospace fonts:
+        #print "_______________________________________________"
+        #print "_ Cylc Self Organising Adaptive Metascheduler _"
+        #print "_\    (c) Hilary Oliver, NIWA, 2008-2011     /_"
+        #print "__\        cylc is pronounced 'silk'        /__"
+        #print "___\________________C_Y_L_C________________/___"
+        #print
+
+        print ""
+        print "THIS IS THE CYLC OPTIMAL ADAPTIVE METASCHEDULER"
+        print "Copyright Hilary Oliver, NIWA, 2008-2011"
+        print "cylc is pronounced 'silk'"
+        print ""
 
         items = self.banner.keys()
 

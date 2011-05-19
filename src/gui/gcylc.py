@@ -2041,7 +2041,7 @@ The cylc forecast suite metascheduler.
             warning_dialog( str(x) + '\n' + msg ).warn()
             return False
 
-        foo = gcapture( None, stdout, width=800, height=400, ignore_command=True )
+        foo = gcapture( None, stdout, width=600, height=400, ignore_command=True )
         self.gcapture_windows.append(foo)
         foo.run()
 

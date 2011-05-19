@@ -17,7 +17,7 @@ class tailer(threading.Thread):
         self.freeze = False
         self.warning_re = warning_re
         self.critical_re = critical_re
-        self.warning_tag = self.logbuffer.create_tag( None, foreground = "#9a8008" )
+        self.warning_tag = self.logbuffer.create_tag( None, foreground = "#a83fd3" )
         self.critical_tag = self.logbuffer.create_tag( None, foreground = "red" )
  
     def clear( self ):

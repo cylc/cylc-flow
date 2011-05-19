@@ -26,7 +26,7 @@ class cylc_logviewer( logviewer ):
         window = gtk.Window()
         #window.set_border_width(5)
         window.set_title( "log viewer" )
-        window.set_size_request(800, 400)
+        window.set_size_request(600, 400)
  
         combobox = gtk.combo_box_new_text()
         combobox.append_text( 'Task' ) 
