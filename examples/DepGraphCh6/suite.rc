@@ -1,0 +1,18 @@
+title = Dependency Graph Example (Ch.6)
+
+description = """This suite implements the example at the start of
+Chapter 6 in the cylc userguide. You will need to trigger task A
+manually to get the suite running initially, because no cold start 
+task has been defined to satisfy its initial restart dependencies."""
+
+[dependencies]
+    [[0,6,12,18]] # hours
+        graph = """
+A => B & C   # B and C trigger off A
+A(T-6) => A  # A has restart files
+                """
+    [[6,18]] # hours
+        graph = "C => X"
+[visualization]
+    [[node attributes]]
+        X = "color=red"
