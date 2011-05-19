@@ -18,10 +18,20 @@ used to automatically clean up a failed task family."""
 [tasks]
     [[fammo_cleanup]]
         command = cylc wrap fammo_cleanup.sh
+
     [[m_foo]]
         command = cylc wrap sleep 8 
+
     [[m_bar]]
-        # This family member always fails
-        command = cylc wrap -m "sleep 5; /bin/false"
+        # This task fails at 6,18 and succeeds at 0,12
+        pre-command scripting = """
+HH=${CYCLE_TIME#????????} 
+if (( HH == 6 || HH == 18 )); then
+    COMMAND=/bin/false
+else
+    COMMAND=/bin/true
+fi"""
+        command = cylc wrap -m "sleep 5; $COMMAND"
+
     [[m_baz]]
         command = cylc wrap sleep 10
