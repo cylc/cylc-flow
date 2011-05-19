@@ -798,8 +798,7 @@ locks manually (c.f.\ deleting a lock file manually if the
 associated process died without cleaning up after itself).
 
 You can also choose not to use the lockserver for a particular suite, by
-setting the following switch in its suite.rc (suite
-definition) file,
+setting the following switch in its suite.rc (suite definition) file,
 \begin{lstlisting}
 # SUITE.RC:
 use lockserver = False  # not recommended!
@@ -814,7 +813,7 @@ prompt> gcylc &
 
 Now use the `View' menu to switch to the central suite database, which 
 contains suites accessible to all users. Suites are displayed in a
-treeview by suite owner, group, and name, as shown in
+treeview by owner, group, and name, as shown in
 Figure~\ref{fig-cdb-new}.
 
 \begin{figure}
@@ -842,26 +841,29 @@ commandline, you can:
     \item reregister the suite or group (if you own it).
 \end{myenumerate}
 
-\subsection{Import An Example Suite To Your Private Database} 
+However, you can only {\em run} suites that are registered in your
+private database, which requires either registering them directly or
+importing them from the central database.
 
-Find the suite registered as `admin:examples:DepGraphCh6' in the central 
+\subsection{Import A Suite To Your Private Database} 
+
+Find the suite registered as `admin:examples:DepGraphCh6' in the central
 database (replace `admin' with the name of the user account under which
 cylc was installed). If there are a lot of suites in the central
-database, use View $\rightarrow$ Filter to restrict the view (you
-can leave
-the dialog open and refilter as often as you like).
+database, use View $\rightarrow$ Filter to restrict the view (you can
+leave the dialog open and refilter as often as you like).
 
-Now right click on the DepGraphCh6 suite and choose `Import' to copy the
-suite to your private database. A dialog box will pop up allowing you 
-to register your copy under a different group and name (just leave these
-as `examples' and `DepGraphCh6') and a location to copy the
-suite definition to (e.g.\ \lstinline=$HOME/suites/DepGraphCh6=).
-{\em Note that suite groups do not need to be created explicitly, they are 
+Now right click on DepGraphCh6 and choose `Import' to copy the suite to
+your private database. A dialog box will pop up allowing you to register
+your copy under a different group and name (just leave these as
+`examples' and `DepGraphCh6') and a location to copy the suite
+definition to (e.g.\ \lstinline=$HOME/suites/DepGraphCh6=).  {\em Note
+that suite groups do not need to be created explicitly, they are
 automatically created and deleted as required.} 
 
-Use the View menu to switch back to your private database, and 
-check that you now have a copy of the example suite; it should look like
-Figure~\ref{fig-pdb-new}. Note that you can also import the whole 
+Use the View menu to switch back to your private database, and check
+that you now have a copy of the example suite; it should look like
+Figure~\ref{fig-pdb-new}. Note that you can also import the whole
 `examples' group at once if you like (right-click on the group instead
 of the suite name).
 
@@ -948,7 +950,7 @@ constituent include-files {\em when you save and exit the editor}.
 
 If you use the vim editor your can have nice cylc-specific syntax
 highlighting and section folding; see Section~\ref{SyntaxHighlighting}
-for a screenshot, and instructions}. 
+for a screenshot, and instructions. 
 
 Here is the suite.rc file for the DepGraphCh6 example suite:
 \begin{lstlisting}
@@ -1041,10 +1043,11 @@ To run a suite from the commandline,
 prompt> cylc run examples:userguide 2011042506
 \end{lstlisting}
 
-{\em In real mode operation (as opposed to {\em dummy mode},
-Section~\ref{DummyMode}) do not choose an initial cycle time in the
-future or nothing will happen until that time.}\footnote{For any 
-suite processing initiated by clock-triggered tasks, at least.}
+{\em do not choose an initial cycle time in the future or nothing will
+happen until that time.}\footnote{For any suite processing initiated by
+clock-triggered tasks, at least.} In {\em dummy mode} suites run on an
+accelerated clock, and you can simulate catchup to real time,
+(Section~\ref{DummyMode}), 
 
 Then start up a suite control interface to follow progress:
 \begin{lstlisting}

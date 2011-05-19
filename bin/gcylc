@@ -9,6 +9,7 @@ except Exception, x:
 import os, sys
 import port_scan
 import gtk
+from mkdir_p import mkdir_p
 from passphrase import passphrase
 from optparse import OptionParser
 from gcylc import MainApp
@@ -64,7 +65,12 @@ if 'TMPDIR' in os.environ:
 elif 'SCRATCH' in os.environ:
     tmpdir = os.environ['SCRATCH']
 else:
-    raise SystemExit( 'You must export $TMPDIR or $SCRATCH before running gcylc' )
+    raise SystemExit( 'ERROR: export $TMPDIR or $SCRATCH before running gcylc' )
+# create $TMPDIR if necessary
+try:
+    mkdir_p( tmpdir )
+except Exception,x:
+    raise SystemExit(x)
 
 imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
 
