@@ -739,13 +739,14 @@ the ``simple dependency graph example'' suite from Chapter 6, which
 should have been registered in the central suite database during cylc
 installation as ``examples:DepGraphCh6''. 
 
-\subsection{0. Cylc Environment}
+\subsection{Cylc Environment}
 
 To gain access to cylc you just need to source the cylc environment
 script. Put the following code in your login script, or do the same at the
 terminal prompt before using cylc.\footnote{To switch between different
 cylc installations just source the appropriate environment script.}
 \begin{lstlisting}
+# .profile
 export CYLC_DIR=/path/to/cylc/installation
 . $CYLC_DIR/environment.sh
 \end{lstlisting}
@@ -754,11 +755,17 @@ You should also specify the graphical and terminal editors you want to
 use to edit suites, by setting the following environment variables in
 your \lstinline=.profile=:
 \begin{lstlisting}
+# .profile
 export GEDITOR='gvim -f'  # GUI editor launched by gcylc
 export EDITOR=vim         # terminal editor launched by 'cylc edit'
 \end{lstlisting}
 See \lstinline=cylc edit help= (Appendix~\ref{edit}) for other editor
-examples.
+examples. And finally, you must ensure that \lstinline=$TMPDIR= is 
+defined in your environment, for example:
+\begin{lstlisting}
+# .profile
+export TMPDIR=/tmp/$USER
+\end{lstlisting}
 
 \subsection{Start Your Lockserver Daemon}
 
@@ -806,103 +813,186 @@ prompt> gcylc &
 \end{lstlisting}
 
 Now use the `View' menu to switch to the central suite database, which 
-contains suites accessible to all users. You can view suites in the 
-central database (just right-click on them) but to run them you need
-to import them to your private suite database.
+contains suites accessible to all users. Suites are displayed in a
+treeview by suite owner, group, and name, as shown in
+Figure~\ref{fig-cdb-new}.
 
-\subsection{Import The Example Suite} 
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.8\textwidth]{../images/screenshots/cdb.png}
+    \end{center}
+\caption[gcylc: Central Suite Database]{\small
+The central suite database, viewed in gcylc, showing some example suites.}
+\label{fig-cdb-new}
+\end{figure} 
 
-Right-click on the suite registered as `admin:examples:DepGraphCh6'
-and choose the `Import' option to copy the suite to your private
-suite database (replace `admin' with the name of the user account under
-which cylc was installed; and note that the suite owner, group, and
-name, are displayed in a tree view (admin $->$  examples $->$
-DepGraphCh6). A dialog box will pop up asking for the group 
-and name under which to register the suite in your private database,
-and a destination directory into which to copy the suite definition. 
-Leave the suite GROUP:NAME as examples:DepGraph6, and choose a 
-destination directory that you have permission to write to. Now
-use the `View' menu to switch back to your private database, and 
-check that you now have a copy of the example suite.
+\subsubsection{Central Suite Database Actions}
 
-The following subsections desribe how to import a copy of the example
-suite from the central database to a local directory,
-\begin{lstlisting}
-$HOME/cylc/examples/userguide
-\end{lstlisting}
-and register it as,
-\begin{lstlisting}
-examples:userguide
-\end{lstlisting}
+By right-clicking on a suite in the central database, or using the cylc
+commandline, you can:
+\begin{myenumerate}
+    \item retrieve the suite description,
+    \item list tasks in the suite,
+    \item view the suite defintion in your editor,
+    \item plot the suite dependency graph,
+    \item search the suite definition and bin scripts,
+    \item validate the suite defintion,
+    \item import the suite or group to your private database,
+    \item unreregister the suite or group (if you own it),
+    \item reregister the suite or group (if you own it).
+\end{myenumerate}
 
-\subsubsection{using gcylc}
+\subsection{Import An Example Suite To Your Private Database} 
 
-Start gcylc, switch to the central database view, right-click on
-\lstinline=admin > examples > userguide= 
-(where `admin' is the username of the cylc installation account),
-choose `Import', and specify the registration GROUP and NAME, and 
-destination path, as above. Check that the import was successful
-by inspecting the command output window, and switching the view back to
-your local database, which should now contain your copy of the suite.
+Find the suite registered as `admin:examples:DepGraphCh6' in the central 
+database (replace `admin' with the name of the user account under which
+cylc was installed). If there are a lot of suites in the central
+database, use View $\rightarrow$ Filter to restrict the view (you
+can leave
+the dialog open and refilter as often as you like).
 
-\subsubsection{using the commandline}
+Now right click on the DepGraphCh6 suite and choose `Import' to copy the
+suite to your private database. A dialog box will pop up allowing you 
+to register your copy under a different group and name (just leave these
+as `examples' and `DepGraphCh6') and a location to copy the
+suite definition to (e.g.\ \lstinline=$HOME/suites/DepGraphCh6=).
+{\em Note that suite groups do not need to be created explicitly, they are 
+automatically created and deleted as required.} 
 
-Check that the example suite is registered in the central database,
+Use the View menu to switch back to your private database, and 
+check that you now have a copy of the example suite; it should look like
+Figure~\ref{fig-pdb-new}. Note that you can also import the whole 
+`examples' group at once if you like (right-click on the group instead
+of the suite name).
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.8\textwidth]{../images/screenshots/pdb-new.png}
+    \end{center}
+\caption[gcylc: Private Suite Database]{\small
+A private suite database, viewed in gcylc, showing a first example suite
+imported from the central database.}
+\label{fig-pdb-new}
+\end{figure} 
+
+\subsubsection{Commandline}
+
+If you like, you can now delete your new suite and re-import it via the
+cylc commandline. To delete a suite, right-click $\rightarrow$
+Unregister and choose ``delete suite definition directory'' (ignore the
+dire warnings - you still have the master copy in the central database). 
+The following transcript shows how to reimport the suite using the cylc
+commandline:
 
 \lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
 \begin{lstlisting}
-prompt> cylc db print --central | grep userguide # or:
-prompt> cylc db print --central --group=examples --name=userguide
-admin:examples:userguide  "userguide example suite" /home/admin/cylc/examples/userguide
+# Check that the example suite is registered in the central database,
+prompt> cylc db print --central | grep DepGraphCh6
+admin:examples:DepGraphCh6  "Dependency Graph Example (Ch.6)" \
+    /home/admin/cylc/examples/DepGraphCh6
+
+# Import the suite,
+prompt> cylc db import admin:examples:DepGraphCh6 $HOME/suites/examples/DepGraphCh6
+Locking database /home/oliverh/.cylc/LDB/db
+REGISTERED examples:DepGraphCh6  "Dependency Graph Example (Ch.6)" \
+    /home/oliverh/suites/examples/DepGraphCh6
+Copying suite definition
+Unlocking database /home/oliverh/.cylc/LDB/db
+DONE
+
+# Check the import was successful,
+prompt> cylc db print | grep DepGraphCh6
+examples:DepGraphCh6 "Dependency Graph Example (Ch.6)" \
+    /home/oliverh/suites/examples/DepGraphCh6
 \end{lstlisting}
 
 \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
-Now import the suite,
+
+\subsubsection{Private Suite Database Actions}
+
+By right-clicking on a suite in your private database, or using the cylc
+commandline, you can:
+\begin{myenumerate}
+    \item start a suite control GUI to run the suite (or connect to a running suite),
+    \item submit a single suite task to run, just as it would be submitted by the suite
+    \item view the suite stdout and stderr streams,
+    \item view the suite log file (which records all scheduling events and messages),
+    \item retrieve the suite description,
+    \item list tasks in the suite,
+    \item edit the suite defintion in your editor,
+    \item plot the suite dependency graph,
+    \item search the suite definition and bin scripts,
+    \item validate the suite defintion,
+    \item copy the suite or group,
+    \item export the suite or group to the central database,
+    \item unreregister the suite or group,
+    \item reregister the suite or group.
+\end{myenumerate}
+
+\subsection{Edit The Suite}
+
+Right-click on the suite and choose `Edit', or use the edit command,
 \begin{lstlisting}
-prompt> cylc db import admin:examples:userguide $HOME/cylc/examples/userguide
+prompt> cylc edit examples:DepGraphCh6
 \end{lstlisting}
+to view the suite definition (suite.rc file) in your editor. 
 
-Check that the import was successful,
-\begin{lstlisting}
-prompt> cylc db print | grep userguide # or:
-prompt> cylc db print --group=examples --name=userguide
-examples:userguide "userguide example suite" /home/oliverh/cylc/examples/userguide
-\end{lstlisting}
-
-You can now edit, search, validate, plot, run, etc., your copy of the
-example suite, using the commandline or gcylc (right-click on the suite
-as described above).
-
-\subsection{Editing A Suite}
-
-To edit the suite definition via gcylc right-click on the suite and
-choose `Edit'; right-click again and choose `Graph' to plot the suite
-dependency graph that is defined in the suite.rc file. If you edit the
-suite.rc file the graph viewer will update whenever you save the file.
-
-To edit a suite from the commandline,
-\begin{lstlisting}
-prompt> cylc edit examples:userguide
-\end{lstlisting}
 This moves to the suite definition directory (so that you can easily
 open other suite files in the same edit session) and opens the
 suite.rc file in your chosen editor. You can of course
-do this entirely manually, but using the edit command (or right-click Edit 
-suite in gcylc) has some advantages: it is very quick and convenient,
-you don't have to remember the suite definition directory
-location, and for suite.rc files that contain include files
-(even nested ones) you can optionally edit the file inlined - it will be
-split back into its constituent include-files {\em when you save and
-exit the editor}. 
+do this entirely manually, but this way is very quick and convenient,
+you don't have to remember suite definition directory locations, and
+for suite.rc files that contain include files (even nested ones) you can
+optionally edit the file inlined - it will be split back into its
+constituent include-files {\em when you save and exit the editor}. 
+
+If you use the vim editor your can have nice cylc-specific syntax
+highlighting and section folding; see Section~\ref{SyntaxHighlighting}
+for a screenshot, and instructions}. 
+
+Here is the suite.rc file for the DepGraphCh6 example suite:
+\begin{lstlisting}
+# SUITE.RC
+title = Dependency Graph Example (Ch.6)
+
+[dependencies]
+    [[0,6,12,18]] # hours
+        graph = """
+A => B & C   # B and C trigger off A
+A(T-6) => A  # A has restart files
+                """
+    [[6,18]] # hours
+        graph = "C => X"
+[visualization]
+    [[node attributes]]
+        X = "color=red"
+\end{lstlisting}
+
+This is a complete, valid, cylc suite definition that defines a suite
+you can run: each task will execute the default cylc dummy task
+commandline, which if defined explicitly in the suite.rc file would look
+like this:
+\begin{lstlisting}
+# SUITE.RC
+[tasks]
+    [[X]] # define properties of task X
+        command = cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_DUMMY_SLEEP"
+\end{lstlisting}
+In other words, each task will emit an identifying message (e.g.\
+\lstinline=DUMMY X%2011052218=), sleep for a short period (10 seconds),
+and then exit. The wrapper, \lstinline=cylc wrap=, automatically reports the
+task started, and finished (or failed), to the suite.
 
 \subsection{Graphing A Suite}
 
-To graph the suite,
+To plot the dependency graph defined in the suite.rc file, use
+right-click $\rightarrow$ `Graph', or the commandline,
 \begin{lstlisting}
-prompt> cylc graph examples:userguide 2011042506 2011042606 &
+prompt> cylc graph examples:DepGraphCh6 2011042506 2011042606 &
 \end{lstlisting}
-(this results in the graph of Figure~\ref{fig-simple-graph-2}, in the 
-Suite Design Overview chapter)
+This will pop up a zoomable, pannable, graph viewer application showing
+Figure~\ref{fig-dep-graph-ch6}. If you edit the suite.rc file the graph
+viewer will update whenever you save the file.
 
 \subsection{Searching A Suite}
 
@@ -914,7 +1004,7 @@ directory,
 \begin{lstlisting}
 prompt> cylc grep OUTPUT_DIR examples:userguide
 
-FILE: /home/oliverh/cylc/examples/userguide/suite.rc
+FILE: /home/oliverh/suites/examples/userguide/suite.rc
    SECTION: [tasks]->[[X]]->[[[environment]]]
       [53]:             OUTPUT_DIR = $WORKSPACE
    SECTION: [tasks]->[[A]]->[[[environment]]]
@@ -922,11 +1012,11 @@ FILE: /home/oliverh/cylc/examples/userguide/suite.rc
 
 <...snip...>
 
-FILE: /home/oliverh/cylc/examples/userguide/bin/E.sh
+FILE: /home/oliverh/suites/examples/userguide/bin/E.sh
    [7]: cylc checkvars -c OUTPUT_DIR
    [21]: touch $OUTPUT_DIR/sea-state.products
 
-FILE: /home/oliverh/cylc/examples/userguide/bin/D.sh
+FILE: /home/oliverh/suites/examples/userguide/bin/D.sh
    [7]: cylc checkvars -c OUTPUT_DIR
    [24]: touch $OUTPUT_DIR/combined.products
 
@@ -1239,6 +1329,7 @@ between cycles.}
 \end{figure} 
 
 \subsubsection{Syntax Highlighting}
+\label{SyntaxHighlighting}
 
 The file \lstinline=$CYLC_DIR/conf/cylc.vim= configures 
 suite.rc syntax highlighting and section folding for the
@@ -2244,7 +2335,7 @@ export CYLC_DIR="/home/admin/cylc"
 export CYLC_MODE="submit"
 export CYLC_SUITE_HOST="oliverh-33586DL.greta.niwa.co.nz"
 export CYLC_SUITE_PORT="NONE"
-export CYLC_SUITE_DIR="/home/oliverh/cylc/examples/userguide"
+export CYLC_SUITE_DIR="/home/oliverh/suites/examples/userguide"
 export CYLC_SUITE="examples:userguide"
 export CYLC_SUITE_GROUP="examples"
 export CYLC_SUITE_NAME="userguide"

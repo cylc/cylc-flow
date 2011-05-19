@@ -1,6 +1,8 @@
 _______
 GENERAL
 
+* gcylc import fails if $TMPDIR does not exist already.
+
 * CONDITIONAL EXPRESSIONS BUG:
     A & B | C => D
   A suite with an expression like this will run correctly but not plot correctly.
