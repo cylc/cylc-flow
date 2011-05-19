@@ -74,17 +74,6 @@ try:
 except RegistrationError,x:
     raise SystemExit(x)
 
-# LOCAL ENVIRONMENT
-# Provide access to the suite bin directory. This is probably no longer
-# required for standalone task submit as we no longer execute task 
-# commands directly (it's now done by executing a temporary job script
-# that configures the suite bin path explicitly).  
-os.environ[ 'PATH' ] += ':' + suite_dir + '/bin'
-# user defined local variables. Also probably not required for
-# standalone task submit, but we'll do it for completeness.
-for var in self.config['cylc local environment']:
-    os.environ[var] = self.config['cylc local environment'][var]
-
 # check task ---------------------------------------------------------
 try:
     ( task_name, ctime ) = task_id.split( '%' )
@@ -116,6 +105,17 @@ if config[ 'use lockserver' ]:
     # release_suite_access()
     if not suite_lock( suite, suite_dir, host, lockserver_port, 'submit' ).request_suite_access():
         raise SystemExit( 'ERROR: failed to acquire a suite lock' )
+
+# LOCAL ENVIRONMENT
+# Provide access to the suite bin directory. This is probably no longer
+# required for standalone task submit as we no longer execute task 
+# commands directly (it's now done by executing a temporary job script
+# that configures the suite bin path explicitly).  
+os.environ[ 'PATH' ] += ':' + suite_dir + '/bin'
+# user defined local variables. Also probably not required for
+# standalone task submit, but we'll do it for completeness.
+for var in config['cylc local environment']:
+    os.environ[var] = config['cylc local environment'][var]
 
 # No TASK EVENT HOOKS are set for the submit command because there is
 # no scheduler instance watching for task failure etc. 
