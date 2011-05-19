@@ -1,26 +1,27 @@
 #!/bin/bash
+set -e
 
-# This script cleans up if the fammo task family fails
+# This task script cleans up if the fammo family fails: it removes
+# failed family members, and the failed family itself, from the suite.
 
-echo "Hello from ${TASK_ID} preparing to clean up family fammo"
+sleep 10 # (time to observe the failed tasks in the suite monitor).
 
-# Sleep for 10 seconds so there's time for failed tasks to be seen
-sleep 10
+# Determine which family member(s) failed, if any
+FAILED_TASKS=$(cylc dump $CYLC_SUITE | grep $CYCLE_TIME | grep failed | sed -e 's/,.*$//')
 
-# determine which family member(s) failed
-FAILED_TASKS=$(cylc dump $CYLC_SUITE | grep failed | sed -e 's/,.*$//')
-
-# remove failed members (use --force for non-interactive!)
 found_failed_member=false
+echo "FAILED TASKS:"
 for T in $FAILED_TASKS; do
+    echo -n "   $T ..."
     if [[ $T == m_* ]]; then
         found_failed_member=true
-        echo cylc control remove --force $CYLC_SUITE ${T}%$CYCLE_TIME
+        echo "REMOVING (family member)"
         cylc control remove --force $CYLC_SUITE ${T}%$CYCLE_TIME
+    else
+        echo "NOT REMOVING (not family member)"
     fi
 done
 if $found_failed_member; then
-    # remove the family itself (use --force for non-interactive!)
-    echo cylc control remove --force $CYLC_SUITE fammo%$CYCLE_TIME
+    echo "REMOVING (family)"
     cylc control remove --force $CYLC_SUITE fammo%$CYCLE_TIME
 fi

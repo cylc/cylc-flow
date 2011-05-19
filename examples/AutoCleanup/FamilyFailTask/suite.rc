@@ -1,4 +1,4 @@
-title = family failure hook script example
+title = family failure cleanup task example
 runahead limit in hours = 6
 
 description = """An example suite in which a special task is
