@@ -1307,7 +1307,7 @@ class scheduler(object):
         self.spawn_and_die( task_ids )
 
 
-    def spawn_and_die( self, task_ids, dump_state=True, reason='suicide by remote request' ):
+    def spawn_and_die( self, task_ids, dump_state=True, reason='remote request' ):
         # spawn and kill all tasks in task_ids.keys()
         # works for dict or list input
 
