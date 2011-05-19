@@ -774,10 +774,11 @@ def userguide( w, graph=False ):
     update_tb( tb, "View submitted task stdout and stderr in real time." )
     update_tb( tb, "\n o View Prerequisites & Outputs: ", [bold])
     update_tb( tb, "View the current state of a task's prerequisites and outputs.")
-    update_tb( tb, "\n o Trigger Task: ", [bold])
+    update_tb( tb, "\n o Trigger: ", [bold])
     update_tb( tb, "Reset the task to the 'ready' state (all prerequisites "
-            "satisfied), thereby causing it to (re)trigger immediately (if "
-            "the suite is not paused, in which case it will trigger on resuming)." )
+            "satisfied), thereby causing it to trigger immediately (NOTE: "
+            "if the suite is held (paused) the task will trigger when "
+            "the hold is released)." )
     update_tb( tb, "\n o Reset to 'waiting': ", [bold])
     update_tb( tb, "Set all of a task's prerequisites unsatisfied." )
     update_tb( tb, "\n o Reset to 'finished': ", [bold])

@@ -316,7 +316,7 @@ The cylc forecast suite metascheduler.
 
         items.append( gtk.SeparatorMenuItem() )
 
-        reset_ready_item = gtk.MenuItem( 'Trigger Now (if suite not held)' )
+        reset_ready_item = gtk.MenuItem( 'Trigger' )
         items.append( reset_ready_item )
         reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
         if self.readonly:
