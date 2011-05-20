@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* get_oldest_ctime() loops through all tasks and is called multiple times
+  within the task processing loop - should be able to call it just once.
+
 * CONDITIONAL EXPRESSIONS BUG:
     A & B | C => D
   A suite with an expression like this will run correctly but not plot correctly.

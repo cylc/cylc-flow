@@ -643,15 +643,29 @@ class scheduler(object):
     def will_pause_at( self ):
         return self.pause_time
 
+    def get_oldest_unfailed_c_time( self ):
+        # return the cycle time of the oldest task
+        oldest = 9999887766
+        for itask in self.tasks:
+            if itask.state.is_failed():
+                continue
+            #if hasattr( itask, 'daemon_task' ):
+            #    # avoid daemon tasks
+            #    continue
+            if int( itask.c_time ) < int( oldest ):
+                oldest = itask.c_time
+        return oldest
+
     def get_oldest_c_time( self ):
         # return the cycle time of the oldest task
         oldest = 9999887766
         for itask in self.tasks:
             #if itask.state.is_failed():  # uncomment for earliest NON-FAILED 
             #    continue
-            if hasattr( itask, 'daemon_task' ):
-                # avoid daemon tasks
-                continue
+
+            #if hasattr( itask, 'daemon_task' ):
+            #    # avoid daemon tasks
+            #    continue
             if int( itask.c_time ) < int( oldest ):
                 oldest = itask.c_time
         return oldest
@@ -736,7 +750,7 @@ class scheduler(object):
             if self.runahead:
                 # if a runahead limit is defined, check for violations
                 tdiff = cycle_time.decrement( itask.c_time, self.runahead )
-                if int( tdiff ) > int( oldest_c_time ):
+                if int( tdiff ) > int( self.get_oldest_unfailed_c_time() ):
                     # too far ahead: don't spawn this task.
                     itask.log( 'DEBUG', "delaying spawning (too far ahead)" )
                     continue
@@ -846,15 +860,17 @@ class scheduler(object):
 
     def earliest_unsucceeded( self ):
         # find the earliest unsucceeded task
+        # EXCLUDING FAILED TASKS
         all_succeeded = True
         earliest_unsucceeded = '9999887766'
         for itask in self.tasks:
-            #if itask.state.is_failed():  # uncomment for earliest NON-FAILED
-            #    continue
+            if itask.state.is_failed():
+                # EXCLUDING FAILED TASKS
+                continue
 
             # avoid daemon tasks
-            if hasattr( itask, 'daemon_task' ):
-                continue
+            #if hasattr( itask, 'daemon_task' ):
+            #    continue
 
             if not itask.state.is_succeeded():
                 all_succeeded = False
@@ -881,7 +897,7 @@ class scheduler(object):
         for itask in self.tasks:
             if itask.suicide_prerequisites.count() != 0:
                 if itask.suicide_prerequisites.all_satisfied():
-                    self.spawn_and_die( [itask.id], dump_state=False, reason='death by suicide' )
+                    self.spawn_and_die( [itask.id], dump_state=False, reason='suicide' )
 
         #### RESTORE FOR TESTING ASYNCHRONOUS TASK FUNCTIONALITY:
         #### self.cleanup_async()
@@ -907,7 +923,7 @@ class scheduler(object):
 
         # delete the spent tasks
         for itask in spent:
-            self.trash( itask, 'quick death' )
+            self.trash( itask, 'quick' )
 
     def cleanup_non_intercycle( self, failed_rt ):
         # A/ Non INTERCYCLE tasks by definition have ONLY COTEMPORAL
@@ -986,7 +1002,7 @@ class scheduler(object):
  
         # delete the spent quick death tasks
         for itask in spent:
-            self.trash( itask, 'quick death' )
+            self.trash( itask, 'quick' )
 
     def cleanup_generic( self, failed_rt ):
         # B/ THE GENERAL CASE
@@ -1041,8 +1057,8 @@ class scheduler(object):
         for itask in self.tasks:
             if not itask.done():
                 continue
-            if itask.c_time in failed_rt.keys():
-                continue
+            #if itask.c_time in failed_rt.keys():
+            #    continue
             if int( itask.c_time ) >= cutoff:
                 continue
             

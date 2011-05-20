@@ -126,13 +126,17 @@ tasks to include at startup = force_list( default=list() )
 #>\end{myitemize}
 
 runahead limit in hours = integer( min=0, default=24 )
-#>This is the maximum difference (in cycle time)
-#>that cylc allows between the fastest and slowest tasks in the suite.
-#>Cycling tasks with no prerequisites (most suites will not have any 
-#>of these) will rapidly spawn ahead to the runahead limit. 
-#> Clock-triggered tasks with no other prerequisites (most suites will
-#> have some of these) will do the same if sufficiently far behind
-#> the real time clock.
+#> If a task's cycle time is ahead of the oldest non-failed task in the
+#> suite by more than this limit, it will be prevented from spawning a 
+#> successor until the slowest tasks catch up sufficiently. Failed
+#> tasks (which are not automatically removed from a suite) do not
+#> activate the runahead limit (but downstream dependencies that can't 
+#> run because of the failure will). 
+#> In real time operation, for most suites the runahead limit is of
+#> little consequence because the suite will be constrained at the 
+#> front by its real time clock-triggered tasks. The runahead limit is
+#> intended to stop fast tasks from running off far into the future in
+#> historical case studies. 
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} integer
