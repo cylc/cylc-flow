@@ -12,6 +12,17 @@
 #   BAD:
 # bar = string_list( default=list('foo','bar' ))
 
+#> \subsection{Include Files}
+#> \label{IncludeFiles}
+#> In addition to the items and values defined below, suite.rc files can include
+#> any number of include-files that can be multiply included and nested
+#> (i.e.\ they can include other include-files, ...).
+#> \begin{lstlisting}
+#>%include path/to/myfile.rc
+#> \end{lstlisting}
+#> Include-file paths should be specified portably\footnote{If the suite
+#> is copied to another location you shouldn't have to change hardwired
+#> paths.} relative to the suite definition directory.
 
 #>\subsection{Top Level (global settings)}
 
