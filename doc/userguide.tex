@@ -1561,21 +1561,14 @@ prompt> cylc graph dep:example1 2011052200 2011052206
 
 Incidentally, the suite.rc file listed in Figure~\ref{fig-dep-eg-1} is 
 a complete valid suite definition that you can run (just import a copy
-from the central suite database and run it). Cylc will run dummy tasks,
+from the central suite database and run it): cylc will run dummy tasks,
 which sleep for a few seconds then emit an identifying message,
-because no task properties have been defined. To run real tasks you just
-need to replace the default dummy task commandlines with real ones, 
-\begin{lstlisting}
-# SUITE.RC
-[tasks]
-    [[A]]
-        command = cylc wrap foo.sh
-\end{lstlisting}
-If you do try to run Example 1, be aware that you'll need to trigger
-task A manually to get the suite started. That's because A(T) depends on
-its own previous instance A(T-6), and at startup there is no previous
-cycle to satisfy that prerequisite.  How to handle a {\em cold start}
-properly is described below.
+because no task properties have been defined. If you do try to run
+Example 1, be aware that you'll need to trigger task A manually to get
+the suite started. That's because A(T) depends on its own previous
+instance A(T-6), and at startup there is no previous cycle to satisfy
+that prerequisite.  How to handle a {\em cold start} properly is
+described below.
 
 \begin{figure}
 \begin{minipage}[b]{0.5\textwidth}
@@ -1738,7 +1731,7 @@ cylc do when A finishes?}
     graph = "A | B => C"
 \end{lstlisting}
 
-\subsubsection{Which Task Is Plotted?}
+\subsubsection{Which Task Will Be Plotted?}
 
 In a list of alternative triggers separated by OR operators, the 
 full conditional expression determines run time behaviour, but one of
@@ -1752,6 +1745,10 @@ order or attach an asterisk to the chosen task:
 # but this will plot as A => D:
     graph = "A* | B | C => D"
 \end{lstlisting}
+
+{\em In the future we plan to optionally allow all tasks in a
+conditional trigger to be plotted on the same graph rather than 
+singling out just one.}
 
 % TO DO: !!!!! GRAPHING BUG FOR A | B & C EXPRESSIONS!!!!!!!!
 
@@ -3297,9 +3294,11 @@ things for yourself.
 In cylc, {\em each task has its own private cycle time} and can run when
 its prerequisites are satisfied regardless of what other tasks (with, 
 potentially, different cycle times) are running in the suite at the time.
-There is no global loop over of successive forecast cycles; instead  
-the suite advances by means of each task spawning its own successor, at 
-the next valid cycle time for the task (this information is gleaned from 
+The variable \lstinline=$CYCLE_TIME=, which tasks can read from the
+execution environment configured for them by cylc, is {\em
+task-specific}. There is no global loop over of successive forecast
+cycles; the suite advances by means of each task spawning its own
+successor at its next valid cycle time (which is known gleaned from 
 the suite.rc dependency graph).
 
 \subsection{Make Fine-Grained Suites} 
@@ -3332,7 +3331,9 @@ convenient groups in very large suites (and with \lstinline=cylc edit=
 you can edit a temporarily inlined file to get a global view). 
 But they are most useful for handling the repetitive definition of
 groups of similar tasks, because the same inclusion can be used multiple
-times in the same suite.rc file. 
+times in the same suite.rc file.  See {\em Include Files}
+(Section~\ref{IncludeFiles}).
+
 
 \subsection{Make Tasks Rerunnable}
 
@@ -3384,7 +3385,7 @@ Section~\ref{SuiteRCReference}).
 %has completed its restart prerequisites (minimal previous instance
 %dependence, maximal throughput).
 
-\subsection{Put Cycle Time In All Output File Paths}
+\subsection{Put Task Cycle Time In All Output File Paths}
 \label{PutCycleTimeinIO}
 
 Having all filenames, or perhaps the names of their containing
