@@ -1942,14 +1942,10 @@ the effort depends on the situation, of course.
 \subsection{Task Families}
 
 A task family is a named group of tasks that appears as a single task
-in the suite dependency graph. The family, instead of each individual
-member, can trigger off upstream tasks; and downstream tasks can trigger
-off the family, instead of off each member.
-
-Cylc task families are implemented as special pseudo-tasks that do not
-actually submit anything to run when they enters the `running' state.
-A task proxy representing the family will be seen in the suite control
-GUI when a suite. 
+in the suite dependency graph. Instead of having each individual member
+task trigger off one or more upstream tasks, you can just trigger the
+family; and instead of triggering downstream processing off each member task, 
+you can trigger off the family as a whole.
 
 \begin{myitemize}
     \item a family enters the `running' state when its prerequisites are
@@ -1964,6 +1960,11 @@ GUI when a suite.
             \item failed, if one or more members failed   
         \end{myitemize}
 \end{myitemize}
+
+Cylc task families are implemented as special pseudo-tasks that do not
+actually submit anything to run when they enter the `running' state.
+Task proxies representing families can be seen in the suite control
+GUI when a suite containing families runs. 
 
 Cylc task families can have internal dependencies, and members can also
 participate in dependent relationships outside of the family.
