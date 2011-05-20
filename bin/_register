@@ -7,13 +7,13 @@ from config import get_suite_title, SuiteConfigError
 
 parser = OptionParser( usage = """cylc [db] register [options] SUITE PATH
 
-Register a suite in your local suite database. Suite registrations
+Register a suite in your private suite database. Suite registrations
 associate a GROUP and a NAME with a suite definition directory. This 
 must be done before you can use a suite - cylc commands reference a
 particular suite by its GROUP:NAME.
 
 Arguments:
-     SUITE  -  local suite registration GROUP:NAME
+     SUITE  -  private suite registration GROUP:NAME
      PATH   -  A cylc suite definition directory location.""" )
 
 parser.add_option( "-v", "--verbose",

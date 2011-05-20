@@ -248,7 +248,7 @@ USAGE:
 # topic summaries
 catsum = OrderedDict()
 catsum['all'    ]        = "the complete cylc command set"
-catsum['database'    ]   = "local and central suite registration."
+catsum['database'    ]   = "private and central suite registration."
 catsum['information' ]   = "retrieve and print information about a suite."
 catsum['preparation' ]   = "suite editing, graphing, validation etc."
 catsum['discovery'   ]   = "what suites are running at the moment?"
@@ -286,14 +286,14 @@ Command CATEGORIES:"""
 # command summaries
 comsum = OrderedDict()
 # database
-comsum[ 'register'   ] = 'Add a suite to your local registration database'
-comsum[ 'reregister' ] = 'Change local or central suite registrations'
-comsum[ 'unregister' ] = 'Remove suites from the local or central database'
+comsum[ 'register'   ] = 'Add a suite to your private registration database'
+comsum[ 'reregister' ] = 'Change private or central suite registrations'
+comsum[ 'unregister' ] = 'Remove suites from the private or central database'
 comsum[ 'copy'       ] = 'Copy a suite or group of suites.'
-comsum[ 'print'      ] = 'Print local or central suite registrations'
+comsum[ 'print'      ] = 'Print private or central suite registrations'
 comsum[ 'get'        ] = 'Print a suite definition directory path'
-comsum[ 'import'     ] = 'Import central registrations to your local database'
-comsum[ 'export'     ] = 'Export local registrations to the central database'
+comsum[ 'import'     ] = 'Import central registrations to your private database'
+comsum[ 'export'     ] = 'Export private registrations to the central database'
 comsum[ 'refresh'    ] = 'Check for invalid registrations and update titles'
 # preparation
 comsum[ 'edit'       ] = 'Edit a suite.rc file in $EDITOR, optionally inlined'

@@ -7,7 +7,7 @@ from config import get_suite_title, SuiteConfigError
 
 parser = OptionParser( usage = """cylc [db] refresh|check [options]
 
-Check the local or central database for invalid registrations (this 
+Check the private or central database for invalid registrations (this 
 probably means a suite definition directory has been deleted or moved
 manually) and update any suite titles that have changed since their 
 initial registration (for the central database this also updates the

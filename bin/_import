@@ -7,12 +7,12 @@ from optparse import OptionParser
 from registration import localdb, centraldb, regsplit, RegistrationError
 from regprompt import prompt
 
-parser = OptionParser( usage = """cylc [db] import [OPTIONS] CENTRAL [LOCAL] DIR
+parser = OptionParser( usage = """cylc [db] import [OPTIONS] CENTRAL [PRIVATE] DIR
 
 Import suites or groups from the central registration database.
 
 Arguments:
-    CENTRAL, LOCAL  - OWNER:GROUP:NAME, OWNER:GROUP.
+    CENTRAL, PRIVATE  - OWNER:GROUP:NAME, OWNER:GROUP.
     DIR    - destination for the imported suite definition (must not exist).
              or top level directory for imported groups.""" )
 

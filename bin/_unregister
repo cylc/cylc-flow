@@ -8,7 +8,7 @@ from config import config, SuiteConfigError
 
 parser = OptionParser( usage = """cylc [db] unregister|delete [OPTIONS] REG
 
-Remove suite (or suite group) registrations from your local, or the
+Remove suite (or suite group) registrations from your private, or the
 central, suite database.  By default this does not actually delete 
 suite definition directories.
 
@@ -18,10 +18,10 @@ the same GROUP:NAME name to regain access to it.
 Arguments:
     REG - suite registration:
             OWNER:GROUP:NAME (Central DB), or
-                  GROUP:NAME (Local DB), or
+                  GROUP:NAME (Private DB), or
           or registration group (note trailing colon!):
             OWNER:GROUP: (Central DB), or 
-                  GROUP: (Local DB)""" )
+                  GROUP: (Private DB)""" )
 
 parser.add_option( "--obliterate",
         help="Delete the suite definition directory too (!DANGEROUS!).",

@@ -7,14 +7,14 @@ from optparse import OptionParser
 from registration import localdb, centraldb, regsplit, RegistrationError
 from regprompt import prompt
 
-parser = OptionParser( usage = """cylc [db] export [OPTIONS] LOCAL [CENTRAL]
+parser = OptionParser( usage = """cylc [db] export [OPTIONS] PRIVATE [CENTRAL]
 
-Export local suite or group registrations to the central database. The central
+Export private suite or group registrations to the central database. The central
 database can be a reference to the owner's suite definition, or we can copy
 the suite definition to [CentralDB]/owner/group/name/.
 
 Arguments:
-    LOCAL    - SUITE registration GROUP:NAME
+    PRIVATE  - SUITE registration GROUP:NAME
     CENTRAL  - SUITE registration, OWNER:GROUP:NAME""" )  
 
 parser.add_option( "-c", "--copy",

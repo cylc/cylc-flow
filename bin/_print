@@ -9,7 +9,7 @@ parser = OptionParser( usage = """cylc [db] print [options]
      $ cylc [db] pr                      # print all
      $ cylc [db] pr [FILTER options]     # print some
 
-Print local or central suite registrations, which associate a suite name
+Print private or central suite registrations, which associate a suite name
 with a suite definition directory (stored in $HOME/.cylc/registrations).
 Cylc commands target a particular suite using its registered name.
 

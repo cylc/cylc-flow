@@ -9,7 +9,7 @@ from regprompt import prompt
 
 parser = OptionParser( usage = """cylc [db] copy|cp [OPTIONS] FROM TO [DIR]
 
-Copy suites or groups in your local suite database. If DIR is given, suite
+Copy suites or groups in your private suite database. If DIR is given, suite
 definition directories will be copied to that location, otherwise the new
 registration will refer to the old suite definition directory. Copying a 
 group to GROUP:foo results in the suite definition being copied to
@@ -19,7 +19,7 @@ If DIR is not given, a new reference to the original source suite will
 be created (i.e. the suite definition directory will not be copied).
  
 Arguments:
-    FROM, TO - local suite registrations (GROUP:NAME) or groups (GROUP:)
+    FROM, TO - private suite registrations (GROUP:NAME) or groups (GROUP:)
     [DIR]    - destination for the copied suite definition (must not exist).
                or top level directory for copied suite definitions.""" )
 
