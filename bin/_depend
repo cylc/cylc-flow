@@ -33,7 +33,7 @@ dep = args[2]
 m = re.match( '^(\w+)%(\w+)$', dep )
 if m:
     #name, ctime = m.groups()
-    msg = dep + ' finished'
+    msg = dep + ' succeeded'
 else:
     msg = dep
     print >> sys.stderr, 'WARNING: final arg not a task ID, assuming prerequisite message:'

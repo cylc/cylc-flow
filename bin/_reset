@@ -12,7 +12,7 @@ parser = PromptOptionParser( """cylc [control] reset [options] SUITE TASK
 Force a task's state to:
  1/ 'ready' ...... all prerequisites satisfied (default) 
  2/ 'waiting' .... prerequisites not satisfied yet
- 3/ 'finished' ... all outputs completed
+ 3/ 'succeeded' .. all outputs completed
  4/ 'failed' ..... use to test failure recovery scenarios
  
 Resetting a task to 'ready' will cause it to trigger immediately unless
@@ -29,9 +29,9 @@ parser.add_option( "--waiting",
         help="Force task to the 'waiting' state.",
         action="store_true", default=False, dest="waiting" )
 
-parser.add_option( "--finished", 
-        help="Force task to 'finished' state.", 
-        action="store_true", default=False, dest="finished" )
+parser.add_option( "--succeeded", 
+        help="Force task to 'succeeded' state.", 
+        action="store_true", default=False, dest="succeeded" )
 
 parser.add_option( "--failed", 
         help="Force task to 'failed' state.", 
@@ -42,13 +42,13 @@ parser.add_option( "--failed",
 if len(args) != 2:
     parser.error( "Suite name and task ID required." )
 
-if [ options.waiting, options.finished, options.failed ].count( True ) != 1:
-    parser.error( "Specify none or one of waiting, finished, or failed" )
+if [ options.waiting, options.succeeded, options.failed ].count( True ) != 1:
+    parser.error( "Specify none or one of waiting, succeeded, or failed" )
 
 if options.waiting:
     state = 'waiting'
-elif options.finished:
-    state = 'finished'
+elif options.succeeded:
+    state = 'succeeded'
 elif options.failed:
     state = 'failed'
 else:

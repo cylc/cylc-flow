@@ -26,7 +26,7 @@ parser.add_option( "-t", "--task",
 
 parser.add_option( "-f", "--filter", 
         help="Filter the log with a Python-style regular expression "
-        "e.g. '\[(foo|bar).*(started|finished)'",
+        "e.g. '\[(foo|bar).*(started|succeeded)'",
         metavar="RE", action="store", default=None, dest="regexfilter" )
 
 parser.add_option( "-r", "--rotation", 

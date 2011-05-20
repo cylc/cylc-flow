@@ -30,7 +30,7 @@ cut-and-paste the filename from the log to the commandline).
 NOTE: if you set a stop time it will be recorded in the suite state dump
 and you cannot then change or cancel that stop time at a restart. This
 is because any tasks that reached the stop time prior to shutdown will be
-stopped (recorded in the state dump file as 'finished' and 'spawned',
+stopped (recorded in the state dump file as 'succeeded' and 'spawned',
 but with no existing successor) and canceling the stop time or setting a
 later one will not bring these tasks back from the dead. If you need to
 continue operation after a set stop time you can either: (a) let the
