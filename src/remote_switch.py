@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-# TO DO: ALL REMOTE METHODS TO RETURN RESPONSE AS reset_task_state() DOES.
-
 import Pyro.core
 import logging
 import cycle_time

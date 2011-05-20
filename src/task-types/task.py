@@ -313,9 +313,9 @@ class task( Pyro.core.ObjBase ):
 
     def reset_state_failed( self ):
         # all prerequisites satisified and no outputs complete
-        itask.state.set_status( 'failed' )
-        itask.prerequisites.set_all_satisfied()
-        itask.outputs.set_all_incomplete()
+        self.state.set_status( 'failed' )
+        self.prerequisites.set_all_satisfied()
+        self.outputs.set_all_incomplete()
 
     def reset_state_stopped( self ):
         itask.state.set_status( 'stopped' )
