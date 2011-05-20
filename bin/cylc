@@ -141,6 +141,7 @@ cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 # categories[ categorey ] = [ aliases ] 
 categories = OrderedDict()
 categories['all'         ] = ['all' ]
+categories['admin'       ] = ['admin' ]
 categories['database'    ] = ['db', 'database' ]
 categories['preparation' ] = ['preparation' ]
 categories['information' ] = ['information'    ]
@@ -190,6 +191,9 @@ utility_commands['template' ] = ['template']
 utility_commands['housekeeping'] = ['housekeeping'] 
 #utility_commands['transfer' ] = ['transfer'] 
 
+admin_commands = OrderedDict()
+admin_commands['create-cdb'     ] = [ 'create-cdb']
+
 database_commands = OrderedDict()
 database_commands['gcylc'     ] = information_commands['gcylc']
 database_commands['register'  ] = [ 'register' ]
@@ -224,6 +228,7 @@ task_commands['failed'] = [ 'failed', 'task-failed' ]
 
 all_commands = OrderedDict()
 for dct in [ 
+        admin_commands,
         database_commands, 
         preparation_commands, 
         information_commands, 
@@ -248,6 +253,7 @@ USAGE:
 # topic summaries
 catsum = OrderedDict()
 catsum['all'    ]        = "the complete cylc command set"
+catsum['admin'       ]   = "commands for use by the cylc administrator."
 catsum['database'    ]   = "private and central suite registration."
 catsum['information' ]   = "retrieve and print information about a suite."
 catsum['preparation' ]   = "suite editing, graphing, validation etc."
@@ -285,6 +291,8 @@ Command CATEGORIES:"""
 
 # command summaries
 comsum = OrderedDict()
+# admin
+comsum[ 'create-cdb' ] = 'Create the central suite registration database'
 # database
 comsum[ 'register'   ] = 'Add a suite to your private registration database'
 comsum[ 'reregister' ] = 'Change private or central suite registrations'

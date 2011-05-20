@@ -596,7 +596,7 @@ create the central database and export several example suites to
 it:
 
 \begin{lstlisting}
-admin> create_cdb.sh
+admin> cylc admin create-cdb
 \end{lstlisting}
 (You must have installed cylc and configured your environment as above
 before doing this). To view the contents of the central database,
@@ -1543,7 +1543,7 @@ commenting it out of the dependency graph.
 
 \pagebreak
 
-\section{Dependency Graphs}
+\section{Suite.rc Dependency Graphs}
 \label{DependencyGraphs}
  
 Dependency graphs define the relationships between tasks in a suite. 
@@ -1606,7 +1606,6 @@ A(T-6) => A  # Model A restart trigger
 \label{fig-dep-eg-1}
 \end{figure}
 
-
 \subsection{Graph Syntax}
 
 Multiline graph strings may contain:
@@ -1645,6 +1644,31 @@ connections between tasks, but not the tasks themselves, must be unique.
                B => C
                B => D"""
 \end{lstlisting}
+
+\subsection{Task Valid Hours}
+
+The set of hours that a particular task can run at is defined by
+the hour list headings of the graph sections that the task appears
+in.
+
+\subsection{Time Offset Notation}
+
+\begin{lstlisting}
+# SUITE.RC
+[dependencies]
+    [[0,6,12,18]]
+        graph = "A => B"
+\end{lstlisting}
+
+This is short for ``let \lstinline=B(T)= trigger when \lstinline=A(T)=
+finishes successfully'', where T can be any task cycle time with the 
+hour.  The vast majority of tasks in a suite will likely only trigger
+off cotemporal (same cycle time) tasks, and when the upstream task
+finishes successfully. Therefore, to make graphs as clear and concise
+as possible we omit the explicit cycle time and trigger state notation
+for this default behaviour. {\em In fact the explicit notation is 
+not allowed at the moment.}
+
 
 \subsection{Task Finished Triggers}
 
