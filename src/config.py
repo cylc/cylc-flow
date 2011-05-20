@@ -631,7 +631,11 @@ class config( CylcConfigObj ):
 
             # '|' (OR) is not allowed on the right side
             if re.search( '\|', rgroup ):
-                raise SuiteConfigError, "ERROR: OR '|' conditionals are illegal on the right: " + rgroup
+                raise SuiteConfigError, "ERROR: OR '|' is not legal on the right side of dependencies: " + rgroup
+
+            # (T+/-N) offsets not allowed on the right side (as yet)
+            if re.search( '\(\s*T\s*[+-]\s*\d+\s*\)', rgroup ):
+                raise SuiteConfigError, "ERROR: time offsets are not legal on the right side of dependencies: " + rgroup
 
             # now split on '&' (AND) and generate corresponding pairs
             rights = re.split( '\s*&\s*', rgroup )
@@ -699,7 +703,11 @@ class config( CylcConfigObj ):
 
             # '|' (OR) is not allowed on the right side
             if re.search( '\|', rgroup ):
-                raise SuiteConfigError, "ERROR: OR '|' conditionals are illegal on the right: " + rgroup
+                raise SuiteConfigError, "ERROR: OR '|' is not legal on the right side of dependencies: " + rgroup
+
+            # (T+/-N) offsets not allowed on the right side (as yet)
+            if re.search( '\(\s*T\s*[+-]\s*\d+\s*\)', rgroup ):
+                raise SuiteConfigError, "ERROR: time offsets are not legal on the right side of dependencies: " + rgroup
 
             # now split on '&' (AND) and generate corresponding pairs
             rights = re.split( '\s*&\s*', rgroup )
