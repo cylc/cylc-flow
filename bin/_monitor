@@ -191,7 +191,7 @@ try:
                 elif state == "failed":
                     ctrl_start = "\033[1;37;41m"
                 else:
-                    # finished
+                    # succeeded
                     ctrl_start = ""
 
                 # construct the display string for this task

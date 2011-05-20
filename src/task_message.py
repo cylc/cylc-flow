@@ -107,8 +107,8 @@ class message(object):
             if self.mode == 'scheduler':
                 self.get_proxy().incoming( self.priority, self.msg )
 
-    def send_finished( self ):
-        self.send_sp( self.task_id + ' finished' )
+    def send_succeeded( self ):
+        self.send_sp( self.task_id + ' succeeded' )
 
     def send_started( self ):
         self.send_sp( self.task_id + ' started' )

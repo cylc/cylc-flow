@@ -130,7 +130,6 @@ for UMFILE in ${FILEIN}; do
     fi
 done
 
-# Task finished
-MSG="Finished"
+MSG="Done"
 echo "`date -u +%Y%m%d" "%T" "%Z`; $msgout $MSG"
 exit 0

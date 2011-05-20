@@ -328,11 +328,11 @@ The cylc forecast suite metascheduler.
         if self.readonly:
             reset_waiting_item.set_sensitive(False)
 
-        reset_finished_item = gtk.MenuItem( 'Reset to "finished"' )
-        items.append( reset_finished_item )
-        reset_finished_item.connect( 'activate', self.reset_task_state, task_id, 'finished' )
+        reset_succeeded_item = gtk.MenuItem( 'Reset to "succeeded"' )
+        items.append( reset_succeeded_item )
+        reset_succeeded_item.connect( 'activate', self.reset_task_state, task_id, 'succeeded' )
         if self.readonly:
-            reset_finished_item.set_sensitive(False)
+            reset_succeeded_item.set_sensitive(False)
 
         reset_failed_item = gtk.MenuItem( 'Reset to "failed"' )
         items.append( reset_failed_item )
@@ -493,7 +493,7 @@ The cylc forecast suite metascheduler.
         m = re.match( '^(\w+)%(\w+)$', dep )
         if m:
             #name, ctime = m.groups()
-            msg = dep + ' finished'
+            msg = dep + ' succeeded'
         else:
             msg = dep
 

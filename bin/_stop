@@ -14,7 +14,7 @@ parser = PromptOptionParser( """cylc [control] stop|shutdown [options] SUITE [ST
 2/ With [STOP], shut down a suite AFTER on of the following events:
     a/ all tasks have passed the cycle time STOP (YYYYMMDDHH)
     b/ the clock time has reached STOP (YYYY/MM/DD-HH:mm)
-    c/ the task STOP (TASK%YYYYMMDDHH) has finished running
+    c/ the task STOP (TASK%YYYYMMDDHH) has finished
 
 3/ With [--now], shut down immediately, regardless of tasks still running.
    WARNING: beware of orphaning tasks that are still running at shutdown;

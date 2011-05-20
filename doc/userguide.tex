@@ -294,7 +294,7 @@ typically also depend on its own previous instance for the model {\em
 background state} used in initializing the new forecast. Thus, as
 alluded to in Figure~\ref{fig-dep-two-linked}, task {\em a} could in
 principle start
-immediately its predecessor has finished.  Figure~\ref{fig-overlap}
+as soon as its predecessor has finished.  Figure~\ref{fig-overlap}
 shows, however, that starting a whole new cycle at this point is
 dangerous - it results in dependency violations in half of the tasks in
 the example suite. In fact the situation is even worse than this
@@ -1000,7 +1000,7 @@ The task wrapper \lstinline=cylc wrap=, which allows cylc to run
 unmodified existing commands, scripts, or programs (see {\em Task
 Wrapping: Using Existing Scripts As Cylc Tasks},
 Section~\ref{TaskWrapping}), automatically reports the task started, and
-finished or failed, to the suite.
+succeeded or failed, to the suite.
 
 \subsection{Graphing A Suite}
 
@@ -1627,7 +1627,7 @@ connections between tasks, but not the tasks themselves, must be unique.
 
 \begin{lstlisting}
 # SUITE.RC
-# B triggers when A is finished, then C and D trigger when B is finished:
+# B triggers if A succeeds, then C and D trigger if B succeeds:
     graph = "A => B => C & D"
 # which is equivalent to this:
     graph = """A => B => C
@@ -1663,7 +1663,7 @@ for this default behaviour. {\em In fact the explicit notation is
 not allowed at the moment.}
 
 
-\subsection{Task Finished Triggers}
+\subsection{Task Succeeded Triggers}
 
 If an upstream task name is unqualified, the downstream task will trigger 
 when it finishes (assuming it has no other triggers defined elsewhere in 
@@ -1691,7 +1691,7 @@ If you don't care whether a task finishes or fails,
 
 \begin{lstlisting}
 # SUITE.RC
-# B triggers once A has either FINISHED or FAILED:
+# B triggers once A has either SUCCEEDED or FAILED:
     graph = A | A:fail => B
 \end{lstlisting}
 
@@ -1874,7 +1874,7 @@ doesn't know the details of the previous cycle (if it did, it would
 be restarting from a previous state, not warm starting) so it still has
 to solve the bootstrapping problem to get the suite started. It does
 this by starting the suite with designated cold start tasks already in
-the finished state. In other words, the cold start tasks stand for the
+the succeeded state. In other words, the cold start tasks stand for the
 previous finished cycle, rather than actually running processes that
 masquerade as the previous cycle.
 
@@ -1906,7 +1906,7 @@ fails and can't be fixed. {\em This is why Task A, above, is declared to be
 one set of restart files, for the very next cycle, does not need to be
 declared sequential because this early triggering problem cannot arise.}
 Sequential tasks do not spawn a successor until they have
-finished (by default, tasks spawn as soon as they start running in
+succeeded (by default, tasks spawn as soon as they start running in
 order to get maximum functional parallelism in a suite) which
 means that A(T+6) will not be waiting around to trigger off an older
 predecessor while A(T) is still running. If A(T) fails though, the
@@ -1975,9 +1975,9 @@ you can trigger off the family as a whole.
             \item this causes each of member of the family to trigger
         \end{myitemize}
     \item a family's final state is not determined until all of its
-        members have finished or failed:
+        members have succeeded or failed:
         \begin{myitemize}
-            \item finished, if all members finished
+            \item succeeded, if all members succeeded
             \item failed, if one or more members failed   
         \end{myitemize}
 \end{myitemize}
@@ -2046,7 +2046,7 @@ effective dependencies on the right (plotted with
 \subsubsection{Family Failure Recovery} 
 
 If a family member fails it will enter the `failed' state, and once 
-all members have finished or failed, the family itself will enter
+all members have succeeded or failed, the family itself will enter
 the failed state. To recover from this, assuming it is a fixable
 problem,
 
@@ -2367,11 +2367,11 @@ file, or for the occasional bit of more complex environment manipulation
 than can't easily be achieved by exporting variables alone. However, use
 of this feature should be restricted to simple, fast, and reliable
 scripting, because it is executed outside of the task itself (i.e.\
-prior to the task started message, and after the task finished message).
+prior to the task started message, and after the task succeeded message).
 If pre-command scripting aborts, it will appear that the task is stuck 
 in the `submitted' state.  If post-command scripting fails, it will fail
 unnoticed by cylc (although evidence would be left in the task stdout or
-stderr logs) because the task would have reported in finished or failed
+stderr logs) because the task would have reported in succeeded or failed
 before the scripting ran. Anything non-trivial should really go into
 the task itself. A better way of scripting simple tasks entirely in the
 suite.rc file is to wrap multiple commands on the task commandline using
@@ -2458,7 +2458,7 @@ because the task wrapper can't know when the task is really finished.
 {\em Tasks with internal outputs that have to be reported complete 
 before the task is finished}, so that others can trigger off them
 early, cannot be wrapped because the wrapper only reports outputs
-complete when the task is finished. 
+complete when the task is succeeded. 
 
 Non-wrapped tasks have to be modified slightly for cylc, by inserting 
 calls to the cylc task messaging interface in appropriate places (see
@@ -2481,7 +2481,7 @@ running at once).
 
 As noted in the previous section, {\em explicit task messaging is only
 for the minority of tasks that cannot be wrapped, or those with internal
-outputs that have to be reported before the task is finished.} 
+outputs that have to be reported before the task is succeeded.} 
 To report startup, a script should call,
 \begin{lstlisting}
 # acquire a task lock and report that I've started
@@ -2505,11 +2505,11 @@ cylc task message "foo products uploaded for $CYCLE_TIME"
 # report all outputs completed at once:
 cylc task message --all-outputs-completed
 \end{lstlisting}
-To report finished or failed (e.g.):
+To report succeeded or failed (e.g.):
 \begin{lstlisting}
 if $FILES_FOUND; then
     # release my task lock and report success
-    cylc task finished
+    cylc task succeeded
     exit 0
 else
     # release my task lock and report failed
@@ -2545,7 +2545,7 @@ trap 'cylc task failed "error trapped"' ERR
 
 cylc task started
 mkdir /illegal/dir   # illegal operation: will be trapped and reported
-cylc task finished
+cylc task succeeded
 \end{lstlisting}
 
 Note that if you use \lstinline=set -e= to abort on error, any explicit 
@@ -2930,7 +2930,7 @@ the gcylc help panels should explain most available functionality too.
 %runahead limit (observe task X in the userguide example suite).
 %Thereafter, each task will, of its own accord, submit to run as soon as
 %its prerequisites have been satisfied by other tasks already running or
-%finished in the suite (and trigger time etc.).  Each task spawns a
+%succeeded in the suite (and trigger time etc.).  Each task spawns a
 %successor at a point in its lifecycle that depends on its type: tied
 %tasks spawn has soon as their restart prerequisites have been completed,
 %and free tasks spawn at the instant they start running.  Once a task
@@ -2989,12 +2989,12 @@ the gcylc help panels should explain most available functionality too.
 %2010/03/28 00:33:52 INFO main.C - [2010010400] storm surge fields ready for 2010010400
 %2010/03/28 00:33:52 INFO main.A - [2010010412] surface wind fields ready for 2010010412
 %2010/03/28 00:33:52 INFO main.C - [2010010400] C%2010010400 completed
-%2010/03/28 00:33:52 INFO main.C - [2010010400] C%2010010400 finished
+%2010/03/28 00:33:52 INFO main.C - [2010010400] C%2010010400 succeeded
 %2010/03/28 00:33:52 INFO main.A - [2010010412] surface pressure field ready for 2010010412
 %2010/03/28 00:33:52 INFO main.A - [2010010412] level forecast fields ready for 2010010412
 %2010/03/28 00:33:53 INFO main.A - [2010010412] A%2010010412 completed
-%2010/03/28 00:33:53 INFO main.A - [2010010412] A%2010010412 finished
-%2010/03/28 00:33:53 CRITICAL main - ALL RUNNING TASKS FINISHED
+%2010/03/28 00:33:53 INFO main.A - [2010010412] A%2010010412 succeeded
+%2010/03/28 00:33:53 CRITICAL main - ALL RUNNING TASKS SUCCEEDED
 %\end{lstlisting}
 %
 %\lstset{language=,

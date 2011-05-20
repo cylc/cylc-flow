@@ -27,7 +27,7 @@ class nopid(object):
             # already spawned
             return False
 
-        if self.state.is_running() or self.state.is_finished():
+        if self.state.is_running() or self.state.is_succeeded():
             # see documentation above
             return True
         else:

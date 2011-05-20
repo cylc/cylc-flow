@@ -5,7 +5,7 @@
 import re, sys
 
 # label1 => "foo ready for $CYCLE_TIME"
-# label2 => "bar%$CYCLE_TIME finished"
+# label2 => "bar%$CYCLE_TIME succeeded"
 # expr   => "( [label1] or [label2] )"
 
 class conditional_prerequisites(object):

@@ -263,7 +263,7 @@ class scheduler(object):
         task.task.global_hook_scripts[ 'submission failed' ] = self.config['task submission failed hook script']
         task.task.global_hook_scripts[ 'started'   ]         = self.config['task started hook script'  ]
         task.task.global_hook_scripts[ 'warning'   ]         = self.config['task warning hook script'  ]
-        task.task.global_hook_scripts[ 'finished'  ]         = self.config['task finished hook script' ]
+        task.task.global_hook_scripts[ 'succeeded' ]         = self.config['task succeeded hook script' ]
         task.task.global_hook_scripts[ 'failed'    ]         = self.config['task failed hook script'   ]
         task.task.global_hook_scripts[ 'timeout'   ]         = self.config['task timeout hook script'  ]
         # GLOBAL TIMEOUT HOOK SCRIPTS
@@ -456,16 +456,16 @@ class scheduler(object):
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     print "MAIN LOOP TIME TAKEN:", seconds, "seconds"
 
-            # SHUT DOWN IF ALL TASKS ARE FINISHED OR STOPPED
+            # SHUT DOWN IF ALL TASKS ARE SUCCEEDED OR STOPPED
             stop_now = True  # assume stopping
             for itask in self.tasks:
                 # find any reason not to stop
-                if not itask.state.is_finished() and not itask.state.is_stopped():
+                if not itask.state.is_succeeded() and not itask.state.is_stopped():
                     # don't stop if any tasks are waiting, submitted, or running
                     stop_now = False
                     break
-                if itask.state.is_finished() and not itask.state.has_spawned():
-                    # Check for tasks that are finished but not spawned.
+                if itask.state.is_succeeded() and not itask.state.has_spawned():
+                    # Check for tasks that are succeeded but not spawned.
                     # If they are older than the suite stop time they
                     # must be about to spawn. Otherwise they must be 
                     # stalled at the runahead limit, in which case we
@@ -505,7 +505,7 @@ class scheduler(object):
                 stop = True
                 for itask in self.tasks:
                     if itask.name == name:
-                        if not itask.state.is_finished():
+                        if not itask.state.is_succeeded():
                             iname, ictime = itask.id.split('%')
                             if int(ictime) <= int(ctime):
                                 stop = False
@@ -693,14 +693,14 @@ class scheduler(object):
                 self.broker.negotiate( itask )
 
         for itask in self.tasks:
-            # This decides whether task families have finished or failed
+            # This decides whether task families have succeeded or failed
             # based on the state of their members.
-            if itask.state.is_finished() or itask.state.is_failed():
+            if itask.state.is_succeeded() or itask.state.is_failed():
                 # already decided
                 continue
             if not itask.not_fully_satisfied():
                 # families are not fully satisfied until all their
-                # members have finished or failed. Only then can
+                # members have succeeded or failed. Only then can
                 # we decide on the final family state, by checking
                 # on its special family member prerequisites.
                 itask.check_requisites()
@@ -844,10 +844,10 @@ class scheduler(object):
 
         return [ all_satisfied, earliest_unsatisfied ]
 
-    def earliest_unfinished( self ):
-        # find the earliest unfinished task
-        all_finished = True
-        earliest_unfinished = '9999887766'
+    def earliest_unsucceeded( self ):
+        # find the earliest unsucceeded task
+        all_succeeded = True
+        earliest_unsucceeded = '9999887766'
         for itask in self.tasks:
             #if itask.state.is_failed():  # uncomment for earliest NON-FAILED
             #    continue
@@ -856,18 +856,18 @@ class scheduler(object):
             if hasattr( itask, 'daemon_task' ):
                 continue
 
-            if not itask.state.is_finished():
-                all_finished = False
-                if not earliest_unfinished:
-                    earliest_unfinished = itask.c_time
-                elif int( itask.c_time ) < int( earliest_unfinished ):
-                    earliest_unfinished = itask.c_time
+            if not itask.state.is_succeeded():
+                all_succeeded = False
+                if not earliest_unsucceeded:
+                    earliest_unsucceeded = itask.c_time
+                elif int( itask.c_time ) < int( earliest_unsucceeded ):
+                    earliest_unsucceeded = itask.c_time
 
-        return [ all_finished, earliest_unfinished ]
+        return [ all_succeeded, earliest_unsucceeded ]
 
     def cleanup( self ):
         # Delete tasks that are no longer needed, i.e. those that
-        # spawned, finished, AND are no longer needed to satisfy
+        # spawned, succeeded, AND are no longer needed to satisfy
         # the prerequisites of other tasks.
         #--
 
@@ -912,15 +912,15 @@ class scheduler(object):
     def cleanup_non_intercycle( self, failed_rt ):
         # A/ Non INTERCYCLE tasks by definition have ONLY COTEMPORAL
         # DOWNSTREAM DEPENDANTS). i.e. they are no longer needed once
-        # their cotemporal peers have finished AND there are no
+        # their cotemporal peers have succeeded AND there are no
         # unspawned tasks with earlier cycle times. So:
         #
         # (i) FREE TASKS are spent if they are:
-        #    spawned, finished, no earlier unspawned tasks.
+        #    spawned, succeeded, no earlier unspawned tasks.
         #
         # (ii) TIED TASKS are spent if they are:
-        #    spawned, finished, no earlier unspawned tasks, AND there is
-        #    at least one subsequent instance that is FINISHED
+        #    spawned, succeeded, no earlier unspawned tasks, AND there is
+        #    at least one subsequent instance that is SUCCEEDED
         #    ('satisfied' would do but that allows elimination of a tied
         #    task whose successor could subsequently fail, thus
         #    requiring manual task reset after a restart).
@@ -944,7 +944,7 @@ class scheduler(object):
                 # task has not spawned yet, or will never spawn (oneoff tasks)
                 continue
             if not itask.done():
-                # task has not finished yet
+                # task has not succeeded yet
                 continue
 
             #if itask.c_time in failed_rt.keys():
@@ -966,16 +966,16 @@ class scheduler(object):
                 continue
 
             if hasattr( itask, 'is_tied' ):
-                # Is there a later finished instance of the same task?
-                # It must be FINISHED in case the current task fails and
+                # Is there a later succeeded instance of the same task?
+                # It must be SUCCEEDED in case the current task fails and
                 # cannot be fixed => the task's manually inserted
                 # post-gap successor will need to be satisfied by said
-                # finished task. 
+                # succeeded task. 
                 there_is = False
                 for t in self.tasks:
                     if t.name == itask.name and \
                             int( t.c_time ) > int( itask.c_time ) and \
-                            t.state.is_finished():
+                            t.state.is_succeeded():
                                 there_is = True
                                 break
                 if not there_is:
@@ -990,11 +990,11 @@ class scheduler(object):
 
     def cleanup_generic( self, failed_rt ):
         # B/ THE GENERAL CASE
-        # No finished-and-spawned task that is later than the *EARLIEST
+        # No succeeded-and-spawned task that is later than the *EARLIEST
         # UNSATISFIED* task can be deleted yet because it may still be
         # needed to satisfy new tasks that may appear when earlier (but
         # currently unsatisfied) tasks spawn. Therefore only
-        # finished-and-spawned tasks that are earlier than the
+        # succeeded-and-spawned tasks that are earlier than the
         # earliest unsatisfied task are candidates for deletion. Of
         # these, we can delete a task only IF another spent instance of
         # it exists at a later time (but still earlier than the earliest
@@ -1004,25 +1004,25 @@ class scheduler(object):
         # at restart: just before shutdown, when all running tasks have
         # finished, we briefly have 'all tasks satisfied', which allows 
         # deletion without the 'earliest unsatisfied' limit, and can
-        # result in deletion of finished tasks that are still required
+        # result in deletion of succeeded tasks that are still required
         # to satisfy others after a restart.
 
         # THEREFORE the correct deletion cutoff is the earlier of:
-        # *EARLIEST UNFINISHED*  OR *EARLIEST UNSPAWNED*, the latter
+        # *EARLIEST UNSUCCEEDED*  OR *EARLIEST UNSPAWNED*, the latter
         # being required to account for sequential (and potentially
         # tied) tasks that can spawn only after finishing - thus there
-        # may be tasks in the system that have finished but have not yet
+        # may be tasks in the system that have succeeded but have not yet
         # spawned a successor that could still depend on the deletion
         # candidate.  The only way to use 'earliest unsatisfied'
         # over a suite restart would be to record the state of all
         # prerequisites for each task in the state dump (which may be a
         # good thing to do, eventually!)
 
-        [ all_finished, earliest_unfinished ] = self.earliest_unfinished()
-        if all_finished:
-            self.log.debug( "all tasks finished" )
+        [ all_succeeded, earliest_unsucceeded ] = self.earliest_unsucceeded()
+        if all_succeeded:
+            self.log.debug( "all tasks succeeded" )
         else:
-            self.log.debug( "earliest unfinished: " + earliest_unfinished )
+            self.log.debug( "earliest unsucceeded: " + earliest_unsucceeded )
 
         # time of the earliest unspawned task
         [all_spawned, earliest_unspawned] = self.earliest_unspawned()
@@ -1031,7 +1031,7 @@ class scheduler(object):
         else:
             self.log.debug( "earliest unspawned task at: " + earliest_unspawned )
 
-        cutoff = int( earliest_unfinished )
+        cutoff = int( earliest_unsucceeded )
         if int( earliest_unspawned ) < cutoff:
             cutoff = int( earliest_unspawned )
         self.log.debug( "cleanup cutoff: " + str(cutoff) )
@@ -1087,7 +1087,7 @@ class scheduler(object):
             self.trash( itask, 'general' )
 
     def reset_task_state( self, task_id, state ):
-        if state not in [ 'ready', 'waiting', 'finished', 'failed', 'stopped' ]:
+        if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'stopped' ]:
             raise TaskStateError, 'Illegal reset state: ' + state
         # find the task to reset
         found = False
@@ -1107,8 +1107,8 @@ class scheduler(object):
             itask.reset_state_ready()
         elif state == 'waiting':
             itask.reset_state_waiting()
-        elif state == 'finished':
-            itask.reset_state_finished()
+        elif state == 'succeeded':
+            itask.reset_state_succeeded()
         elif state == 'failed':
             itask.reset_state_failed()
         elif state == 'stopped':
@@ -1211,7 +1211,7 @@ class scheduler(object):
         # involves tasks that do not even exist yet within the pool.
 
         # Method: trigger the target task *virtually* (i.e. without
-        # running the real task) by: setting it to the finished state,
+        # running the real task) by: setting it to the succeeded state,
         # setting all of its outputs completed, and forcing it to spawn.
         # (this is equivalent to instantaneous successful completion as
         # far as cylc is concerned). Then enter the normal dependency
@@ -1242,8 +1242,8 @@ class scheduler(object):
         for itask in self.tasks:
             # Find the target task
             if itask.id == id:
-                # set it finished
-                itask.set_finished()
+                # set it succeeded
+                itask.set_succeeded()
                 # force it to spawn
                 foo = self.force_spawn( itask )
                 if foo:
@@ -1260,7 +1260,7 @@ class scheduler(object):
             for itask in self.tasks:
                 if itask.ready_to_run() and int( itask.c_time ) <= int( stop ):
                     something_triggered = True
-                    itask.set_finished()
+                    itask.set_succeeded()
                     foo = self.force_spawn( itask )
                     if foo:
                         spawn.append( foo )

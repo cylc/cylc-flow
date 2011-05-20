@@ -669,7 +669,7 @@ def userguide( w, graph=False ):
             "provides a quick visual overview of the current state "
             "of the suite, with colours to indicate task state: "
             "blue=waiting, orange=submitted, green=running, "
-            "gray=finished, red=failed, yellow=stopped (held). "
+            "gray=succeeded, red=failed, yellow=stopped (held). "
             "The lower panel is a cycle-time tree view "
             "with more detail on each task. You can filter on task state or task "
             "name to quickly find the tasks you're interested in. " )
@@ -781,7 +781,7 @@ def userguide( w, graph=False ):
             "the hold is released)." )
     update_tb( tb, "\n o Reset to 'waiting': ", [bold])
     update_tb( tb, "Set all of a task's prerequisites unsatisfied." )
-    update_tb( tb, "\n o Reset to 'finished': ", [bold])
+    update_tb( tb, "\n o Reset to 'succeeded': ", [bold])
     update_tb( tb, "Set all of a task's outputs completed." )
     update_tb( tb, "\n o Reset to 'failed': ", [bold])
     update_tb( tb, "Put the task in the 'failed' state." )

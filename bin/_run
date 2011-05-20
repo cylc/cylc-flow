@@ -46,7 +46,7 @@ next valid cycle time thereafter for the task.
 run - in which case a 'cylc restart' may be an option too) or that files
 required from previous cycles have been put in place by some external
 means. Startup is as for a cold start, except that designated
-cold start tasks are inserted in the 'finished' state (i.e. outputs
+cold start tasks are inserted in the 'succeeded' state (i.e. outputs
 completed). The cold start task list must be defined in the suite config
 file:
   SUITE.RC: [special tasks] -> coldstart = task1, task2, ...
@@ -147,8 +147,8 @@ Arguments:
             # (startup=True is only for coldstart)
             itask = self.config.get_task_proxy( name, self.start_time, 'waiting', stopctime=None, startup=False )
             if name in coldstart_tasks:
-                itask.log( 'WARNING', "warm start: starting in finished state" )
-                itask.state.set_status( 'finished' )
+                itask.log( 'WARNING', "warm start: starting in succeeded state" )
+                itask.state.set_status( 'succeeded' )
                 itask.prerequisites.set_all_satisfied()
                 itask.outputs.set_all_complete()
             if name in startup_tasks:

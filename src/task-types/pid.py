@@ -49,8 +49,8 @@ class pid(object):
             return False
         if self.state.is_waiting() or self.state.is_submitted():
             return False
-        if self.state.is_finished():
-            # always spawn a finished task
+        if self.state.is_succeeded():
+            # always spawn a succeeded task
             return True
         ready = False
         if self.state.is_running() or self.state.is_failed(): 
@@ -77,7 +77,7 @@ class pid(object):
             if task.c_time != nx_ct:
                 continue
             # found my successor
-            if task.state.is_finished():
+            if task.state.is_succeeded():
                 return False
             else:
                 return True

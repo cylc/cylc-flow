@@ -15,9 +15,9 @@ class task_lock(object):
     # well as to stdout, without causing cylc to complain that it has
     # received a message from a task that has not started running yet.
     # Similarly, the lock release message is only echoed to stdout
-    # because it is necessarily emitted after the task finished message.
+    # because it is necessarily emitted after the task succeeded message.
     # (a cylc message after that time will cause cylc to complain that
-    # it has received a message from a task that has finished running). 
+    # it has received a message from a task that has succeeded). 
 
     def __init__( self, task_id=None, suite=None, host=None, port=None ):
         self.use_lock_server = False

@@ -51,7 +51,7 @@ class taskdef(object):
 
         self.hook_scripts = {}
         for event in [ 'submitted', 'submission failed', 'started', 
-                'warning', 'finished', 'failed', 'timeout' ]:
+                'warning', 'succeeded', 'failed', 'timeout' ]:
             self.hook_scripts[ event ] = None
 
         self.timeouts = {}
@@ -186,14 +186,6 @@ class taskdef(object):
         #tclass.reset_execution_timeout_on_incoming_messages = self.reset_execution_timeout_on_incoming_messages
 
         tclass.hook_scripts = self.hook_scripts
-        #tclass.task_submitted_hook = self.task_submitted_hook
-        #tclass.task_started_hook = self.task_started_hook
-        #tclass.task_finished_hook = self.task_finished_hook
-        #tclass.task_failed_hook = self.task_failed_hook
-        #tclass.task_warning_hook = self.task_warning_hook
-        #tclass.task_submission_failed_hook = self.task_submission_failed_hook
-        #tclass.task_timeout_hook = self.task_timeout_hook
-
         tclass.remote_host = self.host
 
         # TO DO: can this be moved into task base class?
@@ -298,18 +290,18 @@ class taskdef(object):
                 sself.prerequisites.add_requisites( foo )
 
             if self.type == 'family':
-                # familyfinished prerequisites (all satisfied => all
+                # familysucceeded prerequisites (all satisfied => all
                 # members finished successfully).
-                sself.familyfinished_prerequisites = plain_prerequisites( sself.id )
+                sself.familysucceeded_prerequisites = plain_prerequisites( sself.id )
                 for member in self.members:
-                    sself.familyfinished_prerequisites.add( member + '%' + sself.c_time + ' finished' )
+                    sself.familysucceeded_prerequisites.add( member + '%' + sself.c_time + ' succeeded' )
                 # familyOR prerequisites (A|A:fail and B|B:fail and ...)
-                # all satisfied => all members have either finished or failed.
+                # all satisfied => all members have either succeeded or failed.
                 sself.familyOR_prerequisites = conditional_prerequisites( sself.id )
                 expr = ''
                 for member in self.members:
                     expr += '( ' + member + ' | ' + member + '_fail ) & '
-                    sself.familyOR_prerequisites.add( member + '%' + sself.c_time + ' finished', member )
+                    sself.familyOR_prerequisites.add( member + '%' + sself.c_time + ' succeeded', member )
                     sself.familyOR_prerequisites.add( member + '%' + sself.c_time + ' failed', member + '_fail' )
                 sself.familyOR_prerequisites.set_condition( expr.rstrip('& ') )
 

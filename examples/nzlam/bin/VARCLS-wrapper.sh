@@ -1,7 +1,7 @@
 #!/bin/bash
 
-set -e; trap 'cylc task-failed "error trapped"' ERR 
-cylc task-started || exit 1
+set -e; trap 'cylc task failed "error trapped"' ERR 
+cylc task started || exit 1
 
 # A custom cylc wrapper for:
 #   VAR 26v1.0 ConfigureLS.
@@ -50,7 +50,7 @@ for REP in $VARCLS_WRAPPER_OPTIONAL_REPLACEMENTS; do
         fi
     done
     if ! $FOUND; then
-        cylc task-failed "$REP is not a known OPS wrapper replacement variable"
+        cylc task failed "$REP is not a known OPS wrapper replacement variable"
         exit 1
     else 
         eval REPLACE_${REP}=true
@@ -73,10 +73,10 @@ done
 # changed job ID in the UI and forgot to clear out the old job).
 N_JOBS=$( ls $VARUI_JOB_DIR/Var_*_init | wc -l )
 if (( N_JOBS == 0 )); then
-    cylc task-failed "No processed job found in $VARUI_JOB_DIR"
+    cylc task failed "No processed job found in $VARUI_JOB_DIR"
     exit 1
 elif (( N_JOBS > 1 )); then 
-    cylc task-failed "More than one processed job found in $VARUI_JOB_DIR"
+    cylc task failed "More than one processed job found in $VARUI_JOB_DIR"
     exit 1
 fi
 
@@ -99,7 +99,7 @@ JOB_COMP=$JOB_DIR/VarComp_$JOBID
 
 # is this a ConfigureLS job?
 if ! grep 'program="VarScr_ConfigureLS"' $JOB_COMP > /dev/null 2>&1; then
-    cylc task-failed 'This is not a VAR ConfigureLS job'
+    cylc task failed 'This is not a VAR ConfigureLS job'
     exit 1
 fi
 
@@ -134,7 +134,7 @@ $REPLACE_VERT_LEV && \
 
 # insert final cylc calls in $JOB_FINAL
 perl -pi -e "s@(job completed: rc=.*)@\1
-# MINIMAL CYLC ENVIRONMENT FOR ACCESS TO cylc task-message
+# MINIMAL CYLC ENVIRONMENT FOR ACCESS TO cylc task message
 export CYLC_SUITE_NAME=\"$CYLC_SUITE_NAME\"
 export CYLC_SUITE_OWNER=\"$CYLC_SUITE_OWNER\"
 export CYLC_SUITE_HOST=\"$CYLC_SUITE_HOST\"
@@ -148,11 +148,11 @@ export CYLC_DIR=\"$CYLC_DIR\"
 . $CYLC_DIR/environment.sh
 
 if (( RC != 0 )); then
-    cylc task-failed 'CYLC VAR WRAPPER: Job Failed'
+    cylc task failed 'CYLC VAR WRAPPER: Job Failed'
 else
     echo CYLC VAR WRAPPER: Job Finished
-    cylc task-message --all-outputs-completed
-    cylc task-finished
+    cylc task message --all-outputs-completed
+    cylc task succeeded
 fi
 @" $JOB_FINAL
 

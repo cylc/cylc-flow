@@ -408,7 +408,7 @@ class config( CylcConfigObj ):
                 else:
                     raise SuiteConfigError, "ERROR: Task '" + lnode.name + "' does not define output '" + lnode.output  + "'"
         else:
-            trigger = task_name + '%$(CYCLE_TIME) finished'
+            trigger = task_name + '%$(CYCLE_TIME) succeeded'
 
         # now adjust for time offset
         if offset:
@@ -1124,7 +1124,7 @@ class config( CylcConfigObj ):
         taskd.hook_scripts[ 'submission failed' ] = taskconfig['task submission failed hook script']
         taskd.hook_scripts[ 'started'   ]         = taskconfig['task started hook script'  ]
         taskd.hook_scripts[ 'warning'   ]         = taskconfig['task warning hook script'  ]
-        taskd.hook_scripts[ 'finished'  ]         = taskconfig['task finished hook script' ]
+        taskd.hook_scripts[ 'succeeded' ]         = taskconfig['task succeeded hook script' ]
         taskd.hook_scripts[ 'failed'    ]         = taskconfig['task failed hook script'   ]
         taskd.hook_scripts[ 'timeout'   ]         = taskconfig['task timeout hook script'  ]
         # task-specific timeout hook scripts

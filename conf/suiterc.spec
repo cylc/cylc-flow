@@ -209,7 +209,7 @@ job submission log directory = string( default='$HOME/CylcLogs/$CYLC_SUITE_GROUP
 task submitted hook script = string( default=None )
 task submission failed hook script = string( default=None )
 task started hook script = string( default=None )
-task finished hook script = string( default=None )
+task succeeded hook script = string( default=None )
 task failed hook script = string( default=None )
 task warning hook script = string( default=None )
 task timeout hook script = string( default=None )
@@ -223,7 +223,7 @@ task timeout hook script = string( default=None )
 #>\item {\bf task submitted hook script}
 #>\item {\bf task submission failed hook script}
 #>\item {\bf task started hook script}
-#>\item {\bf task finished hook script}
+#>\item {\bf task succeeded hook script}
 #>\item {\bf task failed hook script}
 #>\item {\bf task timeout hook script}
 #>\end{myitemize}
@@ -305,8 +305,8 @@ post-command scripting = string( default='' )
 #> immediately {\em after} the task command. If 
 #> used, this scripting should be simple and reliable (anything
 #> complex should go in the task itself) because it executes after the 
-#> ``task finished'' message (thus an error here will not register as a task
-#> failure - it will appear that the task finished successfully).
+#> ``task succeeded'' message (thus an error here will not register as a task
+#> failure - it will appear that the task succeeded).
 #> If task-specific post-command scripting is also defined for particular
 #> tasks, the global scripting will be executed first.
 #>\begin{myitemize}
@@ -469,7 +469,7 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #> By default, cylc tasks spawn a successor at the instant they start
 #> running, so that successive instances of the same task can run in
 #> parallel if the opportunity arises. {\em Sequential tasks}, however,
-#> will not spawn a successor until they have finished running. This
+#> will not spawn a successor until they have finished successfully. This
 #> should be used for (a) {\em tasks that cannot run in parallel with
 #> their own previous instances} because they would somehow interfere with each
 #> other (use cycle time in all I/O paths to avoid this); and (b)
@@ -697,7 +697,7 @@ __many__ = string
 #> immediately {\em after} the task command. If 
 #> used, this scripting should be simple and reliable (anything
 #> complex should go in the task itself) because it executes after the 
-#> ``task finished'' message (thus an abort here will not register as a task
+#> ``task succeeded'' message (thus an abort here will not register as a task
 #> failure - it will appear that the task finished successfully).
 #> If global post-command scripting is also defined, it will be executed
 #> first.
@@ -739,7 +739,7 @@ __many__ = string
     task submitted hook script = string( default=None )
     task submission failed hook script = string( default=None )
     task started hook script = string( default=None )
-    task finished hook script = string( default=None )
+    task succeeded hook script = string( default=None )
     task failed hook script = string( default=None )
     task warning hook script = string( default=None )
     task timeout hook script = string( default=None )
@@ -754,7 +754,7 @@ __many__ = string
 #>\item {\bf task submitted hook script}
 #>\item {\bf task submission failed hook script}
 #>\item {\bf task started hook script}
-#>\item {\bf task finished hook script}
+#>\item {\bf task succeeded hook script}
 #>\item {\bf task failed hook script}
 #>\item {\bf task timeout hook script}
 #>\end{myitemize}

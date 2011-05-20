@@ -16,7 +16,7 @@ dump file.
 
 class task_state(object):
 
-    allowed_status = [ 'waiting', 'submitted', 'running', 'finished', 'failed', 'stopped', 'neutral' ]
+    allowed_status = [ 'waiting', 'submitted', 'running', 'succeeded', 'failed', 'stopped', 'neutral' ]
     # INTERNALLY TO THIS CLASS, SPAWNED STATUS IS A STRING
     allowed_bool = [ 'true', 'false' ]
 
@@ -59,8 +59,8 @@ class task_state(object):
         else:
             return False
 
-    def is_finished( self ):
-        if self.state[ 'status' ] == 'finished':
+    def is_succeeded( self ):
+        if self.state[ 'status' ] == 'succeeded':
             return True
         else:
             return False
@@ -142,9 +142,9 @@ class task_state(object):
 
         if input in task_state.allowed_status:
             state[ 'status' ] = input
-            # ASSUME THAT ONLY FINISHED TASKS, AT STARTUP, HAVE spawned 
+            # ASSUME THAT ONLY succeeded TASKS, AT STARTUP, HAVE spawned 
             # (in fact this will only be used to start tasks in 'waiting')
-            if input == 'finished':
+            if input == 'succeeded':
                 state[ 'spawned' ] = 'true'
             else:
                 state[ 'spawned' ] = 'false'

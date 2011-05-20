@@ -21,13 +21,13 @@
 
 # THIS IS A WRAPPED CYLC TASK SCRIPT
 
-set -e; trap 'cylc task-message -p CRITICAL "error trapped"' ERR
+set -e; trap 'cylc task message -p CRITICAL "error trapped"' ERR
 
 # command line args
 KEEP=false
 FORCE=false
 [[ $# > 2 ]] && {
-    cylc task-message -p CRITICAL "too many arguments"
+    cylc task message -p CRITICAL "too many arguments"
     exit 1
 }
 [[ $@ = *--keep*  ]] && KEEP=true
@@ -45,7 +45,7 @@ WORKING_DIR=$TMPDIR
 mkdir -p $( dirname $ALABC_FILE )
 
 if [[ -f $ALABC_FILE ]] && ! $FORCE; then
-    cylc task-message "finished (ALABC file already exists)"
+    cylc task message "succeeded (ALABC file already exists)"
     exit 0
 fi
 
@@ -68,14 +68,14 @@ for FILE in $FILE_LIST; do
         gunzip -c $F_IN > $FILE
     else
         # report failed
-        cylc task-message -p CRITICAL "file not found $F_IN"
+        cylc task message -p CRITICAL "file not found $F_IN"
         exit 1
     fi
 done
 
 # run makebc to generate output ALABC file
 makebc -n $MAKEBC_NAMELIST -i $FILE_LIST -o $ALABC_FILE || {
-    cylc task-message -p CRITICAL "makebc failed"
+    cylc task message -p CRITICAL "makebc failed"
     exit 1
 }
 
@@ -87,4 +87,4 @@ else
     rm $FILE_LIST
 fi
 
-# FINISHED
+# EOF

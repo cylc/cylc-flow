@@ -102,7 +102,7 @@ class updater(threading.Thread):
         self.running_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-running-glow.xpm" )
         self.failed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-failed-glow.xpm" )
         self.stopped_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-stopped-glow.xpm" )
-        self.finished_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-finished.xpm" )
+        self.succeeded_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-finished.xpm" )
 
         self.empty_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-empty.xpm" )
 
@@ -397,8 +397,8 @@ class updater(threading.Thread):
                         state_list.append( self.submitted_led )
                     elif state == 'running':
                         state_list.append( self.running_led )
-                    elif state == 'finished':
-                        state_list.append( self.finished_led )
+                    elif state == 'succeeded':
+                        state_list.append( self.succeeded_led )
                     elif state == 'failed':
                         state_list.append( self.failed_led )
                     elif state == 'stopped':

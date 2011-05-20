@@ -199,7 +199,7 @@ class xupdater(threading.Thread):
         self.graphw.add_node( 'waiting' )
         self.graphw.add_node( 'submitted' )
         self.graphw.add_node( 'running' )
-        self.graphw.add_node( 'finished' )
+        self.graphw.add_node( 'succeeded' )
         self.graphw.add_node( 'failed' )
         self.graphw.add_node( 'stopped' )
         self.graphw.add_node( 'base' )
@@ -207,12 +207,12 @@ class xupdater(threading.Thread):
         waiting = self.graphw.get_node( 'waiting' )
         submitted = self.graphw.get_node( 'submitted' )
         running = self.graphw.get_node( 'running' )
-        finished = self.graphw.get_node( 'finished' )
+        succeeded = self.graphw.get_node( 'succeeded' )
         failed = self.graphw.get_node( 'failed' )
         stopped = self.graphw.get_node( 'stopped' )
         base = self.graphw.get_node( 'base' )
 
-        for node in [ waiting, submitted, running, finished, failed, stopped, base ]:
+        for node in [ waiting, submitted, running, succeeded, failed, stopped, base ]:
             node.attr['style'] = 'filled'
             node.attr['shape'] = 'ellipse'
             node.attr['URL'] = 'KEY'
@@ -223,8 +223,8 @@ class xupdater(threading.Thread):
         submitted.attr['color'] = 'darkorange3'
         running.attr['fillcolor'] = 'green'
         running.attr['color'] = 'darkgreen'
-        finished.attr['fillcolor'] = 'grey'
-        finished.attr['color'] = 'black'
+        succeeded.attr['fillcolor'] = 'grey'
+        succeeded.attr['color'] = 'black'
         failed.attr['fillcolor'] = 'red'
         failed.attr['color'] = 'firebrick3'
         base.attr['fillcolor'] = 'cornsilk'
@@ -235,8 +235,8 @@ class xupdater(threading.Thread):
         self.graphw.add_edge( base, waiting, autoURL=False, style='invis')
         self.graphw.add_edge( waiting, submitted, autoURL=False, style='invis')
         self.graphw.add_edge( submitted, running, autoURL=False, style='invis')
-        self.graphw.add_edge( running, finished, autoURL=False, style='invis')
-        self.graphw.add_edge( finished, failed, autoURL=False, style='invis')
+        self.graphw.add_edge( running, succeeded, autoURL=False, style='invis')
+        self.graphw.add_edge( succeeded, failed, autoURL=False, style='invis')
         self.graphw.add_edge( failed, stopped, autoURL=False, style='invis')
 
     def set_live_node_attr( self, node, id, shape=None ):
@@ -251,7 +251,7 @@ class xupdater(threading.Thread):
         elif self.state_summary[id]['state'] == 'waiting':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'cadetblue2'
-        elif self.state_summary[id]['state'] == 'finished':
+        elif self.state_summary[id]['state'] == 'succeeded':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'grey'
         elif self.state_summary[id]['state'] == 'failed':

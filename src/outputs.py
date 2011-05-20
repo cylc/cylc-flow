@@ -20,7 +20,7 @@ class outputs( requisites ):
     def __init__( self, owner_id ):
         self.ordered = [] 
         requisites.__init__( self, owner_id )
-        # automatically define special 'started' and 'finished' outputs
+        # automatically define special 'started' and 'succeeded' outputs
 
     def add( self, message ):
         # Add a new unsatisfied output message for time t
@@ -41,7 +41,7 @@ class outputs( requisites ):
         message = self.owner_id + ' started'
         self.satisfied[ message ] = False
         self.ordered.insert(0, message )
-        self.add( self.owner_id + ' finished' )
+        self.add( self.owner_id + ' succeeded' )
 
     def get_ordered( self ):
         return self.ordered

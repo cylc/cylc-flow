@@ -31,4 +31,4 @@ if not cylc_mode.mode().is_raw():
         msg = "FAILED TO CONNECT TO A LOCKSERVER"
         message( msg, 'WARNING' ).send()
  
-message().send_finished()
+message().send_succeeded()

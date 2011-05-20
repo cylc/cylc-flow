@@ -12,7 +12,7 @@ state_changed = True
 
 # Cycling tasks: cycle time also required for a cold start. Init with: 
 #  (1) cycle time
-#  (2) state ('waiting', 'submitted', 'running', and 'finished' or 'failed')
+#  (2) state ('waiting', 'submitted', 'running', and 'succeeded' or 'failed')
 
 # For a restart from previous state, however, some tasks may require
 # additional state information to be stored in the state dump file.
@@ -36,9 +36,9 @@ class cycling( task ):
     
     intercycle = False
     # This is a statement that the task has only cotemporal dependants
-    # and as such can be deleted as soon as there are no non-finished
+    # and as such can be deleted as soon as there are no unsucceeded
     # tasks with cycle times equal to or older than its own cycle time
-    # (prior to that we can't be sure that an older non-finished 
+    # (prior to that we can't be sure that an older unsucceeded 
     # task won't give rise to a new task that does depend on the task
     # we're interested in). 
 

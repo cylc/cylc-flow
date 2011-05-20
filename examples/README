@@ -1,4 +1,5 @@
 This directory contains the example suites packaged with cylc.
 
-User's should maintain their own suites in revision control repositories
-with suite versions tagged for compatibility with particular cylc versions.
+It is suggested that users maintain their own suites in revision control
+repositories with version tagging for compatibility with particular cylc
+versions.

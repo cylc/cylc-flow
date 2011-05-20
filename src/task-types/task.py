@@ -45,7 +45,7 @@ def displaytd( td ):
 # NOTE ON TASK STATE INFORMATION---------------------------------------
 
 # task attributes required for a system cold start are:
-#  state ('waiting', 'submitted', 'running', and 'finished' or 'failed')
+#  state ('waiting', 'submitted', 'running', and 'succeeded' or 'failed')
 
 # The 'state' variable is initialised by the base class, and written to
 # the state dump file by the base class dump_state() method.
@@ -75,7 +75,7 @@ class task( Pyro.core.ObjBase ):
 
     global_hook_scripts = {}
     for event in [ 'submitted', 'submission failed', 'started', 
-            'warning', 'finished', 'failed', 'timeout' ]:
+            'warning', 'succeeded', 'failed', 'timeout' ]:
         global_hook_scripts[ event ] = None
  
     global_timeouts = {}
@@ -119,9 +119,9 @@ class task( Pyro.core.ObjBase ):
             pass
 
     @classmethod
-    def update_mean_total_elapsed_time( cls, started, finished ):
+    def update_mean_total_elapsed_time( cls, started, succeeded ):
         # the class variables here are defined in derived task classes
-        cls.elapsed_times.append( finished - started )
+        cls.elapsed_times.append( succeeded - started )
         elt_sec = [x.days * 86400 + x.seconds for x in cls.elapsed_times ]
         mtet_sec = sum( elt_sec ) / len( elt_sec )
         cls.mean_total_elapsed_time = datetime.timedelta( seconds=mtet_sec )
@@ -166,7 +166,7 @@ class task( Pyro.core.ObjBase ):
 
         self.submitted_time = None
         self.started_time = None
-        self.finished_time = None
+        self.succeeded_time = None
         self.etc = None
         self.to_go = None
 
@@ -176,7 +176,7 @@ class task( Pyro.core.ObjBase ):
 
         # chose task-specific and then global hook scripts
         for event in [ 'submitted', 'submission failed', 'started', 
-                'warning', 'finished', 'failed', 'timeout' ]:
+                'warning', 'succeeded', 'failed', 'timeout' ]:
             if not self.hook_scripts[ event ]:
                 # if no task-specific event hook script specified
                 if self.__class__.global_hook_scripts[ event ]:
@@ -262,19 +262,19 @@ class task( Pyro.core.ObjBase ):
             command = ' '.join( [self.hook_scripts['started'], 'started', self.name, self.c_time, "'(task running)' &"] )
             subprocess.call( command, shell=True )
 
-    def set_finished( self ):
+    def set_succeeded( self ):
         self.outputs.set_all_complete()
-        self.state.set_status( 'finished' )
-        self.finished_time = task.clock.get_datetime()
-        # don't update mean total elapsed time if set_finished() was called
+        self.state.set_status( 'succeeded' )
+        self.succeeded_time = task.clock.get_datetime()
+        # don't update mean total elapsed time if set_succeeded() was called
 
-    def set_finished_hook( self ):
-        # (set_finished() is used by remote switch)
-        print '\n' + self.id + " FINISHED"
-        self.state.set_status( 'finished' )
-        if self.hook_scripts['finished']:
-            self.log( 'NORMAL', 'calling task finished hook script' )
-            command = ' '.join( [self.hook_scripts['finished'], 'finished', self.name, self.c_time, "'(task finished)' &"] )
+    def set_succeeded_hook( self ):
+        # (set_succeeded() is used by remote switch)
+        print '\n' + self.id + " SUCCEEDED"
+        self.state.set_status( 'succeeded' )
+        if self.hook_scripts['succeeded']:
+            self.log( 'NORMAL', 'calling task succeeded hook script' )
+            command = ' '.join( [self.hook_scripts['succeeded'], 'succeeded', self.name, self.c_time, "'(task succeeded)' &"] )
             subprocess.call( command, shell=True )
 
     def set_failed( self, reason ):
@@ -305,9 +305,9 @@ class task( Pyro.core.ObjBase ):
         self.prerequisites.set_all_unsatisfied()
         self.outputs.set_all_incomplete()
 
-    def reset_state_finished( self ):
+    def reset_state_succeeded( self ):
         # all prerequisites satisified and all outputs complete
-        self.state.set_status( 'finished' )
+        self.state.set_status( 'succeeded' )
         self.prerequisites.set_all_satisfied()
         self.outputs.set_all_complete()
 
@@ -358,9 +358,9 @@ class task( Pyro.core.ObjBase ):
             timeout = self.execution_timer_start + datetime.timedelta( minutes=self.timeouts['execution'] )
             if current_time > timeout:
                 if self.timeouts['reset on incoming']:
-                    msg = 'last message ' + str( self.timeouts['execution'] ) + ' minutes ago, but has not finished'
+                    msg = 'last message ' + str( self.timeouts['execution'] ) + ' minutes ago, but has not succeeded'
                 else:
-                    msg = 'started ' + str( self.timeouts['execution'] ) + ' minutes ago, but has not finished'
+                    msg = 'started ' + str( self.timeouts['execution'] ) + ' minutes ago, but has not succeeded'
                 self.log( 'WARNING', msg )
                 command = ' '.join( [ self.hook_scripts['timeout'], 'execution', self.name, self.c_time, "'" + msg + "' &" ] )
                 subprocess.call( command, shell=True )
@@ -373,7 +373,7 @@ class task( Pyro.core.ObjBase ):
         self.log( 'DEBUG', 'setting all internal outputs completed' )
         for message in self.outputs.satisfied.keys():
             if message != self.id + ' started' and \
-                    message != self.id + ' finished' and \
+                    message != self.id + ' succeeded' and \
                     message != self.id + ' completed':
                 self.incoming( 'NORMAL', message )
 
@@ -435,14 +435,14 @@ class task( Pyro.core.ObjBase ):
                 self.log( priority,  message )
                 self.outputs.set_satisfied( message )
 
-                if message == self.id + ' finished':
-                    # TASK HAS FINISHED
-                    self.finished_time = task.clock.get_datetime()
-                    self.__class__.update_mean_total_elapsed_time( self.started_time, self.finished_time )
+                if message == self.id + ' succeeded':
+                    # TASK HAS SUCCEEDED
+                    self.succeeded_time = task.clock.get_datetime()
+                    self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
                     if not self.outputs.all_satisfied():
-                        self.set_failed( 'finished before all outputs were completed' )
+                        self.set_failed( 'succeeded before all outputs were completed' )
                     else:
-                        self.set_finished_hook()
+                        self.set_succeeded_hook()
                         if self.launcher:
                             # ('family' tasks have no launcher)
                             self.launcher.cleanup()
@@ -453,7 +453,7 @@ class task( Pyro.core.ObjBase ):
 
         elif message == self.id + ' failed':
             # process task failure messages
-            self.finished_time = task.clock.get_datetime()
+            self.succeeded_time = task.clock.get_datetime()
             state_changed = True
             self.set_failed( message )
             try:
@@ -512,8 +512,8 @@ class task( Pyro.core.ObjBase ):
         sys.exit(1)
 
     def done( self ):
-        # return True if task has finished and spawned
-        if self.state.is_finished() and self.state.has_spawned():
+        # return True if task has succeeded and spawned
+        if self.state.is_succeeded() and self.state.has_spawned():
             return True
         else:
             return False
@@ -551,11 +551,11 @@ class task( Pyro.core.ObjBase ):
         else:
             summary[ 'started_time' ] =  '*'
 
-        if self.finished_time:
-            #summary[ 'finished_time' ] =  self.finished_time.strftime("%Y/%m/%d %H:%M:%S" )
-            summary[ 'finished_time' ] =  self.finished_time.strftime("%H:%M:%S" )
+        if self.succeeded_time:
+            #summary[ 'succeeded_time' ] =  self.succeeded_time.strftime("%Y/%m/%d %H:%M:%S" )
+            summary[ 'succeeded_time' ] =  self.succeeded_time.strftime("%H:%M:%S" )
         else:
-            summary[ 'finished_time' ] =  '*'
+            summary[ 'succeeded_time' ] =  '*'
 
         # str(timedelta) => "1 day, 23:59:55.903937" (for example)
         # to strip off fraction of seconds:
@@ -566,8 +566,8 @@ class task( Pyro.core.ObjBase ):
             met = self.__class__.mean_total_elapsed_time
             summary[ 'mean total elapsed time' ] =  re.sub( '\.\d*$', '', str(met) )
             if self.started_time:
-                if not self.finished_time:
-                    # started but not finished yet, compute ETC
+                if not self.succeeded_time:
+                    # started but not succeeded yet, compute ETC
                     current_time = task.clock.get_datetime()
                     run_time = current_time - self.started_time
                     self.to_go = met - run_time
@@ -575,7 +575,7 @@ class task( Pyro.core.ObjBase ):
                     summary[ 'Tetc' ] = self.etc.strftime( "%H:%M:%S" ) + '(' + re.sub( '\.\d*$', '', displaytd(self.to_go) ) + ')'
                 elif self.etc:
                     # the first time a task finishes self.etc is not defined
-                    # task finished; leave final prediction
+                    # task succeeded; leave final prediction
                     summary[ 'Tetc' ] = self.etc.strftime( "%H:%M:%S" ) + '(' + re.sub( '\.\d*$', '', displaytd(self.to_go) ) + ')'
                 else:
                     summary[ 'Tetc' ] = '*'

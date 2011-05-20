@@ -2,13 +2,14 @@
 
 
 # THIS CYLC TASK SCRIPT IS INTENDED TO BE RUN VIA cylc-wrapper
-# As such it should not send its own start, finished, or failed
+# As such it should not send its own start, succeeded, or failed
 # messages. On failure it can send a descriptive message, if necessary,
 # before aborting with 'exit 1'
 
 set -e
 
-echo "!!!!!! DISABLED PENDING UPDATE !!!!!!"
+echo "!!!!!! This script has not been checked for compatibility with"
+echo "!!!!!! recent versions of cylc: DISABLED PENDING UPDATE !!!!!!"
 exit 1
 
 # Purpose: file copy or transfer.

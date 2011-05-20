@@ -8,8 +8,8 @@
 # combined and moved to $MY_OUTPUT.
 # UM_DATAM is probably not needed for RCF jobs.
 
-set -e; trap 'cylc task-failed "error trapped"' ERR 
-cylc task-started || exit 1
+set -e; trap 'cylc task failed "error trapped"' ERR 
+cylc task started || exit 1
 
 # check compulsory inputs
 # WARNING: $MY_OUTPUT is defined by UM .profile at login
@@ -68,7 +68,7 @@ TMPFILE=$TMPDIR/um-wrapper.$$
 
 # PREPEND cylc environment
 cat >> $TMPFILE <<eof
-# MINIMAL CYLC ENVIRONMENT FOR ACCESS TO 'cylc task-message' ETC.
+# MINIMAL CYLC ENVIRONMENT FOR ACCESS TO 'cylc task message' ETC.
 export CYLC_SUITE_NAME=$CYLC_SUITE_NAME
 export CYLC_SUITE_OWNER=$CYLC_SUITE_OWNER
 export CYLC_SUITE_HOST=$CYLC_SUITE_HOST
@@ -86,14 +86,14 @@ eof
 cat $SCRIPT >> $TMPFILE 
 mv $TMPFILE $SCRIPT
 
-# APPEND success test and final cylc task-messages 
+# APPEND success test and final cylc task messages 
 
 cat >> $SCRIPT <<eof
 if (( RC != 0 )); then
-    cylc task-failed "CYLC UM-WRAPPER: JOB FAILED"
+    cylc task failed "CYLC UM-WRAPPER: JOB FAILED"
 else
-    cylc task-message --all-outputs-completed
-    cylc task-finished
+    cylc task message --all-outputs-completed
+    cylc task succeeded
 fi
 eof
 

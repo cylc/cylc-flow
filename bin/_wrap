@@ -11,11 +11,11 @@
 # The task wrapper does the following:
 # (1) sends special 'started' message
 # (2) executes the wrapped task, with any commandline arguments
-# (3) if success: reports all registered outputs completed and finishes
+# (3) if success: reports all outputs completed, and reports succeeded
 #     if failure: reports failure.
 
 # Wrapped tasks can also send their own cylc messages, which will be
-# logged by cylc, but must not send their own start/finished/failed or
+# logged by cylc, but must not send their own start/succeeded/failed or
 # registered output messages.
 
 usage() {
@@ -89,7 +89,7 @@ fi
 if $success; then
     # SUCCEEDED
     cylc task message --all-outputs-completed
-    cylc task finished
+    cylc task succeeded
 else
     # FAILED
     cylc task failed 
