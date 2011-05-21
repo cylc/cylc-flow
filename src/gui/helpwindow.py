@@ -433,7 +433,7 @@ you enter nothing, no limit will be used!""")
 
 
 def add_prerequisite( b ):
-    help = helpwindow( "Add a Prerequisite Help", 250, """
+    help = helpwindow( "Add A Prerequisite Help", 250, """
 Add a dependency on the fly to a task in a running suite. If you
 specify a task ID (NAME%YYYYMMDDHH) the target TASK will depend on
 it finishing, otherwise you can specify an explicit prerequisite message
@@ -721,7 +721,7 @@ def userguide( w, graph=False ):
         update_tb( tb, "Expand any graph subtrees that you have "
                 "collapsed via the right-click popup menu.")
 
-        update_tb( tb, "\n o Cycle-time Zoom ", [bold])
+        update_tb( tb, "\n o Time Range Focus ", [bold])
         update_tb( tb, "Restrict display to a specified range of cycle times.")
 
         update_tb( tb, "\n o Toggle Graph Key ", [bold])
@@ -763,18 +763,21 @@ def userguide( w, graph=False ):
         update_tb( tb, "\n o Collapse Subtree: ", [bold])
         update_tb( tb, "Collapse everything downstream of this task into a single node." )
 
-        update_tb( tb, "\n o Cycle-time Zoom to YYYYMMDDHH: ", [bold])
+        update_tb( tb, "\n o Focus On YYYYMMDDHH: ", [bold])
         update_tb( tb, "Restrict the graph to just the cycle time of this node (task)." )
  
-        update_tb( tb, "\n o Cycle-time Zoom to Range: ", [bold])
+        update_tb( tb, "\n o Focus On Range: ", [bold])
         update_tb( tb, "Restrict the graph to a specified range of cycle times." )
- 
-    update_tb( tb, "\n o View Task Job Script: ", [bold])
+
+        update_tb( tb, "\n o Focus Reset: ", [bold])
+        update_tb( tb, "Reset any cycle time focusing and show the whole graph." )
+  
+    update_tb( tb, "\n o View Job Script: ", [bold])
     update_tb( tb, "View the script used to submit this task to run." )
-    update_tb( tb, "\n o View Job Stdout & Stderr: ", [bold])
-    update_tb( tb, "View submitted task stdout and stderr in real time." )
-    update_tb( tb, "\n o View Prerequisites & Outputs: ", [bold])
-    update_tb( tb, "View the current state of a task's prerequisites and outputs.")
+    update_tb( tb, "\n o View Output: ", [bold])
+    update_tb( tb, "View task stdout and stderr logs in real time." )
+    update_tb( tb, "\n o View State: ", [bold])
+    update_tb( tb, "View the state of a task's prerequisites and outputs.")
     update_tb( tb, "\n o Trigger: ", [bold])
     update_tb( tb, "Reset the task to the 'ready' state (all prerequisites "
             "satisfied), thereby causing it to trigger immediately (NOTE: "
@@ -795,10 +798,10 @@ def userguide( w, graph=False ):
     update_tb( tb, "Release a task from the 'stopped' state "
             "so that it can run again as normal." )
 
-    update_tb( tb, "\n o Remove (after spawning): ", [bold])
-    update_tb( tb, "Remove a task from the suite after ensuring that it has "
-            "spawned a successor." )
-    update_tb( tb, "\n o Remove (without spawning): ", [bold])
+    update_tb( tb, "\n o Remove after spawning: ", [bold])
+    update_tb( tb, "Remove a task from the suite after forcing it to "
+            "spawn a successor if it has not done so already." )
+    update_tb( tb, "\n o Remove without spawning: ", [bold])
     update_tb( tb, "Remove a task from the suite even if it has not "
             "yet spawned a successor (in which case it will be removed "
             "permanently unless re-inserted)." )

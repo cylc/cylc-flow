@@ -92,13 +92,13 @@ Dependency graph based GUI suite control interface.
         menu_root = gtk.MenuItem( task_id )
         menu_root.set_submenu( menu )
 
-        timezoom_item_direct = gtk.MenuItem( 'Cycle-Time Zoom to ' + ctime )
+        timezoom_item_direct = gtk.MenuItem( 'Focus on ' + ctime )
         timezoom_item_direct.connect( 'activate', self.focused_timezoom_direct, ctime )
 
-        timezoom_item = gtk.MenuItem( 'Cycle-Time Zoom to Range' )
+        timezoom_item = gtk.MenuItem( 'Focus on Range' )
         timezoom_item.connect( 'activate', self.focused_timezoom_popup, task_id )
 
-        timezoom_reset_item = gtk.MenuItem( 'Cycle-Time Zoom Reset' )
+        timezoom_reset_item = gtk.MenuItem( 'Focus Reset' )
         timezoom_reset_item.connect( 'activate', self.focused_timezoom_direct, None )
 
         if type == 'collapsed subtree':
@@ -181,7 +181,7 @@ Dependency graph based GUI suite control interface.
     def create_main_menu( self ):
         ControlAppBase.create_main_menu(self)
 
-        graph_range_item = gtk.MenuItem( 'Cycle-Time _Zoom' )
+        graph_range_item = gtk.MenuItem( 'Time Range Focus ...' )
         self.view_menu.append( graph_range_item )
         graph_range_item.connect( 'activate', self.graph_timezoom_popup )
 
@@ -189,7 +189,7 @@ Dependency graph based GUI suite control interface.
         self.view_menu.append( crop_item )
         crop_item.connect( 'activate', self.toggle_crop )
 
-        filter_item = gtk.MenuItem( 'Task _Filtering' )
+        filter_item = gtk.MenuItem( 'Task _Filtering ...' )
         self.view_menu.append( filter_item )
         filter_item.connect( 'activate', self.filter_popup )
 

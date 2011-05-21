@@ -302,15 +302,15 @@ The cylc forecast suite metascheduler.
 
         items = []
 
-        js_item = gtk.MenuItem( 'View Task Job Script' )
+        js_item = gtk.MenuItem( 'View Job Script' )
         items.append( js_item )
         js_item.connect( 'activate', self.view_task_info, task_id, True )
 
-        info_item = gtk.MenuItem( 'View Job Stdout & Stderr' )
+        info_item = gtk.MenuItem( 'View Output' )
         items.append( info_item )
         info_item.connect( 'activate', self.view_task_info, task_id, False )
 
-        info_item = gtk.MenuItem( 'View Task Prerequisites & Outputs' )
+        info_item = gtk.MenuItem( 'View State' )
         items.append( info_item )
         info_item.connect( 'activate', self.popup_requisites, task_id )
 
@@ -356,13 +356,13 @@ The cylc forecast suite metascheduler.
 
         items.append( gtk.SeparatorMenuItem() )
     
-        kill_item = gtk.MenuItem( 'Remove (after spawning)' )
+        kill_item = gtk.MenuItem( 'Remove after spawning' )
         items.append( kill_item )
         kill_item.connect( 'activate', self.kill_task, task_id )
         if self.readonly:
             kill_item.set_sensitive(False)
 
-        kill_nospawn_item = gtk.MenuItem( 'Remove (without spawning)' )
+        kill_nospawn_item = gtk.MenuItem( 'Remove without spawning' )
         items.append( kill_nospawn_item )
         kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
         if self.readonly:
@@ -376,7 +376,7 @@ The cylc forecast suite metascheduler.
 
         items.append( gtk.SeparatorMenuItem() )
     
-        addprereq_item = gtk.MenuItem( 'Add a Prerequisite' )
+        addprereq_item = gtk.MenuItem( 'Add A Prerequisite' )
         items.append( addprereq_item )
         addprereq_item.connect( 'activate', self.add_prerequisite_popup, task_id )
         if self.readonly:
