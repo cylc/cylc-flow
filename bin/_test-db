@@ -16,11 +16,25 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# This is a thorough test of cylc suite registration database
-# functionality (local and central).
-
-# exit immediately on error
 set -e
+
+usage() {
+    echo "USAGE: cylc [admin] test-db [--help]"
+    echo "This is a thorough test of cylc suite registration"
+    echo "database functionality (private and central)."
+    echo "Options:"
+    echo "  --help   Print this usage message."
+}
+
+if [[ $# != 0 ]]; then 
+    usage
+    if [[ $1 == "--help" ]]; then
+        exit 0
+    else
+        echo "ERROR: illegal commandline arguments"
+        exit 1
+    fi
+fi
 
 USG=$CYLC_DIR/examples/userguide
 TMPDIR=${TMPDIR:-/tmp/$USER}

@@ -20,46 +20,50 @@
 
 set -e; trap "echo 'TEST FAILED (see output log)'" ERR
 
-SUITE_REG=Z1TtestQrX:foobar
-SUITE_DIR=${TMPDIR:-/tmp/$USER}/Z1TtestQrX/foobar
+usage() {
+    echo "USAGE: cylc [admin] test-suite [--help]"
+    echo ""
+    echo "Run an automated test of core cylc functionality using a new copy of"
+    echo "the userguide example suite. This should be used to check that new"
+    echo "developments in the cylc codebase have not introduced serious bugs."
+    echo "The test runs a suite registered as 'test'; to watch its progress"
+    echo "use 'cylc view'. Aside from timing differences results should be the"
+    echo "same in real or dummy mode."
+    echo
+    echo "Currently the test does the following:"
+    echo "  - Copies the userguide example suite definition directory;"
+    echo "  - Registers the new suite as $SUITE_REG;"
+    echo "  - Starts the suite at T0=06Z, with task X set to fail at 12Z;"
+    echo "  - Unlocks the running suite;"
+    echo "  - Sets a stop time at 12Z (i.e. T0+30 hours);"
+    echo "  - Waits for the suite to stall as result of X failing;"
+    echo "  - Inserts a new coldstart task at 06Z (T0+24 hours);"
+    echo "  - Purges the failed X and dependants through to 00Z (T0+18 hours)"
+    echo "    inclusive, which allows the suite to get going again at 06Z;"
+    echo "  - Waits for the suite to shut itself down at the 12Z stop time."
+    echo "  - Run a single task (called prep) from the suite with submit." 
+    echo
+    echo "Options:"
+    echo "  -h, --help   Print this help message and exit."
 
-if [[ $# != 0 ]]; then
-    if [[ $1 == '-h' || $1 == '--help' ]]; then
-        echo "Usage: test-suite.sh"
-        echo 
-        echo "Run an automated test of core cylc functionality using a new copy of"
-        echo "the userguide example suite. This should be used to check that new"
-        echo "developments in the cylc codebase have not introduced serious bugs."
-        echo "The test runs a suite registered as 'test'; to watch its progress"
-        echo "use 'cylc view'. Aside from timing differences results should be the"
-        echo "same in real or dummy mode."
-        echo
-        echo "Currently the test does the following:"
-        echo "  - Copies the userguide example suite definition directory;"
-        echo "  - Registers the new suite as $SUITE_REG;"
-        echo "  - Starts the suite at T0=06Z, with task X set to fail at 12Z;"
-        echo "  - Unlocks the running suite;"
-        echo "  - Sets a stop time at 12Z (i.e. T0+30 hours);"
-        echo "  - Waits for the suite to stall as result of X failing;"
-        echo "  - Inserts a new coldstart task at 06Z (T0+24 hours);"
-        echo "  - Purges the failed X and dependants through to 00Z (T0+18 hours)"
-        echo "    inclusive, which allows the suite to get going again at 06Z;"
-        echo "  - Waits for the suite to shut itself down at the 12Z stop time."
-        echo "  - Run a single task (called prep) from the suite with submit." 
-        echo
-        echo "Options:"
-        echo "  -h, --help   Print this help message and exit."
+    echo "This is a thorough test of cylc suite registration"
+    echo "database functionality (private and central)."
+    echo "Options:"
+    echo "  --help   Print this usage message."
+}
+
+if [[ $# != 0 ]]; then 
+    usage
+    if [[ $1 == "--help" ]]; then
         exit 0
     else
-        echo "ERROR, no arguments required."
+        echo "ERROR: illegal commandline arguments"
         exit 1
     fi
 fi
 
-#if [[ ! -x bin/cylc ]]; then
-#    echo  "ERROR: run this test from the top level of a cylc installation."
-#    exit 1
-#fi
+SUITE_REG=Z1TtestQrX:foobar
+SUITE_DIR=${TMPDIR:-/tmp/$USER}/Z1TtestQrX/foobar
 
 # START FROM A CLEAN SLATE
 if cylc db unreg $SUITE_REG > /dev/null 2>&1; then

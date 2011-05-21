@@ -16,7 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 usage() {
     echo "USAGE: cylc [license] warranty [--help]"
     echo "Cylc is release under the GNU General Public License v3.0"
