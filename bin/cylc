@@ -77,6 +77,8 @@ def match_command( abbrev ):
     # allow any unique abbreviation to commands when no category is specified
     matches = []
     for dct in [ 
+        admin_commands,
+        license_commands,
         database_commands, 
         preparation_commands, 
         information_commands, 
