@@ -626,23 +626,22 @@ admin:examples:userguide  "userguide example suite"  /home/admin/cylc/examples/u
 
 \subsubsection{Suite Database Test} 
 
-The script \lstinline=$CYLC_DIR/test/test-db.sh= gives
-suite database functionality a work out - it registers the userguide
-example suite under a new name and then manipulates it (by copying the
-suite in various ways, exporting it to the central database, and so on,
-before finally deleting the test registrations). This process should
-complete in a few seconds without errors.
+The command \lstinline=cylc admin test-db= gives suite database
+functionality a work out - it registers the userguide example suite
+under a new name and then manipulates it (by copying the suite in
+various ways, exporting it to the central database, and so on, before
+finally deleting the test registrations). This process should complete
+in a few seconds without errors.
 
 \subsubsection{Suite Scheduler Test} 
 
-The script \lstinline=$CYLC_DIR/test/test-suite.sh= tests the cylc 
-scheduler itself by running an example suite, configuring it 
-to fail out a specific task, and then doing some advanced failure
-recovery intervention on it (recursive purge plus insertion of
-cold start tasks). This process should complete in 2-3 minutes, and can
-be watched in real time by right-clicking on the test suite, when it 
-appears in the gcylc local database window and opening up the 
-suite control GUI.
+The command \lstinline=cylc admin test-suite= tests the cylc scheduler
+itself by running an example suite, configuring it to fail out a
+specific task, and then doing some advanced failure recovery
+intervention on it (recursive purge plus insertion of cold start tasks).
+This process should complete in 2-3 minutes, and can be watched in real
+time by right-clicking on the test suite, when it appears in the gcylc
+local database window and opening up the suite control GUI.
 
 \pagebreak
 \section{Screenshots}

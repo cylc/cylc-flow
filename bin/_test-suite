@@ -46,9 +46,9 @@ fi
 #fi
 
 # START FROM A CLEAN SLATE
-echo -n ">> pre-start cleanup..."
-if cylc db unreg $SUITE_REG; then
-    echo "unregistered old suite"
+if cylc db unreg $SUITE_REG > /dev/null 2>&1; then
+    echo -n ">> pre-start cleanup..."
+    echo "unregistered old test suite"
 fi
 rm -rf $SUITE_DIR
 echo done
@@ -93,8 +93,7 @@ READY=false
 while ! $READY; do
     READY=true
     for TASK in A B C D E F; do
-        #! grep "${TASK}%2010010106 finished" $LOG && READY=false
-        ! grep "${TASK}%2010010106 finished" $LOG > /dev/null 2>&1 && READY=false
+        ! grep "${TASK}%2010010106 succeeded" $LOG > /dev/null 2>&1 && READY=false
     done
     #! grep "X%2010010112 failed" $LOG && READY=false
     ! grep "X%2010010112 failed" $LOG > /dev/null 2>&1 && READY=false
@@ -151,7 +150,7 @@ echo "  $STDERR"
 echo -n "   ."
 READY=false
 while ! $READY; do
-    egrep 'cylc \(submit.*\): prep%2010010106 finished' $STDOUT 2> /dev/null && READY=true
+    egrep 'cylc \(submit.*\): prep%2010010106 succeeded' $STDOUT 2> /dev/null && READY=true
     echo -n .
     sleep 1
 done

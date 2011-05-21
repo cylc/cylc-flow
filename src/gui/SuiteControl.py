@@ -247,7 +247,7 @@ and associated methods for their control widgets.
                 about.set_program_name( "cylc" )
         cylc_version = 'THIS IS NOT A VERSIONED RELEASE'
         about.set_version( cylc_version )
-        about.set_copyright( "(c) Hilary Oliver, NIWA, 2008-2010" )
+        about.set_copyright( "(c) Hilary Oliver, NIWA, 2008-2011" )
         about.set_comments( 
 """
 The cylc forecast suite metascheduler.

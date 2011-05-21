@@ -192,7 +192,9 @@ utility_commands['housekeeping'] = ['housekeeping']
 #utility_commands['transfer' ] = ['transfer'] 
 
 admin_commands = OrderedDict()
-admin_commands['create-cdb'     ] = [ 'create-cdb']
+admin_commands['create-cdb'  ] = [ 'create-cdb']
+admin_commands['test-db'     ] = [ 'test-db']
+admin_commands['test-suite'  ] = [ 'test-suite']
 
 database_commands = OrderedDict()
 database_commands['gcylc'     ] = information_commands['gcylc']
@@ -292,7 +294,9 @@ Command CATEGORIES:"""
 # command summaries
 comsum = OrderedDict()
 # admin
-comsum[ 'create-cdb' ] = 'Create the central suite registration database'
+comsum[ 'create-cdb' ] = '(ADMIN) Create the central suite database'
+comsum[ 'test-db'    ] = '(ADMIN) Automated suite database test'
+comsum[ 'test-suite' ] = '(ADMIN) Automated cylc scheduler test'
 # database
 comsum[ 'register'   ] = 'Add a suite to your private registration database'
 comsum[ 'reregister' ] = 'Change private or central suite registrations'
