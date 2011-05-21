@@ -141,7 +141,6 @@ cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 # categories[ categorey ] = [ aliases ] 
 categories = OrderedDict()
 categories['all'         ] = ['all' ]
-categories['admin'       ] = ['admin' ]
 categories['database'    ] = ['db', 'database' ]
 categories['preparation' ] = ['preparation' ]
 categories['information' ] = ['information'    ]
@@ -149,6 +148,8 @@ categories['discovery'   ] = ['discovery' ]
 categories['control'     ] = ['control' ]
 categories['utility'     ] = ['utility' ]
 categories['task'        ] = ['task' ]
+categories['admin'       ] = ['admin' ]
+categories['license'     ] = ['license', 'GPL' ]
  
 information_commands = OrderedDict()
 information_commands['gcylc'    ] = ['gcylc'      ]
@@ -196,6 +197,10 @@ admin_commands['create-cdb'  ] = [ 'create-cdb']
 admin_commands['test-db'     ] = [ 'test-db']
 admin_commands['test-suite'  ] = [ 'test-suite']
 
+license_commands = OrderedDict()
+license_commands['warranty'  ] = [ 'warranty']
+license_commands['conditions'] = [ 'conditions']
+
 database_commands = OrderedDict()
 database_commands['gcylc'     ] = information_commands['gcylc']
 database_commands['register'  ] = [ 'register' ]
@@ -231,6 +236,7 @@ task_commands['failed'] = [ 'failed', 'task-failed' ]
 all_commands = OrderedDict()
 for dct in [ 
         admin_commands,
+        license_commands,
         database_commands, 
         preparation_commands, 
         information_commands, 
@@ -256,6 +262,7 @@ USAGE:
 catsum = OrderedDict()
 catsum['all'    ]        = "the complete cylc command set"
 catsum['admin'       ]   = "commands for use by the cylc administrator."
+catsum['license'     ]   = "Software licensing information (GPL v3.0)."
 catsum['database'    ]   = "private and central suite registration."
 catsum['information' ]   = "retrieve and print information about a suite."
 catsum['preparation' ]   = "suite editing, graphing, validation etc."
@@ -297,6 +304,9 @@ comsum = OrderedDict()
 comsum[ 'create-cdb' ] = '(ADMIN) Create the central suite database'
 comsum[ 'test-db'    ] = '(ADMIN) Automated suite database test'
 comsum[ 'test-suite' ] = '(ADMIN) Automated cylc scheduler test'
+# license
+comsum[ 'warranty'   ] = 'Print the GPLv3 disclaimer of warranty'
+comsum[ 'conditions' ] = 'Print the GNU General Public License v3.0'
 # database
 comsum[ 'register'   ] = 'Add a suite to your private registration database'
 comsum[ 'reregister' ] = 'Change private or central suite registrations'
@@ -535,7 +545,8 @@ args = args_new
 notify=False
 if command not in ['cycletime', 'template', 'log', 'checkvars', 'get',
         'message', 'started', 'succeeded', 'failed', 'submit', 'wrap',
-        'task-message', 'task-started', 'task-succeeded', 'task-failed']:
+        'task-message', 'task-started', 'task-succeeded', 'task-failed',
+        'warranty', 'conditions']:
     # notify => print 'DONE' when command is completed, which is 
     # helpful for gui command capture windows. But some commands return
     # specific results by stdout, which we don't want to contaminate.

@@ -1,0 +1,34 @@
+#!/usr/bin/env python
+
+import sys
+
+usage = """
+USAGE: cylc [license] warranty [--help]
+   Cylc is release under the GNU General Public License v3.0
+This command prints the GPL v3.0 disclaimer of warranty.
+Options:
+  --help   Print this usage message.
+"""
+
+if len(sys.argv) != 1:
+    print usage
+    if sys.argv[1] == '--help':
+        sys.exit(0)
+    else:
+        print "ERROR: illegal commandline arguments"
+        sys.exit(1)
+
+print ""
+print "GNU General Public License v3.0, Section 15:"
+print ""
+print "15. Disclaimer of Warranty."
+print ""
+print "  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY"
+print "APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT"
+print "HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM \"AS IS\" WITHOUT WARRANTY"
+print "OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,"
+print "THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR"
+print "PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM"
+print "IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF"
+print "ALL NECESSARY SERVICING, REPAIR OR CORRECTION."
+print ""

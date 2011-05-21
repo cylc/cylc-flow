@@ -52,7 +52,7 @@ usage2() {
     echo "task is finished." 
 }
 
-if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then
+if [[ $1 == '--help' ]]; then
     usage
     usage2
     exit 0

@@ -374,10 +374,15 @@ class scheduler(object):
         #print
 
         print ""
-        print "THIS IS THE CYLC OPTIMAL ADAPTIVE METASCHEDULER"
-        print "Copyright Hilary Oliver, NIWA, 2008-2011"
-        print "cylc is pronounced 'silk'"
+        print "THIS IS THE CYLC FORECAST SUITE METASCHEDULER"
+        print "Copyright (C) 2008-2011 Hilary Oliver, NIWA"
         print ""
+        print "This program comes with ABSOLUTELY NO WARRANTY;"
+        print "for details type: `cylc license warranty'."
+        print "This is free software, and you are welcome to "
+        print "redistribute it under certain conditions;"
+        print "for details type: `cylc license conditions'."
+        print 
 
         items = self.banner.keys()
 

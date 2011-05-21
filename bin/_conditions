@@ -1,0 +1,26 @@
+#!/bin/bash
+
+usage() {
+    echo "USAGE: cylc [license] warranty [--help]"
+    echo "Cylc is release under the GNU General Public License v3.0"
+    echo "This command prints the GPL v3.0 license in full."
+    echo ""
+    echo "Options:"
+    echo "  --help   Print this usage message."
+}
+
+if [[ $# != 0 ]]; then 
+    usage
+    if [[ $1 == "--help" ]]; then
+        exit 0
+    else
+        echo "ERROR: illegal commandline arguments"
+        exit 1
+    fi
+fi
+
+echo
+echo "The GNU General Public License v3.0"
+echo
+cat $CYLC_DIR/COPYING
+echo
