@@ -1,0 +1,5 @@
+This directory is for utility scripts that are not strictly required by
+cylc suites, but which perform functions commonly needed by cylc tasks:
+cycle time arithmetic, filename templating, and file housekeeping, for 
+example. New utilities, if sufficiently general, should be made available
+via the cylc commandline 'utility' category.  See 'cylc utility help'.
