@@ -529,19 +529,28 @@ as it catches up to real time operation.
         2.x and consequently still has significantly less library and
         third party support.  As of mid 2011, Python 2.7 is still the
         standard for new Linux distributions.}
+    \item PyGTK, a Python wrapper for the GTK+ graphical user interface toolkit.
+        {\em PyGTK is included in
+        most Linux Distributions.} http://www.pygtk.org
     \item Pyro 3 (Python Remote Objects) - latest version test
         3.12.\footnote{As of April 2011, Pyro 4, which is compatible
         with Python 3, is in development but it is still not recommended
         for production use.} %Open source license: MIT.
+        Recently moved from sourceforge to: http://www.xs4all.nl/~irmen/pyro3
     \item The graphviz graph layout engine (latest version tested:
         2.26.3). %Open source license: Eclipse Public License v1.0.
+        http://www.graphviz.org
     \item Pygraphviz, a python interface to graphviz (latest version
         tested: 1.0rc6). %Open source license: BSD
+        \newline
+        http://networkx.lanl.gov/pygraphviz
 \end{myitemize}
 
-Of the software listed above, Python and Pyro are essential; graphviz
+Of the software listed above, Python and Pyro are essential; PyGTK is
+required to run the gcylc suite database and suite control GUIs, but you
+can equally control and monitor cylc suites from the commandline. Graphviz
 and pygraphviz are required for dependency graphing and the graph-based
-suite control interface, but you can run cylc without them.
+suite control GUI, but you can also run cylc without them.
 
 Cylc has also absorbed in modified form (so you don't need to install 
 them) the following open source software packages:
