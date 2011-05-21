@@ -61,9 +61,9 @@ class xupdater(threading.Thread):
         self.state_summary = {}
         self.global_summary = {}
         self.god = None
-        self.mode = "waiting..."
-        self.dt = "waiting..."
-        self.block = "waiting ..."
+        self.mode = "mode:\nwaiting..."
+        self.dt = "state last changed at:\nwaiting..."
+        self.block = "access:\nwaiting ..."
 
         self.label_mode = label_mode
         self.label_status = label_status
@@ -86,12 +86,12 @@ class xupdater(threading.Thread):
             return False
         else:
             self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
-            self.status = "connected"
+            self.status = "status:\nconnected"
             self.label_status.set_text( self.status )
             return True
 
     def connection_lost( self ):
-        self.status = "NOT RUNNING"
+        self.status = "status:\nSTOPPED"
         self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
         self.label_status.set_text( self.status )
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
@@ -110,35 +110,35 @@ class xupdater(threading.Thread):
         self.global_summary = glbl
 
         if glbl['stopping']:
-            self.status = 'STOPPING'
+            self.status = 'status:\nSTOPPING'
 
         elif glbl['paused']:
-            self.status = 'PAUSED'
+            self.status = 'status:\nPAUSED'
        
         elif glbl['will_pause_at']:
-            self.status = 'PAUSE ' + glbl[ 'will_pause_at' ]
+            self.status = 'status:\nPAUSE ' + glbl[ 'will_pause_at' ]
 
         elif glbl['will_stop_at']:
-            self.status = 'STOP ' + glbl[ 'will_stop_at' ]
+            self.status = 'status:\nSTOP ' + glbl[ 'will_stop_at' ]
 
         else:
-            self.status = 'running'
+            self.status = 'status:\nrunning'
 
         if glbl[ 'dummy_mode' ]:
             #rate = glbl[ 'dummy_clock_rate' ]
             #self.mode = 'DUMMY (' + str( rate ) + 's/hr)'
             #self.mode = 'DUMMY'
-            self.mode = 'simulation'
+            self.mode = 'mode:\ndummy'
         else:
-            self.mode = 'operation'
+            self.mode = 'mode:\nreal'
 
         if glbl[ 'blocked' ]:
-            self.block = 'blocked'
+            self.block = 'access:\nblocked'
         else:
-            self.block = 'unblocked'
+            self.block = 'access:\nfree'
 
         dt = glbl[ 'last_updated' ]
-        self.dt = dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
+        self.dt = 'state last changed at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
 
         # only update states if a change occurred, or action required
         if self.action_required:
@@ -155,15 +155,24 @@ class xupdater(threading.Thread):
 
     def update_globals( self ):
         self.label_mode.set_text( self.mode )
-        self.label_status.set_text( self.status )
         self.label_time.set_text( self.dt )
 
         self.label_block.set_text( self.block )
-        if self.block == 'blocked':
+        if self.block == 'access:\nblocked':
             self.label_block.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
         else:
             self.label_block.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
 
+        self.label_status.set_text( self.status )
+        if re.search( 'STOPPED', self.status ):
+            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
+        elif re.search( 'STOP', self.status ):  # stopping
+            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff8c2a' ))
+        elif re.search( 'PAUSE', self.status ):
+            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ffde00' ))
+        else:
+            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
+ 
         return False
  
     def run(self):

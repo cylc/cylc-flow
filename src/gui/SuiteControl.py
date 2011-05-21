@@ -1156,53 +1156,53 @@ The cylc forecast suite metascheduler.
         start_menu_root = gtk.MenuItem( '_Control' )
         start_menu_root.set_submenu( start_menu )
 
-        start_item = gtk.MenuItem( '_Run (cold-, warm-, raw-, re-start)' )
+        start_item = gtk.MenuItem( '_Run Suite ... ' )
         start_menu.append( start_item )
         start_item.connect( 'activate', self.startsuite_popup )
         if self.readonly:
             start_item.set_sensitive(False)
 
-        stop_item = gtk.MenuItem( '_Stop (soon, now, or later)' )
+        stop_item = gtk.MenuItem( '_Stop Suite ... ' )
         start_menu.append( stop_item )
         stop_item.connect( 'activate', self.stopsuite_popup )
         if self.readonly:
             stop_item.set_sensitive(False)
 
-        pause_item = gtk.MenuItem( '_Hold (stop submitting tasks)' )
+        pause_item = gtk.MenuItem( '_Hold Suite (pause)' )
         start_menu.append( pause_item )
         pause_item.connect( 'activate', self.pause_suite )
         if self.readonly:
             pause_item.set_sensitive(False)
 
-        resume_item = gtk.MenuItem( '_Release (resume submitting tasks)' )
+        resume_item = gtk.MenuItem( '_Release Suite (unpause)' )
         start_menu.append( resume_item )
         resume_item.connect( 'activate', self.resume_suite )
         if self.readonly:
             resume_item.set_sensitive(False)
 
-        insert_item = gtk.MenuItem( '_Insert a Task or Group' )
+        insert_item = gtk.MenuItem( '_Insert Task(s) ...' )
         start_menu.append( insert_item )
         insert_item.connect( 'activate', self.insert_task_popup )
         if self.readonly:
             insert_item.set_sensitive(False)
 
-        runahead_item = gtk.MenuItem( '_Change Runahead Limit' )
-        start_menu.append( runahead_item )
-        runahead_item.connect( 'activate', self.change_runahead_popup )
-        if self.readonly:
-            runahead_item.set_sensitive(False)
-
-        block_item = gtk.MenuItem( '_Block (ignore intervention requests)' )
+        block_item = gtk.MenuItem( '_Block Access' )
         start_menu.append( block_item )
         block_item.connect( 'activate', self.block_suite )
         if self.readonly:
             block_item.set_sensitive(False)
 
-        unblock_item = gtk.MenuItem( 'U_nblock (comply with intervention requests)' )
+        unblock_item = gtk.MenuItem( 'U_nblock Access' )
         start_menu.append( unblock_item )
         unblock_item.connect( 'activate', self.unblock_suite )
         if self.readonly:
             unblock_item.set_sensitive(False)
+
+        runahead_item = gtk.MenuItem( '_Change Runahead Limit ...' )
+        start_menu.append( runahead_item )
+        runahead_item.connect( 'activate', self.change_runahead_popup )
+        if self.readonly:
+            runahead_item.set_sensitive(False)
 
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( '_Help' )
@@ -1236,32 +1236,27 @@ The cylc forecast suite metascheduler.
 
         eb = gtk.EventBox()
         eb.add( self.label_suitename )
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ed9638' ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#88bbee' ) )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) )
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
         eb.add( self.label_mode )
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#bbddff' ) )
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
         eb.add( self.label_status )
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#88bbee' ) )
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
         eb.add( self.label_time )
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#6ab7b4' ) ) 
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fa87a4' ) ) 
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#bbddff' ) ) 
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) ) 
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
         eb.add( self.label_block )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dddddd' ) ) 
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) ) 
         hbox.pack_start( eb, True )
 
         return hbox

@@ -299,9 +299,8 @@ process has to know when you exit from the editor).
     help.show()
  
 def todo( b) :
-    help = helpwindow( "Commands or options not yet implemented in the GUI", 300, """
-
-%h2 restart a suite with the '--no-unstop' option.
+    help = helpwindow( "Commands or command options not yet implemented in the GUI", 300, """
+%h2 restarting a suite with the '--no-unstop' option.
 By default, any tasks in the 'stopped' state (by 'cylc hold SUITE TASK' )
 will be unstopped on restarting a suite.""")
     help.show()
@@ -738,20 +737,22 @@ def userguide( w, graph=False ):
                 "state is updated.")
 
     update_tb( tb, "\n\nMenu: Control > ", [bold, red] )
-    update_tb( tb, "\n o Start: ", [bold])
+    update_tb( tb, "\n o Run Suite: ", [bold])
     update_tb( tb, "Cold Start, Warm Start, Raw Start, or Restart the suite.")
-    update_tb( tb, "\n o Stop: ", [bold])
-    update_tb( tb, "Shut down the suite now, or after a given cycle, or "
-            "when all currently running tasks have finished." )
-    update_tb( tb, "\n o Pause: ", [bold])
+    update_tb( tb, "\n o Stop Suite: ", [bold])
+    update_tb( tb, "Shut down the suite when all currently running tasks have finished "
+            "or immediately (beware of orphaned tasks!), or after a all tasks have "
+            "passed a given cycle time, or after a particular wall clock time, or "
+            "after a particular task has finished." )
+    update_tb( tb, "\n o Hold (pause): ", [bold])
     update_tb( tb, "Refrain from submitting tasks that are ready to run.")
-    update_tb( tb, "\n o Resume: ", [bold])
+    update_tb( tb, "\n o Release( unpause): ", [bold])
     update_tb( tb, "Resume submitting tasks that are ready to run.")
     update_tb( tb, "\n o Insert: ", [bold])
     update_tb( tb, "Insert a task or task group into a running suite." )
-    update_tb( tb, "\n o Block: ", [bold])
+    update_tb( tb, "\n o Block Access: ", [bold])
     update_tb( tb, "Refuse to comply with subsequent intervention commands." )
-    update_tb( tb, "\n o Unblock: ", [bold])
+    update_tb( tb, "\n o Unblock Access: ", [bold])
     update_tb( tb, "Comply with subsequent intervention commands." )
 
     if not graph:
