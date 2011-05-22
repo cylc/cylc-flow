@@ -780,9 +780,9 @@ evolves, particularly in delayed operation.
 
 \lstset{language=bash}
 
-In this section we work through some basic cylc functionality using the
-``QuickStart'' example suites, which should have been registered in the
-central suite database during cylc installation. 
+In this section we will work through some basic cylc functionality using
+the ``QuickStart'' example suites, which should have been registered in
+the central suite database during cylc installation. 
 
 \subsection{Cylc Environment}
 
@@ -857,16 +857,7 @@ prompt> gcylc &
 \end{lstlisting}
 and use the Database menu to switch to the central database, which
 displays suites accessible to all users, in a treeview by owner, group,
-and name, as shown in Figure~\ref{fig-cdb-new}.
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=0.8\textwidth]{../images/screenshots/cdb.png}
-    \end{center}
-\caption[gcylc: Central Suite Database]{\small
-The central suite database showing some example suites.}
-\label{fig-cdb-new}
-\end{figure} 
+and name (see Figure~\ref{fig-cdb}).
 
 \subsubsection{Central Suite Database Actions}
 
@@ -886,75 +877,56 @@ commandline, you can:
 But you can only {\em run} suites that are registered in your private
 database. 
 
-\subsection{Import A Suite To Your Private Database} 
+\subsection{Import The QuickStart Suites To Your Private Database} 
 
 You can register new suites directly in your private database using gcylc 
 or the \lstinline=cylc db register= command, or you can import suites
 from the central database.
 
-Find the suite registered as `admin:examples:QuickStart1' in the central
-database (replace `admin' with the name of the user account under which
-cylc was installed). If there are a lot of suites in the central
-database, use View $\rightarrow$ Filter to restrict the view (you can
-leave the dialog open and refilter as often as you like).
+Find the suite registered under the `admin:QuickStart' group in the
+central database (replace `admin' with the name of the user account
+under which cylc was installed). If there are a lot of suites in the
+central database, use View $\rightarrow$ Filter to restrict the view
+(you can leave the dialog open and refilter as often as you like).
 
-Now right click on QuickStart1 and choose `Import' to copy the suite to
-your private database. A dialog box will pop up allowing you to register
-your copy under a different group and name (just leave these as they are)
-and a destination directory for the suite definition (e.g.\
-\lstinline=$HOME/suites/QuickStart1=). 
+Now right click on the QuickStart group and choose `Import'; this will
+copy the whole group of suites to your private database. A dialog box
+will pop up allowing you to register your copy under a different group
+(leave this as it is) and a destination for the suite definition
+directories in the group (choose something like
+\lstinline=$HOME/suites/QuickStart=). 
 
-{\em Note that suite groups do not need to be created explicitly, they
+{\em Note that you can also import individual suites, and that
+registration groups do not need to be created explicitly, they
 are automatically created and deleted as required.} 
 
 Now use the Database menu to switch back to your private database, and
-confirm that you now have a copy of the example suite; it should look
-like Figure~\ref{fig-pdb-new}. Note that you can also import the whole
-`examples' group at once if you like (right-click on the group instead
-of the suite name).
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=0.8\textwidth]{../images/screenshots/pdb-new.png}
-    \end{center}
-\caption[gcylc: Private Suite Database]{\small
-A private suite database showing a first example suite
-imported from the central database.}
-\label{fig-pdb-new}
-\end{figure} 
+confirm that you now have a copy of the example suites.
 
 \subsubsection{Commandline}
 
-If you like, you can now delete your new suite and re-import it via the
-cylc commandline. To delete a suite, right-click $\rightarrow$
-Unregister and choose ``delete suite definition directory'' (ignore the
-dire warnings - you still have the master copy in the central database). 
-The following transcript shows how to reimport the suite using the cylc
-commandline:
+Here's how to do the same thing on the commandline:
 
-\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
+%\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
 \begin{lstlisting}
-# Check that the example suite is registered in the central database,
-prompt> cylc db print --central | grep QuickStart1
-admin:examples:QuickStart1  "Dependency Graph Example (Ch.6)" \
-    /home/admin/cylc/examples/QuickStart1
+# Check that the QuickStart example suites are registered in the central database,
+prompt> cylc db print --central | grep QuickStart
+admin:QuickStart:foo  "(foo)" /home/admin/cylc/examples/QuickStart/a
+admin:QuickStart:bar  "(bar)" /home/admin/cylc/examples/QuickStart/b
+admin:QuickStart:baz  "(baz)" /home/admin/cylc/examples/QuickStart/c
 
-# Import the suite,
-prompt> cylc db import admin:examples:QuickStart1 $HOME/suites/examples/QuickStart1
-Locking database /home/oliverh/.cylc/LDB/db
-REGISTERED examples:QuickStart1  "Dependency Graph Example (Ch.6)" \
-    /home/oliverh/suites/examples/QuickStart1
-Copying suite definition
-Unlocking database /home/oliverh/.cylc/LDB/db
-DONE
+# Import the group of suites,
+prompt> cylc db import admin:QuickStart: $HOME/suites/QuickStart
+# TBD!
 
 # Check the import was successful,
-prompt> cylc db print | grep QuickStart1
-examples:QuickStart1 "Dependency Graph Example (Ch.6)" \
-    /home/oliverh/suites/examples/QuickStart1
+prompt> cylc db print | grep QuickStart
+QuickStart:foo  "(foo)" /home/oliverh/suites/QuickStart/a
+QuickStart:bar  "(bar)" /home/oliverh/suites/QuickStart/b
+QuickStart:baz  "(baz)" /home/oliverh/suites/QuickStart/c
 \end{lstlisting}
 
-\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
+%\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 
 \subsubsection{Private Suite Database Actions}
 
@@ -985,11 +957,11 @@ change the title when editing the suite.rc file, use
 to update the database.
 
 
-\subsection{Edit The Suite}
+\subsection{View The QuickStart:foo Suite Definition}
 
 Right-click on the suite and choose `Edit', or use the edit command,
 \begin{lstlisting}
-prompt> cylc edit examples:QuickStart1
+prompt> cylc edit QuickStart:foo
 \end{lstlisting}
 to view the suite definition (suite.rc file) in your editor. 
 
@@ -1006,62 +978,334 @@ If you use the vim editor your can have nice cylc-specific syntax
 highlighting and section folding; see Section~\ref{SyntaxHighlighting}
 for a screenshot and instructions. 
 
-Here is the suite.rc file for the DepGraphCh6 example suite:
+You should see the following suite.rc file in your editor: 
+
+\lstinputlisting{../examples/QuickStart/foo/suite.rc}
+
+This defines a complete, valid, runnable suite. To understand suite.rc
+files in detail, read {\em Suite Definition}
+(Section~\ref{SuiteDefinition}). But here's a summary of what this 
+particular suite.rc file means, in words: 
+
+At 0, 6, 12, and 18 hours each day a clock-triggered task called GetData
+triggers 1 hour after the wall clock reaches its nominal cycle
+time; then a {\em sequential} task called Model triggers when GetData finishes;
+and a task called PostA triggers when Model is finished. Additionally,
+Model depends on its own previous instance from 6 hours earlier; and twice
+per day at 6 and 18 hours another task called PostB also triggers off Model.
+
+The fact that Model is declared to be sequential means that it can't start
+running until its previous instance has finished, whereas the other tasks 
+can run in parallel with their own previous instances if the opportunity 
+arises (in fact there is no particular reason to make Model sequential in
+this suite other than to demonstrate that we can force tasks to be
+sequential). 
+
+Finally, when the suite is first {\em cold started} from scratch it is
+made to wait on a special {\em startup} task
+called Prep. Startup tasks are oneoff tasks (non-spawning) that are 
+only used at suite startup, and any dependence on a startup task in the
+suite graph only applies at suite startup.
+
+The optional visualization section, fairly obviously, just defines
+properties used to plot the suite graph, which we'll do next.
+
+\subsection{Plot The QuickStart:foo Dependency Graph}
+
+Right-click on the QuickStart:foo suite in gcylc and choose Graph; or on
+the commandline,
 \begin{lstlisting}
-# SUITE.RC
-title = Dependency Graph Example (Ch.6)
-# This is a complete suite definition - run it!
-[dependencies]
-    [[0,6,12,18]]
-        graph = """
-A => B & C   # B and C trigger off A
-A(T-6) => A  # A triggers off previous instance
-                """
-    [[6,18]]
-        graph = "C => X"  # X triggers off C just twice daily
-[visualization]
-    [[node attributes]]
-        X = "color=red"
-\end{lstlisting}
-
-This is a complete, valid, runnable suite definition. Commandlines have
-not been defined for each task so cylc defaults to running {\em dummy
-tasks} that write an identifying message to stdout and sleep for a few
-seconds before exiting. If defined explicitly in the suite.rc file
-the dummy task commandlines would look like this:
-\begin{lstlisting}
-# SUITE.RC
-[tasks]
-    [[X]]
-        command = cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_DUMMY_SLEEP"
-\end{lstlisting}
-where \lstinline=$TASK_ID= is \lstinline=NAME%YYYYMMDDHH= and 
-\lstinline=$CYLC_DUMMY_SLEEP= defaults to 10 seconds.
-
-The task wrapper \lstinline=cylc wrap=, which allows cylc to run
-unmodified existing commands, scripts, or programs (see {\em Task
-Wrapping: Using Existing Scripts As Cylc Tasks},
-Section~\ref{TaskWrapping}), automatically reports the task started, and
-succeeded or failed, to the suite.
-
-\subsection{Graphing A Suite}
-
-To plot the dependency graph from the suite.rc file, use
-the gcylc Graph right-click menu item, or the commandline,
-\begin{lstlisting}
-prompt> cylc graph examples:DepGraphCh6 2011042500 2011042518 &
+prompt> cylc graph QuickStart:foo 2011052300 2011042318 &
 \end{lstlisting}
 This will pop up a zoomable, pannable, graph viewer application showing
-Figure~\ref{fig-dep-graph-ch6}. If you edit the suite.rc file the graph
-viewer will update whenever you save the file.
+the graph of Figure~\ref{fig-QuickStartA-graph18}. 
+
+{\em If you edit the suite.rc file the graph viewer will update whenever
+you save the file.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.5\textwidth]{../images/screenshots/dep-example.png}
+        \includegraphics[width=0.7\textwidth]{../images/screenshots/QuickStartA-graph18.png}
     \end{center}
-\caption{Example Suite DepGraphCh6 Plotted.}
-\label{fig-dep-graph-ch6}
+\caption{\small The QuickStart:foo suite dependency graph.}
+\label{fig-QuickStartA-graph18}
 \end{figure}
+
+\subsection{Run The QuickStart:foo Suite}
+
+No task commandlines have been defined in the QuickStart:foo suite so
+cylc will use the default {\em dummy} commandlines for each task.
+If defined explicitly in the suite.rc file the dummy task commandlines
+would look like this:
+\begin{lstlisting}
+# SUITE.RC
+[tasks]
+    [[GetData]]
+        command = cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_DUMMY_SLEEP"
+\end{lstlisting}
+where \lstinline=$TASK_ID= is the tasks unique identifier in the suite 
+(\lstinline=TASKNAME%YYYYMMDDHH=) and \lstinline=$CYLC_DUMMY_SLEEP=
+defaults to 10 seconds. Fairly obviously, this writes an identifying
+message to stdout and then sleeps for a few seconds before exiting. 
+The task wrapper \lstinline=cylc wrap= allows cylc to run unmodified
+existing commands, scripts, or programs (see {\em Task
+Wrapping: Using Existing Scripts As Cylc Tasks} - it automatically
+reports the task started, and succeeded or failed according to the 
+exit status of the wrapped process (see Section~\ref{TaskWrapping}).
+
+Now start a suite control GUI by right-clicking on the suite in gcylc
+and choosing `Control (graph)'. 
+
+{\em Note that if you start a suite running via a suite control GUI
+and then shut down the GUI, the suite will keep running.  If you
+open another instance of the control GUI (for the same suite) it 
+will reconnect if the suite is already running.}
+
+In the control GUI choose Run from the Control menu, enter an initial
+cold start cycle time (e.g.\ 2011052306), and select ``Hold (pause) on
+startup'' so that the suite starts in the paused state, wherein tasks
+won't be submitted even if they are ready to run. 
+
+{\em Do not choose an initial cycle time in the future or nothing will
+happen until that time.}
+
+If the initial cycle time ends in 06 or 18 
+the suite controller should look like Figure~\ref{fig-QuickStartA-ControlStart06},
+otherwise (00 or 12) like Figure~\ref{fig-QuickStartA-ControlStart00}.
+
+\begin{figure}
+\begin{minipage}[t]{0.5\textwidth}
+    \begin{center}
+        \includegraphics[width=\textwidth]{../images/screenshots/QuickStartA-ControlStart06.png}
+    \end{center}
+    \caption{\small foo}
+    \label{fig-QuickStartA-ControlStart06}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\textwidth}
+    \begin{center}
+        \includegraphics[width=\textwidth]{../images/screenshots/QuickStartA-ControlStart00.png}
+    \end{center}
+    \caption{\small bar}
+    \label{fig-QuickStartA-ControlStart00}
+\end{minipage}
+\end{figure} 
+
+The reason for the difference in graph structure between the two start
+cycles is this: cylc starts up with every task present, in the waiting
+state (blue), at the intitial cycle time {\em or} at the first
+subsequent valid cycle time for the task - and PostB is not valid at 00
+or 12. The off-white tasks are from the base graph and aren't actually
+present in the suite as yet (so they will not appear in the non
+graph-based suite control GUI).
+
+\subsubsection{Release The Hold On The Suite}
+
+Choose Release from the Control menu in the suite control GUI, and
+observe what happens: all the GetData tasks out to a few cycles ahead
+will rapidly go off at once, and then the suite will stall, as shown in
+Figures~\ref{fig-QuickStartA-ControlRunning}
+and~\ref{fig-QuickStartA-ControlRunning}. 
+
+\begin{figure}
+\begin{minipage}[t]{0.5\textwidth}
+    \begin{center}
+        \includegraphics[width=\textwidth]{../images/screenshots/QuickStartA-ControlRunning.png}
+    \end{center}
+    \caption{\small foo}
+    \label{fig-QuickStartA-ControlRunning}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\textwidth}
+    \begin{center}
+        \includegraphics[width=\textwidth]{../images/screenshots/QuickStartA-ControlStalled.png}
+    \end{center}
+    \caption{\small bar}
+    \label{fig-QuickStartA-ControlStalled}
+\end{minipage}
+\end{figure} 
+
+The Prep task runs immediately because it has no prerequisites and is
+not clock-triggered. The clock-triggered GetData tasks then all go off
+at once because they have no prerequisites (i.e.\ they do not have to
+wait on any upstream tasks), their trigger time as long passed (the
+initial cycle time was in the past), and they are not sequential tasks
+(so they are able to run in parallel).
+They stop spawning beyond four cycles ahead because of the suite 
+``runahead limit'' set to 12 hours in the suite.rc file. The runahead
+limit is designed to stop free tasks like this from running off too far
+into the future. It is normally of no conseqence in real time operation
+because the clock triggered tasks are then constrained by the wall
+clock, and the other (downstream) tasks have to wait on them.
+
+\subsubsection{Viewing Task States}
+
+If you're wondering why a particular task has not triggered yet in a
+running suite you can view the current state of its prerequisites 
+by right-clicking on the task and choosing `View State', or using
+\lstinline=cylc show=. Doing this for the first Model task, which is 
+stuck in the waiting state, results in Figure~\ref{fig-QuickStartA-ModelState}.
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.5\textwidth]{../images/screenshots/QuickStartA-ModelState.png}
+    \end{center}
+    \caption{\small foo}
+    \label{fig-QuickStartA-ModelState}
+\end{figure} 
+
+It is clear that the reason the task is not running and consequently, by
+virtue of the runahead limit, why the suite as a whole has stalled, is
+the Model(T) is waiting on Model(T-6) which does not exist at suite
+startup. Model of course represents a warm-cycled forecast model that
+depends on a ``model background'' or ``restart file(s)'' generated by
+its own previous run.
+
+\subsubsection{Triggering Tasks Manually}
+
+Right-click on the waiting Model and choose Trigger, or use
+\lstinline=cylc trigger=, to force the task to trigger, and thereby get
+the suite up and running. In a real suite this would not be sufficient:
+the real forecast model that the Model task represents would probably
+fail for lack of the real restart files that it requires as input.
+Well see how to handle this properly shortly.
+
+\subsubsection{Shutting Down And Restarting A Suite}
+
+Having watched the QuickStart:foo suite run for a while, choose Stop from
+the Control menu, or \lstinline=cylc stop=, to shut it down. The default
+stop method waits for any tasks that are currently running to finish
+before shutting the suite down, so that the final recorded suite state
+is perfectly consistent with what actually happened.  
+
+You can restart the start from where it left off by choosing Run from
+the Control menu and selecting the `restart' option, or using
+\lstinline=cylc restart=. {\em Note that cylc always writes a special
+state dump, and logs its name, prior to actioning any intervention, and
+you can restart a suite from one of these states, rather than the 
+default most recent state, in case you make a mistake.}
+
+\subsection{QuickStart:bar - Handling Model Cold Starts Properly}
+
+Now take a look at the QuickStart:bar suite, which is a minor modification 
+of QuickStart:foo. The suite.rc file has a new {\em coldstart} task called
+ColdModel,
+
+\begin{lstlisting}
+# SUITE.RC
+[special tasks]
+    coldstart = ColdModel
+\end{lstlisting}
+and the dependency graph (see also Figure~\ref{fig-QuickStartB-graph18})
+looks like this:
+\begin{lstlisting}
+# SUITE.RC
+[dependencies]
+    [[ 0,6,12,18 ]]
+        graph  =  """Prep => GetData & ColdModel
+                     GetData => Model => PostA
+                     ColdModel | Model(T-6) => Model"""
+    [[ 6,18 ]]
+        graph = "Model => PostB"
+\end{lstlisting}
+
+In other words, Model can trigger off {\em either} its previous-cycle
+self {\em or} ColdModel in the same cycle. 
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.7\textwidth]{../images/screenshots/QuickStartB-graph18.png}
+    \end{center}
+\caption{\small The QuickStart:bar suite dependency graph showing a model cold start task.}
+\label{fig-QuickStartB-graph18}
+\end{figure}
+
+A coldstart task is a oneoff task used to satisfy the previous-cycle
+dependence of a cotemporal task whose previous-cycle trigger is not
+available. The obvious use for this is to cold start warm-cycled
+forecast models at suite startup, when there is no previous cycle.
+Unlike startup tasks though, cold start dependencies are not restricted
+to suite startup because it is sometime useful to be able to 
+insert a cold start task into a running suite, to get a model restarted
+after it skipped a cycle due to problems, without having to restart the
+rest of the suite.
+
+{\em A model cold start task in a real suite often submits a real ``cold
+start forecast'' to generates the previous-cycle input files required by
+its associated model}.  Or it could just stand in for some external
+spinup process, or similar, that has to be completed before the suite
+starts - in this case the cold start task would be a dummy task that
+simply reports successful completion in order to satisfy the initial
+previous-cycle dependence of the model.
+
+If you run QuickStart:bar you'll see that no manually triggering is required
+to get the suite started this time.
+
+
+\subsection{QuickStart:baz - With Complete Task Implementation}
+
+The QuickStart:baz suite is the same as QuickStart:bar except that its
+tasks run real scripts, located in the suite bin directory. The task 
+scripts are independently configured (i.e.\ they don't know about each
+other) but they generate output files and consume input files in such a
+way that the dependency graph of Figure~\ref{fig-QuickStartB-graph18}
+must be respected or they won't run successfully.
+
+The suite configures the task scripts, through their respective
+execution environments, in such a way that they run in the proper
+sequence. 
+
+By studying this suite and its tasks, and by making quick copies of 
+it to modify and run, you should be able to learn a lot about how 
+to build real cylc suites.
+
+\subsection{Following What's Happening In A Running Suite}
+
+\subsubsection{Suite Stdout and Stderr}
+
+When cylc runs a suite it writes warnings and other information messages
+(such as when and how each task is submitted) to the stdout stream. If 
+you start a suite at the commandline, what happens to this output is
+entirely up to you. If you start a suite via gcylc, the output is 
+redirected to a special file, \lstinline=$HOME/.cylc/SUITE.out= that can
+be reaccessed if you later reconnect to the suite with a new control GUI
+instance.
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.7\textwidth]{../images/screenshots/suite-output.png}
+    \end{center}
+\caption{\small Cylc suite stdout/stderr example.}
+\label{fig-suite-output}
+\end{figure}
+
+\subsubsection{Suite Logs}
+
+The cylc suite log records every event that occurs (incoming messages from tasks
+and so no) along with the time of the event. The top level logging directory,
+under which a suite-specific log is written, is configurable in the suite.rc file.
+The default location is \lstinline=$HOME/.cylc/logging/=. Suite logs are
+(optionally) rolled over at start up and the 5 most recent back ups are
+automatically kept.
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.7\textwidth]{../images/screenshots/suite-log.png}
+    \end{center}
+\caption{\small A cylc suite log via gcylc.}
+\label{fig-suite-log}
+\end{figure}
+
+Figure~\ref{fig-suite-log} shows a suite log viewed from within gcylc. The 
+\lstinline=cylc log= command also enables viewing and filtering of suite logs
+without having to remember the actual log file location.
+
+\subsubsection{Task Stdout and Stderr Logs}
+
+The stdout and stderr logs generated when a task is submitted to run end up
+in the {\em job submission log directory}, which is a suite.rc
+configurable item (the default location is \lstinline=$HOME/CylcLogs/GROUP/NAME/=).
+
 
 \subsection{Searching A Suite}
 
@@ -1069,8 +1313,8 @@ The cylc suite search tool or reports matches in the suite.rc file
 by line number, suite section, and file, even if nested include-files
 are used, and by file and line number for matches in the suite bin
 directory.  The following output listing is from a search of
-the examples:userguide suite, because the DepGraphCh6 suite is too 
-minimal to be of much use a demonstration here:
+the examples:userguide suite, because the QuickStart suites are a little
+too minimal to bother with in this context:
 \begin{lstlisting}
 prompt> cylc grep OUTPUT_DIR examples:userguide
 
@@ -1113,122 +1357,6 @@ will be dummied out, as discussed above.
 For more information on suite validation see
 Section~\ref{Validation}.
 
-\subsection{Running A Suite}
-
-Right-click on examples:DepGraphCh6 and bring up a graph-based 
-suite controller, choose Run from the control menu, 
-enter an intial cycle time for a {\em cold start}, and hit the Run
-button. The suite should start up with a set of tasks in the waiting
-state, like either one of Figures~\ref{fig-graph-control-1} or
-Figures~\ref{fig-graph-control-2}.
-
-\begin{figure}
-\begin{minipage}[t]{0.5\textwidth}
-    \begin{center}
-        \includegraphics[width=\textwidth]{../images/screenshots/graph-control-1.png}
-    \end{center}
-    \caption{\small foo}
-    \label{fig-graph-control-1}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.5\textwidth}
-    \begin{center}
-        \includegraphics[width=\textwidth]{../images/screenshots/graph-control-2.png}
-    \end{center}
-    \caption{\small foo}
-    \label{fig-graph-control-2}
-\end{minipage}
-\end{figure} 
-
-When cylc starts up, every task is inserted into the suite {\em at the
-initial cycle time, or at the next valid cycle time for the task}. This
-explains the difference between the two figures. If the intial cycle 
-time is at 00Z, the next valid cylc for task X is at 06Z, and the 
-control GUI fills in the dependency graph between with blank tasks
-(the off-white colour).  Now, the reason why nothing is happening
-in the suite is that all the tasks are waiting for their prerequisites
-to be satisfied. In particular, task A is waiting on its own previous
-instance, which does not exist because this is the first cycle. 
-Right-click on task A and choose `View Prequisites and
-Outputs' to see this (Figure~ref{fig-view-prereq-eg}.
-
-\begin{figure}
-\begin{minipage}[t]{0.3\textwidth}
-    \begin{center}
-        \includegraphics[width=\textwidth]{../images/screenshots/view-prereq-eg.png}
-    \end{center}
-    \caption{\small foo}
-    \label{fig-view-prereq-eg}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.6\textwidth}
-    \begin{center}
-        \includegraphics[width=\textwidth]{../images/screenshots/graph-con-3.png}
-    \end{center}
-    \caption{\small foo}
-    \label{fig-graph-control-3}
-\end{minipage}
-\end{figure} 
-
-
-
-Normally a suite like this would have a special {\em cold start task}
-to satisfy task A's previous-cycle dependencies at startup, but for
-demonstration purposes is is convenient to have a suite that requires
-manual triggering to get it going, so that things don't happen too
-quickly.
-
-To run a suite from the commandline,
-\begin{lstlisting}
-prompt> cylc run examples:DepGraphCh6 2011042506
-\end{lstlisting}
-
-Note that {\em if} the suite contained any {\em clock-triggered} tasks
-(any real suite would) you would not choose an initial cycle time in
-the future, or nothing would happen until that time. As this suite
-does not contain any clock-triggered tasks, however, it's tasks are 
-not constained by the wall clock time at all.
-
-Then start up a suite control interface to follow progress:
-\begin{lstlisting}
-prompt> gcylc examples:userguide &
-# or:
-prompt> gcylc &
-# then right-click on the userguide suite and choose 'Control'
-\end{lstlisting}
-
-You can also start, stop, and control suites directly from the gcylc
-suite control interface (see options available under the `Control' 
-menu, and by right-clicking on tasks in the suite).
-
-The lockserver will let you run multiple instances of the userguide
-example suite at once, under different registrations, because the
-suite.rc file allows that (the suite GROUP and NAME is used in all 
-suite I/O paths so that different suite instances will not interfere
-with each other).
-
-\subsection{Shutting A Suite Down}
-
-To shut a suite down from the commandline, 
-\begin{lstlisting}
-prompt> cylc stop examples:userguide
-\end{lstlisting}
-
-This will cause the suite to shut down once any currently running tasks
-have finished. There are various other ways of stopping a suite too; see
-\lstinline=cylc stop help=.
-
-\subsection{Restarting A Suite}
-
-To restart a suite from its most recent previous state, on the
-commandline,
-\begin{lstlisting}
-prompt> cylc restart examples:userguide
-\end{lstlisting}
-
-You can also restart a suite from other saved prior states; 
-see \lstinline=cylc restart help=. 
-
 \pagebreak
 \section{Using Example Suites To Understand Cylc}
 
@@ -1263,6 +1391,11 @@ identical to real operation, so dummy mode can be used to test recovery
 strategies for certain kinds of failure, for instance. In dummy mode you
 can watch how any suite catches up and transitions from delayed to real
 time operation.
+
+The lockserver will let you run multiple instances of the userguide
+example suite at once, under different registrations, because the
+suite.rc file allows that (i.e.\ the suite group and name are used in
+all I/O paths so that different suite instances will not interfere).
 
 \pagebreak
 \section{Suite Registration}
@@ -1568,9 +1701,8 @@ Reference} (Appendix~\ref{SuiteRCReference}).
         \includegraphics[width=\textwidth]{../images/screenshots/simple-6-warm.png}
     \end{center}
 \end{minipage}
-\caption[Dependency graphs for the simple example suite]{\small
-Dependency graphs (cold and warm start) plotted from the {\em simple}
-example suite.rc file.}
+\caption[Dependency graphs for a simple example suite]{\small
+Dependency graphs (cold and warm start) plotted from a simple suite.rc file.}
 \label{fig-simple-graph-1}
 \end{figure} 
 
@@ -1580,7 +1712,7 @@ example suite.rc file.}
     \end{center}
 \caption[Three cycle cold start dependency graph for the simple example
 suite]{\small Three cycle cold start dependency graph plotted by `cylc
-graph' from the {\em simple} example suite.rc file, showing variation
+graph' from the simple example suite.rc file, showing variation
 between cycles.}
 \label{fig-simple-graph-2}
 \end{figure} 
