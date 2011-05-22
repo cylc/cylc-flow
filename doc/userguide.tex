@@ -675,7 +675,7 @@ and to give a general impression of available functionality.
         \includegraphics[width=0.8\textwidth]{../images/screenshots/db.png}
     \end{center}
 \caption[gcylc: Private Suite Database]{\small
-The gcylc GUI, Private (user-specific) suite database.}
+The gcylc GUI showing the private suite database (user-specific).}
 \label{fig-db}
 \end{figure} 
 
@@ -684,7 +684,7 @@ The gcylc GUI, Private (user-specific) suite database.}
         \includegraphics[width=0.8\textwidth]{../images/screenshots/cdb.png}
     \end{center}
 \caption[gcylc: Central Suite Database]{\small
-The gcylc GUI, central (all users) suite database view.}
+The gcylc GUI showing the central suite database (all users).}
 \label{fig-cdb}
 \end{figure} 
 
@@ -769,9 +769,9 @@ unfortunately) to refer to the ``current cycle'', the ``previous
 cycle'', or the ``next cycle'' and so on, with reference to a particular
 task, and particularly in real time operation. This means, of course,
 all tasks that ``belong to the same forecast cycle''.  Just keep in
-mind that the members of such a group may not all exist in the suite 
-at the same point in real time. In other words, each task may pass
-through the ``current cycle'' (etc.) at a different time as the suite
+mind that the members of such a group may not all exist in the running
+suite at the time. In other words, each task may pass through the
+``current cycle'' (etc.) at a different time as the suite
 evolves, particularly in delayed operation.
 
 \pagebreak
@@ -780,44 +780,9 @@ evolves, particularly in delayed operation.
 
 \lstset{language=bash}
 
-This section is a quick introduction to basic cylc functionality using
-the ``simple dependency graph example'' suite from Section 6, which
-should have been registered in the central suite database during cylc
-installation as ``examples:DepGraphCh6''. 
-
-\subsection{Using Example Suites To Learn About Cylc}
-
-Before we begin the specific example it's important to note, more
-generally, that cylc has been designed from the ground up to make
-testing and prototyping very easy.  Simply ``drawing'' (textually) a
-dependency graph in a new suite.rc file creates a valid suite that runs
-dummy tasks (which just emit an identifying message, sleep for a few
-seconds, and then exit). You can then arrange for a particular task to
-fail, for example, by supplying an appropriate task commandline to
-replace the default ``dummy'' one.
-
-Cylc's example suites run quickly and are completely portable: you 
-can import a copy of one and run it without changing a thing; in fact
-you can run multiple copies of them at once, under different names,
-without any interference between them. Some example suites employ dummy
-tasks or just run simple task commands (as just described above) but
-some have actual external task implementations, in the form of scripts
-in the suite bin directory, that behave like real tasks in
-that they generate specific output files (using touch) that are
-``required'' by other tasks in the suite, and if the suite does not
-run them in the proper order they will abort will an error message 
-(``input file not found'' or similar).
-
-To test something quickly you can copy an example suite (or any other 
-suite) in an instant, using the cylc commands or GUI, make a few changes
-according to your needs, and then run it to see what happens.
-
-You can also run real suites in dummy mode: each task is replaced by the
-default dummy task (above) and the suite runs quickly on an accelerated
-clock. As far as cylc is concerned this is identical to real operation,
-so dummy mode can be used to test recovery strategies for certain kinds
-of failure, for instance.
-
+In this section we work through some basic cylc functionality using the
+``QuickStart'' example suites, which should have been registered in the
+central suite database during cylc installation. 
 
 \subsection{Cylc Environment}
 
@@ -890,11 +855,9 @@ At the command prompt:
 \begin{lstlisting}
 prompt> gcylc &
 \end{lstlisting}
-
-Now use the `Database' menu to switch to the central suite database,
-which contains suites accessible to all users. Suites are displayed in a
-treeview by owner, group, and name, as shown in
-Figure~\ref{fig-cdb-new}.
+and use the Database menu to switch to the central database, which
+displays suites accessible to all users, in a treeview by owner, group,
+and name, as shown in Figure~\ref{fig-cdb-new}.
 
 \begin{figure}
     \begin{center}
@@ -917,33 +880,36 @@ commandline, you can:
     \item search the suite definition and bin scripts,
     \item validate the suite definition,
     \item import the suite or group to your private database,
-    \item unreregister the suite or group (if you own it),
+    \item unreregister or delete the suite or group (if you own it),
     \item reregister the suite or group (if you own it).
 \end{myenumerate}
-
-However, you can only {\em run} suites that are registered in your
-private database, which requires either registering them directly or
-importing them from the central database.
+But you can only {\em run} suites that are registered in your private
+database. 
 
 \subsection{Import A Suite To Your Private Database} 
 
-Find the suite registered as `admin:examples:DepGraphCh6' in the central
+You can register new suites directly in your private database using gcylc 
+or the \lstinline=cylc db register= command, or you can import suites
+from the central database.
+
+Find the suite registered as `admin:examples:QuickStart1' in the central
 database (replace `admin' with the name of the user account under which
 cylc was installed). If there are a lot of suites in the central
 database, use View $\rightarrow$ Filter to restrict the view (you can
 leave the dialog open and refilter as often as you like).
 
-Now right click on DepGraphCh6 and choose `Import' to copy the suite to
+Now right click on QuickStart1 and choose `Import' to copy the suite to
 your private database. A dialog box will pop up allowing you to register
-your copy under a different group and name (just leave these as
-`examples' and `DepGraphCh6') and a location to copy the suite
-definition to (e.g.\ \lstinline=$HOME/suites/DepGraphCh6=).  {\em Note
-that suite groups do not need to be created explicitly, they are
-automatically created and deleted as required.} 
+your copy under a different group and name (just leave these as they are)
+and a destination directory for the suite definition (e.g.\
+\lstinline=$HOME/suites/QuickStart1=). 
 
-Use the Database menu to switch back to your private database, and check
-that you now have a copy of the example suite; it should look like
-Figure~\ref{fig-pdb-new}. Note that you can also import the whole
+{\em Note that suite groups do not need to be created explicitly, they
+are automatically created and deleted as required.} 
+
+Now use the Database menu to switch back to your private database, and
+confirm that you now have a copy of the example suite; it should look
+like Figure~\ref{fig-pdb-new}. Note that you can also import the whole
 `examples' group at once if you like (right-click on the group instead
 of the suite name).
 
@@ -969,23 +935,23 @@ commandline:
 \lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
 \begin{lstlisting}
 # Check that the example suite is registered in the central database,
-prompt> cylc db print --central | grep DepGraphCh6
-admin:examples:DepGraphCh6  "Dependency Graph Example (Ch.6)" \
-    /home/admin/cylc/examples/DepGraphCh6
+prompt> cylc db print --central | grep QuickStart1
+admin:examples:QuickStart1  "Dependency Graph Example (Ch.6)" \
+    /home/admin/cylc/examples/QuickStart1
 
 # Import the suite,
-prompt> cylc db import admin:examples:DepGraphCh6 $HOME/suites/examples/DepGraphCh6
+prompt> cylc db import admin:examples:QuickStart1 $HOME/suites/examples/QuickStart1
 Locking database /home/oliverh/.cylc/LDB/db
-REGISTERED examples:DepGraphCh6  "Dependency Graph Example (Ch.6)" \
-    /home/oliverh/suites/examples/DepGraphCh6
+REGISTERED examples:QuickStart1  "Dependency Graph Example (Ch.6)" \
+    /home/oliverh/suites/examples/QuickStart1
 Copying suite definition
 Unlocking database /home/oliverh/.cylc/LDB/db
 DONE
 
 # Check the import was successful,
-prompt> cylc db print | grep DepGraphCh6
-examples:DepGraphCh6 "Dependency Graph Example (Ch.6)" \
-    /home/oliverh/suites/examples/DepGraphCh6
+prompt> cylc db print | grep QuickStart1
+examples:QuickStart1 "Dependency Graph Example (Ch.6)" \
+    /home/oliverh/suites/examples/QuickStart1
 \end{lstlisting}
 
 \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
@@ -1023,7 +989,7 @@ to update the database.
 
 Right-click on the suite and choose `Edit', or use the edit command,
 \begin{lstlisting}
-prompt> cylc edit examples:DepGraphCh6
+prompt> cylc edit examples:QuickStart1
 \end{lstlisting}
 to view the suite definition (suite.rc file) in your editor. 
 
@@ -1262,6 +1228,41 @@ prompt> cylc restart examples:userguide
 
 You can also restart a suite from other saved prior states; 
 see \lstinline=cylc restart help=. 
+
+\pagebreak
+\section{Using Example Suites To Understand Cylc}
+
+Cylc has been designed from the ground up to make testing and
+prototyping very easy.  Simply ``drawing'' (textually) a dependency
+graph in a new suite.rc file creates a valid suite that you can run (the
+tasks will default to the ``dummy task command'': emitting an
+identifying message, sleeping for a few seconds, and then exiting). You
+can then arrange for particular tasks to do more complex things (to
+fail, for example) by supplying appropriate task commandlines to replace
+the default one.
+
+Cylc's example suites run quickly and are portable: you can copy one and
+run it without modification (in fact you can run multiple copies at
+once, under different registrations, because the suite group and name
+are used in all I/O paths).
+
+The ``QuickStart2'' and ``userguide'' examples have actual external task
+implementations, in the form of scripts in the suite bin directory, that
+behave like real tasks: each generates cycle-specific output files 
+required as input by other tasks, and if not executed in the proper
+order they will abort with a {\em file not found} error, or similar.
+
+You can copy an example suite in an instant, using the cylc commands or
+GUI, make a few changes according to your needs, and then run it to see
+what happens.
+
+You can also run real suites in dummy mode, wherein each real task is
+replaced by the default dummy task (above) and the suite runs quickly on
+an accelerated clock. As far as cylc is concerned this is almost
+identical to real operation, so dummy mode can be used to test recovery
+strategies for certain kinds of failure, for instance. In dummy mode you
+can watch how any suite catches up and transitions from delayed to real
+time operation.
 
 \pagebreak
 \section{Suite Registration}
