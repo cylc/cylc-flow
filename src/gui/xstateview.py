@@ -62,7 +62,7 @@ class xupdater(threading.Thread):
         self.action_required = True
         self.oldest_ctime = None
         self.newest_ctime = None
-        self.show_key = True
+        self.show_key = False # graph key visibility default
         self.best_fit = False
         self.crop = False
         self.filter_include = None
