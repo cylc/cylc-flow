@@ -1,5 +1,5 @@
 %\documentclass[11pt,a4paper]{report}
-\documentclass[11pt,a4paper]{article}
+\documentclass[11pt,a4paper,titlepage]{article}
 %\documentclass[11pt,a4paper]{amsart}
 
 % 1 inch margins
@@ -15,6 +15,8 @@
 \usepackage[usenames]{color}   % dvips here screws up graphicx png version, above
 \usepackage{hyperref}
 %\usepackage{titletoc}
+
+\usepackage{titlepic}  % off CTAN, held locally in cylc doc dir.
 
 \usepackage{tocloft}
 % prevent double digit sub-sections crowding the toc line
@@ -118,6 +120,7 @@ Copyright Hilary Oliver, NIWA, 2008-2011}
 
 \author{Hilary Oliver}
 
+\titlepic{\includegraphics[width=0.4\textwidth]{niwa-colour.png}}
 
 % define a more compact itemized list environment
 \newenvironment{myitemize} {
