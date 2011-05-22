@@ -616,7 +616,7 @@ on the commandline:
 \begin{lstlisting}
 admin> cylc db print --central
 admin:examples:simple  "a simple example suite"  /home/admin/cylc/examples/simple
-admin:examples:userguide  "user guide example suite"  /home/admin/cylc/examples/userguide
+admin:examples:intro  "user guide example suite"  /home/admin/cylc/examples/Intro
 \end{lstlisting}
     \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 
@@ -1313,12 +1313,12 @@ The cylc suite search tool or reports matches in the suite.rc file
 by line number, suite section, and file, even if nested include-files
 are used, and by file and line number for matches in the suite bin
 directory.  The following output listing is from a search of
-the examples:userguide suite, because the QuickStart suites are a little
+the examples:intro suite, because the QuickStart suites are a little
 too minimal to bother with in this context:
 \begin{lstlisting}
-prompt> cylc grep OUTPUT_DIR examples:userguide
+prompt> cylc grep OUTPUT_DIR examples:intro
 
-FILE: /home/oliverh/suites/examples/userguide/suite.rc
+FILE: /home/oliverh/suites/examples/Intro/suite.rc
    SECTION: [tasks]->[[X]]->[[[environment]]]
       [53]:             OUTPUT_DIR = $WORKSPACE
    SECTION: [tasks]->[[A]]->[[[environment]]]
@@ -1326,11 +1326,11 @@ FILE: /home/oliverh/suites/examples/userguide/suite.rc
 
 <...snip...>
 
-FILE: /home/oliverh/suites/examples/userguide/bin/E.sh
+FILE: /home/oliverh/suites/examples/Intro/bin/E.sh
    [7]: cylc checkvars -c OUTPUT_DIR
    [21]: touch $OUTPUT_DIR/sea-state.products
 
-FILE: /home/oliverh/suites/examples/userguide/bin/D.sh
+FILE: /home/oliverh/suites/examples/Intro/bin/D.sh
    [7]: cylc checkvars -c OUTPUT_DIR
    [24]: touch $OUTPUT_DIR/combined.products
 
@@ -1374,7 +1374,7 @@ run it without modification (in fact you can run multiple copies at
 once, under different registrations, because the suite group and name
 are used in all I/O paths).
 
-The ``QuickStart2'' and ``userguide'' examples have actual external task
+The ``QuickStart2'' and ``intro'' examples have actual external task
 implementations, in the form of scripts in the suite bin directory, that
 behave like real tasks: each generates cycle-specific output files 
 required as input by other tasks, and if not executed in the proper
@@ -1392,7 +1392,7 @@ strategies for certain kinds of failure, for instance. In dummy mode you
 can watch how any suite catches up and transitions from delayed to real
 time operation.
 
-The lockserver will let you run multiple instances of the userguide
+The lockserver will let you run multiple instances of the intro
 example suite at once, under different registrations, because the
 suite.rc file allows that (i.e.\ the suite group and name are used in
 all I/O paths so that different suite instances will not interfere).
@@ -2457,20 +2457,20 @@ stdout, with the \lstinline=background= job submission method:
 # CYLC STDOUT
 ColdB%2011101300  READY TO RUN
 SUBMITTING TASK: /tmp/cylc-ColdB%2011101300-5gRx61 </dev/null \
-    1> /home/oliverh/CylcLogs/examples/userguide/ColdB%2011101300-N3pBYv.out \
-    2> /home/oliverh/CylcLogs/examples/userguide/ColdB%2011101300-N3pBYv.err &
+    1> /home/oliverh/CylcLogs/examples/intro/ColdB%2011101300-N3pBYv.out \
+    2> /home/oliverh/CylcLogs/examples/intro/ColdB%2011101300-N3pBYv.err &
 \end{lstlisting}
 
 You can also use \lstinline=cylc submit --dry-run= to generate a task
 job script for inspection: 
 
 \begin{lstlisting}
-prompt> cylc submit --dry-run examples:userguide A%2010080806 
+prompt> cylc submit --dry-run examples:intro A%2010080806 
 DRY RUN: create the job script and show how it would be executed.
   * TASK JOB SCRIPT: /tmp/cylc-A%2010080806-VXQusn
   * JOB SUBMISSION METHOD: /tmp/cylc-A%2010080806-VXQusn </dev/null \
-    1> /home/oliverh/CylcLogs/examples/userguide/A%2010080806-CWYM68.out \
-    2> /home/oliverh/CylcLogs/examples/userguide/A%2010080806-CWYM68.err &
+    1> /home/oliverh/CylcLogs/examples/intro/A%2010080806-CWYM68.out \
+    2> /home/oliverh/CylcLogs/examples/intro/A%2010080806-CWYM68.err &
 \end{lstlisting}
 
 And here is the resulting job script:
@@ -2488,10 +2488,10 @@ export CYLC_DIR="/home/admin/cylc"
 export CYLC_MODE="submit"
 export CYLC_SUITE_HOST="oliverh-33586DL.greta.niwa.co.nz"
 export CYLC_SUITE_PORT="NONE"
-export CYLC_SUITE_DIR="/home/oliverh/suites/examples/userguide"
-export CYLC_SUITE="examples:userguide"
+export CYLC_SUITE_DIR="/home/oliverh/suites/examples/intro"
+export CYLC_SUITE="examples:intro"
 export CYLC_SUITE_GROUP="examples"
-export CYLC_SUITE_NAME="userguide"
+export CYLC_SUITE_NAME="intro"
 export CYLC_SUITE_OWNER="oliverh"
 export CYLC_USE_LOCKSERVER="True"
 export CYLC_DUMMY_SLEEP="10"
@@ -3308,7 +3308,7 @@ the gcylc help panels should explain most available functionality too.
 %basicstyle=\color{basic}\scriptsize\ttfamily,
 %}
 %\begin{lstlisting}
-%$ tail $HOME/cylc-logs/userguide/log
+%$ tail $HOME/cylc-logs/intro/log
 %2010/03/28 00:33:50 INFO main.F - [2010010312] disconnected (spent; general)
 %2010/03/28 00:33:52 INFO main.C - [2010010400] storm surge fields ready for 2010010400
 %2010/03/28 00:33:52 INFO main.A - [2010010412] surface wind fields ready for 2010010412
@@ -3374,7 +3374,7 @@ offset of 10 hours.
 %suite interventions, with complete safety.
 %
 %\begin{lstlisting}
-%cylc restart --practice examples:userguide
+%cylc restart --practice examples:intro
 %\end{lstlisting}
 %
 %This will start a dummy mode clone of an existing suite from the

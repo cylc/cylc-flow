@@ -24,14 +24,14 @@ usage() {
     echo "USAGE: cylc [admin] test-suite [--help]"
     echo ""
     echo "Run an automated test of core cylc functionality using a new copy of"
-    echo "the userguide example suite. This should be used to check that new"
+    echo "the 'intro' example suite. This should be used to check that new"
     echo "developments in the cylc codebase have not introduced serious bugs."
     echo "The test runs a suite registered as 'test'; to watch its progress"
     echo "use 'cylc view'. Aside from timing differences results should be the"
     echo "same in real or dummy mode."
     echo
     echo "Currently the test does the following:"
-    echo "  - Copies the userguide example suite definition directory;"
+    echo "  - Copies the 'intro' example suite definition directory;"
     echo "  - Registers the new suite as $SUITE_REG;"
     echo "  - Starts the suite at T0=06Z, with task X set to fail at 12Z;"
     echo "  - Unlocks the running suite;"
@@ -74,8 +74,8 @@ rm -rf $SUITE_DIR
 echo done
 
 # COPY THE SUITE
-echo -n ">> COPYING userguide example suite to $SUITE_DIR ... "
-cylc db copy examples:userguide $SUITE_REG $SUITE_DIR
+echo -n ">> COPYING 'intro' example suite to $SUITE_DIR ... "
+cylc db copy examples:intro $SUITE_REG $SUITE_DIR
 
 # log file for stdout and stderr
 OUT=test.out; OUT_SCHED=test-suite.out
