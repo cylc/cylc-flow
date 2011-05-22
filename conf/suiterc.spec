@@ -14,15 +14,21 @@
 
 #> \subsection{Include Files}
 #> \label{IncludeFiles}
-#> In addition to the items and values defined below, suite.rc files can include
-#> any number of include-files that can be multiply included and nested
-#> (i.e.\ they can include other include-files, ...).
+#> Include-files can be used to help organize the task definition
+#> sections of large suites, or to group common environment variable settings
+#> into one file that can be included in multiple task environment sections 
+#> (instead of polluting the global namespace for {\em all} tasks).
+#> Include-files can be multiply included and nested 
+#> (i.e.\ and include-file can include other include-files, ...).
 #> \begin{lstlisting}
 #>%include path/to/myfile.rc
 #> \end{lstlisting}
 #> Include-file paths should be specified portably\footnote{If the suite
 #> is copied to another location you shouldn't have to change hardwired
 #> paths.} relative to the suite definition directory.
+#> The \lstinline=cylc edit= command can optionally provide an inlined 
+#> version of a suite.rc file that is automatically split back into 
+#> its constituent include-files when you save and exit the editor.
 
 #>\subsection{Top Level (global settings)}
 

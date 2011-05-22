@@ -741,6 +741,40 @@ The gcylc GUI, central (all users) suite database view.}
 \clearpage
 
 \pagebreak
+
+\section{On The Meaning Of {\em Cycle Time} In Cylc}
+
+You may be used to the idea that a forecasting suite has a ``current
+cycle time'', which is the analysis time or nominal start time
+associated with the main forecast model(s) in the suite, and that
+the whole suite advances to the next forecast cycle when all tasks in
+the current cycle have finished (or even when a particular wall clock
+time is reached, in real time operation). This is not how cylc works.
+
+\subsubsection{Cylc Has No Global (Suite-Wide) Cycle Time}
+
+In {\em Introduction: How Cylc Works} (Section~\ref{HowCylcWorks}) it is
+explained that {\em each task in a cylc suite has its own private cycle
+time} and can run when its prerequisites are satisfied regardless of
+other tasks (with, potentially, different cycle times) that happen to be
+running at the same time.  Cylc suites advance by means of each task
+spawning its own successor at the next valid cycle time for the task,
+not by a global loop over successive forecast cycles. 
+%\footnote{A task's private cycle time is still the familiar analysis
+%time for forecast model tasks, or that of the associated model(s) for
+%pre- and post-processing tasks, however.}
+
+However, it is still sometimes convenient (and potentially confusing,
+unfortunately) to refer to the ``current cycle'', the ``previous
+cycle'', or the ``next cycle'' and so on, with reference to a particular
+task, and particularly in real time operation. This means, of course,
+all tasks that ``belong to the same forecast cycle''.  Just keep in
+mind that the members of such a group may not all exist in the suite 
+at the same point in real time. In other words, each task may pass
+through the ``current cycle'' (etc.) at a different time as the suite
+evolves, particularly in delayed operation.
+
+\pagebreak
 \section{Quick Start Guide} 
 \label{QuickStartGuide}
 
@@ -750,6 +784,40 @@ This section is a quick introduction to basic cylc functionality using
 the ``simple dependency graph example'' suite from Section 6, which
 should have been registered in the central suite database during cylc
 installation as ``examples:DepGraphCh6''. 
+
+\subsection{Using Example Suites To Learn About Cylc}
+
+Before we begin the specific example it's important to note, more
+generally, that cylc has been designed from the ground up to make
+testing and prototyping very easy.  Simply ``drawing'' (textually) a
+dependency graph in a new suite.rc file creates a valid suite that runs
+dummy tasks (which just emit an identifying message, sleep for a few
+seconds, and then exit). You can then arrange for a particular task to
+fail, for example, by supplying an appropriate task commandline to
+replace the default ``dummy'' one.
+
+Cylc's example suites run quickly and are completely portable: you 
+can import a copy of one and run it without changing a thing; in fact
+you can run multiple copies of them at once, under different names,
+without any interference between them. Some example suites employ dummy
+tasks or just run simple task commands (as just described above) but
+some have actual external task implementations, in the form of scripts
+in the suite bin directory, that behave like real tasks in
+that they generate specific output files (using touch) that are
+``required'' by other tasks in the suite, and if the suite does not
+run them in the proper order they will abort will an error message 
+(``input file not found'' or similar).
+
+To test something quickly you can copy an example suite (or any other 
+suite) in an instant, using the cylc commands or GUI, make a few changes
+according to your needs, and then run it to see what happens.
+
+You can also run real suites in dummy mode: each task is replaced by the
+default dummy task (above) and the suite runs quickly on an accelerated
+clock. As far as cylc is concerned this is identical to real operation,
+so dummy mode can be used to test recovery strategies for certain kinds
+of failure, for instance.
+
 
 \subsection{Cylc Environment}
 
@@ -1060,7 +1128,7 @@ FILE: /home/oliverh/suites/examples/userguide/bin/D.sh
 \end{lstlisting}
 (The same thing can of course be done via the gcylc right-click menu).
 
-\subsection{Suite Validation}
+\subsection{Validation}
 
 After editing a suite always validate it to check for errors, via 
 gcylc or the \lstinline=cylc validate SUITE= command.
@@ -1077,7 +1145,7 @@ will be dummied out, as discussed above.
 \end{figure}
 
 For more information on suite validation see
-Section~\ref{SuiteValidation}.
+Section~\ref{Validation}.
 
 \subsection{Running A Suite}
 
@@ -1196,7 +1264,7 @@ You can also restart a suite from other saved prior states;
 see \lstinline=cylc restart help=. 
 
 \pagebreak
-\section{Suite Registration Databases}
+\section{Suite Registration}
 \label{SuiteRegistration}
 
 How to construct a cylc suite is described in coming sections of the
@@ -1265,68 +1333,62 @@ The same functionality is also available by right-clicking on suites
 or groups in the gcylc GUI, as shown in Figure~\ref{fig-pdb-new}.
 
 \pagebreak
-\section{Cylc Suite Definition} 
+\section{Suite Definition} 
 \label{SuiteDefinition}
 
-A cylc suite is defined by a single {\em suite.rc file} that concisely
-specifies the properties of the various {\em tasks} managed by
-the suite, and the relationships between them.
+A cylc suite is defined entirely by a single structured, validated, {\em
+suite.rc file} that concisely specifies the properties of, and the
+relationships between, the various {\em tasks} managed by the suite. 
 
-This section of the user guide shows how a define a cylc suite \dots
+This section of the user guide deals with the format and content of the
+suite.rc file, including task definition.  Task {\em implementation} - 
+what's required of the real commands, scripts, or programs that
+do the processing that the tasks represent, is covered in
+Section~\ref{TaskImplementation}.
 
-A ``task'' is a somewhat abstract entity in that its role in the 
-suite is distinct from its implementation by real command, script, or
-program 
-
-representing in the sense of a named entity that represents a specific
-function in the suite, is definitely part of suite definition, per se.
-
-
-task represents processing initiated by a (but note that the same command, script, or program, can lie
-behind multiple tasks in the same suite, with differing task-specific
-input parameters). 
-
-This section provides an overview of what a cylc suite looks look:
-what should be kept in the {\em suite definition directory}, and the 
-the format and structure of the {\em suite.rc} suite definition file. 
-
-For detailed information on what's legal in a suite.rc file see
-the {\em Suite.rc Reference} (Appendix~\ref{SuiteRCReference});
-for how to write the suite.rc dependency graphs that determine the
-structure of your suite see {\em Suite.rc Dependency Graphs}
-(Section~\ref{DependencyGraphs}) ; for how to construct the tasks 
-that do the real processing in a cylc suite see {\em Task
-Implementation} (Section~\ref{TaskImplementation}), and for how cylc
-tasks are actually submitted to run, see{\em Job Submission} 
-(Section~\ref{JobSubmission}).
+%for how to write the suite.rc dependency graphs that determine the
+%structure of your suite see {\em Suite.rc Dependency Graphs}
+%(Section~\ref{DependencyGraphs}) ; for how to construct the tasks 
+%that do the real processing in a cylc suite see {\em Task
+%Implementation} (Section~\ref{TaskImplementation}), and for how cylc
+%tasks are actually submitted to run, see{\em Job Submission} 
+%(Section~\ref{JobSubmission}).
 
 \subsection{The Suite Definition Directory}
 
 A cylc {\em suite definition directory} contains:
 \begin{myitemize}
     \item {\bf a suite.rc file}: this is {\em the} suite definition
-    \item any include-files included in the suite.rc file (see Section~\ref{IncludeFiles})
-        \begin{myitemize}
-            \item use of include-files is optional
-            \item these may be kept in the sub-directories
-            \item paths are specified relative to the suite definition directory
-        \end{myitemize}
+    \item any include-files used by the suite.rc file (see Section~\ref{IncludeFiles})
+        %\begin{myitemize}
+        %    \item use of include-files is optional
+        %    \item these may be kept in sub-directories, 
+        %    \item paths should be specified portably, relative to the
+        %        suite definition directory
+        %\end{myitemize}
     \item {\bf a bin directory} for scripts and programs that implement,
         or are used by, suite tasks
         \begin{myitemize}
-            \item technically this is optional as tasks can call external
+            \item technically optional - tasks can call external
                 commands, scripts, or programs 
             \item tasks get automatic access to their own suite bin directory
         \end{myitemize}
-    \item any other suite-related files and directories
+    \item any other suite-related documentation, control files, etc.
         \begin{myitemize}
-            \item documentation, ancillary files, control files, \dots
-            \item will be copied if you copy the suite
-            \item can be accessed by tasks at run time - see
-                {\em Task Execution Environment} (Section~\ref{TaskExecutionEnvironment})
-            \item holding everything in one place makes revision control easy
+            \item whole suite definition directories are copied if you
+                copy a suite
+            \item files in the suite definition directory can be
+                accessed portably by tasks at run time 
+                through the environment variable \lstinline=$CYLC_SUITE_DIR=
+                supplied by the suite (see
+                {\em Task Execution Environment}
+                (Section~\ref{TaskExecutionEnvironment})
+            \item holding everything in one place makes revision control
+                easy
         \end{myitemize}
 \end{myitemize}
+
+Here's an imaginary example,
 
 \begin{lstlisting}
 /path/to/my/suite   # suite definition directory
@@ -1349,12 +1411,16 @@ A cylc {\em suite definition directory} contains:
 \subsection{The suite.rc File}
 \label{SuiteRCFile}
 
-Cylc uses a structured, validated, config file for suite definition.
-Entire suite.rc files parse directly into a nested data structure inside
-cylc, which makes it very easy to add and use new configuration items,
-and they are automatically validated against a specification file that
-defines all legal entries, values, options, and defaults
-(\lstinline=$CYLC_DIR/conf/suiterc.spec=). 
+Cylc suite.rc files parse directly into a nested data structure inside
+cylc, which makes it very easy to add and use new configuration items.
+
+Suite.rc files are automatically validated against a specification file 
+(\lstinline=$CYLC_DIR/conf/suiterc.spec=) that defines all legal
+entries, values, options, and defaults; these are documented
+in detail in the {\em Suite.rc Reference}
+(Appendix~\ref{SuiteRCReference}).
+
+\subsubsection{Syntax}
 
 \begin{myitemize}
     \item {\bf Entries} take the form \lstinline@item = value@.
@@ -1383,7 +1449,7 @@ defines all legal entries, values, options, and defaults
         include-file).
 \end{myitemize}
 
-The following pseudo-listing illustrates the general suite.rc file structure:
+The following pseudo-listing illustrates the file structure:
 
 \begin{lstlisting}
 # comment
@@ -1409,34 +1475,52 @@ a list item with continuation = a, b, c, \
 # ...
 \end{lstlisting}
 
+\subsubsection{An Example}
 
-\subsubsection{A Simple Example}
+A typical suite.rc file might contain the following information:
+\begin{myitemize}
+    \item suite title
+    \item suite description
+    \item a default job submission method for the suite
+    \item lists of tasks with special behaviour (e.g. clock-triggered tasks)
+    \item a dependency graph defining the relationships between tasks
+    \item a global environment section (variables avaiable to all tasks)
+    \item and for each task,
+        \begin{myitemize}
+            \item task description
+            \item task-specific environment section (variables available to just this task)
+            \item the commandline to execute when the task is ready to run
+        \end{myitemize}
+    \item optionally, a visualization section to configure graph plotting for the suite
+\end{myitemize}
 
-This is the suite.rc file from the ``simple'' example suite; a few
-entries have been omitted in order to show the file's structure clearly:
+Here's an example: 
 
 \begin{lstlisting}
 # GLOBAL SETTINGS
-title = a simple example suite
+title = suite foo
+
+description = """Run Model on real time input data and postprocess its 
+output with PostA, four times daily; twice daily do additional
+postprocessing with PostB."""
+
 job submission method = loadleveler
  
 [special tasks]
     # TASKS WITH UNUSUAL BEHAVIOUR
-    startup         = Prep
-    coldstart       = ColdA
-    sequential      = ModelA
+    coldstart       = ColdModel
+    sequential      = Model
     clock-triggered = GetData(1)
 
 [dependencies]
     # THE SUITE DEPENDENCY GRAPH
     [[ 0,6,12,18 ]]  # four times daily
         graph  =  """
-            Prep => GetData & ColdA
-            GetData => ModelA => PostA
-            ColdA | ModelA(T-6) => ModelA  # cold start or restart
+            GetData => Model => PostA
+            ColdModel | Model(T-6) => ModelA  # model cold start or restart
                   """
     [[ 6,18 ]]  # additional postprocessing at 6 and 18 UTC
-        graph = "ModelA => PostB" 
+        graph = "Model => PostB" 
 
 [environment]
     # ENVIRONMENT VARIABLES AVAILABLE TO ALL TASKS
@@ -1450,7 +1534,7 @@ job submission method = loadleveler
         [[[environment]]]
             # ENVIRONMENT VARIABLES AVAILABLE TO THIS TASK
             GETDATA_OUTPUT_DIR = $WORKSPACE
-    [[ModelA]]
+    [[Model]]
         # ...
     [[PostA]]
         # ...
@@ -1460,11 +1544,16 @@ job submission method = loadleveler
     # ...
 \end{lstlisting}
 
-Dependency graphs plotted from this (by gcylc or 
-\lstinline=cylc graph=) are shown in Figures~\ref{fig-simple-graph-1} 
-and~\ref{fig-simple-graph-2}.
-How to define suite dependency graphs is described in
-Section~\ref{DependencyGraphs}.
+This is in fact the examples:simple suite, which you can copy, study, 
+and run (it is also the example used in the {\em Quick Start Guide}
+(Section~\ref{QuickStartGuide}). Dependency graphs plotted from this (by
+gcylc or \lstinline=cylc graph=) are shown in
+Figures~\ref{fig-simple-graph-1} and~\ref{fig-simple-graph-2}.
+
+Subsequent sections of the user guide explain important parts of the
+suite.rc file in detail. To see what else can go in a suite definition
+you can study the other example suites and refer to the {\em Suite.rc
+Reference} (Appendix~\ref{SuiteRCReference}).
 
 \begin{figure}
 \begin{minipage}[t]{0.5\textwidth}
@@ -1495,6 +1584,8 @@ between cycles.}
 \label{fig-simple-graph-2}
 \end{figure} 
 
+\clearpage
+
 \subsubsection{Syntax Highlighting In Vim}
 \label{SyntaxHighlighting}
 
@@ -1515,10 +1606,9 @@ modifications, as described in the file, to your
 %    \label{fig-cylc-vim} 
 %\end{figure} 
 
-\clearpage
-\pagebreak
-\subsection{Suite Validation}
-\label{SuiteValidation}
+
+\subsection{Validation}
+\label{Validation}
 
 Suite validation is designed to catch most suite definition errors
 before run time.  First the suite.rc file is validated
@@ -1589,9 +1679,7 @@ These are not necessarily errors - a task defined by graph alone will
 run as a dummy task, and you can temporarily disable a defined task by
 commenting it out of the dependency graph. 
 
-\pagebreak
-
-\subsection{Defining Suite Dependency Graphs}
+\subsection{Dependency Graphs}
 \label{DependencyGraphs}
  
 Dependency graphs define the relationships between tasks in a suite. 
@@ -1659,6 +1747,19 @@ Multiline graph strings may contain:
     \item {\bf conditional operators}: \lstinline=&= (AND) and \lstinline=|= (OR)
     \item {\bf explicit task output labels} - \lstinline=foo:fail=, \lstinline=foo:out1=
     \item {\bf cycle time offsets} - \lstinline=A(T-6)=
+\end{myitemize}
+
+Each dependent pair in a graph defines how the task on the right
+depends on the task on the left {\em at cycle time T}. However,
+\begin{myitemize}
+    \item the ``current" cycle time T is left implicit because it is
+        almost ubiquitous (the vast majority of tasks typically trigger
+        off other with the same cycle time)
+    \item : a task may trigger off other tasks with cycle times, but not
+        later ones.\footnote{Internally cylc has no
+problem with \lstinline@A(T+6) => B@, for example, but it's not
+currently allowed by the graph parser.} Thus only tasks on the left
+of a pair can use the offset notation, e.g.\lstinline=@A(T-6) => B@.
 \end{myitemize}
 
 \subsubsection{Partitioning The Graph}
@@ -2121,229 +2222,22 @@ tasks in the same forecast cycle into a single family (cylc task
 families can have internal dependencies) - this would result in enforced
 whole-suite sequential cycling even when catching up from a delay.
 
-\subsection{Job Submission Methods: How Cylc Submits Tasks To Run}
-\label{JobSubmission}
 
-{\em Task Implementaion} (Section~\ref{TaskImplementation}) describes
-what requirements a command, script, or program, must fulfill in order
-to function as a cylc task (preview: most existing scripts etc. can
-function unmodified as cylc tasks, thanks to the {\em cylc task
-wrapper}, but a few may require some minor modifications).
-
-In this section we explain how cylc arranges for such a task to be
-executed once it has determined that it is ready to run (i.e.\
-that the task's prerequisites are satisfied), and how create new 
-task job submission methods.
-
-\subsubsection{Task Job Scripts}
-
-When a task is ready to run, cylc generates a temporary {\em task job
-script} that contains commands to configure the task execution
-environment before calling the task commandline.  Cylc then 
-submits the job script to run by means of the {\em job submission
-method} chosen for the suite or the task. Different tasks can have
-different job submission methods: set a default in the suite.rc file
-(see Section~\ref{SuiteRCFile}) and override it, if necessary, for
-specific tasks:
- 
-\begin{lstlisting}
-# SUITE.RC
-job submission method = loadleveler  # suite default
-[tasks]
-   [[foo]]
-        job submission method = at_now  # just for task foo
-\end{lstlisting}
-
-\subsubsection{Available Methods}
-\label{AvailableMethods}
-
-\lstset{language=bash}
-
-There are two basic methods that should be available on any platform,
-sufficient for running cylc's example suites if not real forecasting
-systems:
-
-\begin{myitemize}
-
-    \item \lstinline=background= - run tasks directly in a background shell.
-
-     \item \lstinline=at_now= - submit tasks to the rudimentary
-         \lstinline=at= scheduler (\lstinline=atd= must be running).
-
-\end{myitemize}
-
-Tasks in a real forecasting system should be submitted to a batch queue
-scheduler or cross-platform resource manager such as {\em loadleveler}
-(IBM). Methods currently available are:
-
-\begin{myitemize} 
-    
-    \item \lstinline=loadleveler= - This method submits general
-        (non loadleveler-specific) task scripts to loadleveler. 
-        Any {\em directives} you provide in the 
-        suite.rc file 
-        will be written to the job script, which will then 
-        be submitted to run via \lstinline=llsubmit=. 
-
-    \item \lstinline=ll_raw= - This method submits loadleveler-ready
-        scripts (i.e.\ scripts containing hardwired directives) to
-        loadleveler.  This may be necessary for complex (e.g.\
-        multi-step) jobs. The original script is copied to
-        make the temporary job script, and cylc environment
-        scripting is inserted into it immediately after the loadleveler
-        directives.
-
-    \item \lstinline=ll_ecox= - This is derived from the basic 
-        \lstinline=loadleveler= method. It automatically adapts certain
-        task parameters (such as owner username) to NIWA's EcoConnect
-        operational environment so that the same suite definition
-        can be used in distinct {\em oper}, {\em test,} and {\em devel}
-        environments in which the suite and task owners, and their home
-        directories, vary accordingly.
-
-\end{myitemize}
-
-
-\subsubsection{Whither Task stdout And stderr?}
-
-When a task is ready to run cylc generates task-specific stdout and
-stderr filenames containing the task name, cycle time, and a random
-component so that rerunning the task won't overwrite the old output,
-e.g.:
-
-\begin{lstlisting}
-ColdB%2011101300-N3pBYv.out
-ColdB%2011101300-N3pBYv.err
-\end{lstlisting}
-
-You can set the location for these task output logs in the
-suite.rc file; the default is,
-\begin{lstlisting}
-# SUITE.RC
-job submission log directory = $HOME/CylcLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME
-\end{lstlisting}
-
-How the stdout and stderr streams are directed into these files depends
-on the job submission method. The \lstinline=background= method just uses
-appropriate output redirection on the commandline. The
-\lstinline=loadleveler= method writes appropriate directives to the job
-script submitted to that is submitted to loadleveler.
-
-Cylc obviously has no control over the stdout and stderr streams of
-complex tasks that do their own internal output management (e.g.\ tasks 
-that resubmit sub-jobs and direct the output thereof to other files). 
-But otherwise these job logs will capture all stdout and stderr for your
-tasks, and they can be viewed in real time in the suite control GUI. 
-
-\subsubsection{Defining New Job Submission Methods}
-
-Defining a new job submission method requires some minimal amount of
-Python programming.  You can derive (in the sense of object oriented
-programming inheritance) new methods from one of the existing ones, or
-directly from cylc's job submission base class,
-\begin{lstlisting}
-$CYLC_DIR/src/job-submission/job_submit.py
-\end{lstlisting}
-using the existing methods as examples. Most often this should be
-merely be a matter of defining the commandline used to execute the
-aforementioned job scripts, using the provided stdout and stderr file
-paths appropriately. For example, here is the entire class code for 
-the \lstinline=background= method:
-
-\lstset{language=Python}
-
-\begin{lstlisting}
-#!/usr/bin/env python
-
-import os, re
-import tempfile
-from job_submit import job_submit
-
-class background( job_submit ):
-    """
-Run the job script directly in a background shell. 
-    """
-    def construct_jobfile_submission_command( self ):
-        # stdin redirection allows background execution on remote hosts
-        self.command = self.jobfile_path + " </dev/null" + \
-                " 1> " + self.stdout_file + " 2> " + self.stderr_file + " &"
-# EOF
-\end{lstlisting}
-
-Here is the \lstinline=at_now= method:
-
-\begin{lstlisting}
-#!/usr/bin/env python
-
-import os, re
-import tempfile
-from job_submit import job_submit
-
-class at_now( job_submit ):
-    """
-Submit the job script to the 'at' scheduler, to run 'now'.
-    """
-    def construct_jobfile_submission_command( self ):
-        self.command = 'at now <<EOF\n' + self.jobfile_path + \
-                ' 1> ' + self.stdout_file + ' 2> ' + self.stderr_file + '\nEOF'
-# EOF
-\end{lstlisting}
-
-Finally, even the \lstinline=loadleveler= method is quite simple:
-
-\begin{lstlisting}
-#!/usr/bin/env python
-
-import os, re
-import tempfile
-from job_submit import job_submit
-
-class loadleveler( job_submit ):
-    """
-Minimalist loadleveler job submission.
-    """
-    def set_directives( self ):
-        self.directive_prefix = "# @ "
-        self.final_directive  = "# @ queue"
-
-        defaults = {}
-        defaults[ 'job_name' ] = self.task_id
-        defaults[ 'output'   ] = self.stdout_file
-        defaults[ 'error'    ] = self.stderr_file
-
-        defaults[ 'shell'    ] = '/bin/ksh'
-
-        # in case the user wants to override the above defaults:
-        for d in self.directives:
-            defaults[ d ] = self.directives[ d ]
-        self.directives = defaults
-
-    def construct_jobfile_submission_command( self ):
-        self.command = 'llsubmit ' + self.jobfile_path
-# EOF
-\end{lstlisting}
-
-To use your new method, save it in a source file with the same name
-as the job submission class (see examples above), install it in the cylc
-source tree,
-\begin{lstlisting}
-$CYLC_DIR/src/job-submission/MyNewJobSubmitMethod.py
-\end{lstlisting}
-and,  in the spec file \lstinline=$CYLC_DIR/conf/suiterc.spec=, 
-add its name to the list of allowed values for the 
-{\em job submission method} items, at the top level and in the 
-tasks section.
-
-\pagebreak
-
-\pagebreak
-\section{Task Implementation}
-\label{TaskImplementation}
+\subsection{Task Definition}
+\label{Task Definition}
 
 A {\em task} is a single schedulable unit in a cylc suite, uniquely
 identified by its name and (task-specific!) cycle time.
 
-\subsection{Task Names}
+Although ``tasks'' stand for real external processes, or groups of
+processes, they are somewhat abstract entities in that they acquire a
+a name and function, through the suite definition, that is distinct from 
+their implementation as a real command, script, or program.  The same 
+script, for example, can implement several different tasks within the
+same suite, with the function they perform in the suite context being
+determined by task-specific input parameters supplied by the suite.
+
+\subsubsection{Task Names}
 
 Behind each task lies a real command, script, or program. (however, 
 the same command, script, or program can lie behind multiple tasks
@@ -2377,7 +2271,7 @@ is flexible and portable (see
 Section~\ref{TaskAndSuiteIdentityVariables}, {\em Task And Suite
 Identity Variables}).
 
-\subsection{Task Commandline and Environment}
+\subsubsection{Task Commandline and Environment}
 \label{TaskExecutionEnvironment}
 
 Every task has an associated commandline to initiate the processing
@@ -2386,7 +2280,7 @@ it executes, is defined in the suite.rc file, and actioned by the
 {\em task job script} that cylc uses to invoke the task (see
 Section~\ref{JobScripts}, {\em Task Job Scripts}).
 
-\subsubsection{Generic Task Scripts}
+\paragraph{Generic Task Scripts}
 
 If several tasks in a suite perform a similar function, e.g.\ to
 move files around, they can invoke the same command, script, or program,
@@ -2395,7 +2289,7 @@ commandline. The cylc file transfer and file housekeeping utility
 programs were designed with this in mind (see 
 \lstinline=cylc util help=).
 
-\subsection{Task Job Scripts (How Tasks Are Invoked By Cylc)}
+\subsubsection{Task Job Scripts (How Tasks Are Invoked By Cylc)}
 \label{JobScripts}
 
 When a task is ready to run, cylc writes, and then executes via the job
@@ -2494,7 +2388,7 @@ cylc wrap A.sh $OPTIONS
 #EOF
 \end{lstlisting}
 
-\subsection{Task Execution Environment}
+\subsubsection{Task Execution Environment}
 \label{TaskExecutionEnvironment}
 
 The following subsections explain the purpose of each part of the task
@@ -2515,7 +2409,7 @@ The ordering of the job script sections is,
 global variables, so even global variables can be made task- and
 cycle-specific by referencing the task identity.} 
 
-\subsubsection{Suite And Task Identity Variables}
+\paragraph{Suite And Task Identity Variables}
 \label{TaskAndSuiteIdentityVariables}
 
 The first sections of the job script defines variables that identify the
@@ -2548,7 +2442,7 @@ These variables are also used, automatically, by the task messaging
 interface, to target the right task proxy in the particular cylc
 instance that is running the task's parent suite. 
 
-\subsubsection{Global And Task-Specific Environment Variables}
+\paragraph{Global And Task-Specific Environment Variables}
 
 Generally speaking, parameters common to several tasks should be defined
 once in the global environment section of the suite.rc file; and those
@@ -2573,7 +2467,7 @@ you can safely refer to previously defined variables.
             # (task variables can reference global variables)
 \end{lstlisting}
 
-\subsubsection{Task Access To Cylc Commands}
+\paragraph{Task Access To Cylc Commands}
 
 Executing tasks need access to the cylc task messaging commands, and
 possibly to cylc utility commands. Task job scripts source the cylc
@@ -2609,7 +2503,7 @@ host, in the suite.rc task environment section.
             CYLC_SUITE_DIR = /path/to/remote/suite/definition
 \end{lstlisting}
 
-\subsubsection{Task Access To The Suite Definition Directory}
+\paragraph{Task Access To The Suite Definition Directory}
 
 To allow tasks to run scripts or programs in the suite bin directory
 the cylc environment script automatically configures \lstinline=$PATH=
@@ -2625,7 +2519,7 @@ under the suite definition directory, just override
 \lstinline=$CYLC_SUITE_DIR= with the remote suite directory location, in
 the suite.rc task environment section.
 
-\subsubsection{When Are Environment Variables Evaluated?}
+\paragraph{When Are Environment Variables Evaluated?}
 
 Environment variables are {\em not} evaluated by cylc prior to 
 executing the task. They are written, in unevaluated form, to the job
@@ -2635,7 +2529,7 @@ directory of the account under which the task executes (which isn't
 necessarily the same account, or even the same host, that is running the
 suite). 
 
-\subsubsection{Pre- and Post-command Scripting}
+\paragraph{Pre- and Post-command Scripting}
 
 The global and task-specific {\em pre-command scripting} and {\em
 post-command scripting} suite.rc items (not shown in the example 
@@ -2657,6 +2551,11 @@ before the scripting ran. Anything non-trivial should really go into
 the task itself. A better way of scripting simple tasks entirely in the
 suite.rc file is to wrap multiple commands on the task commandline using
 the cylc task wrapper (below).
+
+
+\pagebreak
+\section{Task Implementation}
+\label{TaskImplementation}
 
 \subsection{Task Wrapping: Using Existing Scripts As Cylc Tasks}
 \label{TaskWrapping}
@@ -2862,7 +2761,7 @@ messaging in the appropriate places, before invoking the (now modified)
 native process. The task commandline would then just invoke the custom
 wrapper.
 
-\paragraph{Propagating The Task Execution Environment}
+\subsection{Propagating The Task Execution Environment}
 
 Task processing normally executes in the configured task execution
 environment, even in subprocesses because the environment is exported.
@@ -2967,6 +2866,223 @@ install the suite definition on the remote host and override
 task's suite.rc environment section.
 
 \pagebreak
+
+\section{Task Execution}
+\label{JobSubmission}
+
+{\em Task Implementaion} (Section~\ref{TaskImplementation}) describes
+what requirements a command, script, or program, must fulfill in order
+to function as a cylc task (preview: most existing scripts etc. can
+function unmodified as cylc tasks, thanks to the {\em cylc task
+wrapper}, but a few may require some minor modifications).
+
+In this section we explain how cylc arranges for such a task to be
+executed once it has determined that it is ready to run (i.e.\
+that the task's prerequisites are satisfied), and how create new 
+task job submission methods.
+
+\subsection{Task Job Scripts}
+
+When a task is ready to run, cylc generates a temporary {\em task job
+script} that contains commands to configure the task execution
+environment before calling the task commandline.  Cylc then 
+submits the job script to run by means of the {\em job submission
+method} chosen for the suite or the task. Different tasks can have
+different job submission methods: set a default in the suite.rc file
+(see Section~\ref{SuiteRCFile}) and override it, if necessary, for
+specific tasks:
+ 
+\begin{lstlisting}
+# SUITE.RC
+job submission method = loadleveler  # suite default
+[tasks]
+   [[foo]]
+        job submission method = at_now  # just for task foo
+\end{lstlisting}
+
+\subsection{Available Methods}
+\label{AvailableMethods}
+
+\lstset{language=bash}
+
+There are two basic methods that should be available on any platform,
+sufficient for running cylc's example suites if not real forecasting
+systems:
+
+\begin{myitemize}
+
+    \item \lstinline=background= - run tasks directly in a background shell.
+
+     \item \lstinline=at_now= - submit tasks to the rudimentary
+         \lstinline=at= scheduler (\lstinline=atd= must be running).
+
+\end{myitemize}
+
+Tasks in a real forecasting system should be submitted to a batch queue
+scheduler or cross-platform resource manager such as {\em loadleveler}
+(IBM). Methods currently available are:
+
+\begin{myitemize} 
+    
+    \item \lstinline=loadleveler= - This method submits general
+        (non loadleveler-specific) task scripts to loadleveler. 
+        Any {\em directives} you provide in the 
+        suite.rc file 
+        will be written to the job script, which will then 
+        be submitted to run via \lstinline=llsubmit=. 
+
+    \item \lstinline=ll_raw= - This method submits loadleveler-ready
+        scripts (i.e.\ scripts containing hardwired directives) to
+        loadleveler.  This may be necessary for complex (e.g.\
+        multi-step) jobs. The original script is copied to
+        make the temporary job script, and cylc environment
+        scripting is inserted into it immediately after the loadleveler
+        directives.
+
+    \item \lstinline=ll_ecox= - This is derived from the basic 
+        \lstinline=loadleveler= method. It automatically adapts certain
+        task parameters (such as owner username) to NIWA's EcoConnect
+        operational environment so that the same suite definition
+        can be used in distinct {\em oper}, {\em test,} and {\em devel}
+        environments in which the suite and task owners, and their home
+        directories, vary accordingly.
+
+\end{myitemize}
+
+
+\subsection{Whither Task stdout And stderr?}
+
+When a task is ready to run cylc generates task-specific stdout and
+stderr filenames containing the task name, cycle time, and a random
+component so that rerunning the task won't overwrite the old output,
+e.g.:
+
+\begin{lstlisting}
+ColdB%2011101300-N3pBYv.out
+ColdB%2011101300-N3pBYv.err
+\end{lstlisting}
+
+You can set the location for these task output logs in the
+suite.rc file; the default is,
+\begin{lstlisting}
+# SUITE.RC
+job submission log directory = $HOME/CylcLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME
+\end{lstlisting}
+
+How the stdout and stderr streams are directed into these files depends
+on the job submission method. The \lstinline=background= method just uses
+appropriate output redirection on the commandline. The
+\lstinline=loadleveler= method writes appropriate directives to the job
+script submitted to that is submitted to loadleveler.
+
+Cylc obviously has no control over the stdout and stderr streams of
+complex tasks that do their own internal output management (e.g.\ tasks 
+that resubmit sub-jobs and direct the output thereof to other files). 
+But otherwise these job logs will capture all stdout and stderr for your
+tasks, and they can be viewed in real time in the suite control GUI. 
+
+\subsection{Defining New Job Submission Methods}
+
+Defining a new job submission method requires some minimal amount of
+Python programming.  You can derive (in the sense of object oriented
+programming inheritance) new methods from one of the existing ones, or
+directly from cylc's job submission base class,
+\begin{lstlisting}
+$CYLC_DIR/src/job-submission/job_submit.py
+\end{lstlisting}
+using the existing methods as examples. Most often this should be
+merely be a matter of defining the commandline used to execute the
+aforementioned job scripts, using the provided stdout and stderr file
+paths appropriately. For example, here is the entire class code for 
+the \lstinline=background= method:
+
+\lstset{language=Python}
+
+\begin{lstlisting}
+#!/usr/bin/env python
+
+import os, re
+import tempfile
+from job_submit import job_submit
+
+class background( job_submit ):
+    """
+Run the job script directly in a background shell. 
+    """
+    def construct_jobfile_submission_command( self ):
+        # stdin redirection allows background execution on remote hosts
+        self.command = self.jobfile_path + " </dev/null" + \
+                " 1> " + self.stdout_file + " 2> " + self.stderr_file + " &"
+# EOF
+\end{lstlisting}
+
+Here is the \lstinline=at_now= method:
+
+\begin{lstlisting}
+#!/usr/bin/env python
+
+import os, re
+import tempfile
+from job_submit import job_submit
+
+class at_now( job_submit ):
+    """
+Submit the job script to the 'at' scheduler, to run 'now'.
+    """
+    def construct_jobfile_submission_command( self ):
+        self.command = 'at now <<EOF\n' + self.jobfile_path + \
+                ' 1> ' + self.stdout_file + ' 2> ' + self.stderr_file + '\nEOF'
+# EOF
+\end{lstlisting}
+
+Finally, even the \lstinline=loadleveler= method is quite simple:
+
+\begin{lstlisting}
+#!/usr/bin/env python
+
+import os, re
+import tempfile
+from job_submit import job_submit
+
+class loadleveler( job_submit ):
+    """
+Minimalist loadleveler job submission.
+    """
+    def set_directives( self ):
+        self.directive_prefix = "# @ "
+        self.final_directive  = "# @ queue"
+
+        defaults = {}
+        defaults[ 'job_name' ] = self.task_id
+        defaults[ 'output'   ] = self.stdout_file
+        defaults[ 'error'    ] = self.stderr_file
+
+        defaults[ 'shell'    ] = '/bin/ksh'
+
+        # in case the user wants to override the above defaults:
+        for d in self.directives:
+            defaults[ d ] = self.directives[ d ]
+        self.directives = defaults
+
+    def construct_jobfile_submission_command( self ):
+        self.command = 'llsubmit ' + self.jobfile_path
+# EOF
+\end{lstlisting}
+
+To use your new method, save it in a source file with the same name
+as the job submission class (see examples above), install it in the cylc
+source tree,
+\begin{lstlisting}
+$CYLC_DIR/src/job-submission/MyNewJobSubmitMethod.py
+\end{lstlisting}
+and,  in the spec file \lstinline=$CYLC_DIR/conf/suiterc.spec=, 
+add its name to the list of allowed values for the 
+{\em job submission method} items, at the top level and in the 
+tasks section.
+
+\pagebreak
+
+
 \section{Running Suites}
 \label{RunningCylcSuites}
 
@@ -3353,24 +3469,8 @@ TBD
 Matters pertaining to simplicity, flexibility,
 efficiency, and portability of cylc suites.
 
-\subsection{Use The Example Suites to Learn About Cylc}
-
-The example suites run quickly and are completely portable - you can run
-multiple copies of them at once without any interference between them.
-Make a quick copy of one from the central database and modify it to test
-things for yourself.
-
-\subsection{Remember: There Is No {\em Suite-Wide} Cycle Time}
-
-In cylc, {\em each task has its own private cycle time} and can run when
-its prerequisites are satisfied regardless of what other tasks (with, 
-potentially, different cycle times) are running in the suite at the time.
-The variable \lstinline=$CYCLE_TIME=, which tasks can read from the
-execution environment configured for them by cylc, is {\em
-task-specific}. There is no global loop over of successive forecast
-cycles; the suite advances by means of each task spawning its own
-successor at its next valid cycle time (which is known gleaned from 
-the suite.rc dependency graph).
+\subsection{Use Cylc's Cycle Time Offset Utilities}
+TBD
 
 \subsection{Make Fine-Grained Suites} 
 \label{Granularity}
@@ -3640,7 +3740,7 @@ of sequence, or in parallel, even if the opportunity arises.
 All tasks in a cylc suite know their own private cycle time, but most
 don't care about the wall clock time - they just run when their
 prerequisites are satisfied. The exception to this is {\em
-clock-triggered} tasks, which wait on a wall clock time, expressed as an
+clock-triggered} tasks, which wait on a wall clock time expressed as an
 offset from their own cycle time, in addition to any other
 prerequisites. The usual purpose of these tasks is to retrieve real time
 data from the external world, triggering at roughly the expected time of
@@ -3650,7 +3750,22 @@ the data is delayed; only on successful detection or retrieval should
 the task report success and then exit (or perhaps report failure and
 then exit if the data has not arrived by some cutoff time). 
 
+\subsection{Do Not Treat Real Time Operation As Special} 
 
+Cylc suites, without modification, can handle real time and delayed
+operation equally well.
+
+In real time operation clock-triggered tasks (see above) constrain the
+behaviour of the whole suite, or at least of all tasks situated
+downstream of them in the dependency graph.
+
+In delayed operation (due to an actual delay in an operational suite or
+because you're running an historical case study) clock-triggered will 
+not constrain the suite at all, and cylc's multi-cycling abilities
+come to the fore, because their trigger times have already passed. 
+But if a clock-triggered task happens to catch up to the wall clock, it
+will automatically wait again. In this way a cylc suite naturally
+transitions from delayed operation into real time operation. 
 
 \pagebreak
 
