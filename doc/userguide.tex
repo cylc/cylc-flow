@@ -519,7 +519,6 @@ as it catches up to real time operation.
 
 \pagebreak
 \section{Installation} 
-\label{InstallationAndTesting}
 
 \subsection{Requirements} 
 \label{Requirements}
@@ -535,57 +534,52 @@ as it catches up to real time operation.
         third party support.  As of mid 2011, Python 2.7 is still the
         standard for new Linux distributions.}
     \item PyGTK, a Python wrapper for the GTK+ graphical user interface toolkit.
-        {\em PyGTK is included in
-        most Linux Distributions.} http://www.pygtk.org
+        PyGTK is included in most Linux Distributions. \newline
+        {\em http://www.pygtk.org}
     \item Pyro 3 (Python Remote Objects) - latest version test
         3.12.\footnote{As of April 2011, Pyro 4, which is compatible
         with Python 3, is in development but it is still not recommended
-        for production use.} %Open source license: MIT.
-        Recently moved from sourceforge to: http://www.xs4all.nl/~irmen/pyro3
+        for production use.} \newline
+        {\em http://www.xs4all.nl/~irmen/pyro3}
     \item The graphviz graph layout engine (latest version tested:
-        2.26.3). %Open source license: Eclipse Public License v1.0.
-        http://www.graphviz.org
+        2.26.3). \newline
+        {\em http://www.graphviz.org}
     \item Pygraphviz, a python interface to graphviz (latest version
-        tested: 1.0rc6). %Open source license: BSD
-        \newline
-        http://networkx.lanl.gov/pygraphviz
+        tested: 1.0rc6).  \newline
+        {\em http://networkx.lanl.gov/pygraphviz}
 \end{myitemize}
 
-Of the software listed above, Python and Pyro are essential; PyGTK is
-required to run the gcylc suite database and suite control GUIs, but you
-can equally control and monitor cylc suites from the commandline. Graphviz
-and pygraphviz are required for dependency graphing and the graph-based
-suite control GUI, but you can also run cylc without them.
+Python and Pyro are essential. PyGTK is required by the gcylc GUI
+(but you can control and monitor cylc suites from the commandline). 
+Graphviz and pygraphviz are required for dependency graphing and the
+graph-based suite control GUI (but you can also run cylc without them).
 
-Cylc has also absorbed in modified form (so you don't need to install 
-them) the following open source software packages:
+Cylc has absorbed the following software in modified form (no need to
+install them): 
 \begin{myitemize}
-    \item The xdot graph viewer 
+    \item xdot, a graph viewer
         (http://code.google.com/p/jrfonseca/wiki/XDot,
-        open source license: LGPL)
-    \item The ConfigObj and Validate python modules \newline
-        (http://www.voidspace.org.uk/python/configobj.html,
-        open source license: BSD)
+        LGPL license)
+    \item ConfigObj and Validate 
+        (http://www.voidspace.org.uk/python, %configobj.html,
+        BSD license)
 
 \end{myitemize}
 
-\subsection{Installation} 
-\label{Installation}
+\subsection{Unpack Cylc}
 
-\subsubsection{Cylc}
+Cylc installs into a normal user account; just unpack the release tarball.
 
-Cylc is designed to be installed into a normal user account (called
-`admin' below). Simply unpack the cylc release tarball into your chosen
-location. Users gain access by sourcing the cylc environment script:
+\subsection{The Cylc Environment Script}
 
+To gain access to cylc:
 \begin{lstlisting}
 # configure your shell environment for access to cylc
-admin> export CYLC_DIR=/path/to/cylc/installation/
-admin> . $CYLC_DIR/environment.sh
+export CYLC_DIR=/path/to/cylc/installation/
+. $CYLC_DIR/environment.sh
 \end{lstlisting}
-
-Note that the variable \lstinline=$CYLC_DIR= is actually required by
-the environment script, so don't skip the export step.
+The variable \lstinline=$CYLC_DIR= is required by the environment
+script, so don't skip the export step.
 
 % TO DO: SYSTEM LEVEL INSTALL INSTRUCTIONS
 %For a system-level install just inspect the environment script for the
@@ -593,43 +587,38 @@ the environment script, so don't skip the export step.
 %contents therein in standard system locations. Users would then not need
 %to source the environment script before using cylc. 
 
-\subsubsection{Other}
+%\subsubsection{Other}
+%
+%Pyro, graphviz, and Pygraphviz all have their own simple installation
+%instructions.  If you can't get these installed at system level it is 
+%quite possible to install them all into a user account, and then adapt
+%the cylc environment script slightly to ensure that cylc can access 
+%them.
 
-Pyro, graphviz, and Pygraphviz all have their own simple installation
-instructions.  If you can't get these installed at system level it is 
-quite possible to install them all into a user account, and then adapt
-the cylc environment script slightly to ensure that cylc can access 
-them.
+\subsection{Create The Central Suite Database}
 
-\subsection{Create the Central Suite Database}
-
-Cylc suites must be registered in a local (user-specific) database 
-before they can be used. Suites can also be exported to a central
-database visible to all users. Run the following script to 
-create the central database and export several example suites to
-it:
+Cylc has a central suite database, visible to all users on the 
+cylc host, to facilitate sharing of suites. Run the following 
+command immediately after installation to create the central database
+and export several example suites to it:
 
 \begin{lstlisting}
 admin> cylc admin create-cdb
 \end{lstlisting}
-(You must have installed cylc and configured your environment as above
-before doing this). To view the contents of the central database,
-run gcylc and click on `Database' \lstinline@->@ `CentralDB', or 
-on the commandline:
 
-    \lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
-\begin{lstlisting}
-admin> cylc db print --central
-admin:examples:simple  "a simple example suite"  /home/admin/cylc/examples/simple
-admin:examples:intro  "user guide example suite"  /home/admin/cylc/examples/Intro
-\end{lstlisting}
-    \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
+To view the content of the resulting central database, run gcylc and
+switch to the central database using the Database menu, or 
+use \lstinline=cylc db print --central= on the commandline.
 
+%    \lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
+%\begin{lstlisting}
+%admin> cylc db print --central
+%admin:examples:simple  "a simple example suite"  /home/admin/cylc/examples/simple
+%admin:examples:intro  "user guide example suite"  /home/admin/cylc/examples/Intro
+%\end{lstlisting}
+%    \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 
-\subsection{Testing}
-\label{Testing}
-
-\subsubsection{Suite Database Test} 
+\subsection{Run The Automated Database Test} 
 
 The command \lstinline=cylc admin test-db= gives suite database
 functionality a work out - it registers the user guide example suite
@@ -638,31 +627,30 @@ various ways, exporting it to the central database, and so on, before
 finally deleting the test registrations). This process should complete
 in a few seconds without errors.
 
-\subsubsection{Suite Scheduler Test} 
+\subsection{Run The Automated Scheduler Test} 
 
 The command \lstinline=cylc admin test-suite= tests the cylc scheduler
 itself by running an example suite, configuring it to fail out a
 specific task, and then doing some advanced failure recovery
 intervention on it (recursive purge plus insertion of cold start tasks).
-This process should complete in 2-3 minutes, and can be watched in real
-time by right-clicking on the test suite, when it appears in the gcylc
-local database window and opening up the suite control GUI.
+This process should complete in 2-3 minutes and can be watched in real
+time by right-clicking on the temporary test suite when it appears in
+the gcylc private database window, and opening up a suite control GUI.
 
 \pagebreak
-\section{Screenshots}
+\section{Some Screenshots}
 
-This section of the user guide contains a few screenshots of cylc in use,
-just to show what the various elements of the user interface looks like,
-and to give a general impression of available functionality.
+The following few screenshots provide a glimpse of what the cylc user
+interface looks like.
 
 \begin{myitemize}
     \item Figure~\ref{fig-command-help} - the cylc commandline interface, top level.
-    \item Figure~\ref{fig-db} - the gcylc GUI, private (user-specific) database.
-    \item Figure~\ref{fig-cdb} - the gcylc GUI, central (multi user) database.
+    \item Figure~\ref{fig-db} - a private database in gcylc.
+    \item Figure~\ref{fig-cdb} - a central suite database in gcylc.
     \item Figure~\ref{fig-cylc-vim} - a simple cylc suite definition file (suite.rc) in the vim editor.
     \item Figure~\ref{fig-simple-graph-2} - the suite definition of Figure~\ref{fig-cylc-vim} graphed by cylc.
-    \item Figure~\ref{fig-gcylc-original} - the gcylc suite control GUI, treeview interface.
-    \item Figure~\ref{fig-gcylc-graph} - the gcylc suite control GUI, graph interface.
+    \item Figure~\ref{fig-gcylc-original} - suite control GUI, treeview interface.
+    \item Figure~\ref{fig-gcylc-graph} - suite control GUI, graph-based interface.
     \item Figure~\ref{fig-ecox-1} - a large operational suite graphed by cylc.
     \item Figure~\ref{fig-ecox-2} - another view of the large operational suite of Figure~\ref{fig-ecox-1}.
 \end{myitemize}
@@ -749,35 +737,67 @@ The gcylc GUI showing the central suite database (all users).}
 
 \section{On The Meaning Of {\em Cycle Time} In Cylc}
 
-You may be used to the idea that a forecasting suite has a ``current
-cycle time'', which is the analysis time or nominal start time
-associated with the main forecast model(s) in the suite, and that
-the whole suite advances to the next forecast cycle when all tasks in
-the current cycle have finished (or even when a particular wall clock
-time is reached, in real time operation). This is not how cylc works.
+%You may be used to the idea that a forecasting suite has a ``current
+%cycle time'', which is the analysis time or nominal start time
+%associated with the main forecast model(s) in the suite, and that
+%the whole suite advances to the next forecast cycle when all tasks in
+%the current cycle have finished (or even when a particular wall clock
+%time is reached, in real time operation). This is not how cylc works.
 
-\subsubsection{Cylc Has No Global (Suite-Wide) Cycle Time}
+As explained in {\em Introduction: How Cylc Works}
+(Section~\ref{HowCylcWorks}): {\bf cylc has no concept of global cycle
+time}.  Instead, {\bf each task has its own private cycle time} and can
+run when its prerequisites are satisfied regardless of other tasks with
+different cycle times running at the same time. {\bf Cylc suites advance
+by means of each task spawning a successor at the next valid cycle time
+for the task}, not by incrementing a suite-wide forecast cycle. 
 
-In {\em Introduction: How Cylc Works} (Section~\ref{HowCylcWorks}) it is
-explained that {\em each task in a cylc suite has its own private cycle
-time} and can run when its prerequisites are satisfied regardless of
-other tasks (with, potentially, different cycle times) that happen to be
-running at the same time.  Cylc suites advance by means of each task
-spawning its own successor at the next valid cycle time for the task,
-not by a global loop over successive forecast cycles. 
-%\footnote{A task's private cycle time is still the familiar analysis
-%time for forecast model tasks, or that of the associated model(s) for
-%pre- and post-processing tasks, however.}
+However, it may still be convenient sometimes to refer to the ``current
+cycle'', the ``previous cycle'', or the ``next cycle'' and so forth,
+with reference to a particular task, or in the sense of all tasks that
+``belong to'' a particular forecast cycle.  Just keep in mind that the
+members of such a group may not all exist in the running suite at the
+time. In other words, each task may pass through the ``current cycle''
+(etc.) at a different time as the suite evolves, particularly in delayed
+operation.
 
-However, it is still sometimes convenient (and potentially confusing,
-unfortunately) to refer to the ``current cycle'', the ``previous
-cycle'', or the ``next cycle'' and so on, with reference to a particular
-task, and particularly in real time operation. This means, of course,
-all tasks that ``belong to the same forecast cycle''.  Just keep in
-mind that the members of such a group may not all exist in the running
-suite at the time. In other words, each task may pass through the
-``current cycle'' (etc.) at a different time as the suite
-evolves, particularly in delayed operation.
+\section{Using Example Suites To Understand Cylc}
+
+Cylc has been designed from the ground up to make testing and
+prototyping very easy.  Simply ``drawing'', textually, a dependency
+graph in a new suite.rc file creates a valid suite that you can run. The
+tasks will default to emitting an identifying message, sleeping for a
+few seconds, and then exiting; but you can then arrange for particular
+tasks to do more complex things (to fail, for example) by supplying
+appropriate task commandlines to replace the default one.
+
+Cylc's example suites run quickly and are portable: you can copy and run
+them immediately without modification. You can even run multiple
+copies of the same example suite at once, under different registrations,
+because the suite group and name are used in all I/O paths.
+
+The ``QuickStart2'' and ``intro'' examples have actual external task
+implementations, in the form of scripts in the suite bin directory, that
+behave like real tasks: each generates cycle-specific output files 
+required as input by other tasks, and if not executed in the proper
+order they will abort with a {\em file not found} error, or similar.
+
+You can copy an example suite in an instant, using the cylc commands or
+GUI, make a few changes according to your needs, and then run it to see
+what happens.
+
+You can also run real suites in dummy mode, wherein each real task is
+replaced by the default dummy task (above) and the suite runs quickly on
+an accelerated clock. As far as cylc is concerned this is almost
+identical to real operation, so dummy mode can be used to test recovery
+strategies for certain kinds of failure, for instance. In dummy mode you
+can watch how any suite catches up and transitions from delayed to real
+time operation.
+
+The lockserver will let you run multiple instances of the intro
+example suite at once, under different registrations, because the
+suite.rc file allows that (i.e.\ the suite group and name are used in
+all I/O paths so that different suite instances will not interfere).
 
 \pagebreak
 \section{Quick Start Guide} 
@@ -1363,46 +1383,6 @@ For more information on suite validation see
 Section~\ref{Validation}.
 
 \pagebreak
-\section{Using Example Suites To Understand Cylc}
-
-Cylc has been designed from the ground up to make testing and
-prototyping very easy.  Simply ``drawing'' (textually) a dependency
-graph in a new suite.rc file creates a valid suite that you can run (the
-tasks will default to the ``dummy task command'': emitting an
-identifying message, sleeping for a few seconds, and then exiting). You
-can then arrange for particular tasks to do more complex things (to
-fail, for example) by supplying appropriate task commandlines to replace
-the default one.
-
-Cylc's example suites run quickly and are portable: you can copy one and
-run it without modification (in fact you can run multiple copies at
-once, under different registrations, because the suite group and name
-are used in all I/O paths).
-
-The ``QuickStart2'' and ``intro'' examples have actual external task
-implementations, in the form of scripts in the suite bin directory, that
-behave like real tasks: each generates cycle-specific output files 
-required as input by other tasks, and if not executed in the proper
-order they will abort with a {\em file not found} error, or similar.
-
-You can copy an example suite in an instant, using the cylc commands or
-GUI, make a few changes according to your needs, and then run it to see
-what happens.
-
-You can also run real suites in dummy mode, wherein each real task is
-replaced by the default dummy task (above) and the suite runs quickly on
-an accelerated clock. As far as cylc is concerned this is almost
-identical to real operation, so dummy mode can be used to test recovery
-strategies for certain kinds of failure, for instance. In dummy mode you
-can watch how any suite catches up and transitions from delayed to real
-time operation.
-
-The lockserver will let you run multiple instances of the intro
-example suite at once, under different registrations, because the
-suite.rc file allows that (i.e.\ the suite group and name are used in
-all I/O paths so that different suite instances will not interfere).
-
-\pagebreak
 \section{Suite Registration}
 \label{SuiteRegistration}
 
@@ -1744,78 +1724,6 @@ modifications, as described in the file, to your
 %    \label{fig-cylc-vim} 
 %\end{figure} 
 
-
-\subsection{Validation}
-\label{Validation}
-
-Suite validation is designed to catch most suite definition errors
-before run time.  First the suite.rc file is validated
-against the spec file \lstinline=$CYLC_DIR/conf/suiterc.spec=, which 
-is the ultimate arbiter of what's legal in a cylc suite definition
-(see Section~\ref{SuiteRCReference}). Validation detects any formatting
-errors, typographic errors, illegal items, and illegal values; then some
-global consistency checking is done; and finally the validator attempts
-to create each suite task proxy according to information parsed from the
-suite.rc file.
-
-Here's an example of a successful validation,
-\begin{lstlisting}
-prompt> cylc validate examples:simple
-Parsing Suite Config File
-Instantiating Task Proxies:
-  -  ColdModel ... OK
-  -  GetData ... OK
-  -  Model ... OK
-  -  PostA ... OK
-  -  PostB ... OK
-  -  Prep ... OK
-Suite examples:simple validates OK.
-DONE
-\end{lstlisting}
-
-\subsubsection{Validation Errors}
-
-The validator reports the line numbers of detected errors. 
-
-\begin{lstlisting}
-prompt> cylc validate examples:simple
-Parsing Suite Config File
-ERROR: [[special tasks]
-NestingError('Cannot compute the section depth at line 19.',)
-_validate examples:simple  failed:  1
-\end{lstlisting}
-
-If the suite.rc file contains include-files, use the 
-\lstinline=cylc inline SUITE= command (or the gcylc 
-right-click `Edit' option) to view an inlined copy with correct line
-numbers.
-
-\subsubsection{Validation Warnings}
-
-Several kinds of warning are emitted by the validator, principally 
-if any tasks in the dependency graph are not defined in the [tasks]
-section, or if any tasks defined in the [tasks] section are not used in
-the dependency graph:
-\begin{lstlisting}
-Parsing Suite Config File
-WARNING: task "PostA" is defined only by graph: it will run as a dummy task.
-WARNING: task "Prep" is defined in [tasks] but not used in the graph.
-Instantiating Task Proxies:
-  -  ColdModel ... OK
-  -  GetData ... OK
-  -  Model ... OK
-  -  PostA ... OK
-  -  PostB ... OK
-  -  Prep ...WARNING: no hours in graph or [tasks][[Prep]]; task can be 
-                      'submit'ed but not inserted into the suite.
- OK
-Suite examples:simple validates OK.
-DONE
-\end{lstlisting}
-
-These are not necessarily errors - a task defined by graph alone will
-run as a dummy task, and you can temporarily disable a defined task by
-commenting it out of the dependency graph. 
 
 \subsection{Dependency Graphs}
 \label{DependencyGraphs}
@@ -2423,9 +2331,9 @@ Section~\ref{JobScripts}, {\em Task Job Scripts}).
 If several tasks in a suite perform a similar function, e.g.\ to
 move files around, they can invoke the same command, script, or program,
 with task-specific input parameters provided via the environment and/or
-commandline. The cylc file transfer and file housekeeping utility
-programs were designed with this in mind (see 
-\lstinline=cylc util help=).
+commandline. %The cylc file transfer and file housekeeping utility
+%programs were designed with this in mind (see 
+%\lstinline=cylc util help=).
 
 \subsubsection{Task Job Scripts (How Tasks Are Invoked By Cylc)}
 \label{JobScripts}
@@ -2692,6 +2600,79 @@ the cylc task wrapper (below).
 
 
 \pagebreak
+
+\subsection{Validation}
+\label{Validation}
+
+Suite validation is designed to catch most suite definition errors
+before run time.  First the suite.rc file is validated
+against the spec file \lstinline=$CYLC_DIR/conf/suiterc.spec=, which 
+is the ultimate arbiter of what's legal in a cylc suite definition
+(see Section~\ref{SuiteRCReference}). Validation detects any formatting
+errors, typographic errors, illegal items, and illegal values; then some
+global consistency checking is done; and finally the validator attempts
+to create each suite task proxy according to information parsed from the
+suite.rc file.
+
+Here's an example of a successful validation,
+\begin{lstlisting}
+prompt> cylc validate examples:simple
+Parsing Suite Config File
+Instantiating Task Proxies:
+  -  ColdModel ... OK
+  -  GetData ... OK
+  -  Model ... OK
+  -  PostA ... OK
+  -  PostB ... OK
+  -  Prep ... OK
+Suite examples:simple validates OK.
+DONE
+\end{lstlisting}
+
+\subsubsection{Validation Errors}
+
+The validator reports the line numbers of detected errors. 
+
+\begin{lstlisting}
+prompt> cylc validate examples:simple
+Parsing Suite Config File
+ERROR: [[special tasks]
+NestingError('Cannot compute the section depth at line 19.',)
+_validate examples:simple  failed:  1
+\end{lstlisting}
+
+If the suite.rc file contains include-files, use the 
+\lstinline=cylc inline SUITE= command (or the gcylc 
+right-click `Edit' option) to view an inlined copy with correct line
+numbers.
+
+\subsubsection{Validation Warnings}
+
+Several kinds of warning are emitted by the validator, principally 
+if any tasks in the dependency graph are not defined in the [tasks]
+section, or if any tasks defined in the [tasks] section are not used in
+the dependency graph:
+\begin{lstlisting}
+Parsing Suite Config File
+WARNING: task "PostA" is defined only by graph: it will run as a dummy task.
+WARNING: task "Prep" is defined in [tasks] but not used in the graph.
+Instantiating Task Proxies:
+  -  ColdModel ... OK
+  -  GetData ... OK
+  -  Model ... OK
+  -  PostA ... OK
+  -  PostB ... OK
+  -  Prep ...WARNING: no hours in graph or [tasks][[Prep]]; task can be 
+                      'submit'ed but not inserted into the suite.
+ OK
+Suite examples:simple validates OK.
+DONE
+\end{lstlisting}
+
+These are not necessarily errors - a task defined by graph alone will
+run as a dummy task, and you can temporarily disable a defined task by
+commenting it out of the dependency graph. 
+
 \section{Task Implementation}
 \label{TaskImplementation}
 
