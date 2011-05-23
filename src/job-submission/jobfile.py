@@ -115,6 +115,12 @@ class jobfile(object):
         self.FILE.write( "\nexport TASK_NAME=" + self.task_name )
         self.FILE.write( "\nexport CYCLE_TIME=" + self.cycle_time )
 
+        # configure access to cylc now so that cylc commands can be used
+        # in global and local environment variables, e.g.: 
+        #    NEXT_CYCLE=$( cylc util cycletime --add=6 )
+        self.FILE.write( "\n\n# ACCESS TO CYLC:" )
+        self.FILE.write( "\n. $CYLC_DIR/environment.sh" )
+
         if len( self.global_env.keys()) > 0:
             self.FILE.write( "\n\n# GLOBAL VARIABLES:" )
             for var in self.global_env:
@@ -124,9 +130,6 @@ class jobfile(object):
             self.FILE.write( "\n\n# LOCAL VARIABLES:" )
             for var in self.task_env:
                 self.FILE.write( "\nexport " + var + "=\"" + str( self.task_env[var] ) + "\"" )
-
-        self.FILE.write( "\n\n# ACCESS TO CYLC:" )
-        self.FILE.write( "\n. $CYLC_DIR/environment.sh" )
 
     def write_pre_scripting( self ):
         if self.dummy_mode:
