@@ -925,21 +925,21 @@ The cylc forecast suite metascheduler.
                 menu.append( cong_item )
                 cong_item.connect( 'activate', self.launch_controller, reg, state, True )
 
-                subm_item = gtk.MenuItem( '_Submit (single task)')
+                subm_item = gtk.MenuItem( '_Submit A Task')
                 menu.append( subm_item )
                 subm_item.connect( 'activate', self.submit_task_popup, reg )
 
-                out_item = gtk.MenuItem( 'View _Output')
+                out_item = gtk.MenuItem( 'View Cylc _Output')
                 menu.append( out_item )
                 out_item.connect( 'activate', self.view_output, reg, state )
 
-                out_item = gtk.MenuItem( 'View _Log')
+                out_item = gtk.MenuItem( 'View Cylc _Log')
                 menu.append( out_item )
                 out_item.connect( 'activate', self.view_log, reg )
 
                 if state != '-':
                     # suite is running
-                    dump_item = gtk.MenuItem( 'D_ump' )
+                    dump_item = gtk.MenuItem( 'D_ump Suite State' )
                     menu.append( dump_item )
                     dump_item.connect( 'activate', self.dump_suite, reg )
 
@@ -2029,16 +2029,15 @@ The cylc forecast suite metascheduler.
             else:
                 started_by_gcylc = False
                 info_dialog( "This suite is running, but it was started from "
-                    "the commandline, so gcylc does not have access its output "
-                    "file.").inform()
+                    "the commandline, so gcylc cannot access its cylc stdout/stderr file.").inform()
                 return False
         else:
             # suite not running
             info_dialog( "This suite is not running, so "
-                    "the output capture window will show output (stdout and "
-                    "stderr) from the previous time(s) that the suite was started "
-                    "from via the gcylc app (gcylc cannot access stdout "
-                    "and stderr for suites launched from the commandline).").inform()
+                    "the suite output window will show stdout and stderr "
+                    "messages captured the last time(s) the suite was started "
+                    "from via the GUI (gcylc cannot access stdout "
+                    "and stderr for suites started by the commandline).").inform()
 
         # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?
         # a hard-wired prefix makes it possible for us to 

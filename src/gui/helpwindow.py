@@ -131,14 +131,14 @@ class helpwindow( helpwindow_base ):
 
 ##########
 def main( b ):
-    help = helpwindow( "Gcylc Main Window Help", 500, """%h2 Overview
+    help = helpwindow( "gcylc Main Window Help", 500, """%h2 Overview
 
-Gcylc initially shows your local (privately registered) suites. Using
+When gcylc starts up it shows your private suite database. Using
 the menu bar and right-click menu items you can register new suites;
-copy, reregister, and unregister existing suites; start suites running
-or connect a controller to suites that are already running; edit,
-search, validate, and graph suite definitions; and import suites from,
-or export them to, the central suite registration database (which is
+copy, reregister, and unregister existing suites; start a suite control
+application to run a dormant suite or connect to one that is already
+running; edit, search, validate, and graph suite definitions; and import
+suites from, or export them to, the central suite database (which is
 seen by all users). You can also view, search, validate, and graph
 suites in the central database when considering whether to import them
 for your own use.
@@ -150,8 +150,8 @@ Register another suite. This opens a file chooser dialog configured to
 filter for cylc suite definition (suite.rc) files.
 
 %h3 File > Exit
-This quits the application but does not close down any suite editing or
-control windows, etc., that you have opened.
+Quits the gcylc application, but not any external programs you have launched
+from gcylc (such as suite edit sessions or suite control apps.
 
 %h3 View > Filter
 Change which suites are visible by searching on group and name match
@@ -171,11 +171,11 @@ are automatically detected and updated by the GUI. Suite titles though,
 while held in the database, are originally parsed from suite config
 files. 
 
-%h3 View > LocalDB
-View the local (user-specific) suite registration database.
+%h3 Database > Private
+Switch to your private suite registration database.
 
-%h3 View > CentralDB
-View the central (all users) suite registration database.
+%h3 Database > Central
+Switch to the central suite registration database.
 
 
 %h2 Right Click Menu Options
@@ -186,49 +186,62 @@ options relating to suite registration, registration groups are created
 and deleted as required (you don't need to explicitly create group 'foo'
 before registering a suite 'foo:bar', for example).
 
-Each right-click menu item invokes a subprocess inside a wrapper that
-captures the stdout and stderr streams for display in a log window that
-updates in real time. These output log windows can be closed without
-affecting the associated subprocess, but you will lose access to the
-output. The Control option invokes a self-contained GUI application for
-suite control and montoring (like 'gcylc SUITE') while the other options
-invoke cylc commandline programs. If you start a suite from within a
-control app you will see the suite stdout and stderr in the app's
-log window; otherwise, if you just connect to a suite that is
-already running, you won't. 
+Most right-click menu items invoke cylc commandline programs inside a
+wrapper that captures subprocess stdout and stderr streams and displays
+in a window that updates in real time. These output log windows can be
+closed without affecting the associated subprocess, but you will lose
+access to the output (except in the case of the stdout/stderr from cylc
+itself for suites that are started from a suite control GUI - see below).
 
-%h3 Control
-Launch a control GUI to start a suite running, or to connect to a suite
-that is already running. 
+If you start a suite from the commandline, what happens to cylc stdout
+and stderr is of course entirely up to you (you may want to use
+commandline redirection and/or the posix nohup command).
+
+%h3 Control (original) or Control (graph)
+
+Launch a suite control GUI, with either the original text treeview interface,
+or the newer dependency graph based interface, to start a suite running,
+or to connect to a suite that is already running. 
 
 If you start the suite from within the control GUI, or if you connect to
 a suite that was started from a control GUI, the GUI subprocess output
-window will show suite stdout and stderr as redirected to the files
-$HOME/.cylc/GROUP:NAME.(out|err).
+window will show cylc stdout and stderr as redirected to the files
+$HOME/.cylc/GROUP:NAME.(out|err). If you start a suite from the
+commandline, where cylc stdout and stderr goes is up to you (use 
+output redirection and/or the posix nohup command, for instance).
 
-If you start a suite from the commandline, however, stdout and stderr
-will go to the terminal, or to any files you care to redirect to yourself.
-Reconnecting to such a suite from a control GUI will not show this output.
+%h3 Submit A Task
 
-%h3 View Output
+Submit a single task from the suite, exactly as it would be submitted by
+the suite.
+
+%h3 View Cylc Output
 This opens a new view of the suite stdout and stderr files
 $HOME/.cylc/GROUP:NAME.(out|err) used when suites are started from
 within gcylc (if you start a suite from the commandline, where its
-stdout and stderr end up is entirely up to you).
+stdout and stderr end up is entirely up to you). This is available from
+running tasks, and finished tasks while they remain in the suite (so
+long as you don't stop and restart the suite).
 
-%h3 View Log
+%h3 View Cylc Log
 This opens a searchable and filterable view of the log file that records,
 timestamped, all important events as the suite runs.
 
-%h3 Dump
+%h3 Dump Suite State
 (Running suites only) Print the current state of each task in the suite.
+
+%h3 Describe
+Print the suite description as parsed from the suite.rc file.
+
+%h3 List Tasks
+Print the suite's task list, parsed from the suite.rc file.
 
 %h3 Edit
 Edit the suite config (suite.rc) file
 
 %h3 Graph
-Plot the configured (suite.rc) dependency graph, or the most recent run
-time graph (if the suite has been run before). The suite.rc graph will
+Plot the suite.rc dependency graph, or the most recent run time graph
+(if the suite has run at least once before). The suite.rc graph will
 update in real time as you edit the suite.
 
 %h3 Search
@@ -238,12 +251,6 @@ Search in the suite config file and bin directory.
 Parse the suite config file, validating it against the suite config
 spec, then attempt to instantiate all suite task proxies, and report any
 errors.
-
-%h3 Describe
-Print the suite description, parsed from the suite.rc file.
-
-%h3 List Tasks
-Print the suite's configured task list, parsed from the suite.rc file.
 
 %h3 Copy
 Copy an existing suite (or group of suites) and register it (or them)
@@ -435,8 +442,8 @@ be defined in the suite.rc file [task insertion groups] section.""")
 
 def submit( b ):
     help = helpwindow( "Submit Task Help", 200, """
-Submit a single task to run exactly as it would be submitted from within
-a running suite.""")
+Submit a single task from the suite, exactly as it would be submitted by the
+suite.""")
     help.show()
 
 def change_runahead( b ):
