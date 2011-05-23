@@ -444,6 +444,12 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em example:} foo(1.5), bar(2.25)
 #>\item {\em default:} None
 #>\end{myitemize}
+#> Clock-triggered tasks currently can't be triggered manually prior to
+#> their trigger time. This will be change in future cylc releases. In
+#> the meantime if you need to do this you can kill the task with
+#> \lstinline=cylc remove=, run it manually outside of the suite with
+#> \lstinline=cylc submit=, and then trigger any downstream dependencies
+#> of the killed task manually. 
 
     startup = force_list( default=list())
 #> Startup tasks are oneoff tasks that are only used when {\em cold

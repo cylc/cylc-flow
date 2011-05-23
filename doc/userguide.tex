@@ -119,7 +119,7 @@ numbers=none,
 User Guide \linebreak 
 {\em \small Cylc Version THIS IS NOT A VERSIONED RELEASE} \linebreak
 {\em \small Released Under the GNU GPLv3.0 Software License} \linebreak
-Copyright Hilary Oliver, NIWA, 2008-2011}
+{\small Copyright Hilary Oliver, NIWA, 2008-2011}}
 
 \author{Hilary Oliver}
 
@@ -761,45 +761,6 @@ time. In other words, each task may pass through the ``current cycle''
 (etc.) at a different time as the suite evolves, particularly in delayed
 operation.
 
-\section{Using Example Suites To Understand Cylc}
-
-Cylc has been designed from the ground up to make testing and
-prototyping very easy.  Simply ``drawing'', textually, a dependency
-graph in a new suite.rc file creates a valid suite that you can run. The
-tasks will default to emitting an identifying message, sleeping for a
-few seconds, and then exiting; but you can then arrange for particular
-tasks to do more complex things (to fail, for example) by supplying
-appropriate task commandlines to replace the default one.
-
-Cylc's example suites run quickly and are portable: you can copy and run
-them immediately without modification. You can even run multiple
-copies of the same example suite at once, under different registrations,
-because the suite group and name are used in all I/O paths.
-
-The ``QuickStart2'' and ``intro'' examples have actual external task
-implementations, in the form of scripts in the suite bin directory, that
-behave like real tasks: each generates cycle-specific output files 
-required as input by other tasks, and if not executed in the proper
-order they will abort with a {\em file not found} error, or similar.
-
-You can copy an example suite in an instant, using the cylc commands or
-GUI, make a few changes according to your needs, and then run it to see
-what happens.
-
-You can also run real suites in dummy mode, wherein each real task is
-replaced by the default dummy task (above) and the suite runs quickly on
-an accelerated clock. As far as cylc is concerned this is almost
-identical to real operation, so dummy mode can be used to test recovery
-strategies for certain kinds of failure, for instance. In dummy mode you
-can watch how any suite catches up and transitions from delayed to real
-time operation.
-
-The lockserver will let you run multiple instances of the intro
-example suite at once, under different registrations, because the
-suite.rc file allows that (i.e.\ the suite group and name are used in
-all I/O paths so that different suite instances will not interfere).
-
-\pagebreak
 \section{Quick Start Guide} 
 \label{QuickStartGuide}
 
@@ -1382,15 +1343,58 @@ will be dummied out, as discussed above.
 For more information on suite validation see
 Section~\ref{Validation}.
 
+
+\subsection{Using Example Suites To Understand Cylc}
+
+Cylc has been designed from the ground up to make testing and
+prototyping very easy. Simply drawing (in text) a dependency graph in a
+new suite.rc file creates a valid suite that you can run. The tasks will
+default to emitting an identifying message, sleeping for a few seconds,
+and then exiting; but you can then arrange for particular tasks to do
+more complex things (to fail, for example) by supplying appropriate task
+commandlines to replace the default ``dummy'' one.
+
+Cylc's example suites run quickly and are portable: you can copy and run
+them immediately without modification, even those with real task
+implementations that generate real (albeit zero-sized) output files. You
+can even run multiple copies of the same example suite at once (even
+multiple {\em instances} of the exact same suite, in fact), under
+different registrations, because the suite group and name are used in
+all I/O paths.
+
+%The ``QuickStart:baz'' and ``intro'' examples have actual external task
+%implementations, in the form of scripts in the suite bin directory, that
+%behave like real tasks: each generates cycle-specific output files 
+%required as input by other tasks, and if not executed in the proper
+%order they will abort with a {\em file not found} error, or similar.
+
+You can copy an example suite in an instant, using the cylc commands or
+GUI, make a few changes according to your needs, and then run it to see
+what happens.
+
+You can also run real suites in dummy mode, wherein each real task is
+replaced by the default dummy task (above) and the suite runs quickly on
+an accelerated clock. As far as cylc is concerned this is almost
+identical to real operation, so dummy mode can be used to test recovery
+strategies for certain kinds of failure, for instance. In dummy mode you
+can watch how any suite catches up and transitions from delayed to real
+time operation.
+
+The lockserver will let you run multiple instances of the intro
+example suite at once, under different registrations, because the
+suite.rc file allows that (i.e.\ the suite group and name are used in
+all I/O paths so that different suite instances will not interfere).
+
+\pagebreak
 \pagebreak
 \section{Suite Registration}
 \label{SuiteRegistration}
 
 How to construct a cylc suite is described in coming sections of the
-user guide. But before you can do anything to a suite with the cylc
-command set (which includes tools to aid in suite construction as well
-as suite control) you must register it in your {\em private suite
-database}. 
+user guide. The cylc command set includes tools to aid in suite
+construction as well as suite control, however, and before you can do
+anything to a suite with cylc commands you must register the suite in
+your {\em private suite database}. 
 
 \subsection{Private Suite Databases}
 
@@ -2288,8 +2292,7 @@ determined by task-specific input parameters supplied by the suite.
 Behind each task lies a real command, script, or program. (however, 
 the same command, script, or program can lie behind multiple tasks
 even in the same suite, according to differing task-specific input
-parameters supplied.
-
+parameters supplied).
 
 The suite.rc file defines the set of {\em tasks} to be managed by the
 suite, their individual properties, and the relationships between them.
@@ -2297,7 +2300,6 @@ The concept of ``task'' is something of an abstraction in that the same
 command, script, or program can lie behind any number of different tasks
 within the same suite, or in different suites, functioning according to
 task-specific input supplied by the suite
-
 
 {\em Tasks} are something of an in-suite abstraction. Whilst tasks 
 are implemented by real commands, scripts, or programs, they get
@@ -3092,7 +3094,7 @@ How the stdout and stderr streams are directed into these files depends
 on the job submission method. The \lstinline=background= method just uses
 appropriate output redirection on the commandline. The
 \lstinline=loadleveler= method writes appropriate directives to the job
-script submitted to that is submitted to loadleveler.
+script that is submitted to loadleveler.
 
 Cylc obviously has no control over the stdout and stderr streams of
 complex tasks that do their own internal output management (e.g.\ tasks 
@@ -3205,26 +3207,45 @@ tasks section.
 \section{Running Suites}
 \label{RunningCylcSuites}
 
-TBD:
+{\bf This section of the user guide is, unfortunately, yet to be done.}
+
+For the moment, for quite complete documentation of all available functionality,
+refer to commandline help (included here in Section~\ref{CommandReference}) 
+and the suite.rc reference (Section~\ref{SuiteRCReference}). The gcylc help 
+menus are also reasonably complete.
 
 \begin{myitemize}
-    \item cold starting, warm starting, stopping, and restarting suites.
+    \item cold starting, warm starting, raw starting, restarting, and stopping suites
+        {\em (see \lstinline=cylc run help=)}
     \item running single tasks outside or inside suites
-    \item intervening in suites - stopping, removing, and inserting tasks, \dots
-    \item discovery - getting information from running suites
+        {\em (see \lstinline=cylc insert help= and \lstinline=cylc submit help=)}
+    \item intervening in suites, e.g.\ stopping, removing, and inserting tasks, \dots
+        {\em (see \lstinline=cylc control help=)}
+    \item getting information about running suites, and the tasks in them 
+        {\em (see \lstinline=cylc info help= and \lstinline=cylc discovery help=)}
     \item where to look for output - suite log, suite stdout/stderr, task stdout/stderr
+        {\em (this is documented in the Quick Start Guide, Section~\ref{QuickStart})}
     \item understanding cylc suite evolution, particular in catchup operation
-    \item how to recover from certain kinds of failure
-    \item the cylc lockserver 
-    \item suite security - use of secure passphrases
-    \item automatic state dump backups, named pre-intervention statedumps
-    \item centralized alerting and timeouts
-\end{myitemize}
+        {\em (the Quick Start Guide, Section~\ref{QuickStart}, will help here, along 
+        with the cylc example suites, and running your real suites in dummy mode)}
 
-For the moment, all cylc commands are comprehensively documented - see
-the command reference section; all suite.rc entries are
-comprehensively documented - see the suite.rc reference section; and
-the gcylc help panels should explain most available functionality too.
+    \item how to recover from certain kinds of task failure (TBD)
+
+    \item the cylc lockserver 
+        {\em (lockserver startup is documented in the Quick Start Guide; see also 
+        \lstinline=cylc lockserver help= and \lstinline=cylc lockclient help=})
+
+    \item suite security - use of secure passphrases {\em (this is
+        almost trivial to configure, see documentation of ``use secure passphrase'' 
+        in the Suite.rc Reference, Section~\ref{SuiteRCReference})}
+    \item automatic state dump backups, named pre-intervention state dumps
+        {\em (mentioned in the Quick Start Guide,
+        Section~\ref{QuickStart}; watch the suite log after intervening
+        in a suite)}
+    \item centralized alerting and timeouts
+        {\em (see documentation of ``task event hooks'' in the Suite.rc
+        Reference, Section~\ref{SuiteRCReference})}
+\end{myitemize}
 
 
 %\subsection{Understanding Suite Evolution}
@@ -3875,12 +3896,12 @@ Cylc suites, without modification, can handle real time and delayed
 operation equally well.
 
 In real time operation clock-triggered tasks (see above) constrain the
-behaviour of the whole suite, or at least of all tasks situated
+behaviour of the whole suite, or at least of all tasks 
 downstream of them in the dependency graph.
 
 In delayed operation (due to an actual delay in an operational suite or
-because you're running an historical case study) clock-triggered will 
-not constrain the suite at all, and cylc's multi-cycling abilities
+because you're running an historical case study) clock-triggered tasks
+will not constrain the suite at all, and cylc's multi-cycling abilities
 come to the fore, because their trigger times have already passed. 
 But if a clock-triggered task happens to catch up to the wall clock, it
 will automatically wait again. In this way a cylc suite naturally
