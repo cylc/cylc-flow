@@ -65,7 +65,7 @@ class job_submit(object):
 
     def __init__( self, task_id, task_command, task_env, directives, 
             pre_scripting, post_scripting, logfiles, task_joblog_dir, 
-            task_owner, remote_host ): 
+            task_owner, remote_host, remote_cylc_dir, remote_suite_dir ): 
 
         self.task_id = task_id
         self.task_command = task_command
@@ -88,6 +88,9 @@ class job_submit(object):
         else:
             self.task_owner = self.suite_owner
             self.other_owner = False
+
+        self.remote_cylc_dir = remote_cylc_dir
+        self.remote_suite_dir = remote_suite_dir
 
         if remote_host:
             # Remote job submission
@@ -215,6 +218,7 @@ class job_submit(object):
                 self.task_pre_scripting, self.task_post_scripting, 
                 self.directive_prefix, self.__class__.global_dvs, self.directives,
                 self.final_directive, self.task_command, 
+                self.remote_cylc_dir, self.remote_suite_dir, 
                 self.__class__.shell, self.__class__.dummy_mode,
                 self.__class__.__name__ )
         self.jobfile_path = jf.write()

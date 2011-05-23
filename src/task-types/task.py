@@ -30,7 +30,6 @@
 #   pass
 # foo = classmethod( foo )
 
-
 # TASK PROXY BASE CLASS:
 
 import sys, re
@@ -344,8 +343,11 @@ class task( Pyro.core.ObjBase ):
         self.launcher = get_object( self.job_submit_method, self.job_submit_method )\
                 ( self.id, self.external_task, self.env_vars, self.directives, 
                         self.pre_scripting, self.post_scripting, self.logfiles, 
-                        self.job_submit_log_directory,
-                        self.__class__.owner, self.__class__.remote_host )
+                        self.__class__.job_submit_log_directory,
+                        self.__class__.owner,
+                        self.__class__.remote_host,
+                        self.__class__.remote_cylc_directory, 
+                        self.__class__.remote_suite_directory )
 
         if self.launcher.submit( dry_run ):
             self.set_submitted()

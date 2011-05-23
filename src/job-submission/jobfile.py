@@ -25,7 +25,8 @@ class jobfile(object):
     def __init__( self, task_id, cylc_env, global_env, task_env, 
             global_pre_scripting, global_post_scripting, 
             task_pre_scripting, task_post_scripting, 
-            directive_prefix, global_dvs, directives, final_directive, task_command, 
+            directive_prefix, global_dvs, directives, final_directive, 
+            task_command, remote_cylc_dir, remote_suite_dir,
             shell, dummy_mode, job_submission_method):
 
         self.task_id = task_id
@@ -44,6 +45,8 @@ class jobfile(object):
         self.shell = shell
         self.dummy_mode = dummy_mode
         self.job_submission_method = job_submission_method
+        self.remote_cylc_dir = remote_cylc_dir
+        self.remote_suite_dir = remote_suite_dir
 
         # Get NAME%CYCLETIME (cycling tasks) or NAME%TAG (asynchronous tasks)
         ( self.task_name, tag ) = task_id.split( '%' )
@@ -97,14 +100,11 @@ class jobfile(object):
         # that the order of definition is preserved (and pass any such
         # references through as-is to the task job script).
 
-        # If the task overrides $CYLC_DIR and CYLC_SUITE_DIR
-        # replace them in the global cylc environment (used by tasks
-        # running on a remote host, to specify the remote cylc
-        # installation and remote suite definition directory locations)
-        if 'CYLC_DIR' in self.task_env:
-            self.cylc_env['CYLC_DIR'] = self.task_env['CYLC_DIR']
-        if 'CYLC_SUITE_DIR' in self.task_env:
-            self.cylc_env['CYLC_SUITE_DIR'] = self.task_env['CYLC_SUITE_DIR']
+        # Override $CYLC_DIR and CYLC_SUITE_DIR for remotely hosted tasks
+        if self.remote_cylc_dir:
+            self.cylc_env['CYLC_DIR'] = self.remote_cylc_dir
+        if self.remote_suite_dir:
+            self.cylc_env['CYLC_SUITE_DIR'] = self.remote_suite_dir
 
         self.FILE.write( "\n\n# CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY:" )
         for var in self.cylc_env:

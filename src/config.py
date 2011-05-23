@@ -291,7 +291,7 @@ def get_suite_title( suite=None, path=None ):
                 title = config( suite ).get_title()
         except SuiteConfigError, x:
             print >> sys.stderr, 'ERROR: suite.rc parse failure!'
-            raise
+            raise SystemExit( str(x) )
 
     return title
 
@@ -1134,6 +1134,13 @@ class config( CylcConfigObj ):
             taskd.job_submit_method = self['job submission method']
 
         taskd.job_submit_log_directory = taskconfig['job submission log directory']
+
+        # remote host consistency check
+        if taskconfig['remote host'] and not taskconfig['remote cylc directory']:
+            raise SuiteConfigError, name + ": tasks with a remote host must specify the remote cylc directory"
+
+        taskd.remote_cylc_directory = taskconfig['remote cylc directory']
+        taskd.remote_suite_directory = taskconfig['remote suite directory']
 
         # task-specific event hook scripts
         taskd.hook_scripts[ 'submitted' ]         = taskconfig['task submitted hook script']

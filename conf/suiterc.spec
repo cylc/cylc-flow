@@ -4,7 +4,6 @@
 # document processing (which strips off the leading '#>' characters). 
 # ITEM DOCUMENTATION SHOULD BE UPDATED WHENEVER AN ITEM IS CHANGED.
 
-
 # NOTE: A CONFIGOBJ or VALIDATE BUG? LIST CONSTRUCTOR FAILS IF LAST LIST
 # ELEMENT IS FOLLOWED BY A SPACE (OR DOES IT JUST NEED A TRAILING COMMA?):
 #   GOOD:
@@ -733,13 +732,13 @@ __many__ = string
 #>\item {\em default:} None
 #>\end{myitemize}
 
-    host = string( default=None )
+    remote host = string( default=None )
 #> If a task specifies a remote host, cylc will attempt to execute the
 #> task on that host, using the specified job submission method, by
 #> passwordless ssh. The relevant suite
 #> task scripts and executables, and cylc itself, must be installed on the 
-#> remote host. The environment variables \lstinline=$CYLC_SUITE_DIR=
-#> and \lstinline=$CYLC_DIR= must be overridden with their remote values. 
+#> remote host. The task must also specify {\em remote cylc directory}
+#> and {\em remote suite directory}. 
 #> An {\em owner} must be defined if the task owner's username on the
 #> remote host is not the same as the local suite owner's. Passwordless
 #> ssh must be configured between the local suite owner and remote
@@ -751,6 +750,34 @@ __many__ = string
 #>\item {\em default:} None
 #>\end{myitemize}
 
+    remote cylc directory = string( default=None )
+#> For tasks that run on a remote host, this must be used to specify
+#> the path to the cylc installation (i.e.\ \lstinline=$CYLC_DIR=)
+#> on the remote host.
+#>\begin{myitemize}
+#>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:} string
+#>\item {\em legal values:} a valid directory path on the remote host
+#>\item {\em default:} None
+#>\end{myitemize}
+#> This item is compulsory for remotely hosted tasks.
+
+    remote suite directory = string( default=None )
+#> For tasks that run on a remote host, this must be used to specify
+#> the path to the suite definition directory 
+#> on the remote host. This gives the task access to files in the 
+#> suite directory (via \lstinline=$CYLC_SUITE_DIR=) and to the 
+#> suite bin directory (via \lstinline=$PATH=).
+#>\begin{myitemize}
+#>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:} string
+#>\item {\em legal values:} a valid directory path on the remote host
+#>\item {\em default:} None
+#>\end{myitemize}
+#> This item is not compulsory for remotely hosted tasks, because 
+#> some tasks may not require access to files in the suite definition
+#> directory.
+ 
 #>IGNORE
     task submitted hook script = string( default=None )
     task submission failed hook script = string( default=None )

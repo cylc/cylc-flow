@@ -2516,40 +2516,32 @@ you can safely refer to previously defined variables.
 \end{lstlisting}
 
 \paragraph{Task Access To Cylc Commands}
+\label{TaskAccessToCylcCommands}
 
 Executing tasks need access to the cylc task messaging commands, and
-possibly to cylc utility commands. Task job scripts source the cylc
-environment script to allow this:
-
-\begin{lstlisting}
-# TASK JOB SCRIPT
-# CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY
-export CYLC_DIR=/path/to/cylc/installation
-# ...snip...
-# ACCESS TO CYLC
-. $CYLC_DIR/environment.sh   # environment.sh uses $CYLC_DIR
-\end{lstlisting}
+possibly to cylc utility commands, so task job scripts source the cylc
+environment script.
 
 \paragraph{On Remote Hosts}
 
-In the job script, user (suite.rc) specified environment variables are
-defined prior to sourcing the cylc environment. To provide access to
-cylc on remote hosts you just need to override 
-\lstinline=$CYLC_DIR= with the cylc installation path on the remote 
-host, in the suite.rc task environment section. 
+If you specify a remote host for task, you must also specify the 
+locations of the remote cylc installation and the remote suite
+definition directory (which should be installed on the remote
+host so that tasks can access suite files and the suite bin 
+directory, if necessary).
 
 \begin{lstlisting}
 # SUITE.RC
 [tasks]
     [[foo]]
         # run this task on a remote host
-        host = fitzroy.niwa.co.nz
-        [[[environment]]]
-            # override the cylc path:
-            CYLC_DIR = /path/to/remote/cylc/installation
-            # override the suite definition directory path:
-            CYLC_SUITE_DIR = /path/to/remote/suite/definition
+        remote host = fitzroy.niwa.co.nz
+        remote cylc directory = /path/to/remote/cylc/installation
+        remote suite directory = /path/to/remote/suite/definition
 \end{lstlisting}
+This results in the \lstinline=$CYLC_DIR= and
+\lstinline=$CYLC_SUITE_DIR= variable definitions being set to 
+their remote values in the job script.
 
 \paragraph{Task Access To The Suite Definition Directory}
 
@@ -2561,11 +2553,7 @@ stored under the suite definition directory.
 
 \paragraph{On Remote Hosts}
 
-As for \lstinline=$CYLC_DIR=, above, if a task on a remote
-host needs to access scripts in the suite bin directory, or to any files
-under the suite definition directory, just override 
-\lstinline=$CYLC_SUITE_DIR= with the remote suite directory location, in
-the suite.rc task environment section.
+See {\em Task Access To Cylc Commands} (Section~\ref{TaskAccessToCylcCommands}).
 
 \paragraph{When Are Environment Variables Evaluated?}
 
@@ -2963,29 +2951,31 @@ If a task declares a remote host and owner in its suite.rc task section,
 [tasks]
     [[foo]]
         owner = bob
-        host = fitzroy.niwa.co.nz
+        remote host = fitzroy.niwa.co.nz
+        remote cylc directory = /path/to/remote/cylc/installation
+        remote suite directory = /path/to/remote/suite/definition
         job submission method = loadleveler
 \end{lstlisting}
 cylc will copy the task job script to the remote host by
 \lstinline=scp=, and then run it on the remote host (using the
 specified job submission method for the task) by \lstinline=ssh=. 
-For this to work passwordless ssh must be configured between the
-suite owner on the suite host and the task owner on the remote host.
 
-\subsubsection{Remote Host Requirements}
+Specifying the remote cylc directory gives remote tasks access 
+to cylc commands; and the remote suite directory gives them 
+access to suite files via \lstinline=$CYLC_SUITE_DIR=, and to the
+suite bin directory via \lstinline=$PATH= (automatically configured by
+the cylc environment script).
 
-Cylc (and Pyro) must be installed on the remote host, so that the remote
-task can communicate with its parent suite. To give the remote task
-access to the remote cylc installation just override
-\lstinline=$CYLC_DIR= with the remote cylc location, in the task's
-suite.rc environment section.
+\begin{myitemize}
+    \item passwordless ssh must be configured between the suite owner on
+        the suite host and the task owner on the remote host.
+    \item cylc (and Pyro) must be installed on the remote host, so that
+        the remote task can communicate with its parent suite.
+    \item the suite definition directory must be installed on the remote
+        host, if the task needs access to scripts in the suite bin
+        directory or to any other files stored there.
+\end{myitemize}
         
-To give the remote task access to any files stored in the suite
-definition directory, including scripts in the suite bin directory, just
-install the suite definition on the remote host and override
-\lstinline=$CYLC_SUITE_DIR= with the remote suite location, in the
-task's suite.rc environment section.
-
 \pagebreak
 
 \section{Task Execution}
