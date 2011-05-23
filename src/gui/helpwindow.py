@@ -724,9 +724,12 @@ def userguide( w, graph=False ):
     update_tb( tb, "Exit the control GUI (does not shut the suite down).")
 
     update_tb( tb, "\n\nMenu: View > ", [bold, red] )
-    update_tb( tb, "\n o Nudge: ", [bold])
+    update_tb( tb, "\n o Nudge Suite: ", [bold])
+
     update_tb( tb, "Invoke the cylc task processing loop when nothing else "
-            "is happening, in order to update estimated completion times." )
+            "is happening, in order to update estimated completion times "
+            "(which are not yet shown in the graph-base GUI) and the "
+            "\"state last updated at\" time in the status bar." )
 
     update_tb( tb, "\n o View Suite Log: ", [bold])
     update_tb( tb, "View the cylc log for this suite, updating the view "
@@ -742,6 +745,15 @@ def userguide( w, graph=False ):
 
         update_tb( tb, "\n o Toggle Graph Key ", [bold])
         update_tb( tb, "Show or remove the dependency graph color key.")
+
+        update_tb( tb, "\n o Toggle Crop Base Graph ", [bold])
+        update_tb( tb, "This controls whether or not the suite base "
+                "graph (off-white coloured nodes) is plotted for tasks "
+                "that are not currently present in the suite. Not plotting "
+                "them may result in several apparently disconnected "
+                "graph sections, but plotting them may not be advantageous "
+                "if there are tasks with widely separated cycle times "
+                "present." )
 
     else:
         update_tb( tb, "\n o Toggle Task Names ", [bold])
@@ -760,16 +772,19 @@ def userguide( w, graph=False ):
             "or immediately (beware of orphaned tasks!), or after a all tasks have "
             "passed a given cycle time, or after a particular wall clock time, or "
             "after a particular task has finished." )
-    update_tb( tb, "\n o Hold (pause): ", [bold])
+    update_tb( tb, "\n o Hold Suite (pause): ", [bold])
     update_tb( tb, "Refrain from submitting tasks that are ready to run.")
-    update_tb( tb, "\n o Release( unpause): ", [bold])
+    update_tb( tb, "\n o Release Suite (unpause): ", [bold])
     update_tb( tb, "Resume submitting tasks that are ready to run.")
-    update_tb( tb, "\n o Insert: ", [bold])
+    update_tb( tb, "\n o Insert Task(s): ", [bold])
     update_tb( tb, "Insert a task or task group into a running suite." )
     update_tb( tb, "\n o Block Access: ", [bold])
     update_tb( tb, "Refuse to comply with subsequent intervention commands." )
     update_tb( tb, "\n o Unblock Access: ", [bold])
     update_tb( tb, "Comply with subsequent intervention commands." )
+    update_tb( tb, "\n o Change Runahead Limit: ", [bold])
+    update_tb( tb, "Change the suite's configured runahead limit at "
+            "run time." )
 
     if not graph:
         update_tb( tb, "\n\nTask Tree View Panel: Right-Click Popup Menu > ", [bold, red] )
@@ -825,6 +840,13 @@ def userguide( w, graph=False ):
     update_tb( tb, "Remove a task from the suite, then remove any task "
             "that would depend on it, then remove any tasks that would depend on "
             "those tasks, and so on, through to a given stop cycle." )
+
+    update_tb( tb, "\n o Add A Prerequisite: ", [bold])
+    update_tb( tb, "Here you can add a new prerequisite to a task at "
+            "run time. Example of use: make a task wait on a oneoff task "
+            "that it does not normally depend on but which has been "
+            "inserted into the suite to handle some unusual situation.")
+
 
     window.show_all()
 
