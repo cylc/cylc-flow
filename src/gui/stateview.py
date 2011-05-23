@@ -99,7 +99,7 @@ class updater(threading.Thread):
         self.global_summary = {}
         self.god = None
         self.mode = "mode:\nwaiting..."
-        self.dt = "state last changed at:\nwaiting..."
+        self.dt = "state last updated at:\nwaiting..."
         self.block = "access:\nwaiting ..."
 
         self.ttreeview = ttreeview
@@ -201,7 +201,7 @@ class updater(threading.Thread):
             self.block = 'access:\nfree'
 
         dt = glbl[ 'last_updated' ]
-        self.dt = 'state last changed at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
+        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
 
         # only update states if a change occurred
         if compare_dict_of_dict( states, self.state_summary ):
