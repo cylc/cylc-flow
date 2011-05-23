@@ -1135,9 +1135,11 @@ class config( CylcConfigObj ):
 
         taskd.job_submit_log_directory = taskconfig['job submission log directory']
 
-        # remote host consistency check
-        if taskconfig['remote host'] and not taskconfig['remote cylc directory']:
-            raise SuiteConfigError, name + ": tasks with a remote host must specify the remote cylc directory"
+        if taskconfig['remote host']:
+            taskd.remote_host = taskconfig['remote host']
+            # consistency check
+            if not taskconfig['remote cylc directory']:
+                raise SuiteConfigError, name + ": tasks with a remote host must specify the remote cylc directory"
 
         taskd.remote_cylc_directory = taskconfig['remote cylc directory']
         taskd.remote_suite_directory = taskconfig['remote suite directory']

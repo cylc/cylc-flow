@@ -65,7 +65,7 @@ class taskdef(object):
         self.modifiers = []
 
         self.owner = None
-        self.host = None
+        self.remote_host = None
 
         self.hook_scripts = {}
         for event in [ 'submitted', 'submission failed', 'started', 
@@ -204,7 +204,7 @@ class taskdef(object):
         #tclass.reset_execution_timeout_on_incoming_messages = self.reset_execution_timeout_on_incoming_messages
 
         tclass.hook_scripts = self.hook_scripts
-        tclass.remote_host = self.host
+        tclass.remote_host = self.remote_host
 
         # TO DO: can this be moved into task base class?
         tclass.job_submit_method = self.job_submit_method
