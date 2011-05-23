@@ -1,6 +1,10 @@
 _______
 GENERAL
 
+* purge algorithm improvement: post cylc-3.0 we could easily determine,
+  via the suite dependency graph, if any tasks that should be affected
+  by the purge have not yet reached the purge start time.
+
 * allow 'submit' from suite control GUI.
 
 * allow launch gcylc from suite control GUIs?

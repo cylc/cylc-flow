@@ -33,10 +33,16 @@ WARNING: THIS COMMAND IS DANGEROUS, but in case of disaster you can
 simply restart the suite from the automatic pre-purge state dump (the
 filename will be logged by cylc before the purge is actioned.)
 
-Note that the immediate downstream dependents of the root task will only
-be detected if they exist at the time the purge is done. If you purge
-before all such tasks have been spawned by their upstream predecessors,
-those tasks will have to be cleaned up later with \lstinline=cylc
+Note that downstream tasks dependent on the root task will only be
+detected as such if they exist at the time the purge is done. In other
+words, if you want purge task P(T), and X(T) depends on P(T), but P is 
+still running T-6, or whatever, and has not spawned a successor at T, 
+then X will not affected by the purge. To avoid this, wait until all
+tasks that depend on P have caught up to P(T) before purging.
+[development note: post cylc-3.0 we could easily determine, via the
+suite dependency graph, that X(T) needs to be included in the purge even
+if it has not appeared in the suite yet.]
+
 remove""",
 ["TASK_ID              Task at which to start the purge (NAME%YYYYMMDDHH).",
  "STOP                 Cycle (inclusive!) at which to stop (YYYYMMDDHH)"] )
