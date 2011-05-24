@@ -98,11 +98,13 @@ class job_submit(object):
 
         if remote_host or self.__class__.global_remote_host:
             # Remote job submission
-            if not self.__class__.simulation_mode:
+            self.local_job_submit = False
+            if self.__class__.simulation_mode:
                 # Ignore remote hosts in simulation mode (this allows us to
                 # dummy-run suites with remote tasks if outside of their 
                 # usual execution environment).
-                self.local_job_submit = False
+                self.local_job_submit = True
+            else:
 
                 if remote_cylc_dir:
                     self.remote_cylc_dir = remote_cylc_dir
