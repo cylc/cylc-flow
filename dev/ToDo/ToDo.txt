@@ -1,6 +1,8 @@
 _______
 GENERAL
 
+* a 'nudge' that just updates task state info, without going through
+  the full task processing loop?
 
 * warm, cold, and raw start should insert tasks beyond the optional
   final task in the 'held' state, not just delete them? (see 'STOPPING'
