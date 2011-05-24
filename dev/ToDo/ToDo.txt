@@ -1,6 +1,11 @@
 _______
 GENERAL
 
+
+* warm, cold, and raw start should insert tasks beyond the optional
+  final task in the 'held' state, not just delete them? (see 'STOPPING'
+  in bin/_run
+
 * purge algorithm improvement: post cylc-3.0 we could easily determine,
   via the suite dependency graph, if any tasks that should be affected
   by the purge have not yet reached the purge start time.

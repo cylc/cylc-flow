@@ -32,7 +32,7 @@ dump file.
 
 class task_state(object):
 
-    allowed_status = [ 'waiting', 'submitted', 'running', 'succeeded', 'failed', 'stopped', 'neutral' ]
+    allowed_status = [ 'waiting', 'submitted', 'running', 'succeeded', 'failed', 'held', 'neutral' ]
     # INTERNALLY TO THIS CLASS, SPAWNED STATUS IS A STRING
     allowed_bool = [ 'true', 'false' ]
 
@@ -105,8 +105,8 @@ class task_state(object):
         else:
             return False
 
-    def is_stopped( self ):
-        if self.state[ 'status' ] == 'stopped':
+    def is_held( self ):
+        if self.state[ 'status' ] == 'held':
             return True
         else:
             return False

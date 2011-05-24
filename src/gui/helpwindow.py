@@ -323,9 +323,8 @@ process has to know when you exit from the editor).
  
 def todo( b) :
     help = helpwindow( "Commands or command options not yet implemented in the GUI", 300, """
-%h2 restarting a suite with the '--no-unstop' option.
-By default, any tasks in the 'stopped' state (by 'cylc hold SUITE TASK' )
-will be unstopped on restarting a suite.""")
+%h2 restarting a suite with the '--no-release' option.
+Don't release any held tasks on restarting.""")
     help.show()
 
 def graph( b ):
@@ -524,9 +523,7 @@ def start_guide(w):
     update_tb( tb, " - OPTIONAL.", [bold,red2])
     update_tb( tb, "\nFinal cycle time. Each task will stop spawning "
             "successors when it reaches this cycle time, and the suite "
-            "will shut down when all remaining tasks have reached it. "
-            "Note that if you set a stop time you can't change or cancel "
-            "it easily - see 'cylc [con] restart --help' for more information." )
+            "will shut down when all remaining tasks have reached it.")
 
     update_tb( tb, "\n\n o Initial State (FILE)", [bold, red] )
     update_tb( tb, " - Restart only.\n", [bold,red2] )
@@ -624,10 +621,10 @@ def shutdown_guide( w ):
     update_tb( tb, "\n\n o Stop after all tasks have passed a given cycle time", [bold, red] )
     update_tb( tb, "\nStop the suite once all tasks have passed "
             "the cycle time YYYYMMDDHH. This results in tasks "
-            "entering a 'stopped' (held) state once they have spawned "
+            "entering a 'held' state once they have spawned "
             "beyond the designated cycle time. If you later "
-            "restart the suite, stopped tasks will be unstopped "
-            "(by default)." )
+            "restart the suite, stopped tasks will be released "
+            "by default." )
 
     update_tb( tb, "\n\n o Stop after a given wall clock time", [bold, red] )
     update_tb( tb, "\nAt the specified clock time, the suite will refrain "
@@ -691,7 +688,7 @@ def userguide( w, graph=False ):
             "provides a quick visual overview of the current state "
             "of the suite, with colours to indicate task state: "
             "blue=waiting, orange=submitted, green=running, "
-            "gray=succeeded, red=failed, yellow=stopped (held). "
+            "gray=succeeded, red=failed, yellow=held. "
             "The lower panel is a cycle-time tree view "
             "with more detail on each task. You can filter on task state or task "
             "name to quickly find the tasks you're interested in. " )
@@ -829,11 +826,11 @@ def userguide( w, graph=False ):
     update_tb( tb, "Put the task in the 'failed' state." )
 
     update_tb( tb, "\n o Hold: ", [bold])
-    update_tb( tb, "Put a task in the 'stopped' state; "
+    update_tb( tb, "Put a task in the 'held' state; "
             "it won't run or spawn until released." )
 
     update_tb( tb, "\n o Release: ", [bold])
-    update_tb( tb, "Release a task from the 'stopped' state "
+    update_tb( tb, "Release a task from the 'held' state "
             "so that it can run again as normal." )
 
     update_tb( tb, "\n o Remove after spawning: ", [bold])

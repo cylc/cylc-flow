@@ -251,14 +251,14 @@ Dependency graph based GUI suite control interface.
 
         filterbox = gtk.HBox()
         # allow filtering out of 'succeeded' and 'waiting'
-        all_states = [ 'waiting', 'submitted', 'running', 'succeeded', 'failed', 'stopped' ]
+        all_states = [ 'waiting', 'submitted', 'running', 'succeeded', 'failed', 'held' ]
         labels = {}
         labels[ 'waiting'   ] = '_waiting'
         labels[ 'submitted' ] = 's_ubmitted'
         labels[ 'running'   ] = '_running'
         labels[ 'succeeded'  ] = 'su_cceeded'
         labels[ 'failed'    ] = 'f_ailed'
-        labels[ 'stopped'   ] = 's_topped'
+        labels[ 'held'   ] = 'h_eld'
         # initially filter out 'succeeded' and 'waiting' tasks
         #filter_states = [ 'waiting', 'succeeded' ]
         for st in all_states:

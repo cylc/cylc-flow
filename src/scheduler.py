@@ -477,11 +477,11 @@ class scheduler(object):
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     print "MAIN LOOP TIME TAKEN:", seconds, "seconds"
 
-            # SHUT DOWN IF ALL TASKS ARE SUCCEEDED OR STOPPED
+            # SHUT DOWN IF ALL TASKS ARE SUCCEEDED OR HELD
             stop_now = True  # assume stopping
             for itask in self.tasks:
                 # find any reason not to stop
-                if not itask.state.is_succeeded() and not itask.state.is_stopped():
+                if not itask.state.is_succeeded() and not itask.state.is_held():
                     # don't stop if any tasks are waiting, submitted, or running
                     stop_now = False
                     break
@@ -499,7 +499,7 @@ class scheduler(object):
                         stop_now = False
                         break
             if stop_now:
-                self.log.warning( "ALL TASKS FINISHED OR STOPPED" )
+                self.log.warning( "ALL TASKS FINISHED OR HELD" )
                 break
 
             if self.remote.halt and self.no_tasks_running():
@@ -784,12 +784,12 @@ class scheduler(object):
                 stop_me = False
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the suite stop time
-                    new_task.log( 'WARNING', "STOPPING at configured suite stop time " + self.stop_time )
-                    new_task.state.set_status('stopped')
+                    new_task.log( 'WARNING', "HOLDING at configured suite stop time " + self.stop_time )
+                    new_task.state.set_status('held')
                 if itask.stop_c_time and int( new_task.c_time ) > int( itask.stop_c_time ):
                     # this task has a stop time configured, and we've reached it
-                    new_task.log( 'WARNING', "STOPPING at configured task stop time " + itask.stop_c_time )
-                    new_task.state.set_status('stopped')
+                    new_task.log( 'WARNING', "HOLDING at configured task stop time " + itask.stop_c_time )
+                    new_task.state.set_status('held')
                 # perpetuate the task stop time, if there is one
                 new_task.stop_c_time = itask.stop_c_time
                 self.insert( new_task )
@@ -804,12 +804,12 @@ class scheduler(object):
             new_task = itask.spawn( 'waiting' )
             if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                 # we've reached the suite stop time
-                new_task.log( 'WARNING', "STOPPING at configured suite stop time " + self.stop_time )
-                new_task.state.set_status('stopped')
+                new_task.log( 'WARNING', "HOLDING at configured suite stop time " + self.stop_time )
+                new_task.state.set_status('held')
             if itask.stop_c_time and int( new_task.c_time ) > int( itask.stop_c_time ):
                 # this task has a stop time configured, and we've reached it
                 new_task.log( 'WARNING', "STOPPING at configured task stop time " + itask.stop_c_time )
-                new_task.state.set_status('stopped')
+                new_task.state.set_status('held')
             # perpetuate the task stop time, if there is one
             new_task.stop_c_time = itask.stop_c_time
             self.insert( new_task )
@@ -1124,7 +1124,7 @@ class scheduler(object):
             self.trash( itask, 'general' )
 
     def reset_task_state( self, task_id, state ):
-        if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'stopped' ]:
+        if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'held' ]:
             raise TaskStateError, 'Illegal reset state: ' + state
         # find the task to reset
         found = False
@@ -1148,8 +1148,8 @@ class scheduler(object):
             itask.reset_state_succeeded()
         elif state == 'failed':
             itask.reset_state_failed()
-        elif state == 'stopped':
-            itask.reset_state_stopped()
+        elif state == 'held':
+            itask.reset_state_held()
 
         if state != 'failed':
             try:
@@ -1227,12 +1227,12 @@ class scheduler(object):
                     del itask
                 else: 
                     if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
-                        itask.log( 'WARNING', " STOPPING at configured suite stop time " + self.stop_time )
-                        itask.state.set_status('stopped')
+                        itask.log( 'WARNING', "HOLDING at configured suite stop time " + self.stop_time )
+                        itask.state.set_status('held')
                     if itask.stop_c_time and int( itask.c_time ) > int( itask.stop_c_time ):
                         # this task has a stop time configured, and we've reached it
-                        itask.log( 'WARNING', "STOPPING at configured task stop time " + itask.stop_c_time )
-                        itask.state.set_status('stopped')
+                        itask.log( 'WARNING', "HOLDING at configured task stop time " + itask.stop_c_time )
+                        itask.state.set_status('held')
                     inserted.append( itask.id )
                     to_insert.append(itask)
 
@@ -1378,8 +1378,8 @@ class scheduler(object):
  
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time
-                    new_task.log( 'WARNING', 'STOPPING at configured suite stop time' )
-                    new_task.state.set_status('stopped')
+                    new_task.log( 'WARNING', 'HOLDING at configured suite stop time' )
+                    new_task.state.set_status('held')
                 # perpetuate the task stop time, if there is one
                 new_task.stop_c_time = itask.stop_c_time
                 self.insert( new_task )

@@ -129,10 +129,10 @@ class xupdater(threading.Thread):
             self.status = 'status:\nSTOPPING'
 
         elif glbl['paused']:
-            self.status = 'status:\nPAUSED'
+            self.status = 'status:\nHELD'
        
         elif glbl['will_pause_at']:
-            self.status = 'status:\nPAUSE ' + glbl[ 'will_pause_at' ]
+            self.status = 'status:\nHOLD ' + glbl[ 'will_pause_at' ]
 
         elif glbl['will_stop_at']:
             self.status = 'status:\nSTOP ' + glbl[ 'will_stop_at' ]
@@ -184,7 +184,7 @@ class xupdater(threading.Thread):
             self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
         elif re.search( 'STOP', self.status ):  # stopping
             self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff8c2a' ))
-        elif re.search( 'PAUSE', self.status ):
+        elif re.search( 'HELD', self.status ):
             self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ffde00' ))
         else:
             self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
@@ -226,7 +226,7 @@ class xupdater(threading.Thread):
         self.graphw.add_node( 'running' )
         self.graphw.add_node( 'succeeded' )
         self.graphw.add_node( 'failed' )
-        self.graphw.add_node( 'stopped' )
+        self.graphw.add_node( 'held' )
         self.graphw.add_node( 'base' )
 
         waiting = self.graphw.get_node( 'waiting' )
@@ -234,10 +234,10 @@ class xupdater(threading.Thread):
         running = self.graphw.get_node( 'running' )
         succeeded = self.graphw.get_node( 'succeeded' )
         failed = self.graphw.get_node( 'failed' )
-        stopped = self.graphw.get_node( 'stopped' )
+        held = self.graphw.get_node( 'held' )
         base = self.graphw.get_node( 'base' )
 
-        for node in [ waiting, submitted, running, succeeded, failed, stopped, base ]:
+        for node in [ waiting, submitted, running, succeeded, failed, held, base ]:
             node.attr['style'] = 'filled'
             node.attr['shape'] = 'ellipse'
             node.attr['URL'] = 'KEY'
@@ -254,15 +254,15 @@ class xupdater(threading.Thread):
         failed.attr['color'] = 'firebrick3'
         base.attr['fillcolor'] = 'cornsilk'
         base.attr['color'] = 'black'
-        stopped.attr['fillcolor'] = 'yellow'
-        stopped.attr['color'] = 'black'
+        held.attr['fillcolor'] = 'yellow'
+        held.attr['color'] = 'black'
 
         self.graphw.add_edge( base, waiting, autoURL=False, style='invis')
         self.graphw.add_edge( waiting, submitted, autoURL=False, style='invis')
         self.graphw.add_edge( submitted, running, autoURL=False, style='invis')
         self.graphw.add_edge( running, succeeded, autoURL=False, style='invis')
         self.graphw.add_edge( succeeded, failed, autoURL=False, style='invis')
-        self.graphw.add_edge( failed, stopped, autoURL=False, style='invis')
+        self.graphw.add_edge( failed, held, autoURL=False, style='invis')
 
     def set_live_node_attr( self, node, id, shape=None ):
         # override base graph URL to distinguish live tasks
@@ -282,7 +282,7 @@ class xupdater(threading.Thread):
         elif self.state_summary[id]['state'] == 'failed':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'red'
-        elif self.state_summary[id]['state'] == 'stopped':
+        elif self.state_summary[id]['state'] == 'held':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'yellow'
 
@@ -369,7 +369,7 @@ class xupdater(threading.Thread):
                     self.graph_warned[id] = True
 
                 state = self.state_summary[id]['state']
-                if state == 'submitted' or state == 'running' or  state == 'failed' or state == 'stopped':
+                if state == 'submitted' or state == 'running' or  state == 'failed' or state == 'held':
                     if state not in extra_node_ids:
                         extra_node_ids[state] = [id] 
                     else:
@@ -422,7 +422,7 @@ class xupdater(threading.Thread):
                 if id in self.state_summary:
                     # (else is part of the base graph)
                     state = self.state_summary[id]['state']
-                    if state == 'submitted' or state == 'running' or  state == 'failed' or state == 'stopped':
+                    if state == 'submitted' or state == 'running' or  state == 'failed' or state == 'held':
                         if state not in extra_node_ids:
                             extra_node_ids[state] = [id] 
                         else:

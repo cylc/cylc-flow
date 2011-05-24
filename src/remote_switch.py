@@ -424,14 +424,14 @@ class remote_switch( Pyro.core.ObjBase ):
         else:
             return None
 
-    def stop_task( self, task_id ):
+    def hold_task( self, task_id ):
         if self._suite_is_blocked():
             return result( False, "Suite is blocked" )
 
         if not self._task_type_exists( task_id ):
             return result(  False, "No such task type: " + self._name_from_id( task_id ) )
 
-        self._warning( "REMOTE: stop task: " + task_id )
+        self._warning( "REMOTE: hold task: " + task_id )
         found = False
         was_waiting = False
         for itask in self.tasks:
@@ -440,24 +440,25 @@ class remote_switch( Pyro.core.ObjBase ):
                 print itask.state.state['status']
                 if itask.state.is_waiting():
                     was_waiting = True
-                    itask.state.set_status( 'stopped' )
+                    itask.state.set_status( 'held' )
                 break
         if found:
             if was_waiting:
+                self.process_tasks = True # to update monitor
                 return result( True, "OK" )
             else:
                 return result( False, "Task not in the 'waiting' state" )
         else:
             return result( False, "Task not found" )
 
-    def unstop_task( self, task_id ):
+    def release_task( self, task_id ):
         if self._suite_is_blocked():
             return result( False, "Suite is blocked" )
 
         if not self._task_type_exists( task_id ):
             return result( False, "No such task type: " + self._name_from_id( task_id ) )
 
-        self._warning( "REMOTE: unstop task: " + task_id )
+        self._warning( "REMOTE: release task: " + task_id )
         found = False
         for itask in self.tasks:
             if itask.id == task_id:
@@ -465,6 +466,7 @@ class remote_switch( Pyro.core.ObjBase ):
                 found = True
                 break
         if found:
+            self.process_tasks = True # to update monitor
             return result( True, "OK" )
         else:
             return result( False, "Task not found" )

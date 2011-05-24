@@ -360,13 +360,13 @@ The cylc forecast suite metascheduler.
 
         stoptask_item = gtk.MenuItem( 'Hold' )
         items.append( stoptask_item )
-        stoptask_item.connect( 'activate', self.stop_task, task_id, True )
+        stoptask_item.connect( 'activate', self.hold_task, task_id, True )
         if self.readonly:
             stoptask_item.set_sensitive(False)
 
         unstoptask_item = gtk.MenuItem( 'Release' )
         items.append( unstoptask_item )
-        unstoptask_item.connect( 'activate', self.stop_task, task_id, False )
+        unstoptask_item.connect( 'activate', self.hold_task, task_id, False )
         if self.readonly:
             unstoptask_item.set_sensitive(False)
 
@@ -636,7 +636,7 @@ The cylc forecast suite metascheduler.
         self.quitters.remove( lv )
         w.destroy()
 
-    def stop_task( self, b, task_id, stop=True ):
+    def hold_task( self, b, task_id, stop=True ):
         if stop:
             msg = "hold " + task_id + "?"
         else:
@@ -653,9 +653,9 @@ The cylc forecast suite metascheduler.
             warning_dialog( x.__str__() ).warn()
             return
         if stop:
-            result = proxy.stop_task( task_id )
+            result = proxy.hold_task( task_id )
         else:
-            result = proxy.unstop_task( task_id )
+            result = proxy.release_task( task_id )
 
         if result.success:
             info_dialog( result.reason ).inform()

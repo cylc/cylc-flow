@@ -61,7 +61,7 @@ def get_col( state ):
         return '#0a0'
     elif state == 'failed':
         return '#f00'
-    elif state == 'stopped':
+    elif state == 'held':
         return '#bb0'
     else:
         return '#000'
@@ -176,10 +176,10 @@ class updater(threading.Thread):
             self.status = 'status:\nSTOPPING'
 
         elif glbl['paused']:
-            self.status = 'status:\nPAUSED'
+            self.status = 'status:\nHELD'
        
         elif glbl['will_pause_at']:
-            self.status = 'status:\nPAUSE ' + glbl[ 'will_pause_at' ]
+            self.status = 'status:\nHOLD ' + glbl[ 'will_pause_at' ]
 
         elif glbl['will_stop_at']:
             self.status = 'status:\nSTOP ' + glbl[ 'will_stop_at' ]
@@ -332,14 +332,14 @@ class updater(threading.Thread):
                             iterch = None
 
                         st = re.sub('<[^>]+>', '', state ) # remove tags
-                        if st == 'submitted' or st == 'running' or st == 'failed' or st == 'stopped':
+                        if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
                             if iter not in expand_me:
                                 expand_me.append( iter )
                     else:
                         # row unchanged
                         iterch = self.ttreestore.iter_next( iterch )
                         st = re.sub('<[^>]+>', '', state ) # remove tags
-                        if st == 'submitted' or st == 'running' or st == 'failed' or st == 'stopped':
+                        if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
                             if iter not in expand_me:
                                 expand_me.append( iter )
 
@@ -356,7 +356,7 @@ class updater(threading.Thread):
                     self.ttreestore.append( piter, [ name ] + new_data[ctime][name] )
                     state = new_data[ ctime ][ name ][0]
                     st = re.sub('<[^>]+>', '', state ) # remove tags
-                    if st == 'submitted' or st == 'running' or st == 'failed' or st == 'stopped':
+                    if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
                         if iter not in expand_me:
                             expand_me.append( piter )
                 continue
@@ -377,7 +377,7 @@ class updater(threading.Thread):
                 state = new_data[ ctime ][ name ][0]
                 # expand whether new or old data
                 st = re.sub('<[^>]+>', '', state ) # remove tags
-                if st == 'submitted' or st == 'running' or st == 'failed' or st == 'stopped':
+                if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
                     if iter not in expand_me:
                         expand_me.append( p_iter )
 
@@ -417,7 +417,7 @@ class updater(threading.Thread):
                         state_list.append( self.succeeded_led )
                     elif state == 'failed':
                         state_list.append( self.failed_led )
-                    elif state == 'stopped':
+                    elif state == 'held':
                         state_list.append( self.stopped_led )
                 else:
                     state_list.append( self.empty_led )
@@ -441,7 +441,7 @@ class updater(threading.Thread):
             self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
         elif re.search( 'STOP', self.status ):  # stopping
             self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff8c2a' ))
-        elif re.search( 'PAUSE', self.status ):
+        elif re.search( 'HELD', self.status ):
             self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ffde00' ))
         else:
             self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))

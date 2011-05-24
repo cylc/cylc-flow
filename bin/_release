@@ -64,7 +64,7 @@ except SuiteIdentificationError, x:
     raise SystemExit(x)
 
 if task_only:
-    result = proxy.unstop_task( task )
+    result = proxy.release_task( task )
 else:
     result = proxy.resume()
 

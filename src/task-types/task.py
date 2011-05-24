@@ -332,8 +332,8 @@ class task( Pyro.core.ObjBase ):
         self.prerequisites.set_all_satisfied()
         self.outputs.set_all_incomplete()
 
-    def reset_state_stopped( self ):
-        itask.state.set_status( 'stopped' )
+    def reset_state_held( self ):
+        itask.state.set_status( 'held' )
 
     def run_external_task( self, dry_run=False ):
         self.log( 'DEBUG',  'submitting task script' )
