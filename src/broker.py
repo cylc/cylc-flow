@@ -16,8 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-import sys
+import logging
 
 # BROKER:
 # A collection of output messages with associated owner ids (of the
@@ -32,7 +31,8 @@ class broker(object):
     # outputs.
 
     def __init__( self ):
-        self.all_outputs = {}   # all_outputs[ taskid ] = [ taskid's requisites ]
+         self.log = logging.getLogger( 'main' )
+         self.all_outputs = {}   # all_outputs[ taskid ] = [ taskid's requisites ]
 
     def register( self, task ):
         # because task ids are unique, and all tasks register their
@@ -43,8 +43,9 @@ class broker(object):
         outputs = task.outputs
 
         if owner_id in self.all_outputs.keys():
-            print "ERROR:", owner_id, "has already registered its outputs"
-            sys.exit(1)
+            self.log.critical(  owner_id + "has already registered its outputs!" )
+            self.log.critical( "(perhaps you inserted an already-spawned task?")
+            raise SystemExit("ABORTING")
 
         self.all_outputs[ owner_id ] = outputs
 
