@@ -191,9 +191,9 @@ class updater(threading.Thread):
             #rate = glbl[ 'dummy_clock_rate' ]
             #self.mode = 'DUMMY (' + str( rate ) + 's/hr)'
             #self.mode = 'DUMMY'
-            self.mode = 'mode:\ndummy'
+            self.mode = 'mode:\nsimulation'
         else:
-            self.mode = 'mode:\nreal'
+            self.mode = 'mode:\nlive'
 
         if glbl[ 'blocked' ]:
             self.block = 'access:\nblocked'

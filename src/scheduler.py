@@ -629,7 +629,7 @@ class scheduler(object):
 
     def unset_suite_hold( self ):
         if self.suite_hold_now:
-            self.log.critical( "UNHOLD: new tasks will run when ready")
+            self.log.critical( "RELEASE: new tasks will run when ready")
             self.suite_hold_now = False
             self.pause_time = None
         # TO DO: write a separate method for cancelling a stop time:
