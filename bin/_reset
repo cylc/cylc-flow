@@ -27,20 +27,24 @@ from CylcError import CylcError
 parser = PromptOptionParser( """cylc [control] reset [options] SUITE TASK
 
 Force a task's state to:
- 1/ 'ready' ...... all prerequisites satisfied (default) 
- 2/ 'waiting' .... prerequisites not satisfied yet
- 3/ 'succeeded' .. all outputs completed
- 4/ 'failed' ..... use to test failure recovery scenarios
+ 1/ 'ready' .... (default)   ...... all prerequisites satisfied (default) 
+ 2/ 'waiting' .. (--waiting) ...... prerequisites not satisfied yet
+ 3/ 'succeeded'  (--succeeded) .... all outputs completed
+ 4/ 'failed' ... (--failed) ....... use to test failure recovery
  
 Resetting a task to 'ready' will cause it to trigger immediately unless
-the suite is paused, in which case the task will trigger when normal
+the suite is held, in which case the task will trigger when normal
 operation is resumed.
 
 See also:
    cylc control trigger
-   cylc control pause
-   cylc control resume""",
+   cylc control hold
+   cylc control relase""",
 [ 'TASK              NAME%YYYYMMDDHH - the task to reset.'] )
+
+parser.add_option( "--ready", 
+        help="Force task to the 'ready' state.",
+        action="store_true", default=False, dest="ready" )
 
 parser.add_option( "--waiting", 
         help="Force task to the 'waiting' state.",
@@ -59,8 +63,9 @@ parser.add_option( "--failed",
 if len(args) != 2:
     parser.error( "Suite name and task ID required." )
 
-if [ options.waiting, options.succeeded, options.failed ].count( True ) != 1:
-    parser.error( "Specify none or one of waiting, succeeded, or failed" )
+count = [ options.waiting, options.succeeded, options.failed, options.ready ].count( True )
+if count != 0 and count != 1:
+    parser.error( "Specify none or one of --ready, --waiting, --succeeded, or --failed" )
 
 if options.waiting:
     state = 'waiting'
