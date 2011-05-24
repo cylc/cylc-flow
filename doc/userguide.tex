@@ -2530,27 +2530,27 @@ Executing tasks need access to the cylc task messaging commands, and
 possibly to cylc utility commands, so task job scripts source the cylc
 environment script.
 
-\paragraph{On Remote Hosts}
-
-If you specify a remote host for task, you must also specify the 
-locations of the remote cylc installation and the remote suite
-definition directory (which should be installed on the remote
-host so that tasks can access suite files and the suite bin 
-directory, if necessary).
-
-\begin{lstlisting}
-# SUITE.RC
-[tasks]
-    [[foo]]
-        # run this task on a remote host
-        remote host = fitzroy.niwa.co.nz
-        remote cylc directory = /path/to/remote/cylc/installation
-        remote suite directory = /path/to/remote/suite/definition
-\end{lstlisting}
-This results in the \lstinline=$CYLC_DIR= and
-\lstinline=$CYLC_SUITE_DIR= variable definitions being set to 
-their remote values in the job script.
-
+%\paragraph{On Remote Hosts}
+%
+%If you specify a remote host for task, you must also specify the 
+%locations of the remote cylc installation and the remote suite
+%definition directory (which should be installed on the remote
+%host so that tasks can access suite files and the suite bin 
+%directory, if necessary).
+%
+%\begin{lstlisting}
+%# SUITE.RC
+%[tasks]
+%    [[foo]]
+%        # run this task on a remote host
+%        remote host = fitzroy.niwa.co.nz
+%        remote cylc directory = /path/to/remote/cylc/installation
+%        remote suite directory = /path/to/remote/suite/definition
+%\end{lstlisting}
+%This results in the \lstinline=$CYLC_DIR= and
+%\lstinline=$CYLC_SUITE_DIR= variable definitions being set to 
+%their remote values in the job script.
+ 
 \paragraph{Task Access To The Suite Definition Directory}
 
 To allow tasks to run scripts or programs in the suite bin directory
@@ -2559,10 +2559,10 @@ for access to \lstinline=$CYLC_SUITE_DIR/bin=. Task scripts can
 also use \lstinline=$CYLC_SUITE_DIR= to portably access any files
 stored under the suite definition directory.
 
-\paragraph{On Remote Hosts}
-
-See {\em Task Access To Cylc Commands} (Section~\ref{TaskAccessToCylcCommands}).
-
+%\paragraph{On Remote Hosts}
+%
+%See {\em Task Access To Cylc Commands} (Section~\ref{TaskAccessToCylcCommands}).
+%
 \paragraph{When Are Environment Variables Evaluated?}
 
 Environment variables are {\em not} evaluated by cylc prior to 
@@ -2999,6 +2999,13 @@ the cylc environment script).
         host, if the task needs access to scripts in the suite bin
         directory or to any other files stored there.
 \end{myitemize}
+
+{\em Note that you can easily run the cylc example suites in live mode
+on a remote host. For the suites with real task implementations that 
+work with ``real'' files, you'll have to run all tasks on the same
+remote host. To distribut a suite across several hosts you must 
+arrange (using additional tasks) to transfer files between the hosts
+as required to satisfy the real I/O dependencies.}
         
 \pagebreak
 
@@ -3884,13 +3891,6 @@ build directories (etc.), you can turn the directory into a revision
 control repository and be virtually assured of the ability to exactly
 reproduce earlier versions as required, regardless of suite
 complexity.
-
-Note that if your suite includes remote tasks that refer to files in the
-suite definition directory you'll need to copy the directory to the
-remote host and, in the suite.rc task-specific environment
-sections of the remote tasks, override \lstinline=$CYLC_SUITE_DIR= with
-the remote path - just as for \lstinline=$CYLC_DIR= which, for remote
-tasks, must point to the remote cylc installation).
 
 \subsection{Orderly Product Generation?}
 \label{OrderlyProductGeneration}
