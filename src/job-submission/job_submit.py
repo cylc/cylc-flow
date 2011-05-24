@@ -96,47 +96,45 @@ class job_submit(object):
             self.task_owner = self.suite_owner
             self.other_owner = False
 
-        if remote_host or self.__class__.global_remote_host:
-            # Remote job submission
-            self.local_job_submit = False
-            if self.__class__.simulation_mode:
-                # Ignore remote hosts in simulation mode (this allows us to
-                # dummy-run suites with remote tasks if outside of their 
-                # usual execution environment).
-                self.local_job_submit = True
-            else:
-
-                if remote_cylc_dir:
-                    self.remote_cylc_dir = remote_cylc_dir
-                elif self.__class__.global_remote_cylc_dir:
-                    self.remote_cylc_dir = self.__class__.global_remote_cylc_dir
-                else:
-                    self.remote_cylc_dir = None
-  
-                if remote_suite_dir:
-                    self.remote_suite_dir = remote_suite_dir
-                elif self.__class__.global_remote_suite_dir:
-                    self.remote_suite_dir = self.__class__.global_remote_suite_dir
-                else:
-                    self.remote_suite_dir = None
-
-                if remote_host:
-                    self.remote_host = remote_host
-                elif self.__class__.global_remote_host:
-                    self.remote_host = self.__class__.global_remote_host
-                else:
-                    self.homedir = None
-                    # (remote job submission by ssh will automatically dump
-                    # us in the owner's home directory)
+        if remote_cylc_dir:
+            self.remote_cylc_dir = remote_cylc_dir
+        elif self.__class__.global_remote_cylc_dir:
+            self.remote_cylc_dir = self.__class__.global_remote_cylc_dir
         else:
-            # Local job submission
-            self.local_job_submit = True
-            if self.__class__.simulation_mode:
-                # Ignore task owners in simulation mode (this allows us to
-                # dummy-run suites with owned tasks if outside of their 
-                # usual execution environment).
-                self.task_owner = self.suite_owner
+            self.remote_cylc_dir = None
+  
+        if remote_suite_dir:
+            self.remote_suite_dir = remote_suite_dir
+        elif self.__class__.global_remote_suite_dir:
+            self.remote_suite_dir = self.__class__.global_remote_suite_dir
+        else:
+            self.remote_suite_dir = None
 
+        if remote_host:
+            self.remote_host = remote_host
+        elif self.__class__.global_remote_host:
+            self.remote_host = self.__class__.global_remote_host
+
+        if remote_host or self.__class__.global_remote_host:
+            self.local_job_submit = False
+        else:
+            self.local_job_submit = True
+
+        if self.__class__.simulation_mode:
+            # but ignore remote task settings in simulation mode (this allows us to
+            # dummy-run suites with remote tasks if outside of their 
+            # usual execution environment).
+            self.local_job_submit = True
+            # Ignore task owners in simulation mode (this allows us to
+            # dummy-run suites with owned tasks if outside of their 
+            # usual execution environment).
+            self.task_owner = self.suite_owner
+
+        if not self.local_job_submit:
+            self.homedir = None
+            # (remote job submission by ssh will automatically dump
+            # us in the owner's home directory)
+        else:
             # The job will be submitted from the task owner's home
             # directory, in case the job submission method requires that
             # the "running directory" exists and is writeable by the job
@@ -328,6 +326,9 @@ class job_submit(object):
         return success
 
     def submit_jobfile_remote( self, dry_run ):
+        # add local jobfile to list of viewable logfiles
+        self.logfiles.add_path( self.jobfile_path )
+
         # make sure the local jobfile is executable (file mode is preserved by scp?)
         os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
 

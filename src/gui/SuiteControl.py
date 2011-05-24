@@ -1113,8 +1113,10 @@ The cylc forecast suite metascheduler.
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         logs = []
+        jsfound = False
         for f in logfiles:
             if re.search( 'cylc-', f ):
+                jsfound = True
                 js = f
             else:
                 logs.append(f)
@@ -1122,7 +1124,12 @@ The cylc forecast suite metascheduler.
         window.set_size_request(800, 300)
         if jsonly:
             window.set_title( task_id + ": Task Job Submission Script" )
-            lv = textload( task_id, js )
+            if jsfound:
+                lv = textload( task_id, js )
+            else:
+                # This should not happen anymore!
+                pass
+
         else:
             # put '.out' before '.err'
             logs.sort( reverse=True )
