@@ -2284,11 +2284,19 @@ whole-suite sequential cycling even when catching up from a delay.
 \subsection{Task Definition}
 \label{Task Definition}
 
-A {\em task} is a single schedulable unit in a cylc suite, uniquely
-identified by its name and (task-specific!) cycle time.
+A cylc {\em task definition} entails task name, 
+
+For each task we need to define:
+    - how it relates to other tasks in the suite, and what hours of the
+    day are its valid cycle times (dependency graph)
+    - its a name (dependency graph and/or task section)
+    - a commandline, to invoke the processing it represents
+        (task section, defaults to dummy task)
+    - the execution environment, in which the commandline is 
+        executed (global and/or task environment section)
 
 Although ``tasks'' stand for real external processes, or groups of
-processes, they are somewhat abstract entities in that they acquire a
+processes, they are somewhat abstract in that they acquire a
 a name and function, through the suite definition, that is distinct from 
 their implementation as a real command, script, or program.  The same 
 script, for example, can implement several different tasks within the
