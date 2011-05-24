@@ -430,10 +430,14 @@ output goes to special files that can be accessed again).""")
 
 def insertion( b ):
     help = helpwindow( "Insertion Help", 250, """
-Insert the specified task or group into a running suite. Subsequent
-behaviour of the inserted task(s), as for any task, depends entirely on
-its type (a oneoff task will run once and not spawn a successor, and 
-so on).  Task insertion groups are just a convenience to allow insertion
+Insert the specified task or group into a running suite. WARNING:
+be aware that inserted tasks will spawn successors as usual, unless
+they are oneoff tasks or you set a final cycle on the inserted task.
+If there is already another instance of the task at a later cycle 
+time and the inserted one catches up, the suite will abort because
+you cannot run with duplicate tasks in the suite! 
+
+Task insertion groups are just a convenience to allow insertion
 of multiple tasks at once (e.g. a handful of tasks required to cold
 start part of a suite after certain problems have occured). These must
 be defined in the suite.rc file [task insertion groups] section.""")
