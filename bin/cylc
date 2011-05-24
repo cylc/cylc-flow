@@ -19,7 +19,6 @@
 from OrderedDict import OrderedDict
 import os, re, sys
 from execute import execute
-from mkdir_p import mkdir_p
 
 # check Pyro is installed
 try:
@@ -139,19 +138,6 @@ def pretty_print( incom, choose_dict, indent=True, numbered=False ):
                 digit = str(count)
             print digit + '/', 
         print label[item], '.'*(longest-len(label[item])) + '...', incom[item]
-
-# TMPDIR is required by some commands
-if 'TMPDIR' in os.environ:
-    tmpdir = os.environ['TMPDIR']
-elif 'SCRATCH' in os.environ:
-    tmpdir = os.environ['SCRATCH']
-else:
-    raise SystemExit( 'ERROR: export $TMPDIR or $SCRATCH before running cylc' )
-# create $TMPDIR if necessary
-try:
-    mkdir_p( tmpdir )
-except Exception,x:
-    raise SystemExit(x)
 
 # auto-replace with version tag at build/install:
 cylc_version = "THIS IS NOT A VERSIONED RELEASE"

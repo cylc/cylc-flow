@@ -244,8 +244,18 @@ class job_submit(object):
                 self.__class__.__name__ )
         self.jobfile_path = jf.write()
 
+        if not self.local_job_submit:
+            # Remote jobfile path is in $HOME (it will be dumped there
+            # by scp) until we allow users to specify a remote $TMPDIR.
+            self.local_jobfile_path = self.jobfile_path
+            self.jobfile_path = '$HOME/' + os.path.basename( self.jobfile_path )
+
         # Construct self.command, the command to submit the jobfile to run
         self.construct_jobfile_submission_command()
+
+        if not self.local_job_submit:
+            self.remote_jobfile_path = self.jobfile_path
+            self.jobfile_path = self.local_jobfile_path
 
         # Now submit it
         if self.local_job_submit:
@@ -353,14 +363,11 @@ class job_submit(object):
         #print ' - deleting local jobfile ' + self.jobfile_path
         #os.unlink( self.jobfile_path )
 
-        # Replace local with remote jobfile path (relative to $HOME).
-        self.jobfile_path = '$HOME/' + os.path.basename( self.jobfile_path )
-
         command_2 = "ssh " + self.destination + " '" + self.command + "'"
 
         # execute the local command to submit the job
         if dry_run:
-            print " > REMOTE TASK JOB SCRIPT: " + self.jobfile_path
+            print " > REMOTE TASK JOB SCRIPT: " + self.remote_jobfile_path
             print " > REMOTE JOB SUBMISSION METHOD: " + command_2
         else:
             print " > SUBMITTING TASK: " + command_2

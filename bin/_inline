@@ -23,6 +23,7 @@ import tempfile
 from optparse import OptionParser
 from collections import deque
 from registration import getdb, RegistrationError
+from mkdir_p import mkdir_p
 
 done = []
 
@@ -144,10 +145,17 @@ if len(args) != 1:
 
 suite = args[0]
 
-try:
+if 'TMPDIR' in os.environ:
     tmpdir = os.environ['TMPDIR']
-except KeyError:
-    raise SystemExit( 'export $TMPDIR before using this command' )
+elif 'SCRATCH' in os.environ:
+    tmpdir = os.environ['SCRATCH']
+else:
+    raise SystemExit( "ERROR: export $TMPDIR or $SCRATCH before 'cylc inline'" )
+try:
+    # create $TMPDIR if necessary
+    mkdir_p( tmpdir )
+except Exception,x:
+    raise SystemExit(x)
 
 if options.geditor:
     edvar = 'GEDITOR'

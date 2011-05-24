@@ -16,13 +16,13 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import gtk
 import gobject
 import os, sys
 from optparse import OptionParser
 from warning_dialog import warning_dialog
 from gcapture import gcapture, gcapture_tmpfile
+from mkdir_p import mkdir_p
 
 # This is a unit test for $CYLC_DIR/src/gui/gcapture.py
 # but it may be more generally useful.
@@ -67,6 +67,12 @@ else:
     x = 'You must export $TMPDIR or $SCRATCH before running this command' 
     warning_dialog( x ).warn()
     sys.exit(1)
+
+try:
+    # create $TMPDIR if necessary
+    mkdir_p( tmpdir )
+except Exception,x:
+    raise SystemExit(x)
 
 if options.other:
     ignore_command = True

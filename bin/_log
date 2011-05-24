@@ -23,6 +23,7 @@ from shutil import copy
 import tempfile
 import subprocess
 from registration import RegistrationError
+from mkdir_p import mkdir_p
  
 parser = OptionParser( """cylc [info] log [options] SUITE 
 Print, or view in $EDITOR, local suite log files, with optional
@@ -107,10 +108,17 @@ try:
 except KeyError:
     raise SystemExit( 'export $EDITOR before using this command' )
 
-try:
+if 'TMPDIR' in os.environ:
     tmpdir = os.environ['TMPDIR']
-except KeyError:
-    raise SystemExit( 'export $TMPDIR before using this command' )
+elif 'SCRATCH' in os.environ:
+    tmpdir = os.environ['SCRATCH']
+else:
+    raise SystemExit( "ERROR: export $TMPDIR or $SCRATCH before 'cylc log'" )
+try:
+    # create $TMPDIR if necessary
+    mkdir_p( tmpdir )
+except Exception,x:
+    raise SystemExit(x)
 
 tmpfile = tempfile.mktemp( suffix = ".tmp", prefix = suite+'-log', dir = tmpdir )
 tmp = open( tmpfile, 'wb' )
