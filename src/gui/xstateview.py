@@ -307,7 +307,7 @@ class xupdater(threading.Thread):
         if start_time == None or oldest > start_time:
             raw = True
         else:
-            # (show coldstart tasks) - TO DO: actual raw start
+            # (show cold start tasks) - TO DO: actual raw start
             raw = False
 
         extra_node_ids = {}

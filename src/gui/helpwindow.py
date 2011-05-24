@@ -432,7 +432,7 @@ def insertion( b ):
     help = helpwindow( "Insertion Help", 250, """
 Insert the specified task or group into a running suite. WARNING:
 be aware that inserted tasks will spawn successors as usual, unless
-they are oneoff tasks or you set a final cycle on the inserted task.
+they are one off tasks or you set a final cycle on the inserted task.
 If there is already another instance of the task at a later cycle 
 time and the inserted one catches up, the suite will abort because
 you cannot run with duplicate tasks in the suite! 
@@ -851,7 +851,7 @@ def userguide( w, graph=False ):
 
     update_tb( tb, "\n o Add A Prerequisite: ", [bold])
     update_tb( tb, "Here you can add a new prerequisite to a task at "
-            "run time. Example of use: make a task wait on a oneoff task "
+            "run time. Example of use: make a task wait on a one off task "
             "that it does not normally depend on but which has been "
             "inserted into the suite to handle some unusual situation.")
 

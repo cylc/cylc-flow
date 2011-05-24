@@ -512,7 +512,7 @@ class task( Pyro.core.ObjBase ):
         return self.__class__( self.next_tag(), state )
 
     def has_spawned( self ):
-        # the oneoff task type modifier overrides this.
+        # the one off task type modifier overrides this.
 
         # NOT NEEDED: temporary tasks handled in scheduler.py now
         #if self.final_cycle_time:

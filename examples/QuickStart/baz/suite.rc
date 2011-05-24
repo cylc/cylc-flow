@@ -18,8 +18,7 @@ uses a private running directory for its restart files)."""
 
 [special tasks]
     startup         = Prep
-    coldstart       = ColdModel
-    sequential      = Model
+    cold start       = ColdModel
     clock-triggered = GetData(1)
 
 [dependencies]

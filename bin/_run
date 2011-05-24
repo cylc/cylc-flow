@@ -42,22 +42,22 @@ tasks in previous cycles):
   3/ Raw  start (-r,--raw)    -- assume nothing
 (These are all the same for a suite that has no intercycle dependencies).
 
-1/ COLDSTART -- start from scratch, with special oneoff "coldstart
+1/ COLD START -- start from scratch, with special one off "cold start
 tasks" to satisfy the initial dependencies of any tasks that normally
 depend on tasks from a previous cycle (most notably the restart
-dependencies of warm cycled forecast models). Coldstart tasks
+dependencies of warm cycled forecast models). Cold start tasks
 can run real processes (e.g. a special forecast to generate the initial
 restart files for a warm cycled model) or, with no task command defined,
 just act as a dummy proxy for some external process that has to occur
 before the suite is started (e.g. a spinup run of some kind). For a
 suite with no intercycle dependencies there is no distinction between
-the cold, warm, and raw start methods. For a coldstart, each task,
+the cold, warm, and raw start methods. For a cold start, each task,
 including designated cold start tasks, starts in the 'waiting' state
 (i.e. prerequisites not satisfied) at the initial cycle time or at the
 next valid cycle time thereafter for the task. 
-  SUITE.RC: [special tasks] -> coldstart = task1, task2, ...
+  SUITE.RC: [special tasks] -> cold start = task1, task2, ...
 
-2/ WARMSTART:
+2/ WARM START:
     This assumes that there was a previous cycle (from a previous suite
 run - in which case a 'cylc restart' may be an option too) or that files
 required from previous cycles have been put in place by some external
@@ -65,19 +65,19 @@ means. Startup is as for a cold start, except that designated
 cold start tasks are inserted in the 'succeeded' state (i.e. outputs
 completed). The cold start task list must be defined in the suite config
 file:
-  SUITE.RC: [special tasks] -> coldstart = task1, task2, ...
+  SUITE.RC: [special tasks] -> cold start = task1, task2, ...
 
-3/ RAWSTART:
+3/ RAW START:
     This starts the suite as if in mid run without any special handling
 - any tasks that depend on previous cycles will have to be triggered
 manually. Startup is as for a cold start, except that designated
 cold start tasks are excluded from the suite. The cold start task list
 must be defined in the suite config file:
-  SUITE.RC: [special tasks] -> coldstart = task1, task2, ...
+  SUITE.RC: [special tasks] -> cold start = task1, task2, ...
  
 NOTE:
   SUITE.RC: [special tasks]-> startup = task1, task2, ...
-Startup tasks are oneoff tasks that are used only in a coldstart; any
+Startup tasks are one off tasks that are used only in a cold start; any
 dependence on a startup task is ignored in subsequent cycles. This 
 allows you to make everything wait on one or more startup tasks that
 could, for example, clean out suite workspaces when a suite is started
@@ -158,9 +158,9 @@ Arguments:
         coldstart_tasks = self.config.get_coldstart_task_list()
         startup_tasks = self.config.get_startup_task_list()
         if len( coldstart_tasks ) == 0:
-            self.log.warning( "THIS SUITE HAS NOT DEFINED THE 'coldstart task list' CONFIG ITEM" )
+            self.log.warning( "THIS SUITE HAS NOT DEFINED THE 'cold start task list' CONFIG ITEM" )
         for name in task_list:
-            # (startup=True is only for coldstart)
+            # (startup=True is only for cold start)
             itask = self.config.get_task_proxy( name, self.start_time, 'waiting', stopctime=None, startup=False )
             if name in coldstart_tasks:
                 itask.log( 'WARNING', "warm start: starting in succeeded state" )
@@ -191,10 +191,10 @@ Arguments:
         coldstart_tasks = self.config.get_coldstart_task_list()
         startup_tasks = self.config.get_startup_task_list()
         if len( coldstart_tasks ) == 0:
-            self.log.warning( "THIS SUITE HAS NOT DEFINED THE 'coldstart task list' CONFIG ITEM" )
+            self.log.warning( "THIS SUITE HAS NOT DEFINED THE 'cold start task list' CONFIG ITEM" )
 
         for name in task_list:
-            # startup=True only for coldstart
+            # startup=True only for cold start
             itask = self.config.get_task_proxy( name, self.start_time, 'waiting', stopctime=None, startup=False )
             if name in coldstart_tasks or name in startup_tasks:
                 itask.log( 'WARNING', "This is a raw start: I will self-destruct." )

@@ -42,7 +42,7 @@ Plot cylc dependency graphs in a pannable, zoomable viewer.
 
 For the configured (suite.rc) graph, the viewer updates automatically
 when the suite.rc file is saved during editing. By default the full 
-graph from coldstart is plotted; you can omit suite coldstart tasks
+graph from cold start is plotted; you can omit suite cold start tasks
 with the '-w,--warmstart' option. 
 
 Graph viewer controls:

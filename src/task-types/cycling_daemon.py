@@ -22,7 +22,7 @@ from oneoff import oneoff
 import re
 
 class cycling_daemon( oneoff, cycling ):
-    # A oneoff task that adds outputs dynamically as messages matching
+    # A one off task that adds outputs dynamically as messages matching
     # registered patterns come in. The corresponding real task may keep
     # running indefinitely, e.g. to watch for incoming external data.
 

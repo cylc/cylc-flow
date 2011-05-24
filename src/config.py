@@ -547,7 +547,7 @@ class config( CylcConfigObj ):
         # TO DO: automatically determine this by parsing the dependency
         #        graph - requires some thought.
         # For now user must define this:
-        return self['special tasks']['coldstart']
+        return self['special tasks']['cold start']
 
     def get_startup_task_list( self ):
         return self['special tasks']['startup']
@@ -1077,11 +1077,11 @@ class config( CylcConfigObj ):
         except taskdef.DefinitionError, x:
             raise SuiteConfigError, str(x)
 
-        # SET ONEOFF TASK INDICATOR
-        #   coldstart and startup tasks are automatically oneoff
-        if name in self['special tasks']['oneoff'] or \
+        # SET ONE OFF TASK INDICATOR
+        #   cold start and startup tasks are automatically one off
+        if name in self['special tasks']['one off'] or \
             name in self['special tasks']['startup'] or \
-            name in self['special tasks']['coldstart']:
+            name in self['special tasks']['cold start']:
             taskd.modifiers.append( 'oneoff' )
 
         # SET SEQUENTIAL TASK INDICATOR

@@ -203,7 +203,7 @@ runs once daily. The regional weather forecast runs four times daily but
 it supplies surface winds and pressure to several downstream models that
 run only twice daily, and precipitation accumulations to catchment river
 models that run on an hourly cycle assimilating real time stream flow
-observations and using the most recent available regional weather
+observations and using the most recently available regional weather
 forecast.  EcoConnect runs on heterogenous distributed hardware,
 including a massively parallel supercomputer and several Linux servers. 
 
@@ -620,6 +620,7 @@ use \lstinline=cylc db print --central= on the commandline.
 
 \subsection{Run The Automated Database Test} 
 
+\lstset{language=}
 The command \lstinline=cylc admin test-db= gives suite database
 functionality a work out - it registers the user guide example suite
 under a new name and then manipulates it (by copying the suite in
@@ -825,8 +826,8 @@ prompt> cylc lockserver --help
 There is a command line client interface, 
 \lstinline=cylc lockclient=,
 for interrogating the lockserver and managing 
-locks manually (c.f.\ deleting a lock file manually if the
-associated process died without cleaning up after itself).
+locks manually (e.g.\ releasing locks if a suite was killed 
+before it could clean up after itself).
 
 You can also choose not to use the lockserver for a particular suite, by
 setting the following switch in its suite.rc (suite definition) file,
@@ -975,21 +976,27 @@ particular suite.rc file means, in words:
 
 At 0, 6, 12, and 18 hours each day a clock-triggered task called GetData
 triggers 1 hour after the wall clock reaches its nominal cycle
-time; then a {\em sequential} task called Model triggers when GetData finishes;
+time; then a task called Model triggers when GetData finishes;
 and a task called PostA triggers when Model is finished. Additionally,
 Model depends on its own previous instance from 6 hours earlier; and twice
 per day at 6 and 18 hours another task called PostB also triggers off Model.
 
-The fact that Model is declared to be sequential means that it can't start
-running until its previous instance has finished, whereas the other tasks 
-can run in parallel with their own previous instances if the opportunity 
-arises (in fact there is no particular reason to make Model sequential in
-this suite other than to demonstrate that we can force tasks to be
-sequential). 
+Note that all the tasks in this suite can run in parallel with their own
+previous instances if the opportunity arises (i.e.\ if their prerequisites
+happen to be satisfied before the previous instance is finished).
+Most tasks should be capable of this (see {\em Suite Design Principles 
+and Suggestions}, Section~\ref{SuiteDesignPrinciples}) but if necessary
+you can force particular tasks to run sequentially without using an 
+explicit trigger on their own previous instance, e.g.: 
+\begin{lstlisting}
+# SUITE.RC
+[special tasks]
+    sequential = GetData
+\end{lstlisting}
 
 Finally, when the suite is first {\em cold started} from scratch it is
 made to wait on a special {\em startup} task
-called Prep. Startup tasks are oneoff tasks (non-spawning) that are 
+called Prep. Startup tasks are one off tasks (non-spawning) that are 
 only used at suite startup, and any dependence on a startup task in the
 suite graph only applies at suite startup.
 
@@ -1206,7 +1213,7 @@ self {\em or} ColdModel in the same cycle.
 \label{fig-QuickStartB-graph18}
 \end{figure}
 
-A coldstart task is a oneoff task used to satisfy the previous-cycle
+A cold start task is a one off task used to satisfy the previous-cycle
 dependence of a cotemporal task whose previous-cycle trigger is not
 available. The obvious use for this is to cold start warm-cycled
 forecast models at suite startup, when there is no previous cycle.
@@ -1390,7 +1397,7 @@ all I/O paths so that different suite instances will not interfere).
 \section{Suite Registration}
 \label{SuiteRegistration}
 
-How to construct a cylc suite is described in coming sections of the
+How to construct a cylc suite is described in following sections of the
 user guide. The cylc command set includes tools to aid in suite
 construction as well as suite control, however, and before you can do
 anything to a suite with cylc commands you must register the suite in
@@ -1450,6 +1457,7 @@ publicly); registering new suites; copying, unregistering, deleting,
 or re-registering suites; and exporting suites to, or importing them
 from, the central database.  
 
+\lstset{language=usage}
 \lstinputlisting{command-usage/database.txt}
 
 The same functionality is also available by right-clicking on suites
@@ -1856,10 +1864,10 @@ This is short for ``let \lstinline=B(T)= trigger when \lstinline=A(T)=
 finishes successfully'', where T can be any task cycle time with the 
 hour.  The vast majority of tasks in a suite will likely only trigger
 off cotemporal (same cycle time) tasks, and when the upstream task
-finishes successfully. Therefore, to make graphs as clear and concise
+finishes successfully. Therefore, to make graphs as concise
 as possible we omit the explicit cycle time and trigger state notation
 for this default behaviour. {\em In fact the explicit notation is 
-not allowed at the moment.}
+not allowed at the moment}. 
 
 
 \subsubsection{Task Succeeded Triggers}
@@ -2025,7 +2033,7 @@ cycle there is no previous instance of A to satisfy B's prerequisites.
  
 \paragraph{Cold Start Tasks}
 
-A {\em cold start task} is a special oneoff task used to satisfy the
+A {\em cold start task} is a special one off task used to satisfy the
 initial previous-cycle dependence of another cotemporal task. In effect, 
 the cold start task masquerades as its counterpart's previous-cycle trigger. 
 
@@ -2059,7 +2067,7 @@ some kind prevents continued normal cycling.
 \paragraph{Warm Starting A Suite}
 
 Cold start tasks have to be declared as such in the suite.rc ``special
-tasks'' section so that cylc knows they are oneoff (non-spawning) tasks,
+tasks'' section so that cylc knows they are one off (non-spawning) tasks,
 but also because they play a critical role in warm starting cylc
 suites. 
 
@@ -3241,11 +3249,11 @@ menus are also reasonably complete.
 %\subsection{Understanding Suite Evolution}
 %\label{UnderstandingSuiteEvolution}
 %
-%On a coldstart all tasks (including oneoff tasks) in the sytem will be
+%On a coldstart all tasks (including one off tasks) in the sytem will be
 %instantiated at the initial cycle time, or at the next subsequent valid
 %cycle time for the task. Any tasks that have no prerequisites (and, if
 %they are contact tasks, have reached their trigger time) will submit to
-%run immediately. Any cycling (i.e.\ non oneoff) tasks that have no
+%run immediately. Any cycling (i.e.\ non one off) tasks that have no
 %prerequisites (and, if they are contact tasks, have reached their
 %trigger time) will rapidly spawn ahead until stopped by the suite's
 %runahead limit (observe task X in the user guide example suite).
@@ -3460,7 +3468,7 @@ had time to test that it is still working.}
 %    \item if every task in the suite has one or more unsatisfied
 %        prerequisites, the suite will be stalled. This could happen,
 %        for example, if you start a suite that contains tied (forecast
-%        model) tasks without the corresponding oneoff coldstart tasks to
+%        model) tasks without the corresponding one off coldstart tasks to
 %        satisfy their initial restart prerequisites.
 %
 %\end{myitemize}
@@ -3481,7 +3489,7 @@ had time to test that it is still working.}
 %    intervention, kills some tasks that are required to satisfy the
 %    prerequisites of other tasks that still exist in the system, then 
 %    the suite will eventually stall as a result of these tasks being
-%    unable to run. Solution: insert tasks (possibly oneoff cold start
+%    unable to run. Solution: insert tasks (possibly one off cold start
 %    tasks) to get the suite running again.
 %
 %    \item If some task in the suite has a cycling interval long than
@@ -3620,6 +3628,7 @@ TBD
 \pagebreak
 
 \section{Suite Design Principles And Suggestions}
+\label{SuiteDesignPrinciples}
 
 Matters pertaining to simplicity, flexibility,
 efficiency, and portability of cylc suites.

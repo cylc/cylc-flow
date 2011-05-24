@@ -204,7 +204,7 @@ Arguments:
             if name not in task_list:
                 continue
 
-            # startup=True only for coldstart
+            # startup=True only for cold start
             itask = self.config.get_task_proxy( name, c_time, state, stopctime=None, startup=False )
 
             if itask.state.is_succeeded():  

@@ -979,7 +979,7 @@ class scheduler(object):
                 # task not up for consideration here
                 continue
             if not itask.has_spawned():
-                # task has not spawned yet, or will never spawn (oneoff tasks)
+                # task has not spawned yet, or will never spawn (one off tasks)
                 continue
             if not itask.done():
                 # task has not succeeded yet
@@ -1102,7 +1102,7 @@ class scheduler(object):
             
             for itask in candidates[ rt ]:
                 if hasattr( itask, 'is_oneoff' ):
-                    # oneoff candidates that do not nominate a follow-on can
+                    # one off candidates that do not nominate a follow-on can
                     # be assumed to have no non-cotemporal dependants
                     # and can thus be eliminated.
                     try:

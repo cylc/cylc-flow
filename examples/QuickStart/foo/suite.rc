@@ -5,7 +5,6 @@ runahead limit in hours = 12
  
 [special tasks]
     startup         = Prep
-    sequential      = Model
     clock-triggered = GetData(1)
 
 [dependencies]

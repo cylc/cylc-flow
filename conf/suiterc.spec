@@ -451,7 +451,7 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #> of the killed task manually. 
 
     startup = force_list( default=list())
-#> Startup tasks are oneoff tasks that are only used when {\em cold
+#> Startup tasks are one off tasks that are only used when {\em cold
 #> starting a suite}, i.e.\ when starting up without assuming any previous
 #> cycle. A startup task can be used to clean out or prepare a suite
 #> workspace, for example, before other tasks run. Note that {\em cold
@@ -462,8 +462,8 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em default:} empty list
 #>\end{myitemize}
 
-    coldstart = force_list( default=list())
-#> A coldstart task (or possibly a sequence of them) is used to satisfy
+    cold start = force_list( default=list())
+#> A cold start task (or possibly a sequence of them) is used to satisfy
 #> the dependence of an associated task with the same cycle time, on 
 #> outputs from a previous cycle - when those outputs are not
 #> available. The primary use for this is to cold start a warm-cycled
@@ -504,11 +504,11 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em default:} empty list
 #>\end{myitemize}
 
-    oneoff = force_list( default=list())
-#> Oneoff tasks do not spawn a successor. After finishing, and once
+    one off = force_list( default=list())
+#> One off tasks do not spawn a successor. After finishing, and once
 #> they're no longer required to satisfy the prerequisites of others,
 #> they are removed from the suite.  {\em Startup} and {\em
-#> coldstart} tasks are automatically oneoff tasks and do not need
+#> cold start} tasks are automatically one off tasks and do not need
 #> to be listed here.
 #>\begin{myitemize}
 #>\item {\em section:} [special tasks]

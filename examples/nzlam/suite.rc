@@ -16,7 +16,7 @@ use lockserver = True
 
 [special tasks]
     sequential = forecast
-    coldstart = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
+    cold start = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
     clock-triggered = get_globaldump(3), get_obstore(3), get_bgerr(3), get_frames(-2.25) 
     # frames clock: we use frames from previous UKMO global run, ready ~2.25 hours before cycle time.
  
@@ -36,7 +36,7 @@ use lockserver = True
         forecast => get_outputs => nc_conv_met & housekeeping
         # OPS needs bgerr and obstores
         get_obstore & get_bgerr => OPS
-        # OPS and VAR need backgrounds from previous forecast, or coldstart
+        # OPS and VAR need backgrounds from previous forecast, or cold start
         forecast_cold | forecast(T-6) => VAR_ConfigureLS & OPS"""
     [[6,12,18]]
         graph = """

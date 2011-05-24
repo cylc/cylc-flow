@@ -22,7 +22,7 @@ use lockserver = True
 [special tasks]
     startup          = prep
     sequential       = A, B, C
-    coldstart        = ColdA, ColdB, ColdC
+    cold start        = ColdA, ColdB, ColdC
     clock-triggered  = X(1)
 
 [dependencies]

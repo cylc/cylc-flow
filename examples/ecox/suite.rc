@@ -35,7 +35,7 @@ nzlam_coldstart_without_download = unpack_globaldump, UM_GLtoGL_recon, UM_GLtoNZ
         ext_check_frames_ukmet(-2.25),  ext_check_dump_ukmet(-1.25), \
         ext_check_globalice_ukmet(4.3), ext_check_globalwind_ukmet(4.3)
 
-    coldstart = ext_check_dump_ukmet, ext_get_dump_ukmet, \
+    cold start = ext_check_dump_ukmet, ext_get_dump_ukmet, \
         unpack_globaldump, UM_GLtoGL_recon, UM_GLtoNZ_recon, \
         UM_nzlam_coldstart, globalwave_cold, topnet_cold, ricom_cold, \
         nzwave_cold

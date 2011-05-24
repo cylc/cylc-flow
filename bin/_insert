@@ -27,7 +27,7 @@ parser = PromptOptionParser( """cylc [control] insert [options] SUITE TASK[%STOP
 Insert a single task or a task group into a running suite. Task groups must be
 defined in the suite config (suite.rc) file. 
 
-Inserted tasks will spawn successors as normal, unless they are 'oneoff' tasks.
+Inserted tasks will spawn successors as normal, unless they are 'one off' tasks.
 See also 'cylc task submit', for running single tasks without a scheduler.""",
 [ 'TASK                   task or group to insert (NAME%YYYYMMDDHH)',
   'STOP                   Optional stop cycle (YYYYMMDDHH)' ]
