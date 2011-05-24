@@ -150,11 +150,13 @@ Arguments:
         [ time_type, time_string ] = line1.split(' : ')
         if time_type == 'simulation time':
             if not self.simulation_mode:
-                raise SystemExit("You can't restart in live mode from a simulation mode state dump")
-            
+                raise SystemExit("ERROR: You can't RESTART in live mode from a simulation mode state dump")
             [ time, rate ] = time_string.split( ',' )
             self.clock.reset( time, rate )
-
+        else:
+            if self.simulation_mode:
+                raise SystemExit("ERROR: You can't RESTART in simulation mode from a live mode state dump")
+ 
         line2 = lines[1]
         line2 = line2.rstrip()
         [ junk, oldstoptime ] = line2.split(' : ')

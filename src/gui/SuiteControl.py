@@ -268,8 +268,8 @@ and associated methods for their control widgets.
 """
 The cylc forecast suite metascheduler.
 """ )
-        about.set_website( "http://www.niwa.co.nz" )
-        about.set_logo( gtk.gdk.pixbuf_new_from_file( self.imagedir + "/dew.jpg" ))
+        #about.set_website( "http://www.niwa.co.nz" )
+        about.set_logo( gtk.gdk.pixbuf_new_from_file( self.imagedir + "/screenshots/logo.png" ))
         about.run()
         about.destroy()
 

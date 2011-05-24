@@ -2208,6 +2208,7 @@ the effort depends on the situation, of course.
 
 
 \subsubsection{Task Families}
+\label{TaskFamilies}
 
 A task family is a named group of tasks that appears as a single task
 in the suite dependency graph. Instead of having each individual member
@@ -3320,34 +3321,35 @@ menus are also reasonably complete.
 \label{UsingTheGraphBasedSuiteControlGUI}
 
 The graph-based suite control GUI has the advantage that it shows
-very clearly the true connections between tasks in a suite. It even 
+the structure of a suite very clearly as it evolves. It even 
 works well for large suites, on the order of at least one or two
 hundred tasks, because it zooms and pans easily and responsively.
 
 On the downside, the graphviz engine does a new global optimization
-every time the graph changes, so the layout is not stable as the suite
-evolves. This may or may not be a solvable problem - it seems likely
-that incremental changes in an evolving graph would eventually result in
-some kind of highly non-optimal layout.
+every time the graph changes, so the layout may not remain stable. This
+may or may not be a solvable problem - it seems likely that making
+continuing incremental changes to an existing graph would
+inevitably result in some kind of mess.
 
-However, the following features of the GUI make it quite usable in spite
-of the layout problem:
+The following features of the graph-based control GUI go a long way 
+toward mitigating the changing layout problem:
 
 \begin{myitemize}
     \item The disconnect button can be used to temporarily prevent the
         graph from changing as the content of the suite changes (and
-        in real time operation suites tend to evolve quite slowing in
-        any case)
-    \item Right-click on a task and choose the "Focus" option to restrict
-        the graph display to that task's cycle time.  Anything interesting
+        in real time operation suites evolve quite slowly anyway)
+    \item Right-click on a task and choose the ``Focus'' option to restrict
+        the graph display to that task's cycle time. Anything interesting
         happening in other cycles will show up as disconnected
-        rectangular nodes to the right of the graph (and you can click on
-        those to focus on their cycles).
-    \item Task filtering is the ultimate quick route to focusing on just
-        the tasks you want after taking a look at the global layout.
-    \item In future releases we plan to keep the graph centered, after
-        the layout changes, on the task most recently clicked on.
+        rectangular nodes to the right of the graph (and you can click
+        on those to intantly refocus to their cycles).
+    \item Task filtering is the ultimate quick route to temporarily focusing
+        on just the tasks you're interested in (but this will 
+        destroy the graph structure, to state the obvious).
 \end{myitemize}
+
+In future cylc releases we plan to keep the graph centered, after layout
+changes, on the most recently clicked task.
 
 
 %\subsection{Understanding Suite Evolution}
@@ -3480,12 +3482,12 @@ offset of 10 hours.
 \subsubsection{Can I Switch A Suite Between Simulation And Live Modes?}
 
 The scheduler mode (simulation or live) is recorded in the suite state
-dump file. {\em Cylc will not let you restart a dummy suite in live
-mode, or a live mode suite in dummy mode} because an attempt at the 
-former must certainly be a mistake, and an attempt at the latter,
-while feasible, would corrupt your live suite state dump file and 
-turn it over to simulation mode. Note, however, if you really want
-to run the current state of a live suite forward in simulation mode,
+dump file. {\em Cylc will not let you restart a simulation mode suite in
+live, or a live mode suite in simulation mode} - any attempt to do the 
+former must certainly be a mistake, and doing the latter, while
+feasible, would corrupt your live suite state dump and turn it over to
+simulation mode. Note, however, that if you really want to run the
+current state of a live suite forward in simulation mode,
 all you need to do is this:
 \begin{myenumerate}
     \item back up the live state dump (or take note of the filename
@@ -3497,10 +3499,10 @@ all you need to do is this:
         state dump or backup 
 \end{myenumerate}
 
-{\em Cylc also has the ability to create an instant dummy mode clone 
-of the current state of any running or stopped live suite, but this 
-``practice mode'' has been temporarily disabled because we haven't
-had time to test that it is still working.}
+{\em Cylc can also create an instant dummy mode clone of the current
+state of any running or stopped suite, but this ``practice mode'' has
+been disabled in the current release pending testing (it hasn't been
+used in a while).}
 
 %\subsubsection{Practice Mode}
 %
@@ -3712,8 +3714,6 @@ had time to test that it is still working.}
 
 \section{Advanced Topics}
 
-TBD
-
 \begin{myitemize}
     \item spin-up processes via temporary tasks and adding prerequisites
         on-the-fly
@@ -3812,8 +3812,7 @@ finished yet.  This generally just means ensuring that all file I/O
 contains the generating task's cycle time in the file or directory name
 so that there is no interference between successive instances. If this
 is difficult to achieve in particular cases, however, you can declare
-the offending tasks to be ``sequential'' (see
-Section~\ref{SuiteRCReference}). 
+the offending tasks to be {\em sequential}.
 
 % MAYBE SHOULD INCLUDE THE FOLLOWING HERE:
 %Warm-cycled forecast models {\em do} depend on their own previous

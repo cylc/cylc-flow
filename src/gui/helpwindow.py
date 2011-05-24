@@ -64,7 +64,7 @@ class helpwindow_base( object ):
         self.tb.insert_with_tags( self.tb.get_end_iter(), '\n' + text, self.tag_bold, self.tag_heading )
  
     def add_subheading( self, text ):
-        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n____' + text, self.tag_bold, self.tag_subheading )
+        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n    ' + text, self.tag_bold, self.tag_subheading )
 
     def add_text( self, text ):
         self.tb.insert_with_tags( self.tb.get_end_iter(), text + '\n', self.tag_text )
@@ -323,8 +323,7 @@ process has to know when you exit from the editor).
  
 def todo( b) :
     help = helpwindow( "Commands or command options not yet implemented in the GUI", 300, """
-%h2 restarting a suite with the '--no-release' option.
-Don't release any held tasks on restarting.""")
+%h2 'cylc restart --no-release' option: don't release held tasks on restarting a suite.""")
     help.show()
 
 def graph( b ):
