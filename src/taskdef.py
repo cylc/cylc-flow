@@ -61,6 +61,7 @@ class taskdef(object):
         self.job_submit_method = 'background'
         self.job_submit_log_directory = None
         self.remote_cylc_directory = None
+        self.remote_suite_directory = None
         self.remote_cylc_path = None
         self.modifiers = []
 
