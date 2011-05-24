@@ -339,6 +339,11 @@ class scheduler(object):
         job_submit.global_post_scripting = self.config['post-command scripting']
         job_submit.owned_task_execution_method = self.config['owned task execution method']
 
+        job_submit.global_task_owner = self.config['owner']
+        job_submit.global_remote_host = self.config['remote host']
+        job_submit.global_remote_cylc_dir = self.config['remote cylc directory']
+        job_submit.global_remote_suite_dir = self.config['remote suite directory']
+
         # LOCAL ENVIRONMENT
         # Access to the suite bin directory may be required for alert
         # scripts executed by the suite (it is no longer required for 

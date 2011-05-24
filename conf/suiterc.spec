@@ -86,6 +86,66 @@ use lockserver = boolean( default=True )
 #>\item {\em default:} True
 #>\end{myitemize}
 
+remote host = string( default=None )
+#> If a global remote host is specified cylc will attempt to run 
+#> every task on that host, except for particular tasks that specify
+#> a different host, using the job submission method for the task, by
+#> passwordless ssh. Use this if all of your tasks, or at least
+#> the bulk of them, run on a different machine from the cylc suite
+#> that will control them. The relevant suite task scripts and executables,
+#> and cylc itself, must be installed on the remote host. The items
+#> {\em remote cylc directory} and {\em remote suite directory} must
+#> also be specified globally and/or per task, and {\em owner} must be
+#> defined (globally and/or per task) if the task owner's username on
+#> the remote host is not the same as the local suite owner's.
+#> Passwordless ssh must be configured between the local suite owner and
+#> remote task owner accounts.
+#>\begin{myitemize}
+#>\item {\em section:} (top level)
+#>\item {\em type:} string
+#>\item {\em legal values:} a valid hostname on your network
+#>\item {\em default:} None
+#>\end{myitemize}
+
+remote cylc directory = string( default=None )
+#> For tasks that specify a global remote host, this must be used to
+#> define the path to the remote cylc installation (i.e.\
+#> \lstinline=$CYLC_DIR=)
+#> on the remote host.
+#>\begin{myitemize}
+#>\item {\em section:}  (top level)
+#>\item {\em type:} string
+#>\item {\em legal values:} a valid directory path on the remote host
+#>\item {\em default:} None
+#>\end{myitemize}
+#> This item is compulsory for remotely hosted tasks.
+
+remote suite directory = string( default=None )
+#> For tasks that specify a global remote host, this must be used to
+#> define the path to the suite definition directory on the remote host,
+#> in order to give remote tasks access to files in the 
+#> suite directory (via \lstinline=$CYLC_SUITE_DIR=) and to the 
+#> suite bin directory (via \lstinline=$PATH=).
+#>\begin{myitemize}
+#>\item {\em section:}  (top level)
+#>\item {\em type:} string
+#>\item {\em legal values:} a valid directory path on the remote host
+#>\item {\em default:} None
+#>\end{myitemize}
+#> This item is not compulsory for remotely hosted tasks, because 
+#> some tasks may not require access to files in the suite definition
+#> directory.
+ 
+owner = string( default=None )
+#> If a task has a defined owner, cylc will attempt to execute the task
+#> as that user, according to the global {\em owned task execution method}.
+#>\begin{myitemize}
+#>\item {\em section:}  (top level)
+#>\item {\em type:} string
+#>\item {\em legal values:} a valid username on the task host
+#>\item {\em default:} None
+#>\end{myitemize}
+
 use secure passphrase = boolean( default=False )
 #>If True, any intervention in a
 #> running suite will require use of a secure passphrase. The way this is 

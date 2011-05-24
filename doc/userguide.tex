@@ -2946,6 +2946,9 @@ be configured to allow the suite owner to execute the llsubmit command
 as the task owner.  For ssh, passwordless ssh must be configured between
 the suite owner and task owner accounts.
 
+{\em A task owner can also be declared globally, if all or most of your
+tasks need to run under a different username than the suite owner.}
+
 \subsection{Running Tasks On A Remote Host}
 \label{RunningTasksOnARemoteHost}
 
@@ -2954,19 +2957,32 @@ resource manager, such as loadleveler, that allows you to submit a job
 locally to run on the remote host}.
 
 If a task declares a remote host and owner in its suite.rc task section,
-\begin{lstlisting}
-# SUITE.RC
-[tasks]
-    [[foo]]
-        owner = bob
-        remote host = fitzroy.niwa.co.nz
-        remote cylc directory = /path/to/remote/cylc/installation
-        remote suite directory = /path/to/remote/suite/definition
-        job submission method = loadleveler
-\end{lstlisting}
 cylc will copy the task job script to the remote host by
 \lstinline=scp=, and then run it on the remote host (using the
-specified job submission method for the task) by \lstinline=ssh=. 
+right job submission method for the task) by \lstinline=ssh=. 
+
+{\em Remote host, task owner, and directories can be declared globally
+and/or by task. Use the global settings if all or most of your tasks
+need to run on the same remote host.
+
+\begin{lstlisting}
+# SUITE.RC
+
+# GLOBAL
+owner = alice
+remote host = foo.niwa.co.nz
+remote cylc directory = /path/to/remote/cylc/installation/on/foo
+remote suite directory = /path/to/remote/suite/definition/on/foo
+job submission method = loadleveler
+[tasks]
+    [[foo]]
+        # TASK-SPECIFIC
+        owner = bob
+        remote host = bar.niwa.co.nz
+        remote cylc directory = /path/to/remote/cylc/installation/on/bar
+        remote suite directory = /path/to/remote/suite/definition/on/bar
+        job submission method = at_now
+\end{lstlisting}
 
 Specifying the remote cylc directory gives remote tasks access 
 to cylc commands; and the remote suite directory gives them 

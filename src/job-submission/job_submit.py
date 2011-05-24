@@ -55,6 +55,10 @@ class job_submit(object):
     # class variables that are set remotely at startup:
     # (e.g. 'job_submit.simulation_mode = True')
     simulation_mode = False
+    global_task_owner = None
+    global_remote_host = None
+    global_remote_cylc_dir = None
+    global_remote_suite_dir = None
     failout_id = None
     global_pre_scripting = None
     global_post_scripting = None
@@ -85,26 +89,43 @@ class job_submit(object):
         if task_owner:
             self.task_owner = task_owner
             self.other_owner = True
+        elif self.__class__.global_task_owner:
+            self.task_owner = self.__class__.global_task_owner
+            self.other_owner = True
         else:
             self.task_owner = self.suite_owner
             self.other_owner = False
 
-        self.remote_cylc_dir = remote_cylc_dir
-        self.remote_suite_dir = remote_suite_dir
-
-        if remote_host:
+        if remote_host or self.__class__.global_remote_host:
             # Remote job submission
-            if self.__class__.simulation_mode:
+            if not self.__class__.simulation_mode:
                 # Ignore remote hosts in simulation mode (this allows us to
                 # dummy-run suites with remote tasks if outside of their 
                 # usual execution environment).
-                pass
-            else:
                 self.local_job_submit = False
-                self.remote_host = remote_host
-                self.homedir = None
-                # (remote job submission by ssh will automatically dump
-                # us in the owner's home directory)
+
+                if remote_cylc_dir:
+                    self.remote_cylc_dir = remote_cylc_dir
+                elif self.__class__.global_remote_cylc_dir:
+                    self.remote_cylc_dir = self.__class__.global_remote_cylc_dir
+                else:
+                    self.remote_cylc_dir = None
+  
+                if remote_suite_dir:
+                    self.remote_suite_dir = remote_suite_dir
+                elif self.__class__.global_remote_suite_dir:
+                    self.remote_suite_dir = self.__class__.global_remote_suite_dir
+                else:
+                    self.remote_suite_dir = None
+
+                if remote_host:
+                    self.remote_host = remote_host
+                elif self.__class__.global_remote_host:
+                    self.remote_host = self.__class__.global_remote_host
+                else:
+                    self.homedir = None
+                    # (remote job submission by ssh will automatically dump
+                    # us in the owner's home directory)
         else:
             # Local job submission
             self.local_job_submit = True

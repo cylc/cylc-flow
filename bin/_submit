@@ -184,6 +184,11 @@ job_submit.global_pre_scripting = config['pre-command scripting']
 job_submit.global_post_scripting = config['post-command scripting']
 job_submit.owned_task_execution_method = config['owned task execution method']
 
+job_submit.global_task_owner = config['owner']
+job_submit.global_remote_host = config['remote host']
+job_submit.global_remote_cylc_dir = config['remote cylc directory']
+job_submit.global_remote_suite_dir = config['remote suite directory']
+
 # intantiate the task--------------------------------------------------
 try:
     task_proxy = config.get_task_proxy( task_name, ctime, 'waiting', stopctime=None, startup=True )
