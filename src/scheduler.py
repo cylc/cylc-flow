@@ -98,7 +98,7 @@ class scheduler(object):
                 "before resuming operation.",
                 action="store_true", default=False, dest="startpaused" )
 
-        self.parser.add_option( "-d", "--simulation-mode",
+        self.parser.add_option( "-s", "--simulation-mode",
                 help="Use dummy tasks that masquerade as the real thing, "
                 "and accelerate the wall clock: get the scheduling right "
                 "without having to run the real suite tasks.",

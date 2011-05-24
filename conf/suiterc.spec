@@ -4,6 +4,8 @@
 # document processing (which strips off the leading '#>' characters). 
 # ITEM DOCUMENTATION SHOULD BE UPDATED WHENEVER AN ITEM IS CHANGED.
 
+#>\lstset{language=}
+
 # NOTE: A CONFIGOBJ or VALIDATE BUG? LIST CONSTRUCTOR FAILS IF LAST LIST
 # ELEMENT IS FOLLOWED BY A SPACE (OR DOES IT JUST NEED A TRAILING COMMA?):
 #   GOOD:
@@ -17,8 +19,8 @@
 #> sections of large suites, or to group common environment variable settings
 #> into one file that can be included in multiple task environment sections 
 #> (instead of polluting the global namespace for {\em all} tasks).
-#> Include-files can be multiply included and nested 
-#> (i.e.\ and include-file can include other include-files, ...).
+#> Include-file boundaries are arbitrary (they can cross suite.rc 
+#> section boundaries). They can be multiply included and nested.
 #> \begin{lstlisting}
 #>%include path/to/myfile.rc
 #> \end{lstlisting}
@@ -39,6 +41,7 @@ title = string( default="No title supplied" )
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
 #>\item {\em default:} ``No title supplied''
+#>\item {\em example:} \lstinline@title = ``Suite Foo''@
 #>\end{myitemize}
 
 description = string( default="No description supplied" )
@@ -48,6 +51,7 @@ description = string( default="No description supplied" )
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
 #>\item {\em default:} ``No description supplied''
+#>\item {\em example:} \lstinline@description = ``Here's what this suite does ...''@
 #>\end{myitemize}
 
 job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=background )
@@ -68,6 +72,7 @@ job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw
 #>   \end{myitemize}
 #>\item {\em default:} \lstinline=background=
 #>\item {\em task override:} yes
+#>\item {\em example:} \lstinline@job submission method = at_now@
 #>\end{myitemize}
 
 use lockserver = boolean( default=True )
@@ -84,6 +89,7 @@ use lockserver = boolean( default=True )
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
 #>\item {\em default:} True
+#>\item {\em example:} \lstinline@use lockserver = True@
 #>\end{myitemize}
 
 remote host = string( default=None )
@@ -105,6 +111,7 @@ remote host = string( default=None )
 #>\item {\em type:} string
 #>\item {\em legal values:} a valid hostname on your network
 #>\item {\em default:} None
+#>\item {\em example:} \lstinline@remote host = foo.niwa.co.nz@
 #>\end{myitemize}
 
 remote cylc directory = string( default=None )
@@ -117,6 +124,7 @@ remote cylc directory = string( default=None )
 #>\item {\em type:} string
 #>\item {\em legal values:} a valid directory path on the remote host
 #>\item {\em default:} None
+#>\item {\em example:} \lstinline@remote cylc directory = /path/to/cylc/on/remote/host@
 #>\end{myitemize}
 #> This item is compulsory for remotely hosted tasks.
 
@@ -131,6 +139,7 @@ remote suite directory = string( default=None )
 #>\item {\em type:} string
 #>\item {\em legal values:} a valid directory path on the remote host
 #>\item {\em default:} None
+#>\item {\em example:} \lstinline@remote suite directory = /path/to/suite/on/remote/host@
 #>\end{myitemize}
 #> This item is not compulsory for remotely hosted tasks, because 
 #> some tasks may not require access to files in the suite definition
@@ -144,6 +153,7 @@ owner = string( default=None )
 #>\item {\em type:} string
 #>\item {\em legal values:} a valid username on the task host
 #>\item {\em default:} None
+#>\item {\em example:} \lstinline@owner = bob@
 #>\end{myitemize}
 
 use secure passphrase = boolean( default=False )
@@ -160,6 +170,7 @@ use secure passphrase = boolean( default=False )
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
 #>\item {\em default:} False
+#>\item {\em example:} \lstinline@use secure passphrase = True@
 #>\end{myitemize}
 
 tasks to exclude at startup = force_list( default=list())
@@ -174,6 +185,7 @@ tasks to exclude at startup = force_list( default=list())
 #>\item {\em section:} (top level)
 #>\item {\em type:} list of task names
 #>\item {\em default:} empty
+#>\item {\em example:} \lstinline@tasks to exclude at startup = TaskA, TaskB, TaskC@
 #>\end{myitemize}
 
 tasks to include at startup = force_list( default=list() )
@@ -188,6 +200,7 @@ tasks to include at startup = force_list( default=list() )
 #>\item {\em section:} (top level)
 #>\item {\em type:} list of task names
 #>\item {\em default:} empty
+#>\item {\em example:} \lstinline@tasks to include at startup = TaskA, TaskB, TaskC@
 #>\end{myitemize}
 
 runahead limit in hours = integer( min=0, default=24 )
@@ -207,17 +220,19 @@ runahead limit in hours = integer( min=0, default=24 )
 #>\item {\em type:} integer
 #>\item {\em legal values:} $>= 0$
 #>\item {\em default:} 24
+#>\item {\em example:} \lstinline@runahead limit in hours = 48@
 #>\end{myitemize}
 
-top level logging directory = string( default = '$HOME/.cylc/logging' )
+top level cylc log directory = string( default = '$HOME/.cylc/logging' )
 #>The top-level directory under which cylc 
-#> stores suite-specific scheduler log files.
+#> writes its suite-specific log files.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
 #>\item {\em default:} \lstinline=$HOME/.cylc/logging=.
+#>\item {\em example:} \lstinline@top level cylc log directory = $HOME/CylcLogs@
 #>\end{myitemize}
 
 roll log at startup = boolean( default=True )
@@ -228,6 +243,7 @@ roll log at startup = boolean( default=True )
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
 #>\item {\em default:} True
+#>\item {\em example:} \lstinline@roll log at startup = False@
 #>\end{myitemize}
 
 top level state dump directory = string( default = '$HOME/.cylc/state' )
@@ -240,6 +256,7 @@ top level state dump directory = string( default = '$HOME/.cylc/state' )
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
 #>\item {\em default:} \lstinline=$HOME/.cylc/state=
+#>\item {\em example:} \lstinline@top level state dump directory = $HOME/CylcState@
 #>\end{myitemize}
 
 number of state dump backups = integer( min=1, default=10 )
@@ -258,6 +275,7 @@ number of state dump backups = integer( min=1, default=10 )
 #>\item {\em type:} integer
 #>\item {\em legal values:} $>= 1$
 #>\item {\em default:} 10
+#>\item {\em example:} \lstinline@number of state dump backups = 20@
 #>\end{myitemize}
 
 job submission log directory = string( default='$HOME/CylcLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
@@ -272,6 +290,7 @@ job submission log directory = string( default='$HOME/CylcLogs/$CYLC_SUITE_GROUP
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
 #>\item {\em default:} \lstinline=$HOME/CylcLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME=
+#>\item {\em example:} \lstinline@job submission log directory = $HOME/Logs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME@
 #>\end{myitemize}
 
 #>IGNORE
@@ -298,8 +317,8 @@ task timeout hook script = string( default=None )
 #>\end{myitemize}
 #> These items set global defaults that can be overridden by specific
 #> tasks; or you can omit the defaults and just handle alerts for
-#> certain critical tasks.
-#> Hook scripts are called with the following arguments supplied by cylc:
+#> certain critical tasks. Hook scripts can be located in the suite bin
+#> directory. {\em They are called by cylc} with the following arguments:
 #> \begin{lstlisting}
 #> <script> [EVENT] TASK CYCLE_TIME MESSAGE
 #> \end{lstlisting}
@@ -311,6 +330,7 @@ task timeout hook script = string( default=None )
 #>\item {\em type:} string
 #>\item {\em default:} None
 #>\item {\em task override:} yes
+#>\item {\em example:} \lstinline@task failed hook script = alerts.sh@
 #>\end{myitemize}
 
 #>IGNORE
@@ -326,8 +346,8 @@ task execution timeout in minutes = float( default=None )
 #>\item {\bf task execution timeout in minutes}
 #>\end{myitemize}
 #> If a task has not started (or finished) N minutes after it was submitted 
-#> (or started), the task timeout hook script will be called with the
-#> following arguments supplied by cylc:
+#> (or started), the task timeout hook script will be called by cylc with the
+#> following arguments:
 #> \begin{lstlisting}
 #> <script> [EVENT] TASK CYCLE_TIME MESSAGE
 #> \end{lstlisting}
@@ -339,6 +359,7 @@ task execution timeout in minutes = float( default=None )
 #>\item {\em type:} float (minutes)
 #>\item {\em default:} None
 #>\item {\em task override:} yes
+#>\item {\em example:} \lstinline@task execution timeout in minutes = 10@
 #>\end{myitemize}
 
 reset execution timeout on incoming messages = boolean( default=True )
@@ -352,6 +373,7 @@ reset execution timeout on incoming messages = boolean( default=True )
 #>\item {\em type:} boolean
 #>\item {\em default:} True
 #>\item {\em task override:} yes
+#>\item {\em example:} \lstinline@reset execution timeout on incoming messages = False@
 #>\end{myitemize}
 
 pre-command scripting = string( default='' )
@@ -367,6 +389,12 @@ pre-command scripting = string( default='' )
 #>\item {\em section:} (top level)
 #>\item {\em type:} multiline string
 #>\item {\em default:} empty
+#>\item {\em example:} 
+#> \begin{lstlisting}
+#>    pre-command scripting = """
+#>      . $HOME/.profile
+#>      echo Hello from suite $CYLC_SUITE!"""
+#> \end{lstlisting}
 #>\end{myitemize}
 
 post-command scripting = string( default='' )
@@ -383,6 +411,12 @@ post-command scripting = string( default='' )
 #>\item {\em type:} multiline string
 #>\item {\em default:} empty
 #>\item {\em task override:} yes
+#>\item {\em example:}
+#> \begin{lstlisting}
+#>    post-command scripting = """
+#>      . $HOME/.profile
+#>      echo Goodbye from suite $CYLC_SUITE!"""
+#> \end{lstlisting}
 #>\end{myitemize}
 
 owned task execution method = option( sudo, ssh, default=sudo )
@@ -402,6 +436,7 @@ owned task execution method = option( sudo, ssh, default=sudo )
 #>        \item ssh
 #>   \end{myitemize}
 #>\item {\em default:} sudo
+#>\item {\em example:} \lstinline@owned task execution method = ssh@
 #>\end{myitemize}
 #>To use sudo with loadleveler, for example, \lstinline=/etc/sudoers=
 #> must be configured to allow the suite owner to execute the
@@ -418,41 +453,46 @@ ignore task owners = boolean( default=False )
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
 #>\item {\em default:} False
+#>\item {\em example:} \lstinline@ignore task owners = True@
 #>\end{myitemize}
 
 use quick task elimination = boolean( default=True )
 #>If this item is switch on (it is by default) cylc will remove spent
 #> tasks from the suite sooner if they are known to have no downstream
-#> dependents in subsequent forecast cycles. Otherwise only the generic
-#> spent task elimination algorithm will be used.
+#> dependents in subsequent forecast cycles. Otherwise just the generic
+#> spent task elimination algorithm will be used. (Mainly used in 
+#> cylc development).
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
 #>\item {\em default:} True
+#>\item {\em example:} \lstinline@use quick task elimination = False@
 #>\end{myitemize}
 
 simulation mode only = boolean( default=False )
 #>If True, cylc will abort cleanly if you try to run
 #>the suite in real mode. This can be used for demo suites that
-#>can't run for real because they've been copied out of their
+#>can't run in live mode because they've been copied out of their
 #>normal operational environment.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
 #>\item {\em default:} False
+#>\item {\em example:} \lstinline@simulation mode only@
 #>\end{myitemize}
 
 allow multiple simultaneous instances = boolean( default=False )
 #>If True, the lockserver will allow multiple instances of this 
-#> suite to run at the same time, so long as they are 
-#> registered under different names. Use this if the I/O paths 
-#> of every task in the suite are dynamically configured to be suite
-#> specific (i.e.\ they must all contain the suite registration group
-#> and name).
+#> suite to run at the same time under different registrations. You can
+#> do this
+#> if the I/O paths of every task in the suite are dynamically
+#> configured to be suite specific (i.e.\ they all contain the
+#> suite registration group and name).
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
 #>\item {\em default:} False
+#>\item {\em example:} \lstinline@allow multiple simultaneous instances = True@
 #>\end{myitemize}
 
 job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=/bin/bash )
@@ -479,6 +519,7 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>        \item \lstinline=/usr/bin/ksh=
 #>   \end{myitemize}
 #>\item {\em default:} \lstinline=/bin/bash= 
+#>\item {\em example:} \lstinline@job submission shell = /bin/ksh@
 #>\end{myitemize}
 
 [special tasks]
@@ -500,8 +541,8 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\begin{myitemize}
 #>\item {\em section:}  [special tasks]
 #>\item {\em type:} list of tasknames followed by parenthesized offsets, in hours
-#>\item {\em example:} foo(1.5), bar(2.25)
 #>\item {\em default:} None
+#>\item {\em example:} \lstinline@clock-triggered = foo(1.5), bar(2.25)@
 #>\end{myitemize}
 #> Clock-triggered tasks currently can't be triggered manually prior to
 #> their trigger time. This will be change in future cylc releases. In
@@ -520,6 +561,7 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em section:} [special tasks]
 #>\item {\em type:} list of task names
 #>\item {\em default:} empty list
+#>\item {\em example:} \lstinline@startup = TaskA, TaskB@
 #>\end{myitemize}
 
     cold start = force_list( default=list())
@@ -538,6 +580,7 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em section:} [special tasks]
 #>\item {\em type:} list of task names
 #>\item {\em default:} empty list
+#>\item {\em example:} \lstinline@cold start = ColdA, TaskF@
 #>\end{myitemize}
 
     sequential = force_list( default=list())
@@ -562,6 +605,7 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em type:} list of task names
 #>\item {\em legal values:}
 #>\item {\em default:} empty list
+#>\item {\em example:} \lstinline@cold start = ModelA, PostProcB@
 #>\end{myitemize}
 
     one off = force_list( default=list())
@@ -574,6 +618,7 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em section:} [special tasks]
 #>\item {\em type:} list of task names
 #>\item {\em default:} empty list
+#>\item {\em example:} \lstinline@cold start = one off@
 #>\end{myitemize}
 
     models with explicit restart outputs = force_list( default=list())
@@ -593,6 +638,7 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em section:} [special tasks]
 #>\item {\em type:} list of task names
 #>\item {\em default:} empty list
+#>\item {\em example:} \lstinline@models with explicit restart outputs = A, B@
 #>\end{myitemize}
 
 [task families]
@@ -603,26 +649,26 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #> can also appear in the graph as non-family tasks, although you're not
 #> likely to need either of these features.
     __many__ = force_list( default=None )
-#> Repeat MANY (task family name) to list each task family by name.
+#> Replace MANY with each task family name.
 #>\begin{myitemize}
 #>\item {\em section:} [task families]
 #>\item {\em type:} list of task names (the family members)
-#>\item {\em example:} ObsProc = ObsSurface, ObsSonde, ObsAircraft, ObsSat
 #>\item {\em default:} None
+#>\item {\em example:} \lstinline@ObsProc = ObsSurface, ObsSonde, ObsAircraft, ObsSat@
 #>\end{myitemize}
 
 [dependencies]
 #> This is where to define the suite dependency graph.
     [[__many__]]
-#> Repeat MANY (list of hours for which the following chunk
-#> of dependency graph is valid) as required for differing 
+#> Replace MANY with each list of hours preceding a chunk of the suite
+#> dependency graph, as required for differing 
 #> dependencies at different hours.
 #>\begin{myitemize}
 #>\item {\em section:} [dependencies]
 #>\item {\em type:} list of integer hour
 #>\item {\em legal values:} $0 \leq hour \leq 23$
-#>\item {\em example:} [[0,6,12,18]]
 #>\item {\em default:} None
+#>\item {\em example:} \lstinline@[[0,6,12,18]]@
 #>\end{myitemize}
 
     graph = string
@@ -654,22 +700,21 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #> is preserved. See Section~\ref{TaskExecutionEnvironment}, Task
 #> Execution Environment, for more information.
 __many__ = string
-#> Repeat MANY (environment variable definition) for any environment
-#> variables you need.
+#> Replace MANY with each global environment variable definition
 #>\begin{myitemize}
 #>\item {\em section:} [environment]
 #>\item {\em type:} string
+#>\item {\em default:} None
 #>\item {\em legal values:} any valid environment variable assignment
 #> expression. Whitespace around the `$=$' is fine (the
 #> \lstinline=suite.rc= file is not a shell script). 
-#> E.g. for the bash shell: 
+#> \item {\em examples} for the bash shell: 
 #>   \begin{myitemize}
 #>       \item \lstinline@FOO = $HOME/bar/baz@
 #>       \item \lstinline@BAR = ${FOO}$GLOBALVAR@
 #>       \item \lstinline@BAZ = $(echo "hello world")@
 #>       \item \lstinline@WAZ = ${FOO%.jpg}.png@
 #>   \end{myitemize}
-#>\item {\em default:} None
 #>\end{myitemize}
 
 [directives]
@@ -681,8 +726,7 @@ __many__ = string
 #> submission method should also define the directive comment prefix
 #> (`\lstinline=# @=' for loadleveler) and final directive ('\lstinline=# @ queue=').
 __many__ = string
-#> Repeat MANY (batch queue scheduler directive) for any directives
-#> you need, e.g.:
+#> Replace MANY with each global batch queue scheduler directive, e.g.\
 #> \begin{lstlisting}
 #>    class = parallel
 #> \end{lstlisting}
@@ -695,7 +739,12 @@ __many__ = string
 
 [tasks]
     [[__many__]]
-#> Repeat MANY (task name) for every task in the suite.
+#> Replace MANY with each task name, followed by the settings for that
+#> task.
+#>\begin{myitemize}
+#>\item {\em section:} [tasks]
+#>\item {\em example:} \lstinline@[[TaskF]]@
+#>\end{myitemize}
 
     description = string( default="No description supplied" )
 #> Describe what this task does. The description can be retrieved at run time
@@ -704,6 +753,7 @@ __many__ = string
 #>\item {\em section:} [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
 #>\item {\em default:} No description supplied
+#>\item {\em example:} \lstinline@ description = "here's what this task does..."@
 #>\end{myitemize}
 
     command = force_list( default=list( cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP",))
@@ -716,6 +766,7 @@ __many__ = string
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
 #>\item {\em default:} \lstinline=cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP"=
+#>\item {\em example:} \lstinline=cylc wrap GetData.sh=
 #>\end{myitemize}
 
     job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=None )
@@ -735,12 +786,13 @@ __many__ = string
 #>       \item \lstinline=ll_raw= - loadleveler, for existing job scripts
 #>   \end{myitemize}
 #>\item {\em default:} \lstinline=background=
+#>\item {\em example:} \lstinline@job submission method = at_now@
 #>\end{myitemize}
 
     job submission log directory = string( default=None )
-#>Set a job submission log directory for this task, overriding the suite
-#> default. This is for stdout and stderr logs for the job scripts submitted by
-#> cylc when tasks are ready to run.
+#> Set a job submission log directory for this task, overriding the suite
+#> default, for the stdout and stderr logs from the job scripts
+#> submitted by cylc when tasks are ready to run.
 #> For monolithic tasks (which don't resubmit sub-jobs themselves) these will
 #> be the complete job logs for the task.  For owned tasks, the suite
 #> owner's home directory will be replaced by the task owner's.
@@ -750,6 +802,7 @@ __many__ = string
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
 #>\item {\em default:} None (see global default)
+#>\item {\em example:} \lstinline@job submission log directory = $HOME/TaskXLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME@
 #>\end{myitemize}
 
     pre-command scripting = string( default='' )
@@ -765,6 +818,12 @@ __many__ = string
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} multiline string
 #>\item {\em default:} empty
+#>\item {\em example:}
+#> \begin{lstlisting}
+#>    pre-command scripting = """
+#>      . $HOME/.profile
+#>      echo Hello from task $TASK_ID!"""
+#> \end{lstlisting}
 #>\end{myitemize}
 
     post-command scripting = string( default='' )
@@ -780,6 +839,11 @@ __many__ = string
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} multiline string
 #>\item {\em default:} empty
+#> \begin{lstlisting}
+#>    pre-command scripting = """
+#>      . $HOME/.profile
+#>      echo Goodbye from task $TASK_ID!"""
+#> \end{lstlisting}
 #>\end{myitemize}
 
     owner = string( default=None )
@@ -790,6 +854,7 @@ __many__ = string
 #>\item {\em type:} string
 #>\item {\em legal values:} a valid username on the task host
 #>\item {\em default:} None
+#>\item {\em example:} \lstinline@owner = alice@
 #>\end{myitemize}
 
     remote host = string( default=None )
@@ -808,6 +873,7 @@ __many__ = string
 #>\item {\em type:} string
 #>\item {\em legal values:} a valid hostname on your network
 #>\item {\em default:} None
+#>\item {\em example:} \lstinline@remote host = thor.niwa.co.nz@
 #>\end{myitemize}
 
     remote cylc directory = string( default=None )
@@ -819,6 +885,7 @@ __many__ = string
 #>\item {\em type:} string
 #>\item {\em legal values:} a valid directory path on the remote host
 #>\item {\em default:} None
+#>\item {\em example:} \lstinline@remote cylc directory = /path/to/cylc/on/remote/host@
 #>\end{myitemize}
 #> This item is compulsory for remotely hosted tasks.
 
@@ -833,6 +900,7 @@ __many__ = string
 #>\item {\em type:} string
 #>\item {\em legal values:} a valid directory path on the remote host
 #>\item {\em default:} None
+#>\item {\em example:} \lstinline@remote suite directory = /path/to/suite/on/remote/host@
 #>\end{myitemize}
 #> This item is not compulsory for remotely hosted tasks, because 
 #> some tasks may not require access to files in the suite definition
@@ -862,7 +930,8 @@ __many__ = string
 #>\item {\bf task timeout hook script}
 #>\end{myitemize}
 #> These are task-specific settings; you can also set global defaults.
-#> Hook scripts are called with the following arguments supplied by cylc:
+#> Hook scripts can be located in the suite bin directory. {\em They
+#> are called by cylc} with the following arguments:
 #> \begin{lstlisting}
 #> <script> EVENT TASK CYCLE_TIME MESSAGE
 #> \end{lstlisting}
@@ -873,6 +942,7 @@ __many__ = string
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
 #>\item {\em default:} None
+#>\item {\em example:} \lstinline@task failed hook script = alerts.sh@
 #>\end{myitemize}
 
 #>IGNORE
@@ -889,8 +959,8 @@ __many__ = string
 #>\item {\bf task execution timeout in minutes}
 #>\end{myitemize}
 #> If a task has not started (or finished) N minutes after it was submitted 
-#> (or started), the task timeout hook script will be called with the
-#> following arguments supplied by cylc:
+#> (or started), the task timeout hook script will be called by cylc with the
+#> following arguments:
 #> \begin{lstlisting}
 #> <script> [EVENT] TASK CYCLE_TIME MESSAGE
 #> \end{lstlisting}
@@ -901,6 +971,7 @@ __many__ = string
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} float (minutes)
 #>\item {\em default:} None
+#>\item {\em example:} \lstinline@task execution timeout in minutes = 10@
 #>\end{myitemize}
 
     reset execution timeout on incoming messages = boolean( default=True )
@@ -913,6 +984,7 @@ __many__ = string
 #>\item {\em section:} [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} boolean
 #>\item {\em default:} True
+#>\item {\em example:} \lstinline@reset execution timeout on incoming messages = False@
 #>\end{myitemize}
 
     extra log files = force_list( default=list())
@@ -927,6 +999,7 @@ __many__ = string
 #>\item {\em type:} list of strings
 #>\item {\em legal values:} valid file paths, may contain environment variables
 #>\item {\em default:} empty
+#>\item {\em example:} \lstinline@extra log files = /a/b/c, /d/e/f@
 #>\end{myitemize}
 
 #>IGNORE
@@ -947,6 +1020,7 @@ __many__ = string
 #>\item {\em type:} list of integers
 #>\item {\em legal values:} $ 0,1,2,...,23$
 #>\item {\em default:} empty
+#>\item {\em example:} \lstinline@hours = 6,18
 #>\end{myitemize}
 #>RESUME
 
@@ -957,15 +1031,14 @@ __many__ = string
 #> Execution Environment'', Section~\ref{TaskExecutionEnvironment} for
 #> more information.
         __many__ = string
-#> Repeat MANY (environment variable definition) for any 
-#> task-specific environment variables you need.
+#> Replace MANY with each task environment variable definition.
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]] $\rightarrow$ [[[environment]]]
 #>\item {\em type:} string
 #>\item {\em legal values:} any valid environment variable assignment
 #> expression. Whitespace around the `$=$' is fine (the
 #> \lstinline=suite.rc= file is not a shell script). 
-#> E.g. for the bash shell: 
+#> \item {\em examples:} for the bash shell: 
 #>   \begin{myitemize}
 #>       \item \lstinline@FOO = $HOME/bar/baz@
 #>       \item \lstinline@BAR = ${FOO}$GLOBALVAR@
@@ -984,7 +1057,7 @@ __many__ = string
 #> submission method should also define the directive comment prefix
 #> (`\lstinline=# @=' for loadleveler) and final directive (`\lstinline=# @ queue=').
         __many__ = string
-#> Repeat MANY (batch queue scheduler directive) for any directives 
+#> Replace MANY with each task batch queue scheduler directive.
 #> you need.
 #>\begin{myitemize}
 #>\item {\em section:} [tasks] $\rightarrow$ [[TASK]] $\rightarrow$ [[[directives]]]
@@ -1031,15 +1104,17 @@ __many__ = string
 #>\end{myitemize}
 
 [simulation mode]
-#> Configure simulation mode behavior (used only you run the suite in simulation mode).
+#> Configure simulation mode behavior (used only when you run the suite in simulation mode).
 clock offset from initial cycle time in hours = integer( default=24 )
 #> Specify a clock offset of 0 to simulate real time operation, greater 
-#> than zero to simulate catch up and transition to real time operation.
+#> than zero to simulate catching up from a delay and transitioning to
+#> real time operation.
 #>\begin{myitemize}
 #>\item {\em section:} [simulation mode]
 #>\item {\em type:} integer
 #>\item {\em legal values:} $\geq 0$
 #>\item {\em default:} 24
+#>\item {\em example:} \lstinline@clock offset from initial cycle time in hours = 6@
 #>\end{myitemize}
 
 clock rate in seconds per simulation hour = integer( default=10 )
@@ -1051,6 +1126,7 @@ clock rate in seconds per simulation hour = integer( default=10 )
 #>\item {\em type:} integer
 #>\item {\em legal values:} $\geq 0$
 #>\item {\em default:} 10
+#>\item {\em example:} \lstinline@clock rate in seconds per simulation hour = 20 @
 #>\end{myitemize}
 
 # exported as $CYLC_SIMULATION_SLEEP in job submission file:
@@ -1062,6 +1138,7 @@ task run time in seconds = integer( default=10 )
 #>\item {\em type:} integer
 #>\item {\em legal values:} $\geq 0$
 #>\item {\em default:} 10
+#>\item {\em example:} \lstinline@task run time in seconds = 20@
 #>\end{myitemize}
 
 #>IGNORE
@@ -1082,6 +1159,7 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 #>   \end{myitemize}
 #>\item {\em default:} \lstinline=background=
 #>\item {\em task override:} yes
+#>\item {\em example:} \lstinline@job submission method = at_now@
 #>\end{myitemize}
 #>RESUME
 
@@ -1099,6 +1177,7 @@ run time graph cutoff in hours = integer( default=24 )
 #>\item {\em type:} integer
 #>\item {\em legal values:} $>=0$
 #>\item {\em default:} 24
+#>\item {\em example:} @lstinline@run time graph cutoff = 12@
 #>\end{myitemize}
 
 run time graph directory = string( default='$CYLC_SUITE_DIR/graphing')
@@ -1108,6 +1187,7 @@ run time graph directory = string( default='$CYLC_SUITE_DIR/graphing')
 #>\item {\em type:} string
 #>\item {\em legal values:} a valid local file path
 #>\item {\em default:} \lstinline=$CYLC_SUITE_DIR/graphing=
+#>\item {\em example:} \lstinline@run time graph directory = $HOME/mygraph@
 #>\end{myitemize}
 
 show family members = boolean( default=False )
@@ -1118,6 +1198,7 @@ show family members = boolean( default=False )
 #>\item {\em section:}  [visualization]
 #>\item {\em type:} boolean
 #>\item {\em default:} False
+#>\item {\em example:} \lstinline@show family members = True@
 #>\end{myitemize}
 
 use node color for edges = boolean( default=True )
@@ -1128,60 +1209,72 @@ use node color for edges = boolean( default=True )
 #>\item {\em section:}  [visualization]
 #>\item {\em type:} boolean
 #>\item {\em default:} True
+#>\item {\em example:} \lstinline@use node color for edges = False@
 #>\end{myitemize}
 
 default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=box'))
 #> Set the default attributes (color and style etc.) of task nodes.
+#> Attribute pairs must be quoted to hide the \lstinline@=@ character in them.
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization]
 #>\item {\em type:} list of {\em quoted} \lstinline@'attribute=value'@ pairs
 #>\item {\em legal values:} see graphviz or pygraphviz documentation
 #>\item {\em default:} \lstinline@'style=unfilled', 'color=black', 'shape=ellipse'@
+#>\item {\em example:} \lstinline@default node attributes = 'style=filled', 'shape=box'@
 #>\end{myitemize}
 
 default edge attributes = force_list( default=list('color=black'))
 #> Set the default attributes (color and style etc.) of graph edges.
+#> Attribute pairs must be quoted to hide the \lstinline@=@ character in them.
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization]
 #>\item {\em type:} list of graph edge attributes
 #>\item {\em legal values:} see graphviz or pygraphviz documentation
 #>\item {\em default:} \lstinline@'color=black'@
+#>\item {\em example:} \lstinline@default edge attributes = 'color=red'@
 #>\end{myitemize}
 
 [[node groups]]
 #> Define named groups of graph nodes (tasks) that can have
 #> attributes assigned to them in the [[node attributes]] section.
     __many__ = force_list( default=list())
-#> Repeat MANY for each node group.  The same task can appear in
-#> multiple groups.
+#> Replace MANY with each node group.
+#> Note that the same task can appear in multiple groups.
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization] $\rightarrow$ [[node groups]]
 #>\item {\em type:} list of task names
 #>\item {\em default:} empty
+#>\item {\em example:} \lstinline@BigModels = TaskX, TaskY@
 #>\end{myitemize}
 
 [[node attributes]]
 #> Here you can assign graph node attributes to specific tasks or named
 #> groups of tasks defined in the [[node groups]] section.
     __many__ = force_list( default=list())
-#> Repeat MANY for any specific tasks or named groups that you want to 
+#> Replace MANY for any specific tasks or named groups that you want to 
 #> assign attributes to.
 #>\begin{myitemize}
 #>\item {\em section:} [visualization] $\rightarrow$ [[node attributes]]
 #>\item {\em type:} list of {\em quoted} \lstinline@'attribute=value'@ pairs
 #>\item {\em legal values:} see graphviz or pygraphviz documentation
 #>\item {\em default:} None
+#>\item {\em example:}
+#>\begin{lstlisting}
+#>   BigModels = 'style=filled', 'color=blue'
+#>   TaskX = 'color=red'
+#>\end{lstlisting}
 #>\end{myitemize}
 
 [task insertion groups]
 #> Define named groups of tasks that can be inserted into a suite en mass.
 #> May be useful for groups of related cold start tasks, for instance.
  __many__ = force_list()
-#> Repeat MANY for any task insertion groups you need.
+#> Replace MANY with each task insertion group.
 #>\begin{myitemize}
 #>\item {\em section:} [task insertion groups]
 #>\item {\em type:} list of task names
 #>\item {\em default:} None
+#>\item {\em example:} \lstinline@NWPCold = ColdX, ColdY@
 #>\end{myitemize}
 
 [cylc local environment]
@@ -1193,27 +1286,26 @@ default edge attributes = force_list( default=list('color=black'))
 #> variables defined in this section will only be available 
 #> to tasks if local direct job submission methods are used}. 
 __many__ = string
-#> Repeat MANY (environment variable definition) for any environment
-#> variables you need.
+#> Replace MANY with each cylc local environment variable definition.
 #>\begin{myitemize}
 #>\item {\em section:} [cylc local environment]
 #>\item {\em type:} string
+#>\item {\em default:} None
 #>\item {\em legal values:} any valid environment variable assignment
 #> expression. Whitespace around the `$=$' is fine (the
 #> \lstinline=suite.rc= file is not a shell script). 
-#> E.g. for the bash shell: 
+#> \item {\em examples:} for the bash shell: 
 #>   \begin{myitemize}
 #>       \item \lstinline@FOO = $HOME/bar/baz@
 #>       \item \lstinline@BAZ = $(echo "hello world")@
 #>       \item \lstinline@WAZ = ${FOO%.jpg}.png@
 #>   \end{myitemize}
-#>\item {\em default:} None
 #>\end{myitemize}
 
 [experimental]
 #> Section for experimenting with new configuration items
 live graph movie = boolean( default=False )
-#> Turning this item on will result in a new dot file being written out to the 
+#> Turning this item on will result in a new dot file being written to the 
 #> suite graphing directory every time the suite state changes. These
 #> can later be converted into movie frames and animated with appropriate 
 #> image processing tools.
@@ -1221,5 +1313,6 @@ live graph movie = boolean( default=False )
 #>\item {\em section:} [experimental]
 #>\item {\em type:} boolean
 #>\item {\em default:} False
+#>\item {\em example:} \lstinline@live graph movie = True@
 #>\end{myitemize}
 

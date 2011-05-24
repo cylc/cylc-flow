@@ -65,7 +65,7 @@ while( <FOO> ) {
     s@^\s*(\[\[.*\]\])\s*\$@\\\subsubsection{\1}@; 
     s@^\s*(\[.*\])\s*\$@\\\subsection{\1}@; 
 
-    s@^(.*)__many__(.*)@\1MANY\2@;
+    s@^(.*)__many__(.*)@\1\\\textless MANY\\\textgreater\2@;
     s@^#>RESUME@@;
     s@^#>@@;
     s@^\s*#.*@@;

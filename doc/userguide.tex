@@ -4,6 +4,7 @@
 
 % 1 inch margins
 \usepackage{fullpage}
+\usepackage{textcomp}  % \textgreater, \textless
 \usepackage{framed}
 \usepackage{listings}
   \usepackage{courier}
@@ -22,9 +23,9 @@
 % prevent double digit sub-sections crowding the toc line
 \addtolength\cftsubsecnumwidth{0.5em}  % see tocloft manual
 
-\definecolor{codeblock}{rgb}{0.9,0.9,0.9}
+\definecolor{codeblock}{rgb}{0.95,0.95,0.95}
 %\definecolor{keywords}{rgb}{1.0,0.3,0.0}
-\definecolor{keywords}{rgb}{1.0,0.1,1.0}
+\definecolor{keywords}{rgb}{0.7,0.1,1.0}
 %\definecolor{comments}{rgb}{0.0,0.7,0.8}
 \definecolor{comments}{rgb}{1.0,0.0,0.0}
 \definecolor{identifiers}{rgb}{0.0,0.2,0.8}
@@ -515,9 +516,7 @@ as it catches up to real time operation.
 %of hair pulling and teeth gnashing, but once achieved the complexities
 %therein are entirely hidden from the user.
 
-\pagebreak
-
-\pagebreak
+%\pagebreak
 \section{Installation} 
 
 \subsection{Requirements} 
@@ -638,7 +637,7 @@ This process should complete in 2-3 minutes and can be watched in real
 time by right-clicking on the temporary test suite when it appears in
 the gcylc private database window, and opening up a suite control GUI.
 
-\pagebreak
+%\pagebreak
 \section{Some Screenshots}
 
 The following few screenshots provide a glimpse of what the cylc user
@@ -734,7 +733,7 @@ The gcylc GUI showing the central suite database (all users).}
 % dump floats
 \clearpage
 
-\pagebreak
+%\pagebreak
 
 \section{On The Meaning Of {\em Cycle Time} In Cylc}
 
@@ -1392,8 +1391,7 @@ example suite at once, under different registrations, because the
 suite.rc file allows that (i.e.\ the suite group and name are used in
 all I/O paths so that different suite instances will not interfere).
 
-\pagebreak
-\pagebreak
+%\pagebreak
 \section{Suite Registration}
 \label{SuiteRegistration}
 
@@ -1463,7 +1461,7 @@ from, the central database.
 The same functionality is also available by right-clicking on suites
 or groups in the gcylc GUI, as shown in Figure~\ref{fig-pdb-new}.
 
-\pagebreak
+%\pagebreak
 \section{Suite Definition} 
 \label{SuiteDefinition}
 
@@ -2605,7 +2603,7 @@ suite.rc file is to wrap multiple commands on the task commandline using
 the cylc task wrapper (below).
 
 
-\pagebreak
+%\pagebreak
 
 \subsection{Validation}
 \label{Validation}
@@ -2971,7 +2969,7 @@ right job submission method for the task) by \lstinline=ssh=.
 
 {\em Remote host, task owner, and directories can be declared globally
 and/or by task. Use the global settings if all or most of your tasks
-need to run on the same remote host.
+need to run on the same remote host}.
 
 \begin{lstlisting}
 # SUITE.RC
@@ -3015,7 +3013,7 @@ remote host. To distribut a suite across several hosts you must
 arrange (using additional tasks) to transfer files between the hosts
 as required to satisfy the real I/O dependencies.}
         
-\pagebreak
+%\pagebreak
 
 \section{Task Execution}
 \label{JobSubmission}
@@ -3230,7 +3228,7 @@ add its name to the list of allowed values for the
 {\em job submission method} items, at the top level and in the 
 tasks section.
 
-\pagebreak
+%\pagebreak
 
 
 \section{Running Suites}
@@ -3656,7 +3654,7 @@ TBD
 \end{lstlisting}
 \end{myitemize}
 
-\pagebreak
+%\pagebreak
 
 \section{Suite Design Principles And Suggestions}
 \label{SuiteDesignPrinciples}
@@ -3976,25 +3974,25 @@ hooks), and some are primarily used for cylc development (e.g.\ simulation
 mode configuration). In general your suite.rc files shouldn't be a whole
 lot more complicated than those of the cylc example suites.
 
-\subsection{Overview}
-
-Details of suite.rc syntax are described in
-Section~\ref{SuiteRCFile}. For this section it suffices to say that
-every entry in the file is of the form:
-\begin{lstlisting}
-item = value
-\end{lstlisting}
-where \lstinline=item= may be a phrase containing spaces, and
-\lstinline=value= may be an integer, float, boolean (True/False),
-string, multiline string, or a comma-separated list of any of the
-former.  suite.rc files are validated against
-\lstinline=$CYLC_DIR/conf/suiterc.spec=, which defines what
-items are allowed, and places constraints on what values are legal for
-each item.
+%\subsection{Overview}
+%
+%Details of suite.rc syntax are described in
+%Section~\ref{SuiteRCFile}. For this section it suffices to say that
+%every entry in the file is of the form:
+%\begin{lstlisting}
+%item = value
+%\end{lstlisting}
+%where \lstinline=item= may be a phrase containing spaces, and
+%\lstinline=value= may be an integer, float, boolean (True/False),
+%string, multiline string, or a comma-separated list of any of the
+%%former.  suite.rc files are validated against
+%\lstinline=$CYLC_DIR/conf/suiterc.spec=, which defines what
+%items are allowed, and places constraints on what values are legal for
+%each item.
 
 \input{suiterc.spec.tex}
 
-\pagebreak
+%\pagebreak
 
 \section{Command Reference}
 \label{CommandReference}
@@ -4004,12 +4002,9 @@ each item.
 \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 \lstset{language=usage}
 \input{commands.tex}
-\pagebreak
-
-\pagebreak
 %\pagebreak
 
-\pagebreak
+%\pagebreak
 
 \section{An Annotated Cylc Task Script}
 \label{AnnotatedTaskScript}
@@ -4025,9 +4020,6 @@ just use the cylc task wrapper (Section~\ref{TaskWrapping}).
 
 \lstset{language=bash}
 \lstinputlisting{annotated-task-script.sh}
-
-\pagebreak
-
 
 %\pagebreak
 
