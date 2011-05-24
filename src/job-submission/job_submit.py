@@ -53,8 +53,8 @@ import subprocess
  
 class job_submit(object):
     # class variables that are set remotely at startup:
-    # (e.g. 'job_submit.dummy_mode = True')
-    dummy_mode = False
+    # (e.g. 'job_submit.simulation_mode = True')
+    simulation_mode = False
     failout_id = None
     global_pre_scripting = None
     global_post_scripting = None
@@ -69,7 +69,7 @@ class job_submit(object):
 
         self.task_id = task_id
         self.task_command = task_command
-        if self.__class__.dummy_mode:
+        if self.__class__.simulation_mode:
             if self.__class__.failout_id != self.task_id:
                 self.task_command = dummy_command
             else: 
@@ -94,8 +94,8 @@ class job_submit(object):
 
         if remote_host:
             # Remote job submission
-            if self.__class__.dummy_mode:
-                # Ignore remote hosts in dummy mode (this allows us to
+            if self.__class__.simulation_mode:
+                # Ignore remote hosts in simulation mode (this allows us to
                 # dummy-run suites with remote tasks if outside of their 
                 # usual execution environment).
                 pass
@@ -108,8 +108,8 @@ class job_submit(object):
         else:
             # Local job submission
             self.local_job_submit = True
-            if self.__class__.dummy_mode:
-                # Ignore task owners in dummy mode (this allows us to
+            if self.__class__.simulation_mode:
+                # Ignore task owners in simulation mode (this allows us to
                 # dummy-run suites with owned tasks if outside of their 
                 # usual execution environment).
                 self.task_owner = self.suite_owner
@@ -219,7 +219,7 @@ class job_submit(object):
                 self.directive_prefix, self.__class__.global_dvs, self.directives,
                 self.final_directive, self.task_command, 
                 self.remote_cylc_dir, self.remote_suite_dir, 
-                self.__class__.shell, self.__class__.dummy_mode,
+                self.__class__.shell, self.__class__.simulation_mode,
                 self.__class__.__name__ )
         self.jobfile_path = jf.write()
 

@@ -27,7 +27,7 @@ class jobfile(object):
             task_pre_scripting, task_post_scripting, 
             directive_prefix, global_dvs, directives, final_directive, 
             task_command, remote_cylc_dir, remote_suite_dir,
-            shell, dummy_mode, job_submission_method):
+            shell, simulation_mode, job_submission_method):
 
         self.task_id = task_id
         self.cylc_env = cylc_env
@@ -43,7 +43,7 @@ class jobfile(object):
         self.directives = directives
         self.task_command = task_command
         self.shell = shell
-        self.dummy_mode = dummy_mode
+        self.simulation_mode = simulation_mode
         self.job_submission_method = job_submission_method
         self.remote_cylc_dir = remote_cylc_dir
         self.remote_suite_dir = remote_suite_dir
@@ -132,8 +132,8 @@ class jobfile(object):
                 self.FILE.write( "\nexport " + var + "=\"" + str( self.task_env[var] ) + "\"" )
 
     def write_pre_scripting( self ):
-        if self.dummy_mode:
-            # ignore extra scripting in dummy mode
+        if self.simulation_mode:
+            # ignore extra scripting in simulation mode
             return
         if self.global_pre_scripting:
             self.FILE.write( "\n\n# GLOBAL PRE-COMMAND SCRIPTING:" )
@@ -147,8 +147,8 @@ class jobfile(object):
         self.FILE.write( "\n" + self.task_command )
 
     def write_post_scripting( self ):
-        if self.dummy_mode:
-            # ignore extra scripting in dummy mode
+        if self.simulation_mode:
+            # ignore extra scripting in simulation mode
             return
         if self.global_post_scripting:
             self.FILE.write( "\n\n# GLOBAL POST-COMMAND SCRIPTING:" )

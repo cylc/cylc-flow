@@ -28,7 +28,7 @@ usage() {
     echo "developments in the cylc codebase have not introduced serious bugs."
     echo "The test runs a suite registered as 'test'; to watch its progress"
     echo "use 'cylc view'. Aside from timing differences results should be the"
-    echo "same in real or dummy mode."
+    echo "same in live or simulation mode."
     echo
     echo "Currently the test does the following:"
     echo "  - Copies the 'intro' example suite definition directory;"

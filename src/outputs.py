@@ -31,7 +31,7 @@ class outputs( requisites ):
     # not (not satisfied).
 
     # additionally, each output message has an associated estimated
-    # completion time, used to simulate task execution in dummy mode.
+    # completion time, used to simulate task execution in simulation mode.
 
     def __init__( self, owner_id ):
         self.ordered = [] 

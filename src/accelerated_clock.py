@@ -25,42 +25,42 @@ import datetime, time
 
 class clock( Pyro.core.ObjBase ):
     """
-    REAL TIME or ACCELERATED DUMMY MODE clock for cylc.
+    REAL TIME or ACCELERATED SIMULATION MODE clock for cylc.
 
-    In dummy mode, equate a given dummy YYYYMMDDHH with the real time at
-    initialisation, and thereafter advance dummy time at the requested
+    In simulation mode, equate a given simulation YYYYMMDDHH with the real time at
+    initialisation, and thereafter advance simulation time at the requested
     rate of seconds per hour.
     """
 
-    def __init__( self, rate, offset, dummy_mode ):
+    def __init__( self, rate, offset, simulation_mode ):
         
         Pyro.core.ObjBase.__init__(self)
         
-        self.dummy_mode = dummy_mode
+        self.simulation_mode = simulation_mode
 
-        # time acceleration (N real seconds = 1 dummy hour)
+        # time acceleration (N real seconds = 1 simulation hour)
         self.acceleration = rate
         
         # start time offset (relative to start cycle time)
         self.offset_hours = offset
 
         self.base_realtime = datetime.datetime.now() 
-        self.base_dummytime = self.base_realtime
+        self.base_simulationtime = self.base_realtime
 
-        #if dummy_mode:
-        #    print "DUMMY CLOCK ........"
+        #if simulation_mode:
+        #    print "simulation CLOCK ........"
         #    print " - accel:  " + str( self.acceleration ) + "s = 1 simulated hour"
         #    print " - offset: " + str( self.offset_hours )
 
 
     def set( self, ctime ):
 
-        #print 'Setting dummy mode clock time'
-        self.base_dummytime = datetime.datetime( 
+        #print 'Setting simulation mode clock time'
+        self.base_simulationtime = datetime.datetime( 
                 int(ctime[0:4]), int(ctime[4:6]), 
                 int(ctime[6:8]), int(ctime[8:10]))
                 
-        self.base_dummytime += datetime.timedelta( 0,0,0,0,0, self.offset_hours, 0) 
+        self.base_simulationtime += datetime.timedelta( 0,0,0,0,0, self.offset_hours, 0) 
 
 
     def get_rate( self ):
@@ -72,11 +72,11 @@ class clock( Pyro.core.ObjBase ):
 
         self.acceleration = int( rate )
 
-        if not self.dummy_mode:
+        if not self.simulation_mode:
             print "(ignoring clock reset in real time)"
             return
         
-        print 'Setting dummy mode clock time'
+        print 'Setting simulation mode clock time'
 
         YMDHms = dstr.split( ':' )
         Y = YMDHms[0]
@@ -100,23 +100,23 @@ class clock( Pyro.core.ObjBase ):
         base_ctime = Y + M + D + H + m + s
         #base_ctime = Y + M + D + H 
 
-        self.base_dummytime = datetime.datetime( 
+        self.base_simulationtime = datetime.datetime( 
                 int(base_ctime[0:4]), int(base_ctime[4:6]), 
                 int(base_ctime[6:8]), int(base_ctime[8:10]),
                 int(base_ctime[10:12]), int(base_ctime[12:14]))
                 
         print "CLOCK RESET ......."
-        print " - accel:  " + str( self.acceleration ) + "s = 1 dummy hour"
-        print " - start:  " + str( self.base_dummytime )
+        print " - accel:  " + str( self.acceleration ) + "s = 1 simulation hour"
+        print " - start:  " + str( self.base_simulationtime )
 
     def get_datetime( self ):
 
-        if not self.dummy_mode:
+        if not self.simulation_mode:
             # return real time
             return datetime.datetime.now()
 
         else:
-            # compute dummy time based on how much real time has passed
+            # compute simulation time based on how much real time has passed
             delta_real = datetime.datetime.now() - self.base_realtime
         
             # time deltas are expressed as days, seconds, microseconds
@@ -125,9 +125,9 @@ class clock( Pyro.core.ObjBase ):
             microseconds = delta_real.microseconds
 
             seconds_passed_real = microseconds / 1000000. + seconds + days * 24 * 3600
-            dummy_hours_passed = seconds_passed_real / self.acceleration
+            simulation_hours_passed = seconds_passed_real / self.acceleration
 
-            return self.base_dummytime + datetime.timedelta( 0,0,0,0,0, dummy_hours_passed, 0 )
+            return self.base_simulationtime + datetime.timedelta( 0,0,0,0,0, simulation_hours_passed, 0 )
 
     def dump_to_str( self ):
         # dump current clock time to a string: Y:M:D:H:m:s

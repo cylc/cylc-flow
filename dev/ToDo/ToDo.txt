@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* dummy_command module should not be needed due to default command in
+  suite.rc?
+
 * a 'nudge' that just updates task state info, without going through
   the full task processing loop?
 

@@ -140,10 +140,10 @@ class xupdater(threading.Thread):
         else:
             self.status = 'status:\nrunning'
 
-        if glbl[ 'dummy_mode' ]:
-            #rate = glbl[ 'dummy_clock_rate' ]
-            #self.mode = 'DUMMY (' + str( rate ) + 's/hr)'
-            #self.mode = 'DUMMY'
+        if glbl[ 'simulation_mode' ]:
+            #rate = glbl[ 'simulation_clock_rate' ]
+            #self.mode = 'SIMULATION (' + str( rate ) + 's/hr)'
+            #self.mode = 'SIMULATION'
             self.mode = 'mode:\nsimulation'
         else:
             self.mode = 'mode:\nlive'
@@ -151,7 +151,7 @@ class xupdater(threading.Thread):
         if glbl[ 'blocked' ]:
             self.block = 'access:\nblocked'
         else:
-            self.block = 'access:\nfree'
+            self.block = 'access:\nunblocked'
 
         dt = glbl[ 'last_updated' ]
         self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" ) 

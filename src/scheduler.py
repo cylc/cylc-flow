@@ -80,7 +80,7 @@ class scheduler(object):
         self.blocked = True 
 
         # COMMANDLINE OPTIONS
-        self.parser.set_defaults( dummy_mode=False, practice_mode=False, debug=False )
+        self.parser.set_defaults( simulation_mode=False, practice_mode=False, debug=False )
 
         self.graph_warned = {}
 
@@ -97,20 +97,20 @@ class scheduler(object):
                 "before resuming operation.",
                 action="store_true", default=False, dest="startpaused" )
 
-        self.parser.add_option( "-d", "--dummy-mode",
+        self.parser.add_option( "-d", "--simulation-mode",
                 help="Use dummy tasks that masquerade as the real thing, "
                 "and accelerate the wall clock: get the scheduling right "
                 "without having to run the real suite tasks.",
-                action="store_true", dest="dummy_mode" )
+                action="store_true", dest="simulation_mode" )
 
         self.parser.add_option( "-p", "--practice-mode",
-                help="Clone an existing suite in dummy mode using new state "
+                help="Clone an existing suite in simulation mode using new state "
                 "and logging directories to avoid corrupting the original. "
                 "Failed tasks will not be reset to waiting in the clone.",
                 action="store_true", dest="practice_mode" )
 
         self.parser.add_option( "--fail", help=\
-                "(DUMMY MODE) get the specified task to report failure and then abort.",
+                "(SIMULATION MODE) get the specified task to report failure and then abort.",
                 metavar="NAME%YYYYMMDDHH", action="store", dest="failout_task_id" )
 
         self.parser.add_option( "--debug", help=\
@@ -144,20 +144,20 @@ class scheduler(object):
         # SUITE NAME
         self.suite = self.args[0]
 
-        # MODE OF OPERATION (REAL, DUMMY, practice)
-        if self.options.dummy_mode and self.options.practice_mode:
-            parser.error( "Choose ONE of dummy or practice mode")
-        if self.options.dummy_mode:
-            self.banner['Mode of operation'] = 'DUMMY'
-            self.dummy_mode = True
+        # MODE OF OPERATION (REAL, SIMULATION, practice)
+        if self.options.simulation_mode and self.options.practice_mode:
+            parser.error( "Choose ONE of simulation or practice mode")
+        if self.options.simulation_mode:
+            self.banner['Mode of operation'] = 'SIMULATION'
+            self.simulation_mode = True
             self.practice = False
         elif self.options.practice_mode:
-            self.banner['Mode of operation'] = 'DUMMY (PRACTICE)'
-            self.dummy_mode = True
+            self.banner['Mode of operation'] = 'SIMULATION (PRACTICE)'
+            self.simulation_mode = True
             self.practice = True
         else:
             self.banner['Mode of operation'] = 'REAL'
-            self.dummy_mode = False
+            self.simulation_mode = False
             self.practice = False
 
         # LOGGING LEVEL
@@ -186,13 +186,13 @@ class scheduler(object):
 
     def configure_suite( self ):
         # LOAD SUITE CONFIG FILE
-        self.config = config( self.suite, dummy_mode=self.dummy_mode )
+        self.config = config( self.suite, simulation_mode=self.simulation_mode )
         self.config.create_directories()
 
         self.suite_dir = self.config.get_dirname()
 
-        if self.config['dummy mode only'] and not self.dummy_mode:
-            raise SystemExit( "ERROR: this suite can only run in dummy mode (see suite.rc)" )
+        if self.config['simulation mode only'] and not self.simulation_mode:
+            raise SystemExit( "ERROR: this suite can only run in simulation mode (see suite.rc)" )
 
         # DETERMINE SUITE LOGGING AND STATE DUMP DIRECTORIES
         self.logging_dir = os.path.join( self.config['top level logging directory'],    self.suite ) 
@@ -233,8 +233,8 @@ class scheduler(object):
 
         # USE LOCKSERVER?
         self.use_lockserver = self.config['use lockserver']
-        if self.dummy_mode:
-            # no need for lockserver in dummy mode
+        if self.simulation_mode:
+            # no need for lockserver in simulation mode
             self.use_lockserver = False
 
         if self.use_lockserver:
@@ -265,7 +265,7 @@ class scheduler(object):
         self.pyro.connect( suite_id, 'cylcid', qualified = False )
 
         # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
-        self.suite_state = state_summary( self.config, self.dummy_mode, self.start_time, self.gcylc )
+        self.suite_state = state_summary( self.config, self.simulation_mode, self.start_time, self.gcylc )
         self.pyro.connect( self.suite_state, 'state_summary')
 
         # USE QUICK TASK ELIMINATION?
@@ -311,28 +311,28 @@ class scheduler(object):
         for var in self.config['directives']:
             globaldvs[ var ] = self.config['directives'][var]
 
-        # CLOCK (accelerated time in dummy mode)
-        rate = self.config['dummy mode']['clock rate in seconds per dummy hour']
-        offset = self.config['dummy mode']['clock offset from initial cycle time in hours']
-        self.clock = accelerated_clock.clock( int(rate), int(offset), self.dummy_mode ) 
+        # CLOCK (accelerated time in simulation mode)
+        rate = self.config['simulation mode']['clock rate in seconds per simulation hour']
+        offset = self.config['simulation mode']['clock offset from initial cycle time in hours']
+        self.clock = accelerated_clock.clock( int(rate), int(offset), self.simulation_mode ) 
 
-        # nasty kludge to give the dummy mode clock to task classes:
+        # nasty kludge to give the simulation mode clock to task classes:
         task.task.clock = self.clock
         clocktriggered.clocktriggered.clock = self.clock
 
         self.pyro.connect( self.clock, 'clock' )
 
         self.failout_task_id = self.options.failout_task_id
-        cylcenv['CYLC_DUMMY_SLEEP'] =  self.config['dummy mode']['task run time in seconds']
+        cylcenv['CYLC_SIMULATION_SLEEP'] =  self.config['simulation mode']['task run time in seconds']
 
         # JOB SUBMISSION
-        job_submit.dummy_mode = self.dummy_mode
+        job_submit.simulation_mode = self.simulation_mode
         job_submit.cylc_env = cylcenv
         job_submit.global_env = globalenv
         job_submit.global_dvs = globaldvs
         job_submit.shell = self.config['job submission shell']
         job_submit.joblog_dir = self.config[ 'job submission log directory' ]
-        if self.dummy_mode and self.failout_task_id:
+        if self.simulation_mode and self.failout_task_id:
             job_submit.failout_id = self.failout_task_id
         job_submit.global_pre_scripting = self.config['pre-command scripting']
         job_submit.global_post_scripting = self.config['post-command scripting']
@@ -367,7 +367,7 @@ class scheduler(object):
         self.log = logging.getLogger( 'main' )
         pimp_my_logger.pimp_it( \
              self.log, self.logging_dir, self.config['roll log at startup'], \
-                self.logging_level, self.dummy_mode, self.clock )
+                self.logging_level, self.simulation_mode, self.clock )
 
         # STATE DUMP ROLLING ARCHIVE
         arclen = self.config[ 'number of state dump backups' ]
@@ -824,8 +824,8 @@ class scheduler(object):
             FILE = self.state_dump_archive.roll_open()
 
         # suite time
-        if self.dummy_mode:
-            FILE.write( 'dummy time : ' + self.clock.dump_to_str() + ',' + str( self.clock.get_rate()) + '\n' )
+        if self.simulation_mode:
+            FILE.write( 'simulation time : ' + self.clock.dump_to_str() + ',' + str( self.clock.get_rate()) + '\n' )
         else:
             FILE.write( 'suite time : ' + self.clock.dump_to_str() + '\n' )
 

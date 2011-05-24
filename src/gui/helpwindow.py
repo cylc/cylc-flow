@@ -544,18 +544,18 @@ def start_guide(w):
             "to 'ready', which will result in them triggering immediately "
             "if the suite is not on hold." )
  
-    update_tb( tb, "\n\n o Dummy Mode", [bold, red] )
+    update_tb( tb, "\n\n o Simulation Mode", [bold, red] )
     update_tb( tb, " - OPTIONAL.", [bold,red2])
-    update_tb( tb, "\nDummy mode simulates a suite by replacing "
+    update_tb( tb, "\nSimulation mode simulates a suite by replacing "
             "each real task with a small program that simply reports the "
             "task's registered outputs completed and then returns success. "
-            "You can configure aspects of dummy mode scheduling in your "
+            "You can configure aspects of simulation mode scheduling in your "
             "suite.rc file, for example the accelerated clock rate, and the "
             "initial clock offset from the initial cycle time (this allows "
             "you to simulate catch up to real time operation after a delay).")
 
     update_tb( tb, "\n    + Fail A Task (NAME%YYYYMMDDHH)", [bold, red] )
-    update_tb( tb, " - OPTIONAL, dummy mode only.", [bold,red2])
+    update_tb( tb, " - OPTIONAL, simulation mode only.", [bold,red2])
     update_tb( tb, "\n   Get a task to fail in order "
             "to test the effect on the suite." )
 

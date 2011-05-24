@@ -76,9 +76,9 @@ except SuiteIdentificationError, x:
 if display_global:
     print "suite : " + suite
 
-    dummy_mode = glbl[ 'dummy_mode' ]
-    if dummy_mode:
-        print 'DUMMY MODE (clock rate: ', glbl[ 'dummy_clock_rate' ], ')'
+    simulation_mode = glbl[ 'simulation_mode' ]
+    if simulation_mode:
+        print 'SIMULATION MODE (clock rate: ', glbl[ 'simulation_clock_rate' ], ')'
 
     dt = glbl[ 'last_updated' ]
     print 'last summary update: ' +  dt.strftime( "%Y/%m/%d %H:%M:%S" )

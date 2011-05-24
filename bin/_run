@@ -132,7 +132,7 @@ Arguments:
     def load_tasks_cold( self ):
         self.log.info( 'Cold Start ' + self.start_time )
 
-        # set clock before using log (affects dummy mode only)
+        # set clock before using log (affects simulation mode only)
         self.clock.set( self.start_time )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
@@ -151,7 +151,7 @@ Arguments:
     def load_tasks_warm( self ):
         self.log.info( 'Warm Start ' + self.start_time )
 
-        # set clock before using log (affects dummy mode only)
+        # set clock before using log (affects simulation mode only)
         self.clock.set( self.start_time )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
@@ -184,7 +184,7 @@ Arguments:
     def load_tasks_raw( self ):
         self.log.info( 'Raw Start ' + self.start_time )
         
-        # set clock before using log (affects dummy mode only)
+        # set clock before using log (affects simulation mode only)
         self.clock.set( self.start_time )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )

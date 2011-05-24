@@ -906,7 +906,7 @@ The cylc forecast suite metascheduler.
         rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ctime_entry, statedump_entry, no_reset_cb )
         restart_rb.connect(   "toggled", self.startup_method, "re",   ctime_entry, statedump_entry, no_reset_cb )
 
-        dmode_group = controlled_option_group( "Dummy Mode", "--dummy-mode" )
+        dmode_group = controlled_option_group( "Simulation Mode", "--simulation-mode" )
         dmode_group.add_entry( 
                 'Fail A Task (NAME%YYYYMMDDHH)',
                 '--fail='

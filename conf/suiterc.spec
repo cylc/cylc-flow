@@ -371,7 +371,7 @@ use quick task elimination = boolean( default=True )
 #>\item {\em default:} True
 #>\end{myitemize}
 
-dummy mode only = boolean( default=False )
+simulation mode only = boolean( default=False )
 #>If True, cylc will abort cleanly if you try to run
 #>the suite in real mode. This can be used for demo suites that
 #>can't run for real because they've been copied out of their
@@ -646,7 +646,7 @@ __many__ = string
 #>\item {\em default:} No description supplied
 #>\end{myitemize}
 
-    command = force_list( default=list( cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
+    command = force_list( default=list( cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP",))
 #> The commandline, or {\em list of commandlines}, to execute when
 #> the task is ready to run. If the command is omitted or commented out
 #> the task will run as a dummy task. If a list of commandlines is
@@ -655,7 +655,7 @@ __many__ = string
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
-#>\item {\em default:} \lstinline=cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_DUMMY_SLEEP"=
+#>\item {\em default:} \lstinline=cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP"=
 #>\end{myitemize}
 
     job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=None )
@@ -970,35 +970,35 @@ __many__ = string
 #> \end{lstlisting}
 #>\end{myitemize}
 
-[dummy mode]
-#> Configure dummy mode behavior (used only you run the suite in dummy mode).
+[simulation mode]
+#> Configure simulation mode behavior (used only you run the suite in simulation mode).
 clock offset from initial cycle time in hours = integer( default=24 )
 #> Specify a clock offset of 0 to simulate real time operation, greater 
 #> than zero to simulate catch up and transition to real time operation.
 #>\begin{myitemize}
-#>\item {\em section:} [dummy mode]
+#>\item {\em section:} [simulation mode]
 #>\item {\em type:} integer
 #>\item {\em legal values:} $\geq 0$
 #>\item {\em default:} 24
 #>\end{myitemize}
 
-clock rate in seconds per dummy hour = integer( default=10 )
-#> This determines the speed at which dummy mode suites run. A value
-#> of 10, for example, means it will take 10 dummy seconds to simulate
+clock rate in seconds per simulation hour = integer( default=10 )
+#> This determines the speed at which simulation mode suites run. A value
+#> of 10, for example, means it will take 10 simulation seconds to simulate
 #> one hour of real time operation.
 #>\begin{myitemize}
-#>\item {\em section:} [dummy mode]
+#>\item {\em section:} [simulation mode]
 #>\item {\em type:} integer
 #>\item {\em legal values:} $\geq 0$
 #>\item {\em default:} 10
 #>\end{myitemize}
 
-# exported as $CYLC_DUMMY_SLEEP in job submission file:
+# exported as $CYLC_SIMULATION_SLEEP in job submission file:
 task run time in seconds = integer( default=10 )
-#> Set the approximate number of dummy seconds that a dummy task
+#> Set the approximate number of simulation seconds that a dummy task
 #> takes to execute.
 #>\begin{myitemize}
-#>\item {\em section:} [dummy mode]
+#>\item {\em section:} [simulation mode]
 #>\item {\em type:} integer
 #>\item {\em legal values:} $\geq 0$
 #>\item {\em default:} 10
@@ -1009,7 +1009,7 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 #> For testing purposes you can also choose to have dummy tasks executed
 #> job submission methods (you are unlikely to need this).
 #>\begin{myitemize}
-#>\item {\em section:}  [dummy mode]
+#>\item {\em section:}  [simulation mode]
 #>\item {\em type:} string
 #>\item {\em legal values:} 
 #>   \begin{myitemize}
@@ -1033,7 +1033,7 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 run time graph cutoff in hours = integer( default=24 )
 #> Cylc generates a run time graph of resolved dependencies, from the
 #> start of every run until each task has passed this cutoff. Use 
-#> dummy mode to generate run time graphs quickly.
+#> simulation mode to generate run time graphs quickly.
 #>\begin{myitemize}
 #>\item {\em section:} [visualization]
 #>\item {\em type:} integer

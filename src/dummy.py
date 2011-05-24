@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# dummy mode task commands
+# simulation mode task commands
 
-dummy_command = 'cylc wrap -m "echo Hello from DUMMY $TASK_ID; sleep $CYLC_DUMMY_SLEEP"'
+dummy_command = 'cylc wrap -m "echo Hello from DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP"'
 dummy_command_fail = 'cylc wrap -m "echo Hello from DUMMY ${TASK_ID}, ABORTING by request; /bin/false"'

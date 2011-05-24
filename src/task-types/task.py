@@ -483,7 +483,7 @@ class task( Pyro.core.ObjBase ):
                 self.outputs.set_satisfied( message )
             else:
                 # yes, retry.
-                if self.launcher and not self.launcher.dummy_mode:
+                if self.launcher and not self.launcher.simulation_mode:
                     # ('family' tasks have no launcher)
                     self.log( 'CRITICAL',  'Retrying with next command' )
                     self.launcher.task = self.external_task

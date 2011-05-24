@@ -127,7 +127,7 @@ Arguments:
         # The state dump file format is:
         # suite time : <time>
         #   OR
-        # dummy time : <time>,rate
+        # simulation time : <time>,rate
         #   THEN
         # class <classname>: item1=value1, item2=value2, ... 
         # <task_id> : <state>
@@ -144,13 +144,13 @@ Arguments:
         # The state dump file first line is:
         # suite time : <time>
         #   OR
-        # dummy time : <time>,rate
+        # simulation time : <time>,rate
         line1 = lines[0]
         line1 = line1.rstrip()
         [ time_type, time_string ] = line1.split(' : ')
-        if time_type == 'dummy time':
-            if not self.dummy_mode:
-                raise SystemExit("You can't restart in real mode from a dummy mode state dump")
+        if time_type == 'simulation time':
+            if not self.simulation_mode:
+                raise SystemExit("You can't restart in live mode from a simulation mode state dump")
             
             [ time, rate ] = time_string.split( ',' )
             self.clock.reset( time, rate )

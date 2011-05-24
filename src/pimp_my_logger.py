@@ -20,23 +20,23 @@
 import logging, logging.handlers
 import os, sys, re
 
-# NOTE: the dummy mode dummy clock has been replaced with a general
-# clock that returns dummy time in dummy mode, so we could replace
+# NOTE: the simulation mode clock has been replaced with a general
+# clock that returns simulation time in simulation mode, so we could replace
 # the normal log time universally now... 
 
 class LogFilter(logging.Filter):
-    # replace log message timestamps with dummy clock times
+    # replace log message timestamps with simulation clock times
 
     def __init__(self, clock, name = "" ):
         logging.Filter.__init__( self, name )
         self.clock = clock
 
     def filter(self, record):
-        # replace log message time stamp with dummy time
+        # replace log message time stamp with simulation time
         record.created = self.clock.get_epoch()
         return True
     
-def pimp_it( log, dir, roll_at_startup, level, dummy_mode, \
+def pimp_it( log, dir, roll_at_startup, level, simulation_mode, \
         clock = None, run_task = False ):
     log.setLevel( level )
     max_bytes = 1000000
@@ -62,6 +62,6 @@ def pimp_it( log, dir, roll_at_startup, level, dummy_mode, \
     h.setFormatter(f)
     log.addHandler(h)
 
-    if dummy_mode:
-        # replace logged real time with dummy clock time 
+    if simulation_mode:
+        # replace logged real time with simulation clock time 
         log.addFilter( LogFilter( clock, "main" ))

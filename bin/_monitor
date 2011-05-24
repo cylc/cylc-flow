@@ -121,8 +121,8 @@ try:
             alerted3 = False
 
             dt = glbl[ 'last_updated' ]
-            rate = glbl[ 'dummy_clock_rate' ]
-            dummy_mode = glbl[ 'dummy_mode' ]
+            rate = glbl[ 'simulation_clock_rate' ]
+            simulation_mode = glbl[ 'simulation_mode' ]
             paused = glbl['paused']
             stopping = glbl['stopping']
             will_pause_at = glbl['will_pause_at']
@@ -217,7 +217,7 @@ try:
 
             # MONITOR HEADER and CURRENT TIME
             blit = []
-            # SUITE NAME, NUMBER OF TASKS, DUMMY MODE
+            # SUITE NAME, NUMBER OF TASKS, SIMULATION MODE
             foo = header
             bar = suite + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'
             foo = re.sub( '^.{' + str(len('cylc!')) + '}', 'cylc!', foo )
@@ -231,8 +231,8 @@ try:
             # when task processing is invoked).
             blit.append( 'summary updated - ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
-            if dummy_mode:
-                foo = 'DUMMY MODE:'
+            if simulation_mode:
+                foo = 'SIMULATION MODE:'
                 bar = str(rate) + ' real seconds = 1 hour' 
                 baz = header
                 baz = re.sub( '^.{' + str(len(foo)) + '}', foo, baz )

@@ -296,8 +296,8 @@ def get_suite_title( suite=None, path=None ):
     return title
 
 class config( CylcConfigObj ):
-    def __init__( self, suite=None, dummy_mode=False, path=None ):
-        self.dummy_mode = dummy_mode
+    def __init__( self, suite=None, simulation_mode=False, path=None ):
+        self.simulation_mode = simulation_mode
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
         self.lone_nodes = {} # nodes[ hour ] = [ A, B, ... ]
         self.taskdefs = {}
@@ -1106,9 +1106,9 @@ class config( CylcConfigObj ):
             if strict:
                 raise SuiteConfigError, 'Task not defined: ' + name
             # no [tasks][[name]] section defined: default dummy task
-            if self.dummy_mode:
-                # use dummy mode specific job submit method for all tasks
-                taskd.job_submit_method = self['dummy mode']['job submission method']
+            if self.simulation_mode:
+                # use simulation mode specific job submit method for all tasks
+                taskd.job_submit_method = self['simulation mode']['job submission method']
             else:
                 # suite default job submit method
                 taskd.job_submit_method = self['job submission method']
@@ -1123,9 +1123,9 @@ class config( CylcConfigObj ):
         if not self['ignore task owners']:
             taskd.owner = taskconfig['owner']
 
-        if self.dummy_mode:
-            # use dummy mode specific job submit method for all tasks
-            taskd.job_submit_method = self['dummy mode']['job submission method']
+        if self.simulation_mode:
+            # use simulation mode specific job submit method for all tasks
+            taskd.job_submit_method = self['simulation mode']['job submission method']
         elif taskconfig['job submission method'] != None:
             # a task-specific job submit method was specified
             taskd.job_submit_method = taskconfig['job submission method']

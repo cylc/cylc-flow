@@ -152,10 +152,10 @@ cylcenv[ 'CYLC_SUITE_GROUP' ] = suite_group
 cylcenv[ 'CYLC_SUITE_NAME' ] = suite_name
 cylcenv[ 'CYLC_SUITE_OWNER' ] = owner
 cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
-cylcenv[ 'CYLC_DUMMY_SLEEP'] =  config['dummy mode']['task run time in seconds']
+cylcenv[ 'CYLC_SIMULATION_SLEEP'] =  config['simulation mode']['task run time in seconds']
 
 dclock = accelerated_clock.clock( None, None, False ) 
-# nasty kludge to give the dummy mode clock to task classes:
+# nasty kludge to give the simulation mode clock to task classes:
 task.task.clock = dclock
 clocktriggered.clocktriggered.clock = dclock
 
