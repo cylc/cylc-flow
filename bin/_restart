@@ -59,8 +59,7 @@ Arguments:
 
         self.parser = OptionParser( usage )
         self.parser.add_option( "--no-reset", 
-            help="Do not reset failed tasks to ready on restarting "
-            "(this option is the default in practice mode).",
+            help="Do not reset failed tasks to ready on restarting",
             action="store_true", default=False, dest="no_reset" )
         self.parser.add_option( "--no-release", 
             help="Do not release held tasks on restarting.",
@@ -75,7 +74,8 @@ Arguments:
     def parse_commandline( self ):
         ( self.options, self.args ) = self.parser.parse_args()
         self.no_reset = False
-        if self.options.no_reset or self.options.practice_mode:
+        #DISABLED if self.options.no_reset or self.options.practice_mode:
+        if self.options.no_reset:
             self.no_reset = True
         self.restart_from = None
         if len( self.args ) == 2:
@@ -96,13 +96,13 @@ Arguments:
 
     def load_tasks( self ):
         # FIND THE INITIAL STATE DUMP FILE
-        if self.practice:
-            # in practice mode, we reset from the parent suite's state dump
-            state_dump_dir = re.sub( '-practice', '', self.state_dump_dir )
-            state_dump_file = re.sub( '-practice', '', self.state_dump_filename )
-        else:
-            state_dump_dir = self.state_dump_dir
-            state_dump_file = self.state_dump_filename
+        #DISABLED if self.practice:
+        #DISABLED     # in practice mode, we reset from the parent suite's state dump
+        #DISABLED     state_dump_dir = re.sub( '-practice', '', self.state_dump_dir )
+        #DISABLED     state_dump_file = re.sub( '-practice', '', self.state_dump_filename )
+        #DISABLED else:
+        state_dump_dir = self.state_dump_dir
+        state_dump_file = self.state_dump_filename
 
         if self.restart_from:
             # user specified the initial state dump

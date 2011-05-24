@@ -80,7 +80,8 @@ class scheduler(object):
         self.blocked = True 
 
         # COMMANDLINE OPTIONS
-        self.parser.set_defaults( simulation_mode=False, practice_mode=False, debug=False )
+        #DISABLED PRACTICE MODE self.parser.set_defaults( simulation_mode=False, practice_mode=False, debug=False )
+        self.parser.set_defaults( simulation_mode=False, debug=False )
 
         self.graph_warned = {}
 
@@ -103,11 +104,11 @@ class scheduler(object):
                 "without having to run the real suite tasks.",
                 action="store_true", dest="simulation_mode" )
 
-        self.parser.add_option( "-p", "--practice-mode",
-                help="Clone an existing suite in simulation mode using new state "
-                "and logging directories to avoid corrupting the original. "
-                "Failed tasks will not be reset to waiting in the clone.",
-                action="store_true", dest="practice_mode" )
+        #DISABLED self.parser.add_option( "-p", "--practice-mode",
+        #DISABLED         help="Clone an existing suite in simulation mode using new state "
+        #DISABLED         "and logging directories to avoid corrupting the original. "
+        #DISABLED         "Failed tasks will not be reset to waiting in the clone.",
+        #DISABLED         action="store_true", dest="practice_mode" )
 
         self.parser.add_option( "--fail", help=\
                 "(SIMULATION MODE) get the specified task to report failure and then abort.",
@@ -145,20 +146,20 @@ class scheduler(object):
         self.suite = self.args[0]
 
         # MODE OF OPERATION (REAL, SIMULATION, practice)
-        if self.options.simulation_mode and self.options.practice_mode:
-            parser.error( "Choose ONE of simulation or practice mode")
+        #DISABLED if self.options.simulation_mode and self.options.practice_mode:
+        #DISABLED     parser.error( "Choose ONE of simulation or practice mode")
         if self.options.simulation_mode:
             self.banner['Mode of operation'] = 'SIMULATION'
             self.simulation_mode = True
-            self.practice = False
-        elif self.options.practice_mode:
-            self.banner['Mode of operation'] = 'SIMULATION (PRACTICE)'
-            self.simulation_mode = True
-            self.practice = True
+            #DISABLED self.practice = False
+        #DISABLED elif self.options.practice_mode:
+        #DISABLED     self.banner['Mode of operation'] = 'SIMULATION (PRACTICE)'
+        #DISABLED     self.simulation_mode = True
+        #DISABLED     self.practice = True
         else:
             self.banner['Mode of operation'] = 'REAL'
             self.simulation_mode = False
-            self.practice = False
+            #DISABLED self.practice = False
 
         # LOGGING LEVEL
         if self.options.debug:
@@ -179,10 +180,10 @@ class scheduler(object):
             # Suite Not Found: good - it's not running already!
             pass
         else:
-            if self.options.practice_mode:
-                print "Continuing in Cylc Practice Mode"
-            else:
-                raise SystemExit( "ERROR: suite " + self.suite + " is already running")
+            #DISABLED if self.options.practice_mode:
+            #DISABLED     print "Continuing in Cylc Practice Mode"
+            #DISABLED else:
+            raise SystemExit( "ERROR: suite " + self.suite + " is already running")
 
     def configure_suite( self ):
         # LOAD SUITE CONFIG FILE
@@ -197,9 +198,9 @@ class scheduler(object):
         # DETERMINE SUITE LOGGING AND STATE DUMP DIRECTORIES
         self.logging_dir = os.path.join( self.config['top level logging directory'],    self.suite ) 
         self.state_dump_dir   = os.path.join( self.config['top level state dump directory'], self.suite )
-        if self.practice:
-            self.logging_dir += '-practice'
-            self.state_dump_dir   += '-practice'
+        #DISABLED if self.practice:
+        #DISABLED     self.logging_dir += '-practice'
+        #DISABLED     self.state_dump_dir   += '-practice'
         # create logging and state dump directoriesif necessary
         mkdir_p( self.logging_dir )
         mkdir_p( self.state_dump_dir )
@@ -247,11 +248,11 @@ class scheduler(object):
                 raise SystemExit( 'Lockserver not found. See \'cylc lockserver status\'')
  
         # CONFIGURE SUITE PYRO SERVER
-        if self.practice:
-            # modify suite name so we can run next to the original suite.
-            suitename = self.suite + "-practice"
-        else:
-            suitename = self.suite
+        #DISABLED if self.practice:
+        #DISABLED     # modify suite name so we can run next to the original suite.
+        #DISABLED     suitename = self.suite + "-practice"
+        #DISABLED else:
+        suitename = self.suite
         try:
             self.pyro = pyro_server( suitename, use_passphrase=self.config['use secure passphrase'] )
         except SecurityError, x:
@@ -427,10 +428,10 @@ class scheduler(object):
 
     def run( self ):
         if self.use_lockserver:
-            if self.practice:
-                suitename = self.suite + '-practice'
-            else:
-                suitename = self.suite
+            #DISABLED if self.practice:
+            #DISABLED     suitename = self.suite + '-practice'
+            #DISABLED else:
+            suitename = self.suite
 
             # request suite access from the lock server
             if suite_lock( suitename, self.suite_dir, self.host, self.lockserver_port, 'scheduler' ).request_suite_access( self.exclusive_suite_lock ):
@@ -438,8 +439,8 @@ class scheduler(object):
             else:
                raise SystemExit( "Failed to acquire a suite lock" )
 
-        if not self.practice:
-            self.back_up_statedump_file()
+        #DISABLED if not self.practice:
+        #DISABLED     self.back_up_statedump_file()
 
         if self.pause_time:
             # TO DO: HANDLE STOP AND PAUSE TIMES THE SAME WAY?
@@ -586,10 +587,10 @@ class scheduler(object):
 
         if self.use_lockserver:
             # do this last
-            if self.practice:
-                suitename = self.suite + '-practice'
-            else:
-                suitename = self.suite
+            #DISABLED if self.practice:
+            #DISABLED     suitename = self.suite + '-practice'
+            #DISABLED else:
+            suitename = self.suite
 
             if self.lock_acquired:
                 print "Releasing suite lock"

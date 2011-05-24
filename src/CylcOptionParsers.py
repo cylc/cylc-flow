@@ -57,9 +57,9 @@ Arguments:
         #        help="Cylc suite port (default: scan cylc ports).",
         #        metavar="INT", action="store", default=None, dest="port" )
 
-        self.add_option( "-p", "--practice",
-                help="Target a suite running in practice mode.", 
-                action="store_true", default=False, dest="practice" )
+        #DISABLED self.add_option( "-p", "--practice",
+        #DISABLED         help="Target a suite running in practice mode.", 
+        #DISABLED         action="store_true", default=False, dest="practice" )
 
         self.add_option( "-f", "--force",
                 help="(No effect; for consistency with interactive commands)",
@@ -85,7 +85,7 @@ Arguments:
         # cylc suite host
         # self.host = options.host   # see default above!
 
-        self.practice = options.practice  # practice mode or not
+        #DISABLED self.practice = options.practice  # practice mode or not
 
         return ( options, args )
 
@@ -95,8 +95,8 @@ Arguments:
     def get_groupname( self ):
         # TO DO: USER PYREX MODULE HERE
         groupname = ':cylc.' + self.owner + '.' + self.suite_name
-        if self.practice:
-            groupname += '-practice'
+        #DISABLED if self.practice:
+        #DISABLED     groupname += '-practice'
         return groupname
 
 
@@ -129,9 +129,9 @@ arguments:
         #        help="Cylc suite port (default: scan cylc ports).",
         #        metavar="INT", action="store", default=None, dest="port" )
 
-        self.add_option( "-p", "--practice",
-                help="Target a suite running in practice mode.", 
-                action="store_true", default=False, dest="practice" )
+        #DISABLED self.add_option( "-p", "--practice",
+        #DISABLED         help="Target a suite running in practice mode.", 
+        #DISABLED         action="store_true", default=False, dest="practice" )
 
         self.add_option( "-f", "--force",
                 help="(No effect; for consistency with interactive commands)",
@@ -154,7 +154,7 @@ arguments:
 
         self.suite_name = args[0]
         #self.host = options.host   # see default above!
-        self.practice = options.practice  # practice mode or not
+        #DISABLED self.practice = options.practice  # practice mode or not
 
         return ( options, args )
 
@@ -164,8 +164,8 @@ arguments:
     def get_groupname( self ):
         # TO DO: USER PYREX MODULE HERE
         groupname = ':cylc.' + self.owner + '.' + self.suite_name
-        if self.practice:
-            groupname += '-practice'
+        #DISABLED if self.practice:
+        #DISABLED     groupname += '-practice'
         return groupname
 
 
