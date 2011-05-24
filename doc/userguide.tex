@@ -1027,10 +1027,10 @@ would look like this:
 # SUITE.RC
 [tasks]
     [[GetData]]
-        command = cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_DUMMY_SLEEP"
+        command = cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP"
 \end{lstlisting}
 where \lstinline=$TASK_ID= is the tasks unique identifier in the suite 
-(\lstinline=TASKNAME%YYYYMMDDHH=) and \lstinline=$CYLC_DUMMY_SLEEP=
+(\lstinline=TASKNAME%YYYYMMDDHH=) and \lstinline=$CYLC_SIMULATION_SLEEP=
 defaults to 10 seconds. Fairly obviously, this writes an identifying
 message to stdout and then sleeps for a few seconds before exiting. 
 The task wrapper \lstinline=cylc wrap= allows cylc to run unmodified
@@ -1372,11 +1372,11 @@ You can copy an example suite in an instant, using the cylc commands or
 GUI, make a few changes according to your needs, and then run it to see
 what happens.
 
-You can also run real suites in dummy mode, wherein each real task is
+You can also run real suites in simulation mode, wherein each real task is
 replaced by the default dummy task (above) and the suite runs quickly on
 an accelerated clock. As far as cylc is concerned this is almost
-identical to real operation, so dummy mode can be used to test recovery
-strategies for certain kinds of failure, for instance. In dummy mode you
+identical to real operation, so simulation mode can be used to test recovery
+strategies for certain kinds of failure, for instance. In simulation mode you
 can watch how any suite catches up and transitions from delayed to real
 time operation.
 
@@ -2409,7 +2409,7 @@ export CYLC_SUITE_GROUP="examples"
 export CYLC_SUITE_NAME="intro"
 export CYLC_SUITE_OWNER="oliverh"
 export CYLC_USE_LOCKSERVER="True"
-export CYLC_DUMMY_SLEEP="10"
+export CYLC_SIMULATION_SLEEP="10"
 
 # TASK IDENTITY:
 export TASK_ID=A%2010080806
@@ -3217,7 +3217,7 @@ menus are also reasonably complete.
         {\em (this is documented in the Quick Start Guide, Section~\ref{QuickStart})}
     \item understanding cylc suite evolution, particular in catchup operation
         {\em (the Quick Start Guide, Section~\ref{QuickStart}, will help here, along 
-        with the cylc example suites, and running your real suites in dummy mode)}
+        with the cylc example suites, and running your real suites in simulation mode)}
 
     \item how to recover from certain kinds of task failure (TBD)
 
@@ -3325,7 +3325,7 @@ menus are also reasonably complete.
 %Each entry shows the time of logging, the name and cycle time of the
 %reporting task (in square brackets), and the logged message.
 %
-%In dummy mode, the logged time is the dummy mode accelerated clock time, not 
+%In simulation mode, the logged time is the simulation mode accelerated clock time, not 
 %real time.
 %
 %Existing log files are automatically rotated at start up and,
@@ -3333,20 +3333,20 @@ menus are also reasonably complete.
 %size should be configurable, but it is currently hardwired in
 %\lstinline=$CYLC_DIRsrc/pimp_my_logger.py=.
 
-\subsection{Dummy Mode} 
-\label{DummyMode}
+\subsection{Simulation Mode} 
+\label{SimulationMode}
 
-If you start a suite in dummy mode (a command line option for the cold-,
+If you start a suite in simulation mode (a command line option for the cold-,
 warm-, raw-, and re-start commands, and a checkbutton in the gcylc suite
 start panel) then cylc will run on an accelerated clock and submit dummy
 programs instead of the real tasks. These masquerade as the real tasks
 by reporting the correct outputs complete after a short interval,
 reporting success, and then exiting. This is essentially
-indistinguishable, to cylc, from real operation. Dummy mode was, and
+indistinguishable, to cylc, from real operation. Simulation mode was, and
 remains, an important aid to cylc development because it allows
 testing of every aspect of scheduling without having to run real
 tasks in real time. Prior to cylc-3 it was also a useful aid to suite
-development - a dummy run would quickly identify any mismatch between
+development - a simulation run would quickly identify any mismatch between
 the user-defined prerequisites and outputs across the suite, so you
 could get the scheduling right without running the real tasks. Post
 cylc-3.0 this is less important because task prerequisites and outputs
@@ -3355,15 +3355,40 @@ cylc, the suite will run according to the graph.
 
 \subsubsection{Clock Rate and Offset}
 
-Dummy mode suites run on an accelerated clock so that you can test
+Simulation mode suites run on an accelerated clock so that you can test
 things very quickly. You can set the clock rate and offset with respect
 to the initial cycle time with options to the \lstinline=cylc coldstart=
-command. An offset of 10 hours, say, means that the dummy mode clock
+command. An offset of 10 hours, say, means that the simulation mode clock
 starts at 10 hours prior to the suite's initial cycle time.  You can
 thus simulate the behaviour of the suite as it catches up from a delay
 and transitions to real time operation.  By default, the clock runs at a
 rate of 10 seconds real time to 1 hour suite time, and with an initial
 offset of 10 hours. 
+
+\subsubsection{Can I Switch A Suite Between Simulation And Live Modes?}
+
+The scheduler mode (simulation or live) is recorded in the suite state
+dump file. {\em Cylc will not let you restart a dummy suite in live
+mode, or a live mode suite in dummy mode} because an attempt at the 
+former must certainly be a mistake, and an attempt at the latter,
+while feasible, would corrupt your live suite state dump file and 
+turn it over to simulation mode. Note, however, if you really want
+to run the current state of a live suite forward in simulation mode,
+all you need to do is this:
+\begin{myenumerate}
+    \item back up the live state dump (or take note of the filename
+        of the relevant automatic dump when you do the final suite
+        shutdown intervention).
+    \item edit the mode line in the state dump file, and restart the
+        suite in simulation mode.
+    \item later, restart the live suite from the pre-simulation model
+        state dump or backup 
+\end{myenumerate}
+
+{\em Cylc also has the ability to create an instant dummy mode clone 
+of the current state of any running or stopped live suite, but this 
+``practice mode'' has been temporarily disabled because we haven't
+had time to test that it is still working.}
 
 %\subsubsection{Practice Mode}
 %
@@ -3374,7 +3399,7 @@ offset of 10 hours.
 %cylc restart --practice examples:intro
 %\end{lstlisting}
 %
-%This will start a dummy mode clone of an existing suite from the
+%This will start a simulation mode clone of an existing suite from the
 %current state of that suite (which may be paused, still running, or
 %halted), but using different state and log files so that the original
 %suite will not be corrupted by the clone.
@@ -3399,16 +3424,16 @@ offset of 10 hours.
 %
 %\begin{myitemize}
 %    \item register your suite again under a different name. This allows
-%        you to run a dummy mode copy of the same suite without
+%        you to run a simulation mode copy of the same suite without
 %        interfering with the original suite (it also allows you to run
-%        a copy of the real mode suite without interference, but only if
+%        a copy of the live mode suite without interference, but only if
 %        the real suite tasks are configured to use the registered
 %        suite name in all important input and output filenames and/or
 %        directory paths - see {\em Command Reference} Section~\ref{register}).
 %
-%    \item start up the newly registered suite in dummy mode using:
+%    \item start up the newly registered suite in simulation mode using:
 %        \begin{lstlisting}
-%cylc restart --dummy-mode SUITE PATH
+%cylc restart --simulation-mode SUITE PATH
 %        \end{lstlisting}
 %        where PATH is a state dump file from the original suite. The
 %        absolute path is required here because the default state
@@ -3474,7 +3499,7 @@ offset of 10 hours.
 %    \item If through a suite design error error, a task exists that
 %        cannot get its prerequisites satisfied by any other task in the
 %        suite, that task will never run and will eventually cause the
-%        suite to stall.  Solution: test the suite in dummy mode to 
+%        suite to stall.  Solution: test the suite in simulation mode to 
 %        check that all prerequisites and outputs, suite-wide, are 
 %        compatible.
 %
@@ -3581,7 +3606,7 @@ TBD
     \item spin-up processes via temporary tasks and adding prerequisites
         on-the-fly
     \item recursive purge
-    \item instant dummy mode clones of a running suite
+    \item instant simulation mode clones of a running suite
     \item fuzzy prerequisites
     \item asynchronous tasks
     \item subsuites:
@@ -3914,7 +3939,7 @@ hyperlinks in the PDF document contents page.
 Most suites will only need a few of these settings - most items have
 default values that will be sufficient, some are probably only needed
 for critical operational suites (e.g.\ secure passphrases and task event
-hooks), and some are primarily used for cylc development (e.g.\ dummy
+hooks), and some are primarily used for cylc development (e.g.\ simulation
 mode configuration). In general your suite.rc files shouldn't be a whole
 lot more complicated than those of the cylc example suites.
 
@@ -4032,7 +4057,7 @@ tedious; a few edge cases associated with suite startup and forecast
 model restart dependencies were, arguably, difficult to understand; and
 the global structure of a suite was not readily apparent until run time
 (although to counter this cylc 2.x could generate run-time resolved
-dependency graphs very quickly in dummy mode).
+dependency graphs very quickly in simulation mode).
 
 \subsubsection{Post-3.0}
 
