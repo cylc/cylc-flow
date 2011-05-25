@@ -49,7 +49,7 @@ fi
 
 echo
 echo " + Registering examples suites"
-cylc register examples:UG1 $CYLC_DIR/examples/UG1
+cylc register examples:CUG1 $CYLC_DIR/examples/CUG1
 
 cylc register examples:CUG_QS1 $CYLC_DIR/examples/CUG5/one
 cylc register examples:CUG_QS2 $CYLC_DIR/examples/CUG5/two
