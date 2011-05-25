@@ -30,10 +30,10 @@ echo "SETTING EXECUTABLE PERMISSIONS"
 
 chmod +x bin/*
 chmod +x util/*
-chmod +x test/*
 chmod +x doc/process
-chmod +x examples/simple/bin/*
-chmod +x examples/userguide/bin/*
+chmod +x examples/UG1/bin/*
+chmod +x examples/QuickStart/three/bin/*
+chmod +x examples/AutoCleanup/*/bin/*
 
 echo "SETTING VERSION TAG IN MAIN COMMAND AND USERGUIDE"
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" src/gui/gcylc.py
