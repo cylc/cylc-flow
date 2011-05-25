@@ -28,7 +28,8 @@ parser = OptionParser( usage = """cylc [db] import [OPTIONS] CENTRAL [PRIVATE] D
 Import suites or groups from the central registration database.
 
 Arguments:
-    CENTRAL, PRIVATE  - OWNER:GROUP:NAME, OWNER:GROUP.
+    CENTRAL    - OWNER:GROUP:NAME or OWNER:GROUP:
+    [PRIVATE]  - GROUP:NAME or GROUP: (omit to keep the central group or name)
     DIR    - destination for the imported suite definition (must not exist).
              or top level directory for imported groups.""" )
 
