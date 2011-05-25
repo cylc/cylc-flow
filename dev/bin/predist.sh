@@ -80,3 +80,8 @@ rm -r dev
 
 echo "REMOVING .pyc FILES"
 find . -name '*.pyc' | xargs rm
+
+echo "REMOVING SCREENSHOTS"
+rm -r images/screenshots
+
+echo "DONE"
