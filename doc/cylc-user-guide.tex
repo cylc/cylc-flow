@@ -1364,28 +1364,43 @@ The cylc suite search tool reports matches in the suite.rc file
 by line number, suite section, and file, even if nested include-files
 are used, and by file and line number for matches in the suite bin
 directory.  The following output listing is from a search of
-the examples:CUG1 suite, because the QuickStart suites are a little
-too minimal to bother with in this context:
+the examples:CUG3 suite, which has task scripts in the suite
+bin directory. 
 \begin{lstlisting}
-$ cylc grep OUTPUT_DIR examples:CUG1
+$ cylc grep OUTPUT_DIR examples:CUG3
 
-FILE: /home/oliverh/suites/examples/CUG1/suite.rc
-   SECTION: [tasks]->[[X]]->[[[environment]]]
-      [53]:             OUTPUT_DIR = $WORKSPACE
-   SECTION: [tasks]->[[A]]->[[[environment]]]
-      [59]:             OUTPUT_DIR = $WORKSPACE
+SUITE: examples:CUG_QS3
+PATTERN: OUTPUT_DIR
 
-<...snip...>
+FILE: /home/admin/cylc/examples/CUG5/three/suite.rc
+   SECTION: [tasks]->[[GetData]]->[[[environment]]]
+      [47]:             GETDATA_OUTPUT_DIR = $WORKSPACE
+   SECTION: [tasks]->[[ColdModel]]->[[[environment]]]
+      [54]:             MODEL_OUTPUT_DIR = $WORKSPACE
+   SECTION: [tasks]->[[Model]]->[[[environment]]]
+      [62]:             MODEL_OUTPUT_DIR = $WORKSPACE
+   SECTION: [tasks]->[[PostA]]->[[[environment]]]
+      [70]:             POSTA_OUTPUT_DIR = $WORKSPACE
+   SECTION: [tasks]->[[PostB]]->[[[environment]]]
+      [77]:             POSTB_OUTPUT_DIR = $WORKSPACE
 
-FILE: /home/oliverh/suites/examples/Intro/bin/E.sh
-   [7]: cylc checkvars -c OUTPUT_DIR
-   [21]: touch $OUTPUT_DIR/sea-state.products
+FILE: /home/admin/cylc/examples/CUG5/three/bin/PostA.sh
+   [7]: cylc checkvars -c POSTA_OUTPUT_DIR
+   [21]: touch $POSTA_OUTPUT_DIR/surface-wind.products
 
-FILE: /home/oliverh/suites/examples/Intro/bin/D.sh
-   [7]: cylc checkvars -c OUTPUT_DIR
-   [24]: touch $OUTPUT_DIR/combined.products
+FILE: /home/admin/cylc/examples/CUG5/three/bin/GetData.sh
+   [6]: cylc checkvars -c GETDATA_OUTPUT_DIR
+   [11]: touch $GETDATA_OUTPUT_DIR/obs-${CYCLE_TIME}.nc
 
-<...snip...>
+FILE: /home/admin/cylc/examples/CUG5/three/bin/PostB.sh
+   [7]: cylc checkvars -c POSTB_OUTPUT_DIR
+   [21]: touch $POSTB_OUTPUT_DIR/precip.products
+
+FILE: /home/admin/cylc/examples/CUG5/three/bin/Model.sh
+   [11]: cylc checkvars -c MODEL_OUTPUT_DIR MODEL_RUNNING_DIR
+   [54]: touch $MODEL_OUTPUT_DIR/surface-winds-${CYCLE_TIME}.nc
+   [55]: touch $MODEL_OUTPUT_DIR/precipitation-${CYCLE_TIME}.nc
+DONE
 \end{lstlisting}
 (The same thing can of course be done via the gcylc right-click menu).
 
