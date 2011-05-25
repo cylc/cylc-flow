@@ -33,12 +33,23 @@ WARNING: THIS COMMAND IS DANGEROUS, but in case of disaster you can
 simply restart the suite from the automatic pre-purge state dump (the
 filename will be logged by cylc before the purge is actioned.)
 
-Note that downstream tasks dependent on the root task will only be
-detected as such if they exist at the time the purge is done. In other
-words, if you want purge task P(T), and X(T) depends on P(T), but P is 
-still running T-6, or whatever, and has not spawned a successor at T, 
-then X will not affected by the purge. To avoid this, wait until all
-tasks that depend on P have caught up to P(T) before purging.
+UNDERSTANDING HOW PURGE WORKS: cylc identifies tasks that depend on 
+the root task, and then on its downstream dependents, and then on
+theirs, etc., but simulating what would happen if the root task were to
+trigger: it artificially sets the root task to "succeeded",
+then negotatiates dependencies and artificially sets any tasks whose
+prerequisites get satisfied to "succeeded", then negotiates dependencies
+again, and so on until the stop cycle is reached or nothing new
+triggers. Then it marks all tasks that "virtually" triggered for
+removal. Consequently:
+ * tasks downstream of the root will only be identified as such if they
+   exist in the suite in the waiting state when the purge is done. If
+   they are still running in a previous cycle and having spawned into
+   the present cycle yet, they will be missed. To avoid this, wait until
+   all tasks that depend on the root have caught up to it before purging.
+ * if you purge a task that has already finished, only it and its own
+   successors will be purged (other downstream tasks will already have
+   triggered if they were able to).
 [development note: post cylc-3.0 we could easily determine, via the
 suite dependency graph, that X(T) needs to be included in the purge even
 if it has not appeared in the suite yet.]
