@@ -1486,21 +1486,23 @@ command line, you can:
 
 \subsubsection{Can Suite's Be Shared Across The Network}
 
-{\em The central suite database is not currently accessible on the
-network, it is local to the cylc host} 
-It briefly locks users out during operations that change the minimal
-registration data (i.e.\ the mappings between suite names and locations,
-not when copying suite definitions to the central location, which is
-potentially time consuming). 
+The central suite database is not currently accessible on the
+network, it is local to the cylc host and accessed through the 
+filesystem. Consequently it has to be world, or at least group,
+writeable, which is not very secure.
+
+%Also it briefly locks users out during operations that change the
+%        minimal
+%registration data (i.e.\ the mappings between suite names and locations,
+%not when copying suite definitions to the central location, which is
+%potentially time consuming). 
 
 {\em We intend to develop a client/server interface to the public suite
 database so that users can easily share suites across the network}. The 
 required server functionality is essentially identical to that of the
-cylc lockserver, so this will not be difficult. 
-
-In the meantime, do it copying a suite manually is simply a matter of
-copying the suite definition directory and registering the new copy 
-in your private suite database.
+cylc lockserver, so this will not be difficult. In the meantime, copying
+a suite manually is simply a matter of copying the suite definition
+directory and registering the new copy in your private suite database.
 
 \subsection{Database Operations}
 

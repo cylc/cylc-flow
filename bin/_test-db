@@ -36,7 +36,7 @@ if [[ $# != 0 ]]; then
     fi
 fi
 
-USG=$CYLC_DIR/examples/userguide
+USG=$CYLC_DIR/examples/CUG1
 TMPDIR=${TMPDIR:-/tmp/$USER}
 
 GRP=Z1TCylcTestXaQ

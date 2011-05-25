@@ -74,8 +74,11 @@ rm -rf $SUITE_DIR
 echo done
 
 # COPY THE SUITE
-echo -n ">> COPYING 'intro' example suite to $SUITE_DIR ... "
-cylc db copy examples:intro $SUITE_REG $SUITE_DIR
+#echo -n ">> COPYING CUG1 example suite to $SUITE_DIR ... "
+#cylc db copy examples:CUG1 $SUITE_REG $SUITE_DIR
+
+echo -n ">> IMPORTING CUG1 example suite to $SUITE_DIR ... "
+cylc db import examples:CUG1 $SUITE_REG $SUITE_DIR
 
 # log file for stdout and stderr
 OUT=test.out; OUT_SCHED=test-suite.out
