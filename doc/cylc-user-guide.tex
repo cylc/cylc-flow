@@ -3329,32 +3329,31 @@ tasks section.
 %\pagebreak
 
 
-\section{Running Suites}
+
+\section{Getting More Information}
 \label{RunningCylcSuites}
 
-{\bf This section of the user guide not complete yet.}
-For the moment, please refer to command line help (included here in
-Section~\ref{CommandReference}) the suite.rc reference
-(Section~\ref{SuiteRCReference}), the gcylc help menus, and the examples
+Some of the following topics are yet to be properly documented. For
+the moment, see cylc command line help (included here in
+Section~\ref{CommandReference}); the suite.rc reference
+(Section~\ref{SuiteRCReference}); the gcylc help menus; and the examples
 in this document (particularly the {\em Quick Start Guide},
 Section~\ref{QuickStartGuide}). 
 
 \begin{myitemize}
-    \item cold starting, warm starting, raw starting, restarting, and stopping suites
+    \item the difference between cold-, warm-, raw-, and re-starting, a suite
         {\em (see \lstinline=cylc run help=)}
     \item running single tasks outside or inside suites
         {\em (see \lstinline=cylc insert help= and \lstinline=cylc submit help=)}
-    \item intervening in suites, e.g.\ stopping, removing, and inserting tasks, \dots
+    \item intervening in suites, e.g.\ stopping, removing, inserting tasks; 
         {\em (see \lstinline=cylc control help=)}
-    \item getting information about running suites, and the tasks in them 
-        {\em (see \lstinline=cylc info help= and \lstinline=cylc discovery help=)}
+    \item getting information from suites and tasks 
+        {\em (\lstinline=cylc info help=, \lstinline=cylc discovery help=)}
     \item where to look for output - suite log, suite stdout/stderr, task stdout/stderr
         {\em (this is documented in the Quick Start Guide)}
     \item understanding cylc suite evolution, particularly in catchup operation
         {\em (the Quick Start Guide will also help here, along 
         with the cylc example suites, and running your real suites in simulation mode)}
-
-    \item how to recover from certain kinds of task failure (TBD)
 
     \item the cylc lockserver 
         {\em (lockserver startup is documented in the Quick Start Guide; see also 
@@ -3371,406 +3370,13 @@ Section~\ref{QuickStartGuide}).
         Reference, Section~\ref{SuiteRCReference})}
 \end{myitemize}
 
-\subsection{Using The Graph-Based Suite Control GUI}
-\label{UsingTheGraphBasedSuiteControlGUI}
-
-The graph-based suite control GUI has the advantage that it shows
-the structure of a suite very clearly as it evolves. It works 
-remarkably well even for very large suites, on the order of one hundred
-tasks or more {\em but} on the downside, the graphviz engine does a new
-global optimization every time the graph changes, so the layout is often
-not very stable. This may or may not be a solvable problem - it seems
-likely that making continual incremental changes to an existing graph
-without redoing the global layout would inevitably result in some kind
-of horrible mess.
-
-The following features of the graph-based control GUI go a long way 
-toward mitigating the changing layout problem:
-
-\begin{myitemize}
-    \item The disconnect button can be used to temporarily prevent the
-        graph from changing as the content of the suite changes (and
-        in real time operation suites evolve quite slowly anyway)
-    \item Right-click on a task and choose the ``Focus'' option to restrict
-        the graph display to that task's cycle time. Anything interesting
-        happening in other cycles will show up as disconnected
-        rectangular nodes to the right of the graph (and you can click
-        on those to intantly refocus to their cycles).
-    \item Task filtering is the ultimate quick route to temporarily focusing
-        on just the tasks you're interested in (but this will 
-        destroy the graph structure, to state the obvious).
-\end{myitemize}
-
-In future cylc releases we plan to keep the graph centered, after layout
-changes, on the most recently clicked-on task.
-
-
-%\subsection{Understanding Suite Evolution}
-%\label{UnderstandingSuiteEvolution}
-%
-%On a cold start all tasks (including one off tasks) in the sytem will be
-%instantiated at the initial cycle time, or at the next subsequent valid
-%cycle time for the task. Any tasks that have no prerequisites (and, if
-%they are contact tasks, have reached their trigger time) will submit to
-%run immediately. Any cycling (i.e.\ non one off) tasks that have no
-%prerequisites (and, if they are contact tasks, have reached their
-%trigger time) will rapidly spawn ahead until stopped by the suite's
-%runahead limit (observe task X in the user guide example suite).
-%Thereafter, each task will, of its own accord, submit to run as soon as
-%its prerequisites have been satisfied by other tasks already running or
-%succeeded in the suite (and trigger time etc.).  Each task spawns a
-%successor at a point in its lifecycle that depends on its type: tied
-%tasks spawn has soon as their restart prerequisites have been completed,
-%and free tasks spawn at the instant they start running.  Once a task
-%exists it is free to run as soon as its prerequisites are satisfied,
-%thus successive instances of a free task can run entirely in parallel,
-%and successive instances of a tied task can overlap if the opportunity
-%arises (other prerequisites allowing).
-
-%\subsection{Automatic State Dumps}
-%\label{AutomaticStateDumps}
-%
-%Cylc updates its configured state dump file (e.g.\
-%\lstinline=$HOME/cylc-state/state=) every time the task of a task
-%changes. Previous states are maintained in a rolling archive 
-%(length specified in the {\em suite.rc} file):
-%
-%\begin{lstlisting}
-%nwp_oper> ls .cylc/state/SUITE/
-%state       # current state
-%state-1     # most recent previous state
-%state-2     # next most recent previous state
-%...
-%state-N     # oldest state dump; will be deleted at next update
-%\end{lstlisting}
-%
-%In addition, immediately prior to any system intervention a special
-%uniquely named state dump file is created and logged, e.g.:
-%
-%\begin{lstlisting}
-%2010/03/30 14:54:29 WARNING main - pre-purge state dump: state.2010:3:30:14:54:29
-%\end{lstlisting}
-%
-%If you accidentally intervene wrongly in a suite, just shut it down
-%and restart from the pre-intervention state dump:
-%
-%\begin{lstlisting}
-%cylc restart SUITE state.2010:3:30:14:54:29
-%\end{lstlisting}
-
-%\subsection{Suite Log Files}
-%\label{SuiteLogFiles}
-%
-%Earlier versions of cylc created a main suite log file and a
-%task-specific log for every task. However, because when all logged
-%events were made to percolate up to the main log the task-specific logs
-%became superfluous. Instead, cylc provides facilities for filtering the
-%main log for task-specific messages (or you can just use
-%\lstinline=grep= for this purpose).
-%
-%\lstset{language=,
-%basicstyle=\color{basic}\scriptsize\ttfamily,
-%}
-%\begin{lstlisting}
-%$ tail $HOME/cylc-logs/intro/log
-%2010/03/28 00:33:50 INFO main.F - [2010010312] disconnected (spent; general)
-%2010/03/28 00:33:52 INFO main.C - [2010010400] storm surge fields ready for 2010010400
-%2010/03/28 00:33:52 INFO main.A - [2010010412] surface wind fields ready for 2010010412
-%2010/03/28 00:33:52 INFO main.C - [2010010400] C%2010010400 completed
-%2010/03/28 00:33:52 INFO main.C - [2010010400] C%2010010400 succeeded
-%2010/03/28 00:33:52 INFO main.A - [2010010412] surface pressure field ready for 2010010412
-%2010/03/28 00:33:52 INFO main.A - [2010010412] level forecast fields ready for 2010010412
-%2010/03/28 00:33:53 INFO main.A - [2010010412] A%2010010412 completed
-%2010/03/28 00:33:53 INFO main.A - [2010010412] A%2010010412 succeeded
-%2010/03/28 00:33:53 CRITICAL main - ALL RUNNING TASKS SUCCEEDED
-%\end{lstlisting}
-%
-%\lstset{language=,
-%basicstyle=\color{basic}\footnotesize\ttfamily,
-%}
-
-%Each entry shows the time of logging, the name and cycle time of the
-%reporting task (in square brackets), and the logged message.
-%
-%In simulation mode, the logged time is the simulation mode accelerated clock time, not 
-%real time.
-%
-%Existing log files are automatically rotated at start up and,
-%individually, when they reach a size of 10 MB.  This maximum file 
-%size should be configurable, but it is currently hardwired in
-%\lstinline=$CYLC_DIRsrc/pimp_my_logger.py=.
-
-\subsection{Simulation Mode} 
-\label{SimulationMode}
-
-If you start a suite in simulation mode (a command line option for the cold-,
-warm-, raw-, and re-start commands, and a checkbutton in the gcylc suite
-start panel) then cylc will run on an accelerated clock and submit dummy
-programs instead of the real tasks. These masquerade as the real tasks
-by reporting the correct outputs complete after a short interval,
-reporting success, and then exiting. This is essentially
-indistinguishable, to cylc, from real operation. Simulation mode was, and
-remains, an important aid to cylc development because it allows
-testing of every aspect of scheduling without having to run real
-tasks in real time. Prior to cylc-3 it was also a useful aid to suite
-development - a simulation run would quickly identify any mismatch between
-the user-defined prerequisites and outputs across the suite, so you
-could get the scheduling right without running the real tasks. Post
-cylc-3.0 this is less important because task prerequisites and outputs
-are implicitly defined by the dependency graph and, short of a bug in
-cylc, the suite will run according to the graph.
-
-\subsubsection{Clock Rate and Offset}
-
-Simulation mode suites run on an accelerated clock so that you can test
-things very quickly. You can set the clock rate and offset with respect
-to the initial cycle time with options to the \lstinline=cylc run=
-command. An offset of 10 hours, say, means that the simulation mode clock
-starts at 10 hours prior to the suite's initial cycle time.  You can
-thus simulate the behaviour of the suite as it catches up from a delay
-and transitions to real time operation.  By default, the clock runs at a
-rate of 10 seconds real time to 1 hour suite time, and with an initial
-offset of 10 hours. 
-
-\subsubsection{Can I Switch A Suite Between Simulation And Live Modes?}
-
-The scheduler mode (simulation or live) is recorded in the suite state
-dump file. {\em Cylc will not let you restart a simulation mode suite in
-live, or a live mode suite in simulation mode} - any attempt to do the 
-former must certainly be a mistake, and doing the latter, while
-feasible, would corrupt your live suite state dump and turn it over to
-simulation mode. Note, however, that if you really want to run the
-current state of a live suite forward in simulation mode,
-all you need to do is this:
-\begin{myenumerate}
-    \item back up the live state dump (or take note of the filename
-        of the relevant automatic dump when you do the final suite
-        shutdown intervention).
-    \item edit the mode line in the state dump file, and restart the
-        suite in simulation mode.
-    \item later, restart the live suite from the pre simulation mode
-        state dump backup 
-\end{myenumerate}
-
-{\em Cylc can also create an instant dummy mode clone of the current
-state of any running or stopped suite, but this ``practice mode'' has
-been disabled in the current release pending testing.}
-
-%\subsubsection{Practice Mode}
-%
-%Practice mode allows quick and easy testing of potentially complex
-%suite interventions, with complete safety.
-%
-%\begin{lstlisting}
-%cylc restart --practice examples:CUG1
-%\end{lstlisting}
-%
-%This will start a simulation mode clone of an existing suite from the
-%current state of that suite (which may be paused, still running, or
-%halted), but using different state and log files so that the original
-%suite will not be corrupted by the clone.
-%
-%{\em At startup in practice mode, failed tasks are not reset to waiting}
-%because the whole point of practice mode is to ``practice'' how to
-%recover from failures.
-%
-%Note that other cylc commands for monitoring or interacting with the
-%suite must also use the \lstinline=--practice= option in order to
-%target the practice suite and not the real one. Be sure to set
-%\lstinline=cylc lock= on the original suite first, to avoid
-%accidentally messing with it (even if you do screw up, however, cylc's
-%automatic pre-intervention state dumps will save you!).
-%
-%
-%\subsubsection{Roll Your Own Practice Mode}
-%
-%A less automated way to ``practice'' on a copy of an existing suite
-%that starts up from the current (or previous) state of that suite, 
-%\lstinline=cylc run --practice= is this:
-%
-%\begin{myitemize}
-%    \item register your suite again under a different name. This allows
-%        you to run a simulation mode copy of the same suite without
-%        interfering with the original suite (it also allows you to run
-%        a copy of the live mode suite without interference, but only if
-%        the real suite tasks are configured to use the registered
-%        suite name in all important input and output filenames and/or
-%        directory paths - see {\em Command Reference} Section~\ref{register}).
-%
-%    \item start up the newly registered suite in simulation mode using:
-%        \begin{lstlisting}
-%cylc restart --simulation-mode SUITE PATH
-%        \end{lstlisting}
-%        where PATH is a state dump file from the original suite. The
-%        absolute path is required here because the default state
-%        dump location depends on the registered suite name (so that
-%        different suites don't interfere with each other's state
-%        dumps).
-%
-%\end{myitemize}
-%
-%\subsection{Diagnosing A Stalled Suite}
-%\label{DiagnosingAStalledSuite}
-%
-%In certain situations a suite may appear to be ``stuck'', i.e.\ no
-%tasks are running and nothing appears to be happening. There are several 
-%possible reasons for this (it does not necessarily indicate a problem!):
-%
-%\begin{myitemize}
-%    \item In {\em normal real time operation}, when all running tasks
-%        have finished for the most recent cycle, nothing will happen
-%        until the one or more contact tasks in the suite trigger at the
-%        start of the next cycle. \lstinline=cylc show= tells if a
-%        contact task has yet to reach its trigger time.
-%
-%    \item if every task in the suite has one or more unsatisfied
-%        prerequisites, the suite will be stalled. This could happen,
-%        for example, if you start a suite that contains tied (forecast
-%        model) tasks without the corresponding one off cold start tasks to
-%        satisfy their initial restart prerequisites.
-%
-%\end{myitemize}
-%
-%The following problems will eventually cause a suite to get stuck at
-%the {\em runahead limit} (which by default is 24 hours: i.e.\ the
-%fastest task in the suite is only allowed to get 24 hours ahead of the
-%slowest) because cylc does not automatically remove failed tasks from
-%the system.  Operational suites should have automated means of
-%alerting the operators to any failure that occurs, but in the
-%unlikely event that the failure is not noticed until the system stalls
-%at the runahead limit, then to get things moving again the operator must
-%either remove the failed task or reset (and thereby rerun) it after
-%fixing the problem that cause the failure.
-%
-%\begin{myitemize}
-%    \item If the system operator, perhaps in a post-task-failure
-%    intervention, kills some tasks that are required to satisfy the
-%    prerequisites of other tasks that still exist in the system, then 
-%    the suite will eventually stall as a result of these tasks being
-%    unable to run. Solution: insert tasks (possibly one off cold start
-%    tasks) to get the suite running again.
-%
-%    \item If some task in the suite has a cycling interval long than
-%        the runahead limit, the suite will stall (e.g.\ if
-%    you have a task that runs 24-hourly at 00Z, but set the runahead
-%    limit to just 12 hours). This could also happen if you purge enough
-%    cycles that the difference between the pre- and post-purge tasks
-%    is greater than the runahead limit. Solution: ensure your runahead
-%    limit is large enough to span these gaps.
-%
-%    \item If a failed task has not yet been removed or reset by the
-%    system operator it will eventually stall the suite. Solution:
-%    Fix, or otherwise deal with, failed tasks as quickly as possible.
-%
-%    \item If through a suite design error error, a task exists that
-%        cannot get its prerequisites satisfied by any other task in the
-%        suite, that task will never run and will eventually cause the
-%        suite to stall.  Solution: test the suite in simulation mode to 
-%        check that all prerequisites and outputs, suite-wide, are 
-%        compatible.
-%
-%    \item If a misconfigured external task does not report an output
-%        that it is supposed to (i.e.\ as registered in its task proxy
-%        definition file), then its task proxy will not record that 
-%        output as complete and cylc will set it to the 'failed' state
-%        when it finishes without completing a registered output. A
-%        failed task will eventually stall the suite, as explained above, 
-%        if it is not fixed and re-run, or removed from the suite.
-%        Solution: ensure all external tasks report their outputs
-%        correctly.
-%
-%\end{myitemize}
-%
-%To confirm that the runahead limit is causing a stall, you can use 
-%\lstinline=cylc verbosity= to set the debug logging level: any task
-%that is not spawning a successor only because it has exceeded the
-%runahead limit will report that to the log.
-%
-%
-%\subsection{Failure Recovery Scenarios}
-%\label{FailureRecoveryScenarios}
-%
-%\begin{myitemize}
-%    \item {\em One forecast cycle runs into the next, after a delay in
-%        operations}. This is never a problem for cylc; every task runs
-%        as soon as it can run, regardless of forecast cycle, and any
-%        task that can't run before it's predecessor has finished will
-%        wait.
-%
-%    \item {\em A delayed parallel trial or case study catches up to real
-%        time operation}. This is no problem for cylc; any cylc suite
-%        will seamlessly transition in and out of ``normal real time
-%        operation'' (distinct cycles triggered by the wall clock) as needed.
-%
-%    \item {\em An external task fails, but can be fixed}. For example, a
-%        forecast model aborts trying to read a corrupted data file that
-%        can be regenerated correctly. The failed task will be noted by
-%        cylc, and its downstream dependants will not be able to run,
-%        but other tasks will carry on as normal while you address the
-%        problem. When fixed, use `cylc reset' to get the failed task to
-%        run again, after which it and its downstream dependants will
-%        catch up to the rest of the suite as quickly as possible.
-%
-%    \item {\em An important external task fails, but cannot be fixed.}
-%        In this case, if the task has a lot of downstream dependants,
-%        you will presumably need omit one or more cycles of the affected
-%        tasks, and cold start their part of the suite at a the earliest
-%        possible subsequent cycle.  To do this, insert the relevant cold
-%        start task, or task group, at the later cycle, then purge the
-%        failed task and everything that depends on it (and on them, and
-%        so on) down to the cold start time.  Other downstream forecast
-%        models will be able to pick up immediately so long their most
-%        recent previous instance (i.e.\ just before the gap) wrote out
-%        sufficient restart outputs to bridge the gap (otherwise they,
-%        or perhaps the entire suite, will need to be cold started). 
-%
-%    \item {\em HELP, I attempted a drastic intervention in a complex
-%        suite, using the horrifying purge command, and this time I
-%        really screwed the pooch!} Before any operation that alters the
-%        sytem state, cylc automatically writes out a special state dump
-%        file and reports the filename in the main log. Shut the suite
-%        down and restart it from its pre-intervention state (just
-%        cut-and-paste the state dump filename from the main log file -
-%        the file path is not required because the file will be in the
-%        configured suite state dump directory).  Then {\em retry your
-%        intervention in practice mode} before doing it for real!
-%
-%\end{myitemize}
-%
-%\subsection{Dead Suite Cleanup}
-%%\label{DeadSuiteCleanup}
-%
-%\subsubsection{Normal Shutdown}
-%
-%Cylc waits for any currently running tasks to finish before shutting
-%down cleanly. There will be nothing to clean up. 
-%
-%\subsubsection{Shutdown NOW or Controlled Abort}
-%
-%If a critical error of some kind, or use of \lstinline=cylc stop --now=,
-%results in an immediate suite shutdown while there are still external
-%tasks running, any subsequent cylc messaging calls made by the
-%still-running tasks will fail because the parent suite no longer
-%exists. Depending on the exact circumstances this may result in some 
-%orphaned processes that need to be killed manually.
-%
-%\subsubsection{Uncontrolled Suite Abort}
-%
-%(To Do, check: currently no ill effects - maybe sockets (ports) remain
-%tied up until they time out?).
-%
-%
-%
-%\pagebreak
-
-
-
-\section{Advanced Topics}
+\subsection{Advanced Topics}
 
 \begin{myitemize}
     \item spin-up processes via temporary tasks and adding prerequisites
         on-the-fly
     \item recursive purge
+    \item how to recover from certain kinds of task failure
     \item instant simulation mode clones of a running suite
     \item fuzzy prerequisites
     \item asynchronous tasks
@@ -4141,6 +3747,152 @@ lot more complicated than those of the cylc example suites.
 
 %\pagebreak
 
+
+\section{The Graph-Based Suite Control GUI}
+\label{TheGraphBasedSuiteControlGUI}
+
+The graph-based suite control GUI has the advantage that it shows
+the structure of a suite very clearly as it evolves. It works 
+remarkably well even for very large suites, on the order of one hundred
+tasks or more {\em but} on the downside, the graphviz engine does a new
+global optimization every time the graph changes, so the layout is often
+not very stable. This may or may not be a solvable problem - it seems
+likely that making continual incremental changes to an existing graph
+without redoing the global layout would inevitably result in some kind
+of horrible mess.
+
+The following features of the graph-based control GUI go a long way 
+toward mitigating the changing layout problem:
+
+\begin{myitemize}
+    \item The disconnect button can be used to temporarily prevent the
+        graph from changing as the content of the suite changes (and
+        in real time operation suites evolve quite slowly anyway)
+    \item Right-click on a task and choose the ``Focus'' option to restrict
+        the graph display to that task's cycle time. Anything interesting
+        happening in other cycles will show up as disconnected
+        rectangular nodes to the right of the graph (and you can click
+        on those to intantly refocus to their cycles).
+    \item Task filtering is the ultimate quick route to temporarily focusing
+        on just the tasks you're interested in (but this will 
+        destroy the graph structure, to state the obvious).
+\end{myitemize}
+
+In future cylc releases we plan to keep the graph centered, after layout
+changes, on the most recently clicked-on task.
+
+
+\section{Simulation Mode} 
+\label{SimulationMode}
+
+If you start a suite in simulation mode (a command line option for the cold-,
+warm-, raw-, and re-start commands, and a checkbutton in the gcylc suite
+start panel) then cylc will run on an accelerated clock and submit dummy
+programs instead of the real tasks. These masquerade as the real tasks
+by reporting the correct outputs complete after a short interval,
+reporting success, and then exiting. This is essentially
+indistinguishable, to cylc, from real operation. Simulation mode was, and
+remains, an important aid to cylc development because it allows
+testing of every aspect of scheduling without having to run real
+tasks in real time. Prior to cylc-3 it was also a useful aid to suite
+development - a simulation run would quickly identify any mismatch between
+the user-defined prerequisites and outputs across the suite, so you
+could get the scheduling right without running the real tasks. Post
+cylc-3.0 this is less important because task prerequisites and outputs
+are implicitly defined by the dependency graph and, short of a bug in
+cylc, the suite will run according to the graph.
+
+\subsection{Clock Rate and Offset}
+
+Simulation mode suites run on an accelerated clock so that you can test
+things very quickly. You can set the clock rate and offset with respect
+to the initial cycle time with options to the \lstinline=cylc run=
+command. An offset of 10 hours, say, means that the simulation mode clock
+starts at 10 hours prior to the suite's initial cycle time.  You can
+thus simulate the behaviour of the suite as it catches up from a delay
+and transitions to real time operation.  By default, the clock runs at a
+rate of 10 seconds real time to 1 hour suite time, and with an initial
+offset of 10 hours. 
+
+\subsection{Switching A Suite Between Simulation And Live Modes?}
+
+The scheduler mode (simulation or live) is recorded in the suite state
+dump file. {\em Cylc will not let you restart a simulation mode suite in
+live, or a live mode suite in simulation mode} - any attempt to do the 
+former must certainly be a mistake, and doing the latter, while
+feasible, would corrupt your live suite state dump and turn it over to
+simulation mode. Note, however, that if you really want to run the
+current state of a live suite forward in simulation mode,
+all you need to do is this:
+\begin{myenumerate}
+    \item back up the live state dump (or take note of the filename
+        of the relevant automatic dump when you do the final suite
+        shutdown intervention).
+    \item edit the mode line in the state dump file, and restart the
+        suite in simulation mode.
+    \item later, restart the live suite from the pre simulation mode
+        state dump backup 
+\end{myenumerate}
+
+{\em Cylc can also create an instant dummy mode clone of the current
+state of any running or stopped suite, but this ``practice mode'' has
+been disabled in the current release pending testing.}
+
+%\subsubsection{Practice Mode}
+%
+%Practice mode allows quick and easy testing of potentially complex
+%suite interventions, with complete safety.
+%
+%\begin{lstlisting}
+%cylc restart --practice examples:CUG1
+%\end{lstlisting}
+%
+%This will start a simulation mode clone of an existing suite from the
+%current state of that suite (which may be paused, still running, or
+%halted), but using different state and log files so that the original
+%suite will not be corrupted by the clone.
+%
+%{\em At startup in practice mode, failed tasks are not reset to waiting}
+%because the whole point of practice mode is to ``practice'' how to
+%recover from failures.
+%
+%Note that other cylc commands for monitoring or interacting with the
+%suite must also use the \lstinline=--practice= option in order to
+%target the practice suite and not the real one. Be sure to set
+%\lstinline=cylc lock= on the original suite first, to avoid
+%accidentally messing with it (even if you do screw up, however, cylc's
+%automatic pre-intervention state dumps will save you!).
+%
+%
+%\subsubsection{Roll Your Own Practice Mode}
+%
+%A less automated way to ``practice'' on a copy of an existing suite
+%that starts up from the current (or previous) state of that suite, 
+%\lstinline=cylc run --practice= is this:
+%
+%\begin{myitemize}
+%    \item register your suite again under a different name. This allows
+%        you to run a simulation mode copy of the same suite without
+%        interfering with the original suite (it also allows you to run
+%        a copy of the live mode suite without interference, but only if
+%        the real suite tasks are configured to use the registered
+%        suite name in all important input and output filenames and/or
+%        directory paths - see {\em Command Reference} Section~\ref{register}).
+%
+%    \item start up the newly registered suite in simulation mode using:
+%        \begin{lstlisting}
+%cylc restart --simulation-mode SUITE PATH
+%        \end{lstlisting}
+%        where PATH is a state dump file from the original suite. The
+%        absolute path is required here because the default state
+%        dump location depends on the registered suite name (so that
+%        different suites don't interfere with each other's state
+%        dumps).
+%
+%\end{myitemize}
+%
+
+        
 \section{An Annotated Cylc Task Script}
 \label{AnnotatedTaskScript}
 
@@ -4198,7 +3950,6 @@ just use the cylc task wrapper (Section~\ref{TaskWrapping}).
 %
 %\end{myitemize}
 
-        
 \section{Cylc Development History}
 \subsubsection{Pre-3.0}
 
@@ -4297,5 +4048,257 @@ improved cylc's usability and functionality.
 
 \section{GNU GENERAL PUBLIC LICENSE v3.0}
 \input{gpl-3.0}
+
+
+
+%\subsection{Understanding Suite Evolution}
+%\label{UnderstandingSuiteEvolution}
+%
+%On a cold start all tasks (including one off tasks) in the sytem will be
+%instantiated at the initial cycle time, or at the next subsequent valid
+%cycle time for the task. Any tasks that have no prerequisites (and, if
+%they are contact tasks, have reached their trigger time) will submit to
+%run immediately. Any cycling (i.e.\ non one off) tasks that have no
+%prerequisites (and, if they are contact tasks, have reached their
+%trigger time) will rapidly spawn ahead until stopped by the suite's
+%runahead limit (observe task X in the user guide example suite).
+%Thereafter, each task will, of its own accord, submit to run as soon as
+%its prerequisites have been satisfied by other tasks already running or
+%succeeded in the suite (and trigger time etc.).  Each task spawns a
+%successor at a point in its lifecycle that depends on its type: tied
+%tasks spawn has soon as their restart prerequisites have been completed,
+%and free tasks spawn at the instant they start running.  Once a task
+%exists it is free to run as soon as its prerequisites are satisfied,
+%thus successive instances of a free task can run entirely in parallel,
+%and successive instances of a tied task can overlap if the opportunity
+%arises (other prerequisites allowing).
+
+%\subsection{Automatic State Dumps}
+%\label{AutomaticStateDumps}
+%
+%Cylc updates its configured state dump file (e.g.\
+%\lstinline=$HOME/cylc-state/state=) every time the task of a task
+%changes. Previous states are maintained in a rolling archive 
+%(length specified in the {\em suite.rc} file):
+%
+%\begin{lstlisting}
+%nwp_oper> ls .cylc/state/SUITE/
+%state       # current state
+%state-1     # most recent previous state
+%state-2     # next most recent previous state
+%...
+%state-N     # oldest state dump; will be deleted at next update
+%\end{lstlisting}
+%
+%In addition, immediately prior to any system intervention a special
+%uniquely named state dump file is created and logged, e.g.:
+%
+%\begin{lstlisting}
+%2010/03/30 14:54:29 WARNING main - pre-purge state dump: state.2010:3:30:14:54:29
+%\end{lstlisting}
+%
+%If you accidentally intervene wrongly in a suite, just shut it down
+%and restart from the pre-intervention state dump:
+%
+%\begin{lstlisting}
+%cylc restart SUITE state.2010:3:30:14:54:29
+%\end{lstlisting}
+
+%\subsection{Suite Log Files}
+%\label{SuiteLogFiles}
+%
+%Earlier versions of cylc created a main suite log file and a
+%task-specific log for every task. However, because when all logged
+%events were made to percolate up to the main log the task-specific logs
+%became superfluous. Instead, cylc provides facilities for filtering the
+%main log for task-specific messages (or you can just use
+%\lstinline=grep= for this purpose).
+%
+%\lstset{language=,
+%basicstyle=\color{basic}\scriptsize\ttfamily,
+%}
+%\begin{lstlisting}
+%$ tail $HOME/cylc-logs/intro/log
+%2010/03/28 00:33:50 INFO main.F - [2010010312] disconnected (spent; general)
+%2010/03/28 00:33:52 INFO main.C - [2010010400] storm surge fields ready for 2010010400
+%2010/03/28 00:33:52 INFO main.A - [2010010412] surface wind fields ready for 2010010412
+%2010/03/28 00:33:52 INFO main.C - [2010010400] C%2010010400 completed
+%2010/03/28 00:33:52 INFO main.C - [2010010400] C%2010010400 succeeded
+%2010/03/28 00:33:52 INFO main.A - [2010010412] surface pressure field ready for 2010010412
+%2010/03/28 00:33:52 INFO main.A - [2010010412] level forecast fields ready for 2010010412
+%2010/03/28 00:33:53 INFO main.A - [2010010412] A%2010010412 completed
+%2010/03/28 00:33:53 INFO main.A - [2010010412] A%2010010412 succeeded
+%2010/03/28 00:33:53 CRITICAL main - ALL RUNNING TASKS SUCCEEDED
+%\end{lstlisting}
+%
+%\lstset{language=,
+%basicstyle=\color{basic}\footnotesize\ttfamily,
+%}
+
+%Each entry shows the time of logging, the name and cycle time of the
+%reporting task (in square brackets), and the logged message.
+%
+%In simulation mode, the logged time is the simulation mode accelerated clock time, not 
+%real time.
+%
+%Existing log files are automatically rotated at start up and,
+%individually, when they reach a size of 10 MB.  This maximum file 
+%size should be configurable, but it is currently hardwired in
+%\lstinline=$CYLC_DIRsrc/pimp_my_logger.py=.
+
+%\subsection{Diagnosing A Stalled Suite}
+%\label{DiagnosingAStalledSuite}
+%
+%In certain situations a suite may appear to be ``stuck'', i.e.\ no
+%tasks are running and nothing appears to be happening. There are several 
+%possible reasons for this (it does not necessarily indicate a problem!):
+%
+%\begin{myitemize}
+%    \item In {\em normal real time operation}, when all running tasks
+%        have finished for the most recent cycle, nothing will happen
+%        until the one or more contact tasks in the suite trigger at the
+%        start of the next cycle. \lstinline=cylc show= tells if a
+%        contact task has yet to reach its trigger time.
+%
+%    \item if every task in the suite has one or more unsatisfied
+%        prerequisites, the suite will be stalled. This could happen,
+%        for example, if you start a suite that contains tied (forecast
+%        model) tasks without the corresponding one off cold start tasks to
+%        satisfy their initial restart prerequisites.
+%
+%\end{myitemize}
+%
+%The following problems will eventually cause a suite to get stuck at
+%the {\em runahead limit} (which by default is 24 hours: i.e.\ the
+%fastest task in the suite is only allowed to get 24 hours ahead of the
+%slowest) because cylc does not automatically remove failed tasks from
+%the system.  Operational suites should have automated means of
+%alerting the operators to any failure that occurs, but in the
+%unlikely event that the failure is not noticed until the system stalls
+%at the runahead limit, then to get things moving again the operator must
+%either remove the failed task or reset (and thereby rerun) it after
+%fixing the problem that cause the failure.
+%
+%\begin{myitemize}
+%    \item If the system operator, perhaps in a post-task-failure
+%    intervention, kills some tasks that are required to satisfy the
+%    prerequisites of other tasks that still exist in the system, then 
+%    the suite will eventually stall as a result of these tasks being
+%    unable to run. Solution: insert tasks (possibly one off cold start
+%    tasks) to get the suite running again.
+%
+%    \item If some task in the suite has a cycling interval long than
+%        the runahead limit, the suite will stall (e.g.\ if
+%    you have a task that runs 24-hourly at 00Z, but set the runahead
+%    limit to just 12 hours). This could also happen if you purge enough
+%    cycles that the difference between the pre- and post-purge tasks
+%    is greater than the runahead limit. Solution: ensure your runahead
+%    limit is large enough to span these gaps.
+%
+%    \item If a failed task has not yet been removed or reset by the
+%    system operator it will eventually stall the suite. Solution:
+%    Fix, or otherwise deal with, failed tasks as quickly as possible.
+%
+%    \item If through a suite design error error, a task exists that
+%        cannot get its prerequisites satisfied by any other task in the
+%        suite, that task will never run and will eventually cause the
+%        suite to stall.  Solution: test the suite in simulation mode to 
+%        check that all prerequisites and outputs, suite-wide, are 
+%        compatible.
+%
+%    \item If a misconfigured external task does not report an output
+%        that it is supposed to (i.e.\ as registered in its task proxy
+%        definition file), then its task proxy will not record that 
+%        output as complete and cylc will set it to the 'failed' state
+%        when it finishes without completing a registered output. A
+%        failed task will eventually stall the suite, as explained above, 
+%        if it is not fixed and re-run, or removed from the suite.
+%        Solution: ensure all external tasks report their outputs
+%        correctly.
+%
+%\end{myitemize}
+%
+%To confirm that the runahead limit is causing a stall, you can use 
+%\lstinline=cylc verbosity= to set the debug logging level: any task
+%that is not spawning a successor only because it has exceeded the
+%runahead limit will report that to the log.
+%
+%
+%\subsection{Failure Recovery Scenarios}
+%\label{FailureRecoveryScenarios}
+%
+%\begin{myitemize}
+%    \item {\em One forecast cycle runs into the next, after a delay in
+%        operations}. This is never a problem for cylc; every task runs
+%        as soon as it can run, regardless of forecast cycle, and any
+%        task that can't run before it's predecessor has finished will
+%        wait.
+%
+%    \item {\em A delayed parallel trial or case study catches up to real
+%        time operation}. This is no problem for cylc; any cylc suite
+%        will seamlessly transition in and out of ``normal real time
+%        operation'' (distinct cycles triggered by the wall clock) as needed.
+%
+%    \item {\em An external task fails, but can be fixed}. For example, a
+%        forecast model aborts trying to read a corrupted data file that
+%        can be regenerated correctly. The failed task will be noted by
+%        cylc, and its downstream dependants will not be able to run,
+%        but other tasks will carry on as normal while you address the
+%        problem. When fixed, use `cylc reset' to get the failed task to
+%        run again, after which it and its downstream dependants will
+%        catch up to the rest of the suite as quickly as possible.
+%
+%    \item {\em An important external task fails, but cannot be fixed.}
+%        In this case, if the task has a lot of downstream dependants,
+%        you will presumably need omit one or more cycles of the affected
+%        tasks, and cold start their part of the suite at a the earliest
+%        possible subsequent cycle.  To do this, insert the relevant cold
+%        start task, or task group, at the later cycle, then purge the
+%        failed task and everything that depends on it (and on them, and
+%        so on) down to the cold start time.  Other downstream forecast
+%        models will be able to pick up immediately so long their most
+%        recent previous instance (i.e.\ just before the gap) wrote out
+%        sufficient restart outputs to bridge the gap (otherwise they,
+%        or perhaps the entire suite, will need to be cold started). 
+%
+%    \item {\em HELP, I attempted a drastic intervention in a complex
+%        suite, using the horrifying purge command, and this time I
+%        really screwed the pooch!} Before any operation that alters the
+%        sytem state, cylc automatically writes out a special state dump
+%        file and reports the filename in the main log. Shut the suite
+%        down and restart it from its pre-intervention state (just
+%        cut-and-paste the state dump filename from the main log file -
+%        the file path is not required because the file will be in the
+%        configured suite state dump directory).  Then {\em retry your
+%        intervention in practice mode} before doing it for real!
+%
+%\end{myitemize}
+%
+%\subsection{Dead Suite Cleanup}
+%%\label{DeadSuiteCleanup}
+%
+%\subsubsection{Normal Shutdown}
+%
+%Cylc waits for any currently running tasks to finish before shutting
+%down cleanly. There will be nothing to clean up. 
+%
+%\subsubsection{Shutdown NOW or Controlled Abort}
+%
+%If a critical error of some kind, or use of \lstinline=cylc stop --now=,
+%results in an immediate suite shutdown while there are still external
+%tasks running, any subsequent cylc messaging calls made by the
+%still-running tasks will fail because the parent suite no longer
+%exists. Depending on the exact circumstances this may result in some 
+%orphaned processes that need to be killed manually.
+%
+%\subsubsection{Uncontrolled Suite Abort}
+%
+%(To Do, check: currently no ill effects - maybe sockets (ports) remain
+%tied up until they time out?).
+%
+%
+%
+%\pagebreak
+
 
 \end{document}
