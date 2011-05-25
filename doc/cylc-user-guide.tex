@@ -1920,7 +1920,7 @@ the hour list headings of any graph sections that the task appears
 in. This is how cylc knows what ``the next cycle time'' for a particular
 task is, when it comes time to spawn a successor.
 
-\subsubsection{Partitioning The Suite Graph}
+\subsubsection{Partitioning The Graph}
 
 Suite dependency graphs can be broken down into {\em dependent pairs}
 where the left side of pair (which may be a single task, or several 
@@ -1941,9 +1941,9 @@ side has an offset. Summarizing:
 This make graphs look clean and concise, because the majority of tasks
 typically only depend on others with the same cycle time.
 
-Now, having explained that graphs are interpreted in a
-pairwise manner, you can optionally chain pairs together intuitively to
-``follow a path'' through the dependency graph. So this,
+Now, having explained that dependency graphs are interpreted in a
+pairwise manner, you can optionally, but intuitively, chain pairs
+together to ``follow a path'' through the graph. So this,
 \begin{lstlisting}
 # SUITE.RC
     graph = """
@@ -2161,7 +2161,7 @@ cylc suites at run time, but they are currently not graphed properly.}
 
 \paragraph{Parenthesized Conditional Triggers}
 
-{\em Parenthesized conditional expressions are not allowed as yet.}
+{\em Parenthesized conditional expressions are currently illegal.}
 Internally cylc can handle this perfectly well, because it transforms 
 prerequisite conditions directly into Python code and gets the 
 interpreter to evaluate the result, {\em but} the cylc-3 suite.rc graph
