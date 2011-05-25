@@ -114,6 +114,8 @@ if $FORCE_COMMANDS; then
     done
 fi
 
+cylc --version > doc/version.txt
+
 #-----------------------------------------------------------------------
 
 cd doc
