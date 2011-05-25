@@ -56,7 +56,7 @@ title = string( default="No title supplied" )
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
-#>\item {\em default:} "No title supplie"d
+#>\item {\em default:} "No title supplied"
 #>\item {\em example:} \lstinline@title = "Suite Foo"@
 #>\end{myitemize}
 
@@ -782,7 +782,7 @@ __many__ = string
 #>\begin{myitemize}
 #>\item {\em section:} [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
-#>\item {\em default:} No description supplied
+#>\item {\em default:} "No description supplied"
 #>\item {\em example:}
 #> \begin{lstlisting}
 #> description = """
