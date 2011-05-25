@@ -27,7 +27,7 @@
 
 # The task wrapper does the following:
 # (1) sends special 'started' message
-# (2) executes the wrapped task, with any commandline arguments
+# (2) executes the wrapped task, with any command line arguments
 # (3) if success: reports all outputs completed, and reports succeeded
 #     if failure: reports failure.
 

@@ -377,7 +377,7 @@ same time (even if registered under different names) unless the suite
 allows that. Task locks do the same for individual tasks (even if
 submitted outside of their suite using 'cylc submit').
 
-The commandline user interface for interrogating the daemon, and
+The command line user interface for interrogating the daemon, and
 for manual lock management, is 'cylc lockclient'.
 
 Use of the lockserver is optional:

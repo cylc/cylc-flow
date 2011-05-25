@@ -42,7 +42,7 @@ updated whenever a task changes state and thus records the most recent
 previous state of the suite. However, cylc also records a special named
 state dump, and logs its filename, before actioning any intervention
 command, and you can choose to restart from one of these (just
-cut-and-paste the filename from the log to the commandline).
+cut-and-paste the filename from the log to the command line).
 
 NOTE: daemonize important suites with the POSIX nohup command:
     nohup cylc [con] restart SUITE YYYYMMDDHH > suite.out 2> suite.err &
@@ -164,7 +164,7 @@ Arguments:
         if oldstoptime != '(none)':
             # the suite had a prescribed stop time when it shut down
             if self.stop_time:
-                # a stop time was given on the restart commandline
+                # a stop time was given on the restart command line
                 if self.stop_time != oldstoptime:
                     # OK, override the old stop time with the new
                     if self.options.keep_finalcycle:

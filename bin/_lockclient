@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     usage = """cylc [control] lockclient|lc [options]
 
-This is the commandline client interface to the cylc lockserver daemon,
+This is the command line client interface to the cylc lockserver daemon,
 for server interrogation and manual lock management.
 
 Use of the lockserver is optional:
@@ -200,7 +200,7 @@ See also:
 
         else:
             # this should not be reached
-            parser.error( "Commandline parsing error!" )
+            parser.error( "Command line parsing error!" )
             #raise SystemExit( "unknown cylc lockserver option" )
 
     except SuiteNotFoundError, x:

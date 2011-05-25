@@ -37,7 +37,7 @@ import socket
 parser = OptionParser( """gcylc [SUITE]
 
 This is the cylc graphical user interface. It is functionally equivalent
-to the commandline interface ('cylc help') in most respects.
+to the command line interface ('cylc help') in most respects.
 
     1/ gcylc &
 This invokes the gcylc main window, which displays suites in your

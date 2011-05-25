@@ -16,9 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# This script allows gcylc to be invoked via the commandline interface
+# This script allows gcylc to be invoked via the command line interface
 # (cylc gcylc) and thereby allows it to be incorporated into
-# the standard commandline self-documentation. This version catches a
+# the standard command line self-documentation. This version catches a
 # common spelling error (gcycl).
 
 echo "TYPO ALERT: 'gcylc' not 'gcycl'."

@@ -72,7 +72,7 @@ suite section (even if include files are nested).
 
 An unquoted list of PATTERNs will be converted to an OR'd pattern.
 
-Note that the order of commandline arguments conforms to grep command usage
+Note that the order of command line arguments conforms to grep command usage
 ('grep PATTERN FILE') not normal cylc command usage ('command SUITE ARGS').
 However, if the second argument is not found to be a registered suite, an
 attempt will be made to action the command with the arguments reversed.

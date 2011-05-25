@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-# Catch a common commandline typo: 'gcycl'.
+# Catch a common command line typo: 'gcycl'.
 # Could be done by shell alias, but this 
 # relieves the cylc user of the burden.
 

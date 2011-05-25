@@ -105,7 +105,7 @@ if $FORCE_COMMANDS; then
     for COMMAND in $(cylc commands); do 
         echo "+ $COMMAND"
         # direct command help into a txt file
-        cylc $COMMAND --help > doc/command-usage/$COMMAND.txt
+        cylc $COMMAND --help | egrep -v '^DONE$' > doc/command-usage/$COMMAND.txt
         # append to a latex file for inclusion in the userguide
         echo "\subsubsection{$COMMAND}" >> doc/commands.tex
         echo "\label{$COMMAND}" >> doc/commands.tex

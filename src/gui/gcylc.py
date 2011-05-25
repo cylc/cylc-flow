@@ -1920,7 +1920,7 @@ The cylc forecast suite metascheduler.
             else:
                 started_by_gcylc = False
                 info_dialog( "This suite is running but it was started from "
-                    "the commandline, so gcylc does not have access its stdout "
+                    "the command line, so gcylc does not have access its stdout "
                     "and stderr streams.").inform()
 
         if running_already and started_by_gcylc or not running_already:
@@ -1983,7 +1983,7 @@ The cylc forecast suite metascheduler.
             foo.run()
 
         else:
-            # connecting a controller to a running suite started by commandline
+            # connecting a controller to a running suite started by command line
             # so no point in connecting to the special stdout and stderr files.
             # User was informed of this already by a dialog above.
             if depgraph:
@@ -2029,7 +2029,7 @@ The cylc forecast suite metascheduler.
             else:
                 started_by_gcylc = False
                 info_dialog( "This suite is running, but it was started from "
-                    "the commandline, so gcylc cannot access its cylc stdout/stderr file.").inform()
+                    "the command line, so gcylc cannot access its cylc stdout/stderr file.").inform()
                 return False
         else:
             # suite not running
@@ -2037,7 +2037,7 @@ The cylc forecast suite metascheduler.
                     "the suite output window will show stdout and stderr "
                     "messages captured the last time(s) the suite was started "
                     "from via the GUI (gcylc cannot access stdout "
-                    "and stderr for suites started by the commandline).").inform()
+                    "and stderr for suites started by the command line).").inform()
 
         # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?
         # a hard-wired prefix makes it possible for us to 
@@ -2054,7 +2054,7 @@ The cylc forecast suite metascheduler.
             stdout = open( prefix + '.out', 'rb' )
         except IOError,x:
             msg = '''This probably means the suite has not yet been started via gcylc
-(if you start a suite on the commandline stdout and stderr redirection is up to you).'''
+(if you start a suite on the command line stdout and stderr redirection is up to you).'''
             warning_dialog( str(x) + '\n' + msg ).warn()
             return False
 

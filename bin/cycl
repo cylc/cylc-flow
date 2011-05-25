@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Catch a common commandline typo: 'cycl'. This could be done by shell
+# Catch a common command line typo: 'cycl'. This could be done by shell
 # alias, but we're relieving the user of the burden.
 
 echo

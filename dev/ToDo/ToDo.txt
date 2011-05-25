@@ -1,6 +1,14 @@
 _______
 GENERAL
 
+* it should be possible to triggere clock-triggered tasks manually
+  prior to their trigger time. (consider also: clock-triggered tasks
+  downstream of the purge root - they won't trigger in the purge
+  simulation if their time is not up yet?)
+
+* recursive purge overhaul? see documentation of limitations in the
+  purge command help.
+
 * dummy_command module should not be needed due to default command in
   suite.rc?
 

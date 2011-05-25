@@ -186,16 +186,16 @@ options relating to suite registration, registration groups are created
 and deleted as required (you don't need to explicitly create group 'foo'
 before registering a suite 'foo:bar', for example).
 
-Most right-click menu items invoke cylc commandline programs inside a
+Most right-click menu items invoke cylc command line programs inside a
 wrapper that captures subprocess stdout and stderr streams and displays
 in a window that updates in real time. These output log windows can be
 closed without affecting the associated subprocess, but you will lose
 access to the output (except in the case of the stdout/stderr from cylc
 itself for suites that are started from a suite control GUI - see below).
 
-If you start a suite from the commandline, what happens to cylc stdout
+If you start a suite from the command line, what happens to cylc stdout
 and stderr is of course entirely up to you (you may want to use
-commandline redirection and/or the posix nohup command).
+command line redirection and/or the posix nohup command).
 
 %h3 Control (original) or Control (graph)
 
@@ -207,7 +207,7 @@ If you start the suite from within the control GUI, or if you connect to
 a suite that was started from a control GUI, the GUI subprocess output
 window will show cylc stdout and stderr as redirected to the files
 $HOME/.cylc/GROUP:NAME.(out|err). If you start a suite from the
-commandline, where cylc stdout and stderr goes is up to you (use 
+command line, where cylc stdout and stderr goes is up to you (use 
 output redirection and/or the posix nohup command, for instance).
 
 %h3 Submit A Task
@@ -218,7 +218,7 @@ the suite.
 %h3 View Cylc Output
 This opens a new view of the suite stdout and stderr files
 $HOME/.cylc/GROUP:NAME.(out|err) used when suites are started from
-within gcylc (if you start a suite from the commandline, where its
+within gcylc (if you start a suite from the command line, where its
 stdout and stderr end up is entirely up to you). This is available from
 running tasks, and finished tasks while they remain in the suite (so
 long as you don't stop and restart the suite).
@@ -685,7 +685,7 @@ def userguide( w, graph=False ):
     if not graph:
         update_tb( tb, "\n\nThis is a real time suite control "
             "and monitoring application for cylc, traditional interface. "
-            "See 'cylc help' for the equivalent commandline functionality." )
+            "See 'cylc help' for the equivalent command line functionality." )
 
         update_tb( tb, "The upper 'light panel' "
             "provides a quick visual overview of the current state "
@@ -703,7 +703,7 @@ def userguide( w, graph=False ):
         update_tb( tb, "\n\nThis is a real time suite control "
             "and monitoring application for cylc, using the new dependency "
             "graph interface. "
-            "See 'cylc help' for the equivalent commandline functionality. " )
+            "See 'cylc help' for the equivalent command line functionality. " )
 
         update_tb( tb, "Graph node colours indicate "
             "task state. The configured suite dependency "

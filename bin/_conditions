@@ -30,7 +30,7 @@ if [[ $# != 0 ]]; then
     if [[ $1 == "--help" ]]; then
         exit 0
     else
-        echo "ERROR: illegal commandline arguments"
+        echo "ERROR: illegal command line arguments"
         exit 1
     fi
 fi

@@ -69,7 +69,7 @@ def commandline_parser():
 
     return parser
 
-# parse commandline options and arguments-----------------------------
+# parse command line options and arguments-----------------------------
 parser = commandline_parser()
 ( options, args ) = parser.parse_args()
 

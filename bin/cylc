@@ -280,7 +280,7 @@ catsum['utility'     ]   = "cycle time arithmetic, filename templating, etc."
 ##multiple cycles run at once, during catchup operation, to the maximum
 ##extent allowed by the suite dependency graph.
 
-usage = """Welcome to the cylc metascheduler commandline interface.
+usage = """Welcome to the cylc metascheduler command line interface.
 The cylc graphical user interface is gcylc.
 Cylc release version: """ + cylc_version + """
 """ + general_usage + """
