@@ -1,7 +1,5 @@
 title = "Cylc User Guide Quick Start Example 3"
-description = "(See the Cylc User Guide)"
-
-#use lockserver = True
+#description = "(See the Cylc User Guide)"
 
 description = """A clock-triggered data-gathering task, a warm-cycled
 model, and two post-processing tasks (one runs every second cycle). The
