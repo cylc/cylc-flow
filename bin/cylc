@@ -409,12 +409,16 @@ args = sys.argv[1:]
 if len(args) == 1:
     if args[0] == 'categories':
         # secret argument for document processing
-        for key in catsum.keys():
+        keys = catsum.keys()
+        keys.sort()
+        for key in keys:
             print key
         sys.exit(0)
     if args[0] == 'commands':
         # secret argument for document processing
-        for key in comsum.keys():
+        keys = comsum.keys()
+        keys.sort()
+        for key in keys:
             print key
         sys.exit(0)
     if is_help( args[0] ):
