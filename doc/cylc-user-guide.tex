@@ -587,12 +587,12 @@ $ export CYLC_DIR=/path/to/cylc/installation/
 $ . $CYLC_DIR/environment.sh
 \end{lstlisting}
 Put this into your \lstinline=.profile= login script to configure
-cylc access automatically. Note that the variable \lstinline=$CYLC_DIR=
+cylc access automatically. The variable \lstinline=$CYLC_DIR=
 is required inside the environment script, so don't skip the export
-step.  You should now be able to use cylc:
+step.  You should now be able to run cylc commands:
 \begin{lstlisting}
 $ cylc --version
-3.0.0
+3.x.y
 \end{lstlisting}
 
 % TO DO: SYSTEM LEVEL INSTALL INSTRUCTIONS
@@ -627,17 +627,18 @@ use \lstinline=cylc db print --central= on the command line.
 \lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
 \begin{lstlisting}
 $ cylc db print --central
- admin:examples:CUG1  "Cylc User Guide Example 1"  /home/admin/cylc/examples/CUG1
- admin:examples:CUG73  "Cylc User Guide Dependency Graph Example"  /home/admin/cylc/examples/CUG7.3
- admin:examples:CUG74  "A two-task test suite"  /home/admin/cylc/examples/CUG7.4
- admin:examples:CUG_QS1  "Cylc User Guide Quick Start Example 1"  /home/admin/cylc/examples/CUG5/one
- admin:examples:CUG_QS2  "Cylc User Guide Quick Start Example 2"  /home/admin/cylc/examples/CUG5/two
- admin:examples:CUG_QS3  "Cylc User Guide Quick Start Example 3"  /home/admin/cylc/examples/CUG5/three
- admin:examples:FFHook  "family failure hook script example"  /home/admin/cylc/examples/AutoCleanup/FamilyFailHook
- admin:examples:FFTask  "family failure cleanup task example"  /home/admin/cylc/examples/AutoCleanup/FamilyFailTask
+ admin:examples:CUG1    "Cylc User Guide Example 1"  /home/admin/cylc/examples/CUG1
+ admin:examples:CUG73   "Cylc User Guide <SNIP>"     /home/admin/cylc/examples/CUG7.3
+ admin:examples:CUG74   "A two-task test suite"      /home/admin/cylc/examples/CUG7.4
+ admin:examples:CUG_QS1 "Cylc User Guide <SNIP> "    /home/admin/cylc/examples/CUG5/one
+ admin:examples:CUG_QS2 "Cylc User Guide <SNIP>"     /home/admin/cylc/examples/CUG5/two
+ admin:examples:CUG_QS3 "Cylc User Guide <SNIP>"     /home/admin/cylc/examples/CUG5/three
+ admin:examples:FFHook  "family failure hook <SNIP>" /home/admin/cylc/examples/<SNIP>
+ admin:examples:FFTask  "family failure clean <SNIP>"/home/admin/cylc/examples/<SNIP>
 DONE
 \end{lstlisting}
 \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
+(some strings above have been truncated to reduce the line length)
 
 \subsection{Run The Automated Database Test} 
 
@@ -660,9 +661,9 @@ time by right-clicking on the temporary test suite when it appears in
 the gcylc private database window, and opening up a suite control GUI.
 
 %\pagebreak
-\section{Some Screenshots}
+\section{Cylc Screenshots}
 
-The following few screenshots provide a glimpse of what the cylc user
+The following screenshots provide a glimpse of what the cylc user
 interface looks like.
 
 \begin{myitemize}
@@ -690,7 +691,7 @@ interface looks like.
         \includegraphics[width=0.8\textwidth]{../images/screenshots/db.png}
     \end{center}
 \caption[gcylc: Private Suite Database]{\small
-The gcylc GUI showing the private suite database (user-specific).}
+gcylc showing a private suite database.}
 \label{fig-db}
 \end{figure} 
 
@@ -699,7 +700,7 @@ The gcylc GUI showing the private suite database (user-specific).}
         \includegraphics[width=0.8\textwidth]{../images/screenshots/cdb.png}
     \end{center}
 \caption[gcylc: Central Suite Database]{\small
-The gcylc GUI showing the central suite database (all users).}
+gcylc showing the central suite database.}
 \label{fig-cdb}
 \end{figure} 
 
@@ -790,7 +791,18 @@ same time. In other words, some tasks may pass through the ``current cycle''
 
 In this section we will work through some basic cylc functionality using
 the ``QuickStart'' example suites, which should have been registered in
-the central suite database during cylc installation. 
+the central suite database during cylc installation, 
+
+\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
+\begin{lstlisting}
+$ cylc database print --central | grep Quick
+ admin:examples:CUG_QS1 "<SNIP>Quick Start Example 1" /home/admin/cylc/examples/CUG5/one
+ admin:examples:CUG_QS2 "<SNIP>Quick Start Example 2" /home/admin/cylc/examples/CUG5/two
+ admin:examples:CUG_QS3 "<SNIP>Quick Start Example 3" /home/admin/cylc/examples/CUG5/three
+DONE
+\end{lstlisting}
+\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
+(suite titles have been truncated above to reduce line length).
 
 \subsection{Configuring Your Environment For Cylc}
 
@@ -802,9 +814,13 @@ cylc installations just source the appropriate environment script.}
 # .profile
 export CYLC_DIR=/path/to/cylc/installation
 . $CYLC_DIR/environment.sh
-
+\end{lstlisting}
+The variable \lstinline=$CYLC_DIR= is required inside the environment
+script, so don't skip the export step. You should now be able to run
+cylc commands:
+\begin{lstlisting}
 $ cylc --version
-3.0.0
+3.x.y
 \end{lstlisting}
 
 You should also specify the graphical and terminal editors you want to
@@ -894,18 +910,18 @@ You can register new suites directly in your private database using gcylc
 or \lstinline=cylc db register=, or you can import suites
 from the central database.
 
-Find the suite registered under the `admin:QuickStart' group in the
+Find the suites registered under the `admin:examples' group in the
 central database (replace `admin' with the name of the user account
 under which cylc was installed). If there are a lot of suites in the
 central database, use View $\rightarrow$ Filter to restrict the view
 (you can leave the dialog open and refilter as often as you like).
 
-Now right click on the QuickStart group and choose `Import'; this will
+Now right click on the examples group and choose `Import'; this will
 copy the whole group of suites to your private database. A dialog box
 will pop up allowing you to register your copy under a different group
 (leave this as it is) and a destination for the suite definition
 directories in the group (choose something like
-\lstinline=$HOME/suites/QuickStart=). 
+\lstinline=$HOME/suites/examples=). 
 
 {\em Note that you can also import individual suites, and that
 registration groups do not need to be created explicitly, they
@@ -918,26 +934,40 @@ confirm that you now have a copy of the example suites.
 
 Here's how to do the same thing on the command line:
 
-%\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
+\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
 \begin{lstlisting}
-# Check that the QuickStart example suites are registered in the central database,
-$ cylc db print --central | grep QuickStart
-admin:QuickStart:foo  "(foo)" /home/admin/cylc/examples/QuickStart/a
-admin:QuickStart:bar  "(bar)" /home/admin/cylc/examples/QuickStart/b
-admin:QuickStart:baz  "(baz)" /home/admin/cylc/examples/QuickStart/c
-
-# Import the group of suites,
-$ cylc db import admin:QuickStart: $HOME/suites/QuickStart
-# TBD!
-
-# Check the import was successful,
-$ cylc db print | grep QuickStart
-QuickStart:foo  "(foo)" /home/oliverh/suites/QuickStart/a
-QuickStart:bar  "(bar)" /home/oliverh/suites/QuickStart/b
-QuickStart:baz  "(baz)" /home/oliverh/suites/QuickStart/c
+$ cylc db import admin:examples: $HOME/suites/examples
+Matched:
+   admin:examples:CUG1
+   admin:examples:CUG73
+   admin:examples:CUG74
+   admin:examples:CUG_QS1
+   admin:examples:CUG_QS2
+   admin:examples:CUG_QS3
+   admin:examples:FFHook
+   admin:examples:FFTask
+Locking database /home/oliverh/.cylc/LDB/db
+REGISTERED examples:CUG1 "<SNIP> Example 1" /home/oliverh/suites/examples/CUG1
+Copying suite definition
+REGISTERED examples:CUG73 "<SNIP> Graph Example" /home/oliverh/suites/examples/CUG73
+Copying suite definition
+REGISTERED examples:CUG74 "A two-task test suite" /home/oliverh/suites/examples/CUG74
+Copying suite definition
+REGISTERED examples:CUG_QS1 "<SNIP> Example 1" /home/oliverh/suites/examples/CUG_QS1
+Copying suite definition
+REGISTERED examples:CUG_QS2 "<SNIP> Example 2" /home/oliverh/suites/examples/CUG_QS2
+Copying suite definition
+REGISTERED examples:CUG_QS3 "<SNIP> Example 3" /home/oliverh/suites/examples/CUG_QS3
+Copying suite definition
+REGISTERED examples:FFHook  "<SNIP> script example"  /home/oliverh/suites/examples/FFHook
+Copying suite definition
+REGISTERED examples:FFTask  "<SNIP> task example"  /home/oliverh/suites/examples/FFTask
+Copying suite definition
+Unlocking database /home/oliverh/.cylc/LDB/db
+DONE
 \end{lstlisting}
-
-%\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
+(suite title strings have been truncated again to reduce line length).
+\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 
 \subsubsection{Private Suite Database Actions}
 
@@ -961,11 +991,11 @@ command line, you can:
 \end{myenumerate}
 
 
-\subsection{View The QuickStart:foo Suite Definition}
+\subsection{View The examples:CUG\_QS1 Suite Definition}
 
 Right-click on the suite and choose `Edit', or use the edit command,
 \begin{lstlisting}
-$ cylc edit QuickStart:foo
+$ cylc edit examples:CUG_QS1
 \end{lstlisting}
 to view the suite definition (suite.rc file) in your editor. 
 
@@ -988,8 +1018,8 @@ You should see the following suite.rc file in your editor:
 
 This defines a complete, valid, runnable suite. To understand suite.rc
 files in detail, read {\em Suite Definition}
-(Section~\ref{SuiteDefinition}). But here's a summary of what this 
-particular suite.rc file means, in words: 
+(Section~\ref{SuiteDefinition}); but here's how to interpreset this
+suite.rc file means: 
 
 At 0, 6, 12, and 18 hours each day a clock-triggered task called GetData
 triggers 1 hour after the wall clock reaches its nominal cycle
@@ -998,8 +1028,8 @@ and a task called PostA triggers when Model is finished. Additionally,
 Model depends on its own previous instance from 6 hours earlier; and twice
 per day at 6 and 18 hours another task called PostB also triggers off Model.
 
-Note that all the tasks in this suite can run in parallel with their own
-previous instances if the opportunity arises (i.e.\ if their prerequisites
+All the tasks in this suite can run in parallel with their own previous
+instances if the opportunity arises (i.e.\ if their prerequisites
 happen to be satisfied before the previous instance is finished).
 Most tasks should be capable of this (see {\em Suite Design Principles 
 and Suggestions}, Section~\ref{SuiteDesignPrinciples}) but if necessary
@@ -1020,12 +1050,12 @@ suite graph only applies at suite startup.
 The optional visualization section, fairly obviously, just defines
 properties used to plot the suite graph, which we'll do next.
 
-\subsection{Plot The QuickStart:foo Dependency Graph}
+\subsection{Plot The examples:CUG\_QS1 Dependency Graph}
 
-Right-click on the QuickStart:foo suite in gcylc and choose Graph; or on
+Right-click on the examples:CUG\_QS1 suite in gcylc and choose Graph; or on
 the command line,
 \begin{lstlisting}
-$ cylc graph QuickStart:foo 2011052300 2011042318 &
+$ cylc graph examples:CUG_QS1 2011052300 2011042318 &
 \end{lstlisting}
 This should pop up a zoomable, pannable, graph viewer showing
 the graph of Figure~\ref{fig-QuickStartA-graph18}. 
@@ -1037,15 +1067,15 @@ you save the file.}
     \begin{center}
         \includegraphics[width=0.7\textwidth]{../images/screenshots/QuickStartA-graph18.png}
     \end{center}
-\caption{\small The QuickStart:foo suite dependency graph.}
+\caption{\small The examples:CUG\_QS1 suite dependency graph.}
 \label{fig-QuickStartA-graph18}
 \end{figure}
 
-\subsection{Run The QuickStart:foo Suite}
+\subsection{Run The examples:CUG\_QS1 Suite}
 
 Each cylc task has a command line that is called to invoke the real 
 task processing when the task is ready to run. No task command lines have
-been defined in the QuickStart:foo suite so they all default to a  
+been defined in our example suite so the tasks all default to a  
 {\em dummy} command line like this:
 \begin{lstlisting}
 # SUITE.RC
@@ -1069,7 +1099,7 @@ and choosing `Control (graph)'.  You can also open an instance of
 original text treeview control GUI on the same suite, if you like.
 
 Multiple GUIs running at the same time will automatically connect to
-the same running suite, they won't try to run separate instances). 
+the same running suite (they won't try to run separate instances). 
 Note also that if you start a suite running via a control GUI
 and then shut down the GUI, the suite will keep running and you 
 can reconnect to it by simply opening another control GUI instance.
@@ -1091,27 +1121,27 @@ or otherwise (00 or 12) like
 Figure~\ref{fig-QuickStartA-ControlStart00}.
 
 \begin{figure}
-\begin{minipage}[t]{0.5\textwidth}
     \begin{center}
-        \includegraphics[width=\textwidth]{../images/screenshots/QuickStartA-ControlStart06.png}
+        \includegraphics[width=0.8\textwidth]{../images/screenshots/QuickStartA-ControlStart06.png}
     \end{center}
-    \caption{\small foo}
+    \caption{\small Suite examples:CUG\_QS1 started with an initial
+    cycle time ending in 06 or 18 hours.}
     \label{fig-QuickStartA-ControlStart06}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.5\textwidth}
+\end{figure} 
+
+\begin{figure}
     \begin{center}
-        \includegraphics[width=\textwidth]{../images/screenshots/QuickStartA-ControlStart00.png}
+        \includegraphics[width=0.8\textwidth]{../images/screenshots/QuickStartA-ControlStart00.png}
     \end{center}
-    \caption{\small bar}
+    \caption{\small Suite examples:CUG\_QS1 started with an initial
+    cycle time ending in 00 or 12 hours.}
     \label{fig-QuickStartA-ControlStart00}
-\end{minipage}
 \end{figure} 
 
 The reason for the difference in graph structure between the two start
 cycles is this: cylc starts up with every task present, in the waiting
-state (blue), at the intitial cycle time {\em or} at the first
-subsequent valid cycle time for the task - and PostB is not valid at 00
+state (blue), at the initial cycle time {\em or} at the first
+subsequent valid cycle time for the task - and PostB does not run at 00
 or 12. The off-white tasks are from the base graph and aren't actually
 present in the suite as yet (so they will not appear in the non
 graph-based suite control GUI).
@@ -1129,7 +1159,7 @@ and~\ref{fig-QuickStartA-ControlRunning}.
     \begin{center}
         \includegraphics[width=\textwidth]{../images/screenshots/QuickStartA-ControlRunning.png}
     \end{center}
-    \caption{\small foo}
+    \caption{\small foo.}
     \label{fig-QuickStartA-ControlRunning}
 \end{minipage}
 \hfill
@@ -1137,7 +1167,7 @@ and~\ref{fig-QuickStartA-ControlRunning}.
     \begin{center}
         \includegraphics[width=\textwidth]{../images/screenshots/QuickStartA-ControlStalled.png}
     \end{center}
-    \caption{\small bar}
+    \caption{\small bar.}
     \label{fig-QuickStartA-ControlStalled}
 \end{minipage}
 \end{figure} 
@@ -1147,7 +1177,8 @@ not clock-triggered. The clock-triggered GetData tasks then all go off
 at once because they have no prerequisites (i.e.\ they do not have to
 wait on any upstream tasks), their trigger time has long passed (the
 initial cycle time was in the past), and they are not sequential tasks
-(so they are able to run in parallel).
+(so they are able to run in parallel - try declaring GetData
+sequential to see the difference).
 They don't spawn beyond four cycles ahead though thanks to the suite 
 ``runahead limit'', which is set to 12 hours in the suite.rc file. The
 runahead limit is designed to stop free tasks like this from running off
@@ -1190,7 +1221,7 @@ Well see how to handle this properly shortly.
 
 \subsubsection{Shutting Down And Restarting A Suite}
 
-Having watched the QuickStart:foo suite run for a while, choose Stop from
+Having watched the examples:CUG\_QS1 suite run for a while, choose Stop from
 the Control menu, or \lstinline=cylc stop=, to shut it down. The default
 stop method waits for any tasks that are currently running to finish
 before shutting the suite down, so that the final recorded suite state
@@ -1203,10 +1234,10 @@ state dump, and logs its name, prior to actioning any intervention, and
 you can restart a suite from one of these states, rather than the 
 default most recent state, in case you make a mistake.}
 
-\subsection{QuickStart:bar - Handling Model Cold Starts Properly}
+\subsection{examples:CUG\_QS2 - Handling Model Cold Starts Properly}
 
-Now take a look at the QuickStart:bar suite, which is a minor modification 
-of QuickStart:foo. The suite.rc file has a new {\em cold start} task called
+Now take a look at the examples:CUG\_QS2 suite, which is a minor modification 
+of examples:CUG\_QS1. The suite.rc file has a new {\em cold start} task called
 ColdModel,
 
 \begin{lstlisting}
@@ -1234,7 +1265,7 @@ self {\em or} ColdModel in the same cycle.
     \begin{center}
         \includegraphics[width=0.7\textwidth]{../images/screenshots/QuickStartB-graph18.png}
     \end{center}
-\caption{\small The QuickStart:bar suite dependency graph showing a model cold start task.}
+\caption{\small The examples:CUG\_QS2 dependency graph showing a model cold start task.}
 \label{fig-QuickStartB-graph18}
 \end{figure}
 
@@ -1256,14 +1287,14 @@ starts - in this case the cold start task would be a dummy task that
 simply reports successful completion in order to satisfy the initial
 previous-cycle dependence of the model.
 
-If you run QuickStart:bar you'll see that no manually triggering is required
+If you run examples:CUG\_QS2 you'll see that no manually triggering is required
 to get the suite started this time.
 
 
-\subsection{QuickStart:baz - With Complete Task Implementation}
+\subsection{examples:CUG\_QS3 - With Task Implementation}
 
-The QuickStart:baz suite is the same as QuickStart:bar except that its
-tasks run real scripts, located in the suite bin directory. The task 
+The suite examples:CUG\_QS3 is the same as examples:CUG\_QS2 except that
+its tasks run real scripts, located in the suite bin directory. The task 
 scripts don't know about each other or the suite, but they generate
 output files and consume input files in way that requires them to 
 run by the graph of Figure~\ref{fig-QuickStartB-graph18} (or else
@@ -1392,12 +1423,6 @@ can even run multiple copies of the same example suite at once (even
 multiple {\em instances} of the exact same suite, in fact), under
 different registrations, because the suite group and name are used in
 all I/O paths.
-
-%The ``QuickStart:baz'' and ``intro'' examples have actual external task
-%implementations, in the form of scripts in the suite bin directory, that
-%behave like real tasks: each generates cycle-specific output files 
-%required as input by other tasks, and if not executed in the proper
-%order they will abort with a {\em file not found} error, or similar.
 
 You can copy an example suite in an instant, using the cylc commands or
 GUI, make a few changes according to your needs, and then run it to see
