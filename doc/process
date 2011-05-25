@@ -127,6 +127,6 @@ cd doc
 #done
 #cd ..
 
-pdflatex userguide.tex
-#latex userguide.tex
-#dvipdf userguide.dvi
+pdflatex cylc-user-guide.tex
+#latex cylc-user-guide.tex
+#dvipdf cylc-user-guide.dvi

@@ -35,14 +35,14 @@ chmod +x examples/UG1/bin/*
 chmod +x examples/QuickStart/three/bin/*
 chmod +x examples/AutoCleanup/*/bin/*
 
-echo "SETTING VERSION TAG IN MAIN COMMAND AND USERGUIDE"
+echo "SETTING VERSION TAG IN MAIN COMMAND AND USER GUIDE"
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" src/gui/gcylc.py
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" src/gui/SuiteControl.py
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" bin/cylc
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" doc/userguide.tex
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" doc/cylc-user-guide.tex
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" README
 
-echo "MAKING DOCUMENTATION (USERGUIDE)"
+echo "MAKING DOCUMENTATION (USER GUIDE)"
 # make sure documentation processing uses the release versions
 # (which have the correct version tag inserted).
 export PATH=bin:$PATH
@@ -63,16 +63,16 @@ doc/process
 
 echo "DELETING DOCUMENTATION SOURCE"
 # copy and restore from doc/:
-#  1/ the PDF userguide
+#  1/ the PDF user guide
 #  2/ SuiteDesign.txt
 #  3/ suite.rc.README
 # (2 and 3 are required by 'cylc configure', which copies them into
 # suite defintion directores for the endless edification of users).
-cp doc/userguide.pdf .
+cp doc/cylc-user-guide.pdf .
 cp doc/SuiteDesign.txt .
 rm -r doc
 mkdir doc
-mv userguide.pdf doc
+mv cylc-user-guide.pdf doc
 mv SuiteDesign.txt doc
 
 echo "DELETING DEV DIRECTORY"
