@@ -401,7 +401,7 @@ class regdb(object):
         dir,descr = self.get( suite )
         if not verbose:
             print prefix, self.suiteid( owner,group,name ),
-	        if not re.match( '".*"', descr ):
+            if not re.match( '".*"', descr ):
                 print ' "' + descr  + '" ',
             else:
                 print descr,

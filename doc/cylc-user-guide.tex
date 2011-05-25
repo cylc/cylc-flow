@@ -1155,21 +1155,21 @@ Figures~\ref{fig-QuickStartA-ControlRunning}
 and~\ref{fig-QuickStartA-ControlRunning}. 
 
 \begin{figure}
-\begin{minipage}[t]{0.5\textwidth}
     \begin{center}
-        \includegraphics[width=\textwidth]{../images/screenshots/QuickStartA-ControlRunning.png}
+        \includegraphics[width=0.8\textwidth]{../images/screenshots/QuickStartA-ControlRunning.png}
     \end{center}
-    \caption{\small foo.}
+    \caption{\small Suite examples:CUG\_QS1 running, showing multiple
+    instances of the clock-triggered task GetData running at once.}
     \label{fig-QuickStartA-ControlRunning}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.5\textwidth}
+\end{figure} 
+\begin{figure}
     \begin{center}
-        \includegraphics[width=\textwidth]{../images/screenshots/QuickStartA-ControlStalled.png}
+        \includegraphics[width=0.8\textwidth]{../images/screenshots/QuickStartA-ControlStalled.png}
     \end{center}
-    \caption{\small bar.}
+    \caption{\small Suite examples:CUG\_QS1 running, but stalled, after 
+    the clock-triggered GetData tasks have finished, because of Model's
+    previous-cycle dependence (see main text).}
     \label{fig-QuickStartA-ControlStalled}
-\end{minipage}
 \end{figure} 
 
 The Prep task runs immediately because it has no prerequisites and is
@@ -1182,9 +1182,11 @@ sequential to see the difference).
 They don't spawn beyond four cycles ahead though thanks to the suite 
 ``runahead limit'', which is set to 12 hours in the suite.rc file. The
 runahead limit is designed to stop free tasks like this from running off
-too far into the future. It is normally of no conseqence in real time
-operation because the clock triggered tasks are then constrained by the
-wall clock, and the other (downstream) tasks have to wait on them.
+too far into the future. It is of no conseqence in normal real time
+operation\footnote{So long as it is sufficient to span the normal
+range of cycle times present in the suite.} because the clock triggered
+tasks are then constrained by the wall clock, and the other tasks have
+to wait on them.
 
 \subsubsection{Viewing Task States}
 
@@ -1197,9 +1199,10 @@ Figure~\ref{fig-QuickStartA-ModelState}.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.5\textwidth]{../images/screenshots/QuickStartA-ModelState.png}
+        \includegraphics[width=0.4\textwidth]{../images/screenshots/QuickStartA-ModelState.png}
     \end{center}
-    \caption{\small foo}
+    \caption{\small Viewing current task state after right-clicking on a task in gcylc. The
+    same information is available from the \lstinline=cylc show= command.}
     \label{fig-QuickStartA-ModelState}
 \end{figure} 
 
@@ -1280,7 +1283,7 @@ after it had to skip one or more cycles due to problems, without having
 to restart the rest of the suite.
 
 {\em A model cold start task in a real suite often submits a real ``cold
-start forecast'' to generates the previous-cycle input files required by
+start forecast'' to generate the previous-cycle input files required by
 its associated model}.  Or it could just stand in for some external
 spinup process, or similar, that has to be completed before the suite
 starts - in this case the cold start task would be a dummy task that
@@ -1301,7 +1304,7 @@ run by the graph of Figure~\ref{fig-QuickStartB-graph18} (or else
 they will fail to find their input files).
 
 The suite gets these tasks to run together out of a common workspace,
-in such a way that they run in the proper sequence. 
+such that they run in the proper sequence. 
 
 By studying this suite and its tasks, and by making quick copies of 
 it to modify and run, you should be able to learn a lot about how 
@@ -1314,8 +1317,8 @@ to build real cylc suites.
 When cylc runs a suite it writes warnings and other informative messages,
 such as when and how each task is submitted, to the stdout stream. If 
 you start a suite at the command line, what happens to this output is
-entirely up to you. If you start a suite via gcylc, the output is 
-redirected to a special file, \lstinline=$HOME/.cylc/SUITE.out= that can
+entirely up to you. If you start a suite via gcylc, however, the output is 
+directed to a special file, \lstinline=$HOME/.cylc/SUITE.out= that can
 be accessed again later if reconnect to the suite with a new control GUI
 instance.
 
@@ -1391,8 +1394,9 @@ FILE: /home/oliverh/suites/examples/Intro/bin/D.sh
 After editing a suite always validate it to check for errors, via 
 gcylc or the \lstinline=cylc validate SUITE= command.
 Figure~\ref{fig-validate-eg} shows validation of 
-examples:CUG73. Note the warnings that the tasks 
-will be dummied out, as discussed above. 
+examples:CUG73 (unfortunately the suite was registered under 
+a different name when the screenshots were taken!). Note the warnings
+that the tasks will be dummied out, as discussed above. 
 
 \begin{figure}
     \begin{center}
@@ -1422,7 +1426,7 @@ implementations that generate real (albeit zero-sized) output files. You
 can even run multiple copies of the same example suite at once (even
 multiple {\em instances} of the exact same suite, in fact), under
 different registrations, because the suite group and name are used in
-all I/O paths.
+all I/O paths (without being hardwired anywhere).
 
 You can copy an example suite in an instant, using the cylc commands or
 GUI, make a few changes according to your needs, and then run it to see
@@ -3033,17 +3037,20 @@ need to run on the same remote host}.
 \begin{lstlisting}
 # SUITE.RC
 
-# GLOBAL
+# GLOBAL remote host settings
 owner = alice
 remote host = foo.niwa.co.nz
 remote cylc directory = /path/to/remote/cylc/installation/on/foo
 remote suite directory = /path/to/remote/suite/definition/on/foo
 job submission method = loadleveler
 [tasks]
-    [[foo]]
-        # TASK-SPECIFIC
+    [[TaskA]]
+        # (no task specific remote host settings: this task runs on foo)
+        # ...
+    [[TaskB]]
+        # TASK remote host settings:
         owner = bob
-        remote host = bar.niwa.co.nz
+        remote host = bar.niwa.co.nz  # but this one runs on bar
         remote cylc directory = /path/to/remote/cylc/installation/on/bar
         remote suite directory = /path/to/remote/suite/definition/on/bar
         job submission method = at_now
@@ -3065,12 +3072,27 @@ the cylc environment script).
         directory or to any other files stored there.
 \end{myitemize}
 
-{\em Note that you can easily run the cylc example suites in live mode
-on a remote host. For the suites with real task implementations that 
-work with ``real'' files, you'll have to run all tasks on the same
-remote host. To distribut a suite across several hosts you must 
-arrange (using additional tasks) to transfer files between the hosts
-as required to satisfy the real I/O dependencies.}
+{\em Note that you can easily run the cylc example suites host by simply
+setting the global remote host suite.rc items (and ensuring that cylc
+is installed on the remote host)}. For the example suites with real task
+implementations that work with ``real'' files, you'll have to run {\em
+all} tasks on the same remote host so that they can all access their 
+required input and output files. To distribute a suite across several
+hosts you must arrange (using additional tasks) to transfer files
+between the hosts as required to satisfy the real I/O dependencies.
+
+\subsubsection{Remote Task Log Directories}
+
+The stdout and stderr from local tasks is directed into files in the
+{\em job submission log directory} (specified in the suite.rc file) 
+as explained in Section~\ref{WhitherStdoutAndStderr}. 
+
+{\em Remote task stdout and stderr, however, currently ends up in the 
+remote task owner's home directory}, ignoring any suite.rc job log
+directory settings. This is simply because at cylc's home institution
+we now have cross platform job submission via loadleveler so we don't
+need cylc's remote task functionality \dots and consequently cylc 
+needs updating slightly in this respect.
         
 %\pagebreak
 
@@ -3158,6 +3180,7 @@ scheduler or cross-platform resource manager such as {\em loadleveler}
 
 
 \subsection{Whither Task stdout And stderr?}
+\label{WhitherStdoutAndStderr}
 
 When a task is ready to run cylc generates task-specific stdout and
 stderr filenames containing the task name, cycle time, and a random
@@ -3725,6 +3748,7 @@ been disabled in the current release pending testing.}
 %\pagebreak
 
 
+
 \section{Advanced Topics}
 
 \begin{myitemize}
@@ -3744,14 +3768,10 @@ been disabled in the current release pending testing.}
 
 %\pagebreak
 
-\section{Suite Design Principles And Suggestions}
+\section{Suite Design Principles}
 \label{SuiteDesignPrinciples}
 
-Matters pertaining to simplicity, flexibility,
-efficiency, and portability of cylc suites.
-
-\subsection{Use Cylc's Cycle Time Offset Utilities}
-TBD
+%Simplicity, flexibility, efficiency, and portability of cylc suites.
 
 \subsection{Make Fine-Grained Suites} 
 \label{Granularity}
@@ -3846,6 +3866,18 @@ also enables the previous task rerunnability recommendation by avoiding
 overwrite of important files from one cycle to the next. Cylc has a
 powerful utilities for cycle time offset based filename templating and
 housekeeping.
+
+\subsubsection{Use Cylc's Cycle Time Filename Template Utility}
+
+The command line utility program \lstinline=cylc template=
+determines filenames based on a template string containing
+YYYYMMDDHH (or variations thereof) by substituting the
+current cycle time, or some offset from it, into the template.
+This can be used in the suite.rc environment sections, or in
+task implementation scripts if necessary, to instantly generate cycle
+time appropriate filenames for any purpose in the suite.
+
+See \lstinline=cylc util template help= for more information.
 
 \subsection{How To Manage Input/Output File Dependencies}
 \label{HandlingDependencies}

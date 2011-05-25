@@ -1,6 +1,8 @@
 _______
 GENERAL
 
+* remote job log directory for remote tasks.
+
 * it should be possible to triggere clock-triggered tasks manually
   prior to their trigger time. (consider also: clock-triggered tasks
   downstream of the purge root - they won't trigger in the purge
