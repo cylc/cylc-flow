@@ -31,8 +31,8 @@ echo "SETTING EXECUTABLE PERMISSIONS"
 chmod +x bin/*
 chmod +x util/*
 chmod +x doc/process
-chmod +x examples/UG1/bin/*
-chmod +x examples/QuickStart/three/bin/*
+chmod +x examples/CUG1/bin/*
+chmod +x examples/CUG5/three/bin/*
 chmod +x examples/AutoCleanup/*/bin/*
 
 echo "SETTING VERSION TAG IN MAIN COMMAND AND USER GUIDE"
