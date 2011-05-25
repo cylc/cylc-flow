@@ -252,7 +252,7 @@ top level cylc log directory = string( default = '$HOME/.cylc/logging' )
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
 #>\item {\em default:} \lstinline=$HOME/.cylc/logging=.
-#>\item {\em example:} \lstinline@top level cylc log directory = $HOME/CylcLogs@
+#>\item {\em example:} \lstinline@top level cylc log directory = $HOME/logging@
 #>\end{myitemize}
 
 roll log at startup = boolean( default=True )
@@ -310,7 +310,7 @@ job submission log directory = string( default='$HOME/CylcLogs/$CYLC_SUITE_GROUP
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
 #>\item {\em default:} \lstinline=$HOME/CylcLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME=
-#>\item {\em example:} \lstinline@job submission log directory = $HOME/Logs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME@
+#>\item {\em example:} \lstinline@job submission log directory = $HOME/Logs/$CYLC_SUITE@
 #>\end{myitemize}
 
 #>IGNORE
@@ -628,7 +628,7 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em type:} list of task names
 #>\item {\em legal values:}
 #>\item {\em default:} empty list
-#>\item {\em example:} \lstinline@cold start = ModelA, PostProcB@
+#>\item {\em example:} \lstinline@sequential = ModelA, PostProcB@
 #>\end{myitemize}
 
     one off = force_list( default=list())
@@ -1324,7 +1324,7 @@ default edge attributes = force_list( default=list('color=black'))
 [cylc local environment]
 #> Use this section to add variables to the environment in which cylc
 #> itself is running. These variables will be available to processes
-#> spawned directly by cylc itself, namely timeout and alert hook
+#> spawned directly by cylc, namely timeout and alert hook
 #> scripts. {\em Do not use this section to alter the task execution
 #> environment - use the plain [environment] sections for that - 
 #> variables defined in this section will only be available 
