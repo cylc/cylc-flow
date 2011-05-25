@@ -1,4 +1,4 @@
-title = userguide example suite
+title = "Cylc User Guide Example 1"
 
 #        B(T-6)-> B -> E   
 #                / \   
@@ -7,12 +7,14 @@ title = userguide example suite
 #        C(T-6)-> C -> F 
 #       
 
-description = """Models A.sh, B.sh, and C.sh; post processing tasks'
-D.sh, E.sh, F.sh; and data collection task X.sh. The tasks are not
-cylc-aware, have their own I/O directories, and abort if their 
-required input files are not present. This suite configures them
-all to use a common I/O workspace, except for private running
-directories for the restart files of the warm-cycled models."""
+description = """This implements the suite that illustrates the
+Cylc User Guide Introduction. Models A.sh, B.sh, and C.sh; post
+processing tasks D.sh, E.sh, F.sh; and clock-triggered data collection
+task X.sh. The scripts are not cylc-aware, have their own I/O
+directories, and abort if their required input files are not present.
+This suite configures them all to use a common I/O workspace, except for
+private running directories for the restart files of the warm-cycled
+models."""
 
 use lockserver = True
 

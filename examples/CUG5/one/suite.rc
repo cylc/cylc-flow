@@ -1,5 +1,5 @@
-title = "Quick Start Example 1"
-description = "TBD"
+title = "Cylc User Guide Quick Start Example 1"
+description = "(See the Cylc User Guide)"
 
 runahead limit in hours = 12
  

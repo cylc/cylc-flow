@@ -1,4 +1,5 @@
-title = a simple example suite
+title = "Cylc User Guide Quick Start Example 3"
+description = "(See the Cylc User Guide)"
 
 #use lockserver = True
 

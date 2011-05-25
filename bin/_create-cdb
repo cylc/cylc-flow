@@ -55,8 +55,8 @@ cylc register examples:CUG_QS1 $CYLC_DIR/examples/CUG5/one
 cylc register examples:CUG_QS2 $CYLC_DIR/examples/CUG5/two
 cylc register examples:CUG_QS3 $CYLC_DIR/examples/CUG5/three
 
-cylc register examples:CUG7 $CYLC_DIR/examples/CUG7
 cylc register examples:CUG73 $CYLC_DIR/examples/CUG7.3
+cylc register examples:CUG74 $CYLC_DIR/examples/CUG7.4
 
 cylc register examples:FFHook $CYLC_DIR/examples/AutoCleanup/FamilyFailHook
 cylc register examples:FFTask $CYLC_DIR/examples/AutoCleanup/FamilyFailTask

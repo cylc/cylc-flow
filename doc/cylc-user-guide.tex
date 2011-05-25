@@ -38,7 +38,7 @@
 \definecolor{keywords}{rgb}{0.7,0.1,1.0}
 %\definecolor{comments}{rgb}{0.0,0.7,0.8}
 \definecolor{comments}{rgb}{1.0,0.0,0.0}
-\definecolor{identifiers}{rgb}{0.0,0.2,0.8}
+\definecolor{identifiers}{rgb}{0.0,0.2,0.5}
 \definecolor{strings}{rgb}{0.0,0.6,0.0}
 \definecolor{basic}{rgb}{0.0,0.2,0.8}
 
@@ -581,17 +581,19 @@ Cylc installs into a normal user account; just unpack the release tarball.
 
 \subsection{Configuring Your Environment For Cylc}
 
-To gain access to cylc:
+To gain access to cylc type the following at the command prompt:
 \begin{lstlisting}
-# configure your shell environment for access to cylc
-export CYLC_DIR=/path/to/cylc/installation/
-. $CYLC_DIR/environment.sh
-
+$ export CYLC_DIR=/path/to/cylc/installation/
+$ . $CYLC_DIR/environment.sh
+\end{lstlisting}
+Put this into your \lstinline=.profile= login script to configure
+cylc access automatically. Note that the variable \lstinline=$CYLC_DIR=
+is required inside the environment script, so don't skip the export
+step.  You should now be able to use cylc:
+\begin{lstlisting}
 $ cylc --version
 3.0.0
 \end{lstlisting}
-The variable \lstinline=$CYLC_DIR= is required by the environment
-script, so don't skip the export step.
 
 % TO DO: SYSTEM LEVEL INSTALL INSTRUCTIONS
 %For a system-level install just inspect the environment script for the
@@ -615,20 +617,17 @@ command immediately after installation to create the central database
 and export several example suites to it:
 
 \begin{lstlisting}
-admin> cylc admin create-cdb
+$ cylc admin create-cdb
 \end{lstlisting}
 
 To view the content of the resulting central database, run gcylc and
 switch to the central database using the Database menu, or 
 use \lstinline=cylc db print --central= on the command line.
 
-%    \lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
-%\begin{lstlisting}
-%admin> cylc db print --central
-%admin:examples:simple  "a simple example suite"  /home/admin/cylc/examples/simple
-%admin:examples:intro  "user guide example suite"  /home/admin/cylc/examples/Intro
-%\end{lstlisting}
-%    \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
+\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
+\begin{lstlisting}
+\end{lstlisting}
+    \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 
 \subsection{Run The Automated Database Test} 
 

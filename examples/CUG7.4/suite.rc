@@ -1,4 +1,4 @@
-title = "A two task test suite"
+title = "A two-task test suite"
 description = "Used as an example in Section 7.4 of the user guide"
 [dependencies]
     [[0,12]]              # A and B both run 0 and 12 hours
