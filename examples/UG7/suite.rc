@@ -1,0 +1,20 @@
+title = "A two task test suite"
+description = "Used as an example in Section 7.4 of the user guide"
+[dependencies]
+    [[0,12]]              # A and B both run 0 and 12 hours
+        graph = "A => B"  # B triggers off A successfully finishing
+[environment]             # GLOBAL ENVIRONMENT
+    NEXT_CYCLE = $( cylc util cycletime -a 12 )
+    PREV_CYCLE = $( cylc util cycletime -p 12 )
+[tasks]
+    [[A]]                 # TASK A SETTINGS
+        description = "Task A, does something"
+        command = cylc wrap A.sh
+        [[[environment]]] # TASK A ENVIRONMENT
+            INPUT = foo-${NEXT_CYCLE}.txt
+    [[B]]                 # TASK B SETTINGS
+        description = "Task B, does something else"
+        command = cylc wrap B.sh -f
+        [[[environment]]] # TASK B ENVIRONMENT
+            INPUT = bar-${NEXT_CYCLE}.txt
+

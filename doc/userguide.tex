@@ -1495,7 +1495,7 @@ commands to implement the aforementioned operations.
 \lstinputlisting{command-usage/database.txt}
 
 The same functionality is also available by right-clicking on suites
-or groups in the gcylc GUI, as shown in Figure~\ref{fig-pdb-new}.
+or groups in the gcylc GUI, as shown in Figure~\ref{fig-db}.
 
 %\pagebreak
 \section{Suite Definition} 
@@ -2350,7 +2350,7 @@ When the family triggers, the reset member task will follow suit. If the
 member completes successfully this time, so will the family,
 and downstream processing will proceed as normal.
 
-\paragraph{Use Families Sparingly}
+\paragraph{Use Task Families Sparingly}
 
 Task families should really only be used as a convenient simplification
 for groups of tasks that would naturally trigger at the same time anyway
@@ -2368,148 +2368,140 @@ whole-suite sequential cycling even when catching up from a delay.
 \subsection{Task Definition}
 \label{Task Definition}
 
-%Cylc {\em task definition} basically entails defining the following:
-%\begin{myitemize}
-%    \item the task name (below),
-%    \item what cycles it can run in, and how it relates to other
-%        tasks (the dependency graph, Section~\ref{DependencyGraphs}),
-%    \item the command line that should be invoked to initiate 
-%        processing when cylc determines that the task is ready to run,
-%    \item the execution environment in which the task command
-%        line should be executed, and,
-%    \item how it should be submitted to run (Section~\ref{JobSubmissionMethod)})
-%    \item and a few other lesser details, such as batch queue
-%\end{myitemize}
+Cylc task definition is very simple: the dependency graph defines which
+cycles the task can run in and how it relates to other tasks, then we 
+specify the command line used to initiate processing when the task
+is ready to run, the execution environment in which the command
+line should be invoked, and a few lesser details such as remote hosting
+and task ownership.
 
 Note that there is not necessarily a one-to-one mapping between tasks
 defined in the suite.rc file and the external commands, scripts, or
 programs that implement them. Multiple tasks can call the same script
-(etc.) with varying inputs supplied via the task command line and
-execution environment.
+(etc.) with varying inputs supplied by their respective command lines and
+execution environments.
 
-\subsection{Task Names}
-\label{TaskNames}
+\subsubsection{Task Names}
+\label{TaskName}
 
-A task name is defined by its entry(s) in the suite.rc dependency graph
-and its subsection heading under the suite.rc [tasks] section.
-To rename a task, just change its name in the suite.rc file.
+A task's name is defined by its entry(s) in the suite.rc dependency
+graph, then a matching subsection heading under the suite.rc [tasks]
+section is used to define other parameters (the command line, etc.)
+for the task. To rename a task, just change its name in the suite.rc
+file.
 
 Cylc's messaging commands, which report task progress back to the parent
 suite, do need to know the name and suite of the calling task, but they
 automatically extract this information from the task execution
 environment (which is configured by the suite; below) so that no
-explicit use of task names is needed outside of the suite.rc file.
+explicit use of task names is required outside of the suite.rc file 
+(it may sometimes be useful, but it isn't strictly required).
 Similarly, if a task needs to make use of its own name, or that of its
 parent suite, (to make I/O paths task and suite-specific, for instance)
-these should be extracted from the execution environment (below) rather
-than hardwired, so that the suite is flexible and portable (see
+these should be extracted portably from the execution environment
+(below) rather than hardwired into the task implementation, so that the
+suite is flexible and portable (see
 Section~\ref{TaskAndSuiteIdentityVariables}, {\em Task And Suite
 Identity Variables}).
 
-\subsection{Task Command Line and Environment}
-\label{TaskExecutionEnvironment}
+\subsubsection{A Task Definition Example}
 
-Every task has an associated command line to initiate the processing
-that it represents. The task command line, and the environment in which
-it executes, is defined in the suite.rc file, and actioned by the 
-{\em task job script} that cylc uses to invoke the task (see
-Section~\ref{JobScripts}, {\em Task Job Scripts}).
+The following rather trivial suite of two tasks illustrates the important
+aspects of task definition:
 
-\subsection{Task Job Scripts (How Tasks Are Invoked By Cylc)}
+\begin{lstlisting}
+# SUITE.RC
+title = "A two task test suite"
+description = "Used as an example in Section 7.4 of the user guide"
+[dependencies]
+    [[0,12]]              # A and B both run 0 and 12 hours
+        graph = "A => B"  # B triggers off A successfully finishing
+[environment]             # GLOBAL ENVIRONMENT
+    NEXT_CYCLE = $( cylc util cycletime -a 12 )
+    PREV_CYCLE = $( cylc util cycletime -p 12 )
+[tasks]
+    [[A]]                 # TASK A SETTINGS
+        description = "Task A, does something"
+        command = cylc wrap A.sh
+        [[[environment]]] # TASK A ENVIRONMENT
+            INPUT = foo-${NEXT_CYCLE}.txt
+    [[B]]                 # TASK B SETTINGS
+        description = "Task B, does something else"
+        command = cylc wrap B.sh -f
+        [[[environment]]] # TASK B ENVIRONMENT
+            INPUT = bar-${NEXT_CYCLE}.txt
+\end{lstlisting}
+
+\subsubsection{Task Job Scripts: How Tasks Are Invoked By Cylc}
 \label{JobScripts}
 
 When a task is ready to run, cylc writes, and then executes via the job
 submission method specified for the task (see
 Section~\ref{JobSubmission}), a {\em task job script} that configures
 the environment for the task and then calls its command line.
+       
+Cylc writes the command used to submit the job script to stdout. You can
+test this yourself by running a suite or using the 
+\lstinline@ cylc submit@ command, which submits a single task to 
+run just as it would be submitted by the suite, and with the
+\lstinline=--dry-run= option just generates the task script for 
+inspection and says how it would be executed according to the chosen
+job submission method:
 
-%In more detail, the temporary ``job script'' contains:
-%\begin{myitemize}
-%    \item scripting to configure the execution environment for the task
-%        This includes user-defined environment variables:
-%        \begin{myitemize}
-%            \item global environment variables
-%            \item task-specific environment variables
-%            \item pre- and post-command scripting
-%            \item any batch queue scheduler directives
-%        \end{myitemize}
-%        and cylc-defined environment variables:
-%        \begin{myitemize}
-%            \item to identify the task and cycle time, etc.
-%            \item to portably locate the suite definition directory
-%            \item for access to cylc itself
-%        \end{myitemize}
-%    \item scripting to call the command line defined for the task.
-%\end{myitemize}
-        
-Cylc writes the exact command used to submit each job script to the
-suite stdout stream. The following is an excerpt from example suite
-stdout, with the \lstinline=background= job submission method:
+The following illustrates this using the suite listed just
+above; it should be registered as examples:UG7 in your central suite
+database.
 
 \begin{lstlisting}
-# CYLC STDOUT
-ColdB%2011101300  READY TO RUN
-SUBMITTING TASK: /tmp/cylc-ColdB%2011101300-5gRx61 </dev/null \
-    1> /home/oliverh/CylcLogs/examples/intro/ColdB%2011101300-N3pBYv.out \
-    2> /home/oliverh/CylcLogs/examples/intro/ColdB%2011101300-N3pBYv.err &
-\end{lstlisting}
-
-You can also use \lstinline=cylc submit --dry-run= to generate a task
-job script for inspection: 
-
-\begin{lstlisting}
-$ cylc submit --dry-run examples:intro A%2010080806 
-DRY RUN: create the job script and show how it would be executed.
-  * TASK JOB SCRIPT: /tmp/cylc-A%2010080806-VXQusn
-  * JOB SUBMISSION METHOD: /tmp/cylc-A%2010080806-VXQusn </dev/null \
-    1> /home/oliverh/CylcLogs/examples/intro/A%2010080806-CWYM68.out \
-    2> /home/oliverh/CylcLogs/examples/intro/A%2010080806-CWYM68.err &
+ cylc submit --dry-run examples:UG7 A%2010080806
+ DRY RUN: create the task job script and show how it would be executed.
+ TASK JOB SCRIPT: /tmp/cylc-A%2010080812-b9w0V5
+ JOB SUBMISSION METHOD: /tmp/cylc-A%2010080812-b9w0V5 </dev/null 1>
+   /home/oliverh/CylcLogs/examples/UG7/A%2010080812-raV_3z.out 2>
+   /home/oliverh/CylcLogs/examples/UG7/A%2010080812-raV_3z.err &
 \end{lstlisting}
 
 And here is the resulting job script:
 
 \begin{lstlisting}
-$ cat /tmp/cylc-A%2010080806-VXQusn
+% cat /tmp/cylc-A%2010080812-b9w0V5
+
 #!/bin/bash
 
 # ++++ THIS IS A CYLC TASK JOB SCRIPT ++++
-# Task: A%2010080806
+# Task: A%2010080812
 # To be submitted by method: 'background'
 
 # CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY:
-export CYLC_DIR="/home/admin/cylc"
+export CYLC_DIR="/home/oliverh/cylc/cylc-3"
 export CYLC_MODE="submit"
 export CYLC_SUITE_HOST="oliverh-33586DL.greta.niwa.co.nz"
 export CYLC_SUITE_PORT="NONE"
-export CYLC_SUITE_DIR="/home/oliverh/suites/examples/intro"
-export CYLC_SUITE="examples:intro"
+export CYLC_SUITE_DIR="/home/oliverh/cylc/cylc-3/examples/UG7"
+export CYLC_SUITE="examples:UG7"
 export CYLC_SUITE_GROUP="examples"
-export CYLC_SUITE_NAME="intro"
+export CYLC_SUITE_NAME="UG7"
 export CYLC_SUITE_OWNER="oliverh"
 export CYLC_USE_LOCKSERVER="True"
 export CYLC_SIMULATION_SLEEP="10"
 
 # TASK IDENTITY:
-export TASK_ID=A%2010080806
+export TASK_ID=A%2010080812
 export TASK_NAME=A
-export CYCLE_TIME=2010080806
-
-# GLOBAL VARIABLES:
-export TASK_EXE_SECONDS="10"
-export WORKSPACE="/tmp/$USER/$CYLC_SUITE/common"
-export RUNNING="$WORKSPACE/running"
-
-# LOCAL VARIABLES:
-export INPUT_DIR="$WORKSPACE"
-export OUTPUT_DIR="$WORKSPACE"
-export RUNNING_DIR="$RUNNING/A"
-export OPTIONS="-w $WORKSPACE -r $RUNNING_DIR"
+export CYCLE_TIME=2010080812
 
 # ACCESS TO CYLC:
 . $CYLC_DIR/environment.sh
 
+# GLOBAL VARIABLES:
+export NEXT_CYCLE="$( cylc util cycletime -a 12 )"
+export PREV_CYCLE="$( cylc util cycletime -p 12 )"
+
+# LOCAL VARIABLES:
+export INPUT="foo-${NEXT_CYCLE}.txt"
+
 # EXECUTE THE TASK:
-cylc wrap A.sh $OPTIONS
+cylc wrap A.sh
 
 #EOF
 \end{lstlisting}
@@ -2517,18 +2509,18 @@ cylc wrap A.sh $OPTIONS
 \subsubsection{Task Execution Environment}
 \label{TaskExecutionEnvironment}
 
-The following subsections explain the purpose of each part of the task
-job script, and how to specify the contents thereof in the suite.rc file.
+The task execution environment is explicitly defined in the job script prior to 
+executing the task command line, as can be seen in the above listing.
 The ordering of the job script sections is,
 \begin{myenumerate}
     \item  cylc location, suite location, suite identity
     \item  task identity
+    \item  access to cylc
     \item  global variables
     \item  task-specific variables
-    \item  access to cylc
-    \item  global and task-specific pre-command scripting (not shown)
+    \item  (global and task-specific pre-command scripting - not shown)
     \item  task command line
-    \item  global and task-specific post-command scripting (not shown)
+    \item  (global and task-specific post-command scripting - not shown)
 \end{myenumerate}
 
 {\em Note that the task identity variables are defined prior to the
@@ -2538,35 +2530,42 @@ cycle-specific by referencing the task identity.}
 \paragraph{Suite And Task Identity Variables}
 \label{TaskAndSuiteIdentityVariables}
 
-The first sections of the job script defines variables that identify the
+The first section of the job script defines variables that identify the
 task name, task cycle time, suite registration (group and name), suite
 host and port, and several other parameters (see the example job script
-above). Executing tasks will almost certainly need to make use of their
-own cycle time,
-\begin{myitemize}
-    \item \lstinline=$CYCLE_TIME=
-\end{myitemize}
+above).
 
-They may also need to know the location of the suite definition
+An executing task will almost certainly need to make use of its
+own cycle time:
+\begin{lstlisting}
+$CYCLE_TIME    
+\end{lstlisting}
+It may also need the location of its suite definition
 directory, to access files stored there,
-\begin{myitemize}
-    \item \lstinline=$CYLC_SUITE_DIR= - \lstinline=/path/to/suite/definition=
-\end{myitemize}
-
-And they may need to use the task and suite identity variables (to 
+\begin{lstlisting}
+$CYCLE_SUITE_DIR
+\end{lstlisting}
+And it may need to use the task and suite identity variables (to 
 make portable suites that write all output to suite-specific locations,
 for instance):
-\begin{myitemize}
-    \item \lstinline=$CYLC_SUITE=  - e.g.\ foo:bar
-    \item \lstinline=$CYLC_SUITE_GROUP=  - foo
-    \item \lstinline=$CYLC_SUITE_NAME=  - bar 
-    \item \lstinline=$TASK_NAME= - X
-    \item \lstinline=$TASK_ID= - X\%2011051118
-\end{myitemize}
+\begin{lstlisting}
+$CYLC_SUITE            # e.g. foo:bar
+$CYLC_SUITE_GROUP      # foo
+$CYLC_SUITE_NAME       # bar 
+$TASK_NAME             # X
+$TASK_ID               # X%2011051118
+\end{lstlisting}
 
 These variables are also used, automatically, by the task messaging
 interface, to target the right task proxy in the particular cylc
 instance that is running the task's parent suite. 
+
+\paragraph{Cylc Access Environment}
+
+Next the cylc environment is configured according to the value of
+\lstinline=$CYLC_DIR=. This is done prior to exporting user-defined
+variables so that cylc utility commands can be used in the following
+variable assignment expressions, as shown above.
 
 \paragraph{Global And Task-Specific Environment Variables}
 
@@ -2579,65 +2578,11 @@ Both global and task-specific environment variables are exported in
 exactly the same order that they are defined in the suite.rc file, so
 you can safely refer to previously defined variables.
 
-\begin{lstlisting}
-# SUITE.RC
-[environment]
-    # variables available to all tasks
-    suite_workspace = $TMPDIR/$CYLC_SUITE/work
-[tasks]
-    [[TaskX]]
-        command = clean-workspace $OUTPUT_DIR 
-        [[[environment]]] 
-            # variables available only to TaskX
-            OUTPUT_DIR = $WORKSPACE/$TASK_NAME
-            # (task variables can reference global variables)
-\end{lstlisting}
-
-\paragraph{Task Access To Cylc Commands}
-\label{TaskAccessToCylcCommands}
-
-Executing tasks need access to the cylc task messaging commands, and
-possibly to cylc utility commands, so task job scripts source the cylc
-environment script.
-
-%\paragraph{On Remote Hosts}
-%
-%If you specify a remote host for task, you must also specify the 
-%locations of the remote cylc installation and the remote suite
-%definition directory (which should be installed on the remote
-%host so that tasks can access suite files and the suite bin 
-%directory, if necessary).
-%
-%\begin{lstlisting}
-%# SUITE.RC
-%[tasks]
-%    [[foo]]
-%        # run this task on a remote host
-%        remote host = fitzroy.niwa.co.nz
-%        remote cylc directory = /path/to/remote/cylc/installation
-%        remote suite directory = /path/to/remote/suite/definition
-%\end{lstlisting}
-%This results in the \lstinline=$CYLC_DIR= and
-%\lstinline=$CYLC_SUITE_DIR= variable definitions being set to 
-%their remote values in the job script.
- 
-\paragraph{Task Access To The Suite Definition Directory}
-
-To allow tasks to run scripts or programs in the suite bin directory
-the cylc environment script automatically configures \lstinline=$PATH=
-for access to \lstinline=$CYLC_SUITE_DIR/bin=. Task scripts can 
-also use \lstinline=$CYLC_SUITE_DIR= to portably access any files
-stored under the suite definition directory.
-
-%\paragraph{On Remote Hosts}
-%
-%See {\em Task Access To Cylc Commands} (Section~\ref{TaskAccessToCylcCommands}).
-%
 \paragraph{When Are Environment Variables Evaluated?}
 
-Environment variables are {\em not} evaluated by cylc prior to 
-executing the task. They are written, in unevaluated form, to the job
-script that is submitted by cylc to run the task. Thus
+Environment variables are {\em not} evaluated by cylc prior to executing
+the task. They are written, in unevaluated form, to the job script that
+is submitted by cylc to run the task, as shown just above. Thus
 \lstinline=$HOME=, for instance, will evaluate, at run time, to the home
 directory of the account under which the task executes (which isn't
 necessarily the same account, or even the same host, that is running the
@@ -2940,8 +2885,7 @@ task scripting.
 \subsubsection{Custom Task Wrappers}
 
 For large scientific models with idiosyncratic native job-submission
-processes that can't easily be re-engineered for the sake of simplicity
-and clarity, you may need to write a custom wrapper that takes input
+processes, you may need to write a custom wrapper that takes input
 parameters from the environment and its command line, and then modifies
 the native scripts according to task and cycle time, and to insert cylc
 messaging in the appropriate places, before invoking the (now modified)
@@ -3079,7 +3023,7 @@ as required to satisfy the real I/O dependencies.}
         
 %\pagebreak
 
-\section{Task Execution}
+\section{Task Job Submission}
 \label{JobSubmission}
 
 {\em Task Implementaion} (Section~\ref{TaskImplementation}) describes
@@ -3300,10 +3244,10 @@ tasks section.
 
 {\bf This section of the user guide is, unfortunately, yet to be completed.}
 
-For the moment, for quite complete documentation of all available functionality,
+For the moment, for reasonably complete documentation of available functionality,
 refer to command line help (included here in Section~\ref{CommandReference}) 
-and the suite.rc reference (Section~\ref{SuiteRCReference}). The gcylc help 
-menus are also reasonably complete.
+the suite.rc reference (Section~\ref{SuiteRCReference}), the gcylc help 
+menus, and examples elsewhere in this User Guide. 
 
 \begin{myitemize}
     \item cold starting, warm starting, raw starting, restarting, and stopping suites
@@ -3315,9 +3259,9 @@ menus are also reasonably complete.
     \item getting information about running suites, and the tasks in them 
         {\em (see \lstinline=cylc info help= and \lstinline=cylc discovery help=)}
     \item where to look for output - suite log, suite stdout/stderr, task stdout/stderr
-        {\em (this is documented in the Quick Start Guide, Section~\ref{QuickStart})}
-    \item understanding cylc suite evolution, particular in catchup operation
-        {\em (the Quick Start Guide, Section~\ref{QuickStart}, will help here, along 
+        {\em (this is documented in the Quick Start Guide, Section~\ref{QuickStartGuide})}
+    \item understanding cylc suite evolution, particularly in catchup operation
+        {\em (the Quick Start Guide will also help here, along 
         with the cylc example suites, and running your real suites in simulation mode)}
 
     \item how to recover from certain kinds of task failure (TBD)
@@ -3330,9 +3274,8 @@ menus are also reasonably complete.
         almost trivial to configure, see documentation of ``use secure passphrase'' 
         in the Suite.rc Reference, Section~\ref{SuiteRCReference})}
     \item automatic state dump backups, named pre-intervention state dumps
-        {\em (mentioned in the Quick Start Guide,
-        Section~\ref{QuickStart}; watch the suite log after intervening
-        in a suite)}
+        {\em (mentioned in the Quick Start Guide; watch the suite log
+        after intervening in a suite)}
     \item centralized alerting and timeouts
         {\em (see documentation of ``task event hooks'' in the Suite.rc
         Reference, Section~\ref{SuiteRCReference})}
