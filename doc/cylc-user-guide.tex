@@ -975,7 +975,7 @@ for a screenshot and instructions.
 
 You should see the following suite.rc file in your editor: 
 
-\lstinputlisting{../examples/QuickStart/one/suite.rc}
+\lstinputlisting{../examples/CUG5/one/suite.rc}
 
 This defines a complete, valid, runnable suite. To understand suite.rc
 files in detail, read {\em Suite Definition}
@@ -1321,12 +1321,12 @@ The cylc suite search tool reports matches in the suite.rc file
 by line number, suite section, and file, even if nested include-files
 are used, and by file and line number for matches in the suite bin
 directory.  The following output listing is from a search of
-the examples:UG1 suite, because the QuickStart suites are a little
+the examples:CUG1 suite, because the QuickStart suites are a little
 too minimal to bother with in this context:
 \begin{lstlisting}
-$ cylc grep OUTPUT_DIR examples:UG1
+$ cylc grep OUTPUT_DIR examples:CUG1
 
-FILE: /home/oliverh/suites/examples/UG1/suite.rc
+FILE: /home/oliverh/suites/examples/CUG1/suite.rc
    SECTION: [tasks]->[[X]]->[[[environment]]]
       [53]:             OUTPUT_DIR = $WORKSPACE
    SECTION: [tasks]->[[A]]->[[[environment]]]
@@ -1351,14 +1351,14 @@ FILE: /home/oliverh/suites/examples/Intro/bin/D.sh
 After editing a suite always validate it to check for errors, via 
 gcylc or the \lstinline=cylc validate SUITE= command.
 Figure~\ref{fig-validate-eg} shows validation of 
-examples:UG73. Note the warnings that the tasks 
+examples:CUG73. Note the warnings that the tasks 
 will be dummied out, as discussed above. 
 
 \begin{figure}
     \begin{center}
         \includegraphics[width=0.5\textwidth]{../images/screenshots/validate-eg.png}
     \end{center}
-\caption{Example Suite UG73 Validation.}
+\caption{Example Suite CUG73 Validation.}
 \label{fig-validate-eg}
 \end{figure}
 
@@ -1725,7 +1725,7 @@ job submission method = loadleveler
     # ...
 \end{lstlisting}
 
-This is in fact the examples:UGQS3 suite from the Quick Start Guide,
+This is in fact the examples:CUGQS3 suite from the Quick Start Guide,
 which you can copy, study, and run. Dependency graphs plotted from this
 (by gcylc or \lstinline=cylc graph=) are shown in
 Figures~\ref{fig-simple-graph-1} and~\ref{fig-simple-graph-2}.
@@ -2465,16 +2465,16 @@ inspection and says how it would be executed according to the chosen
 job submission method:
 
 The following illustrates this using the suite listed just
-above; it should be registered as examples:UG7 in your central suite
+above; it should be registered as examples:CUG7 in your central suite
 database.
 
 \begin{lstlisting}
- cylc submit --dry-run examples:UG7 A%2010080806
+ cylc submit --dry-run examples:CUG7 A%2010080806
  DRY RUN: create the task job script and show how it would be executed.
  TASK JOB SCRIPT: /tmp/cylc-A%2010080812-b9w0V5
  JOB SUBMISSION METHOD: /tmp/cylc-A%2010080812-b9w0V5 </dev/null 1>
-   /home/oliverh/CylcLogs/examples/UG7/A%2010080812-raV_3z.out 2>
-   /home/oliverh/CylcLogs/examples/UG7/A%2010080812-raV_3z.err &
+   /home/oliverh/CylcLogs/examples/CUG7/A%2010080812-raV_3z.out 2>
+   /home/oliverh/CylcLogs/examples/CUG7/A%2010080812-raV_3z.err &
 \end{lstlisting}
 
 And here is the resulting job script:
@@ -2493,10 +2493,10 @@ export CYLC_DIR="/home/oliverh/cylc/cylc-3"
 export CYLC_MODE="submit"
 export CYLC_SUITE_HOST="oliverh-33586DL.greta.niwa.co.nz"
 export CYLC_SUITE_PORT="NONE"
-export CYLC_SUITE_DIR="/home/oliverh/cylc/cylc-3/examples/UG7"
-export CYLC_SUITE="examples:UG7"
+export CYLC_SUITE_DIR="/home/oliverh/cylc/cylc-3/examples/CUG7"
+export CYLC_SUITE="examples:CUG7"
 export CYLC_SUITE_GROUP="examples"
-export CYLC_SUITE_NAME="UG7"
+export CYLC_SUITE_NAME="CUG7"
 export CYLC_SUITE_OWNER="oliverh"
 export CYLC_USE_LOCKSERVER="True"
 export CYLC_SIMULATION_SLEEP="10"
@@ -3488,7 +3488,7 @@ been disabled in the current release pending testing.}
 %suite interventions, with complete safety.
 %
 %\begin{lstlisting}
-%cylc restart --practice examples:UG1
+%cylc restart --practice examples:CUG1
 %\end{lstlisting}
 %
 %This will start a simulation mode clone of an existing suite from the
