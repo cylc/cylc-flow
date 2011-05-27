@@ -1871,11 +1871,11 @@ actual graphs, but it is more concise
 than the real thing because sections of the graph that repeat at
 different hours of the day only have to be defined once.
 
-Figure~\ref{fig-dep-eg-1} shows a simple example alongside its graphical
+Figure~\ref{fig-dep-eg-1} shows an example alongside its graphical
 representation, plotted with,
 \lstset{language=bash}
 \begin{lstlisting}
-$ cylc graph dep:example1 2011052200 2011052206
+$ cylc graph examples:CUG73 2011052200 2011052206
 # (or use right-click Graph in gcylc)
 \end{lstlisting}
 
@@ -1883,12 +1883,14 @@ Incidentally, the suite.rc file listed in Figure~\ref{fig-dep-eg-1} is
 a complete valid suite definition that you can run (just import a copy
 from the central suite database and run it): cylc will run dummy tasks,
 which sleep for a few seconds then emit an identifying message,
-because no task properties have been defined. If you do try to run
+because no task command lines have been defined. If you do try to run
 Example 1, be aware that you'll need to trigger task A manually to get
 the suite started. That's because A(T) depends on its own previous
 instance A(T-6), and at startup there is no previous cycle to satisfy
 that prerequisite.  How to handle a {\em cold start} properly is
-described below.
+described below in {\em Satisfying Intercycle Dependencies At Startup}
+(Section~\ref{SatisfyingIntercycleDependenciesAtStartup}) and in the
+{\em Quick Start Guide} (Section~\ref{QuickStartGuide}).
 
 \begin{figure}
 \begin{minipage}[b]{0.5\textwidth}
@@ -1935,7 +1937,7 @@ Multiline graph strings may contain:
 
 \subsubsection{Valid Cycle Times For Each Task}
 
-The set of hours at which a particular task can run is defined by
+The set of hours at which a task can run is defined by
 the hour list headings of any graph sections that the task appears
 in. This is how cylc knows what ``the next cycle time'' for a particular
 task is, when it comes time to spawn a successor.
@@ -1952,14 +1954,21 @@ For instance, the simple ``word graph'' {\em C(T) triggers off B(T) which
 triggers off A(T)}, where T represents task cycle time, can be
 deconstructed into the pairs {\em C(T) triggers of B(T)} and {\em B(T)
 triggers off A(T)}. Also, T should be left implicit except when the left
-side has an offset. Summarizing:
+side has an offset, i.e:
 \begin{myitemize}
     \item \lstinline=A(T)= must be written as just \lstinline=A=
+\end{myitemize}
+This make graphs look clean and concise, because the vast majority of
+tasks in a typical suite will only depend on others with the same cycle
+time.
+        
+Also, because dependent pairs define a trigger for the right side task
+at cycle time T, where T matches one of the hours listed for the graph
+section,
+\begin{myitemize}
     \item cycle time offsets such as \lstinline=A(T-6)= can only appear
         on the left side of a pair.
 \end{myitemize}
-This make graphs look clean and concise, because the majority of tasks
-typically only depend on others with the same cycle time.
 
 Now, having explained that dependency graphs are interpreted in a
 pairwise manner, you can optionally, but intuitively, chain pairs
@@ -2193,13 +2202,8 @@ rely on operator precedence - AND before OR - and split large
 expressions into multiple lines). However, if there is any call for more
 complicated conditional triggers we will certainly address this problem.
 
-\begin{lstlisting}
-# SUITE.RC
-# D triggers when either A or (B and C) finish:
-    graph = "A | B & C => D"
-\end{lstlisting}
-
 \subsubsection{Satisfying Intercycle Dependencies At Startup}
+\label{SatisfyingIntercycleDependenciesAtStartup}
 
 Considering the intercycle dependence shown just above, between tasks A
 and B, it is clear that some kind of boostrapping process will be
@@ -2235,9 +2239,9 @@ ColdFoo(T). At startup ColdFoo will do the job, before being be eliminated
 from the suite (because cold start tasks are non-spawning), and
 thereafter Bar(T-6) will do it.
 
-In cylc, a cold task can also be inserted into the suite at run time 
-to cold start just the task it is associated with, if a problem of 
-some kind prevents continued normal cycling.
+{\em A cold task can also be inserted into the suite at run time 
+to cold start just the task that it is associated with, if a problem of 
+some kind prevents continued normal cycling}.
 
 \paragraph{Warm Starting A Suite}
 
@@ -2260,6 +2264,7 @@ previous finished cycle, rather than actually running processes that
 masquerade as the previous cycle.
 
 \subsubsection{Model Restart Dependencies}
+\label{ModelRestartDependencies}
 
 Warm cycled forecast models generate {\em restart files}, e.g.\ model
 background fields, that are required to initialize the next forecast
@@ -2301,8 +2306,8 @@ This is certainly an option, but it should be noted that there are some
 benefits to having your suite reflect all of the real dependencies
 between the tasks that it is managing, particularly for complex
 multi-model operational suites in which the suite operator might not be
-an expert on the models. Consider such a suite in which an unfixable
-failure in a driving model (e.g.\ weather) can preclude running some
+an expert on the models. Consider such a suite in which a failure in a
+driving model (e.g.\ weather) precludes running one or more 
 cycles of the downstream models (sea state, storm surge, river flow,
 \dots). If the real restart dependencies of each model are known to the
 suite, the operator can just do a recursive purge to remove the subtree
@@ -2310,7 +2315,7 @@ of all tasks that can never run due to the failure, and then cold start
 the failed driving model after a gap (skipping as few cycles as possible
 until the new cold start input data are available). After
 that the downstream models will kick off automatically so long as the 
-gap is spanned by their respective sets of restart files, because their
+gap is spanned by their respective restart files, because their
 restart dependencies will automatically be satisfied by the older
 pre-gap instances in the suite. Managing this kind of scenario manually
 in a complex suite can be quite difficult.
@@ -2354,7 +2359,7 @@ you can trigger off the family as a whole.
     \item a family enters the `running' state when its prerequisites are
         satisfied
         \begin{myitemize}
-            \item this causes each of member of the family to trigger
+            \item this causes each member of the family to trigger
         \end{myitemize}
     \item a family's final state is not determined until all of its
         members have succeeded or failed:
@@ -2366,8 +2371,6 @@ you can trigger off the family as a whole.
 
 Cylc task families are implemented as special pseudo-tasks that do not
 actually submit anything to run when they enter the `running' state.
-Task proxies representing families can be seen in the suite control
-GUI when a suite containing families runs. 
 
 Cylc task families can have internal dependencies, and members can also
 participate in dependent relationships outside of the family.
@@ -2428,9 +2431,9 @@ effective dependencies on the right (plotted with
 \paragraph{Recovering From Task Family Failures} 
 
 If a family member fails it will enter the `failed' state, and once 
-all members have succeeded or failed, the family itself will enter
-the failed state. To recover from this, assuming it is a fixable
-problem,
+all other members have finished (succeeded or failed), the family itself
+will enter the failed state. To recover from this, assuming the problem
+that caused the original member to fail is fixable,
 
 \begin{myenumerate}
     \item fix the problem that caused the failure
@@ -2450,7 +2453,11 @@ that are all made available at the same time) and whose outputs would
 all be put to use at a similar time too. Otherwise task families will
 unnecessarily constrain cylc's ability to achieve maximum functional
 parallelism, because every member has to finish before downstream
-processing can continue.  As an extreme example, imagine grouping all
+processing can continue.\footnote{Actually this isn't entirely true 
+because downstream tasks can also trigger off individual family members
+as if they weren't family members - however, the family members themselves
+will not be able to start running until the family itself triggers.} As
+an extreme example, imagine grouping all
 tasks in the same forecast cycle into a single family (cylc task
 families can have internal dependencies) - this would result in enforced
 whole-suite sequential cycling even when catching up from a delay.
@@ -2460,9 +2467,9 @@ whole-suite sequential cycling even when catching up from a delay.
 \label{Task Definition}
 
 Cylc task definition is very simple: the dependency graph defines which
-cycles the task can run in and how it relates to other tasks, then we 
-specify the command line used to initiate processing when the task
-is ready to run, the execution environment in which the command
+cycles the task can run in and how it relates to other tasks, the
+command line that initiates processing when the task is ready to run,
+the execution environment in which the command
 line should be invoked, and a few lesser details such as remote hosting
 and task ownership.
 
@@ -2488,12 +2495,11 @@ environment (which is configured by the suite; below) so that no
 explicit use of task names is required outside of the suite.rc file 
 (it may sometimes be useful, but it isn't strictly required).
 Similarly, if a task needs to make use of its own name, or that of its
-parent suite, (to make I/O paths task and suite-specific, for instance)
+parent suite (to make I/O paths task and suite-specific, for instance)
 these should be extracted portably from the execution environment
 (below) rather than hardwired into the task implementation, so that the
-suite is flexible and portable (see
-Section~\ref{TaskAndSuiteIdentityVariables}, {\em Task And Suite
-Identity Variables}).
+suite is flexible and portable (see {\em Suite and Task
+Identity Variables}, Section~\ref{TaskAndSuiteIdentityVariables}).
 
 \subsubsection{A Task Definition Example}
 
@@ -2506,7 +2512,7 @@ title = "A two task test suite"
 description = "Used as an example in Section 7.4 of the user guide"
 [dependencies]
     [[0,12]]              # A and B both run 0 and 12 hours
-        graph = "A => B"  # B triggers off A successfully finishing
+        graph = "A => B"  # B triggers when A successfully finishes
 [environment]             # GLOBAL ENVIRONMENT
     NEXT_CYCLE = $( cylc util cycletime -a 12 )
     PREV_CYCLE = $( cylc util cycletime -p 12 )
@@ -2526,21 +2532,21 @@ description = "Used as an example in Section 7.4 of the user guide"
 \subsubsection{Task Job Scripts: How Tasks Are Invoked By Cylc}
 \label{JobScripts}
 
-When a task is ready to run, cylc writes, and then executes via the job
-submission method specified for the task (see
+When a task is ready to run, cylc writes, and then executes via the
+task's job submission method (see
 Section~\ref{JobSubmission}), a {\em task job script} that configures
 the environment for the task and then calls its command line.
        
-Cylc writes the command used to submit the job script to stdout. You can
-test this yourself by running a suite or using the 
-\lstinline@ cylc submit@ command, which submits a single task to 
+The actual command line used to submit the job script is also written to
+stdout by cylc. You can test this yourself by running a suite or using
+the \lstinline=cylc submit= command, which submits a single task to 
 run just as it would be submitted by the suite, and with the
 \lstinline=--dry-run= option just generates the task script for 
 inspection and says how it would be executed according to the chosen
 job submission method:
 
 The following illustrates this using the suite listed just
-above; it should be registered as {\em examples:CUG7} in your central
+above; it should be registered as {\em examples:CUG74} in your central
 suite database.
 
 \begin{lstlisting}
@@ -2621,7 +2627,7 @@ cycle-specific by referencing the task identity.}
 \paragraph{Suite And Task Identity Variables}
 \label{TaskAndSuiteIdentityVariables}
 
-The first section of the job script defines variables that identify the
+The first sections of the job script define variables that identify the
 task name, task cycle time, suite registration (group and name), suite
 host and port, and several other parameters (see the example job script
 above).
