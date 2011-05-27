@@ -2931,18 +2931,26 @@ mkdir /illegal/dir   # illegal operation: will be trapped and reported
 cylc task succeeded
 \end{lstlisting}
 
-Note that if you use \lstinline=set -e= to abort on error, any explicit 
-error checking must be done inline:
+If you use \lstinline=set -e=, any explicit error checking
+must be done inline to avoid triggering the trap:
 
 \begin{lstlisting}
 #!/bin/bash
 set -e
 
-mkdir /illegal/dir | {  # inline error detection using OR operator
+# This is OK:
+mkdir /illegal/dir || {  # inline error detection using OR operator
     cylc task failed "important operation failed"
     exit 1
 }
 
+# and this is OK:
+if not mkdir /illegal/dir; then  
+    cylc task failed "important operation failed"
+    exit 1
+fi
+
+# but this isn't:
 mkdir /illegal/dir      # this will cause an immediate abort,
 if [[ $? != 0 ]]; then  # so this line will not be reached.
     cylc task failed "important operation failed"
