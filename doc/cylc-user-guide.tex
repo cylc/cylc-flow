@@ -238,7 +238,7 @@ upstream tasks.
     \begin{center}
         \includegraphics[width=6cm]{inkscape-svg/dep-one-cycle.pdf} 
     \end{center}
-    \caption[Single cycle dependency graph for a simple suite]{\small
+    \caption[A single cycle dependency graph for a simple suite]{\small
     The dependency graph for a single forecast cycle of a simple example
     suite. Tasks {\em a, b,} and {\em c} represent forecast models,
     {\em d, e} and {\em f} are post processing or product generation
@@ -251,7 +251,7 @@ upstream tasks.
     \begin{center}
         \includegraphics[width=8cm]{inkscape-svg/timeline-one.pdf}
     \end{center}
-    \caption[Single cycle job schedules for real time operation]{\small
+    \caption[A single cycle job schedule for real time operation]{\small
     The optimal job schedule for two consecutive cycles of our example
     suite during real time operation, assuming that all tasks trigger 
     off upstream tasks finishing completely. The horizontal extent of
@@ -273,7 +273,7 @@ diagrams.
     \begin{center}
         \includegraphics[width=10cm]{inkscape-svg/dep-two-cycles-linked.pdf} 
     \end{center}
-    \caption[What if the external data is available early?]{\small If
+    \caption[What if the external driving data is available early?]{\small If
     the external driving data is available in advance, can we start
     running the next cycle early?} 
     \label{fig-dep-two-linked}
@@ -367,7 +367,7 @@ failures) won't result in dependency violations.
     \begin{center}
         \includegraphics[width=8cm]{inkscape-svg/dep-multi-cycle.pdf} 
     \end{center}
-    \caption[Complete multicycle dependency graph]{\small The complete
+    \caption[The complete multicycle dependency graph]{\small The complete
     dependency graph for the example suite, assuming the least possible
     intercycle dependence: the forecast models ($a$, $b$, and $c$)
     depend on their own previous instances. The dashed arrows show
@@ -379,8 +379,8 @@ failures) won't result in dependency violations.
     \begin{center}
         \includegraphics[width=6cm]{inkscape-svg/timeline-two-cycles-optimal.pdf} 
     \end{center}
-    \caption[Optimal two-cycle job schedule]{\small Optimal two cycle
-    job schedule when the next cycle's driving data is available in
+    \caption[The optimal two-cycle job schedule]{\small The optimal two
+    cycle job schedule when the next cycle's driving data is available in
     advance, possible in principle when intercycle dependencies are
     handled explicitly.} 
     \label{fig-optimal-two}
@@ -400,7 +400,7 @@ with dependency violations.
     \begin{center}
         \includegraphics[width=12cm]{inkscape-svg/timeline-three.pdf} 
     \end{center}
-    \caption[Post delay comparison of job schedules]{\small Job
+    \caption[Comparison of job schedules after a delay]{\small Job
     schedules for the example suite after a delay of almost one whole
     forecast cycle, when intercycle dependencies are
     taken into account (above the time axis), and when they are not
@@ -609,7 +609,7 @@ $ cylc --version
 %the cylc environment script slightly to ensure that cylc can access 
 %them.
 
-\subsection{Create The Central Suite Database}
+\subsection{Creating The Central Suite Database}
 
 Cylc has a central suite database, visible to all users on the 
 cylc host, to facilitate sharing of suites. Run the following 
@@ -640,7 +640,7 @@ DONE
 \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 (some strings above have been truncated to reduce the line length)
 
-\subsection{Run The Automated Database Test} 
+\subsection{Running The Automated Database Test} 
 
 \lstset{language=}
 The command \lstinline=cylc admin test-db= gives suite database
@@ -650,7 +650,7 @@ various ways, exporting it to the central database, and so on, before
 finally deleting the test registrations). This process should complete
 in a few seconds without errors.
 
-\subsection{Run The Automated Scheduler Test} 
+\subsection{Running The Automated Scheduler Test} 
 
 The command \lstinline=cylc admin test-suite= tests the cylc scheduler
 itself by running an example suite, configuring it to fail out a
@@ -682,7 +682,7 @@ interface looks like.
     \begin{center}
         \includegraphics[width=0.8\textwidth]{../images/screenshots/commandhelp.png}
     \end{center}
-\caption{\small The cylc command line interface, top level}
+\caption[\small The cylc command line interface]{The cylc command line interface}
 \label{fig-command-help}
 \end{figure} 
 
@@ -690,7 +690,7 @@ interface looks like.
     \begin{center}
         \includegraphics[width=0.8\textwidth]{../images/screenshots/db.png}
     \end{center}
-\caption[gcylc: Private Suite Database]{\small
+\caption[gcylc showing a private suite database]{\small
 gcylc showing a private suite database.}
 \label{fig-db}
 \end{figure} 
@@ -699,7 +699,7 @@ gcylc showing a private suite database.}
     \begin{center}
         \includegraphics[width=0.8\textwidth]{../images/screenshots/cdb.png}
     \end{center}
-\caption[gcylc: Central Suite Database]{\small
+\caption[gcylc showing the central suite database]{\small
 gcylc showing the central suite database.}
 \label{fig-cdb}
 \end{figure} 
@@ -708,7 +708,8 @@ gcylc showing the central suite database.}
     \begin{center}
         \includegraphics[height=0.45\textheight]{../images/screenshots/simple-suiterc.png}]
     \end{center}
-    \caption{A simple cylc suite definition being edited in {\em vim}}
+    \caption[A simple cylc suite definition edited in {\em vim}]{\small
+    A simple cylc suite definition edited in {\em vim}}
     \label{fig-cylc-vim} 
 \end{figure} 
 
@@ -716,7 +717,9 @@ gcylc showing the central suite database.}
     \begin{center}
         \includegraphics[width=0.35\textheight]{../images/screenshots/simple-18-cold.png}
     \end{center}
-    \caption{The suite definition of Figure~\ref{fig-cylc-vim} graphed by cylc.}
+    \caption[The suite definition of Figure~\ref{fig-cylc-vim} graphed
+    by cylc.]{\small The suite definition of Figure~\ref{fig-cylc-vim}
+    graphed by cylc.}
 \label{fig-simple-graph-2}
 \end{figure} 
 
@@ -724,7 +727,8 @@ gcylc showing the central suite database.}
     \begin{center}
         \includegraphics[width=0.8\textwidth]{../images/screenshots/control-trad.png}
     \end{center}
-\caption{\small The gcylc suite control GUI, treeview interface.}
+\caption[The suite control GUI, treeview interface.]{\small The suite
+control GUI, treeview interface.}
 \label{fig-gcylc-original}
 \end{figure} 
 
@@ -732,7 +736,7 @@ gcylc showing the central suite database.}
     \begin{center}
         \includegraphics[width=0.8\textwidth]{../images/screenshots/control-graph.png}
     \end{center}
-\caption{\small The gcylc suite control GUI, graph interface.}
+\caption[The suite control GUI, graph interface.]{\small The suite control GUI, graph interface.}
 \label{fig-gcylc-graph}
 \end{figure} 
 
@@ -740,7 +744,8 @@ gcylc showing the central suite database.}
     \begin{center}
         \includegraphics[width=\textwidth]{../images/screenshots/ecox-1.png}
     \end{center}
-\caption{\small A large operational suite graphed by cylc.}
+\caption[A large operational suite graphed by cylc.]{small A large
+operational suite graphed by cylc.}
 \label{fig-ecox-1}
 \end{figure} 
 
@@ -748,7 +753,9 @@ gcylc showing the central suite database.}
     \begin{center}
         \includegraphics[width=0.8\textwidth]{../images/screenshots/ecox-2.png}
     \end{center}
-    \caption{\small Another view of the large operational suite of Figure~\ref{fig-ecox-1}.}
+    \caption[Another view of the large operational suite of
+    Figure~\ref{fig-ecox-1}]{\small Another view of the large
+    operational suite of Figure~\ref{fig-ecox-1}.}
 \label{fig-ecox-2}
 \end{figure} 
 
@@ -839,7 +846,7 @@ defined in your environment, for example:
 export TMPDIR=/tmp/$USER
 \end{lstlisting}
 
-\subsection{Start Your Lockserver Daemon}
+\subsection{Starting Your Lockserver Daemon}
 
 Each cylc user should run a lockserver to prevent accidental 
 invocation of multiple instances of the same suite or task at the same 
@@ -876,7 +883,7 @@ setting the following switch in its suite.rc (suite definition) file,
 use lockserver = False  # not recommended!
 \end{lstlisting}
 
-\subsection{Start The gcylc GUI}
+\subsection{Starting The gcylc GUI}
 
 At the command prompt:
 \begin{lstlisting}
@@ -904,7 +911,7 @@ command line, you can:
 But you can only {\em run} suites that are registered in your private
 database. 
 
-\subsection{Import The QuickStart Suites To Your Private Database} 
+\subsection{Importing The QuickStart Suites To Your Private Database} 
 
 You can register new suites directly in your private database using gcylc 
 or \lstinline=cylc db register=, or you can import suites
@@ -930,7 +937,7 @@ are automatically created and deleted as required.}
 Now use the Database menu to switch back to your private database, and
 confirm that you now have a copy of the example suites.
 
-\subsubsection{Command Line}
+\subsubsection{By The Command Line}
 
 Here's how to do the same thing on the command line:
 
@@ -991,7 +998,7 @@ command line, you can:
 \end{myenumerate}
 
 
-\subsection{View The examples:CUG\_QS1 Suite Definition}
+\subsection{Viewing The examples:CUG\_QS1 Suite Definition}
 
 Right-click on the suite and choose `Edit', or use the edit command,
 \begin{lstlisting}
@@ -1050,7 +1057,7 @@ suite graph only applies at suite startup.
 The optional visualization section, fairly obviously, just defines
 properties used to plot the suite graph, which we'll do next.
 
-\subsection{Plot The examples:CUG\_QS1 Dependency Graph}
+\subsection{Plotting The examples:CUG\_QS1 Dependency Graph}
 
 Right-click on the examples:CUG\_QS1 suite in gcylc and choose Graph; or on
 the command line,
@@ -1067,11 +1074,11 @@ you save the file.}
     \begin{center}
         \includegraphics[width=0.7\textwidth]{../images/screenshots/QuickStartA-graph18.png}
     \end{center}
-\caption{\small The examples:CUG\_QS1 suite dependency graph.}
+\caption[The examples:CUG\_QS1 dependency graph]{\small The examples:CUG\_QS1 dependency graph.}
 \label{fig-QuickStartA-graph18}
 \end{figure}
 
-\subsection{Run The examples:CUG\_QS1 Suite}
+\subsection{Running The examples:CUG\_QS1 Suite}
 
 Each cylc task has a command line that is called to invoke the real 
 task processing when the task is ready to run. No task command lines have
@@ -1124,7 +1131,8 @@ Figure~\ref{fig-QuickStartA-ControlStart00}.
     \begin{center}
         \includegraphics[width=0.8\textwidth]{../images/screenshots/QuickStartA-ControlStart06.png}
     \end{center}
-    \caption{\small Suite examples:CUG\_QS1 started with an initial
+    \caption[Suite examples:CUG\_QS1 at startup, 06 or 18 hours.]
+    \caption{\small Suite examples:CUG\_QS1 at startup with an initial
     cycle time ending in 06 or 18 hours.}
     \label{fig-QuickStartA-ControlStart06}
 \end{figure} 
@@ -1133,9 +1141,9 @@ Figure~\ref{fig-QuickStartA-ControlStart00}.
     \begin{center}
         \includegraphics[width=0.8\textwidth]{../images/screenshots/QuickStartA-ControlStart00.png}
     \end{center}
-    \caption{\small Suite examples:CUG\_QS1 started with an initial
-    cycle time ending in 00 or 12 hours.}
-    \label{fig-QuickStartA-ControlStart00}
+    \caption[Suite examples:CUG\_QS1 at startup, 00 or 12 hours]{\small
+    Suite examples:CUG\_QS1 at startup with an initial cycle time ending
+    in 00 or 12 hours.} \label{fig-QuickStartA-ControlStart00}
 \end{figure} 
 
 The reason for the difference in graph structure between the two start
@@ -1146,10 +1154,10 @@ or 12. The off-white tasks are from the base graph and aren't actually
 present in the suite as yet (so they will not appear in the non
 graph-based suite control GUI).
 
-\subsubsection{Release The Hold On The Suite}
-
-Choose Release from the Control menu in the suite control GUI, and
-observe what happens: all the GetData tasks out to a few cycles ahead
+Now, click on Control $\rightarrow$ Release in the suite control GUI
+to {\em release the hold on the suite}, 
+and observe what happens: all the GetData tasks out to a few cycles
+ahead
 will rapidly go off at once, and then the suite will stall, as shown in
 Figures~\ref{fig-QuickStartA-ControlRunning}
 and~\ref{fig-QuickStartA-ControlRunning}. 
@@ -1158,7 +1166,9 @@ and~\ref{fig-QuickStartA-ControlRunning}.
     \begin{center}
         \includegraphics[width=0.8\textwidth]{../images/screenshots/QuickStartA-ControlRunning.png}
     \end{center}
-    \caption{\small Suite examples:CUG\_QS1 running, showing multiple
+    \caption[Suite examples:CUG\_QS1 running, showing multiple
+    clock-triggered GetData tasks running at once.]
+    {\small Suite examples:CUG\_QS1 running, showing multiple
     instances of the clock-triggered task GetData running at once.}
     \label{fig-QuickStartA-ControlRunning}
 \end{figure} 
@@ -1166,8 +1176,10 @@ and~\ref{fig-QuickStartA-ControlRunning}.
     \begin{center}
         \includegraphics[width=0.8\textwidth]{../images/screenshots/QuickStartA-ControlStalled.png}
     \end{center}
-    \caption{\small Suite examples:CUG\_QS1 running, but stalled, after 
-    the clock-triggered GetData tasks have finished, because of Model's
+    \caption[ Suite examples:CUG\_QS1 stalled after 
+    the clock-triggered GetData tasks have finished.]
+{\small Suite examples:CUG\_QS1 stalled after the clock-triggered
+GetData tasks have finished, because of Model's
     previous-cycle dependence (see main text).}
     \label{fig-QuickStartA-ControlStalled}
 \end{figure} 
@@ -1201,7 +1213,8 @@ Figure~\ref{fig-QuickStartA-ModelState}.
     \begin{center}
         \includegraphics[width=0.4\textwidth]{../images/screenshots/QuickStartA-ModelState.png}
     \end{center}
-    \caption{\small Viewing current task state after right-clicking on a task in gcylc. The
+    \caption[Viewing current task state in gcylc]
+{\small Viewing current task state after right-clicking on a task in gcylc. The
     same information is available from the \lstinline=cylc show= command.}
     \label{fig-QuickStartA-ModelState}
 \end{figure} 
@@ -1268,7 +1281,8 @@ self {\em or} ColdModel in the same cycle.
     \begin{center}
         \includegraphics[width=0.7\textwidth]{../images/screenshots/QuickStartB-graph18.png}
     \end{center}
-\caption{\small The examples:CUG\_QS2 dependency graph showing a model cold start task.}
+\caption[The examples:CUG\_QS2 graph with model cold start task.]{\small
+The examples:CUG\_QS2 dependency graph showing a model cold start task.}
 \label{fig-QuickStartB-graph18}
 \end{figure}
 
@@ -1326,7 +1340,7 @@ instance.
     \begin{center}
         \includegraphics[width=0.7\textwidth]{../images/screenshots/suite-output.png}
     \end{center}
-\caption{\small Cylc suite stdout/stderr example.}
+\caption[Cylc suite stdout/stderr example.]{\small Cylc suite stdout/stderr example.}
 \label{fig-suite-output}
 \end{figure}
 
@@ -1343,7 +1357,7 @@ automatically kept.
     \begin{center}
         \includegraphics[width=0.7\textwidth]{../images/screenshots/suite-log.png}
     \end{center}
-\caption{\small A cylc suite log via gcylc.}
+\caption[ A cylc suite log viewed via gcylc.]{\small A cylc suite log viewed via gcylc.}
 \label{fig-suite-log}
 \end{figure}
 
@@ -1404,7 +1418,7 @@ DONE
 \end{lstlisting}
 (The same thing can of course be done via the gcylc right-click menu).
 
-\subsection{Validation}
+\subsection{Validating A Suite}
 
 After editing a suite always validate it to check for errors, via 
 gcylc or the \lstinline=cylc validate SUITE= command.
@@ -1417,7 +1431,7 @@ that the tasks will be dummied out, as discussed above.
     \begin{center}
         \includegraphics[width=0.5\textwidth]{../images/screenshots/validate-eg.png}
     \end{center}
-\caption{Example Suite CUG73 Validation.}
+\caption[Suite CUG73 Validation.]{\small Suite CUG73 Validation.}
 \label{fig-validate-eg}
 \end{figure}
 
@@ -1895,7 +1909,7 @@ A(T-6) => A  # Model A restart trigger
         \includegraphics[width=\textwidth]{../images/screenshots/dep-eg-1.png}
     \end{center}
 \end{minipage}
-\caption{Dependency Graph Example 1.}
+\caption[Dependency Graph Example 1.]{\small Dependency Graph Example 1.}
 \label{fig-dep-eg-1}
 \end{figure}
 
@@ -1913,7 +1927,7 @@ Multiline graph strings may contain:
     \item {\bf cycle time offsets} - \lstinline=A(T-6)=
 \end{myitemize}
 
-\subsubsection{The Cycle Times At Which Each Task Can Run}
+\subsubsection{Valid Cycle Times For Each Task}
 
 The set of hours at which a particular task can run is defined by
 the hour list headings of any graph sections that the task appears
@@ -2147,7 +2161,7 @@ of the relationship.
 
 % TO DO: !!!!! GRAPHING BUG FOR A | B & C EXPRESSIONS!!!!!!!!
 
-\paragraph{Complex Conditional Triggers (Both AND and OR)}
+\paragraph{Complex Conditional Triggers With AND And OR}
 
 You can use AND and OR operators in the same expression, 
 \begin{lstlisting}
@@ -2159,7 +2173,7 @@ You can use AND and OR operators in the same expression,
 {\em KNOWN BUG ALERT: complex conditional triggers work as expected in 
 cylc suites at run time, but they are currently not graphed properly.}
 
-\paragraph{Parenthesized Conditional Triggers}
+\paragraph{Parenthesized Complex Conditional Triggers}
 
 {\em Parenthesized conditional expressions are currently illegal.}
 Internally cylc can handle this perfectly well, because it transforms 
@@ -2398,7 +2412,7 @@ Figure~\ref{fig-fam-eg-3}.
         \includegraphics[width=0.6\textwidth]{../images/screenshots/family-two.png}
     \end{center}
 \end{minipage}
-\caption[A simple task family example]{\small A very small suite with
+\caption[A simple task family]{\small A very small suite with
 a simple task family, showing the family itself on the left, and the
 effective dependencies on the right (plotted with
 \lstinline@SUITE.RC: [visualization] -> show family members = True@).}
