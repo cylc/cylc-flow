@@ -3125,13 +3125,10 @@ needs updating slightly in this respect.
 
 {\em Task Implementaion} (Section~\ref{TaskImplementation}) describes
 what requirements a command, script, or program, must fulfill in order
-to function as a cylc task (preview: most existing scripts etc. can
-function unmodified as cylc tasks, thanks to the {\em cylc task
-wrapper}, but a few may require some minor modifications).
+to function as a cylc task.
 
-In this section we explain how cylc arranges for such a task to be
-executed once it has determined that it is ready to run (i.e.\
-that the task's prerequisites are satisfied), and how create new 
+In this section we explain how tasks are executed once they are ready to
+run (i.e.\ once their prerequisites are satisfied), and how to create new 
 task job submission methods.
 
 \subsection{Task Job Scripts}
