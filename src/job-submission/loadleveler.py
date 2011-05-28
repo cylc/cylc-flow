@@ -16,8 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, re
-import tempfile
 from job_submit import job_submit
 
 class loadleveler( job_submit ):
