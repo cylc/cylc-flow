@@ -45,7 +45,7 @@
 #> paths.} relative to the suite definition directory.
 #> The \lstinline=cylc edit= command can optionally provide an inlined 
 #> version of a suite.rc file that is automatically split back into 
-#> its constituent include-files when you save and exit the editor.
+#> its constituent include-files when you save the file and exit the editor.
 
 #>\subsection{Top Level (global settings)}
 
@@ -116,8 +116,8 @@ remote host = string( default=None )
 #> If a global remote host is specified cylc will attempt to run 
 #> every task on that host, except for particular tasks that override
 #> the host setting, by passwordless ssh. Use this if all of your tasks,
-#> or at least
-#> the bulk of them, run on a remote machine. The relevant suite task
+#> or at least the bulk of them, run on the same remote host, otherwise
+#> define remote hosts at task level. The relevant suite task
 #> scripts and executables,
 #> and cylc itself, must be installed on the remote host. The items
 #> {\em remote cylc directory} and {\em remote suite directory} must
@@ -135,9 +135,12 @@ remote host = string( default=None )
 #>\end{myitemize}
 
 remote cylc directory = string( default=None )
-#> For tasks that specify a global remote host, this must be used to
+#> For tasks that specify a global remote host, this is used to
 #> define the path to the remote cylc installation (i.e.\
-#> \lstinline=$CYLC_DIR=)
+#> \lstinline=$CYLC_DIR=). 
+#> Use this if all of your tasks,
+#> or at least the bulk of them, run on the same remote host, otherwise
+#> define the remote cylc directory at task level. 
 #> on the remote host.
 #>\begin{myitemize}
 #>\item {\em section:}  (top level)
@@ -154,6 +157,9 @@ remote suite directory = string( default=None )
 #> in order to give remote tasks access to files in the 
 #> suite directory (via \lstinline=$CYLC_SUITE_DIR=) and to the 
 #> suite bin directory (via \lstinline=$PATH=).
+#> Use this if all of your tasks,
+#> or at least the bulk of them, run on the same remote host, otherwise
+#> define the remote suite directory at task level. 
 #>\begin{myitemize}
 #>\item {\em section:}  (top level)
 #>\item {\em type:} string
@@ -168,6 +174,10 @@ remote suite directory = string( default=None )
 owner = string( default=None )
 #> If a task has a defined owner, cylc will attempt to execute the task
 #> as that user, according to the global {\em owned task execution method}.
+#> Use this if all of your tasks, or at least the bulk of them, run under
+#> the same username, otherwise define task owners at task level (or 
+#> not at all, if all tasks run as the suite owner, which is the usual
+#> situation). 
 #>\begin{myitemize}
 #>\item {\em section:}  (top level)
 #>\item {\em type:} string
