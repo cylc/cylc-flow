@@ -1,0 +1,128 @@
+title = "Cylc Admin Test Suite"
+
+#        B(T-6)-> B -> E   
+#                / \   
+#  X & A(T-6)-> A   -> D 
+#                \ /    
+#        C(T-6)-> C -> F 
+#       
+
+description = """This is a copy of the suite implementation for
+the examples that illustrates the Cylc User Guide Introduction.
+This copy is used by the 'cylc admin test-suite' command and 
+should only be modified with extreme caution."""
+
+# LOCKSERVER OFF: we're only testing scheduling functionality here.
+use lockserver = False
+
+[experimental]
+    live graph movie = True
+
+[special tasks]
+    startup          = prep
+    sequential       = A, B, C
+    cold start        = ColdA, ColdB, ColdC
+    clock-triggered  = X(1)
+
+[dependencies]
+    [[0,6,12,18]]
+        graph =  """X => A => B => E
+                    A => C => F
+                    B & C => D
+    
+                    ColdA | A(T-6)* | A(T-12) | A(T-18) => A
+                    ColdB | B(T-6) => B
+                    ColdC | C(T-6) => C
+
+                    prep => X & ColdA & ColdB & ColdC"""
+[environment]
+    TASK_EXE_SECONDS = 10
+    WORKSPACE = /tmp/$USER/$CYLC_SUITE/common
+    RUNNING   = $WORKSPACE/running
+
+[tasks]
+    [[prep]]
+        description = "clean out the suite workspace for a new run"
+        command = cylc wrap clean-workspace.sh $WORKSPACE
+    [[X]]
+        description = "retrieve real time data for model A"
+        command = cylc wrap X.sh
+        [[[environment]]]
+            OUTPUT_DIR = $WORKSPACE
+    [[A]]
+        description = "model A - weather forecast"
+        command = cylc wrap A.sh
+        [[[environment]]]
+            INPUT_DIR = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
+            RUNNING_DIR = $RUNNING/A
+    [[B]]
+        description = "model B - sea state forecast"
+        command = cylc wrap B.sh
+        [[[environment]]]
+            INPUT_DIR = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
+            RUNNING_DIR = $RUNNING/B
+    [[C]]
+        description = "model C - river flow forecast"
+        command = cylc wrap C.sh
+        [[[environment]]]
+            INPUT_DIR = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
+            RUNNING_DIR = $RUNNING/C
+    [[D]]
+        description = "combined post processing for models B and C"
+        command = cylc wrap D.sh
+        [[[environment]]]
+            INPUT_DIR = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
+    [[E]]
+        description = "post processing for model B"
+        command = cylc wrap E.sh
+        [[[environment]]]
+            INPUT_DIR = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
+    [[F]]
+        description = "post processing for model F"
+        command = cylc wrap F.sh
+        [[[environment]]]
+            INPUT_DIR = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
+
+    [[ColdA]]
+        description = "cold start model A"
+        command = cylc wrap ColdA.sh
+        [[[environment]]]
+            RUNNING_DIR = $RUNNING/A
+ 
+    [[ColdB]]
+        description = "model B"
+        command = cylc wrap ColdB.sh
+        [[[environment]]]
+            RUNNING_DIR = $RUNNING/B
+ 
+    [[ColdC]]
+        description = "model C"
+        command = cylc wrap ColdC.sh
+        [[[environment]]]
+            RUNNING_DIR = $RUNNING/C
+ 
+[visualization]
+    default node attributes = "style=filled"
+    show family members = True
+    [[node groups]]
+        models = A, B, C
+        cold   = ColdA, ColdB, ColdC
+        post   = D, E, F
+        data   = X
+    [[node attributes]]
+        models = "shape=septagon"
+        post   = "style=unfilled", "shape=rectangle"
+        cold   = "shape=egg", "fillcolor=slateblue"
+        data   = "shape=box", "fillcolor=lawngreen"
+        A      = "fillcolor=red"
+        C      = "fillcolor=orange"
+        B      = "fillcolor=magenta3"
+        D      = "style=bold", "color=green4"
+        E      = "style=bold", "color=blue"
+        F      = "style=bold", "color=red"
