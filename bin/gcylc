@@ -43,17 +43,16 @@ to the command line interface ('cylc help') in most respects.
 This invokes the gcylc main window, which displays suites in your
 private registration database, and in the central database available to
 all users. By right-clicking on suites or registration groups you can
-gain access all cylc functionality, from editing and graphing through
+gain access to all cylc functionality, from editing and graphing through
 to suite control and monitoring.
 
     2/ gcylc [-g,--graph] SUITE &
 This directly invokes a suite control and monitoring application for a
 particular suite. Alternatively you can get this by right-clicking on 
 the suite in the main gcylc suite database viewer (1/ above).
-Without the -g,--graph option you'll get the standard filtered cycle
-time treeview suite control and monitoring interface; with it, the
-newer, and still somewhat experimental, dependency graph based
-interface.
+Without the -g,--graph option you'll get the standard filtered treeview
+suite control and monitoring interface; with it, the
+newer dependency graph based interface.
 
 NOTE: daemonize important suites with the POSIX nohup command:
     $ nohup gcylc [options] [SUITE] &
