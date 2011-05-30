@@ -24,7 +24,7 @@ import socket
 import logging
 import datetime
 import port_scan
-import cycle_time
+from cycle_time import ct
 import pimp_my_logger
 import accelerated_clock 
 import re, os, sys, shutil
@@ -215,18 +215,22 @@ class scheduler(object):
         self.stop_clock_time = None
         self.stop_task = None
         if self.options.stop_time:
-            self.stop_time = self.options.stop_time
-            if not cycle_time.is_valid( self.stop_time ):
-                self.parser.error( "invalid cycle time: " + self.stop_time )
+            try:
+                self.stop_time = ct( self.options.stop_time ).get()
+            except CycleTimeError, x:
+                raise SystemExit(x)
+                #self.parser.error( "invalid cycle time: " + self.stop_time )
             self.banner[ 'Stopping at' ] = self.stop_time
 
         # PAUSE TIME?
         self.suite_hold_now = False
         self.pause_time = None
         if self.options.pause_time:
-            self.pause_time = self.options.pause_time
-            if not cycle_time.is_valid( self.pause_time ):
-                self.parser.error( "invalid cycle time: " + self.pause_time )
+            try:
+                self.pause_time = ct( self.options.pause_time ).get()
+            except CycleTimeError, x:
+                raise SystemExit(x)
+            #    self.parser.error( "invalid cycle time: " + self.pause_time )
             self.banner[ 'Pausing at' ] = self.pause_time
 
         # start in unblocked state
@@ -672,7 +676,7 @@ class scheduler(object):
 
     def get_oldest_unfailed_c_time( self ):
         # return the cycle time of the oldest task
-        oldest = 9999887766
+        oldest = '99991228235959'
         for itask in self.tasks:
             if itask.state.is_failed():
                 continue
@@ -685,7 +689,7 @@ class scheduler(object):
 
     def get_oldest_c_time( self ):
         # return the cycle time of the oldest task
-        oldest = 9999887766
+        oldest = '99991228235959'
         for itask in self.tasks:
             #if itask.state.is_failed():  # uncomment for earliest NON-FAILED 
             #    continue
@@ -699,7 +703,7 @@ class scheduler(object):
 
     def get_newest_c_time( self ):
         # return the cycle time of the newest task
-        newest = 1000010101
+        newest = '100001010100'
         for itask in self.tasks:
             # avoid daemon tasks
             if hasattr( itask, 'daemon_task' ):
@@ -776,8 +780,10 @@ class scheduler(object):
         for itask in self.tasks:
             if self.runahead:
                 # if a runahead limit is defined, check for violations
-                tdiff = cycle_time.decrement( itask.c_time, self.runahead )
-                if int( tdiff ) > int( self.get_oldest_unfailed_c_time() ):
+                #tdiff = cycle_time.decrement( itask.c_time, self.runahead )
+                foo = ct( itask.c_time )
+                foo.decrement( hours=self.runahead )
+                if int( foo.get() ) > int( self.get_oldest_unfailed_c_time() ):
                     # too far ahead: don't spawn this task.
                     itask.log( 'DEBUG', "delaying spawning (too far ahead)" )
                     continue
@@ -1506,11 +1512,20 @@ class scheduler(object):
         if self.runtime_graph_finalized:
             return
         # stop if all tasks are more than configured hours beyond suite start time
-        if cycle_time.diff_hours( self.get_oldest_c_time(), self.start_time ) >= self.runtime_graph_cutoff:
+        st = ct( self.start_time )
+        ot = ct( self.get_oldest_c_time() )
+        delta1 = ot.subtract( st )
+        delta2 = datetime.timedelta( 0, 0, 0, 0, 0, self.runtime_graph_cutoff, 0 )
+        #if cycle_time.diff_hours( self.get_oldest_c_time(), self.start_time ) >= self.runtime_graph_cutoff:
+        if delta1 >= delta2:
             self.finalize_runtime_graph()
             return
         # ignore task if its ctime more than configured hrs beyond suite start time?
-        if cycle_time.diff_hours( task.c_time, self.start_time ) >= self.runtime_graph_cutoff:
+        st = ct( self.start_time )
+        tt = ct( task.c_time )
+        delta1 = tt.subtract(st)
+        #if cycle_time.diff_hours( task.c_time, self.start_time ) >= self.runtime_graph_cutoff:
+        if delta1 >= delta2:
             return
         for id in task.get_resolved_dependencies():
             l = id

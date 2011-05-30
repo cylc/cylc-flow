@@ -37,7 +37,7 @@ from task_output_logs import logfiles
 from collections import deque
 from outputs import outputs
 from dummy import dummy_command
-import cycle_time
+from cycle_time import ct
 
 class Error( Exception ):
     """base class for exceptions in this module."""
@@ -228,7 +228,10 @@ class taskdef(object):
             m = re.search( '\$\(CYCLE_TIME\s*\-\s*(\d+)\)', preq )
             if m:
                 offset = m.groups()[0]
-                ctime = cycle_time.decrement( sself.c_time, offset )
+                #ctime = cycle_time.decrement( sself.c_time, offset )
+                foo = ct( sself.c_time )
+                foo.decrement( hours=offset )
+                ctime = foo.get()
                 preq = re.sub( '\$\(CYCLE_TIME\s*\-\s*\d+\)', ctime, preq )
             else:
                 preq = re.sub( '\$\(CYCLE_TIME\)', sself.c_time, preq )
@@ -337,10 +340,12 @@ class taskdef(object):
                 if m:
                     sign, offset = m.groups()
                     if sign == '-':
-                        #ctime = cycle_time.decrement( sself.c_time, offset )
                        raise DefinitionError, "ERROR, " + sself.id + ": Output offsets must be positive: " + output
                     else:
-                        ctime = cycle_time.increment( sself.c_time, offset )
+                        #ctime = cycle_time.increment( sself.c_time, offset )
+                        foo = ct( sself.c_time )
+                        foo.increment( hours=offset )
+                        ctime = foo.get()
                     out = re.sub( '\$\(CYCLE_TIME.*\)', ctime, output )
                 else:
                     out = re.sub( '\$\(CYCLE_TIME\)', sself.c_time, output )

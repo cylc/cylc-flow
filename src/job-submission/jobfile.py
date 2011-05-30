@@ -17,7 +17,6 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import tempfile
-import cycle_time
 from OrderedDict import OrderedDict
 
 class jobfile(object):
@@ -50,8 +49,9 @@ class jobfile(object):
 
         # Get NAME%CYCLETIME (cycling tasks) or NAME%TAG (asynchronous tasks)
         ( self.task_name, tag ) = task_id.split( '%' )
-        if cycle_time.is_valid( tag ):
-            self.cycle_time = tag
+        # TO DO: asynchronous tasks
+        # if cycle_time.is_valid( tag ):
+        self.cycle_time = tag
 
     def write( self ):
         # Get a new temp filename, open it, and write the task job script to it.

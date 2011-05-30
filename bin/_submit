@@ -25,7 +25,8 @@ from mkdir_p import mkdir_p
 from registration import getdb, regsplit, RegistrationError
 from execute import execute
 from job_submit import job_submit
-import cycle_time, pimp_my_logger
+import pimp_my_logger
+from cycle_time import ct, CycleTimeError
 from suite_lock import suite_lock
 from lockserver import lockserver
 import task, clocktriggered
@@ -92,11 +93,14 @@ except RegistrationError,x:
 
 # check task ---------------------------------------------------------
 try:
-    ( task_name, ctime ) = task_id.split( '%' )
+    ( task_name, tag ) = task_id.split( '%' )
 except ValueError:
     parser.error( "Task ID must be NAME%YYYYMMDDHH" )
-if not cycle_time.is_valid( ctime ):
-    parser.error( "invalid cycle time: " + ctime )
+
+try:
+     ctime = ct(tag).get()
+except CycleTimeError, x:
+    raise SystemExit(x)
 
 owner = os.environ['USER']
 

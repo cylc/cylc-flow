@@ -19,7 +19,7 @@
 
 import sys
 from task import task
-import cycle_time
+from cycle_time import ct
 from copy import deepcopy
 
 global state_changed
@@ -86,9 +86,9 @@ class cycling( task ):
             if rh <= vh:
                 incr = vh - rh
                 break
-    
-        nearest_rt = cycle_time.increment( rt, incr )
-        return nearest_rt
+        nearest_rt = ct(rt)
+        nearest_rt.increment( hours=incr )
+        return nearest_rt.get()
 
     def ready_to_spawn( self ):
         # return True or False
@@ -107,38 +107,21 @@ class cycling( task ):
 
         n_times = len( self.valid_hours )
         if n_times == 1:
-            increment = 24
+            incr = 24
         else:
             i_now = self.valid_hours.index( int( rt[8:10]) )
             # list indices start at zero
             if i_now < n_times - 1 :
-                increment = self.valid_hours[ i_now + 1 ] - self.valid_hours[ i_now ]
+                incr = self.valid_hours[ i_now + 1 ] - self.valid_hours[ i_now ]
             else:
-                increment = self.valid_hours[ 0 ] + 24 - self.valid_hours[ i_now ]
+                incr = self.valid_hours[ 0 ] + 24 - self.valid_hours[ i_now ]
 
-        return cycle_time.increment( rt, increment )
+        foo = ct( rt )
+        foo.increment( incr )
+        return foo.get()
 
     def next_tag( self ):
         return self.next_c_time()
-
-    def prev_c_time( self ):
-        # return the previous cycle time valid for this task.
-        #--
-
-        rt = self.c_time
-
-        n_times = len( self.valid_hours )
-        if n_times == 1:
-            increment = 24
-        else:
-            i_now = self.valid_hours.index( int( rt[8:10]) )
-            # list indices start at zero
-            if i_now > 0 :
-                decrement = self.valid_hours[ i_now ] - self.valid_hours[ i_now - 1 ] 
-            else:
-                decrement = self.valid_hours[ i_now ] - self.valid_hours[ n_times - 1 ] + 24
-
-        return cycle_time.decrement( rt, decrement )
 
     def get_valid_hours( self ):
         return self.valid_hours

@@ -18,7 +18,7 @@
 
 import sys
 import datetime
-from cycle_time import _rt_to_dt
+from cycle_time import ct
 
 class clocktriggered(object):
 
@@ -36,7 +36,7 @@ class clocktriggered(object):
     def start_time_reached( self ):
         reached = False
         # check current time against expected start time
-        rt = _rt_to_dt( self.c_time )
+        rt = ct( self.c_time ).get_datetime()
         delayed_start = rt + datetime.timedelta( 0,0,0,0,0,self.real_time_delay,0 ) 
         current_time = clocktriggered.clock.get_datetime()
         if current_time >= delayed_start:

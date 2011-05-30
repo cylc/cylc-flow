@@ -18,8 +18,7 @@
 
 import sys
 from optparse import OptionParser
-
-import cycle_time
+from cycle_time import ct, CycleTimeError
 from scheduler import scheduler
 
 global debug
@@ -109,10 +108,10 @@ Arguments:
         if len( self.args ) != 2:
             self.parser.error( "Please supply a suite name and initial cycle time." )
 
-        if cycle_time.is_valid( self.args[1] ):
-            self.start_time = self.args[1]
-        else:
-            self.parser.error( "Invalid cycle time: " + self.args[1])
+        try:
+            self.start_time = ct( self.args[1] ).get()
+        except CycleTimeError, x:
+            raise SystemExit(x)
 
         scheduler.parse_commandline( self )
 

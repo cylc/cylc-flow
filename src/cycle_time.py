@@ -16,54 +16,107 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-""" 
-CYCLE TIME (YYYYMMDDHH)
-"""
-
-# do logical comparisons of cycle times in integer form: int( rt )
-
-# (note "rt" == "reference time" = old cylc name for "cycle time")
-
 import datetime
 import re
 
-def _rt_to_dt( rt ):
-    return datetime.datetime( 
-            int(rt[0:4]), int(rt[4:6]), 
-            int(rt[6:8]), int(rt[8:10]))
+""" 
+CYCLE TIME: YYYYMMDDHH(mm)
+"""
 
-def _dt_to_rt( dt ): 
-    return dt.strftime( "%Y%m%d%H" )
+class CycleTimeError( Exception ):
+    """
+    Attributes:
+        message - what the problem is. 
+    """
+    def __init__( self, msg ):
+        self.msg = msg
+    def __str__( self ):
+        return repr(self.msg)
 
-def increment( rt, hours ): 
-        dt = _rt_to_dt( rt )
-        return _dt_to_rt( dt + datetime.timedelta( 0, 0, 0, 0, 0, int(hours), 0 ) )
+class InvalidCycleTimeError( CycleTimeError ):
+    pass
 
-def decrement( rt, hours ): 
-        dt = _rt_to_dt( rt )
-        return _dt_to_rt( dt - datetime.timedelta( 0, 0, 0, 0, 0, int(hours), 0 ) )
+class ct( object ):
 
-def diff_hours( rt2, rt1 ):
-    # rt2 - rt1 in hours
-    dt2 = _rt_to_dt( rt2 )
-    dt1 = _rt_to_dt( rt1 )
+    def __init__( self, str ):
+        self.parse( str )
 
-    delta = dt2 - dt1
+    def parse( self, str ):
+        if len( str ) == 10:
+            # YYYYMMDDHH - append minutes and seconds
+            self.strvalue = str + '0000'
+        elif len( str ) == 12:
+            # YYYYMMDDHHmm - append seconds
+            self.strvalue = str + '00'
+        elif len( str ) == 14:
+            # YYYYMMDDHHmmss
+            self.strvalue = str
+        else:
+            raise InvalidCycleTimeError, 'Cycle Times must be YYYYMMDDHH[mm[ss]]: ' + str
 
-    if delta.microseconds != 0:
-        print "WARNING: cycle_time.difference_hours(): unexpected timedelta"
-
-    return delta.days * 24 + delta.seconds/3600
-
-def is_valid( rt ):
-    if re.compile( "^\d{10}$" ).match( rt ):
+        self.year    = self.strvalue[ 0:4 ]
+        self.month   = self.strvalue[ 4:6 ]
+        self.day     = self.strvalue[ 6:8 ]
+        self.hour    = self.strvalue[ 8:10]
+        self.minute  = self.strvalue[10:12]
+        self.seconds = self.strvalue[12:14]
+        
+        # convert to datetime as a validity check!
         try:
-            _rt_to_dt( rt )
-        except ValueError, x:
-            print x
-            return False
+            self.dtvalue = datetime.datetime( int(self.year), int(self.month),
+                int(self.day), int(self.hour), int(self.minute),
+                int(self.seconds))
+        except ValueError,x:
+            # returns sensible messages: "minute must be in 0..59"
+            raise InvalidCycleTimeError( x.__str__() + ': ' + self.get_formatted() )
 
-        return True
-    else:
-        return False
+    def get( self ):
+        # YYYYMMDDHHmmss
+        return self.strvalue
+
+    def get_formatted( self ):
+        # YYYY/MM/DD HH:mm:ss
+        return self.year + '/' + self.month + '/' + self.day + ' ' + \
+                self.hour + ':' + self.minute + ':' + self.seconds
+
+    def get_datetime( self ):
+        return self.dtvalue
+
+    def _str_from_datetime( self, dt ): 
+        return dt.strftime( "%Y%m%d%H%M%S" )
+
+    def increment( self, weeks=0, days=0, hours=0, minutes=0, seconds=0,
+            microseconds=0, milliseconds=0 ): 
+        # Can't increment by years or months easily - they vary in length.
+        newdt = self.dtvalue + \
+                datetime.timedelta( int(days), int(seconds),
+                        int(microseconds), int(milliseconds), 
+                        int(minutes), int(hours), int(weeks) )
+        self.parse( self._str_from_datetime( newdt ))
+
+    def decrement( self, weeks=0, days=0, hours=0, minutes=0, seconds=0,
+            microseconds=0, milliseconds=0 ): 
+        # Can't decrement by years or months easily - they vary in length.
+        newdt = self.dtvalue - \
+                datetime.timedelta( int(days), int(seconds),
+                        int(microseconds), int(milliseconds), 
+                        int(minutes), int(hours), int(weeks) )
+        self.parse( self._str_from_datetime( newdt ))
+
+    def clone( self ):
+        return ct( self.strvalue )
+
+    def subtract( self, ct ):
+        # subtract this ct from me,
+        # return a timedelta: .days, .seconds, .microseconds
+         return self.dtvalue - ct.dtvalue
+
+if __name__ == "__main__":
+    foo = ct( '20110526184359' )
+    print foo.get(), foo.get_formatted()
+    try:
+        bar = ct('2011053918' )
+    except CycleTimeError, x:
+        print x 
+
+
