@@ -1,0 +1,10 @@
+*.pyc
+doc/command-usage/*
+doc/commands.tex
+doc/cylc-user-guide.aux
+doc/cylc-user-guide.lof
+doc/cylc-user-guide.log
+doc/cylc-user-guide.out
+doc/cylc-user-guide.pdf
+doc/cylc-user-guide.toc
+doc/suiterc.spec.tex
