@@ -7,16 +7,20 @@ GENERAL
 
 * remote job log directory for remote tasks.
 
-* it should be possible to triggere clock-triggered tasks manually
+* it should be possible to trigger clock-triggered tasks manually
   prior to their trigger time. (consider also: clock-triggered tasks
   downstream of the purge root - they won't trigger in the purge
   simulation if their time is not up yet?)
 
-* recursive purge overhaul? see documentation of limitations in the
-  purge command help.
+* RECURSIVE PURGE OVERHAUL? see documentation of limitations in the
+  purge command help. Post cylc-3.0 we could easily determine, via the
+  suite dependency graph, if any tasks that should be affected by the
+  purge have not yet reached the purge start time. Also: see TO DO in
+  the in-method comments: ensure that ALL tasks whose prerequisites get
+  satisfied in the virtual system evolution that occurs in the purge
+  algorithm, get unsatisfied again at the end of it.
 
-* dummy_command module should not be needed due to default command in
-  suite.rc?
+* dummy_command module not needed due to default command in suite.rc?
 
 * a 'nudge' that just updates task state info, without going through
   the full task processing loop?
@@ -25,10 +29,6 @@ GENERAL
   final task in the 'held' state, not just delete them? (see 'STOPPING'
   in bin/_run
 
-* purge algorithm improvement: post cylc-3.0 we could easily determine,
-  via the suite dependency graph, if any tasks that should be affected
-  by the purge have not yet reached the purge start time.
-
 * allow 'submit' from suite control GUI.
 
 * allow launch gcylc from suite control GUIs?
@@ -36,7 +36,7 @@ GENERAL
 * get_oldest_ctime() loops through all tasks and is called multiple times
   within the task processing loop - should be able to call it just once.
 
-* CONDITIONAL EXPRESSIONS BUG:
+* CONDITIONAL EXPRESSION GRAPHING BUG:
     A & B | C => D
   A suite with an expression like this will run correctly but not plot correctly.
   For plotting, it is parsed as "A and ( B or C )", whereas it should be 
@@ -48,35 +48,36 @@ GENERAL
 * system level install of cylc - the (non-system-level) cylc environment 
   script is currently source automatically by cylc task job scripts.
 
-* LONG TERM: consider replacing finished tasks with a data structure
-  that remembers what happened. More efficient for very large suites?
+* Consider replacing finished tasks with a data structure that remembers
+  what happened. More efficient for very large suites?
 
-* consider changing task pool to a dictionary indexed by task ID =>
-  no more looping through the pool to find specific tasks.
+* Consider changing the task pool list to a dictionary indexed by task
+  ID. This would avoid having to loop through the pool to find a task.
 
 * IMPORTANT: rationalize suite shutdown criteria in main loop.
 
-* exclude failed tasks in the cleanup or runahead algorithms.
+* exclude failed tasks in the cleanup algorithms.
   Failed mean prereqs were satisfied so we don't need to keep 
   upstream tasks around. This may depend on the next item:
 * cleanup algorithm and failed tasks: test with userguide suite in dummy
   mode, failing C and F. In case of F, why do none of A,B,C get
   removed? 
+
 * exclude inserted spinup/temporary tasks from runahead check?
   (or manually alter the check - this should be fine because the
   catching up spinup task will be all alone out behind the 
   caught-up operational tasks - so the suite won't get cluttered
   with finished tasks as a result of the long runahead limit).
 
-* errors caught be validate should also be caught cleanly if the user
+* errors caught by validate should also be caught cleanly if the user
   tries to start the suite. E.g. misspell a task in 'tasks to exclude at
   startup'
 
-* add 'stopped' task coloring to the old terminal monitor program.
+* add 'held' task coloring to the old terminal monitor program.
 
 * GUI: check for suite block before popping up entry dialogs?
 
-* Practice mode:
+* Practice mode (currently disabled):
     * message command (command line usage only) lock and practice mode?
     * practice mode should be allowed even for exclusive suite locks. 
     * check that practice mode suites initialise with the same clock time
@@ -87,34 +88,26 @@ GENERAL
   the commands?
 
 * stop-at-cycle-time won't shutdown if there are any tasks stuck in
-  'waiting', even if they are all passed the stop cycle.
+  'waiting', even if they are all passed the stop cycle (still true?).
 
 * temporary job file location should be configurable.
 
-* update cylc xdot code from latest version in the external directory.
+* update cylc xdot code from latest version available? (see recently
+  deleted 'external' directory)
 
 * log a warning for remote change to runahead limit.
 
 * config(suite) writes to stdout/stderr (gcylc parent terminal) - see
   gcylc:view_log() for a non-validating suite.
 
-* document lockserver hosting issues: on a global filesystem, could use
-  single lockserver across multiple machines (have to specify
-  CYLC_LOCKSERVER_HOST in all suites, however) OR allow a separate
-  lockserver on each host - but this won't prevent running the same
-  suite on different hosts at the same time, which would cause probs in
-  a global filesystem.  ALSO _THIS functionality is currently disabled
-  in cylc -it is assumed that CYLC_SUITE_HOST is also the lockserver host.
-
 * allow $CYLC_DIR/conf overrides by user in .cylc?
 
-* reg export, copy, import should take group: as target even for single
-  suites.
+* db export, copy, import should take group: as target even for single suites.
 
 * clean up src/gui/textload.py and use of it: it was quickly hacked out
   of the tailing logviewer and should be treated separately and more simply.
 
-* note DO NOT USE a suite reg GROUP:NAME as a suite definition dir
+* CANNOT USE a suite reg GROUP:NAME as a suite definition dir
   as the colon screws up the PATH to the suite bin directory.
 
 * tasks that are not in the dep graph can now be run with 'submit';
@@ -123,70 +116,23 @@ GENERAL
 * clean up prerequisites classes - put all in one module? (same with
   outputs + requisites?)
 
- * FOR SUITES WITH OWNED TASKS:
- replace suite owner with task owner in job submission log directory
- (e.g. for 'sudo -u owner llsubmit task' the job log dir ends up in the
- ll directives for stdout and stderr output; these must be writeable by
- the owner or the job will be put on hold by loadleveler). CURRENTLY
- this is hardwired into ll_basic.py job submission but needs to be made
- more generally applicable. Also, can we provide a general mechanism for
- owned tasks in case suite and task owner home directories are of
- different structure? Perhaps owned tasks need to set a job log
- directory in their suite.rc task section?
+* SystemExit() in config.py, cylcconfigobj, (...?) BAD FOR GUI!
 
-* job submission log directory for tasks with owners: MUST be relative
-  to $HOME, which is used as loadleveler @initialdir, not absolute, or 
-  the loadleveler stdout and stderr output file directives will end up
-  pointing to the suite owner's space and the job will hang. Need a more 
-  transparent way of doing this!
-
-* raise SystemExit() in config.py, cylcconfigobj, (and anywhere else?) NO GOOD FOR GUI!
-
-* chooser: setting group color fails if multiple suites are running.
-  Need to parse each group member and check if any are running.
+* gcylc: setting running suite group green fails if multiple suites are
+  running. Need to parse each group member and check if any are running.
 
 * Consider possible changes to cylc internals in light of the fact
   that as of cylc-3 we know all task dependencies in advance, thanks
-  to the suite.rc dependency graph.  E.g. we may be able to remove many
+  to the suite.rc dependency graph. E.g. we may be able to remove many
   finished tasks ahead of the generic cleanup cut off.
-
-* Consider: instead of keeping finished tasks around, maintain a
-  database of finished outputs from which old data could "roll off"
-  at said cutoff. This would probably have a performance advantage 
-  for very large suites because it would eliminate the large numbers of
-  finished tasks that potentially have to stay in the task pool
-  for a while. This database would have to be written to file with every
-  change with the state dump file, to allow valid suite restarts.
-
-* suite db locking: document, and provide info via command response, 
-  what to do in the unlikely event that a lock is in place when a
-  transaction is attempted. Also, should trap Ctrl-C => unlock.
 
 * locking code could be simplified or cleaned up a bit now that
   the lockserver is user-specific?
-
-* click on a task and tell suite to pause upon completion thereof.
-
-* Document: if a suite is restarted on a new port the gui still
-  reconnects.
-
-* inlined suite.rc: avoid comments ending in line continuation marker
-  (2D textual dependency graph in comments at start of e.g. suite.rc)
-
-* document insertion danger: if you insert task A(T+N) ahead of A(T),
-  the suite will shut down if A(T) catches up with A(T+N): 'task has 
-  already registered its outputs'
 
 * consider calling task-started from task execution script instead of
   cylc-wrapper or task scripts: this would eliminate submitted state
   failures, and allow error trapping on tasks with significant
   in-suiterc scripting (and scripting-only tasks?)
-
-* 'coldstart tasks' could be replaced with a list auto-determined
-  by parsing the dependency graph?
-
-* document that restarting early on in a coldstart will not be
-  recognized as a coldstart.
 
 * currently all task reset commands go through the 'remote' object,
   which all suites have, but we could get a proxy for the task proxy directly,
@@ -197,32 +143,16 @@ GENERAL
   + PYRO_MAXCONNECTIONS , default 200: max number
   of simultaneous connections to a single pyro server?
   The default connection validator checks for this.
-  + port range: set sufficiently wide for UKMO.
-  (Consider cylclockd too)
+  + port range: set sufficiently wide for large sites.
+  (Consider lockservers too)
   + consider Pyro multi-threading again?
-  + use passphrase authentication in the default pyro connection validator
- (see the Pyro userguide security page).
-  THESE SHOULD BE USER-SPECIFIC GLOBAL PREFERENCES?
-
-* allow single tasks to be paused ?
 
 * '--host' should not be allowed for intervention commands because
   owner's username does not cross machine boundaries, generally.
 
-* consider the need for different spawning behaviour of sequential (and
-  tied?) tasks - why not just depend on prev%finished?
+* what happens if we restart after suite.rc task content changed?
 
-* document that continuation lines and include-files are cylc-specific
-  extensions to ConfigObj.
-
-* put roadmap into documentation. 
-
-* generate new stdout and stderr log files when a task is reset (done?).
-
-* in the new config format, what happens if we restart after suite.rc
-  tasks changed?
-
-* IMPORTANT: check that the user-defined task names do not clash with
+* Check that the user-defined task names do not clash with
   parent class or attribute names.
 
 * at some point, do some profiling of execution time and memory use:
@@ -242,19 +172,9 @@ GENERAL
   check for non-essential port scanning, esp. in gui.
   (see GUI note below)
 
-* document how to re-run partial suite over existing data:
-    - exclude some tasks
-    - insert a new task to generate the outputs representing
-      the existing data, and/OR
-    - dummy out the tasks that generated the existing data.
-
-* inserting an already existing task causes cylc to shut down with 
-  'error: task X has already registered its outputs' - is this the
-  desired behavior? (FIXED?)
-* can doing task deletion and insertion while a suite is PAUSED result
-  in "INSERTING A TASK
+* ?can deletion and insertion while a suite is HELD result in 
+    "INSERTING A TASK
       ERROR: A%2010081800 has already registered its outputs"
-(DUPLICATE; see above)
 
 * document reason for naming of pyro-connected objects
   (owner.suite.obj): prevent accidentally intervening in the wrong
@@ -264,7 +184,7 @@ GENERAL
 * temporary job submission filenames should contain the suite name
   so that automated cleanup processes can distinguish between suites.
 
-* check use of re m.group() and m.groups(): 
+* Python re: check use of re m.group() and m.groups(): 
 
     m.group(0)  # entire match
     m.group(1)  # first parenthesised sub-group
@@ -291,16 +211,8 @@ GENERAL
   because the automatic restart messages will not have the right task
   name.
 
-* some kind of internal queuing system as a more flexible alternative to
-  the simple max runahead limit?
-
-* commandline option parsing: defaults can be set to int or float, but 
-  values read from commandline input are always strings and need to be
-  converted.
-
-* dummy mode restart: clock-rate is set by state dump file, so no point 
-  in having rate as a commandline option unless it overrides. (and what
-  about offset? should it be in the state dump too?).
+* consider some kind of internal queuing system as a more flexible
+  alternative to the simple max runahead limit?
 
 * check all open( file, mode ) statements for mode 'rb' etc. 
 
@@ -314,19 +226,11 @@ GENERAL
 * example system implementations should always use $USER in temp dir
   paths, to avoid interference between users. (done?)
 
-* allow default loadleveler directives for ll_basic etc., to be
-  specified in suite.rc?
-
 * allow insertion of tasks in 'spawned already' state, for oneoff runs 
   of non-oneoff tasks?
 
-* purge algorithm: see TO DO in the in-method comments: ensure that ALL
-  tasks whose prerequisites get satisfied in the virtual system
-  evolution that occurs in the purge algorithm, get unsatisfied again at
-  the end of it.
-
 * stop (without --now) won't cause shutdown if a task family (but not
-  it's members!) has just triggered?
+  it's members) has just triggered?
 
 * task state at initialization: there's no point in giving initial
   state of "finished" for example, if this does not result in setting
@@ -336,18 +240,7 @@ GENERAL
 * note that prerequisites are no longer derived from requisites. Change
   documentation in the latter class (and elsewhere?) to reflect this.
 
-* a minor redesign of jobsumit / launcher class to avoid the current
-  clunky method of setting some class parameters directly instead of by
-  instance initialization or method call? e.g. job_submit.env = env.
-
-* --fail=TASKID: check that TASKID exists in the target suite.
-
-* In task scripts, document that failure inside RES=$( foo.sh ) does not
-  trigger the err trap!
-
-* document new use of 'TaskID failed' as an output: added on the fly as
-  a new output if failure occurs, then removed from the output list on
-  reset.
+* task scripts: does failure in RES=$( foo.sh ) get err trapped? (no?)
 
 * use new cylc_mode class everywhere mode test is required.
 
@@ -357,16 +250,14 @@ GENERAL
 * extreme task elimination method - extrapolate forward in time to see
   if a finished task will ever be needed, otherwise delete?
 
-* iteration over dictionary items: DO NOT USE
-  = for item in dict:
-  =    (operation that adds or removes items from dict)
-  -> RuntimeError: dictionary changed size during iteration
+* CHECK USE OF DICTIONARY ITERATION THROUGHOUT THE CODE:
+    for item in dict:
+       (operation that adds or removes items from dict)
+  => RuntimeError: dictionary changed size during iteration
 
-  Instead use
-  = for item in dict.keys():
+  Instead use:
+    for item in dict.keys():
   which must build a temporary list?
-
-  CHECK USE OF DICTIONARY ITERATION THROUGHOUT THE CODE
 
 * src/which.py, like the shell command, searches only for executable
   files. The ll_raw job submit classes use which to find task scripts
@@ -374,7 +265,7 @@ GENERAL
   to check that which returns a result before continuing (e.g. if 
   the task script has not been set executable). 
 
-* daemon and asynchronous task: initial tests done; go back, check, and
+* DAEMON AND ASYNCHRONOUS TASKS: initial tests done; go back, check, and
   complete, for new versions of cylc.
 
 * consider reset --no-spawn (Bernard tried to reset a waiting unspawned
@@ -386,24 +277,10 @@ GENERAL
   'waiting' state (not 'ready') - thus the aforementioned peers may be
   required to satisfy the failed task's prerequisites post resetting.
 
-* Consider the effect of "# uncomment for earliest NON-FAILED" (x2) in
-  manager.py - and test with dummy mode failout tasks.  For failed F in
-  userguide example suite, it allows some intermediate finished cycles
-  to be deleted, but this does not affect the delay due to max runahead.
-
 * consider task proc loop invocation - could we separate summary update
   vs task processing (e.g. when a task fails we have to run pointlessly
   (?) through the loop in order to update the summary immediately for
   monitoring.
-
-* document this: deleting a task may allow the suite to move on to the
-  point that a reinserted task will not get its prerequisites satisfied
-  automatically.
-
-* consistent suite exit strategy: 
-   -sys.exit(1), 
-   -raise SystemExit(message)
-   -custom exceptions
 
 * all error messages should go to stderr: print >> sys.stderr, 'message'
 
@@ -422,33 +299,14 @@ GENERAL
   of the satisfier task as well, for each prerequisite, and also to
   choose the latest task as satisfier if more than one can do it.
 
-* when remote killing all waiting tasks at a ref time, check that (a)
-  the suite has moved on passed that time, and (b) none of the waiting
-  tasks are clock-triggered tasks whose time has not come up yet.
-
-* we need a way to make the the custom clock (accelerated in dummy mode)
+* need a way to make the the custom clock (accelerated in dummy mode)
   available throughout the code, so we can easily use it anywhere
   (task.set_execution_timer is a kludge we could avoid, for instance).
 
 * clean up the clock class with respect to dummy vs real time, and move
   it into task pool?
 
-* do we need non-interpolation of single-quoted strings in taskdef
-  environment, scripting, command? (implement in job_submit.py)?
-
 * see To Do comment in broker.negotiate() - priority low.
-
-* execute.execute( [command]) blocks until command completes: THIS MAY
-  NOT BE GOOD FOR TASK FAILURE HOOK SCRIPT INVOCATION?
-
-__________
-LOCKSERVER
-
-* allow for a different lockserver host? (probably not). 
-
-* document that when a suite releases its lock all of that suite's task
-  locks are also released (e.g. when a suite is stopped --now with 
-  tasks still running).
 
 ___
 GUI
@@ -464,19 +322,25 @@ GUI
 * access to task stdout and stderr for remote tasks? In fact, more
   generally, current we assume the viewer is running locally.
 
-* VIEWING AND INTERACTING WITH REMOTE SUITES:
-THIS IS PROBABLY NO LONGER RELEVANT SINCE DITCHING THE PYRO NAMESERVER
-  'cylc view --host=foo'               .... works
-  'cylc view -u USER --host=foo SUITE' .... fails
-  The '-u USER' option does not work for cylc commands when '--host' is
-  required (remote machine) because cylc preferences looks for USER's
-  home directory locally => WHEN --host IS USED WE CANNOT LOAD PREFS (TO
-  PRELOAD THE TASK LIST; HAVE TO GET IT DYNAMICALLY FROM THE RUNNING
-  SUITE).  
+====================================
+GRAPH STABILITY:
+
+Small changes to graph content can cause large layout jumps - this is
+probably inevitable. 
+
+However, changes to the order of nodes and edges in the dot-file
+for the *same* graph may also cause layout changes. I've traced 
+this back to config.get_graph() for the cylc base graph and verified
+that I'm sorting edges and nodes prior to adding them to the graph.
+Thus the random(?) reordering seems to be a feature of the internals
+of pygraphviz? (maybe it stores nodes in dicts in the underlying C
+library...?)
+
+CONSIDER ADDING LAYOUT ONCE to base graph, and thereafter only when new 
+tasks are added to the graph? 
 
 ====================================
-FUZZY PREREQUISITES (only for infrequent 'advanced' usage - e.g. hourly
-TopNet in EcoConnect)
+FUZZY PREREQUISITES
 
 * allow mixed fuzzy and non-fuzzy prerequisites (currently have to 
   set identical fuzzy bounds to simulate the non-fuzzy case; see
