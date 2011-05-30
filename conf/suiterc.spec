@@ -758,7 +758,10 @@ __many__ = string
 #>       \item \lstinline@WAZ = ${FOO%.jpg}.png@
 #>       \item \lstinline@NEXT_CYCLE = $( cylc cycletime -a 6 )@
 #>       \item \lstinline@PREV_CYCLE = `cylc cycletime -s 6`@
+#>       \item \lstinline@ZAZ = "${FOO#bar}"@
 #>   \end{myitemize}
+#> Variable expansion expressions containing the hash character must be
+#> quoted because hash is the suite.rc comment delimiter.
 #>\end{myitemize}
 
 [directives]
@@ -1110,6 +1113,9 @@ __many__ = string
 #>       \item \lstinline@WAZ = ${FOO%.jpg}.png@
 #>       \item \lstinline@NEXT_CYCLE = $( cylc cycletime --add=6 )@
 #>       \item \lstinline@PREV_CYCLE = `cylc cycletime -s 6`@
+#>       \item \lstinline@ZAZ = "${FOO#bar}"@
+#> Variable expansion expressions containing the hash character must be
+#> quoted because hash is the suite.rc comment delimiter.
 #>   \end{myitemize}
 #>\item {\em default:} None
 #>\end{myitemize}
