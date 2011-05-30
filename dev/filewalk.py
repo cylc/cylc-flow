@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# How to traverse a directory tree using Python
+
 import os, re
 
 pwd = os.getcwd()

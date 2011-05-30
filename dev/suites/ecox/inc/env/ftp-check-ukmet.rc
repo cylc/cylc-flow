@@ -1,5 +1,0 @@
-            SRCE    = ftpops.metoffice.gov.uk
-            SRCE_LOC    = ~/
-            DEST_LOC    = ${HOME}/output
-            SRCE_USER   = niwa
-            TIMEOUT = 60 

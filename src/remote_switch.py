@@ -378,10 +378,6 @@ class remote_switch( Pyro.core.ObjBase ):
         self.log.setLevel( new_level )
         return result(True, 'OK')
 
-    def should_i_die( self, task_id ):
-        if self.halt:
-            return True
-
     # INTERNAL USE METHODS FOLLOW:--------------------------------------
 
     def _task_type_exists( self, name_or_id ):
