@@ -1,6 +1,10 @@
 _______
 GENERAL
 
+* allow tasks that run (in cycle time space) less than daily, and more
+  than hourly. src/cycle_time.py has been OO-ified and extend to 
+  minutes and seconds in prepartion for this.
+
 * remote job log directory for remote tasks.
 
 * it should be possible to triggere clock-triggered tasks manually
