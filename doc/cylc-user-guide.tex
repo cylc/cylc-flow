@@ -483,40 +483,31 @@ even more efficient job schedule.
 \end{figure} 
 
 Cylc manages a pool of proxy objects that represent real tasks in the
-forecasting suite. A task proxy object can run the real task that it
+forecasting suite. A task proxy can run the real task that it
 represents when its prerequisites are satisfied, and can receive reports
 of completed outputs from the real task as it runs. There is no global
 cycling mechanism to advance the suite in time; instead each individual
 task proxy has a private cycle time and spawns its own successor. Task
-proxies are self-contained and do not know what other tasks exist in the
-suite, they just know their own prerequisites and outputs. Intercycle
+proxies are self-contained - they just know their own prerequisites and
+outputs and are not aware of the wider suite context. Intercycle
 dependencies are not treated as special, and the task pool can be
 populated with tasks from many different cycle times. 
-How cylc sees the task pool is illustrated in
-Figure~\ref{fig-task-pool}. Now, whenever any task proxy changes state
-(as a result of an output completion message, for example) cylc gets the
-entire pool to interact indiscriminately ({\em regardless of cycle
-time}) in an attempt to match unsatisfied prerequisites with completed
-outputs.\footnote{In fact this dependency negotiation goes through a
-middleman or broker object, which reduces the interaction scaling from
-$n^2$ to $n$, where $n$ is the number of task proxies in the suite.} 
+The cylc task pool is illustrated in Figure~\ref{fig-task-pool}. Now,
+{\em whenever any task changes state
+due to completion of an output, every task checks to see if its
+own prerequisites are now satisfied.}\footnote{In fact this dependency
+negotiation goes through a broker object (rather than every task
+literally checking every other task) which scales as $n$ (rather than
+$n^2$) where $n$ is the number of task proxies in the pool.}  Moreover,
+this matching of prerequisites and outputs involves the entire task
+pool, regardless of individual cycle times, so that inter- and
+intra-cycle dependencies are handled with ease.
 
 Thus without using global cycling mechanisms, and treating all
-dependencies equally, cylc in effect gets a set of individual tasks to
-self-organise by negotiating their own dependencies: optimal scheduling,
-as described in the previous section, emerges naturally at run time.
-
-In addition, cylc makes no distinction between delayed and real time
-operation. In delayed operation the tasks that gather the suite's
-external driving data will return immediately (because the data is
-already available) and the suite will only be constrained by its
-internal dependencies. In real time operation, the data gathering tasks
-will return only when the external data becomes available (at
-some defined offset with respect to the task's cycle time), delaying
-downstream tasks until then, by which time the previous forecast cycle
-will have completed. A cylc suite thus transitions seamlessly from
-optimal multicycle scheduling to a sequence of distinct forecast cycles
-as it catches up to real time operation.
+dependencies equally, cylc in effect gets a pool of tasks to
+self-organise by negotiating their own dependencies so that optimal
+scheduling, as described in the previous section, emerges naturally at
+run time.
 
 %Perhaps the most difficult problem encountered during cylc
 %implementation was how to arrange that every task proxy object exists by
@@ -1815,7 +1806,7 @@ job submission method = loadleveler
     # ...
 \end{lstlisting}
 
-This is in fact the {\em examples:CUG_QS3} suite from the Quick Start Guide,
+This is in fact the {\em examples:CUG\_QS3} suite from the Quick Start Guide,
 which you can copy, study, and run. Dependency graphs plotted from this
 (by gcylc or \lstinline=cylc graph=) are shown in
 Figures~\ref{fig-simple-graph-1} and~\ref{fig-simple-graph-3}.
@@ -3750,7 +3741,8 @@ will not constrain the suite at all, and cylc's multi-cycling abilities
 come to the fore, because their trigger times have already passed. 
 But if a clock-triggered task happens to catch up to the wall clock, it
 will automatically wait again. In this way a cylc suite naturally
-transitions from delayed operation into real time operation. 
+and seamlessly transitions between delayed and real time operation 
+as required.
 
 \pagebreak
 
