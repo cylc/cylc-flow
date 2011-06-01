@@ -8,4 +8,5 @@ doc/cylc-user-guide.out
 doc/cylc-user-guide.pdf
 doc/cylc-user-guide.toc
 doc/suiterc.spec.tex
+*.swp
 CDB
