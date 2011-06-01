@@ -18,9 +18,6 @@ models."""
 
 use lockserver = True
 
-[experimental]
-    live graph movie = True
-
 [special tasks]
     startup          = prep
     sequential       = A, B, C

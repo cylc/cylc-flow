@@ -15,9 +15,6 @@ should only be modified with extreme caution."""
 # LOCKSERVER OFF: we're only testing scheduling functionality here.
 use lockserver = False
 
-[experimental]
-    live graph movie = True
-
 [special tasks]
     startup          = prep
     sequential       = A, B, C
