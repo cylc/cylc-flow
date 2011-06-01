@@ -144,7 +144,7 @@ if len(args) == 3:
         stop_ctime = ct(args[2])
     except CycleTimeError,x:
         raise SystemExit(x)
-    stop_delta = stop_ctime.subtract( stop_ctime, ct(start_ctime) )
+    stop_delta = stop_ctime.subtract( ct(start_ctime) )
     # timedelta: days, seconds, microseconds; ignoring microseconds
     stop = stop_delta.days * 24 + stop_delta.seconds / 3600
 else:
