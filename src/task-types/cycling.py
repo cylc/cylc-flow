@@ -117,7 +117,7 @@ class cycling( task ):
                 incr = self.valid_hours[ 0 ] + 24 - self.valid_hours[ i_now ]
 
         foo = ct( rt )
-        foo.increment( incr )
+        foo.increment( hours=incr )
         return foo.get()
 
     def next_tag( self ):

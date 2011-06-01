@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
-import cycle_time
+from cycle_time import ct, CycleTimeError
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
@@ -64,16 +64,18 @@ if len( args ) != 3:
     parser.error( "suite name, task ID, and stop cycle required." )
 
 target = args[1]
-stop = args[2]
+stoptag = args[2]
 
 try:
-    ( name, start ) = target.split('%')
+    ( name, starttag ) = target.split('%')
 except ValueError:
     parser.error( "Task ID must be NAME%YYYYMMDDHH")
  
-for cycle in [ start, stop ]:
-    if not cycle_time.is_valid( cycle ):
-        parser.error( "invalid cycle time: " + cycle )
+try:
+    start = ct(starttag).get()
+    stop = ct(stoptag).get()
+except CycleTimeError,x:
+    raise SystemExit(x)
 
 suite = parser.get_suite_name()
 

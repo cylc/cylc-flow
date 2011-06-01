@@ -50,7 +50,6 @@ class jobfile(object):
         # Get NAME%CYCLETIME (cycling tasks) or NAME%TAG (asynchronous tasks)
         ( self.task_name, tag ) = task_id.split( '%' )
         # TO DO: asynchronous tasks
-        # if cycle_time.is_valid( tag ):
         self.cycle_time = tag
 
     def write( self ):

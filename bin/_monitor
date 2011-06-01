@@ -23,7 +23,7 @@ For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
 """
 
-# FIXME !!!!!!!!!!!  from cycle_time import _rt_to_dt, is_valid
+from cycle_time import ct, CycleTimeError
 import cylc_pyro_client
 from port_scan import SuiteIdentificationError
 import os, re, sys
@@ -264,15 +264,14 @@ try:
             for rt in c_time_list:
                 line = ''
 
-                # FIXME !!!!!!!!!!!if not is_valid( rt ):
-                if not True:
-                # FIXME !!!!!!!!!!!    line = line + rt
-                    pass
-
+                try:
+                    crt = ct(rt)
+                except CycleTimeError:
+                    line = line + rt
                 else:
                     # colour cycle time according to whether it has
                     # caught up to the current clock time or not.
-                    rtdt = None # FIXME !!!!!!!!!!!!!!_rt_to_dt( rt )
+                    rtdt = crt.get_datetime()
                     if dt > rtdt:
                         # behind
                         line = '\033[1;34m' + rt + ctrl_end

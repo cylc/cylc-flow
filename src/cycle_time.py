@@ -54,6 +54,8 @@ class ct( object ):
         else:
             raise InvalidCycleTimeError, 'Cycle Times must be YYYYMMDDHH[mm[ss]]: ' + str
 
+        self.strvalue_Y2H = self.strvalue[0:10]
+
         self.year    = self.strvalue[ 0:4 ]
         self.month   = self.strvalue[ 4:6 ]
         self.day     = self.strvalue[ 6:8 ]
@@ -70,9 +72,13 @@ class ct( object ):
             # returns sensible messages: "minute must be in 0..59"
             raise InvalidCycleTimeError( x.__str__() + ': ' + self.get_formatted() )
 
-    def get( self ):
-        # YYYYMMDDHHmmss
-        return self.strvalue
+    def get( self, Y2H=True ):
+        if Y2H:
+            # YYYYMMDDHH
+            return self.strvalue_Y2H
+        else:
+            # YYYYMMDDHHmmss
+            return self.strvalue
 
     def get_formatted( self ):
         # YYYY/MM/DD HH:mm:ss
@@ -107,9 +113,15 @@ class ct( object ):
         return ct( self.strvalue )
 
     def subtract( self, ct ):
-        # subtract this ct from me,
-        # return a timedelta: .days, .seconds, .microseconds
+        # subtract this ct from me, return a timedelta
+        # (.days, .seconds, .microseconds)
          return self.dtvalue - ct.dtvalue
+
+    def subtract_hrs( self, ct ):
+        # subtract this ct from me, return hours
+        delta = self.subtract(ct)
+        return int( delta.days * 24 + delta.seconds / 3600 + delta.microseconds / ( 3600 * 1000000 ))
+
 
 if __name__ == "__main__":
     foo = ct( '20110526184359' )

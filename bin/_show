@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, re, sys
-import cycle_time
+from cycle_time import ct, CycleTimeError
 import cylc_pyro_client
 from CylcOptionParsers import NoPromptOptionParser_u
 from port_scan import SuiteIdentificationError
@@ -42,7 +42,7 @@ prnt_id = False
 if len(args) == 2:
     target = args[1]
     try:
-        name, cycle = target.split( '%' )
+        name, tag = target.split( '%' )
     except ValueError:
         prnt_name = True
         name = target
@@ -75,8 +75,10 @@ if prnt_name or prnt_id:
         print ' + ', info[name]
 
 if prnt_id:
-    if not cycle_time.is_valid( cycle ):
-        parser.error( "invalid cycle time: " + cycle )
+    try:
+        cycle = ct(tag).get()
+    except CycleTimeError, x:
+        raise SystemExit(x)
 
     # PREREQUISITES AND OUTPUTS
     result = proxy.get_task_requisites( [ id ] )

@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
-import cycle_time
+from cycle_time import ct, CycleTimeError
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
@@ -49,18 +49,26 @@ target = args[1]
 kill_cycle = False
 kill_task = False
 
-if cycle_time.is_valid( target ):
-    kill_cycle = True
-elif re.search( '%', target ):
-    kill_task = True
-    try:
-        ( name, cycle ) = target.split('%')
-    except ValueError:
-        parser.error( "Task ID must be NAME%YYYYMMDDHH")
-    if not cycle_time.is_valid( cycle ):
-        parser.error( "invalid cycle time: " + cycle )
+try:
+    ct(target)
+except:
+    kill_cycle = False
 else:
-    parser.error( 'Input Format error? must be NAME%YYYYMMDDHH or YYYYMMDDHH' )
+    kill_cycle = True
+
+if not kill_cycle:
+    if re.search( '%', target ):
+        kill_task = True
+        try:
+            ( name, tag ) = target.split('%')
+        except ValueError:
+            parser.error( "Task ID must be NAME%YYYYMMDDHH")
+        try:
+            cycle = ct( tag ).get()
+        except CycleTimeError,x:
+            raise SystemExit(x)
+    else:
+        parser.error( 'Input Format error? must be NAME%YYYYMMDDHH or YYYYMMDDHH' )
 
 try:
     proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )

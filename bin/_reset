@@ -18,7 +18,7 @@
 
 
 import os, sys
-import cycle_time
+from cycle_time import ct, CycleTimeError
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
@@ -79,12 +79,14 @@ else:
 task_id = args[1]
 
 try:
-    (name, cycle ) = task_id.split('%')
+    (name, tag ) = task_id.split('%')
 except ValueError:
     parser.error( "Task or Group ID must be NAME%YYYYMMDDHH")
 
-if not cycle_time.is_valid( cycle ):
-    parser.error( "invalid cycle time: " + cycle )
+try:
+    cycle = ct(tag).get()
+except CycleTimeError, x:
+    raise SystemExit(x)
 
 suite = parser.get_suite_name()
 

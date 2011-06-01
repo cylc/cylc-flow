@@ -19,7 +19,6 @@
 
 import Pyro.core
 import datetime
-import cycle_time
 from time import sleep
 import datetime, time
 

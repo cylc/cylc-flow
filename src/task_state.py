@@ -137,14 +137,6 @@ class task_state(object):
             print 'ERROR, illegal abdication status:', self.state[ 'spawned' ]
             sys.exit(1)
 
-        #if 'cycle_time' not in self.state:
-        #    print 'ERROR, cycle time not defined'
-        #    sys.exit(1)
-
-        #if not cycle_time.is_valid( self.state[ 'cycle_time' ] ):
-        #    print 'ERROR, invalid cycle time', self.state[ 'cycle_time' ]
-        #    sys.exit(1)
-
     def dump( self ):
         # format: 'item1=value1, item2=value2, ...'
         result = ''

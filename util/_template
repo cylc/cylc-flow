@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
-import cycle_time
+from cycle_time import ct, CycleTimeError
 from optparse import OptionParser
 
 parser = OptionParser( usage = """cylc [util] template [options] STRING [CYCLE] 
@@ -81,16 +81,18 @@ else:
 
 if len(args) == 2:
     # explicit cycle time
-    cycle = args[1]
-    if not cycle_time.is_valid( cycle ):
-        parser.error( "invalid cycle time: " + cycle )
-
+    try:
+        cycle = ct( args[1] )
+    except CycleTimeError, x:
+        raise SystemExit(x)
+ 
 if not cycle:
     # cycle time must be defined in the environment
     if 'CYCLE_TIME' in os.environ:
-        cycle = os.environ[ 'CYCLE_TIME' ]
-        if not cycle_time.is_valid( cycle ):
-            parser.error( "invalid cycle time: " + cycle )
+        try:
+            cycle = ct( os.environ[ 'CYCLE_TIME' ] )
+        except CycleTimeError, x:
+            raise SystemExit(x)
     else:
         parser.error( "no valid cycle time found" )
 
@@ -99,7 +101,7 @@ subtract = False
 add = False
 offset = False
 
-hours_str = int( cycle[8:10] ) 
+hours_str = int( cycle.hour ) 
 
 if options.subtract:
     subtract = True
@@ -133,19 +135,19 @@ if offset:
 
 
 if add:
-    cycle = cycle_time.increment( cycle, hours )
+    cycle.increment( hours=hours )
 elif subtract:
-    cycle = cycle_time.decrement( cycle, hours )
+    cycle.decrement( hours=hours )
 
 string = template
 # replace YYYYMMDDHH
-string = re.sub( "YYYYMMDDHH", cycle, string )
+string = re.sub( "YYYYMMDDHH", cycle.get(), string )
 # replace YYYY, MM, DD, HH
-string = re.sub( 'YYYY', cycle[0:4],  string )
-string = re.sub( 'MM',   cycle[4:6],  string )
-string = re.sub( 'DD',   cycle[6:8],  string )
-string = re.sub( 'HH',   cycle[8:10], string )
+string = re.sub( 'YYYY', cycle.year,  string )
+string = re.sub( 'MM',   cycle.month,  string )
+string = re.sub( 'DD',   cycle.day,  string )
+string = re.sub( 'HH',   cycle.hour, string )
 # replace YY
-string = re.sub( 'YY',   cycle[2:3],  string )
+string = re.sub( 'YY',   cycle.year[2:4],  string )
 
 print string

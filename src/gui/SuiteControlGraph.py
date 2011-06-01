@@ -23,7 +23,7 @@ import gobject
 import helpwindow
 from xstateview import xupdater
 #from warning_dialog import warning_dialog, info_dialog
-import cycle_time
+from cycle_time import ct
 from cylc_xdot import xdot_widgets
 
 class ControlGraph(ControlAppBase):
@@ -340,8 +340,11 @@ Dependency graph based GUI suite control interface.
 
         name, ctime = id.split('%')
         # TO DO: do we need to check that oldeset_ctime is defined yet?
-        diff_pre = cycle_time.diff_hours( ctime, self.x.oldest_ctime )
-        diff_post = cycle_time.diff_hours( self.x.newest_ctime, ctime )
+        cti = ct(ctime)
+        octi = ct( self.x.oldest_ctime )
+        ncti = ct( self.x.newest_ctime )
+        diff_pre = cti.subtract_hrs( octi )
+        diff_post = ncti.subtract_hrs( cti )
 
         # TO DO: error checking on date range given
         box = gtk.HBox()
@@ -451,8 +454,12 @@ Dependency graph based GUI suite control interface.
     def focused_timezoom(self, w, focus_ctime, start_e, stop_e):
         pre_hours = start_e.get_text()
         post_hours = stop_e.get_text()
-        self.x.start_ctime = cycle_time.decrement( focus_ctime, pre_hours )
-        self.x.stop_ctime = cycle_time.increment( focus_ctime, post_hours )
+        foo = ct(focus_ctime)
+        foo.decrement( hours=pre_hours )
+        self.x.start_ctime = foo.get()
+        bar = ct(focus_ctime)
+        bar.increment( hours=post_hours )
+        self.x.stop_ctime = bar.get()
         self.x.best_fit = True
         self.x.action_required = True
 

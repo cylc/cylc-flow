@@ -28,7 +28,7 @@ from combo_logviewer import combo_logviewer
 from warning_dialog import warning_dialog, info_dialog
 from port_scan import SuiteIdentificationError
 import cylc_pyro_client
-import cycle_time
+from cycle_time import ct, CycleTimeError
 from option_group import controlled_option_group
 from config import config
 from color_rotator import rotator
@@ -125,8 +125,10 @@ and associated methods for their control widgets.
             if stoptime == '':
                 warning_dialog( "ERROR: No stop time entered" ).warn()
                 return
-            if not cycle_time.is_valid( stoptime ):
-                warning_dialog( "ERROR: Invalid stop time: " + stoptime ).warn()
+            try:
+                ct(stoptime)
+            except CycleTimeError,x:
+                warning_dialog( str(x) ).warn()
                 return
 
         elif stopnow_rb.get_active():
@@ -155,10 +157,16 @@ and associated methods for their control widgets.
                 warning_dialog( "ERROR: No stop task ID entered" ).warn()
                 return
             try:
-                stoptask_id.split('%')
+                name, tag = stoptask_id.split('%')
             except:
                 warning_dialog( "ERROR: Bad task ID (TASK%YYYYMMDDHH): " + stoptask_id ).warn()
                 return
+            try:
+                ct(tag)
+            except CycleTimeError,x:
+                warning_dialog( str(x) ).warn()
+                return
+
         else:
             # SHOULD NOT BE REACHED
             warning_dialog( "ERROR: Bug in GUI?" ).warn()
@@ -213,8 +221,10 @@ and associated methods for their control widgets.
 
         ste = stoptime_entry.get_text()
         if ste:
-            if not cycle_time.is_valid( ste ):
-                warning_dialog( "ERROR: invalid cycle time: " + ste ).warn()
+            try:
+                ct(ste)
+            except CycleTimeError,x:
+                warning_dialog( str(x) ).warn()
                 return
             command += ' --until=' + stoptime_entry.get_text()
 
@@ -223,9 +233,12 @@ and associated methods for their control widgets.
             if ctime == '':
                 warning_dialog( 'Error: an initial cycle time is required' ).warn()
                 return
-            elif not cycle_time.is_valid( ctime ):
-                warning_dialog( "ERROR: invalid cycle time: " + ctime ).warn()
-                return
+            else:
+                try:
+                    ct(ctime)
+                except CycleTimeError,x:
+                    warning_dialog( str(x) ).warn()
+                    return
 
         for group in optgroups:
             command += group.get_options()
@@ -518,8 +531,10 @@ The cylc forecast suite metascheduler.
         except ValueError:
             warning_dialog( "ERROR, Task or Group ID must be NAME%YYYYMMDDHH").warn()
             return
-        if not cycle_time.is_valid( cycle ):
-            warning_dialog( "ERROR, invalid cycle time: " + cycle ).warn()
+        try:
+            ct(cycle)
+        except CycleTimeError,x:
+            warning_dialog( str(x) ).warn()
             return
 
         window.destroy()
@@ -1066,16 +1081,20 @@ The cylc forecast suite metascheduler.
     def insert_task( self, w, window, entry_name, entry_ctime, entry_stopctime ):
         name = entry_name.get_text()
         ctime = entry_ctime.get_text()
-        if not cycle_time.is_valid( ctime ):
-            warning_dialog( "Cycle time not valid: " + ctime ).warn()
+        try:
+            ct(ctime)
+        except CycleTimeError,x:
+            warning_dialog( str(x) ).warn()
             return
         if name == '':
             warning_dialog( "Enter task or group name" ).warn()
             return
         stopctime = entry_stopctime.get_text()
         if stopctime != '':
-            if not cycle_time.is_valid( stopctime ):
-                warning_dialog( "Cycle time not valid: " + stopctime ).warn()
+            try:
+                ct(stopctime)
+            except CycleTimeError,x:
+                warning_dialog( str(x) ).warn()
                 return
         window.destroy()
         if stopctime == '':

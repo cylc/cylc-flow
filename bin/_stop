@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
-import cycle_time
+from cycle_time import ct, CycleTimeError
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
@@ -65,10 +65,9 @@ except SuiteIdentificationError, x:
 method = None
 if shutdown_at:
     # STOP argument detected
-    if cycle_time.is_valid( shutdown_arg ):
-        # STOP is a cycle time
-        method = 'stop after cycle time'
-    else:
+    try:
+        ct(shutdown_arg)
+    except CycleTimeError,x:
         try:
             # YYYY/MM/DD-HH:mm
             date, time = shutdown_arg.split('-')
@@ -81,12 +80,20 @@ if shutdown_at:
                 parser.error( "invalid STOP argument: " + shutdown_arg )
             else:
                 # STOP is a task ID
+                # check valid ctime
+                try:
+                    ct(ctime)
+                except CycleTimeError,x:
+                    raise SystemExit(str(x))
                 method = 'stop after task finishes'
         else:
             # STOP is a clock time
             method = 'stop after clock time'
+    else:
+        # STOP is a valid cycle time
+        method = 'stop after cycle time'
 
-    if not parser.prompt( 'Set shutdown time ' + shutdown_arg + ' for'):
+    if not parser.prompt( 'Set shutdown ' + shutdown_arg + ' for'):
         sys.exit(0)
 
     result = proxy.set_stop( shutdown_arg, method )

@@ -23,7 +23,7 @@ import threading
 import cylc_pyro_client
 import gtk
 import pygtk
-import cycle_time
+from cycle_time import ct
 ####pygtk.require('2.0')
 
 def compare_dict_of_dict( one, two ):
@@ -312,7 +312,10 @@ class xupdater(threading.Thread):
 
         extra_node_ids = {}
 
-        diffhrs = cycle_time.diff_hours( newest, oldest ) + 1
+        nct = ct(newest)
+        oct = ct(oldest)
+        diffhrs = nct.subtract_hrs( oct ) + 1
+
         #if diffhrs < 25:
         #    diffhrs = 25
         self.graphw = self.suiterc.get_graph( oldest, diffhrs, colored=False, raw=raw ) 

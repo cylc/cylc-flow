@@ -20,8 +20,7 @@ import os, sys, re
 import socket
 from optparse import OptionParser
 from time import sleep
-
-import cycle_time
+from cycle_time import ct, CycleTimeError
 from port_scan import SuiteNotFoundError
 from registration import localdb, RegistrationError
 from lockserver import lockserver
@@ -55,15 +54,16 @@ def check_task_spec( task_spec ):
     check_suite_spec( suite )
 
     try:
-        (name, cycle) = task_id.split( '%' )
+        (name, tag) = task_id.split( '%' )
     except ValueError:
         raise SystemExit( task_spec + " - Please specify SUITE:TASK_NAME%CYCLE_TIME" )
  
-    if not cycle_time.is_valid( cycle ):
-        raise SystemExit( "Invalid cycle time: " + cycle )
+    try:
+        cycle = ct(tag).get()
+    except CycleTimeError,x:
+        raise SystemExit(x)
 
     return ( suite, task_id )
-
 
 if __name__ == "__main__":
 

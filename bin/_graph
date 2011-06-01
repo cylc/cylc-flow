@@ -18,7 +18,7 @@
 
 import os, re, sys
 from time import sleep
-import cycle_time
+from cycle_time import ct, CycleTimeError
 import gtk
 import gtk.gdk
 import gobject
@@ -134,15 +134,19 @@ if len(args) < 2 or len(args) > 3:
 
 suite = args[0]
 
-start_ctime = args[1]
-if not cycle_time.is_valid(start_ctime):
-    parser.error( "Illegal START cycle time (YYYYMMDDHH): " + start_ctime )
+try:
+    start_ctime = ct(args[1]).get()
+except CycleTimeError,x:
+    raise SystemExit(x)
 
 if len(args) == 3:
-    stop_ctime = args[2]
-    if not cycle_time.is_valid(stop_ctime):
-        parser.error( "Illegal STOP cycle time (YYYYMMDDHH): " + stop_ctime )
-    stop = cycle_time.diff_hours( stop_ctime, start_ctime )
+    try:
+        stop_ctime = ct(args[2])
+    except CycleTimeError,x:
+        raise SystemExit(x)
+    stop_delta = stop_ctime.subtract( stop_ctime, ct(start_ctime) )
+    # timedelta: days, seconds, microseconds; ignoring microseconds
+    stop = stop_delta.days * 24 + stop_delta.seconds / 3600
 else:
     stop = 0
 

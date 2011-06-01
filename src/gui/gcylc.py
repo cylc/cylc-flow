@@ -22,7 +22,7 @@ import gobject
 import gtk
 import time, os, re
 import threading
-import cycle_time
+from cycle_time import ct, CycleTimeError
 from config import config, SuiteConfigError
 import cylc_pyro_client
 from port_scan import scan, SuiteIdentificationError
@@ -1726,9 +1726,17 @@ The cylc forecast suite metascheduler.
         if suiterc_rb.get_active():
             start = start_entry.get_text()
             stop = stop_entry.get_text()  # optional
-            if not cycle_time.is_valid( start ):
-                warning_dialog( "Invalid cycle time (YYYYMMDDHH) " + start ).warn()
+            try:
+                ct(start)
+            except CycleTimeError,x:
+                warning_dialog( str(x) ).warn()
                 return False
+            if stop != '':
+                try:
+                    ct(stop)
+                except CycleTimeError,x:
+                    warning_dialog( str(x) ).warn()
+                    return False
             if warm_rb.get_active():
                 options += ' -w '
             options += ' ' + reg + ' ' + start + ' ' + stop

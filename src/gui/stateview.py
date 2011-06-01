@@ -24,7 +24,6 @@ import threading
 import cylc_pyro_client
 import gtk
 import pygtk
-import cycle_time
 ####pygtk.require('2.0')
 
 def compare_dict_of_dict( one, two ):

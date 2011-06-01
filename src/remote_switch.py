@@ -18,7 +18,7 @@
 
 import Pyro.core
 import logging
-import cycle_time
+from cycle_time import ct, CycleTimeError
 import sys, os
 from CylcError import TaskNotFoundError, TaskStateError
 from job_submit import job_submit
@@ -190,10 +190,12 @@ class remote_switch( Pyro.core.ObjBase ):
             return result( False, "Suite Blocked" )
 
         if method == 'stop after cycle time':
-            if cycle_time.is_valid( arg ):
-                self.pool.set_stop_ctime( arg )
-            else:
+            try:
+                ct(arg)
+            except CycleTimeError, x:
                 return result( False, "Bad cycle time (YYYYMMDDHH): " + arg )
+            else:
+                self.pool.set_stop_ctime( arg )
 
         elif method == 'stop after clock time':
             try:

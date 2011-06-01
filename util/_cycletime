@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
-import cycle_time
+from cycle_time import ct, CycleTimeError
 from optparse import OptionParser
 
 parser = OptionParser( usage = """cylc [util] cycletime [options] [CYCLE]
@@ -68,17 +68,18 @@ if len( args ) == 0:
     if 'CYCLE_TIME' not in os.environ:
         parser.error( "Provide CYCLE arg, or define $CYCLE_TIME" )
     else:
-        cycle = os.environ[ 'CYCLE_TIME' ]
-        if not cycle_time.is_valid( cycle ):
-            parser.error( "invalid cycle time: " + cycle )
+        try:
+            cycle = ct(os.environ[ 'CYCLE_TIME' ])
+        except CycleTimeError, x:
+            raise SystemExit(x)
     # DONE (no args)
 
 elif len( args ) == 1:
     # must be cycle time
-    cycle = args[0]
-    if not cycle_time.is_valid( cycle ):
-        print 'ERROR, invalid cycle time:', cycle
-        sys.exit(1)
+    try:
+        cycle = ct(args[0])
+    except CycleTimeError, x:
+        raise SystemExit(x)
 else:
     parser.error( "Wrong number of arguments!" )
 
@@ -87,22 +88,31 @@ subtract = False
 add = False
 offset = False
 
-hours_str = int( cycle[8:10] ) 
+hours_str = int( cycle.hour ) 
 
 if options.subtract:
     subtract = True
     n_chosen += 1 
-    hours_str = int( options.subtract )
+    try:
+        hours_str = int( options.subtract )
+    except ValueError:
+        parser.error( 'ERROR: you can only subtract integer hours' )
 
 if options.add:
     add = True
     n_chosen += 1
-    hours_str = int( options.add )
+    try:
+        hours_str = int( options.add )
+    except ValueError:
+        parser.error( 'ERROR: you can only add integer hours' )
 
 if options.offset:
     offset = True
     n_chosen += 1
-    hours_str = int( options.offset )
+    try:
+        hours_str = int( options.offset )
+    except ValueError:
+        parser.error( 'ERROR: you can only offset integer hours' )
 
 if n_chosen > 1:
     parser.error( "Choose ZERO or ONE of subtract, add, or offset" )
@@ -145,17 +155,17 @@ if offset:
         add = True
 
 if add:
-    cycle = cycle_time.increment( cycle, hours )
+    cycle.increment( hours=hours )
 elif subtract:
-    cycle = cycle_time.decrement( cycle, hours )
+    cycle.decrement( hours=hours )
 
 if print_year:
-    print cycle[0:4]
+    print cycle.year
 elif print_month:
-    print cycle[4:6]
+    print cycle.month
 elif print_day:
-    print cycle[6:8]
+    print cycle.day
 elif print_hour:
-    print cycle[8:10]
+    print cycle.hour
 else:
-    print cycle
+    print cycle.get()

@@ -19,8 +19,7 @@
 
 import os, sys, re
 from optparse import OptionParser
-
-import cycle_time
+from cycle_time import ct, CycleTimeError
 from scheduler import scheduler
 
 global debug
@@ -80,9 +79,13 @@ Arguments:
         self.restart_from = None
         if len( self.args ) == 2:
             self.restart_from = self.args[1]
-            if cycle_time.is_valid( self.restart_from ):
-                print "WARNING: THE SUPPLIED INITIAL RESTART DUMP FILENAME IS A"
-                print "VALID CYCLE TIME - did you mean to (cold|warm|raw)start?"
+            try:
+                ct( self.restart_from )
+            except:
+                pass
+            else:
+                # user must have meant to cold or warm start, not restart.
+                raise SystemExit("ERROR: restart dump filename is a valid cycle time!")
 
         scheduler.parse_commandline( self )
 

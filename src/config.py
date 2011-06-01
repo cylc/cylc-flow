@@ -31,7 +31,7 @@
 # a new config object.
 
 import taskdef
-import cycle_time
+from cycle_time import ct
 import re, os, sys, logging
 from mkdir_p import mkdir_p
 from validate import Validator
@@ -141,7 +141,9 @@ class edge( object):
                 # TO DO: this check is redundant (already checked by
                 # graphnode processing).
                 raise SuiteConfigError, "Prerequisite offsets must be negative: " + left
-            ctime = cycle_time.decrement( ctime, offset )
+            foo = ct(ctime)
+            foo.decrement( hours=offset )
+            ctime = foo.get()
             res = task + '%' + ctime
         else:
             res = left + '%' + ctime
@@ -219,7 +221,9 @@ class node( object):
                 # TO DO: this check is redundant (already checked by
                 # graphnode processing).
                 raise SuiteConfigError, "Prerequisite offsets must be negative: " + left
-            ctime = cycle_time.decrement( ctime, offset )
+            foo = ct(ctime)
+            foo.decrement(hours=offset)
+            ctime = foo.get()
             res = task + '%' + ctime
         else:
             res = left + '%' + ctime
@@ -839,8 +843,11 @@ class config( CylcConfigObj ):
                     if cycles[i] > hour:
                         found = True
                         diff = cycles[i] - hour
-                        ctime = cycle_time.increment( ctime, diff )
-                        if int( cycle_time.diff_hours( ctime, start_ctime )) > int(stop):
+                        foo = ct(ctime)
+                        foo.increment( hours=diff )
+                        ctime = foo.get()
+                        diffhrs = foo.subtract_hrs( ct(start_ctime) )
+                        if diffhrs > int(stop):
                             found = False
                         break
             if found:
@@ -861,8 +868,11 @@ class config( CylcConfigObj ):
                     else:
                         i += 1
                         diff = cycles[i] - hour
-                    ctime = cycle_time.increment( ctime, diff )
-                    if int( cycle_time.diff_hours( ctime, start_ctime )) > int(stop):
+                    foo = ct(ctime)
+                    foo.increment( hours=diff )
+                    ctime = foo.get()
+                    diffhrs = foo.subtract_hrs( ct(start_ctime) )
+                    if diffhrs > int(stop):
                         break
  
         gr_edges = []
@@ -882,8 +892,10 @@ class config( CylcConfigObj ):
                     if cycles[i] > hour:
                         found = True
                         diff = cycles[i] - hour
-                        ctime = cycle_time.increment( ctime, diff )
-                        if int( cycle_time.diff_hours( ctime, start_ctime )) > int(stop):
+                        foo = ct(ctime)
+                        foo.increment( hours=diff )
+                        diffhrs = foo.subtract_hrs( ct(start_ctime) )
+                        if diffhrs > int(stop):
                             found = False
                         break
             if found:
@@ -897,7 +909,9 @@ class config( CylcConfigObj ):
                             continue
                         lname, lctime = re.split( '%', left )
                         rname, rctime = re.split( '%', right )
-                        if int( cycle_time.diff_hours( start_ctime, lctime )) > 0:
+                        sct = ct(start_ctime)
+                        diffhrs = sct.subtract_hrs( ct(lctime) )
+                        if diffhrs > 0:
                             # check that left is not earlier than start time
                             continue
                         if self['visualization']['show family members']:
@@ -932,9 +946,12 @@ class config( CylcConfigObj ):
                     else:
                         i += 1
                         diff = cycles[i] - hour
-                    ctime = cycle_time.increment( ctime, diff )
-    
-                    if int( cycle_time.diff_hours( ctime, start_ctime )) > int(stop):
+
+                    foo = ct(ctime)
+                    foo.increment( hours=diff )
+                    ctime = foo.get()
+                    diffhrs = foo.subtract_hrs( ct(start_ctime) )
+                    if diffhrs > int(stop):
                         break
                 
         # sort and then add edges in the hope that edges added in the

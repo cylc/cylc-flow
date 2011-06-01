@@ -18,7 +18,7 @@
 
 import re, sys, os
 import datetime
-import cycle_time
+from cycle_time import ct, CycleTimeError
 from batchproc import batchproc
 
 class HousekeepingError( Exception ):
@@ -49,7 +49,11 @@ class config_line:
             verbose=False, debug=False, mode=None, cheap=False ):
         self.source = source
         self.match = match
-        self.ctime = ctime
+        try:
+            # check the validity of the base cycle time
+            self.ctime = ct(ctime)
+        except CycleTimeError,x:
+            raise HousekeepingError, str(x)
         self.offset = offset
         self.opern = oper 
         self.destn = dest
@@ -73,10 +77,6 @@ class config_line:
             # slightly ( '\d' --> '\\d' ).
             print >> sys.stderr, 'ERROR: ', self.match
             raise HousekeepingError, 'Bad pattern'
-
-        # check the validity of the base cycle time
-        if not cycle_time.is_valid( self.ctime ):
-            raise HousekeepingError, 'Bad cycle time: ' + self.ctime
 
         # check the validity of the offset
         try:
@@ -104,7 +104,9 @@ class config_line:
             print "TARGET:", self.destn
         print "MATCH :", self.match
         print "ACTION:", self.opern
-        print "CUTOFF:", self.ctime, '-', self.offset, '=', cycle_time.decrement( self.ctime, self.offset )
+        foo = ct( self.ctime )
+        foo.decrement( hours=self.offset )
+        print "CUTOFF:", self.ctime, '-', self.offset, '=', foo.get()
         batch = batchproc( batchsize, verbose=self.verbose )
         for entry in os.listdir( self.source ):
             src_entries += 1
@@ -254,7 +256,9 @@ class hkitem:
             return False
 
         # check validity of extracted cycle time
-        if not cycle_time.is_valid( self.matched_ctime ):
+        try:
+            ct(self.matched_ctime)
+        except:
             if self.debug:
                 print " + extracted cycle time is NOT VALID: " + self.matched_ctime
             return False
@@ -263,7 +267,11 @@ class hkitem:
                 print " + extracted cycle time: " + self.matched_ctime
 
         # assume ctime is >= self.matched_ctime
-        gap = cycle_time.diff_hours( self.ctime, self.matched_ctime )
+        foo = ct( self.ctime )
+        bar = ct( self.matched_ctime )
+        # gap hours
+        gap = foo.subtract_hrs( bar )
+
         if self.debug:
             print " + computed offset hours", gap,
         if int(gap) < int(self.offset):

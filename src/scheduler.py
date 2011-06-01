@@ -689,7 +689,7 @@ class scheduler(object):
 
     def get_oldest_c_time( self ):
         # return the cycle time of the oldest task
-        oldest = '99991228235959'
+        oldest = ct('9999122823').get()
         for itask in self.tasks:
             #if itask.state.is_failed():  # uncomment for earliest NON-FAILED 
             #    continue
@@ -703,7 +703,7 @@ class scheduler(object):
 
     def get_newest_c_time( self ):
         # return the cycle time of the newest task
-        newest = '100001010100'
+        newest = ct('1000010101').get()
         for itask in self.tasks:
             # avoid daemon tasks
             if hasattr( itask, 'daemon_task' ):
@@ -1516,7 +1516,6 @@ class scheduler(object):
         ot = ct( self.get_oldest_c_time() )
         delta1 = ot.subtract( st )
         delta2 = datetime.timedelta( 0, 0, 0, 0, 0, self.runtime_graph_cutoff, 0 )
-        #if cycle_time.diff_hours( self.get_oldest_c_time(), self.start_time ) >= self.runtime_graph_cutoff:
         if delta1 >= delta2:
             self.finalize_runtime_graph()
             return
@@ -1524,7 +1523,6 @@ class scheduler(object):
         st = ct( self.start_time )
         tt = ct( task.c_time )
         delta1 = tt.subtract(st)
-        #if cycle_time.diff_hours( task.c_time, self.start_time ) >= self.runtime_graph_cutoff:
         if delta1 >= delta2:
             return
         for id in task.get_resolved_dependencies():
