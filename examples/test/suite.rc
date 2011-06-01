@@ -1,4 +1,4 @@
-title = "Cylc User Guide Example 1"
+title = "Cylc Admin Test Suite"
 
 #        B(T-6)-> B -> E   
 #                / \   
@@ -7,16 +7,13 @@ title = "Cylc User Guide Example 1"
 #        C(T-6)-> C -> F 
 #       
 
-description = """This implements the suite that illustrates the
-Cylc User Guide Introduction. Models A.sh, B.sh, and C.sh; post
-processing tasks D.sh, E.sh, F.sh; and clock-triggered data collection
-task X.sh. The scripts are not cylc-aware, have their own I/O
-directories, and abort if their required input files are not present.
-This suite configures them all to use a common I/O workspace, except for
-private running directories for the restart files of the warm-cycled
-models."""
+description = """This is a copy of the suite implementation for
+the examples that illustrates the Cylc User Guide Introduction.
+This copy is used by the 'cylc admin test-suite' command and 
+should only be modified with extreme caution."""
 
-use lockserver = True
+# LOCKSERVER OFF: we're only testing scheduling functionality here.
+use lockserver = False
 
 [special tasks]
     startup          = prep

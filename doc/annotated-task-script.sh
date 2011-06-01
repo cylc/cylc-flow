@@ -18,12 +18,21 @@ fi
     # handle error
 }
 
+if ! /bin/false; then   # CORRECT; this avoids the 'set -e' trap
+    # handle error
+fi
+
 # errors not explicitly handled will be caught by trapping:
 mkdir /illegal/dir/path  # trapped!
 
 # Cylc-aware subprocesses that call 'task failed' themselves on error
 # should not be left to the trap (it would call 'task failed' again):
 cylc-aware-script || exit 1 
+# or this is OK too:
+if ! cylc-aware-script; then
+    # script failed
+    exit 1
+fi
 
 # For non cylc-aware subprocesses that just 'exit 1' on error:
 non-cylc-aware          # leave it to the trap
@@ -31,6 +40,11 @@ non-cylc-aware || {     # or handle explicitly
     cylc task failed "non-cylc-aware script failed"
     exit 1
 }
+# or this is OK too:
+if ! non-cylc-aware; then
+    cylc task failed "non-cylc-aware script failed"
+    exit 1
+fi
 
 # send a progress message to my parent suite:
 cylc task message "Hello World"

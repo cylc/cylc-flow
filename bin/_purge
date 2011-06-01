@@ -44,15 +44,15 @@ triggers. Then it marks all tasks that "virtually" triggered for
 removal. Consequently:
  * tasks downstream of the root will only be identified as such if they
    exist in the suite in the waiting state when the purge is done. If
-   they are still running in a previous cycle and having spawned into
-   the present cycle yet, they will be missed. To avoid this, wait until
-   all tasks that depend on the root have caught up to it before purging.
+   they have not yet spawned into the current cycle they will be missed
+   by the purge. To avoid this, wait until all tasks that depend on the
+   root have caught up it before purging.
  * if you purge a task that has already finished, only it and its own
    successors will be purged (other downstream tasks will already have
    triggered if they were able to).
-[development note: post cylc-3.0 we could easily determine, via the
-suite dependency graph, that X(T) needs to be included in the purge even
-if it has not appeared in the suite yet.]
+[development note: post cylc-3.0 we should be able to identify tasks
+that depend on the purge root by using the suite dependency graph, even
+if they have not spawned into the cycle time of the root yet.]
 
 remove""",
 ["TASK_ID              Task at which to start the purge (NAME%YYYYMMDDHH).",

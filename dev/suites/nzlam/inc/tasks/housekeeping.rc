@@ -1,3 +1,0 @@
-[[housekeeping]]
-    description = Implement a T-120 hour rolling archive for the suite running dir
-    command = cylc wrap "cylc housekeeping $RUNNING_DIR '(\d{10})' delete $RUNNING_ARCHIVE_LEN"

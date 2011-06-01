@@ -31,7 +31,7 @@ Parallel (as in spawning of multiple Unix processes at once) batch
 archiving and cleanup of files or directories with names that contain a
 cycle time.
 
-OPERATE ('delete', 'move', or 'copy') items (files or directories)
+OPERATE ('delete', 'move', or 'copy') on items (files or directories)
 matching a Python-style regular expression MATCH in directory SOURCE
 whose names contain a cycle time (as YYYYMMDDHH, or YYYYMMDD and HH
 separately) more than OFFSET (integer hours) earlier than a base cycle

@@ -2,24 +2,129 @@
 
 set -e; trap "echo ERROR" ERR
 
-if [[ $# != 1 ]]; then
-    echo "USAGE: $0 x.y.z"
-    echo "You must be in top level CYLC_DIR to run this script"
+usage() {
+    echo "USAGE: $0 [x.y.z]"
+    echo "Make a release tarball from the cylc git repo in \$CYLC_DIR"
+    echo "  \$CYLC_DIR and \$TMPDIR must be set."
+    echo "If X.Y.Z is supplied, the new version number will be substituted"
+    echo "in the cylc documentation and code source files, and the "
+    echo "repository will be tagged accordingly; otherwise 'X.Y.Z' will be"
+    echo "substituted and the repository will not be tagged." 
+    echo "The final tarball ends up in \$HOME."
+}
+ 
+if [[ -z $CYLC_DIR ]]; then
+    echo "ERROR: \$CYLC_DIR required"
+    usage
     exit 1
 fi
 
-export CYLC_VERSION=$1
-export CYLC_DIR=$PWD
+ORIG_CYLC_DIR=$CYLC_DIR
 
-ls bin/cylc > /dev/null 2>&1  # set -e => this aborts if not in CYLC_DIR
+if [[ -z $TMPDIR ]]; then
+    echo "ERROR: \$TMPDIR required"
+    usage
+    exit 1
+fi
 
-TARBALL="cylc-${CYLC_VERSION}.tar.gz"
+if [[ $# > 1 ]]; then
+    echo "ERROR: too many args"
+    usage
+    exit 1
+fi
 
-# tag, create release tarball, and move it to $HOME
-darcs tag $CYLC_VERSION
-darcs dist -d ${TARBALL%.tar.gz}
+TAG=false
+if [[ $# == 1 ]]; then
+    TAG=true
+    export VERSION=$1
+else
+    export VERSION=X.Y.Z
+fi
+
+REPO="cylc-${VERSION}"
+TARBALL="cylc-${VERSION}.tgz"
+TMP=$TMPDIR/$$
+mkdir -p $TMP
+cd $TMP
+git clone $CYLC_DIR
+mv $(basename $CYLC_DIR) $REPO
+cd $REPO
+. environment.sh
+rm -rf .git
+
+# - replace the cylc version tag throughout
+# - make documentation
+# - remove doc source
+# - remove dev material
+
+echo "SETTING VERSION TAG IN MAIN COMMAND AND USER GUIDE"
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" src/gui/gcylc.py
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" src/gui/SuiteControl.py
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" bin/cylc
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" doc/cylc-user-guide.tex
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" doc/version.txt
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" README
+
+echo "MAKING DOCUMENTATION (USER GUIDE)"
+# make sure documentation processing uses the release versions
+# (which have the correct version tag inserted).
+export PATH=bin:$PATH
+export PYTHONPATH=src:$PYTHONPATH
+echo
+echo "LATEX PROCESSING 1/3"
+echo
+doc/process -c -f
+echo
+echo "LATEX PROCESSING 2/3"
+echo
+doc/process
+# Third time required to get Table of Contents page number right?!
+echo
+echo "LATEX PROCESSING 3/3"
+echo
+doc/process
+
+echo "DELETING DOCUMENTATION SOURCE"
+# copy and restore from doc/:
+#  1/ the PDF user guide
+#  2/ SuiteDesign.txt
+#  3/ suite.rc.README
+# (2 and 3 are required by 'cylc configure', which copies them into
+# suite defintion directores for the endless edification of users).
+cp doc/cylc-user-guide.pdf .
+cp doc/SuiteDesign.txt .
+rm -r doc
+mkdir doc
+mv cylc-user-guide.pdf doc/CylcUserGuide-${VERSION}.pdf
+mv SuiteDesign.txt doc
+
+echo "DELETING DEV DIRECTORY"
+rm -r dev
+
+echo "REMOVING .pyc FILES"
+find . -name '*.pyc' | xargs rm
+
+echo "REMOVING SCREENSHOTS"
+rm -r images/screenshots
+
+echo "REMOVING .git files"
+find . -name '.git*' | xargs rm
+
+echo "DONE"
+
+cd .. 
+echo "CREATING RELEASE $TARBALL"
+tar czf $TARBALL $REPO
+echo "MOVING $TARBALL TO $HOME"
 mv $TARBALL $HOME 
-
-# unpack new release
 cd
+echo "UNPACKING $TARBALL"
 tar xzf $TARBALL
+
+if $TAG; then
+    cd $ORIG_CYLC_DIR
+    . environment.sh
+    git tag -a $VERSION -m 'new release tag'
+fi
+
+# EOF
