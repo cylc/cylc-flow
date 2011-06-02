@@ -707,12 +707,12 @@ def userguide( w, graph=False ):
 
         update_tb( tb, "Graph node colours indicate "
             "task state. The configured suite dependency "
-            "graph, with off-white nodes, is used as a base graph for "
-            "the displayed graph. Left-click to center the graph on a "
+            "graph, with off-white nodes, is used as a base for "
+            "the displayed nodes. " )
+        update_tb( tb,  "Left-click to center the graph on a "
             "node; left-drag to pan; Zoom buttons, mouse-wheel, or "
             "ctrl-left-drag to zoom in and out, and shift-left-drag to "
-            "zoom in on a box. " )
-        update_tb( tb, 
+            "zoom in on a box. "
             "Right-click on nodes for task control "
             "and interrogation options. ", [bold] )
         update_tb( tb, 
