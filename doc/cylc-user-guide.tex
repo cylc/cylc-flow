@@ -20,6 +20,7 @@
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{}
+\renewcommand{\headheight}{14pt}
 \renewcommand{\headsep}{10pt}
 \lhead{\leftmark}
 \rhead{\rightmark}
@@ -2526,14 +2527,14 @@ Cylc's messaging commands, which report task progress back to the parent
 suite, do need to know the name and suite of the calling task, but they
 automatically extract this information from the task execution
 environment (which is configured by the suite; below) so that no
-explicit use of task names is required outside of the suite.rc file 
-(it may sometimes be useful, but it isn't strictly required).
+use of hardwired task names is required outside of the suite.rc file.
 Similarly, if a task needs to make use of its own name, or that of its
 parent suite (to make I/O paths task and suite-specific, for instance)
 these should be extracted portably from the execution environment
-(below) rather than hardwired into the task implementation, so that the
-suite is flexible and portable (see {\em Suite and Task
-Identity Variables}, Section~\ref{TaskAndSuiteIdentityVariables}).
+supplied by cylc (Section~\ref{TaskExecutionEnvironment}) rather than
+hardwired into the task implementation, so that the suite is flexible
+and portable (see {\em Suite and Task Identity Variables},
+Section~\ref{TaskAndSuiteIdentityVariables}).
 
 
 \subsubsection{Task Job Scripts: How Tasks Are Invoked By Cylc}
