@@ -197,9 +197,9 @@ If you start a suite from the command line, what happens to cylc stdout
 and stderr is of course entirely up to you (you may want to use
 command line redirection and/or the posix nohup command).
 
-%h3 Control (original) or Control (graph)
+%h3 Control (treeview) or Control (graph)
 
-Launch a suite control GUI, with either the original text treeview interface,
+Launch a suite control GUI, with either the text treeview interface,
 or the newer dependency graph based interface, to start a suite running,
 or to connect to a suite that is already running. 
 
