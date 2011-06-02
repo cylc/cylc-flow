@@ -1,5 +1,8 @@
 TO BE DOCUMENTED:
 
+* Task retry via command list is currently only documented in the
+  Suite.rc Reference appendix.
+
 * note 'cylc submit SUITE foo%T' results in T being adjusted to the next
   nearest valid cycle time for the task IF valid hours are defined for 
   the task by either graph or '[tasks][foo]hours'. If the latter is
