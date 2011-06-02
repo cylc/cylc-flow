@@ -674,7 +674,7 @@ interface looks like.
     \item Figure~\ref{fig-cdb} - viewing the central suite database in gcylc.
     \item Figure~\ref{fig-cylc-vim} - a cylc suite definition file (suite.rc) in the vim editor.
     \item Figure~\ref{fig-simple-graph-2} - the suite definition of Figure~\ref{fig-cylc-vim} graphed by cylc.
-    \item Figure~\ref{fig-gcylc-original} - suite control GUI, treeview interface.
+    \item Figure~\ref{fig-gcylc-treeview} - suite control GUI, treeview interface.
     \item Figure~\ref{fig-gcylc-graph} - suite control GUI, graph-based interface.
     \item Figure~\ref{fig-ecox-1} - a large operational suite graphed by cylc.
     \item Figure~\ref{fig-ecox-2} - another view of the large operational suite of Figure~\ref{fig-ecox-1}.
@@ -731,7 +731,7 @@ gcylc showing the central suite database.}
     \end{center}
 \caption[The suite control GUI, treeview interface.]{\small The suite
 control GUI, treeview interface.}
-\label{fig-gcylc-original}
+\label{fig-gcylc-treeview}
 \end{figure} 
 
 \begin{figure}
@@ -1771,7 +1771,6 @@ job submission method = loadleveler
 [special tasks]
     # TASKS WITH UNUSUAL BEHAVIOUR
     cold start       = ColdModel
-    sequential      = Model
     clock-triggered = GetData(1)
 
 [dependencies]
@@ -2099,6 +2098,7 @@ Task A must emit this message when the actual output has been completed,
 see Section~\ref{TaskMessaging}, {\em Task Messaging}.
 
 \subsubsection{Intercycle Triggers}
+\label{IntercycleTriggers}
 
 Most tasks in a typical suite will trigger off other cotemporal (same
 cycle time) tasks, but some may depend on tasks with earlier cycle
@@ -2210,10 +2210,11 @@ complicated conditional triggers we will certainly address this problem.
 \subsubsection{Satisfying Intercycle Dependencies At Startup}
 \label{SatisfyingIntercycleDependenciesAtStartup}
 
-Considering the intercycle dependence shown just above, between tasks A
-and B, it is clear that some kind of boostrapping process will be
-required to get the suite going initially, because in the very first
-cycle there is no previous instance of A to satisfy B's prerequisites. 
+Considering the intercycle dependence shown in {\em Intercycle Triggers}
+(Section~\ref{IntercycleTriggers}) it is clear that some kind of
+boostrapping process will be required to get the suite going initially,
+because in the very first cycle there is no previous instance of A to
+satisfy B's prerequisites. 
  
 \paragraph{Cold Start Tasks}
 
@@ -2254,19 +2255,19 @@ Cold start tasks have to be declared as such in the suite.rc ``special
 tasks'' section so that cylc knows they are one off (non-spawning) tasks,
 but also because they play a critical role in suite warm starts.
 
-{\em Warm starting} (at a particular cycle time) a suite that has
-previously been shut down is an alternative to {\em restarting} it from
-a previous state. Warm starts
-assume the existence of a previous cycle (i.e.\ that any files from 
-the previous cycle that are required by the new cycle will be in place
-already). So no cold start tasks need to run {\em but} cylc itself 
-doesn't know the details of the previous cycle (otherwise you could
-just restart from the previous state rather than warm start) so it still
-has to solve the bootstrapping problem to get the suite started. It does
-this by starting the suite with designated cold start tasks already in
-the succeeded state. In other words, the cold start tasks stand for the
-previous finished cycle, rather than actually running processes that
-masquerade as the previous cycle.
+{\em Warm starting} a previously shut down suite at a particular cycle
+time is an alternative to {\em restarting} it from a previous state
+(which in cylc is likely to include tasks with several different
+cycle times). Warm starts assume the existence of a previous cycle
+(i.e.\ that any files from the previous cycle that are required by the
+new cycle will be in place already). So no cold start tasks need to run
+{\em but} cylc itself doesn't know the details of the previous cycle (it
+would if you did a restart from the previous state rather than a warm
+start) so it still has to solve the bootstrapping problem to get the
+suite started. It does this by starting the suite with designated cold
+start tasks already in the succeeded state. In other words, the cold
+start tasks stand for the previous finished cycle, rather than actually
+running processes that masquerade as the previous cycle.
 
 \subsubsection{Model Restart Dependencies}
 \label{ModelRestartDependencies}
