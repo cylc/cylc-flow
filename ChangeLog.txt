@@ -1,4 +1,0 @@
-Post cylc-3.0.3 release:
-
- + updated documentation on error detection and trapping in task scripts.
-
