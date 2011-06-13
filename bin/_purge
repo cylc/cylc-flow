@@ -25,29 +25,28 @@ from port_scan import SuiteIdentificationError
 parser = PromptOptionParser( """cylc [control] purge [options] SUITE TASK_ID STOP
 
 Remove an entire tree of dependent tasks from a running suite. The root
-task will be forced to spawn and die, then so will every task that
-depends on it, then every task that depends on those, and so on until
-the specified stop cycle time.
+task will be forced to spawn and will then be removed, then so will
+every task that depends on it, and every task that depends on those, and
+so on until the given stop cycle time.
 
-WARNING: THIS COMMAND IS DANGEROUS, but in case of disaster you can
-simply restart the suite from the automatic pre-purge state dump (the
-filename will be logged by cylc before the purge is actioned.)
+WARNING: THIS COMMAND IS DANGEROUS but in case of disaster you can
+restart the suite from the automatic pre-purge state dump (the filename
+will be logged by cylc before the purge is actioned.)
 
 UNDERSTANDING HOW PURGE WORKS: cylc identifies tasks that depend on 
 the root task, and then on its downstream dependents, and then on
 theirs, etc., but simulating what would happen if the root task were to
-trigger: it artificially sets the root task to "succeeded",
+trigger: it artificially sets the root task to the "succeeded" state
 then negotatiates dependencies and artificially sets any tasks whose
-prerequisites get satisfied to "succeeded", then negotiates dependencies
-again, and so on until the stop cycle is reached or nothing new
-triggers. Then it marks all tasks that "virtually" triggered for
-removal. Consequently:
- * tasks downstream of the root will only be identified as such if they
-   exist in the suite in the waiting state when the purge is done. If
-   they have not yet spawned into the current cycle they will be missed
-   by the purge. To avoid this, wait until all tasks that depend on the
-   root have caught up it before purging.
- * if you purge a task that has already finished, only it and its own
+prerequisites get satisfied to "succeeded"; then it negotiates
+dependencies again, and so on until the stop cycle is reached or nothing
+new triggers. Finally it marks "virtually triggered" tasks for removal.
+Consequently:
+ * Dependent tasks will only be identified as such if they have already
+   spawned into the root cycle, otherwise they will be missed by the
+   purge. To avoid this, wait until all tasks that depend on the root
+   have caught up it before purging.
+ * If you purge a task that has already finished, only it and its own
    successors will be purged (other downstream tasks will already have
    triggered if they were able to).
 [development note: post cylc-3.0 we should be able to identify tasks
