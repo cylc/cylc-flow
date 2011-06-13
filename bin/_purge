@@ -45,7 +45,7 @@ Consequently:
  * Dependent tasks will only be identified as such if they have already
    spawned into the root cycle, otherwise they will be missed by the
    purge. To avoid this, wait until all tasks that depend on the root
-   have caught up it before purging.
+   have caught up to it before purging.
  * If you purge a task that has already finished, only it and its own
    successors will be purged (other downstream tasks will already have
    triggered if they were able to).
