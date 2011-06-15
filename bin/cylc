@@ -281,7 +281,7 @@ catsum['utility'     ]   = "cycle time arithmetic, filename templating, etc."
 ##extent allowed by the suite dependency graph.
 
 usage = """Welcome to the cylc metascheduler command line interface.
-The cylc graphical user interface is gcylc.
+The cylc graphical interface is gcylc.
 Cylc release version: """ + cylc_version + """
 """ + general_usage + """
 
