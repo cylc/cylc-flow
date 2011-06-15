@@ -17,12 +17,11 @@
 This is an installation of the cylc forecast suite metascheduler.
 Release version: THIS IS NOT A VERSIONED RELEASE
 
-For documentation and installation instructions:
-    - see doc/userguide.pdf.
-
-To gain access to cylc do this:
+To gain access to cylc:
     % export CYLC_DIR=/path/to/cylc/installation
     % . $CYLC_DIR/environment.sh
 
-For cylc commandline documentation:
-    % cylc help
+For documentation and installation instructions:
+    - The Cylc User Guide: $CYLC_DIR/doc/CylcUserGuide.pdf
+    - The Cylc Home Page: http://hjoliver.github.com/cylc
+    - For command line help type 'cylc help'
