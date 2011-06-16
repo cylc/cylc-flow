@@ -20,6 +20,7 @@
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{}
+\renewcommand{\headheight}{14pt}
 \renewcommand{\headsep}{10pt}
 \lhead{\leftmark}
 \rhead{\rightmark}
@@ -483,40 +484,31 @@ even more efficient job schedule.
 \end{figure} 
 
 Cylc manages a pool of proxy objects that represent real tasks in the
-forecasting suite. A task proxy object can run the real task that it
+forecasting suite. A task proxy can run the real task that it
 represents when its prerequisites are satisfied, and can receive reports
 of completed outputs from the real task as it runs. There is no global
 cycling mechanism to advance the suite in time; instead each individual
 task proxy has a private cycle time and spawns its own successor. Task
-proxies are self-contained and do not know what other tasks exist in the
-suite, they just know their own prerequisites and outputs. Intercycle
+proxies are self-contained - they just know their own prerequisites and
+outputs and are not aware of the wider suite context. Intercycle
 dependencies are not treated as special, and the task pool can be
 populated with tasks from many different cycle times. 
-How cylc sees the task pool is illustrated in
-Figure~\ref{fig-task-pool}. Now, whenever any task proxy changes state
-(as a result of an output completion message, for example) cylc gets the
-entire pool to interact indiscriminately ({\em regardless of cycle
-time}) in an attempt to match unsatisfied prerequisites with completed
-outputs.\footnote{In fact this dependency negotiation goes through a
-middleman or broker object, which reduces the interaction scaling from
-$n^2$ to $n$, where $n$ is the number of task proxies in the suite.} 
+The cylc task pool is illustrated in Figure~\ref{fig-task-pool}. Now,
+{\em whenever any task changes state
+due to completion of an output, every task checks to see if its
+own prerequisites are now satisfied.}\footnote{In fact this dependency
+negotiation goes through a broker object (rather than every task
+literally checking every other task) which scales as $n$ (rather than
+$n^2$) where $n$ is the number of task proxies in the pool.}  Moreover,
+this matching of prerequisites and outputs involves the entire task
+pool, regardless of individual cycle times, so that inter- and
+intra-cycle dependencies are handled with ease.
 
 Thus without using global cycling mechanisms, and treating all
-dependencies equally, cylc in effect gets a set of individual tasks to
-self-organise by negotiating their own dependencies: optimal scheduling,
-as described in the previous section, emerges naturally at run time.
-
-In addition, cylc makes no distinction between delayed and real time
-operation. In delayed operation the tasks that gather the suite's
-external driving data will return immediately (because the data is
-already available) and the suite will only be constrained by its
-internal dependencies. In real time operation, the data gathering tasks
-will return only when the external data becomes available (at
-some defined offset with respect to the task's cycle time), delaying
-downstream tasks until then, by which time the previous forecast cycle
-will have completed. A cylc suite thus transitions seamlessly from
-optimal multicycle scheduling to a sequence of distinct forecast cycles
-as it catches up to real time operation.
+dependencies equally, cylc in effect gets a pool of tasks to
+self-organise by negotiating their own dependencies so that optimal
+scheduling, as described in the previous section, emerges naturally at
+run time.
 
 %Perhaps the most difficult problem encountered during cylc
 %implementation was how to arrange that every task proxy object exists by
@@ -683,7 +675,7 @@ interface looks like.
     \item Figure~\ref{fig-cdb} - viewing the central suite database in gcylc.
     \item Figure~\ref{fig-cylc-vim} - a cylc suite definition file (suite.rc) in the vim editor.
     \item Figure~\ref{fig-simple-graph-2} - the suite definition of Figure~\ref{fig-cylc-vim} graphed by cylc.
-    \item Figure~\ref{fig-gcylc-original} - suite control GUI, treeview interface.
+    \item Figure~\ref{fig-gcylc-treeview} - suite control GUI, treeview interface.
     \item Figure~\ref{fig-gcylc-graph} - suite control GUI, graph-based interface.
     \item Figure~\ref{fig-ecox-1} - a large operational suite graphed by cylc.
     \item Figure~\ref{fig-ecox-2} - another view of the large operational suite of Figure~\ref{fig-ecox-1}.
@@ -740,7 +732,7 @@ gcylc showing the central suite database.}
     \end{center}
 \caption[The suite control GUI, treeview interface.]{\small The suite
 control GUI, treeview interface.}
-\label{fig-gcylc-original}
+\label{fig-gcylc-treeview}
 \end{figure} 
 
 \begin{figure}
@@ -1780,7 +1772,6 @@ job submission method = loadleveler
 [special tasks]
     # TASKS WITH UNUSUAL BEHAVIOUR
     cold start       = ColdModel
-    sequential      = Model
     clock-triggered = GetData(1)
 
 [dependencies]
@@ -1815,7 +1806,7 @@ job submission method = loadleveler
     # ...
 \end{lstlisting}
 
-This is in fact the {\em examples:CUG_QS3} suite from the Quick Start Guide,
+This is in fact the {\em examples:CUG\_QS3} suite from the Quick Start Guide,
 which you can copy, study, and run. Dependency graphs plotted from this
 (by gcylc or \lstinline=cylc graph=) are shown in
 Figures~\ref{fig-simple-graph-1} and~\ref{fig-simple-graph-3}.
@@ -2108,6 +2099,7 @@ Task A must emit this message when the actual output has been completed,
 see Section~\ref{TaskMessaging}, {\em Task Messaging}.
 
 \subsubsection{Intercycle Triggers}
+\label{IntercycleTriggers}
 
 Most tasks in a typical suite will trigger off other cotemporal (same
 cycle time) tasks, but some may depend on tasks with earlier cycle
@@ -2219,10 +2211,11 @@ complicated conditional triggers we will certainly address this problem.
 \subsubsection{Satisfying Intercycle Dependencies At Startup}
 \label{SatisfyingIntercycleDependenciesAtStartup}
 
-Considering the intercycle dependence shown just above, between tasks A
-and B, it is clear that some kind of boostrapping process will be
-required to get the suite going initially, because in the very first
-cycle there is no previous instance of A to satisfy B's prerequisites. 
+Considering the intercycle dependence shown in {\em Intercycle Triggers}
+(Section~\ref{IntercycleTriggers}) it is clear that some kind of
+boostrapping process will be required to get the suite going initially,
+because in the very first cycle there is no previous instance of A to
+satisfy B's prerequisites. 
  
 \paragraph{Cold Start Tasks}
 
@@ -2263,19 +2256,19 @@ Cold start tasks have to be declared as such in the suite.rc ``special
 tasks'' section so that cylc knows they are one off (non-spawning) tasks,
 but also because they play a critical role in suite warm starts.
 
-{\em Warm starting} (at a particular cycle time) a suite that has
-previously been shut down is an alternative to {\em restarting} it from
-a previous state. Warm starts
-assume the existence of a previous cycle (i.e.\ that any files from 
-the previous cycle that are required by the new cycle will be in place
-already). So no cold start tasks need to run {\em but} cylc itself 
-doesn't know the details of the previous cycle (otherwise you could
-just restart from the previous state rather than warm start) so it still
-has to solve the bootstrapping problem to get the suite started. It does
-this by starting the suite with designated cold start tasks already in
-the succeeded state. In other words, the cold start tasks stand for the
-previous finished cycle, rather than actually running processes that
-masquerade as the previous cycle.
+{\em Warm starting} a previously shut down suite at a particular cycle
+time is an alternative to {\em restarting} it from a previous state
+(which in cylc is likely to include tasks with several different
+cycle times). Warm starts assume the existence of a previous cycle
+(i.e.\ that any files from the previous cycle that are required by the
+new cycle will be in place already). So no cold start tasks need to run
+{\em but} cylc itself doesn't know the details of the previous cycle (it
+would if you did a restart from the previous state rather than a warm
+start) so it still has to solve the bootstrapping problem to get the
+suite started. It does this by starting the suite with designated cold
+start tasks already in the succeeded state. In other words, the cold
+start tasks stand for the previous finished cycle, rather than actually
+running processes that masquerade as the previous cycle.
 
 \subsubsection{Model Restart Dependencies}
 \label{ModelRestartDependencies}
@@ -2534,14 +2527,14 @@ Cylc's messaging commands, which report task progress back to the parent
 suite, do need to know the name and suite of the calling task, but they
 automatically extract this information from the task execution
 environment (which is configured by the suite; below) so that no
-explicit use of task names is required outside of the suite.rc file 
-(it may sometimes be useful, but it isn't strictly required).
+use of hardwired task names is required outside of the suite.rc file.
 Similarly, if a task needs to make use of its own name, or that of its
 parent suite (to make I/O paths task and suite-specific, for instance)
 these should be extracted portably from the execution environment
-(below) rather than hardwired into the task implementation, so that the
-suite is flexible and portable (see {\em Suite and Task
-Identity Variables}, Section~\ref{TaskAndSuiteIdentityVariables}).
+supplied by cylc (Section~\ref{TaskExecutionEnvironment}) rather than
+hardwired into the task implementation, so that the suite is flexible
+and portable (see {\em Suite and Task Identity Variables},
+Section~\ref{TaskAndSuiteIdentityVariables}).
 
 
 \subsubsection{Task Job Scripts: How Tasks Are Invoked By Cylc}
@@ -3750,7 +3743,8 @@ will not constrain the suite at all, and cylc's multi-cycling abilities
 come to the fore, because their trigger times have already passed. 
 But if a clock-triggered task happens to catch up to the wall clock, it
 will automatically wait again. In this way a cylc suite naturally
-transitions from delayed operation into real time operation. 
+and seamlessly transitions between delayed and real time operation 
+as required.
 
 \pagebreak
 

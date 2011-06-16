@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* maintain a list of finished tasks distinct from the task pool but
+  accessible from the gui, so that users can get at old output.
+
 * allow tasks that run (in cycle time space) less than daily, and more
   than hourly. src/cycle_time.py has been OO-ified and extend to 
   minutes and seconds in prepartion for this.

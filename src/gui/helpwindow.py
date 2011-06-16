@@ -197,9 +197,9 @@ If you start a suite from the command line, what happens to cylc stdout
 and stderr is of course entirely up to you (you may want to use
 command line redirection and/or the posix nohup command).
 
-%h3 Control (original) or Control (graph)
+%h3 Control (treeview) or Control (graph)
 
-Launch a suite control GUI, with either the original text treeview interface,
+Launch a suite control GUI, with either the text treeview interface,
 or the newer dependency graph based interface, to start a suite running,
 or to connect to a suite that is already running. 
 
@@ -707,12 +707,12 @@ def userguide( w, graph=False ):
 
         update_tb( tb, "Graph node colours indicate "
             "task state. The configured suite dependency "
-            "graph, with off-white nodes, is used as a base graph for "
-            "the displayed graph. Left-click to center the graph on a "
+            "graph, with off-white nodes, is used as a base for "
+            "the displayed nodes. " )
+        update_tb( tb,  "Left-click to center the graph on a "
             "node; left-drag to pan; Zoom buttons, mouse-wheel, or "
             "ctrl-left-drag to zoom in and out, and shift-left-drag to "
-            "zoom in on a box. " )
-        update_tb( tb, 
+            "zoom in on a box. "
             "Right-click on nodes for task control "
             "and interrogation options. ", [bold] )
         update_tb( tb, 

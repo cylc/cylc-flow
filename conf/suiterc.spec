@@ -575,14 +575,16 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em section:}  [special tasks]
 #>\item {\em type:} list of tasknames followed by parenthesized offsets, in hours
 #>\item {\em default:} None
+#>\item {\em legal values:} The offset, in hours, can be positive or
+#> negative.
 #>\item {\em example:} \lstinline@clock-triggered = foo(1.5), bar(2.25)@
 #>\end{myitemize}
 #> Clock-triggered tasks currently can't be triggered manually prior to
 #> their trigger time. This will be change in future cylc releases. In
 #> the meantime if you need to do this you can kill the task with
 #> \lstinline=cylc remove=, run it manually outside of the suite with
-#> \lstinline=cylc submit=, and then trigger any direct downstream
-#> dependencies of the killed task manually. 
+#> \lstinline=cylc submit=, and then manually trigger any direct
+#> downstream dependencies of the killed task. 
 
     startup = force_list( default=list())
 #> Startup tasks are one off tasks that are only used when {\em cold
@@ -641,7 +643,6 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\begin{myitemize}
 #>\item {\em section:}  [special tasks]
 #>\item {\em type:} list of task names
-#>\item {\em legal values:}
 #>\item {\em default:} empty list
 #>\item {\em example:} \lstinline@sequential = ModelA, PostProcB@
 #>\end{myitemize}

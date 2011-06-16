@@ -74,6 +74,7 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE/common
             POSTB_OUTPUT_DIR = $WORKSPACE
 
 [visualization]
+    default node attributes = "shape=ellipse"
     [[node groups]]
         post = PostA, PostB
         models = ColdModel, Model
