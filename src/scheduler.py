@@ -234,10 +234,6 @@ class scheduler(object):
 
         # USE LOCKSERVER?
         self.use_lockserver = self.config['use lockserver']
-        if self.simulation_mode:
-            # no need for lockserver in simulation mode
-            self.use_lockserver = False
-
         if self.use_lockserver:
             # check that user is running a lockserver
             # DO THIS BEFORE CONFIGURING PYRO FOR THE SUITE
