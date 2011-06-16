@@ -23,15 +23,19 @@ from optparse import OptionParser
 from config import config, SuiteConfigError
 from taskdef import DefinitionError
 
-indent = '  '
+n_oone = 0
+n_otwo = 0
+n_diff = 0
 
 def diffdict( one, two, oone, otwo, diff ):
+    global n_oone, n_otwo, n_diff
     # Recursively difference two dictionaries in which any element
     # may be another dictionary, keeping items that appear only 
     # in one or the other, and items that appear in both but differ. 
     for key in one:
         if key not in two:
             oone[key] = one[key]
+            n_oone += 1
         elif one[key] != two[key]:
             if isinstance( one[key], dict ):
                 for item in oone, otwo, diff:
@@ -40,15 +44,19 @@ def diffdict( one, two, oone, otwo, diff ):
                 diffdict( one[key], two[key], oone[key], otwo[key], diff[key] )
             else:
                 diff[key] = ( one[key], two[key] )
+                n_diff += 1
 
     for key in two:
         if key not in one:
             otwo[key] = two[key]
+            n_otwo += 1
 
-def prdict( dct, arrow='<', section='', level=0, diff=False ):
+def prdict( dct, arrow='<', section='', level=0, diff=False, nested=False ):
     # Recursively print, in pseudo 'diff' format, the contents of
     # one of the three dictionaries populated by the diffdict() function
     # above (any element may itself be a dictionary).
+
+    count = 0
 
     if section != '':
         prfx = section + ' '
@@ -65,35 +73,43 @@ def prdict( dct, arrow='<', section='', level=0, diff=False ):
     for key in dct:
         if isinstance( dct[key], dict ):
             lvl = level + 1
-            prdict( dct[key], arrow, prfx + '['*lvl + str(key) + ']'*lvl, lvl, diff )
+            if nested:
+                pre = prfx + '\n' + '   '*lvl 
+            else:
+                pre = prfx
+            prdict( dct[key], arrow, pre + '['*lvl + str(key) + ']'*lvl, lvl, diff, nested )
         else:
             if not foo:
-                print
-                print indent, sctn
+                if nested:
+                    print '  ', sctn
+                else:
+                    print '\n  ', sctn
                 foo = True
 
             if diff:
-                print indent, '< ', key, '=', dct[key][0]
-                print indent, '> ', key, '=', dct[key][1]
+                print ' <  ', key, '=', dct[key][0]
+                print ' >  ', key, '=', dct[key][1]
             else:
-                print indent, arrow, key, '=', dct[key]
+                print ' ' + arrow + '  ', key, '=', dct[key]
 
 parser = OptionParser( """cylc [prep] diff|compare [options] SUITE1 SUITE2
 
-Compare two suite definitions and display differences.
+Compare two suite definitions and display any differences.
 
-Differencing is done after parsing the suite.rc files. It therefore
-takes account of default values that are not explicitly defined, and
-does not care about different use of include files or different 
-ordering of configuration items.
+NOTE: differencing is done after parsing the suite.rc files so it takes
+account of default values that are not explicitly defined, it disregards
+the order of configuration items, and it sees include-file content after
+inlining.
 
 Seemingly identical suites (immediately after copying one from the
 other, for instance) can differ slightly if they use default
 configuration items, such as the default job submission log directory,
-that are suite-specific.
+that are suite-specific (i.e. the includes $CYLC_SUITE_NAME etc.).
 
 Files in the suite bin directory, and other files held in the suite
-definition directory, are not currently differenced.
+definition directory, are not currently differenced (they may be
+important in task implementations, but are not part of the suite
+definition).
 
 Arguments:
    SUITE1, SUITE2  - suite registrations [OWNER:]GROUP:NAME""")
@@ -101,6 +117,10 @@ Arguments:
 parser.add_option( "-d", "--debug", help="print the "
         "exception traceback for validation errors.",
         action="store_true", default=False, dest="debug" )
+
+parser.add_option( "-n", "--nested", help="print suite.rc "
+        "section headings in nested form.",
+        action="store_true", default=False, dest="nested" )
 
 (options, args) = parser.parse_args()
 
@@ -142,14 +162,23 @@ diff_1_2 = {}
 
 diffdict( config1, config2, suite1_only, suite2_only, diff_1_2 )
 
-print
-print 'Only in ' + suite1 + ':'
-prdict( suite1_only, '< ' )
+if n_oone > 0:
+    print
+    msg = str(n_oone) + ' items only in ' + suite1 + ' (<)'
+    print msg
+    #print '-' * len(msg)
+    prdict( suite1_only, '<', nested=options.nested )
 
-print
-print 'Only in ' + suite2 + ':'
-prdict( suite2_only, '> ' )
+if n_otwo > 0:
+    print
+    msg = str(n_otwo) + ' items only in ' + suite2 + ' (>)'
+    print msg
+    #print '-' * len(msg)
+    prdict( suite2_only, '>', nested=options.nested )
 
-print
-print 'Differences ' + suite1 + ' ' + suite2 + ':'
-prdict( diff_1_2, '', diff=True )
+if n_diff > 0:
+    print
+    msg = str(n_diff) + ' common items differ ' + suite1 + '(<) ' + suite2 + '(>)'
+    print msg
+    #print '-' * len(msg)
+    prdict( diff_1_2, '', diff=True, nested=options.nested )
