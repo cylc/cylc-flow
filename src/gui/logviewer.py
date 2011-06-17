@@ -22,6 +22,7 @@ import pygtk
 import time, os, re, sys
 from warning_dialog import warning_dialog
 from tailer import tailer
+import pango
 
 class logviewer(object):
     def __init__( self, name, dir, file, warning_re=None, critical_re=None ):
@@ -131,7 +132,9 @@ class logviewer(object):
     def create_gui_panel( self ):
         self.logview = gtk.TextView()
         self.logview.set_editable( False )
-
+        # use a fixed font:
+        self.logview.modify_font( pango.FontDescription("monospace") )
+ 
         searchbox = gtk.HBox()
         entry = gtk.Entry()
         entry.connect( "activate", self.enter_clicked, self.logview )
