@@ -1,0 +1,19 @@
+CYLC METASCHEDULER CHANGE LOG, INITIALIZED at version 3.0.3.
+Non-trivial changes of relevance to users should be listed.
+
+All changes are likely to involve minor updates and corrections to
+documentation (User Guide, command line help, and GUI help) that will
+not be mentioned unless particularly important.
+
+3.0.3 - 3.0.4
+ + More documentation of error detection in task scripts.
+ + Some User Guide typos corrected.
+ + Minor command line help updates.
+ + 'cylc admin create-cdb' now uses its own test suite.
+
+3.0.4 - 3.0.5
+ + Clarified graph-based control GUI help.
+
+ 3.0.5 - 3.1.0
+ + New suite compare/diff functionality added.
+
