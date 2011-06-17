@@ -18,6 +18,7 @@
 
 from tailer import tailer
 import gtk
+import pango
 import tempfile
 import os, re, sys
 from warning_dialog import warning_dialog, info_dialog
@@ -59,6 +60,8 @@ are displayed in red.
         self.textview = gtk.TextView()
         self.textview.set_editable(False)
         self.textview.set_wrap_mode( gtk.WRAP_WORD )
+        # use a fixed font:
+        self.textview.modify_font( pango.FontDescription("monospace") )
         tb = self.textview.get_buffer()
 
         self.blue = tb.create_tag( None, foreground = "darkblue" )
