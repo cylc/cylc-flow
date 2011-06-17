@@ -7,13 +7,11 @@ not be mentioned unless particularly important.
 
 3.0.3 - 3.0.4
  + More documentation of error detection in task scripts.
- + Some User Guide typos corrected.
- + Minor command line help updates.
  + 'cylc admin create-cdb' now uses its own test suite.
 
 3.0.4 - 3.0.5
  + Clarified graph-based control GUI help.
 
- 3.0.5 - 3.1.0
+3.0.5 - 3.1.0
  + New suite compare/diff functionality added.
 
