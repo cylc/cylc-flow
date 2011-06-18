@@ -132,7 +132,8 @@ class logviewer(object):
     def create_gui_panel( self ):
         self.logview = gtk.TextView()
         self.logview.set_editable( False )
-        # use a fixed font:
+        # Use a monospace font. This is safe - by testing - setting an
+        # illegal font description has no effect.
         self.logview.modify_font( pango.FontDescription("monospace") )
  
         searchbox = gtk.HBox()

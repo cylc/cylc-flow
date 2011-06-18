@@ -60,7 +60,8 @@ are displayed in red.
         self.textview = gtk.TextView()
         self.textview.set_editable(False)
         self.textview.set_wrap_mode( gtk.WRAP_WORD )
-        # use a fixed font:
+        # Use a monospace font. This is safe - by testing - setting an
+        # illegal font description has no effect.
         self.textview.modify_font( pango.FontDescription("monospace") )
         tb = self.textview.get_buffer()
 
