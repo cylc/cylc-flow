@@ -32,7 +32,7 @@ class restart( scheduler ):
 
 Restart a cylc suite from a previous state. Tasks in the 'submitted',
 'running', or 'failed' states will immediately be resubmitted at
-startup unless you specify '--no-reset'. Any 'held' tasks will be
+start up unless you specify '--no-reset'. Any 'held' tasks will be
 released unless you specify the '--no-release' option. A final cycle
 time that was set prior to shutdown will be ignored on restart unless
 you specify '--keep-finalcycle'

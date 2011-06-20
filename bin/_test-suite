@@ -45,11 +45,6 @@ usage() {
     echo
     echo "Options:"
     echo "  -h, --help   Print this help message and exit."
-
-    echo "This is a thorough test of cylc suite registration"
-    echo "database functionality (private and central)."
-    echo "Options:"
-    echo "  --help   Print this usage message."
 }
 
 if [[ $# != 0 ]]; then 

@@ -51,9 +51,7 @@ Consequently:
    triggered if they were able to).
 [development note: post cylc-3.0 we should be able to identify tasks
 that depend on the purge root by using the suite dependency graph, even
-if they have not spawned into the cycle time of the root yet.]
-
-remove""",
+if they have not spawned into the cycle time of the root yet.]""",
 ["TASK_ID              Task at which to start the purge (NAME%YYYYMMDDHH).",
  "STOP                 Cycle (inclusive!) at which to stop (YYYYMMDDHH)"] )
 

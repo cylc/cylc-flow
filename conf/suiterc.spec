@@ -505,13 +505,13 @@ use quick task elimination = boolean( default=True )
 simulation mode only = boolean( default=False )
 #>If True, cylc will abort cleanly if you try to run
 #>the suite in real mode. This can be used for demo suites that
-#>can't run in live mode because they've been copied out of their
+#>can't run in real mode because they've been copied out of their
 #>normal operating environment.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
 #>\item {\em default:} False
-#>\item {\em example:} \lstinline@simulation mode only@
+#>\item {\em example:} \lstinline@simulation mode only = True@
 #>\end{myitemize}
 
 allow multiple simultaneous instances = boolean( default=False )
@@ -580,7 +580,7 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em example:} \lstinline@clock-triggered = foo(1.5), bar(2.25)@
 #>\end{myitemize}
 #> Clock-triggered tasks currently can't be triggered manually prior to
-#> their trigger time. This will be change in future cylc releases. In
+#> their trigger time. This will changed in a future cylc release. In
 #> the meantime if you need to do this you can kill the task with
 #> \lstinline=cylc remove=, run it manually outside of the suite with
 #> \lstinline=cylc submit=, and then manually trigger any direct

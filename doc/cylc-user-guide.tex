@@ -2155,7 +2155,7 @@ provide a concise alternative to defining multiple triggers separately:
 OR operators (\lstinline=|=), for true ``conditional triggers'',
 can only appear on the left,\footnote{An OR
 operator on the right doesn't make much sense in the context of a
-forecasting suite: if ``B or C'' triggers off A, what exaclty should
+forecasting suite: if ``B or C'' triggers off A, what exactly should
 cylc do when A finishes?}
 \begin{lstlisting}
 # SUITE.RC
@@ -3538,7 +3538,7 @@ Having all filenames, or perhaps the names of their containing
 directories, stamped with the cycle time of the generating task greatly
 aids in managing suite disk usage, both for archiving and cleanup. It
 also enables the aforementioned task rerunnability recommendation by avoiding
-overwrite of important files from one cycle to the next. Cylc has a
+overwrite of important files from one cycle to the next. Cylc has 
 powerful utilities for cycle time offset based filename templating and
 housekeeping.
 
@@ -4017,7 +4017,7 @@ This way of defining suites exposed cylc's self-organising nature to the
 user, and it did have some nice properties. For instance a group of
 tasks could be transferred directly from one suite to another by simply
 copying the taskdef files over (and checking that prerequisite and
-output messages where consistent with the new suite). However, ensuring
+output messages were consistent with the new suite). However, ensuring
 consistency of prerequisites and outputs across a large suite could be
 tedious; a few edge cases associated with suite startup and forecast
 model restart dependencies were, arguably, difficult to understand; and
