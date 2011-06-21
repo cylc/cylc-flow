@@ -768,12 +768,12 @@ class scheduler(object):
         #--
 
         # update oldest suite cycle time
-        oldest_c_time = self.get_oldest_c_time()
+        oldest_unfailed_ctime = self.get_oldest_unfailed_c_time() 
         for itask in self.tasks:
             if self.runahead:
                 # if a runahead limit is defined, check for violations
                 tdiff = cycle_time.decrement( itask.c_time, self.runahead )
-                if int( tdiff ) > int( self.get_oldest_unfailed_c_time() ):
+                if int( tdiff ) > int( oldest_unfailed_ctime ):
                     # too far ahead: don't spawn this task.
                     itask.log( 'DEBUG', "delaying spawning (too far ahead)" )
                     continue
