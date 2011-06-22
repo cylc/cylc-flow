@@ -401,9 +401,6 @@ class task( Pyro.core.ObjBase ):
         else:
             return False
 
-    def get_ordered_outputs( self ):
-        return self.outputs.get_ordered()
-
     def reject_if_failed( self, message ):
         if self.state.is_failed():
             self.log( 'WARNING', 'rejecting the following message as I am in the failed state:' )
