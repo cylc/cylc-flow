@@ -57,11 +57,18 @@ class plain_prerequisites(object):
             
     def satisfy_me( self, outputs ):
         # can any completed outputs satisfy any of my prequisites?
-        for label in self.get_not_satisfied_list():
+        ###for label in self.get_not_satisfied_list():
+        for label in self.satisfied:
+            #if self.satisfied[label]:
+            #    continue
             # for each of my unsatisfied prerequisites
-            for output in outputs.get_satisfied_list():
+            ###for output in outputs.get_satisfied_list():
+            for output in outputs.satisfied:
+                #if not outputs.satisfied[output]:
+                #    continue
                 # compare it with each of the completed outputs
-                if re.match( self.messages[label], output ):
+                ###if re.match( self.messages[label], output ):
+                if self.messages[label] == output:
                     self.satisfied[ label ] = True
                     self.satisfied_by[ label ] = outputs.owner_id
 

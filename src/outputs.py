@@ -75,6 +75,13 @@ class outputs( object ):
         for message in self.satisfied.keys():
             self.satisfied[ message ] = True
 
+    def get_satisfied( self ):
+        satisfied = {}
+        for message in self.satisfied.keys():
+            if self.satisfied[ message ]:
+                satisfied[message] = True
+        return satisfied
+
     def get_satisfied_list( self ):
         satisfied = []
         for message in self.satisfied.keys():

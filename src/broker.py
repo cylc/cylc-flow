@@ -40,7 +40,7 @@ class broker(object):
         # should only be called once by each task
 
         owner_id = task.id
-        outputs = task.outputs
+        outputs = task.outputs.get_satisfied()
 
         if owner_id in self.all_outputs.keys():
             self.log.critical(  owner_id + "has already registered its outputs!" )
@@ -68,10 +68,5 @@ class broker(object):
     def negotiate( self, task ):
         # can my outputs satisfy any of task's prerequisites
         for id in self.all_outputs.keys():
-            # TO DO: if task becomes fully satsified mid-loop we could
-            # bail out with the following commented-out conditional, but
-            # is the cost of doing the test every time more than that of
-            # continuing when task is fully satisfied?
-            # CONDITIONAL: if task.not_fully_satisfied():
-            task.satisfy_me( self.all_outputs[ id ] )
+            task.satisfy_me( self.all_outputs[ id ], id )
 
