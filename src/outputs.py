@@ -16,23 +16,81 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
-import sys
-from requisites import requisites
+import re, sys
 
 # OUTPUTS:
 # A collection of messages representing the outputs of ONE TASK.
 # "satisfied" => the output has been completed.
 
-class outputs( requisites ):
-    # outputs are requisites for which each message represents an
-    # output or milestone that has either been completed (satisfied) or
-    # not (not satisfied).
-
+class outputs( object ):
     def __init__( self, owner_id ):
-        requisites.__init__( self, owner_id )
-        # automatically define special 'started' and 'succeeded' outputs
+        self.owner_id = owner_id
+        self.satisfied = {}     # self.satisfied[ "message" ] = True/False
 
+    def count( self ):
+        # how many messages are stored
+        return len( self.satisfied.keys() )
+
+    def count_satisfied( self ):
+        # how many messages are stored
+        n = 0
+        for message in self.satisfied.keys():
+            if self.satisfied[ message ]:
+                n += 1
+        return n
+
+    def dump( self ):
+        # return a list of strings representing each message and its state
+        res = []
+        for key in self.satisfied.keys():
+            res.append( [ key, self.satisfied[ key ] ]  )
+        return res
+
+    def all_satisfied( self ):
+        if False in self.satisfied.values(): 
+            return False
+        else:
+            return True
+
+    def is_satisfied( self, message ):
+        if self.satisfied[ message ]:
+            return True
+        else:
+            return False
+
+    def set_satisfied( self, message ):
+        self.satisfied[ message ] = True
+
+    def exists( self, message ):
+        if message in self.satisfied.keys():
+            return True
+        else:
+            return False
+
+    def set_all_unsatisfied( self ):
+        for message in self.satisfied.keys():
+            self.satisfied[ message ] = False
+
+    def set_all_satisfied( self ):
+        for message in self.satisfied.keys():
+            self.satisfied[ message ] = True
+
+    def get_satisfied_list( self ):
+        satisfied = []
+        for message in self.satisfied.keys():
+            if self.satisfied[ message ]:
+                satisfied.append( message )
+        return satisfied
+
+    def get_not_satisfied_list( self ):
+        not_satisfied = []
+        for message in self.satisfied.keys():
+            if not self.satisfied[ message ]:
+                not_satisfied.append( message )
+        return not_satisfied
+
+    def get_list( self ):
+        return self.satisfied.keys()
     def add( self, message ):
         # Add a new unsatisfied output message
         if message in self.satisfied.keys():
@@ -47,12 +105,13 @@ class outputs( requisites ):
         del self.satisfied[ message ]
 
     def register( self ):
+        # automatically define special 'started' and 'succeeded' outputs
         message = self.owner_id + ' started'
         self.satisfied[ message ] = False
         self.add( self.owner_id + ' succeeded' )
 
     def set_all_incomplete( self ):
-        requisites.set_all_unsatisfied( self )
+        self.set_all_unsatisfied()
 
     def set_all_complete( self ):
-        requisites.set_all_satisfied( self )
+        self.set_all_satisfied()
