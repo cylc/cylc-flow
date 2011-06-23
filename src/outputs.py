@@ -38,7 +38,7 @@ class outputs( object ):
     def count( self ):
         return len( self.completed ) + len( self.not_completed )
 
-    def count_satisfied( self ):
+    def count_completed( self ):
         return len( self.completed )
 
     def dump( self ):
@@ -50,19 +50,19 @@ class outputs( object ):
             res.append( [ key, True ]  )
         return res
 
-    def all_satisfied( self ):
+    def all_completed( self ):
         if len( self.not_completed ) == 0:
             return True
         else:
             return False
 
-    def is_satisfied( self, message ):
+    def is_completed( self, message ):
         if message in self.completed:
             return True
         else:
             return False
 
-    def set_satisfied( self, message ):
+    def set_completed( self, message ):
         try:
             del self.not_completed[message]
         except:
@@ -75,27 +75,15 @@ class outputs( object ):
         else:
             return False
 
-    def set_all_unsatisfied( self ):
+    def set_all_incomplete( self ):
         for message in self.completed.keys():
             del self.completed[message]
             self.not_completed[ message ] = self.owner_id
 
-    def set_all_satisfied( self ):
+    def set_all_completed( self ):
         for message in self.not_completed.keys():
             del self.not_completed[message]
             self.completed[ message ] = self.owner_id
-
-    def get_satisfied( self ):
-        return self.completed
-
-    def get_satisfied_list( self ):
-        return self.completed.keys()
-
-    def get_not_satisfied_list( self ):
-        return self.not_completed.keys()
-
-    def get_list( self ):
-        return self.completed.keys() + self.not_completed.keys()
 
     def add( self, message ):
         # Add a new not-completed output message
@@ -109,7 +97,7 @@ class outputs( object ):
         try:
             del self.completed[ message ]
             del self.not_completed[ message ]
-        except:
+        except KeyError:
             print >> sys.stderr, 'WARNING: not such output to delete:'
             print >> sys.stderr, message
 
@@ -120,9 +108,3 @@ class outputs( object ):
         message = self.owner_id + ' started'
         self.not_completed[ message ] = self.owner_id
         self.add( self.owner_id + ' succeeded' )
-
-    def set_all_incomplete( self ):
-        self.set_all_unsatisfied()
-
-    def set_all_complete( self ):
-        self.set_all_satisfied()

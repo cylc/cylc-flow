@@ -22,6 +22,9 @@ from prerequisites import prerequisites
 
 # THIS IS USED WITH ASYNCHRONOUS TASKS (EXPERIMENTAL)
 
+# TO DO: THIS NEEDS TO BE UPDATED FOR NEW PREREQUISITE AND OUTPUT
+# HANDLING.
+
 class loose_prerequisites( prerequisites ):
 
     def __init__( self, owner_id ):
