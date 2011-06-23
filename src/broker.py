@@ -32,7 +32,7 @@ class broker(object):
 
     def __init__( self ):
          self.log = logging.getLogger( 'main' )
-         self.all_outputs = {}   # all_outputs[ taskid ] = [ taskid's requisites ]
+         self.all_outputs = {}   # all_outputs[ message ] = taskid
 
     def register( self, task ):
         # because task ids are unique, and all tasks register their
@@ -47,7 +47,7 @@ class broker(object):
             self.log.critical( "(perhaps you inserted an already-spawned task?")
             raise SystemExit("ABORTING")
 
-        self.all_outputs[ owner_id ] = outputs
+        self.all_outputs.update( outputs )
 
         # TO DO: SHOULD WE CHECK FOR SYSTEM-WIDE DUPLICATE OUTPUTS?
         # (note that successive tasks of the same type can register
@@ -60,13 +60,10 @@ class broker(object):
     def dump( self ):
         # for debugging
         print "BROKER DUMP:"
-        for id in self.all_outputs.keys():
-            print " " + id
-            for output in self.all_outputs[ id ].get_list():
-                print " + " + output
-               
+        for msg in self.all_outputs:
+            print " + " + self.all_outputs[msg], msg
+
     def negotiate( self, task ):
         # can my outputs satisfy any of task's prerequisites
-        for id in self.all_outputs:
-            task.satisfy_me( self.all_outputs[ id ], id )
+        task.satisfy_me( self.all_outputs )
 

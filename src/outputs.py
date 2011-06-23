@@ -23,15 +23,14 @@ import re, sys
 
 class outputs( object ):
     def __init__( self, owner_id ):
+
         self.owner_id = owner_id
         # Store completed and not-completed outputs in separate 
         # dicts to allow quick passing of completed to the broker.
 
-        # A set data structure would be more sensible than a dict
-        # here, as we don't need the dict values.  The post-v2.5 
-        # sets builtin seems to provide no speed up, however, while
-        # pre-v2.5 'sets' module make cylc slightly slower for my
-        # large test suite. Therefore: stick with dicts for now.
+        # Using rhs of dict as a cheap way to get owner ID to receiving
+        # tasks via the dependency broker object:
+        # self.(not)completed[message] = owner_id
 
         self.completed = {}
         self.not_completed = {}
@@ -68,7 +67,7 @@ class outputs( object ):
             del self.not_completed[message]
         except:
             pass
-        self.completed[ message ] = 0
+        self.completed[ message ] = self.owner_id
 
     def exists( self, message ):
         if message in self.completed or message in self.not_completed:
@@ -79,12 +78,12 @@ class outputs( object ):
     def set_all_unsatisfied( self ):
         for message in self.completed.keys():
             del self.completed[message]
-            self.not_completed[ message ] = 0
+            self.not_completed[ message ] = self.owner_id
 
     def set_all_satisfied( self ):
         for message in self.not_completed.keys():
             del self.not_completed[message]
-            self.completed[ message ] = 0
+            self.completed[ message ] = self.owner_id
 
     def get_satisfied( self ):
         return self.completed
@@ -104,7 +103,7 @@ class outputs( object ):
             # duplicate output messages are an error.
             print >> sys.stderr, 'ERROR: already registered: ' + message
             sys.exit(1)
-        self.not_completed[message] = 0
+        self.not_completed[message] = self.owner_id
 
     def remove( self, message ):
         try:
@@ -119,7 +118,7 @@ class outputs( object ):
         # automatically define special 'started' and 'succeeded' outputs
         # TO DO: just use two calls to add()?
         message = self.owner_id + ' started'
-        self.not_completed[ message ] = 0
+        self.not_completed[ message ] = self.owner_id
         self.add( self.owner_id + ' succeeded' )
 
     def set_all_incomplete( self ):

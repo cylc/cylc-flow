@@ -41,21 +41,14 @@ class prerequisites(object):
                 break
         return result
             
-    def satisfy_me( self, outputs, owner_id ):
-        # can any completed outputs satisfy any of my prequisites?
+    def satisfy_me( self, outputs ):
+        # Can any completed outputs satisfy any of my prequisites?
         for reqs in self.container:
-            ####for label in reqs.get_not_satisfied_list():
             for label in reqs.satisfied:
-                #if reqs.satisfied[label]:
-                #    continue
-                # for each of my unsatisfied prerequisites
-                ###for output in outputs.get_satisfied_list():
-                for output in outputs:
-                    # compare it with each of the completed outputs
-                    ####if re.match( reqs.messages[label], output ):
-                    if reqs.messages[label] == output:
+                for msg in outputs:
+                    if reqs.messages[label] == msg:
                         reqs.satisfied[ label ] = True
-                        reqs.satisfied_by[ label ] = owner_id
+                        reqs.satisfied_by[ label ] = outputs[msg]  # (owner_id)
 
     def get_satisfied_by( self ):
         satisfied_by = {}

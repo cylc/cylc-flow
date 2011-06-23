@@ -613,9 +613,9 @@ class task( Pyro.core.ObjBase ):
             return True
         return False
 
-    def satisfy_me( self, task, owner_id ):
-        self.prerequisites.satisfy_me( task, owner_id )
-        #self.suicide_prerequisites.satisfy_me( task )
+    def satisfy_me( self, outputs ):
+        self.prerequisites.satisfy_me( outputs )
+        #self.suicide_prerequisites.satisfy_me( outputs )
 
     def next_tag( self ):
         raise SystemExit( "OVERRIDE ME" )

@@ -56,21 +56,14 @@ class plain_prerequisites(object):
         return not ( False in self.satisfied.values() ) 
             
     def satisfy_me( self, outputs ):
-        # can any completed outputs satisfy any of my prequisites?
-        ###for label in self.get_not_satisfied_list():
+        # Can any completed outputs satisfy any of my prequisites?
+        # THIS IS NOW HANDLED AT prerequisites CONTAINER LEVEL but is
+        # kept here also in case of raw use of plain prerequisites.
         for label in self.satisfied:
-            #if self.satisfied[label]:
-            #    continue
-            # for each of my unsatisfied prerequisites
-            ###for output in outputs.get_satisfied_list():
-            for output in outputs.satisfied:
-                #if not outputs.satisfied[output]:
-                #    continue
-                # compare it with each of the completed outputs
-                ###if re.match( self.messages[label], output ):
-                if self.messages[label] == output:
+            for msg in outputs:
+                if self.messages[label] == msg:
                     self.satisfied[ label ] = True
-                    self.satisfied_by[ label ] = outputs.owner_id
+                    self.satisfied_by[ label ] = outputs[msg] # owner_id
 
     def count( self ):
         # how many messages are stored

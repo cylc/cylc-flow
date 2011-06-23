@@ -83,14 +83,12 @@ class conditional_prerequisites(object):
         return res
             
     def satisfy_me( self, outputs ):
-        # can any completed outputs satisfy any of my prequisites?
-        for label in self.get_not_satisfied_list():
-            # for each of my unsatisfied prerequisites
-            for output in outputs.get_satisfied_list():
-                # compare it with each of the completed outputs
-                if re.match( self.messages[label], output ):
+        # Can any completed outputs satisfy any of my prequisites?
+        for label in self.satisfied:
+            for msg in outputs:
+                if self.messages[label] == msg:
                     self.satisfied[ label ] = True
-                    self.satisfied_by[ label ] = outputs.owner_id
+                    self.satisfied_by[ label ] = outputs[msg] # owner_id
 
     def count( self ):
         # how many messages are stored
