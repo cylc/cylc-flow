@@ -40,7 +40,7 @@ class broker(object):
         # should only be called once by each task
 
         owner_id = task.id
-        outputs = task.outputs.get_satisfied()
+        outputs = task.outputs.completed
 
         if owner_id in self.all_outputs.keys():
             self.log.critical(  owner_id + "has already registered its outputs!" )
@@ -67,6 +67,6 @@ class broker(object):
                
     def negotiate( self, task ):
         # can my outputs satisfy any of task's prerequisites
-        for id in self.all_outputs.keys():
+        for id in self.all_outputs:
             task.satisfy_me( self.all_outputs[ id ], id )
 

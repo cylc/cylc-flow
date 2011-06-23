@@ -20,101 +20,106 @@ import re, sys
 
 # OUTPUTS:
 # A collection of messages representing the outputs of ONE TASK.
-# "satisfied" => the output has been completed.
 
 class outputs( object ):
     def __init__( self, owner_id ):
         self.owner_id = owner_id
-        self.satisfied = {}     # self.satisfied[ "message" ] = True/False
+        # Store completed and not-completed outputs in separate 
+        # dicts to allow quick passing of completed to the broker.
+
+        # A set data structure would be more sensible than a dict
+        # here, as we don't need the dict values.  The post-v2.5 
+        # sets builtin seems to provide no speed up, however, while
+        # pre-v2.5 'sets' module make cylc slightly slower for my
+        # large test suite. Therefore: stick with dicts for now.
+
+        self.completed = {}
+        self.not_completed = {}
 
     def count( self ):
-        # how many messages are stored
-        return len( self.satisfied.keys() )
+        return len( self.completed ) + len( self.not_completed )
 
     def count_satisfied( self ):
-        # how many messages are stored
-        n = 0
-        for message in self.satisfied.keys():
-            if self.satisfied[ message ]:
-                n += 1
-        return n
+        return len( self.completed )
 
     def dump( self ):
         # return a list of strings representing each message and its state
         res = []
-        for key in self.satisfied.keys():
-            res.append( [ key, self.satisfied[ key ] ]  )
+        for key in self.not_completed:
+            res.append( [ key, False ]  )
+        for key in self.completed:
+            res.append( [ key, True ]  )
         return res
 
     def all_satisfied( self ):
-        if False in self.satisfied.values(): 
-            return False
-        else:
+        if len( self.not_completed ) == 0:
             return True
+        else:
+            return False
 
     def is_satisfied( self, message ):
-        if self.satisfied[ message ]:
+        if message in self.completed:
             return True
         else:
             return False
 
     def set_satisfied( self, message ):
-        self.satisfied[ message ] = True
+        try:
+            del self.not_completed[message]
+        except:
+            pass
+        self.completed[ message ] = 0
 
     def exists( self, message ):
-        if message in self.satisfied.keys():
+        if message in self.completed or message in self.not_completed:
             return True
         else:
             return False
 
     def set_all_unsatisfied( self ):
-        for message in self.satisfied.keys():
-            self.satisfied[ message ] = False
+        for message in self.completed.keys():
+            del self.completed[message]
+            self.not_completed[ message ] = 0
 
     def set_all_satisfied( self ):
-        for message in self.satisfied.keys():
-            self.satisfied[ message ] = True
+        for message in self.not_completed.keys():
+            del self.not_completed[message]
+            self.completed[ message ] = 0
 
     def get_satisfied( self ):
-        satisfied = {}
-        for message in self.satisfied.keys():
-            if self.satisfied[ message ]:
-                satisfied[message] = True
-        return satisfied
+        return self.completed
 
     def get_satisfied_list( self ):
-        satisfied = []
-        for message in self.satisfied.keys():
-            if self.satisfied[ message ]:
-                satisfied.append( message )
-        return satisfied
+        return self.completed.keys()
 
     def get_not_satisfied_list( self ):
-        not_satisfied = []
-        for message in self.satisfied.keys():
-            if not self.satisfied[ message ]:
-                not_satisfied.append( message )
-        return not_satisfied
+        return self.not_completed.keys()
 
     def get_list( self ):
-        return self.satisfied.keys()
+        return self.completed.keys() + self.not_completed.keys()
+
     def add( self, message ):
-        # Add a new unsatisfied output message
-        if message in self.satisfied.keys():
+        # Add a new not-completed output message
+        if message in self.completed:
             # duplicate output messages are an error.
-            print 'ERROR: already registered: ' + message
+            print >> sys.stderr, 'ERROR: already registered: ' + message
             sys.exit(1)
-        self.satisfied[message] = False
+        self.not_completed[message] = 0
 
     def remove( self, message ):
-        # calling function should catch exceptions due to attempting to
-        # delete a non-existent item.
-        del self.satisfied[ message ]
+        try:
+            del self.completed[ message ]
+            del self.not_completed[ message ]
+        except:
+            print >> sys.stderr, 'WARNING: not such output to delete:'
+            print >> sys.stderr, message
+
 
     def register( self ):
         # automatically define special 'started' and 'succeeded' outputs
+        # TO DO: just use two calls to add()?
         message = self.owner_id + ' started'
-        self.satisfied[ message ] = False
+        self.not_completed[ message ] = 0
         self.add( self.owner_id + ' succeeded' )
 
     def set_all_incomplete( self ):
