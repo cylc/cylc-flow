@@ -297,6 +297,8 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_DIR' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner
         cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
+        if self.use_lockserver:
+            cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port )
 
         # SUITE.RC GLOBAL ENVIRONMENT
         globalenv = OrderedDict()
