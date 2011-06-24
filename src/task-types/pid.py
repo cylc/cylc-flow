@@ -24,15 +24,13 @@ class pid(object):
     is_tied = True  # used in manager
 
     # Forecast models depend on a previous instance via their restart
-    # files. This class provides a method to register special restart
-    # prerequisites and outputs, and overrides
-    # free.ready_to_spawn() appropriately.
+    # files. This class overrides free.ready_to_spawn() appropriately.
 
     def set_next_restart_completed( self ):
         if self.reject_if_failed( 'set_next_restart_completed' ):
             return
         restart_messages = []
-        for message in self.outputs.satisfied.keys():
+        for message in self.outputs.completed:
             if re.search( 'restart files ready for', message ):
                 restart_messages.append( message )
         restart_messages.sort()
@@ -48,7 +46,7 @@ class pid(object):
         # convenience for external tasks that don't report restart
         # outputs one at a time.
         self.log( 'WARNING', 'setting ALL restart outputs completed' )
-        for message in self.outputs.satisfied.keys():
+        for message in self.outputs.completed:
             if re.search( 'restart files ready for', message ):
                 if not self.outputs.is_completed( message ):
                     self.incoming( 'NORMAL', message )
@@ -75,9 +73,9 @@ class pid(object):
             # before or after completing their restart outputs.
             # Ready only if all restart outputs are completed
             ready = True
-            for message in self.outputs.satisfied.keys():
+            for message in self.outputs.completed:
                 if re.search( 'restart', message ) and \
-                        not self.outputs.satisfied[ message ]:
+                        not self.outputs.is_completed( message ):
                     ready = False
                     break
         return ready

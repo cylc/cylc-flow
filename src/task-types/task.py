@@ -389,7 +389,7 @@ class task( Pyro.core.ObjBase ):
             return
         # used by the task wrapper 
         self.log( 'DEBUG', 'setting all internal outputs completed' )
-        for message in self.outputs.satisfied.keys():
+        for message in self.outputs.completed:
             if message != self.id + ' started' and \
                     message != self.id + ' succeeded' and \
                     message != self.id + ' completed':
