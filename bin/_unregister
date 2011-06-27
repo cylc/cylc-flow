@@ -44,6 +44,10 @@ parser.add_option( "--obliterate",
         help="Delete the suite definition directory too (!DANGEROUS!).",
         action="store_true", default=False, dest="obliterate" )
 
+parser.add_option( "--force",
+        help="Don't ask for confirmation before obliterating suite definitions",
+        action="store_true", default=False, dest="force" )
+
 parser.add_option( "--gcylc",
         help="(DO NOT USE THIS OPTION).",
         action="store_true", default=False, dest="gcylc" )
@@ -122,11 +126,11 @@ else:
 if options.obliterate:
     really_obliterate = False
     print "Suite(s) successfully unregistered."
-    if options.gcylc:
+    if options.gcylc or options.force:
         # confirmed by dialog
         really_obliterate = True
     else:
-        response = raw_input( "DO YOU REALLY WANT TO DELETE THE SUITE DEFINITION DIRECTORIES (y/n)?" )
+        response = raw_input( "DO YOU REALLY WANT TO DELETE THE SUITE DEFINITION DIRECTORY(S) (y/n)?" )
         if response == 'y':
             really_obliterate = True
     if really_obliterate and len(dirs)>0:

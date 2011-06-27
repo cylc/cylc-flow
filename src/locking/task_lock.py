@@ -84,11 +84,10 @@ class task_lock(object):
                 sys.exit(1)
 
         # port here is the lockserver port, not the suite port
+        # (port = None forces scan).
         self.port = port
         if not self.port:
             if 'CYLC_LOCKSERVER_PORT' in os.environ.keys():
-                # THIS ENVIRONMENT VARIABLE IS CURRENTLY NOT IMPLEMENTED
-                # (port = None forces scan).
                 self.port = os.environ[ 'CYLC_LOCKSERVER_PORT' ]
 
     def acquire( self ):

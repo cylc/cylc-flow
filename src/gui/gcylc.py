@@ -917,7 +917,7 @@ The cylc forecast suite metascheduler.
             else:
                 reg = group + ':' + name
             if not self.cdb:
-                con_item = gtk.MenuItem( '_Control (treeview)')
+                con_item = gtk.MenuItem( '_Control (tree)')
                 menu.append( con_item )
                 con_item.connect( 'activate', self.launch_controller, reg, state )
 
@@ -929,11 +929,11 @@ The cylc forecast suite metascheduler.
                 menu.append( subm_item )
                 subm_item.connect( 'activate', self.submit_task_popup, reg )
 
-                out_item = gtk.MenuItem( 'View Cylc _Output')
+                out_item = gtk.MenuItem( 'View _Output')
                 menu.append( out_item )
                 out_item.connect( 'activate', self.view_output, reg, state )
 
-                out_item = gtk.MenuItem( 'View Cylc _Log')
+                out_item = gtk.MenuItem( 'View _Log')
                 menu.append( out_item )
                 out_item.connect( 'activate', self.view_log, reg )
 
@@ -987,6 +987,10 @@ The cylc forecast suite metascheduler.
                 menu.append( exp_item )
                 exp_item.connect( 'activate', self.export_suite_popup, reg )
     
+            compare_item = gtk.MenuItem( 'Co_mpare' )
+            menu.append( compare_item )
+            compare_item.connect( 'activate', self.compare_suite_popup, reg )
+ 
             reregister_item = gtk.MenuItem( '_Reregister' )
             menu.append( reregister_item )
             reregister_item.connect( 'activate', self.reregister_suite_popup, reg )
@@ -1503,6 +1507,53 @@ The cylc forecast suite metascheduler.
         foo.run()
         w.destroy()
 
+    def compare_suite_popup( self, w, reg ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Compare '" + reg + "'")
+
+        vbox = gtk.VBox()
+
+        reg_owner, reg_group, reg_name = regsplit( reg ).get() 
+
+        label = gtk.Label("Other Suite Group" )
+        group_entry = gtk.Entry()
+        group_entry.set_text( reg_group )
+        hbox = gtk.HBox()
+        hbox.pack_start( label )
+        hbox.pack_start(group_entry, True) 
+        vbox.pack_start( hbox )
+ 
+        label = gtk.Label("Other Suite Name" )
+        name_entry = gtk.Entry()
+        name_entry.set_text( reg_name )
+        hbox = gtk.HBox()
+        hbox.pack_start( label )
+        hbox.pack_start(name_entry, True) 
+        vbox.pack_start( hbox )
+
+        nested_cb = gtk.CheckButton( "Nested Sections" )
+        nested_cb.set_active(False)
+        vbox.pack_start (nested_cb, True)
+
+        cancel_button = gtk.Button( "_Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        ok_button = gtk.Button( "Co_mpare" )
+        ok_button.connect("clicked", self.compare_suites, window, reg, group_entry, name_entry, nested_cb )
+
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", helpwindow.compare )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( ok_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
     def copy_suite_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
@@ -1564,6 +1615,21 @@ The cylc forecast suite metascheduler.
         else:
             entry.set_sensitive( True )
 
+    def compare_suites( self, b, w, reg, group_entry, name_entry, nested_cb ):
+        group = group_entry.get_text()
+        name  = name_entry.get_text()
+        chk = [ group, name ]
+        opts = ''
+        if nested_cb.get_active():
+            opts = ' -n '
+        if not self.check_entries( chk ):
+            return False
+        command = "cylc diff " + opts + reg + ' ' + group + ':' + name
+        foo = gcapture_tmpfile( command, self.tmpdir, 800 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+        w.destroy()
+ 
     def copy_suite( self, b, w, reg, group_entry, name_entry, refonly_cb, def_entry ):
         group = group_entry.get_text()
         name  = name_entry.get_text()

@@ -224,6 +224,7 @@ preparation_commands['inline'  ] = [ 'inline'    ]
 preparation_commands['validate'] = [ 'validate'    ]
 preparation_commands['search'  ] = [ 'search', 'grep' ]
 preparation_commands['graph'   ] = [ 'graph'    ]
+preparation_commands['diff'    ] = [ 'diff', 'compare' ]
 
 discovery_commands = OrderedDict()
 discovery_commands['ping'] = [ 'ping' ]
@@ -281,7 +282,7 @@ catsum['utility'     ]   = "cycle time arithmetic, filename templating, etc."
 ##extent allowed by the suite dependency graph.
 
 usage = """Welcome to the cylc metascheduler command line interface.
-The cylc graphical user interface is gcylc.
+The cylc graphical interface is gcylc.
 Cylc release version: """ + cylc_version + """
 """ + general_usage + """
 
@@ -327,6 +328,7 @@ comsum[ 'inline'     ] = 'View suite.rc files in $EDITOR, include-files inlined'
 comsum[ 'validate'   ] = 'Parse and validate a suite config (suite.rc) file'
 comsum[ 'search'     ] = 'An intelligent search tool for cylc suites'
 comsum[ 'graph'      ] = 'A dependency graph viewer that updates as you edit'
+comsum[ 'diff'       ] = 'Compare two suite definitions and print differences'
 # information
 comsum[ 'list'       ] = 'Print a suite\'s task list'
 comsum[ 'describe'   ] = 'Print a suite\'s title and description'

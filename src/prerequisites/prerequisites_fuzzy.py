@@ -16,7 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import re
 import sys
 import logging
@@ -31,6 +30,9 @@ from prerequisites import prerequisites
 # For cycle-time based prerequisites of the form "X more recent than
 # or equal to this cycle time". A delimited time cutoff is expected
 # in the message string. Requires a more complex satisfy_me() method.
+
+# TO DO: THIS NEEDS TO BE UPDATED FOR NEW PREREQUISITE AND OUTPUT
+# HANDLING.
 
 class fuzzy_prerequisites( prerequisites ):
 

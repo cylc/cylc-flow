@@ -747,7 +747,7 @@ control GUI, treeview interface.}
     \begin{center}
         \includegraphics[width=\textwidth]{../images/screenshots/ecox-1.png}
     \end{center}
-\caption[A large operational suite graphed by cylc.]{small A large
+\caption[A large operational suite graphed by cylc.]{\small A large
 operational suite graphed by cylc.}
 \label{fig-ecox-1}
 \end{figure} 
@@ -792,7 +792,7 @@ with reference to a particular task, or in the sense of all tasks that
 members of such a group may not all exist in the running suite at the
 same time. In other words, some tasks may pass through the ``current cycle''
 (etc.) at different times as the suite evolves, particularly in delayed
-(catchup) operation.
+(catch up) operation.
 
 \section{Quick Start Guide} 
 \label{QuickStartGuide}
@@ -997,6 +997,7 @@ command line, you can:
     \item search the suite definition and bin scripts,
     \item validate the suite definition,
     \item copy the suite or group,
+    \item compare (difference) the suite with another suite,
     \item export the suite or group to the central database,
     \item unreregister the suite or group,
     \item reregister the suite or group.
@@ -1521,6 +1522,7 @@ By right-clicking on a suite in the private database, or using cylc commands, yo
     \item search the suite definition and bin scripts,
     \item validate the suite definition,
     \item copy the suite or group,
+    \item compare (difference) the suite with another suite,
     \item export the suite or group to the central database,
     \item unreregister the suite or group,
     \item reregister the suite or group.
@@ -2153,7 +2155,7 @@ provide a concise alternative to defining multiple triggers separately:
 OR operators (\lstinline=|=), for true ``conditional triggers'',
 can only appear on the left,\footnote{An OR
 operator on the right doesn't make much sense in the context of a
-forecasting suite: if ``B or C'' triggers off A, what exaclty should
+forecasting suite: if ``B or C'' triggers off A, what exactly should
 cylc do when A finishes?}
 \begin{lstlisting}
 # SUITE.RC
@@ -3391,7 +3393,7 @@ Section~\ref{QuickStartGuide}).
         and \lstinline=cylc discovery help=)
     \item where to look for output - suite log, suite stdout/stderr, task stdout/stderr
         (this is documented in the Quick Start Guide)
-    \item understanding cylc suite evolution, particularly in catchup operation
+    \item understanding cylc suite evolution, particularly in catch up operation
         (the {\em Quick Start Guide} will also help here, along 
         with the cylc example suites, and running your real suites in
         simulation mode)
@@ -3536,7 +3538,7 @@ Having all filenames, or perhaps the names of their containing
 directories, stamped with the cycle time of the generating task greatly
 aids in managing suite disk usage, both for archiving and cleanup. It
 also enables the aforementioned task rerunnability recommendation by avoiding
-overwrite of important files from one cycle to the next. Cylc has a
+overwrite of important files from one cycle to the next. Cylc has 
 powerful utilities for cycle time offset based filename templating and
 housekeeping.
 
@@ -4004,7 +4006,7 @@ just use the cylc task wrapper (Section~\ref{TaskWrapping}).
 %\end{myitemize}
 
 \section{Cylc Development History}
-\subsubsection{Pre-3.0}
+\subsection{Pre-3.0}
 
 Early versions of cylc were focused on developing and testing the new 
 scheduling algorithm, and the suite design interface at the time was
@@ -4015,7 +4017,7 @@ This way of defining suites exposed cylc's self-organising nature to the
 user, and it did have some nice properties. For instance a group of
 tasks could be transferred directly from one suite to another by simply
 copying the taskdef files over (and checking that prerequisite and
-output messages where consistent with the new suite). However, ensuring
+output messages were consistent with the new suite). However, ensuring
 consistency of prerequisites and outputs across a large suite could be
 tedious; a few edge cases associated with suite startup and forecast
 model restart dependencies were, arguably, difficult to understand; and
@@ -4023,7 +4025,7 @@ the global structure of a suite was not readily apparent until run time
 (although to counter this cylc 2.x could generate run-time resolved
 dependency graphs very quickly in simulation mode).
 
-\subsubsection{Post-3.0}
+\subsection{Post-3.0}
 
 At version 3.0 we implemented an entirely new suite design interface
 that, in essence, defines the suite dependency graph and the command line

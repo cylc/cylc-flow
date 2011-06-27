@@ -16,54 +16,95 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
-import sys
-from requisites import requisites
+import re, sys
 
 # OUTPUTS:
-# A collection of messages with associated times, representing the
-# outputs of ONE TASK and their estimated completion times. 
-# "Satisfied" => the output has been completed.
+# A collection of messages representing the outputs of ONE TASK.
 
-class outputs( requisites ):
-    # outputs are requisites for which each message represents an
-    # output or milestone that has either been completed (satisfied) or
-    # not (not satisfied).
-
-    # additionally, each output message has an associated estimated
-    # completion time, used to simulate task execution in simulation mode.
-
+class outputs( object ):
     def __init__( self, owner_id ):
-        self.ordered = [] 
-        requisites.__init__( self, owner_id )
-        # automatically define special 'started' and 'succeeded' outputs
 
-    def add( self, message ):
-        # Add a new unsatisfied output message for time t
-        if message in self.satisfied.keys():
-            # duplicate output messages are an error.
-            print 'ERROR: already registered: ' + message
-            sys.exit(1)
-        self.satisfied[message] = False
-        self.ordered.append( message )
+        self.owner_id = owner_id
+        # Store completed and not-completed outputs in separate 
+        # dicts to allow quick passing of completed to the broker.
 
-    def remove( self, message ):
-        # calling function should catch exceptions due to attempting to
-        # delete a non-existent item.
-        del self.satisfied[ message ]
-        self.ordered.remove( message )
+        # Using rhs of dict as a cheap way to get owner ID to receiving
+        # tasks via the dependency broker object:
+        # self.(not)completed[message] = owner_id
 
-    def register( self ):
-        message = self.owner_id + ' started'
-        self.satisfied[ message ] = False
-        self.ordered.insert(0, message )
-        self.add( self.owner_id + ' succeeded' )
+        self.completed = {}
+        self.not_completed = {}
 
-    def get_ordered( self ):
-        return self.ordered
+    def count( self ):
+        return len( self.completed ) + len( self.not_completed )
+
+    def count_completed( self ):
+        return len( self.completed )
+
+    def dump( self ):
+        # return a list of strings representing each message and its state
+        res = []
+        for key in self.not_completed:
+            res.append( [ key, False ]  )
+        for key in self.completed:
+            res.append( [ key, True ]  )
+        return res
+
+    def all_completed( self ):
+        if len( self.not_completed ) == 0:
+            return True
+        else:
+            return False
+
+    def is_completed( self, message ):
+        if message in self.completed:
+            return True
+        else:
+            return False
+
+    def set_completed( self, message ):
+        try:
+            del self.not_completed[message]
+        except:
+            pass
+        self.completed[ message ] = self.owner_id
+
+    def exists( self, message ):
+        if message in self.completed or message in self.not_completed:
+            return True
+        else:
+            return False
 
     def set_all_incomplete( self ):
-        requisites.set_all_unsatisfied( self )
+        for message in self.completed.keys():
+            del self.completed[message]
+            self.not_completed[ message ] = self.owner_id
 
-    def set_all_complete( self ):
-        requisites.set_all_satisfied( self )
+    def set_all_completed( self ):
+        for message in self.not_completed.keys():
+            del self.not_completed[message]
+            self.completed[ message ] = self.owner_id
+
+    def add( self, message ):
+        # Add a new not-completed output message
+        if message in self.completed:
+            # duplicate output messages are an error.
+            print >> sys.stderr, 'ERROR: already registered: ' + message
+            sys.exit(1)
+        self.not_completed[message] = self.owner_id
+
+    def remove( self, message ):
+        try:
+            del self.completed[ message ]
+            del self.not_completed[ message ]
+        except KeyError:
+            print >> sys.stderr, 'WARNING: not such output to delete:'
+            print >> sys.stderr, message
+
+
+    def register( self ):
+        # automatically define special 'started' and 'succeeded' outputs
+        # TO DO: just use two calls to add()?
+        message = self.owner_id + ' started'
+        self.not_completed[ message ] = self.owner_id
+        self.add( self.owner_id + ' succeeded' )

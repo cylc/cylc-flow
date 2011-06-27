@@ -1,0 +1,184 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: Copyright (C) 2008-2011 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+import os, sys
+from job_submit import job_submit
+from optparse import OptionParser
+from config import config, SuiteConfigError
+from taskdef import DefinitionError
+
+n_oone = 0
+n_otwo = 0
+n_diff = 0
+
+def diffdict( one, two, oone, otwo, diff ):
+    global n_oone, n_otwo, n_diff
+    # Recursively difference two dictionaries in which any element
+    # may be another dictionary, keeping items that appear only 
+    # in one or the other, and items that appear in both but differ. 
+    for key in one:
+        if key not in two:
+            oone[key] = one[key]
+            n_oone += 1
+        elif one[key] != two[key]:
+            if isinstance( one[key], dict ):
+                for item in oone, otwo, diff:
+                    if key not in item:
+                        item[key] = {}
+                diffdict( one[key], two[key], oone[key], otwo[key], diff[key] )
+            else:
+                diff[key] = ( one[key], two[key] )
+                n_diff += 1
+
+    for key in two:
+        if key not in one:
+            otwo[key] = two[key]
+            n_otwo += 1
+
+def prdict( dct, arrow='<', section='', level=0, diff=False, nested=False ):
+    # Recursively print, in pseudo 'diff' format, the contents of
+    # one of the three dictionaries populated by the diffdict() function
+    # above (any element may itself be a dictionary).
+
+    count = 0
+
+    if section != '':
+        prfx = section + ' '
+    else:
+        prfx = ''
+
+    if section == '':
+        sctn = '(top)'
+    else:
+        sctn = section
+
+    foo = False
+
+    for key in dct:
+        if isinstance( dct[key], dict ):
+            lvl = level + 1
+            if nested:
+                pre = prfx + '\n' + '   '*lvl 
+            else:
+                pre = prfx
+            prdict( dct[key], arrow, pre + '['*lvl + str(key) + ']'*lvl, lvl, diff, nested )
+        else:
+            if not foo:
+                if nested:
+                    print '  ', sctn
+                else:
+                    print '\n  ', sctn
+                foo = True
+
+            if diff:
+                print ' <  ', key, '=', dct[key][0]
+                print ' >  ', key, '=', dct[key][1]
+            else:
+                print ' ' + arrow + '  ', key, '=', dct[key]
+
+parser = OptionParser( """cylc [prep] diff|compare [options] SUITE1 SUITE2
+
+Compare two suite definitions and display any differences.
+
+NOTE: differencing is done after parsing the suite.rc files so it takes
+account of default values that are not explicitly defined, it disregards
+the order of configuration items, and it sees include-file content after
+inlining.
+
+Seemingly identical suites (immediately after copying one from the
+other, for instance) can differ slightly if they use default
+configuration items, such as the default job submission log directory,
+that are suite-specific (i.e. the includes $CYLC_SUITE_NAME etc.).
+
+Files in the suite bin directory, and other files held in the suite
+definition directory, are not currently differenced (they may be
+important in task implementations, but are not part of the suite
+definition).
+
+Arguments:
+   SUITE1, SUITE2  - suite registrations [OWNER:]GROUP:NAME""")
+
+parser.add_option( "-d", "--debug", help="print the "
+        "exception traceback for validation errors.",
+        action="store_true", default=False, dest="debug" )
+
+parser.add_option( "-n", "--nested", help="print suite.rc "
+        "section headings in nested form.",
+        action="store_true", default=False, dest="nested" )
+
+(options, args) = parser.parse_args()
+
+if len(args) != 2:
+    parser.error( "Wrong number or arguments" )
+else:
+    suite1 = args[0]
+    suite2 = args[1]
+
+print "Parsing", suite1
+try:
+    config1 = config( suite1 )
+    config1.load_tasks()
+except SuiteConfigError,x:
+    if options.debug:
+        raise
+    else:
+        raise SystemExit(x)
+
+print "Parsing", suite2
+try:
+    config2 = config( suite2 )
+    config2.load_tasks()
+except SuiteConfigError,x:
+    if options.debug:
+        raise
+    else:
+        raise SystemExit(x)
+
+if config1 == config2: # does this work, or do we need to do key by key comparison?
+    print "Suite definitions " + suite1 + " and " + suite2 + " are identical."
+    sys.exit(0)
+
+print "Suite definitions " + suite1 + " and " + suite2 + " differ."
+
+suite1_only = {}
+suite2_only = {}
+diff_1_2 = {}
+
+diffdict( config1, config2, suite1_only, suite2_only, diff_1_2 )
+
+if n_oone > 0:
+    print
+    msg = str(n_oone) + ' items only in ' + suite1 + ' (<)'
+    print msg
+    #print '-' * len(msg)
+    prdict( suite1_only, '<', nested=options.nested )
+
+if n_otwo > 0:
+    print
+    msg = str(n_otwo) + ' items only in ' + suite2 + ' (>)'
+    print msg
+    #print '-' * len(msg)
+    prdict( suite2_only, '>', nested=options.nested )
+
+if n_diff > 0:
+    print
+    msg = str(n_diff) + ' common items differ ' + suite1 + '(<) ' + suite2 + '(>)'
+    print msg
+    #print '-' * len(msg)
+    prdict( diff_1_2, '', diff=True, nested=options.nested )

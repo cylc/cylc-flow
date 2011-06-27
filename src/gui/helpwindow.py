@@ -361,6 +361,28 @@ Partial matches are allowed (i.e. there is no implicit string start
 %i (foo|bar) - match 'foo' or 'bar' preceded or followed by anything""")
     help.show()
 
+def compare( b ):
+    help = helpwindow( "Compare/Diff Help", 200, """
+Compare two suite definitions and display any differences.
+
+NOTE: differencing is done after parsing the suite.rc files so it takes
+account of default values that are not explicitly defined, it disregards
+the order of configuration items, and it sees include-file content after
+inlining.
+
+Seemingly identical suites (immediately after copying one from the
+other, for instance) can differ slightly if they use default
+configuration items, such as the default job submission log directory,
+that are suite-specific (i.e. the includes $CYLC_SUITE_NAME etc.).
+
+Files in the suite bin directory, and other files held in the suite
+definition directory, are not currently differenced (they may be
+important in task implementations, but are not part of the suite
+definition).
+""")
+    help.show()
+
+
 def copy( b ):
     help = helpwindow( "Copy Help", 200, """
 Copy the defintion of a registered suite to the specified location and

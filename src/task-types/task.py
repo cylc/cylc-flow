@@ -278,7 +278,7 @@ class task( Pyro.core.ObjBase ):
             subprocess.call( command, shell=True )
 
     def set_succeeded( self ):
-        self.outputs.set_all_complete()
+        self.outputs.set_all_completed()
         self.state.set_status( 'succeeded' )
         self.succeeded_time = task.clock.get_datetime()
         # don't update mean total elapsed time if set_succeeded() was called
@@ -324,7 +324,7 @@ class task( Pyro.core.ObjBase ):
         # all prerequisites satisified and all outputs complete
         self.state.set_status( 'succeeded' )
         self.prerequisites.set_all_satisfied()
-        self.outputs.set_all_complete()
+        self.outputs.set_all_completed()
 
     def reset_state_failed( self ):
         # all prerequisites satisified and no outputs complete
@@ -389,20 +389,17 @@ class task( Pyro.core.ObjBase ):
             return
         # used by the task wrapper 
         self.log( 'DEBUG', 'setting all internal outputs completed' )
-        for message in self.outputs.satisfied.keys():
+        for message in self.outputs.completed:
             if message != self.id + ' started' and \
                     message != self.id + ' succeeded' and \
                     message != self.id + ' completed':
                 self.incoming( 'NORMAL', message )
 
     def is_complete( self ):  # not needed?
-        if self.outputs.all_satisfied():
+        if self.outputs.all_completed():
             return True
         else:
             return False
-
-    def get_ordered_outputs( self ):
-        return self.outputs.get_ordered()
 
     def reject_if_failed( self, message ):
         if self.state.is_failed():
@@ -448,16 +445,16 @@ class task( Pyro.core.ObjBase ):
         if self.outputs.exists( message ):
             # registered output messages
 
-            if not self.outputs.is_satisfied( message ):
+            if not self.outputs.is_completed( message ):
                 # message indicates completion of a registered output.
                 self.log( priority,  message )
-                self.outputs.set_satisfied( message )
+                self.outputs.set_completed( message )
 
                 if message == self.id + ' succeeded':
                     # TASK HAS SUCCEEDED
                     self.succeeded_time = task.clock.get_datetime()
                     self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
-                    if not self.outputs.all_satisfied():
+                    if not self.outputs.all_completed():
                         self.set_failed( 'succeeded before all outputs were completed' )
                     else:
                         self.set_succeeded_hook()
@@ -480,7 +477,7 @@ class task( Pyro.core.ObjBase ):
             except IndexError:
                 # no, can't retry.
                 self.outputs.add( message )
-                self.outputs.set_satisfied( message )
+                self.outputs.set_completed( message )
             else:
                 # yes, retry.
                 if self.launcher and not self.launcher.simulation_mode:
@@ -545,7 +542,7 @@ class task( Pyro.core.ObjBase ):
         # add more information to the summary if necessary.
 
         n_total = self.outputs.count()
-        n_satisfied = self.outputs.count_satisfied()
+        n_satisfied = self.outputs.count_completed()
 
         summary = {}
         summary[ 'name' ] = self.name
@@ -616,9 +613,9 @@ class task( Pyro.core.ObjBase ):
             return True
         return False
 
-    def satisfy_me( self, task ):
-        self.prerequisites.satisfy_me( task )
-        self.suicide_prerequisites.satisfy_me( task )
+    def satisfy_me( self, outputs ):
+        self.prerequisites.satisfy_me( outputs )
+        #self.suicide_prerequisites.satisfy_me( outputs )
 
     def next_tag( self ):
         raise SystemExit( "OVERRIDE ME" )

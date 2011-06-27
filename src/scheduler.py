@@ -238,10 +238,6 @@ class scheduler(object):
 
         # USE LOCKSERVER?
         self.use_lockserver = self.config['use lockserver']
-        if self.simulation_mode:
-            # no need for lockserver in simulation mode
-            self.use_lockserver = False
-
         if self.use_lockserver:
             # check that user is running a lockserver
             # DO THIS BEFORE CONFIGURING PYRO FOR THE SUITE
@@ -305,6 +301,8 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_DIR' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner
         cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
+        if self.use_lockserver:
+            cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port )
 
         # SUITE.RC GLOBAL ENVIRONMENT
         globalenv = OrderedDict()
@@ -776,14 +774,13 @@ class scheduler(object):
         #--
 
         # update oldest suite cycle time
-        oldest_c_time = self.get_oldest_c_time()
+        oldest_unfailed_ctime = self.get_oldest_unfailed_c_time() 
         for itask in self.tasks:
             if self.runahead:
                 # if a runahead limit is defined, check for violations
-                #tdiff = cycle_time.decrement( itask.c_time, self.runahead )
                 foo = ct( itask.c_time )
                 foo.decrement( hours=self.runahead )
-                if int( foo.get() ) > int( self.get_oldest_unfailed_c_time() ):
+                if int( foo.get() ) > int( oldest_unfailed_ctime ):
                     # too far ahead: don't spawn this task.
                     itask.log( 'DEBUG', "delaying spawning (too far ahead)" )
                     continue
