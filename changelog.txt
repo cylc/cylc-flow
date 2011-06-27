@@ -19,4 +19,5 @@ not be mentioned unless particularly important.
 3.1.0 - 3.2.0
  + Big speed up for large suites due to some optimization of the
    scheduling algorithm.
+ + Monospaced fonts in GUI output capture windows.
 
