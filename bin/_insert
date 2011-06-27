@@ -62,6 +62,8 @@ if stoptag:
         stop = ct(stoptag).get()
     except CycleTimeError,x:
         raise SystemExit(x)
+else:
+    stop = None
 
 try:
     proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )
