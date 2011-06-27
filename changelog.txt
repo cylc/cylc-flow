@@ -13,6 +13,10 @@ not be mentioned unless particularly important.
  + Clarified graph-based control GUI help.
 
 3.0.5 - 3.1.0
- + allow use of lockserver in simulation mode.
+ + Allow use of lockserver in simulation mode.
  + New suite compare/diff functionality added.
+
+3.1.0 - 3.2.0
+ + Big speed up for large suites due to some optimization of the
+   scheduling algorithm.
 
