@@ -16,25 +16,19 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Generate a suite with N dummy tasks arranged in a simple tree structure:
-  T1 => T2 & T3; T2 => T4 & T5; T3 => T6 & T7; ...
-"""
+"""Generate a suite of M linear chains of N dummy tasks."""
 
 import os, sys
 from mkdir_p import mkdir_p
+import random
 
 def usage():
     print "USAGE: sys.argv[0] N_TASKS"
     print "(INTEGER number of tasks)"
 
 try:
-    N = sys.argv[1]
-except:
-    usage()
-    sys.exit(1)
-
-try:
-    int(N)
+    M = int(sys.argv[1])
+    N = int(sys.argv[2])
 except:
     usage()
     sys.exit(1)
@@ -45,7 +39,7 @@ except:
     print 'ERROR: you must define $TMPDIR'
     sys.exit(1)
 
-name = 'T' + N
+name = 'T_' + str(M) + 'x' + str(N)
 group = 'scaling'
 suite = group + ':' + name
 
@@ -58,15 +52,9 @@ suiterc = os.path.join( dir, 'suite.rc' )
 
 FILE = open( suiterc, 'wb' )
 
-FILE.write( "title = scaling test" + N + '\n' )
-FILE.write( "description = A test suite containing " + N + " tasks\n" )
+FILE.write( "title = scaling test " + str(M) + 'x' + str(N) + '\n' )
+FILE.write( "description = A test suite containing " + str(M*N) + " tasks\n" )
 FILE.write( "job submission method = at_now\n" )
-
-FILE.write( """
-[special tasks]
-    sequential = """)
-for i in range(1,int(N)+1):
-    FILE.write( 'T' + str(i) + ', ' )
 
 FILE.write( """
 
@@ -75,11 +63,24 @@ FILE.write( """
         graph = \"\"\"
 """)
 
-for i in range(2,int(N)+1,2):
-    FILE.write( 'T' + str(i/2) + ' => T' + str(i) + '\n')
-    FILE.write( 'T' + str(i/2) + ' => T' + str(i+1) + '\n')
+for i in range(1,M*N-M,M):
+    for j in range(0,M ):
+        k = i + j
+        print 'T' + str(k) + ' => T' + str(k+M)
+        FILE.write( 'T' + str(k) + ' => T' + str(k+M) + '\n')
 
 FILE.write('\n"""')
+
+
+FILE.write( """
+
+[tasks]
+""" )
+for i in range(1,M*N):
+    FILE.write( "  [[T" + str(i) + "]]\n" )
+    FILE.write( "     [[[environment]]]\n" )
+    FILE.write( "  CYLC_SIMULATION_SLEEP = " + str( random.randint(1,15) ) + "\n" )
+
 FILE.close()
 
 os.system( 'cylc db register ' + suite + ' ' + dir )
