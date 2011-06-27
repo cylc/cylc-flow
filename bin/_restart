@@ -213,7 +213,7 @@ Arguments:
                 # must have satisfied prerequisites and completed outputs
                 itask.log( 'NORMAL', "starting in SUCCEEDED state" )
                 itask.prerequisites.set_all_satisfied()
-                itask.outputs.set_all_complete()
+                itask.outputs.set_all_completed()
 
             elif itask.state.is_submitted() or itask.state.is_running():  
                 # Must have satisfied prerequisites. These tasks may have
