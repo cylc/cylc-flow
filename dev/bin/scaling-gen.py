@@ -16,15 +16,16 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Generate a suite of M linear chains of N dummy tasks."""
+"""Generate a suite of M linear chains of N dummy tasks, with randomly
+varying execution times varying between 1 and 15 seconds."""
 
 import os, sys
 from mkdir_p import mkdir_p
 import random
 
 def usage():
-    print "USAGE: sys.argv[0] N_TASKS"
-    print "(INTEGER number of tasks)"
+    print "USAGE: sys.argv[0] M N"
+    print "(MxN number of tasks)"
 
 try:
     M = int(sys.argv[1])
@@ -39,7 +40,7 @@ except:
     print 'ERROR: you must define $TMPDIR'
     sys.exit(1)
 
-name = 'T_' + str(M) + 'x' + str(N)
+name = 'T' + str(M) + 'x' + str(N)
 group = 'scaling'
 suite = group + ':' + name
 

@@ -28,7 +28,7 @@ class pyro_server( object ):
         self.suite = suite
         self.owner = user
 
-        # REQUIRE SINGLE THREADED PYRO (see documentation)
+        # SINGLE THREADED PYRO
         Pyro.config.PYRO_MULTITHREADED = 0
         # USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
         # (see the Userguide "Networking Issues" section).
