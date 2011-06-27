@@ -65,3 +65,5 @@ export PYTHONPATH
 # Python stdout buffering delays appearance of output when not directed
 # to a terminal (e.g. when running a suite via the poxix nohup command).
 export PYTHONUNBUFFERED=true
+
+echo "Cylc release version: $(cylc -v)"
