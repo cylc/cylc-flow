@@ -422,7 +422,7 @@ class config( CylcConfigObj ):
                 if output_name == 'fail':
                     trigger = task_name + '%$(CYCLE_TIME) failed'
                 else:
-                    raise SuiteConfigError, "ERROR: Task '" + lnode.name + "' does not define output '" + lnode.output  + "'"
+                    raise SuiteConfigError, "ERROR: Task '" + task_name + "' does not define output '" + output_name  + "'"
         else:
             trigger = task_name + '%$(CYCLE_TIME) succeeded'
 
