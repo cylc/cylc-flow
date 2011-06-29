@@ -463,7 +463,7 @@ class task( Pyro.core.ObjBase ):
                             self.launcher.cleanup()
             else:
                 # this output has already been satisfied
-                self.log( 'WARNING', "UNEXPECTED OUTPUT (already satisfied):" )
+                self.log( 'WARNING', "UNEXPECTED OUTPUT (already completed):" )
                 self.log( 'WARNING', "-> " + message )
 
         elif message == self.id + ' failed':
