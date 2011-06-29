@@ -67,6 +67,8 @@ class jobfile(object):
         self.write_pre_scripting()
         self.write_task_command()
         self.write_post_scripting()
+
+        self.FILE.write( '\n\n cylc task succeeded' )
         self.FILE.write( '\n\n#EOF' )
         self.FILE.close() 
 
@@ -77,6 +79,13 @@ class jobfile(object):
         self.FILE.write( '\n\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++' )
         self.FILE.write( '\n# Task: ' + self.task_id )
         self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'')
+
+        self.FILE.write( """
+set -e; trap 'cylc task failed \"error trapped\"' ERR
+
+# SEND THE STARTUP MESSAGE
+cylc task started || exit 1
+""" )
 
     def write_directives( self ):
         # override global with task-specific directives
@@ -144,7 +153,12 @@ class jobfile(object):
  
     def write_task_command( self ):
         self.FILE.write( "\n\n# EXECUTE THE TASK:" )
-        self.FILE.write( "\n" + self.task_command )
+        self.FILE.write( """
+if ! """ + self.task_command + """; then 
+    cylc task failed \"task command failed\"
+    exit 1
+fi
+""")
 
     def write_post_scripting( self ):
         if self.simulation_mode:
