@@ -1096,7 +1096,7 @@ been defined in our example suite so the tasks all default to the
 # SUITE.RC
 [tasks]
     [[GetData]]
-        command = cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP"
+        command = cylc wrap -m "set -e; echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP"
 \end{lstlisting}
 where \lstinline=$TASK_ID= is \lstinline=NAME%YYYYMMDDHH=) and 
 \lstinline=$CYLC_SIMULATION_SLEEP= defaults to 10 seconds - it writes
@@ -2851,12 +2851,12 @@ that deliberately fails 30 seconds into execution:
 [tasks]
     [[suicidal]]
         description = a task that kills itself after 30 seconds
-        command = cylc wrap -m "sleep 30; echo Goodbye cruel world; /bin/false"
+        command = cylc wrap -m "set -e; sleep 30; echo Goodbye cruel world; /bin/false"
 \end{lstlisting}
 
 You can test this on the command line:
 \begin{lstlisting}
-$ cylc wrap -m "date; sleep 30; date; echo Goodbye cruel world; /bin/false"
+$ cylc wrap -m "set -e; date; sleep 30; date; echo Goodbye cruel world; /bin/false"
 cylc (raw - 2011/05/13 10:33:59): TASK_ID started
 Fri May 13 10:33:59 NZST 2011
 Fri May 13 10:34:29 NZST 2011

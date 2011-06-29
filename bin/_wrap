@@ -94,7 +94,9 @@ fi
 
 success=false
 if $multiple; then
-    if eval $@; then
+    # evaluate the commands in a subshell so that inlined error
+    # detection works, e.g.: cylc wrap -m 'set -e; false'.
+    if ( eval $@ ); then
         success=true
     fi
 else
