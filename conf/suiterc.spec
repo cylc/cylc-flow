@@ -411,13 +411,7 @@ reset execution timeout on incoming messages = boolean( default=True )
 
 pre-command scripting = string( default='' )
 #> Scripting to be executed verbatim in the task execution environment,
-#> before the task command, for every task. If 
-#> used, this scripting should be simple and reliable (anything
-#> complex should go in the task itself) because it executes before the 
-#> ``task started'' message (thus an abort here will not register as a task
-#> failure - it will appear that the task is stuck in the submitted state).
-#> Suite level pre-command scripting, if defined, will be executed
-#> immediately prior to task-specific pre-command scripting.
+#> before the task command, for every task. 
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} multiline string
@@ -432,13 +426,7 @@ pre-command scripting = string( default='' )
 
 post-command scripting = string( default='' )
 #> Scripting to be executed verbatim in the task execution environment,
-#> immediately after the task command. If 
-#> used, this scripting should be simple and reliable (anything
-#> complex should go in the task itself) because it executes after the 
-#> ``task succeeded'' message (thus an error here will not register as a task
-#> failure - it will appear that the task succeeded).
-#> Suite level post-command scripting, if defined, will be executed
-#> immediately prior to task-specific post-command scripting.
+#> immediately after the task command, for every task. 
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} multiline string
@@ -532,9 +520,9 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\label{JobSubShell}
 #>This is the shell used to interpret the job script submitted by cylc
 #> when a task is ready to run.
-#> {\em It has no bearing on the shell used for task scripts.}
-#> The pre- and post-command scripting items, if used, must be valid
-#> for the job submission shell; which is entirely up to the user. The
+#> {\em It has no bearing on the shell used in task implementations.}
+#> Global pre- and post-command scripting, and the content of the task
+#> commands themselves, must be valid in the job submission shell. The
 #> suite environment sections must be converted similarly;
 #> this is currently hardwired into cylc as 
 #> \lstinline@export item=value@ (which works for both bash and ksh
@@ -865,48 +853,6 @@ __many__ = string
 #> {\em For remotely hosted tasks this configuration item is currently ignored - task
 #> output logs are written to the remote task owner's home directory.} (This will be
 #> addressed in a future cylc release).
-
-
-    pre-command scripting = string( default='' )
-#> Scripting to be executed verbatim in the task execution environment,
-#> immediately before the task command. If 
-#> used, this scripting should be simple and reliable (anything
-#> complex should go in the task itself) because it executes before the 
-#> ``task started'' message (thus an abort here will not register as a task
-#> failure - it will appear that the task is stuck in the submitted state).
-#> If suite level pre-command scripting is also defined, it will be executed
-#> first.
-#>\begin{myitemize}
-#>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
-#>\item {\em type:} multiline string
-#>\item {\em default:} empty
-#>\item {\em example:}
-#> \begin{lstlisting}
-#>    pre-command scripting = """
-#>      . $HOME/.profile
-#>      echo Hello from task $TASK_ID!"""
-#> \end{lstlisting}
-#>\end{myitemize}
-
-    post-command scripting = string( default='' )
-#> Scripting to be executed verbatim in the task execution environment,
-#> immediately after the task command. If 
-#> used, this scripting should be simple and reliable (anything
-#> complex should go in the task itself) because it executes after the 
-#> ``task succeeded'' message (thus an abort here will not register as a task
-#> failure - it will appear that the task finished successfully).
-#> If suite level post-command scripting is also defined, it will be executed
-#> first.
-#>\begin{myitemize}
-#>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
-#>\item {\em type:} multiline string
-#>\item {\em default:} empty
-#> \begin{lstlisting}
-#>    pre-command scripting = """
-#>      . $HOME/.profile
-#>      echo Goodbye from task $TASK_ID!"""
-#> \end{lstlisting}
-#>\end{myitemize}
 
     owner = string( default=None )
 #> If a task has a defined owner, cylc will attempt to execute the task

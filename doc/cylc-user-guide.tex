@@ -2625,9 +2625,9 @@ The ordering of the job script sections is,
     \item  access to cylc
     \item  global variables
     \item  task-specific variables
-    \item  (global and task-specific pre-command scripting - not shown)
+    \item  (global pre-command scripting - not shown)
     \item  task command line
-    \item  (global and task-specific post-command scripting - not shown)
+    \item  (global post-command scripting - not shown)
 \end{myenumerate}
 
 {\em Note that the task identity variables are defined prior to the
@@ -2695,30 +2695,14 @@ directory of the account under which the task executes (which isn't
 necessarily the same account, or even the same host, that is running the
 suite). 
 
-\paragraph{Pre- and Post-command Scripting}
+\paragraph{Global Pre- and Post-Command Scripting}
 
-The global and task-specific {\em pre-command scripting} and {\em
-post-command scripting} suite.rc items (not shown in the example 
-job script above, because they were not defined for that task) allow
-you to write arbitrary scripting in a multiline string in the suite.rc
-task sections, that will be written verbatim immediately before, 
-and after, the task command line. This can be used to 
-construct simple tasks that are entirely scripted within the suite.rc
-file, or for the occasional bit of more complex environment manipulation
-than can't easily be achieved by exporting variables alone. However, use
-of this feature should be restricted to simple, fast, and reliable
-scripting, because it is executed outside of the task itself (i.e.\
-prior to the task started message, and after the task succeeded message).
-If pre-command scripting aborts, it will appear that the task is stuck 
-in the `submitted' state.  If post-command scripting fails, it will fail
-unnoticed by cylc (although evidence would be left in the task stdout or
-stderr logs) because the task would have reported in succeeded or failed
-before the scripting ran. Anything non-trivial should really go into
-the task implementation. Another way to add additional scripting each 
-side of the main task script, and potentially to script very simple
-tasks entirely within the suite.rc file, is to wrap multiple commands on
-the task command line using the cylc task wrapper (see {\em Task
-Wrapping}, Section~\ref{TaskWrapping}).
+The global {\em pre-command scripting} and {\em post-command scripting}
+suite.rc items (not shown in the example job script above, because they
+were not defined for that task) allow you to write arbitrary scripting
+in a multiline string in the suite.rc task sections, that will be
+written verbatim immediately before, and after, the task command line 
+{\em of every task}.
 
 %\pagebreak
 
@@ -2864,10 +2848,6 @@ Goodbye cruel world
 cylc (raw - 2011/05/13 10:34:29): CRITICAL TASK_ID failed
 \end{lstlisting}
 (when not invoked by a suite, the messaging interface just writes to stdout).
-You can also use the global and task-specific {\em pre-command
-scripting} and {\em post-command scripting} suite.rc items to
-construct simple tasks that are entirely scripted within the suite.rc
-file (see details above).
 
 \subsection{Non-wrapped Tasks: Modifying Scripts For Cylc}
 \label{Unwrapping}
