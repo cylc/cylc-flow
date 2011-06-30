@@ -342,7 +342,7 @@ class task( Pyro.core.ObjBase ):
         # get new stdout/stderr logfiles and not overwrite the old ones.
         self.launcher = get_object( self.job_submit_method, self.job_submit_method )\
                 ( self.id, self.external_task, self.env_vars, self.directives, 
-                        self.pre_scripting, self.post_scripting, self.logfiles, 
+                        self.logfiles, 
                         self.__class__.job_submit_log_directory,
                         self.__class__.owner,
                         self.__class__.remote_host,

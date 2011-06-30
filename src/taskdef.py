@@ -100,8 +100,6 @@ class taskdef(object):
 
         # default to dummy task for tasks in graph but not in the [tasks] section.
         self.commands = [ dummy_command ] # list of commands
-        self.pre_scripting  = ''          # list of lines
-        self.post_scripting = ''          # list of lines
         self.environment = OrderedDict()  # var = value
         self.directives  = OrderedDict()  # var = value
 
@@ -356,9 +354,6 @@ class taskdef(object):
             for var in self.directives:
                 val = self.directives[ var ]
                 sself.directives[ var ] = val
-
-            sself.pre_scripting = self.pre_scripting
-            sself.post_scripting = self.post_scripting
 
             if 'catchup_clocktriggered' in self.modifiers:
                 catchup_clocktriggered.__init__( sself )

@@ -24,7 +24,6 @@ class jobfile(object):
 
     def __init__( self, task_id, cylc_env, global_env, task_env, 
             global_pre_scripting, global_post_scripting, 
-            task_pre_scripting, task_post_scripting, 
             directive_prefix, global_dvs, directives, final_directive, 
             task_command, remote_cylc_dir, remote_suite_dir,
             shell, simulation_mode, job_submission_method):
@@ -35,8 +34,6 @@ class jobfile(object):
         self.task_env = task_env
         self.global_pre_scripting = global_pre_scripting
         self.global_post_scripting = global_post_scripting
-        self.task_pre_scripting = task_pre_scripting
-        self.task_post_scripting = task_post_scripting
         self.directive_prefix = directive_prefix
         self.final_directive = final_directive
         self.global_dvs = global_dvs
@@ -173,10 +170,7 @@ cylc task started || exit 1""" )
         if self.global_pre_scripting:
             self.FILE.write( "\n\n# GLOBAL PRE-COMMAND SCRIPTING:" )
             self.FILE.write( "\n" + self.global_pre_scripting )
-        if self.task_pre_scripting:
-            self.FILE.write( "\n\n# TASK PRE-COMMAND SCRIPTING:" )
-            self.FILE.write( "\n" + self.task_pre_scripting )
- 
+
     def write_task_command( self ):
         self.FILE.write( "\n\n# EXECUTE THE TASK:" )
         self.FILE.write( """

@@ -68,8 +68,8 @@ class job_submit(object):
     owned_task_execution_method = None
 
     def __init__( self, task_id, task_command, task_env, directives, 
-            pre_scripting, post_scripting, logfiles, task_joblog_dir, 
-            task_owner, remote_host, remote_cylc_dir, remote_suite_dir ): 
+            logfiles, task_joblog_dir, task_owner, remote_host,
+            remote_cylc_dir, remote_suite_dir ): 
 
         self.task_id = task_id
         self.task_command = task_command
@@ -81,8 +81,6 @@ class job_submit(object):
 
         self.task_env = task_env
         self.directives  = directives
-        self.task_pre_scripting = pre_scripting
-        self.task_post_scripting = post_scripting
         self.logfiles = logfiles
  
         self.suite_owner = os.environ['USER']
@@ -236,7 +234,6 @@ class job_submit(object):
         jf = jobfile( self.task_id, 
                 self.__class__.cylc_env, self.__class__.global_env, self.task_env, 
                 self.__class__.global_pre_scripting, self.__class__.global_post_scripting, 
-                self.task_pre_scripting, self.task_post_scripting, 
                 self.directive_prefix, self.__class__.global_dvs, self.directives,
                 self.final_directive, self.task_command, 
                 self.remote_cylc_dir, self.remote_suite_dir, 
