@@ -63,29 +63,26 @@ class jobfile(object):
         self.FILE = open( path, 'wb' )
         self.write_header()
         self.write_directives()
-        self.write_environment()
+        self.write_environment_1()
+        self.write_task_started()
+        self.write_environment_2()
         self.write_pre_scripting()
         self.write_task_command()
         self.write_post_scripting()
+        self.write_task_succeeded()
+        return path
 
-        self.FILE.write( '\n\n cylc task succeeded' )
+    def write_task_succeeded( self ):
+        self.FILE.write( '\n\n# SEND THE TASK SUCCEEDED MESSAGE')
+        self.FILE.write( '\n cylc task succeeded' )
         self.FILE.write( '\n\n#EOF' )
         self.FILE.close() 
-
-        return path
 
     def write_header( self ):
         self.FILE.write( '#!' + self.shell )
         self.FILE.write( '\n\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++' )
         self.FILE.write( '\n# Task: ' + self.task_id )
         self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'')
-
-        self.FILE.write( """
-set -e; trap 'cylc task failed \"error trapped\"' ERR
-
-# SEND THE STARTUP MESSAGE
-cylc task started || exit 1
-""" )
 
     def write_directives( self ):
         # override global with task-specific directives
@@ -103,7 +100,7 @@ cylc task started || exit 1
             self.FILE.write( '\n' + self.directive_prefix + d + " = " + dvs[ d ] )
         self.FILE.write( '\n' + self.final_directive )
 
-    def write_environment( self ):
+    def write_environment_1( self ):
         # Task-specific variables may reference other previously-defined
         # task-specific variables, or global variables. Thus we ensure
         # that the order of definition is preserved (and pass any such
@@ -124,6 +121,17 @@ cylc task started || exit 1
         self.FILE.write( "\nexport TASK_NAME=" + self.task_name )
         self.FILE.write( "\nexport CYCLE_TIME=" + self.cycle_time )
 
+    def write_err_trap( self ):
+        self.FILE.write( """
+
+set -e; trap 'cylc task failed \"error trapped\"' ERR""" )
+
+    def write_task_started( self ):
+        self.FILE.write( """
+# SEND THE TASK STARTED MESSAGE
+cylc task started || exit 1""" )
+
+    def write_environment_2( self ):
         # configure access to cylc now so that cylc commands can be used
         # in global and local environment variables, e.g.: 
         #    NEXT_CYCLE=$( cylc util cycletime --add=6 )
@@ -157,8 +165,7 @@ cylc task started || exit 1
 if ! """ + self.task_command + """; then 
     cylc task failed \"task command failed\"
     exit 1
-fi
-""")
+fi""")
 
     def write_post_scripting( self ):
         if self.simulation_mode:
