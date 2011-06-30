@@ -64,6 +64,7 @@ class jobfile(object):
         self.write_header()
         self.write_directives()
         self.write_environment_1()
+        self.write_err_trap()
         self.write_task_started()
         self.write_environment_2()
         self.write_pre_scripting()
@@ -124,10 +125,12 @@ class jobfile(object):
     def write_err_trap( self ):
         self.FILE.write( """
 
+# SET THE ERROR TRAP 
 set -e; trap 'cylc task failed \"error trapped\"' ERR""" )
 
     def write_task_started( self ):
         self.FILE.write( """
+
 # SEND THE TASK STARTED MESSAGE
 cylc task started || exit 1""" )
 
@@ -141,12 +144,27 @@ cylc task started || exit 1""" )
         if len( self.global_env.keys()) > 0:
             self.FILE.write( "\n\n# GLOBAL VARIABLES:" )
             for var in self.global_env:
-                self.FILE.write( "\nexport " + var + "=\"" + str( self.global_env[var] ) + "\"" )
+                self.FILE.write( "\n" + var + "=\"" + str( self.global_env[var] ) + "\"" )
+            # export them all (see note below)
+            self.FILE.write( "\nexport" )
+            for var in self.global_env:
+                self.FILE.write( " " + var )
 
         if len( self.task_env.keys()) > 0:
             self.FILE.write( "\n\n# LOCAL VARIABLES:" )
             for var in self.task_env:
-                self.FILE.write( "\nexport " + var + "=\"" + str( self.task_env[var] ) + "\"" )
+                self.FILE.write( "\n" + var + "=\"" + str( self.task_env[var] ) + "\"" )
+            # export them all (see note below)
+            self.FILE.write( "\nexport" )
+            for var in self.task_env:
+                self.FILE.write( " " + var )
+
+            # NOTE: the reason for separate export of user-specified
+            # variables is this: inline export does not activate the
+            # error trap if sub-expressions fail, e.g. (not typo in
+            # 'echo' command name):
+            # export FOO=$( ecko foo )  # error not trapped!
+            # FOO=$( ecko foo )  # error trapped
 
     def write_pre_scripting( self ):
         if self.simulation_mode:

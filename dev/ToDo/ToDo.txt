@@ -214,8 +214,6 @@ GENERAL
 * note that prerequisites are no longer derived from requisites. Change
   documentation in the latter class (and elsewhere?) to reflect this.
 
-* task scripts: does failure in RES=$( foo.sh ) get err trapped? (no?)
-
 * use new cylc_mode class everywhere mode test is required.
 
 * cylc submit --scheduler: task state resets to 'running' but all
