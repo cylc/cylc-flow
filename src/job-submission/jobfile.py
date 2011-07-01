@@ -177,11 +177,7 @@ cylc task started || exit 1""" )
 
     def write_task_command( self ):
         self.FILE.write( "\n\n# EXECUTE THE TASK:" )
-        self.FILE.write( """
-if ! """ + self.task_command + """; then 
-    cylc task failed \"task command failed\"
-    exit 1
-fi""")
+        self.FILE.write( "\n" + self.task_command )
 
     def write_post_scripting( self ):
         if self.simulation_mode:
@@ -190,7 +186,3 @@ fi""")
         if self.global_post_scripting:
             self.FILE.write( "\n\n# GLOBAL POST-COMMAND SCRIPTING:" )
             self.FILE.write( "\n" + self.global_post_scripting )
-        if self.task_post_scripting:
-            self.FILE.write( "\n\n# TASK POST-COMMAND SCRIPTING:" )
-            self.FILE.write( "\n" + self.task_post_scripting )
- 

@@ -342,7 +342,7 @@ class task( Pyro.core.ObjBase ):
         # get new stdout/stderr logfiles and not overwrite the old ones.
         self.launcher = get_object( self.job_submit_method, self.job_submit_method )\
                 ( self.id, self.external_task, self.env_vars, self.directives, 
-                        self.logfiles, self.manual_messaging,
+                        self.manual_messaging, self.logfiles, 
                         self.__class__.job_submit_log_directory,
                         self.__class__.owner,
                         self.__class__.remote_host,
@@ -387,7 +387,6 @@ class task( Pyro.core.ObjBase ):
     def set_all_internal_outputs_completed( self ):
         if self.reject_if_failed( 'set_all_internal_outputs_completed' ):
             return
-        # used by the task wrapper 
         self.log( 'DEBUG', 'setting all internal outputs completed' )
         for message in self.outputs.completed:
             if message != self.id + ' started' and \

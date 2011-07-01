@@ -119,10 +119,13 @@ class job_submit(object):
         else:
             self.local_job_submit = True
 
-        if manual_messaging:
+        if manual_messaging != None:  # boolean, must distinguish None from False
             self.manual_messaging = manual_messaging
-        elif self.__class__.manual_messaging:
-            self.manual_messaging = self.__class__.manual_messaging
+        elif self.__class__.global_manual_messaging != None:  # (ditto)
+            self.manual_messaging = self.__class__.global_manual_messaging
+
+        print '1', manual_messaging
+        print '2', self.__class__.global_manual_messaging
 
         if self.__class__.simulation_mode:
             # but ignore remote task settings in simulation mode (this allows us to
