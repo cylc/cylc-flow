@@ -58,8 +58,6 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE/common
             MODEL_INPUT_DIR = $WORKSPACE
             MODEL_OUTPUT_DIR = $WORKSPACE
             MODEL_RUNNING_DIR = $WORKSPACE/Model
-            FOO = $(echo hello)
-            BAR = $( munge ) 
  
     [[PostA]]
         description = "post processing for model, every cycle"

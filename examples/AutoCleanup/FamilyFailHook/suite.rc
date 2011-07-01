@@ -18,9 +18,9 @@ used to automatically clean up a failed task family."""
     [[fammo]]
         task failed hook script = failhook.sh
     [[m_foo]]
-        command = cylc wrap sleep 8 
+        command = sleep 8 
     [[m_bar]]
         # This family member always fails
-        command = cylc wrap -m "sleep 5; /bin/false"
+        command = "sleep 5; /bin/false"
     [[m_baz]]
-        command = cylc wrap sleep 10
+        command = sleep 10

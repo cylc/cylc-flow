@@ -17,10 +17,10 @@ used to automatically clean up a failed task family."""
                     fammo | fammo:fail => fammo_cleanup"""
 [tasks]
     [[fammo_cleanup]]
-        command = cylc wrap fammo_cleanup.sh
+        command = fammo_cleanup.sh
 
     [[m_foo]]
-        command = cylc wrap sleep 8 
+        command = sleep 8 
 
     [[m_bar]]
         # This task fails at 6,18 and succeeds at 0,12
@@ -31,7 +31,7 @@ if (( HH == 6 || HH == 18 )); then
 else
     COMMAND=/bin/true
 fi"""
-        command = cylc wrap -m "sleep 5; $COMMAND"
+        command = "sleep 5; $COMMAND"
 
     [[m_baz]]
-        command = cylc wrap sleep 10
+        command = sleep 10
