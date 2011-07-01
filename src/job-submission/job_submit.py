@@ -124,9 +124,6 @@ class job_submit(object):
         elif self.__class__.global_manual_messaging != None:  # (ditto)
             self.manual_messaging = self.__class__.global_manual_messaging
 
-        print '1', manual_messaging
-        print '2', self.__class__.global_manual_messaging
-
         if self.__class__.simulation_mode:
             # but ignore remote task settings in simulation mode (this allows us to
             # dummy-run suites with remote tasks if outside of their 
