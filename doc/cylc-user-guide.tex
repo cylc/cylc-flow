@@ -2593,7 +2593,7 @@ export TASK_NAME=A
 export CYCLE_TIME=2011052400
 
 # SET THE ERROR TRAP 
-set -e; trap 'cylc task failed "error trapped"' ERR
+set -e; trap 'cylc task failed "Error trapped by task job script"' ERR
 
 # SEND THE TASK STARTED MESSAGE
 cylc task started || exit 1
@@ -2625,28 +2625,28 @@ cylc task succeeded
 
 The task execution environment is explicitly defined in the job script prior to 
 executing the task command line or scripting, as can be seen in the
-above listing.  The job script sections are:
+above listing.  The job script sections perform the following functions:
 \begin{myenumerate}
-    \item  cylc location, suite location, suite identity
-    \item  task identity
-    \item  set error trapping - send ``task failed message to the suite
-        in case of error
-    \item  access to cylc
-    \item  send a ``task started'' message to the suite
+    \item  identify the parent suite and the cylc installation that is
+        running it
+    \item  identify the task
+    \item  set error trapping to inform the suite if the task fails
+    \item  inform the suite that the task has started running
     \item  configure access to cylc, for the task
-    \item  global variables
-    \item  local (task-specific) variables
+    \item  export global variables
+    \item  export task-specific variables
     \item  (global pre-command scripting - not shown)
-    \item  task invocation (command line or verbatim scripting - or a list thereof for retry in case of failure)
+    \item  invoke task processing
     \item  (global post-command scripting - not shown)
-    \item  send a ``task succeeded'' message to the suite\footnote{This may 
-        be omitted in favour of messaging in the task implemention, for 
-        certain tasks - see Section~\ref{TaskImplementation}.
+    \item  inform the suite that the task has finished 
+        successfully\footnote{This may omitted, for 
+        certain tasks, in favour of messaging from the task
+        implementation - see Section~\ref{TaskImplementation}}.
 \end{myenumerate}
 
-{\em Note that the task identity variables are defined prior to the
+Note that the task identity variables are defined prior to the
 global variables, so even global variables can be made task- and
-cycle-specific by referencing the task identity.} 
+cycle-specific by referencing the task identity. 
 
 \paragraph{Suite And Task Identity Variables}
 \label{TaskAndSuiteIdentityVariables}
@@ -2683,11 +2683,15 @@ instance that is running the task's parent suite.
 
 \paragraph{Error Trapping}
 
-This results in a ``task failed'' message to the suite if any command in 
-the job script fails. Task invocation usually involves calling an external
-script, which should \lstinline=exit 1= if any error occurs, in order to
-invoke the job script trap. See Section~\ref{TaskImplementation}, {\em
-Task Implementation}, for more on this).
+\begin{lstlisting}
+set -e; trap 'cylc task failed "Error trapped by task job script"' ERR
+\end{lstlisting}
+
+This results in the suite being informed of task failure if any command 
+in the job script fails. If task invocation involves calling an external
+script (which it usually does) such scripts must abort with non-zero exit
+status if any internal error occurs (See
+Section~\ref{TaskImplementation}, {\em Task Implementation}, for more on this).
 
 \paragraph{Cylc Access Environment}
 
@@ -2866,8 +2870,7 @@ set -e  # abort on error
 mkdir /illegal/dir  # this will abort with non-zero exit status
 \end{lstlisting}
 
-If you want the suite to log an explanatory message for the task
-failure, send a task message before exiting:
+To log an explanatory message, send a message before exiting:
 
 \begin{lstlisting}
 #!/bin/bash

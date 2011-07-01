@@ -813,10 +813,11 @@ __many__ = string
 #>\end{myitemize}
 
     command = force_list( default=list( "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP",))
-#> This is the scripting to execute when the task is ready to run. If omitted 
-#> the task will run as a dummy task (see the default command below). It can be a single
-#> command line or verbatim scripting inside a multiline string. If a list of command lines
-#> (or a list of scripts inside mulitline strings) is provided, the task
+#> This is the scripting to execute when the task is ready to run. If
+#> omitted the task will run as a dummy task (see the default command
+#> below). It can be a single command line or verbatim scripting inside
+#> a multiline string. If a list of command lines (or of mulitline
+#> scripting strings) is provided, the task
 #> will automatically resubmit with the second command/script if the
 #> first fails, and so on - this can be used for automated error
 #> recovery.
@@ -1118,8 +1119,8 @@ __many__ = string
 #> {\em Only required if other tasks trigger off specific {\em internal
 #> outputs} of this task}, as opposed to triggering off it finishing.
 #> The task implementation must report the specified output message 
-#> by calling 'cylc task message OUTPUT_MESSAGE' when the corresponding
-#> real output has been completed.
+#> by calling \lstinline=cylc task message OUTPUT_MESSAGE= when the
+#> corresponding real output has been completed.
         __many__ = string
 #> Replace MANY with each output message definition, for any explicit output
 #> messages emitted by this task and depended on by other tasks in the 

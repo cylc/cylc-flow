@@ -83,7 +83,7 @@ class jobfile(object):
         self.write_cylc_access( strio )
         self.FILE.write( '\n\n# SUITE AND TASK IDENTITY FOR CUSTOM TASK WRAPPERS:')
         self.FILE.write( '\n# (string contains embedded newlines, so echo in QUOTED form)' )
-        self.FILE.write( '\nCUSTOM_TASK_WRAPPER_ENVIRONMENT="' + strio.getvalue() + '"' )
+        self.FILE.write( '\nexport CUSTOM_TASK_WRAPPER_ENVIRONMENT="' + strio.getvalue() + '"' )
         strio.close()
 
     def write_task_succeeded( self ):
@@ -145,7 +145,7 @@ class jobfile(object):
         self.FILE.write( """
 
 # SET THE ERROR TRAP 
-set -e; trap 'cylc task failed \"error trapped\"' ERR""" )
+set -e; trap 'cylc task failed \"Error trapped by task job script\"' ERR""" )
 
     def write_task_started( self ):
         self.FILE.write( """
