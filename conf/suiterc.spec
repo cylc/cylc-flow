@@ -812,20 +812,19 @@ __many__ = string
 #> \end{lstlisting}
 #>\end{myitemize}
 
-    command = force_list( default=list( cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP",))
-#> This is the command line, or {\em list of command lines}, to execute when
-#> the task is ready to run. If the command is omitted or commented out
-#> the task will run as a dummy task (see the default value below). If a
-#> list of command lines is
-#> supplied, the task will automatically resubmit with the second
-#> command line if the first fails (and so on). Many existing commands, scripts,
-#> and programs can be used unmodified as cylc tasks by executing them inside
-#> the cylc task wrapper (see Section ~\ref{TaskWrapping}).
+    command = force_list( default=list( "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP",))
+#> This is the scripting to execute when the task is ready to run. If omitted 
+#> the task will run as a dummy task (see the default command below). It can be a single
+#> command line or verbatim scripting inside a multiline string. If a list of command lines
+#> (or a list of scripts inside mulitline strings) is provided, the task
+#> will automatically resubmit with the second command/script if the
+#> first fails, and so on - this can be used for automated error
+#> recovery.
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
-#>\item {\em default:} \lstinline=cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP"=
-#>\item {\em example:} \lstinline=cylc wrap GetData.sh=
+#>\item {\em default:} \lstinline="echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP"=
+#>\item {\em example:} \lstinline=GetData.sh OPTIONS ARGUMENTS=
 #>\end{myitemize}
 
     job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=None )
@@ -1049,7 +1048,7 @@ __many__ = string
 #>\end{myitemize}
 #>RESUME
 
-    task finished messaging handled in implementation = boolean( default=False )
+    task finished messaging handled in implementation = boolean( default=None )
 #> If a task's initiating process detaches and exits before task
 #> processing is finished, then cylc cannot arrange for the task to
 #> automatically signal when it has succeeded or failed. In such cases
@@ -1059,7 +1058,7 @@ __many__ = string
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
-#>\item {\em default:} \lstinline=False= 
+#>\item {\em default:} \lstinline=None= 
 #>\item {\em example:} \lstinline@task finished messaging handled in implementation = True@
 #>\end{myitemize}
 
@@ -1116,14 +1115,11 @@ __many__ = string
 
         [[[outputs]]]
 #> \label{outputs}
-#> {\em This section is only required if other tasks 
-#> trigger off specific labeled outputs of this task}, as opposed to 
-#> triggering off it finishing. Tasks with explicit outputs 
-#> would generally do their own cylc messaging so that they can report
-#> said outputs complete as soon as they are ready (the cylc
-#> task wrapper does report such explicit outputs complete when the task
-#> finishes, but then you might as well not bother with explicit outputs
-#> and just trigger off the task finishing).
+#> {\em Only required if other tasks trigger off specific {\em internal
+#> outputs} of this task}, as opposed to triggering off it finishing.
+#> The task implementation must report the specified output message 
+#> by calling 'cylc task message OUTPUT_MESSAGE' when the corresponding
+#> real output has been completed.
         __many__ = string
 #> Replace MANY with each output message definition, for any explicit output
 #> messages emitted by this task and depended on by other tasks in the 
@@ -1135,8 +1131,7 @@ __many__ = string
 #>           \lstinline=$(CYCLE_TIME)= with an optional offset as shown
 #> below. {\bf Note the round parentheses} - this is not a shell
 #> variable, although without an offset it does correspond to 
-#> the \lstinline=$CYCLE_TIME= in the task
-#> execution environment.
+#> the \lstinline=$CYCLE_TIME= in the task execution environment.
 #>\item {\em default:} None
 #>\item{ \em examples:}
 #> \begin{lstlisting}
