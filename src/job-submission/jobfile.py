@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import tempfile
+import StringIO
 import cycle_time
 from OrderedDict import OrderedDict
 
@@ -64,7 +65,10 @@ class jobfile(object):
         self.write_environment_1()
         self.write_err_trap()
         self.write_task_started()
+        self.write_cylc_access()
         self.write_environment_2()
+        if self.manual_messaging:
+            self.write_manual_environment()
         self.write_pre_scripting()
         self.write_task_command()
         self.write_post_scripting()
@@ -72,6 +76,15 @@ class jobfile(object):
         self.FILE.write( '\n\n#EOF' )
         self.FILE.close() 
         return path
+
+    def write_manual_environment( self ):
+        strio = StringIO.StringIO()
+        self.write_environment_1( strio )
+        self.write_cylc_access( strio )
+        self.FILE.write( '\n\n# SUITE AND TASK IDENTITY FOR CUSTOM TASK WRAPPERS:')
+        self.FILE.write( '\n# (string contains embedded newlines, so echo in QUOTED form)' )
+        self.FILE.write( '\nCUSTOM_TASK_WRAPPER_ENVIRONMENT="' + strio.getvalue() + '"' )
+        strio.close()
 
     def write_task_succeeded( self ):
         if self.manual_messaging:
@@ -102,11 +115,16 @@ class jobfile(object):
             self.FILE.write( '\n' + self.directive_prefix + d + " = " + dvs[ d ] )
         self.FILE.write( '\n' + self.final_directive )
 
-    def write_environment_1( self ):
+    def write_environment_1( self, STRIO=None ):
         # Task-specific variables may reference other previously-defined
         # task-specific variables, or global variables. Thus we ensure
         # that the order of definition is preserved (and pass any such
         # references through as-is to the task job script).
+
+        if STRIO:
+            BUFFER = STRIO
+        else:
+            BUFFER = self.FILE
 
         # Override $CYLC_DIR and CYLC_SUITE_DIR for remotely hosted tasks
         if self.remote_cylc_dir:
@@ -114,14 +132,14 @@ class jobfile(object):
         if self.remote_suite_dir:
             self.cylc_env['CYLC_SUITE_DIR'] = self.remote_suite_dir
 
-        self.FILE.write( "\n\n# CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY:" )
+        BUFFER.write( "\n\n# CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY:" )
         for var in self.cylc_env:
-            self.FILE.write( "\nexport " + var + "=\"" + str( self.cylc_env[var] ) + "\"" )
+            BUFFER.write( "\nexport " + var + "=" + str( self.cylc_env[var] ) )
 
-        self.FILE.write( "\n\n# TASK IDENTITY:" )
-        self.FILE.write( "\nexport TASK_ID=" + self.task_id )
-        self.FILE.write( "\nexport TASK_NAME=" + self.task_name )
-        self.FILE.write( "\nexport CYCLE_TIME=" + self.cycle_time )
+        BUFFER.write( "\n\n# TASK IDENTITY:" )
+        BUFFER.write( "\nexport TASK_ID=" + self.task_id )
+        BUFFER.write( "\nexport TASK_NAME=" + self.task_name )
+        BUFFER.write( "\nexport CYCLE_TIME=" + self.cycle_time )
 
     def write_err_trap( self ):
         self.FILE.write( """
@@ -135,13 +153,19 @@ set -e; trap 'cylc task failed \"error trapped\"' ERR""" )
 # SEND THE TASK STARTED MESSAGE
 cylc task started || exit 1""" )
 
-    def write_environment_2( self ):
-        # configure access to cylc now so that cylc commands can be used
-        # in global and local environment variables, e.g.: 
+    def write_cylc_access( self, STRIO=None ):
+        # configure access to cylc prior to defining user local and
+        # global environment variables so that cylc commands can be used
+        # in them, e.g.: 
         #    NEXT_CYCLE=$( cylc util cycletime --add=6 )
-        self.FILE.write( "\n\n# ACCESS TO CYLC:" )
-        self.FILE.write( "\n. $CYLC_DIR/environment.sh" )
+        if STRIO:
+            BUFFER = STRIO
+        else:
+            BUFFER = self.FILE
+        BUFFER.write( "\n\n# ACCESS TO CYLC:" )
+        BUFFER.write( "\n. $CYLC_DIR/environment.sh" )
 
+    def write_environment_2( self ):
         if len( self.global_env.keys()) > 0:
             self.FILE.write( "\n\n# GLOBAL VARIABLES:" )
             for var in self.global_env:
