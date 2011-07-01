@@ -107,7 +107,9 @@ fi
 
 if $success; then
     # SUCCEEDED
-    cylc task message --all-outputs-completed
+    # the wrapper probably shouldn't report internal outputs complete
+    # (there's no point in using internal outputs if wrapping a task).
+    #cylc task message --all-outputs-completed
     cylc task succeeded
 else
     # FAILED
