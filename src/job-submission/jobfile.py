@@ -69,16 +69,16 @@ class jobfile(object):
         self.write_task_command()
         self.write_post_scripting()
         self.write_task_succeeded()
+        self.FILE.write( '\n\n#EOF' )
+        self.FILE.close() 
         return path
 
     def write_task_succeeded( self ):
         if self.manual_messaging:
-            self.FILE.write( '\n\n# THIS TASK HANDLES FINISHED MESSAGING ITSELF')
+            self.FILE.write( '\n\n# (THIS TASK HANDLES FINISHED MESSAGING ITSELF)')
         else:
             self.FILE.write( '\n\n# SEND THE TASK SUCCEEDED MESSAGE')
             self.FILE.write( '\n cylc task succeeded' )
-            self.FILE.write( '\n\n#EOF' )
-            self.FILE.close() 
 
     def write_header( self ):
         self.FILE.write( '#!' + self.shell )
@@ -176,7 +176,7 @@ cylc task started || exit 1""" )
             self.FILE.write( "\n" + self.global_pre_scripting )
 
     def write_task_command( self ):
-        self.FILE.write( "\n\n# EXECUTE THE TASK:" )
+        self.FILE.write( "\n\n# INVOKE TASK PROCESSING:" )
         self.FILE.write( "\n" + self.task_command )
 
     def write_post_scripting( self ):
