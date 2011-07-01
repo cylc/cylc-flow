@@ -544,6 +544,21 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em example:} \lstinline@job submission shell = /bin/ksh@
 #>\end{myitemize}
 
+task finished messaging handled in implementation = boolean( default=False )
+#> If a task's initiating process detaches and exits before task
+#> processing is finished, then cylc cannot arrange for the task to
+#> automatically signal when it has succeeded or failed. In such cases
+#> you must insert some minimal cylc messaging in appropriate places in
+#> the task implementation. Use this global setting in the unlikely
+#> event that all, or most, of your tasks are in this category; otherwise
+#> you can set it on a per task basis.
+#>\begin{myitemize}
+#>\item {\em section:} (top level)
+#>\item {\em type:} boolean
+#>\item {\em default:} \lstinline=False= 
+#>\item {\em example:} \lstinline@task finished messaging handled in implementation = True@
+#>\end{myitemize}
+
 [special tasks]
 #> This section identifies any tasks with special behaviour.
 #> By default tasks:
@@ -1033,6 +1048,20 @@ __many__ = string
 #>\item {\em example:} \lstinline@hours = 6,18
 #>\end{myitemize}
 #>RESUME
+
+    task finished messaging handled in implementation = boolean( default=False )
+#> If a task's initiating process detaches and exits before task
+#> processing is finished, then cylc cannot arrange for the task to
+#> automatically signal when it has succeeded or failed. In such cases
+#> you must insert some minimal cylc messaging in appropriate places in
+#> the task implementation. There is an equivalent global setting in the
+#> unlikely event that all, or most, of your tasks are in this category.
+#>\begin{myitemize}
+#>\item {\em section:} (top level)
+#>\item {\em type:} boolean
+#>\item {\em default:} \lstinline=False= 
+#>\item {\em example:} \lstinline@task finished messaging handled in implementation = True@
+#>\end{myitemize}
 
         [[[environment]]]
 #> Use this section to define the task-specific task execution

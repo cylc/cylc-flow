@@ -336,6 +336,7 @@ class scheduler(object):
         job_submit.global_pre_scripting = self.config['pre-command scripting']
         job_submit.global_post_scripting = self.config['post-command scripting']
         job_submit.owned_task_execution_method = self.config['owned task execution method']
+        job_submit.global_manual_messaging = self.config['task finished messaging handled in implementation']
 
         job_submit.global_task_owner = self.config['owner']
         job_submit.global_remote_host = self.config['remote host']

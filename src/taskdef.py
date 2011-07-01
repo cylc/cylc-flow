@@ -63,6 +63,7 @@ class taskdef(object):
         self.remote_cylc_directory = None
         self.remote_suite_directory = None
         self.remote_cylc_path = None
+        self.manual_messaging = False
         self.modifiers = []
 
         self.owner = None
@@ -210,6 +211,7 @@ class taskdef(object):
         tclass.job_submit_log_directory = self.job_submit_log_directory
         tclass.remote_cylc_directory = self.remote_cylc_directory
         tclass.remote_suite_directory = self.remote_suite_directory
+        tclass.manual_messaging = self.manual_messaging
 
         tclass.valid_hours = self.hours
 

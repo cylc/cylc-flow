@@ -1144,6 +1144,8 @@ class config( CylcConfigObj ):
         taskd.remote_cylc_directory = taskconfig['remote cylc directory']
         taskd.remote_suite_directory = taskconfig['remote suite directory']
 
+        taskd.manual_messaging = taskconfig['task finished messaging handled in implementation']
+
         # task-specific event hook scripts
         taskd.hook_scripts[ 'submitted' ]         = taskconfig['task submitted hook script']
         taskd.hook_scripts[ 'submission failed' ] = taskconfig['task submission failed hook script']

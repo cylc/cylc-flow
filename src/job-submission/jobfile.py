@@ -25,7 +25,7 @@ class jobfile(object):
     def __init__( self, task_id, cylc_env, global_env, task_env, 
             global_pre_scripting, global_post_scripting, 
             directive_prefix, global_dvs, directives, final_directive, 
-            task_command, remote_cylc_dir, remote_suite_dir,
+            manual_messaging, task_command, remote_cylc_dir, remote_suite_dir,
             shell, simulation_mode, job_submission_method):
 
         self.task_id = task_id
@@ -44,6 +44,7 @@ class jobfile(object):
         self.job_submission_method = job_submission_method
         self.remote_cylc_dir = remote_cylc_dir
         self.remote_suite_dir = remote_suite_dir
+        self.manual_messaging = manual_messaging
 
         # Get NAME%CYCLETIME (cycling tasks) or NAME%TAG (asynchronous tasks)
         ( self.task_name, tag ) = task_id.split( '%' )
@@ -71,10 +72,13 @@ class jobfile(object):
         return path
 
     def write_task_succeeded( self ):
-        self.FILE.write( '\n\n# SEND THE TASK SUCCEEDED MESSAGE')
-        self.FILE.write( '\n cylc task succeeded' )
-        self.FILE.write( '\n\n#EOF' )
-        self.FILE.close() 
+        if self.manual_messaging:
+            self.FILE.write( '\n\n# THIS TASK HANDLES FINISHED MESSAGING ITSELF')
+        else:
+            self.FILE.write( '\n\n# SEND THE TASK SUCCEEDED MESSAGE')
+            self.FILE.write( '\n cylc task succeeded' )
+            self.FILE.write( '\n\n#EOF' )
+            self.FILE.close() 
 
     def write_header( self ):
         self.FILE.write( '#!' + self.shell )
