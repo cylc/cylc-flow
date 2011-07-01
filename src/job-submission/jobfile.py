@@ -78,7 +78,7 @@ class jobfile(object):
             self.FILE.write( '\n\n# (THIS TASK HANDLES FINISHED MESSAGING ITSELF)')
         else:
             self.FILE.write( '\n\n# SEND THE TASK SUCCEEDED MESSAGE')
-            self.FILE.write( '\n cylc task succeeded' )
+            self.FILE.write( '\ncylc task succeeded' )
 
     def write_header( self ):
         self.FILE.write( '#!' + self.shell )

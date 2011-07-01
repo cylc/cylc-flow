@@ -1096,18 +1096,12 @@ been defined in our example suite so the tasks all default to the
 # SUITE.RC
 [tasks]
     [[GetData]]
-        command = cylc wrap -m "set -e; echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP"
+        command = "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP"
 \end{lstlisting}
 where \lstinline=$TASK_ID= is \lstinline=NAME%YYYYMMDDHH=) and 
-\lstinline=$CYLC_SIMULATION_SLEEP= defaults to 10 seconds - it writes
-an identifying
-message to stdout and then sleeps for a few seconds before exiting. 
-The task wrapper \lstinline=cylc wrap= allows cylc to run unmodified
-existing commands, scripts, or programs by automatically
-reporting the task started, and then succeeded or failed according to
-the exit status of the wrapped process (see {\em Task
-Wrapping: Using Existing Scripts As Cylc Tasks}, 
-Section~\ref{TaskWrapping}).
+\lstinline=$CYLC_SIMULATION_SLEEP= defaults to 10 seconds - it just
+writes an identifying message to stdout and then sleeps for a few
+seconds before exiting. 
 
 Now start a suite control GUI by right-clicking on the suite in gcylc
 and choosing `Control (graph)'.  You can also open a treeview control
@@ -1794,7 +1788,7 @@ job submission method = loadleveler
     # COMMAND AND EXECUTION ENVIRONMENT FOR EACH TASK
     [[GetData]]
         description = "retrieve data for the current cycle time"
-        command = cylc wrap GetData.sh
+        command = GetData.sh
         [[[environment]]]
             # ENVIRONMENT VARIABLES AVAILABLE TO THIS TASK
             GETDATA_OUTPUT_DIR = $WORKSPACE
@@ -2506,12 +2500,12 @@ description = "Used as an example in Section 7.4 of the User Guide"
 [tasks]
     [[A]]                 # TASK A SETTINGS
         description = "Task A, does something"
-        command = cylc wrap A.sh
+        command = A.sh
         [[[environment]]] # TASK A ENVIRONMENT
             INPUT = foo-${NEXT_CYCLE}.txt
     [[B]]                 # TASK B SETTINGS
         description = "Task B, does something else"
-        command = cylc wrap B.sh -f
+        command = B.sh -f
         [[[environment]]] # TASK B ENVIRONMENT
             INPUT = bar-${NEXT_CYCLE}.txt
 \end{lstlisting}
@@ -2560,74 +2554,94 @@ above; it should be registered as {\em examples:CUG74} in your central
 suite database.
 
 \begin{lstlisting}
- cylc submit --dry-run examples:CUG7 A%2010080806
- DRY RUN: create the task job script and show how it would be executed.
- TASK JOB SCRIPT: /tmp/cylc-A%2010080812-b9w0V5
- JOB SUBMISSION METHOD: /tmp/cylc-A%2010080812-b9w0V5 </dev/null 1>
-   /home/oliverh/CylcLogs/examples/CUG7/A%2010080812-raV_3z.out 2>
-   /home/oliverh/CylcLogs/examples/CUG7/A%2010080812-raV_3z.err &
+% cylc submit --dry-run examples:CUG74 A%2011052400
+DRY RUN: create the task job script and show how it would be executed.
+ > TASK JOB SCRIPT: /tmp/cylc-A%2011052400-jfHtqy
+ > JOB SUBMISSION METHOD: /tmp/cylc-A%2011052400-jfHtqy </dev/null 1>
+     /home/oliverh/CylcLogs/examples/CUG74/A%2011052400-DuaPUt.out 2>
+     /home/oliverh/CylcLogs/examples/CUG74/A%2011052400-DuaPUt.err &
 \end{lstlisting}
 
 And here is the resulting job script:
 
 \begin{lstlisting}
-% cat /tmp/cylc-A%2010080812-b9w0V5
+% cat /tmp/cylc-A%2011052400
 
 #!/bin/bash
 
 # ++++ THIS IS A CYLC TASK JOB SCRIPT ++++
-# Task: A%2010080812
+# Task: A%2011052400
 # To be submitted by method: 'background'
 
 # CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY:
-export CYLC_DIR="/home/oliverh/cylc/cylc-3"
+export CYLC_DIR="/home/oliverh/cylc"
 export CYLC_MODE="submit"
-export CYLC_SUITE_HOST="oliverh-33586DL.greta.niwa.co.nz"
+export CYLC_SUITE_HOST="oliverh-33191VL.greta.niwa.co.nz"
 export CYLC_SUITE_PORT="NONE"
-export CYLC_SUITE_DIR="/home/oliverh/cylc/cylc-3/examples/CUG7"
-export CYLC_SUITE="examples:CUG7"
+export CYLC_SUITE_DIR="/home/oliverh/cylc/examples/CUG7.4"
+export CYLC_SUITE="examples:CUG74"
 export CYLC_SUITE_GROUP="examples"
-export CYLC_SUITE_NAME="CUG7"
+export CYLC_SUITE_NAME="CUG74"
 export CYLC_SUITE_OWNER="oliverh"
 export CYLC_USE_LOCKSERVER="True"
+export CYLC_LOCKSERVER_PORT="7767"
 export CYLC_SIMULATION_SLEEP="10"
 
 # TASK IDENTITY:
-export TASK_ID=A%2010080812
+export TASK_ID=A%2011052400
 export TASK_NAME=A
-export CYCLE_TIME=2010080812
+export CYCLE_TIME=2011052400
+
+# SET THE ERROR TRAP 
+set -e; trap 'cylc task failed "error trapped"' ERR
+
+# SEND THE TASK STARTED MESSAGE
+cylc task started || exit 1
 
 # ACCESS TO CYLC:
 . $CYLC_DIR/environment.sh
 
 # GLOBAL VARIABLES:
-export NEXT_CYCLE="$( cylc util cycletime -a 12 )"
-export PREV_CYCLE="$( cylc util cycletime -p 12 )"
+NEXT_CYCLE="$( cylc util cycletime -a 12 )"
+PREV_CYCLE="$( cylc util cycletime -p 12 )"
+export NEXT_CYCLE PREV_CYCLE
 
 # LOCAL VARIABLES:
-export INPUT="foo-${NEXT_CYCLE}.txt"
+INPUT="foo-${NEXT_CYCLE}.txt"
+export INPUT
 
-# EXECUTE THE TASK:
-cylc wrap A.sh
+# INVOKE TASK PROCESSING:
+A.sh
+
+# SEND THE TASK SUCCEEDED MESSAGE
+cylc task succeeded
 
 #EOF
+
 \end{lstlisting}
 
 \subsubsection{Task Execution Environment}
 \label{TaskExecutionEnvironment}
 
 The task execution environment is explicitly defined in the job script prior to 
-executing the task command line, as can be seen in the above listing.
-The ordering of the job script sections is,
+executing the task command line or scripting, as can be seen in the
+above listing.  The job script sections are:
 \begin{myenumerate}
     \item  cylc location, suite location, suite identity
     \item  task identity
+    \item  set error trapping - send ``task failed message to the suite
+        in case of error
     \item  access to cylc
+    \item  send a ``task started'' message to the suite
+    \item  configure access to cylc, for the task
     \item  global variables
-    \item  task-specific variables
+    \item  local (task-specific) variables
     \item  (global pre-command scripting - not shown)
-    \item  task command line
+    \item  task invocation (command line or verbatim scripting - or a list thereof for retry in case of failure)
     \item  (global post-command scripting - not shown)
+    \item  send a ``task succeeded'' message to the suite\footnote{This may 
+        be omitted in favour of messaging in the task implemention, for 
+        certain tasks - see Section~\ref{TaskImplementation}.
 \end{myenumerate}
 
 {\em Note that the task identity variables are defined prior to the
@@ -2667,6 +2681,14 @@ These variables are also used, automatically, by the task messaging
 interface, to target the right task proxy in the particular cylc
 instance that is running the task's parent suite. 
 
+\paragraph{Error Trapping}
+
+This results in a ``task failed'' message to the suite if any command in 
+the job script fails. Task invocation usually involves calling an external
+script, which should \lstinline=exit 1= if any error occurs, in order to
+invoke the job script trap. See Section~\ref{TaskImplementation}, {\em
+Task Implementation}, for more on this).
+
 \paragraph{Cylc Access Environment}
 
 Next the cylc environment is configured according to the value of
@@ -2705,6 +2727,8 @@ written verbatim immediately before, and after, the task command line
 {\em of every task}.
 
 %\pagebreak
+
+
 
 \subsection{Suite Validation}
 \label{Validation}
@@ -2782,123 +2806,122 @@ commenting it out of the dependency graph.
 \section{Task Implementation}
 \label{TaskImplementation}
 
-\subsection{Task Wrapping: Using Existing Scripts As Cylc Tasks}
-\label{TaskWrapping}
+{\em Most existing processing jobs do not require any modification to
+function as cylc tasks.}
 
-{\em Most pre- and post-processing scripts, models, etc., can be used 
-by cylc without modification.}
+If a task {\em has no internal outputs} (i.e. downstream processing only
+triggers off the task {\em finishing}) and {\em its initiating script 
+does not detach and exit before all processing is finished}, then the 
+task implementation does not need to be ``cylc-aware'' because all the
+necessary task messaging (wherein a task informs its parent suite of
+starting, finishing successfully, or failing) is handled by the job
+script generated by cylc for the task, as illustrated in
+Section~\ref{JobScripts}.
 
-Specifically, any script, command, or program that sees through, from 
-start to finish, all of the processes that it initiates, 
-can be used as a cylc task by simply executing it through the task
-wrapper, \lstinline=cylc wrap=:
+Just call your existing command, script, or scripting, via the task {\em
+command} string:
+
 \begin{lstlisting}
 # SUITE.RC
 [tasks]
     [[foo]]
-        description = a cylc task that runs foo.sh
-        command = cylc wrap foo.sh $OPTIONS $ARGS
+        description = a task that runs foo.sh
+        command = foo.sh OPTIONS ARGUMENTS
+
+    [[bar]]
+        description = a task that runs bar.sh
+        command = """echo HELLO
+                     bar.sh
+                     echo BYE""" 
+
+    [[baz]]
+        description = "a task that runs baz.sh, and retries on failure"
+        command = """echo attempt No.1
+                     baz.sh""",
+                  """echo attempt No.2  # only invoked if try No.1 fails
+                     baz.sh --retry"""
 \end{lstlisting}
 
-The wrapped script does not need to be ``cylc-aware'' because the
-wrapper knows the identity of the task it represents, and its parent
-suite, through the task execution environment configured by the suite,
-and it automatically reports startup; success or failure according
-to the exit status of the wrapped script; and, on finishing, completion
-of any specific outputs registered for the task (if other tasks just
-trigger off it finishing, there will be none of these). 
+\subsection{Suite.rc Inlined Tasks}
 
-To avoid writing explicit error checks for every mundane operation 
-in a task script, wrapped tasks can use \lstinline=set -e= to abort on
-any error, and then rely on the cylc wrapper to report the failure to
-cylc:
+Note that simple tasks can be entirely scripted within the suite.rc file
+because the task ``command'' can be a single command line or verbatim
+scripting enclosed in a multiline string (or a list thereof, to retry
+on task failure).
+
+\subsection{Exit 1 On Error}
+
+The only requirement for such unmodified task scripts is that they
+abort on error with non-zero exit status, in order to trigger the
+job script's error trap, which will in turn call 
+\lstinline=cylc task failed=
+to alert the suite of the problem.
+
+You can avoid writing explicit error checks for every 
+operation in a task script by using \lstinline=set -e=:
+
 \begin{lstlisting}
 #!/bin/bash
-# wrapped task script (execute with: 'cylc wrap foo.sh')
-
 set -e  # abort on error
-
-mkdir /illegal/dir  # illegal operation: the script will abort and
-                    # the cylc wrapper will report the task failed.
+mkdir /illegal/dir  # this will abort with non-zero exit status
 \end{lstlisting}
 
-%Appendix~\ref{AnnotatedTaskScript} provides more information on
-%task scripting.
-
-For simple tasks that don't warrant an entire script of their own, 
-a series of commands can be wrapped as a single cylc task, by using 
-the \lstinline=-m,--multi= option. For example, here's a simple task
-that deliberately fails 30 seconds into execution:
+If you want the suite to log an explanatory message for the task
+failure, send a task message before exiting:
 
 \begin{lstlisting}
-# SUITE.RC
-[tasks]
-    [[suicidal]]
-        description = a task that kills itself after 30 seconds
-        command = cylc wrap -m "set -e; sleep 30; echo Goodbye cruel world; /bin/false"
+#!/bin/bash
+set -e  # abort on error
+if ! mkdir /illegal/dir; then
+    # (use inline error checking to avoid triggering the above 'set -e')
+    cylc task message -p CRITICAL "Failed to create directory /illegal/dir"
+    exit 1
+fi
 \end{lstlisting}
 
-You can test this on the command line:
+You can also use this syntax:
 \begin{lstlisting}
-$ cylc wrap -m "set -e; date; sleep 30; date; echo Goodbye cruel world; /bin/false"
-cylc (raw - 2011/05/13 10:33:59): TASK_ID started
-Fri May 13 10:33:59 NZST 2011
-Fri May 13 10:34:29 NZST 2011
-Goodbye cruel world
-cylc (raw - 2011/05/13 10:34:29): CRITICAL TASK_ID failed
+#!/bin/bash
+set -e
+mkdir /illegal/dir || {  # inline error checking using OR operator
+    cylc task message -p CRITICAL "Failed to create directory /illegal/dir"
+    exit 1
+}
 \end{lstlisting}
-(when not invoked by a suite, the messaging interface just writes to stdout).
 
-\subsection{Non-wrapped Tasks: Modifying Scripts For Cylc}
-\label{Unwrapping}
+But not this:
+\begin{lstlisting}
+mkdir /illegal/dir  # aborted via 'set -e'
+if [[ $? != 0 ]]; then  # so this will never be reached.
+    cylc task message -p CRITICAL "Failed to create directory /illegal/dir"
+    exit 1
+fi
+\end{lstlisting}
 
-{\em Tasks with initiating scripts that do not see all processing
-through from start to finish} because they detach and exit immediately
-after spawning internal background or batch jobs, cannot be wrapped
-because the task wrapper can't know when the task is really finished. 
+Appendix~\ref{AnnotatedTaskScript} provides more information on
+task scripting.
 
-{\em Tasks with internal outputs that have to be reported complete 
-before the task is finished}, so that others can trigger off them
-early, cannot be wrapped because the wrapper only reports outputs
-complete when the task is finished. 
+\subsection{Tasks Requiring Minor Modifications For Cylc}
+\label{TaskModsForCylc}
 
-Non-wrapped tasks have to be modified slightly for cylc, by inserting 
-calls to the cylc task messaging interface in appropriate places (see
-the next section, {\em Task Messaging}).
+{\em Tasks with initiating scripts that spawn jobs internally and then
+detach and exit without seeing all task processing through to the
+finish} must send their own ``cylc task succeeded'' message (and
+``cylc task failed'' in case of error) instead of the default 
+messaging at the end of the task job script generated by cylc. 
+
+{\em Tasks with internal outputs allowing downstream processing to
+trigger before they are finished} must call ``cylc task message'' 
+at the appropriate time to report their internal outputs complete.
 
 \subsubsection{Task Messaging}
 \label{TaskMessaging}
 
-Once submitted, a task must,
-\begin{myitemize}
-    \item Report that it has started executing
-    \item Report completion of any outputs that other tasks depend on
-        (this is automatic if they just depend on it finishing)
-    \item Report successful finish, OR
-    \item Report failure in case of error
-\end{myitemize}
-where ``report'' is short for {\em send an appropriate message to the cylc
-instance that is running my suite} (there may be multiple suites
-running at once).
+Note the lack of any apparent sender identification or target addressing
+in the cylc messaging commands. This information is automatically
+deduced from the execution environment written by the suite to the job
+script used to invoke the task. 
 
-As noted in the previous section, {\em explicit task messaging is only
-needed for tasks that cannot be wrapped, or those with
-internal outputs that have to be reported before the task is finished.} 
-To report startup, a script should call,
-\begin{lstlisting}
-# acquire a task lock and report that I've started
-cylc task started
-# OR
-cylc started
-# (the command category 'task' is optional; see 'cylc help')
-\end{lstlisting}
-
-Note the lack of any sender identification or targetting information in
-the command. Task messaging commands automatically deduce the calling
-task's name and cycle time, and the target suite (and its host and
-port), and so on, from the execution environment supplied by the suite
-(through the task job script). To report registered outputs, progress
-messages, warnings, etc.,
 \begin{lstlisting}
 # send a warning message (it will be logged by the suite):
 cylc task message -p WARNING "oops, something's fishy here"
@@ -2919,66 +2942,6 @@ else
     exit 1
 fi
 \end{lstlisting}
-
-\subsubsection{Detect And Report All Fatal Errors}
-
-Cylc needs to know if a task has failed, for any reason, otherwise it
-will think it is still running (although timeout alerting can be
-used as a safety net here). In task scripting, therefore, the success of
-any important operation should be checked explicitly so that a sensible
-error message can be logged on failure, e.g.:
-
-\begin{lstlisting}
-#!/bin/bash
-important.exe || {
-    cylc task failed "important operation failed"
-    exit 1
-}
-\end{lstlisting}
-
-Non-wrapped tasks can combine this with error trapping to automatically
-alert cylc on any failure:
-
-\begin{lstlisting}
-#!/bin/bash
-# non-wrapped task
-set -e
-trap 'cylc task failed "error trapped"' ERR
-
-cylc task started
-mkdir /illegal/dir   # illegal operation: will be trapped and reported
-cylc task succeeded
-\end{lstlisting}
-
-If you use \lstinline=set -e=, any explicit error checking
-must be done inline to avoid triggering the trap:
-
-\begin{lstlisting}
-#!/bin/bash
-set -e
-
-# This is OK:
-mkdir /illegal/dir || {  # inline error detection using OR operator
-    cylc task failed "important operation failed"
-    exit 1
-}
-
-# and this is OK:
-if not mkdir /illegal/dir; then  
-    cylc task failed "important operation failed"
-    exit 1
-fi
-
-# but this isn't:
-mkdir /illegal/dir      # this will cause an immediate abort,
-if [[ $? != 0 ]]; then  # so this line will not be reached.
-    cylc task failed "important operation failed"
-    exit 1
-fi
-\end{lstlisting}
-
-Appendix~\ref{AnnotatedTaskScript} provides more information on
-task scripting.
 
 \subsubsection{Custom Task Wrappers}
 
@@ -3912,7 +3875,7 @@ been disabled in the current release pending testing.}
 \label{AnnotatedTaskScript}
 
 The following annotated cylc task script shows how to handle cylc
-messaging manually. As explained in Section~\ref{Unwrapping}, {\em 
+messaging manually. As explained in Section~\ref{TaskModsForCylc}, {\em 
 this is only required for tasks that are not overseen by a single 
 script that sees all processing through from start to finish; and
 tasks with internal outputs that have to be reported complete before the
