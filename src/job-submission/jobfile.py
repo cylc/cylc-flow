@@ -63,9 +63,9 @@ class jobfile(object):
         self.write_header()
         self.write_directives()
         self.write_environment_1()
+        self.write_cylc_access()
         self.write_err_trap()
         self.write_task_started()
-        self.write_cylc_access()
         self.write_environment_2()
         if self.manual_messaging:
             self.write_manual_environment()
@@ -90,7 +90,7 @@ class jobfile(object):
         if self.manual_messaging:
             self.FILE.write( '\n\n# (THIS TASK HANDLES FINISHED MESSAGING ITSELF)')
         else:
-            self.FILE.write( '\n\n# SEND THE TASK SUCCEEDED MESSAGE')
+            self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE')
             self.FILE.write( '\ncylc task succeeded' )
 
     def write_header( self ):
@@ -144,13 +144,13 @@ class jobfile(object):
     def write_err_trap( self ):
         self.FILE.write( """
 
-# SET THE ERROR TRAP 
+# SET ERROR TRAPPING
 set -e; trap 'cylc task failed \"Error trapped by task job script\"' ERR""" )
 
     def write_task_started( self ):
         self.FILE.write( """
 
-# SEND THE TASK STARTED MESSAGE
+# SEND TASK STARTED MESSAGE
 cylc task started || exit 1""" )
 
     def write_cylc_access( self, STRIO=None ):
