@@ -299,7 +299,7 @@ class job_submit(object):
         # execute the local command to submit the job
         if dry_run:
             print " > TASK JOB SCRIPT: " + self.jobfile_path
-            print " > JOB SUBMISSION METHOD: " + self.command
+            print " > JOB SUBMISSION: " + self.command
             success = True
         else:
             print " > SUBMITTING TASK: " + self.command
@@ -374,7 +374,7 @@ class job_submit(object):
         # execute the local command to submit the job
         if dry_run:
             print " > REMOTE TASK JOB SCRIPT: " + self.remote_jobfile_path
-            print " > REMOTE JOB SUBMISSION METHOD: " + command_2
+            print " > REMOTE JOB SUBMISSION: " + command_2
         else:
             print " > SUBMITTING TASK: " + command_2
             try:

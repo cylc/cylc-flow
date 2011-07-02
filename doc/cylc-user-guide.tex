@@ -909,6 +909,7 @@ command line, you can:
     \item plot the suite dependency graph,
     \item search the suite definition and bin scripts,
     \item validate the suite definition,
+    \item compare (difference) the suite with another suite,
     \item import the suite or group to your private database,
     \item unreregister or delete the suite or group (if you own it),
     \item reregister the suite or group (if you own it).
@@ -1554,6 +1555,7 @@ command line, you can:
     \item plot the suite dependency graph,
     \item search the suite definition and bin scripts,
     \item validate the suite definition,
+    \item compare (difference) the suite with another suite,
     \item import the suite or group to your private database,
     \item unreregister or delete the suite or group (if you own it),
     \item reregister the suite or group (if you own it).
@@ -2453,28 +2455,23 @@ Task families should really only be used as a convenient simplification
 for groups of tasks that would naturally trigger at the same time anyway
 (e.g.\ multiple tasks for processing different types of observations
 that are all made available at the same time) and whose outputs would
-all be put to use at a similar time too. Otherwise task families will
-unnecessarily constrain cylc's ability to achieve maximum functional
-parallelism, because every member has to finish before downstream
-processing can continue.\footnote{Actually this isn't entirely true 
-because downstream tasks can also trigger off individual family members
-as if they weren't family members - however, the family members themselves
-will not be able to start running until the family itself triggers.} As
-an extreme example, imagine grouping all
-tasks in the same forecast cycle into a single family (cylc task
-families can have internal dependencies) - this would result in enforced
-whole-suite sequential cycling even when catching up from a delay.
-
+all be put to use at a similar time too. Otherwise use of task families
+may unnecessarily constrain cylc's ability to achieve maximum functional
+parallelism, because every member has to wait on its parent family 
+starting before it can run, and all members have to finish before
+downstream processing can continue.\footnote{Actually downstream tasks
+can trigger off individual family members as if they weren't family
+members - but extensive use of this would defeat the purpose 
+of using a family in the first place.}
 
 \subsection{Task Definition}
 \label{Task Definition}
 
-Cylc task definition is very simple: the dependency graph defines which
-cycles the task can run in and how it relates to other tasks, the
-command line that initiates processing when the task is ready to run,
-the execution environment in which the command
-line should be invoked, and a few lesser details such as remote hosting
-and task ownership.
+Cylc task definition is very simple: where a task appears in the suite
+dependency graph determines its relationship to other tasks and its
+valid cylce times, and its other properties are defined under 
+\lstinline=[tasks] [[NAME]]= - principally execution environment and
+the command line or scripting used to invoke task processing.
 
 Note that there is not necessarily a one-to-one mapping between tasks
 defined in the suite.rc file and the external commands, scripts, or
@@ -2498,71 +2495,55 @@ description = "Used as an example in Section 7.4 of the User Guide"
     NEXT_CYCLE = $( cylc util cycletime -a 12 )
     PREV_CYCLE = $( cylc util cycletime -p 12 )
 [tasks]
-    [[A]]                 # TASK A SETTINGS
+    [[A]]                 # TASK A PROPERTIES
         description = "Task A, does something"
         command = A.sh
-        [[[environment]]] # TASK A ENVIRONMENT
+        [[[environment]]] # Task A environment
             INPUT = foo-${NEXT_CYCLE}.txt
-    [[B]]                 # TASK B SETTINGS
+    [[B]]                 # TASK B PROPERTIES
         description = "Task B, does something else"
         command = B.sh -f
-        [[[environment]]] # TASK B ENVIRONMENT
+        [[[environment]]] # Task B environment
             INPUT = bar-${NEXT_CYCLE}.txt
 \end{lstlisting}
 
 \subsubsection{Task Names}
 \label{TaskName}
 
-A task's name is defined by its entry(s) in the suite.rc dependency
-graph, then a matching subsection heading under the suite.rc [tasks]
-section is used to define other parameters (the command line, etc.)
-for the task. To rename a task, just change its name in the suite.rc
-file.
-
-Cylc's messaging commands, which report task progress back to the parent
-suite, do need to know the name and suite of the calling task, but they
-automatically extract this information from the task execution
-environment (which is configured by the suite; below) so that no
-use of hardwired task names is required outside of the suite.rc file.
-Similarly, if a task needs to make use of its own name, or that of its
-parent suite (to make I/O paths task and suite-specific, for instance)
-these should be extracted portably from the execution environment
-supplied by cylc (Section~\ref{TaskExecutionEnvironment}) rather than
-hardwired into the task implementation, so that the suite is flexible
-and portable (see {\em Suite and Task Identity Variables},
-Section~\ref{TaskAndSuiteIdentityVariables}).
-
+Task names can contain letters, digits, and underscores. They should not
+be hard wired into task implementations (scripts, models, etc.) - task
+and suite identity can be extracted portably from the task execution
+environment supplied by the suite
+(Section~\ref{TaskExecutionEnvironment}) - then to rename a task you can
+just change its name in the suite.rc file.
 
 \subsubsection{Task Job Scripts: How Tasks Are Invoked By Cylc}
 \label{JobScripts}
 
 When a task is ready to run, cylc writes, and then executes via the
-task's job submission method (see
-Section~\ref{JobSubmission}), a {\em task job script} that configures
-the environment for the task and then calls its command line.
+task's job submission method (see Section~\ref{JobSubmission}), a 
+{\em job script} that configures the execution environment and then
+invokes the external processing defined for the task.
        
 The actual command line used to submit the job script is also written to
-stdout by cylc. You can test this yourself by running a suite or using
-the \lstinline=cylc submit= command, which submits a single task to 
-run just as it would be submitted by the suite, and with the
-\lstinline=--dry-run= option just generates the task script for 
-inspection and says how it would be executed according to the chosen
-job submission method:
-
-The following illustrates this using the suite listed just
-above; it should be registered as {\em examples:CUG74} in your central
-suite database.
+stdout by cylc. You can test this using \lstinline=cylc submit=, which
+runs a single task exactly as the suite would. The \lstinline=--dry-run=
+option causes it to generate the job script for inspection and show how
+it would be executed with the chosen job submission method. The
+following listing illustrates using the two task example suite just
+above (registered as {\em examples:CUG74} in
+the central suite database):
 
 \begin{lstlisting}
 % cylc submit --dry-run examples:CUG74 A%2011052400
 DRY RUN: create the task job script and show how it would be executed.
  > TASK JOB SCRIPT: /tmp/cylc-A%2011052400-jfHtqy
- > JOB SUBMISSION METHOD: /tmp/cylc-A%2011052400-jfHtqy </dev/null 1>
+ > JOB SUBMISSION: /tmp/cylc-A%2011052400-jfHtqy </dev/null 1>
      /home/oliverh/CylcLogs/examples/CUG74/A%2011052400-DuaPUt.out 2>
      /home/oliverh/CylcLogs/examples/CUG74/A%2011052400-DuaPUt.err &
 \end{lstlisting}
 
-And here is the resulting job script:
+Here is the generated job script:
 
 \begin{lstlisting}
 % cat /tmp/cylc-A%2011052400
@@ -2592,14 +2573,14 @@ export TASK_ID=A%2011052400
 export TASK_NAME=A
 export CYCLE_TIME=2011052400
 
-# SET THE ERROR TRAP 
-set -e; trap 'cylc task failed "Error trapped by task job script"' ERR
-
-# SEND THE TASK STARTED MESSAGE
-cylc task started || exit 1
-
 # ACCESS TO CYLC:
 . $CYLC_DIR/environment.sh
+
+# SET ERROR TRAPPING
+set -e; trap 'cylc task failed "Error trapped by task job script"' ERR
+
+# SEND TASK STARTED MESSAGE
+cylc task started || exit 1
 
 # GLOBAL VARIABLES:
 NEXT_CYCLE="$( cylc util cycletime -a 12 )"
@@ -2613,7 +2594,7 @@ export INPUT
 # INVOKE TASK PROCESSING:
 A.sh
 
-# SEND THE TASK SUCCEEDED MESSAGE
+# SEND TASK SUCCEEDED MESSAGE
 cylc task succeeded
 
 #EOF
@@ -2623,41 +2604,17 @@ cylc task succeeded
 \subsubsection{Task Execution Environment}
 \label{TaskExecutionEnvironment}
 
-The task execution environment is explicitly defined in the job script prior to 
-executing the task command line or scripting, as can be seen in the
-above listing.  The job script sections perform the following functions:
-\begin{myenumerate}
-    \item  identify the parent suite and the cylc installation that is
-        running it
-    \item  identify the task
-    \item  set error trapping to inform the suite if the task fails
-    \item  inform the suite that the task has started running
-    \item  configure access to cylc, for the task
-    \item  export global variables
-    \item  export task-specific variables
-    \item  (global pre-command scripting - not shown)
-    \item  invoke task processing
-    \item  (global post-command scripting - not shown)
-    \item  inform the suite that the task has finished 
-        successfully\footnote{This may omitted, for 
-        certain tasks, in favour of messaging from the task
-        implementation - see Section~\ref{TaskImplementation}}.
-\end{myenumerate}
+As can be seen in the job script listing above, the task execution
+environment is explicitly defined prior to executing the task command
+line or scripting.  
 
-Note that the task identity variables are defined prior to the
-global variables, so even global variables can be made task- and
-cycle-specific by referencing the task identity. 
+\paragraph{Suite And Task Identify}
 
-\paragraph{Suite And Task Identity Variables}
-\label{TaskAndSuiteIdentityVariables}
+The task's name and cycle time are defined before the global variables,
+so global variables can actually be made task- and cycle-specific by
+referencing them. 
 
-The first sections of the job script define variables that identify the
-task name, task cycle time, suite registration (group and name), suite
-host and port, and several other parameters (see the example job script
-above).
-
-An executing task will almost certainly need to make use of its
-own cycle time:
+An executing task will almost certainly need to use its own cycle time:
 \begin{lstlisting}
 $CYCLE_TIME    
 \end{lstlisting}
@@ -2666,9 +2623,8 @@ directory, to access files stored there,
 \begin{lstlisting}
 $CYCLE_SUITE_DIR
 \end{lstlisting}
-And it may need to use the task and suite identity variables (to 
-make portable suites that write all output to suite-specific locations,
-for instance):
+And it may need to use the task and suite identity variables (e.g.\ to 
+make portable suites that write all output to suite-specific locations):
 \begin{lstlisting}
 $CYLC_SUITE            # e.g. foo:bar
 $CYLC_SUITE_GROUP      # foo
@@ -2677,28 +2633,16 @@ $TASK_NAME             # X
 $TASK_ID               # X%2011051118
 \end{lstlisting}
 
-These variables are also used, automatically, by the task messaging
-interface, to target the right task proxy in the particular cylc
-instance that is running the task's parent suite. 
+These variables are also used automatically by cylc task messaging
+commands, to target the right task proxy in the right suite.
 
-\paragraph{Error Trapping}
+\paragraph{Task Access To Cylc}
 
-\begin{lstlisting}
-set -e; trap 'cylc task failed "Error trapped by task job script"' ERR
-\end{lstlisting}
-
-This results in the suite being informed of task failure if any command 
-in the job script fails. If task invocation involves calling an external
-script (which it usually does) such scripts must abort with non-zero exit
-status if any internal error occurs (See
-Section~\ref{TaskImplementation}, {\em Task Implementation}, for more on this).
-
-\paragraph{Cylc Access Environment}
-
-Next the cylc environment is configured according to the value of
-\lstinline=$CYLC_DIR=. This is done prior to exporting user-defined
-variables so that cylc utility commands can be used in the following
-variable assignment expressions, as shown above.
+The cylc environment script, in \lstinline=$CYLC_DIR=, is sourced so
+that the executing task has access to cylc commands and utilities. 
+The fact that this is done prior to exporting user-defined variables 
+means that cylc utility commands can be used in variable assignment
+expressions, as shown in the listing above.
 
 \paragraph{Global And Task-Specific Environment Variables}
 
@@ -2724,15 +2668,23 @@ suite).
 \paragraph{Global Pre- and Post-Command Scripting}
 
 The global {\em pre-command scripting} and {\em post-command scripting}
-suite.rc items (not shown in the example job script above, because they
-were not defined for that task) allow you to write arbitrary scripting
-in a multiline string in the suite.rc task sections, that will be
-written verbatim immediately before, and after, the task command line 
-{\em of every task}.
+suite.rc items (not shown in the example job script above) are multiline
+strings containing scripting to be executed verbatim immediately before,
+and after, the task command line or scripting, {\em for every task}.
 
 %\pagebreak
 
+\paragraph{Error Trapping}
 
+This line:
+\begin{lstlisting}
+set -e; trap 'cylc task failed "Error trapped by task job script"' ERR
+\end{lstlisting}
+results in the suite being informed of task failure if any command 
+in the job script fails. External scripts invoked for task processing
+must abort with non-zero exit status if an error occurs (See
+Section~\ref{TaskImplementation}, {\em Task Implementation}) in order
+to trigger the task failure message.
 
 \subsection{Suite Validation}
 \label{Validation}
@@ -2810,20 +2762,17 @@ commenting it out of the dependency graph.
 \section{Task Implementation}
 \label{TaskImplementation}
 
-{\em Most existing processing jobs do not require any modification to
-function as cylc tasks.}
-
-If a task {\em has no internal outputs} (i.e. downstream processing only
-triggers off the task {\em finishing}) and {\em its initiating script 
+Most scripts can function as cylc tasks without any modification: if a
+task {\em has no internal outputs} (i.e.\ downstream processing only
+triggers off it {\em finishing}) and {\em its initiating script 
 does not detach and exit before all processing is finished}, then the 
-task implementation does not need to be ``cylc-aware'' because all the
+task implementation does not need to be cylc-aware because all the
 necessary task messaging (wherein a task informs its parent suite of
-starting, finishing successfully, or failing) is handled by the job
-script generated by cylc for the task, as illustrated in
-Section~\ref{JobScripts}.
+its progress) is handled by the job script generated by cylc for the
+task, as illustrated in Section~\ref{JobScripts}.
 
-Just call your existing command, script, or scripting, via the task {\em
-command} string:
+Just call your existing command, script, or inlined scripting, via the
+task {\em command} string. For example:
 
 \begin{lstlisting}
 # SUITE.RC
@@ -2848,10 +2797,10 @@ command} string:
 
 \subsection{Suite.rc Inlined Tasks}
 
-Note that simple tasks can be entirely scripted within the suite.rc file
-because the task ``command'' can be a single command line or verbatim
-scripting enclosed in a multiline string (or a list thereof, to retry
-on task failure).
+Simple tasks can be entirely scripted within the suite.rc file
+because the task {\em command} string can contain multiple lines
+of scripting (or a list thereof, to retry the task, with variations, on
+failure).
 
 \subsection{Exit 1 On Error}
 
@@ -3106,7 +3055,7 @@ needs updating slightly in this respect.
         
 %\pagebreak
 
-\section{Task Job Submission}
+\section{Task Execution}
 \label{JobSubmission}
 
 {\em Task Implementaion} (Section~\ref{TaskImplementation}) describes
