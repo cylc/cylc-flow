@@ -2491,7 +2491,7 @@ aspects of task definition:
 title = "A two task test suite"
 description = "Used as an example in Section 7.4 of the User Guide"
 [dependencies]
-    [[0,12]]              # A and B both run 0 and 12 hours
+    [[0,12]]              # For cycle times ending in 00 and 12 hours
         graph = "A => B"  # B triggers when A successfully finishes
 [environment]             # GLOBAL ENVIRONMENT
     NEXT_CYCLE = $( cylc util cycletime -a 12 )
@@ -2529,7 +2529,7 @@ The task execution environment comprises variables automatically
 defined by cylc, and global and task-specific variables defined 
 in the suite.rc file. These variables are explicitly exported 
 prior to executing the task command scripting (to see how this
-is actually implemented go to Section~\ref{TaskExecution}, {\em Task
+is implemented go to Section~\ref{TaskExecution}, {\em Task
 Execution}).  
 
 \paragraph{Suite And Task Identify}
@@ -2588,11 +2588,11 @@ previously defined variables.
 
 Environment variables are {\em not} evaluated by cylc prior to executing
 the task. They are written, in unevaluated form, to the job script that
-is submitted by cylc to run the task, as shown just above. Thus
-\lstinline=$HOME=, for instance, will evaluate, at run time, to the home
-directory of the account under which the task executes (which isn't
-necessarily the same account, or even the same host, that is running the
-suite). 
+is submitted by cylc to run the task (this is shown in
+Section~\ref{JobScripts}). Thus \lstinline=$HOME=, for instance, will
+evaluate, at run time, to the home directory of the account under which
+the task executes (which isn't necessarily the same account, or even the
+same host, that is running the suite). 
 
 %\paragraph{Global Pre- and Post-Command Scripting}
 %
