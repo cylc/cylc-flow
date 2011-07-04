@@ -82,22 +82,24 @@ class jobfile(object):
         self.write_environment_1( strio )
         self.write_cylc_access( strio )
         self.FILE.write( '\n\n# SUITE AND TASK IDENTITY FOR CUSTOM TASK WRAPPERS:')
-        self.FILE.write( '\n# (string contains embedded newlines, so echo in QUOTED form)' )
+        self.FILE.write( '\n# (contains embedded newlines so usage may require "QUOTES")' )
         self.FILE.write( '\nexport CUSTOM_TASK_WRAPPER_ENVIRONMENT="' + strio.getvalue() + '"' )
         strio.close()
 
     def write_task_succeeded( self ):
         if self.manual_messaging:
-            self.FILE.write( '\n\n# (THIS TASK HANDLES FINISHED MESSAGING ITSELF)')
+            self.FILE.write( '\n\n# (THIS TASK HANDLES COMPLETION MESSAGING ITSELF)')
         else:
-            self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE')
+            self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE:')
             self.FILE.write( '\ncylc task succeeded' )
+        self.FILE.write( '\n\necho "TASK JOB SCRIPT EXITING"')
 
     def write_header( self ):
         self.FILE.write( '#!' + self.shell )
         self.FILE.write( '\n\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++' )
         self.FILE.write( '\n# Task: ' + self.task_id )
         self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'')
+        self.FILE.write( '\n\necho "TASK JOB SCRIPT STARTING"')
 
     def write_directives( self ):
         # override global with task-specific directives
@@ -144,13 +146,13 @@ class jobfile(object):
     def write_err_trap( self ):
         self.FILE.write( """
 
-# SET ERROR TRAPPING
+# SET ERROR TRAPPING:
 set -e; trap 'cylc task failed \"Error trapped by task job script\"' ERR""" )
 
     def write_task_started( self ):
         self.FILE.write( """
 
-# SEND TASK STARTED MESSAGE
+# SEND TASK STARTED MESSAGE:
 cylc task started || exit 1""" )
 
     def write_cylc_access( self, STRIO=None ):
@@ -200,7 +202,7 @@ cylc task started || exit 1""" )
             self.FILE.write( "\n" + self.global_pre_scripting )
 
     def write_task_command( self ):
-        self.FILE.write( "\n\n# INVOKE TASK PROCESSING:" )
+        self.FILE.write( "\n\n# TASK COMMAND SCRIPTING:" )
         self.FILE.write( "\n" + self.task_command )
 
     def write_post_scripting( self ):
