@@ -10,7 +10,8 @@ $SCRIPT 1> $OUT 2> $ERR
 EOF
 ) > $RES 2>&1
 if grep 'No atd running' $RES; then
-    echo 'ERROR: no atd running!'
+    echo 'ERROR: atd is not running!'
     exit 1
 fi
+# model.sh should now be running at the behest of the 'at' scheduler.
 echo "run-model.sh: done"

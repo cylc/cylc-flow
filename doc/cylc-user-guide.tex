@@ -2698,22 +2698,25 @@ scripts, or executables invoked by cylc to carry out task processing.
 Any existing command, script, or executable can function as a cylc task
 if the following conditions are met:
 \begin{myitemize}
-    \item the task has no {\em internal outputs} needed to trigger
-        downstream processing early - otherwise it must be modified
-        to report when those internal outputs are completed.
-    \item the task's initiating script or control process does not
-        detach and exit before all task processing is finished -
-        otherwise it must be modified to report success or failure 
-        itself, because cylc will not be able to arrange automatic 
-        completion reporting.
-    \item all task scripting must return non-zero exit status on error
-        to enable failure detection by the job script.
+    \item The task must have no {\em internal outputs} that others trigger
+        off - otherwise it must be modified to report when those
+        internal outputs are completed.
+    \item The script or process that invokes the task must not exit before 
+        all task processing is finished - otherwise it must be modified to
+        report final success or failure itself.
+    \item Task scripting must return non-zero exit status on error, to
+        allow automatic detection of successful completion or failure.
 \end{myitemize}
 
-The following suite.rc listing shows several tasks that run external 
-scripts, \lstinline=foo.sh= and \lstinline=bar.sh=, which have not 
-been modified in any way for cylc,
+If these requirements are not met see {\em Modifying Scripts For Cylc},
+Section~\ref{TaskModsForCylc}. Reporting internal outputs is easy.
+Manual completion messaging is more involved, but is typically only
+needed for large models with internally complex native job submission
+processes.
 
+The following suite.rc listing shows several tasks that run external 
+scripts, \lstinline=foo.sh= and \lstinline=bar.sh=, which do not 
+know about cylc:
 \begin{lstlisting}
 # SUITE.RC
 [tasks]
@@ -2735,16 +2738,14 @@ been modified in any way for cylc,
                      baz.sh --retry"""
 \end{lstlisting}
 
-If these requirements are not met, see {\em Modifying Scripts For Cylc} 
-(Section~\ref{TaskModsForCylc}).
-
 \subsection{Suite.rc Inlined Tasks}
 
 Simple tasks can be entirely implemented within the suite.rc file
 because the task {\em command} string can contain multiple lines
 of scripting (or a list of such strings, to retry on failure). The
-contents of the command string are written verbatim to the task job
-script as shown in Section~\ref{JobScripts}.
+command string is written verbatim to the task job script after 
+configuring the execution environment - see {\em Task Execution},
+Section~\ref{TaskExecution}.
 
 
 \subsection{Return Non-zero Exit Status On Error}
@@ -2826,12 +2827,12 @@ have been completed:
 
 \begin{lstlisting}
 #!/bin/bash
+# (task foo implementation)
+# ...
 # report an output completed:
 cylc task message "foo products uploaded for $CYCLE_TIME"
 \end{lstlisting}
-What makes this an ``output'', as opposed to general information, is
-that it matches an output registered for the task in the suite.rc file:
-
+This must match one of the task's registered outputs:
 \begin{lstlisting}
 # SUITE.RC
 [dependencies]
@@ -2841,11 +2842,12 @@ that it matches an output registered for the task in the suite.rc file:
     [[foo]]
         output1 = "foo products uploaded for $(CYCLE_TIME)"
 \end{lstlisting}
+otherwise it will just be logged as a progress report or similar.
 
-\subsubsection{Tasks Whose Control Processes Detach And Exit Early}
+\subsubsection{Tasks With Initiating Processes That Detach And Exit Early}
 
-Tasks with control processes or initiating scripts that spawn internal
-jobs (e.g.\ to a batch queue scheduler or to another host) and then
+Tasks with initiating scripts or processes that spawn jobs internally
+(e.g.\ to a batch queue scheduler or to another host) and then
 detach and exit without seeing the resulting processing through 
 must arrange for the spawned processing to send its own ``cylc
 task succeeded'' or ``cylc task failed'' messages on completion -
@@ -2864,8 +2866,7 @@ manual task completion messaging = True  # global setting
 Reporting success or failure is just a matter of calling the cylc
 messaging commands:
 \begin{lstlisting}
-# external task scripting
-
+#!/bin/bash
 # ...
 if $SUCCESS; then
     # release my task lock and report success
@@ -3389,15 +3390,14 @@ Section~\ref{QuickStartGuide}).
     \item how to recover from certain kinds of task failure
     \item instant simulation mode clones of a running suite
     \item fuzzy prerequisites - triggering of the {\em most recent available},
-        within limits, instance of some task
-    \item asynchronous tasks (with no cycle time) - for running a sequence, 
-        of tree, of tasks initiated by a random event such as a
-        satellite pass. 
+        within limits, instance of an upstream task
+    \item asynchronous tasks (no cycle time) - for running a tree of
+        tasks initiated by a random event such as a satellite pass. 
     \item subsuites - running another suite inside a task:
 \begin{lstlisting}
 [tasks]
     [[foo]]
-        command = cylc wrap "cylc run SUITE $CYCLE_TIME --until=$CYCLE_TIME"
+        command = "cylc run SUITE $CYCLE_TIME --until=$CYCLE_TIME"
 \end{lstlisting}
 \end{myitemize}
 
