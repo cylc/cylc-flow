@@ -1675,7 +1675,7 @@ Here's an imaginary example,
 Cylc suite.rc files parse directly into a nested data structure inside
 cylc, which makes it very easy to add and use new configuration items.
 
-Suite.rc files are automatically validated against a specification file 
+Suite.rc files are validated against a specification file 
 (\lstinline=$CYLC_DIR/conf/suiterc.spec=) that defines all legal
 entries, values, options, and defaults; these are documented
 in detail in the {\em Suite.rc Reference}
@@ -1750,7 +1750,8 @@ A typical suite.rc file might contain the following information:
         \begin{myitemize}
             \item task description
             \item task-specific environment section (variables available to just this task)
-            \item the command line to execute when the task is ready to run
+            \item the command scripting to execute when the task is
+                ready to run
         \end{myitemize}
     \item optionally, a visualization section to configure graph plotting for the suite
 \end{myitemize}
@@ -1886,9 +1887,9 @@ Incidentally, the suite.rc file listed in Figure~\ref{fig-dep-eg-1} is
 a complete valid suite definition that you can run (just import a copy
 from the central suite database and run it): cylc will run dummy tasks,
 which sleep for a few seconds then emit an identifying message,
-because no task command lines have been defined. If you do try to run
-Example 1, be aware that you'll need to trigger task A manually to get
-the suite started. That's because A(T) depends on its own previous
+because task command scripting has not been specified. If you do try to
+run Example 1, be aware that you'll need to trigger task A manually to
+get the suite started. That's because A(T) depends on its own previous
 instance A(T-6), and at startup there is no previous cycle to satisfy
 that prerequisite.  How to handle a {\em cold start} properly is
 described below in {\em Satisfying Intercycle Dependencies At Startup}
@@ -2467,19 +2468,20 @@ of using a family in the first place.}
 \subsection{Task Definition}
 \label{Task Definition}
 
-Cylc task definition is very simple: a task's position in the suite
-dependency graph determines its relationship to other tasks and its
-valid cycle times, then any other properties are defined under 
-\lstinline=[tasks] [[NAME]]= - principally execution environment and
-the command scripting used to invoke task processing.
+A task's position in the suite dependency graph determines its
+relationship to other tasks and its valid cycle times. Other
+properties such as execution environment and the command scripting
+used to invoke task processing are defined under the suite.rc 
+\lstinline=[tasks]= section.
 
 Note that there is not necessarily a one-to-one mapping between tasks
 defined in the suite.rc file and the external commands, scripts, or
 programs that implement them. Multiple tasks can call the same script
-(etc.) with varying inputs supplied by their respective command lines and
-execution environments.
+(etc.) with varying inputs supplied by their respective command lines
+and execution environments.
 
 \subsubsection{A Task Definition Example}
+\label{ATaskDefinitionExample}
 
 The following rather trivial suite of two tasks illustrates the important
 aspects of task definition:
@@ -2507,6 +2509,9 @@ description = "Used as an example in Section 7.4 of the User Guide"
             INPUT = bar-${NEXT_CYCLE}.txt
 \end{lstlisting}
 
+Note the task names in the suite dependency graph, the command scripting
+for each task, and the global and task-specific environment sections.
+
 \subsubsection{Task Names}
 \label{TaskName}
 
@@ -2517,98 +2522,18 @@ task execution environment supplied by the suite
 (Section~\ref{TaskExecutionEnvironment}) - then to rename a task, just
 change the name in the suite.rc file.
 
-\subsubsection{Task Job Scripts: How Tasks Are Invoked By Cylc}
-\label{JobScripts}
-
-When a task is ready to run, cylc writes, and then executes via the
-task's job submission method (see Section~\ref{JobSubmission}), a 
-{\em job script} that configures the execution environment and then
-invokes the external processing defined for the task.
-       
-The actual command line used to submit the job script is also written to
-stdout by cylc. You can test this using \lstinline=cylc submit=, which
-runs a single task exactly as the suite would. The \lstinline=--dry-run=
-option causes it to generate the job script for inspection and show how
-it would be executed with the chosen job submission method. The
-following listing illustrates using the two task example suite just
-above (registered as {\em examples:CUG74} in
-the central suite database):
-
-\begin{lstlisting}
-% cylc submit --dry-run examples:CUG74 A%2011052400
-DRY RUN: create the task job script and show how it would be executed.
- > TASK JOB SCRIPT: /tmp/cylc-A%2011052400-jfHtqy
- > JOB SUBMISSION: /tmp/cylc-A%2011052400-jfHtqy </dev/null 1>
-     /home/oliverh/CylcLogs/examples/CUG74/A%2011052400-DuaPUt.out 2>
-     /home/oliverh/CylcLogs/examples/CUG74/A%2011052400-DuaPUt.err &
-\end{lstlisting}
-
-Here is the generated job script:
-
-\begin{lstlisting}
-% cat /tmp/cylc-A%2011052400
-
-#!/bin/bash
-
-# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++
-# Task: A%2011052400
-# To be submitted by method: 'background'
-
-# CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY:
-export CYLC_DIR="/home/oliverh/cylc"
-export CYLC_MODE="submit"
-export CYLC_SUITE_HOST="oliverh-33191VL.greta.niwa.co.nz"
-export CYLC_SUITE_PORT="NONE"
-export CYLC_SUITE_DIR="/home/oliverh/cylc/examples/CUG7.4"
-export CYLC_SUITE="examples:CUG74"
-export CYLC_SUITE_GROUP="examples"
-export CYLC_SUITE_NAME="CUG74"
-export CYLC_SUITE_OWNER="oliverh"
-export CYLC_USE_LOCKSERVER="True"
-export CYLC_LOCKSERVER_PORT="7767"
-export CYLC_SIMULATION_SLEEP="10"
-
-# TASK IDENTITY:
-export TASK_ID=A%2011052400
-export TASK_NAME=A
-export CYCLE_TIME=2011052400
-
-# ACCESS TO CYLC:
-. $CYLC_DIR/environment.sh
-
-# SET ERROR TRAPPING
-set -e; trap 'cylc task failed "Error trapped by task job script"' ERR
-
-# SEND TASK STARTED MESSAGE
-cylc task started || exit 1
-
-# GLOBAL VARIABLES:
-NEXT_CYCLE="$( cylc util cycletime -a 12 )"
-PREV_CYCLE="$( cylc util cycletime -p 12 )"
-export NEXT_CYCLE PREV_CYCLE
-
-# LOCAL VARIABLES:
-INPUT="foo-${NEXT_CYCLE}.txt"
-export INPUT
-
-# INVOKE TASK PROCESSING:
-A.sh
-
-# SEND TASK SUCCEEDED MESSAGE
-cylc task succeeded
-
-#EOF
-
-\end{lstlisting}
-
 \subsubsection{Task Execution Environment}
 \label{TaskExecutionEnvironment}
 
-As can be seen in the job script listing above, the task execution
-environment is explicitly defined prior to executing the task command
-line or scripting.  
+The task execution environment comprises variables automatically 
+defined by cylc, and global and task-specific variables defined 
+in the suite.rc file. These variables are explicitly exported 
+prior to executing the task command scripting (to see how this
+is actually implemented go to Section~\ref{TaskExecution}, {\em Task
+Execution}).  
 
 \paragraph{Suite And Task Identify}
+\label{SATI}
 
 The task's name and cycle time are defined before the global variables,
 so global variables can actually be made task- and cycle-specific by
@@ -2638,11 +2563,15 @@ commands, to target the right task proxy object in the right suite.
 
 \paragraph{Task Access To Cylc}
 
-The cylc environment script, in \lstinline=$CYLC_DIR=, is sourced in
-the job script so that the executing task has access to cylc commands
-and utilities. The fact that this is done prior to exporting
-user-defined variables means that cylc utility commands can be used in
-variable assignment expressions, as shown in the listing above.
+Task execution environments are automatically configured to give the
+executing task access to cylc commands and utilities. This is done prior
+to exporting user-defined variables so that cylc utility commands can
+be used in variable assignment expressions. For example: 
+\begin{lstlisting}
+# SUITE.RC
+[environment]
+    FOO = $( cylc util cycletime --add=6 )
+\end{lstlisting}
 
 \paragraph{Global And Task-Specific Environment Variables}
 
@@ -2665,28 +2594,27 @@ directory of the account under which the task executes (which isn't
 necessarily the same account, or even the same host, that is running the
 suite). 
 
-\paragraph{Global Pre- and Post-Command Scripting}
-
-The global {\em pre-} and {\em post-command scripting} suite.rc items
-(not shown in the example job script above) are multiline strings
-containing scripting to be executed verbatim immediately before
-and after the task command scripting, for every task (task-specific 
-scripting goes in the task command scripting (or in an external script
-invoked by it).
+%\paragraph{Global Pre- and Post-Command Scripting}
+%
+%The global {\em pre-} and {\em post-command scripting} suite.rc items
+%(not shown in the example job script above) are multiline strings
+%containing scripting to be executed verbatim immediately before
+%and after the task command scripting, for every task (task-specific 
+%scripting goes in the task command scripting (or in an external script
+%invoked by it).
 
 %\pagebreak
 
-\paragraph{Error Trapping}
-
-This line:
-\begin{lstlisting}
-set -e; trap 'cylc task failed "Error trapped by task job script"' ERR
-\end{lstlisting}
-results in the suite being informed of task failure if any command 
-in the job script fails. External scripts invoked for task processing
-must abort with non-zero exit status if an error occurs (See
-Section~\ref{TaskImplementation}, {\em Task Implementation}) in order
-to trigger the task failure message.
+%\paragraph{Error Trapping}
+%
+%This line:
+%\begin{lstlisting}
+%set -e; trap 'cylc task failed "Error trapped by task job script"' ERR
+%\end{lstlisting}
+%results in the suite being informed of task failure if any command 
+%in the job script fails. Any external scripts invoked in the task
+%command scripting must likewise return non-zero exit status on error
+%in order to trigger the trap.
 
 \subsection{Suite Validation}
 \label{Validation}
@@ -2736,10 +2664,9 @@ numbers.
 
 \subsubsection{Validation Warnings}
 
-Several kinds of warning are emitted by the validator, principally 
-if any tasks in the dependency graph are not defined in the [tasks]
-section, or if any tasks defined in the [tasks] section are not used in
-the dependency graph:
+Warnings are emitted by the validator if any tasks in the dependency
+graph are not defined in the [tasks] section, or if any tasks defined in
+the [tasks] section are not used in the dependency graph:
 \begin{lstlisting}
 Parsing Suite Config File
 WARNING: task "PostA" is defined only by graph: it will run as a dummy task.
@@ -2756,7 +2683,6 @@ Instantiating Task Proxies:
 Suite examples:simple validates OK.
 DONE
 \end{lstlisting}
-
 These are not necessarily errors - a task defined by graph alone will
 run as a dummy task, and you can temporarily disable a defined task by
 commenting it out of the dependency graph. 
@@ -2767,24 +2693,26 @@ commenting it out of the dependency graph.
 This section lays out the minimal requirements on external commands,
 scripts, or executables invoked by cylc to carry out task processing.
 
-An existing script (etc.) can function as a cylc task without 
-modification so long as the following conditions are met:
+\subsection{Most Tasks Require No Modification For Cylc}
+
+Any existing command, script, or executable can function as a cylc task
+if the following conditions are met:
 \begin{myitemize}
     \item the task has no {\em internal outputs} needed to trigger
         downstream processing early - otherwise it must be modified
         to report when those internal outputs are completed.
     \item the task's initiating script or control process does not
         detach and exit before all task processing is finished -
-        otherwise the job script cannot automatically detect and report
-        task success or failure.  % (as shown in Section~\ref{JobScripts}).
-    \item all task scripting returns non-zero exit status on error to
-        enable failure detection by the job script.
+        otherwise it must be modified to report success or failure 
+        itself, because cylc will not be able to arrange automatic 
+        completion reporting.
+    \item all task scripting must return non-zero exit status on error
+        to enable failure detection by the job script.
 \end{myitemize}
 
-If these conditions are met you can just invoke your existing processes
-via task {\em command} scripting in the suite.rc file, supplying input
-parameters as required via command lines and/or execution environment.
-For example:
+The following suite.rc listing shows several tasks that run external 
+scripts, \lstinline=foo.sh= and \lstinline=bar.sh=, which have not 
+been modified in any way for cylc,
 
 \begin{lstlisting}
 # SUITE.RC
@@ -2807,29 +2735,37 @@ For example:
                      baz.sh --retry"""
 \end{lstlisting}
 
+If these requirements are not met, see {\em Modifying Scripts For Cylc} 
+(Section~\ref{TaskModsForCylc}).
+
 \subsection{Suite.rc Inlined Tasks}
 
 Simple tasks can be entirely implemented within the suite.rc file
 because the task {\em command} string can contain multiple lines
-of scripting (or a list of such strings, to retry on failure).
+of scripting (or a list of such strings, to retry on failure). The
+contents of the command string are written verbatim to the task job
+script as shown in Section~\ref{JobScripts}.
 
-\subsection{Exit Status On Error}
 
-The requirement to abort with non-zero exit status in case of error
+\subsection{Return Non-zero Exit Status On Error}
+
+The requirement to abort with non-zero exit status on error
+(which should be normal scripting practice in any case) 
 allows the job script to trap errors and send a 
-\lstinline=cylc task failed= message to alert the suite.  You can avoid
-writing explicit error checks for every operation with \lstinline=set -e=:
+\lstinline=cylc task failed= message to alert the suite.  You can 
+use \lstinline=set -e= to avoid writing explicit error checks for every
+operation:
 
 \begin{lstlisting}
 #!/bin/bash
 set -e  # abort on error
-mkdir /illegal/dir  # this will abort with non-zero exit status
+mkdir /illegal/dir  # this error will abort the script with non-zero exit status
 \end{lstlisting}
 
 \subsection{Modifying Scripts For Cylc}
 \label{TaskModsForCylc}
 
-\subsubsection{Task Messaging}
+\subsubsection{Voluntary Messaging}
 
 If you like you can modify task scripts to log explanatory messages with
 the suite if certain events occur. For example, a task can send a
@@ -2841,7 +2777,7 @@ set -e  # abort on error
 if ! mkdir /illegal/dir; then
     # (use inline error checking to avoid triggering the above 'set -e')
     cylc task message -p CRITICAL "Failed to create directory /illegal/dir"
-    exit 1
+    exit 1 # now abort non-zero exit status to trigger the task failed message
 fi
 \end{lstlisting}
 
@@ -2869,9 +2805,9 @@ fi
 You can also send warning messages, or general information:
 \begin{lstlisting}
 #!/bin/bash
-# send a warning message (it will be logged by the suite):
+# a warning message (this will be logged by the suite):
 cylc task message -p WARNING "oops, something's fishy here"
-# send information:
+# information (this will also be logged by the suite):
 cylc task message "Hello from task foo"
 \end{lstlisting}
 
@@ -2882,6 +2818,7 @@ and task stdout and stderr can be examined for evidence of what went
 wrong.
 
 \subsubsection{Reporting Internal Outputs Completed}
+\label{RIOC}
 
 Tasks with internal outputs that allow downstream processing to
 trigger before they are finished must report when those internal outputs
@@ -2892,10 +2829,8 @@ have been completed:
 # report an output completed:
 cylc task message "foo products uploaded for $CYCLE_TIME"
 \end{lstlisting}
-
-What makes this an ``output'', as opposed to some general informative
-message, is that it matches an output registered for the task in the 
-suite.rc file:
+What makes this an ``output'', as opposed to general information, is
+that it matches an output registered for the task in the suite.rc file:
 
 \begin{lstlisting}
 # SUITE.RC
@@ -2907,23 +2842,27 @@ suite.rc file:
         output1 = "foo products uploaded for $(CYCLE_TIME)"
 \end{lstlisting}
 
-Appendix~\ref{AnnotatedTaskScript} provides more information on
-task scripting.
-
-\subsubsection{Custom Task Wrappers}
+\subsubsection{Tasks Whose Control Processes Detach And Exit Early}
 
 Tasks with control processes or initiating scripts that spawn internal
 jobs (e.g.\ to a batch queue scheduler or to another host) and then
-detach and exit without seeing the resulting processing through to the
-finish must arrange for the spawned processing to send its own ``cylc
+detach and exit without seeing the resulting processing through 
+must arrange for the spawned processing to send its own ``cylc
 task succeeded'' or ``cylc task failed'' messages on completion -
-because the cylc-generated job script that can otherwise provide
-automatic messaging will also finish early, just after the initiating
-process exits.
+because the cylc-generated job script (Section~\ref{JobScripts}) that
+otherwise provides automatic completion messaging cannot know when 
+the task is really finished. To disable automatic completion messaging:
 
-Reporting success or failure is just a matter of calling the right messaging
-command:
+\begin{lstlisting}
+# SUITE.RC
+manual task completion messaging = True  # global setting
+[tasks]
+    [ [foo]]
+        manual task completion messaging = True  # task-specific setting
+\end{lstlisting}
 
+Reporting success or failure is just a matter of calling the cylc
+messaging commands:
 \begin{lstlisting}
 # external task scripting
 
@@ -2934,48 +2873,76 @@ if $SUCCESS; then
     exit 0
 else
     # release my task lock and report failed
-    cylc task failed "oops"
+    cylc task failed "Input file X not found"
     exit 1
 fi
 \end{lstlisting}
 
-If your task's spawned sub-job(s) execute in the same environment as its
-initial scripting, this may be all you need to do. But if the initial
-execution environment is not propagated through to the sub-job, you 
-will need to arrange for this this to happen in order for the messaging
-commands to target the right task proxy object and suite, and the
-environment must be configured to give access to cylc commands. Other
-user-specified variables may be needed too, depending on the task. 
+Bear in mind, however, that cylc messaging commands read environment
+variables that identify the calling task and the target suite, as
+explained in {\em Task Execution Environment}
+(Section~\ref{TaskExecutionEnvironment}), so if your job submission
+method does not automatically copy its parent environment you must
+arrange for these variables, at the least, to be propagated through to
+your spawned sub-jobs.
 
-One way to do this is to call a {\em wrapper} that modifies the native
-task scripts on the fly to insert task finished messaging in the
-appropriate places, and anything else required, before invoking the (now
-modified) native process. 
+One way to handle this is to write a {\em task wrapper} that modifies a
+copy of the detaching native job scripts, on the fly, to insert
+completion messaging in the appropriate places, and other variables if
+necessary, before invoking the (now modified) native process. A
+significant advantage of this method is that you don't need to
+permanently modify the model or its associated native scripting 
+for cylc. Another is that you can configure the native job setup 
+for a single test case (running it without cylc) and then have 
+your custom wrapper modify the test case on the fly with suite, task,
+and cycle-specific parameters as required.
 
-\begin{lstlisting}
-#/bin/bash
-# CustomFoo.sh, a custom wrapper for task foo.
-# (cylc messaging and error checking not shown).
-# Usage:
-#---------------------------------------------
-# SUITE.RC
-# [tasks]
-#   [[foo]]
-#      command = CustomFoo.sh $OPTIONS $ARGS
-#---------------------------------------------
-# ...
-# Copy native scripts to $NATIVESCRIPTS_DIR, on the fly, so we don't
-# have to hack the orginals
-# ...
-# Modify native script foobar.sh:
-echo "export CYCLE_TIME=$CYCLE_TIME" >> $NATIVESCRIPTS_DIR/foobar.sh 
-echo "export CYLC_DIR=$CYLC_DIR" >> $NATIVESCRIPTS_DIR/foobar.sh 
-# (you'll probably need more sophisticated search-and-replace 
-# scripting rather than simply appending to the end of the file).
-# ...
-# Finally, invoke the job in its own special way:
-foo.sh  # presumably this results in foobar.sh being executed ...
-\end{lstlisting}
+To make this easier, for tasks that declare manual completion 
+messaging, cylc makes non user-defined environment scripting
+available in a single variable called
+\lstinline=$CYLC_SUITE_ENVIRONMENT= that can be inserted into the
+aforementioned native task scripts prior to calling the cylc messaging
+commands.\footnote{Note that \lstinline=$CYLC_SUITE_ENVIRONMENT= is 
+a string containing embedded newline characters and it has
+to be handled accordingly. In the bash shell, for instance, it should
+be echoed in quotes to avoid concatenation to a single line.}
+
+\subsubsection{A Custom Task Wrapper Example}
+
+The example suite {\bf examples:detach} contains a script 
+\lstinline=model.sh= that runs a pseudo-model executable as follows:
+\lstinputlisting{../examples/detach/native/model.sh}
+this is in turn executed by a script \lstinline=run-model.sh= that
+detaches immediately after job submission (i.e.\ it exits before the
+model executable actually runs):
+\lstinputlisting{../examples/detach/native/run-model.sh}
+{\em Note that your {\bf at} scheduler daemon must be up 
+if you want to test this suite.}
+
+Here's a cylc suite to run this unruly model:
+\lstinputlisting{../examples/detach/suite.rc}
+
+The suite invokes the task by means of the custom wrapper 
+\lstinline=model-wrapper.sh= which modifies, on the fly, 
+a temporary copy of the model's native job scripts as described above:
+\lstinputlisting{../examples/detach/bin/model-wrapper.sh}
+
+If you run this suite, or submit the model task alone with
+\lstinline=cylc submit=, you'll find that the usual job submission 
+log files for task stdout and stderr end before the task is finished. 
+To see the ``model'' output and the final task completion message
+(success or failure), examine the log files generated by the 
+job submitted internally to the {\em at} scheduler (their 
+location is determined by the \lstinline=$PREFIX= variable in the
+suite.rc file). 
+
+It should not be difficult to adapt this example to real tasks
+with detaching internal job submission.  You will probably also need to
+replace other parameters, such as model input and output filenames, with
+suite- and cycle-appropriate values, but exactly the same technique can
+be used: identify which job script needs to be modified and use text
+processing tools (such as the single line {\em perl} search-and-replace 
+expressions above) to do the job.
 
 \subsection{Running Local Tasks Under Other User Accounts}
 
@@ -3080,26 +3047,24 @@ needs updating slightly in this respect.
 %\pagebreak
 
 \section{Task Execution}
-\label{JobSubmission}
+\label{TaskExecution}
 
-{\em Task Implementaion} (Section~\ref{TaskImplementation}) describes
+{\em Task Implementation} (Section~\ref{TaskImplementation}) describes
 what requirements a command, script, or program, must fulfill in order
 to function as a cylc task.
 
-This section explains how tasks are executed once they are ready to
-run (i.e.\ once their prerequisites are satisfied), and how to create new 
-task job submission methods.
+This section explains how tasks are executed when they are ready to
+run, and how to define new task job submission methods.
 
 \subsection{Task Job Scripts}
+\label{JobScripts}
 
-When a task is ready to run, cylc generates a temporary {\em task job
-script} that contains commands to configure the task execution
-environment before calling the task command scripting.  Cylc then 
-submits the job script to run by means of the {\em job submission
-method} chosen for the suite or the task. Different tasks can have
-different job submission methods: set a default in the suite.rc file
-(see Section~\ref{SuiteRCFile}) and override it, if necessary, for
-specific tasks:
+When a task is ready to run cylc generates a temporary {\em task job
+script} to configure the execution environment and call the task's
+command scripting. The job script is then submitted to run by
+means of the {\em job submission method} specified for the task. 
+Different tasks can have different job submission methods. You can set a
+default for the suite and override it, if necessary, per task:
  
 \begin{lstlisting}
 # SUITE.RC
@@ -3108,6 +3073,83 @@ job submission method = loadleveler  # suite default
    [[foo]]
         job submission method = at_now  # just for task foo
 \end{lstlisting}
+
+The actual command line used to submit the job script is written to suite 
+stdout by cylc. You can see this using \lstinline=cylc submit=, which
+runs a single task exactly as the suite would. The \lstinline=--dry-run=
+option causes it to generate the job script for inspection and show how
+it would be executed with the chosen job submission method. The
+following listing illustrates using the two task example suite of
+Section~\ref{ATaskDefinitionExample} (also registered as {\em
+examples:CUG74} in the central suite database):
+
+\begin{lstlisting}
+% cylc submit --dry-run examples:CUG74 A%2011052400
+DRY RUN: create the task job script and show how it would be executed.
+ > TASK JOB SCRIPT: /tmp/cylc-A%2011052400-jfHtqy
+ > JOB SUBMISSION: /tmp/cylc-A%2011052400-jfHtqy </dev/null 1>
+     /home/oliverh/CylcLogs/examples/CUG74/A%2011052400-DuaPUt.out 2>
+     /home/oliverh/CylcLogs/examples/CUG74/A%2011052400-DuaPUt.err &
+\end{lstlisting}
+
+Here is the generated job script:
+
+\begin{lstlisting}
+% cat /tmp/cylc-A%2011052400
+
+#!/bin/bash
+
+# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++
+# Task: A%2011052400
+# To be submitted by method: 'background'
+
+# CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY:
+export CYLC_DIR="/home/oliverh/cylc"
+export CYLC_MODE="submit"
+export CYLC_SUITE_HOST="oliverh-33191VL.greta.niwa.co.nz"
+export CYLC_SUITE_PORT="NONE"
+export CYLC_SUITE_DIR="/home/oliverh/cylc/examples/CUG7.4"
+export CYLC_SUITE="examples:CUG74"
+export CYLC_SUITE_GROUP="examples"
+export CYLC_SUITE_NAME="CUG74"
+export CYLC_SUITE_OWNER="oliverh"
+export CYLC_USE_LOCKSERVER="True"
+export CYLC_LOCKSERVER_PORT="7767"
+export CYLC_SIMULATION_SLEEP="10"
+
+# TASK IDENTITY:
+export TASK_ID=A%2011052400
+export TASK_NAME=A
+export CYCLE_TIME=2011052400
+
+# ACCESS TO CYLC:
+. $CYLC_DIR/environment.sh
+
+# SET ERROR TRAPPING:
+set -e; trap 'cylc task failed "Error trapped by task job script"' ERR
+
+# SEND TASK STARTED MESSAGE:
+cylc task started || exit 1
+
+# GLOBAL VARIABLES:
+NEXT_CYCLE="$( cylc util cycletime -a 12 )"
+PREV_CYCLE="$( cylc util cycletime -p 12 )"
+export NEXT_CYCLE PREV_CYCLE
+
+# LOCAL VARIABLES:
+INPUT="foo-${NEXT_CYCLE}.txt"
+export INPUT
+
+# TASK COMMAND SCRIPTING:
+A.sh
+
+# SEND TASK SUCCEEDED MESSAGE:
+cylc task succeeded
+
+#EOF
+
+\end{lstlisting}
+
 
 \subsection{Available Methods}
 \label{AvailableMethods}
@@ -3847,20 +3889,6 @@ been disabled in the current release pending testing.}
 %
 
         
-\section{An Annotated Cylc Task Script}
-\label{AnnotatedTaskScript}
-
-The following annotated cylc task script shows how to handle cylc
-messaging manually. As explained in Section~\ref{TaskModsForCylc}, {\em 
-this is only required for tasks that are not overseen by a single 
-script that sees all processing through from start to finish; and
-tasks with internal outputs that have to be reported complete before the
-task is finished so that other tasks can trigger off them early.} 
-Otherwise save yourself the trouble (not that it is very difficult) and
-just use the cylc task wrapper (Section~\ref{TaskWrapping}).
-
-\lstset{language=bash}
-\lstinputlisting{annotated-task-script.sh}
 
 %\pagebreak
 

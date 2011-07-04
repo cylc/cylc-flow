@@ -1,8 +1,8 @@
 title = Custom Task Wrapper Example
 
 description = """This suite runs a single task that internally submits a
-sub-job before detaching and exitng immediately - so we have handle task
-completion messaging manually - see the Cylc User Guide, Section 8.4.3."""
+'model executable' before detaching and exiting immediately - so we have
+to handle task completion messaging manually - see the User Guide 8.4.3."""
 
 [special tasks]
     sequential = model
@@ -14,7 +14,9 @@ completion messaging manually - see the Cylc User Guide, Section 8.4.3."""
 [tasks]
     [[model]]
         manual task completion messaging = True
-        command = model-wrapper.sh
+        command = model-wrapper.sh  # invoke the task via a custom wrapper
         [[[environment]]]
+            # location of native job scripts to modify for this suite:
             NATIVESCRIPTS = $CYLC_SUITE_DIR/native
-            OUTPUT_PREFIX = $HOME/detach
+            # output path prefix for detached model stdout and stderr:
+            PREFIX = $HOME/detach
