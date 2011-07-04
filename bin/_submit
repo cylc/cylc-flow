@@ -185,7 +185,7 @@ job_submit.joblog_dir = config['job submission log directory']
 job_submit.global_pre_scripting = config['pre-command scripting']
 job_submit.global_post_scripting = config['post-command scripting']
 job_submit.owned_task_execution_method = config['owned task execution method']
-job_submit.global_manual_messaging = config['task finished messaging handled in implementation']
+job_submit.global_manual_messaging = config['manual task completion messaging']
 
 job_submit.global_task_owner = config['owner']
 job_submit.global_remote_host = config['remote host']

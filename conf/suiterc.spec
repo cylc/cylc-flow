@@ -544,7 +544,7 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\item {\em example:} \lstinline@job submission shell = /bin/ksh@
 #>\end{myitemize}
 
-task finished messaging handled in implementation = boolean( default=False )
+manual task completion messaging = boolean( default=False )
 #> If a task's initiating process detaches and exits before task
 #> processing is finished, then cylc cannot arrange for the task to
 #> automatically signal when it has succeeded or failed. In such cases
@@ -556,7 +556,7 @@ task finished messaging handled in implementation = boolean( default=False )
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
 #>\item {\em default:} \lstinline=False= 
-#>\item {\em example:} \lstinline@task finished messaging handled in implementation = True@
+#>\item {\em example:} \lstinline@manual task completion messaging = True@
 #>\end{myitemize}
 
 [special tasks]
@@ -1049,7 +1049,7 @@ __many__ = string
 #>\end{myitemize}
 #>RESUME
 
-    task finished messaging handled in implementation = boolean( default=None )
+    manual task completion messaging = boolean( default=None )
 #> If a task's initiating process detaches and exits before task
 #> processing is finished, then cylc cannot arrange for the task to
 #> automatically signal when it has succeeded or failed. In such cases
@@ -1060,7 +1060,7 @@ __many__ = string
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
 #>\item {\em default:} \lstinline=None= 
-#>\item {\em example:} \lstinline@task finished messaging handled in implementation = True@
+#>\item {\em example:} \lstinline@manual task completion messaging = True@
 #>\end{myitemize}
 
         [[[environment]]]
