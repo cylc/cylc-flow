@@ -7,6 +7,15 @@ can be migrated to the github issue tracker.
 _______
 GENERAL
 
+* Consider changing the task pool list to a dictionary indexed by task
+  ID. This would avoid having to loop through the pool to find a task.
+* Also, consider a major change to the scheduling algorithm that would
+  fit quite nicely with a dict-based task pool: if dict values contain 
+  a list of *known trigger tasks* determined from the dependency graph
+  each task could just ask those tasks, rather than all of them (via the
+  broker) for satisfaction. We could then eliminate the broker, and
+  may significantly increase efficiency for very large suites?
+
 * RECURSIVE PURGE OVERHAUL? see documentation of limitations in the
   purge command help. Post cylc-3.0 we could easily determine, via the
   suite dependency graph, if any tasks that should be affected by the
@@ -34,9 +43,6 @@ GENERAL
 
 * Consider replacing finished tasks with a data structure that remembers
   what happened. More efficient for very large suites?
-
-* Consider changing the task pool list to a dictionary indexed by task
-  ID. This would avoid having to loop through the pool to find a task.
 
 * IMPORTANT: rationalize suite shutdown criteria in main loop.
 
