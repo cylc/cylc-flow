@@ -1,23 +1,42 @@
-CYLC METASCHEDULER CHANGE LOG, INITIALIZED at version 3.0.3.
-Non-trivial changes of relevance to users should be listed.
+CYLC METASCHEDULER CHANGE LOG, INITIALIZED after version 3.0.3.
 
-All changes are likely to involve minor updates and corrections to
-documentation (User Guide, command line help, and GUI help) that will
-not be mentioned unless particularly important.
+Non-trivial changes of relevance to users are listed. All changes are
+likely to involve unlisted minor updates and corrections to cylc 
+documentation (User Guide, command line help, and GUI help).
 
-3.0.3 - 3.0.4
+Version number X.Y.Z incrementing:
+  X - major changes
+  Y - significant changes
+  Z - minor changes and bug fixes
+
+3.0.4
  + More documentation of error detection in task scripts.
  + 'cylc admin create-cdb' now uses its own test suite.
 
-3.0.4 - 3.0.5
+3.0.5
  + Clarified graph-based control GUI help.
 
-3.0.5 - 3.1.0
+3.1.0
  + Allow use of lockserver in simulation mode.
  + New suite compare/diff functionality added.
 
-3.1.0 - 3.2.0
+3.2.0
  + Big speed up for large suites due to some optimization of the
    scheduling algorithm.
  + Monospaced fonts in GUI output capture windows.
+
+3.3.0
+ + Updated the terminal monitor to display held (paused) tasks properly.
+ + Entirely eliminated the need for explicit task wrapping:
+   - moved 'task started' and 'task succeeded' messages, and automatic
+   'task failed' messaging, to the generated task job script.
+   - task scripts now only have to call 'task succeeded/failed', and
+     only for tasks whose initiating processes detach and exit early.
+   - this means the entire task job script is now seen by cylc, not just 
+     the (formerly) wrapped command line.
+   - task-specific pre-command scripting is no longer needed - instead
+     the task command string can contain multiline scripting.
+ + New variable $CYLC_SUITE_ENVIRONMENT in the task execution environment
+   for use in custom wrappers for tasks with manual completion messaging.
+ + Added and documented new example suite to illustrate custom task wrapping.
 
