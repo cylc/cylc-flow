@@ -1,10 +1,16 @@
 #!/bin/bash
 set -e
-echo "run-model.sh ${CYCLE_TIME}: submitting model.sh to 'at now'"
+echo "run-model.sh: submitting model.sh to 'at now'"
 SCRIPT=model.sh  # location of the model job to submit
 OUT=$1; ERR=$2   # stdout and stderr log paths
 # submit the job and detach
-at now <<EOF
+RES=$TMPDIR/atnow$$.txt
+( at now <<EOF
 $SCRIPT 1> $OUT 2> $ERR
 EOF
-echo "run-model.sh ${CYCLE_TIME}: done"
+) > $RES 2>&1
+if grep 'No atd running' $RES; then
+    echo 'ERROR: no atd running!'
+    exit 1
+fi
+echo "run-model.sh: done"
