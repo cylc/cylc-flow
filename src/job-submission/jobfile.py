@@ -83,16 +83,15 @@ class jobfile(object):
         self.write_cylc_access( strio )
         self.FILE.write( '\n\n# SUITE AND TASK IDENTITY FOR CUSTOM TASK WRAPPERS:')
         self.FILE.write( '\n# (contains embedded newlines so usage may require "QUOTES")' )
-        self.FILE.write( '\nexport CUSTOM_SUITE_ENVIRONMENT="' + strio.getvalue() + '"' )
+        self.FILE.write( '\nexport CYCL_SUITE_ENVIRONMENT="' + strio.getvalue() + '"' )
         strio.close()
 
     def write_task_succeeded( self ):
         if self.manual_messaging:
-            self.FILE.write( '\n\n# (THIS TASK HANDLES COMPLETION MESSAGING ITSELF)')
+            self.FILE.write( '\n\necho "JOB SCRIPT EXITING: THIS TASK HANDLES ITS OWN COMPLETION MESSAGING"')
         else:
             self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE:')
             self.FILE.write( '\ncylc task succeeded' )
-        self.FILE.write( '\n\necho "TASK JOB SCRIPT EXITING"')
 
     def write_header( self ):
         self.FILE.write( '#!' + self.shell )

@@ -78,7 +78,7 @@ description = string( default="No description supplied" )
 job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=background )
 #>The default job submission method for the suite. This
 #>determines how cylc job scripts are executed when a task is
-#>ready to run. See Section~\ref{JobSubmission}.
+#>ready to run - see Section~\ref{TaskExecution}.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
@@ -832,7 +832,7 @@ __many__ = string
 #>Set the job submission method for this task, overriding the suite
 #> default (if there is one). This
 #>determines how cylc job scripts are executed when a task is
-#>ready to run. See {\em Task Job Submission}, Section~\ref{JobSubmission}.
+#>ready to run. See {\em Task Execution}, Section~\ref{TaskExecution}.
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
@@ -1078,7 +1078,7 @@ __many__ = string
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]] $\rightarrow$ [[[environment]]]
 #>\item {\em type:} string
 #>\item {\em legal values:} any environment variable assignment
-#> expression valid in the {\em job submission shell} (Section~\ref{JobSubShell}).
+#> expression valid in the {\em job submission shell}. 
 #> White space around the `$=$' is allowed (the
 #> \lstinline=suite.rc= file is not a shell script). 
 #> \item {\em examples:} for the bash shell: 
