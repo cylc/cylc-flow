@@ -216,6 +216,12 @@ GENERAL
 
 * use new cylc_mode class everywhere mode test is required.
 
+* consider more specialized messaging commands:
+    cylc task error
+    cylc task warning
+    cylc task message
+    cylc task output
+
 * cylc submit --scheduler: task state resets to 'running' but all
   messages are ignored.
 
