@@ -83,7 +83,7 @@ class jobfile(object):
         self.write_cylc_access( strio )
         self.FILE.write( '\n\n# SUITE AND TASK IDENTITY FOR CUSTOM TASK WRAPPERS:')
         self.FILE.write( '\n# (contains embedded newlines so usage may require "QUOTES")' )
-        self.FILE.write( '\nexport CYCL_SUITE_ENVIRONMENT="' + strio.getvalue() + '"' )
+        self.FILE.write( '\nexport CYLC_SUITE_ENVIRONMENT="' + strio.getvalue() + '"' )
         strio.close()
 
     def write_task_succeeded( self ):
