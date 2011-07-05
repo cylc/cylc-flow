@@ -40,3 +40,8 @@ Version number X.Y.Z incrementing:
    for use in custom wrappers for tasks with manual completion messaging.
  + Added and documented new example suite to illustrate custom task wrapping.
 
+3.3.1
+ + Fixed a typo in writing out the new $CYLC_SUITE_ENVIRONMENT to job
+ scripts, which could break new-style custom wrappers for detaching tasks. 
+
+
