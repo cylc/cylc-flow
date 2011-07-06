@@ -62,6 +62,7 @@ class jobfile(object):
         self.FILE = open( path, 'wb' )
         self.write_header()
         self.write_directives()
+        self.FILE.write( '\n\necho "TASK JOB SCRIPT STARTING"')
         self.write_environment_1()
         self.write_cylc_access()
         self.write_err_trap()
@@ -92,13 +93,13 @@ class jobfile(object):
         else:
             self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE:')
             self.FILE.write( '\ncylc task succeeded' )
+            self.FILE.write( '\n\necho "JOB SCRIPT EXITING (TASK SUCCEEDED)"')
 
     def write_header( self ):
         self.FILE.write( '#!' + self.shell )
         self.FILE.write( '\n\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++' )
         self.FILE.write( '\n# Task: ' + self.task_id )
         self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'')
-        self.FILE.write( '\n\necho "TASK JOB SCRIPT STARTING"')
 
     def write_directives( self ):
         # override global with task-specific directives
