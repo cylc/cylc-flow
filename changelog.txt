@@ -44,4 +44,7 @@ Version number X.Y.Z incrementing:
  + Fixed a typo in writing out the new $CYLC_SUITE_ENVIRONMENT to job
  scripts, which could break new-style custom wrappers for detaching tasks. 
 
+3.3.2
+ + Fixed a bug introduced at 3.2.0 that prevented failed tasks from 
+   becoming 'unfailed' after retriggering them.
 
