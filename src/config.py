@@ -513,10 +513,10 @@ class config( CylcConfigObj ):
 
     def process_configured_directories( self ):
         # absolute path, but can use ~user, env vars ($HOME etc.):
-        self['top level cylc log directory'] = \
-                os.path.expandvars( os.path.expanduser( self['top level cylc log directory']))
-        self['top level state dump directory'] =  \
-                os.path.expandvars( os.path.expanduser( self['top level state dump directory']))
+        self['suite log directory'] = \
+                os.path.expandvars( os.path.expanduser( self['suite log directory']))
+        self['state dump directory'] =  \
+                os.path.expandvars( os.path.expanduser( self['state dump directory']))
         self['job submission log directory' ] = \
                 os.path.expandvars( os.path.expanduser( self['job submission log directory' ]))
         self['visualization']['run time graph directory'] = \
@@ -525,8 +525,8 @@ class config( CylcConfigObj ):
     def create_directories( self ):
         # create logging, state, and job log directories if necessary
         for dir in [
-            self['top level cylc log directory'], 
-            self['top level state dump directory'],
+            self['suite log directory'], 
+            self['state dump directory'],
             self['job submission log directory'],
             self['visualization']['run time graph directory'] ]: 
             mkdir_p( dir )

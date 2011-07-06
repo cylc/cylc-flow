@@ -104,7 +104,7 @@ owner = os.environ['USER']
 config = config( suite )
 config.create_directories()
 # modify logging dir for single task submit so as not to alter suite logs
-logging_dir = os.path.join( config['top level cylc log directory'], suite + '-submit' ) 
+logging_dir = os.path.join( config['suite log directory'], 'submit' ) 
 mkdir_p( logging_dir )
 
 use_lockserver = False

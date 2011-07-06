@@ -1306,6 +1306,6 @@ The cylc forecast suite metascheduler.
         return cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( object )
  
     def view_log( self, w ):
-        logdir = os.path.join( self.suiterc['top level cylc log directory'], self.suite )
+        logdir = os.path.join( self.suiterc['suite log directory'] )
         foo = cylc_logviewer( 'log', logdir, self.suiterc.get_full_task_name_list() )
         self.quitters.append(foo)

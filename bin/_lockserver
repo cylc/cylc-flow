@@ -388,13 +388,12 @@ use lockserver = False
 
 The lockserver reads a config file that specifies the location of the
 daemon's process ID, state, and log files. The default config file 
-is '$CYLC_DIR/conf/lockserver.conf', but you can specify an alternative
-file on the command line (in which case all subsequent interaction with
-the daemon via the lockclient command must also specify the same file). 
-If the process ID, state, and log files, in the config file, are not
-specified as absolute paths, they are assumed to be relative to $HOME;
-the default config file uses '$HOME/.cylc/' so all users can simply use
-the default config file unless they have reason not to do so.
+is '$CYLC_DIR/conf/lockserver.conf'. You can specify an alternative
+config file on the command line, but then all subsequent interaction
+with the daemon via the lockclient command must also specify the same
+file (this is really only for testing purposes). The default process ID,
+state, and log files paths are relative to $HOME so this should be 
+sufficient for all users.
 
 The state file records currently held locks and, if it exists at
 startup, is used to initialize the lockserver (i.e. suite and task locks
