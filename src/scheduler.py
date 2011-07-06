@@ -196,8 +196,8 @@ class scheduler(object):
             raise SystemExit( "ERROR: this suite can only run in simulation mode (see suite.rc)" )
 
         # DETERMINE SUITE LOGGING AND STATE DUMP DIRECTORIES
-        self.logging_dir = os.path.join( self.config['top level cylc log directory'],    self.suite ) 
-        self.state_dump_dir   = os.path.join( self.config['top level state dump directory'], self.suite )
+        self.logging_dir = os.path.join( self.config['suite log directory'] ) 
+        self.state_dump_dir   = os.path.join( self.config['state dump directory'] )
         #DISABLED if self.practice:
         #DISABLED     self.logging_dir += '-practice'
         #DISABLED     self.state_dump_dir   += '-practice'

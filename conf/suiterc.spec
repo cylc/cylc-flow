@@ -256,16 +256,18 @@ runahead limit in hours = integer( min=0, default=24 )
 #>\item {\em example:} \lstinline@runahead limit in hours = 48@
 #>\end{myitemize}
 
-top level cylc log directory = string( default = '$HOME/.cylc/logging' )
-#>The top-level directory under which cylc 
-#> writes its suite-specific log.
+suite log directory = string( default = string( default='$HOME/CylcSuiteLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+#>Cylc logs all events to a suite log file. The main log and
+#> its automatic backups are stored under this directory. {\em You must
+#> ensure the directory is suite-specific; this can be done without hard wiring by
+#> using suite identity environment variables as the default value does.}
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
-#>\item {\em default:} \lstinline=$HOME/.cylc/logging=.
-#>\item {\em example:} \lstinline@top level cylc log directory = $HOME/logging@
+#>\item {\em default:} \lstinline=$HOME/CylcSuiteLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME=
+#>\item {\em example:} \lstinline@suite log directory = $HOME/CSL/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME@
 #>\end{myitemize}
 
 roll log at startup = boolean( default=True )
@@ -279,17 +281,20 @@ roll log at startup = boolean( default=True )
 #>\item {\em example:} \lstinline@roll log at startup = False@
 #>\end{myitemize}
 
-top level state dump directory = string( default = '$HOME/.cylc/state' )
-#>The top-level directory under which cylc
-#> stores suite-specific state dump files (which can be used to restart
-#> a suite from an earlier state).
+state dump directory = string( default = string( default='$HOME/CylcStateDumps/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+#> Suite state dump files allows cylc to restart suites from previous states. 
+#> The default state dump and its backups, and special
+#> pre-intervention state dumps are all stored under this directory.
+#> {\em You must ensure the directory is suite-specific; this can be
+#> done without hard wiring by using suite identity environment variables
+#> as the default value does.}
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
-#>\item {\em default:} \lstinline=$HOME/.cylc/state=
-#>\item {\em example:} \lstinline@top level state dump directory = $HOME/CylcState@
+#>\item {\em default:} \lstinline=$HOME/CylcStateDumps/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME=
+#>\item {\em example:} \lstinline@state dump directory = $HOME/CSD/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME@
 #>\end{myitemize}
 
 number of state dump backups = integer( min=1, default=10 )
@@ -311,7 +316,7 @@ number of state dump backups = integer( min=1, default=10 )
 #>\item {\em example:} \lstinline@number of state dump backups = 20@
 #>\end{myitemize}
 
-job submission log directory = string( default='$HOME/CylcLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+job submission log directory = string( default='$HOME/CylcJobLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
 #> The directory in which to put the stdout and stderr
 #> log files for the job scripts submitted by cylc when tasks are ready to run.
 #> For monolithic tasks (which don't resubmit sub-jobs themselves) these will
@@ -322,7 +327,7 @@ job submission log directory = string( default='$HOME/CylcLogs/$CYLC_SUITE_GROUP
 #>\item {\em type:} string
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
-#>\item {\em default:} \lstinline=$HOME/CylcLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME=
+#>\item {\em default:} \lstinline=$HOME/CylcJobLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME=
 #>\item {\em example:} \lstinline@job submission log directory = $HOME/Logs/$CYLC_SUITE@
 #>\end{myitemize}
 #> {\em For remotely hosted tasks this configuration item is currently ignored - task
