@@ -327,7 +327,7 @@ job submission log directory = string( default='$HOME/CylcJobLogs/$CYLC_SUITE_GR
 #>\item {\em type:} string
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
-#>\item {\em default:} \lstinline=$HOME/CylcLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME=
+#>\item {\em default:} \lstinline=$HOME/CylcJobLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME=
 #>\item {\em example:} \lstinline@job submission log directory = $HOME/Logs/$CYLC_SUITE@
 #>\end{myitemize}
 #> {\em For remotely hosted tasks this configuration item is currently ignored - task
