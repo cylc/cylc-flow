@@ -237,7 +237,7 @@ upstream tasks.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=6cm]{inkscape-svg/dep-one-cycle.pdf} 
+        \includegraphics[width=6cm]{images/dep-one-cycle} 
     \end{center}
     \caption[A single cycle dependency graph for a simple suite]{\small
     The dependency graph for a single forecast cycle of a simple example
@@ -250,7 +250,7 @@ upstream tasks.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=8cm]{inkscape-svg/timeline-one.pdf}
+        \includegraphics[width=8cm]{images/timeline-one}
     \end{center}
     \caption[A single cycle job schedule for real time operation]{\small
     The optimal job schedule for two consecutive cycles of our example
@@ -272,7 +272,7 @@ diagrams.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=10cm]{inkscape-svg/dep-two-cycles-linked.pdf} 
+        \includegraphics[width=10cm]{images/dep-two-cycles-linked} 
     \end{center}
     \caption[What if the external driving data is available early?]{\small If
     the external driving data is available in advance, can we start
@@ -282,7 +282,7 @@ diagrams.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=6cm]{inkscape-svg/timeline-one-c.pdf} 
+        \includegraphics[width=6cm]{images/timeline-one-c} 
     \end{center}
     \caption[Attempted overlap of consective single-cycle job
     schedules]{\small A naive attempt to overlap two consecutive cycles
@@ -294,7 +294,7 @@ diagrams.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=8cm]{inkscape-svg/timeline-one-a.pdf} 
+        \includegraphics[width=8cm]{images/timeline-one-a} 
     \end{center}
     \caption[The only safe multicycle job schedule?]{\small The best that
     can be done {\em in general} when intercycle dependencies are
@@ -366,7 +366,7 @@ failures) won't result in dependency violations.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=8cm]{inkscape-svg/dep-multi-cycle.pdf} 
+        \includegraphics[width=8cm]{images/dep-multi-cycle} 
     \end{center}
     \caption[The complete multicycle dependency graph]{\small The complete
     dependency graph for the example suite, assuming the least possible
@@ -378,7 +378,7 @@ failures) won't result in dependency violations.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=6cm]{inkscape-svg/timeline-two-cycles-optimal.pdf} 
+        \includegraphics[width=6cm]{images/timeline-two-cycles-optimal} 
     \end{center}
     \caption[The optimal two-cycle job schedule]{\small The optimal two
     cycle job schedule when the next cycle's driving data is available in
@@ -399,7 +399,7 @@ with dependency violations.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=12cm]{inkscape-svg/timeline-three.pdf} 
+        \includegraphics[width=12cm]{images/timeline-three} 
     \end{center}
     \caption[Comparison of job schedules after a delay]{\small Job
     schedules for the example suite after a delay of almost one whole
@@ -413,7 +413,7 @@ with dependency violations.
 
 \begin{figure}
     \begin{center} 
-        \includegraphics[width=8cm]{inkscape-svg/timeline-two.pdf}
+        \includegraphics[width=8cm]{images/timeline-two}
     \end{center} 
     \caption[Optimal job schedule when all external data is
     available]{\small Job schedules for the example suite in case study
@@ -472,7 +472,7 @@ even more efficient job schedule.
 
 \begin{figure}
     \begin{center} 
-        \includegraphics[width=8cm]{inkscape-svg/task-pool.pdf}
+        \includegraphics[width=8cm]{images/task-pool}
     \end{center} 
     \caption[The cylc task pool]{\small How cylc sees a suite, in
     contrast to the multicycle dependency graph of Figure~\ref{fig-dep-multi}.
@@ -683,7 +683,7 @@ interface looks like.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../images/screenshots/commandhelp.png}
+        \includegraphics[width=0.8\textwidth]{screenshots/commandhelp.png}
     \end{center}
 \caption[\small The cylc command line interface]{The cylc command line interface}
 \label{fig-command-help}
@@ -691,7 +691,7 @@ interface looks like.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../images/screenshots/db.png}
+        \includegraphics[width=0.8\textwidth]{screenshots/db.png}
     \end{center}
 \caption[gcylc showing a private suite database]{\small
 gcylc showing a private suite database.}
@@ -700,7 +700,7 @@ gcylc showing a private suite database.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../images/screenshots/cdb.png}
+        \includegraphics[width=0.8\textwidth]{screenshots/cdb.png}
     \end{center}
 \caption[gcylc showing the central suite database]{\small
 gcylc showing the central suite database.}
@@ -709,7 +709,7 @@ gcylc showing the central suite database.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[height=0.45\textheight]{../images/screenshots/simple-suiterc.png}]
+        \includegraphics[height=0.45\textheight]{screenshots/simple-suiterc.png}]
     \end{center}
     \caption[A simple cylc suite definition edited in {\em vim}]{\small
     A simple cylc suite definition edited in {\em vim}}
@@ -718,7 +718,7 @@ gcylc showing the central suite database.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.35\textheight]{../images/screenshots/simple-18-cold.png}
+        \includegraphics[width=0.35\textheight]{screenshots/simple-18-cold.png}
     \end{center}
     \caption[The suite definition of Figure~\ref{fig-cylc-vim} graphed
     by cylc.]{\small The suite definition of Figure~\ref{fig-cylc-vim}
@@ -728,7 +728,7 @@ gcylc showing the central suite database.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../images/screenshots/control-trad.png}
+        \includegraphics[width=0.8\textwidth]{screenshots/control-trad.png}
     \end{center}
 \caption[The suite control GUI, treeview interface.]{\small The suite
 control GUI, treeview interface.}
@@ -737,7 +737,7 @@ control GUI, treeview interface.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../images/screenshots/control-graph.png}
+        \includegraphics[width=0.8\textwidth]{screenshots/control-graph.png}
     \end{center}
 \caption[The suite control GUI, graph interface.]{\small The suite control GUI, graph interface.}
 \label{fig-gcylc-graph}
@@ -745,7 +745,7 @@ control GUI, treeview interface.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=\textwidth]{../images/screenshots/ecox-1.png}
+        \includegraphics[width=\textwidth]{screenshots/ecox-1.png}
     \end{center}
 \caption[A large operational suite graphed by cylc.]{\small A large
 operational suite graphed by cylc.}
@@ -754,7 +754,7 @@ operational suite graphed by cylc.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../images/screenshots/ecox-2.png}
+        \includegraphics[width=0.8\textwidth]{screenshots/ecox-2.png}
     \end{center}
     \caption[Another view of the large operational suite of
     Figure~\ref{fig-ecox-1}]{\small Another view of the large
@@ -1080,7 +1080,7 @@ you save the file and exit the editor.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.7\textwidth]{../images/screenshots/QuickStartA-graph18.png}
+        \includegraphics[width=0.7\textwidth]{screenshots/QuickStartA-graph18.png}
     \end{center}
     \caption[The {\em examples:CUG\_QS1} dependency graph]{\small The
     {\em examples:CUG\_QS1} dependency graph.}
@@ -1130,7 +1130,7 @@ Figure~\ref{fig-QuickStartA-ControlStart00}.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../images/screenshots/QuickStartA-ControlStart06.png}
+        \includegraphics[width=0.8\textwidth]{screenshots/QuickStartA-ControlStart06.png}
     \end{center}
     \caption[Suite {\em examples:CUG\_QS1} at startup, 06 or 18 hours.]{\small
     Suite {\em examples:CUG\_QS1} at startup with an initial
@@ -1141,7 +1141,7 @@ Figure~\ref{fig-QuickStartA-ControlStart00}.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../images/screenshots/QuickStartA-ControlStart00.png}
+        \includegraphics[width=0.8\textwidth]{screenshots/QuickStartA-ControlStart00.png}
     \end{center}
     \caption[Suite {\em examples:CUG\_QS1} at startup, 00 or 12
     hours]{\small Suite {\em examples:CUG\_QS1} at startup with an
@@ -1169,7 +1169,7 @@ and~\ref{fig-QuickStartA-ControlStalled}.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../images/screenshots/QuickStartA-ControlRunning.png}
+        \includegraphics[width=0.8\textwidth]{screenshots/QuickStartA-ControlRunning.png}
     \end{center}
     \caption[Suite {\em examples:CUG\_QS1} running.]
     {\small Suite {\em examples:CUG\_QS1} running, showing multiple
@@ -1178,7 +1178,7 @@ and~\ref{fig-QuickStartA-ControlStalled}.
 \end{figure} 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../images/screenshots/QuickStartA-ControlStalled.png}
+        \includegraphics[width=0.8\textwidth]{screenshots/QuickStartA-ControlStalled.png}
     \end{center}
     \caption[ Suite {\em examples:CUG\_QS1} stalled.]
     {\small Suite {\em examples:CUG\_QS1} stalled after the
@@ -1216,7 +1216,7 @@ Figure~\ref{fig-QuickStartA-ModelState}.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.4\textwidth]{../images/screenshots/QuickStartA-ModelState.png}
+        \includegraphics[width=0.4\textwidth]{screenshots/QuickStartA-ModelState.png}
     \end{center}
     \caption[Viewing current task state in gcylc]
 {\small Viewing current task state after right-clicking on a task in gcylc. The
@@ -1284,7 +1284,7 @@ self {\em or} ColdModel in the same cycle.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.7\textwidth]{../images/screenshots/QuickStartB-graph18.png}
+        \includegraphics[width=0.7\textwidth]{screenshots/QuickStartB-graph18.png}
     \end{center}
     \caption[The {\em examples:CUG\_QS2} graph with model cold start task.]{\small
     The {\em examples:CUG\_QS2} dependency graph showing a model cold
@@ -1345,7 +1345,7 @@ GUI.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.7\textwidth]{../images/screenshots/suite-output.png}
+        \includegraphics[width=0.7\textwidth]{screenshots/suite-output.png}
     \end{center}
 \caption[Cylc suite stdout/stderr example.]{\small Cylc suite stdout/stderr example.}
 \label{fig-suite-output}
@@ -1362,7 +1362,7 @@ automatically kept.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.7\textwidth]{../images/screenshots/suite-log.png}
+        \includegraphics[width=0.7\textwidth]{screenshots/suite-log.png}
     \end{center}
 \caption[ A cylc suite log viewed via gcylc.]{\small A cylc suite log viewed via gcylc.}
 \label{fig-suite-log}
@@ -1436,7 +1436,7 @@ that the tasks will be dummied out, as discussed above.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.5\textwidth]{../images/screenshots/validate-eg.png}
+        \includegraphics[width=0.5\textwidth]{screenshots/validate-eg.png}
     \end{center}
     \caption[Suite {\em examples:CUG73} Validation.]{\small Suite
     {examples:CUG73} Validation.}
@@ -1818,13 +1818,13 @@ study other example suites and refer to the {\em Suite.rc Reference}
 \begin{figure}
 \begin{minipage}[t]{0.35\textwidth}
     \begin{center}
-        \includegraphics[width=\textwidth]{../images/screenshots/simple-6-cold.png}
+        \includegraphics[width=\textwidth]{screenshots/simple-6-cold.png}
     \end{center}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.35\textwidth}
     \begin{center}
-        \includegraphics[width=\textwidth]{../images/screenshots/simple-6-warm.png}
+        \includegraphics[width=\textwidth]{screenshots/simple-6-warm.png}
     \end{center}
 \end{minipage}
 \caption[Dependency graphs for a simple example suite]{\small
@@ -1834,7 +1834,7 @@ Dependency graphs (cold and warm start) plotted from a simple suite.rc file.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[height=0.4\textheight]{../images/screenshots/simple-18-cold.png}
+        \includegraphics[height=0.4\textheight]{screenshots/simple-18-cold.png}
     \end{center}
 \caption[Three cycle cold start dependency graph for the simple example
 suite]{\small Three cycle cold start dependency graph plotted by `cylc
@@ -1858,7 +1858,7 @@ modifications, as described in the syntax file, to your
 
 %\begin{figure}
 %    \begin{center}
-%        \includegraphics[width=14cm]{../images/screenshots/simple-suiterc.png}]
+%        \includegraphics[width=14cm]{screenshots/simple-suiterc.png}]
 %    \end{center}
 %    \caption[Cylc suite.rc syntax highlighting in vim]{
 %    Cylc suite.rc syntax highlighting and folding in the vim editior.}
@@ -1918,7 +1918,7 @@ A(T-6) => A  # Model A restart trigger
 \hfill
 \begin{minipage}[b]{0.5\textwidth}
     \begin{center}
-        \includegraphics[width=\textwidth]{../images/screenshots/dep-eg-1.png}
+        \includegraphics[width=\textwidth]{screenshots/dep-eg-1.png}
     \end{center}
 \end{minipage}
 \caption[Dependency Graph Example 1.]{\small Dependency Graph Example 1.}
@@ -2418,13 +2418,13 @@ Figure~\ref{fig-fam-eg-3}.
 \begin{figure}
 \begin{minipage}[t]{0.4\textwidth}
     \begin{center}
-        \includegraphics[width=0.4\textwidth]{../images/screenshots/family-one.png}
+        \includegraphics[width=0.4\textwidth]{screenshots/family-one.png}
     \end{center}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.6\textwidth}
     \begin{center}
-        \includegraphics[width=0.6\textwidth]{../images/screenshots/family-two.png}
+        \includegraphics[width=0.6\textwidth]{screenshots/family-two.png}
     \end{center}
 \end{minipage}
 \caption[A simple task family]{\small A very small suite with
