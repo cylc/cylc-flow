@@ -3,16 +3,30 @@
 set -e; trap "echo ERROR" ERR
 
 usage() {
-    echo "USAGE: $0 [x.y.z]"
+    echo "USAGE: $0 [--tag] x.y.z"
     echo "Make a release tarball from the cylc git repo in \$CYLC_DIR"
     echo "  \$CYLC_DIR and \$TMPDIR must be set."
-    echo "If X.Y.Z is supplied, the new version number will be substituted"
-    echo "in the cylc documentation and code source files, and the "
-    echo "repository will be tagged accordingly; otherwise 'X.Y.Z' will be"
-    echo "substituted and the repository will not be tagged." 
-    echo "The final tarball ends up in \$HOME."
+    echo "If --tag is specified the repository will be tagged with"
+    echo "the new version number."
+    echo "Note that the release tarball ends up in \$HOME."
 }
- 
+TAG=false
+if [[ $# == 2 ]]; then
+    if [[ $1 == '--tag' ]]; then
+        TAG=true
+    else
+        usage
+        exit 1
+    fi
+    VERSION=$2
+elif [[ $# == 1 ]]; then
+    VERSION=$1
+else
+    echo "ERROR: too many args"
+    usage
+    exit 1
+fi
+
 if [[ -z $CYLC_DIR ]]; then
     echo "ERROR: \$CYLC_DIR required"
     usage
@@ -25,20 +39,6 @@ if [[ -z $TMPDIR ]]; then
     echo "ERROR: \$TMPDIR required"
     usage
     exit 1
-fi
-
-if [[ $# > 1 ]]; then
-    echo "ERROR: too many args"
-    usage
-    exit 1
-fi
-
-TAG=false
-if [[ $# == 1 ]]; then
-    TAG=true
-    export VERSION=$1
-else
-    export VERSION=X.Y.Z
 fi
 
 REPO="cylc-${VERSION}"
@@ -124,7 +124,7 @@ tar xzf $TARBALL
 if $TAG; then
     cd $ORIG_CYLC_DIR
     . environment.sh
-    git tag -a $VERSION -m 'new release tag'
+    git tag -a $VERSION -m 'New cylc release tag.'
 fi
 
 # EOF
