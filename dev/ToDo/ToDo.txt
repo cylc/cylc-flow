@@ -20,13 +20,7 @@ GENERAL
   error.
 
 * lockserver configuration is currently installation-wide under
-  $CYLC_DIR/conf. Should allow user override. Also, the default
-  paths use $HOSTNAME which is a bash special variable! Users of ksh
-  will end up with literal '$HOSTNAME' in their lockserver file paths
-  unless they put HOSTNAME=$(hostname) in their .profile. This should
-  be rethought. Non urgent though as hostname-specificity is only 
-  required if running lockservers from multiple hosts that see the 
-  same common filesystem.
+  $CYLC_DIR/conf - should allow user override.
 
 * RECURSIVE PURGE OVERHAUL? see documentation of limitations in the
   purge command help. Post cylc-3.0 we could easily determine, via the

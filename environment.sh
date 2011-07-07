@@ -67,3 +67,10 @@ export PYTHONPATH
 export PYTHONUNBUFFERED=true
 
 echo "Cylc release version: $(cylc -v)"
+
+# Export $HOSTNAME for use in default lockserver config (see
+# $CYLC_DIR/conf/lockserver.conf). HOSTNAME is a bash variable (see man
+# bash) that is defined but not exported; in other shells it may not
+# even be defined.
+export HOSTNAME=$(hostname)
+
