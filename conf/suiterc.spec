@@ -532,9 +532,7 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #> this is currently hardwired into cylc as 
 #> \lstinline@export item=value@ (which works for both bash and ksh
 #> because \lstinline=value= is entirely user-defined) so cylc would
-#> have to be modified slightly if other shells are needed (this
-#> probably not necessary as the scripting items should not be heavily
-#> used anyway - see the warnings in the documentation for those items).
+#> have to be modified slightly if other shells are needed.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
