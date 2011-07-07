@@ -62,6 +62,7 @@ perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" src/gui/gcylc.py
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" src/gui/SuiteControl.py
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" bin/cylc
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" doc/cug-pdf.tex
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" doc/cug-html.tex
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" doc/version.txt
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" README
 
