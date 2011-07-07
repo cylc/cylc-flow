@@ -85,7 +85,7 @@ cp -r doc/images tmpdoc
 cp -r doc/screenshots tmpdoc
 rm -r doc
 mv tmpdoc doc
-mv doc/cug-pdf.pdf doc/CylcUserGuide-${VERSION}.pdf
+mv doc/cug-pdf.pdf doc/CylcUserGuide.pdf
 
 echo "DELETING DEV DIRECTORY"
 rm -r dev
