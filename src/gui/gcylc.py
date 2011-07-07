@@ -115,7 +115,7 @@ class db_updater(threading.Thread):
         newtree = {}
         for reg in self.regd_choices:
             suite, suite_dir, descr = reg
-            suite_dir = re.sub( os.environ['HOME'], '~', suite_dir )
+            suite_dir = re.sub( '^' + os.environ['HOME'], '~', suite_dir )
             if suite in ports:
                 state = 'port ' + str(ports[suite])
             else:
