@@ -1204,7 +1204,7 @@ without having to remember the actual log file location.
 
 The stdout and stderr logs generated when a task is submitted end up
 in the suite.rc {\em job submission log directory}, 
-default location \lstinline=$HOME/CylcLogs/GROUP/NAME/=.
+default location \lstinline=$HOME/CylcJobLogs/GROUP/NAME/=.
 
 
 \subsection{Searching A Suite}
@@ -2917,8 +2917,8 @@ examples:CUG74} in the central suite database):
 DRY RUN: create the task job script and show how it would be executed.
  > TASK JOB SCRIPT: /tmp/cylc-A%2011052400-jfHtqy
  > JOB SUBMISSION: /tmp/cylc-A%2011052400-jfHtqy </dev/null 1>
-     /home/oliverh/CylcLogs/examples/CUG74/A%2011052400-DuaPUt.out 2>
-     /home/oliverh/CylcLogs/examples/CUG74/A%2011052400-DuaPUt.err &
+     /home/oliverh/CylcJobLogs/examples/CUG74/A%2011052400-DuaPUt.out 2>
+     /home/oliverh/CylcJobLogs/examples/CUG74/A%2011052400-DuaPUt.err &
 \end{lstlisting}
 
 Here is the generated job script:
@@ -3047,7 +3047,7 @@ You can set the location for these task output logs in the
 suite.rc file; the default is,
 \begin{lstlisting}
 # SUITE.RC
-job submission log directory = $HOME/CylcLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME
+job submission log directory = $HOME/CylcJobLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME
 \end{lstlisting}
 
 How the stdout and stderr streams are directed into these files depends
