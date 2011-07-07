@@ -129,6 +129,14 @@ cd doc
 #done
 #cd ..
 
-pdflatex cylc-user-guide.tex
-#latex cylc-user-guide.tex
-#dvipdf cylc-user-guide.dvi
+pdflatex cug-pdf.tex
+pdflatex cug-pdf.tex
+pdflatex cug-pdf.tex
+
+rm *.aux
+
+htlatex cug-html.tex "xhtml,3,next"
+htlatex cug-html.tex "xhtml,3,next"
+
+./cleanup.sh
+

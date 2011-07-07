@@ -1,175 +1,3 @@
-%\documentclass[11pt,a4paper]{report}
-\documentclass[11pt,a4paper,titlepage]{article}
-%\documentclass[11pt,a4paper]{amsart}
-
-% 1 inch margins
-\usepackage{fullpage}
-\usepackage{textcomp}  % \textgreater, \textless
-\usepackage{framed}
-\usepackage{listings}
-  \usepackage{courier}
-\usepackage{amsmath}
-\usepackage{verbatim}
-%\usepackage{graphicx}             % latex, eps
-\usepackage[pdftex]{graphicx}    % pdflatex, png, jpg, pdf
-%\usepackage[dvips,usenames,dvipsnames]{color}   % dvips here screws up graphicx png version, above
-\usepackage[usenames]{color}   % dvips here screws up graphicx png version, above
-\usepackage{hyperref}
-%\usepackage{titletoc}
-
-\usepackage{fancyhdr}
-\pagestyle{fancy}
-\fancyhf{}
-\renewcommand{\headheight}{14pt}
-\renewcommand{\headsep}{10pt}
-\lhead{\leftmark}
-\rhead{\rightmark}
-\lfoot{Copyright Hilary Oliver, NIWA, 2008-2011}
-\rfoot{\thepage}
-
-
-\usepackage{titlepic}  % off CTAN, held locally in cylc doc dir.
-
-\usepackage{tocloft}
-% prevent double digit sub-sections crowding the toc line
-\addtolength\cftsubsecnumwidth{0.5em}  % see tocloft manual
-
-\definecolor{codeblock}{rgb}{0.95,0.95,0.95}
-%\definecolor{keywords}{rgb}{1.0,0.3,0.0}
-\definecolor{keywords}{rgb}{0.7,0.1,1.0}
-%\definecolor{comments}{rgb}{0.0,0.7,0.8}
-\definecolor{comments}{rgb}{1.0,0.0,0.0}
-\definecolor{identifiers}{rgb}{0.0,0.2,0.5}
-\definecolor{strings}{rgb}{0.0,0.6,0.0}
-\definecolor{basic}{rgb}{0.0,0.2,0.8}
-
-% hyperlink color:
-%\definecolor{linkc}{rgb}{0,0.2,0.68}
-% colored hyperlink instead of boxed
-%\hypersetup{colorlinks=true, linkcolor=linkc}
-\hypersetup{colorlinks=true, linkcolor=blue}
-
-\definecolor{shadecolor}{rgb}{0.9,0.9,0.1}
-
-\lstset{
-language=,
-%xleftmargin=2em,
-%frame=single,
-backgroundcolor=\color{codeblock},
-basicstyle=\color{basic}\footnotesize\ttfamily,
-identifierstyle=\color{identifiers},
-keywordstyle=\color{keywords},
-commentstyle=\color{comments},
-stringstyle=\color{strings},
-showstringspaces=false,
-%numbers=left,
-%numberstyle=\color{Gray}
-}
-
-\lstset{
-language=bash,
-numbers=left,
-}
-
-%\lstdefinelanguage{cylctaskdef}
-%{
-%morekeywords={INHERIT,TASK,FAMILY,DESCRIPTION,SCRIPTING,TYPE,LOGFILES,CONTACT_DELAY,OWNER,REMOTE_HOST,HOURS,COMMAND,MEMBERS,MEMBER_OF,ENVIRONMENT,DIRECTIVES,PREREQUISITES,COLDSTART_PREREQUISITES,SUICIDE_PREREQUISITES,OUTPUTS,N_RESTART_OUTPUTS,INTERCYCLE,FOLLOW_ON,conditional},
-%sensitive=false,
-%morecomment=[l]{\#},
-%morestring=[b]\",
-%numbers=left,
-%}
-
-\lstdefinelanguage{usage}
-{
-string=[b]{"},
-sensitive=false,
-morecomment=[l]{Usage:},
-morecomment=[l]{USAGE:},
-morecomment=[l]{usage:},
-morecomment=[l]{HELP:},
-morecomment=[l]{CATEGORY:},
-morecomment=[l]{COMMANDs:},
-morecomment=[l]{Arguments:},
-morecomment=[l]{Options:},
-morecomment=[l]{arguments:},
-morecomment=[l]{command-options:},
-morecomment=[l]{COMMANDS:},
-morecomment=[l]{options:},
-%morecomment=[l]{\#},
-numbers=none,
-}
-
-% allow \paragraph as subsubsubsection
-% and \subparagraph as subsubsubsubsection
-\setcounter{secnumdepth}{5}
-\setcounter{tocdepth}{5}
-
-% the follow makes \paragraph{} be followed 
-% by a newline, as for section headings.
-\makeatletter
-\renewcommand\paragraph{%
-   \@startsection{paragraph}{4}{0mm}%
-      {-\baselineskip}%
-      {.5\baselineskip}%
-      {\normalfont\normalsize\bfseries}}
-\makeatother
-% and similarly for \subparagraph{} 
-\makeatletter
-\renewcommand\subparagraph{%
-   \@startsection{subparagraph}{4}{0mm}%
-      {-\baselineskip}%
-      {.5\baselineskip}%
-      {\normalfont\normalsize\bfseries}}
-\makeatother
-
-%\title{Cylc \linebreak 
-%An Optimal Adaptive Metascheduler \linebreak 
-%For Complex Forecasting Suites \linebreak 
-
-\title{The Cylc Forecast Suite Metascheduler\linebreak 
-User Guide \linebreak 
-{\em \small Cylc Version THIS IS NOT A VERSIONED RELEASE} \linebreak
-{\em \small Released Under the GNU GPL v3.0 Software License} \linebreak
-{\small Copyright Hilary Oliver, NIWA, 2008-2011}}
-
-\author{Hilary Oliver}
-
-\titlepic{\includegraphics[width=0.5\textwidth]{niwa-colour.png}}
-
-% define a more compact itemized list environment
-\newenvironment{myitemize} {
-\begin{itemize}
-    \setlength{\itemsep}{1pt}
-    \setlength{\parskip}{0pt}
-    \setlength{\parsep}{0pt}
-    \setlength{\topsep}{0pt}
-    }{\end{itemize}}
-
-% define a more compact enumerate list environment
-\newenvironment{myenumerate} {
-\begin{enumerate}
-    \setlength{\itemsep}{1pt}
-    \setlength{\parskip}{0pt}
-    \setlength{\parsep}{0pt}
-    \setlength{\topsep}{0pt}
-    }{\end{enumerate}}
-
-
-\begin{document}
-
-\maketitle
-
-\pagebreak
-
-\input{abstract.tex}
-
-\pagebreak
-\tableofcontents
-\listoffigures
-%\listoftables
-
-\pagebreak
 \section{Introduction: How Cylc Works} 
 \label{HowCylcWorks}
 
@@ -237,7 +65,7 @@ upstream tasks.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=6cm]{images/dep-one-cycle} 
+        \includegraphics[width=6cm]{images/dep-one-cycle.png} 
     \end{center}
     \caption[A single cycle dependency graph for a simple suite]{\small
     The dependency graph for a single forecast cycle of a simple example
@@ -250,7 +78,7 @@ upstream tasks.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=8cm]{images/timeline-one}
+        \includegraphics[width=8cm]{images/timeline-one.png}
     \end{center}
     \caption[A single cycle job schedule for real time operation]{\small
     The optimal job schedule for two consecutive cycles of our example
@@ -272,7 +100,7 @@ diagrams.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=10cm]{images/dep-two-cycles-linked} 
+        \includegraphics[width=10cm]{images/dep-two-cycles-linked.png} 
     \end{center}
     \caption[What if the external driving data is available early?]{\small If
     the external driving data is available in advance, can we start
@@ -282,7 +110,7 @@ diagrams.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=6cm]{images/timeline-one-c} 
+        \includegraphics[width=6cm]{images/timeline-one-c.png} 
     \end{center}
     \caption[Attempted overlap of consective single-cycle job
     schedules]{\small A naive attempt to overlap two consecutive cycles
@@ -294,7 +122,7 @@ diagrams.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=8cm]{images/timeline-one-a} 
+        \includegraphics[width=8cm]{images/timeline-one-a.png} 
     \end{center}
     \caption[The only safe multicycle job schedule?]{\small The best that
     can be done {\em in general} when intercycle dependencies are
@@ -366,7 +194,7 @@ failures) won't result in dependency violations.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=8cm]{images/dep-multi-cycle} 
+        \includegraphics[width=8cm]{images/dep-multi-cycle.png} 
     \end{center}
     \caption[The complete multicycle dependency graph]{\small The complete
     dependency graph for the example suite, assuming the least possible
@@ -378,7 +206,7 @@ failures) won't result in dependency violations.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=6cm]{images/timeline-two-cycles-optimal} 
+        \includegraphics[width=6cm]{images/timeline-two-cycles-optimal.png} 
     \end{center}
     \caption[The optimal two-cycle job schedule]{\small The optimal two
     cycle job schedule when the next cycle's driving data is available in
@@ -399,7 +227,7 @@ with dependency violations.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=12cm]{images/timeline-three} 
+        \includegraphics[width=12cm]{images/timeline-three.png} 
     \end{center}
     \caption[Comparison of job schedules after a delay]{\small Job
     schedules for the example suite after a delay of almost one whole
@@ -413,7 +241,7 @@ with dependency violations.
 
 \begin{figure}
     \begin{center} 
-        \includegraphics[width=8cm]{images/timeline-two}
+        \includegraphics[width=8cm]{images/timeline-two.png}
     \end{center} 
     \caption[Optimal job schedule when all external data is
     available]{\small Job schedules for the example suite in case study
@@ -472,7 +300,7 @@ even more efficient job schedule.
 
 \begin{figure}
     \begin{center} 
-        \includegraphics[width=8cm]{images/task-pool}
+        \includegraphics[width=8cm]{images/task-pool.png}
     \end{center} 
     \caption[The cylc task pool]{\small How cylc sees a suite, in
     contrast to the multicycle dependency graph of Figure~\ref{fig-dep-multi}.
@@ -615,25 +443,25 @@ To view the content of the resulting central database, run gcylc and
 switch to the central database using the Database menu, or 
 use \lstinline=cylc db print --central= on the command line.
 
-\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
+%\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
 \begin{lstlisting}
 $ cylc db print --central
- admin:examples:CUG1    "Cylc User Guide Example 1"  /home/admin/cylc/examples/CUG1
- admin:examples:CUG73   "Cylc User Guide <SNIP>"     /home/admin/cylc/examples/CUG7.3
- admin:examples:CUG74   "A two-task test suite"      /home/admin/cylc/examples/CUG7.4
- admin:examples:CUG_QS1 "Cylc User Guide <SNIP> "    /home/admin/cylc/examples/CUG5/one
- admin:examples:CUG_QS2 "Cylc User Guide <SNIP>"     /home/admin/cylc/examples/CUG5/two
- admin:examples:CUG_QS3 "Cylc User Guide <SNIP>"     /home/admin/cylc/examples/CUG5/three
- admin:examples:FFHook  "family failure hook <SNIP>" /home/admin/cylc/examples/<SNIP>
- admin:examples:FFTask  "family failure clean <SNIP>"/home/admin/cylc/examples/<SNIP>
+ admin:examples:CUG1    "Cylc User Guide Example 1"  ~admin/cylc/examples/CUG1
+ admin:examples:CUG73   "Cylc User Guide <SNIP>"     ~admin/cylc/examples/CUG7.3
+ admin:examples:CUG74   "A two-task test suite"      ~admin/cylc/examples/CUG7.4
+ admin:examples:CUG_QS1 "Cylc User Guide <SNIP> "    ~/dmin/cylc/examples/CUG5/one
+ admin:examples:CUG_QS2 "Cylc User Guide <SNIP>"     ~admin/cylc/examples/CUG5/two
+ admin:examples:CUG_QS3 "Cylc User Guide <SNIP>"     ~admin/cylc/examples/CUG5/three
+ admin:examples:FFHook  "family failure hook <SNIP>" ~admin/cylc/examples/<SNIP>
+ admin:examples:FFTask  "family failure clean <SNIP>"~admin/cylc/examples/<SNIP>
 DONE
 \end{lstlisting}
-\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
+%\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 (some strings above have been truncated to reduce the line length)
 
 \subsection{Running The Automated Database Test} 
 
-\lstset{language=}
+\lstset{language=bash}
 The command \lstinline=cylc admin test-db= gives suite database
 functionality a work out - it registers the User Guide example suite
 under a new name and then manipulates it (by copying the suite in
@@ -803,15 +631,15 @@ This section works through some basic cylc functionality using
 the ``QuickStart'' example suites, which should have been registered in
 the central suite database during cylc installation, 
 
-\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
+%\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
 \begin{lstlisting}
 $ cylc database print --central | grep Quick
- admin:examples:CUG_QS1 "<SNIP>Quick Start Example 1" /home/admin/cylc/examples/CUG5/one
- admin:examples:CUG_QS2 "<SNIP>Quick Start Example 2" /home/admin/cylc/examples/CUG5/two
- admin:examples:CUG_QS3 "<SNIP>Quick Start Example 3" /home/admin/cylc/examples/CUG5/three
+ admin:examples:CUG_QS1 "<SNIP>Quick Start Example 1" ~admin/cylc/examples/CUG5/one
+ admin:examples:CUG_QS2 "<SNIP>Quick Start Example 2" ~admin/cylc/examples/CUG5/two
+ admin:examples:CUG_QS3 "<SNIP>Quick Start Example 3" ~admin/cylc/examples/CUG5/three
 DONE
 \end{lstlisting}
-\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
+%\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 (suite titles have been truncated above to reduce line length).
 
 \subsection{Configuring Your Environment For Cylc}
@@ -947,7 +775,7 @@ confirm that you now have a copy of the example suites.
 
 Here's how to do the same thing on the command line:
 
-\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
+%\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
 \begin{lstlisting}
 $ cylc db import admin:examples: $HOME/suites/examples
 Matched:
@@ -960,27 +788,27 @@ Matched:
    admin:examples:FFHook
    admin:examples:FFTask
 Locking database /home/oliverh/.cylc/LDB/db
-REGISTERED examples:CUG1 "<SNIP> Example 1" /home/oliverh/suites/examples/CUG1
+REGISTERED examples:CUG1 "<SNIP> Example 1" ~oliverh/suites/examples/CUG1
 Copying suite definition
-REGISTERED examples:CUG73 "<SNIP> Graph Example" /home/oliverh/suites/examples/CUG73
+REGISTERED examples:CUG73 "<SNIP> Graph Example" ~oliverh/suites/examples/CUG73
 Copying suite definition
-REGISTERED examples:CUG74 "A two-task test suite" /home/oliverh/suites/examples/CUG74
+REGISTERED examples:CUG74 "A two-task test suite" ~oliverh/suites/examples/CUG74
 Copying suite definition
-REGISTERED examples:CUG_QS1 "<SNIP> Example 1" /home/oliverh/suites/examples/CUG_QS1
+REGISTERED examples:CUG_QS1 "<SNIP> Example 1" ~oliverh/suites/examples/CUG_QS1
 Copying suite definition
-REGISTERED examples:CUG_QS2 "<SNIP> Example 2" /home/oliverh/suites/examples/CUG_QS2
+REGISTERED examples:CUG_QS2 "<SNIP> Example 2" ~oliverh/suites/examples/CUG_QS2
 Copying suite definition
-REGISTERED examples:CUG_QS3 "<SNIP> Example 3" /home/oliverh/suites/examples/CUG_QS3
+REGISTERED examples:CUG_QS3 "<SNIP> Example 3" ~oliverh/suites/examples/CUG_QS3
 Copying suite definition
-REGISTERED examples:FFHook  "<SNIP> script example"  /home/oliverh/suites/examples/FFHook
+REGISTERED examples:FFHook  "<SNIP> script example"  ~oliverh/suites/examples/FFHook
 Copying suite definition
-REGISTERED examples:FFTask  "<SNIP> task example"  /home/oliverh/suites/examples/FFTask
+REGISTERED examples:FFTask  "<SNIP> task example"  ~oliverh/suites/examples/FFTask
 Copying suite definition
 Unlocking database /home/oliverh/.cylc/LDB/db
 DONE
 \end{lstlisting}
 (suite title strings have been truncated again to reduce line length).
-\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
+%\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 
 \subsubsection{Private Suite Database Actions}
 
@@ -1093,6 +921,7 @@ Each cylc task has a command line that is called to invoke the real
 task processing when the task is ready to run. No task command lines have
 been defined in our example suite so the tasks all default to the 
 {\em dummy} command line:
+\lstset{language=bash}
 \begin{lstlisting}
 # SUITE.RC
 [tasks]
@@ -3735,12 +3564,9 @@ lot more complicated than those of the cylc example suites.
 
 %This section is auto-generated from the self-documenting command set.
   
-\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
+%\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 \lstset{language=usage}
 \input{commands.tex}
-%\pagebreak
-
-%\pagebreak
 
 
 \section{The Graph-Based Suite Control GUI}
@@ -4282,4 +4108,3 @@ improved cylc's usability and functionality.
 %\pagebreak
 
 
-\end{document}

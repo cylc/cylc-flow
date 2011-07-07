@@ -61,7 +61,7 @@ echo "SETTING VERSION TAG IN MAIN COMMAND AND USER GUIDE"
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" src/gui/gcylc.py
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" src/gui/SuiteControl.py
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" bin/cylc
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" doc/cylc-user-guide.tex
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" doc/cug-pdf.tex
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" doc/version.txt
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" README
 
@@ -71,41 +71,26 @@ echo "MAKING DOCUMENTATION (USER GUIDE)"
 export PATH=bin:$PATH
 export PYTHONPATH=src:$PYTHONPATH
 echo
-echo "LATEX PROCESSING 1/3"
-echo
+echo "LATEX PROCESSING"
 doc/process -c -f
-echo
-echo "LATEX PROCESSING 2/3"
-echo
-doc/process
-# Third time required to get Table of Contents page number right?!
-echo
-echo "LATEX PROCESSING 3/3"
-echo
-doc/process
 
 echo "DELETING DOCUMENTATION SOURCE"
-# copy and restore from doc/:
-#  1/ the PDF user guide
-#  2/ SuiteDesign.txt
-#  3/ suite.rc.README
-# (2 and 3 are required by 'cylc configure', which copies them into
-# suite defintion directores for the endless edification of users).
-cp doc/cylc-user-guide.pdf .
-cp doc/SuiteDesign.txt .
+# copy and restore generated documents from doc.
+mkdir tmpdoc
+cp doc/cug-pdf.pdf tmpdoc
+cp doc/*.html tmpdoc
+cp doc/*.css tmpdoc
+cp -r doc/images tmpdoc
+cp -r doc/screenshots tmpdoc
 rm -r doc
-mkdir doc
-mv cylc-user-guide.pdf doc/CylcUserGuide-${VERSION}.pdf
-mv SuiteDesign.txt doc
+mv tmpdoc doc
+mv doc/cug-pdf.pdf doc/CylcUserGuide-${VERSION}.pdf
 
 echo "DELETING DEV DIRECTORY"
 rm -r dev
 
 echo "REMOVING .pyc FILES"
 find . -name '*.pyc' | xargs rm
-
-echo "REMOVING SCREENSHOTS"
-rm -r images/screenshots
 
 echo "REMOVING .git files"
 find . -name '.git*' | xargs rm
