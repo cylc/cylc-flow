@@ -16,6 +16,9 @@ GENERAL
   broker) for satisfaction. We could then eliminate the broker, and
   may significantly increase efficiency for very large suites?
 
+* suite validation problem: missing '=' causes crash due to configobj
+  error.
+
 * lockserver configuration is currently installation-wide under
   $CYLC_DIR/conf. Should allow user override. Also, the default
   paths use $HOSTNAME which is a bash special variable! Users of ksh
