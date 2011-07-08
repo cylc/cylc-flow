@@ -585,10 +585,11 @@ include directories:
 library_path=os.environ['CYLC_DIR'] + '/external/installed/lib'
 include_path=os.environ['CYLC_DIR'] + '/external/installed/include/graphviz'
 \end{lstlisting}
-(Check these are the correct library and include paths by looking at the
-contents of the directories).  Finally, install pygraphviz:
+Check these are the correct library and include paths by inspecting the
+contents of those directories, and adjust if necessary.  Finally,
+install pygraphviz:
 \begin{lstlisting}
-$ . $CYLC_DIR/environment.sh  # if you haven't done this already
+$ export CYLC_DIR=/path/to/cylc  # (if not done already)
 $ python setup.py install --prefix=$CYLC_DIR/external/installed
 \end{lstlisting}
 This should install the Pygraphviz modules in the same place as the 
@@ -597,8 +598,8 @@ Pyro modules, e.g.:
 $ ls $CYLC_DIR/external/installed/lib64/python2.6/site-packages/
  pygraphviz  pygraphviz-1.1-py2.6.egg-info  Pyro  Pyro-3.14-py2.6.egg-info
 \end{lstlisting}
-If not, add another directory path to the PYTHONPATH variable in your
-cylc environment script.
+If not, add the correct Pyraphviz installation path to the
+PYTHONPATH variable in your cylc environment script.
 
 You should now have access to all cylc functionality. 
 Test by running the automated suite database test (Section~\ref{RTADT})
