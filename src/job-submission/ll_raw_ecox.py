@@ -21,6 +21,6 @@ from _ecox import ecox
 
 class ll_raw_ecox( ecox, ll_raw ):
 
-    def __init__( self, task_id, ext_task, task_env, dirs, pre_scr, post_scr, logs, joblog_dir, owner, host, remote_cylc_dir, remote_suite_dir ): 
-        self.check( task_id, owner, dirs )
-        ll_raw.__init__( self, task_id, ext_task, task_env, dirs, pre_scr, post_scr, logs, joblog_dir, owner, host, remote_cylc_dir, remote_suite_dir) 
+    def __init__( self, task_id, command, task_env, directives, manual_messaging, logs, joblog_dir, owner, host, remote_cylc_dir, remote_suite_dir ): 
+        self.check( task_id, owner, directives )
+        ll_raw.__init__( self, task_id, command, task_env, directives, manual_messaging, logs, joblog_dir, owner, host, remote_cylc_dir, remote_suite_dir) 
