@@ -18,9 +18,9 @@ if [[ $# == 2 ]]; then
         usage
         exit 1
     fi
-    VERSION=$2
+    VSN=$2
 elif [[ $# == 1 ]]; then
-    VERSION=$1
+    VSN=$1
 else
     echo "ERROR: too many args"
     usage
@@ -41,8 +41,8 @@ if [[ -z $TMPDIR ]]; then
     exit 1
 fi
 
-REPO="cylc-${VERSION}"
-TARBALL="cylc-${VERSION}.tgz"
+REPO="cylc-${VSN}"
+TARBALL="cylc-${VSN}.tgz"
 TMP=$TMPDIR/$$
 mkdir -p $TMP
 cd $TMP
@@ -58,13 +58,13 @@ rm -rf .git
 # - remove dev material
 
 echo "SETTING VERSION TAG IN MAIN COMMAND AND USER GUIDE"
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" src/gui/gcylc.py
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" src/gui/SuiteControl.py
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" bin/cylc
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" doc/cug-pdf.tex
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" doc/cug-html.tex
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" doc/version.txt
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VERSION/" README
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" src/gui/gcylc.py
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" src/gui/SuiteControl.py
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" bin/cylc
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/cug-pdf.tex
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/cug-html.tex
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/version.txt
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" README
 
 echo "MAKING DOCUMENTATION (USER GUIDE)"
 # make sure documentation processing uses the release versions
@@ -110,7 +110,7 @@ tar xzf $TARBALL
 if $TAG; then
     cd $ORIG_CYLC_DIR
     . environment.sh
-    git tag -a $VERSION -m 'New cylc release tag.'
+    git tag -a $VSN -m 'New cylc release tag.'
 fi
 
 # EOF
