@@ -166,7 +166,7 @@ Arguments:
                 itask.log( 'WARNING', "warm start: starting in succeeded state" )
                 itask.state.set_status( 'succeeded' )
                 itask.prerequisites.set_all_satisfied()
-                itask.outputs.set_all_complete()
+                itask.outputs.set_all_completed()
             if name in startup_tasks:
                 itask.log( 'WARNING', "This is a warm start: I will self-destruct." )
                 itask.prepare_for_death()
