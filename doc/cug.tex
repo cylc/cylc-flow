@@ -498,23 +498,22 @@ future cylc release.
 \subsection{Installing Everything Under Your Home Directory}
 
 If you do not have root access to your host machine and cannot easily
-get Pyro, graphviz, and pygraphviz installed at system level, here's
-how to install everything under a new sub-directory in the cylc source
-tree in your home directory, \lstinline=$CYLC_DIR/external=. 
-
-Download the Pyro, Graphviz, and Pygraphviz source distributions from
-the locations given at the beginning of Section~\ref{Requirements} and
-move the tarballs to the new installation directory.
+get Pyro, Graphviz, and Pygraphviz installed at system level, here's
+how to install everything under your home directory. 
 
 \subsubsection{Cylc}
 
-Cylc already installs into a normal user account - just unpack the 
-cylc tarball as described in Section~\ref{UnpackingTheCylcTarball}.
-After unpacking you can create the suite database and upload the example
-suites to it as just described in
-Section~\ref{CreatingTheCentralSuiteDatabase}.
+Cylc is already designed to be installed into a normal user account -
+just unpack the cylc release tarball as described in
+Section~\ref{UnpackingTheCylcTarball}.
+
 If you try to use cylc commands now you will get a warning that Pyro is
-not installed yet.
+not installed.
+
+Now create a new local installation directory in the cylc source tree,
+\lstinline=$CYLC_DIR/external=, and download the Pyro, Graphviz, and
+Pygraphviz source distributions to it (from the URLs given at the
+beginning of Section~\ref{Requirements}).
 
 \subsubsection{Pyro}
 
@@ -528,11 +527,13 @@ $ python setup.py install --prefix=$CYLC_DIR/external/installed
 Now you just need to take note of the resulting sub-directories under
 \lstinline=installed=, which are somewhat dependent on your Python
 version and platform, and add these to the \lstinline=PYTHONPATH=
-variable in your cylc environment script. Edit
+variable in your cylc environment script: Edit
 \lstinline=$CYLC_DIR/environment.sh=, uncomment the paragraph 
-starting with 
-\lstinline=# FOR LOCAL INSTALLATION OF PYRO, GRAPHVIZ, AND PYGRAPHVIZ=,
-and alter the path to suit your installation. 
+starting with this line:
+\begin{lstlisting}
+# FOR LOCAL INSTALLATION OF PYRO, GRAPHVIZ, AND PYGRAPHVIZ
+\end{lstlisting}
+and alter the paths under it to suit your local installation. 
 
 At this point you should be able to source the cylc environment script
 and use cylc commands:
@@ -544,9 +545,11 @@ Cylc release version: 3.3.3
 $ cylc -v
 3.3.3
 \end{lstlisting}
-You can now run cylc suites via the command line or the tree suite
-control GUI, but you can't graph suites or use the graph suite control
-GUI until you install graphviz and pygraphviz.
+
+Now create the suite database and upload the example suites as described
+in Section~\ref{CreatingTheCentralSuiteDatabase}.  At this point you 
+should have access to all cylc functionality except for suite graphing
+and the graph based suite control GUI. 
 
 \subsubsection{Graphviz}
 
@@ -560,12 +563,12 @@ $ ./configure --prefix=$CYLC_DIR/external/installed
 $ make
 $ make install
 \end{lstlisting}
-This will install graphviz files into the bin, include, and lib
-sub-directories of your local installation directory. The local installation
-section of your cylc environment script (above) provides access to the
-graphviz executables in this bin directory, although you will probably not
-need to use them. The graphviz lib and include locations are required 
-when installing Pygraphviz (next).
+This installs graphviz files into the bin, include, and lib
+sub-directories of your local installation directory. The local
+installation section of your cylc environment script (above) provides
+access to the graphviz executables in this bin directory, although you
+will probably not need to use them. The graphviz lib and include
+locations are required when installing Pygraphviz (next).
 
 \subsubsection{Pygraphviz}
 
