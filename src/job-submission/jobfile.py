@@ -89,7 +89,13 @@ class jobfile(object):
 
     def write_task_succeeded( self ):
         if self.manual_messaging:
-            self.FILE.write( '\n\necho "JOB SCRIPT EXITING: THIS TASK HANDLES ITS OWN COMPLETION MESSAGING"')
+            if self.simulation_mode:
+                self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE:')
+                self.FILE.write( '\n# (this task handles its own completion messaging in real mode)"')
+                self.FILE.write( '\ncylc task succeeded' )
+                self.FILE.write( '\n\necho "JOB SCRIPT EXITING (TASK SUCCEEDED)"')
+            else:
+                self.FILE.write( '\n\necho "JOB SCRIPT EXITING: THIS TASK HANDLES ITS OWN COMPLETION MESSAGING"')
         else:
             self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE:')
             self.FILE.write( '\ncylc task succeeded' )
