@@ -17,8 +17,6 @@
 # email if a task fails; or update a general monitoring system such as
 # Nagios according to whether a task has started, finished, or failed.
 
-echo "MMMMMMMMMMMUNGE: $MUNGE"
-
 EVENT=$1
 NAME=$2
 CTIME=$3
