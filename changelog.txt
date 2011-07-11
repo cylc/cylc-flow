@@ -62,3 +62,9 @@ Version number X.Y.Z incrementing:
       completion messaging in real mode need automatic completion in sim mode.  
  + Documented local installation of Pyro, Graphviz, and Pygraphviz.
  + Documented how to upgrade to a new version of cylc.
+
+ 3.3.5
+ + Fix a bug that affected task submission and execution timeouts:
+   - if a timeout was set, the hook script was called even if the event
+     did occur in time - which should cancel the timeout.
+ + More detailed documentation of complete installation by non-root users.
