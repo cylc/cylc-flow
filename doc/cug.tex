@@ -397,7 +397,8 @@ install them):
 \subsection{Unpacking The Cylc Tarball}
 \label{UnpackingTheCylcTarball}
 
-Cylc installs into a normal user account; just unpack the release tarball.
+Cylc installs into a normal user account; just unpack the release
+tarball in the desired location.
 
 \subsection{Configuring Your Environment For Cylc}
 
@@ -504,16 +505,18 @@ how to install everything under your home directory.
 \subsubsection{Cylc}
 
 Cylc is already designed to be installed into a normal user account -
-just unpack the cylc release tarball as described in
-Section~\ref{UnpackingTheCylcTarball}.
+just unpack the cylc release tarball in the desired location, which 
+we shall refer to below as \lstinline=$CYLC_DIR=.
 
 If you try to use cylc commands now you will get a warning that Pyro is
 not installed.
 
-Now create a new local installation directory in the cylc source tree,
-\lstinline=$CYLC_DIR/external=, and download the Pyro, Graphviz, and
-Pygraphviz source distributions to it (from the URLs given at the
-beginning of Section~\ref{Requirements}).
+\subsubsection{Download Pyro, Graphviz, And Pygraphviz}
+
+Create a new sub-directory in the cylc source tree,
+\lstinline=$CYLC_DIR/external=, and download the Pyro,
+Graphviz, and Pygraphviz source distributions to it (from the URLs given
+at the beginning of Section~\ref{Requirements}).
 
 \subsubsection{Pyro}
 
@@ -524,19 +527,22 @@ $ tar xzf Pyro-3.14.tar.gz
 $ cd Pyro-3.14
 $ python setup.py install --prefix=$CYLC_DIR/external/installed
 \end{lstlisting}
-Now you just need to take note of the resulting sub-directories under
-\lstinline=installed=, which are somewhat dependent on your Python
-version and platform, and add these to the \lstinline=PYTHONPATH=
-variable in your cylc environment script: Edit
-\lstinline=$CYLC_DIR/environment.sh=, uncomment the paragraph 
-starting with this line:
+Take note of the resulting Python \lstinline=site-packages= directory
+under \lstinline=external/installed/=, e.g.:
+\begin{lstlisting}
+$CYLC_DIR/external/installed/lib64/python2.6/site-packages/
+\end{lstlisting}
+(The exact path will depend on your local Python environment).
+Add this to your \lstinline=PYTHONPATH= by editing 
+\lstinline=$CYLC_DIR/environment.sh=, uncommenting the paragraph 
+that begins with:
 \begin{lstlisting}
 # FOR LOCAL INSTALLATION OF PYRO, GRAPHVIZ, AND PYGRAPHVIZ
 \end{lstlisting}
-and alter the paths under it to suit your local installation. 
+and altering the paths under it to suit your local installation. 
 
-At this point you should be able to source the cylc environment script
-and use cylc commands:
+Now you should be able to source the cylc environment and get cylc
+to print its release version: 
 \begin{lstlisting}
 $ export CYLC_DIR=$HOME/cylc-3.3.3   # or whichever version you have    
 $ . $CYLC_DIR environment.sh
@@ -545,6 +551,13 @@ Cylc release version: 3.3.3
 $ cylc -v
 3.3.3
 \end{lstlisting}
+If this command aborts and says that Pyro is not installed or is not available,
+then you have either not installed Pyro (check the output of the installation 
+command carefully) {\em or} you have not pointed to the installed Pyro modules
+in your PYTHONPATH, {\em or} you have not sourced the cylc environment script 
+since updating its PYTHONPATH.
+
+\subsubsection{Create The Suite Database And Load The Example Suites}
 
 Now create the suite database and upload the example suites as described
 in Section~\ref{CreatingTheCentralSuiteDatabase}.  At this point you 
@@ -585,15 +598,17 @@ include directories:
 library_path=os.environ['CYLC_DIR'] + '/external/installed/lib'
 include_path=os.environ['CYLC_DIR'] + '/external/installed/include/graphviz'
 \end{lstlisting}
-Check these are the correct library and include paths by inspecting the
-contents of those directories, and adjust if necessary.  Finally,
-install pygraphviz:
+Or you can just specify the absolute paths if you like, instead of using
+the \lstinline=$CYLC_DIR= environment variable. Check that these are the
+correct library and include paths by inspecting the contents of the
+specified directories, and adjust them if necessary.  Finally, install
+pygraphviz:
 \begin{lstlisting}
 $ export CYLC_DIR=/path/to/cylc  # (if not done already)
 $ python setup.py install --prefix=$CYLC_DIR/external/installed
 \end{lstlisting}
-This should install the Pygraphviz modules in the same place as the 
-Pyro modules, e.g.:
+This may or may not, depending on your local Python setup, install the
+Pygraphviz modules into the same place as the Pyro modules, e.g.:
 \begin{lstlisting}
 $ ls $CYLC_DIR/external/installed/lib64/python2.6/site-packages/
  pygraphviz  pygraphviz-1.1-py2.6.egg-info  Pyro  Pyro-3.14-py2.6.egg-info
@@ -601,17 +616,39 @@ $ ls $CYLC_DIR/external/installed/lib64/python2.6/site-packages/
 If not, add the correct Pyraphviz installation path to the
 PYTHONPATH variable in your cylc environment script.
 
-You should now have access to all cylc functionality. 
-Test by running the automated suite database test (Section~\ref{RTADT})
-and the automated scheduler test (Section~\ref{RTAST}), then go on 
-to the {\em Quick Start Guide} (Section~\ref{QuickStartGuide}).
+The easiest way to check that pygraphviz has been installed properly is
+to start an interactive Python session (type {\em python} after
+sourcing the cylc environment script to configure your PYTHONPATH) then
+type {\em import pygraphviz} at the python interpreter prompt. If this
+results in the error message
+{\em ImportError: No module named pygraphviz} then either you have 
+not installed pygraphviz properly, {\em or} you have not configured your
+PYTHONPATH to point to the installed pygraphviz modules, {\em or} you have not
+sourced the cylc environment script since updating its PYTHONPATH.
+Finally, if you have installed pygraphviz and configured your PYTHONPATH
+properly but graphviz itself has not been installed properly (or if the
+graphviz libraries have been deleted since you installed pygraphviz)
+then the initial pygraphiz import will be successful but a lower level
+import will fail when the pygraphviz modules cannot load the underlying
+graphviz libraries - in that case, reinstall graphviz.
+
+\subsubsection{What Next?}
+
+You should now have access to all cylc functionality.  Create 
+the central suite database and upload the example suites now, if 
+you have not done so already
+(Section~\ref{CreatingTheCentralSuiteDatabase}), then test 
+your cylc installation by running the automated suite database test
+(Section~\ref{RTADT}) and the automated scheduler test
+(Section~\ref{RTAST}), and go on to the {\em Quick Start Guide}
+(Section~\ref{QuickStartGuide}).
 
 \subsection{Upgrading To A New Cylc Version}
 
 This is as simple as unpacking the new cylc release and replacing the 
 old example suites with the new ones in the central suite database. 
 
-In a future release we make the central suite database 
+In a future release we will make the central suite database 
 installation-independent.  Currently though it is held in the cylc
 installation directory under \lstinline=$CYLC_DIR/CDB=, i.e. if you have
 multiple versions of cylc on the one host each will have its own
