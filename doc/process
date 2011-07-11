@@ -6,7 +6,6 @@ set -e
 
 usage() {
 	echo "USAGE: [-f][-c] $0"
-    echo ' -f, force re-conversion of eps figures to PDF'
     echo ' -c, force re-processing of command documentation'
     echo "Run this script from \$CYLC_DIR"
 }
@@ -119,15 +118,6 @@ cylc --version > doc/version.txt
 #-----------------------------------------------------------------------
 
 cd doc
-
-#cd inkscape-svg
-#for F in *.eps; do
-#    [[ ! -f ${F%eps}pdf ]] || $FORCE && {
-#        echo converting $F to PDF
-#        epstopdf $F
-#    }
-#done
-#cd ..
 
 pdflatex cug-pdf.tex
 pdflatex cug-pdf.tex
