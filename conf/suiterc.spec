@@ -282,7 +282,7 @@ roll log at startup = boolean( default=True )
 #>\end{myitemize}
 
 state dump directory = string( default = string( default='$HOME/CylcStateDumps/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
-#> Suite state dump files allows cylc to restart suites from previous states. 
+#> Suite state dump files allow cylc to restart suites from previous states. 
 #> The default state dump and its backups, and special
 #> pre-intervention state dumps are all stored under this directory.
 #> {\em You must ensure the directory is suite-specific; this can be
