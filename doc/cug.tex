@@ -2276,7 +2276,7 @@ complicated conditional triggers we will certainly address this problem.
 
 Considering the intercycle dependence shown in {\em Intercycle Triggers}
 (Section~\ref{IntercycleTriggers}) it is clear that some kind of
-boostrapping process will be required to get the suite going initially,
+bootsrapping process will be required to get the suite going initially,
 because in the very first cycle there is no previous instance of A to
 satisfy B's prerequisites. 
  
@@ -2446,7 +2446,7 @@ Cylc task families can have internal dependencies, and members can also
 participate in dependent relationships outside of the family.
 
 Task families can be declared `sequential' in the suite.rc [special
-tasks] section, in which case they will will run sequentially even if
+tasks] section, in which case they will run sequentially even if
 their members are not sequential.
 
 To trigger downstream processing off a family even if one or more of its 
@@ -2526,7 +2526,7 @@ parallelism, because every member has to wait on its parent family
 starting before it can run, and all members have to finish before
 downstream processing can continue.\footnote{Actually downstream tasks
 can trigger off individual family members as if they weren't family
-members - but extensive use of this would defeat the purpose 
+members - but extensive use of this would probably defeat the purpose 
 of using a family in the first place.}
 
 \subsection{Task Definition}
