@@ -363,7 +363,10 @@ class task( Pyro.core.ObjBase ):
             # task submission and execution timeouts only
             return
         current_time = task.clock.get_datetime()
-        if self.timeouts['submission'] != None and self.submission_timer_start != None:
+        if self.timeouts['submission'] != None \
+                and self.submission_timer_start != None \
+                and not self.state.is_running():
+                # check for job submission timeout
             timeout = self.submission_timer_start + datetime.timedelta( minutes=self.timeouts['submission'] )
             if current_time > timeout:
                 msg = 'submitted ' + str( self.timeouts['submission'] ) + ' minutes ago, but has not started'
@@ -372,7 +375,10 @@ class task( Pyro.core.ObjBase ):
                 subprocess.call( command, shell=True )
                 self.submission_timer_start = None
 
-        if self.timeouts['execution'] != None and self.execution_timer_start != None:
+        if self.timeouts['execution'] != None \
+                and self.execution_timer_start != None \
+                and self.state.is_running():
+                    # check for job execution timeout
             timeout = self.execution_timer_start + datetime.timedelta( minutes=self.timeouts['execution'] )
             if current_time > timeout:
                 if self.timeouts['reset on incoming']:
