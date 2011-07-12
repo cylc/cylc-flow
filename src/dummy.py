@@ -18,5 +18,5 @@
 
 # simulation mode task commands
 
-dummy_command = 'cylc wrap -m "echo Hello from DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP"'
-dummy_command_fail = 'cylc wrap -m "echo Hello from DUMMY ${TASK_ID}, ABORTING by request; /bin/false"'
+dummy_command = "echo Hello from DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP"
+dummy_command_fail = "echo Hello from DUMMY ${TASK_ID}, ABORTING by request; false"

@@ -426,7 +426,7 @@ class config( CylcConfigObj ):
                 if output_name == 'fail':
                     trigger = task_name + '%$(CYCLE_TIME) failed'
                 else:
-                    raise SuiteConfigError, "ERROR: Task '" + lnode.name + "' does not define output '" + lnode.output  + "'"
+                    raise SuiteConfigError, "ERROR: Task '" + task_name + "' does not define output '" + output_name  + "'"
         else:
             trigger = task_name + '%$(CYCLE_TIME) succeeded'
 
@@ -517,10 +517,10 @@ class config( CylcConfigObj ):
 
     def process_configured_directories( self ):
         # absolute path, but can use ~user, env vars ($HOME etc.):
-        self['top level cylc log directory'] = \
-                os.path.expandvars( os.path.expanduser( self['top level cylc log directory']))
-        self['top level state dump directory'] =  \
-                os.path.expandvars( os.path.expanduser( self['top level state dump directory']))
+        self['suite log directory'] = \
+                os.path.expandvars( os.path.expanduser( self['suite log directory']))
+        self['state dump directory'] =  \
+                os.path.expandvars( os.path.expanduser( self['state dump directory']))
         self['job submission log directory' ] = \
                 os.path.expandvars( os.path.expanduser( self['job submission log directory' ]))
         self['visualization']['run time graph directory'] = \
@@ -529,8 +529,8 @@ class config( CylcConfigObj ):
     def create_directories( self ):
         # create logging, state, and job log directories if necessary
         for dir in [
-            self['top level cylc log directory'], 
-            self['top level state dump directory'],
+            self['suite log directory'], 
+            self['state dump directory'],
             self['job submission log directory'],
             self['visualization']['run time graph directory'] ]: 
             mkdir_p( dir )
@@ -1161,6 +1161,8 @@ class config( CylcConfigObj ):
         taskd.remote_cylc_directory = taskconfig['remote cylc directory']
         taskd.remote_suite_directory = taskconfig['remote suite directory']
 
+        taskd.manual_messaging = taskconfig['manual task completion messaging']
+
         # task-specific event hook scripts
         taskd.hook_scripts[ 'submitted' ]         = taskconfig['task submitted hook script']
         taskd.hook_scripts[ 'submission failed' ] = taskconfig['task submission failed hook script']
@@ -1178,8 +1180,6 @@ class config( CylcConfigObj ):
         taskd.commands    = taskconfig[ 'command' ]
         taskd.environment = taskconfig[ 'environment' ]
         taskd.directives  = taskconfig[ 'directives' ]
-        taskd.pre_scripting   = taskconfig[ 'pre-command scripting' ]
-        taskd.post_scripting   = taskconfig[ 'post-command scripting' ]
 
         return taskd
 

@@ -1,19 +1,26 @@
+
+Since moving cylc to github, I'm using this page to keep track of 
+half-formed ideas and issues that require further investigation 
+before concluding there is a problem ... at which point the issue
+can be migrated to the github issue tracker.
+
 _______
 GENERAL
 
-* maintain a list of finished tasks distinct from the task pool but
-  accessible from the gui, so that users can get at old output.
+* Consider changing the task pool list to a dictionary indexed by task
+  ID. This would avoid having to loop through the pool to find a task.
+* Also, consider a major change to the scheduling algorithm that would
+  fit quite nicely with a dict-based task pool: if dict values contain 
+  a list of *known trigger tasks* determined from the dependency graph
+  each task could just ask those tasks, rather than all of them (via the
+  broker) for satisfaction. We could then eliminate the broker, and
+  may significantly increase efficiency for very large suites?
 
-* allow tasks that run (in cycle time space) less than daily, and more
-  than hourly. src/cycle_time.py has been OO-ified and extend to 
-  minutes and seconds in prepartion for this.
+* suite validation problem: missing '=' causes crash due to configobj
+  error.
 
-* remote job log directory for remote tasks.
-
-* it should be possible to trigger clock-triggered tasks manually
-  prior to their trigger time. (consider also: clock-triggered tasks
-  downstream of the purge root - they won't trigger in the purge
-  simulation if their time is not up yet?)
+* lockserver configuration is currently installation-wide under
+  $CYLC_DIR/conf - should allow user override.
 
 * RECURSIVE PURGE OVERHAUL? see documentation of limitations in the
   purge command help. Post cylc-3.0 we could easily determine, via the
@@ -22,6 +29,8 @@ GENERAL
   the in-method comments: ensure that ALL tasks whose prerequisites get
   satisfied in the virtual system evolution that occurs in the purge
   algorithm, get unsatisfied again at the end of it.
+ (consider also: clock-triggered tasks downstream of the purge root -
+ they won't trigger in the purge simulation if their time is not up yet?)
 
 * dummy_command module not needed due to default command in suite.rc?
 
@@ -32,19 +41,6 @@ GENERAL
   final task in the 'held' state, not just delete them? (see 'STOPPING'
   in bin/_run
 
-* allow 'submit' from suite control GUI.
-
-* allow launch gcylc from suite control GUIs?
-
-* get_oldest_ctime() loops through all tasks and is called multiple times
-  within the task processing loop - should be able to call it just once.
-
-* CONDITIONAL EXPRESSION GRAPHING BUG:
-    A & B | C => D
-  A suite with an expression like this will run correctly but not plot correctly.
-  For plotting, it is parsed as "A and ( B or C )", whereas it should be 
-  "(A and B) or C"
-
 *  Do suicide prerequisites need to be re-instated in cylc-3? Maybe they 
    are not needed now that we have conditional prerequisites?
 
@@ -53,9 +49,6 @@ GENERAL
 
 * Consider replacing finished tasks with a data structure that remembers
   what happened. More efficient for very large suites?
-
-* Consider changing the task pool list to a dictionary indexed by task
-  ID. This would avoid having to loop through the pool to find a task.
 
 * IMPORTANT: rationalize suite shutdown criteria in main loop.
 
@@ -74,9 +67,8 @@ GENERAL
 
 * errors caught by validate should also be caught cleanly if the user
   tries to start the suite. E.g. misspell a task in 'tasks to exclude at
-  startup'
-
-* add 'held' task coloring to the old terminal monitor program.
+  startup'.  And/or should a full validation be done automatically prior
+  to starting a suite? 
 
 * GUI: check for suite block before popping up entry dialogs?
 
@@ -93,7 +85,8 @@ GENERAL
 * stop-at-cycle-time won't shutdown if there are any tasks stuck in
   'waiting', even if they are all passed the stop cycle (still true?).
 
-* temporary job file location should be configurable.
+* temporary job file location should be configurable, other than via
+  $TMPDIR?
 
 * update cylc xdot code from latest version available? (see recently
   deleted 'external' directory)
@@ -114,7 +107,7 @@ GENERAL
   as the colon screws up the PATH to the suite bin directory.
 
 * tasks that are not in the dep graph can now be run with 'submit';
-  should we allow insertion to?
+  should we allow insertion too?
 
 * clean up prerequisites classes - put all in one module? (same with
   outputs + requisites?)
@@ -233,15 +226,21 @@ GENERAL
 * note that prerequisites are no longer derived from requisites. Change
   documentation in the latter class (and elsewhere?) to reflect this.
 
-* task scripts: does failure in RES=$( foo.sh ) get err trapped? (no?)
-
 * use new cylc_mode class everywhere mode test is required.
+
+* consider more specialized messaging commands:
+    cylc task error
+    cylc task warning
+    cylc task message
+    cylc task output
 
 * cylc submit --scheduler: task state resets to 'running' but all
   messages are ignored.
 
 * extreme task elimination method - extrapolate forward in time to see
-  if a finished task will ever be needed, otherwise delete?
+  if a finished task will ever be needed, otherwise delete? Or, post 
+  cylc-3, use the predefined dependency graph to detect tasks that 
+  will not be needed anymore?
 
 * CHECK USE OF DICTIONARY ITERATION THROUGHOUT THE CODE:
     for item in dict:
@@ -258,8 +257,8 @@ GENERAL
   to check that which returns a result before continuing (e.g. if 
   the task script has not been set executable). 
 
-* DAEMON AND ASYNCHRONOUS TASKS: initial tests done; go back, check, and
-  complete, for new versions of cylc.
+* DAEMON TASKS: as for asynchronous tasks, demonstrated in cylc-2; go
+  back, check, and complete, for cylc-3.
 
 * consider reset --no-spawn (Bernard tried to reset a waiting unspawned
   task to finished, which made it spawn ... is this the desired
@@ -275,13 +274,10 @@ GENERAL
   (?) through the loop in order to update the summary immediately for
   monitoring.
 
-* all error messages should go to stderr: print >> sys.stderr, 'message'
+* check that all error messages go to stderr (print >> sys.stderr).
 
 * allow cylc task proxies to kill their real external tasks at shutdown
   (and otherwise)?
-
-* make sure that no remote operation, other than 'stop', can bring a
-  suite down (exception handling on all remote switches).
 
 * when there are multiple finished tasks that can satisfy a new task's
   restart prerequisites, the one that actually satisfies the new task
@@ -299,9 +295,6 @@ GENERAL
 * clean up the clock class with respect to dummy vs real time, and move
   it into task pool?
 
-* see To Do comment in broker.negotiate() - priority low.
-
-___
 GUI
 
 * dynamic reloading of the LED panel if the number of tasks in the

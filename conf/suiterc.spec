@@ -78,7 +78,7 @@ description = string( default="No description supplied" )
 job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=background )
 #>The default job submission method for the suite. This
 #>determines how cylc job scripts are executed when a task is
-#>ready to run. See Section~\ref{JobSubmission}.
+#>ready to run - see Section~\ref{TaskExecution}.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
@@ -256,16 +256,18 @@ runahead limit in hours = integer( min=0, default=24 )
 #>\item {\em example:} \lstinline@runahead limit in hours = 48@
 #>\end{myitemize}
 
-top level cylc log directory = string( default = '$HOME/.cylc/logging' )
-#>The top-level directory under which cylc 
-#> writes its suite-specific log.
+suite log directory = string( default = string( default='$HOME/CylcSuiteLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+#>Cylc logs all events to a suite log file. The main log and
+#> its automatic backups are stored under this directory. {\em You must
+#> ensure the directory is suite-specific; this can be done without hard wiring by
+#> using suite identity environment variables as the default value does.}
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
-#>\item {\em default:} \lstinline=$HOME/.cylc/logging=.
-#>\item {\em example:} \lstinline@top level cylc log directory = $HOME/logging@
+#>\item {\em default:} \lstinline=$HOME/CylcSuiteLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME=
+#>\item {\em example:} \lstinline@suite log directory = $HOME/CSL/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME@
 #>\end{myitemize}
 
 roll log at startup = boolean( default=True )
@@ -279,17 +281,20 @@ roll log at startup = boolean( default=True )
 #>\item {\em example:} \lstinline@roll log at startup = False@
 #>\end{myitemize}
 
-top level state dump directory = string( default = '$HOME/.cylc/state' )
-#>The top-level directory under which cylc
-#> stores suite-specific state dump files (which can be used to restart
-#> a suite from an earlier state).
+state dump directory = string( default = string( default='$HOME/CylcStateDumps/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+#> Suite state dump files allow cylc to restart suites from previous states. 
+#> The default state dump and its backups, and special
+#> pre-intervention state dumps are all stored under this directory.
+#> {\em You must ensure the directory is suite-specific; this can be
+#> done without hard wiring by using suite identity environment variables
+#> as the default value does.}
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
-#>\item {\em default:} \lstinline=$HOME/.cylc/state=
-#>\item {\em example:} \lstinline@top level state dump directory = $HOME/CylcState@
+#>\item {\em default:} \lstinline=$HOME/CylcStateDumps/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME=
+#>\item {\em example:} \lstinline@state dump directory = $HOME/CSD/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME@
 #>\end{myitemize}
 
 number of state dump backups = integer( min=1, default=10 )
@@ -311,7 +316,7 @@ number of state dump backups = integer( min=1, default=10 )
 #>\item {\em example:} \lstinline@number of state dump backups = 20@
 #>\end{myitemize}
 
-job submission log directory = string( default='$HOME/CylcLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+job submission log directory = string( default='$HOME/CylcJobLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
 #> The directory in which to put the stdout and stderr
 #> log files for the job scripts submitted by cylc when tasks are ready to run.
 #> For monolithic tasks (which don't resubmit sub-jobs themselves) these will
@@ -322,7 +327,7 @@ job submission log directory = string( default='$HOME/CylcLogs/$CYLC_SUITE_GROUP
 #>\item {\em type:} string
 #>\item {\em legal values:} absolute path, may contain environment
 #> variables such as \lstinline=$HOME=.
-#>\item {\em default:} \lstinline=$HOME/CylcLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME=
+#>\item {\em default:} \lstinline=$HOME/CylcJobLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME=
 #>\item {\em example:} \lstinline@job submission log directory = $HOME/Logs/$CYLC_SUITE@
 #>\end{myitemize}
 #> {\em For remotely hosted tasks this configuration item is currently ignored - task
@@ -411,13 +416,7 @@ reset execution timeout on incoming messages = boolean( default=True )
 
 pre-command scripting = string( default='' )
 #> Scripting to be executed verbatim in the task execution environment,
-#> before the task command, for every task. If 
-#> used, this scripting should be simple and reliable (anything
-#> complex should go in the task itself) because it executes before the 
-#> ``task started'' message (thus an abort here will not register as a task
-#> failure - it will appear that the task is stuck in the submitted state).
-#> Suite level pre-command scripting, if defined, will be executed
-#> immediately prior to task-specific pre-command scripting.
+#> before the task command, for every task. 
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} multiline string
@@ -432,13 +431,7 @@ pre-command scripting = string( default='' )
 
 post-command scripting = string( default='' )
 #> Scripting to be executed verbatim in the task execution environment,
-#> immediately after the task command. If 
-#> used, this scripting should be simple and reliable (anything
-#> complex should go in the task itself) because it executes after the 
-#> ``task succeeded'' message (thus an error here will not register as a task
-#> failure - it will appear that the task succeeded).
-#> Suite level post-command scripting, if defined, will be executed
-#> immediately prior to task-specific post-command scripting.
+#> immediately after the task command, for every task. 
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} multiline string
@@ -532,16 +525,14 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>\label{JobSubShell}
 #>This is the shell used to interpret the job script submitted by cylc
 #> when a task is ready to run.
-#> {\em It has no bearing on the shell used for task scripts.}
-#> The pre- and post-command scripting items, if used, must be valid
-#> for the job submission shell; which is entirely up to the user. The
+#> {\em It has no bearing on the shell used in task implementations.}
+#> Global pre- and post-command scripting, and the content of the task
+#> commands themselves, must be valid in the job submission shell. The
 #> suite environment sections must be converted similarly;
 #> this is currently hardwired into cylc as 
 #> \lstinline@export item=value@ (which works for both bash and ksh
 #> because \lstinline=value= is entirely user-defined) so cylc would
-#> have to be modified slightly if other shells are needed (this
-#> probably not necessary as the scripting items should not be heavily
-#> used anyway - see the warnings in the documentation for those items).
+#> have to be modified slightly if other shells are needed.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
@@ -554,6 +545,21 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 #>   \end{myitemize}
 #>\item {\em default:} \lstinline=/bin/bash= 
 #>\item {\em example:} \lstinline@job submission shell = /bin/ksh@
+#>\end{myitemize}
+
+manual task completion messaging = boolean( default=False )
+#> If a task's initiating process detaches and exits before task
+#> processing is finished, then cylc cannot arrange for the task to
+#> automatically signal when it has succeeded or failed. In such cases
+#> you must insert some minimal cylc messaging in appropriate places in
+#> the task implementation. Use this global setting in the unlikely
+#> event that all, or most, of your tasks are in this category; otherwise
+#> you can set it on a per task basis.
+#>\begin{myitemize}
+#>\item {\em section:} (top level)
+#>\item {\em type:} boolean
+#>\item {\em default:} \lstinline=False= 
+#>\item {\em example:} \lstinline@manual task completion messaging = True@
 #>\end{myitemize}
 
 [special tasks]
@@ -809,27 +815,27 @@ __many__ = string
 #> \end{lstlisting}
 #>\end{myitemize}
 
-    command = force_list( default=list( cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP",))
-#> This is the command line, or {\em list of command lines}, to execute when
-#> the task is ready to run. If the command is omitted or commented out
-#> the task will run as a dummy task (see the default value below). If a
-#> list of command lines is
-#> supplied, the task will automatically resubmit with the second
-#> command line if the first fails (and so on). Many existing commands, scripts,
-#> and programs can be used unmodified as cylc tasks by executing them inside
-#> the cylc task wrapper (see Section ~\ref{TaskWrapping}).
+    command = force_list( default=list( "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP",))
+#> This is the scripting to execute when the task is ready to run. If
+#> omitted the task will run as a dummy task (see the default command
+#> below). It can be a single command line or verbatim scripting inside
+#> a multiline string. If a list of command lines (or of mulitline
+#> scripting strings) is provided, the task
+#> will automatically resubmit with the second command/script if the
+#> first fails, and so on - this can be used for automated error
+#> recovery.
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
-#>\item {\em default:} \lstinline=cylc wrap -m "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP"=
-#>\item {\em example:} \lstinline=cylc wrap GetData.sh=
+#>\item {\em default:} \lstinline="echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP"=
+#>\item {\em example:} \lstinline=GetData.sh OPTIONS ARGUMENTS=
 #>\end{myitemize}
 
     job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=None )
 #>Set the job submission method for this task, overriding the suite
 #> default (if there is one). This
 #>determines how cylc job scripts are executed when a task is
-#>ready to run. See {\em Task Job Submission}, Section~\ref{JobSubmission}.
+#>ready to run. See {\em Task Execution}, Section~\ref{TaskExecution}.
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
@@ -865,48 +871,6 @@ __many__ = string
 #> {\em For remotely hosted tasks this configuration item is currently ignored - task
 #> output logs are written to the remote task owner's home directory.} (This will be
 #> addressed in a future cylc release).
-
-
-    pre-command scripting = string( default='' )
-#> Scripting to be executed verbatim in the task execution environment,
-#> immediately before the task command. If 
-#> used, this scripting should be simple and reliable (anything
-#> complex should go in the task itself) because it executes before the 
-#> ``task started'' message (thus an abort here will not register as a task
-#> failure - it will appear that the task is stuck in the submitted state).
-#> If suite level pre-command scripting is also defined, it will be executed
-#> first.
-#>\begin{myitemize}
-#>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
-#>\item {\em type:} multiline string
-#>\item {\em default:} empty
-#>\item {\em example:}
-#> \begin{lstlisting}
-#>    pre-command scripting = """
-#>      . $HOME/.profile
-#>      echo Hello from task $TASK_ID!"""
-#> \end{lstlisting}
-#>\end{myitemize}
-
-    post-command scripting = string( default='' )
-#> Scripting to be executed verbatim in the task execution environment,
-#> immediately after the task command. If 
-#> used, this scripting should be simple and reliable (anything
-#> complex should go in the task itself) because it executes after the 
-#> ``task succeeded'' message (thus an abort here will not register as a task
-#> failure - it will appear that the task finished successfully).
-#> If suite level post-command scripting is also defined, it will be executed
-#> first.
-#>\begin{myitemize}
-#>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
-#>\item {\em type:} multiline string
-#>\item {\em default:} empty
-#> \begin{lstlisting}
-#>    pre-command scripting = """
-#>      . $HOME/.profile
-#>      echo Goodbye from task $TASK_ID!"""
-#> \end{lstlisting}
-#>\end{myitemize}
 
     owner = string( default=None )
 #> If a task has a defined owner, cylc will attempt to execute the task
@@ -1088,6 +1052,20 @@ __many__ = string
 #>\end{myitemize}
 #>RESUME
 
+    manual task completion messaging = boolean( default=None )
+#> If a task's initiating process detaches and exits before task
+#> processing is finished, then cylc cannot arrange for the task to
+#> automatically signal when it has succeeded or failed. In such cases
+#> you must insert some minimal cylc messaging in appropriate places in
+#> the task implementation. There is an equivalent global setting in the
+#> unlikely event that all, or most, of your tasks are in this category.
+#>\begin{myitemize}
+#>\item {\em section:} (top level)
+#>\item {\em type:} boolean
+#>\item {\em default:} \lstinline=None= 
+#>\item {\em example:} \lstinline@manual task completion messaging = True@
+#>\end{myitemize}
+
         [[[environment]]]
 #> Use this section to define the task-specific task execution
 #> environment. Variables defined here may refer to variables in
@@ -1103,7 +1081,7 @@ __many__ = string
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]] $\rightarrow$ [[[environment]]]
 #>\item {\em type:} string
 #>\item {\em legal values:} any environment variable assignment
-#> expression valid in the {\em job submission shell} (Section~\ref{JobSubShell}).
+#> expression valid in the {\em job submission shell}. 
 #> White space around the `$=$' is allowed (the
 #> \lstinline=suite.rc= file is not a shell script). 
 #> \item {\em examples:} for the bash shell: 
@@ -1141,14 +1119,11 @@ __many__ = string
 
         [[[outputs]]]
 #> \label{outputs}
-#> {\em This section is only required if other tasks 
-#> trigger off specific labeled outputs of this task}, as opposed to 
-#> triggering off it finishing. Tasks with explicit outputs 
-#> would generally do their own cylc messaging so that they can report
-#> said outputs complete as soon as they are ready (the cylc
-#> task wrapper does report such explicit outputs complete when the task
-#> finishes, but then you might as well not bother with explicit outputs
-#> and just trigger off the task finishing).
+#> {\em Only required if other tasks trigger off specific {\em internal
+#> outputs} of this task}, as opposed to triggering off it finishing.
+#> The task implementation must report the specified output message 
+#> by calling \lstinline=cylc task message OUTPUT_MESSAGE= when the
+#> corresponding real output has been completed.
         __many__ = string
 #> Replace MANY with each output message definition, for any explicit output
 #> messages emitted by this task and depended on by other tasks in the 
@@ -1160,8 +1135,7 @@ __many__ = string
 #>           \lstinline=$(CYCLE_TIME)= with an optional offset as shown
 #> below. {\bf Note the round parentheses} - this is not a shell
 #> variable, although without an offset it does correspond to 
-#> the \lstinline=$CYCLE_TIME= in the task
-#> execution environment.
+#> the \lstinline=$CYCLE_TIME= in the task execution environment.
 #>\item {\em default:} None
 #>\item{ \em examples:}
 #> \begin{lstlisting}

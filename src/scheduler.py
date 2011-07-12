@@ -196,8 +196,8 @@ class scheduler(object):
             raise SystemExit( "ERROR: this suite can only run in simulation mode (see suite.rc)" )
 
         # DETERMINE SUITE LOGGING AND STATE DUMP DIRECTORIES
-        self.logging_dir = os.path.join( self.config['top level cylc log directory'],    self.suite ) 
-        self.state_dump_dir   = os.path.join( self.config['top level state dump directory'], self.suite )
+        self.logging_dir = os.path.join( self.config['suite log directory'] ) 
+        self.state_dump_dir   = os.path.join( self.config['state dump directory'] )
         #DISABLED if self.practice:
         #DISABLED     self.logging_dir += '-practice'
         #DISABLED     self.state_dump_dir   += '-practice'
@@ -340,6 +340,7 @@ class scheduler(object):
         job_submit.global_pre_scripting = self.config['pre-command scripting']
         job_submit.global_post_scripting = self.config['post-command scripting']
         job_submit.owned_task_execution_method = self.config['owned task execution method']
+        job_submit.global_manual_messaging = self.config['manual task completion messaging']
 
         job_submit.global_task_owner = self.config['owner']
         job_submit.global_remote_host = self.config['remote host']
@@ -1161,12 +1162,8 @@ class scheduler(object):
             itask.reset_state_held()
 
         if state != 'failed':
-            try:
-                # remove the tasks's "failed" output
-                itask.outputs.remove( task_id + ' failed' )
-            except:
-                # the task had no "failed" output
-                pass
+            # remove the tasks's "failed" output
+            itask.outputs.remove( task_id + ' failed', fail_silently=True )
 
     def add_prerequisite( self, task_id, message ):
         # find the task to reset

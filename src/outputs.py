@@ -93,14 +93,14 @@ class outputs( object ):
             sys.exit(1)
         self.not_completed[message] = self.owner_id
 
-    def remove( self, message ):
-        try:
+    def remove( self, message, fail_silently=False ):
+        if message in self.completed:
             del self.completed[ message ]
+        elif message in self.not_completed:
             del self.not_completed[ message ]
-        except KeyError:
-            print >> sys.stderr, 'WARNING: not such output to delete:'
-            print >> sys.stderr, message
-
+        elif not fail_silently:
+            print >> sys.stderr, 'WARNING: no such output to delete:'
+            print >> sys.stderr, ' => ', message
 
     def register( self ):
         # automatically define special 'started' and 'succeeded' outputs

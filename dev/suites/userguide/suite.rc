@@ -13,43 +13,34 @@ functionality."""
 
 #job submission shell = /usr/bin/ksh
 
-#dummy mode only = True
-
 use lockserver = True
 use secure passphrase = True
 
 #task submitted hook script         = alert.sh
 #task started hook script           = alert.sh
-#task finished hook script          = alert.sh
+#task succeeded hook script          = alert.sh
 #task failed hook script            = alert.sh
 #task warning hook script           = alert.sh
 #task submission failed hook script = alert.sh
 task timeout hook script           = timeout.sh
 task execution timeout in minutes = 0.2
+task submission timeout in minutes = 0.2
 
-#use crude safety lock = True
-#ignore task owners = True
-#job submission method = ll_basic
-
-tasks to include at startup = X
+tasks to include at startup = C
 
 #use suite blocking = True
 
-pre-command scripting = '''
-echo hello world!
-'''
-post-command scripting = '''
-echo goodbye world!
-'''
+pre-command scripting = 'echo hello world!'
+post-command scripting = 'echo goodbye world!'
 
-[dummy mode]
+[simulation mode]
 #clock offset from initial cycle time in hours = 0
 task run time in seconds = 1
 
 [special tasks]
     startup          = prep
     sequential       = A, B
-    coldstart        = ColdA, ColdB, ColdC
+    cold start        = ColdA, ColdB, ColdC
     clock-triggered  = X(1)
     models with explicit restart outputs = C
 
@@ -83,7 +74,6 @@ task run time in seconds = 1
                    bar => baz"""
 
 [cylc local environment]
-    MUNGE = flunge
 [environment]
     TASK_EXE_SECONDS = 15
     WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
@@ -97,31 +87,21 @@ task run time in seconds = 1
 
 [ tasks ]
     [[prep]]
-        command = cylc wrap clean-workspace.sh $WORKSPACE
-        pre-command scripting = """
-echo tweet!
-"""
-        post-command scripting = """
-echo twaat!
-"""
+        command = """echo tweet!
+clean-workspace.sh $WORKSPACE
+echo twoot!"""
 
     [[X]]
         description = "retrieve real time data for model A"
-        task started hook script = alert2.sh
+        #task started hook script = alert2.sh
         task submission timeout in minutes = 0.5
-        command = cylc wrap X.sh
+        command = X.sh
         #command = X.sh
         [[[ environment ]]]
             X_OUTPUT_DIR = $WORKSPACE
-        scripting = \
-"""
-echo hello
-mkdir /tmp/munge
-echo bye
-"""
     [[A]]
         description = "model A - weather forecast"
-        command = cylc wrap A.sh
+        command = A.sh
         [[[environment]]]
             A_INPUT_DIR = $WORKSPACE
             A_OUTPUT_DIR = $WORKSPACE
@@ -129,7 +109,7 @@ echo bye
 
     [[B]]
         description = "model B - sea state forecast"
-        command = cylc wrap B.sh
+        command = B.sh
         [[[environment]]]
             B_INPUT_DIR = $WORKSPACE
             B_OUTPUT_DIR = $WORKSPACE
@@ -139,8 +119,9 @@ echo bye
 
     [[C]]
         description = "model C - river flow forecast"
-        command = cylc wrap C.sh
-        #command = C-no-wrap.sh
+        #command = C.sh
+        command = C-manual.sh
+        manual task completion messaging = True
         [[[environment]]]
             C_INPUT_DIR = $WORKSPACE
             C_OUTPUT_DIR = $WORKSPACE
@@ -153,39 +134,41 @@ echo bye
             r18 = restart files done for $(CYCLE_TIME+18)
     [[D]]
         description = "combined post processing for models B and C"
-        command = cylc wrap D.sh
-        #command = D-no-wrap.sh
-        #command = cylc wrap D-fail.sh, cylc wrap D.sh,
+        command = D.sh
+        #command = D-manual.sh
+        #manual task completion messaging = True
+        #command = D-fail.sh, D.sh,
         #task execution timeout in minutes = 0.0
         #reset execution timeout on incoming messages = False
         # job submission method = ll_basic
+
         [[[environment]]]
             D_INPUT_DIR = $WORKSPACE
             D_OUTPUT_DIR = $WORKSPACE
     [[E]]
         description = "post processing for model B"
-        command = cylc wrap E.sh
+        command = E.sh
         [[[environment]]]
             E_INPUT_DIR = $WORKSPACE
             E_OUTPUT_DIR = $WORKSPACE
     [[F]]
         description = "post processing for model F"
-        command = cylc wrap F.sh
+        command = F.sh
         [[[environment]]]
             F_INPUT_DIR = $WORKSPACE
             F_OUTPUT_DIR = $WORKSPACE
 
     [[ColdA]]
         description = "cold start model A"
-        command = cylc wrap ColdA.sh
+        command = ColdA.sh
 
     [[ColdB]]
         description = "model B"
-        command = cylc wrap ColdB.sh
+        command = ColdB.sh
 
     [[ColdC]]
         description = "model C"
-        command = cylc wrap ColdC.sh
+        command = ColdC.sh
 
     [[FOO]]
     [[bar]]

@@ -9,12 +9,12 @@ description = "Used as an example in Section 7.4 of the user guide"
 [tasks]
     [[A]]                 # TASK A SETTINGS
         description = "Task A, does something"
-        command = cylc wrap A.sh
+        command = A.sh
         [[[environment]]] # TASK A ENVIRONMENT
             INPUT = foo-${NEXT_CYCLE}.txt
     [[B]]                 # TASK B SETTINGS
         description = "Task B, does something else"
-        command = cylc wrap B.sh -f
+        command = B.sh -f
         [[[environment]]] # TASK B ENVIRONMENT
             INPUT = bar-${NEXT_CYCLE}.txt
 

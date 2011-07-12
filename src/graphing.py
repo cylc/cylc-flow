@@ -37,13 +37,14 @@ try:
 except ImportError:
     # This allows us to carry on with graphing disabled if
     # pygraphviz is not installed.
-    raise GraphvizError, 'The Python pygraphviz module is not installed or not accessible.'
+    raise GraphvizError, 'graphviz and/or pygraphviz are not accessible.'
 
-try:
-    testG = pygraphviz.AGraph(directed=True)
-    testG.layout()  # this invokes the pygraphviz 'dot' program
-except ValueError:
-    raise GraphvizError, 'The graphviz package is not installed or not accessible'
+# Not needed as 'import pygraphviz' fails if graphviz is not installed.
+#try:
+#    testG = pygraphviz.AGraph(directed=True)
+#    testG.layout()  # this invokes the pygraphviz 'dot' program
+#except ValueError:
+#    raise GraphvizError, 'graphviz is not installed or not accessible'
 
 #ddmmhh = re.compile('%(\d{4})(\d{2})(\d{2})(\d{2})')
 # allow literal 'YYYYMMDDHH'

@@ -63,6 +63,7 @@ class taskdef(object):
         self.remote_cylc_directory = None
         self.remote_suite_directory = None
         self.remote_cylc_path = None
+        self.manual_messaging = False
         self.modifiers = []
 
         self.owner = None
@@ -100,8 +101,6 @@ class taskdef(object):
 
         # default to dummy task for tasks in graph but not in the [tasks] section.
         self.commands = [ dummy_command ] # list of commands
-        self.pre_scripting  = ''          # list of lines
-        self.post_scripting = ''          # list of lines
         self.environment = OrderedDict()  # var = value
         self.directives  = OrderedDict()  # var = value
 
@@ -212,6 +211,7 @@ class taskdef(object):
         tclass.job_submit_log_directory = self.job_submit_log_directory
         tclass.remote_cylc_directory = self.remote_cylc_directory
         tclass.remote_suite_directory = self.remote_suite_directory
+        tclass.manual_messaging = self.manual_messaging
 
         tclass.valid_hours = self.hours
 
@@ -361,9 +361,6 @@ class taskdef(object):
             for var in self.directives:
                 val = self.directives[ var ]
                 sself.directives[ var ] = val
-
-            sself.pre_scripting = self.pre_scripting
-            sself.post_scripting = self.post_scripting
 
             if 'catchup_clocktriggered' in self.modifiers:
                 catchup_clocktriggered.__init__( sself )

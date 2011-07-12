@@ -48,11 +48,11 @@ PATH=$CYLC_DIR/bin:$CYLC_DIR/util:$PATH
 PYTHONPATH=$CYLC_DIR/src:$CYLC_DIR/src/job-submission:$CYLC_DIR/src/task-types:$CYLC_DIR/src/locking:$CYLC_DIR/src/gui:$CYLC_DIR/src/external:$CYLC_DIR/src/prerequisites/$PYTHONPATH
 PYTHONPATH=$CYLC_DIR/conf:$PYTHONPATH
 
-# IN CASE OF A LOCAL INSTALL OF PACKAGES IN THE external DIRECTORY,
-# CHECK THE FOLLOWING:
-
-PYTHONPATH=$CYLC_DIR/external/local/lib/python2.6/site-packages:$PYTHONPATH
-PATH=$CYLC_DIR/external/local/bin:$PATH
+# FOR LOCAL INSTALLATION OF PYRO, GRAPHVIZ, AND PYGRAPHVIZ
+# Uncoment below and adjust paths appropriately for your system.
+# See the Cylc User Guide "Installation" Section for detailed instructions. 
+# PYTHONPATH=$CYLC_DIR/external/installed/lib64/python2.6/site-packages:$PYTHONPATH
+# PATH=$CYLC_DIR/external/installed/bin:$PATH
 
 if [[ -n $CYLC_SUITE_DIR ]]; then
     # caller must be a cylc job script; add suite-specific paths as well
@@ -66,4 +66,8 @@ export PYTHONPATH
 # to a terminal (e.g. when running a suite via the poxix nohup command).
 export PYTHONUNBUFFERED=true
 
-echo "Cylc release version: $(cylc -v)"
+VERSION=$( cylc -v )
+# ('cylc -v' fails if Pyro not installed)
+if [[ $? == 0 ]]; then
+    echo "Cylc release version: $VERSION"
+fi

@@ -50,10 +50,12 @@ parser.add_option( "-a", "--align",
 
 suite = parser.get_suite_name()
 
-header = 'waiting submitted running done failed'
+header = 'waiting submitted running held failed'
 header = '                                     '
 ctrl_end = "\033[0m"
-key = "\033[1;35mwaiting\033[0m \033[1;37;40msubmitted\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end 
+#key = "\033[1;36mwaiting\033[0m \033[1;32msubmitted\033[0m \033[1;37;42mrunning\033[1;37;43m held \033[1;37;41mfailed" + ctrl_end 
+key = "\033[1;36mwait'g\033[0m\033[1;32m sub'd\033[0m done\033[1;37;42m running\033[1;37;43m held \033[1;37;41mfailed" + ctrl_end 
+
 
 #print
 #print "here we go ..."
@@ -199,13 +201,15 @@ try:
 
                 # color displayed info according to run status
                 if state == "submitted":
-                    ctrl_start = "\033[1;37;40m"
+                    ctrl_start = "\033[1;32m"
                 elif state == "running":
                     ctrl_start = "\033[1;37;42m"
                 elif state == "waiting":
-                    ctrl_start = "\033[1;35m"
+                    ctrl_start = "\033[1;36m"
                 elif state == "failed":
                     ctrl_start = "\033[1;37;41m"
+                elif state == "held":
+                    ctrl_start = "\033[1;37;43m"
                 else:
                     # succeeded
                     ctrl_start = ""
@@ -223,7 +227,7 @@ try:
             foo = re.sub( '^.{' + str(len('cylc!')) + '}', 'cylc!', foo )
             foo = re.sub( '.{' + str(len(suite)) + '}$', suite, foo )
 
-            blit.append( '\033[1;37;43m' + foo + ctrl_end )
+            blit.append( '\033[1;37;44m' + foo + ctrl_end )
 
             blit.append( key )
 
@@ -302,4 +306,4 @@ try:
         sleep( 1 )
 
 except KeyboardInterrupt:
-    raise SystemExit( 'OK, whatever' )
+    sys.exit(0)

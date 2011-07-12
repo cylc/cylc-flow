@@ -59,6 +59,7 @@ class job_submit(object):
     global_remote_host = None
     global_remote_cylc_dir = None
     global_remote_suite_dir = None
+    global_manual_messaging = False
     failout_id = None
     global_pre_scripting = None
     global_post_scripting = None
@@ -68,8 +69,8 @@ class job_submit(object):
     owned_task_execution_method = None
 
     def __init__( self, task_id, task_command, task_env, directives, 
-            pre_scripting, post_scripting, logfiles, task_joblog_dir, 
-            task_owner, remote_host, remote_cylc_dir, remote_suite_dir ): 
+            manual_messaging, logfiles, task_joblog_dir, task_owner,
+            remote_host, remote_cylc_dir, remote_suite_dir ): 
 
         self.task_id = task_id
         self.task_command = task_command
@@ -81,8 +82,6 @@ class job_submit(object):
 
         self.task_env = task_env
         self.directives  = directives
-        self.task_pre_scripting = pre_scripting
-        self.task_post_scripting = post_scripting
         self.logfiles = logfiles
  
         self.suite_owner = os.environ['USER']
@@ -119,6 +118,11 @@ class job_submit(object):
             self.local_job_submit = False
         else:
             self.local_job_submit = True
+
+        if manual_messaging != None:  # boolean, must distinguish None from False
+            self.manual_messaging = manual_messaging
+        elif self.__class__.global_manual_messaging != None:  # (ditto)
+            self.manual_messaging = self.__class__.global_manual_messaging
 
         if self.__class__.simulation_mode:
             # but ignore remote task settings in simulation mode (this allows us to
@@ -236,9 +240,8 @@ class job_submit(object):
         jf = jobfile( self.task_id, 
                 self.__class__.cylc_env, self.__class__.global_env, self.task_env, 
                 self.__class__.global_pre_scripting, self.__class__.global_post_scripting, 
-                self.task_pre_scripting, self.task_post_scripting, 
                 self.directive_prefix, self.__class__.global_dvs, self.directives,
-                self.final_directive, self.task_command, 
+                self.final_directive, self.manual_messaging, self.task_command, 
                 self.remote_cylc_dir, self.remote_suite_dir, 
                 self.__class__.shell, self.__class__.simulation_mode,
                 self.__class__.__name__ )
@@ -296,7 +299,7 @@ class job_submit(object):
         # execute the local command to submit the job
         if dry_run:
             print " > TASK JOB SCRIPT: " + self.jobfile_path
-            print " > JOB SUBMISSION METHOD: " + self.command
+            print " > JOB SUBMISSION: " + self.command
             success = True
         else:
             print " > SUBMITTING TASK: " + self.command
@@ -371,7 +374,7 @@ class job_submit(object):
         # execute the local command to submit the job
         if dry_run:
             print " > REMOTE TASK JOB SCRIPT: " + self.remote_jobfile_path
-            print " > REMOTE JOB SUBMISSION METHOD: " + command_2
+            print " > REMOTE JOB SUBMISSION: " + command_2
         else:
             print " > SUBMITTING TASK: " + command_2
             try:

@@ -63,6 +63,8 @@ cylc register examples:CUG74 $CYLC_DIR/examples/CUG7.4
 cylc register examples:FFHook $CYLC_DIR/examples/AutoCleanup/FamilyFailHook
 cylc register examples:FFTask $CYLC_DIR/examples/AutoCleanup/FamilyFailTask
 
+cylc register examples:detach $CYLC_DIR/examples/detach
+
 echo
 echo " + Exporting examples suites to the central database"
 # Export the example suites to the central database.

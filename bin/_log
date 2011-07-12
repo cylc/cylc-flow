@@ -65,7 +65,7 @@ try:
 except RegistrationError, x:
     raise SystemExit(x)
 
-filename = os.path.join( config( suite )['top level cylc log directory'], suite, 'log' )
+filename = os.path.join( config( suite )['suite log directory'], 'log' )
  
 if options.rotation != "0":
     filename = filename + options.rotation

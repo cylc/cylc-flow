@@ -115,7 +115,7 @@ class db_updater(threading.Thread):
         newtree = {}
         for reg in self.regd_choices:
             suite, suite_dir, descr = reg
-            suite_dir = re.sub( os.environ['HOME'], '~', suite_dir )
+            suite_dir = re.sub( '^' + os.environ['HOME'], '~', suite_dir )
             if suite in ports:
                 state = 'port ' + str(ports[suite])
             else:
@@ -2080,7 +2080,7 @@ The cylc forecast suite metascheduler.
                     '\n\nThe suite.rc file must be parsed\n'
                     ' to determine the suite log path.' ).warn()
             return
-        logdir = os.path.join( suiterc['top level cylc log directory'], suite )
+        logdir = os.path.join( suiterc['suite log directory'] )
         cylc_logviewer( 'log', logdir, suiterc.get_task_name_list() )
 
     def view_output( self, w, name, state ):

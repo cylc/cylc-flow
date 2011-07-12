@@ -342,7 +342,7 @@ class task( Pyro.core.ObjBase ):
         # get new stdout/stderr logfiles and not overwrite the old ones.
         self.launcher = get_object( self.job_submit_method, self.job_submit_method )\
                 ( self.id, self.external_task, self.env_vars, self.directives, 
-                        self.pre_scripting, self.post_scripting, self.logfiles, 
+                        self.manual_messaging, self.logfiles, 
                         self.__class__.job_submit_log_directory,
                         self.__class__.owner,
                         self.__class__.remote_host,
@@ -363,7 +363,10 @@ class task( Pyro.core.ObjBase ):
             # task submission and execution timeouts only
             return
         current_time = task.clock.get_datetime()
-        if self.timeouts['submission'] != None and self.submission_timer_start != None:
+        if self.timeouts['submission'] != None \
+                and self.submission_timer_start != None \
+                and not self.state.is_running():
+                # check for job submission timeout
             timeout = self.submission_timer_start + datetime.timedelta( minutes=self.timeouts['submission'] )
             if current_time > timeout:
                 msg = 'submitted ' + str( self.timeouts['submission'] ) + ' minutes ago, but has not started'
@@ -372,7 +375,10 @@ class task( Pyro.core.ObjBase ):
                 subprocess.call( command, shell=True )
                 self.submission_timer_start = None
 
-        if self.timeouts['execution'] != None and self.execution_timer_start != None:
+        if self.timeouts['execution'] != None \
+                and self.execution_timer_start != None \
+                and self.state.is_running():
+                    # check for job execution timeout
             timeout = self.execution_timer_start + datetime.timedelta( minutes=self.timeouts['execution'] )
             if current_time > timeout:
                 if self.timeouts['reset on incoming']:
@@ -387,7 +393,6 @@ class task( Pyro.core.ObjBase ):
     def set_all_internal_outputs_completed( self ):
         if self.reject_if_failed( 'set_all_internal_outputs_completed' ):
             return
-        # used by the task wrapper 
         self.log( 'DEBUG', 'setting all internal outputs completed' )
         for message in self.outputs.completed:
             if message != self.id + ' started' and \
@@ -463,7 +468,7 @@ class task( Pyro.core.ObjBase ):
                             self.launcher.cleanup()
             else:
                 # this output has already been satisfied
-                self.log( 'WARNING', "UNEXPECTED OUTPUT (already satisfied):" )
+                self.log( 'WARNING', "UNEXPECTED OUTPUT (already completed):" )
                 self.log( 'WARNING', "-> " + message )
 
         elif message == self.id + ' failed':

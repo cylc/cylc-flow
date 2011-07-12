@@ -115,7 +115,7 @@ except RegistrationError, x:
     raise SystemExit( x )
 
 # get suite logging directory
-logging_dir = os.path.join( config( suite )['top level cylc log directory'], suite )
+logging_dir = os.path.join( config( suite )['suite log directory'] )
 
 # scan for suite port
 try:

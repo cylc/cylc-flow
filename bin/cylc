@@ -231,7 +231,6 @@ discovery_commands['ping'] = [ 'ping' ]
 discovery_commands['scan'] = [ 'scan' ]
 
 task_commands = OrderedDict()
-task_commands['wrap'] = [ 'wrap' ]
 task_commands['submit'] = [ 'submit', 'single' ]
 task_commands['started'] = [ 'started', 'task-started' ]
 task_commands['message'] = [ 'message', 'task-message' ]
@@ -273,7 +272,7 @@ catsum['information' ]   = "retrieve and print information about a suite."
 catsum['preparation' ]   = "suite editing, graphing, validation etc."
 catsum['discovery'   ]   = "what suites are running at the moment?"
 catsum['control'     ]   = "running, monitoring, and controlling suites."
-catsum['task'        ]   = "running single tasks, task wrapping and messaging."
+catsum['task'        ]   = "running single tasks, and task messaging commands."
 catsum['utility'     ]   = "cycle time arithmetic, filename templating, etc."
 
 # was in help doc:
@@ -360,7 +359,6 @@ comsum[ 'verbosity'  ] = 'Change a suite\'s logging verbosity level'
 comsum[ 'ping'       ] = 'Check that a suite is running'
 comsum[ 'scan'       ] = 'Scan a host for running suites and lockservers'
 # task
-comsum[ 'wrap'       ] = 'Use an existing script or program as a cylc task'
 comsum[ 'submit'     ] = 'Run a single task just as its parent suite would'
 comsum[ 'started'    ] = 'Acquire a task lock and report started'
 comsum[ 'message'    ] = 'Report progress and completion of outputs'
@@ -554,7 +552,7 @@ args = args_new
 
 notify=False
 if command not in ['cycletime', 'template', 'log', 'checkvars', 'get',
-        'message', 'started', 'succeeded', 'failed', 'submit', 'wrap',
+        'message', 'started', 'succeeded', 'failed', 'submit', 
         'task-message', 'task-started', 'task-succeeded', 'task-failed',
         'test-db', 'test-suite', 'warranty', 'conditions']:
     # notify => print 'DONE' when command is completed, which is 
@@ -568,4 +566,7 @@ if command not in ['cycletime', 'template', 'log', 'checkvars', 'get',
 if command in [ 'task-started', 'task-succeeded', 'task-failed', 'task-message' ]:
     command = re.sub( '^task-', '', command )
 
-execute( [ '_' + command ] + args, notify=notify )
+try:
+    execute( [ '_' + command ] + args, notify=notify )
+except KeyboardInterrupt:
+    pass
