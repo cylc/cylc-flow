@@ -113,8 +113,6 @@ if $FORCE_COMMANDS; then
     done
 fi
 
-cylc --version > doc/version.txt
-
 #-----------------------------------------------------------------------
 
 cd doc
@@ -127,6 +125,4 @@ rm *.aux
 
 htlatex cug-html.tex "xhtml,3,next"
 htlatex cug-html.tex "xhtml,3,next"
-
-./cleanup.sh
 
