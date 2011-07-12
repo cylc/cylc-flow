@@ -27,7 +27,7 @@ class daemon( oneoff, task ):
     # may keep running indefinitely, e.g. to watch for incoming
     # asynchronous data.
 
-    # not 'daemon' - hasattr(task, 'daemon') returns True for all tasks 
+    # note 'daemon' - hasattr(task, 'daemon') returns True for all tasks 
     # due to the pyro daemon (I think).
     daemon_task = True  
 
@@ -35,6 +35,5 @@ class daemon( oneoff, task ):
         # intercept incoming messages and check for a pattern match 
         for pattern in self.output_patterns:
             if re.match( pattern, message ):
-                self.outputs.add( 10, message )
-
+                self.outputs.add( message )
         task.incoming( self, priority, message )

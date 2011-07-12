@@ -1,0 +1,10 @@
+
+description = simple asynchronous example suite
+
+[dependencies]
+    [[SATID]]
+        graph = watcher
+
+[tasks]
+    [[watcher]]
+        command = watcher.sh

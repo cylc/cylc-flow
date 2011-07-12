@@ -685,6 +685,8 @@ manual task completion messaging = boolean( default=False )
 #>\item {\em example:} \lstinline@models with explicit restart outputs = A, B@
 #>\end{myitemize}
 
+    daemon = force_list( default=list())
+
 [task families]
 #> A task family is a named group of tasks that appears as a single task
 #> in the suite dependency graph. Thus the entire family triggers as a group,
