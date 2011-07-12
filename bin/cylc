@@ -531,7 +531,7 @@ else:
         except CommandNotFoundError, y:
             print y
             print 'COMMANDS available in CATEGORY "' + category + '":'
-            print coms
+            print coms.keys()
             sys.exit(1)
  
         else:
