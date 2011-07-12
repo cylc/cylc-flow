@@ -969,7 +969,7 @@ class config( CylcConfigObj ):
 
         # loop over cycle time lists
         for section in self['dependencies']:
-            if re.match( '[\s,\d]+', section ):
+            if re.match( '^[\s,\d]+$', section ):
                 cycle_list_string = section
             else:
                 raise SuiteConfigError, 'Illegal Section: [dependencies]['+section+']'
@@ -1005,10 +1005,10 @@ class config( CylcConfigObj ):
 
         # loop over cycle time lists
         for section in self['dependencies']:
-            if re.match( '[\s,\d]+', section ):
+            if re.match( '^[\s,\d]+$', section ):
                 cycle_list_string = section
             else:
-                continue
+                raise SuiteConfigError, 'Illegal Section: [dependencies]['+section+']'
 
             # get a list of integer hours from cycle_list_string
             temp = re.split( '\s*,\s*', cycle_list_string )
