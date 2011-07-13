@@ -2,11 +2,11 @@
 
 set -e
 
-# Generates pdf documentation from cylc LaTeX source.
+# Generate PDF and HTML User Guides from the LaTeX source.
 
 usage() {
-	echo "USAGE: [-f][-c] $0"
-    echo ' -c, force re-processing of command documentation'
+	echo "USAGE: [-c] $0"
+    echo ' -c, (re)generate command help listings'
     echo "Run this script from \$CYLC_DIR"
 }
 
@@ -15,14 +15,11 @@ if [[ ! -f bin/cylc ]]; then
     exit 1
 fi
 
-FORCE=false
 FORCE_COMMANDS=false
 if [[ $# > 0 ]]; then 
     for arg in $@; do
         if [[ $arg = -c ]]; then
             FORCE_COMMANDS=true
-        elif [[ $arg = -f ]]; then
-            FORCE=true
         else
             usage
             exit 1
