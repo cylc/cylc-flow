@@ -662,13 +662,12 @@ the new ones:
 
 \begin{myenumerate}
     \item Before upgrading (under the old cylc version), unregister the
-        {\em examples} group from the central database and from the cylc
-        admin user's private database. 
+        {\em examples} group from the central suite database. 
     \item Download the new cylc release tarball and unpack it.
     \item Copy (via the shell) the central database from the old
         installation to the new.
     \item Source the new cylc environment script.
-    \item Run \lstinline=cylc admin create-cdb= to register the example
+    \item Run \lstinline=cylc admin create-cdb= to upload the example
         suites for the new release.
 \end{myenumerate}
 
@@ -949,11 +948,6 @@ directories in the group (choose something like
 {\em Note that you can also import individual suites, and that
 registration groups do not need to be created explicitly, they
 are automatically created and deleted as required.} 
-
-Note also that {\em if you are the cylc admin user} the example suites 
-will already be registered in your private database - that's
-where they were registered in the first place, in order to be exported
-to the central database.
 
 Now use the Database menu to switch back to your private database, and
 confirm that you now have a copy of the example suites.
