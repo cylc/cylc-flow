@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, re, sys
-from config import config
+from config import config, SuiteConfigError
 from optparse import OptionParser
 from shutil import copy
 import tempfile
@@ -65,7 +65,10 @@ try:
 except RegistrationError, x:
     raise SystemExit(x)
 
-filename = os.path.join( config( suite )['suite log directory'], 'log' )
+try:
+    filename = os.path.join( config( suite )['suite log directory'], 'log' )
+except SuiteConfigError, x:
+    raise SystemExit(x)
  
 if options.rotation != "0":
     filename = filename + options.rotation
