@@ -361,7 +361,7 @@ task timeout hook script = string( default=None )
 #> certain critical tasks. Hook scripts can be located in the suite bin
 #> directory. {\em They are called by cylc} with the following arguments:
 #> \begin{lstlisting}
-#> <script> [EVENT] TASK CYCLE_TIME MESSAGE
+#> <script> EVENT SUITE TASK CYCLETIME MESSAGE
 #> \end{lstlisting}
 #> where MESSAGE describes what has happened, and EVENT is the same 
 #> as in the item name except that `submission failed' becomes 
@@ -389,7 +389,7 @@ task execution timeout in minutes = float( default=None )
 #> it was submitted (or started), the task timeout hook script will be
 #> called by cylc with the following arguments:
 #> \begin{lstlisting}
-#> <script> [EVENT] TASK CYCLE_TIME MESSAGE
+#> <script> EVENT SUITE TASK CYCLETIME MESSAGE
 #> \end{lstlisting}
 #> where EVENT is `submission' or `execution'.
 #> Like the hook scripts themselves, these suite level settings
@@ -961,7 +961,7 @@ __many__ = string
 #> Hook scripts can be located in the suite bin directory. {\em They
 #> are called by cylc} with the following arguments:
 #> \begin{lstlisting}
-#> <script> EVENT TASK CYCLE_TIME MESSAGE
+#> <script> EVENT SUITE TASK CYCLETIME MESSAGE
 #> \end{lstlisting}
 #> where MESSAGE describes what has happened, and EVENT is 
 #> as in the item name except that `submission failed' becomes 
@@ -990,7 +990,7 @@ __many__ = string
 #> (or started), the task timeout hook script will be called by cylc with the
 #> following arguments:
 #> \begin{lstlisting}
-#> <script> [EVENT] TASK CYCLE_TIME MESSAGE
+#> <script> EVENT SUITE TASK CYCLETIME MESSAGE
 #> \end{lstlisting}
 #> where EVENT is `submission' or `execution'.
 #> Like the hook scripts, these are task-specific settings; you can also

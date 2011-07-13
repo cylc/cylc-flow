@@ -164,6 +164,7 @@ dclock = accelerated_clock.clock( None, None, False )
 # nasty kludge to give the simulation mode clock to task classes:
 task.task.clock = dclock
 clocktriggered.clocktriggered.clock = dclock
+task.task.suite = suite
 
 # SUITE.RC GLOBAL ENVIRONMENT
 globalenv = OrderedDict()

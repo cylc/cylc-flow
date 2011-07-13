@@ -18,8 +18,8 @@ use secure passphrase = True
 
 #task submitted hook script         = alert.sh
 #task started hook script           = alert.sh
-#task succeeded hook script          = alert.sh
-#task failed hook script            = alert.sh
+task succeeded hook script          = alert.sh
+task failed hook script            = alert.sh
 #task warning hook script           = alert.sh
 #task submission failed hook script = alert.sh
 task timeout hook script           = timeout.sh

@@ -2,8 +2,7 @@
 
 # This is an example cylc alert script.
 # Cylc supplies the following command line arguments:
-
-# <alert script> EVENT  TASK_NAME  CYCLE_TIME  MESSAGE
+# <alert script> EVENT SUITE TASK CTIME  MESSAGE
 
 # where EVENT is either:
 #  'submitted',
@@ -18,8 +17,9 @@
 # Nagios according to whether a task has started, finished, or failed.
 
 EVENT=$1
-NAME=$2
-CTIME=$3
-MESSAGE="$4"  # quotes required: message contains spaces
+SUITE=$2
+TASK=$3
+CTIME=$4
+MESSAGE="$5"  # quotes required: message contains spaces
 
-echo "<<${EVENT}>> $NAME $CTIME $MESSAGE"
+echo "<<${EVENT}>> $SUITE $TASK%$CTIME \"$MESSAGE\""
