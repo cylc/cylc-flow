@@ -31,7 +31,8 @@ filtering. This command is a convenience: you don't need to
 know the log file location on disk.
 
 Arguments:
-  SUITE - access the cylc logs from the suite of this name.""")
+  SUITE - Private suite database registration GROUP:NAME
+          of the suite whose log you want to view.""")
 
 parser.add_option( "-p", "--print", 
         help="Print the suite log file location and exit.",

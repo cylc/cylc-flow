@@ -40,7 +40,7 @@ See also:
    cylc control trigger
    cylc control hold
    cylc control relase""",
-[ 'TASK              NAME%YYYYMMDDHH - the task to reset.'] )
+[ 'TASK                 NAME%YYYYMMDDHH - the task to reset.'] )
 
 parser.add_option( "--ready", 
         help="Force task to the 'ready' state.",

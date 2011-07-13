@@ -30,7 +30,7 @@ released.  Putting a waiting task on hold prevents it from running and
 spawning successors, until it is released.  
 
 See also 'cylc [control] release'.""",
-["""TASK              Task to hold (NAME%YYYYMMDDHH)"""])
+["""TASK                 Task to hold (NAME%YYYYMMDDHH)"""])
 
 (options, args) = parser.parse_args()
 

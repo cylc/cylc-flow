@@ -112,7 +112,8 @@ important in task implementations, but are not part of the suite
 definition).
 
 Arguments:
-   SUITE1, SUITE2  - suite registrations [OWNER:]GROUP:NAME""")
+   SUITE1, SUITE2  - suite registrations [OWNER:]GROUP:NAME
+                    (use OWNER: to access the central database)""")
 
 parser.add_option( "-d", "--debug", help="print the "
         "exception traceback for validation errors.",
