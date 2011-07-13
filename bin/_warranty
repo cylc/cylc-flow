@@ -21,7 +21,7 @@ import sys
 
 usage = """
 USAGE: cylc [license] warranty [--help]
-   Cylc is release under the GNU General Public License v3.0
+   Cylc is released under the GNU General Public License v3.0
 This command prints the GPL v3.0 disclaimer of warranty.
 Options:
   --help   Print this usage message.
