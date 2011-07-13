@@ -25,7 +25,8 @@ parser = OptionParser( """cylc [info] describe [OPTIONS] SUITE
 Parse a suite config file and print the suite title and description.
 
 Arguments:
-   SUITE    - suite registration [OWNER:]GROUP:NAME""")
+   SUITE    - suite registration [OWNER:]GROUP:NAME
+            (use OWNER: to access the central database)""")
 
 parser.add_option( "-d", "--debug", help="print the "
         "exception traceback for validation errors.",

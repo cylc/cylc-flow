@@ -210,9 +210,10 @@ except KeyError:
 
 # find location of the suite definition directory
 global suitedir
-reg = getdb( suite )
-reg.load_from_file()
+
 try:
+    reg = getdb( suite )
+    reg.load_from_file()
     suitedir, descr = reg.get( suite )
 except RegistrationError,x:
     raise SystemExit(x)

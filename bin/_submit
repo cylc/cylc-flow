@@ -84,9 +84,9 @@ task_id = args[1]
 host = socket.getfqdn()
 
 # find location of the suite definition directory --------------------
-reg = getdb(suite)
-reg.load_from_file()
 try:
+    reg = getdb(suite)
+    reg.load_from_file()
     suite_dir,descr = reg.get( suite )
 except RegistrationError,x:
     raise SystemExit(x)
@@ -105,7 +105,11 @@ except CycleTimeError, x:
 owner = os.environ['USER']
 
 # load suite config item --------------------------------------------
-config = config( suite )
+try:
+    config = config( suite )
+except SuiteConfigError,x:
+    raise SystemExit(x)
+
 config.create_directories()
 # modify logging dir for single task submit so as not to alter suite logs
 logging_dir = os.path.join( config['suite log directory'], 'submit' ) 

@@ -63,12 +63,12 @@ if len(args) != 1:
 
 suite = args[0]
 
-db = getdb( suite )
 try:
+    db = getdb( suite )
     db.lock()
+    db.load_from_file()
 except RegistrationError, x:
     raise SystemExit(x)
-db.load_from_file()
 
 dirs = []
 

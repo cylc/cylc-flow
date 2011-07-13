@@ -90,7 +90,8 @@ See also:
     cylc [control] stop|shutdown
 
 Arguments:
-   SUITE                Registered GROUP:NAME of the suite to run.
+   SUITE                Private database registration GROUP:NAME of the
+                        suite you want to run.
    YYYYMMDDHH           Initial cycle time.""" 
 
         self.parser = OptionParser( usage )

@@ -30,7 +30,7 @@ from mkdir_p import mkdir_p
 from passphrase import passphrase
 from optparse import OptionParser
 from gcylc import MainApp
-from config import config
+from config import config, SuiteConfigError
 from registration import localdb, RegistrationError
 import socket
 
@@ -115,7 +115,10 @@ except RegistrationError, x:
     raise SystemExit( x )
 
 # get suite logging directory
-logging_dir = os.path.join( config( suite )['suite log directory'] )
+try:
+    logging_dir = os.path.join( config( suite )['suite log directory'] )
+except SuiteConfigError,x:
+    raise SystemExit(x)
 
 # scan for suite port
 try:
