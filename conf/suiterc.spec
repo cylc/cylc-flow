@@ -345,9 +345,8 @@ task timeout hook script = string( default=None )
 #>RESUME
 
 #> \subsubsection{task EVENT hook scripts}
-#> Task event hooks facilitate centralized alerting for critical events
-#> in operational suites. You can name script(s) to attach to various 
-#> events using one or more of the following items:
+#> Task event hooks facilitate centralized alerting for critical events.
+#> The following hooks are available:
 #>\begin{myitemize}
 #>\item {\bf task submitted hook script}
 #>\item {\bf task submission failed hook script}
@@ -356,12 +355,21 @@ task timeout hook script = string( default=None )
 #>\item {\bf task failed hook script}
 #>\item {\bf task timeout hook script}
 #>\end{myitemize}
-#> These items set suite level defaults that can be overridden by specific
-#> tasks; or you can omit the defaults and just handle alerts for
-#> certain critical tasks. Hook scripts can be located in the suite bin
-#> directory. {\em They are called by cylc} with the following arguments:
+#> These suite level defaults can be overridden by specific tasks, or you
+#> can omit the defaults and just attach hook scripts for critical tasks.
+#> Cylc provides a hook script that sends emails: cylc-email-alert.sh.
+#> Your own hook scripts can be located in suite bin directories. 
+#> Hook scripts are passed the following arguments:
 #> \begin{lstlisting}
-#> <script> EVENT SUITE TASK CYCLETIME MESSAGE
+#> <hook-script> EVENT SUITE TASK CYCLETIME MESSAGE
+#> \end{lstlisting}
+#> where MESSAGE describes what has happened, and EVENT is 
+#> either `submitted', `started', `succeeded', `failed', `timeout', 
+#> or `submit\_failed'.
+#> Note that {\em hook scripts are called by cylc, not by tasks,} 
+#> so if you wish to pass in additional information via the environment, 
+#> use the [cylc local environment] section, not [environment].
+#> \begin{lstlisting}
 #> \end{lstlisting}
 #> where MESSAGE describes what has happened, and EVENT is the same 
 #> as in the item name except that `submission failed' becomes 
@@ -370,7 +378,7 @@ task timeout hook script = string( default=None )
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
 #>\item {\em default:} None
-#>\item {\em example:} \lstinline@task failed hook script = alerts.sh@
+#>\item {\em example:} \lstinline@task failed hook script = cylc-email-alert.sh@
 #>\end{myitemize}
 
 #>IGNORE
@@ -946,9 +954,8 @@ __many__ = string
 
 #> \paragraph{    task EVENT hook scripts}
 #>
-#> Task event hooks facilitate centralized alerting for critical events
-#> in operational suites. You can name script(s) to attach to various 
-#> events using one or more of the following items:
+#> Task event hooks facilitate centralized alerting for critical events.
+#> The following hooks are available:
 #>\begin{myitemize}
 #>\item {\bf task submitted hook script}
 #>\item {\bf task submission failed hook script}
@@ -957,20 +964,24 @@ __many__ = string
 #>\item {\bf task failed hook script}
 #>\item {\bf task timeout hook script}
 #>\end{myitemize}
-#> These are task-specific settings; you can also set suite level defaults.
-#> Hook scripts can be located in the suite bin directory. {\em They
-#> are called by cylc} with the following arguments:
+#> These are task-specific hooks; you can also set suite level defaults.
+#> Cylc provides a hook script that sends emails: cylc-email-alert.sh.
+#> Your own hook scripts can be located in suite bin directories. 
+#> Hook scripts are passed the following arguments:
 #> \begin{lstlisting}
-#> <script> EVENT SUITE TASK CYCLETIME MESSAGE
+#> <hook-script> EVENT SUITE TASK CYCLETIME MESSAGE
 #> \end{lstlisting}
 #> where MESSAGE describes what has happened, and EVENT is 
-#> as in the item name except that `submission failed' becomes 
-#> `submit\_failed'.
+#> either `submitted', `started', `succeeded', `failed', `timeout', 
+#> or `submit\_failed'.
+#> Note that {\em hook scripts are called by cylc, not by tasks,} 
+#> so if you wish to pass in additional information via the environment, 
+#> use the [cylc local environment] section, not [environment].
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
 #>\item {\em default:} None
-#>\item {\em example:} \lstinline@task failed hook script = alerts.sh@
+#>\item {\em example:} \lstinline@task failed hook script = cylc-email-alert.sh@
 #>\end{myitemize}
 
 #>IGNORE
