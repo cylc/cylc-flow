@@ -68,3 +68,16 @@ Version number X.Y.Z incrementing:
    - if a timeout was set, the hook script was called even if the event
      did occur in time - which should cancel the timeout.
  + More detailed documentation of complete installation by non-root users.
+
+ 3.3.6
+ + Documentation of graphviz installation without QT.
+ + Improved detection of errors in suite.rc graph hours headings.
+ + Improved detection of erroneous suite registrations on the command line.
+ + Fixed a bug in 'cylc log' command task filtering.
+ + At installation, unregister example suites from admin user's private db.
+ + Task event hook script argument list changed. Cylc now calls:
+     <hook script> EVENT SUITE TASK CTIME MESSAGE
+   The new SUITE argument is particularly needed if running multiple suites.
+   WARNING: this change will break existing task event hook scripts.
+ + Added a task event hook script to 'cylc util' that sends email alerts.
+
