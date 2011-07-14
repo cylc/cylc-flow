@@ -357,7 +357,7 @@ task timeout hook script = string( default=None )
 #>\end{myitemize}
 #> These suite level defaults can be overridden by specific tasks, or you
 #> can omit the defaults and just attach hook scripts for critical tasks.
-#> Cylc provides a hook script that sends emails: cylc-email-alert.sh.
+#> Cylc provides a hook script that sends emails: cylc email-alert.
 #> Your own hook scripts can be located in suite bin directories. 
 #> Hook scripts are passed the following arguments:
 #> \begin{lstlisting}
@@ -378,7 +378,7 @@ task timeout hook script = string( default=None )
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
 #>\item {\em default:} None
-#>\item {\em example:} \lstinline@task failed hook script = cylc-email-alert.sh@
+#>\item {\em example:} \lstinline@task failed hook script = cylc email-alert@
 #>\end{myitemize}
 
 #>IGNORE
@@ -965,7 +965,7 @@ __many__ = string
 #>\item {\bf task timeout hook script}
 #>\end{myitemize}
 #> These are task-specific hooks; you can also set suite level defaults.
-#> Cylc provides a hook script that sends emails: cylc-email-alert.sh.
+#> Cylc provides a hook script that sends emails: cylc email-alert.
 #> Your own hook scripts can be located in suite bin directories. 
 #> Hook scripts are passed the following arguments:
 #> \begin{lstlisting}
@@ -981,7 +981,7 @@ __many__ = string
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
 #>\item {\em default:} None
-#>\item {\em example:} \lstinline@task failed hook script = cylc-email-alert.sh@
+#>\item {\em example:} \lstinline@task failed hook script = cylc email-alert@
 #>\end{myitemize}
 
 #>IGNORE

@@ -5,12 +5,39 @@
 # To get an email when any task in your suite fails, for example:
 #________________________________________________
 # (SUITE.RC)
-# task failed hook script = cylc-email-alert.sh
+# task failed hook script = cylc email-alert
 #________________________________________________
 
 # Cylc calls event hook scripts with the following arguments:
-# EVENT SUITE TASK CYCLETIME  MESSAGE
+#   EVENT SUITE TASK CYCLETIME  MESSAGE
 # See the Cylc User Guide Suite.rc Reference for more information.
+
+usage() {
+    echo "USAGE: cylc email-alert EVENT SUITE TASK CTIME MESSAGE"
+    echo ""
+    echo "A cylc event hook script that sends an email alert. The arguments"
+    echo "are supplied automatically by cylc. To get and email alert whenever"
+    echo "a task in your suite fails, for example, do this:"
+    echo ""
+    echo "# SUITE.RC"
+    echo "task failed hook script = cylc email-alert # globally or per task"
+    echo "[cylc local environment]"
+    echo "   MAIL_ADDRESS = foo@bar.baz.waz"
+    echo ""
+    echo "See the Suite.rc Reference (Cylc User Guide) for details."
+}
+
+if [[ $# = 1 ]]; then
+    if [[ $1 = '--help' ]]; then
+        usage
+        exit 0
+    fi
+fi
+
+if [[ $# < 5 ]]; then
+    usage
+    exit 1
+fi
 
 EVENT=$1      # e.g. "failed"
 SUITE=$2      # group:name of the [failed] task
