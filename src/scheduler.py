@@ -268,7 +268,7 @@ class scheduler(object):
         # USE QUICK TASK ELIMINATION?
         self.use_quick = self.config['use quick task elimination'] 
 
-       # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
+        # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
         self.exclusive_suite_lock = not self.config[ 'allow multiple simultaneous instances' ]
 
         # GLOBAL EVENT HOOK SCRIPTS
@@ -283,6 +283,9 @@ class scheduler(object):
         task.task.global_timeouts[ 'submission'    ]     = self.config['task submission timeout in minutes']
         task.task.global_timeouts[ 'execution'     ]     = self.config['task execution timeout in minutes' ]
         task.task.global_timeouts[ 'reset on incoming' ] = self.config['reset execution timeout on incoming messages']
+
+        # set suite in task class (for passing to hook scripts)
+        task.task.suite = self.suite
 
         # CYLC EXECUTION ENVIRONMENT
         cylcenv = OrderedDict()

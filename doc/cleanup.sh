@@ -2,7 +2,7 @@
 
 # remove all evidence of document processing
 if [[ ! -f doc/cug.tex ]]; then
-    echo "Run this script from $CYLC_DIR in your cylc repository."
+    echo "Run this script from \$CYLC_DIR in your cylc repository."
     # We don't change to $CYLC_DIR automatically in case the environment
     # is configured for another cylc installation.
     exit 1
