@@ -369,11 +369,6 @@ task timeout hook script = string( default=None )
 #> Note that {\em hook scripts are called by cylc, not by tasks,} 
 #> so if you wish to pass in additional information via the environment, 
 #> use the [cylc local environment] section, not [environment].
-#> \begin{lstlisting}
-#> \end{lstlisting}
-#> where MESSAGE describes what has happened, and EVENT is the same 
-#> as in the item name except that `submission failed' becomes 
-#> `submit\_failed'.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
