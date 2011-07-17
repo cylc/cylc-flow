@@ -3166,6 +3166,8 @@ Here is the generated job script:
 # Task: A%2011052400
 # To be submitted by method: 'background'
 
+echo "TASK JOB SCRIPT STARTING"
+
 # CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY:
 export CYLC_DIR="/home/oliverh/cylc"
 export CYLC_MODE="submit"
@@ -3189,7 +3191,19 @@ export CYCLE_TIME=2011052400
 . $CYLC_DIR/environment.sh
 
 # SET ERROR TRAPPING:
-set -e; trap 'cylc task failed "Error trapped by task job script"' ERR
+set -u # Fail when using an undefined variable
+# Define the trap handler
+HANDLE_TRAP() {
+  echo Received signal "$@"
+  cylc task failed "Task job script received signal $@"
+  trap "" EXIT
+  exit 0
+}
+# Trap any signals which could cause the script to exit
+trap "HANDLE_TRAP EXIT" EXIT
+trap "HANDLE_TRAP ERR"  ERR
+trap "HANDLE_TRAP TERM" TERM
+trap "HANDLE_TRAP XCPU" XCPU
 
 # SEND TASK STARTED MESSAGE:
 cylc task started || exit 1
@@ -3208,6 +3222,9 @@ A.sh
 
 # SEND TASK SUCCEEDED MESSAGE:
 cylc task succeeded
+trap "" EXIT
+
+echo "JOB SCRIPT EXITING (TASK SUCCEEDED)"
 
 #EOF
 
