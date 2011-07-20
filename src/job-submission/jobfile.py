@@ -99,6 +99,7 @@ class jobfile(object):
         else:
             self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE:')
             self.FILE.write( '\ncylc task succeeded' )
+            self.FILE.write( '\ntrap "" EXIT' )            
             self.FILE.write( '\n\necho "JOB SCRIPT EXITING (TASK SUCCEEDED)"')
 
     def write_header( self ):
@@ -150,10 +151,20 @@ class jobfile(object):
         BUFFER.write( "\nexport CYCLE_TIME=" + self.cycle_time )
 
     def write_err_trap( self ):
-        self.FILE.write( """
-
-# SET ERROR TRAPPING:
-set -e; trap 'cylc task failed \"Error trapped by task job script\"' ERR""" )
+        self.FILE.write( '\n\n# SET ERROR TRAPPING:' )
+        self.FILE.write( '\nset -u # Fail when using an undefined variable' )
+        self.FILE.write( '\n# Define the trap handler' )
+        self.FILE.write( '\nHANDLE_TRAP() {' )
+        self.FILE.write( '\n  echo Received signal "$@"' )
+        self.FILE.write( '\n  cylc task failed "Task job script received signal $@"' )
+        self.FILE.write( '\n  trap "" EXIT' )
+        self.FILE.write( '\n  exit 0' )
+        self.FILE.write( '\n}' )
+        self.FILE.write( '\n# Trap any signals which could cause the script to exit' )
+        self.FILE.write( '\ntrap "HANDLE_TRAP EXIT" EXIT' )
+        self.FILE.write( '\ntrap "HANDLE_TRAP ERR"  ERR' )
+        self.FILE.write( '\ntrap "HANDLE_TRAP TERM" TERM' )
+        self.FILE.write( '\ntrap "HANDLE_TRAP XCPU" XCPU' )
 
     def write_task_started( self ):
         self.FILE.write( """
