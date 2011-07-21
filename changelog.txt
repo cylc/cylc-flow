@@ -88,4 +88,4 @@ Version number X.Y.Z incrementing:
  task failure after unexpected exit with normal exit status (EXIT
  signal), process termination by the TERM signal (e.g. by 'kill PID' or
  'llcancel JOBID'), and termination (e.g. by the batch scheduler) due
- to  exceeding some time limit (XCPU signal).
+ to exceeding some system time limit (XCPU signal).
