@@ -83,6 +83,7 @@ Version number X.Y.Z incrementing:
 
 3.3.7
  + Disabled the cylc lockserver by default.
+ + Altered environment.sh to work with 'set -u'.
  + Better task error trapping: in addition to trapping processes that
  abort with non-zero exit status (ERR signal) cylc now also registers
  task failure after unexpected exit with normal exit status (EXIT
