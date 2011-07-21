@@ -5,9 +5,9 @@
 # You must move to the top level of your cylc installation before
 # sourcing this script OR first set $CYLC_DIR to that directory.
 
-# Note that references to any environment variable below that could
+# Note that any reference to an environment variable which could
 # potentially be undefined is wrapped in ${VAR:-} for compatibility
-# with 'set -u' (thanks to Dave Mathews, Met Office).
+# with 'set -u' (thanks to Dave Matthews, Met Office).
 
 if [[ -f bin/cylc ]]; then
     # we're in the top level of a cylc installation
