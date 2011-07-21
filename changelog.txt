@@ -81,3 +81,11 @@ Version number X.Y.Z incrementing:
    WARNING: this change will break existing task event hook scripts.
  + Added a task event hook script to 'cylc util' that sends email alerts.
 
+3.3.7
+ + Disabled the cylc lockserver by default.
+ + Better task error trapping: in addition to trapping processes that
+ abort with non-zero exit status (ERR signal) cylc now also registers
+ task failure after unexpected exit with normal exit status (EXIT
+ signal), process termination by the TERM signal (e.g. by 'kill PID' or
+ 'llcancel JOBID'), and termination (e.g. by the batch scheduler) due
+ to  exceeding some time limit (XCPU signal).

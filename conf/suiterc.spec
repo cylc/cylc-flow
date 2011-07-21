@@ -95,20 +95,25 @@ job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw
 #>\item {\em example:} \lstinline@job submission method = at_now@
 #>\end{myitemize}
 
-use lockserver = boolean( default=True )
-#>Use of the cylc lockserver prevents
-#> invocation of multiple instances of the same
+use lockserver = boolean( default=False )
+#> The cylc lockserver generalizes traditional {\em lock files} to the network.
+#> It prevents prevents invocation of multiple instances of the same
 #> suite at the same time, or invocation of a task (using
 #> \lstinline=cylc submit=) if the same task is already running (in its
-#> suite or by \lstinline=cylc submit=). It will only allow multiple
+#> suite or by \lstinline=cylc submit=). It will allow multiple
 #> instances of a suite to run under
-#> different registrations if the suite declares itself
+#> different registrations {\em only if} the suite declares itself
 #> capable of that (see \lstinline=suite.rc= item
 #> ``allow multiple simultaneous instances'').
+#> The lockserver cannot prevent you from running distinct {\em copies}
+#> of a suite simultaneously. See \lstinline=cylc lockserver --help= for 
+#> how to run the lockserver, and \lstinline=cylc lockclient --help= for 
+#> occasional manual lock management requirements. The lockserver is 
+#> currently disabled by default. 
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} boolean
-#>\item {\em default:} True
+#>\item {\em default:} False
 #>\item {\em example:} \lstinline@use lockserver = True@
 #>\end{myitemize}
 
