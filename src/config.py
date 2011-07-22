@@ -580,7 +580,7 @@ class config( CylcConfigObj ):
         all_tasknames.sort(key=str.lower)  # case-insensitive sort
         return all_tasknames
 
-    def edges_from_graph_line( self, line, cycle_list_string ):
+    def edges_from_graph_line( self, line, section_label, asynchronous ):
         # Extract dependent pairs from the suite.rc textual dependency
         # graph to use in constructing graphviz graphs.
 
@@ -613,11 +613,8 @@ class config( CylcConfigObj ):
         # is equivalent to:
         #  'A => D' and 'B | C => D'          <--- use this instead
 
-        temp = re.split( '\s*,\s*', cycle_list_string )
-        # turn cycle_list_string into a list of integer hours
-        hours = []
-        for i in temp:
-            hours.append( int(i) )
+        # list of valid hours or asynch IDs
+        section_label_members = re.split( '\s*,\s*', section_label )
 
         # split on arrows
         sequence = re.split( '\s*=>\s*', line )
@@ -633,12 +630,12 @@ class config( CylcConfigObj ):
             items  = re.split( '\s*&\s*', group )
             for item in items:
                 n = node( item )
-                # store nodes by hour
-                for hour in hours:
-                    if hour not in self.lone_nodes:
-                        self.lone_nodes[hour] = []
-                    if n not in self.lone_nodes[hour]:
-                        self.lone_nodes[hour].append( n )
+                # store nodes by hour (or asynch ID)
+                for slm in section_label_members:
+                    if slm not in self.lone_nodes:
+                        self.lone_nodes[slm] = []
+                    if n not in self.lone_nodes[slm]:
+                        self.lone_nodes[slm].append( n )
             return
 
         # get list of pairs
@@ -664,11 +661,11 @@ class config( CylcConfigObj ):
                 for l in lefts:
                     e = edge( l,r )
                     # store edges by hour
-                    for hour in hours:
-                        if hour not in self.edges:
-                            self.edges[hour] = []
-                        if e not in self.edges[hour]:
-                            self.edges[hour].append( e )
+                    for slm in section_label_members:
+                        if slm not in self.edges:
+                            self.edges[slm] = []
+                        if e not in self.edges[slm]:
+                            self.edges[slm].append( e )
 
             # self.edges left side members can be:
             #   foo           (task name)
@@ -677,17 +674,11 @@ class config( CylcConfigObj ):
             #   foo:N(T-DD)   (both)
 
 
-    def tasks_from_graph_line( self, line, cycle_list_string ):
+    def tasks_from_graph_line( self, line, section_label, asynchronous ):
         # Extract dependent pairs from the suite.rc textual dependency
         # graph and use to defined task proxy class definitions.
 
         # SEE DOCUMENTATION OF GRAPH LINE FORMAT ABOVE
-
-        temp = re.split( '\s*,\s*', cycle_list_string )
-        # turn cycle_list_string into a list of integer hours
-        hours = []
-        for i in temp:
-            hours.append( int(i) )
 
         # split on arrows
         sequence = re.split( '\s*=>\s*', line )
@@ -709,7 +700,10 @@ class config( CylcConfigObj ):
 
                 if name not in self.taskdefs:
                     self.taskdefs[ name ] = self.get_taskdef( name )
-                self.taskdefs[name].add_hours( hours )
+                if not asynchronous:
+                    self.taskdefs[name].add_hours( section_label )
+                else:
+                    self.taskdefs[name].add_asynchid( section_label )
             return
 
         # get list of pairs
@@ -732,14 +726,9 @@ class config( CylcConfigObj ):
             # now split on '&' (AND) and generate corresponding pairs
             rights = re.split( '\s*&\s*', rgroup )
             for r in rights:
-                self.generate_taskdefs( lconditional, r, cycle_list_string )
+                self.generate_taskdefs( lconditional, r, section_label, asynchronous )
 
-    def generate_taskdefs( self, lcond, right, cycle_list_string ):
-        # get a list of integer hours from cycle_list_string
-        temp = re.split( '\s*,\s*', cycle_list_string )
-        hours = []
-        for i in temp:
-            hours.append( int(i) )
+    def generate_taskdefs( self, lcond, right, section_label, asynchronous ):
 
         # extract left side task names (split on '|' or '&')
         lefts = re.split( '\s*[\|&]\s*', lcond )
@@ -752,7 +741,10 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, str(x)
             if name not in self.taskdefs:
                 self.taskdefs[ name ] = self.get_taskdef( name )
-            self.taskdefs[ name ].add_hours( hours )
+            if not asynchronous:
+                self.taskdefs[ name ].add_hours( section_label )
+            else:
+                self.taskdefs[ name ].add_asynchid( section_label )
 
         # SET TRIGGERS
         if not re.search( '\|', lcond ):
@@ -986,19 +978,28 @@ class config( CylcConfigObj ):
 
         # loop over cycle time lists
         for section in self['dependencies']:
+            asynchronous = False
             if re.match( '^[\s,\d]+$', section ):
-                cycle_list_string = section
+                # Cycling tasks.
+                ### NOT USED: Get a list of integer hours for the section
+                ###temp = re.split( '\s*,\s*', section )
+                ###hours = []
+                ###for i in temp:
+                ###    hours.append( int(i) )
+                section_label = section
+
+            elif re.match( '^asynch:', section ):
+                # Asynchronous tasks.
+                # Get the asynchronous ID match string
+                asynchronous = True
+                m = re.match( '^asynch:(.*)$', section )
+                section_label = m.groups()[0]
+
             else:
                 raise SuiteConfigError, 'Illegal Section: [dependencies]['+section+']'
 
-            # get a list of integer hours from cycle_list_string
-            temp = re.split( '\s*,\s*', cycle_list_string )
-            hours = []
-            for i in temp:
-                hours.append( int(i) )
-
             # parse the dependency graph for this list of cycle times
-            graph = self['dependencies'][ cycle_list_string ]['graph']
+            graph = self['dependencies'][ section ]['graph']
             lines = re.split( '\s*\n\s*', graph )
             for xline in lines:
                 # strip comments
@@ -1012,29 +1013,37 @@ class config( CylcConfigObj ):
 
                 # add to the graphviz dependency graph
                 # and generate task proxy class definitions
-                self.edges_from_graph_line( line, cycle_list_string )
+                self.edges_from_graph_line( line, section_label, asynchronous )
 
         self.graph_loaded = True
 
     def load_tasks( self ):
         # LOAD FROM DEPENDENCY GRAPH
         dep_pairs = []
-
+        asynchronous = False
         # loop over cycle time lists
         for section in self['dependencies']:
             if re.match( '^[\s,\d]+$', section ):
-                cycle_list_string = section
+                # Cycling tasks.
+                ### NOT USED: get a list of integer hours from cycle_list_string
+                ###temp = re.split( '\s*,\s*', cycle_list_string )
+                ###hours = []
+                ###for i in temp:
+                ###    hours.append( int(i) )
+                section_label = section
+
+            elif re.match( '^asynch:', section ):
+                # Asynchronous tasks.
+                # Get the asynchronous ID match string
+                asynchronous = True
+                m = re.match( '^asynch:(.*)$', section )
+                section_label = m.groups()[0]
+
             else:
                 raise SuiteConfigError, 'Illegal Section: [dependencies]['+section+']'
 
-            # get a list of integer hours from cycle_list_string
-            temp = re.split( '\s*,\s*', cycle_list_string )
-            hours = []
-            for i in temp:
-                hours.append( int(i) )
-
             # parse the dependency graph for this list of cycle times
-            graph = self['dependencies'][ cycle_list_string ]['graph']
+            graph = self['dependencies'][ section ]['graph']
             lines = re.split( '\s*\n\s*', graph )
             for xline in lines:
                 # strip comments
@@ -1048,7 +1057,7 @@ class config( CylcConfigObj ):
 
                 # add to the graphviz dependency graph
                 # and generate task proxy class definitions
-                self.tasks_from_graph_line( line, cycle_list_string )
+                self.tasks_from_graph_line( line, section_label, asynchronous )
 
         # task families
         members = []

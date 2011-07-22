@@ -121,7 +121,9 @@ class taskdef(object):
             self.cond_triggers[ cycle_list_string ] = []
         self.cond_triggers[ cycle_list_string ].append( [ triggers, exp ] )
 
-    def add_hours( self, hours ):
+    def add_hours( self, section_label ):
+        # list of valid hours
+        hours = re.split( '\s*,\s*', section_label )
         for hr in hours:
             hour = int( hr )
             if hour < 0 or hour > 23:
@@ -129,6 +131,9 @@ class taskdef(object):
             if hour not in self.hours: 
                 self.hours.append( hour )
             self.hours.sort( key=int )
+
+    def add_asynchid( self, section_label ):
+        self.asynchid = section_label
 
     def check_consistency( self ):
         if len( self.hours ) == 0:
@@ -228,7 +233,6 @@ class taskdef(object):
             m = re.search( '\$\(CYCLE_TIME\s*\-\s*(\d+)\)', preq )
             if m:
                 offset = m.groups()[0]
-                #ctime = cycle_time.decrement( sself.c_time, offset )
                 foo = ct( sself.c_time )
                 foo.decrement( hours=offset )
                 ctime = foo.get()

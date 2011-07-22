@@ -1,8 +1,11 @@
 
 description = simple asynchronous example suite
 
+[special tasks]
+    daemon = watcher
+
 [dependencies]
-    [[SATID]]
+    [[asynch:SATID]]
         graph = watcher
 
 [tasks]
