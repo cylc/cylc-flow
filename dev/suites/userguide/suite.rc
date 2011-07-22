@@ -16,17 +16,17 @@ functionality."""
 use lockserver = True
 use secure passphrase = True
 
-#task submitted hook script         = alert.sh
-#task started hook script           = alert.sh
-#task succeeded hook script          = alert.sh
-#task failed hook script            = alert.sh
-#task warning hook script           = alert.sh
-#task submission failed hook script = alert.sh
-task timeout hook script           = timeout.sh
+#task submitted hook script         = cylc util email-alert
+#task started hook script           = cylc util email-alert
+task succeeded hook script          = cylc util email-alert
+task failed hook script            = cylc util email-alert
+#task warning hook script           = cylc util email-alert
+#task submission failed hook script = cylc util email-alert
+task timeout hook script           = cylc util email-alert
 task execution timeout in minutes = 0.2
 task submission timeout in minutes = 0.2
 
-tasks to include at startup = C
+#tasks to include at startup = C
 
 #use suite blocking = True
 
@@ -74,6 +74,9 @@ task run time in seconds = 1
                    bar => baz"""
 
 [cylc local environment]
+# for cylc util email-alert:
+MAIL_ADDRESS = h.oliver@niwa.co.nz
+
 [environment]
     TASK_EXE_SECONDS = 15
     WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
@@ -93,7 +96,7 @@ echo twoot!"""
 
     [[X]]
         description = "retrieve real time data for model A"
-        #task started hook script = alert2.sh
+        #task started hook script = cylc util email-alert
         task submission timeout in minutes = 0.5
         command = X.sh
         #command = X.sh
@@ -101,7 +104,7 @@ echo twoot!"""
             X_OUTPUT_DIR = $WORKSPACE
     [[A]]
         description = "model A - weather forecast"
-        command = A.sh
+        command = "A.sh"
         [[[environment]]]
             A_INPUT_DIR = $WORKSPACE
             A_OUTPUT_DIR = $WORKSPACE

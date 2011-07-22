@@ -71,6 +71,12 @@ echo " + Exporting examples suites to the central database"
 # This will create the new database file.
 cylc export examples:
 
+echo " + Unregistering the originals in your private database"
+# So even the admin user has to import *copies* of the example suites
+# from the central database - so that he/she cannot modify the originals 
+# by accident. 
+cylc unregister examples:
+
 # determine CDB directory location
 CDB=$(python -c 'from CylcGlobals import central_regdb_dir; print central_regdb_dir')
 
