@@ -99,6 +99,8 @@ class taskdef(object):
         self.outputs = []     # list of special outputs; change to OrderedDict()
                               # if need to vary per cycle.
 
+        self.output_patterns = []  # asynchronous daemon tasks
+
         # default to dummy task for tasks in graph but not in the [tasks] section.
         self.commands = [ dummy_command ] # list of commands
         self.environment = OrderedDict()  # var = value
@@ -132,8 +134,8 @@ class taskdef(object):
                 self.hours.append( hour )
             self.hours.sort( key=int )
 
-    def add_asynchid( self, section_label ):
-        self.asynchid = section_label
+    def add_asynchid( self, asyncid ):
+        self.output_patterns.append( asyncid )
 
     def check_consistency( self ):
         if len( self.hours ) == 0:
@@ -297,6 +299,8 @@ class taskdef(object):
             sself.orig_c_hour = start_c_time[8:10]
  
             sself.external_tasks = deque()
+
+            sself.output_patterns = self.output_patterns
 
             for command in self.commands:
                 sself.external_tasks.append( command )
