@@ -13,8 +13,8 @@ functionality."""
 
 #job submission shell = /usr/bin/ksh
 
-use lockserver = True
-use secure passphrase = True
+#use lockserver = True
+#use secure passphrase = True
 
 #task submitted hook script         = cylc util email-alert
 #task started hook script           = cylc util email-alert
@@ -75,7 +75,7 @@ task run time in seconds = 1
 
 [cylc local environment]
 # for cylc util email-alert:
-MAIL_ADDRESS = h.oliver@niwa.co.nz
+#MAIL_ADDRESS = h.oliver@niwa.co.nz
 
 [environment]
     TASK_EXE_SECONDS = 15

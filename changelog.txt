@@ -90,3 +90,13 @@ Version number X.Y.Z incrementing:
  signal), process termination by the TERM signal (e.g. by 'kill PID' or
  'llcancel JOBID'), and termination (e.g. by the batch scheduler) due
  to exceeding some system time limit (XCPU signal).
+
+ 3.3.8-PENDING
+  + Fixed bug introduced in 3.3.7: trapping of EXIT signal must be 
+  turned off at the end of job scripts for detaching tasks (which
+  handle their own completion messaging).
+  +  Task event hook script argument list changed again. Cylc now calls:
+     <hook script> EVENT SUITE TASKID MESSAGE
+  Where TASKID works with both cycling and non-cycling tasks (in development).
+  WARNING: this change will break existing task event hook scripts.
+
