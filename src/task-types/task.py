@@ -145,7 +145,7 @@ class task( Pyro.core.ObjBase ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
-        #  * unique identity (NAME%CYCLE for cycling tasks)
+        #  * self.id: unique identity (e.g. NAME%CYCLE for cycling tasks)
         #  * prerequisites and outputs
         #  * self.env_vars 
 
@@ -153,9 +153,11 @@ class task( Pyro.core.ObjBase ):
         self.state = task_state.task_state( state )
         self.launcher = None
 
-        # count instances of each top level object derived from task
-        # top level derived classes must define:
+        # Count instances of each top level object derived from task.
+        # Top level derived classes must define:
         #   <class>.instance_count = 0
+        # NOTE: top level derived classes are now defined dynamically
+        # (so this is initialised in src/taskdef.py).
         self.__class__.instance_count += 1
 
         Pyro.core.ObjBase.__init__(self)
@@ -184,10 +186,6 @@ class task( Pyro.core.ObjBase ):
         self.succeeded_time = None
         self.etc = None
         self.to_go = None
-
-        # A final stop time can be set by 'cylc insert' to create
-        # a temporary task.
-        self.stop_c_time = None
 
         # chose task-specific and then global hook scripts
         for event in [ 'submitted', 'submission failed', 'started', 
@@ -255,7 +253,7 @@ class task( Pyro.core.ObjBase ):
 
     def call_warning_hook( self, message ):
         self.log( 'WARNING', 'calling task warning hook' )
-        command = ' '.join( [self.hook_scripts['warning'], 'warning', self.__class__.suite, self.name, self.c_time, "'" + message + "' &"] )
+        command = ' '.join( [self.hook_scripts['warning'], 'warning', self.__class__.suite, self.id, "'" + message + "' &"] )
         subprocess.call( command, shell=True )
 
     def set_submitted( self ):
@@ -265,7 +263,7 @@ class task( Pyro.core.ObjBase ):
         self.submission_timer_start = self.submitted_time
         if self.hook_scripts['submitted']:
             self.log( 'NORMAL', 'calling task submitted hook script' )
-            command = ' '.join( [self.hook_scripts['submitted'], 'submitted', self.__class__.suite, self.name, self.c_time, "'(task submitted)' &"] )
+            command = ' '.join( [self.hook_scripts['submitted'], 'submitted', self.__class__.suite, self.id, "'(task submitted)' &"] )
             subprocess.call( command, shell=True )
 
     def set_running( self ):
@@ -274,7 +272,7 @@ class task( Pyro.core.ObjBase ):
         self.execution_timer_start = self.started_time
         if self.hook_scripts['started']:
             self.log( 'NORMAL', 'calling task started hook script' )
-            command = ' '.join( [self.hook_scripts['started'], 'started', self.__class__.suite, self.name, self.c_time, "'(task running)' &"] )
+            command = ' '.join( [self.hook_scripts['started'], 'started', self.__class__.suite, self.id, "'(task running)' &"] )
             subprocess.call( command, shell=True )
 
     def set_succeeded( self ):
@@ -289,7 +287,7 @@ class task( Pyro.core.ObjBase ):
         self.state.set_status( 'succeeded' )
         if self.hook_scripts['succeeded']:
             self.log( 'NORMAL', 'calling task succeeded hook script' )
-            command = ' '.join( [self.hook_scripts['succeeded'], 'succeeded', self.__class__.suite, self.name, self.c_time, "'(task succeeded)' &"] )
+            command = ' '.join( [self.hook_scripts['succeeded'], 'succeeded', self.__class__.suite, self.id, "'(task succeeded)' &"] )
             subprocess.call( command, shell=True )
 
     def set_failed( self, reason ):
@@ -297,7 +295,7 @@ class task( Pyro.core.ObjBase ):
         self.log( 'CRITICAL', reason )
         if self.hook_scripts['failed']:
             self.log( 'WARNING', 'calling task failed hook script' )
-            command = ' '.join( [self.hook_scripts['failed'], 'failed', self.__class__.suite, self.name, self.c_time, "'" + reason + "' &"] )
+            command = ' '.join( [self.hook_scripts['failed'], 'failed', self.__class__.suite, self.id, "'" + reason + "' &"] )
             subprocess.call( command, shell=True )
 
     def set_submit_failed( self ):
@@ -306,7 +304,7 @@ class task( Pyro.core.ObjBase ):
         self.log( 'CRITICAL', reason )
         if self.hook_scripts['submission failed']:
             self.log( 'WARNING', 'calling task submission failed hook script' )
-            command = ' '.join( [self.hook_scripts['submission failed'], 'submit_failed', self.__class__.suite, self.name, self.c_time, "'" + reason + "' &"] )
+            command = ' '.join( [self.hook_scripts['submission failed'], 'submit_failed', self.__class__.suite, self.id, "'" + reason + "' &"] )
             subprocess.call( command, shell=True )
 
     def reset_state_ready( self ):
@@ -371,7 +369,7 @@ class task( Pyro.core.ObjBase ):
             if current_time > timeout:
                 msg = 'submitted ' + str( self.timeouts['submission'] ) + ' minutes ago, but has not started'
                 self.log( 'WARNING', msg )
-                command = ' '.join( [ self.hook_scripts['timeout'], 'submission', self.__class__.suite, self.name, self.c_time, "'" + msg + "' &" ] )
+                command = ' '.join( [ self.hook_scripts['timeout'], 'submission', self.__class__.suite, self.id, "'" + msg + "' &" ] )
                 subprocess.call( command, shell=True )
                 self.submission_timer_start = None
 
@@ -386,7 +384,7 @@ class task( Pyro.core.ObjBase ):
                 else:
                     msg = 'started ' + str( self.timeouts['execution'] ) + ' minutes ago, but has not succeeded'
                 self.log( 'WARNING', msg )
-                command = ' '.join( [ self.hook_scripts['timeout'], 'execution', self.__class__.suite, self.name, self.c_time, "'" + msg + "' &" ] )
+                command = ' '.join( [ self.hook_scripts['timeout'], 'execution', self.__class__.suite, self.id, "'" + msg + "' &" ] )
                 subprocess.call( command, shell=True )
                 self.execution_timer_start = None
 
@@ -515,15 +513,6 @@ class task( Pyro.core.ObjBase ):
 
     def has_spawned( self ):
         # the one off task type modifier overrides this.
-
-        # NOT NEEDED: temporary tasks handled in scheduler.py now
-        #if self.final_cycle_time:
-        #    if int( self.c_time ) >= int( self.final_cycle_time ):
-        #        self.state.set_spawned()
-        #        return True
-        #    else: 
-        #        return self.state.has_spawned()
-
         return self.state.has_spawned()
 
     def ready_to_spawn( self ):

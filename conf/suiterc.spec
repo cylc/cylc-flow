@@ -366,11 +366,12 @@ task timeout hook script = string( default=None )
 #> Your own hook scripts can be located in suite bin directories. 
 #> Hook scripts are passed the following arguments:
 #> \begin{lstlisting}
-#> <hook-script> EVENT SUITE TASK CYCLETIME MESSAGE
+#> <hook-script> EVENT SUITE TASKID MESSAGE
 #> \end{lstlisting}
-#> where MESSAGE describes what has happened, and EVENT is 
+#> where MESSAGE describes what has happened; EVENT is 
 #> either `submitted', `started', `succeeded', `failed', `timeout', 
-#> or `submit\_failed'.
+#> or `submit\_failed'; and TASKID is the unique task identifier
+#> (e.g.\ NAME%CYCLE_TIME for cycling tasks).
 #> Note that {\em hook scripts are called by cylc, not by tasks,} 
 #> so if you wish to pass in additional information via the environment, 
 #> use the [cylc local environment] section, not [environment].
@@ -397,9 +398,11 @@ task execution timeout in minutes = float( default=None )
 #> it was submitted (or started), the task timeout hook script will be
 #> called by cylc with the following arguments:
 #> \begin{lstlisting}
-#> <script> EVENT SUITE TASK CYCLETIME MESSAGE
+#> <script> EVENT SUITE TASKID MESSAGE
 #> \end{lstlisting}
-#> where EVENT is `submission' or `execution'.
+#> where message describes what has happened; EVENT is `submission' or
+#> `execution'; and TASKID is the unique task identifier
+#> (e.g.\ NAME%CYCLE_TIME for cycling tasks).
 #> Like the hook scripts themselves, these suite level settings
 #> can be overridden by specific tasks.
 #>\begin{myitemize}
@@ -969,11 +972,12 @@ __many__ = string
 #> Your own hook scripts can be located in suite bin directories. 
 #> Hook scripts are passed the following arguments:
 #> \begin{lstlisting}
-#> <hook-script> EVENT SUITE TASK CYCLETIME MESSAGE
+#> <hook-script> EVENT SUITE TASKID MESSAGE
 #> \end{lstlisting}
-#> where MESSAGE describes what has happened, and EVENT is 
+#> where MESSAGE describes what has happened; EVENT is 
 #> either `submitted', `started', `succeeded', `failed', `timeout', 
-#> or `submit\_failed'.
+#> or `submit\_failed'; and TASKID is the unique task identifier
+#> (e.g.\ NAME%CYCLE_TIME for cycling tasks).
 #> Note that {\em hook scripts are called by cylc, not by tasks,} 
 #> so if you wish to pass in additional information via the environment, 
 #> use the [cylc local environment] section, not [environment].
@@ -1001,9 +1005,11 @@ __many__ = string
 #> (or started), the task timeout hook script will be called by cylc with the
 #> following arguments:
 #> \begin{lstlisting}
-#> <script> EVENT SUITE TASK CYCLETIME MESSAGE
+#> <script> EVENT SUITE TASKID MESSAGE
 #> \end{lstlisting}
-#> where EVENT is `submission' or `execution'.
+#> where MESSAGE describes what has happened; EVENT is `submission' or
+#> `execution'; and TASKID is the unique task identifier
+#> (e.g.\ NAME%CYCLE_TIME for cycling tasks).
 #> Like the hook scripts, these are task-specific settings; you can also
 #> set suite level defaults.
 #>\begin{myitemize}

@@ -9,11 +9,11 @@
 #________________________________________________
 
 # Cylc calls event hook scripts with the following arguments:
-#   EVENT SUITE TASK CYCLETIME  MESSAGE
+#   EVENT SUITE TASKID MESSAGE
 # See the Cylc User Guide Suite.rc Reference for more information.
 
 usage() {
-    echo "USAGE: cylc email-alert EVENT SUITE TASK CTIME MESSAGE"
+    echo "USAGE: cylc email-alert EVENT SUITE TASKID MESSAGE"
     echo ""
     echo "A cylc event hook script that sends an email alert. The arguments"
     echo "are supplied automatically by cylc. To get and email alert whenever"
@@ -34,21 +34,20 @@ if [[ $# = 1 ]]; then
     fi
 fi
 
-if [[ $# < 5 ]]; then
+if [[ $# < 4 ]]; then
     usage
     exit 1
 fi
 
 EVENT=$1      # e.g. "failed"
 SUITE=$2      # group:name of the [failed] task
-TASK=$3       # name of the [failed] task 
-CTIME=$4      # cycle time of the [failed] task
-MESSAGE="$5"  # quotes required (message contains spaces)
+TASKID=$3       # name of the [failed] task 
+MESSAGE="$4"  # quotes required (message contains spaces)
 
-MAIL_SUBJECT="!!cylc alert!! $SUITE $TASK%$CTIME $EVENT" 
+MAIL_SUBJECT="!!cylc alert!! $SUITE $TASKID $EVENT" 
 MAIL_ADDRESS=${MAIL_ADDRESS:-$USER@$HOSTNAME}
 MAIL_BODY="SUITE: $SUITE
-TASK: $TASK%$CTIME
+TASK: $TASKID
 MESSAGE: $MESSAGE"
 
 echo "$MAIL_BODY" | mail -s "$MAIL_SUBJECT" $MAIL_ADDRESS
