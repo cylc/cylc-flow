@@ -90,3 +90,8 @@ Version number X.Y.Z incrementing:
  signal), process termination by the TERM signal (e.g. by 'kill PID' or
  'llcancel JOBID'), and termination (e.g. by the batch scheduler) due
  to exceeding some system time limit (XCPU signal).
+
+ 3.3.8-PENDING
+  + Fixed bug introduced in 3.3.7: trapping of EXIT signal must be 
+  turned off at the end of job scripts for detaching tasks (which
+  handle their own completion messaging).
