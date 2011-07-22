@@ -486,10 +486,6 @@ This process should complete in 2-3 minutes and can be watched in real
 time by right-clicking on the temporary test suite when it appears in
 the gcylc private database window, and opening up a suite control GUI.
 
-This test is aimed only at scheduling functionality so the test suite 
-is configured not to use the cylc lockserver (see {\em Starting Your 
-Lockserver Daemon}, Section~\ref{StartingYourLockserverDaemon}).
-
 {\em The test-suite command does not currently detect failure of the
 running suite, it will just keep waiting. To see if this has happened
 (it shouldn't!) take a look at the file \lstinline=test-suite.out= 
@@ -662,13 +658,12 @@ the new ones:
 
 \begin{myenumerate}
     \item Before upgrading (under the old cylc version), unregister the
-        {\em examples} group from the central database and from the cylc
-        admin user's private database. 
+        {\em examples} group from the central suite database. 
     \item Download the new cylc release tarball and unpack it.
     \item Copy (via the shell) the central database from the old
         installation to the new.
     \item Source the new cylc environment script.
-    \item Run \lstinline=cylc admin create-cdb= to register the example
+    \item Run \lstinline=cylc admin create-cdb= to upload the example
         suites for the new release.
 \end{myenumerate}
 
@@ -859,44 +854,7 @@ defined in your environment, for example:
 export TMPDIR=/tmp/$USER
 \end{lstlisting}
 
-\subsection{Starting Your Lockserver Daemon}
-\label{StartingYourLockserverDaemon}
 
-
-Each cylc user should run a lockserver to prevent accidental 
-invocation of multiple instances of the same suite or task at the same 
-time.  The suite and task locks brokered by the lockserver are analogous
-to traditional lock files, but they work across a network, even for
-distributed suites containing tasks that start executing on one host and
-finish on another.
-
-The lockserver daemon can be started at any time and left running.
-\begin{lstlisting}
-$ cylc lockserver start
-\end{lstlisting}
-
-Check that it is running,
-\begin{lstlisting}
-$ cylc lockserver status
-\end{lstlisting}
-
-For detailed usage information,
-\begin{lstlisting}
-$ cylc lockserver --help 
-\end{lstlisting}
-
-There is a command line client interface, 
-\lstinline=cylc lockclient=,
-for interrogating the lockserver and managing 
-locks manually (e.g.\ releasing locks if a suite was killed 
-before it could clean up after itself).
-
-You can also choose not to use the lockserver for a particular suite, by
-setting the following switch in its suite.rc (suite definition) file,
-\begin{lstlisting}
-# SUITE.RC:
-use lockserver = False  # not recommended!
-\end{lstlisting}
 
 \subsection{Starting The gcylc GUI}
 
@@ -949,11 +907,6 @@ directories in the group (choose something like
 {\em Note that you can also import individual suites, and that
 registration groups do not need to be created explicitly, they
 are automatically created and deleted as required.} 
-
-Note also that {\em if you are the cylc admin user} the example suites 
-will already be registered in your private database - that's
-where they were registered in the first place, in order to be exported
-to the central database.
 
 Now use the Database menu to switch back to your private database, and
 confirm that you now have a copy of the example suites.
@@ -1543,12 +1496,8 @@ strategies for certain kinds of failure, for instance. In simulation mode you
 can watch how any suite catches up and transitions from delayed to real
 time operation.
 
-The lockserver will let you run multiple instances of any suite, 
-under different registrations, if the suite declares 
-{\em allow multiple simultaneous instances = True} in its suite.rc file. 
-This should only be used if \lstinline=$CYLC_SUITE_GROUP= and 
-\lstinline=$CYLC_SUITE_NAME= are used in all I/O paths so that the
-different suite instances will not interfere with each other.
+The example suites all use registration specific I/O paths so that
+you can run multiple instances of them at once without interference.
 
 %\pagebreak
 \section{Suite Registration}
@@ -1645,7 +1594,8 @@ writeable, which is not very secure.
 {\em We intend to develop a client/server interface to the public suite
 database so that users can easily share suites across the network}. The 
 required server functionality is essentially identical to that of the
-cylc lockserver, so this will not be difficult. In the meantime,
+cylc lockserver (see Appendix~\ref{TheCylcLockserver}) so this will not
+be difficult. In the meantime,
 ``importing'' a suite manually from another user on another host is
 simply a matter of copying the suite definition directory over and
 registering the new copy in your private database.
@@ -3172,6 +3122,8 @@ Here is the generated job script:
 # Task: A%2011052400
 # To be submitted by method: 'background'
 
+echo "TASK JOB SCRIPT STARTING"
+
 # CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY:
 export CYLC_DIR="/home/oliverh/cylc"
 export CYLC_MODE="submit"
@@ -3195,7 +3147,19 @@ export CYCLE_TIME=2011052400
 . $CYLC_DIR/environment.sh
 
 # SET ERROR TRAPPING:
-set -e; trap 'cylc task failed "Error trapped by task job script"' ERR
+set -u # Fail when using an undefined variable
+# Define the trap handler
+HANDLE_TRAP() {
+  echo Received signal "$@"
+  cylc task failed "Task job script received signal $@"
+  trap "" EXIT
+  exit 0
+}
+# Trap any signals which could cause the script to exit
+trap "HANDLE_TRAP EXIT" EXIT
+trap "HANDLE_TRAP ERR"  ERR
+trap "HANDLE_TRAP TERM" TERM
+trap "HANDLE_TRAP XCPU" XCPU
 
 # SEND TASK STARTED MESSAGE:
 cylc task started || exit 1
@@ -3214,6 +3178,9 @@ A.sh
 
 # SEND TASK SUCCEEDED MESSAGE:
 cylc task succeeded
+trap "" EXIT
+
+echo "JOB SCRIPT EXITING (TASK SUCCEEDED)"
 
 #EOF
 
@@ -3427,11 +3394,6 @@ Section~\ref{QuickStartGuide}).
         (the {\em Quick Start Guide} will also help here, along 
         with the cylc example suites, and running your real suites in
         simulation mode)
-
-    \item the cylc lockserver 
-        (lockserver startup is documented in the {\em Quick Start
-        Guide}; see also \lstinline=cylc lockserver help= and
-        \lstinline=cylc lockclient help=)
 
     \item suite security - use of secure passphrases (this is
         trivial to configure, see documentation of the {\em use secure
@@ -3808,6 +3770,56 @@ lot more complicated than those of the cylc example suites.
 \lstset{language=usage}
 \input{commands.tex}
 
+\section{The Cylc Lockserver}
+\label{TheCylcLockserver}
+
+Each cylc user can optionally run his/her own lockserver to prevent
+accidental invocation of multiple instances of the same suite or task at
+the same time. The suite and task locks brokered by the lockserver are
+analogous to traditional lock files, but they work across a network,
+even for distributed suites containing tasks that start executing on one
+host and finish on another.  
+
+Accidental invocation of multiple instances 
+of the same suite or task at the same time can have serious consequences, 
+so use of the lockserver should be considered for important operational
+suites, but it may be considered an unnecessary complication for general 
+less critical usage, so it is currently disabled by default. 
+
+To enable the lockserver:
+\begin{lstlisting}
+# SUITE.RC
+use lockserver = True
+\end{lstlisting}
+
+The suite will now abort at startup if it cannot connect to the
+lockserver.  To start your lockserver daemon, 
+\begin{lstlisting}
+$ cylc lockserver start
+\end{lstlisting}
+
+To check that it is running,
+\begin{lstlisting}
+$ cylc lockserver status
+\end{lstlisting}
+
+For detailed usage information,
+\begin{lstlisting}
+$ cylc lockserver --help 
+\end{lstlisting}
+
+There is a command line client interface, 
+\begin{lstlisting}
+$ cylc lockclient --help 
+\end{lstlisting}
+for interrogating the lockserver and managing locks manually (e.g.\
+releasing locks if a suite was killed before it could clean up after
+itself).
+
+To watch suite locks being acquired and released as a suite runs, 
+\begin{lstlisting}
+$ watch cylc lockclient --print
+\end{lstlisting}
 
 \section{The Graph-Based Suite Control GUI}
 \label{TheGraphBasedSuiteControlGUI}

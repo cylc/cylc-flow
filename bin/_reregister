@@ -45,8 +45,6 @@ if len(args) != 2:
 arg_from = args[0]
 arg_to = args[1]
 
-reg = getdb( arg_from )
-
 m = re.match( '^(.*):$', arg_from )
 n = re.match( '^(.*):$', arg_to )
 if m:
@@ -60,6 +58,7 @@ else:
     reregister_group = False
 
 try:
+    reg = getdb( arg_from )
     reg.lock()
 except RegistrationError, x:
     raise SystemExit(x)

@@ -36,7 +36,8 @@ the correct source line, although the extra information reported by the
 validator should be sufficient to make this unnecessary.
 
 Arguments:
-   SUITE    - suite registration [OWNER:]GROUP:NAME""")
+   SUITE    - Suite database registration [OWNER:]GROUP:NAME
+              (use OWNER: to access the central database).""")
 
 parser.add_option( "-d", "--debug", help="print the "
         "exception traceback for validation errors.",

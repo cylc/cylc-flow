@@ -37,9 +37,9 @@ if len(args) != 1:
 
 suite = args[0]
 
-reg = getdb(suite)
-reg.load_from_file()
 try:
+    reg = getdb(suite)
+    reg.load_from_file()
     dir, title = reg.get( suite )
 except RegistrationError, x:
     raise SystemExit(x)

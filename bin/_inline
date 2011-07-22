@@ -110,7 +110,8 @@ See also:
     cylc prep validate
 
 Arguments:
-  SUITE   - suite registration [OWNER:]GROUP:NAME.""")
+  SUITE   - suite registration [OWNER:]GROUP:NAME
+            (user OWNER: to access the central database)""")
 
 parser.add_option( "--mark", "-m", 
         help="Mark inclusions in the left margin (line numbers will "

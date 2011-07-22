@@ -63,7 +63,6 @@ perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" src/gui/SuiteControl.py
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" bin/cylc
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/cug-pdf.tex
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/cug-html.tex
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/version.txt
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" README
 
 echo "MAKING DOCUMENTATION (USER GUIDE)"
@@ -73,7 +72,8 @@ export PATH=bin:$PATH
 export PYTHONPATH=src:$PYTHONPATH
 echo
 echo "LATEX PROCESSING"
-doc/process -c -f
+pwd
+doc/process -c
 
 echo "DELETING DOCUMENTATION SOURCE"
 # copy and restore generated documents from doc.

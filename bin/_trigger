@@ -33,7 +33,7 @@ See also:
    cylc con reset
    cylc con pause
    cylc con resume""",
-[ 'TASK              NAME%YYYYMMDDHH - the task to trigger.'] )
+[ 'TASK                 NAME%YYYYMMDDHH - the task to trigger.'] )
 
 (options, args) = parser.parse_args()
 

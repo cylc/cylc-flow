@@ -29,7 +29,7 @@ must be done before you can use a suite - cylc commands reference a
 particular suite by its GROUP:NAME.
 
 Arguments:
-     SUITE  -  private suite registration GROUP:NAME
+     SUITE  -  Private suite database registration GROUP:NAME
      PATH   -  A cylc suite definition directory location.""" )
 
 parser.add_option( "-v", "--verbose",

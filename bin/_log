@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, re, sys
-from config import config
+from config import config, SuiteConfigError
 from optparse import OptionParser
 from shutil import copy
 import tempfile
@@ -31,7 +31,8 @@ filtering. This command is a convenience: you don't need to
 know the log file location on disk.
 
 Arguments:
-  SUITE - access the cylc logs from the suite of this name.""")
+  SUITE - Private suite database registration GROUP:NAME
+          of the suite whose log you want to view.""")
 
 parser.add_option( "-p", "--print", 
         help="Print the suite log file location and exit.",
@@ -65,7 +66,10 @@ try:
 except RegistrationError, x:
     raise SystemExit(x)
 
-filename = os.path.join( config( suite )['suite log directory'], 'log' )
+try:
+    filename = os.path.join( config( suite )['suite log directory'], 'log' )
+except SuiteConfigError, x:
+    raise SystemExit(x)
  
 if options.rotation != "0":
     filename = filename + options.rotation
@@ -76,7 +80,7 @@ if options.print_location:
 
 filter = None
 if options.taskfilter:
-    filter = re.compile( '\\[' + options.filter + '%\d{10}\\]' )
+    filter = re.compile( '\\[' + options.taskfilter + '%\d{10}\\]' )
 elif options.regexfilter:
     filter = re.compile( options.regexfilter )
 

@@ -51,7 +51,8 @@ See also:
     cylc [control] stop|shutdown
 
 Arguments:
-   SUITE                Registered name of the suite to restart.
+   SUITE                Private database registration GROUP:NAME of the
+                        suite you want to restart.
    [FILE]               Optional non-default state dump file (assumed to
                         be in the suite state dump directory unless you
                         supply the file path).""" 

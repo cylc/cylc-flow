@@ -29,8 +29,8 @@ defined in the suite config (suite.rc) file.
 
 Inserted tasks will spawn successors as normal, unless they are 'one off' tasks.
 See also 'cylc task submit', for running single tasks without a scheduler.""",
-[ 'TASK                   task or group to insert (NAME%YYYYMMDDHH)',
-  'STOP                   Optional stop cycle (YYYYMMDDHH)' ]
+[ 'TASK                 Task or group to insert (NAME%YYYYMMDDHH)',
+  'STOP                 Optional stop cycle (YYYYMMDDHH)' ]
 )
 
 (options, args) = parser.parse_args()

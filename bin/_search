@@ -84,7 +84,8 @@ See also:
   cylc prep inline 
 
 Arguments:
-  SUITE   - suite registration [OWNER:]GROUP:NAME.
+  SUITE   - Suite database registration [OWNER:]GROUP:NAME
+            (user OWNER: to access the central database).
   PATTERN - (list of) Python-style regular expression(s).
   """)
 

@@ -88,7 +88,7 @@ class regsplit( object ):
                 group, name = m.groups()
                 owner = user
             else:
-                raise RegistrationError, 'Illegal suite name: ' + suite
+                raise RegistrationError, 'Illegal suite NAME: ' + suite
         self.owner = owner
         self.group = group
         self.name = name
@@ -539,7 +539,7 @@ def getdb( suite ):
             # group:
             type = 'local'
         else:
-            raise RegistrationError, 'Illegal registration: ' + suite
+            raise RegistrationError, 'Illegal suite GROUP:NAME: ' + suite
 
         if type == 'central':
             return centraldb()

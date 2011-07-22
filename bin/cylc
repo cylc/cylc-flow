@@ -195,6 +195,7 @@ utility_commands['checkvars'] = ['checkvars']
 utility_commands['template' ] = ['template'] 
 utility_commands['housekeeping'] = ['housekeeping'] 
 #utility_commands['transfer' ] = ['transfer'] 
+utility_commands['email-alert' ] = ['email-alert'] 
 
 admin_commands = OrderedDict()
 admin_commands['create-cdb'  ] = [ 'create-cdb']
@@ -371,6 +372,7 @@ comsum[ 'checkvars'    ] = 'Check required environment variables en masse'
 comsum[ 'template'     ] = 'Powerful cycle time offset filename templating'
 comsum[ 'housekeeping' ] = 'Parallel archiving and cleanup on cycle time offsets'
 #comsum[ 'transfer'     ] = 'An scp-based file transfer tool'
+comsum[ 'email-alert' ] = 'Send alerts by email when tasks fail (for example)'
 
 def typo( str ):
     corrected = str
@@ -531,7 +533,7 @@ else:
         except CommandNotFoundError, y:
             print y
             print 'COMMANDS available in CATEGORY "' + category + '":'
-            print coms
+            print coms.keys()
             sys.exit(1)
  
         else:

@@ -68,3 +68,35 @@ Version number X.Y.Z incrementing:
    - if a timeout was set, the hook script was called even if the event
      did occur in time - which should cancel the timeout.
  + More detailed documentation of complete installation by non-root users.
+
+ 3.3.6
+ + Documentation of graphviz installation without QT.
+ + Improved detection of errors in suite.rc graph hours headings.
+ + Improved detection of erroneous suite registrations on the command line.
+ + Fixed a bug in 'cylc log' command task filtering.
+ + At installation, unregister example suites from admin user's private db.
+ + Task event hook script argument list changed. Cylc now calls:
+     <hook script> EVENT SUITE TASK CTIME MESSAGE
+   The new SUITE argument is particularly needed if running multiple suites.
+   WARNING: this change will break existing task event hook scripts.
+ + Added a task event hook script to 'cylc util' that sends email alerts.
+
+3.3.7
+ + Disabled the cylc lockserver by default.
+ + Altered environment.sh to work with 'set -u'.
+ + Better task error trapping: in addition to trapping processes that
+ abort with non-zero exit status (ERR signal) cylc now also registers
+ task failure after unexpected exit with normal exit status (EXIT
+ signal), process termination by the TERM signal (e.g. by 'kill PID' or
+ 'llcancel JOBID'), and termination (e.g. by the batch scheduler) due
+ to exceeding some system time limit (XCPU signal).
+
+ 3.3.8-PENDING
+  + Fixed bug introduced in 3.3.7: trapping of EXIT signal must be 
+  turned off at the end of job scripts for detaching tasks (which
+  handle their own completion messaging).
+  +  Task event hook script argument list changed again. Cylc now calls:
+     <hook script> EVENT SUITE TASKID MESSAGE
+  Where TASKID works with both cycling and non-cycling tasks (in development).
+  WARNING: this change will break existing task event hook scripts.
+

@@ -16,8 +16,6 @@ This suite configures them all to use a common I/O workspace, except for
 private running directories for the restart files of the warm-cycled
 models."""
 
-use lockserver = True
-
 [special tasks]
     startup          = prep
     sequential       = A, B, C
