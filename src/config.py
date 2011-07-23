@@ -639,7 +639,7 @@ class config( CylcConfigObj ):
                 for left in lefts:
                     e = edge( left, None )
                     for slm in section_label_members:
-                        if hour not in self.edges:
+                        if slm not in self.edges:
                             self.edges[slm] = []
                         if e not in self.edges[slm]:
                             self.edges[slm].append( e )
@@ -759,13 +759,13 @@ class config( CylcConfigObj ):
 
                 if lnode.name in self['special tasks']['startup']:
                     trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset )
-                    self.taskdefs[right].add_startup_trigger( trigger, cycle_list_string )
+                    self.taskdefs[right].add_startup_trigger( trigger, section_label )
                 else:
                     if lnode.intercycle:
                         self.taskdefs[lnode.name].intercycle = True
 
                     trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset )
-                    self.taskdefs[right].add_trigger( trigger, cycle_list_string )
+                    self.taskdefs[right].add_trigger( trigger, section_label )
         else:
             # Conditional with OR:
             # Strip off '*' plotting conditional indicator
@@ -805,7 +805,7 @@ class config( CylcConfigObj ):
             label = re.sub( '\-', '_', label )
             label = re.sub( '\:', '_', label )
 
-            self.taskdefs[right].add_conditional_trigger( ctrig, label, cycle_list_string )
+            self.taskdefs[right].add_conditional_trigger( ctrig, label, section_label )
 
     def get_graph( self, start_ctime, stop, colored=True, raw=False ):
         if not self.graph_loaded:
@@ -821,9 +821,10 @@ class config( CylcConfigObj ):
         gr_edges = []
         cycles = self.edges.keys()
         if len(cycles) != 0:
-            cycles.sort()
+            cycles.sort(key=int)
             ctime = start_ctime
-            hour = int( start_ctime[8:10] )
+            hour = str(int(start_ctime[8:10])) # get string without zero padding
+            # TO DO: ENSURE THAT ZERO PADDING NOT USED IN SECTION HEADINGS!!!!!
             found = True
             try:
                 i = cycles.index( hour )
@@ -832,9 +833,9 @@ class config( CylcConfigObj ):
                 # appears in the graph, and adjust ctime accordingly.
                 found = False
                 for i in range(0,len(cycles)):
-                    if cycles[i] > hour:
+                    if int(cycles[i]) > int(hour):
                         found = True
-                        diff = cycles[i] - hour
+                        diff = int(cycles[i]) - int(hour)
                         foo = ct(ctime)
                         foo.increment( hours=diff )
                         diffhrs = foo.subtract_hrs( ct(start_ctime) )
@@ -899,10 +900,10 @@ class config( CylcConfigObj ):
                     started = True
                     if i == len(cycles) - 1:
                         i = 0
-                        diff = 24 - hour + cycles[0]
+                        diff = 24 - int(hour) + int(cycles[0])
                     else:
                         i += 1
-                        diff = cycles[i] - hour
+                        diff = int(cycles[i]) - int(hour)
 
                     foo = ct(ctime)
                     foo.increment( hours=diff )
@@ -994,11 +995,6 @@ class config( CylcConfigObj ):
         for section in self['dependencies']:
             if re.match( '^[\s,\d]+$', section ):
                 # Cycling tasks.
-                ### NOT USED: get a list of integer hours from cycle_list_string
-                ###temp = re.split( '\s*,\s*', cycle_list_string )
-                ###hours = []
-                ###for i in temp:
-                ###    hours.append( int(i) )
                 section_label = section
 
             elif re.match( '^asynch:', section ):
