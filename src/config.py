@@ -67,6 +67,8 @@ class edge( object):
         # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
         if self.right in exclude:
             return None
+        if self.right == None:
+            return None
         first_cycle = not not_first_cycle
         if self.right in startup_only:
             if not first_cycle or raw:
@@ -75,7 +77,6 @@ class edge( object):
 
     def get_left( self, ctime, not_first_cycle, raw, startup_only, exclude ):
         # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
-        #if re.search( '\|', self.left_group ):
         OR_list = re.split('\s*\|\s*', self.left_group )
 
         first_cycle = not not_first_cycle
@@ -303,7 +304,6 @@ class config( CylcConfigObj ):
     def __init__( self, suite=None, simulation_mode=False, path=None ):
         self.simulation_mode = simulation_mode
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
-        self.lone_nodes = {} # nodes[ hour ] = [ A, B, ... ]
         self.taskdefs = {}
         self.loaded = False
         self.graph_loaded = False
@@ -622,53 +622,52 @@ class config( CylcConfigObj ):
         # split on arrows
         sequence = re.split( '\s*=>\s*', line )
 
-        # detect lone nodes
-        if len(sequence) == 1:
-            group = sequence[0]
-            # Parentheses are used for intercycle dependencies: (T-6)
-            # etc., so don't check for them as erroneous conditionals
-            # just yet. Now split on '&' (AND) and generate pairs
-            if re.search( '\|', group ):
-                raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR: " + group
-            items  = re.split( '\s*&\s*', group )
-            for item in items:
-                n = node( item )
-                # store nodes by hour
-                for hour in hours:
-                    if hour not in self.lone_nodes:
-                        self.lone_nodes[hour] = []
-                    if n not in self.lone_nodes[hour]:
-                        self.lone_nodes[hour].append( n )
-            return
-
         # get list of pairs
-        for i in range( 0, len(sequence)-1 ):
+        for i in [0] + range( 1, len(sequence)-1 ):
             lgroup = sequence[i]
-            rgroup = sequence[i+1]
-            
+            if len(sequence) == 1:
+                rgroup = None
+                lone_node = True
+            else:
+                rgroup = sequence[i+1]
+                lone_node = False
+           
             # parentheses are used for intercycle dependencies: (T-6) etc.
             # so don't check for them as erroneous conditionals just yet.
 
-            # '|' (OR) is not allowed on the right side
-            if re.search( '\|', rgroup ):
-                raise SuiteConfigError, "ERROR: OR '|' is not legal on the right side of dependencies: " + rgroup
-
-            # (T+/-N) offsets not allowed on the right side (as yet)
-            if re.search( '\(\s*T\s*[+-]\s*\d+\s*\)', rgroup ):
-                raise SuiteConfigError, "ERROR: time offsets are not legal on the right side of dependencies: " + rgroup
-
-            # now split on '&' (AND) and generate corresponding pairs
-            rights = re.split( '\s*&\s*', rgroup )
-            lefts  = re.split( '\s*&\s*', lgroup )
-            for r in rights:
-                for l in lefts:
-                    e = edge( l,r )
-                    # store edges by hour
+            if lone_node:
+                if re.search( '\|', lgroup ):
+                    raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR conditionals: " + lgroup
+                lefts  = re.split( '\s*&\s*', lgroup )
+                for left in lefts:
+                    e = edge( left, None )
                     for hour in hours:
                         if hour not in self.edges:
                             self.edges[hour] = []
                         if e not in self.edges[hour]:
                             self.edges[hour].append( e )
+            else:
+                # '|' (OR) is not allowed on the right side
+                if re.search( '\|', rgroup ):
+                    raise SuiteConfigError, "ERROR: OR '|' is not legal on the right side of dependencies: " + rgroup
+
+                # (T+/-N) offsets not allowed on the right side (as yet)
+                if re.search( '\(\s*T\s*[+-]\s*\d+\s*\)', rgroup ):
+                    raise SuiteConfigError, "ERROR: time offsets are not legal on the right side of dependencies: " + rgroup
+
+                # now split on '&' (AND) and generate corresponding pairs
+                rights = re.split( '\s*&\s*', rgroup )
+                lefts  = re.split( '\s*&\s*', lgroup )
+
+                for r in rights:
+                    for l in lefts:
+                        e = edge( l,r )
+                        # store edges by hour
+                        for hour in hours:
+                            if hour not in self.edges:
+                                self.edges[hour] = []
+                            if e not in self.edges[hour]:
+                                self.edges[hour].append( e )
 
             # self.edges left side members can be:
             #   foo           (task name)
@@ -692,47 +691,48 @@ class config( CylcConfigObj ):
         # split on arrows
         sequence = re.split( '\s*=>\s*', line )
 
-        # detect lone nodes
-        if len(sequence) == 1:
-            group = sequence[0]
-            # Parentheses are used for intercycle dependencies: (T-6)
-            # etc., so don't check for them as erroneous conditionals
-            # just yet. Now split on '&' (AND) and generate pairs
-            if re.search( '\|', group ):
-                raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR: " + group
-            nodes  = re.split( '\s*&\s*', group )
-            for node in nodes:
-                try:
-                    name = graphnode( node ).name
-                except GraphNodeError, x:
-                    raise SuiteConfigError, str(x)
-
-                if name not in self.taskdefs:
-                    self.taskdefs[ name ] = self.get_taskdef( name )
-                self.taskdefs[name].add_hours( hours )
-            return
-
         # get list of pairs
-        for i in range( 0, len(sequence)-1 ):
+        for i in [0] + range( 1, len(sequence)-1 ):
             lgroup = sequence[i]
+            if len(sequence) == 1:
+                rgroup = None
+                lone_node = True
+            else:
+                rgroup = sequence[i+1]
+                lone_node = False
+ 
             lconditional = lgroup
-            rgroup = sequence[i+1]
             
             # parentheses are used for intercycle dependencies: (T-6) etc.
             # so don't check for them as erroneous conditionals just yet.
 
-            # '|' (OR) is not allowed on the right side
-            if re.search( '\|', rgroup ):
-                raise SuiteConfigError, "ERROR: OR '|' is not legal on the right side of dependencies: " + rgroup
+            if lone_node:
+                if re.search( '\|', lgroup ):
+                    raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR conditionals: " + lgroup
+                lefts = re.split( '\s*&\s*', lgroup )
+                for left in lefts:
+                    try:
+                        name = graphnode( left ).name
+                    except GraphNodeError, x:
+                        raise SuiteConfigError, str(x)
 
-            # (T+/-N) offsets not allowed on the right side (as yet)
-            if re.search( '\(\s*T\s*[+-]\s*\d+\s*\)', rgroup ):
-                raise SuiteConfigError, "ERROR: time offsets are not legal on the right side of dependencies: " + rgroup
+                    if name not in self.taskdefs:
+                        self.taskdefs[ name ] = self.get_taskdef( name )
+                    self.taskdefs[name].add_hours( hours )
 
-            # now split on '&' (AND) and generate corresponding pairs
-            rights = re.split( '\s*&\s*', rgroup )
-            for r in rights:
-                self.generate_taskdefs( lconditional, r, cycle_list_string )
+            else:
+                # '|' (OR) is not allowed on the right side
+                if re.search( '\|', rgroup ):
+                    raise SuiteConfigError, "ERROR: OR '|' is not legal on the right side of dependencies: " + rgroup
+
+                # (T+/-N) offsets not allowed on the right side (as yet)
+                if re.search( '\(\s*T\s*[+-]\s*\d+\s*\)', rgroup ):
+                    raise SuiteConfigError, "ERROR: time offsets are not legal on the right side of dependencies: " + rgroup
+
+                # now split on '&' (AND) and generate corresponding pairs
+                rights = re.split( '\s*&\s*', rgroup )
+                for r in rights:
+                    self.generate_taskdefs( lconditional, r, cycle_list_string )
 
     def generate_taskdefs( self, lcond, right, cycle_list_string ):
         # get a list of integer hours from cycle_list_string
@@ -826,55 +826,6 @@ class config( CylcConfigObj ):
         startup_exclude_list = self.get_coldstart_task_list() + \
                 self.get_startup_task_list()
 
-        gr_lone_nodes = []
-        cycles = self.lone_nodes.keys()
-        if len(cycles) != 0:
-            cycles.sort()
-            ctime = start_ctime
-            hour = int( start_ctime[8:10] )
-            found = True
-            try:
-                i = cycles.index( hour )
-            except ValueError:
-                # no lone nodes at this hour; find index of next hour
-                # that does have 'em, and adjust ctime accordingly.
-                found = False
-                for i in range(0,len(cycles)):
-                    if cycles[i] > hour:
-                        found = True
-                        diff = cycles[i] - hour
-                        foo = ct(ctime)
-                        foo.increment( hours=diff )
-                        ctime = foo.get()
-                        diffhrs = foo.subtract_hrs( ct(start_ctime) )
-                        if diffhrs > int(stop):
-                            found = False
-                        break
-            if found:
-                started = False
-                while True:
-                    hour = cycles[i]
-                    for n in self.lone_nodes[hour]:
-                        item = n.get(ctime, started, raw, startup_exclude_list, [])
-                        if item == None:
-                            # TO DO: why this test?
-                            continue
-                        gr_lone_nodes.append( item )
-                    # next cycle
-                    started = True
-                    if i == len(cycles) - 1:
-                        i = 0
-                        diff = 24 - hour + cycles[0]
-                    else:
-                        i += 1
-                        diff = cycles[i] - hour
-                    foo = ct(ctime)
-                    foo.increment( hours=diff )
-                    ctime = foo.get()
-                    diffhrs = foo.subtract_hrs( ct(start_ctime) )
-                    if diffhrs > int(stop):
-                        break
- 
         gr_edges = []
         cycles = self.edges.keys()
         if len(cycles) != 0:
@@ -905,15 +856,29 @@ class config( CylcConfigObj ):
                     for e in self.edges[hour]:
                         right = e.get_right(ctime, started, raw, startup_exclude_list, [])
                         left  = e.get_left( ctime, started, raw, startup_exclude_list, [])
-                        if left == None or right == None:
+
+                        if left == None and right == None:
+                            # nothing to add to the graph
                             continue
-                        lname, lctime = re.split( '%', left )
-                        rname, rctime = re.split( '%', right )
-                        sct = ct(start_ctime)
-                        diffhrs = sct.subtract_hrs( ct(lctime) )
-                        if diffhrs > 0:
-                            # check that left is not earlier than start time
-                            continue
+
+                        if left != None:
+                            lname, lctime = re.split( '%', left )
+                            sct = ct(start_ctime)
+                            diffhrs = sct.subtract_hrs( ct(lctime) )
+                            if diffhrs > 0:
+                                # check that left is not earlier than start time
+                                # TO DO: does this invalidate right too?
+                                continue
+                        else:
+                            lname = None
+                            lctime = None
+
+                        if right != None:
+                            rname, rctime = re.split( '%', right )
+                        else:
+                            rname = None
+                            lctime = None
+
                         if self['visualization']['show family members']:
                             if lname in self.members and rname in self.members:
                                 # both families
@@ -958,12 +923,16 @@ class config( CylcConfigObj ):
         # same order each time will result in the graph layout not
         # jumping around (does this help? -if not discard)
         gr_edges.sort()
-        gr_lone_nodes.sort()
         for e in gr_edges:
             l, r = e
-            graph.add_edge( l, r )
-        for n in gr_lone_nodes:
-            graph.add_node( n )
+            if l== None and r == None:
+                pass
+            elif l == None:
+                graph.add_node( r )
+            elif r == None:
+                graph.add_node( l )
+            else:
+                graph.add_edge( l, r )
 
         for n in graph.nodes():
             if not colored:
