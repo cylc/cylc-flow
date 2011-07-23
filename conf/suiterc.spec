@@ -1383,3 +1383,49 @@ live graph movie = boolean( default=False )
 #>\item {\em example:} \lstinline@live graph movie = True@
 #>\end{myitemize}
 
+#>IGNORE
+[raw task definitions]
+    [[__many__]]
+    description = string( default="No description supplied" )
+    command = force_list( default=list( "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP",))
+    job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=None )
+    job submission log directory = string( default=None )
+    owner = string( default=None )
+    remote host = string( default=None )
+    remote cylc directory = string( default=None )
+    remote suite directory = string( default=None )
+    task submitted hook script = string( default=None )
+    task submission failed hook script = string( default=None )
+    task started hook script = string( default=None )
+    task succeeded hook script = string( default=None )
+    task failed hook script = string( default=None )
+    task warning hook script = string( default=None )
+    task timeout hook script = string( default=None )
+    task submission timeout in minutes = float( default=None )
+    task execution timeout in minutes = float( default=None )
+    reset execution timeout on incoming messages = boolean( default=True )
+    extra log files = force_list( default=list())
+    #hours = force_list() # e.g. 0,6,12,18
+    hours = string()  # e.g. "0,6,12,18"
+    manual task completion messaging = boolean( default=None )
+
+    task type = option( free, daemon )
+
+    # oneoff, sequential, tied, clocktriggered
+    task type modifiers = force_list( default=list() )
+
+    clock trigger offset in hours = float( default=0.0 )
+
+        [[[prerequisites]]]
+        __many__ = string
+
+        [[[environment]]]
+        __many__ = string
+        [[[directives]]]
+        __many__ = string
+        [[[outputs]]]
+        __many__ = string
+#> RESUME
+
+
+

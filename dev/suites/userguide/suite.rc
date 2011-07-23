@@ -199,3 +199,11 @@ echo twoot!"""
         D      = "style=bold", "color=green4"
         E      = "style=bold", "color=blue"
         F      = "style=bold", "color=red"
+
+[raw task definitions]
+    [[raw]]
+        description = a raw task
+        task type = free
+        hours = "0,6,12,18"
+        [[[prerequisites]]]
+            one = "A%$(CYCLE_TIME) succeeded"
