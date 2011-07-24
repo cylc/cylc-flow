@@ -782,10 +782,12 @@ class scheduler(object):
 
         for itask in self.asynchronous_tasks:
             if itask.run_if_ready():
-                if not graphing_disabled and not self.runtime_graph_finalized:
-                    # add tasks to the runtime graph at the point
-                    # when they start running.
-                    self.update_runtime_graph( itask )
+                pass
+        # TO DO: RUN TIME GRAPH EXPECTS CTIMES
+        #        if not graphing_disabled and not self.runtime_graph_finalized:
+        #            # add tasks to the runtime graph at the point
+        #            # when they start running.
+        #            self.update_runtime_graph( itask )
 
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of

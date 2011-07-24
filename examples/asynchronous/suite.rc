@@ -1,6 +1,10 @@
 
 description = simple asynchronous example suite
 
+[dependencies]
+    [[12]]
+        graph = "A => B"
+
 [special tasks]
     daemon = watcher
 

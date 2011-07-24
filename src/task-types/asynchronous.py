@@ -60,8 +60,8 @@ class asynchronous( nopid, task ):
         return str( int( self.tag ) + 1 )
 
     def check_requisites( self ):
-        print '\n________________>'
-        print 'pre: ', self.id, self.death_prerequisites.dump()
+        #print '\n________________>'
+        #print 'pre: ', self.id, self.death_prerequisites.dump()
         for message in self.prerequisites.labels:
             lbl = self.prerequisites.labels[message]
             if not self.prerequisites.satisfied[lbl]:
@@ -103,7 +103,7 @@ class asynchronous( nopid, task ):
                     self.death_prerequisites.messages[lbl] = newpre
                     self.death_prerequisites.labels[newpre] = lbl
                     del self.death_prerequisites.labels[deathpre]
-        print 'post: ', self.id, self.death_prerequisites.dump()
+        #print 'post: ', self.id, self.death_prerequisites.dump()
 
     def set_requisites( self ):
         # ONLY REQUIRED FOR RESTART?
@@ -156,7 +156,7 @@ class asynchronous( nopid, task ):
         #print '\n_________________________'
         #print self.death_prerequisites.dump()
         #print self.outputs.dump()
-        print 'SATIS: ', self.id, self.death_prerequisites.dump()
+        #print 'SATIS: ', self.id, self.death_prerequisites.dump()
         self.death_prerequisites.satisfy_me_verbose( outputs )
 
     def get_state_summary( self ):
