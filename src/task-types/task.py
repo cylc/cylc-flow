@@ -159,6 +159,8 @@ class task( Pyro.core.ObjBase ):
         # NOTE: top level derived classes are now defined dynamically
         # (so this is initialised in src/taskdef.py).
         self.__class__.instance_count += 1
+        self.__class__.upward_instance_count += 1
+
 
         Pyro.core.ObjBase.__init__(self)
 

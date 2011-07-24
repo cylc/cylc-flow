@@ -69,8 +69,9 @@ class scheduler(object):
         # STARTUP BANNER
         self.banner = {}
 
-        # TASK POOL
-        self.tasks = []
+        # TASK POOLS
+        self.cycling_tasks = []
+        self.asynchronous_tasks = []
 
         # DEPENDENCY BROKER
         self.broker = broker()
@@ -479,7 +480,7 @@ class scheduler(object):
                 self.spawn()
                 self.dump_state()
 
-                self.suite_state.update( self.tasks, self.clock, \
+                self.suite_state.update( self.cycling_tasks, self.asynchronous_tasks, self.clock, \
                         self.get_oldest_c_time(), self.get_newest_c_time(),
                         self.paused(), self.will_pause_at(), \
                         self.remote.halt, self.will_stop_at(), self.blocked )
@@ -491,25 +492,31 @@ class scheduler(object):
 
             # SHUT DOWN IF ALL TASKS ARE SUCCEEDED OR HELD
             stop_now = True  # assume stopping
-            for itask in self.tasks:
-                # find any reason not to stop
+            for itask in self.asynchronous_tasks:
                 if not itask.state.is_succeeded() and not itask.state.is_held():
                     # don't stop if any tasks are waiting, submitted, or running
                     stop_now = False
                     break
-                if itask.state.is_succeeded() and not itask.state.has_spawned():
-                    # Check for tasks that are succeeded but not spawned.
-                    # If they are older than the suite stop time they
-                    # must be about to spawn. Otherwise they must be 
-                    # stalled at the runahead limit, in which case we
-                    # can stop.
-                    if self.stop_time:
-                        if int(itask.c_time) < int(self.stop_time):
-                            stop_now = False
-                            break
-                    else:
+            if not stop_now:                 
+                for itask in self.cycling_tasks:
+                    # find any reason not to stop
+                    if not itask.state.is_succeeded() and not itask.state.is_held():
+                        # don't stop if any tasks are waiting, submitted, or running
                         stop_now = False
                         break
+                    if itask.state.is_succeeded() and not itask.state.has_spawned():
+                        # Check for tasks that are succeeded but not spawned.
+                        # If they are older than the suite stop time they
+                        # must be about to spawn. Otherwise they must be 
+                        # stalled at the runahead limit, in which case we
+                        # can stop.
+                        if self.stop_time:
+                            if int(itask.c_time) < int(self.stop_time):
+                                stop_now = False
+                                break
+                        else:
+                            stop_now = False
+                            break
             if stop_now:
                 self.log.warning( "ALL TASKS FINISHED OR HELD" )
                 break
@@ -536,7 +543,7 @@ class scheduler(object):
                 name, ctime = self.stop_task.split('%')
                 # shut down if task type name has entirely passed ctime
                 stop = True
-                for itask in self.tasks:
+                for itask in self.cycling_tasks:
                     if itask.name == name:
                         if not itask.state.is_succeeded():
                             iname, ictime = itask.id.split('%')
@@ -616,7 +623,7 @@ class scheduler(object):
             self.finalize_runtime_graph()
 
     def get_tasks( self ):
-        return self.tasks
+        return self.cycling_tasks + self.asynchronous_tasks
 
     def set_stop_ctime( self, stop_time ):
         self.log.warning( "Setting stop cycle time: " + stop_time )
@@ -679,7 +686,7 @@ class scheduler(object):
     def get_oldest_unfailed_c_time( self ):
         # return the cycle time of the oldest task
         oldest = '99991228235959'
-        for itask in self.tasks:
+        for itask in self.cycling_tasks:
             if itask.state.is_failed():
                 continue
             #if hasattr( itask, 'daemon_task' ):
@@ -692,7 +699,7 @@ class scheduler(object):
     def get_oldest_c_time( self ):
         # return the cycle time of the oldest task
         oldest = ct('9999122823').get()
-        for itask in self.tasks:
+        for itask in self.cycling_tasks:
             #if itask.state.is_failed():  # uncomment for earliest NON-FAILED 
             #    continue
 
@@ -706,7 +713,7 @@ class scheduler(object):
     def get_newest_c_time( self ):
         # return the cycle time of the newest task
         newest = ct('1000010101').get()
-        for itask in self.tasks:
+        for itask in self.cycling_tasks:
             # avoid daemon tasks
             if hasattr( itask, 'daemon_task' ):
                 continue
@@ -717,7 +724,7 @@ class scheduler(object):
     def no_tasks_running( self ):
         # return True if no tasks are submitted or running
         #--
-        for itask in self.tasks:
+        for itask in self.cycling_tasks + self.asynchronous_tasks:
             if itask.state.is_running() or itask.state.is_submitted():
                 return False
         return True
@@ -730,16 +737,17 @@ class scheduler(object):
 
         self.broker.reset()
 
-        for itask in self.tasks:
+        for itask in self.cycling_tasks + self.asynchronous_tasks:
             # register task outputs
             self.broker.register( itask )
 
-        for itask in self.tasks:
+        for itask in self.cycling_tasks + self.asynchronous_tasks:
             # try to satisfy me (itask) if I'm not already satisfied.
-            if itask.not_fully_satisfied():
+            if itask.not_fully_satisfied() or hasattr( itask, 'is_asynchronous' ):
+                # asynchronous tasks need to satisfy death prerequisites later
                 self.broker.negotiate( itask )
 
-        for itask in self.tasks:
+        for itask in self.cycling_tasks + self.asynchronous_tasks:
             # This decides whether task families have succeeded or failed
             # based on the state of their members.
             if itask.state.is_succeeded() or itask.state.is_failed():
@@ -761,7 +769,7 @@ class scheduler(object):
             self.log.debug( 'not asking any tasks to run (general suite hold in place)' )
             return
 
-        for itask in self.tasks:
+        for itask in self.cycling_tasks:
                 if self.pause_time:
                     if int( itask.c_time ) > int( self.pause_time ):
                         self.log.debug( 'not asking ' + itask.id + ' to run (' + self.pause_time + ' hold in place)' )
@@ -772,6 +780,13 @@ class scheduler(object):
                         # when they start running.
                         self.update_runtime_graph( itask )
 
+        for itask in self.asynchronous_tasks:
+            if itask.run_if_ready():
+                if not graphing_disabled and not self.runtime_graph_finalized:
+                    # add tasks to the runtime graph at the point
+                    # when they start running.
+                    self.update_runtime_graph( itask )
+
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
         # the slowest task, and if foo(T) spawns
@@ -779,7 +794,7 @@ class scheduler(object):
 
         # update oldest suite cycle time
         oldest_unfailed_ctime = self.get_oldest_unfailed_c_time() 
-        for itask in self.tasks:
+        for itask in self.cycling_tasks:
             if self.runahead:
                 # if a runahead limit is defined, check for violations
                 foo = ct( itask.c_time )
@@ -794,7 +809,6 @@ class scheduler(object):
 
                 # dynamic task object creation by task and module name
                 new_task = itask.spawn( 'waiting' )
-                stop_me = False
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the suite stop time
                     new_task.log( 'WARNING', "HOLDING at configured suite stop time " + self.stop_time )
@@ -806,6 +820,14 @@ class scheduler(object):
                 # perpetuate the task stop time, if there is one
                 new_task.stop_c_time = itask.stop_c_time
                 self.insert( new_task )
+
+        for itask in self.asynchronous_tasks:
+            if itask.ready_to_spawn():
+                itask.log( 'DEBUG', 'spawning')
+                # dynamic task object creation by task and module name
+                new_task = itask.spawn( 'waiting' )
+                self.insert( new_task )
+
 
     def force_spawn( self, itask ):
         if itask.state.has_spawned():
@@ -854,13 +876,12 @@ class scheduler(object):
         ####    cls.dump_class_vars( FILE )
 
         # FOR NEW DYNAMIC TASK CLASS DEFS:
-        for itask in self.tasks:
+        for itask in self.cycling_tasks + self.asynchronous_tasks:
             # TO DO: CHECK THIS STILL WORKS 
             itask.dump_class_vars( FILE )
-             
-        # task instance variables
-        for itask in self.tasks:
+            # task instance variables
             itask.dump_state( FILE )
+
         FILE.close()
         # return the filename (minus path)
         return os.path.basename( filename )
@@ -868,7 +889,7 @@ class scheduler(object):
     def earliest_unspawned( self ):
         all_spawned = True
         earliest_unspawned = '9999887766'
-        for itask in self.tasks:
+        for itask in self.cycling_tasks:
             if not itask.state.has_spawned():
                 all_spawned = False
                 if not earliest_unspawned:
@@ -882,7 +903,7 @@ class scheduler(object):
         # find the earliest unsatisfied task
         all_satisfied = True
         earliest_unsatisfied = '9999887766'
-        for itask in self.tasks:
+        for itask in self.cycling_tasks:
             if not itask.prerequisites.all_satisfied():
                 all_satisfied = False
                 if not earliest_unsatisfied:
@@ -897,7 +918,7 @@ class scheduler(object):
         # EXCLUDING FAILED TASKS
         all_succeeded = True
         earliest_unsucceeded = '9999887766'
-        for itask in self.tasks:
+        for itask in self.cycling_tasks:
             if itask.state.is_failed():
                 # EXCLUDING FAILED TASKS
                 continue
@@ -923,12 +944,12 @@ class scheduler(object):
 
         # times of any failed tasks. 
         failed_rt = {}
-        for itask in self.tasks:
+        for itask in self.cycling_tasks:
             if itask.state.is_failed():
                 failed_rt[ itask.c_time ] = True
 
         # suicide
-        for itask in self.tasks:
+        for itask in self.cycling_tasks + self.asynchronous_tasks:
             if itask.suicide_prerequisites.count() != 0:
                 if itask.suicide_prerequisites.all_satisfied():
                     self.spawn_and_die( [itask.id], dump_state=False, reason='suicide' )
@@ -942,21 +963,26 @@ class scheduler(object):
 
     def cleanup_async( self ):
         spent = []
-        for itask in self.tasks:
+        for itask in self.asynchronous_tasks:
+            #print '\n---', itask.id
             if not itask.done():
                 continue
+            #print '   done'
             try:
                 itask.death_prerequisites
             except AttributeError:
+                #print '   oops'
                 pass
             else:
+                #print '   dump:' 
+                #print itask.death_prerequisites.dump()
                 if itask.death_prerequisites.all_satisfied():
                     print "ASYNC SPENT", itask.id
                     spent.append( itask )
 
         # delete the spent tasks
         for itask in spent:
-            self.trash( itask, 'quick' )
+            self.trash( itask, 'async spent' )
 
     def cleanup_non_intercycle( self, failed_rt ):
         # A/ Non INTERCYCLE tasks by definition have ONLY COTEMPORAL
@@ -985,7 +1011,7 @@ class scheduler(object):
 
         # find the spent quick death tasks
         spent = []
-        for itask in self.tasks:
+        for itask in self.cycling_tasks:
             if itask.intercycle: 
                 # task not up for consideration here
                 continue
@@ -1021,7 +1047,7 @@ class scheduler(object):
                 # post-gap successor will need to be satisfied by said
                 # succeeded task. 
                 there_is = False
-                for t in self.tasks:
+                for t in self.cycling_tasks:
                     if t.name == itask.name and \
                             int( t.c_time ) > int( itask.c_time ) and \
                             t.state.is_succeeded():
@@ -1087,7 +1113,7 @@ class scheduler(object):
 
         # find candidates for deletion
         candidates = {}
-        for itask in self.tasks:
+        for itask in self.cycling_tasks:
             if not itask.done():
                 continue
             #if itask.c_time in failed_rt.keys():
@@ -1140,7 +1166,7 @@ class scheduler(object):
             raise TaskStateError, 'Illegal reset state: ' + state
         # find the task to reset
         found = False
-        for itask in self.tasks:
+        for itask in self.cycling_tasks + self.asynchronous_tasks:
             if itask.id == task_id:
                 found = True
                 break
@@ -1170,7 +1196,7 @@ class scheduler(object):
     def add_prerequisite( self, task_id, message ):
         # find the task to reset
         found = False
-        for itask in self.tasks:
+        for itask in self.cycling_tasks + self.asynchronous_tasks:
             if itask.id == task_id:
                 found = True
                 break
@@ -1183,8 +1209,7 @@ class scheduler(object):
         itask.prerequisites.add_requisites(pp)
 
     def insertion( self, ins_id, stop_c_time=None ):
-        #import pdb
-        #pdb.set_trace()
+        # TO DO: UPDATE FOR ASYCHRONOUS TASKS
 
         # for remote insertion of a new task, or task group
         ( ins_name, ins_ctime ) = ins_id.split( '%' )
@@ -1224,7 +1249,7 @@ class scheduler(object):
                 # so we have to create the task before checking if the task
                 # already exists in the system or the stop time has been reached.
                 rject = False
-                for task in self.tasks:
+                for task in self.cycling_tasks:
                     if itask.id == task.id:
                         # task already in the suite
                         rject = True
@@ -1251,6 +1276,8 @@ class scheduler(object):
         return ( inserted, rejected )
 
     def purge( self, id, stop ):
+        # TO DO: UPDATE FOR ASYNCHRONOUS TASKS?
+
         # Remove an entire dependancy tree rooted on the target task,
         # through to the given stop time (inclusive). In general this
         # involves tasks that do not even exist yet within the pool.
@@ -1284,7 +1311,7 @@ class scheduler(object):
         die = []
         spawn = []
 
-        for itask in self.tasks:
+        for itask in self.cycling_tasks:
             # Find the target task
             if itask.id == id:
                 # set it succeeded
@@ -1302,7 +1329,7 @@ class scheduler(object):
         while something_triggered:
             self.negotiate()
             something_triggered = False
-            for itask in self.tasks:
+            for itask in self.cycling_tasks:
                 if itask.ready_to_run() and int( itask.c_time ) <= int( stop ):
                     something_triggered = True
                     itask.set_succeeded()
@@ -1319,14 +1346,14 @@ class scheduler(object):
         self.kill( die, dump_state=False )
 
     def check_timeouts( self ):
-        for itask in self.tasks:
+        for itask in self.cycling_tasks + self.asynchronous_tasks:
             itask.check_timeout()
 
     def waiting_clocktriggered_task_ready( self ):
         # This method actually returns True if ANY task is ready to run,
         # not just clocktriggered tasks. However, this should not be a problem.
         result = False
-        for itask in self.tasks:
+        for itask in self.cycling_tasks + self.asynchronous_tasks:
             #print itask.id
             if itask.ready_to_run():
                 result = True
@@ -1336,7 +1363,7 @@ class scheduler(object):
     def kill_cycle( self, ctime ):
         # kill all tasks currently at ctime
         task_ids = []
-        for itask in self.tasks:
+        for itask in self.cycling_tasks:
             if itask.c_time == ctime: # and itask.get_status() == 'waiting':
                 task_ids.append( itask.id )
 
@@ -1345,7 +1372,7 @@ class scheduler(object):
     def spawn_and_die_cycle( self, ctime ):
         # spawn and kill all tasks currently at ctime
         task_ids = {}
-        for itask in self.tasks:
+        for itask in self.cycling_tasks:
             if itask.c_time == ctime: # and itask.get_status() == 'waiting':
                 task_ids[ itask.id ] = True
 
@@ -1353,6 +1380,8 @@ class scheduler(object):
 
 
     def spawn_and_die( self, task_ids, dump_state=True, reason='remote request' ):
+        # TO DO: UPDATE FOR ASYNCHRONOUS TASKS
+
         # spawn and kill all tasks in task_ids.keys()
         # works for dict or list input
 
@@ -1365,7 +1394,7 @@ class scheduler(object):
             # find the task
             found = False
             itask = None
-            for t in self.tasks:
+            for t in self.cycling_tasks:
                 if t.id == id:
                     found = True
                     itask = t
@@ -1406,7 +1435,7 @@ class scheduler(object):
             # find the task
             found = False
             itask = None
-            for t in self.tasks:
+            for t in self.cycling_tasks + self.asynchronous_tasks:
                 if t.id == id:
                     found = True
                     itask = t
@@ -1444,7 +1473,10 @@ class scheduler(object):
             else:
                 task.log( 'NORMAL', "removing from suite (" + reason + ")" )
                 task.prepare_for_death()
-                self.tasks.remove( task )
+                if task in self.cycling_tasks:
+                    self.cycling_tasks.remove( task )
+                elif task in self.asynchronous_tasks:
+                    self.asynchronous_tasks.remove( task )
                 del task
                 # do not retry
                 break
@@ -1476,7 +1508,10 @@ class scheduler(object):
                     self.log.critical( 'Check your pyro installations are version compatible' )
             else:
                 task.log('NORMAL', "task proxy inserted" )
-                self.tasks.append( task )
+                if hasattr( task, 'is_asynchronous' ):
+                    self.asynchronous_tasks.append( task )
+                else:
+                    self.cycling_tasks.append( task )
                 # do not retry
                 break
 

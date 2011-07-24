@@ -30,6 +30,7 @@ class daemon( oneoff, task ):
     # note 'daemon' - hasattr(task, 'daemon') returns True for all tasks 
     # due to the pyro daemon (I think).
     daemon_task = True  
+    is_asynchronous = True
 
     def incoming( self, priority, message ):
         # intercept incoming messages and check for a pattern match 
@@ -38,6 +39,6 @@ class daemon( oneoff, task ):
                 self.outputs.add( message )
         task.incoming( self, priority, message )
 
-    def nearest_c_time( self, c_time ):
-        # !TEMPORARY HACK!
-        return c_time
+    #def nearest_c_time( self, c_time ):
+    #    # !TEMPORARY HACK!
+    #    return c_time

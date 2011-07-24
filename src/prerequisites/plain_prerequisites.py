@@ -66,6 +66,22 @@ class plain_prerequisites(object):
                     self.satisfied[ label ] = True
                     self.satisfied_by[ label ] = outputs[msg] # owner_id
 
+    def satisfy_me_verbose( self, outputs ):
+        # Can any completed outputs satisfy any of my prequisites?
+        # THIS IS NOW HANDLED AT prerequisites CONTAINER LEVEL but is
+        # kept here also in case of raw use of plain prerequisites.
+        #print 'satis:', self.dump()
+        for label in self.satisfied:
+            for msg in outputs:
+                #print '   ', msg, self.messages[label]
+                if self.messages[label] == msg:
+                    #print '   MATCH'
+                    self.satisfied[ label ] = True
+                    self.satisfied_by[ label ] = outputs[msg] # owner_id
+                else:
+                    pass
+                    #print '   no match'
+
     def get_satisfied_by( self ):
         return self.satisfied_by
 

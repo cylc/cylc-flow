@@ -202,6 +202,7 @@ class taskdef(object):
         tclass = type( self.name, tuple( base_types), dict())
         tclass.name = self.name        # TO DO: NOT NEEDED, USED class.__name__
         tclass.instance_count = 0
+        tclass.upward_instance_count = 0
         tclass.description = self.description
 
         tclass.elapsed_times = []
@@ -296,12 +297,15 @@ class taskdef(object):
         # class init function
         def tclass_init( sself, start_c_time, initial_state, stop_c_time=None, startup=False ):
             # adjust cycle time to next valid for this task
-            sself.c_time = sself.nearest_c_time( start_c_time )
-            sself.tag = sself.c_time
-            sself.id = sself.name + '%' + sself.c_time
-            sself.c_hour = sself.c_time[8:10]
-            sself.orig_c_hour = start_c_time[8:10]
+            if self.type == 'asynchronous' or self.type == 'daemon':
+                sself.tag = str( sself.__class__.upward_instance_count + 1 )
+            else: 
+                sself.c_time = sself.nearest_c_time( start_c_time )
+                sself.tag = sself.c_time
+                sself.c_hour = sself.c_time[8:10]
+                sself.orig_c_hour = start_c_time[8:10]
  
+            sself.id = sself.name + '%' + sself.tag
             sself.external_tasks = deque()
 
             for command in self.commands:
@@ -328,6 +332,7 @@ class taskdef(object):
             sself.suicide_prerequisites = plain_prerequisites( sself.id )
             ##sself.add_requisites( sself.suicide_prerequisites, self.suicide_triggers )
 
+            # TO DO: UPDATE FAMILIES FOR ASYNCHRONOUS TASKS? (c_time below)
             if self.member_of:
                 foo = plain_prerequisites( sself.id )
                 foo.add( self.member_of + '%' + sself.c_time + ' started' )
@@ -367,8 +372,10 @@ class taskdef(object):
                         foo.increment( hours=offset )
                         ctime = foo.get()
                     out = re.sub( '\$\(CYCLE_TIME.*\)', ctime, output )
-                else:
+                elif re.search( '\$\(CYCLE_TIME\)', output ):
                     out = re.sub( '\$\(CYCLE_TIME\)', sself.c_time, output )
+                else:
+                    out = output
                 sself.outputs.add( out )
             sself.outputs.register()
 

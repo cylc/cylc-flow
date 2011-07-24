@@ -104,9 +104,9 @@ if display_tasks:
     #task_ids.sort()
  
     for id in task_ids:
-        name = states[ id ][ 'name' ]
-        ctime = states[ id ][ 'label' ]
-        state      = states[ id ][ 'state' ]
+        name  = states[ id ][ 'name' ]
+        label = states[ id ][ 'label' ]
+        state = states[ id ][ 'state' ]
 
         if states[ id ][ 'spawned' ]:
             spawned = 'spawned'
@@ -114,9 +114,16 @@ if display_tasks:
             spawned = 'unspawned'
 
         if options.sort_by_cycle:
-            lines.append( ctime + ', ' + name + ', ' + state + ', ' + spawned )
+            line = label + ', ' + name + ', '
         else:
-            lines.append( name + ', ' + ctime + ', ' + state + ', ' + spawned )
+            line = name + ', ' + label + ', '
+
+        line += state + ', ' + spawned 
+
+        if 'asyncid' in states[id]:
+            line += ', ' + states[id]['asyncid'] 
+
+        lines.append( line )
 
     lines.sort()
     for line in lines:

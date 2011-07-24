@@ -24,6 +24,8 @@ class asynchronous( nopid, task ):
     # a non-cycling task with no previous instance dependence (so it
     # spawns when it first enters the running state).
 
+    is_asynchronous = True
+
     used_outputs = {}
     
     def __init__( self, state ):
@@ -50,14 +52,16 @@ class asynchronous( nopid, task ):
 
         task.__init__( self, state )
 
-    def nearest_c_time( self, c_time ):
-        # !TEMPORARY HACK!
-        return c_time
+    #def nearest_c_time( self, c_time ):
+    #    # !TEMPORARY HACK!
+    #    return c_time
 
     def next_tag( self ):
         return str( int( self.tag ) + 1 )
 
     def check_requisites( self ):
+        print '\n________________>'
+        print 'pre: ', self.id, self.death_prerequisites.dump()
         for message in self.prerequisites.labels:
             lbl = self.prerequisites.labels[message]
             if not self.prerequisites.satisfied[lbl]:
@@ -84,16 +88,22 @@ class asynchronous( nopid, task ):
                     self.env_vars[ 'ASYNCID' ] = mg 
                     self.asyncid = mg
 
-            for deathpre in self.death_prerequisites.labels:
+
+            #print '\nXXXXXXXXXXXXxxxx'
+            for deathpre in self.death_prerequisites.labels.keys():
                 lbl = self.death_prerequisites.labels[deathpre]
                 m = re.match( '^(.*)\((.*)\)(.*)', deathpre )
+                #print deathpre
                 if m:
+                    #print 'XXXXXXMATCH!!!!!!!!!!!!!1111'
+
                     (left, mid, right) = m.groups()
                     newpre = left + mg + right
 
                     self.death_prerequisites.messages[lbl] = newpre
                     self.death_prerequisites.labels[newpre] = lbl
                     del self.death_prerequisites.labels[deathpre]
+        print 'post: ', self.id, self.death_prerequisites.dump()
 
     def set_requisites( self ):
         # ONLY REQUIRED FOR RESTART?
@@ -139,13 +149,17 @@ class asynchronous( nopid, task ):
     def dump_state( self, FILE ):
         # Write state information to the state dump file
         # This must be compatible with __init__() on reload
-        FILE.write( self.id + ' : ' + self.asyncid + ' | ' + self.state.dump() + '\n' )
+        FILE.write( self.id + ' (' + self.asyncid + ') : ' + self.state.dump() + '\n' )
 
     def satisfy_me( self, outputs ):
         self.prerequisites.satisfy_me( outputs, self.__class__.used_outputs.keys() )
-        self.death_prerequisites.satisfy_me( outputs )
+        #print '\n_________________________'
+        #print self.death_prerequisites.dump()
+        #print self.outputs.dump()
+        print 'SATIS: ', self.id, self.death_prerequisites.dump()
+        self.death_prerequisites.satisfy_me_verbose( outputs )
 
     def get_state_summary( self ):
         summary = task.get_state_summary( self )
-        summary[ 'label' ] = self.asyncid
+        summary[ 'asyncid' ] = self.asyncid
         return summary
