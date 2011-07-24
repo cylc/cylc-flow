@@ -933,8 +933,7 @@ class scheduler(object):
                 if itask.suicide_prerequisites.all_satisfied():
                     self.spawn_and_die( [itask.id], dump_state=False, reason='suicide' )
 
-        #### RESTORE FOR TESTING ASYNCHRONOUS TASK FUNCTIONALITY:
-        #### self.cleanup_async()
+        self.cleanup_async()
 
         if self.use_quick:
             self.cleanup_non_intercycle( failed_rt )

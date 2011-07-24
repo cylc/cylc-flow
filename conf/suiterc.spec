@@ -1406,18 +1406,26 @@ live graph movie = boolean( default=False )
     reset execution timeout on incoming messages = boolean( default=True )
     extra log files = force_list( default=list())
     #hours = force_list() # e.g. 0,6,12,18
-    hours = string()  # e.g. "0,6,12,18"
+    hours string = string(default=None)  # e.g. "0,6,12,18"
     manual task completion messaging = boolean( default=None )
 
-    task type = option( free, daemon )
+    type = option( free, daemon, asynchronous )
+    asynchid = string( default=None )
 
     # oneoff, sequential, tied, clocktriggered
-    task type modifiers = force_list( default=list() )
+    type modifiers = force_list( default=list() )
 
     clock trigger offset in hours = float( default=0.0 )
 
         [[[prerequisites]]]
         __many__ = string
+
+        [[[loose prerequisites]]]
+        __many__ = string
+
+        [[[death prerequisites]]]
+        __many__ = string
+
 
         [[[environment]]]
         __many__ = string

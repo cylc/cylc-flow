@@ -203,7 +203,7 @@ echo twoot!"""
 [raw task definitions]
     [[raw]]
         description = a raw task
-        task type = free
-        hours = "0,6,12,18"
+        type = free
+        hours string = "0,6,12,18"
         [[[prerequisites]]]
             one = "A%$(CYCLE_TIME) succeeded"

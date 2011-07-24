@@ -4,10 +4,32 @@ description = simple asynchronous example suite
 [special tasks]
     daemon = watcher
 
-[dependencies]
-    [[asynchronous:SATID]]
-        graph = watcher
+#[dependencies]
+#    [[asynchronous:SATID]]
+#        graph = watcher
 
-[tasks]
+[raw task definitions]
     [[watcher]]
+        type = daemon
+        asynchid = SATID
         command = watcher.sh
+    [[upload]]
+        type = asynchronous
+        command = upload.sh
+        asynchid = SATID
+        [[[outputs]]]
+            one = "(SATID-\d+) uploaded"
+        [[[loose prerequisites]]]
+            one = "(SATID-\d+) ready for processing"
+        [[[death prerequisites]]]
+            one = "(SATID-\d+) uploaded"
+    [[archive]]
+        type = asynchronous
+        command = archive.sh
+        asynchid = SATID
+        [[[outputs]]]
+            one = "(SATID-\d+) archived"
+        [[[loose prerequisites]]]
+            one = "(SATID-\d+) ready for processing"
+        [[[death prerequisites]]]
+            one = "(SATID-\d+) archived"

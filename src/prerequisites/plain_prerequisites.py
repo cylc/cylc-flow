@@ -44,13 +44,14 @@ class plain_prerequisites(object):
         self.messages[ label ] = message
         self.labels[ message ] = label
         self.satisfied[label] = False
+        self.satisfied_by[label] = None
 
-    def get_not_satisfied_list( self ):
-        not_satisfied = []
-        for label in self.satisfied:
-            if not self.satisfied[ label ]:
-                not_satisfied.append( label )
-        return not_satisfied
+    def remove( self, message ):
+        lbl = self.labels[message]
+        del self.labels[message]
+        del self.messages[lbl]
+        del self.satisfied[lbl]
+        del self.satisfied_by[lbl]
 
     def all_satisfied( self ):
         return not ( False in self.satisfied.values() ) 
@@ -64,6 +65,9 @@ class plain_prerequisites(object):
                 if self.messages[label] == msg:
                     self.satisfied[ label ] = True
                     self.satisfied_by[ label ] = outputs[msg] # owner_id
+
+    def get_satisfied_by( self ):
+        return self.satisfied_by
 
     def count( self ):
         # how many messages are stored

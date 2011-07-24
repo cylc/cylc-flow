@@ -27,11 +27,11 @@ class prerequisites(object):
     def add_requisites( self, reqs ):
         self.container.append( reqs )
 
-    def get_not_satisfied_list( self ):
-        not_satisfied = []
+    def get_satisfied_list( self ):
+        satisfied = []
         for reqs in self.container:
-            not_satisfied.append( reqs.get_not_satisfied() )
-        return not_satisfied
+            satisfied.append( reqs.get_satisfied() )
+        return satisfied
 
     def all_satisfied( self ):
         result = True

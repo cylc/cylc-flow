@@ -50,72 +50,86 @@ class asynchronous( nopid, task ):
 
         task.__init__( self, state )
 
+    def nearest_c_time( self, c_time ):
+        # !TEMPORARY HACK!
+        return c_time
 
     def next_tag( self ):
         return str( int( self.tag ) + 1 )
 
     def check_requisites( self ):
-        for message in self.prerequisites.get_satisfied_list():
-            # record which outputs already been used by this task type
+        for message in self.prerequisites.labels:
+            lbl = self.prerequisites.labels[message]
+            if not self.prerequisites.satisfied[lbl]:
+                continue
+            # now looping over satisfied prerequisites
+
+            # record which outputs already used by this task type
             self.__class__.used_outputs[ message ] = True
 
-            if message in self.prerequisites.match_group.keys():
-                # IS THIS TOP LEVEL 'IF' NECESSARY?
-                mg = self.prerequisites.match_group[ message ]
+            # get the match group from this message
+            mg = self.prerequisites.match_group[ message ]
 
-                for output in self.outputs.get_list():
-                    m = re.match( '^(.*)\((.*)\)(.*)', output )
-                    if m:
-                        (left, mid, right) = m.groups()
-                        newout = left + mg + right
-
-                        del self.outputs.satisfied[ output ]
-                        self.outputs.satisfied[ newout ] = False
-
-                        self.env_vars[ 'ASYNCID' ] = mg 
-                        self.asyncid = mg
-
-                for deathpre in self.death_prerequisites.get_list():
-                    m = re.match( '^(.*)\((.*)\)(.*)', deathpre )
-                    if m:
-                        (left, mid, right) = m.groups()
-                        newpre = left + mg + right
-
-                        del self.death_prerequisites.satisfied[ deathpre ]
-                        self.death_prerequisites.satisfied[ newpre ] = False
-
-    def set_requisites( self ):
-        mg = self.asyncid
-        for pre in self.prerequisites.get_list():
-            m = re.match( '^(.*)\((.*)\)(.*)', pre )
-            if m:
-                (left, mid, right) = m.groups()
-                if re.match( mid, self.asyncid ):
-                    newpre = left + mg + right
-
-                    del self.prerequisites.satisfied[ pre ]
-                    self.prerequisites.satisfied[ newpre ] = False
-                    self.__class__.used_outputs[ newpre ] = True
-
-        for output in self.outputs.get_list():
-            m = re.match( '^(.*)\((.*)\)(.*)', output )
-            if m:
-                (left, mid, right) = m.groups()
-                if re.match( mid, self.asyncid ):
+            # propagate the match group into my outputs and death pre's
+            for output in self.outputs.not_completed:
+                m = re.match( '^(.*)\((.*)\)(.*)', output )
+                if m:
+                    (left, mid, right) = m.groups()
                     newout = left + mg + right
 
-                    del self.outputs.satisfied[ output ]
-                    self.outputs.satisfied[ newout ] = False
+                    oid = self.outputs.not_completed[ output ] 
+                    del self.outputs.not_completed[ output ]
+                    self.outputs.not_completed[ newout ] = oid
 
-        for deathpre in self.death_prerequisites.get_list():
-            m = re.match( '^(.*)\((.*)\)(.*)', deathpre )
-            if m:
-                (left, mid, right) = m.groups()
-                if re.match( mid, self.asyncid ):
+                    self.env_vars[ 'ASYNCID' ] = mg 
+                    self.asyncid = mg
+
+            for deathpre in self.death_prerequisites.labels:
+                lbl = self.death_prerequisites.labels[deathpre]
+                m = re.match( '^(.*)\((.*)\)(.*)', deathpre )
+                if m:
+                    (left, mid, right) = m.groups()
                     newpre = left + mg + right
 
-                    del self.death_prerequisites.satisfied[ deathpre ]
-                    self.death_prerequisites.satisfied[ newpre ] = False
+                    self.death_prerequisites.messages[lbl] = newpre
+                    self.death_prerequisites.labels[newpre] = lbl
+                    del self.death_prerequisites.labels[deathpre]
+
+    def set_requisites( self ):
+        # ONLY REQUIRED FOR RESTART?
+        # UPDATE THIS METHOD!
+        pass
+        #mg = self.asyncid
+        #for pre in self.prerequisites.get_list():
+        #    m = re.match( '^(.*)\((.*)\)(.*)', pre )
+        #    if m:
+        #        (left, mid, right) = m.groups()
+        #        if re.match( mid, self.asyncid ):
+        #            newpre = left + mg + right
+#
+#                    del self.prerequisites.satisfied[ pre ]
+#                    self.prerequisites.satisfied[ newpre ] = False
+#                    self.__class__.used_outputs[ newpre ] = True
+#
+#        for output in self.outputs.get_list():
+#            m = re.match( '^(.*)\((.*)\)(.*)', output )
+#            if m:
+#                (left, mid, right) = m.groups()
+#                if re.match( mid, self.asyncid ):
+#                    newout = left + mg + right
+#
+#                    del self.outputs.satisfied[ output ]
+#                    self.outputs.satisfied[ newout ] = False
+#
+#        for deathpre in self.death_prerequisites.get_list():
+#            m = re.match( '^(.*)\((.*)\)(.*)', deathpre )
+#            if m:
+#                (left, mid, right) = m.groups()
+#                if re.match( mid, self.asyncid ):
+#                    newpre = left + mg + right
+#
+#                    del self.death_prerequisites.satisfied[ deathpre ]
+#                    self.death_prerequisites.satisfied[ newpre ] = False
 
         # if task is asynchronous it has
         #  - used_outputs

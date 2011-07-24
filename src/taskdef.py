@@ -30,6 +30,7 @@ import sys, re
 from OrderedDict import OrderedDict
 
 from prerequisites_fuzzy import fuzzy_prerequisites
+from prerequisites_loose import loose_prerequisites
 from prerequisites import prerequisites
 from plain_prerequisites import plain_prerequisites
 from conditionals import conditional_prerequisites
@@ -100,6 +101,9 @@ class taskdef(object):
                               # if need to vary per cycle.
 
         self.output_patterns = []  # asynchronous daemon tasks
+
+        self.loose_prerequisites = [] # asynchronous tasks
+        self.death_prerequisites = [] # ditto
 
         # default to dummy task for tasks in graph but not in the [tasks] section.
         self.commands = [ dummy_command ] # list of commands
@@ -300,17 +304,26 @@ class taskdef(object):
  
             sself.external_tasks = deque()
 
-            sself.output_patterns = self.output_patterns
-
             for command in self.commands:
                 sself.external_tasks.append( command )
  
             if 'clocktriggered' in self.modifiers:
                 sself.real_time_delay =  float( self.clocktriggered_offset )
 
+            sself.output_patterns = self.output_patterns
+
             # prerequisites
-            sself.prerequisites = prerequisites()
-            sself.add_prerequisites( startup )
+            if len( self.loose_prerequisites ) > 0:
+                sself.death_prerequisites = plain_prerequisites(sself.id)
+                for pre in self.death_prerequisites:
+                    sself.death_prerequisites.add( pre )
+                sself.prerequisites = loose_prerequisites(sself.id)
+                for pre in self.loose_prerequisites:
+                    sself.prerequisites.add( pre )
+            else:
+                sself.prerequisites = prerequisites()
+                sself.add_prerequisites( startup )
+
             ## should these be conditional too:?
             sself.suicide_prerequisites = plain_prerequisites( sself.id )
             ##sself.add_requisites( sself.suicide_prerequisites, self.suicide_triggers )
@@ -376,6 +389,8 @@ class taskdef(object):
                 # cycling tasks with a final cycle time set
                 super( sself.__class__, sself ).__init__( initial_state, stop_c_time ) 
             else:
+                # TO DO: TEMPORARY HACK FOR ASYNC
+                sself.stop_c_time = '9999123123'
                 super( sself.__class__, sself ).__init__( initial_state ) 
 
         tclass.__init__ = tclass_init
