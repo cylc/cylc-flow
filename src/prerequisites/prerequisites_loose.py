@@ -52,7 +52,8 @@ class loose_prerequisites( plain_prerequisites ):
                 m = re.match( premsg, outmsg )
                 if m:
                     # replace loose prereq with the actual output that satisfied it
-                    self.match_group[outmsg] = m.groups()[0]
+                    #self.match_group[outmsg] = m.groups()[0]
+                    self.asyncid = m.groups()[0]
                     self.sharpen_up( premsg, outmsg )
                     self.satisfied[ label ] = True
                     self.satisfied_by[ label ] = outputs[outmsg] # owner_id
