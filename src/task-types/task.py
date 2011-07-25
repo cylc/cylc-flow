@@ -613,7 +613,13 @@ class task( Pyro.core.ObjBase ):
         self.prerequisites.satisfy_me( outputs )
         #self.suicide_prerequisites.satisfy_me( outputs )
 
+    def adjust_tag( self, tag ):
+        # override to modify inital tag if necessary 
+        return tag
+
     def next_tag( self ):
+        # For cycling tasks: next valid cycle time.
+        # For asynchronous tasks: increment tag ID.
         raise SystemExit( "OVERRIDE ME" )
 
     def my_successor_still_needs_me( self, tasks ):

@@ -38,7 +38,3 @@ class daemon( oneoff, task ):
             if re.match( pattern, message ):
                 self.outputs.add( message )
         task.incoming( self, priority, message )
-
-    #def nearest_c_time( self, c_time ):
-    #    # !TEMPORARY HACK!
-    #    return c_time

@@ -197,8 +197,6 @@ class taskdef(object):
             mod = __import__( foo )
             base_types.append( getattr( mod, foo ) )
 
-        #print self.name, base_types
-
         tclass = type( self.name, tuple( base_types), dict())
         tclass.name = self.name        # TO DO: NOT NEEDED, USED class.__name__
         tclass.instance_count = 0
@@ -211,9 +209,6 @@ class taskdef(object):
         tclass.owner = self.owner
 
         tclass.timeouts = self.timeouts
-        #tclass.submission_timeout_minutes = self.submission_timeout_minutes
-        #tclass.execution_timeout_minutes = self.execution_timeout_minutes
-        #tclass.reset_execution_timeout_on_incoming_messages = self.reset_execution_timeout_on_incoming_messages
 
         tclass.hook_scripts = self.hook_scripts
         tclass.remote_host = self.remote_host
@@ -307,12 +302,9 @@ class taskdef(object):
 
         # class init function
         def tclass_init( sself, start_c_time, initial_state, stop_c_time=None, startup=False ):
-            # adjust cycle time to next valid for this task
-            if self.type == 'asynchronous' or self.type == 'daemon':
-                sself.tag = str( sself.__class__.upward_instance_count + 1 )
-            else: 
-                sself.c_time = sself.nearest_c_time( start_c_time )
-                sself.tag = sself.c_time
+            sself.tag = sself.adjust_tag( start_c_time )
+            if self.type != 'asynchronous' and self.type != 'daemon':
+                sself.c_time = sself.tag
                 sself.c_hour = sself.c_time[8:10]
                 sself.orig_c_hour = start_c_time[8:10]
  
