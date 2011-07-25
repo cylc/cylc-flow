@@ -2,10 +2,11 @@ title = asynchronous demo suite
 
 description = """A tree of asynchronous tasks triggered by a 'random'
 satellite pass, or similar, plus some cycling tasks to show that cylc
-can handle both in the one suite."""
+can handle both in the one suite. Multiple asynchronous processing
+trees can run in parallel if the data happens to come in quickly."""
 
 [dependencies]
-    # the cycling tasks (defined by graph only)
+    # the cycling tasks (here defined by graph only)
     [[12]]
         graph = "A => B"
 
@@ -13,30 +14,38 @@ can handle both in the one suite."""
     # The asynchronous tasks, which have implementations in bin/.
     # (NOTE asynchronous tasks cannot be parsed from the graph yet).
     [[watcher]]
+        description = "watch for incoming satellite data"
         # This task runs indefinitely watching for the incoming data.
         # When data arrives it sends a message matching a special
         # pattern. The task proxy extracts the arbitrary sat pass ID
         # from the message and dynamically registers an output that 
         # downstream tasks can trigger off to process this pass.
         type = daemon
-        output pattern = SATID-\d+ ready for processing
+        # Here's the pattern my outputs will conform to:
+        output pattern = "SATID-\d+ ready for processing"
         command = watcher.sh
+
     [[upload]]
+        description = "upload new satellite data"
         type = asynchronous
         command = upload.sh
         [[[pattern prerequisites]]]
             # Trigger off outputs matching this pattern:
             one = "(SATID-\d+) ready for processing"
+            # Once triggered:
+            # 1) the pattern is replaced with the match in my outputs
+            # and in my death prerequisites, and
+            # 2) the match string is exported to the task as $ASYNCID.
         [[[outputs]]]
-            # My outputs. Once triggered this pattern is 
-            # replaced with the literal match string.
+            # This task's own outputs (pattern replaced as described).
             one = "(SATID-\d+) uploaded"
         [[[death prerequisites]]]
             # I can be removed when this condition is satisfied.
-            # (pattern replaced as for outputs).
+            # (Pattern replaced as described above).
             one = "(SATID-\d+) processing finished"
 
     [[archive]]
+        description = "archive new satellite data"
         type = asynchronous
         command = archive.sh
         [[[pattern prerequisites]]]
@@ -47,8 +56,8 @@ can handle both in the one suite."""
             one = "(SATID-\d+) processing finished"
 
     [[finishup]]
-        # A task to mark the end of processing of one pass, after which
-        # the spent tasks for this pass can be removed from the suite.
+        description = "A task to mark the end of processing of one pass"
+        # Used to determine when cylc can remove the spent tasks. 
         type = asynchronous
         command = cylc task message $ASYNCID processing finished
         [[[pattern prerequisites]]]
