@@ -498,7 +498,7 @@ class scheduler(object):
                     # don't stop if any tasks are waiting, submitted, or running
                     stop_now = False
                     break
-            if not stop_now:                 
+            if stop_now:                 
                 for itask in self.cycling_tasks:
                     # find any reason not to stop
                     if not itask.state.is_succeeded() and not itask.state.is_held():
