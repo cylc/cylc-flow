@@ -445,7 +445,6 @@ class config( CylcConfigObj ):
                 else:
                     trigger = pre + '$(CYCLE_TIME ' + str(combo) + ')' + post
 
-        #print trigger
         return trigger
 
     def __check_tasks( self ):
@@ -556,14 +555,25 @@ class config( CylcConfigObj ):
     def get_startup_task_list( self ):
         return self['special tasks']['startup']
 
+
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
-        # not the full tist of defined tasks (self['tasks'].keys())
+        # not the full list of defined tasks (self['tasks'].keys())
         if not self.loaded:
             self.load_tasks()
         tasknames = self.taskdefs.keys()
         tasknames.sort(key=str.lower)  # case-insensitive sort
         return tasknames
+
+    def get_asynchronous_task_name_list( self ):
+        names = []
+        if not self.loaded:
+            self.load_tasks()
+        for tn in self.taskdefs:
+            if self.taskdefs[tn].type == 'asynchronous' or self.taskdefs[tn].type == 'daemon':
+                names.append(tn)
+        names.sort(key=str.lower)
+        return names
 
     def get_full_task_name_list( self ):
         # return list of task names used in the dependency diagram,
@@ -1274,12 +1284,13 @@ class config( CylcConfigObj ):
                 for lbl in taskconfig['prerequisites']:
                     taskd.add_trigger( taskconfig['prerequisites'][lbl], valid_hours )
 
-            if taskconfig['asynchid']:
-                taskd.add_asynchid( taskconfig['asynchid'] )
-                lpre = taskconfig['loose prerequisites']
+            if taskconfig['output pattern']:
+                taskd.add_asynchid( taskconfig['output pattern'] )
+            if taskconfig['pattern prerequisites']:
+                lpre = taskconfig['pattern prerequisites']
                 for lbl in lpre:
-                    print '...', lpre[lbl]
                     taskd.loose_prerequisites.append(lpre[lbl])
+            if taskconfig['death prerequisites']:
                 dpre = taskconfig['death prerequisites']
                 for lbl in dpre:
                     taskd.death_prerequisites.append(dpre[lbl])

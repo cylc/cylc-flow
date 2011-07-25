@@ -202,22 +202,19 @@ job_submit.global_remote_cylc_dir = config['remote cylc directory']
 job_submit.global_remote_suite_dir = config['remote suite directory']
 
 # intantiate the task--------------------------------------------------
+if task_name in config.get_asynchronous_task_name_list():
+    tag = '1'  # asynchronous tasks always start with tag = 1
+else:
+    tag = ctime
 try:
-    task_proxy = config.get_task_proxy( task_name, ctime, 'waiting', stopctime=None, startup=True )
+    task_proxy = config.get_task_proxy( task_name, tag, 'waiting', stopctime=None, startup=True )
 except KeyError, x:
     try:
-        task_proxy = config.get_task_proxy_raw( task_name, ctime, 'waiting', stopctime=None, startup=True, test=False, strict=False )
+        task_proxy = config.get_task_proxy_raw( task_name, tag, 'waiting', stopctime=None, startup=True, test=False, strict=False )
     except SuiteConfigError,x:
         print >> sys.stderr, 'ERROR:', task_name, 'is not defined by graph or [tasks] section'
         print >> sys.stderr, x
         sys.exit(1)
-
-#print '\nPREREQUISITES:\n'
-#for item in task_proxy.prerequisites.dump():
-#    print item
-#print '\nOUTPUTS:\n'
-#for item in task_proxy.outputs.dump():
-#    print item
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------
 if options.dry_run:

@@ -137,6 +137,7 @@ class scheduler(object):
 
         self.print_banner()
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD (PROVIDED IN DERIVED CLASSES) 
+        self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
         self.load_tasks()
         if not graphing_disabled:
             self.initialize_runtime_graph()
@@ -979,7 +980,6 @@ class scheduler(object):
                 #print '   dump:' 
                 #print itask.death_prerequisites.dump()
                 if itask.death_prerequisites.all_satisfied():
-                    print "ASYNC SPENT", itask.id
                     spent.append( itask )
 
         # delete the spent tasks

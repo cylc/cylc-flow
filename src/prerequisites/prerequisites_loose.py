@@ -46,6 +46,9 @@ class loose_prerequisites( plain_prerequisites ):
         for label in self.satisfied:
             premsg = self.messages[label]
             for outmsg in outputs:
+                if premsg == outmsg:
+                    # (already done)
+                    continue
                 m = re.match( premsg, outmsg )
                 if m:
                     # replace loose prereq with the actual output that satisfied it

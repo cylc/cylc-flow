@@ -38,6 +38,7 @@ class asynchronous( nopid, task ):
         # Top level derived classes must define:
         #   self.id 
         #   <class>.instance_count = 0
+        self.env_vars['ASYNCID'] = 'UNSET'
 
         m = re.match( '(.*) \| (.*)', state )
         if m:

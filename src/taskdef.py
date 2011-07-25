@@ -240,7 +240,7 @@ class taskdef(object):
                 ctime = foo.get()
                 preq = re.sub( '\$\(CYCLE_TIME\s*\-\s*\d+\)', ctime, preq )
             else:
-                preq = re.sub( '\$\(CYCLE_TIME\)', sself.c_time, preq )
+                preq = re.sub( '\$\(CYCLE_TIME\)', sself.tag, preq )
             return preq
         tclass.format_prerequisites = tclass_format_prerequisites 
 
@@ -368,7 +368,7 @@ class taskdef(object):
                         ctime = foo.get()
                     out = re.sub( '\$\(CYCLE_TIME.*\)', ctime, output )
                 elif re.search( '\$\(CYCLE_TIME\)', output ):
-                    out = re.sub( '\$\(CYCLE_TIME\)', sself.c_time, output )
+                    out = re.sub( '\$\(CYCLE_TIME\)', sself.tag, output )
                 else:
                     out = output
                 sself.outputs.add( out )
