@@ -23,7 +23,7 @@ from plain_prerequisites import plain_prerequisites
 # THIS IS USED WITH ASYNCHRONOUS TASKS (EXPERIMENTAL)
 
 class loose_prerequisites( plain_prerequisites ):
-
+    is_loose = True
     def __init__( self, owner_id ):
         self.match_group = {}
         plain_prerequisites.__init__( self, owner_id )
@@ -41,13 +41,11 @@ class loose_prerequisites( plain_prerequisites ):
         self.labels[sharp] = lbl
         del self.labels[loose]
 
-    def satisfy_me( self, outputs, exclusions ):
-        # can any completed outputs satisfy any of my prequisites?
+    def satisfy_me( self, outputs ):
+        # can any completed outputs satisfy any of my prerequisites?
         for label in self.satisfied:
             premsg = self.messages[label]
             for outmsg in outputs:
-                if outmsg in exclusions:
-                    continue
                 m = re.match( premsg, outmsg )
                 if m:
                     # replace loose prereq with the actual output that satisfied it
@@ -55,3 +53,6 @@ class loose_prerequisites( plain_prerequisites ):
                     self.sharpen_up( premsg, outmsg )
                     self.satisfied[ label ] = True
                     self.satisfied_by[ label ] = outputs[outmsg] # owner_id
+
+    def dump( self ):
+        return plain_prerequisites.dump(self)

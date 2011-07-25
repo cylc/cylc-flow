@@ -160,7 +160,7 @@ class taskdef(object):
         if not re.search( '^\s*(.*)\s*min\s*$', strng ) and \
             not re.search( '^\s*(.*)\s*sec\s*$', strng ) and \
             not re.search( '^\s*(.*)\s*hr\s*$', strng ):
-                print "ERROR: missing time unit on " + strng
+                print >> sys.stderr, "ERROR: missing time unit on " + strng
                 sys.exit(1)
     
         m = re.search( '^\s*(.*)\s*min\s*$', strng )
@@ -292,6 +292,17 @@ class taskdef(object):
                             cp.set_condition( exp )
                             sself.prerequisites.add_requisites( cp )
 
+            if len( self.death_prerequisites ) > 0:
+                sself.death_prerequisites = plain_prerequisites(sself.id)
+                for pre in self.death_prerequisites:
+                    sself.death_prerequisites.add( pre )
+
+            if len( self.loose_prerequisites ) > 0:
+                lp = loose_prerequisites(sself.id)
+                for pre in self.loose_prerequisites:
+                    lp.add( pre )
+                sself.prerequisites.add_requisites( lp )
+
         tclass.add_prerequisites = tclass_add_prerequisites
 
         # class init function
@@ -317,16 +328,8 @@ class taskdef(object):
             sself.output_patterns = self.output_patterns
 
             # prerequisites
-            if len( self.loose_prerequisites ) > 0:
-                sself.death_prerequisites = plain_prerequisites(sself.id)
-                for pre in self.death_prerequisites:
-                    sself.death_prerequisites.add( pre )
-                sself.prerequisites = loose_prerequisites(sself.id)
-                for pre in self.loose_prerequisites:
-                    sself.prerequisites.add( pre )
-            else:
-                sself.prerequisites = prerequisites()
-                sself.add_prerequisites( startup )
+            sself.prerequisites = prerequisites()
+            sself.add_prerequisites( startup )
 
             ## should these be conditional too:?
             sself.suicide_prerequisites = plain_prerequisites( sself.id )

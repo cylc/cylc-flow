@@ -52,58 +52,51 @@ class asynchronous( nopid, task ):
 
         task.__init__( self, state )
 
-    #def nearest_c_time( self, c_time ):
-    #    # !TEMPORARY HACK!
-    #    return c_time
-
     def next_tag( self ):
         return str( int( self.tag ) + 1 )
 
     def check_requisites( self ):
-        #print '\n________________>'
-        #print 'pre: ', self.id, self.death_prerequisites.dump()
-        for message in self.prerequisites.labels:
-            lbl = self.prerequisites.labels[message]
-            if not self.prerequisites.satisfied[lbl]:
+        for reqs in self.prerequisites.container:
+            if not hasattr( reqs, 'is_loose' ):
                 continue
-            # now looping over satisfied prerequisites
 
-            # record which outputs already used by this task type
-            self.__class__.used_outputs[ message ] = True
+            for message in reqs.labels:
+                lbl = reqs.labels[message]
+                if not reqs.satisfied[lbl]:
+                    continue
+                # now looping over satisfied prerequisites
 
-            # get the match group from this message
-            mg = self.prerequisites.match_group[ message ]
+                # record which outputs already used by this task type
+                self.__class__.used_outputs[ message ] = True
 
-            # propagate the match group into my outputs and death pre's
-            for output in self.outputs.not_completed:
-                m = re.match( '^(.*)\((.*)\)(.*)', output )
-                if m:
-                    (left, mid, right) = m.groups()
-                    newout = left + mg + right
+                # get the match group from this message
+                mg = reqs.match_group[ message ]
 
-                    oid = self.outputs.not_completed[ output ] 
-                    del self.outputs.not_completed[ output ]
-                    self.outputs.not_completed[ newout ] = oid
+                # propagate the match group into my outputs and death pre's
+                for output in self.outputs.not_completed:
+                    m = re.match( '^(.*)\((.*)\)(.*)', output )
+                    if m:
+                        (left, mid, right) = m.groups()
+                        newout = left + mg + right
 
-                    self.env_vars[ 'ASYNCID' ] = mg 
-                    self.asyncid = mg
+                        oid = self.outputs.not_completed[ output ] 
+                        del self.outputs.not_completed[ output ]
+                        self.outputs.not_completed[ newout ] = oid
 
+                        self.env_vars[ 'ASYNCID' ] = mg 
+                        self.asyncid = mg
 
-            #print '\nXXXXXXXXXXXXxxxx'
-            for deathpre in self.death_prerequisites.labels.keys():
-                lbl = self.death_prerequisites.labels[deathpre]
-                m = re.match( '^(.*)\((.*)\)(.*)', deathpre )
-                #print deathpre
-                if m:
-                    #print 'XXXXXXMATCH!!!!!!!!!!!!!1111'
+                for deathpre in self.death_prerequisites.labels.keys():
+                    lbl = self.death_prerequisites.labels[deathpre]
+                    m = re.match( '^(.*)\((.*)\)(.*)', deathpre )
+                    if m:
 
-                    (left, mid, right) = m.groups()
-                    newpre = left + mg + right
+                        (left, mid, right) = m.groups()
+                        newpre = left + mg + right
 
-                    self.death_prerequisites.messages[lbl] = newpre
-                    self.death_prerequisites.labels[newpre] = lbl
-                    del self.death_prerequisites.labels[deathpre]
-        #print 'post: ', self.id, self.death_prerequisites.dump()
+                        self.death_prerequisites.messages[lbl] = newpre
+                        self.death_prerequisites.labels[newpre] = lbl
+                        del self.death_prerequisites.labels[deathpre]
 
     def set_requisites( self ):
         # ONLY REQUIRED FOR RESTART?
@@ -152,12 +145,13 @@ class asynchronous( nopid, task ):
         FILE.write( self.id + ' (' + self.asyncid + ') : ' + self.state.dump() + '\n' )
 
     def satisfy_me( self, outputs ):
-        self.prerequisites.satisfy_me( outputs, self.__class__.used_outputs.keys() )
-        #print '\n_________________________'
-        #print self.death_prerequisites.dump()
-        #print self.outputs.dump()
-        #print 'SATIS: ', self.id, self.death_prerequisites.dump()
-        self.death_prerequisites.satisfy_me_verbose( outputs )
+        # weed used-already outputs from outputs, so they're not re-used.
+        woutputs = {}
+        for out in outputs:
+            if out not in self.__class__.used_outputs:
+                woutputs[out] = outputs[out]
+        self.prerequisites.satisfy_me( woutputs )
+        self.death_prerequisites.satisfy_me( woutputs )
 
     def get_state_summary( self ):
         summary = task.get_state_summary( self )
