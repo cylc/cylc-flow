@@ -8,32 +8,41 @@ description = simple asynchronous example suite
 [special tasks]
     daemon = watcher
 
-#[dependencies]
-#    [[asynchronous:SATID]]
-#        graph = watcher
-
 [raw task definitions]
     [[watcher]]
         type = daemon
-        asynchid = SATID
+        output pattern = SATID
         command = watcher.sh
     [[upload]]
         type = asynchronous
         command = upload.sh
-        asynchid = SATID
         [[[outputs]]]
+            # my outputs
             one = "(SATID-\d+) uploaded"
-        [[[loose prerequisites]]]
+        [[[pattern prerequisites]]]
+            # my prerequisites
             one = "(SATID-\d+) ready for processing"
         [[[death prerequisites]]]
-            one = "(SATID-\d+) uploaded"
+            # I can be removed when this condition is satisfied
+            one = "(SATID-\d+) processing finished"
     [[archive]]
         type = asynchronous
         command = archive.sh
-        asynchid = SATID
         [[[outputs]]]
             one = "(SATID-\d+) archived"
-        [[[loose prerequisites]]]
+        [[[pattern prerequisites]]]
             one = "(SATID-\d+) ready for processing"
         [[[death prerequisites]]]
-            one = "(SATID-\d+) archived"
+            one = "(SATID-\d+) processing finished"
+    [[finishup]]
+        # a task to mark the end of processing of one pass
+        type = asynchronous
+        command = cylc task message $ASYNCID processing finished
+        [[[outputs]]]
+            one = "(SATID-\d+) processing finished"
+        [[[pattern prerequisites]]]
+            one = "(SATID-\d+) uploaded"
+            two = "(SATID-\d+) archived"
+        [[[death prerequisites]]]
+            one = "(SATID-\d+) processing finished"
+
