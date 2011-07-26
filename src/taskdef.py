@@ -96,6 +96,7 @@ class taskdef(object):
         self.cond_triggers = OrderedDict()             
         self.startup_triggers = OrderedDict()
         self.suicide_triggers = OrderedDict()       
+        self.asynchronous_triggers = []
 
         self.outputs = []     # list of special outputs; change to OrderedDict()
                               # if need to vary per cycle.
@@ -114,6 +115,9 @@ class taskdef(object):
         if cycle_list_string not in self.triggers:
             self.triggers[ cycle_list_string ] = []
         self.triggers[ cycle_list_string ].append( msg )
+
+    def add_asynchronous_trigger( self, msg ):
+        self.asynchronous_triggers.append( msg )
 
     def add_startup_trigger( self, msg, cycle_list_string ):
         if cycle_list_string not in self.startup_triggers:
@@ -231,6 +235,17 @@ class taskdef(object):
         if self.member_of:
             tclass.member_of = self.member_of
 
+        def tclass_format_asynchronous_prerequisites( sself, preq ):
+            m = re.search( '\$\(TAG\s*\-\s*(\d+)\)', preq )
+            if m:
+                offset = m.groups()[0]
+                foo = sself.tag - offset
+                preq = re.sub( '\$\(TAG\s*\-\s*\d+\)', foo, preq )
+            else:
+                preq = re.sub( '\$\(TAG\)', sself.tag, preq )
+            return preq
+        tclass.format_asynchronous_prerequisites = tclass_format_asynchronous_prerequisites 
+
         def tclass_format_prerequisites( sself, preq ):
             m = re.search( '\$\(CYCLE_TIME\s*\-\s*(\d+)\)', preq )
             if m:
@@ -270,7 +285,6 @@ class taskdef(object):
                     if int( sself.c_hour ) == int( hr ):
                         for trig in trigs:
                             pp.add( sself.format_prerequisites( trig ))
-
             sself.prerequisites.add_requisites( pp )
 
             # conditional triggers
@@ -287,10 +301,10 @@ class taskdef(object):
                             cp.set_condition( exp )
                             sself.prerequisites.add_requisites( cp )
 
-            if len( self.death_prerequisites ) > 0:
+            if self.type == 'asynchronous' or self.type == 'sas':
                 sself.death_prerequisites = plain_prerequisites(sself.id)
                 for pre in self.death_prerequisites:
-                    sself.death_prerequisites.add( pre )
+                    sself.death_prerequisites.add( sself.format_asynchronous_prerequisites( pre ))
 
             if len( self.loose_prerequisites ) > 0:
                 lp = loose_prerequisites(sself.id)
@@ -298,12 +312,18 @@ class taskdef(object):
                     lp.add( pre )
                 sself.prerequisites.add_requisites( lp )
 
+            if len( self.asynchronous_triggers ) > 0:
+                pp = plain_prerequisites( sself.id ) 
+                for trigger in self.asynchronous_triggers:
+                    pp.add( sself.format_asynchronous_prerequisites( trigger ))
+                sself.prerequisites.add_requisites( pp )
+
         tclass.add_prerequisites = tclass_add_prerequisites
 
         # class init function
         def tclass_init( sself, start_c_time, initial_state, stop_c_time=None, startup=False ):
             sself.tag = sself.adjust_tag( start_c_time )
-            if self.type != 'asynchronous' and self.type != 'daemon':
+            if self.type != 'asynchronous' and self.type != 'daemon' and self.type != 'sas':
                 sself.c_time = sself.tag
                 sself.c_hour = sself.c_time[8:10]
                 sself.orig_c_hour = start_c_time[8:10]

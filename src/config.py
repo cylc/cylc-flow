@@ -555,7 +555,6 @@ class config( CylcConfigObj ):
     def get_startup_task_list( self ):
         return self['special tasks']['startup']
 
-
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
         # not the full list of defined tasks (self['tasks'].keys())
@@ -570,7 +569,7 @@ class config( CylcConfigObj ):
         if not self.loaded:
             self.load_tasks()
         for tn in self.taskdefs:
-            if self.taskdefs[tn].type == 'asynchronous' or self.taskdefs[tn].type == 'daemon':
+            if self.taskdefs[tn].type == 'asynchronous' or self.taskdefs[tn].type == 'daemon' or self.taskdefs[tn].type == 'sas':
                 names.append(tn)
         names.sort(key=str.lower)
         return names
@@ -1283,7 +1282,15 @@ class config( CylcConfigObj ):
                 # NO CONDITIONALS OR STARTUP TRIGGERS FOR NOW
                 for lbl in taskconfig['prerequisites']:
                     taskd.add_trigger( taskconfig['prerequisites'][lbl], valid_hours )
+            else:
+                # simple asynchronous TO DO: ALSO NEEDED FOR REPEATING ASYNCHRONOUS?
+                for lbl in taskconfig['prerequisites']:
+                    taskd.add_asynchronous_trigger( taskconfig['prerequisites'][lbl] )
 
+            if taskconfig['startup prerequisites']:
+                for lbl in taskconfig['startup prerequisites']:
+                    taskd.add_startup_trigger( taskconfig['startup prerequisites'][lbl], valid_hours )
+ 
             if taskconfig['output pattern']:
                 taskd.add_asynchid( taskconfig['output pattern'] )
             if taskconfig['pattern prerequisites']:

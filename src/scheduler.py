@@ -965,20 +965,18 @@ class scheduler(object):
     def cleanup_async( self ):
         spent = []
         for itask in self.asynchronous_tasks:
-            #print '\n---', itask.id
             if not itask.done():
                 continue
-            #print '   done'
-            try:
-                itask.death_prerequisites
-            except AttributeError:
-                #print '   oops'
-                pass
-            else:
-                #print '   dump:' 
-                #print itask.death_prerequisites.dump()
+            if itask.death_prerequisites.count() > 0:
                 if itask.death_prerequisites.all_satisfied():
                     spent.append( itask )
+            else:
+                # All asynchronous tasks have death prerequisites,
+                # but for one off tasks they may be ignored, i.e.
+                # the count is zero and all_satisfied() returns True -
+                # which in this case does not mean the task can be
+                # removed.
+                pass
 
         # delete the spent tasks
         for itask in spent:

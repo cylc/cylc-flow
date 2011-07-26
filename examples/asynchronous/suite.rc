@@ -1,18 +1,19 @@
-title = asynchronous demo suite
+title = a demo suite for repeating asynchronous tasks
 
-description = """A tree of asynchronous tasks triggered by a 'random'
-satellite pass, or similar, plus some cycling tasks to show that cylc
-can handle both in the one suite. Multiple asynchronous processing
-trees can run in parallel if the data happens to come in quickly."""
+description = """A tree of asynchronous tasks triggered by a random
+satellite pass, plus some cycling tasks to show that cylc can handle
+both in the one suite. Multiple asynchronous processing trees can run in
+parallel if the data happens to come in quickly."""
 
 [dependencies]
-    # the cycling tasks (here defined by graph only)
+    # the cycling tasks (defined by graph only)
     [[12]]
         graph = "A => B"
 
 [raw task definitions]
-    # The asynchronous tasks, which have implementations in bin/.
-    # (NOTE asynchronous tasks cannot be parsed from the graph yet).
+    # (asynchronous tasks cannot be parsed from the suite graph yet).
+    # The asynchronous tasks have implementations in bin/.
+    # Death prerequisites determine when spent tasks can be removed.
     [[watcher]]
         description = "watch for incoming satellite data"
         # This task runs indefinitely watching for the incoming data.

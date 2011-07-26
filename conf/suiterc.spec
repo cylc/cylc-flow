@@ -1409,7 +1409,7 @@ live graph movie = boolean( default=False )
     hours string = string(default=None)  # e.g. "0,6,12,18"
     manual task completion messaging = boolean( default=None )
 
-    type = option( free, daemon, asynchronous )
+    type = option( free, daemon, asynchronous, sas )
     output pattern = string( default=None )
 
     # oneoff, sequential, tied, clocktriggered
@@ -1418,6 +1418,9 @@ live graph movie = boolean( default=False )
     clock trigger offset in hours = float( default=0.0 )
 
         [[[prerequisites]]]
+        __many__ = string
+
+        [[[startup prerequisites]]]
         __many__ = string
 
         [[[pattern prerequisites]]]
