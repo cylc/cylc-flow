@@ -44,7 +44,6 @@ class remote_switch( Pyro.core.ObjBase ):
         self.insert_this = None
         self.failout_id = failout_id
 
-        self.tasks = pool.get_tasks()
         self.pool = pool
 
         self.process_tasks = False
@@ -277,7 +276,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         dump = {}
         found = False
-        for task in self.tasks:
+        for task in self.pool.get_tasks():
             # loop through the suite task list
             id = task.id
             if id in in_ids_back:
@@ -297,7 +296,7 @@ class remote_switch( Pyro.core.ObjBase ):
                     pass
                 dump[ in_ids_back[ id ] ] = [ task.prerequisites.dump(), task.outputs.dump(), extra_info ]
         if not found:
-            self._warning( '(no tasks found to dump' )
+            self._warning( '(no tasks found to dump)' )
         else:
             return dump
     
@@ -432,7 +431,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self._warning( "REMOTE: hold task: " + task_id )
         found = False
         was_waiting = False
-        for itask in self.tasks:
+        for itask in self.pool.get_tasks():
             if itask.id == task_id:
                 found = True
                 print itask.state.state['status']
@@ -458,7 +457,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         self._warning( "REMOTE: release task: " + task_id )
         found = False
-        for itask in self.tasks:
+        for itask in self.pool.get_tasks():
             if itask.id == task_id:
                 itask.state.set_status( 'waiting' )
                 found = True
