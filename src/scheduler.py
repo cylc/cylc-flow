@@ -388,9 +388,7 @@ class scheduler(object):
         self.state_dump_archive = rolling_archive( self.state_dump_filename, arclen )
 
         # REMOTE CONTROL INTERFACE
-        # TO DO: DO WE NEED TO LOAD TASK LIST FIRST?
-        # TO DO: THIS IS CLUNKY - PASSING IN SELF TO GIVE ACCESS TO TASK
-        # POOL METHODS.
+        # (note: passing in self to give access to task pool methods is a bit clunky?).
         self.remote = remote_switch( self.config, self.clock, self.suite_dir, self, self.failout_task_id )
         self.pyro.connect( self.remote, 'remote' )
 
