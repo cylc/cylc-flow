@@ -1499,8 +1499,11 @@ class scheduler(object):
 
     def initialize_runtime_graph( self ):
         title = 'suite ' + self.suite + ' run-time dependency graph'
+        # create output directory if necessary
+        odir = self.config['visualization']['run time graph']['directory']
+        mkdir_p( odir )
         self.runtime_graph_file = \
-                os.path.join( self.config['visualization']['run time graph']['directory'], 'runtime-graph.dot' )
+                os.path.join( odir, 'runtime-graph.dot' )
         self.runtime_graph = graphing.CGraph( title, self.config['visualization'] )
         self.runtime_graph_finalized = False
         if not self.start_time:

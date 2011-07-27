@@ -531,8 +531,7 @@ class config( CylcConfigObj ):
         for dir in [
             self['suite log directory'], 
             self['state dump directory'],
-            self['job submission log directory'],
-            self['visualization']['run time graph']['directory'] ]: 
+            self['job submission log directory']]: 
             mkdir_p( dir )
 
     def get_filename( self ):
