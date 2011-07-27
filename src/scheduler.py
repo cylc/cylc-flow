@@ -137,9 +137,12 @@ class scheduler(object):
         self.print_banner()
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD (PROVIDED IN DERIVED CLASSES) 
         self.load_tasks()
+
+        global graphing_disabled
+        if not self.config['visualization']['run time graph']['enable']:
+            graphing_disabled = True
         if not graphing_disabled:
             self.initialize_runtime_graph()
-
 
     def parse_commandline( self ):
         # SUITE NAME
@@ -610,6 +613,7 @@ class scheduler(object):
         if self.pyro:
             self.pyro.shutdown()
 
+        global graphing_disabled
         if not graphing_disabled:
             self.finalize_runtime_graph()
 
@@ -765,10 +769,11 @@ class scheduler(object):
                         self.log.debug( 'not asking ' + itask.id + ' to run (' + self.pause_time + ' hold in place)' )
                         continue
                 if itask.run_if_ready():
-                    if not graphing_disabled and not self.runtime_graph_finalized:
-                        # add tasks to the runtime graph at the point
-                        # when they start running.
-                        self.update_runtime_graph( itask )
+                    global graphing_disabled
+                    if not graphing_disabled:
+                        if not self.runtime_graph_finalized:
+                            # add tasks to the runtime graph when they start running.
+                            self.update_runtime_graph( itask )
 
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
@@ -1495,13 +1500,13 @@ class scheduler(object):
     def initialize_runtime_graph( self ):
         title = 'suite ' + self.suite + ' run-time dependency graph'
         self.runtime_graph_file = \
-                os.path.join( self.config['visualization']['run time graph directory'], 'runtime-graph.dot' )
+                os.path.join( self.config['visualization']['run time graph']['directory'], 'runtime-graph.dot' )
         self.runtime_graph = graphing.CGraph( title, self.config['visualization'] )
         self.runtime_graph_finalized = False
         if not self.start_time:
             # only do cold and warmstarts for now.
             self.runtime_graph_finalized = True
-        self.runtime_graph_cutoff = self.config['visualization']['run time graph cutoff in hours']
+        self.runtime_graph_cutoff = self.config['visualization']['run time graph']['cutoff in hours']
 
     def update_runtime_graph( self, task ):
         if self.runtime_graph_finalized:

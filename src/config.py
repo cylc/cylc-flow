@@ -523,8 +523,8 @@ class config( CylcConfigObj ):
                 os.path.expandvars( os.path.expanduser( self['state dump directory']))
         self['job submission log directory' ] = \
                 os.path.expandvars( os.path.expanduser( self['job submission log directory' ]))
-        self['visualization']['run time graph directory'] = \
-                os.path.expandvars( os.path.expanduser( self['visualization']['run time graph directory']))
+        self['visualization']['run time graph']['directory'] = \
+                os.path.expandvars( os.path.expanduser( self['visualization']['run time graph']['directory']))
 
     def create_directories( self ):
         # create logging, state, and job log directories if necessary
@@ -532,7 +532,7 @@ class config( CylcConfigObj ):
             self['suite log directory'], 
             self['state dump directory'],
             self['job submission log directory'],
-            self['visualization']['run time graph directory'] ]: 
+            self['visualization']['run time graph']['directory'] ]: 
             mkdir_p( dir )
 
     def get_filename( self ):
