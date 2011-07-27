@@ -99,7 +99,5 @@ Version number X.Y.Z incrementing:
      <hook script> EVENT SUITE TASKID MESSAGE
   Where TASKID works with both cycling and non-cycling tasks (in development).
   WARNING: this change will break existing task event hook scripts.
-  + Disabled run time graphing by default and moved it to the suite.rc
-  visualization section. Run time graphing is used for cylc dev and debugging.
-  WARNING: this breaks existing suite.rc's that use run time graph settings.
+  + Disabled run time graphing by default (it is used mainly for debugging).
 
