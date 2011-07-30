@@ -78,7 +78,7 @@ class edge( object):
         if self.right in startup_only:
             if not first_cycle or raw:
                 return None
-        return self.right + '%' + ctime
+        return self.right + '%' + str(ctime)  # str for int tags (async)
 
     def get_left( self, ctime, not_first_cycle, raw, startup_only, exclude ):
         # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
@@ -150,9 +150,9 @@ class edge( object):
             foo = ct(ctime)
             foo.decrement( hours=offset )
             ctime = foo.get()
-            res = task + '%' + ctime
+            res = task + '%' + str(ctime)  # str for int tag (async)
         else:
-            res = left + '%' + ctime
+            res = left + '%' + str(ctime)
             
         return res
 
@@ -309,6 +309,7 @@ class config( CylcConfigObj ):
     def __init__( self, suite=None, simulation_mode=False, path=None ):
         self.simulation_mode = simulation_mode
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
+        self.once_edges = {}
         self.taskdefs = {}
         self.tasks_loaded = False
         self.graph_loaded = False
@@ -717,10 +718,16 @@ class config( CylcConfigObj ):
                         e = edge( l,r )
                         # store edges by hour (or "once" or "repeat:asyncid")
                         for val in validity:
-                            if val not in self.edges:
-                                self.edges[val] = []
-                            if e not in self.edges[val]:
-                                self.edges[val].append( e )
+                            if val == "once":
+                                if val not in self.once_edges:
+                                    self.once_edges[val] = []
+                                if e not in self.once_edges[val]:
+                                    self.once_edges[val].append( e )
+                            else:
+                                if val not in self.edges:
+                                    self.edges[val] = []
+                                if e not in self.edges[val]:
+                                    self.edges[val].append( e )
 
             # self.edges left side members can be:
             #   foo           (task name)
@@ -818,6 +825,12 @@ class config( CylcConfigObj ):
                 self.get_startup_task_list()
 
         gr_edges = []
+
+        for e in self.once_edges["once"]:
+            right = e.get_right(1, False, False, [], [])
+            left  = e.get_left( 1, False, False, [], [])
+            gr_edges.append( (left, right) )
+
         cycles = self.edges.keys()
         if len(cycles) != 0:
             cycles.sort(key=int)
