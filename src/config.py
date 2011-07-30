@@ -64,9 +64,10 @@ class SuiteConfigError( Exception ):
         return repr(self.msg)
 
 class edge( object):
-    def __init__( self, l, r ):
+    def __init__( self, l, r, sasl=False ):
         self.left_group = l
         self.right = r
+        self.sasl = sasl
 
     def get_right( self, ctime, not_first_cycle, raw, startup_only, exclude ):
         # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
@@ -150,10 +151,12 @@ class edge( object):
             foo = ct(ctime)
             foo.decrement( hours=offset )
             ctime = foo.get()
-            res = task + '%' + str(ctime)  # str for int tag (async)
         else:
-            res = left + '%' + str(ctime)
+            task = left
             
+        if self.sasl:
+            ctime = 1
+        res = task + '%' + str(ctime)  # str for int tag (async)
         return res
 
 class node( object):
@@ -567,7 +570,7 @@ class config( CylcConfigObj ):
         return self['special tasks']['cold start']
 
     def get_startup_task_list( self ):
-        return self['special tasks']['startup']
+        return self['special tasks']['startup'] + self.sas_tasks
 
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
@@ -693,9 +696,12 @@ class config( CylcConfigObj ):
 
             # graph
             lefts  = re.split( '\s*&\s*', lgroup )
+            sasl = False
             for r in rights:
                 for l in lefts:
-                    e = edge( l,r )
+                    if l in self.sas_tasks:
+                        sasl = True
+                    e = edge( l,r, sasl )
                     # store edges by hour (or "once" or "repeat:asyncid")
                     for val in validity:
                         if val == "once":
@@ -854,7 +860,7 @@ class config( CylcConfigObj ):
                             # nothing to add to the graph
                             continue
 
-                        if left != None:
+                        if left != None and not e.sasl:
                             lname, lctime = re.split( '%', left )
                             sct = ct(start_ctime)
                             diffhrs = sct.subtract_hrs( ct(lctime) )
