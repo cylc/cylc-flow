@@ -833,7 +833,7 @@ class config( CylcConfigObj ):
             # TO DO: ENSURE THAT ZERO PADDING NOT USED IN SECTION HEADINGS!!!!!
             found = True
             try:
-                i = cycles.index( hour )
+                i = cycles.index( int(hour) )
             except ValueError:
                 # nothing at this hour; find index of next hour that
                 # appears in the graph, and adjust ctime accordingly.
