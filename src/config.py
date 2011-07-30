@@ -312,7 +312,7 @@ class config( CylcConfigObj ):
     def __init__( self, suite=None, simulation_mode=False, path=None ):
         self.simulation_mode = simulation_mode
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
-        self.once_edges = {}
+        self.once_edges = []
         self.taskdefs = {}
         self.tasks_loaded = False
         self.graph_loaded = False
@@ -456,8 +456,8 @@ class config( CylcConfigObj ):
                 elif combo > 0:
                     trigger = pre + '$(TAG + ' + str(combo) + ')' + post
                 else:
-                    # (30 July 2011: put in '-' below; should it be there?)
-                    trigger = pre + '$(TAG - ' + str(combo) + ')' + post
+                    # '-' appears in combo
+                    trigger = pre + '$(TAG ' + str(combo) + ')' + post
 
         # now for sas tasks, replace '$(TAG)' with '1'
         if task_name in self.sas_tasks:
@@ -705,10 +705,8 @@ class config( CylcConfigObj ):
                     # store edges by hour (or "once" or "repeat:asyncid")
                     for val in validity:
                         if val == "once":
-                            if val not in self.once_edges:
-                                self.once_edges[val] = []
                             if e not in self.once_edges[val]:
-                                self.once_edges[val].append( e )
+                                self.once_edges.append( e )
                         else:
                             if val not in self.edges:
                                 self.edges[val] = []
@@ -820,7 +818,7 @@ class config( CylcConfigObj ):
 
         gr_edges = []
 
-        for e in self.once_edges["once"]:
+        for e in self.once_edges:
             right = e.get_right(1, False, False, [], [])
             left  = e.get_left( 1, False, False, [], [])
             gr_edges.append( (left, right) )

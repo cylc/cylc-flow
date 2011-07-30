@@ -394,7 +394,7 @@ class taskdef(object):
             # outputs
             sself.outputs = outputs( sself.id )
             for output in self.outputs:
-                m = re.search( '\$\(CYCLE_TIME\s*([+-])\s*(\d+)\)', output )
+                m = re.search( '\$\(TAG\s*([+-])\s*(\d+)\)', output )
                 if m:
                     sign, offset = m.groups()
                     if sign == '-':
@@ -404,9 +404,9 @@ class taskdef(object):
                         foo = ct( sself.c_time )
                         foo.increment( hours=offset )
                         ctime = foo.get()
-                    out = re.sub( '\$\(CYCLE_TIME.*\)', ctime, output )
-                elif re.search( '\$\(CYCLE_TIME\)', output ):
-                    out = re.sub( '\$\(CYCLE_TIME\)', sself.tag, output )
+                    out = re.sub( '\$\(TAG.*\)', ctime, output )
+                elif re.search( '\$\(TAG\)', output ):
+                    out = re.sub( '\$\(TAG\)', sself.tag, output )
                 else:
                     out = output
                 sself.outputs.add( out )
