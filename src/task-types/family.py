@@ -17,11 +17,10 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import task
-from free import free
-from sequential import sequential
+#import task
+#from free import free
 
-class family( free ):
+class family( object ):
     """
 Task family implementation in cylc: a task that just enters the running
 state when ready, without running anything for real, so that it's members
@@ -47,10 +46,11 @@ as soon as any one member failed.
         # (only the family members run real tasks).
         self.incoming( 'NORMAL', self.id + ' started' )
 
-    def satisfy_me( self, task ):
-        free.satisfy_me( self, task )
-        self.familysucceeded_prerequisites.satisfy_me( task )
-        self.familyOR_prerequisites.satisfy_me( task )
+    def satisfy_me( self, outputs ):
+        self.prerequisites.satisfy_me( outputs )
+        #self.suicide_prerequisites.satisfy_me( outputs )
+        self.familysucceeded_prerequisites.satisfy_me( outputs )
+        self.familyOR_prerequisites.satisfy_me( outputs )
 
     def check_requisites( self ):
         if self.familysucceeded_prerequisites.all_satisfied():
@@ -69,22 +69,30 @@ as soon as any one member failed.
             self.incoming( 'CRITICAL', self.id + ' failed' )
 
     def reset_state_succeeded( self ):
-        free.reset_state_succeeded( self )
+        self.state.set_status( 'succeeded' )
+        self.prerequisites.set_all_satisfied()
+        self.outputs.set_all_completed()
         self.familysucceeded_prerequisites.set_all_satisfied()
         self.familyOR_prerequisites.set_all_unsatisfied()
 
     def reset_state_failed( self ):
-        free.reset_state_failed( self )
+        self.state.set_status( 'failed' )
+        self.prerequisites.set_all_satisfied()
+        self.outputs.set_all_incomplete()
         self.familysucceeded_prerequisites.set_all_unsatisfied()
         self.familyOR_prerequisites.set_all_satisfied()
 
     def reset_state_waiting( self ):
-        free.reset_state_waiting( self )
+        self.state.set_status( 'waiting' )
+        self.prerequisites.set_all_unsatisfied()
+        self.outputs.set_all_incomplete()
         self.familysucceeded_prerequisites.set_all_unsatisfied()
         self.familyOR_prerequisites.set_all_unsatisfied()
 
     def reset_state_ready( self ):
-        free.reset_state_ready( self )
+        self.state.set_status( 'waiting' )
+        self.prerequisites.set_all_satisfied()
+        self.outputs.set_all_incomplete()
         self.familysucceeded_prerequisites.set_all_unsatisfied()
         self.familyOR_prerequisites.set_all_unsatisfied()
 
