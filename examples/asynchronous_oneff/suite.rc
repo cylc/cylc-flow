@@ -5,43 +5,13 @@ pair of cycling tasks."""
 
 [task families]
     FAM = F, G
+    wam = X, Y
 [dependencies]
     graph = """foo => FAM => baz"""
-#    [[0,6,12,18]]
-#        graph = "baz => A => B"
+    [[0,6,12,18]]
+        graph = "baz => A => wam => B"
 
 [tasks]
-    [[foo]]
-        command = false
-
-#[raw task definitions]
-#    # Asynchronous tasks cannot be parsed from the suite graph yet,
-#    # but these task will be represented as: "foo => bar => baz".
-#
-#    # Note that $(TAG) is the asynchronous analogue of $(CYCLE_TIME) 
-#    # for cycling tasks. Currently the tag is just an integer that
-#    # starts at 1, and increments upward for repeating async tasks.
-#
-#    [[foo]]
-#        type = sas   # "Simple ASychronous" (temporary class name...)
-#
-#    [[bar]]
-#        type = sas
-#        [[[prerequisites]]]
-#        # trigger off foo succeeded
-#        one = "foo%$(TAG) succeeded"
-#
-#    [[baz]]
-#        type = sas
-#        [[[prerequisites]]]
-#        # trigger off bar succeeded
-#        one = "bar%$(TAG) succeeded"
-#
-#    [[A]]
-#        type = free
-#        type modifiers = sequential
-#        hours string = 12
-#        [[[startup prerequisites]]]
-#        # trigger the first cycling task off baz succeeded, at startup only.
-#        one = "baz%1 succeeded"
+    [[X]]
+        command = "echo bugger; false"
 

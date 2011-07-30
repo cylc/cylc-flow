@@ -984,7 +984,7 @@ class config( CylcConfigObj ):
         my_family = {}
         for name in self['task families']:
             try:
-                self.taskdefs[name].type="family"
+                self.taskdefs[name].modifiers.append("family")
             except KeyError:
                 print >> sys.stderr, 'WARNING: family ' + name + ' is not used in the graph'
                 continue
@@ -1001,6 +1001,10 @@ class config( CylcConfigObj ):
                 # take valid hours from the family
                 # (REPLACES HOURS if member appears in graph section)
                 self.taskdefs[mem].hours = self.taskdefs[name].hours
+                if name in self.sas_tasks:
+                    self.taskdefs[mem].type = "sas"
+                    if mem not in self.sas_tasks:
+                        self.sas_tasks.append(mem)
 
         # sort hours list for each task
         for name in self.taskdefs:

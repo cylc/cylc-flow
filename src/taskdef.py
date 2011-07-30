@@ -238,7 +238,7 @@ class taskdef(object):
         tclass.intercycle = self.intercycle
         tclass.follow_on = self.follow_on_task
 
-        if self.type == 'family':
+        if 'family' in self.modifiers:
             tclass.members = self.members
 
         if self.member_of:
@@ -340,6 +340,7 @@ class taskdef(object):
 
         # class init function
         def tclass_init( sself, start_c_time, initial_state, stop_c_time=None, startup=False ):
+            #print self.name, self.type, self.modifiers
             sself.tag = sself.adjust_tag( start_c_time )
             if self.type != 'asynchronous' and self.type != 'daemon' and self.type != 'sas':
                 sself.c_time = sself.tag
@@ -370,7 +371,7 @@ class taskdef(object):
                 foo.add( self.member_of + '%' + sself.tag + ' started' )
                 sself.prerequisites.add_requisites( foo )
 
-            if self.type == 'family':
+            if 'family' in self.modifiers:
                 # familysucceeded prerequisites (all satisfied => all
                 # members finished successfully).
                 sself.familysucceeded_prerequisites = plain_prerequisites( sself.id )
