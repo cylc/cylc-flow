@@ -625,27 +625,17 @@ class config( CylcConfigObj ):
         for i in [0] + range( 1, len(sequence)-1 ):
             lgroup = sequence[i]
             if len(sequence) == 1:
+                # single node: no rhs group
                 rgroup = None
-                lone_node = True
+                if re.search( '\|', lgroup ):
+                    raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR conditionals: " + lgroup
             else:
                 rgroup = sequence[i+1]
-                lone_node = False
            
             # parentheses are used for intercycle dependencies: (T-6) etc.
             # so don't check for them as erroneous conditionals just yet.
 
-            if lone_node:
-                if re.search( '\|', lgroup ):
-                    raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR conditionals: " + lgroup
-                lefts  = re.split( '\s*&\s*', lgroup )
-                for left in lefts:
-                    e = edge( left, None )
-                    for hour in hours:
-                        if hour not in self.edges:
-                            self.edges[hour] = []
-                        if e not in self.edges[hour]:
-                            self.edges[hour].append( e )
-            else:
+            if rgroup:
                 # '|' (OR) is not allowed on the right side
                 if re.search( '\|', rgroup ):
                     raise SuiteConfigError, "ERROR: OR '|' is not legal on the right side of dependencies: " + rgroup
@@ -656,17 +646,20 @@ class config( CylcConfigObj ):
 
                 # now split on '&' (AND) and generate corresponding pairs
                 rights = re.split( '\s*&\s*', rgroup )
-                lefts  = re.split( '\s*&\s*', lgroup )
+            else:
+                rights = [None]
 
-                for r in rights:
-                    for l in lefts:
-                        e = edge( l,r )
-                        # store edges by hour
-                        for hour in hours:
-                            if hour not in self.edges:
-                                self.edges[hour] = []
-                            if e not in self.edges[hour]:
-                                self.edges[hour].append( e )
+            lefts  = re.split( '\s*&\s*', lgroup )
+
+            for r in rights:
+                for l in lefts:
+                    e = edge( l,r )
+                    # store edges by hour
+                    for hour in hours:
+                        if hour not in self.edges:
+                            self.edges[hour] = []
+                        if e not in self.edges[hour]:
+                            self.edges[hour].append( e )
 
             # self.edges left side members can be:
             #   foo           (task name)
@@ -694,32 +687,19 @@ class config( CylcConfigObj ):
         for i in [0] + range( 1, len(sequence)-1 ):
             lgroup = sequence[i]
             if len(sequence) == 1:
+                # single node: no rhs group
                 rgroup = None
-                lone_node = True
+                if re.search( '\|', lgroup ):
+                    raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR conditionals: " + lgroup
             else:
                 rgroup = sequence[i+1]
-                lone_node = False
  
             lconditional = lgroup
             
             # parentheses are used for intercycle dependencies: (T-6) etc.
             # so don't check for them as erroneous conditionals just yet.
 
-            if lone_node:
-                if re.search( '\|', lgroup ):
-                    raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR conditionals: " + lgroup
-                lefts = re.split( '\s*&\s*', lgroup )
-                for left in lefts:
-                    try:
-                        name = graphnode( left ).name
-                    except GraphNodeError, x:
-                        raise SuiteConfigError, str(x)
-
-                    if name not in self.taskdefs:
-                        self.taskdefs[ name ] = self.get_taskdef( name )
-                    self.taskdefs[name].add_hours( hours )
-
-            else:
+            if rgroup:
                 # '|' (OR) is not allowed on the right side
                 if re.search( '\|', rgroup ):
                     raise SuiteConfigError, "ERROR: OR '|' is not legal on the right side of dependencies: " + rgroup
@@ -732,6 +712,8 @@ class config( CylcConfigObj ):
                 rights = re.split( '\s*&\s*', rgroup )
                 for r in rights:
                     self.generate_taskdefs( lconditional, r, cycle_list_string )
+            else:
+                self.generate_taskdefs( lconditional, None, cycle_list_string )
 
     def generate_taskdefs( self, lcond, right, cycle_list_string ):
         # get a list of integer hours from cycle_list_string
@@ -745,6 +727,10 @@ class config( CylcConfigObj ):
 
         # initialise the task definitions
         for node in lefts + [right]:
+            if not node:
+                # if right is None, lefts are lone nodes
+                # for which we still define the taskdefs
+                continue
             try:
                 name = graphnode( node ).name
             except GraphNodeError, x:
@@ -752,6 +738,10 @@ class config( CylcConfigObj ):
             if name not in self.taskdefs:
                 self.taskdefs[ name ] = self.get_taskdef( name )
             self.taskdefs[ name ].add_hours( hours )
+
+        if not right:
+            # lefts are lone nodes; no more triggers to define.
+            return
 
         # SET TRIGGERS
         if not re.search( '\|', lcond ):
