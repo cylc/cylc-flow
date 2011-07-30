@@ -365,10 +365,9 @@ class taskdef(object):
             sself.suicide_prerequisites = plain_prerequisites( sself.id )
             ##sself.add_requisites( sself.suicide_prerequisites, self.suicide_triggers )
 
-            # TO DO: UPDATE FAMILIES FOR ASYNCHRONOUS TASKS? (c_time below)
             if self.member_of:
                 foo = plain_prerequisites( sself.id )
-                foo.add( self.member_of + '%' + sself.c_time + ' started' )
+                foo.add( self.member_of + '%' + sself.tag + ' started' )
                 sself.prerequisites.add_requisites( foo )
 
             if self.type == 'family':
@@ -376,15 +375,15 @@ class taskdef(object):
                 # members finished successfully).
                 sself.familysucceeded_prerequisites = plain_prerequisites( sself.id )
                 for member in self.members:
-                    sself.familysucceeded_prerequisites.add( member + '%' + sself.c_time + ' succeeded' )
+                    sself.familysucceeded_prerequisites.add( member + '%' + sself.tag + ' succeeded' )
                 # familyOR prerequisites (A|A:fail and B|B:fail and ...)
                 # all satisfied => all members have either succeeded or failed.
                 sself.familyOR_prerequisites = conditional_prerequisites( sself.id )
                 expr = ''
                 for member in self.members:
                     expr += '( ' + member + ' | ' + member + '_fail ) & '
-                    sself.familyOR_prerequisites.add( member + '%' + sself.c_time + ' succeeded', member )
-                    sself.familyOR_prerequisites.add( member + '%' + sself.c_time + ' failed', member + '_fail' )
+                    sself.familyOR_prerequisites.add( member + '%' + sself.tag + ' succeeded', member )
+                    sself.familyOR_prerequisites.add( member + '%' + sself.tag + ' failed', member + '_fail' )
                 sself.familyOR_prerequisites.set_condition( expr.rstrip('& ') )
 
             sself.logfiles = logfiles()
@@ -400,7 +399,7 @@ class taskdef(object):
                     if sign == '-':
                        raise DefinitionError, "ERROR, " + sself.id + ": Output offsets must be positive: " + output
                     else:
-                        #ctime = cycle_time.increment( sself.c_time, offset )
+                        # TO DO: GENERALIZE FOR ASYNC TASKS
                         foo = ct( sself.c_time )
                         foo.increment( hours=offset )
                         ctime = foo.get()
