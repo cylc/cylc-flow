@@ -134,7 +134,7 @@ else:
 print "Parsing", suite1
 try:
     config1 = config( suite1 )
-    config1.load_tasks()
+    config1.load()
 except SuiteConfigError,x:
     if options.debug:
         raise
@@ -144,7 +144,7 @@ except SuiteConfigError,x:
 print "Parsing", suite2
 try:
     config2 = config( suite2 )
-    config2.load_tasks()
+    config2.load()
 except SuiteConfigError,x:
     if options.debug:
         raise

@@ -111,39 +111,48 @@ class taskdef(object):
         self.environment = OrderedDict()  # var = value
         self.directives  = OrderedDict()  # var = value
 
-    def add_trigger( self, msg, cycle_list_string ):
-        if cycle_list_string not in self.triggers:
-            self.triggers[ cycle_list_string ] = []
-        self.triggers[ cycle_list_string ].append( msg )
+    def add_trigger( self, msg, validity ):
+        if validity not in self.triggers:
+            self.triggers[ validity ] = []
+        self.triggers[ validity ].append( msg )
 
     def add_asynchronous_trigger( self, msg ):
         self.asynchronous_triggers.append( msg )
 
-    def add_startup_trigger( self, msg, cycle_list_string ):
-        if cycle_list_string not in self.startup_triggers:
-            self.startup_triggers[ cycle_list_string ] = []
-        self.startup_triggers[ cycle_list_string ].append( msg )
+    def add_startup_trigger( self, msg, validity ):
+        if validity not in self.startup_triggers:
+            self.startup_triggers[ validity ] = []
+        self.startup_triggers[ validity ].append( msg )
 
-    def add_conditional_trigger( self, triggers, exp, cycle_list_string ):
+    def add_conditional_trigger( self, triggers, exp, validity ):
         # triggers[label] = trigger
         # expression relates the labels
-        if cycle_list_string not in self.cond_triggers:
-            self.cond_triggers[ cycle_list_string ] = []
-        self.cond_triggers[ cycle_list_string ].append( [ triggers, exp ] )
+        if validity not in self.cond_triggers:
+            self.cond_triggers[ validity ] = []
+        self.cond_triggers[ validity ].append( [ triggers, exp ] )
 
-    def add_hours( self, section_label ):
-        # list of valid hours
-        hours = re.split( '\s*,\s*', section_label )
-        for hr in hours:
-            hour = int( hr )
-            if hour < 0 or hour > 23:
-                raise DefinitionError( 'ERROR: Hour ' + str(hour) + ' must be between 0 and 23' )
-            if hour not in self.hours: 
-                self.hours.append( hour )
+    def set_validity( self, section ):
+        # [list of valid hours], or ["once"], or ["repeat:asyncidpattern"]
+        if section == "once":
+            # simple one-off asynchronous task
+            self.type = "sas"
+        elif re.match( '^repeat:', section ):
+            # Repeating asynchronous task.
+            m = re.match( '^repeat:(.*)$', section )
+            asyncid = m.groups()[0]
+            self.output_patterns.append( asyncid )
+        elif re.match( '^[\s,\d]+$', section ):
+            # Cycling task.
+            hours = re.split( '\s*,\s*', section )
+            for hr in hours:
+                hour = int( hr )
+                if hour < 0 or hour > 23:
+                    raise DefinitionError( 'ERROR: Hour ' + str(hour) + ' must be between 0 and 23' )
+                if hour not in self.hours: 
+                    self.hours.append( hour )
             self.hours.sort( key=int )
-
-    def add_asynchid( self, asyncid ):
-        self.output_patterns.append( asyncid )
+        else:
+            raise DefinitionError( 'ERROR: Illegal graph validity type: ' + section )
 
     def check_consistency( self ):
         if len( self.hours ) == 0:
@@ -235,40 +244,42 @@ class taskdef(object):
         if self.member_of:
             tclass.member_of = self.member_of
 
-        def tclass_format_asynchronous_prerequisites( sself, preq ):
+        def tclass_format_prerequisites( sself, preq ):
             m = re.search( '\$\(TAG\s*\-\s*(\d+)\)', preq )
             if m:
                 offset = m.groups()[0]
-                foo = sself.tag - offset
-                preq = re.sub( '\$\(TAG\s*\-\s*\d+\)', foo, preq )
-            else:
-                preq = re.sub( '\$\(TAG\)', sself.tag, preq )
-            return preq
-        tclass.format_asynchronous_prerequisites = tclass_format_asynchronous_prerequisites 
+                if self.type != 'asynchronous' and self.type != 'daemon' and self.type != 'sas':
+                    # cycle time decrement
+                    foo = ct( sself.c_time )
+                    foo.decrement( hours=offset )
+                    ctime = foo.get()
+                    preq = re.sub( '\$\(TAG\s*\-\s*\d+\)', ctime, preq )
+                else:
+                    # arithmetic decrement
+                    foo = sself.tag - offset
+                    preq = re.sub( '\$\(TAG\s*\-\s*\d+\)', foo, preq )
 
-        def tclass_format_prerequisites( sself, preq ):
-            m = re.search( '\$\(CYCLE_TIME\s*\-\s*(\d+)\)', preq )
-            if m:
-                offset = m.groups()[0]
-                foo = ct( sself.c_time )
-                foo.decrement( hours=offset )
-                ctime = foo.get()
-                preq = re.sub( '\$\(CYCLE_TIME\s*\-\s*\d+\)', ctime, preq )
-            else:
-                preq = re.sub( '\$\(CYCLE_TIME\)', sself.tag, preq )
+            elif re.search( '\$\(TAG\)', preq ):
+                preq = re.sub( '\$\(TAG\)', sself.tag, preq )
+
             return preq
         tclass.format_prerequisites = tclass_format_prerequisites 
 
         def tclass_add_prerequisites( sself, startup ):
 
-            pp = plain_prerequisites( sself.id ) 
-            # if startup, use ONLY startup prerequisites
-            # IF THERE ARE ANY
             if startup:
+                pp = plain_prerequisites( sself.id ) 
+                # if startup, use ONLY startup prerequisites
                 found = False
-                for cycles in self.startup_triggers:
-                    trigs = self.startup_triggers[ cycles ]
-                    hours = re.split( ',\s*', cycles )
+                for val in self.startup_triggers:
+                    if val == "once":
+                        [trig] = self.startup_triggers[ val ]
+                        found = True
+                        pp.add( sself.format_prerequisites( trig ))
+                        continue
+
+                    trigs = self.startup_triggers[ val ]
+                    hours = re.split( ',\s*', val )
                     for hr in hours:
                         if int( sself.c_hour ) == int( hr ):
                             for trig in trigs:
@@ -278,9 +289,15 @@ class taskdef(object):
                     sself.prerequisites.add_requisites( pp )
 
             pp = plain_prerequisites( sself.id ) 
-            for cycles in self.triggers:
-                trigs = self.triggers[ cycles ]
-                hours = re.split( ',\s*', cycles )
+            for val in self.triggers:
+                if val == "once":
+                    [trig] = self.triggers[ val ]
+                    found = True
+                    pp.add( sself.format_prerequisites( trig ))
+                    continue
+
+                trigs = self.triggers[ val ]
+                hours = re.split( ',\s*', val )
                 for hr in hours:
                     if int( sself.c_hour ) == int( hr ):
                         for trig in trigs:
@@ -288,10 +305,11 @@ class taskdef(object):
             sself.prerequisites.add_requisites( pp )
 
             # conditional triggers
-            for cycles in self.cond_triggers:
-                for ctrig in self.cond_triggers[ cycles ]:
+            # TO DO: "once" triggers
+            for val in self.cond_triggers:
+                for ctrig in self.cond_triggers[ val ]:
                     triggers, exp =  ctrig
-                    hours = re.split( ',\s*', cycles )
+                    hours = re.split( ',\s*', val )
                     for hr in hours:
                         if int( sself.c_hour ) == int( hr ):
                             cp = conditional_prerequisites( sself.id )
@@ -304,7 +322,7 @@ class taskdef(object):
             if self.type == 'asynchronous' or self.type == 'sas':
                 sself.death_prerequisites = plain_prerequisites(sself.id)
                 for pre in self.death_prerequisites:
-                    sself.death_prerequisites.add( sself.format_asynchronous_prerequisites( pre ))
+                    sself.death_prerequisites.add( sself.format_prerequisites( pre ))
 
             if len( self.loose_prerequisites ) > 0:
                 lp = loose_prerequisites(sself.id)
@@ -315,7 +333,7 @@ class taskdef(object):
             if len( self.asynchronous_triggers ) > 0:
                 pp = plain_prerequisites( sself.id ) 
                 for trigger in self.asynchronous_triggers:
-                    pp.add( sself.format_asynchronous_prerequisites( trigger ))
+                    pp.add( sself.format_prerequisites( trigger ))
                 sself.prerequisites.add_requisites( pp )
 
         tclass.add_prerequisites = tclass_add_prerequisites

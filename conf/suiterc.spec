@@ -716,6 +716,9 @@ manual task completion messaging = boolean( default=False )
 
 [dependencies]
 #> This is where to define the suite dependency graph.
+    graph = string( default=None )
+#> Define the dependency graph of one-off non-cycling tasks.
+
     [[__many__]]
 #> Replace MANY with each list of hours preceding a chunk of the suite
 #> dependency graph, as required for differing 
