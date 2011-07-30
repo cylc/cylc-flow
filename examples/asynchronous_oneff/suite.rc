@@ -3,10 +3,16 @@ title = demo suite for one-off asynchronous tasks
 description = """A chain of one-off asynchronous tasks followed by a
 pair of cycling tasks."""
 
+[task families]
+    FAM = F, G
 [dependencies]
-    graph = "foo => bar => baz"
-    [[0,6,12,18]]
-        graph = "baz => A => B"
+    graph = """foo => FAM => baz"""
+#    [[0,6,12,18]]
+#        graph = "baz => A => B"
+
+[tasks]
+    [[foo]]
+        command = false
 
 #[raw task definitions]
 #    # Asynchronous tasks cannot be parsed from the suite graph yet,
