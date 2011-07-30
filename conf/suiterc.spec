@@ -1234,29 +1234,8 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 #>RESUME
 
 [visualization]
-#> Graph plotting (suite.rc and run-time) configuration items. These do not
-#> affect the graph-based suite control interface.
-run time graph cutoff in hours = integer( default=24 )
-#> Cylc generates a run time graph of resolved dependencies, from the
-#> start of every run until each task has passed this cutoff. Use 
-#> simulation mode to generate run time graphs quickly.
-#>\begin{myitemize}
-#>\item {\em section:} [visualization]
-#>\item {\em type:} integer
-#>\item {\em legal values:} $>=0$
-#>\item {\em default:} 24
-#>\item {\em example:} \lstinline@run time graph cutoff = 12@
-#>\end{myitemize}
-
-run time graph directory = string( default='$CYLC_SUITE_DIR/graphing')
-#> Where to put the run time graph file, called \lstinline=runtime-graph.dot=.
-#>\begin{myitemize}
-#>\item {\em section:}  [visualization]
-#>\item {\em type:} string
-#>\item {\em legal values:} a valid local file path
-#>\item {\em default:} \lstinline=$CYLC_SUITE_DIR/graphing=
-#>\item {\em example:} \lstinline@run time graph directory = $HOME/mygraph@
-#>\end{myitemize}
+#> Graph plotting configuration items for suite.rc and run time graphs. 
+#> These do not affect the graph-based suite control interface.
 
 show family members = boolean( default=False )
 # TO DO: USE SUB-GRAPH FOR FAMILY MEMBERS?
@@ -1331,6 +1310,45 @@ default edge attributes = force_list( default=list('color=black'))
 #>   BigModels = 'style=filled', 'color=blue'
 #>   TaskX = 'color=red'
 #>\end{lstlisting}
+#>\end{myitemize}
+
+[[run time graph]]
+#> Cylc can generate run time graphs of resolved dependencies, i.e. what 
+#> actually triggers off what as the suite runs.
+#> Use simulation mode to generate run time graphs very quickly.
+
+enable = boolean( default=False )
+#> Run time graphing is disabled by default because it is mainly intended
+#> for cylc development and debugging (the run time graph can be compared
+#> with the suite.rc graph to ensure that new suite.rc graph elements are
+#> parsed correctly).
+#>\begin{myitemize}
+#>\item {\em section:} [visualization][[run time graph]]
+#>\item {\em type:} boolean
+#>\item {\em default:} False
+#>\item {\em example:} \lstinline@enable = True@
+#>\end{myitemize}
+
+cutoff in hours = integer( default=24 )
+#> Each new task will be added to the run time graph, as the suite 
+#> runs, unless its cycle time exceeds the initial cycle time by more
+#> than this cutoff value.
+#>\begin{myitemize}
+#>\item {\em section:} [visualization][[run time graph]]
+#>\item {\em type:} integer
+#>\item {\em legal values:} $>=0$
+#>\item {\em default:} 24
+#>\item {\em example:} \lstinline@cutoff in hours = 12@
+#>\end{myitemize}
+
+directory = string( default='$CYLC_SUITE_DIR/graphing')
+#> Where to put the run time graph file, called \lstinline=runtime-graph.dot=.
+#>\begin{myitemize}
+#>\item {\em section:}  [visualization][[run time graph]]
+#>\item {\em type:} string
+#>\item {\em legal values:} a valid local file path
+#>\item {\em default:} \lstinline=$CYLC_SUITE_DIR/graphing=
+#>\item {\em example:} \lstinline@directory = $HOME/mygraph@
 #>\end{myitemize}
 
 [task insertion groups]

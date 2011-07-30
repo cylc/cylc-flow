@@ -537,16 +537,15 @@ class config( CylcConfigObj ):
                 os.path.expandvars( os.path.expanduser( self['state dump directory']))
         self['job submission log directory' ] = \
                 os.path.expandvars( os.path.expanduser( self['job submission log directory' ]))
-        self['visualization']['run time graph directory'] = \
-                os.path.expandvars( os.path.expanduser( self['visualization']['run time graph directory']))
+        self['visualization']['run time graph']['directory'] = \
+                os.path.expandvars( os.path.expanduser( self['visualization']['run time graph']['directory']))
 
     def create_directories( self ):
         # create logging, state, and job log directories if necessary
         for dir in [
             self['suite log directory'], 
             self['state dump directory'],
-            self['job submission log directory'],
-            self['visualization']['run time graph directory'] ]: 
+            self['job submission log directory']]: 
             mkdir_p( dir )
 
     def get_filename( self ):
@@ -662,40 +661,19 @@ class config( CylcConfigObj ):
         for i in [0] + range( 1, len(sequence)-1 ):
             lgroup = sequence[i]
             if len(sequence) == 1:
+                # single node: no rhs group
                 rgroup = None
-                lone_node = True
+                if re.search( '\|', lgroup ):
+                    raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR conditionals: " + lgroup
             else:
                 rgroup = sequence[i+1]
-                lone_node = False
            
             lconditional = lgroup
  
             # parentheses are used for intercycle dependencies: (T-6) etc.
             # so don't check for them as erroneous conditionals just yet.
 
-            if lone_node:
-                if re.search( '\|', lgroup ):
-                    raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR conditionals: " + lgroup
-                lefts  = re.split( '\s*&\s*', lgroup )
-                for left in lefts:
-                    # task defs
-                    try:
-                        name = graphnode( left ).name
-                    except GraphNodeError, x:
-                        raise SuiteConfigError, str(x)
-                    if name not in self.taskdefs:
-                        self.taskdefs[ name ] = self.get_taskdef( name )
-                    self.taskdefs[name].set_validity( section )
- 
-                    # graph
-                    e = edge( left, None )
-                    # store edges by hour (or "once" or "repeat:asyncid")
-                    for val in validity:
-                        if val not in self.edges:
-                            self.edges[val] = []
-                        if e not in self.edges[val]:
-                            self.edges[val].append( e )
-            else:
+            if rgroup:
                 # '|' (OR) is not allowed on the right side
                 if re.search( '\|', rgroup ):
                     raise SuiteConfigError, "ERROR: OR '|' is not legal on the right side of dependencies: " + rgroup
@@ -706,28 +684,30 @@ class config( CylcConfigObj ):
 
                 # now split on '&' (AND) and generate corresponding pairs
                 rights = re.split( '\s*&\s*', rgroup )
+            else:
+                rights = [None]
 
-                # task defs
-                for r in rights:
-                    self.generate_taskdefs( lconditional, r, section )
+            # task defs
+            for r in rights:
+                self.generate_taskdefs( lconditional, r, section )
 
-                # graph
-                lefts  = re.split( '\s*&\s*', lgroup )
-                for r in rights:
-                    for l in lefts:
-                        e = edge( l,r )
-                        # store edges by hour (or "once" or "repeat:asyncid")
-                        for val in validity:
-                            if val == "once":
-                                if val not in self.once_edges:
-                                    self.once_edges[val] = []
-                                if e not in self.once_edges[val]:
-                                    self.once_edges[val].append( e )
-                            else:
-                                if val not in self.edges:
-                                    self.edges[val] = []
-                                if e not in self.edges[val]:
-                                    self.edges[val].append( e )
+            # graph
+            lefts  = re.split( '\s*&\s*', lgroup )
+            for r in rights:
+                for l in lefts:
+                    e = edge( l,r )
+                    # store edges by hour (or "once" or "repeat:asyncid")
+                    for val in validity:
+                        if val == "once":
+                            if val not in self.once_edges:
+                                self.once_edges[val] = []
+                            if e not in self.once_edges[val]:
+                                self.once_edges[val].append( e )
+                        else:
+                            if val not in self.edges:
+                                self.edges[val] = []
+                            if e not in self.edges[val]:
+                                self.edges[val].append( e )
 
             # self.edges left side members can be:
             #   foo           (task name)
@@ -742,6 +722,10 @@ class config( CylcConfigObj ):
 
         # initialise the task definitions
         for node in lefts + [right]:
+            if not node:
+                # if right is None, lefts are lone nodes
+                # for which we still define the taskdefs
+                continue
             try:
                 name = graphnode( node ).name
             except GraphNodeError, x:
@@ -752,6 +736,10 @@ class config( CylcConfigObj ):
             if name not in self.taskdefs:
                 self.taskdefs[ name ] = self.get_taskdef( name )
             self.taskdefs[ name ].set_validity( section )
+
+        if not right:
+            # lefts are lone nodes; no more triggers to define.
+            return
 
         # SET TRIGGERS
         if not re.search( '\|', lcond ):
