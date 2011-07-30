@@ -705,7 +705,7 @@ class config( CylcConfigObj ):
                     # store edges by hour (or "once" or "repeat:asyncid")
                     for val in validity:
                         if val == "once":
-                            if e not in self.once_edges[val]:
+                            if e not in self.once_edges:
                                 self.once_edges.append( e )
                         else:
                             if val not in self.edges:
@@ -757,8 +757,7 @@ class config( CylcConfigObj ):
                 lnode = graphnode( l ) # (GraphNodeError checked above)
 
                 trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset )
-                if lnode.name in self['special tasks']['startup'] or \
-                        lnode.name in self.sas_tasks:
+                if lnode.name in self['special tasks']['startup'] or lnode.name in self.sas_tasks:
                     self.taskdefs[right].add_startup_trigger( trigger, section )
                 else:
                     if lnode.intercycle:
@@ -773,9 +772,9 @@ class config( CylcConfigObj ):
             # (to change this, need add_startup_conditional_trigger()
             # similarly to above to non-conditional ... and follow
             # through in taskdef.py).
-            for t in self['special tasks']['startup']:
+            for t in self['special tasks']['startup'] or self.sas_tasks:
                 if re.search( r'\b' + t + r'\b', l ):
-                    raise SuiteConfigError, 'ERROR: startup task in conditional: ' + t
+                    raise SuiteConfigError, 'ERROR: startup tasks are not yet allowed in conditional expressions: ' + t
 
             ctrig = {}
 
