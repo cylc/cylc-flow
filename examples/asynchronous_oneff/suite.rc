@@ -3,15 +3,11 @@ title = demo suite for one-off asynchronous tasks
 description = """A chain of one-off asynchronous tasks followed by a
 pair of cycling tasks."""
 
-[task families]
-    FAM = F, G
-    wam = X, Y
 [dependencies]
-    graph = """foo => FAM => baz"""
-    [[0,6,12,18]]
-        graph = "baz => A => wam => B"
+    graph = """one | two => three"""
+    #[[12]]
+    #    graph = "A => B"
 
-[tasks]
-    [[X]]
-        command = "echo bugger; false"
-
+#[tasks]
+#    [[two]]
+#        command = false

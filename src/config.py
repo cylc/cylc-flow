@@ -18,8 +18,6 @@
 
 # ONE-OFF ASYNCHRONOUS TASKS TO DO:
 #  - conditional version
-#  - graphing
-#  - further refactoring of config.py and taskdef.py?
 
 # TO DO: catchup_clocktriggered
 # TO DO: ERROR CHECKING:
@@ -766,17 +764,8 @@ class config( CylcConfigObj ):
         else:
             # Conditional with OR:
             # Strip off '*' plotting conditional indicator
-            l = re.sub( '\s*\*', '', lcond )
-
-            # A startup task currently cannot be part of a conditional
-            # (to change this, need add_startup_conditional_trigger()
-            # similarly to above to non-conditional ... and follow
-            # through in taskdef.py).
-            for t in self['special tasks']['startup'] or self.sas_tasks:
-                if re.search( r'\b' + t + r'\b', l ):
-                    raise SuiteConfigError, 'ERROR: startup tasks are not yet allowed in conditional expressions: ' + t
-
             ctrig = {}
+            l = re.sub( '\s*\*', '', lcond )
 
             lefts = re.split( '\s*[\|&]\s*', l)
             for left in lefts:
@@ -802,7 +791,10 @@ class config( CylcConfigObj ):
             label = re.sub( '\-', '_', label )
             label = re.sub( '\:', '_', label )
 
-            self.taskdefs[right].add_conditional_trigger( ctrig, label, section )
+            if lnode.name in self['special tasks']['startup'] or lnode.name in self.sas_tasks:
+                self.taskdefs[right].add_startup_conditional_trigger( ctrig, label, section )
+            else:
+                self.taskdefs[right].add_conditional_trigger( ctrig, label, section )
 
     def get_graph( self, start_ctime, stop, colored=True, raw=False ):
         if not self.graph_loaded:

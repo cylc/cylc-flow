@@ -97,6 +97,7 @@ class taskdef(object):
         self.startup_triggers = OrderedDict()
         self.suicide_triggers = OrderedDict()       
         self.asynchronous_triggers = []
+        self.startup_cond_triggers = OrderedDict()
 
         self.outputs = []     # list of special outputs; change to OrderedDict()
                               # if need to vary per cycle.
@@ -130,6 +131,13 @@ class taskdef(object):
         if validity not in self.cond_triggers:
             self.cond_triggers[ validity ] = []
         self.cond_triggers[ validity ].append( [ triggers, exp ] )
+
+    def add_startup_conditional_trigger( self, triggers, exp, validity ):
+        # triggers[label] = trigger
+        # expression relates the labels
+        if validity not in self.startup_cond_triggers:
+            self.startup_cond_triggers[ validity ] = []
+        self.startup_cond_triggers[ validity ].append( [ triggers, exp ] )
 
     def set_validity( self, section ):
         # [list of valid hours], or ["once"], or ["repeat:asyncidpattern"]
@@ -288,13 +296,41 @@ class taskdef(object):
                 if found:
                     sself.prerequisites.add_requisites( pp )
 
+                # conditional triggers
+                found = False
+                for val in self.startup_cond_triggers:
+                    if val == "once":
+                        for ctrig in self.startup_cond_triggers[ val ]:
+                            found = True
+                            triggers, exp =  ctrig
+                            cp = conditional_prerequisites( sself.id )
+                            for label in triggers:
+                                trig = triggers[label]
+                                cp.add( sself.format_prerequisites( trig ), label )
+                            cp.set_condition( exp )
+                            sself.prerequisites.add_requisites( cp )
+                        continue
+
+                    for ctrig in self.startup_cond_triggers[ val ]:
+                        triggers, exp =  ctrig
+                        hours = re.split( ',\s*', val )
+                        for hr in hours:
+                            if int( sself.c_hour ) == int( hr ):
+                                cp = conditional_prerequisites( sself.id )
+                                for label in triggers:
+                                    trig = triggers[label]
+                                    cp.add( sself.format_prerequisites( trig ), label )
+                                cp.set_condition( exp )
+                                sself.prerequisites.add_requisites( cp )
+
             pp = plain_prerequisites( sself.id ) 
             for val in self.triggers:
-                if val == "once":
-                    [trig] = self.triggers[ val ]
-                    found = True
-                    pp.add( sself.format_prerequisites( trig ))
-                    continue
+                # NOT NEEDED: ONCE TRIGGERS ARE ONLY USED AT STARTUP? (...restart?)
+                #if val == "once":
+                #    [trig] = self.triggers[ val ]
+                #    found = True
+                #    pp.add( sself.format_prerequisites( trig ))
+                #    continue
 
                 trigs = self.triggers[ val ]
                 hours = re.split( ',\s*', val )
@@ -305,7 +341,6 @@ class taskdef(object):
             sself.prerequisites.add_requisites( pp )
 
             # conditional triggers
-            # TO DO: "once" triggers
             for val in self.cond_triggers:
                 for ctrig in self.cond_triggers[ val ]:
                     triggers, exp =  ctrig
