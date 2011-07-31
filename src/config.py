@@ -20,8 +20,7 @@
 # TO DO: ERROR CHECKING:
 #        - MULTIPLE DEFINITION OF SAME PREREQUISITES, E.G. VIA TWO
 #          CYCLE-TIME SECTIONS IN THE GRAPH.
-#        - SPECIAL OUTPUTS foo:out1
-#          - check outputs do not appear on right side of pairs, 
+#        - EXPLICIT OUTPUTS foo:out1
 #          - document: use foo(T-6):out1, not foo:out1 with $(CYCLE_TIME-6) in
 #          the output message - so the graph will plot correctly.
 
@@ -74,6 +73,9 @@ class edge( object):
         if self.right in startup_only:
             if not first_cycle or raw:
                 return None
+
+        # strip off special outputs
+        self.right = re.sub( ':\w+', '', self.right )
 
         return self.right + '%' + str(ctime)  # str for int tags (async)
 
@@ -688,6 +690,10 @@ class config( CylcConfigObj ):
 
             # task defs
             for r in rights:
+                # ignore output labels on the right (they are only
+                # meaningful on the left, in chained tasks)
+                r = re.sub( ':\w+', '', r )
+
                 self.generate_taskdefs( lconditional, r, section )
 
             # graph
