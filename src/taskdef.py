@@ -19,7 +19,6 @@
 # NOT YET IMPLEMENTED OR DOCUMENTED FROM bin/_taskgen:
 #   - time translation (for different units) not used
 #   - not using the various check_() functions below
-#   - asynch stuff, output_patterns
 
 # ONEOFF and FOLLOWON TASKS: followon still needed but can now be
 # identified automatically from the dependency graph?
@@ -140,15 +139,14 @@ class taskdef(object):
         self.startup_cond_triggers[ validity ].append( [ triggers, exp ] )
 
     def set_validity( self, section ):
-        # [list of valid hours], or ["once"], or ["repeat:asyncidpattern"]
+        # [list of valid hours], or ["once"], or ["ASYNCID:pattern"]
         if section == "once":
             # simple one-off asynchronous task
             self.type = "sas"
         elif re.match( '^ASYNCID:', section ):
             # Repeating asynchronous task.
             m = re.match( '^ASYNCID:(.*)$', section )
-            asyncid = m.groups()[0]
-            self.output_patterns.append( asyncid )
+            self.output_patterns.append( m.groups()[0] )
         elif re.match( '^[\s,\d]+$', section ):
             # Cycling task.
             hours = re.split( '\s*,\s*', section )

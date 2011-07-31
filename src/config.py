@@ -638,7 +638,7 @@ class config( CylcConfigObj ):
         # (this might not be possible in all conceivable cases, but in 
         # reality NWP suites have simple conditional trigger needs).
 
-        # [list of valid hours], or ["once"], or ["repeat:asyncidpattern"]
+        # [list of valid hours], or ["once"], or ["ASYNCID:pattern"]
         validity = []
         if section == "once" or re.match( '^ASYNCID:', section ):
             validity.append( section )
@@ -704,7 +704,7 @@ class config( CylcConfigObj ):
                     if l in self.sas_tasks:
                         sasl = True
                     e = edge( l,r, sasl )
-                    # store edges by hour (or "once" or "repeat:asyncid")
+                    # store edges by hour (or "once" or "ASYNCID:pattern")
                     for val in validity:
                         if val == "once":
                             if e not in self.once_edges:

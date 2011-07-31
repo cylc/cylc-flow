@@ -1,0 +1,36 @@
+title = a demo suite for repeating asynchronous tasks
+
+description = """A tree of asynchronous tasks triggered by a random
+satellite pass, plus some cycling tasks to show that cylc can handle
+both in the one suite. Multiple asynchronous processing trees can run in
+parallel if the data happens to come in quickly."""
+
+[dependencies]
+    [[ASYNCID:SATID-\d+]]
+        graph = """watcher => upload & archive => done"""
+        daemon = watcher
+        final = done
+
+    # the cycling tasks (defined by graph only)
+    [[12,x]]
+        graph = "A => B"
+
+[tasks]
+    [[watcher]]
+        description = "watch for incoming satellite data"
+        command = watcher.sh
+        [[[outputs]]]
+            a = "$(ASYNCID) ready for processing"
+
+    [[upload]]
+        description = "upload new satellite data"
+        command = upload.sh
+       [[[outputs]]]
+            a = "$(ASYNCID) uploaded"
+
+    [[archive]]
+        description = "archive new satellite data"
+        command = archive.sh
+        [[[outputs]]]
+            a = "$(ASYNCID) archived"
+
