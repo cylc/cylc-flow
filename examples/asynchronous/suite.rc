@@ -1,19 +1,16 @@
 title = a demo suite for repeating asynchronous tasks
 
 description = """A tree of asynchronous tasks triggered by a random
-satellite pass, plus some cycling tasks to show that cylc can handle
-both in the one suite. Multiple asynchronous processing trees can run in
-parallel if the data happens to come in quickly."""
+satellite pass, plus some cycling tasks. Multiple asynchronous
+processing trees can run in parallel if the data happens to come in
+quickly."""
 
-#[dependencies]
-#    # the cycling tasks (defined by graph only)
-#    [[12]]
-#        graph = "A => B"
+[dependencies]
+    [[12]]
+        graph = "A => B"
 
 [raw task definitions]
-    # (asynchronous tasks cannot be parsed from the suite graph yet).
     # The asynchronous tasks have implementations in bin/.
-    # Death prerequisites determine when spent tasks can be removed.
     [[watcher]]
         description = "watch for incoming satellite data"
         # This task runs indefinitely watching for the incoming data.
@@ -36,16 +33,11 @@ parallel if the data happens to come in quickly."""
             # Trigger off outputs matching this pattern:
             one = "$(ASYNCID) ready for processing"
             # Once triggered:
-            # 1) the pattern is replaced with the match in my outputs
-            # and in my death prerequisites, and
+            # 1) the pattern is replaced with the match in my outputs, and
             # 2) the match string is exported to the task as $ASYNCID.
         [[[outputs]]]
             # This task's own outputs (pattern replaced as described).
             one = "$(ASYNCID) uploaded"
-        [[[death prerequisites]]]
-            # I can be removed when this condition is satisfied.
-            # (Pattern replaced as described above).
-            one = "$(ASYNCID) processing finished"
 
     [[archive]]
         description = "archive new satellite data"
@@ -56,8 +48,6 @@ parallel if the data happens to come in quickly."""
             one = "$(ASYNCID) ready for processing"
         [[[outputs]]]
             one = "$(ASYNCID) archived"
-        [[[death prerequisites]]]
-            one = "$(ASYNCID) processing finished"
 
     [[finishup]]
         description = "A task to mark the end of processing of one pass"
@@ -70,6 +60,3 @@ parallel if the data happens to come in quickly."""
             two = "$(ASYNCID) archived"
         [[[outputs]]]
             one = "$(ASYNCID) processing finished"
-        [[[death prerequisites]]]
-            one = "$(ASYNCID) processing finished"
-

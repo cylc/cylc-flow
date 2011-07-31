@@ -755,7 +755,6 @@ manual task completion messaging = boolean( default=False )
 #>\end{myitemize}
 
 daemon = string( default=None )
-final = string( default=None )
 
 [environment]
 #> Use this section to define the global task execution environment, i.e.\
@@ -1445,9 +1444,6 @@ live graph movie = boolean( default=False )
         __many__ = string
 
         [[[startup prerequisites]]]
-        __many__ = string
-
-        [[[death prerequisites]]]
         __many__ = string
 
         [[[environment]]]

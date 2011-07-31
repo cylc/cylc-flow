@@ -103,9 +103,7 @@ class taskdef(object):
                               # if need to vary per cycle.
 
         self.output_patterns = []  # asynchronous daemon tasks
-
         self.loose_prerequisites = [] # asynchronous tasks
-        self.death_prerequisites = [] # ditto
 
         # default to dummy task for tasks in graph but not in the [tasks] section.
         self.commands = [ dummy_command ] # list of commands
@@ -139,16 +137,8 @@ class taskdef(object):
             self.startup_cond_triggers[ validity ] = []
         self.startup_cond_triggers[ validity ].append( [ triggers, exp ] )
 
-    def set_validity( self, section ):
-        # [list of valid hours], or ["once"], or ["ASYNCID:pattern"]
-        if section == "once":
-            # simple one-off asynchronous task
-            self.type = "sas"
-        elif re.match( '^ASYNCID:', section ):
-            # Repeating asynchronous task.
-            m = re.match( '^ASYNCID:(.*)$', section )
-            self.output_patterns.append( m.groups()[0] )
-        elif re.match( '^[\s,\d]+$', section ):
+    def set_valid_hours( self, section ):
+        if re.match( '^[\s,\d]+$', section ):
             # Cycling task.
             hours = re.split( '\s*,\s*', section )
             for hr in hours:
@@ -159,7 +149,7 @@ class taskdef(object):
                     self.hours.append( hour )
             self.hours.sort( key=int )
         else:
-            raise DefinitionError( 'ERROR: Illegal graph validity type: ' + section )
+            raise DefinitionError( 'ERROR: Illegal graph valid hours: ' + section )
 
     def check_consistency( self ):
         if len( self.hours ) == 0:
@@ -279,13 +269,13 @@ class taskdef(object):
                 # if startup, use ONLY startup prerequisites
                 found = False
                 for val in self.startup_triggers:
+                    trigs = self.startup_triggers[ val ]
                     if val == "once":
-                        [trig] = self.startup_triggers[ val ]
-                        found = True
-                        pp.add( sself.format_prerequisites( trig ))
+                        for trig in trigs:
+                            found = True
+                            pp.add( sself.format_prerequisites( trig ))
                         continue
 
-                    trigs = self.startup_triggers[ val ]
                     hours = re.split( ',\s*', val )
                     for hr in hours:
                         if int( sself.c_hour ) == int( hr ):
@@ -324,12 +314,11 @@ class taskdef(object):
 
             pp = plain_prerequisites( sself.id ) 
             for val in self.triggers:
-                # NOT NEEDED: ONCE TRIGGERS ARE ONLY USED AT STARTUP? (...restart?)
-                #if val == "once":
-                #    [trig] = self.triggers[ val ]
-                #    found = True
-                #    pp.add( sself.format_prerequisites( trig ))
-                #    continue
+                if re.match( '^ASYNCID:', val ):
+                    for trig in self.triggers[ val ]:
+                        found = True
+                        pp.add( sself.format_prerequisites( trig ))
+                    continue
 
                 trigs = self.triggers[ val ]
                 hours = re.split( ',\s*', val )
@@ -352,11 +341,6 @@ class taskdef(object):
                                 cp.add( sself.format_prerequisites( trig ), label )
                             cp.set_condition( exp )
                             sself.prerequisites.add_requisites( cp )
-
-            if self.type == 'asynchronous' or self.type == 'sas':
-                sself.death_prerequisites = plain_prerequisites(sself.id)
-                for pre in self.death_prerequisites:
-                    sself.death_prerequisites.add( sself.format_prerequisites( pre ))
 
             if len( self.loose_prerequisites ) > 0:
                 lp = loose_prerequisites(sself.id)

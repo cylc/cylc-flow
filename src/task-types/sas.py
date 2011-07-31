@@ -21,9 +21,5 @@ from task import task
 from oneoff import oneoff
 
 class sas( oneoff, task ):
-
+    # TO DO: eliminate this now-superfluous task type modifier.
     is_asynchronous = True
-
-    def satisfy_me( self, outputs ):
-        self.prerequisites.satisfy_me( outputs )
-        self.death_prerequisites.satisfy_me( outputs )

@@ -718,8 +718,8 @@ class scheduler(object):
         newest = ct('1000010101').get()
         for itask in self.cycling_tasks:
             # avoid daemon tasks
-            if hasattr( itask, 'daemon_task' ):
-                continue
+            #if hasattr( itask, 'daemon_task' ):
+            #    continue
             if int( itask.c_time ) > int( newest ):
                 newest = itask.c_time
         return newest
@@ -746,8 +746,7 @@ class scheduler(object):
 
         for itask in self.cycling_tasks + self.asynchronous_tasks:
             # try to satisfy me (itask) if I'm not already satisfied.
-            if itask.not_fully_satisfied() or hasattr( itask, 'is_asynchronous' ):
-                # asynchronous tasks need to satisfy death prerequisites later
+            if itask.not_fully_satisfied():
                 self.broker.negotiate( itask )
 
         for itask in self.cycling_tasks + self.asynchronous_tasks:
@@ -960,30 +959,30 @@ class scheduler(object):
                 if itask.suicide_prerequisites.all_satisfied():
                     self.spawn_and_die( [itask.id], dump_state=False, reason='suicide' )
 
-        self.cleanup_async()
-
         if self.use_quick:
             self.cleanup_non_intercycle( failed_rt )
 
         self.cleanup_generic( failed_rt )
 
+        self.cleanup_async()
+
+    def async_cutoff(self):
+        cutoff = 0
+        for itask in self.asynchronous_tasks:
+            # avoid daemon tasks
+            if hasattr( itask, 'daemon_task' ):
+                continue
+            if not itask.done():
+                if itask.tag > cutoff:
+                    cutoff = itask.tag
+        return cutoff
+ 
     def cleanup_async( self ):
+        cutoff = self.async_cutoff()
         spent = []
         for itask in self.asynchronous_tasks:
-            if not itask.done():
-                continue
-            if itask.death_prerequisites.count() > 0:
-                if itask.death_prerequisites.all_satisfied():
-                    spent.append( itask )
-            else:
-                # All asynchronous tasks have death prerequisites,
-                # but for one off tasks they may be ignored, i.e.
-                # the count is zero and all_satisfied() returns True -
-                # which in this case does not mean the task can be
-                # removed.
-                pass
-
-        # delete the spent tasks
+            if itask.done() and itask.tag < cutoff:
+                spent.append( itask )
         for itask in spent:
             self.trash( itask, 'async spent' )
 

@@ -310,11 +310,14 @@ class config( CylcConfigObj ):
     def __init__( self, suite=None, simulation_mode=False, path=None ):
         self.simulation_mode = simulation_mode
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
-        self.once_edges = []
         self.taskdefs = {}
         self.tasks_loaded = False
         self.graph_loaded = False
+
+        self.once_edges = []
         self.sas_tasks = []
+        self.ras_edges = []
+        self.ras_tasks = []
 
         if suite:
             self.suite = suite
@@ -426,7 +429,7 @@ class config( CylcConfigObj ):
             for task in self['task families'][fam]:
                 self.member_of[ task ] = fam
 
-    def set_trigger( self, task_name, output_name=None, offset=None ):
+    def set_trigger( self, task_name, output_name=None, offset=None, asyncid_pattern=None ):
         if output_name:
             try:
                 trigger = self['tasks'][task_name]['outputs'][output_name]
@@ -457,9 +460,13 @@ class config( CylcConfigObj ):
                     # '-' appears in combo
                     trigger = pre + '$(TAG ' + str(combo) + ')' + post
 
-        # now for sas tasks, replace '$(TAG)' with '1'
+        # for oneoff sas tasks, replace '$(TAG)' with '1' (NECESS?)
         if task_name in self.sas_tasks:
             trigger = re.sub( '\$\(TAG\)', '1', trigger )
+
+        if asyncid_pattern:
+            trigger = re.sub( '\$\(ASYNCID\)', '(' + asyncid_pattern + ')', trigger )
+ 
 
         return trigger
 
@@ -568,7 +575,7 @@ class config( CylcConfigObj ):
         return self['special tasks']['cold start']
 
     def get_startup_task_list( self ):
-        return self['special tasks']['startup'] + self.sas_tasks
+        return self['special tasks']['startup'] + self.sas_tasks + self.ras_tasks
 
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
@@ -701,7 +708,7 @@ class config( CylcConfigObj ):
             sasl = False
             for r in rights:
                 for l in lefts:
-                    if l in self.sas_tasks:
+                    if l in self.sas_tasks + self.ras_tasks:
                         sasl = True
                     e = edge( l,r, sasl )
                     # store edges by hour (or "once" or "ASYNCID:pattern")
@@ -709,6 +716,9 @@ class config( CylcConfigObj ):
                         if val == "once":
                             if e not in self.once_edges:
                                 self.once_edges.append( e )
+                        elif re.match( '^ASYNCID:', str(val) ):
+                            if e not in self.ras_edges:
+                                self.ras_edges.append( e )
                         else:
                             if val not in self.edges:
                                 self.edges[val] = []
@@ -723,6 +733,14 @@ class config( CylcConfigObj ):
 
     def generate_taskdefs( self, lcond, right, section ):
 
+        async = False
+        asyncid_pattern = None
+        m = re.match( '^ASYNCID:(.*)$', section )
+        if m:
+            async = True
+            asyncid_pattern = m.groups()[0]
+            daemon = self['dependencies'][section]['daemon']
+
         # extract left side task names (split on '|' or '&')
         lefts = re.split( '\s*[\|&]\s*', lcond )
 
@@ -736,12 +754,24 @@ class config( CylcConfigObj ):
                 name = graphnode( node ).name
             except GraphNodeError, x:
                 raise SuiteConfigError, str(x)
-            if section == "once":
-                if name not in self.sas_tasks:
-                    self.sas_tasks.append(name)
+
             if name not in self.taskdefs:
                 self.taskdefs[ name ] = self.get_taskdef( name )
-            self.taskdefs[ name ].set_validity( section )
+                if section == "once":
+                    self.taskdefs[name].type = 'sas'
+                    if name not in self.sas_tasks:
+                        self.sas_tasks.append(name)
+                elif async:
+                    if name not in self.ras_tasks:
+                        self.ras_tasks.append(name)
+                        self.taskdefs[name].asyncid_pattern = asyncid_pattern
+                    if name == daemon:
+                        self.taskdefs[name].type = 'daemon'
+                    else:
+                        self.taskdefs[name].type = 'asynchronous'
+
+                else:
+                    self.taskdefs[ name ].set_valid_hours( section )
 
         if not right:
             # lefts are lone nodes; no more triggers to define.
@@ -758,9 +788,11 @@ class config( CylcConfigObj ):
                 l = re.sub( '\s*\*', '', left )
                 lnode = graphnode( l ) # (GraphNodeError checked above)
 
-                trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset )
+                trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset, asyncid_pattern )
                 if lnode.name in self['special tasks']['startup'] or lnode.name in self.sas_tasks:
                     self.taskdefs[right].add_startup_trigger( trigger, section )
+                elif async:
+                    self.taskdefs[right].loose_prerequisites.append(trigger)
                 else:
                     if lnode.intercycle:
                         self.taskdefs[lnode.name].intercycle = True
@@ -813,7 +845,7 @@ class config( CylcConfigObj ):
 
         gr_edges = []
 
-        for e in self.once_edges:
+        for e in self.once_edges + self.ras_edges:
             right = e.get_right(1, False, False, [], [])
             left  = e.get_left( 1, False, False, [], [])
             gr_edges.append( (left, right) )
@@ -1001,6 +1033,10 @@ class config( CylcConfigObj ):
                     self.taskdefs[mem].type = "sas"
                     if mem not in self.sas_tasks:
                         self.sas_tasks.append(mem)
+                elif name in self.ras_tasks:
+                    self.taskdefs[mem].type = "asynchronous"
+                    if mem not in self.ras_tasks:
+                        self.ras_tasks.append(mem)
 
         # sort hours list for each task
         for name in self.taskdefs:
@@ -1228,7 +1264,7 @@ class config( CylcConfigObj ):
 
             valid_hours = taskconfig['hours string']
             if valid_hours:
-                taskd.set_validity( valid_hours )
+                taskd.set_valid_hours( valid_hours )
                 for lbl in taskconfig['prerequisites']:
                     taskd.add_trigger( taskconfig['prerequisites'][lbl], valid_hours )
 
@@ -1238,11 +1274,6 @@ class config( CylcConfigObj ):
                 for lbl in lpre:
                     pre = re.sub( '\$\(ASYNCID\)', '(' + taskconfig['asyncid pattern'] + ')', lpre[lbl] )
                     taskd.loose_prerequisites.append(pre)
-
-            if taskconfig['death prerequisites']:
-                dpre = taskconfig['death prerequisites']
-                for lbl in dpre:
-                    taskd.death_prerequisites.append(dpre[lbl])
 
             if taskconfig['startup prerequisites']:
                 for lbl in taskconfig['startup prerequisites']:

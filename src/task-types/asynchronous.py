@@ -64,7 +64,7 @@ class asynchronous( nopid, task ):
                 # get the match group from this message
                 mg = reqs.asyncid
 
-                # propagate the match group into my outputs and death pre's
+                # propagate the match group into my outputs
                 for output in self.outputs.not_completed:
                     m = re.match( '^(.*)\$\(ASYNCID\)(.*)', output )
                     if m:
@@ -76,16 +76,6 @@ class asynchronous( nopid, task ):
 
                         self.env_vars[ 'ASYNCID' ] = mg 
                         self.asyncid = mg
-
-                for deathpre in self.death_prerequisites.labels.keys():
-                    m = re.match( '^(.*)\$\(ASYNCID\)(.*)', deathpre )
-                    if m:
-                        (left, right) = m.groups()
-                        newpre = left + mg + right
-                        lbl = self.death_prerequisites.labels[deathpre]
-                        self.death_prerequisites.messages[lbl] = newpre
-                        self.death_prerequisites.labels[newpre] = lbl
-                        del self.death_prerequisites.labels[deathpre]
 
     def set_requisites( self ):
         # On reload from state dump, replace match patterns with literal strings.
@@ -122,19 +112,6 @@ class asynchronous( nopid, task ):
                 del self.outputs.not_completed[ output ]
                 self.outputs.not_completed[ newout ] = self.id
 
-        # ... in death prerequisites:
-        for deathpre in self.death_prerequisites.labels.keys():
-            m = re.match( '^(.*)\$\(ASYNCID\)(.*)', deathpre )
-            if m:
-                (left, right) = m.groups()
-                newpre = left + mg + right
-                lbl = self.death_prerequisites.labels[deathpre]
-                val = self.death_prerequisites.satisfied[ lbl ]
-                self.death_prerequisites.messages[lbl] = newpre
-                self.death_prerequisites.labels[newpre] = lbl
-                del self.death_prerequisites.labels[deathpre]
-                self.death_prerequisites.satisfied[ lbl ] = val
-
     def dump_state( self, FILE ):
         # Write state information to the state dump file
         # This must be compatible with __init__() on reloading from state dump
@@ -148,7 +125,6 @@ class asynchronous( nopid, task ):
             if out not in self.__class__.used_outputs:
                 woutputs[out] = outputs[out]
         self.prerequisites.satisfy_me( woutputs )
-        self.death_prerequisites.satisfy_me( woutputs )
 
     def get_state_summary( self ):
         summary = task.get_state_summary( self )
