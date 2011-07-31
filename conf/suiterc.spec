@@ -754,6 +754,9 @@ manual task completion messaging = boolean( default=False )
 #>\item {\em default:} None
 #>\end{myitemize}
 
+daemon = string( default=None )
+final = string( default=None )
+
 [environment]
 #> Use this section to define the global task execution environment, i.e.\
 #> variables made available to all tasks. Order of definition 

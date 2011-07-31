@@ -16,9 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# ONE-OFF ASYNCHRONOUS TASKS TO DO:
-#  - conditional version
-
 # TO DO: catchup_clocktriggered
 # TO DO: ERROR CHECKING:
 #        - MULTIPLE DEFINITION OF SAME PREREQUISITES, E.G. VIA TWO
@@ -77,6 +74,7 @@ class edge( object):
         if self.right in startup_only:
             if not first_cycle or raw:
                 return None
+
         return self.right + '%' + str(ctime)  # str for int tags (async)
 
     def get_left( self, ctime, not_first_cycle, raw, startup_only, exclude ):
@@ -640,7 +638,7 @@ class config( CylcConfigObj ):
 
         # [list of valid hours], or ["once"], or ["repeat:asyncidpattern"]
         validity = []
-        if section == "once" or re.match( '^repeat:', section ):
+        if section == "once" or re.match( '^ASYNCID:', section ):
             validity.append( section )
         elif re.match( '^[\s,\d]+$', section ):
             # Cycling task.

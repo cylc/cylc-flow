@@ -144,9 +144,9 @@ class taskdef(object):
         if section == "once":
             # simple one-off asynchronous task
             self.type = "sas"
-        elif re.match( '^repeat:', section ):
+        elif re.match( '^ASYNCID:', section ):
             # Repeating asynchronous task.
-            m = re.match( '^repeat:(.*)$', section )
+            m = re.match( '^ASYNCID:(.*)$', section )
             asyncid = m.groups()[0]
             self.output_patterns.append( asyncid )
         elif re.match( '^[\s,\d]+$', section ):

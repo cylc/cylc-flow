@@ -4,10 +4,17 @@ description = """A chain of one-off asynchronous tasks followed by a
 pair of cycling tasks."""
 
 [dependencies]
-    graph = """one | two => three"""
+    graph = """one:out1 => two:x => three"""
     #[[12]]
     #    graph = "A => B"
 
-#[tasks]
-#    [[two]]
-#        command = false
+[tasks]
+    [[one]]
+        command = """cylc task message "the quick brown fox""""
+        [[[outputs]]]
+            out1 = "the quick brown fox"
+    [[two]]
+        command = """cylc task message "the bad brown fox""""
+        [[[outputs]]]
+            x = "the bad brown fox"
+
