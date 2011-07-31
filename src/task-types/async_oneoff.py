@@ -16,10 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, re
 from task import task
 from oneoff import oneoff
 
-class sas( oneoff, task ):
-    # TO DO: eliminate this now-superfluous task type modifier.
-    is_asynchronous = True
+class async_oneoff( oneoff, task ):
+    # a one-off asynchronous (non-cycling) task
+    pass

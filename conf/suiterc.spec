@@ -1432,7 +1432,7 @@ live graph movie = boolean( default=False )
     hours string = string(default=None)  # e.g. "0,6,12,18"
     manual task completion messaging = boolean( default=None )
 
-    type = option( free, daemon, asynchronous, sas )
+    type = option( free, async_daemon, async_repeating, async_oneoff )
     asyncid pattern = string( default=None )
 
     # oneoff, sequential, tied, clocktriggered

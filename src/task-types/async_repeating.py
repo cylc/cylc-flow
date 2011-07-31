@@ -20,13 +20,18 @@ import sys, re
 from task import task
 from nopid import nopid
 
-# TO DO: note that only ONE loose prerequisite is currently allowed.
-
-class asynchronous( nopid, task ):
-    # a non-cycling task with no previous instance dependence (so it
-    # spawns when it first enters the running state).
-
-    is_asynchronous = True
+class async_repeating( nopid, task ):
+    """ A repeating asynchronous (no cycle time) task for use in
+    processing satellite data or similar. Its prerequisites contain
+    a pattern to match the "satellite pass ID" (which is essentially
+    arbitrary but must uniquely identify any associated data sets).
+    When matched, the prerequisite is satisfied, the matching ID is 
+    passed to the external task as $ASYNCID (so that it can process
+    the pass data) and substituted for $(ASYNCID) in its own output
+    messages in order that the ID can be passed on to downstream 
+    tasks in the same way. The task type has no previous instance
+    dependence: it spawns when it first enters the running state,
+    to allow parallel processing of successive passes."""
 
     used_outputs = {}
     

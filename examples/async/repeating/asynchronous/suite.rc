@@ -18,7 +18,7 @@ quickly."""
         # pattern. The task proxy extracts the arbitrary sat pass ID
         # from the message and dynamically registers an output that 
         # downstream tasks can trigger off to process this pass.
-        type = daemon
+        type = async_daemon
         command = watcher.sh
         asyncid pattern = "SATID-\d+"
         [[[outputs]]]
@@ -26,7 +26,7 @@ quickly."""
 
     [[upload]]
         description = "upload new satellite data"
-        type = asynchronous
+        type = async_repeating
         asyncid pattern = "SATID-\d+"
         command = upload.sh
         [[[prerequisites]]]
@@ -41,7 +41,7 @@ quickly."""
 
     [[archive]]
         description = "archive new satellite data"
-        type = asynchronous
+        type = async_repeating
         asyncid pattern = "SATID-\d+"
         command = archive.sh
         [[[prerequisites]]]
@@ -53,7 +53,7 @@ quickly."""
         description = "A task to mark the end of processing of one pass"
         # Used to determine when cylc can remove the spent tasks. 
         asyncid pattern = "SATID-\d+"
-        type = asynchronous
+        type = async_repeating
         command = cylc task message $ASYNCID processing finished
         [[[prerequisites]]]
             one = "$(ASYNCID) uploaded"

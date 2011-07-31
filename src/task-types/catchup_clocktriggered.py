@@ -45,6 +45,8 @@
 # time). If it has to wait for the delayed start time to arrive then it
 # has caught up already.
 
+# DEV NOTE: THIS CLASS HAS NOT BEEN USED SINCE CYLC-2; IT MAY NEED UPDATING.
+
 import re
 from clocktriggered import clocktriggered
 

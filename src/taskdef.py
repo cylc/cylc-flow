@@ -102,7 +102,6 @@ class taskdef(object):
         self.outputs = []     # list of special outputs; change to OrderedDict()
                               # if need to vary per cycle.
 
-        self.output_patterns = []  # asynchronous daemon tasks
         self.loose_prerequisites = [] # asynchronous tasks
 
         # default to dummy task for tasks in graph but not in the [tasks] section.
@@ -245,7 +244,7 @@ class taskdef(object):
             m = re.search( '\$\(TAG\s*\-\s*(\d+)\)', preq )
             if m:
                 offset = m.groups()[0]
-                if self.type != 'asynchronous' and self.type != 'daemon' and self.type != 'sas':
+                if self.type != 'async_repeating' and self.type != 'async_daemon' and self.type != 'async_oneoff':
                     # cycle time decrement
                     foo = ct( sself.c_time )
                     foo.decrement( hours=offset )
@@ -360,7 +359,7 @@ class taskdef(object):
         def tclass_init( sself, start_c_time, initial_state, stop_c_time=None, startup=False ):
             #print self.name, self.type, self.modifiers
             sself.tag = sself.adjust_tag( start_c_time )
-            if self.type != 'asynchronous' and self.type != 'daemon' and self.type != 'sas':
+            if self.type != 'async_repeating' and self.type != 'async_daemon' and self.type != 'async_oneoff':
                 sself.c_time = sself.tag
                 sself.c_hour = sself.c_time[8:10]
                 sself.orig_c_hour = start_c_time[8:10]
@@ -374,8 +373,6 @@ class taskdef(object):
  
             if 'clocktriggered' in self.modifiers:
                 sself.real_time_delay =  float( self.clocktriggered_offset )
-
-            sself.output_patterns = self.output_patterns
 
             # prerequisites
             sself.prerequisites = prerequisites()

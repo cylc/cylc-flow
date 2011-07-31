@@ -21,19 +21,17 @@ from task import task
 from oneoff import oneoff
 import re
 
-class daemon( oneoff, task ):
-    # A one off task that dynamically and adds outputs as messages
-    # matching registered patterns come in. The corresponding real task
-    # may keep running indefinitely, e.g. to watch for incoming
-    # asynchronous data.
-
-    # note 'daemon' - hasattr(task, 'daemon') returns True for all tasks 
-    # due to the pyro daemon (I think).
-    daemon_task = True  
-    is_asynchronous = True
+class async_daemon( oneoff, task ):
+    """A one off task that dynamically adds outputs as messages
+    matching a registered pattern come in. The corresponding real task
+    may keep running indefinitely, e.g. to watch for incoming
+    asynchronous data."""
 
     def incoming( self, priority, message ):
         # intercept incoming messages and check for a pattern match 
         if re.match( self.asyncid_pattern, message ):
             self.outputs.add( message )
         task.incoming( self, priority, message )
+
+    def is_daemon( self ):
+        return True

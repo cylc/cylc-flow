@@ -626,3 +626,9 @@ class task( Pyro.core.ObjBase ):
         # TO DO: THIS IS NO LONGER (OR NEVER WAS?) USED?
         # overridden in pid
         return False
+
+    def is_cycling( self ):
+        return False
+
+    def is_daemon( self ):
+        return False

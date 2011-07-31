@@ -137,3 +137,6 @@ class cycling( task ):
         # add more information to the summary if necessary.
         summary[ 'cycle_time' ] = self.c_time   # (equiv to self.tag)
         return summary
+
+    def is_cycling( self ):
+        return True

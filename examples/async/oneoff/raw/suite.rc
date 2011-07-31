@@ -1,4 +1,4 @@
-title = demo suite for one-off asynchronous tasks, version 2
+title = "demo suite for one-off asynchronous tasks, version 2"
 
 description = """A chain of one-off asynchronous tasks followed by a
 pair of cycling tasks. In this version of the suite the asynchronous
@@ -9,35 +9,22 @@ tasks are removed once spent."""
     graph = "A => B"
 
 [raw task definitions]
-    # Asynchronous tasks cannot be parsed from the suite graph yet,
-    # but these task will be represented as: "foo => bar => baz".
-
-    # Death prerequisites, used to determine when spent asynchronous
-    # tasks can be removed, are probably not necessary in the one-off 
-    # case, but just to show it can be done ...:
-
     # Note that $(TAG) is the asynchronous analogue of $(CYCLE_TIME) 
     # for cycling tasks. Currently the tag is just an integer that
     # starts at 1, and increments upward for repeating async tasks.
 
     [[foo]]
-        type = sas
-        [[[death prerequisites]]]
-        one = "baz%$(TAG) succeeded"
+        type = async_oneoff
 
     [[bar]]
-        type = sas
+        type = async_oneoff
         [[[prerequisites]]]
         one = "foo%$(TAG) succeeded"
-        [[[death prerequisites]]]
-        one = "baz%$(TAG) succeeded"
 
     [[baz]]
-        type = sas
+        type = async_oneoff
         [[[prerequisites]]]
         one = "bar%$(TAG) succeeded"
-        [[[death prerequisites]]]
-        one = "baz%$(TAG) succeeded"
 
     [[A]]
         type = free

@@ -692,7 +692,7 @@ class scheduler(object):
         for itask in self.cycling_tasks:
             if itask.state.is_failed():
                 continue
-            #if hasattr( itask, 'daemon_task' ):
+            #if itask.is_daemon():
             #    # avoid daemon tasks
             #    continue
             if int( itask.c_time ) < int( oldest ):
@@ -705,8 +705,7 @@ class scheduler(object):
         for itask in self.cycling_tasks:
             #if itask.state.is_failed():  # uncomment for earliest NON-FAILED 
             #    continue
-
-            #if hasattr( itask, 'daemon_task' ):
+            #if itask.is_daemon():
             #    # avoid daemon tasks
             #    continue
             if int( itask.c_time ) < int( oldest ):
@@ -718,7 +717,7 @@ class scheduler(object):
         newest = ct('1000010101').get()
         for itask in self.cycling_tasks:
             # avoid daemon tasks
-            #if hasattr( itask, 'daemon_task' ):
+            #if itask.is_daemon():
             #    continue
             if int( itask.c_time ) > int( newest ):
                 newest = itask.c_time
@@ -927,10 +926,9 @@ class scheduler(object):
             if itask.state.is_failed():
                 # EXCLUDING FAILED TASKS
                 continue
-
-            # avoid daemon tasks
-            #if hasattr( itask, 'daemon_task' ):
-            #    continue
+            #if itask.is_daemon():
+            #   avoid daemon tasks
+            #   continue
 
             if not itask.state.is_succeeded():
                 all_succeeded = False
@@ -969,8 +967,8 @@ class scheduler(object):
     def async_cutoff(self):
         cutoff = 0
         for itask in self.asynchronous_tasks:
-            # avoid daemon tasks
-            if hasattr( itask, 'daemon_task' ):
+            if itask.is_daemon():
+                # avoid daemon tasks
                 continue
             if not itask.done():
                 if itask.tag > cutoff:
@@ -1510,10 +1508,10 @@ class scheduler(object):
                     self.log.critical( 'Check your pyro installations are version compatible' )
             else:
                 task.log('NORMAL', "task proxy inserted" )
-                if hasattr( task, 'is_asynchronous' ):
-                    self.asynchronous_tasks.append( task )
-                else:
+                if task.is_cycling():
                     self.cycling_tasks.append( task )
+                else:
+                    self.asynchronous_tasks.append( task )
                 # do not retry
                 break
 
