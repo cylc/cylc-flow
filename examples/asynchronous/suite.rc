@@ -5,10 +5,10 @@ satellite pass, plus some cycling tasks to show that cylc can handle
 both in the one suite. Multiple asynchronous processing trees can run in
 parallel if the data happens to come in quickly."""
 
-[dependencies]
-    # the cycling tasks (defined by graph only)
-    [[12]]
-        graph = "A => B"
+#[dependencies]
+#    # the cycling tasks (defined by graph only)
+#    [[12]]
+#        graph = "A => B"
 
 [raw task definitions]
     # (asynchronous tasks cannot be parsed from the suite graph yet).
@@ -22,50 +22,54 @@ parallel if the data happens to come in quickly."""
         # from the message and dynamically registers an output that 
         # downstream tasks can trigger off to process this pass.
         type = daemon
-        # Here's the pattern my outputs will conform to:
-        output pattern = "SATID-\d+ ready for processing"
         command = watcher.sh
+        asyncid pattern = "SATID-\d+"
+        [[[outputs]]]
+            foo = "$(ASYNCID) ready for processing"
 
     [[upload]]
         description = "upload new satellite data"
         type = asynchronous
+        asyncid pattern = "SATID-\d+"
         command = upload.sh
-        [[[pattern prerequisites]]]
+        [[[prerequisites]]]
             # Trigger off outputs matching this pattern:
-            one = "(SATID-\d+) ready for processing"
+            one = "$(ASYNCID) ready for processing"
             # Once triggered:
             # 1) the pattern is replaced with the match in my outputs
             # and in my death prerequisites, and
             # 2) the match string is exported to the task as $ASYNCID.
         [[[outputs]]]
             # This task's own outputs (pattern replaced as described).
-            one = "(SATID-\d+) uploaded"
+            one = "$(ASYNCID) uploaded"
         [[[death prerequisites]]]
             # I can be removed when this condition is satisfied.
             # (Pattern replaced as described above).
-            one = "(SATID-\d+) processing finished"
+            one = "$(ASYNCID) processing finished"
 
     [[archive]]
         description = "archive new satellite data"
         type = asynchronous
+        asyncid pattern = "SATID-\d+"
         command = archive.sh
-        [[[pattern prerequisites]]]
-            one = "(SATID-\d+) ready for processing"
+        [[[prerequisites]]]
+            one = "$(ASYNCID) ready for processing"
         [[[outputs]]]
-            one = "(SATID-\d+) archived"
+            one = "$(ASYNCID) archived"
         [[[death prerequisites]]]
-            one = "(SATID-\d+) processing finished"
+            one = "$(ASYNCID) processing finished"
 
     [[finishup]]
         description = "A task to mark the end of processing of one pass"
         # Used to determine when cylc can remove the spent tasks. 
+        asyncid pattern = "SATID-\d+"
         type = asynchronous
         command = cylc task message $ASYNCID processing finished
-        [[[pattern prerequisites]]]
-            one = "(SATID-\d+) uploaded"
-            two = "(SATID-\d+) archived"
+        [[[prerequisites]]]
+            one = "$(ASYNCID) uploaded"
+            two = "$(ASYNCID) archived"
         [[[outputs]]]
-            one = "(SATID-\d+) processing finished"
+            one = "$(ASYNCID) processing finished"
         [[[death prerequisites]]]
-            one = "(SATID-\d+) processing finished"
+            one = "$(ASYNCID) processing finished"
 

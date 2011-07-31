@@ -62,14 +62,13 @@ class asynchronous( nopid, task ):
                 self.__class__.used_outputs[ message ] = True
 
                 # get the match group from this message
-                #mg = reqs.match_group[ message ]
                 mg = reqs.asyncid
 
                 # propagate the match group into my outputs and death pre's
                 for output in self.outputs.not_completed:
-                    m = re.match( '^(.*)\((.*)\)(.*)', output )
+                    m = re.match( '^(.*)\$\(ASYNCID\)(.*)', output )
                     if m:
-                        (left, mid, right) = m.groups()
+                        (left, right) = m.groups()
                         newout = left + mg + right
                         oid = self.outputs.not_completed[ output ] 
                         del self.outputs.not_completed[ output ]
@@ -79,9 +78,9 @@ class asynchronous( nopid, task ):
                         self.asyncid = mg
 
                 for deathpre in self.death_prerequisites.labels.keys():
-                    m = re.match( '^(.*)\((.*)\)(.*)', deathpre )
+                    m = re.match( '^(.*)\$\(ASYNCID\)(.*)', deathpre )
                     if m:
-                        (left, mid, right) = m.groups()
+                        (left, right) = m.groups()
                         newpre = left + mg + right
                         lbl = self.death_prerequisites.labels[deathpre]
                         self.death_prerequisites.messages[lbl] = newpre
@@ -95,11 +94,10 @@ class asynchronous( nopid, task ):
         for reqs in self.prerequisites.container:
             if not hasattr( reqs, 'is_loose' ):
                 continue
-        for pre in reqs.labels.keys(): 
-            m = re.match( '^(.*)\((.*)\)(.*)', pre )
-            if m:
-                (left, mid, right) = m.groups()
-                if re.match( mid, mg ):
+            for pre in reqs.labels.keys(): 
+                m = re.match( '^(.*)\$\(ASYNCID\)(.*)', pre )
+                if m:
+                    (left, right) = m.groups()
                     newpre = left + mg + right
                     lbl = reqs.labels[pre]
                     reqs.labels[newpre] = lbl
@@ -109,36 +107,33 @@ class asynchronous( nopid, task ):
 
         # ... in outputs:
         for output in self.outputs.completed.keys():
-            m = re.match( '^(.*)\((.*)\)(.*)', output )
+            m = re.match( '^(.*)\$\(ASYNCID\)(.*)', output )
             if m:
-                (left, mid, right) = m.groups()
-                if re.match( mid, mg ):
-                    newout = left + mg + right
-                    del self.outputs.completed[ output ]
-                    self.outputs.completed[ newout ] = self.id
+                (left, right) = m.groups()
+                newout = left + mg + right
+                del self.outputs.completed[ output ]
+                self.outputs.completed[ newout ] = self.id
 
         for output in self.outputs.not_completed.keys():
-            m = re.match( '^(.*)\((.*)\)(.*)', output )
+            m = re.match( '^(.*)\$\(ASYNCID\)(.*)', output )
             if m:
-                (left, mid, right) = m.groups()
-                if re.match( mid, mg ):
-                    newout = left + mg + right
-                    del self.outputs.not_completed[ output ]
-                    self.outputs.not_completed[ newout ] = self.id
+                (left, right) = m.groups()
+                newout = left + mg + right
+                del self.outputs.not_completed[ output ]
+                self.outputs.not_completed[ newout ] = self.id
 
         # ... in death prerequisites:
         for deathpre in self.death_prerequisites.labels.keys():
-            m = re.match( '^(.*)\((.*)\)(.*)', deathpre )
+            m = re.match( '^(.*)\$\(ASYNCID\)(.*)', deathpre )
             if m:
-                (left, mid, right) = m.groups()
-                if re.match( mid, mg ):
-                    newpre = left + mg + right
-                    lbl = self.death_prerequisites.labels[deathpre]
-                    val = self.death_prerequisites.satisfied[ lbl ]
-                    self.death_prerequisites.messages[lbl] = newpre
-                    self.death_prerequisites.labels[newpre] = lbl
-                    del self.death_prerequisites.labels[deathpre]
-                    self.death_prerequisites.satisfied[ lbl ] = val
+                (left, right) = m.groups()
+                newpre = left + mg + right
+                lbl = self.death_prerequisites.labels[deathpre]
+                val = self.death_prerequisites.satisfied[ lbl ]
+                self.death_prerequisites.messages[lbl] = newpre
+                self.death_prerequisites.labels[newpre] = lbl
+                del self.death_prerequisites.labels[deathpre]
+                self.death_prerequisites.satisfied[ lbl ] = val
 
     def dump_state( self, FILE ):
         # Write state information to the state dump file
@@ -159,3 +154,4 @@ class asynchronous( nopid, task ):
         summary = task.get_state_summary( self )
         summary[ 'asyncid' ] = self.asyncid
         return summary
+

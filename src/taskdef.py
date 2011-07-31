@@ -65,6 +65,7 @@ class taskdef(object):
         self.remote_cylc_path = None
         self.manual_messaging = False
         self.modifiers = []
+        self.asyncid_pattern = None
 
         self.owner = None
         self.remote_host = None
@@ -382,6 +383,7 @@ class taskdef(object):
  
             sself.id = sself.name + '%' + sself.tag
             sself.external_tasks = deque()
+            sself.asyncid_pattern = self.asyncid_pattern
 
             for command in self.commands:
                 sself.external_tasks.append( command )

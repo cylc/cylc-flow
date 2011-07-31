@@ -75,10 +75,10 @@ if prnt_name or prnt_id:
         print ' + ', info[name]
 
 if prnt_id:
-    try:
-        cycle = ct(tag).get()
-    except CycleTimeError, x:
-        raise SystemExit(x)
+    #try:
+    #    cycle = ct(tag).get()
+    #except CycleTimeError, x:
+    #    raise SystemExit(x)
 
     # PREREQUISITES AND OUTPUTS
     result = proxy.get_task_requisites( [ id ] )

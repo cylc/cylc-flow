@@ -1434,7 +1434,7 @@ live graph movie = boolean( default=False )
     manual task completion messaging = boolean( default=None )
 
     type = option( free, daemon, asynchronous, sas )
-    output pattern = string( default=None )
+    asyncid pattern = string( default=None )
 
     # oneoff, sequential, tied, clocktriggered
     type modifiers = force_list( default=list() )
@@ -1447,12 +1447,8 @@ live graph movie = boolean( default=False )
         [[[startup prerequisites]]]
         __many__ = string
 
-        [[[pattern prerequisites]]]
-        __many__ = string
-
         [[[death prerequisites]]]
         __many__ = string
-
 
         [[[environment]]]
         __many__ = string

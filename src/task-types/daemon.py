@@ -34,7 +34,6 @@ class daemon( oneoff, task ):
 
     def incoming( self, priority, message ):
         # intercept incoming messages and check for a pattern match 
-        for pattern in self.output_patterns:
-            if re.match( pattern, message ):
-                self.outputs.add( message )
+        if re.match( self.asyncid_pattern, message ):
+            self.outputs.add( message )
         task.incoming( self, priority, message )

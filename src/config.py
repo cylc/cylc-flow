@@ -1229,29 +1229,25 @@ class config( CylcConfigObj ):
             valid_hours = taskconfig['hours string']
             if valid_hours:
                 taskd.set_validity( valid_hours )
-                # NO CONDITIONALS OR STARTUP TRIGGERS FOR NOW
                 for lbl in taskconfig['prerequisites']:
                     taskd.add_trigger( taskconfig['prerequisites'][lbl], valid_hours )
-            else:
-                # simple asynchronous TO DO: ALSO NEEDED FOR REPEATING ASYNCHRONOUS?
-                for lbl in taskconfig['prerequisites']:
-                    taskd.add_asynchronous_trigger( taskconfig['prerequisites'][lbl] )
 
-            if taskconfig['startup prerequisites']:
-                for lbl in taskconfig['startup prerequisites']:
-                    taskd.add_startup_trigger( taskconfig['startup prerequisites'][lbl], valid_hours )
- 
-            if taskconfig['output pattern']:
-                taskd.set_validity( taskconfig['output pattern'] )
-            if taskconfig['pattern prerequisites']:
-                lpre = taskconfig['pattern prerequisites']
+            if taskconfig['asyncid pattern']:
+                taskd.asyncid_pattern = taskconfig['asyncid pattern']
+                lpre = taskconfig['prerequisites']
                 for lbl in lpre:
-                    taskd.loose_prerequisites.append(lpre[lbl])
+                    pre = re.sub( '\$\(ASYNCID\)', '(' + taskconfig['asyncid pattern'] + ')', lpre[lbl] )
+                    taskd.loose_prerequisites.append(pre)
+
             if taskconfig['death prerequisites']:
                 dpre = taskconfig['death prerequisites']
                 for lbl in dpre:
                     taskd.death_prerequisites.append(dpre[lbl])
 
+            if taskconfig['startup prerequisites']:
+                for lbl in taskconfig['startup prerequisites']:
+                    taskd.add_startup_trigger( taskconfig['startup prerequisites'][lbl], valid_hours )
+ 
             self.taskdefs[name] = taskd
 
         if count_raw != 0:
