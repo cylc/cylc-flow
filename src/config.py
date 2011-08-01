@@ -1083,9 +1083,7 @@ class config( CylcConfigObj ):
             taskd.modifiers.append( 'sequential' )
 
         # SET MODEL TASK INDICATOR
-        # (TO DO - identify these tasks from the graph)
-        if name in self['special tasks']['daemon']:
-            taskd.type = 'async_daemon'
+        # (TO DO - identify these tasks from the graph?)
         elif name in self['special tasks']['models with explicit restart outputs']:
             taskd.type = 'tied'
         else:
