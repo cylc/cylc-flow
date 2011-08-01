@@ -102,4 +102,5 @@ Version number X.Y.Z incrementing:
   + Disabled run time graphing by default, in suite.rc [visualization]. 
   It is mainly intended for use in cylc development and debugging.
   WARNING: this breaks existing suite.rc run time graph settings.
-
+  + Suite.rc now provides default initial and final cycles for graph
+  plotting, which can be overridden on the command line (or GUI dialog).
