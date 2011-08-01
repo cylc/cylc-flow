@@ -215,28 +215,38 @@ class scheduler(object):
         # state dump file
         self.state_dump_filename = os.path.join( self.state_dump_dir, 'state' )
 
-        # STOP TIME (etc.)
+        # START and STOP CYCLE TIMES (etc.)
         self.stop_time = None
         self.stop_clock_time = None
         self.stop_task = None
-        
-        if self.start_time:
-            # An initial cycle time was provided on the command line.
-            # Also use command line stop time, if provided.
-            if self.options.stop_time:
-                try:
-                    self.stop_time = ct( self.options.stop_time ).get()
-                except CycleTimeError, x:
-                    raise SystemExit(x)
-        else:
+        # (self.start_time is set already if provided on the command line).
+
+        if not self.start_time:
             # No initial cycle time provided on the command line.
             if self.config['initial cycle time']:
                 # Use suite.rc initial cycle time, if one is defined.
                 self.start_time = str(self.config['initial cycle time'])
+            if self.options.stop_time:
+                # But a final cycle time was provided on the command line.
+                self.stop_time = self.options.stop_time
+            elif self.config['final cycle time']:
+                # Use suite.rc final cycle time, if one is defined.
                 self.stop_time = str(self.config['final cycle time'])
-            else:
-                # (TO DO: OK if the suite only contains asynchronous tasks)
-                raise SystemExit('ERROR: No initial cycle time provided.')
+        else:
+            # An initial cycle time was provided on the command line
+            # => also use command line final cycle time, if provided,
+            # but otherwise don't use the suite.rc default stop time
+            # (user may change start without considering stop cycle).
+            if self.options.stop_time:
+                # stop time provided on the command line
+                try:
+                    self.stop_time = ct( self.options.stop_time ).get()
+                except CycleTimeError, x:
+                    raise SystemExit(x)
+
+        if not self.start_time:
+            # TO DO: this may not be an error if the suite contains asynchronous tasks
+            raise SystemExit('ERROR: No initial cycle time provided.')
 
         if self.stop_time:
             self.banner[ 'Stopping at' ] = self.stop_time

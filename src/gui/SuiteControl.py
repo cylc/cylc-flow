@@ -230,10 +230,7 @@ and associated methods for their control widgets.
 
         ctime = entry_ctime.get_text()
         if method != 'restart':
-            if ctime == '':
-                warning_dialog( 'Error: an initial cycle time is required' ).warn()
-                return
-            else:
+            if ctime != '':
                 try:
                     ct(ctime)
                 except CycleTimeError,x:
@@ -248,11 +245,15 @@ and associated methods for their control widgets.
         if restart_rb.get_active():
             if statedump_entry.get_text():
                 command += ' ' + statedump_entry.get_text()
+
+        #info_dialog( "I'm about to run this command: \n" + command ).inform()
+
         try:
             subprocess.Popen( [command], shell=True )
         except OSError, e:
             warning_dialog( 'Error: failed to start ' + self.suite ).warn()
             success = False
+
 
     def unblock_suite( self, bt ):
         try:
@@ -769,54 +770,58 @@ The cylc forecast suite metascheduler.
 
         vbox = gtk.VBox()
 
-        flabel = gtk.Label( "Shut down the suite WHEN?" )
+        flabel = gtk.Label( "Shut down the suite:" )
         vbox.pack_start (flabel, True)
-        stop_rb = gtk.RadioButton( None, "Stop after currently running tasks have finished" )
+
+        stop_rb = gtk.RadioButton( None, "After currently running tasks have finished" )
         vbox.pack_start (stop_rb, True)
-        stopnow_rb = gtk.RadioButton( stop_rb, "Stop immediately (beware of orphaned tasks!)" )
+        stopnow_rb = gtk.RadioButton( stop_rb, "Immediately (beware of orphaned tasks!)" )
         vbox.pack_start (stopnow_rb, True)
-        stopat_rb = gtk.RadioButton( stop_rb, "Stop after all tasks have passed a given cycle time" )
+        stopat_rb = gtk.RadioButton( stop_rb, "After all tasks have passed a given cycle time" )
         vbox.pack_start (stopat_rb, True)
 
-        box = gtk.HBox()
+        st_box = gtk.HBox()
         label = gtk.Label( 'YYYYMMDDHH' )
-        box.pack_start( label, True )
+        st_box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(10)
         stoptime_entry.set_sensitive(False)
-        box.pack_start (stoptime_entry, True)
-        vbox.pack_start( box )
+        label.set_sensitive(False)
+        st_box.pack_start (stoptime_entry, True)
+        vbox.pack_start( st_box )
 
-        stopct_rb = gtk.RadioButton( stop_rb, "Stop after a given wall clock time" )
+        stopct_rb = gtk.RadioButton( stop_rb, "After a given wall clock time" )
         vbox.pack_start (stopct_rb, True)
 
-        box = gtk.HBox()
+        sc_box = gtk.HBox()
         label = gtk.Label( 'YYYY/MM/DD-HH:mm' )
-        box.pack_start( label, True )
+        sc_box.pack_start( label, True )
         stopclock_entry = gtk.Entry()
         stopclock_entry.set_max_length(16)
         stopclock_entry.set_sensitive(False)
-        box.pack_start (stopclock_entry, True)
-        vbox.pack_start( box )
+        label.set_sensitive(False)
+        sc_box.pack_start (stopclock_entry, True)
+        vbox.pack_start( sc_box )
 
         stoptt_rb = gtk.RadioButton( stop_rb, "Stop after a given task finishes" )
         vbox.pack_start (stoptt_rb, True)
   
         stop_rb.set_active(True)
 
-        box = gtk.HBox()
+        tt_box = gtk.HBox()
         label = gtk.Label( 'TASK%YYYYMMDDHH' )
-        box.pack_start( label, True )
+        tt_box.pack_start( label, True )
         stoptask_entry = gtk.Entry()
         stoptask_entry.set_sensitive(False)
-        box.pack_start (stoptask_entry, True)
-        vbox.pack_start( box )
+        label.set_sensitive(False)
+        tt_box.pack_start (stoptask_entry, True)
+        vbox.pack_start( tt_box )
 
-        stop_rb.connect( "toggled", self.stop_method, "stop", stoptime_entry, stopclock_entry, stoptask_entry)
-        stopat_rb.connect( "toggled", self.stop_method, "stopat", stoptime_entry, stopclock_entry, stoptask_entry)
-        stopnow_rb.connect( "toggled", self.stop_method, "stopnow", stoptime_entry, stopclock_entry, stoptask_entry)
-        stopct_rb.connect( "toggled", self.stop_method, "stopclock", stoptime_entry, stopclock_entry, stoptask_entry)
-        stoptt_rb.connect( "toggled", self.stop_method, "stoptask", stoptime_entry, stopclock_entry, stoptask_entry)
+        stop_rb.connect( "toggled", self.stop_method, "stop", st_box, sc_box, tt_box )
+        stopat_rb.connect( "toggled", self.stop_method, "stopat", st_box, sc_box, tt_box )
+        stopnow_rb.connect( "toggled", self.stop_method, "stopnow", st_box, sc_box, tt_box )
+        stopct_rb.connect( "toggled", self.stop_method, "stopclock", st_box, sc_box, tt_box )
+        stoptt_rb.connect( "toggled", self.stop_method, "stoptask", st_box, sc_box, tt_box )
 
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
@@ -838,26 +843,32 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def stop_method( self, b, meth, stoptime_entry, stopclock_entry, stoptask_entry ):
-        stoptime_entry.set_sensitive( False )
-        stopclock_entry.set_sensitive( False )
-        stoptask_entry.set_sensitive( False )
+    def stop_method( self, b, meth, st_box, sc_box, tt_box  ):
+        for ch in st_box.get_children() + sc_box.get_children() + tt_box.get_children():
+            ch.set_sensitive( False )
         if meth == 'stopat':
-            stoptime_entry.set_sensitive( True )
+            for ch in st_box.get_children():
+                ch.set_sensitive( True )
         elif meth == 'stopclock':
-            stopclock_entry.set_sensitive( True )
+            for ch in sc_box.get_children():
+                ch.set_sensitive( True )
         elif meth == 'stoptask':
-            stoptask_entry.set_sensitive( True )
+            for ch in tt_box.get_children():
+                ch.set_sensitive( True )
 
-    def startup_method( self, b, meth, ctime_entry, statedump_entry, no_reset_cb ):
-        if meth == 'cold' or meth == 'warm' or meth == 'raw':
-            statedump_entry.set_sensitive( False )
-            ctime_entry.set_sensitive( True )
+    def startup_method( self, b, meth, ic_box, is_box, no_reset_cb ):
+        if meth in ['cold', 'warm', 'raw']:
+            for ch in ic_box.get_children():
+                ch.set_sensitive( True )
+            for ch in is_box.get_children():
+                ch.set_sensitive( False )
             no_reset_cb.set_sensitive(False)
         else:
             # restart
-            statedump_entry.set_sensitive( True )
-            ctime_entry.set_sensitive( False )
+            for ch in ic_box.get_children():
+                ch.set_sensitive( False )
+            for ch in is_box.get_children():
+                ch.set_sensitive( True )
             no_reset_cb.set_sensitive(True)
 
     def startsuite_popup( self, b ):
@@ -881,49 +892,45 @@ The cylc forecast suite metascheduler.
         coldstart_rb.set_active(True)
         vbox.pack_start( box )
 
-        box = gtk.HBox()
-        label = gtk.Label( 'From (YYYYMMDDHH)' )
-        box.pack_start( label, True )
+        ic_box = gtk.HBox()
+        label = gtk.Label( 'Initial Cycle (may be optional)' )
+        ic_box.pack_start( label, True )
         ctime_entry = gtk.Entry()
         ctime_entry.set_max_length(10)
+        #if self.suiterc['initial cycle time']:
+        #    ctime_entry.set_text( str(self.suiterc['initial cycle time']) )
+        ic_box.pack_start (ctime_entry, True)
+        vbox.pack_start( ic_box )
 
-        if self.suiterc['initial cycle time']:
-            ctime_entry.set_text( str(self.suiterc['initial cycle time']) )
-
-        box.pack_start (ctime_entry, True)
-        vbox.pack_start( box )
-
-        box = gtk.HBox()
-        label = gtk.Label( 'Until (YYYYMMDDHH)' )
-        box.pack_start( label, True )
+        fc_box = gtk.HBox()
+        label = gtk.Label( 'Final Cycle (always optional)' )
+        fc_box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(10)
-        if self.suiterc['final cycle time']:
-            stoptime_entry.set_text( str(self.suiterc['final cycle time']) )
-        box.pack_start (stoptime_entry, True)
-        vbox.pack_start( box )
+        #if self.suiterc['final cycle time']:
+        #    stoptime_entry.set_text( str(self.suiterc['final cycle time']) )
+        fc_box.pack_start (stoptime_entry, True)
+        vbox.pack_start( fc_box )
 
-        label = gtk.Label( '(the final cycle is optional)' )
-        vbox.pack_start( label )
- 
-        box = gtk.HBox()
+        is_box = gtk.HBox()
         label = gtk.Label( 'Initial State (FILE)' )
-        box.pack_start( label, True )
+        is_box.pack_start( label, True )
         statedump_entry = gtk.Entry()
         statedump_entry.set_text( 'state' )
         statedump_entry.set_sensitive( False )
-        box.pack_start (statedump_entry, True)
-        vbox.pack_start(box)
+        label.set_sensitive( False )
+        is_box.pack_start (statedump_entry, True)
+        vbox.pack_start(is_box)
 
         no_reset_cb = gtk.CheckButton( "Don't reset failed tasks to the 'ready' state" )
         no_reset_cb.set_active(False)
         no_reset_cb.set_sensitive(False)
         vbox.pack_start (no_reset_cb, True)
 
-        coldstart_rb.connect( "toggled", self.startup_method, "cold", ctime_entry, statedump_entry, no_reset_cb )
-        warmstart_rb.connect( "toggled", self.startup_method, "warm", ctime_entry, statedump_entry, no_reset_cb )
-        rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ctime_entry, statedump_entry, no_reset_cb )
-        restart_rb.connect(   "toggled", self.startup_method, "re",   ctime_entry, statedump_entry, no_reset_cb )
+        coldstart_rb.connect( "toggled", self.startup_method, "cold", ic_box, is_box, no_reset_cb )
+        warmstart_rb.connect( "toggled", self.startup_method, "warm", ic_box, is_box, no_reset_cb )
+        rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ic_box, is_box, no_reset_cb )
+        restart_rb.connect(   "toggled", self.startup_method, "re",   ic_box, is_box, no_reset_cb )
 
         dmode_group = controlled_option_group( "Simulation Mode", "--simulation-mode" )
         dmode_group.add_entry( 

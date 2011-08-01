@@ -32,10 +32,12 @@ class controlled_option_group(object):
             for name in self.entries:
                 (entry,label,option) = self.entries[name]
                 entry.set_sensitive(True)
+                label.set_sensitive(True)
         else:
             for name in self.entries:
                 (entry,label,option) = self.entries[name]
                 entry.set_sensitive(False)
+                label.set_sensitive(False)
 
     def add_arg_entry( self, name, max_chars=None, default=None ):
         label = gtk.Label( name )
@@ -71,6 +73,7 @@ class controlled_option_group(object):
             box.pack_start( label, True )
             box.pack_start( entry, True )
             vbox.pack_start( box )
+        self.greyout()
 
     def get_options( self ):
         if not self.checkbutton.get_active():
