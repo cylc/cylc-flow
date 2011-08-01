@@ -1,8 +1,8 @@
-title = a demo suite for repeating asynchronous tasks
+title = "demo suite: repeating asynchronous tasks"
 
 description = """A tree of asynchronous tasks triggered by a random
-satellite pass, plus some cycling tasks. Asynchronous processing can run
-in parallel if the data happens to come in quickly."""
+satellite pass or similar, plus some cycling tasks. Asynchronous
+processing runs in parallel if the data comes in quickly."""
 
 [dependencies]
     # make everything wait on a oneoff asynchronous task

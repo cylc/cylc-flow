@@ -7,5 +7,5 @@ description = "A suite containing one-off asynchronous and cycling tasks."
     [[12]]
         # 1) make the cycling tasks wait on task 'three':
         graph = "three => A => B"
-        # 2) or start the cycling tasks immediately:
+        # 2) or start them immediately:
         # graph = "A => B"
