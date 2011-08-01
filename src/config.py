@@ -617,7 +617,7 @@ class config( CylcConfigObj ):
         all_tasknames.sort(key=str.lower)  # case-insensitive sort
         return all_tasknames
 
-    def process_graph_line( self, line, section ):
+    def process_graph_line( self, line, section, graph_only=False ):
         # Extract dependent pairs from the suite.rc textual dependency
         # graph to use in constructing graphviz graphs.
 
@@ -703,12 +703,12 @@ class config( CylcConfigObj ):
 
             # task defs
             for r in rights:
-                # ignore output labels on the right (they are only
-                # meaningful on the left, in chained tasks)
                 if r:
+                    # ignore output labels on the right (they are only
+                    # meaningful on the left, in chained tasks)
                     r = re.sub( ':\w+', '', r )
-
-                self.generate_taskdefs( lconditional, r, section )
+                if not graph_only:
+                    self.generate_taskdefs( lconditional, r, section )
 
             # graph
             lefts  = re.split( '\s*&\s*', lgroup )
@@ -841,7 +841,7 @@ class config( CylcConfigObj ):
 
     def get_graph( self, start_ctime, stop, colored=True, raw=False ):
         if not self.graph_loaded:
-            self.load()
+            self.load(graph_only=True)
         if colored:
             graph = graphing.CGraph( self.suite, self['visualization'] )
         else:
@@ -981,7 +981,7 @@ class config( CylcConfigObj ):
             prev = cycles[i-1]
         return prev
 
-    def load( self ):
+    def load( self, graph_only=False ):
         # parse the suite dependencies section
         for item in self['dependencies']:
             if item == 'graph':
@@ -1012,8 +1012,9 @@ class config( CylcConfigObj ):
                 line = re.sub( '\s*$', '', line )
 
                 # generate pygraphviz graph nodes and edges, and task definitions
-                self.process_graph_line( line, section )
-                self.graph_loaded = True
+                self.process_graph_line( line, section, graph_only )
+
+        self.graph_loaded = True
 
         # task families
         members = []
@@ -1061,6 +1062,7 @@ class config( CylcConfigObj ):
         self.load_raw_task_definitions()
 
         self.__check_tasks()
+
         self.tasks_loaded = True
 
     def get_taskdef( self, name, strict=False ):
