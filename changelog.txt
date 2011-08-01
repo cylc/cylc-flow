@@ -104,3 +104,5 @@ Version number X.Y.Z incrementing:
   WARNING: this breaks existing suite.rc run time graph settings.
   + Suite.rc now provides default initial and final cycles for graph
   plotting, which can be overridden on the command line (or GUI dialog).
+  + Initial and final suite cycle times can now be provided, optionally,
+  in the suite.rc file, and optionally overridden on the command line.
