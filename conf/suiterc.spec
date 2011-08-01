@@ -696,8 +696,6 @@ manual task completion messaging = boolean( default=False )
 #>\item {\em example:} \lstinline@models with explicit restart outputs = A, B@
 #>\end{myitemize}
 
-    daemon = force_list( default=list())
-
 [task families]
 #> A task family is a named group of tasks that appears as a single task
 #> in the suite dependency graph. Thus the entire family triggers as a group,
@@ -715,24 +713,28 @@ manual task completion messaging = boolean( default=False )
 #>\end{myitemize}
 
 [dependencies]
-#> This is where to define the suite dependency graph.
+#> The suite dependency graph should be defined under this section.
+
     graph = string( default=None )
-#> Define the dependency graph of one-off non-cycling tasks.
+#> Define the graph of any one-off asynchronous tasks (no cycle time) here.
+#> See Section~\ref{GraphDescrip} below for details.
 
     [[__many__]]
-#> Replace MANY with each list of hours preceding a chunk of the suite
-#> dependency graph, as required for differing 
-#> dependencies at different hours.
+#> Replace MANY with each list of hours preceding a section of the suite
+#> dependency graph, as required for differing dependencies at different
+#> hours, {\em and} with any repeated asynchronous graph sections for 
+#> satellite data processing or similar.
 #>\begin{myitemize}
 #>\item {\em section:} [dependencies]
-#>\item {\em type:} list of integer hour
-#>\item {\em legal values:} $0 \leq hour \leq 23$
+#>\item {\em type:} list of integer hours, {\em or} string (for repeated asynchronous)
+#>\item {\em legal values:} $0 \leq hour \leq 23$, {\em or} string
 #>\item {\em default:} None
-#>\item {\em example:} \lstinline@[[0,6,12,18]]@
+#>\item {\em example:} \lstinline@[[0,6,12,18]]@, {\em or} \lstinline@[[ASYNID:SAT-\d+]]@
 #>\end{myitemize}
 
     graph = string
-#> Define the dependency graph that is valid for specified list of hours.
+#> \label{GraphDescrip}
+#> Define the dependency graph valid for specified list of hours or asynchronous ID pattern.
 #> You can use the \lstinline=cylc graph= command, or right click 
 #> Graph in gcylc, to plot the dependency graph as you
 #> work on it.
@@ -755,6 +757,14 @@ manual task completion messaging = boolean( default=False )
 #>\end{myitemize}
 
 daemon = string( default=None )
+#> For [[ASYNCID:pattern]] graph sections only, list any {\em
+#> asynchronous daemon} tasks by name.
+#>\begin{myitemize}
+#>\item {\em section:} [tasks] $\rightarrow$ [[ASYNCID:pattern]]
+#>\item {\em type:} list of task names
+#>\item {\em default:} empty list
+#>\item {\em example:} \lstinline@daemon = A, B@
+#>\end{myitemize}
 
 [environment]
 #> Use this section to define the global task execution environment, i.e.\
