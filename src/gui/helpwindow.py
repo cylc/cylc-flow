@@ -548,6 +548,11 @@ def start_guide(w):
             "successors when it reaches this cycle time, and the suite "
             "will shut down when all remaining tasks have reached it.")
 
+    update_tb( tb, "\n\n o From and Until", [bold, red] )
+    update_tb( tb, " are initialized with the default suite "
+            "initial and final cycle times - if set in "
+            "the suite.rc file.")
+
     update_tb( tb, "\n\n o Initial State (FILE)", [bold, red] )
     update_tb( tb, " - Restart only.\n", [bold,red2] )
     update_tb( tb, "The state dump file from which to load the initial suite state. " )
