@@ -328,16 +328,14 @@ def todo( b) :
 
 def graph( b ):
     help = helpwindow( "Graph Help", 300, """
-Plot suite dependency graphs:
+Plot suite dependency graphs.  The graph will update in real time as you
+edit the suite [dependencies] or [visualization] sections (unless those
+sections are in an include file - the viewer only watches for changes in
+suite.rc).
 
-%h2 The configured graph (suite.rc)
-The graph will update in real time as you edit the suite [dependencies]
-or [visualization] sections (unless those sections are in an include
-file - the viewer only watches for changes in suite.rc).
-
-%h2 The most recent run time graph
-This shows what tasks actually happened in the first N hours (default
-24) of the last suite run. 
+If you provide the optional initial and final cycle times for graphing,
+they will override the suite defaults (which can be set in the suite.rc
+file).
 
 %h3 Optional Output File
 an image file of type determined by the file extension will be written
