@@ -245,14 +245,16 @@ and associated methods for their control widgets.
         if restart_rb.get_active():
             if statedump_entry.get_text():
                 command += ' ' + statedump_entry.get_text()
+
+        #info_dialog( "I'm about to run this command: \n" + command ).inform()
+
         try:
             subprocess.Popen( [command], shell=True )
         except OSError, e:
             warning_dialog( 'Error: failed to start ' + self.suite ).warn()
             success = False
 
-        warning_dialog( command ).warn()
- 
+
     def unblock_suite( self, bt ):
         try:
             god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
