@@ -837,6 +837,7 @@ class config( CylcConfigObj ):
                         diffhrs = foo.subtract_hrs( ct(start_ctime) )
                         if diffhrs > int(stop):
                             found = False
+                        ctime = foo.get()
                         break
             if found:
                 started = False
