@@ -16,18 +16,24 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# TO DO: catchup_clocktriggered
-# TO DO: ERROR CHECKING:
-#        - MULTIPLE DEFINITION OF SAME PREREQUISITES, E.G. VIA TWO
-#          CYCLE-TIME SECTIONS IN THE GRAPH.
-#        - EXPLICIT OUTPUTS foo:out1
-#          - document: use foo(T-6):out1, not foo:out1 with $(CYCLE_TIME-6) in
-#          the output message - so the graph will plot correctly.
+# TO DO: check for multiple definition of same prerequisites, e.g. via
+# two cycle-time sections in the graph.
+# TO DO: document use foo(T-6):out1, not foo:out1 with $(CYCLE_TIME-6) in
+# the explicit output message - so the graph will plot correctly.
 
-# IMPORTANT NOTE: configobj.reload() apparently does not revalidate
-# (list-forcing is not done, for example, on single value lists with
-# no trailing comma) ... so to reparse the file  we have to instantiate
-# a new config object.
+# NOTE: configobj.reload() apparently does not revalidate (list-forcing
+# is not done, for example, on single value lists with no trailing
+# comma) ... so to reparse the file  we have to instantiate a new config
+# object.
+
+#======================================================================
+# DEVELOPER NOTE: This module together with taskdef.py is used to parse
+# the suite.rc file (particularly the dependency graph) and (a) generate
+# graph nodes and edges for graph plotting, and (b) generate task proxy 
+# classes dynamically. This is by far the most complex part of cylc (by
+# contrast the scheduling algorithm, for example, is almost trivial) and
+# it could do with some serious refactoring.
+#======================================================================
 
 import taskdef
 from cycle_time import ct
@@ -1201,6 +1207,13 @@ class config( CylcConfigObj ):
         return self.taskdefs[name].get_task_class()
 
     def load_raw_task_definitions( self ):
+        # !!!!!! DEVELOPMENT USE -EXPERTS ONLY !!!!!!
+        # This method may use items defined in suite.rc:[raw task definitions]
+        # to test new task proxy class developments without bothering
+        # with suite.rc graph parsing. It is not guaranteed to be
+        # complete, i.e. you may not be able to translate all currently 
+        # graphable suites into raw form without adding to this method.
+
         count_raw = 0
         rawtd = self['raw task definitions']
         for name in rawtd:

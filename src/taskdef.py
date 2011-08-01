@@ -16,14 +16,19 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# NOT YET IMPLEMENTED OR DOCUMENTED FROM bin/_taskgen:
-#   - time translation (for different units) not used
-#   - not using the various check_() functions below
+# TO DO: suicide prerequisites
 
 # ONEOFF and FOLLOWON TASKS: followon still needed but can now be
 # identified automatically from the dependency graph?
 
-# SUICIDE PREREQUISITES
+#======================================================================
+# DEVELOPER NOTE: This module is for dynamic definition of task proxy
+# classes according to information parsed from the suite.rc file 
+# (particularly the suite dependency graph) via config.py. This, along 
+# with config.py graphing, is by far the most complex part of cylc (by
+# contrast the scheduling algorithm, for example, is almost trivial) and
+# it could do with some serious refactoring.
+#======================================================================
 
 import sys, re
 from OrderedDict import OrderedDict
@@ -151,6 +156,7 @@ class taskdef(object):
             raise DefinitionError( 'ERROR: Illegal graph valid hours: ' + section )
 
     def check_consistency( self ):
+        # TO DO: this is not currently used.
         if len( self.hours ) == 0:
             raise DefinitionError( 'ERROR: no hours specified' )
 
@@ -162,6 +168,8 @@ class taskdef(object):
             raise DefinitionError( 'ERROR: nested task families are not allowed' )
 
     def time_trans( self, strng, hours=False ):
+        # Time unit translation.
+        # THIS IS NOT CURRENTLY USED, but may be useful in the future.
         # translate a time of the form:
         #  x sec, y min, z hr
         # into float MINUTES or HOURS,

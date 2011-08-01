@@ -1406,7 +1406,12 @@ live graph movie = boolean( default=False )
 #>\item {\em example:} \lstinline@live graph movie = True@
 #>\end{myitemize}
 
+
 #>IGNORE
+# This section is for development purposes only and is ignored by
+# document processing. It can be used to test new task proxy class
+# developments without bothering with suite.rc graph parsing. New items
+# may be added here for use in config.py:load_raw_task_definitions().
 [raw task definitions]
     [[__many__]]
     description = string( default="No description supplied" )
@@ -1453,6 +1458,3 @@ live graph movie = boolean( default=False )
         [[[outputs]]]
         __many__ = string
 #> RESUME
-
-
-
