@@ -886,7 +886,10 @@ The cylc forecast suite metascheduler.
         box.pack_start( label, True )
         ctime_entry = gtk.Entry()
         ctime_entry.set_max_length(10)
-        #ctime_entry.set_width_chars(10)
+
+        if self.suiterc['initial cycle time']:
+            ctime_entry.set_text( str(self.suiterc['initial cycle time']) )
+
         box.pack_start (ctime_entry, True)
         vbox.pack_start( box )
 
@@ -895,7 +898,8 @@ The cylc forecast suite metascheduler.
         box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(10)
-        #stoptime_entry.set_width_chars(10)
+        if self.suiterc['final cycle time']:
+            stoptime_entry.set_text( str(self.suiterc['final cycle time']) )
         box.pack_start (stoptime_entry, True)
         vbox.pack_start( box )
 

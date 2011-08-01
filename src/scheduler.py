@@ -217,12 +217,26 @@ class scheduler(object):
         self.stop_time = None
         self.stop_clock_time = None
         self.stop_task = None
-        if self.options.stop_time:
-            try:
-                self.stop_time = ct( self.options.stop_time ).get()
-            except CycleTimeError, x:
-                raise SystemExit(x)
-                #self.parser.error( "invalid cycle time: " + self.stop_time )
+        
+        if self.start_time:
+            # An initial cycle time was provided on the command line.
+            # Also use command line stop time, if provided.
+            if self.options.stop_time:
+                try:
+                    self.stop_time = ct( self.options.stop_time ).get()
+                except CycleTimeError, x:
+                    raise SystemExit(x)
+        else:
+            # No initial cycle time provided on the command line.
+            if self.config['initial cycle time']:
+                # Use suite.rc initial cycle time, if one is defined.
+                self.start_time = str(self.config['initial cycle time'])
+                self.stop_time = str(self.config['final cycle time'])
+            else:
+                # (TO DO: OK if the suite only contains asynchronous tasks)
+                raise SystemExit('ERROR: No initial cycle time provided.')
+
+        if self.stop_time:
             self.banner[ 'Stopping at' ] = self.stop_time
 
         # PAUSE TIME?
@@ -392,6 +406,18 @@ class scheduler(object):
         # (note: passing in self to give access to task pool methods is a bit clunky?).
         self.remote = remote_switch( self.config, self.clock, self.suite_dir, self, self.failout_task_id )
         self.pyro.connect( self.remote, 'remote' )
+
+        if self.options.warm:
+            self.banner[ "WARM START" ] = self.start_time
+            self.load_tasks = self.load_tasks_warm
+        elif self.options.raw:
+            self.banner[ "RAW START" ] = self.start_time
+            self.load_tasks = self.load_tasks_raw
+        else:
+            self.banner[ "COLD START" ] = self.start_time
+            self.load_tasks = self.load_tasks_cold
+
+
 
     def print_banner( self ):
         #Nice, but doesn't print well in gui windows with non-monospace fonts:

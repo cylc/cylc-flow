@@ -26,7 +26,7 @@ debug = True
 
 class start( scheduler ):
     def __init__( self ):
-        usage = """cylc [control] run|start [options] SUITE YYYYMMDDHHH
+        usage = """cylc [control] run|start [options] SUITE [START]
 
 Start a suite running at a specified initial cycle time. To restart a
 suite from a previous state (which may contain tasks at multiple cycle
@@ -73,6 +73,9 @@ manually. Start up is as for a cold start, except that designated
 cold start tasks are excluded from the suite. The cold start task list
 must be defined in the suite config file:
   SUITE.RC: [special tasks] -> cold start = task1, task2, ...
+
+If you provide an initial cycle time on the command line, the suite.rc
+initial AND final cycle times, if set, will be ignored.
  
 NOTE:
   SUITE.RC: [special tasks]-> startup = task1, task2, ...
@@ -83,7 +86,7 @@ could, for example, clean out suite workspaces when a suite is started
 from scratch (cold start).
 
 NOTE: daemonize important suites with the POSIX nohup command:
-  $ nohup cylc [con] run SUITE YYYYMMDDHH > suite.out 2> suite.err &
+  $ nohup cylc [con] run SUITE [START] > suite.out 2> suite.err &
 
 See also:
     cylc [control] restart
@@ -92,7 +95,8 @@ See also:
 Arguments:
    SUITE                Private database registration GROUP:NAME of the
                         suite you want to run.
-   YYYYMMDDHH           Initial cycle time.""" 
+   [START]              (optional) Initial cycle time (YYYYMMDDHH). This will
+                        override a start time set in the suite.rc file.""" 
 
         self.parser = OptionParser( usage )
 
@@ -106,28 +110,23 @@ Arguments:
 
     def parse_commandline( self ):
         ( self.options, self.args ) = self.parser.parse_args()
-        if len( self.args ) != 2:
-            self.parser.error( "Please supply a suite name and initial cycle time." )
+        largs = len( self.args )
+        if largs == 0:
+            self.parser.error( "ERROR: suite group:name required." )
+        elif largs > 2:
+            self.parser.error( "ERROR: too many arguments." )
 
-        try:
-            self.start_time = ct( self.args[1] ).get()
-        except CycleTimeError, x:
-            raise SystemExit(x)
+        self.start_time = None
+        if largs == 2:
+            try:
+                self.start_time = ct( self.args[1] ).get()
+            except CycleTimeError, x:
+                raise SystemExit(x)
 
         scheduler.parse_commandline( self )
 
         global debug
         debug = self.options.debug
-
-        if self.options.warm:
-            self.banner[ "WARM START" ] = self.start_time
-            self.load_tasks = self.load_tasks_warm
-        elif self.options.raw:
-            self.banner[ "RAW START" ] = self.start_time
-            self.load_tasks = self.load_tasks_raw
-        else:
-            self.banner[ "COLD START" ] = self.start_time
-            self.load_tasks = self.load_tasks_cold
 
     def load_tasks_cold( self ):
         self.log.info( 'Cold Start ' + self.start_time )

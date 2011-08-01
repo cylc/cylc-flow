@@ -75,6 +75,37 @@ description = string( default="No description supplied" )
 #> \end{lstlisting}
 #>\end{myitemize}
 
+initial cycle time = integer( default=None )
+#> Initial suite cycle time. At startup each cycling task will be 
+#> inserted into the suite with this cycle time, or with the closest
+#> subsequent valid cycle time for the task (unless excluded by the 
+#> {\em tasks to include|exclude at startup} items; and note that
+#> how cold start tasks are inserted, or not, depends on the 
+#> start up method - cold, warm, or raw).
+#> Alternatively you can provide, or override, the initial cycle 
+#> time on the command line or suite start GUI panel.
+#>\begin{myitemize}
+#>\item {\em section:} (top level)
+#>\item {\em type:} integer
+#>\item {\em default:} None
+#>\item {\em example:} \lstinline@initial cycle time = 2011052318@
+#>\end{myitemize}
+
+final cycle time = integer( default=None )
+#> Final suite cycle time. Cycling tasks will be held (i.e.\ not 
+#> allowed to spawn a successor) after passing this cycle time. When all
+#> tasks have reached this time the suite
+#> will shut down (unless it also contains still-running asynchronous
+#> tasks).
+#> Alternatively you can provide, or override, the final cycle 
+#> time on the command line or suite start GUI panel.
+#>\begin{myitemize}
+#>\item {\em section:} (top level)
+#>\item {\em type:} integer
+#>\item {\em default:} None
+#>\item {\em example:} \lstinline@final cycle time = 2011052318@
+#>\end{myitemize}
+
 job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=background )
 #>The default job submission method for the suite. This
 #>determines how cylc job scripts are executed when a task is
