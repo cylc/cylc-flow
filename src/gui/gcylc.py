@@ -1694,13 +1694,7 @@ The cylc forecast suite metascheduler.
         window.set_title( "Dependency Graph '" + reg + "'")
 
         box = gtk.HBox()
-        
-        suiterc_rb = gtk.RadioButton( None, "suite.rc" )
-        box.pack_start (suiterc_rb, True)
-        runtime_rb = gtk.RadioButton( suiterc_rb, "runtime" )
-        box.pack_start (runtime_rb, True)
-        suiterc_rb.set_active(True)
- 
+
         vbox = gtk.VBox()
         vbox.pack_start(box, True)
 
@@ -1719,7 +1713,10 @@ The cylc forecast suite metascheduler.
         hbox.pack_start (warm_rb, True)
         vbox.pack_start( hbox, True )
 
-        label = gtk.Label("First Cycle Time" )
+        label = gtk.Label("Override suite defaults (OPTIONAL):" )
+        vbox.pack_start (label, True)
+ 
+        label = gtk.Label("Initial Cycle" )
         start_entry = gtk.Entry()
         start_entry.set_max_length(10)
         hbox = gtk.HBox()
@@ -1727,7 +1724,7 @@ The cylc forecast suite metascheduler.
         hbox.pack_start(start_entry, True) 
         vbox.pack_start(hbox)
 
-        label = gtk.Label("Last Cycle Time" )
+        label = gtk.Label("Final Cycle" )
         stop_entry = gtk.Entry()
         stop_entry.set_max_length(10)
         hbox = gtk.HBox()
@@ -1735,19 +1732,10 @@ The cylc forecast suite metascheduler.
         hbox.pack_start(stop_entry, True) 
         vbox.pack_start (hbox, True)
 
-        label = gtk.Label("(last cycle time is optional)" )
-        vbox.pack_start (label, True)
-   
-        suiterc_rb.connect( "toggled", self.graph_type, "suiterc", 
-                warm_rb, start_entry, stop_entry )
-        runtime_rb.connect( "toggled", self.graph_type, "runtime", 
-                warm_rb, start_entry, stop_entry )
- 
         cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         ok_button = gtk.Button( "_Graph" )
         ok_button.connect("clicked", self.graph_suite, reg, suite_dir,
-                suiterc_rb, runtime_rb, 
                 warm_rb, outputfile_entry, start_entry, stop_entry )
 
         help_button = gtk.Button( "_Help" )
@@ -1762,15 +1750,6 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def graph_type( self, w, typ, warm_rb, start_ent, stop_ent ):
-        if typ == "suiterc" and w.get_active():
-            sensitive = True
-        else:
-            sensitive = False
-        warm_rb.set_sensitive(sensitive)
-        start_ent.set_sensitive(sensitive)
-        stop_ent.set_sensitive(sensitive)
-
     def search_suite( self, w, reg, nobin_cb, pattern_entry ):
         pattern = pattern_entry.get_text()
         options = ''
@@ -1781,46 +1760,33 @@ The cylc forecast suite metascheduler.
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def graph_suite( self, w, reg, suite_dir, suiterc_rb, runtime_rb, 
-            warm_rb, outputfile_entry, start_entry, stop_entry ):
+    def graph_suite( self, w, reg, suite_dir, warm_rb, outputfile_entry,
+            start_entry, stop_entry ):
 
         options = ''
         ofile = outputfile_entry.get_text()
         if ofile != '':
             options += ' -o ' + ofile
 
-        if suiterc_rb.get_active():
-            start = start_entry.get_text()
-            stop = stop_entry.get_text()  # optional
+        start = start_entry.get_text()# optional
+        stop = stop_entry.get_text()  # optional
+        if start != '':
             try:
                 ct(start)
             except CycleTimeError,x:
                 warning_dialog( str(x) ).warn()
                 return False
-            if stop != '':
-                try:
-                    ct(stop)
-                except CycleTimeError,x:
-                    warning_dialog( str(x) ).warn()
-                    return False
-            if warm_rb.get_active():
-                options += ' -w '
-            options += ' ' + reg + ' ' + start + ' ' + stop
-
-        elif runtime_rb.get_active():
-            options += ' -r ' + reg
+        if stop != '':
+            try:
+                ct(stop)
+            except CycleTimeError,x:
+                warning_dialog( str(x) ).warn()
+                return False
+        if warm_rb.get_active():
+            options += ' -w '
+        options += ' ' + reg + ' ' + start + ' ' + stop
 
         command = "cylc graph " + options
-        foo = gcapture_tmpfile( command, self.tmpdir )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def graph_suite_runtime( self, w, reg, outputfile_entry ):
-        options = ''
-        ofile = outputfile_entry.get_text()
-        if ofile != '':
-            options += ' -o ' + ofile
-        command = "cylc graph -r " + options + ' ' + reg
         foo = gcapture_tmpfile( command, self.tmpdir )
         self.gcapture_windows.append(foo)
         foo.run()

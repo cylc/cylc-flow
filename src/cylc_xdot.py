@@ -22,6 +22,7 @@ import time
 import gobject
 import config
 import os
+from cycle_time import ct
 
 class MyDotWindow( xdot.DotWindow ):
     """Override xdot to get rid of some buttons and parse graph from suite.rc"""
@@ -111,7 +112,15 @@ class MyDotWindow( xdot.DotWindow ):
         # reparse the graph
         self.suiterc = config.config( self.suite )
         self.suitercfile = self.suiterc.get_filename()
-        graph = self.suiterc.get_graph( self.ctime, self.stop_after, raw=self.raw )
+        if self.ctime != None and self.stop_after != None:
+            graph = self.suiterc.get_graph( self.ctime, self.stop_after, raw=self.raw )
+        else:
+            one = str( self.suiterc['visualization']['initial cycle time'])
+            two = str(self.suiterc['visualization']['final cycle time'])
+            stop_delta = ct(two).subtract( ct(one) )
+            # timedelta: days, seconds, microseconds; ignoring microseconds
+            stop = stop_delta.days * 24 + stop_delta.seconds / 3600
+            graph = self.suiterc.get_graph( one, stop, raw=self.raw )
         self.set_dotcode( graph.string() )
         if self.outfile and not self.disable_output_image:
             try:

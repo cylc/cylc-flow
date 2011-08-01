@@ -31,19 +31,17 @@ except Exception, x:
     print >> sys.stderr, str(x)
     raise SystemExit( "Cylc graphing disabled" )
 
-parser = OptionParser( """1/ cylc [prep] graph [options] SUITE START [STOP]
-     Plot the configured (suite.rc) dependency graph for SUITE.
-       2/ cylc [prep] graph [options] -r,--runtime SUITE
-     Plot the run-time dependency graph for SUITE, if one has been generated.
-       3/ cylc [prep] graph [options] -f,--file FILE
+parser = OptionParser( """1/ cylc [prep] graph [options] SUITE [START [STOP]]
+     Plot the suite.rc dependency graph for SUITE.
+       2/ cylc [prep] graph [options] -f,--file FILE
      Plot the specified dot-language graph file.
 
 Plot cylc dependency graphs in a pannable, zoomable viewer.
 
-For the configured (suite.rc) graph, the viewer updates automatically
-when the suite.rc file is saved during editing. By default the full 
-graph from cold start is plotted; you can omit suite cold start tasks
-with the '-w,--warmstart' option. 
+The viewer updates automatically when the suite.rc file is saved during
+editing. By default the full cold start graph is plotted, but you omit
+cold start tasks with the '-w,--warmstart' option.  Specify the optional
+initial and final cycle time arguments to override the suite.rc defaults.
 
 Graph viewer controls:
     * Left-click to center the graph on a node.
@@ -54,8 +52,8 @@ Graph viewer controls:
 
 Arguments:
   SUITE   - suite registration [OWNER:]GROUP:NAME
-  START   - Initial cycle time (YYYYMMDDHH) to plot.
-  [STOP]  - Final cycle time (YYYYMMDDHH) to plot (default START+ 6 hours).
+  START   - (optional) Initial cycle time (YYYYMMDDHH) to plot.
+  STOP    - (optional) Final cycle time (YYYYMMDDHH) to plot (default=START).
   """)
 
 #parser.add_option( "-l", "--live", 
@@ -73,11 +71,6 @@ parser.add_option( "-f", "--file",
     help="View a specific dot-language graphfile.",
     metavar="FILE", action="store", default=None, dest="filename" )
 
-parser.add_option( "-r", "--runtime", 
-    help="Plot the suite run-time graph, if one has been generated "
-    "($CYLC_SUITE_DIR/graphing/runtime.dot).",
-    action="store_true", default=False, dest="view_runtime" )
-
 parser.add_option( "-o", "--output", 
     help="Write an image file with format determined by file extension. "
     "The image will be rewritten automatically, for the configured "
@@ -90,19 +83,7 @@ parser.add_option( "-o", "--output",
 ( options, args ) = parser.parse_args()
 
 view_file = False
-if options.view_runtime:
-    if len(args) != 1:
-        parser.error( 'run-time graphing requires one argument (SUITE)' )
-        sys.exit(1)
-    view_file = True
 
-    suite = args[0]
-    try:
-        suiterc = config.config( suite )
-    except config.SuiteConfigError, x:
-        print >> sys.stderr, x
-        sys.exit(1)
-    file = os.path.join( suiterc['visualization']['run time graph directory'], 'runtime-graph.dot')
 if options.filename:
     if len(args) != 0:
         parser.error( 'file graphing arguments: \'-f FILE\' or \'--file=FILE\'' )
@@ -129,32 +110,37 @@ if view_file:
     sys.exit(0)
 
 # parse and plot the suite.rc dependency graph
-if len(args) < 2 or len(args) > 3:
-    parser.error( "suite.rc graphing requires args SUITE START [STOP]" )
+if len(args) < 1 or len(args) > 3:
+    parser.error( "Argument list should be: SUITE [START [STOP]]" )
 
 suite = args[0]
 
-try:
-    start_ctime = ct(args[1]).get()
-except CycleTimeError,x:
-    raise SystemExit(x)
+start_ctime = None
+stop = None
 
-if len(args) == 3:
+if len(args) > 1:
+    # got START
     try:
-        stop_ctime = ct(args[2])
+        start_ctime = ct(args[1]).get()
     except CycleTimeError,x:
         raise SystemExit(x)
-    stop_delta = stop_ctime.subtract( ct(start_ctime) )
-    # timedelta: days, seconds, microseconds; ignoring microseconds
-    stop = stop_delta.days * 24 + stop_delta.seconds / 3600
-else:
-    stop = 0
+
+    if len(args) == 3:
+        # got STOP
+        try:
+            stop_ctime = ct(args[2])
+        except CycleTimeError,x:
+            raise SystemExit(x)
+        stop_delta = stop_ctime.subtract( ct(start_ctime) )
+        # timedelta: days, seconds, microseconds; ignoring microseconds
+        stop = stop_delta.days * 24 + stop_delta.seconds / 3600
+    else:
+        stop = 0
 
 raw = False
 if options.rawstart:
     raw = True
 
-#print start_ctime, stop
 window = MyDotWindow( suite, start_ctime, stop, raw, options.outputfile )
 try:
     window.parse_graph()
