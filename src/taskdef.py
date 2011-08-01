@@ -269,7 +269,7 @@ class taskdef(object):
                 found = False
                 for val in self.startup_triggers:
                     trigs = self.startup_triggers[ val ]
-                    if val == "once":
+                    if val == "once" or re.match( '^ASYNCID:', val ):
                         for trig in trigs:
                             found = True
                             pp.add( sself.format_prerequisites( trig ))
@@ -287,7 +287,7 @@ class taskdef(object):
                 # conditional triggers
                 found = False
                 for val in self.startup_cond_triggers:
-                    if val == "once":
+                    if val == "once" or re.match( '^ASYNCID:', val ):
                         for ctrig in self.startup_cond_triggers[ val ]:
                             found = True
                             triggers, exp =  ctrig

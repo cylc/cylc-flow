@@ -3,7 +3,7 @@ title = "demo suite: one-off asynchronous tasks"
 description = "A suite containing one-off asynchronous and cycling tasks."
 
 [dependencies]
-    #graph = """one => two & three => four"""
+    graph = """one => two & three => four"""
     [[12]]
         # 1) make the cycling tasks wait on task 'three':
         graph = "three => A => B"

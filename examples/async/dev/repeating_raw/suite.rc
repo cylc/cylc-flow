@@ -1,4 +1,4 @@
-title = a demo suite for repeating asynchronous tasks
+title = "for developers: repeating asynchronous tasks via raw task definition."
 
 description = """A tree of asynchronous tasks triggered by a random
 satellite pass, plus some cycling tasks. Multiple asynchronous
@@ -48,15 +48,3 @@ quickly."""
             one = "$(ASYNCID) ready for processing"
         [[[outputs]]]
             one = "$(ASYNCID) archived"
-
-    [[finishup]]
-        description = "A task to mark the end of processing of one pass"
-        # Used to determine when cylc can remove the spent tasks. 
-        asyncid pattern = "SATID-\d+"
-        type = async_repeating
-        command = cylc task message $ASYNCID processing finished
-        [[[prerequisites]]]
-            one = "$(ASYNCID) uploaded"
-            two = "$(ASYNCID) archived"
-        [[[outputs]]]
-            one = "$(ASYNCID) processing finished"

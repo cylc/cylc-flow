@@ -1,17 +1,19 @@
 title = a demo suite for repeating asynchronous tasks
 
 description = """A tree of asynchronous tasks triggered by a random
-satellite pass, plus some cycling tasks. Multiple asynchronous
-processing trees can run in parallel if the data happens to come in
-quickly."""
+satellite pass, plus some cycling tasks. Asynchronous processing can run
+in parallel if the data happens to come in quickly."""
 
 [dependencies]
+    # make everything wait on a oneoff asynchronous task
+    graph = "prep"
     [[ASYNCID:SATID-\d+]]
-        graph = """watcher:a => upload:a & archive:a"""
+        graph = """prep => watcher:a => upload:a & archive:a"""
         daemon = watcher
 
     [[0,12]]
-        graph = "A => B"
+        # a couple of cycling tasks in the same suite, because we can.
+        graph = "prep => A => B"
 
 [tasks]
     [[watcher]]

@@ -1,8 +1,7 @@
-title = "demo suite for one-off asynchronous tasks, version 2"
+title = "for developers: one-off asynchronous tasks via raw task definition."
 
 description = """A chain of one-off asynchronous tasks followed by a
-pair of cycling tasks. In this version of the suite the asynchronous
-tasks are removed once spent."""
+pair of cycling tasks."""
 
 [dependencies]
     [[12]]
@@ -10,8 +9,8 @@ tasks are removed once spent."""
 
 [raw task definitions]
     # Note that $(TAG) is the asynchronous analogue of $(CYCLE_TIME) 
-    # for cycling tasks. Currently the tag is just an integer that
-    # starts at 1, and increments upward for repeating async tasks.
+    # for cycling tasks. For one-off asynchronous tasks it is just 1.
+    # For repeating asynchronous tasks it increments upward.
 
     [[foo]]
         type = async_oneoff

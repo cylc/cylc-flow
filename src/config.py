@@ -699,7 +699,8 @@ class config( CylcConfigObj ):
             for r in rights:
                 # ignore output labels on the right (they are only
                 # meaningful on the left, in chained tasks)
-                r = re.sub( ':\w+', '', r )
+                if r:
+                    r = re.sub( ':\w+', '', r )
 
                 self.generate_taskdefs( lconditional, r, section )
 
@@ -1265,16 +1266,21 @@ class config( CylcConfigObj ):
 
             valid_hours = taskconfig['hours string']
             if valid_hours:
+                # cycling tasks
                 taskd.set_valid_hours( valid_hours )
                 for lbl in taskconfig['prerequisites']:
                     taskd.add_trigger( taskconfig['prerequisites'][lbl], valid_hours )
-
-            if taskconfig['asyncid pattern']:
+            elif taskconfig['asyncid pattern']:
+                # repeating asynchronous tasks
                 taskd.asyncid_pattern = taskconfig['asyncid pattern']
                 lpre = taskconfig['prerequisites']
                 for lbl in lpre:
                     pre = re.sub( '\$\(ASYNCID\)', '(' + taskconfig['asyncid pattern'] + ')', lpre[lbl] )
                     taskd.loose_prerequisites.append(pre)
+            else:
+                # one-off asynchronous tasks
+                for lbl in taskconfig['prerequisites']:
+                    taskd.add_asynchronous_trigger( taskconfig['prerequisites'][lbl] )
 
             if taskconfig['startup prerequisites']:
                 for lbl in taskconfig['startup prerequisites']:
