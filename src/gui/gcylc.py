@@ -1713,7 +1713,7 @@ The cylc forecast suite metascheduler.
         hbox.pack_start (warm_rb, True)
         vbox.pack_start( hbox, True )
 
-        label = gtk.Label("Override suite defaults (OPTIONAL):" )
+        label = gtk.Label("OPTIONAL if defined in suite.rc:" )
         vbox.pack_start (label, True)
  
         label = gtk.Label("Initial Cycle" )

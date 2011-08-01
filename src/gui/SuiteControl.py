@@ -849,15 +849,19 @@ The cylc forecast suite metascheduler.
         elif meth == 'stoptask':
             stoptask_entry.set_sensitive( True )
 
-    def startup_method( self, b, meth, ctime_entry, statedump_entry, no_reset_cb ):
-        if meth == 'cold' or meth == 'warm' or meth == 'raw':
-            statedump_entry.set_sensitive( False )
-            ctime_entry.set_sensitive( True )
+    def startup_method( self, b, meth, ic_box, is_box, no_reset_cb ):
+        if meth in ['cold', 'warm', 'raw']:
+            for ch in ic_box.get_children():
+                ch.set_sensitive( True )
+            for ch in is_box.get_children():
+                ch.set_sensitive( False )
             no_reset_cb.set_sensitive(False)
         else:
             # restart
-            statedump_entry.set_sensitive( True )
-            ctime_entry.set_sensitive( False )
+            for ch in ic_box.get_children():
+                ch.set_sensitive( False )
+            for ch in is_box.get_children():
+                ch.set_sensitive( True )
             no_reset_cb.set_sensitive(True)
 
     def startsuite_popup( self, b ):
@@ -881,49 +885,45 @@ The cylc forecast suite metascheduler.
         coldstart_rb.set_active(True)
         vbox.pack_start( box )
 
-        box = gtk.HBox()
-        label = gtk.Label( 'From (YYYYMMDDHH)' )
-        box.pack_start( label, True )
+        ic_box = gtk.HBox()
+        label = gtk.Label( 'Initial Cycle (may be optional)' )
+        ic_box.pack_start( label, True )
         ctime_entry = gtk.Entry()
         ctime_entry.set_max_length(10)
+        #if self.suiterc['initial cycle time']:
+        #    ctime_entry.set_text( str(self.suiterc['initial cycle time']) )
+        ic_box.pack_start (ctime_entry, True)
+        vbox.pack_start( ic_box )
 
-        if self.suiterc['initial cycle time']:
-            ctime_entry.set_text( str(self.suiterc['initial cycle time']) )
-
-        box.pack_start (ctime_entry, True)
-        vbox.pack_start( box )
-
-        box = gtk.HBox()
-        label = gtk.Label( 'Until (YYYYMMDDHH)' )
-        box.pack_start( label, True )
+        fc_box = gtk.HBox()
+        label = gtk.Label( 'Final Cycle (always optional)' )
+        fc_box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(10)
-        if self.suiterc['final cycle time']:
-            stoptime_entry.set_text( str(self.suiterc['final cycle time']) )
-        box.pack_start (stoptime_entry, True)
-        vbox.pack_start( box )
+        #if self.suiterc['final cycle time']:
+        #    stoptime_entry.set_text( str(self.suiterc['final cycle time']) )
+        fc_box.pack_start (stoptime_entry, True)
+        vbox.pack_start( fc_box )
 
-        label = gtk.Label( '(the final cycle is optional)' )
-        vbox.pack_start( label )
- 
-        box = gtk.HBox()
+        is_box = gtk.HBox()
         label = gtk.Label( 'Initial State (FILE)' )
-        box.pack_start( label, True )
+        is_box.pack_start( label, True )
         statedump_entry = gtk.Entry()
         statedump_entry.set_text( 'state' )
         statedump_entry.set_sensitive( False )
-        box.pack_start (statedump_entry, True)
-        vbox.pack_start(box)
+        label.set_sensitive( False )
+        is_box.pack_start (statedump_entry, True)
+        vbox.pack_start(is_box)
 
         no_reset_cb = gtk.CheckButton( "Don't reset failed tasks to the 'ready' state" )
         no_reset_cb.set_active(False)
         no_reset_cb.set_sensitive(False)
         vbox.pack_start (no_reset_cb, True)
 
-        coldstart_rb.connect( "toggled", self.startup_method, "cold", ctime_entry, statedump_entry, no_reset_cb )
-        warmstart_rb.connect( "toggled", self.startup_method, "warm", ctime_entry, statedump_entry, no_reset_cb )
-        rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ctime_entry, statedump_entry, no_reset_cb )
-        restart_rb.connect(   "toggled", self.startup_method, "re",   ctime_entry, statedump_entry, no_reset_cb )
+        coldstart_rb.connect( "toggled", self.startup_method, "cold", ic_box, is_box, no_reset_cb )
+        warmstart_rb.connect( "toggled", self.startup_method, "warm", ic_box, is_box, no_reset_cb )
+        rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ic_box, is_box, no_reset_cb )
+        restart_rb.connect(   "toggled", self.startup_method, "re",   ic_box, is_box, no_reset_cb )
 
         dmode_group = controlled_option_group( "Simulation Mode", "--simulation-mode" )
         dmode_group.add_entry( 

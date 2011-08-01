@@ -333,9 +333,10 @@ edit the suite [dependencies] or [visualization] sections (unless those
 sections are in an include file - the viewer only watches for changes in
 suite.rc).
 
-If you provide the optional initial and final cycle times for graphing,
-they will override the suite defaults (which can be set in the suite.rc
-file).
+Asynchronous tasks are plotted once. 
+
+For cycling tasks, initial and final cycles for plotting can be defined
+in the suite.rc file, and optionally overridden here.
 
 %h3 Optional Output File
 an image file of type determined by the file extension will be written
@@ -534,24 +535,32 @@ def start_guide(w):
 
     update_tb( tb, "Help: Starting A Suite", [bold, blue] )
 
-    update_tb( tb, "\n\n o From (YYYYMMDDHH)", [bold, red] )
+    update_tb( tb, "\n\n o Initial Cycle Time (YYYYMMDDHH)", [bold, red] )
     update_tb( tb, " - Cold, Warm, and Raw start.", [bold, red2])
-    update_tb( tb, "\nInitial cycle time. Each configured task will be inserted "
+    update_tb( tb, "\nEach task will be inserted "
             "into the suite with this cycle time, or with the closest subsequent "
             "cycle time that is valid for the task. How designated cold start "
-            "tasks are handled depends on the method (cold|warm|raw). "
-            "See 'cylc [con] run --help' for more information.")
+            "tasks are handled depends on the startup method (cold|warm|raw). "
+            "See 'cylc [control] run --help' for more information. ")
+    update_tb( tb, "May be optional: ", [bold, red2])
+    update_tb( tb, "A default initial cycle time can be set in the suite.rc file, "
+            "in which case it can be overridden here. If no default is set "
+            "the suite will fail to start unless you provide a value. "
+            "Note that overriding a default initial cycle time will automatically "
+            "invalidate the default final cycle time too, if one is set.")
 
-    update_tb( tb, "\n\n o Until (YYYYMMDDHH)", [bold, red] )
+    update_tb( tb, "\n\n o Final Cycle Time (YYYYMMDDHH)", [bold, red] )
     update_tb( tb, " - OPTIONAL.", [bold,red2])
-    update_tb( tb, "\nFinal cycle time. Each task will stop spawning "
+    update_tb( tb, "\nIf defined, each task will stop spawning "
             "successors when it reaches this cycle time, and the suite "
-            "will shut down when all remaining tasks have reached it.")
-
-    update_tb( tb, "\n\n o From and Until", [bold, red] )
-    update_tb( tb, " are initialized with the default suite "
-            "initial and final cycle times - if set in "
-            "the suite.rc file.")
+            "will shut down when all cycling tasks have done so (unless "
+            "the suite contains asynchronous tasks that are still running). ")
+    update_tb( tb, "Optional: ", [bold, red2])
+    update_tb( tb, "If no final cycle time is set the suite will run indefinitely. "
+            "If default initial and final cycle times are set in the suite.rc file "
+            "you can optionally override both here, but note that overriding the "
+            "initial cycle time will automatically "
+            "invalidate the default final cycle time too, if one is set.")
 
     update_tb( tb, "\n\n o Initial State (FILE)", [bold, red] )
     update_tb( tb, " - Restart only.\n", [bold,red2] )
