@@ -24,6 +24,7 @@ import threading
 import cylc_pyro_client
 import gtk
 import pygtk
+from string import zfill
 ####pygtk.require('2.0')
 
 def compare_dict_of_dict( one, two ):
@@ -235,10 +236,18 @@ class updater(threading.Thread):
         return value == key
 
     def digitize( self, ct ):
+        # Digitize cycle time for the LED panel display.
+        # For asynchronous tasks zero-pad the task tag.
         led_ctime = []
+        if len(ct) < 10:
+            zct = zfill( ct, 10 )
+            padded = True
+        else:
+            padded = False
+            zct = ct
         for i in range( 10 ):
-            digit = int( ct[i:i+1] )
-            if i in [0,1,2,3,6,7]:
+            digit = int( zct[i:i+1] )
+            if padded or i in [0,1,2,3,6,7]:
                 led_ctime.append( self.led_digits_one[ digit ] )  
             else:
                 led_ctime.append( self.led_digits_two[ digit ] )  
