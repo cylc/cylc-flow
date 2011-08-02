@@ -95,10 +95,13 @@ Version number X.Y.Z incrementing:
   + Fixed bug introduced in 3.3.7: trapping of EXIT signal must be 
   turned off at the end of job scripts for detaching tasks (which
   handle their own completion messaging).
-  +  Task event hook script argument list changed again. Cylc now calls:
+  + Task event hook script argument list changed again. It is now:
      <hook script> EVENT SUITE TASKID MESSAGE
-  Where TASKID works with both cycling and non-cycling tasks (in development).
+  where TASKID works with both cycling and non-cycling tasks (in development).
   WARNING: this change will break existing task event hook scripts.
+  + Also, the EVENT argument for job submission failures is now
+  "submission_failed" rather than "submit_failed", to be more consistent
+  with the associated suite.rc item.
   + Disabled run time graphing by default, in suite.rc [visualization]. 
   It is mainly intended for use in cylc development and debugging.
   WARNING: this breaks existing suite.rc run time graph settings.

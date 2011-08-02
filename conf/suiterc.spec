@@ -389,6 +389,7 @@ task timeout hook script = string( default=None )
 #>\item {\bf task started hook script}
 #>\item {\bf task succeeded hook script}
 #>\item {\bf task failed hook script}
+#>\item {\bf task warning hook script}
 #>\item {\bf task timeout hook script}
 #>\end{myitemize}
 #> These suite level defaults can be overridden by specific tasks, or you
@@ -401,7 +402,7 @@ task timeout hook script = string( default=None )
 #> \end{lstlisting}
 #> where MESSAGE describes what has happened; EVENT is 
 #> either `submitted', `started', `succeeded', `failed', `timeout', 
-#> or `submit\_failed'; and TASKID is the unique task identifier
+#> or `submission_failed'; and TASKID is the unique task identifier
 #> (e.g.\ NAME%CYCLE_TIME for cycling tasks).
 #> Note that {\em hook scripts are called by cylc, not by tasks,} 
 #> so if you wish to pass in additional information via the environment, 
@@ -996,6 +997,7 @@ __many__ = string
 #>\item {\bf task started hook script}
 #>\item {\bf task succeeded hook script}
 #>\item {\bf task failed hook script}
+#>\item {\bf task warning hook script}
 #>\item {\bf task timeout hook script}
 #>\end{myitemize}
 #> These are task-specific hooks; you can also set suite level defaults.
@@ -1007,7 +1009,7 @@ __many__ = string
 #> \end{lstlisting}
 #> where MESSAGE describes what has happened; EVENT is 
 #> either `submitted', `started', `succeeded', `failed', `timeout', 
-#> or `submit\_failed'; and TASKID is the unique task identifier
+#> or `submission\_failed'; and TASKID is the unique task identifier
 #> (e.g.\ NAME%CYCLE_TIME for cycling tasks).
 #> Note that {\em hook scripts are called by cylc, not by tasks,} 
 #> so if you wish to pass in additional information via the environment, 
