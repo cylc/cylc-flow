@@ -55,7 +55,7 @@ else:
     graphing_disabled = False
 
 class scheduler(object):
-    def __init__( self ):
+    def __init__( self, is_restart=False ):
         # PROVIDE IN DERIVED CLASSES:
         # 1/ self.parser = OptionParser( usage )
         # 2/ load_tasks()
@@ -78,6 +78,7 @@ class scheduler(object):
         self.lock_acquired = False
 
         self.blocked = True 
+        self.is_restart = is_restart
 
         # COMMANDLINE OPTIONS
         #DISABLED PRACTICE MODE self.parser.set_defaults( simulation_mode=False, practice_mode=False, debug=False )
@@ -242,7 +243,7 @@ class scheduler(object):
                 except CycleTimeError, x:
                     raise SystemExit(x)
 
-        if not self.start_time:
+        if not self.is_restart and not self.start_time:
             # TO DO: this may not be an error if the suite contains asynchronous tasks
             raise SystemExit('ERROR: No initial cycle time provided.')
 

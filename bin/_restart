@@ -69,7 +69,7 @@ Arguments:
             action="store_true", default=False, dest="keep_finalcycle" )
  
         self.start_time = None  # used in scheduler.py:initialize_graph()
-        scheduler.__init__( self )
+        scheduler.__init__( self, is_restart=True )
 
     def parse_commandline( self ):
         ( self.options, self.args ) = self.parser.parse_args()
