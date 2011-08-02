@@ -652,10 +652,18 @@ class config( CylcConfigObj ):
         # reality NWP suites have simple conditional trigger needs).
 
         # [list of valid hours], or ["once"], or ["ASYNCID:pattern"]
+        async_oneoff = False
+        async_repeat = False
+        cycling = False
         validity = []
-        if section == "once" or re.match( '^ASYNCID:', section ):
-            validity.append( section )
+        if section == "once":
+            async_oneoff = True
+            validity = [section]
+        elif re.match( '^ASYNCID:', section ):
+            async_repeat = True
+            validity = [section]
         elif re.match( '^[\s,\d]+$', section ):
+            cycling = True
             # Cycling task.
             hours = re.split( '\s*,\s*', section )
             for hr in hours:
@@ -701,37 +709,48 @@ class config( CylcConfigObj ):
             else:
                 rights = [None]
 
-            # task defs
             for r in rights:
                 if r:
                     # ignore output labels on the right (they are only
                     # meaningful on the left, in chained tasks)
                     r = re.sub( ':\w+', '', r )
-                if not graph_only:
-                    self.generate_taskdefs( lconditional, r, section )
 
-            # graph
             lefts  = re.split( '\s*&\s*', lgroup )
+
+            if not cycling:
+                for n in lefts + rights:
+                    if async_oneoff:
+                        if n not in self.async_oneoff_tasks:
+                            self.async_oneoff_tasks.append(n)
+                    elif async_repeat: 
+                        if n not in self.async_oneoff_tasks:
+                            self.async_repeating_tasks.append(n)
+
+            # generate graph nodes and edges
             sasl = False
             for r in rights:
                 for l in lefts:
                     if l in self.async_oneoff_tasks + self.async_repeating_tasks:
                         sasl = True
                     e = edge( l,r, sasl )
-                    # store edges by hour (or "once" or "ASYNCID:pattern")
-                    for val in validity:
-                        if val == "once":
-                            if e not in self.async_oneoff_edges:
-                                self.async_oneoff_edges.append( e )
-                        elif re.match( '^ASYNCID:', str(val) ):
-                            if e not in self.async_repeating_edges:
-                                self.async_repeating_edges.append( e )
-                        else:
+                    if async_oneoff:
+                        if e not in self.async_oneoff_edges:
+                            self.async_oneoff_edges.append( e )
+                    elif async_repeat:
+                        if e not in self.async_repeating_edges:
+                            self.async_repeating_edges.append( e )
+                    else:
+                        for val in validity:
                             if val not in self.edges:
                                 self.edges[val] = []
                             if e not in self.edges[val]:
                                 self.edges[val].append( e )
 
+            if not graph_only:
+                # generate task definitions
+                for r in rights:
+                    self.generate_taskdefs( lconditional, r, section )
+ 
             # self.edges left side members can be:
             #   foo           (task name)
             #   foo:N         (specific output)
@@ -739,7 +758,6 @@ class config( CylcConfigObj ):
             #   foo:N(T-DD)   (both)
 
     def generate_taskdefs( self, lcond, right, section ):
-
         async = False
         asyncid_pattern = None
         m = re.match( '^ASYNCID:(.*)$', section )
@@ -766,12 +784,8 @@ class config( CylcConfigObj ):
                 self.taskdefs[ name ] = self.get_taskdef( name )
                 if section == "once":
                     self.taskdefs[name].type = 'async_oneoff'
-                    if name not in self.async_oneoff_tasks:
-                        self.async_oneoff_tasks.append(name)
                 elif async:
-                    if name not in self.async_repeating_tasks:
-                        self.async_repeating_tasks.append(name)
-                        self.taskdefs[name].asyncid_pattern = asyncid_pattern
+                    self.taskdefs[name].asyncid_pattern = asyncid_pattern
                     if name == daemon:
                         self.taskdefs[name].type = 'async_daemon'
                     else:
