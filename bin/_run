@@ -125,6 +125,16 @@ Arguments:
 
         scheduler.parse_commandline( self )
 
+        if self.options.warm:
+            self.banner[ "WARM START" ] = self.start_time
+            self.load_tasks = self.load_tasks_warm
+        elif self.options.raw:
+            self.banner[ "RAW START" ] = self.start_time
+            self.load_tasks = self.load_tasks_raw
+        else:
+            self.banner[ "COLD START" ] = self.start_time
+            self.load_tasks = self.load_tasks_cold
+
         global debug
         debug = self.options.debug
 

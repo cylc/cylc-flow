@@ -417,17 +417,6 @@ class scheduler(object):
         self.remote = remote_switch( self.config, self.clock, self.suite_dir, self, self.failout_task_id )
         self.pyro.connect( self.remote, 'remote' )
 
-        if self.options.warm:
-            self.banner[ "WARM START" ] = self.start_time
-            self.load_tasks = self.load_tasks_warm
-        elif self.options.raw:
-            self.banner[ "RAW START" ] = self.start_time
-            self.load_tasks = self.load_tasks_raw
-        else:
-            self.banner[ "COLD START" ] = self.start_time
-            self.load_tasks = self.load_tasks_cold
-
-
 
     def print_banner( self ):
         #Nice, but doesn't print well in gui windows with non-monospace fonts:
