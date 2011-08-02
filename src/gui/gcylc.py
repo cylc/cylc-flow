@@ -33,14 +33,12 @@ import helpwindow
 from gcapture import gcapture, gcapture_tmpfile
 from mkdir_p import mkdir_p
 from cylc_logviewer import cylc_logviewer
-from option_group import option_group, controlled_option_group
-from color_rotator import rotator
 
 #debug = True
 debug = False
 
-# NOTE, WHY WE LAUNCH CONTROL GUIS AS STANDALONE APPS (via gcapture)
-# instead of as part of the gcylc app: we can then capture out and err
+# WHY LAUNCH CONTROL GUIS AS STANDALONE APPS (via gcapture) rather than
+# as part of the main gcylc app: we can then capture out and err
 # streams into suite-specific log files rather than have it all come
 # out with the gcylc stdout and stderr streams.
 
@@ -529,8 +527,6 @@ class MainApp(object):
 
         self.window.add(vbox)
         self.window.show_all()
-
-        self.log_colors = rotator()
 
     def about( self, bt ):
         about = gtk.AboutDialog()
@@ -1713,30 +1709,36 @@ The cylc forecast suite metascheduler.
         hbox.pack_start (warm_rb, True)
         vbox.pack_start( hbox, True )
 
-        label = gtk.Label("OPTIONAL if defined in suite.rc:" )
-        vbox.pack_start (label, True)
+        override_cb = gtk.CheckButton( "Override default initial and final cycles?" )
+        vbox.pack_start(override_cb)
  
         label = gtk.Label("Initial Cycle" )
         start_entry = gtk.Entry()
         start_entry.set_max_length(10)
-        hbox = gtk.HBox()
-        hbox.pack_start( label )
-        hbox.pack_start(start_entry, True) 
-        vbox.pack_start(hbox)
+        ic_hbox = gtk.HBox()
+        ic_hbox.pack_start( label )
+        ic_hbox.pack_start(start_entry, True) 
+        start_entry.set_sensitive(False)
+        label.set_sensitive(False)
+        vbox.pack_start(ic_hbox)
 
         label = gtk.Label("Final Cycle" )
         stop_entry = gtk.Entry()
         stop_entry.set_max_length(10)
-        hbox = gtk.HBox()
-        hbox.pack_start( label )
-        hbox.pack_start(stop_entry, True) 
-        vbox.pack_start (hbox, True)
+        fc_hbox = gtk.HBox()
+        fc_hbox.pack_start( label )
+        fc_hbox.pack_start(stop_entry, True) 
+        label.set_sensitive(False)
+        stop_entry.set_sensitive(False)
+        vbox.pack_start (fc_hbox, True)
+
+        override_cb.connect( "toggled", self.override_cb_toggled, ic_hbox, fc_hbox )
 
         cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         ok_button = gtk.Button( "_Graph" )
         ok_button.connect("clicked", self.graph_suite, reg, suite_dir,
-                warm_rb, outputfile_entry, start_entry, stop_entry )
+                warm_rb, outputfile_entry, start_entry, stop_entry, override_cb )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.graph )
@@ -1750,6 +1752,13 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
+    def override_cb_toggled( self, w, icbox, fcbox ):
+        for ch in icbox.get_children() + fcbox.get_children():
+            if w.get_active():
+                ch.set_sensitive(True)
+            else:
+                ch.set_sensitive(False)
+
     def search_suite( self, w, reg, nobin_cb, pattern_entry ):
         pattern = pattern_entry.get_text()
         options = ''
@@ -1761,27 +1770,36 @@ The cylc forecast suite metascheduler.
         foo.run()
 
     def graph_suite( self, w, reg, suite_dir, warm_rb, outputfile_entry,
-            start_entry, stop_entry ):
+            start_entry, stop_entry, override_cb ):
 
         options = ''
         ofile = outputfile_entry.get_text()
         if ofile != '':
             options += ' -o ' + ofile
 
-        start = start_entry.get_text()# optional
-        stop = stop_entry.get_text()  # optional
-        if start != '':
-            try:
-                ct(start)
-            except CycleTimeError,x:
-                warning_dialog( str(x) ).warn()
-                return False
-        if stop != '':
-            try:
-                ct(stop)
-            except CycleTimeError,x:
-                warning_dialog( str(x) ).warn()
-                return False
+        if not override_cb.get_active():
+            start = ''
+            stop = ''
+        else:
+            start = start_entry.get_text()
+            stop = stop_entry.get_text()
+            if start != '':
+                try:
+                    ct(start)
+                except CycleTimeError,x:
+                    warning_dialog( str(x) ).warn()
+                    return False
+            if stop != '':
+                if start == '':
+                    warning_dialog( "You cannot override Final Cycle without overriding Initial Cycle.").warn()
+                    return False
+
+                try:
+                    ct(stop)
+                except CycleTimeError,x:
+                    warning_dialog( str(x) ).warn()
+                    return False
+
         if warm_rb.get_active():
             options += ' -w '
         options += ' ' + reg + ' ' + start + ' ' + stop
