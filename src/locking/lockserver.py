@@ -23,16 +23,16 @@ import socket, os
 from port_scan import get_port, check_port
 
 class lockserver(object):
-    def __init__( self, host, port=None ):
-        self.owner = os.environ['USER']
+    def __init__( self, host, owner=os.environ['USER'], port=None ):
+        self.owner = owner
         self.host = host
         self.port = port
 
     def get_proxy( self ):
         if self.port:
-            check_port( "lockserver", self.port, host=self.host, silent=True )
+            check_port( "lockserver", self.port, owner=self.owner, host=self.host, silent=True )
         else:
-            self.port = get_port( "lockserver", host=self.host, silent=True )
+            self.port = get_port( "lockserver", owner=self.owner, host=self.host, silent=True )
 
         # lockservers are connected to Pyro with owner name
         # see comment in bin/_lockserver. TO DO: reuse code.
