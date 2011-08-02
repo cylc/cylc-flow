@@ -129,10 +129,10 @@ Arguments:
         debug = self.options.debug
 
     def load_tasks_cold( self ):
-        self.log.info( 'Cold Start ' + self.start_time )
-
-        # set clock before using log (affects simulation mode only)
-        self.clock.set( self.start_time )
+        if self.start_time:
+            self.log.info( 'Cold Start ' + self.start_time )
+            # set clock before using log (affects simulation mode only)
+            self.clock.set( self.start_time )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
     
@@ -140,7 +140,11 @@ Arguments:
             if name in self.asynchronous_task_list:
                 tag = '1' # asynchronous tasks start with tag = 1
             else:
-                tag = self.start_time
+                if self.start_time:
+                    tag = self.start_time
+                else:
+                    # no initial cycle time: we can't load cycling tasks
+                    continue
             itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=True )
             # check stop time in case the user has set a very quick stop
             if self.stop_time and int( itask.tag ) > int( self.stop_time ):
@@ -152,10 +156,10 @@ Arguments:
                 self.insert( itask )
 
     def load_tasks_warm( self ):
-        self.log.info( 'Warm Start ' + self.start_time )
-
-        # set clock before using log (affects simulation mode only)
-        self.clock.set( self.start_time )
+        if self.start_time:
+            self.log.info( 'Warm Start ' + self.start_time )
+            # set clock before using log (affects simulation mode only)
+            self.clock.set( self.start_time )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
         coldstart_tasks = self.config.get_coldstart_task_list()
@@ -167,7 +171,11 @@ Arguments:
             if name in self.asynchronous_task_list:
                 tag = '1' # asynchronous tasks start with tag = 1
             else:
-                tag = self.start_time
+                if self.start_time:
+                    tag = self.start_time
+                else:
+                    # no initial cycle time: we can't load cycling tasks
+                    continue
             itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=False )
             if name in coldstart_tasks:
                 itask.log( 'WARNING', "warm start: starting in succeeded state" )
@@ -189,10 +197,10 @@ Arguments:
                 self.insert( itask )
 
     def load_tasks_raw( self ):
-        self.log.info( 'Raw Start ' + self.start_time )
-        
-        # set clock before using log (affects simulation mode only)
-        self.clock.set( self.start_time )
+        if self.start_time:
+            self.log.info( 'Raw Start ' + self.start_time )
+            # set clock before using log (affects simulation mode only)
+            self.clock.set( self.start_time )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
 
@@ -206,7 +214,11 @@ Arguments:
             if name in self.asynchronous_task_list:
                 tag = '1' # asynchronous tasks start with tag = 1
             else:
-                tag = self.start_time
+                if self.start_time:
+                    tag = self.start_time
+                else:
+                    # no initial cycle time: we can't load cycling tasks
+                    continue
             itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=False )
             if name in coldstart_tasks or name in startup_tasks:
                 itask.log( 'WARNING', "This is a raw start: I will self-destruct." )

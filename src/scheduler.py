@@ -215,10 +215,11 @@ class scheduler(object):
         # state dump file
         self.state_dump_filename = os.path.join( self.state_dump_dir, 'state' )
 
-        # START and STOP CYCLE TIMES (etc.)
+        self.stop_task = None
+
+        # START and STOP CYCLE TIMES
         self.stop_time = None
         self.stop_clock_time = None
-        self.stop_task = None
         # (self.start_time is set already if provided on the command line).
 
         if not self.start_time:
@@ -245,8 +246,7 @@ class scheduler(object):
                     raise SystemExit(x)
 
         if not self.start_time:
-            # TO DO: this may not be an error if the suite contains asynchronous tasks
-            raise SystemExit('ERROR: No initial cycle time provided.')
+            print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
 
         if self.stop_time:
             self.banner[ 'Stopping at' ] = self.stop_time
