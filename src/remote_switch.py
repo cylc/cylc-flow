@@ -16,11 +16,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys, os
 import Pyro.core
 import logging
-from cycle_time import ct, CycleTimeError
 from taskid import id, TaskIDError
-import sys, os
 from CylcError import TaskNotFoundError, TaskStateError
 from job_submit import job_submit
 from datetime import datetime
@@ -188,18 +187,9 @@ class remote_switch( Pyro.core.ObjBase ):
         self.pool.clear_stop_times()
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )
-
+        # ASSUME VALID TAG TESTED ON INPUT
         if method == 'stop after TAG':
-            if re.match( '^a:', arg ):
-                # async
-                arg = arg[2:]
-            else:
-                try:
-                    ct(arg)
-                except CycleTimeError,x:
-                    return result( False, "Bad task TAG: " + arg )
-                else:
-                    self.pool.set_stop_ctime( arg )
+            self.pool.set_stop_ctime( arg )
 
         elif method == 'stop after clock time':
             try:
