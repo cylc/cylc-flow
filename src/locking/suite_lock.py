@@ -49,7 +49,7 @@ class suite_lock(object):
            return True
 
     def release_suite_access( self):
-        server = lockserver( self.host, self.port ).get()
+        server = lockserver( self.host, port=self.port ).get()
         result = server.release_suite_access( self.suite_dir, self.suite )
         if not result:
             return False
