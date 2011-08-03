@@ -32,7 +32,7 @@ from prerequisites import prerequisites
 # in the message string. Requires a more complex satisfy_me() method.
 
 # TO DO: THIS NEEDS TO BE UPDATED FOR NEW PREREQUISITE AND OUTPUT
-# HANDLING.
+# HANDLING.  SEE LOOSE_PREREQUISITES AS AN EXAMPLE.
 
 class fuzzy_prerequisites( prerequisites ):
 

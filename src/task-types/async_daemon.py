@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
 #C: Copyright (C) 2008-2011 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -16,32 +16,22 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, re, sys
-from optparse import OptionParser
-from registration import getdb, RegistrationError
-from config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc [db] get SUITE
+from task import task
+from oneoff import oneoff
+import re
 
-Retrieve and print a suite definition directory path.
-How to move to a suite definition directory, for the lazy: 
-  $ cd $(cylc get SUITE)
+class async_daemon( oneoff, task ):
+    """A one off task that dynamically adds outputs as messages
+    matching a registered pattern come in. The corresponding real task
+    may keep running indefinitely, e.g. to watch for incoming
+    asynchronous data."""
 
-Arguments:
-    SUITE - registered GROUP:NAME of a suite.""" )
+    def incoming( self, priority, message ):
+        # intercept incoming messages and check for a pattern match 
+        if re.match( self.asyncid_pattern, message ):
+            self.outputs.add( message )
+        task.incoming( self, priority, message )
 
-( options, args ) = parser.parse_args()
-
-if len(args) != 1:
-    parser.error( "Wrong number of arguments" )
-
-suite = args[0]
-
-try:
-    reg = getdb(suite)
-    reg.load_from_file()
-    dir, title = reg.get( suite )
-except RegistrationError, x:
-    raise SystemExit(x)
-else:
-    print dir
+    def is_daemon( self ):
+        return True

@@ -144,12 +144,6 @@ try:
                 name = states[ task_id ][ 'name' ]
                 c_time = states[ task_id ][ 'label' ]
 
-                #try:
-                #    [ junk, c_time ] = task_id.split( '%' )
-                #except ValueError:
-                #    #name = task_id
-                #    c_time = ''
-
                 if c_time not in seen_time.keys():
                     seen_time[ c_time ] = True
                     c_time_list.append( c_time )
@@ -179,15 +173,11 @@ try:
             # display info to the correct place in the task_info structure
             for task_id in task_ids:
 
-                #ctime  =      states[ task_id ][ 'cycle_time' ]
                 name = states[ task_id ][ 'name' ]
+                asyncid = ''
+                if 'asyncid' in states[ task_id ]:
+                    asyncid = '(' + states[ task_id ][ 'asyncid' ] + ')'
                 ctime = states[ task_id ][ 'label' ]
-
-                #try:
-                #    ( name, ctime ) = task_id.split( '%' )
-                #except ValueError:
-                #    name = task_id
-                #    ctime = ''
 
                 name     =      states[ task_id ][ 'name' ]
                 state    =      states[ task_id ][ 'state' ]
@@ -215,12 +205,13 @@ try:
                     ctrl_start = ""
 
                 # construct the display string for this task
-                task_info[ ctime ][ name ] = ctrl_start + name + ctrl_end + abd
+                task_info[ ctime ][ name ] = ctrl_start + name + asyncid + ctrl_end + abd
 
             # construct an array of lines to blit to the screen
 
             # MONITOR HEADER and CURRENT TIME
             blit = []
+            blitlines = {}
             # SUITE NAME, NUMBER OF TASKS, SIMULATION MODE
             foo = header
             bar = suite + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'
@@ -271,8 +262,13 @@ try:
                 try:
                     crt = ct(rt)
                 except CycleTimeError:
-                    line = line + rt
+                    line += rt
+                    indx = rt
+                    if asyncid:
+                        line += ' ' + asyncid
+                        indx = asyncid
                 else:
+                    indx = rt
                     # colour cycle time according to whether it has
                     # caught up to the current clock time or not.
                     rtdt = crt.get_datetime()
@@ -293,11 +289,16 @@ try:
                     else:
                         line = line + ' ' + disp
 
-                blit.append( line )
+                #blit.append( line )
+                blitlines[indx] = line
                         
             # clear screen and blit the new information up
             os.system( "clear" )
             print '\n'.join( blit )
+            indxs = blitlines.keys()
+            indxs.sort(key=int)
+            for ix in indxs:
+                print blitlines[ix]
             # sleep here determines minimum display time before trying to
             # update the information and redisplay it (?). 
             sleep(1)

@@ -1,0 +1,35 @@
+title = "demo suite: repeating asynchronous tasks"
+
+description = """A tree of asynchronous tasks triggered by a random
+satellite pass or similar, plus some cycling tasks. Asynchronous
+processing runs in parallel if the data comes in quickly."""
+
+[dependencies]
+    # make everything wait on a oneoff asynchronous task
+    graph = "prep"
+    [[ASYNCID:SATID-\d+]]
+        graph = """prep => watcher:a => upload:a & archive:a"""
+        daemon = watcher
+
+    [[0,12]]
+        # a couple of cycling tasks in the same suite, because we can.
+        graph = "prep => A => B"
+
+[tasks]
+    [[watcher]]
+        description = "watch for incoming satellite data"
+        command = watcher.sh
+        [[[outputs]]]
+            a = "$(ASYNCID) ready for processing"
+
+    [[upload]]
+        description = "upload new satellite data"
+        command = upload.sh
+       [[[outputs]]]
+            a = "$(ASYNCID) uploaded"
+
+    [[archive]]
+        description = "archive new satellite data"
+        command = archive.sh
+        [[[outputs]]]
+            a = "$(ASYNCID) archived"

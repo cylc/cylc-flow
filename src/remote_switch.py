@@ -16,10 +16,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys, os
 import Pyro.core
 import logging
-from cycle_time import ct, CycleTimeError
-import sys, os
+from taskid import id, TaskIDError
 from CylcError import TaskNotFoundError, TaskStateError
 from job_submit import job_submit
 from datetime import datetime
@@ -187,14 +187,9 @@ class remote_switch( Pyro.core.ObjBase ):
         self.pool.clear_stop_times()
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )
-
-        if method == 'stop after cycle time':
-            try:
-                ct(arg)
-            except CycleTimeError, x:
-                return result( False, "Bad cycle time (YYYYMMDDHH): " + arg )
-            else:
-                self.pool.set_stop_ctime( arg )
+        if method == 'stop after TAG':
+            # ASSUME VALIDITY OF TAG TESTED ON INPUT
+            self.pool.set_stop_ctime( arg )
 
         elif method == 'stop after clock time':
             try:
@@ -206,11 +201,13 @@ class remote_switch( Pyro.core.ObjBase ):
                 return result( False, "Bad datetime (YYYY/MM/DD-HH:mm): " + arg )
             self.pool.set_stop_clock( dtime )
 
-        elif method == 'stop after task finishes':
+        elif method == 'stop after task':
             try:
-                arg.split('%')
-            except:
+                tid = id( arg )
+            except TaskIDError,x:
                 return result( False, "Invalid stop task ID: " + arg )
+            else:
+                arg = tid.id
             self.pool.set_stop_task( arg )
 
         # process, to update state summary
@@ -324,12 +321,12 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return result(True, "OK")
 
-    def die_cycle( self, cycle ):
+    def die_cycle( self, tag ):
         if self._suite_is_blocked():
             return result(False, "Suite is blocked")
 
-        self._warning( "REMOTE: kill cycle: " + cycle )
-        self.pool.kill_cycle( cycle )
+        self._warning( "REMOTE: kill tasks with tag: " + tag )
+        self.pool.kill_cycle( tag )
         self.process_tasks = True
         return result(True, "OK")
 
@@ -345,11 +342,11 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return result(True, "OK")
 
-    def spawn_and_die_cycle( self, cycle ):
+    def spawn_and_die_cycle( self, tag ):
         if self._suite_is_blocked():
             return result(False, "Suite is blocked")
-        self._warning( "REMOTE: spawn and die cycle: " + cycle )
-        self.pool.spawn_and_die_cycle( cycle )
+        self._warning( "REMOTE: spawn and die tasks with tag: " + tag )
+        self.pool.spawn_and_die_cycle( tag )
         self.process_tasks = True
         return result(True, "OK")
 

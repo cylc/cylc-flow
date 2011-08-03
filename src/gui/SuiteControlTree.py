@@ -113,12 +113,12 @@ Text treeview base GUI suite control interface.
 
     def no_task_headings( self ):
         self.task_headings_on = False
-        self.led_headings = ['Cycle Time' ] + [''] * len( self.task_list )
+        self.led_headings = ['Task Tag' ] + [''] * len( self.task_list )
         self.reset_led_headings()
 
     def full_task_headings( self ):
         self.task_headings_on = True
-        self.led_headings = ['Cycle Time' ] + self.task_list
+        self.led_headings = ['Task Tag' ] + self.task_list
         self.reset_led_headings()
 
     def reset_led_headings( self ):
@@ -139,7 +139,7 @@ Text treeview base GUI suite control interface.
         # this is how to set background color of the entire treeview to black:
         #treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) ) 
 
-        tvc = gtk.TreeViewColumn( 'Cycle Time' )
+        tvc = gtk.TreeViewColumn( 'Task Tag' )
         for i in range(10):
             cr = gtk.CellRendererPixbuf()
             #cr.set_property( 'cell-background', 'black' )

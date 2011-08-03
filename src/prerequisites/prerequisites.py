@@ -27,11 +27,11 @@ class prerequisites(object):
     def add_requisites( self, reqs ):
         self.container.append( reqs )
 
-    def get_not_satisfied_list( self ):
-        not_satisfied = []
+    def get_satisfied_list( self ):
+        satisfied = []
         for reqs in self.container:
-            not_satisfied.append( reqs.get_not_satisfied() )
-        return not_satisfied
+            satisfied.append( reqs.get_satisfied() )
+        return satisfied
 
     def all_satisfied( self ):
         result = True
@@ -42,13 +42,16 @@ class prerequisites(object):
         return result
             
     def satisfy_me( self, outputs ):
-        # Can any completed outputs satisfy any of my prequisites?
+        # Can any completed outputs satisfy any of my prerequisites?
+        # DELEGATE TO CONTAINED CLASSES (TO DO: CHECK EFFICIENCY)
+        # (asynchronous tasks have different satisfy_me() requirements)
         for reqs in self.container:
-            for label in reqs.satisfied:
-                for msg in outputs:
-                    if reqs.messages[label] == msg:
-                        reqs.satisfied[ label ] = True
-                        reqs.satisfied_by[ label ] = outputs[msg]  # (owner_id)
+        ##    for label in reqs.satisfied:
+        ##        for msg in outputs:
+        ##            if reqs.messages[label] == msg:
+        ##                reqs.satisfied[ label ] = True
+        ##                reqs.satisfied_by[ label ] = outputs[msg]  # (owner_id)
+            reqs.satisfy_me( outputs )
 
     def get_satisfied_by( self ):
         satisfied_by = {}

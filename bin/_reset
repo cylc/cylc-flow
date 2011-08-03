@@ -18,7 +18,7 @@
 
 
 import os, sys
-from cycle_time import ct, CycleTimeError
+from taskid import id, TaskIDError
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
@@ -37,10 +37,10 @@ the suite is held, in which case the task will trigger when normal
 operation is resumed.
 
 See also:
-   cylc control trigger
-   cylc control hold
-   cylc control relase""",
-[ 'TASK                 NAME%YYYYMMDDHH - the task to reset.'] )
+   cylc [control] trigger
+   cylc [control] hold
+   cylc [control] release""",
+[ 'TASK                 The target task.'] )
 
 parser.add_option( "--ready", 
         help="Force task to the 'ready' state.",
@@ -79,14 +79,11 @@ else:
 task_id = args[1]
 
 try:
-    (name, tag ) = task_id.split('%')
-except ValueError:
-    parser.error( "Task or Group ID must be NAME%YYYYMMDDHH")
-
-try:
-    cycle = ct(tag).get()
-except CycleTimeError, x:
+    tid = id( task_id )
+except TaskIDError,x:
     raise SystemExit(x)
+else:
+    task_id = tid.id
 
 suite = parser.get_suite_name()
 

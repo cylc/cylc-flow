@@ -1,0 +1,34 @@
+title = "for developers: one-off asynchronous tasks via raw task definition."
+
+description = """A chain of one-off asynchronous tasks followed by a
+pair of cycling tasks."""
+
+[dependencies]
+    [[12]]
+    graph = "A => B"
+
+[raw task definitions]
+    # Note that $(TAG) is the asynchronous analogue of $(CYCLE_TIME) 
+    # for cycling tasks. For one-off asynchronous tasks it is just 1.
+    # For repeating asynchronous tasks it increments upward.
+
+    [[foo]]
+        type = async_oneoff
+
+    [[bar]]
+        type = async_oneoff
+        [[[prerequisites]]]
+        one = "foo%$(TAG) succeeded"
+
+    [[baz]]
+        type = async_oneoff
+        [[[prerequisites]]]
+        one = "bar%$(TAG) succeeded"
+
+    [[A]]
+        type = free
+        type modifiers = sequential
+        hours string = 12
+        [[[startup prerequisites]]]
+        one = "baz%1 succeeded"
+

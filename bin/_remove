@@ -18,23 +18,24 @@
 
 import os, sys, re
 from cycle_time import ct, CycleTimeError
+from taskid import id, TaskIDError
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 
-parser = PromptOptionParser( """cylc [control] remove|kill [options] SUITE [TASK_ID] [CYCLE]
+parser = PromptOptionParser( """cylc [control] remove|kill [options] SUITE TASK|TAG
 
-Remove a task, or all tasks with a given cycle time, from a running
-suite. See also 'cylc control purge'.
+Remove a task, or all tasks with a common TAG (cycle time or
+asynchronous 'a:INT'), from a running suite. 
+See also 'cylc [control] purge'.
 
-The target task will be forced to a spawn successor, if it has
-not done so already, before being removed, unless you specify the
-'--no-spawn' option.""",
-["""TASK_ID              Task to remove (NAME%YYYYMMDDHH).
-   CYCLE                Remove all tasks at this cycle (YYYYMMDDHH)."""])
+Target tasks will be forced to spawn successors before being removed, if
+they have not done so already (unless: --no-spawn).""",
+["""TASK                 Target task.
+   TAG                  Target cycle or asynchronous tag ('a:INTEGER')."""])
 
 parser.add_option( "--no-spawn", 
-        help="Do not spawn successors before dying.",
+        help="Do not spawn successors before removal.",
         action="store_true", default=False, dest="no_spawn" )
 
 (options, args) = parser.parse_args()
@@ -46,37 +47,35 @@ suite = parser.get_suite_name()
 
 target = args[1]
 
-kill_cycle = False
+kill_tag = False
 kill_task = False
 
 try:
-    ct(target)
-except:
-    kill_cycle = False
-else:
-    kill_cycle = True
-
-if not kill_cycle:
-    if re.search( '%', target ):
-        kill_task = True
+    # is target a task ID
+    tid = id(target)
+except TaskIDError:
+    # no
+    kill_tag = True
+    # is target a valid cycle time or asynchronous ID?
+    if re.match( '^a:', target ):
+        target = target[2:]
+    else:
         try:
-            ( name, tag ) = target.split('%')
-        except ValueError:
-            parser.error( "Task ID must be NAME%YYYYMMDDHH")
-        try:
-            cycle = ct( tag ).get()
+            ct(target)
         except CycleTimeError,x:
             raise SystemExit(x)
-    else:
-        parser.error( 'Input Format error? must be NAME%YYYYMMDDHH or YYYYMMDDHH' )
+else:
+    # yes
+    kill_task = True
+    target = tid.id
 
 try:
     proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 
-if kill_cycle:
-    if not parser.prompt( 'Kill ALL tasks in ' + target + ' in' ):
+if kill_tag:
+    if not parser.prompt( 'Kill ALL tasks with tag ' + target + ' in' ):
         sys.exit(0)
     if options.no_spawn:
         result = proxy.die_cycle( target )

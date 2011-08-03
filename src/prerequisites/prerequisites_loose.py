@@ -18,52 +18,45 @@
 
 import re
 import sys
-from prerequisites import prerequisites
+from plain_prerequisites import plain_prerequisites
 
 # THIS IS USED WITH ASYNCHRONOUS TASKS (EXPERIMENTAL)
 
-# TO DO: THIS NEEDS TO BE UPDATED FOR NEW PREREQUISITE AND OUTPUT
-# HANDLING.
-
-class loose_prerequisites( prerequisites ):
-
+class loose_prerequisites( plain_prerequisites ):
+    is_loose = True
     def __init__( self, owner_id ):
         self.match_group = {}
-        prerequisites.__init__( self, owner_id )
+        plain_prerequisites.__init__( self, owner_id )
 
     def add( self, message ):
         # TO DO: CHECK FOR LOOSE PATTERN HERE
         # see fuzzy_prerequisites for example
-        prerequisites.add( self, message )
+        plain_prerequisites.add( self, message )
 
     def sharpen_up( self, loose, sharp ):
         # replace a loose prerequisite with the actual output message
         # that satisfied it, and set it satisfied.
-        del self.satisfied[ loose ]
-        self.satisfied[ sharp ] = True
+        lbl = self.labels[loose]
+        self.messages[lbl] = sharp
+        self.labels[sharp] = lbl
+        del self.labels[loose]
 
-    def satisfy_me( self, outputs, exclusions ):
-        #try:
-        #    outputs.exclusions
-        #except AttributeError:
-        #    exclusions = []
-        #else:
-        #    exclusions = outputs.exclusions
-
-        # can any completed outputs satisfy any of my prequisites?
-        for prereq in self.get_not_satisfied_list():
-            # for each of my unsatisfied prerequisites
-            for output in outputs.get_satisfied_list():
-                # for each completed output
-                if output in exclusions:
+    def satisfy_me( self, outputs ):
+        # can any completed outputs satisfy any of my prerequisites?
+        for label in self.satisfied:
+            premsg = self.messages[label]
+            for outmsg in outputs:
+                if premsg == outmsg:
+                    # (already done)
                     continue
-                if prereq == output:
-                    continue
-                m = re.match( prereq, output )
+                m = re.match( premsg, outmsg )
                 if m:
-                    match_group = m.groups()[0]
-                    # replace fuzzy prereq with the actual output that satisfied it
-                    self.match_group[ output ] = match_group 
-                    self.satisfied_by[ output ] = outputs.owner_id
-                    self.sharpen_up( prereq, output )
-                    break
+                    # replace loose prereq with the actual output that satisfied it
+                    #self.match_group[outmsg] = m.groups()[0]
+                    self.asyncid = m.groups()[0]
+                    self.sharpen_up( premsg, outmsg )
+                    self.satisfied[ label ] = True
+                    self.satisfied_by[ label ] = outputs[outmsg] # owner_id
+
+    def dump( self ):
+        return plain_prerequisites.dump(self)

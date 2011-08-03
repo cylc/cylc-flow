@@ -29,6 +29,7 @@ from warning_dialog import warning_dialog, info_dialog
 from port_scan import SuiteIdentificationError
 import cylc_pyro_client
 from cycle_time import ct, CycleTimeError
+from taskid import id, TaskIDError
 from option_group import controlled_option_group
 from config import config
 from color_rotator import rotator
@@ -109,7 +110,7 @@ and associated methods for their control widgets.
 
     def stopsuite( self, bt, window,
             stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
-            stoptime_entry, stopclock_entry, stoptask_entry ):
+            stoptag_entry, stopclock_entry, stoptask_entry ):
         stop = False
         stopat = False
         stopnow = False
@@ -121,15 +122,19 @@ and associated methods for their control widgets.
 
         elif stopat_rb.get_active():
             stopat = True
-            stoptime = stoptime_entry.get_text()
-            if stoptime == '':
-                warning_dialog( "ERROR: No stop time entered" ).warn()
+            stoptag = stoptag_entry.get_text()
+            if stoptag == '':
+                warning_dialog( "ERROR: No stop TAG entered" ).warn()
                 return
-            try:
-                ct(stoptime)
-            except CycleTimeError,x:
-                warning_dialog( str(x) ).warn()
-                return
+            if re.match( '^a:', stoptag ):
+                # async
+                stoptag = stoptag[2:]
+            else:
+                try:
+                    ct(stoptag)
+                except CycleTimeError,x:
+                    warning_dialog( str(x) ).warn()
+                    return
 
         elif stopnow_rb.get_active():
             stopnow = True
@@ -157,16 +162,12 @@ and associated methods for their control widgets.
                 warning_dialog( "ERROR: No stop task ID entered" ).warn()
                 return
             try:
-                name, tag = stoptask_id.split('%')
-            except:
+                tid = id( stoptask_id )
+            except TaskIDError,x:
                 warning_dialog( "ERROR: Bad task ID (TASK%YYYYMMDDHH): " + stoptask_id ).warn()
                 return
-            try:
-                ct(tag)
-            except CycleTimeError,x:
-                warning_dialog( str(x) ).warn()
-                return
-
+            else:
+                stoptask_id = tid.id
         else:
             # SHOULD NOT BE REACHED
             warning_dialog( "ERROR: Bug in GUI?" ).warn()
@@ -179,13 +180,13 @@ and associated methods for their control widgets.
             if stop:
                 result = god.shutdown()
             elif stopat:
-                result = god.set_stop( stoptime, 'stop after cycle time' )
+                result = god.set_stop( stoptag, 'stop after TAG' )
             elif stopnow:
                 result = god.shutdown_now()
             elif stopclock:
                 result = god.set_stop( stopclock_time, 'stop after clock time' )
             elif stoptask:
-                result = god.set_stop( stoptask_id, 'stop after task finishes' )
+                result = god.set_stop( stoptask_id, 'stop after task' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
         else:
@@ -773,15 +774,15 @@ The cylc forecast suite metascheduler.
         flabel = gtk.Label( "Shut down the suite:" )
         vbox.pack_start (flabel, True)
 
-        stop_rb = gtk.RadioButton( None, "After currently running tasks have finished" )
+        stop_rb = gtk.RadioButton( None, "After running tasks have finished" )
         vbox.pack_start (stop_rb, True)
-        stopnow_rb = gtk.RadioButton( stop_rb, "Immediately (beware of orphaned tasks!)" )
+        stopnow_rb = gtk.RadioButton( stop_rb, "NOW (beware of orphaned tasks!)" )
         vbox.pack_start (stopnow_rb, True)
-        stopat_rb = gtk.RadioButton( stop_rb, "After all tasks have passed a given cycle time" )
+        stopat_rb = gtk.RadioButton( stop_rb, "After all tasks have passed a given TAG" )
         vbox.pack_start (stopat_rb, True)
 
         st_box = gtk.HBox()
-        label = gtk.Label( 'YYYYMMDDHH' )
+        label = gtk.Label( "Cycle or 'a:INT'" )
         st_box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(10)
@@ -803,13 +804,13 @@ The cylc forecast suite metascheduler.
         sc_box.pack_start (stopclock_entry, True)
         vbox.pack_start( sc_box )
 
-        stoptt_rb = gtk.RadioButton( stop_rb, "Stop after a given task finishes" )
+        stoptt_rb = gtk.RadioButton( stop_rb, "After a given task finishes" )
         vbox.pack_start (stoptt_rb, True)
   
         stop_rb.set_active(True)
 
         tt_box = gtk.HBox()
-        label = gtk.Label( 'TASK%YYYYMMDDHH' )
+        label = gtk.Label( 'NAME%TAG' )
         tt_box.pack_start( label, True )
         stoptask_entry = gtk.Entry()
         stoptask_entry.set_sensitive(False)
@@ -1042,7 +1043,7 @@ The cylc forecast suite metascheduler.
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title( "Insert a Task or Group" )
+        window.set_title( "Insert a Task or Insertion Group" )
         #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
@@ -1051,26 +1052,18 @@ The cylc forecast suite metascheduler.
         vbox = gtk.VBox()
 
         hbox = gtk.HBox()
-        label = gtk.Label( 'Task or Insertion Group name' )
+        label = gtk.Label( 'Task or Group ID' )
         hbox.pack_start( label, True )
-        entry_name = gtk.Entry()
-        hbox.pack_start (entry_name, True)
+        entry_taskorgroup = gtk.Entry()
+        hbox.pack_start (entry_taskorgroup, True)
         vbox.pack_start(hbox)
 
         hbox = gtk.HBox()
-        label = gtk.Label( 'Cycle Time' )
+        label = gtk.Label( 'Final TAG (optional)' )
         hbox.pack_start( label, True )
-        entry_ctime = gtk.Entry()
-        entry_ctime.set_max_length(10)
-        hbox.pack_start (entry_ctime, True)
-        vbox.pack_start(hbox)
-
-        hbox = gtk.HBox()
-        label = gtk.Label( 'Optional Final Cycle Time' )
-        hbox.pack_start( label, True )
-        entry_stopctime = gtk.Entry()
-        entry_stopctime.set_max_length(10)
-        hbox.pack_start (entry_stopctime, True)
+        entry_stoptag = gtk.Entry()
+        entry_stoptag.set_max_length(10)
+        hbox.pack_start (entry_stoptag, True)
         vbox.pack_start(hbox)
  
         help_button = gtk.Button( "_Help" )
@@ -1078,7 +1071,7 @@ The cylc forecast suite metascheduler.
 
         hbox = gtk.HBox()
         insert_button = gtk.Button( "_Insert" )
-        insert_button.connect("clicked", self.insert_task, window, entry_name, entry_ctime, entry_stopctime )
+        insert_button.connect("clicked", self.insert_task, window, entry_taskorgroup, entry_stoptag )
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         hbox.pack_start(insert_button, False)
@@ -1089,35 +1082,38 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def insert_task( self, w, window, entry_name, entry_ctime, entry_stopctime ):
-        name = entry_name.get_text()
-        ctime = entry_ctime.get_text()
-        try:
-            ct(ctime)
-        except CycleTimeError,x:
-            warning_dialog( str(x) ).warn()
+    def insert_task( self, w, window, entry_taskorgroup, entry_stoptag ):
+        torg = entry_taskorgroup.get_text()
+        if torg == '':
+            warning_dialog( "Enter task or group ID" ).warn()
             return
-        if name == '':
-            warning_dialog( "Enter task or group name" ).warn()
-            return
-        stopctime = entry_stopctime.get_text()
-        if stopctime != '':
+        else:
             try:
-                ct(stopctime)
+                tid = id( torg )
+            except TaskIDError,x:
+                warning_dialog( str(x) ).warn()
+                return
+            else:
+                torg= tid.id
+
+        stoptag = entry_stoptag.get_text()
+        if stoptag != '':
+            try:
+                ct(stoptag)
             except CycleTimeError,x:
                 warning_dialog( str(x) ).warn()
                 return
         window.destroy()
-        if stopctime == '':
+        if stoptag == '':
             stop = None
         else:
-            stop = stopctime
+            stop = stoptag
         try:
             proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
             return
-        result = proxy.insert( name + '%' + ctime, stop )
+        result = proxy.insert( torg, stop )
         if result.success:
             info_dialog( result.reason ).inform()
         else:

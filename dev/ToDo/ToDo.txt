@@ -7,6 +7,30 @@ can be migrated to the github issue tracker.
 _______
 GENERAL
 
+* We need to be able to distinguish cycle time and async tags
+  throughout, by using distinct derived classes or preprending 
+  markers such as: c:YYYYMMDDHH and a:1. Currently both are 
+  just treated as integers in certain comparisons, e.g. can
+  set a stop time of '1' in a cycling suite, and the suite will
+  stop as soon as all running tasks have finished.
+
+* Restarting a suite with a failed family but no failed members fails 
+  (can be tested in dummy mode):
+  Traceback (most recent call last):
+    File "/oper/admin/ecoconnect_admin/cylc-3.3.5/bin/_restart", line 260, in ?
+server.run()
+    File "/oper/admin/ecoconnect_admin/cylc-3.3.5/src/scheduler.py", line 469, in run
+self.negotiate()
+    File "/oper/admin/ecoconnect_admin/cylc-3.3.5/src/scheduler.py", line 746, in negotiate
+itask.check_requisites()
+    File "/oper/admin/ecoconnect_admin/cylc-3.3.5/src/task-types/family.py", line 60, in check_requisites
+    self.incoming( 'NORMAL', self.id + ' succeeded' )
+    File "/oper/admin/ecoconnect_admin/cylc-3.3.5/src/task-types/task.py", line 461, in incoming
+self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
+    File "/oper/admin/ecoconnect_admin/cylc-3.3.5/src/task-types/task.py", line 139, in update_mean_total_elapsed_time
+cls.elapsed_times.append( succeeded - started )
+    TypeError: unsupported operand type(s) for -: 'datetime.datetime' and 'NoneType'
+
 * Consider changing the task pool list to a dictionary indexed by task
   ID. This would avoid having to loop through the pool to find a task.
 * Also, consider a major change to the scheduling algorithm that would

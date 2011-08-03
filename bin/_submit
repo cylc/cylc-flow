@@ -26,14 +26,14 @@ from registration import getdb, regsplit, RegistrationError
 from execute import execute
 from job_submit import job_submit
 import pimp_my_logger
-from cycle_time import ct, CycleTimeError
+from taskid import id, TaskIDError
 from suite_lock import suite_lock
 from lockserver import lockserver
 import task, clocktriggered
 import accelerated_clock 
 from port_scan import SuiteIdentificationError
 
-usage = """cylc [task] submit|single [options] SUITE TASK_ID
+usage = """cylc [task] submit|single [options] SUITE TASK
 
 Submit a single task to run exactly as it would be submitted by its 
 parent suite, in terms of both execution environment and job submission
@@ -49,7 +49,7 @@ the same task, NAME%CYCLE_TIME, is currently running in the suite).
 
 Arguments:
    SUITE           Registered name of the target suite.
-   TASK_ID         Identity of the task to run (NAME%YYYYMMDDHH).""" 
+   TASK            Identity of the task to run (NAME%YYYYMMDDHH).""" 
 
 
 def commandline_parser():
@@ -93,14 +93,12 @@ except RegistrationError,x:
 
 # check task ---------------------------------------------------------
 try:
-    ( task_name, tag ) = task_id.split( '%' )
-except ValueError:
-    parser.error( "Task ID must be NAME%YYYYMMDDHH" )
-
-try:
-     ctime = ct(tag).get()
-except CycleTimeError, x:
+    tid = id( task_id )
+except TaskIDError, x:
     raise SystemExit(x)
+else:
+    task_name = tid.name
+    ctime = tid.tag
 
 owner = os.environ['USER']
 
@@ -202,22 +200,19 @@ job_submit.global_remote_cylc_dir = config['remote cylc directory']
 job_submit.global_remote_suite_dir = config['remote suite directory']
 
 # intantiate the task--------------------------------------------------
+if task_name in config.get_asynchronous_task_name_list():
+    tag = '1'  # asynchronous tasks always start with tag = 1
+else:
+    tag = ctime
 try:
-    task_proxy = config.get_task_proxy( task_name, ctime, 'waiting', stopctime=None, startup=True )
+    task_proxy = config.get_task_proxy( task_name, tag, 'waiting', stopctime=None, startup=True )
 except KeyError, x:
     try:
-        task_proxy = config.get_task_proxy_raw( task_name, ctime, 'waiting', stopctime=None, startup=True, test=False, strict=False )
+        task_proxy = config.get_task_proxy_raw( task_name, tag, 'waiting', stopctime=None, startup=True, test=False, strict=False )
     except SuiteConfigError,x:
         print >> sys.stderr, 'ERROR:', task_name, 'is not defined by graph or [tasks] section'
         print >> sys.stderr, x
         sys.exit(1)
-
-#print '\nPREREQUISITES:\n'
-#for item in task_proxy.prerequisites.dump():
-#    print item
-#print '\nOUTPUTS:\n'
-#for item in task_proxy.outputs.dump():
-#    print item
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------
 if options.dry_run:

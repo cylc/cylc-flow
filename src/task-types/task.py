@@ -159,6 +159,8 @@ class task( Pyro.core.ObjBase ):
         # NOTE: top level derived classes are now defined dynamically
         # (so this is initialised in src/taskdef.py).
         self.__class__.instance_count += 1
+        self.__class__.upward_instance_count += 1
+
 
         Pyro.core.ObjBase.__init__(self)
 
@@ -611,10 +613,22 @@ class task( Pyro.core.ObjBase ):
         self.prerequisites.satisfy_me( outputs )
         #self.suicide_prerequisites.satisfy_me( outputs )
 
+    def adjust_tag( self, tag ):
+        # Override to modify initial tag if necessary.
+        return tag
+
     def next_tag( self ):
-        raise SystemExit( "OVERRIDE ME" )
+        # Asynchronous tasks: increment the tag by one.
+        # Cycling tasks override this to compute their next valid cycle time.
+        return str( int( self.tag ) + 1 )
 
     def my_successor_still_needs_me( self, tasks ):
         # TO DO: THIS IS NO LONGER (OR NEVER WAS?) USED?
         # overridden in pid
+        return False
+
+    def is_cycling( self ):
+        return False
+
+    def is_daemon( self ):
         return False

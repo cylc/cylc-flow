@@ -198,20 +198,20 @@ Arguments:
 
             # instance variables
             ( id, state ) = line.split(' : ')
-            ( name, c_time ) = id.split('%')
+            ( name, tag ) = id.split('%')
             tasknames[name] = True
-            taskstates[id] = (name, c_time, state )
+            taskstates[id] = (name, tag, state )
 
         initial_task_list = tasknames.keys()
         task_list = self.filter_initial_task_list( initial_task_list )
 
         for id in taskstates:
-            name, c_time, state = taskstates[id]
+            name, tag, state = taskstates[id]
             if name not in task_list:
                 continue
 
             # startup=True only for cold start
-            itask = self.config.get_task_proxy( name, c_time, state, stopctime=None, startup=False )
+            itask = self.config.get_task_proxy( name, tag, state, stopctime=None, startup=False )
 
             if itask.state.is_succeeded():  
                 # must have satisfied prerequisites and completed outputs
@@ -244,7 +244,7 @@ Arguments:
                 itask.prerequisites.set_all_unsatisfied()
 
             # check stop time in case the user has set a very quick stop
-            if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+            if self.stop_time and int( itask.tag ) > int( self.stop_time ):
                 # we've reached the stop time already: delete the new task 
                 itask.log( 'WARNING', "HOLDING at configured stop time " + self.stop_time )
                 itask.state.set_status('held')

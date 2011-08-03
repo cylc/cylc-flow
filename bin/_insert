@@ -16,8 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os,sys
+import os, sys, re
 from cycle_time import ct, CycleTimeError
+from taskid import id, TaskIDError
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
@@ -29,8 +30,8 @@ defined in the suite config (suite.rc) file.
 
 Inserted tasks will spawn successors as normal, unless they are 'one off' tasks.
 See also 'cylc task submit', for running single tasks without a scheduler.""",
-[ 'TASK                 Task or group to insert (NAME%YYYYMMDDHH)',
-  'STOP                 Optional stop cycle (YYYYMMDDHH)' ]
+[ 'TASK                 Target task or insertion group.',
+  'STOP                 Optional stop tag (e.g. final cycle time).' ]
 )
 
 (options, args) = parser.parse_args()
@@ -43,25 +44,34 @@ target = args[1]
 suite = parser.get_suite_name()
 
 try:
+    # name%tag%stoptag
     ( name, tag, stoptag ) = target.split('%')
 except ValueError:
     try:
         ( name, tag ) = target.split('%')
     except ValueError:
-        parser.error( "Task or Group must be NAME%YYYYMMDDHH[%YYYYMMDDHH]")
+        raise SystemExit( "ERROR: final argument must be NAME%TAG[%STOP]" )
     else:
         stoptag = None
 
+# check TASK is a valid task ID
 try:
-    cycle = ct( tag ).get()
-except CycleTimeError, x:
+    tid = id( name + '%' + tag )
+except TaskIDError, x:
     raise SystemExit(x)
+else:
+    name = tid.name
+    tag = tid.tag  # (may have 'a:' removed)
 
+# check if stoptag is cycling or asynchronous
 if stoptag:
-    try:
-        stop = ct(stoptag).get()
-    except CycleTimeError,x:
-        raise SystemExit(x)
+    if re.match( '^a:', stoptag ):
+        stop = stoptag[2:]
+    else:
+        try:
+            stop = ct(stoptag).get()
+        except CycleTimeError,x:
+            raise SystemExit(x)
 else:
     stop = None
 
@@ -73,7 +83,7 @@ except SuiteIdentificationError, x:
 if not parser.prompt( 'Insert ' + target + ' in'):
     sys.exit(0)
 
-result = proxy.insert( name + '%' + cycle, stop )
+result = proxy.insert( name + '%' + tag, stop )
 
 if result.success:
     print result.reason

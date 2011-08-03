@@ -745,21 +745,28 @@ manual task completion messaging = boolean( default=False )
 #>\end{myitemize}
 
 [dependencies]
-#> This is where to define the suite dependency graph.
+#> The suite dependency graph should be defined under this section.
+
+    graph = string( default=None )
+#> Define the graph of any one-off asynchronous tasks (no cycle time) here.
+#> See Section~\ref{GraphDescrip} below for details.
+
     [[__many__]]
-#> Replace MANY with each list of hours preceding a chunk of the suite
-#> dependency graph, as required for differing 
-#> dependencies at different hours.
+#> Replace MANY with each list of hours preceding a section of the suite
+#> dependency graph, as required for differing dependencies at different
+#> hours, {\em and} with any repeated asynchronous graph sections for 
+#> satellite data processing or similar.
 #>\begin{myitemize}
 #>\item {\em section:} [dependencies]
-#>\item {\em type:} list of integer hour
-#>\item {\em legal values:} $0 \leq hour \leq 23$
+#>\item {\em type:} list of integer hours, {\em or} string (for repeated asynchronous)
+#>\item {\em legal values:} $0 \leq hour \leq 23$, {\em or} string
 #>\item {\em default:} None
-#>\item {\em example:} \lstinline@[[0,6,12,18]]@
+#>\item {\em example:} \lstinline@[[0,6,12,18]]@, {\em or} \lstinline@[[ASYNID:SAT-\d+]]@
 #>\end{myitemize}
 
     graph = string
-#> Define the dependency graph that is valid for specified list of hours.
+#> \label{GraphDescrip}
+#> Define the dependency graph valid for specified list of hours or asynchronous ID pattern.
 #> You can use the \lstinline=cylc graph= command, or right click 
 #> Graph in gcylc, to plot the dependency graph as you
 #> work on it.
@@ -779,6 +786,16 @@ manual task completion messaging = boolean( default=False )
 #>   """
 #>  \end{lstlisting}
 #>\item {\em default:} None
+#>\end{myitemize}
+
+daemon = string( default=None )
+#> For [[ASYNCID:pattern]] graph sections only, list any {\em
+#> asynchronous daemon} tasks by name.
+#>\begin{myitemize}
+#>\item {\em section:} [tasks] $\rightarrow$ [[ASYNCID:pattern]]
+#>\item {\em type:} list of task names
+#>\item {\em default:} empty list
+#>\item {\em example:} \lstinline@daemon = A, B@
 #>\end{myitemize}
 
 [environment]
@@ -1451,3 +1468,55 @@ live graph movie = boolean( default=False )
 #>\item {\em example:} \lstinline@live graph movie = True@
 #>\end{myitemize}
 
+
+#>IGNORE
+# This section is for development purposes only and is ignored by
+# document processing. It can be used to test new task proxy class
+# developments without bothering with suite.rc graph parsing. New items
+# may be added here for use in config.py:load_raw_task_definitions().
+[raw task definitions]
+    [[__many__]]
+    description = string( default="No description supplied" )
+    command = force_list( default=list( "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP",))
+    job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=None )
+    job submission log directory = string( default=None )
+    owner = string( default=None )
+    remote host = string( default=None )
+    remote cylc directory = string( default=None )
+    remote suite directory = string( default=None )
+    task submitted hook script = string( default=None )
+    task submission failed hook script = string( default=None )
+    task started hook script = string( default=None )
+    task succeeded hook script = string( default=None )
+    task failed hook script = string( default=None )
+    task warning hook script = string( default=None )
+    task timeout hook script = string( default=None )
+    task submission timeout in minutes = float( default=None )
+    task execution timeout in minutes = float( default=None )
+    reset execution timeout on incoming messages = boolean( default=True )
+    extra log files = force_list( default=list())
+    #hours = force_list() # e.g. 0,6,12,18
+    hours string = string(default=None)  # e.g. "0,6,12,18"
+    manual task completion messaging = boolean( default=None )
+
+    type = option( free, async_daemon, async_repeating, async_oneoff )
+    asyncid pattern = string( default=None )
+
+    # oneoff, sequential, tied, clocktriggered
+    type modifiers = force_list( default=list() )
+
+    clock trigger offset in hours = float( default=0.0 )
+
+        [[[prerequisites]]]
+        __many__ = string
+
+        [[[startup prerequisites]]]
+        __many__ = string
+
+        [[[environment]]]
+        __many__ = string
+        [[[directives]]]
+        __many__ = string
+        [[[outputs]]]
+        __many__ = string
+#> RESUME

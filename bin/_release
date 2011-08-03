@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
-from cycle_time import ct, CycleTimeError
+from taskid import id, TaskIDError
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
@@ -42,17 +42,14 @@ suite = parser.get_suite_name()
 suite = parser.get_suite_name()
 task_only = False
 if len(args) == 2:
-    task_only == True
+    task_only = True
     task = args[1]
-
     try:
-        ( name, tag ) = task.split('%')
-    except ValueError:
-        parser.error( "Task ID must be NAME%YYYYMMDDHH")
-    try:
-        cycle = ct(tag).get()
-    except CycleTimeError,x:
+        tid = id( task )
+    except TaskIDError, x:
         raise SystemExit(x)
+    else:
+        task = tid.id
 
     if not parser.prompt( 'Release task ' + task + ' in'):
         sys.exit(0)

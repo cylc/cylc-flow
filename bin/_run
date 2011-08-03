@@ -139,17 +139,25 @@ Arguments:
         debug = self.options.debug
 
     def load_tasks_cold( self ):
-        self.log.info( 'Cold Start ' + self.start_time )
-
-        # set clock before using log (affects simulation mode only)
-        self.clock.set( self.start_time )
+        if self.start_time:
+            self.log.info( 'Cold Start ' + self.start_time )
+            # set clock before using log (affects simulation mode only)
+            self.clock.set( self.start_time )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
     
         for name in task_list:
-            itask = self.config.get_task_proxy( name, self.start_time, 'waiting', stopctime=None, startup=True )
+            if name in self.asynchronous_task_list:
+                tag = '1' # asynchronous tasks start with tag = 1
+            else:
+                if self.start_time:
+                    tag = self.start_time
+                else:
+                    # no initial cycle time: we can't load cycling tasks
+                    continue
+            itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=True )
             # check stop time in case the user has set a very quick stop
-            if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+            if self.stop_time and int( itask.tag ) > int( self.stop_time ):
                 # we've reached the stop time already: delete the new task 
                 itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
                 itask.prepare_for_death()
@@ -158,10 +166,10 @@ Arguments:
                 self.insert( itask )
 
     def load_tasks_warm( self ):
-        self.log.info( 'Warm Start ' + self.start_time )
-
-        # set clock before using log (affects simulation mode only)
-        self.clock.set( self.start_time )
+        if self.start_time:
+            self.log.info( 'Warm Start ' + self.start_time )
+            # set clock before using log (affects simulation mode only)
+            self.clock.set( self.start_time )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
         coldstart_tasks = self.config.get_coldstart_task_list()
@@ -170,7 +178,15 @@ Arguments:
             self.log.warning( "THIS SUITE HAS NOT DEFINED THE 'cold start task list' CONFIG ITEM" )
         for name in task_list:
             # (startup=True is only for cold start)
-            itask = self.config.get_task_proxy( name, self.start_time, 'waiting', stopctime=None, startup=False )
+            if name in self.asynchronous_task_list:
+                tag = '1' # asynchronous tasks start with tag = 1
+            else:
+                if self.start_time:
+                    tag = self.start_time
+                else:
+                    # no initial cycle time: we can't load cycling tasks
+                    continue
+            itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=False )
             if name in coldstart_tasks:
                 itask.log( 'WARNING', "warm start: starting in succeeded state" )
                 itask.state.set_status( 'succeeded' )
@@ -182,7 +198,7 @@ Arguments:
                 del itask
                 continue
             # check stop time in case the user has set a very quick stop
-            if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+            if self.stop_time and int( itask.tag ) > int( self.stop_time ):
                 # we've reached the stop time already: delete the new task 
                 itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
                 itask.prepare_for_death()
@@ -191,12 +207,13 @@ Arguments:
                 self.insert( itask )
 
     def load_tasks_raw( self ):
-        self.log.info( 'Raw Start ' + self.start_time )
-        
-        # set clock before using log (affects simulation mode only)
-        self.clock.set( self.start_time )
+        if self.start_time:
+            self.log.info( 'Raw Start ' + self.start_time )
+            # set clock before using log (affects simulation mode only)
+            self.clock.set( self.start_time )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
+
         coldstart_tasks = self.config.get_coldstart_task_list()
         startup_tasks = self.config.get_startup_task_list()
         if len( coldstart_tasks ) == 0:
@@ -204,14 +221,22 @@ Arguments:
 
         for name in task_list:
             # startup=True only for cold start
-            itask = self.config.get_task_proxy( name, self.start_time, 'waiting', stopctime=None, startup=False )
+            if name in self.asynchronous_task_list:
+                tag = '1' # asynchronous tasks start with tag = 1
+            else:
+                if self.start_time:
+                    tag = self.start_time
+                else:
+                    # no initial cycle time: we can't load cycling tasks
+                    continue
+            itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=False )
             if name in coldstart_tasks or name in startup_tasks:
                 itask.log( 'WARNING', "This is a raw start: I will self-destruct." )
                 itask.prepare_for_death()
                 del itask
                 continue
             # check stop time in case the user has set a very quick stop
-            if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+            if self.stop_time and int( itask.tag ) > int( self.stop_time ):
                 # we've reached the stop time already: delete the new task 
                 itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
                 itask.prepare_for_death()

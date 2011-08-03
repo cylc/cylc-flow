@@ -75,6 +75,9 @@ class cycling( task ):
         self.stop_c_time = stop_c_time
         task.__init__( self, state )
 
+    def adjust_tag( self, tag ):
+        return self.nearest_c_time( tag )
+
     def nearest_c_time( self, rt ):
         # return the next time >= rt for which this task is valid
         rh = int( rt[8:10])
@@ -134,3 +137,6 @@ class cycling( task ):
         # add more information to the summary if necessary.
         summary[ 'cycle_time' ] = self.c_time   # (equiv to self.tag)
         return summary
+
+    def is_cycling( self ):
+        return True

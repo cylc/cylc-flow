@@ -23,7 +23,7 @@ from optparse import OptionParser
 from registration import getdb, RegistrationError
 from config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc [db] unregister|delete [OPTIONS] REG
+parser = OptionParser( usage = """cylc [db] unregister|delete [OPTIONS] SUITE
 
 Remove suite (or suite group) registrations from your private, or the
 central, suite database.  By default this does not actually delete 
@@ -33,7 +33,7 @@ If you accidentally unregister a running suite, just reregister it under
 the same GROUP:NAME name to regain access to it.
 
 Arguments:
-    REG - suite registration:
+    SUITE - suite registration:
             OWNER:GROUP:NAME (Central DB), or
                   GROUP:NAME (Private DB), or
           or registration group (note trailing colon!):

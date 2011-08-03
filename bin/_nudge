@@ -26,14 +26,13 @@ parser = NoPromptOptionParser( """cylc [control] nudge [options] SUITE
 
 Cause the cylc task processing loop to be invoked in a running suite.
 
-Normally this happens only when the state of a task changes such that
+This happens automatically when the state of any task changes such that
 task processing (dependency negotation etc.) is required, or if a
 clock-triggered task is ready to run.
 
-The main reason to use this command is to update task
-estimated-time-until-completion intervals, as shown in the gcylc suite
-monitor GUIs, during periods when nothing else is happening to invoke
-the task processing loop.""" )
+The main reason to use this command is to update the "estimated time till
+completion" intervals shown in the tree-view suite control GUI, during
+periods when nothing else is happening.""" )
 
 (options, args) = parser.parse_args()
 

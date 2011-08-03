@@ -16,6 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# DEV NOTE: THIS CLASS HAS NOT BEEN USED SINCE CYLC-2; IT MAY NEED UPDATING.
 
 from cycling import cycling
 from oneoff import oneoff
@@ -25,10 +26,6 @@ class cycling_daemon( oneoff, cycling ):
     # A one off task that adds outputs dynamically as messages matching
     # registered patterns come in. The corresponding real task may keep
     # running indefinitely, e.g. to watch for incoming external data.
-
-    # not 'daemon' - hasattr(task, 'daemon') returns True for all tasks 
-    # due to the pyro daemon (I think).
-    daemon_task = True  
 
     def __init__( self, state ):
 
@@ -59,3 +56,6 @@ class cycling_daemon( oneoff, cycling ):
         # Write state information to the state dump file
         # This must be compatible with __init__() on reload
         FILE.write( self.id + ' : ' + self.last_reported + ' | ' + self.state.dump() + '\n' )
+
+    def is_daemon( self ):
+        return True

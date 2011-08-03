@@ -16,8 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
+import os, sys, re
 from cycle_time import ct, CycleTimeError
+from taskid import id, TaskIDError
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
@@ -28,9 +29,9 @@ parser = PromptOptionParser( """cylc [control] stop|shutdown [options] SUITE [ST
    No other tasks will be submitted to run in the meantime.
 
 2/ With [STOP], shut down a suite AFTER on of the following events:
-    a/ all tasks have passed the cycle time STOP (YYYYMMDDHH)
+    a/ all tasks have passed the TAG STOP (cycle time or async tag)
     b/ the clock time has reached STOP (YYYY/MM/DD-HH:mm)
-    c/ the task STOP (TASK%YYYYMMDDHH) has finished
+    c/ the task STOP (TASK%TAG) has finished
 
 3/ With [--now], shut down immediately, regardless of tasks still running.
    WARNING: beware of orphaning tasks that are still running at shutdown;
@@ -40,9 +41,9 @@ parser = PromptOptionParser( """cylc [control] stop|shutdown [options] SUITE [ST
 See also:
     cylc [control] start|run
     cylc [control] restart""", 
-   [ """STOP                 YYYYMMDDHH (cycle time), or
-                         YYYY/MM/DD-HH:mm (clock time), or
-                          TASK%YYYYMMDDHH (task ID).""" ] )
+    [ """STOP                 a/ task TAG (cycle time or 'a:INTEGER'), or
+                        b/ YYYY/MM/DD-HH:mm (clock time), or
+                        c/ TASK (task ID).""" ] )
 
 parser.add_option( "--now", 
         help="Shut down immediately; see WARNING above.",
@@ -66,32 +67,38 @@ method = None
 if shutdown_at:
     # STOP argument detected
     try:
-        ct(shutdown_arg)
-    except CycleTimeError,x:
+        # is it a task ID?
+        tid = id( shutdown_arg )
+    except TaskIDError:
+        # not a task ID
         try:
-            # YYYY/MM/DD-HH:mm
+            # is it a date time YYYY/MM/DD-HH:mm?
             date, time = shutdown_arg.split('-')
             yyyy, mm, dd = date.split('/')
             HH,MM = time.split(':')
         except:
-            try:
-                name, ctime = shutdown_arg.split('%')
-            except:
-                parser.error( "invalid STOP argument: " + shutdown_arg )
+            # not a task ID or a date time; 
+            if re.match( '^a:', shutdown_arg ):
+                # is an async TAG
+                shutdown_arg = shutdown_arg[2:]
+                method = 'stop after TAG'
             else:
-                # STOP is a task ID
-                # check valid ctime
+                # nope
                 try:
-                    ct(ctime)
+                    # is it a cycle time?
+                    ct(shutdown_arg)
                 except CycleTimeError,x:
-                    raise SystemExit(str(x))
-                method = 'stop after task finishes'
+                    # nope: not task ID, date time, or TAG
+                    raise SystemExit( "Invalid STOP argument: " + shutdown_arg )
+                else:
+                    # is a cycle time
+                    method = 'stop after TAG'
         else:
-            # STOP is a clock time
+            # is a date time
             method = 'stop after clock time'
     else:
-        # STOP is a valid cycle time
-        method = 'stop after cycle time'
+        # is a task ID
+        method = 'stop after task'
 
     if not parser.prompt( 'Set shutdown ' + shutdown_arg + ' for'):
         sys.exit(0)

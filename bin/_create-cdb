@@ -65,6 +65,9 @@ cylc register examples:FFTask $CYLC_DIR/examples/AutoCleanup/FamilyFailTask
 
 cylc register examples:detach $CYLC_DIR/examples/detach
 
+cylc register examples:async_oneoff $CYLC_DIR/examples/async/oneoff
+cylc register examples:async_repeat $CYLC_DIR/examples/async/repeating
+
 echo
 echo " + Exporting examples suites to the central database"
 # Export the example suites to the central database.

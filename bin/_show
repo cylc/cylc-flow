@@ -17,19 +17,19 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, re, sys
-from cycle_time import ct, CycleTimeError
 import cylc_pyro_client
 from CylcOptionParsers import NoPromptOptionParser_u
 from port_scan import SuiteIdentificationError
+from taskid import id, InvalidTaskIDError, InvalidCycleTimeError
 
-parser = NoPromptOptionParser_u( """cylc [info] show [options] SUITE [TASK NAME] [TASK ID]
+parser = NoPromptOptionParser_u( """cylc [info] show [options] SUITE [NAME[%TAG]]
 
 Print global or task-specific information from a running suite: title and
 task list, task descriptions, current state of task prerequisites and
 outputs and, for clock-triggered tasks, whether or not their delayed
 start time has been reached.""",
-["""TASK NAME            Name of a suite task class - print description.
-   TASK ID              ID (NAME%YYYYMMDDHH) - also print prerequisites etc."""] )
+["""NAME                 Name of a task type. 
+   TAG                  Cycle time, or asynchronous tag 'a:INT'."""] )
 
 (options, args) = parser.parse_args()
 
@@ -42,13 +42,18 @@ prnt_id = False
 if len(args) == 2:
     target = args[1]
     try:
-        name, tag = target.split( '%' )
-    except ValueError:
+        tid = id( target )
+    except InvalidTaskIDError:
+        # must be a task name
         prnt_name = True
         name = target
+    except InvalidCycleTimeError, x:
+        raise SystemExit(x)
     else:
+        # task ID
         prnt_id = True
-        id = target
+        id = tid.id
+        name = tid.name
 else:
     prnt_suite = True
  
@@ -75,11 +80,6 @@ if prnt_name or prnt_id:
         print ' + ', info[name]
 
 if prnt_id:
-    try:
-        cycle = ct(tag).get()
-    except CycleTimeError, x:
-        raise SystemExit(x)
-
     # PREREQUISITES AND OUTPUTS
     result = proxy.get_task_requisites( [ id ] )
 
