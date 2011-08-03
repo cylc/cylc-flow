@@ -35,7 +35,7 @@ class task_lock(object):
     # (a cylc message after that time will cause cylc to complain that
     # it has received a message from a task that has succeeded). 
 
-    def __init__( self, task_id=None, suite=None, host=None, port=None ):
+    def __init__( self, task_id=None, suite=None, owner=None, host=None, port=None ):
         self.use_lock_server = False
         if 'CYLC_USE_LOCKSERVER' in os.environ:
             if os.environ[ 'CYLC_USE_LOCKSERVER' ] == 'True':
@@ -68,6 +68,17 @@ class task_lock(object):
                 print >> sys.stderr, '$CYLC_SUITE not defined'
                 sys.exit(1)
 
+        if owner:
+            self.owner = owner
+        else:
+            if 'CYLC_SUITE_OWNER' in os.environ.keys():
+                self.owner = os.environ[ 'CYLC_SUITE_OWNER' ]
+            elif self.mode == 'raw':
+                pass
+            else:
+                print >> sys.stderr, '$CYLC_SUITE_OWNER not defined'
+                sys.exit(1)
+
         # IT IS CURRENTLY ASSUMED THAT LOCKSERVER AND SUITE HOST ARE THE SAME
         if host:
             self.host = host
@@ -97,7 +108,9 @@ class task_lock(object):
             #print >> sys.stderr, "WARNING: you are not using the cylc lockserver." 
             return True
  
-        server = lockserver( self.host, self.port ).get()
+        # Owner required here because cylc suites can run tasks as other
+        # users - but the lockserver is owned by the suite owner:
+        server = lockserver( self.host, owner=self.owner, port=self.port ).get()
         if server.acquire( self.task_id, self.suite ):
             print "Acquired task lock"
             return True
@@ -112,7 +125,9 @@ class task_lock(object):
             #print >> sys.stderr, "WARNING: you are not using the cylc lockserver." 
             return True
 
-        server = lockserver( self.host, self.port ).get()
+        # Owner required here because cylc suites can run tasks as other
+        # users - but the lockserver is owned by the suite owner:
+        server = lockserver( self.host, owner=self.owner, port=self.port ).get()
         if server.is_locked( self.task_id, self.suite ):
             if server.release( self.task_id, self.suite ):
                 print "Released task lock"

@@ -187,7 +187,7 @@ def check_port( suite, port, owner=os.environ['USER'], host=socket.getfqdn(), ti
             return True
         else:
             # ID'd some other suite.
-            raise OtherSuiteFoundError, "ERROR: Found " + suiteid( one, two, host, port ) + ' NOT ' + suiteid( name, owner, host, port )
+            raise OtherSuiteFoundError, "ERROR: Found " + suiteid( name, xowner, host, port ) + ' NOT ' + suiteid( suite, owner, host, port )
 
 def scan( host, verbose=True, mine=False, silent=False ):
     # scan all cylc Pyro ports for cylc suites

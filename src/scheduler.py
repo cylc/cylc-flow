@@ -55,7 +55,7 @@ else:
     graphing_disabled = False
 
 class scheduler(object):
-    def __init__( self ):
+    def __init__( self, is_restart=False ):
         # PROVIDE IN DERIVED CLASSES:
         # 1/ self.parser = OptionParser( usage )
         # 2/ load_tasks()
@@ -79,6 +79,7 @@ class scheduler(object):
         self.lock_acquired = False
 
         self.blocked = True 
+        self.is_restart = is_restart
 
         # COMMANDLINE OPTIONS
         #DISABLED PRACTICE MODE self.parser.set_defaults( simulation_mode=False, practice_mode=False, debug=False )
@@ -222,28 +223,37 @@ class scheduler(object):
         self.stop_clock_time = None
         # (self.start_time is set already if provided on the command line).
 
-        if not self.start_time:
-            # No initial cycle time provided on the command line.
-            if self.config['initial cycle time']:
-                # Use suite.rc initial cycle time, if one is defined.
-                self.start_time = str(self.config['initial cycle time'])
+        if self.is_restart:
+            # May provide a stop time on the command line only
             if self.options.stop_time:
-                # But a final cycle time was provided on the command line.
                 self.stop_time = self.options.stop_time
-            elif self.config['final cycle time']:
-                # Use suite.rc final cycle time, if one is defined.
-                self.stop_time = str(self.config['final cycle time'])
+ 
         else:
-            # An initial cycle time was provided on the command line
-            # => also use command line final cycle time, if provided,
-            # but otherwise don't use the suite.rc default stop time
-            # (user may change start without considering stop cycle).
-            if self.options.stop_time:
-                # stop time provided on the command line
-                try:
-                    self.stop_time = ct( self.options.stop_time ).get()
-                except CycleTimeError, x:
-                    raise SystemExit(x)
+            if not self.start_time:
+                # No initial cycle time provided on the command line.
+                if self.config['initial cycle time']:
+                    # Use suite.rc initial cycle time, if one is defined.
+                    self.start_time = str(self.config['initial cycle time'])
+                if self.options.stop_time:
+                    # But a final cycle time was provided on the command line.
+                    # NOTE: this will have to be changed if we use a STOP
+                    # arg instead of the '--until=STOP' option - then it
+                    # will not be possible to use STOP without START. 
+                    self.stop_time = self.options.stop_time
+                elif self.config['final cycle time']:
+                    # Use suite.rc final cycle time, if one is defined.
+                    self.stop_time = str(self.config['final cycle time'])
+            else:
+                # An initial cycle time was provided on the command line
+                # => also use command line final cycle time, if provided,
+                # but otherwise don't use the suite.rc default stop time
+                # (user may change start without considering stop cycle).
+                if self.options.stop_time:
+                    # stop time provided on the command line
+                    try:
+                        self.stop_time = ct( self.options.stop_time ).get()
+                    except CycleTimeError, x:
+                        raise SystemExit(x)
 
         if not self.start_time:
             print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
@@ -418,17 +428,6 @@ class scheduler(object):
         # (note: passing in self to give access to task pool methods is a bit clunky?).
         self.remote = remote_switch( self.config, self.clock, self.suite_dir, self, self.failout_task_id )
         self.pyro.connect( self.remote, 'remote' )
-
-        if self.options.warm:
-            self.banner[ "WARM START" ] = self.start_time
-            self.load_tasks = self.load_tasks_warm
-        elif self.options.raw:
-            self.banner[ "RAW START" ] = self.start_time
-            self.load_tasks = self.load_tasks_raw
-        else:
-            self.banner[ "COLD START" ] = self.start_time
-            self.load_tasks = self.load_tasks_cold
-
 
 
     def print_banner( self ):

@@ -306,7 +306,7 @@ class task( Pyro.core.ObjBase ):
         self.log( 'CRITICAL', reason )
         if self.hook_scripts['submission failed']:
             self.log( 'WARNING', 'calling task submission failed hook script' )
-            command = ' '.join( [self.hook_scripts['submission failed'], 'submit_failed', self.__class__.suite, self.id, "'" + reason + "' &"] )
+            command = ' '.join( [self.hook_scripts['submission failed'], 'submission_failed', self.__class__.suite, self.id, "'" + reason + "' &"] )
             subprocess.call( command, shell=True )
 
     def reset_state_ready( self ):
