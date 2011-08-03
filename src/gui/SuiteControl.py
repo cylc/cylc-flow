@@ -36,6 +36,7 @@ from color_rotator import rotator
 from cylc_logviewer import cylc_logviewer
 from textload import textload
 from datetime import datetime
+from gcapture import gcapture_tmpfile
 
 class ControlAppBase(object):
     """
@@ -1257,8 +1258,16 @@ The cylc forecast suite metascheduler.
         help_menu_root = gtk.MenuItem( '_Help' )
         help_menu_root.set_submenu( help_menu )
 
-        self.userguide_item = gtk.MenuItem( '_Quick Guide' )
+        self.userguide_item = gtk.MenuItem( '_GUI Quick Guide' )
         help_menu.append( self.userguide_item )
+
+        cug_pdf_item = gtk.MenuItem( 'Cylc User Guide (_PDF)' )
+        help_menu.append( cug_pdf_item )
+        cug_pdf_item.connect( 'activate', self.launch_cug, True )
+  
+        cug_html_item = gtk.MenuItem( 'Cylc User Guide (_HTML)' )
+        help_menu.append( cug_html_item )
+        cug_html_item.connect( 'activate', self.launch_cug, False )
 
         self.todo_item = gtk.MenuItem( '_To Do' )
         help_menu.append( self.todo_item )
@@ -1335,3 +1344,46 @@ The cylc forecast suite metascheduler.
         logdir = os.path.join( self.suiterc['suite log directory'] )
         foo = cylc_logviewer( 'log', logdir, self.suiterc.get_full_task_name_list() )
         self.quitters.append(foo)
+
+    def launch_cug( self, b, pdf ):
+        fail = []
+        cdir = None
+
+        try:
+            tmpdir = os.environ['TMPDIR']
+        except KeyError:
+            fail.append( "$TMPDIR is not defined" )
+ 
+        try:
+            cdir = os.environ['CYLC_DIR']
+        except KeyError:
+            fail.append( "$CYLC_DIR is not defined" )
+ 
+        if pdf:
+            try:
+                appl = os.environ['PDF_READER']
+            except KeyError:
+                fail.append( "$PDF_READER is not defined" )
+        else:
+            try:
+                appl = os.environ['HTML_READER']
+            except KeyError:
+                fail.append( "$HTML_READER is not defined" )
+
+        if cdir:
+            if pdf:
+                file = os.path.join( cdir, 'doc', 'CylcUserGuide.pdf' )
+            else:
+                file = os.path.join( cdir, 'doc', 'cug-html.html' )
+
+            if not os.path.isfile( file ):
+                fail.append( "File not found: " + file )
+
+        if len(fail) > 0:
+            warning_dialog( '\n'.join( fail ) ).warn()
+            return
+
+        command = appl + " " + file 
+        foo = gcapture_tmpfile( command, tmpdir )
+        foo.run()
+ 
