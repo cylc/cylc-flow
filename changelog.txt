@@ -105,7 +105,9 @@ Version number X.Y.Z incrementing:
   + Disabled run time graphing by default, in suite.rc [visualization]. 
   It is mainly intended for use in cylc development and debugging.
   WARNING: this breaks existing suite.rc run time graph settings.
-  + Suite.rc now provides default initial and final cycles for graph
-  plotting, which can be overridden on the command line (or GUI dialog).
-  + Initial and final suite cycle times can now be provided, optionally,
-  in the suite.rc file, and optionally overridden on the command line.
+  + Initial and final cycles for graph plotting can now be provided in 
+  the suite.rc file, and can be overridden on the command line.
+  + Initial and final cycle times can now be provided in the suite.rc
+  file, and optionally overridden on the command line.
+  + Fixed a lockserver bug, introduced in March 2011, that only affected
+  owned tasks.
