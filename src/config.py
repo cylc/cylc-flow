@@ -445,7 +445,7 @@ class config( CylcConfigObj ):
                 else:
                     raise SuiteConfigError, "ERROR: Task '" + task_name + "' does not define output '" + output_name  + "'"
             else:
-                # replace $(CYCLE_TIME) with $(TAG) in explicit outputs outputs
+                # replace $(CYCLE_TIME) with $(TAG) in explicit outputs
                 trigger = re.sub( 'CYCLE_TIME', 'TAG', trigger )
         else:
             trigger = task_name + '%$(TAG) succeeded'
@@ -1134,7 +1134,8 @@ class config( CylcConfigObj ):
         taskd.description = taskconfig['description']
 
         for lbl in taskconfig['outputs']:
-            taskd.outputs.append( taskconfig['outputs'][lbl] )
+            # replace $(CYCLE_TIME) with $(TAG) in explicit outputs
+            taskd.outputs.append( re.sub( 'CYCLE_TIME', 'TAG', taskconfig['outputs'][lbl] ))
 
         if not self['ignore task owners']:
             taskd.owner = taskconfig['owner']
