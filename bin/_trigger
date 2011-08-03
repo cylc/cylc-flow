@@ -18,7 +18,7 @@
 
 import os, sys
 import cylc_pyro_client
-from cycle_time import ct, CycleTimeError
+from taskid import id, TaskIDError
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 from CylcError import CylcError
@@ -30,10 +30,10 @@ in which case it will trigger when normal operation is resumed).
 This is just a special case of the 'reset' command.
 
 See also:
-   cylc con reset
-   cylc con pause
-   cylc con resume""",
-[ 'TASK                 NAME%YYYYMMDDHH - the task to trigger.'] )
+   cylc [control] reset
+   cylc [control] hold
+   cylc [control] release""",
+[ 'TASK                 The target task.'] )
 
 (options, args) = parser.parse_args()
 
@@ -43,14 +43,11 @@ if len(args) != 2:
 task_id = args[1]
 
 try:
-    (name, tag ) = task_id.split('%')
-except ValueError:
-    parser.error( "Task or Group ID must be NAME%YYYYMMDDHH")
-
-try:
-    cycle = ct(tag).get()
-except CycleTimeError, x:
+    tid = id( task_id )
+except TaskIDError,x:
     raise SystemExit(x)
+else:
+    task_id = tid.id
 
 suite = parser.get_suite_name()
 

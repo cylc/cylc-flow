@@ -16,7 +16,7 @@ usage() {
     echo "USAGE: cylc email-alert EVENT SUITE TASKID MESSAGE"
     echo ""
     echo "A cylc event hook script that sends an email alert. The arguments"
-    echo "are supplied automatically by cylc. To get and email alert whenever"
+    echo "are supplied automatically by cylc. To get an email alert whenever"
     echo "a task in your suite fails, for example, do this:"
     echo ""
     echo "# SUITE.RC"

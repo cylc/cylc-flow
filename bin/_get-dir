@@ -21,14 +21,14 @@ from optparse import OptionParser
 from registration import getdb, RegistrationError
 from config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc [db] get SUITE
+parser = OptionParser( usage = """cylc [db] get-dir SUITE
 
 Retrieve and print a suite definition directory path.
 How to move to a suite definition directory, for the lazy: 
   $ cd $(cylc get SUITE)
 
 Arguments:
-    SUITE - registered GROUP:NAME of a suite.""" )
+    SUITE - target suite.""" )
 
 ( options, args ) = parser.parse_args()
 

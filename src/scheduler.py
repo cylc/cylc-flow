@@ -1295,10 +1295,10 @@ class scheduler(object):
                     itask.prepare_for_death()
                     del itask
                 else: 
-                    if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+                    if self.stop_time and int( itask.tag ) > int( self.stop_time ):
                         itask.log( 'WARNING', "HOLDING at configured suite stop time " + self.stop_time )
                         itask.state.set_status('held')
-                    if itask.stop_c_time and int( itask.c_time ) > int( itask.stop_c_time ):
+                    if itask.stop_c_time and int( itask.tag ) > int( itask.stop_c_time ):
                         # this task has a stop time configured, and we've reached it
                         itask.log( 'WARNING', "HOLDING at configured task stop time " + itask.stop_c_time )
                         itask.state.set_status('held')
@@ -1312,8 +1312,6 @@ class scheduler(object):
         return ( inserted, rejected )
 
     def purge( self, id, stop ):
-        # TO DO: UPDATE FOR ASYNCHRONOUS TASKS?
-
         # Remove an entire dependancy tree rooted on the target task,
         # through to the given stop time (inclusive). In general this
         # involves tasks that do not even exist yet within the pool.
@@ -1347,7 +1345,7 @@ class scheduler(object):
         die = []
         spawn = []
 
-        for itask in self.cycling_tasks:
+        for itask in self.cycling_tasks + self.asynchronous_tasks:
             # Find the target task
             if itask.id == id:
                 # set it succeeded
@@ -1365,8 +1363,8 @@ class scheduler(object):
         while something_triggered:
             self.negotiate()
             something_triggered = False
-            for itask in self.cycling_tasks:
-                if itask.ready_to_run() and int( itask.c_time ) <= int( stop ):
+            for itask in self.cycling_tasks + self.asynchronous_tasks:
+                if itask.ready_to_run() and int( itask.tag ) <= int( stop ):
                     something_triggered = True
                     itask.set_succeeded()
                     foo = self.force_spawn( itask )
@@ -1396,31 +1394,24 @@ class scheduler(object):
                 break
         return result
 
-    def kill_cycle( self, ctime ):
-        # kill all tasks currently at ctime
+    def kill_cycle( self, tag ):
+        # kill all tasks currently with given tag
         task_ids = []
-        for itask in self.cycling_tasks:
-            if itask.c_time == ctime: # and itask.get_status() == 'waiting':
+        for itask in self.cycling_tasks + self.asynchronous_tasks:
+            if itask.tag == tag: # and itask.get_status() == 'waiting':
                 task_ids.append( itask.id )
-
         self.kill( task_ids )
 
-    def spawn_and_die_cycle( self, ctime ):
-        # spawn and kill all tasks currently at ctime
+    def spawn_and_die_cycle( self, tag ):
+        # spawn and kill all tasks currently with given tag
         task_ids = {}
-        for itask in self.cycling_tasks:
-            if itask.c_time == ctime: # and itask.get_status() == 'waiting':
+        for itask in self.cycling_tasks + self.asynchronous_tasks:
+            if itask.tag == tag: # and itask.get_status() == 'waiting':
                 task_ids[ itask.id ] = True
-
         self.spawn_and_die( task_ids )
 
-
     def spawn_and_die( self, task_ids, dump_state=True, reason='remote request' ):
-        # TO DO: UPDATE FOR ASYNCHRONOUS TASKS
-
-        # spawn and kill all tasks in task_ids.keys()
-        # works for dict or list input
-
+        # Spawn and kill all tasks in task_ids. Works for dict or list input.
         # TO DO: clean up use of spawn_and_die (the keyword args are clumsy)
 
         if dump_state:
@@ -1430,7 +1421,7 @@ class scheduler(object):
             # find the task
             found = False
             itask = None
-            for t in self.cycling_tasks:
+            for t in self.cycling_tasks + self.asynchronous_tasks:
                 if t.id == id:
                     found = True
                     itask = t
@@ -1449,7 +1440,7 @@ class scheduler(object):
 
                 new_task = itask.spawn( 'waiting' )
  
-                if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
+                if self.stop_time and int( new_task.tag ) > int( self.stop_time ):
                     # we've reached the stop time
                     new_task.log( 'WARNING', 'HOLDING at configured suite stop time' )
                     new_task.state.set_status('held')

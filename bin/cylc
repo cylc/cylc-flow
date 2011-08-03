@@ -213,7 +213,7 @@ database_commands['reregister'] = [ 'reregister' ]
 database_commands['unregister'] = [ 'unregister', 'delete' ]
 database_commands['copy'      ] = [ 'copy', 'cp' ]
 database_commands['print'     ] = [ 'print' ]
-database_commands['get'       ] = [ 'get' ]
+database_commands['get-dir'   ] = [ 'get-dir' ]
 database_commands['export'    ] = [ 'export' ]
 database_commands['import'    ] = [ 'import' ]
 database_commands['refresh'   ] = [ 'refresh', 'check' ]
@@ -281,9 +281,7 @@ catsum['utility'     ]   = "cycle time arithmetic, filename templating, etc."
 ##multiple cycles run at once, during catchup operation, to the maximum
 ##extent allowed by the suite dependency graph.
 
-usage = """Welcome to the cylc metascheduler command line interface.
-The cylc graphical interface is gcylc.
-Cylc release version: """ + cylc_version + """
+usage = """cylc release version: """ + cylc_version + """
 """ + general_usage + """
 
 Any unique abbreviation can be used for a COMMAND or CATEGORY, e.g.:
@@ -295,6 +293,11 @@ Use of categories is optional,
 but they provide structure to the command set, and they disambiguate
 highly abbreviated commands. Some commands are aliased (ls|list), and 
 some common typos are automatically corrected (cylc,cycl; help,hlep).
+
+Note that 'SUITE' refers to a suite's registered [OWNER:]GROUP:NAME, 
+and 'TASK' refers to the unique NAME%TAG of a task in a suite. For 
+cycling tasks TAG is a cycle time (e.g. foo%2011080806), and for 
+asynchronous tasks it is an integer preceded by 'a:' (e.g. foo%a:1).
 
 How to drill down to usage help for a particular command:
   $ cylc help ............... list all available categories (this page)
@@ -318,7 +321,7 @@ comsum[ 'reregister' ] = 'Change private or central suite registrations'
 comsum[ 'unregister' ] = 'Remove suites from the private or central database'
 comsum[ 'copy'       ] = 'Copy a suite or group of suites.'
 comsum[ 'print'      ] = 'Print private or central suite registrations'
-comsum[ 'get'        ] = 'Print a suite definition directory path'
+comsum[ 'get-dir'    ] = 'Print a suite definition directory path'
 comsum[ 'import'     ] = 'Import central registrations to your private database'
 comsum[ 'export'     ] = 'Export private registrations to the central database'
 comsum[ 'refresh'    ] = 'Check for invalid registrations and update titles'
@@ -553,7 +556,7 @@ for item in command_args:
 args = args_new
 
 notify=False
-if command not in ['cycletime', 'template', 'log', 'checkvars', 'get',
+if command not in ['cycletime', 'template', 'log', 'checkvars', 'get-dir',
         'message', 'started', 'succeeded', 'failed', 'submit', 
         'task-message', 'task-started', 'task-succeeded', 'task-failed',
         'test-db', 'test-suite', 'warranty', 'conditions']:

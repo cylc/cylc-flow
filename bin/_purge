@@ -16,13 +16,17 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
+import os, sys, re
 from cycle_time import ct, CycleTimeError
+from taskid import id, TaskIDError
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 
-parser = PromptOptionParser( """cylc [control] purge [options] SUITE TASK_ID STOP
+# NOTE: it is not clear that this command does the right thing for
+# asynchronous tasks - testing needed if purge is required for such.
+
+parser = PromptOptionParser( """cylc [control] purge [options] SUITE TASK STOP
 
 Remove an entire tree of dependent tasks from a running suite. The root
 task will be forced to spawn and will then be removed, then so will
@@ -52,8 +56,8 @@ Consequently:
 [development note: post cylc-3.0 we should be able to identify tasks
 that depend on the purge root by using the suite dependency graph, even
 if they have not spawned into the cycle time of the root yet.]""",
-["TASK_ID              Task at which to start the purge (NAME%YYYYMMDDHH).",
- "STOP                 Cycle (inclusive!) at which to stop (YYYYMMDDHH)"] )
+["TASK                 Task at which to start the purge.",
+ "STOP                 Cycle time (inclusive!) at which to stop purging."] )
 
 (options, args) = parser.parse_args()
 
@@ -64,15 +68,19 @@ target = args[1]
 stoptag = args[2]
 
 try:
-    ( name, starttag ) = target.split('%')
-except ValueError:
-    parser.error( "Task ID must be NAME%YYYYMMDDHH")
- 
-try:
-    start = ct(starttag).get()
-    stop = ct(stoptag).get()
-except CycleTimeError,x:
+    tid = id( target )
+except TaskIDError, x:
     raise SystemExit(x)
+else:
+    id, name, start = tid.id, tid.name, tid.tag
+ 
+if re.match( '^a:', stoptag ):
+    stop = stoptag[2:]
+else:
+    try:
+        stop = ct(stoptag).get()
+    except CycleTimeError,x:
+        raise SystemExit(x)
 
 suite = parser.get_suite_name()
 
@@ -81,7 +89,7 @@ try:
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 
-if not parser.prompt( 'Purge from ' + target + ' to ' + stop + ' in'):
+if not parser.prompt( 'Purge from ' + id + ' to ' + stop + ' in'):
     sys.exit(0)
 
 result = proxy.purge( target, stop )

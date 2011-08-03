@@ -52,7 +52,7 @@ class ct( object ):
             # YYYYMMDDHHmmss
             self.strvalue = str
         else:
-            raise InvalidCycleTimeError, 'Cycle Times must be YYYYMMDDHH[mm[ss]]: ' + str
+            raise InvalidCycleTimeError, 'ERROR: Cycle Times must be YYYYMMDDHH[mm[ss]] not: ' + str
 
         self.strvalue_Y2H = self.strvalue[0:10]
 

@@ -324,12 +324,12 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return result(True, "OK")
 
-    def die_cycle( self, cycle ):
+    def die_cycle( self, tag ):
         if self._suite_is_blocked():
             return result(False, "Suite is blocked")
 
-        self._warning( "REMOTE: kill cycle: " + cycle )
-        self.pool.kill_cycle( cycle )
+        self._warning( "REMOTE: kill tasks with tag: " + tag )
+        self.pool.kill_cycle( tag )
         self.process_tasks = True
         return result(True, "OK")
 
@@ -345,11 +345,11 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return result(True, "OK")
 
-    def spawn_and_die_cycle( self, cycle ):
+    def spawn_and_die_cycle( self, tag ):
         if self._suite_is_blocked():
             return result(False, "Suite is blocked")
-        self._warning( "REMOTE: spawn and die cycle: " + cycle )
-        self.pool.spawn_and_die_cycle( cycle )
+        self._warning( "REMOTE: spawn and die tasks with tag: " + tag )
+        self.pool.spawn_and_die_cycle( tag )
         self.process_tasks = True
         return result(True, "OK")
 
