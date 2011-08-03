@@ -709,11 +709,13 @@ class config( CylcConfigObj ):
             else:
                 rights = [None]
 
+            new_rights = []
             for r in rights:
                 if r:
                     # ignore output labels on the right (they are only
                     # meaningful on the left, in chained tasks)
-                    r = re.sub( ':\w+', '', r )
+                    new_rights.append( re.sub( ':\w+', '', r ))
+            rights = new_rights
 
             lefts  = re.split( '\s*&\s*', lgroup )
 
