@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
+import os, sys, re
 from cycle_time import ct, CycleTimeError
 from taskid import id, TaskIDError
 import cylc_pyro_client
@@ -77,24 +77,22 @@ if shutdown_at:
             yyyy, mm, dd = date.split('/')
             HH,MM = time.split(':')
         except:
-            # not a task ID or a date time
-            try:
-                # is it a TAG?
-                if re.match( '^a:', shutdown_arg ):
-                    # async
-                    shutdown_arg = shutdown_arg[2:]
-                else:
-                    try:
-                        # cycle time
-                        ct(shutdown_arg)
-                    except CycleTimeError,x:
-                        raise SystemExit(str(x))
-            except:
-                # not a task ID or a date time or a TAG
-                raise SystemExit( "Invalid STOP argument: " + shutdown_arg )
-            else:
-                # is a TAG
+            # not a task ID or a date time; 
+            if re.match( '^a:', shutdown_arg ):
+                # is an async TAG
+                shutdown_arg = shutdown_arg[2:]
                 method = 'stop after TAG'
+            else:
+                # nope
+                try:
+                    # is it a cycle time?
+                    ct(shutdown_arg)
+                except CycleTimeError,x:
+                    # nope: not task ID, date time, or TAG
+                    raise SystemExit( "Invalid STOP argument: " + shutdown_arg )
+                else:
+                    # is a cycle time
+                    method = 'stop after TAG'
         else:
             # is a date time
             method = 'stop after clock time'
