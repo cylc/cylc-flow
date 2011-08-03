@@ -242,6 +242,8 @@ class updater(threading.Thread):
         led_ctime = []
         if len(ct) < 10:
             zct = string.rjust( ct, 10, ' ' )
+        else:
+            zct = ct
         for i in range( 10 ):
             digit = zct[i:i+1]
             if digit == ' ':
