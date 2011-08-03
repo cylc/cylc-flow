@@ -111,3 +111,6 @@ Version number X.Y.Z incrementing:
   file, and optionally overridden on the command line.
   + Fixed a lockserver bug, introduced in March 2011, that only affected
   owned tasks.
+  + Added new asynchronous tasks (no cycle time):
+    - one-off asynchronous tasks for any non-cycling jobs.
+    - repeating asynchronous tasks for processing satellite passes.
