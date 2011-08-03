@@ -618,7 +618,6 @@ class config( CylcConfigObj ):
         return all_tasknames
 
     def process_graph_line( self, line, section, graph_only=False ):
-        print 'SECTION', section
         # Extract dependent pairs from the suite.rc textual dependency
         # graph to use in constructing graphviz graphs.
 
@@ -754,7 +753,6 @@ class config( CylcConfigObj ):
 
             if not graph_only:
                 # generate task definitions
-                print '...', lconditional, rights
                 for r in rights:
                     self.generate_taskdefs( lconditional, r, section )
  
@@ -795,7 +793,6 @@ class config( CylcConfigObj ):
                 if section == "once":
                     self.taskdefs[name].type = 'async_oneoff'
                 elif async:
-                    print name
                     self.taskdefs[name].asyncid_pattern = asyncid_pattern
                     if name == daemon:
                         self.taskdefs[name].type = 'async_daemon'
