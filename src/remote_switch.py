@@ -19,6 +19,7 @@
 import Pyro.core
 import logging
 from cycle_time import ct, CycleTimeError
+from taskid import id, TaskIDError
 import sys, os
 from CylcError import TaskNotFoundError, TaskStateError
 from job_submit import job_submit
@@ -188,13 +189,17 @@ class remote_switch( Pyro.core.ObjBase ):
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )
 
-        if method == 'stop after cycle time':
-            try:
-                ct(arg)
-            except CycleTimeError, x:
-                return result( False, "Bad cycle time (YYYYMMDDHH): " + arg )
+        if method == 'stop after TAG':
+            if re.match( '^a:', arg ):
+                # async
+                arg = arg[2:]
             else:
-                self.pool.set_stop_ctime( arg )
+                try:
+                    ct(arg)
+                except CycleTimeError,x:
+                    return result( False, "Bad task TAG: " + arg )
+                else:
+                    self.pool.set_stop_ctime( arg )
 
         elif method == 'stop after clock time':
             try:
@@ -206,11 +211,14 @@ class remote_switch( Pyro.core.ObjBase ):
                 return result( False, "Bad datetime (YYYY/MM/DD-HH:mm): " + arg )
             self.pool.set_stop_clock( dtime )
 
-        elif method == 'stop after task finishes':
+        elif method == 'stop after task':
             try:
-                arg.split('%')
-            except:
+                tid = id( arg )
+            except TaskIDError,x:
                 return result( False, "Invalid stop task ID: " + arg )
+            else:
+                arg = tid.id
+
             self.pool.set_stop_task( arg )
 
         # process, to update state summary

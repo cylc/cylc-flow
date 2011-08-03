@@ -529,13 +529,15 @@ class scheduler(object):
 
             # SHUT DOWN IF ALL TASKS ARE SUCCEEDED OR HELD
             stop_now = True  # assume stopping
-            for itask in self.asynchronous_tasks:
-                if not itask.state.is_succeeded() and not itask.state.is_held():
-                    # don't stop if any tasks are waiting, submitted, or running
-                    stop_now = False
-                    break
-            if stop_now:                 
-                for itask in self.cycling_tasks:
+            #for itask in self.asynchronous_tasks:
+            #    if not itask.state.is_succeeded() and not itask.state.is_held():
+            #        # don't stop if any tasks are waiting, submitted, or running
+            #        stop_now = False
+            #        break
+            #if stop_now:                 
+            if True:
+                #for itask in self.cycling_tasks:
+                for itask in self.cycling_tasks + self.asynchronous_tasks:
                     # find any reason not to stop
                     if not itask.state.is_succeeded() and not itask.state.is_held():
                         # don't stop if any tasks are waiting, submitted, or running
@@ -548,7 +550,7 @@ class scheduler(object):
                         # stalled at the runahead limit, in which case we
                         # can stop.
                         if self.stop_time:
-                            if int(itask.c_time) < int(self.stop_time):
+                            if int(itask.tag) < int(self.stop_time):
                                 stop_now = False
                                 break
                         else:
@@ -577,17 +579,17 @@ class scheduler(object):
                     self.stop_clock_time = None
 
             if self.stop_task:
-                name, ctime = self.stop_task.split('%')
-                # shut down if task type name has entirely passed ctime
+                name, tag = self.stop_task.split('%')
+                # shut down if task type name has entirely passed task
                 stop = True
-                for itask in self.cycling_tasks:
+                for itask in self.cycling_tasks + self.asynchronous_tasks:
                     if itask.name == name:
                         if not itask.state.is_succeeded():
-                            iname, ictime = itask.id.split('%')
-                            if int(ictime) <= int(ctime):
+                            iname, itag = itask.id.split('%')
+                            if int(itag) <= int(tag):
                                 stop = False
                 if stop:
-                    self.log.critical( "No unfinished STOP TASK (" + name + ") older than " + ctime + " remains" )
+                    self.log.critical( "No unfinished STOP TASK (" + name + ") older than " + tag + " remains" )
                     self.set_suite_hold()
                     self.remote.halt = True
                     # now reset self.stop_task so we don't do this check again.
