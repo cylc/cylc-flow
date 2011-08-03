@@ -101,7 +101,6 @@ def portid( host, port ):
     return host + ":" + str(port)
 
 def suiteid( name, owner, host, port=None ):
-    print name, owner, host, port
     if port != None:
         res = "[" + name + "] " + owner + "@" + portid( host,port)
     else:
