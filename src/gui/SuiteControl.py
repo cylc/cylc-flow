@@ -1043,7 +1043,7 @@ The cylc forecast suite metascheduler.
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title( "Insert a Task or Group" )
+        window.set_title( "Insert a Task or Insertion Group" )
         #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
@@ -1052,26 +1052,18 @@ The cylc forecast suite metascheduler.
         vbox = gtk.VBox()
 
         hbox = gtk.HBox()
-        label = gtk.Label( 'Task or Insertion Group name' )
+        label = gtk.Label( 'Task or Group ID' )
         hbox.pack_start( label, True )
-        entry_name = gtk.Entry()
-        hbox.pack_start (entry_name, True)
+        entry_taskorgroup = gtk.Entry()
+        hbox.pack_start (entry_taskorgroup, True)
         vbox.pack_start(hbox)
 
         hbox = gtk.HBox()
-        label = gtk.Label( 'Cycle Time' )
+        label = gtk.Label( 'Final TAG (optional)' )
         hbox.pack_start( label, True )
-        entry_ctime = gtk.Entry()
-        entry_ctime.set_max_length(10)
-        hbox.pack_start (entry_ctime, True)
-        vbox.pack_start(hbox)
-
-        hbox = gtk.HBox()
-        label = gtk.Label( 'Optional Final Cycle Time' )
-        hbox.pack_start( label, True )
-        entry_stopctime = gtk.Entry()
-        entry_stopctime.set_max_length(10)
-        hbox.pack_start (entry_stopctime, True)
+        entry_stoptag = gtk.Entry()
+        entry_stoptag.set_max_length(10)
+        hbox.pack_start (entry_stoptag, True)
         vbox.pack_start(hbox)
  
         help_button = gtk.Button( "_Help" )
@@ -1079,7 +1071,7 @@ The cylc forecast suite metascheduler.
 
         hbox = gtk.HBox()
         insert_button = gtk.Button( "_Insert" )
-        insert_button.connect("clicked", self.insert_task, window, entry_name, entry_ctime, entry_stopctime )
+        insert_button.connect("clicked", self.insert_task, window, entry_taskorgroup, entry_stoptag )
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         hbox.pack_start(insert_button, False)
@@ -1090,35 +1082,38 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def insert_task( self, w, window, entry_name, entry_ctime, entry_stopctime ):
-        name = entry_name.get_text()
-        ctime = entry_ctime.get_text()
-        try:
-            ct(ctime)
-        except CycleTimeError,x:
-            warning_dialog( str(x) ).warn()
+    def insert_task( self, w, window, entry_taskorgroup, entry_stoptag ):
+        torg = entry_taskorgroup.get_text()
+        if torg == '':
+            warning_dialog( "Enter task or group ID" ).warn()
             return
-        if name == '':
-            warning_dialog( "Enter task or group name" ).warn()
-            return
-        stopctime = entry_stopctime.get_text()
-        if stopctime != '':
+        else:
             try:
-                ct(stopctime)
+                tid = id( torg )
+            except TaskIDError,x:
+                warning_dialog( str(x) ).warn()
+                return
+            else:
+                torg= tid.id
+
+        stoptag = entry_stoptag.get_text()
+        if stoptag != '':
+            try:
+                ct(stoptag)
             except CycleTimeError,x:
                 warning_dialog( str(x) ).warn()
                 return
         window.destroy()
-        if stopctime == '':
+        if stoptag == '':
             stop = None
         else:
-            stop = stopctime
+            stop = stoptag
         try:
             proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
             return
-        result = proxy.insert( name + '%' + ctime, stop )
+        result = proxy.insert( torg, stop )
         if result.success:
             info_dialog( result.reason ).inform()
         else:
