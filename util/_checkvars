@@ -27,10 +27,10 @@ and then optionally check their values according to the chosen
 commandline option. Note that THE VARIABLES MUST BE EXPORTED AS THIS
 SCRIPT NECESSARILY EXECUTES IN A SUBSHELL.
 
-All of the input variables are checked in turn and the results printed, 
-after which, depending on use of '-w,--warn-only', this script either:
- - aborts with exit status 1 (error).
- - or emits a stern warning and exits with status 0 (success).
+All of the input variables are checked in turn and the results printed. 
+If any problems are found then, depending on use of '-w,--warn-only',
+this script either aborts with exit status 1 (error) or emits a stern
+warning and exits with status 0 (success).
 
 Arguments:
    VARNAMES     Space-separated list of environment variable names.""")
