@@ -167,7 +167,7 @@ and associated methods for their control widgets.
                 warning_dialog( "ERROR: Bad task ID (TASK%YYYYMMDDHH): " + stoptask_id ).warn()
                 return
             else:
-                stoptask_id = tid.name, tid.tag
+                stoptask_id = tid.id
         else:
             # SHOULD NOT BE REACHED
             warning_dialog( "ERROR: Bug in GUI?" ).warn()

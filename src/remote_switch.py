@@ -187,8 +187,8 @@ class remote_switch( Pyro.core.ObjBase ):
         self.pool.clear_stop_times()
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )
-        # ASSUME VALID TAG TESTED ON INPUT
         if method == 'stop after TAG':
+            # ASSUME VALIDITY OF TAG TESTED ON INPUT
             self.pool.set_stop_ctime( arg )
 
         elif method == 'stop after clock time':
@@ -208,7 +208,6 @@ class remote_switch( Pyro.core.ObjBase ):
                 return result( False, "Invalid stop task ID: " + arg )
             else:
                 arg = tid.id
-
             self.pool.set_stop_task( arg )
 
         # process, to update state summary
