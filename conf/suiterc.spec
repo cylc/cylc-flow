@@ -402,7 +402,7 @@ task timeout hook script = string( default=None )
 #> \end{lstlisting}
 #> where MESSAGE describes what has happened; EVENT is 
 #> either `submitted', `started', `succeeded', `failed', `timeout', 
-#> or `submission_failed'; and TASKID is the unique task identifier
+#> or `submission\_failed'; and TASKID is the unique task identifier
 #> (e.g.\ NAME%CYCLE_TIME for cycling tasks).
 #> Note that {\em hook scripts are called by cylc, not by tasks,} 
 #> so if you wish to pass in additional information via the environment, 

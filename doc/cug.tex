@@ -48,12 +48,12 @@ forecast.  EcoConnect runs on heterogenous distributed hardware,
 including a massively parallel supercomputer and several Linux servers. 
 
 
-\subsection{Dependencies Between Tasks}
+\subsection{Dependence Between Tasks}
 
-\subsubsection{Intracycle Dependencies} 
-\label{IntracycleDependencies}
+\subsubsection{Intracycle Dependence} 
+\label{IntracycleDependence}
 
-Most inter-task dependencies exist within a single forecast cycle.
+Most inter-task dependence exist within a single forecast cycle.
 Figure~\ref{fig-dep-one} shows the dependency diagram for a single
 forecast cycle of a simple example suite of three forecast models ({\em
 a, b,} and {\em c}) and three post processing or product generation
@@ -124,8 +124,8 @@ diagrams.
     \begin{center}
         \includegraphics[width=8cm]{images/timeline-one-a.png} 
     \end{center}
-    \caption[The only safe multicycle job schedule?]{\small The best that
-    can be done {\em in general} when intercycle dependencies are
+    \caption[The only safe multicycle job schedule?]{\small The best
+    that can be done {\em in general} when intercycle dependence is
     ignored.} 
     \label{fig-job-no-overlap}
 \end{figure} 
@@ -145,20 +145,20 @@ dangerous - it results in dependency violations in half of the tasks in
 the example suite. In fact the situation is even worse than this
 - imagine that task {\em b} in the first cycle is delayed for any reason
 {\em after} the second cycle has been launched? Clearly we must consider
-handling intercycle dependencies explicitly or else agree not to start
+handling intercycle dependence explicitly or else agree not to start
 the next cycle early, as is illustrated in Figure~\ref{fig-job-no-overlap}.
 
-\subsubsection{Intercycle Dependencies} 
-\label{IntercycleDependencies}
+\subsubsection{Intercycle Dependence} 
+\label{IntercycleDependence}
 
-In most suites dependencies between tasks in different cycles
+In most suites dependence between tasks in different cycles
 exist. Forecast models, as above, typically depend on their own most
 recent previous forecast for a background state, and different
 types of tasks in different forecast cycles can also be linked (in an 
 atmospheric forecast analysis suite, for instance, the weather model 
 may also generate background states for use by the observation
 processing and data-assimilation systems in the next cycle). In real
-time operation these intercycle dependencies
+time operation this intercycle dependencies
 can be ignored because they are automatically satisfied when each cycle
 finishes before the next one begins. This is just as well
 because they dramatically increase the complexity of the dependency
@@ -170,7 +170,7 @@ depend on their own previous instances.
 
 For this reason, and because we tend to imagine that forecasting suites
 always run in distinct cycles, existing metaschedulers (as far as the author
-is aware!) ignore intercycle dependencies and therefore {\em require} a
+is aware!) ignore intercycle dependence and therefore {\em require} a
 series of distinct cycles at all times. While this does not affect
 normal real time operation it can be a serious impediment when advance
 availability of external driving data makes it possible, in principle,
@@ -181,7 +181,7 @@ and, to an even greater extent, in historical case studies, and parallel
 test suites that are delayed with respect to the main operation. It is
 a serious problem, in particular, for suites that have little downtime
 between forecast cycles and therefore take many cycles to catch up
-after a delay. Without taking account of intercycle dependencies, the
+after a delay. Without taking account of intercycle dependence, the
 best that can be done, in general, is to reduce the gap between cycles
 to zero as shown in Figure~\ref{fig-job-no-overlap}. A limited crude
 overlap of the single cycle job schedule may be possible for specific
@@ -210,19 +210,19 @@ failures) won't result in dependency violations.
     \end{center}
     \caption[The optimal two-cycle job schedule]{\small The optimal two
     cycle job schedule when the next cycle's driving data is available in
-    advance, possible in principle when intercycle dependencies are
+    advance, possible in principle when intercycle dependence is
     handled explicitly.} 
     \label{fig-optimal-two}
 \end{figure} 
 
 Figure~\ref{fig-optimal-two} shows, in contrast to
 Figure~\ref{fig-overlap}, the optimal two cycle job schedule obtained by
-respecting all intercycle dependencies.  This assumes no delays due to
+respecting all intercycle dependence.  This assumes no delays due to
 resource contention or otherwise - i.e.\ every task runs
 as soon as it is ready to run. The scheduler running
 this suite must be able to adapt dynamically to external conditions 
 that impact on multicycle scheduling in the presence of
-intercycle dependencies or else, again, risk bringing the system down
+intercycle dependence or else, again, risk bringing the system down
 with dependency violations.
 
 \begin{figure}
@@ -231,7 +231,7 @@ with dependency violations.
     \end{center}
     \caption[Comparison of job schedules after a delay]{\small Job
     schedules for the example suite after a delay of almost one whole
-    forecast cycle, when intercycle dependencies are
+    forecast cycle, when intercycle dependence is
     taken into account (above the time axis), and when they are not
     (below the time axis). The colored lines indicate the time that
     each cycle is delayed, and normal ``caught up'' cycles
@@ -250,7 +250,7 @@ with dependency violations.
     schedule obtained when the suite is constrained only by its true
     dependencies, as in Figure \ref{fig-dep-two-linked}, and underneath
     is the best that can be done, in general, when intercycle
-    dependencies are ignored.} 
+    dependence is ignored.} 
     \label{fig-time-two}
 \end{figure} 
 
@@ -258,7 +258,7 @@ To further illustrate the potential benefits of proper intercycle
 dependency handling, Figure~\ref{fig-time-three} shows an operational
 delay of almost one whole cycle in a suite with little downtime between
 cycles. Above the time axis is the optimal schedule that is possible, in
-principle, when intercycle dependencies are taken into account, and
+principle, when intercycle dependence is taken into account, and
 below is the only safe schedule possible {\em in general} when they are
 ignored.  In the former case, even the cycle immediately after the delay
 is hardly affected, and subsequent cycles are all on time, whilst in the
@@ -330,10 +330,10 @@ literally checking every other task) which scales as $n$ (rather than
 $n^2$) where $n$ is the number of task proxies in the pool.}  Moreover,
 this matching of prerequisites and outputs involves the entire task
 pool, regardless of individual cycle times, so that inter- and
-intra-cycle dependencies are handled with ease.
+intra-cycle dependence is handled with ease.
 
 Thus without using global cycling mechanisms, and treating all
-dependencies equally, cylc in effect gets a pool of tasks to
+inter-task dependence equally, cylc in effect gets a pool of tasks to
 self-organise by negotiating their own dependencies so that optimal
 scheduling, as described in the previous section, emerges naturally at
 run time.
@@ -3418,7 +3418,7 @@ Section~\ref{QuickStartGuide}).
     \item spin-up processes via temporary tasks and adding prerequisites
         on-the-fly
     \item how to recover from certain kinds of task failure
-    \item instant simulation mode clones of a running suite
+    %\item instant simulation mode clones of a running suite
     \item fuzzy prerequisites - triggering of the {\em most recent available},
         within limits, instance of an upstream task
     \item asynchronous tasks (no cycle time) - for running a tree of
@@ -3432,6 +3432,84 @@ Section~\ref{QuickStartGuide}).
 \end{myitemize}
 
 %\pagebreak
+
+\section{Asynchronous Tasks (No Cycle Time)}
+
+Documentation of this new feature (cylc-3.3.8) will eventually be
+integrated into the preceding sections of the User Guide.
+
+Asynchronous tasks have an arbitrary integer tag instead of a cycle
+time. Cylc can manage both asynchronous and cycling tasks within the
+same suite.
+
+\subsection{One-off Asynchronous Tasks}
+
+These tasks are defined with no sub-heading under [dependencies] 
+in the suite.rc file: 
+
+\begin{lstlisting}
+# SUITE.RC
+[dependencies]
+    graph = "foo => bar => baz"
+    [[ 0,12 ]]
+        graph  =  """baz => CyclingA => CyclingB"""
+\end{lstlisting}
+
+In this listing two cycling tasks are made to wait on a chain of three 
+one-off asynchronous tasks (they can be used in entirely non-cycling
+suites, or for initial processing prior to starting the cycling tasks).
+One-off asynchronous tasks perform essentially the same function as the
+previously documented one-off startup tasks, except that they don't need
+an associated cycle time.
+
+\subsubsection{One-off Asynchronous Example Suite}
+
+See suite \lstinline=[admin]:examples:async_oneoff=
+
+\subsection{Repeating Asynchronous Tasks}
+
+These tasks can be used to construct suites for processing asynchronous 
+satellite datasets (wherein the data arrives at essentially random
+intervals as far as cylc is concerned). The first task in the suite 
+should be of the {\em daemon} type, which runs indefinitely watching 
+for incoming data. When new data is detected it sends a message 
+that matches a registered pattern containing some unique data ID. 
+The daemon task proxy extracts the ID and dynamically registers a new
+output, containing the actual ID, that downstream tasks can trigger off.
+They in turn have prerequisites containing the data pattern which when 
+satisfied result in them inserting the matched actual ID into their 
+outputs, and so on. Each asynchronous task passes the ID to its 
+real task as \lstinline=$ASYNCID= so that it can process the data
+as required.
+
+Repeating asynchronous tasks are defined under special 
+sub-headings in the [dependencies] section of the suite.rc graph:
+
+\begin{lstlisting}
+# SUITE.RC
+[dependencies]
+    [[ASYNCID:SATX-\d+]]
+        graph  =  """watcher:a => foo:a & bar:a => baz"""
+        daemon = watcher
+[tasks]
+    [[watcher]]
+        # ...
+        [[[outputs]]]
+            a = "New dataset $(ASYNCID) ready for processing"
+    [[foo]]
+        # ...
+        [[[outputs]]]
+            a = "Products generated from dataset $(ASYNCID)"
+# ...        
+\end{lstlisting}
+
+If the asynchronous datasets happen to become available in quick succession,
+entire trees of asynchronous processing can run in parallel.
+
+\subsubsection{Repeating Asynchronous Example Suite}
+
+See suite \lstinline=[admin]:examples:async_repeat=
+
 
 \section{Suite Design Principles}
 \label{SuiteDesignPrinciples}
@@ -3686,7 +3764,7 @@ generation tasks at the same cycle time, and then declare it to be
 sequential so that successive instances cannot run out
 of sequence, or in parallel, even if the opportunity arises.
 
-\subsection{Clock-triggered Tasks Should Wait On External Data}
+\subsection{Clock-triggered Tasks Wait On External Data}
 
 All tasks in a cylc suite know their own private cycle time, but most
 don't care about the wall clock time - they just run when their
