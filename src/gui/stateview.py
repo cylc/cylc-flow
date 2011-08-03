@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from config import config
-import sys, re
+import sys, re, string
 import gobject
 import time
 import threading
@@ -124,6 +124,7 @@ class updater(threading.Thread):
 
         self.led_digits_one = []
         self.led_digits_two = []
+        self.led_digits_blank = gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-blank.xpm" )
         for i in range(10):
             self.led_digits_one.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-" + str(i) + ".xpm" ))
             self.led_digits_two.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/two/digit-" + str(i) + ".xpm" ))
@@ -237,20 +238,18 @@ class updater(threading.Thread):
 
     def digitize( self, ct ):
         # Digitize cycle time for the LED panel display.
-        # For asynchronous tasks zero-pad the task tag.
+        # For asynchronous tasks blank-pad the task tag.
         led_ctime = []
         if len(ct) < 10:
-            zct = zfill( ct, 10 )
-            padded = True
-        else:
-            padded = False
-            zct = ct
+            zct = string.rjust( ct, 10, ' ' )
         for i in range( 10 ):
-            digit = int( zct[i:i+1] )
-            if padded or i in [0,1,2,3,6,7]:
-                led_ctime.append( self.led_digits_one[ digit ] )  
+            digit = zct[i:i+1]
+            if digit == ' ':
+                led_ctime.append( self.led_digits_blank )  
+            elif i in [0,1,2,3,6,7]:
+                led_ctime.append( self.led_digits_one[ int(digit) ] )  
             else:
-                led_ctime.append( self.led_digits_two[ digit ] )  
+                led_ctime.append( self.led_digits_two[ int(digit) ] )  
 
         return led_ctime
 
