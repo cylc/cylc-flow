@@ -96,12 +96,11 @@ class jobfile(object):
                 self.FILE.write( '\n\necho "JOB SCRIPT EXITING (TASK SUCCEEDED)"')
             else:
                 self.FILE.write( '\n\necho "JOB SCRIPT EXITING: THIS TASK HANDLES ITS OWN COMPLETION MESSAGING"')
-                self.FILE.write( '\ntrap "" EXIT' )            
         else:
             self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE:')
             self.FILE.write( '\ncylc task succeeded' )
-            self.FILE.write( '\ntrap "" EXIT' )            
             self.FILE.write( '\n\necho "JOB SCRIPT EXITING (TASK SUCCEEDED)"')
+        self.FILE.write( '\ntrap "" EXIT' )            
 
     def write_header( self ):
         self.FILE.write( '#!' + self.shell )
