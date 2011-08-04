@@ -819,6 +819,25 @@ DONE
 %\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 (suite titles have been truncated above to reduce line length).
 
+\subsection{New Features Not Yet Covered In the Quick Start Guide}
+
+\begin{myitemize}
+\item  One-off asynchronous tasks (no associated cycle time).
+\item  Repeating asynchronous tasks for parallel processing of satellite passes.
+\end{myitemize}
+
+Asynchronous tasks, and their new example suites, are partially
+documented in Section~\ref{AsynchronousTasks}.
+
+\begin{myitemize}
+\item  Suite graphing now has default start and end cycles, and you may define 
+    your own default start and end cycles for graphing in the suite.rc file.
+\item  Default initial and final cycle times for running a suite can now 
+    optionally be defined in the suite.rc file, so you don't have to keep 
+    typing them on the command line, or GUI panel, for repetitive testing.
+\end{myitemize}
+
+
 \subsection{Configuring Your Environment For Cylc}
 
 To gain access to cylc you just need to source the cylc environment
@@ -3434,8 +3453,9 @@ Section~\ref{QuickStartGuide}).
 %\pagebreak
 
 \section{Asynchronous Tasks (No Cycle Time)}
+\label{AsynchronousTasks}
 
-Documentation of this new feature (cylc-3.3.8) will eventually be
+Documentation of this new feature (since cylc-3.4.0) will eventually be
 integrated into the preceding sections of the User Guide.
 
 Asynchronous tasks have an arbitrary integer tag instead of a cycle

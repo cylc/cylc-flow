@@ -403,7 +403,7 @@ task timeout hook script = string( default=None )
 #> where MESSAGE describes what has happened; EVENT is 
 #> either `submitted', `started', `succeeded', `failed', `timeout', 
 #> or `submission\_failed'; and TASKID is the unique task identifier
-#> (e.g.\ NAME%CYCLE_TIME for cycling tasks).
+#> (e.g.\ \lstinline=NAME%CYCLE_TIME= for cycling tasks).
 #> Note that {\em hook scripts are called by cylc, not by tasks,} 
 #> so if you wish to pass in additional information via the environment, 
 #> use the [cylc local environment] section, not [environment].
@@ -434,7 +434,7 @@ task execution timeout in minutes = float( default=None )
 #> \end{lstlisting}
 #> where message describes what has happened; EVENT is `submission' or
 #> `execution'; and TASKID is the unique task identifier
-#> (e.g.\ NAME%CYCLE_TIME for cycling tasks).
+#> (e.g.\ \lstinline=NAME%CYCLE_TIME= for cycling tasks).
 #> Like the hook scripts themselves, these suite level settings
 #> can be overridden by specific tasks.
 #>\begin{myitemize}
@@ -1027,7 +1027,7 @@ __many__ = string
 #> where MESSAGE describes what has happened; EVENT is 
 #> either `submitted', `started', `succeeded', `failed', `timeout', 
 #> or `submission\_failed'; and TASKID is the unique task identifier
-#> (e.g.\ NAME%CYCLE_TIME for cycling tasks).
+#> (e.g.\ \lstinline=NAME%CYCLE_TIME= for cycling tasks).
 #> Note that {\em hook scripts are called by cylc, not by tasks,} 
 #> so if you wish to pass in additional information via the environment, 
 #> use the [cylc local environment] section, not [environment].
@@ -1059,7 +1059,7 @@ __many__ = string
 #> \end{lstlisting}
 #> where MESSAGE describes what has happened; EVENT is `submission' or
 #> `execution'; and TASKID is the unique task identifier
-#> (e.g.\ NAME%CYCLE_TIME for cycling tasks).
+#> (e.g.\ \lstinline=NAME%CYCLE_TIME= for cycling tasks).
 #> Like the hook scripts, these are task-specific settings; you can also
 #> set suite level defaults.
 #>\begin{myitemize}
