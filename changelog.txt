@@ -128,5 +128,8 @@ Version number X.Y.Z incrementing:
 
 3.4.0-a (bug fix release 5 Aug 2011)
 
-  +  Fixed a bug affecting detaching tasks in simulation mode only - job
+  + Fixed a bug affecting detaching tasks in simulation mode only - job
   script EXIT signal trapping was not being cleared before exiting. 
+  + Fixed a bug in the FFTask example suite (which is not actually
+  referred to in the User Guide yet) - it had not been upgraded for
+  compatibility with recent cylc versions.
