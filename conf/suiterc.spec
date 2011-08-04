@@ -56,7 +56,7 @@ title = string( default="No title supplied" )
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
-#>\item {\em default:} "No title supplied"
+#>\item {\em default:} ``No title supplied''
 #>\item {\em example:} \lstinline@title = "Suite Foo"@
 #>\end{myitemize}
 
@@ -66,7 +66,7 @@ description = string( default="No description supplied" )
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
-#>\item {\em default:} "No description supplied"
+#>\item {\em default:} ``No description supplied''
 #>\item {\em example:}
 #> \begin{lstlisting}
 #> description = """

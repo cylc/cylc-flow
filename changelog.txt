@@ -92,7 +92,7 @@ Version number X.Y.Z incrementing:
  to exceeding some system time limit (XCPU signal).
 
  
-3.4.0 - August 4 2011
+3.4.0 (4 August 2011)
 
   + Fixed bug introduced in 3.3.7: trapping of EXIT signal must be 
   turned off at the end of job scripts for detaching tasks (which
@@ -100,8 +100,8 @@ Version number X.Y.Z incrementing:
 
   + Task event hook script argument list changed again. It is now:
      <hook script> EVENT SUITE TASKID MESSAGE
-  where TASKID works with both cycling and non-cycling tasks (in development).
-  WARNING: this change will break existing task event hook scripts.
+  where TASKID works with both cycling and non-cycling (asynchronous)
+  tasks. WARNING: this will break existing task event hook scripts.
   
   + Also, the EVENT argument for job submission failures is now
   "submission_failed" rather than "submit_failed", to be more consistent
@@ -120,7 +120,7 @@ Version number X.Y.Z incrementing:
   + Fixed a lockserver bug, introduced in March 2011, that only affected
   owned tasks.
 
-  + Added new asynchronous tasks (no cycle time):
+  + Added asynchronous tasks (no cycle time):
     - one-off asynchronous tasks for any non-cycling jobs.
     - repeating asynchronous tasks for processing satellite passes.
 

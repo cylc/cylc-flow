@@ -364,8 +364,8 @@ run time.
     \item PyGTK, a Python wrapper for the GTK+ graphical user interface toolkit.
         PyGTK is included in most Linux Distributions. \newline
         {\em http://www.pygtk.org}
-    \item Pyro 3 (Python Remote Objects) - latest version test
-        3.14.\footnote{As of April 2011, Pyro 4, which is compatible
+    \item Pyro 3  (latest version tested
+        3.14.)\footnote{As of April 2011, Pyro 4, which is compatible
         with Python 3, is in development but it is still not recommended
         for production use.} \newline
         {\em http://www.xs4all.nl/~irmen/pyro3}
@@ -3431,18 +3431,16 @@ Section~\ref{QuickStartGuide}).
 
 \end{myitemize}
 
-\subsection{Advanced Topics}
+\subsection{Currently Undocumented Advanced Topics}
 
 \begin{myitemize}
-    \item spin-up processes via temporary tasks and adding prerequisites
-        on-the-fly
-    \item how to recover from certain kinds of task failure
+    \item Spin-up processes via temporary tasks and adding prerequisites
+        on-the-fly.
+    \item How to recover from certain kinds of task failure.
     %\item instant simulation mode clones of a running suite
-    \item fuzzy prerequisites - triggering of the {\em most recent available},
-        within limits, instance of an upstream task
-    \item asynchronous tasks (no cycle time) - for running a tree of
-        tasks initiated by a random event such as a satellite pass. 
-    \item subsuites - running another suite inside a task:
+    %\item fuzzy prerequisites - triggering of the {\em most recent available},
+    %    within limits, instance of an upstream task
+    \item Sub-suites - running another suite inside a task:
 \begin{lstlisting}
 [tasks]
     [[foo]]
@@ -3455,8 +3453,8 @@ Section~\ref{QuickStartGuide}).
 \section{Asynchronous Tasks (No Cycle Time)}
 \label{AsynchronousTasks}
 
-Documentation of this new feature (since cylc-3.4.0) will eventually be
-integrated into the preceding sections of the User Guide.
+{\em Documentation of this new feature (post version 3.4.0) will
+eventually be integrated into the preceding sections of the User Guide}.
 
 Asynchronous tasks have an arbitrary integer tag instead of a cycle
 time. Cylc can manage both asynchronous and cycling tasks within the
@@ -3471,16 +3469,27 @@ in the suite.rc file:
 # SUITE.RC
 [dependencies]
     graph = "foo => bar => baz"
-    [[ 0,12 ]]
-        graph  =  """baz => CyclingA => CyclingB"""
+    [[0,12]]
+        graph  =  "baz => CyclingA => CyclingB"
 \end{lstlisting}
 
 In this listing two cycling tasks are made to wait on a chain of three 
 one-off asynchronous tasks (they can be used in entirely non-cycling
 suites, or for initial processing prior to starting the cycling tasks).
-One-off asynchronous tasks perform essentially the same function as the
-previously documented one-off startup tasks, except that they don't need
-an associated cycle time.
+
+\subsubsection{Comparison with One-off Non-asynchronous ``startup'' Tasks}
+
+One-off non-asynchronous startup tasks run only when a cycling suite is
+{\em cold started} and they are often associated with subsequent one-off
+{\em cold start tasks} used to bootstrap a cycling suite into existence. 
+The distinction between cold and warm starting is only meaningful for
+cycling tasks, however, so {\em one-off asynchronous tasks run every
+time a suite is started} (restarts just resurrect the prior suite state, as
+usual). Thus, while one-off asynchronous tasks can precede cycling
+tasks in the same suite, as shown above, it may be that non-asynchronous 
+startup tasks are more appropriate for this purpose, and that one-off
+asynchronous tasks are best used in constructing entirely non-cycling
+suites.
 
 \subsubsection{One-off Asynchronous Example Suite}
 
@@ -3489,27 +3498,25 @@ See suite \lstinline=[admin]:examples:async_oneoff=
 \subsection{Repeating Asynchronous Tasks}
 
 These tasks can be used to construct suites for processing asynchronous 
-satellite datasets (wherein the data arrives at essentially random
-intervals as far as cylc is concerned). The first task in the suite 
+satellite datasets, wherein the data arrives at (effectively) random
+intervals. The first task in the suite 
 should be of the {\em daemon} type, which runs indefinitely watching 
 for incoming data. When new data is detected it sends a message 
 that matches a registered pattern containing some unique data ID. 
 The daemon task proxy extracts the ID and dynamically registers a new
 output, containing the actual ID, that downstream tasks can trigger off.
-They in turn have prerequisites containing the data pattern which when 
-satisfied result in them inserting the matched actual ID into their 
-outputs, and so on. Each asynchronous task passes the ID to its 
-real task as \lstinline=$ASYNCID= so that it can process the data
-as required.
-
-Repeating asynchronous tasks are defined under special 
-sub-headings in the [dependencies] section of the suite.rc graph:
+The downstream tasks likewise have prerequisites containing the pattern,
+and when these are satisfied the actual ID is substituted
+into their registered outputs. Each asynchronous task proxy passes the
+ID to its real task as \lstinline=$ASYNCID= so that it can process the
+correct dataset. Repeating asynchronous tasks are defined under special 
+sub-headings in the [dependencies] section of the suite.rc graph, e.g.:
 
 \begin{lstlisting}
 # SUITE.RC
 [dependencies]
-    [[ASYNCID:SATX-\d+]]
-        graph  =  """watcher:a => foo:a & bar:a => baz"""
+    [[ASYNCID:SATID-\d+]]
+        graph  =  "watcher:a => foo:a & bar:a => baz"
         daemon = watcher
 [tasks]
     [[watcher]]
