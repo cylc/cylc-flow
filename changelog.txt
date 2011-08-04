@@ -126,3 +126,7 @@ Version number X.Y.Z incrementing:
 
   + Made the User Guide accessible from GUI help menus.
 
+3.4.0-a (bug fix release 5 Aug 2011)
+
+  +  Fixed a bug affecting detaching tasks in simulation mode only - job
+  script EXIT signal trapping was not being cleared before exiting. 
