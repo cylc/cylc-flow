@@ -21,9 +21,9 @@ Dump the current state of all suite tasks to stdout.
 """
 
 import os, sys
-import cylc_pyro_client
-from CylcOptionParsers import NoPromptOptionParser_u
-from port_scan import SuiteIdentificationError
+from cylc import cylc_pyro_client
+from cylc.CylcOptionParsers import NoPromptOptionParser_u
+from cylc.port_scan import SuiteIdentificationError
 
 parser = NoPromptOptionParser_u( """cylc [info] dump [options] SUITE 
 

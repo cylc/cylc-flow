@@ -17,10 +17,10 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, re, sys
-import cylc_pyro_client
-from CylcOptionParsers import NoPromptOptionParser_u
-from port_scan import SuiteIdentificationError
-from taskid import id, InvalidTaskIDError, InvalidCycleTimeError
+from cylc import cylc_pyro_client
+from cylc.CylcOptionParsers import NoPromptOptionParser_u
+from cylc.port_scan import SuiteIdentificationError
+from cylc.taskid import id, InvalidTaskIDError, InvalidCycleTimeError
 
 parser = NoPromptOptionParser_u( """cylc [info] show [options] SUITE [NAME[%TAG]]
 

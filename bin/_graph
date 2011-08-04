@@ -18,15 +18,15 @@
 
 import os, re, sys
 from time import sleep
-from cycle_time import ct, CycleTimeError
+from cylc.cycle_time import ct, CycleTimeError
 import gtk
 import gtk.gdk
 import gobject
 from optparse import OptionParser
-import config
+from cylc import config
 
 try:
-    from cylc_xdot import MyDotWindow
+    from cylc.cylc_xdot import MyDotWindow
 except Exception, x:
     print >> sys.stderr, str(x)
     raise SystemExit( "Cylc graphing disabled" )

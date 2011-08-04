@@ -20,12 +20,12 @@ import os, sys, re
 import socket
 from optparse import OptionParser
 from time import sleep
-from cycle_time import ct, CycleTimeError
-from port_scan import SuiteNotFoundError
-from registration import localdb, RegistrationError
-from lockserver import lockserver
-from task_lock import task_lock
-from suite_lock import suite_lock
+from cylc.cycle_time import ct, CycleTimeError
+from cylc.port_scan import SuiteNotFoundError
+from cylc.registration import localdb, RegistrationError
+from cylc.locking.lockserver import lockserver
+from cylc.locking.task_lock import task_lock
+from cylc.locking.suite_lock import suite_lock
 
 import Pyro.core, Pyro.errors
 

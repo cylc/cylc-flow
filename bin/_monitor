@@ -23,13 +23,13 @@ For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
 """
 
-from cycle_time import ct, CycleTimeError
-import cylc_pyro_client
-from port_scan import SuiteIdentificationError
+from cylc.cycle_time import ct, CycleTimeError
+from cylc import cylc_pyro_client
+from cylc.port_scan import SuiteIdentificationError
 import os, re, sys
 from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
 from time import sleep
-from CylcOptionParsers import NoPromptOptionParser_u
+from cylc.CylcOptionParsers import NoPromptOptionParser_u
 
 compress = True
 

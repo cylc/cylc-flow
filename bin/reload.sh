@@ -26,22 +26,18 @@ set -e
 # AWAITING INCORPORATION INTO THE MAIN CYLC INTERFACE, IF USEFUL.
 
 SUITE=$1
+CYLC=$(dirname $0)/cylc
 
-cylc shutdown -f $SUITE
+$CYLC shutdown -f $SUITE
 
 echo "Waiting for $SUITE to shut down"
 echo -n "."
 
-while true; do
-    STILL_RUNNING=false
-    cylc ping $SUITE && STILL_RUNNING=true
-    ! $STILL_RUNNING && break
+while $CYLC ping $SUITE; do
     sleep 1
     echo -n "."
 done
 echo
 
 echo "Restarting $SUITE"
-cylc restart $SUITE
-
-
+$CYLC restart $SUITE

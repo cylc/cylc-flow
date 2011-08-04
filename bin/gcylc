@@ -17,22 +17,25 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import os, sys
+import gtk
+import socket
+from optparse import OptionParser
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
+
 # check Pyro is installed
 try:
     import Pyro.constants
 except Exception, x:
     raise SystemExit('ERROR: Pyro is not installed (or not accessible)')
 
-import os, sys
-import port_scan
-import gtk
-from mkdir_p import mkdir_p
-from passphrase import passphrase
-from optparse import OptionParser
-from gcylc import MainApp
-from config import config, SuiteConfigError
-from registration import localdb, RegistrationError
-import socket
+from cylc import port_scan
+from cylc.mkdir_p import mkdir_p
+from cylc.passphrase import passphrase
+from cylc.gui.gcylc import MainApp
+from cylc.config import config, SuiteConfigError
+from cylc.registration import localdb, RegistrationError
 
 parser = OptionParser( """gcylc [SUITE]
 
@@ -130,9 +133,9 @@ else:
     print "Suite " + suite + " is running on port " + str(port)
 
 if options.depgraph:
-    from SuiteControlGraph import StandaloneControlGraphApp
+    from cylc.gui.SuiteControlGraph import StandaloneControlGraphApp
     app = StandaloneControlGraphApp( suite, owner, host, port, suite_dir, logging_dir, imagedir )
 else:
-    from SuiteControlTree import StandaloneControlTreeApp
+    from cylc.gui.SuiteControlTree import StandaloneControlTreeApp
     app = StandaloneControlTreeApp( suite, owner, host, port, suite_dir, logging_dir, imagedir )
 gtk.main()

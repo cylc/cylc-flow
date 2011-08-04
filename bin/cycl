@@ -19,7 +19,7 @@
 # Catch a common command line typo: 'cycl'. This could be done by shell
 # alias, but we're relieving the user of the burden.
 
-echo
-echo "TYPO ALERT: it's \"cylc\", not \"cycl\"!"
-echo
-cylc $@
+echo >&2
+echo "TYPO ALERT: it's \"cylc\", not \"cycl\"!" >&2
+echo >&2
+$(dirname $0)/cylc "$@"

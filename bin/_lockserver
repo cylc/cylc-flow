@@ -16,17 +16,17 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from mkdir_p import mkdir_p
+from cylc.mkdir_p import mkdir_p
 from copy import deepcopy
 import os, sys, pwd, re
 import socket, pickle
 import logging, logging.handlers
 from optparse import OptionParser
-from CylcGlobals import pyro_base_port, pyro_port_range
+from cylc.conf.CylcGlobals import pyro_base_port, pyro_port_range
 import Pyro.core, Pyro.errors, Pyro.naming
 from Pyro.ext.daemonizer import Daemonizer
 from ConfigParser import SafeConfigParser
-from suite_id import identifier
+from cylc.suite_id import identifier
 import logging
 
 class ServerDaemon( Daemonizer ):

@@ -17,8 +17,8 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from optparse import OptionParser
-from housekeeping import HousekeepingError, NonIdenticalTargetError
-from hkdiff import diff
+from cylc.housekeeping import HousekeepingError, NonIdenticalTargetError
+from cylc.hkdiff import diff
 import os, sys
 
 class hk_delete:

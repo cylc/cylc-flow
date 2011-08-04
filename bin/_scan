@@ -19,8 +19,8 @@
 import os, sys, re
 import socket
 from optparse import OptionParser
-from port_scan import scan
-from CylcGlobals import pyro_base_port, pyro_port_range
+from cylc.port_scan import scan
+from cylc.conf.CylcGlobals import pyro_base_port, pyro_port_range
 
 parser = OptionParser( """cylc [discover] scan [options]
     

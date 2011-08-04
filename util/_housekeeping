@@ -22,7 +22,7 @@
 import os, sys
 import datetime
 from optparse import OptionParser
-from housekeeping import config_file, config_line
+from cylc.housekeeping import config_file, config_line
 
 usage = """1/ cylc [util] housekeeping [options] SOURCE MATCH OPER OFFSET [TARGET]
 Usage: 2/ cylc [util] housekeeping [options] FILE

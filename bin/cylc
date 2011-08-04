@@ -16,9 +16,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from OrderedDict import OrderedDict
 import os, re, sys
-from execute import execute
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
+
+from OrderedDict import OrderedDict
+from cylc.execute import execute
 
 # check Pyro is installed
 try:
@@ -394,14 +397,6 @@ def category_help(category):
     print
     print 'COMMANDS:'
     pretty_print( comsum, coms )
-
-# check that the cylc core modules are accessible
-try:
-    import cylc
-except:
-    print >> sys.stderr, "ERROR: the cylc core modules are not accessible to Python"
-    print >> sys.stderr, "SOLUTION: source $CYLC_DIR/environment.sh in your shell." 
-    sys.exit(1)
 
 # no arguments: print help and exit
 if len(sys.argv) == 1:

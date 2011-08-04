@@ -17,11 +17,11 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
-from taskid import id, TaskIDError
-import cylc_pyro_client
-from CylcOptionParsers import PromptOptionParser
-from port_scan import SuiteIdentificationError
-from CylcError import CylcError
+from cylc.taskid import id, TaskIDError
+from cylc import cylc_pyro_client
+from cylc.CylcOptionParsers import PromptOptionParser
+from cylc.port_scan import SuiteIdentificationError
+from cylc.CylcError import CylcError
 
 parser = PromptOptionParser( """cylc [control] depend [options] SUITE TASK DEP
 

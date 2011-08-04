@@ -19,7 +19,7 @@
 import os, re, sys
 from optparse import OptionParser
 from collections import deque
-from registration import getdb, RegistrationError
+from cylc.registration import getdb, RegistrationError
 
 def include_files( suitedir, inf ):
     outf = []

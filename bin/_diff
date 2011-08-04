@@ -18,10 +18,10 @@
 
 
 import os, sys
-from job_submit import job_submit
+from cylc.job_submission.job_submit import job_submit
 from optparse import OptionParser
-from config import config, SuiteConfigError
-from taskdef import DefinitionError
+from cylc.config import config, SuiteConfigError
+from cylc.taskdef import DefinitionError
 
 n_oone = 0
 n_otwo = 0

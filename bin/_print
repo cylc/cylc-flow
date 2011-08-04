@@ -18,8 +18,8 @@
 
 import os, re, sys
 from optparse import OptionParser
-from registration import localdb, centraldb, RegistrationError
-from config import config, SuiteConfigError
+from cylc.registration import localdb, centraldb, RegistrationError
+from cylc.config import config, SuiteConfigError
 
 parser = OptionParser( usage = """cylc [db] print [options]
      $ cylc [db] pr                      # print all

@@ -17,10 +17,10 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-import cylc_mode
+from cylc import cylc_mode
 from optparse import OptionParser
-from task_message import message
-from task_lock import task_lock
+from cylc.task_message import message
+from cylc.locking.task_lock import task_lock
 
 usage = """cylc [task] started [options]
 

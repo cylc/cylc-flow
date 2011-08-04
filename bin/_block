@@ -17,9 +17,9 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
-import cylc_pyro_client
-from CylcOptionParsers import PromptOptionParser
-from port_scan import SuiteIdentificationError
+from cylc import cylc_pyro_client
+from cylc.CylcOptionParsers import PromptOptionParser
+from cylc.port_scan import SuiteIdentificationError
 
 parser = PromptOptionParser("""cylc [control] block [options] SUITE 
 

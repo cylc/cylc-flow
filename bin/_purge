@@ -17,11 +17,11 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
-from cycle_time import ct, CycleTimeError
-from taskid import id, TaskIDError
-import cylc_pyro_client
-from CylcOptionParsers import PromptOptionParser
-from port_scan import SuiteIdentificationError
+from cylc.cycle_time import ct, CycleTimeError
+from cylc.taskid import id, TaskIDError
+from cylc import cylc_pyro_client
+from cylc.CylcOptionParsers import PromptOptionParser
+from cylc.port_scan import SuiteIdentificationError
 
 # NOTE: it is not clear that this command does the right thing for
 # asynchronous tasks - testing needed if purge is required for such.

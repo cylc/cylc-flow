@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
-from cycle_time import ct, CycleTimeError
+from cylc.cycle_time import ct, CycleTimeError
 from optparse import OptionParser
 
 parser = OptionParser( usage = """cylc [util] template [options] STRING [CYCLE] 

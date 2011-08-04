@@ -22,8 +22,8 @@ import subprocess
 import tempfile
 from optparse import OptionParser
 from collections import deque
-from registration import getdb, RegistrationError
-from mkdir_p import mkdir_p
+from cylc.registration import getdb, RegistrationError
+from cylc.mkdir_p import mkdir_p
 
 done = []
 

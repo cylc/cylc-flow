@@ -20,18 +20,19 @@ import re, os, sys, socket, logging
 from time import sleep
 from optparse import OptionParser
 from OrderedDict import OrderedDict
-from config import config, SuiteConfigError
-from mkdir_p import mkdir_p
-from registration import getdb, regsplit, RegistrationError
-from execute import execute
-from job_submit import job_submit
-import pimp_my_logger
-from taskid import id, TaskIDError
-from suite_lock import suite_lock
-from lockserver import lockserver
-import task, clocktriggered
-import accelerated_clock 
-from port_scan import SuiteIdentificationError
+from cylc.config import config, SuiteConfigError
+from cylc.mkdir_p import mkdir_p
+from cylc.registration import getdb, regsplit, RegistrationError
+from cylc.execute import execute
+from cylc.job_submission.job_submit import job_submit
+from cylc import pimp_my_logger
+from cylc.taskid import id, TaskIDError
+from cylc.locking.suite_lock import suite_lock
+from cylc.locking.lockserver import lockserver
+from cylc.task_types import task
+from cylc.task_types import clocktriggered
+from cylc import accelerated_clock
+from cylc.port_scan import SuiteIdentificationError
 
 usage = """cylc [task] submit|single [options] SUITE TASK
 

@@ -17,9 +17,9 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from optparse import OptionParser
-from housekeeping import HousekeepingError, NonIdenticalTargetError
-from mkdir_p import mkdir_p
-from hkdiff import diff
+from cylc.housekeeping import HousekeepingError, NonIdenticalTargetError
+from cylc.mkdir_p import mkdir_p
+from cylc.hkdiff import diff
 from shutil import move
 import subprocess
 import os, sys

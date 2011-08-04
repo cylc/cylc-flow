@@ -16,9 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from CylcOptionParsers import NoPromptOptionParser_u
-from port_scan import get_port, SuiteIdentificationError
-from CylcGlobals import pyro_base_port, pyro_port_range
+from cylc.CylcOptionParsers import NoPromptOptionParser_u
+from cylc.port_scan import get_port, SuiteIdentificationError
+from cylc.conf.CylcGlobals import pyro_base_port, pyro_port_range
 
 parser = NoPromptOptionParser_u( """cylc [discover] ping [options] SUITE
     

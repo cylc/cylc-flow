@@ -20,7 +20,7 @@
 varying execution times varying between 1 and 15 seconds."""
 
 import os, sys
-from mkdir_p import mkdir_p
+from cylc.mkdir_p import mkdir_p
 import random
 
 def usage():

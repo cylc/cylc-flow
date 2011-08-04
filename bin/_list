@@ -18,7 +18,7 @@
 
 import os, sys
 from optparse import OptionParser
-from config import config, SuiteConfigError
+from cylc.config import config, SuiteConfigError
 
 parser = OptionParser( """cylc [info] list|ls [OPTIONS] SUITE
 

@@ -17,13 +17,13 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, re, sys
-from config import config, SuiteConfigError
+from cylc.config import config, SuiteConfigError
 from optparse import OptionParser
 from shutil import copy
 import tempfile
 import subprocess
-from registration import RegistrationError
-from mkdir_p import mkdir_p
+from cylc.registration import RegistrationError
+from cylc.mkdir_p import mkdir_p
  
 parser = OptionParser( """cylc [info] log [options] SUITE 
 Print, or view in $EDITOR, local suite log files, with optional

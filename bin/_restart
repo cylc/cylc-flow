@@ -19,8 +19,8 @@
 
 import os, sys, re
 from optparse import OptionParser
-from cycle_time import ct, CycleTimeError
-from scheduler import scheduler
+from cylc.cycle_time import ct, CycleTimeError
+from cylc.scheduler import scheduler
 
 global debug
 debug = True
