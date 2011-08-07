@@ -133,3 +133,8 @@ Version number X.Y.Z incrementing:
   + Fixed a bug in the FFTask example suite (which is not actually
   referred to in the User Guide yet) - it had not been upgraded for
   compatibility with recent cylc versions.
+
+3.4.0-b PENDING (bug fix release)
+ + Fixed a bug, introduced in 3.4.0, in the lockserver client program
+  for manual lock management.
+
