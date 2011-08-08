@@ -397,38 +397,27 @@ install them):
 \subsection{Unpacking The Cylc Tarball}
 \label{UnpackingTheCylcTarball}
 
-Cylc installs into a normal user account; just unpack the release
-tarball in the desired location.
+Cylc installs into a normal user account (although it can easily be
+pressed into a system-level install); just unpack the release tarball in
+your desired location, which we shall call \lstinline=$CYLC_DIR=.
+% TO DO: DOCUMENT SYSTEM LEVEL INSTALLATION
 
 \subsection{Configuring Your Environment For Cylc}
+\label{ConfiguringYourEnvironmentForCylc}
 
-To gain access to cylc type the following at the command prompt:
-\begin{lstlisting}
-$ export CYLC_DIR=/path/to/cylc/installation/
-$ . $CYLC_DIR/environment.sh
-\end{lstlisting}
-Put this into your \lstinline=.profile= login script to configure
-cylc access automatically. The variable \lstinline=$CYLC_DIR=
-is required inside the environment script, so don't skip the export
-step.  You should now be able to run cylc commands:
+The file \lstinline=$CYLC_DIR/cylc.profile= documents the minimal user 
+environment configuration required for interactive cylc usage:
+
+\lstinputlisting{../cylc.profile}
+
+Copy this into your \lstinline=.profile= login script and adapt
+appropriately for your environment. After sourcing your modified login
+script, or logging in again, you should be able to run cylc:
+
 \begin{lstlisting}
 $ cylc --version
 3.x.y
 \end{lstlisting}
-
-% TO DO: SYSTEM LEVEL INSTALL INSTRUCTIONS
-%For a system-level install just inspect the environment script for the
-%few critical executable and source module paths, and install the
-%contents therein in standard system locations. Users would then not need
-%to source the environment script before using cylc. 
-
-%\subsubsection{Other}
-%
-%Pyro, graphviz, and Pygraphviz all have their own simple installation
-%instructions.  If you can't get these installed at system level it is 
-%quite possible to install them all into a user account, and then adapt
-%the cylc environment script slightly to ensure that cylc can access 
-%them.
 
 \subsection{Creating The Central Suite Database}
 \label{CreatingTheCentralSuiteDatabase}
@@ -501,8 +490,7 @@ how to install everything under your home directory.
 \subsubsection{Cylc}
 
 Cylc is already designed to be installed into a normal user account -
-just unpack the cylc release tarball in the desired location, which 
-we shall refer to below as \lstinline=$CYLC_DIR=.
+just unpack the cylc release tarball into \lstinline=$CYLC_DIR=.
 
 If you try to use cylc commands now you will get a warning that Pyro is
 not installed.
@@ -516,36 +504,33 @@ at the beginning of Section~\ref{Requirements}).
 
 \subsubsection{Pyro}
 
-Install Pyro under \lstinline=$CYLC_DIR/external/installed= as follows:
+Install Pyro under \lstinline=$HOME/external/installed= as follows:
 \begin{lstlisting}
-$ cd $CYLC_DIR/external
+$ cd $HOME/external
 $ tar xzf Pyro-3.14.tar.gz
 $ cd Pyro-3.14
-$ python setup.py install --prefix=$CYLC_DIR/external/installed
+$ python setup.py install --prefix=$HOME/external/installed
 \end{lstlisting}
 Take note of the resulting Python \lstinline=site-packages= directory
 under \lstinline=external/installed/=, e.g.:
 \begin{lstlisting}
-$CYLC_DIR/external/installed/lib64/python2.6/site-packages/
+$HOME/external/installed/lib64/python2.6/site-packages/
 \end{lstlisting}
-(The exact path will depend on your local Python environment).
-Add this to your \lstinline=PYTHONPATH= by editing 
-\lstinline=$CYLC_DIR/environment.sh=, uncommenting the paragraph 
-that begins with:
+The exact path will depend on your local Python environment.
+Configure your login script for the cylc environment as described in 
+Section~\ref{ConfiguringYourEnvironmentForCylc} above and add in 
+this new installation path; for example:
 \begin{lstlisting}
-# FOR LOCAL INSTALLATION OF PYRO, GRAPHVIZ, AND PYGRAPHVIZ
+# .profile
+PYTHONPATH=$HOME/external/installed/lib64/python2.6/site-packages:$PYTHONPATH
+PATH=$HOME/external/installed/bin:$PATH
 \end{lstlisting}
-and altering the paths under it to suit your local installation. 
 
-Now you should be able to source the cylc environment and get cylc
-to print its release version: 
+Now you should be able to get cylc to print its release version: 
 \begin{lstlisting}
-$ export CYLC_DIR=$HOME/cylc-3.3.3   # or whichever version you have    
-$ . $CYLC_DIR environment.sh
-CONFIGURING THIS SHELL FOR /wdata/hilary/cylc-3.3.3/bin/cylc
-Cylc release version: 3.3.3
+$ . $HOME/.profile   # (or log in again)
 $ cylc -v
-3.3.3
+3.x.y
 \end{lstlisting}
 If this command aborts and says that Pyro is not installed or is not available,
 then you have either not installed Pyro (check the output of the installation 
@@ -840,40 +825,9 @@ documented in Section~\ref{AsynchronousTasks}.
 
 \subsection{Configuring Your Environment For Cylc}
 
-To gain access to cylc you just need to source the cylc environment
-script. Put the following code in your login script, or do the same at the
-terminal prompt before using cylc.\footnote{To switch between different
-cylc installations just source the appropriate environment script.}
-\begin{lstlisting}
-# .profile
-export CYLC_DIR=/path/to/cylc/installation
-. $CYLC_DIR/environment.sh
-\end{lstlisting}
-The variable \lstinline=$CYLC_DIR= is required inside the environment
-script, so don't skip the export step. You should now be able to run
-cylc commands:
-\begin{lstlisting}
-$ cylc --version
-3.x.y
-\end{lstlisting}
-
-You should also specify the graphical and terminal editors you want to
-use to edit suites, by setting the following environment variables in
-your \lstinline=.profile=:
-\begin{lstlisting}
-# .profile
-export GEDITOR='gvim -f'  # GUI editor launched by gcylc
-export EDITOR=vim         # terminal editor launched by 'cylc edit'
-\end{lstlisting}
-See \lstinline=cylc edit help= (Appendix~\ref{edit}) for other editor
-examples. And finally, you must ensure that \lstinline=$TMPDIR= is 
-defined in your environment, for example:
-\begin{lstlisting}
-# .profile
-export TMPDIR=/tmp/$USER
-\end{lstlisting}
-
-
+To get access to cylc you just need to set a few environment variables
+in your \lstinline=.profile= login script, as described in 
+Section~\ref{ConfiguringYourEnvironmentForCylc}.
 
 \subsection{Starting The gcylc GUI}
 
@@ -2532,7 +2486,7 @@ description = "Used as an example in Section 7.4 of the User Guide"
         graph = "A => B"  # B triggers when A successfully finishes
 [environment]             # GLOBAL ENVIRONMENT
     NEXT_CYCLE = $( cylc util cycletime -a 12 )
-    PREV_CYCLE = $( cylc util cycletime -p 12 )
+    PREV_CYCLE = $( cylc util cycletime -s 12 )
 [tasks]
     [[A]]                 # TASK A PROPERTIES
         description = "Task A, does something"
@@ -3163,7 +3117,10 @@ export TASK_NAME=A
 export CYCLE_TIME=2011052400
 
 # ACCESS TO CYLC:
-. $CYLC_DIR/environment.sh
+PATH=$CYLC_DIR/bin:$PATH
+# Access to the suite bin dir:
+PATH=$CYLC_SUITE_DIR/bin:$PATH
+export PATH
 
 # SET ERROR TRAPPING:
 set -u # Fail when using an undefined variable
@@ -3185,7 +3142,7 @@ cylc task started || exit 1
 
 # GLOBAL VARIABLES:
 NEXT_CYCLE="$( cylc util cycletime -a 12 )"
-PREV_CYCLE="$( cylc util cycletime -p 12 )"
+PREV_CYCLE="$( cylc util cycletime -s 12 )"
 export NEXT_CYCLE PREV_CYCLE
 
 # LOCAL VARIABLES:
@@ -3398,45 +3355,51 @@ in this document (particularly the {\em Quick Start Guide},
 Section~\ref{QuickStartGuide}). 
 
 \begin{myitemize}
-    \item the difference between cold-, warm-, raw-, and re-starting, a suite
+    \item The difference between cold-, warm-, raw-, and re-starting, a suite
         (see \lstinline=cylc run help=)
-    \item running single tasks outside or inside suites
+
+    \item Running single tasks outside or inside suites
         (see \lstinline=cylc insert help= and \lstinline=cylc submit help=)
-    \item intervening in suites, e.g.\ stopping, removing, inserting tasks; 
+
+    \item Intervening in suites, e.g.\ stopping, removing, inserting tasks; 
         (see \lstinline=cylc control help=)
-    \item interrogating suites and tasks 
+
+    \item Interrogating suites and tasks 
         (\lstinline=cylc info help=, \lstinline=cylc show help=,
         and \lstinline=cylc discovery help=)
-    \item where to look for output - suite log, suite stdout/stderr, task stdout/stderr
-        (this is documented in the Quick Start Guide)
-    \item understanding cylc suite evolution, particularly in catch up operation
-        (the {\em Quick Start Guide} will also help here, along 
-        with the cylc example suites, and running your real suites in
-        simulation mode)
+
+    \item Where to look for output - suite log, suite stdout/stderr,
+        task stdout/stderr (this is documented in the Quick Start Guide)
+
+    \item Understanding cylc suite evolution, particularly in catch up
+        operation (the {\em Quick Start Guide} will also help here,
+        along with the cylc example suites, and running your real suites
+        in simulation mode)
 
     \item suite security - use of secure passphrases (this is
         trivial to configure, see documentation of the {\em use secure
         passphrase} configuration item in the {\em Suite.rc Reference},
         Appendix~\ref{SuiteRCReference})
+
     \item automatic state dump backups, named pre-intervention state dumps
         (mentioned in the {\em Quick Start Guide}; watch the suite log
         after intervening in a suite)
+
     \item centralized alerting and timeouts
-        (see documentation of {\em task event hooks} in the {\em Suite.rc
-        Reference}, Appendix~\ref{SuiteRCReference})
+        (see documentation of {\em task event hooks} in the {\em
+        Suite.rc Reference}, Appendix~\ref{SuiteRCReference})
 
-    \item recursive purge - this is a powerful suite intervention, but 
-        you need to understand how it works before using it.
-        See \lstinline=cylc purge help= for details.
+    \item Recursive purge - this is a powerful suite
+        intervention but you need to understand how it works before
+        using it. See \lstinline=cylc purge help= for details.
 
-\end{myitemize}
-
-\subsection{Currently Undocumented Advanced Topics}
-
-\begin{myitemize}
-    \item Spin-up processes via temporary tasks and adding prerequisites
-        on-the-fly.
-    \item How to recover from certain kinds of task failure.
+    \item Handling spin-up processes via temporary tasks
+        and adding prerequisites on-the-fly - see 
+        \lstinline=cylc depend --help=, and note that when you insert a
+        task into a running suite (a) the initial cycle time can be in
+        the past; and (b) you can give a final cycle time after which the
+        task will be eliminated from the suite. 
+    % \item How to recover from certain kinds of task failure.
     %\item instant simulation mode clones of a running suite
     %\item fuzzy prerequisites - triggering of the {\em most recent available},
     %    within limits, instance of an upstream task

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # CYLC USER LOGIN SCRIPT EXAMPLE. Copy the following to your .profile
 # and adapt according to your preferences and local cylc installation.
 
@@ -28,7 +30,7 @@ export TMPDIR=/path/to/my/temporary/directory
 #_______________________________________________________________________
 # For a local user install of Pyro, Graphviz, and Pygraphviz (if you
 # can't easily get them installed at system level on the cylc host):
-### PYTHONPATH=$CYLC_DIR/external/installed/lib64/python2.6/site-packages:$PYTHONPATH
-### PATH=$CYLC_DIR/external/installed/bin:$PATH
+### PYTHONPATH=$HOME/external/installed/lib64/python2.6/site-packages:$PYTHONPATH
+### PATH=$HOME/external/installed/bin:$PATH
 # (See the Cylc User Guide "Installation" Section for instructions). 
 
