@@ -183,6 +183,9 @@ cylc task started || exit 1""" )
             BUFFER = self.FILE
         BUFFER.write( "\n\n# ACCESS TO CYLC:" )
         BUFFER.write( "\nPATH=$CYLC_DIR/bin:$PATH" )
+        BUFFER.write( "\n# Access to the suite bin dir:" )
+        BUFFER.write( "\nPATH=$CYLC_SUITE_DIR/bin:$PATH" )
+        BUFFER.write( "\nexport PATH" )
 
     def write_environment_2( self ):
         if len( self.global_env.keys()) > 0:
