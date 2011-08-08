@@ -38,10 +38,17 @@ def environ_init(argv0=None):
     environ_path_add(dirs)
     environ_path_add([os.path.join(cylc_dir, 'lib')], 'PYTHONPATH')
 
+    # Python output buffering delays appearance of stdout and stderr
+    # when output is not directed to a terminal - e.g. when running a
+    # suite via the posix nohup command.
     os.environ['PYTHONUNBUFFERED'] = 'true'
+    
+    # Export $HOSTNAME for use in the default lockserver config (see
+    # $CYLC_DIR/conf/lockserver.conf). HOSTNAME is a bash variable (see
+    # man bash) that is defined but not exported; in other shells it may
+    # not even be defined.
     if not os.getenv('HOSTNAME', ''):
         os.environ['HOSTNAME'] = socket.gethostname()
-
 
 def environ_path_add(dirs, key='PATH'):
     """For each dir in dirs, add dir to the front of the PATH environment
