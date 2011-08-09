@@ -27,6 +27,11 @@ else
     exit 1
 fi
 
+# determine CYLC_DIR
+MYDIR=$(dirname $0)
+CYLC_DIR=$( readlink -f $MYDIR/../.. )
+echo $CYLC_DIR
+
 if [[ -z $CYLC_DIR ]]; then
     echo "ERROR: \$CYLC_DIR required"
     usage
@@ -49,7 +54,6 @@ cd $TMP
 git clone $CYLC_DIR
 mv $(basename $CYLC_DIR) $REPO
 cd $REPO
-. environment.sh
 rm -rf .git
 
 # - replace the cylc version tag throughout
@@ -109,7 +113,6 @@ tar xzf $TARBALL
 
 if $TAG; then
     cd $ORIG_CYLC_DIR
-    . environment.sh
     git tag -a $VSN -m 'New cylc release tag.'
 fi
 
