@@ -37,10 +37,11 @@
 
 import taskdef
 from cycle_time import ct
+from copy import deepcopy
 import re, os, sys, logging
 from mkdir_p import mkdir_p
 from validate import Validator
-from configobj import get_extra_values, flatten_errors
+from configobj import get_extra_values, flatten_errors, Section
 from cylcconfigobj import CylcConfigObj, ConfigObjError
 from registration import getdb, regsplit, RegistrationError
 from graphnode import graphnode, GraphNodeError
@@ -435,6 +436,56 @@ class config( CylcConfigObj ):
             for task in self['task families'][fam]:
                 self.member_of[ task ] = fam
 
+        # Parse task config generators.  If the [[TASK]] section name
+        # contains commas then it is a list of task names for which the
+        # subsequent config applies to each member. We copy the config
+        # section for each member and substitute '$(TASK)' for the
+        # actual task name in all config items.
+        for item in self['tasks']:
+            if re.search( ',', item ):
+                # list of task names
+                task_names = re.split(',', item )
+            else:
+                # a single task name 
+                continue
+            # generate task config for each list member
+            for name in task_names:
+                # get a copy of the full generic config section
+                taskconfig = deepcopy( self['tasks'][item] )
+                # specialise it to the actual task
+                self.specialize( name, taskconfig )
+                # record the new config under the task name
+                self['tasks'][name] = taskconfig
+            # delete the original multi-task section
+            del self['tasks'][item]
+
+    def specialize( self, name, config ):
+        # recursively specialize a generic task config section to a
+        # specific task, by replaceing '$(TASK)' with 'name' in all
+        # config items.
+        for item in config:
+            if isinstance( config[item], str ):
+                # single config item
+                config[item] = re.sub( '\$\(TASK\)', name, config[item] )
+
+            elif isinstance( config[item], list ):
+                # a list of values 
+                newlist = []
+                for mem in config[item]:
+                    if isinstance( mem, str ):
+                        newlist.append( re.sub( '\$\(TASK\)', name, mem ))
+                    else:
+                        newlist.append( mem )
+                config[item] = newlist
+
+            elif isinstance( config[item], Section ):
+                # recursive call for a sub-section
+                self.specialize( name, config[item] )
+
+            else:
+                # boolean or None values
+                continue
+
     def set_trigger( self, task_name, output_name=None, offset=None, asyncid_pattern=None ):
         if output_name:
             try:
@@ -487,7 +538,8 @@ class config( CylcConfigObj ):
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
         for name in self.taskdefs:
             if name not in self['tasks']:
-                print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it will run as a dummy task.'
+                if name not in self['task families']:
+                    print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it will run as a dummy task.'
         for name in self['tasks']:
             if name not in self.taskdefs:
                 print >> sys.stderr, 'WARNING: task "' + name + '" is defined in [tasks] but not used in the graph.'
