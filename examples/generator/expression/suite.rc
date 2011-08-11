@@ -1,0 +1,57 @@
+title = "expression task generator example suite"
+
+description = """A list of similar tasks all defined at once, in which 
+the task names are generated automatically by a Python expression (a
+"list comprehension"). See also the 'explicit' task generator example,
+in which the task names are listed explicitly."""
+
+[task families] 
+    # generate a list of task names (m1, m2, ..., m5):
+    ensemble = 'list( "m" + str(i) for i in range(1,6))'
+
+[dependencies]
+    [[0,6,12,18]]
+        graph = "foo => ensemble => bar"
+
+[environment]
+    JOBS = $HOME/ensemble
+    # how to use task-specific values that don't contain the task name:
+    JOB_DIR_m1 = $JOBS/j1
+    JOB_DIR_m2 = $JOBS/j2
+    JOB_DIR_m3 = $JOBS/j3
+    JOB_DIR_m4 = $JOBS/j4
+    JOB_DIR_m5 = $JOBS/j5
+
+[tasks]
+    [[ensemble]]  # Define all tasks in the ensemble family at once.
+        description = "Task $(TASK) of the ensemble family"
+        command = """
+cylc task message "Hello 1 from $(TASK) aka $TASK_NAME"
+sleep 5
+if [[ $TASK_NAME = m3 ]]; then # how to distinguish tasks at run time.
+    cylc task message "My JOB DIRECTORY is $JOB_DIR"
+else
+    cylc task message "My job directory is $JOB_DIR"
+fi
+sleep 5"""
+        [[[environment]]]
+            JOB_DIR = $JOB_DIR_$(TASK)
+
+[visualization]
+    show family members = True
+
+# NOTE: $(TASK) is replaced by the actual task name in all config items
+# at the time of task definition, whereas all tasks are provided with
+# $TASK_NAME (and $TASK_ID and $CYCLE_TIME) at run time. So you can use
+# $(TASK) or $TASK_NAME in the command or environment items (but $(TASK)
+# is required in 'JOB_DIR = ...' above because we are generating an
+# environment variable name on the right side, at task definition time).
+# Inspect a task job script to see all this: cylc submit --dry-run.
+
+# NOTE: For similar tasks that are not members of a family you can do:
+# [tasks]
+#   [[ 'list( "m" + str(i) for i in range(1,6))' ]]
+
+# NOTE: The Python list generating expression must be:
+# 1) of the form 'list(...)' not '[...]'.
+# 2) quoted to hide internal commas from the suite.rc parser. 
