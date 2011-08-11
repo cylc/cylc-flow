@@ -432,7 +432,19 @@ class config( CylcConfigObj ):
         self.member_of = {}
         self.members = {}
         for fam in self['task families']:
-            self.members[ fam ] = self['task families'][fam]
+            members = []
+            for mem in self['task families'][fam]:
+                if re.match( '^list\(.*\)$', mem ):
+                    # python list comprehension
+                    try:
+                        members += eval( mem )
+                    except SyntaxError,x:
+                        raise SuiteConfigError, 'Python syntax error in task family: ' + mem
+                    self['task families'][fam].remove( mem )
+                else:
+                    members.append(mem)
+            self['task families'][fam] = members
+            self.members[ fam ] = members
             for task in self['task families'][fam]:
                 self.member_of[ task ] = fam
 
@@ -442,22 +454,35 @@ class config( CylcConfigObj ):
         # section for each member and substitute '$(TASK)' for the
         # actual task name in all config items.
         for item in self['tasks']:
-            if re.search( ',', item ):
+            delete_item = True
+            if item in self['task families']:
+                # a task family
+                task_names = self.members[item]
+                delete_item = False
+            elif re.match( '^list\(.*\)$', item ):
+                # python list comprehension
+                try:
+                    task_names = eval( item )
+                except:
+                    raise SuiteConfigError, 'Python syntax error in task generator: ' + item
+            elif re.search( ',', item ):
                 # list of task names
-                task_names = re.split(',', item )
+                task_names = re.split(', *', item )
             else:
                 # a single task name 
                 continue
             # generate task config for each list member
             for name in task_names:
                 # get a copy of the full generic config section
-                taskconfig = deepcopy( self['tasks'][item] )
+                tconfig = deepcopy( self['tasks'][item] )
                 # specialise it to the actual task
-                self.specialize( name, taskconfig )
+                self.specialize( name, tconfig )
                 # record the new config under the task name
-                self['tasks'][name] = taskconfig
-            # delete the original multi-task section
-            del self['tasks'][item]
+                self['tasks'][name] = tconfig
+
+            if delete_item:
+                # delete the original multi-task section
+                del self['tasks'][item]
 
     def specialize( self, name, config ):
         # recursively specialize a generic task config section to a
