@@ -1,0 +1,36 @@
+title = task generator demo suite
+
+description = """A family of five similar tasks defined by a generic
+task config section in which $(TASK) is replaced, everywhere, by the
+actual task name."""
+
+[task families]
+    ensemble = m1,m2,m3,m4,m5
+
+[environment]
+    # Here's how to use task-specific values that don't contain the
+    # actual task name (see JOB_DIR in the task environment below).
+    JOB_DIR_m1 = $HOME/jobs/j1
+    JOB_DIR_m2 = $HOME/jobs/j2
+    JOB_DIR_m3 = $HOME/jobs/j3
+    JOB_DIR_m4 = $HOME/jobs/j4
+    JOB_DIR_m5 = $HOME/jobs/j5
+
+[dependencies]
+    [[0,6,12,18]]
+        graph = "preproc => ensemble => postproc"
+
+[tasks]
+    [[m1,m2,m3,m4,m5]]
+        description = "Task $(TASK) of the ensemble task family"
+        command = """
+sleep 5
+cylc task message "$(TASK) running directory: $RUNNING_DIR"
+cylc task message "$(TASK) job directory: $JOB_DIR"
+sleep 5"""
+        [[[environment]]]
+            RUNNING_DIR = $HOME/running/$(TASK)
+            JOB_DIR = $JOB_DIR_$(TASK)
+
+[visualization]
+    show family members = True
