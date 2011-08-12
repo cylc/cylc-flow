@@ -25,9 +25,20 @@ easily be run via sudo for this method, as /etc/sudoers would have to
 be configured to allow the suite owner to execute 
 'sudo -u TASK-OWNER JOBFILE' for any conceivable jobfile.
     """
+    TEMPLATE_L = "%(cmd)s </dev/null 1>%(out)s 2>%(err)s &"
+    TEMPLATE_R = ( "mkdir -p $(dirname %(cmd)s)"
+                   + " && cat >%(cmd)s"
+                   + " && chmod +x %(cmd)s"
+                   + " && (" + TEMPLATE_L + ")" )
     def construct_jobfile_submission_command( self ):
         # stdin redirection (< /dev/null) allows background execution 
         # even on a remote host - ssh can exit without waiting for the
         # remote process to finish.
-        self.command = self.jobfile_path + " </dev/null" + \
-                " 1> " + self.stdout_file + " 2> " + self.stderr_file + " &"
+        template = TEMPLATE_L
+        data = { "cmd": self.jobfile_path,
+                 "out": self.stdout_file,
+                 "err": self.stderr_file }
+        if not self.local_job_submit:
+            template = TEMPLATE_R
+            data["cmd"] = self.remote_jobfile_path
+        self.command = template % data

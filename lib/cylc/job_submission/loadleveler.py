@@ -52,4 +52,7 @@ Minimalist loadleveler job submission.
         self.directives = defaults
 
     def construct_jobfile_submission_command( self ):
-        self.command = 'llsubmit ' + self.jobfile_path
+        arg = "-"
+        if self.local_job_submit:
+            arg = self.jobfile_path
+        self.command = 'llsubmit %s' % (arg)
