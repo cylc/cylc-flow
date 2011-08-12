@@ -62,18 +62,14 @@ rm -rf .git
 # - remove dev material
 
 echo "SETTING VERSION TAG IN MAIN COMMAND AND USER GUIDE"
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" src/gui/gcylc.py
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" src/gui/SuiteControl.py
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" lib/cylc/gui/gcylc.py
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" lib/cylc/gui/SuiteControl.py
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" bin/cylc
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/cug-pdf.tex
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/cug-html.tex
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" README
 
 echo "MAKING DOCUMENTATION (USER GUIDE)"
-# make sure documentation processing uses the release versions
-# (which have the correct version tag inserted).
-export PATH=bin:$PATH
-export PYTHONPATH=src:$PYTHONPATH
 echo
 echo "LATEX PROCESSING"
 pwd
@@ -95,10 +91,10 @@ echo "DELETING DEV DIRECTORY"
 rm -r dev
 
 echo "REMOVING .pyc FILES"
-find . -name '*.pyc' | xargs rm
+find . -name '*.pyc' | xargs rm -f
 
 echo "REMOVING .git files"
-find . -name '.git*' | xargs rm
+find . -name '.git*' | xargs rm -f
 
 echo "DONE"
 
