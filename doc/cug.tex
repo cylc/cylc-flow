@@ -784,6 +784,8 @@ same time. In other words, some tasks may pass through the ``current cycle''
 (etc.) at different times as the suite evolves, particularly in delayed
 (catch up) operation.
 
+
+
 \section{Quick Start Guide} 
 \label{QuickStartGuide}
 
@@ -803,24 +805,6 @@ DONE
 \end{lstlisting}
 %\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 (suite titles have been truncated above to reduce line length).
-
-\subsection{New Features Not Yet Covered In the Quick Start Guide}
-
-\begin{myitemize}
-\item  One-off asynchronous tasks (no associated cycle time).
-\item  Repeating asynchronous tasks for parallel processing of satellite passes.
-\end{myitemize}
-
-Asynchronous tasks, and their new example suites, are partially
-documented in Section~\ref{AsynchronousTasks}.
-
-\begin{myitemize}
-\item  Suite graphing now has default start and end cycles, and you may define 
-    your own default start and end cycles for graphing in the suite.rc file.
-\item  Default initial and final cycle times for running a suite can now 
-    optionally be defined in the suite.rc file, so you don't have to keep 
-    typing them on the command line, or GUI panel, for repetitive testing.
-\end{myitemize}
 
 
 \subsection{Configuring Your Environment For Cylc}
@@ -2388,7 +2372,7 @@ fail) use a conditional trigger on the family:
         graph  =  "Family | Family:fail => PostProc"
 \end{lstlisting}
 
-Task families are listed in the top level of the suite.rc file, and 
+Task families are defined in a special section of the suite.rc file, and 
 then used in the suite graph just like ordinary tasks.
 
 \begin{lstlisting}
@@ -2424,6 +2408,16 @@ effective dependencies on the right (plotted with
 \lstinline@SUITE.RC: [visualization] -> show family members = True@).}
 \label{fig-fam-eg-3}
 \end{figure} 
+
+Task family members can be defined by an explicit list of task names, as
+above, or a list-generating Python expression. See
+Appendix~\ref{SuitercTaskFamilies} and the ``generator'' example suites
+for details.
+
+If a family's member tasks are all very similar, they can be defined 
+all at once under a single task definition section. See
+Appendix~\ref{SuitercTasks} and the ``generator'' example suites
+for details.
 
 \paragraph{Recovering From Task Family Failures} 
 
@@ -2512,6 +2506,36 @@ etc.) because task and suite identity can be extracted portably from the
 task execution environment supplied by the suite
 (Section~\ref{TaskExecutionEnvironment}) - then to rename a task, just
 change the name in the suite.rc file.
+
+\subsubsection{Defining Multiple Tasks At Once}
+\label{MultiTaskDef}
+
+Groups of similar tasks that differ only in a few configuration
+details can be defined in single suite.rc task definition sections.
+Potential applications include groups of similar obs processing tasks,
+and forecasting ensembles.
+
+Groups of similar tasks are likely to be candidates for treatment as
+task families, but they don't have to be.
+
+For tasks families, the task names can be defined by an explicit list
+of names, or a generator expression, under \lstinline=[task families]=,
+then the family name can be used in place of individual task names 
+under the \lstinline=[tasks]= section, and subsequent configuration
+items will then apply to each member of the group. For non-family 
+groups, the list of explicit names or the generator expression can 
+take the place of the individual task names under \lstinline=[tasks]=.
+Finally, because at least a few configuration items will need to vary
+across the otherwise similar tasks, cylc replaces the variable
+\lstinline=$(TASK)= with the actual task name, at task definition time, 
+in all configuration items. 
+
+The annotated example suites,
+\begin{myitemize}
+    \item \lstinline=examples:generator_explicit=
+    \item \lstinline=examples:generator_expression=
+\end{myitemize}
+show exactly how to use this new feature.  See also Appendix~\ref{SuitercTasks}.
 
 \subsubsection{Task Execution Environment}
 \label{TaskExecutionEnvironment}
@@ -3343,16 +3367,135 @@ and in the tasks section.
 
 
 
-\section{Getting More Information}
-\label{RunningCylcSuites}
 
-Some of the following topics are yet to be properly documented in the
-User Guide. For the moment, see cylc command line help (which is
-comprehensive, and is included verbatim in Section~\ref{CommandReference});
-the suite.rc reference
-(Section~\ref{SuiteRCReference}); the gcylc help menus; and the examples
-in this document (particularly the {\em Quick Start Guide},
-Section~\ref{QuickStartGuide}). 
+\section{New Features}
+
+{\em Documentation here will eventually be integrated
+into the preceding sections of the User Guide}.
+
+\subsection{Asynchronous Tasks}
+\label{AsynchronousTasks}
+
+{\em Introduced at version $3.4.0$}
+
+Cylc now has {\em one-off asynchronous tasks} for constructing one-off
+suites of tasks that have no associated cycle time, and 
+{\em repeating asynchronous tasks} for processing satellite
+passes (these propagate a special ``data ID'' through the task tree, 
+and can process consecutive passes in parallel if the data happens to 
+come in quickly). 
+
+Asynchronous tasks have an arbitrary integer tag instead of a cycle
+time. Cylc can manage both asynchronous and cycling tasks within the
+same suite.
+
+\subsubsection{One-off Asynchronous Tasks}
+
+These tasks are defined with no sub-heading under [dependencies] 
+in the suite.rc file: 
+
+\begin{lstlisting}
+# SUITE.RC
+[dependencies]
+    graph = "foo => bar => baz"
+    [[0,12]]
+        graph  =  "baz => CyclingA => CyclingB"
+\end{lstlisting}
+
+In this listing two cycling tasks are made to wait on a chain of three 
+one-off asynchronous tasks (they can be used in entirely non-cycling
+suites, or for initial processing prior to starting the cycling tasks).
+
+\paragraph{C.f. One-off Synchronous ``startup'' Tasks}
+
+One-off synchronous startup tasks run only when a cycling suite is
+{\em cold started} and they are often associated with subsequent one-off
+{\em cold start tasks} used to bootstrap a cycling suite into existence. 
+
+The distinction between cold and warm start is only meaningful for
+cycling tasks, and one-off asynchronous tasks may be best used in
+constructing entirely non-cycling suites.
+
+However, one-off asynchronous tasks can precede cycling tasks in the
+same suite, as shown above. It seems likely that, if used in this way,
+they will be intended as startup tasks - so currently they will
+only run in a cold start.  For completeness though, in a future release
+we will make it possible to have one-off asynchronous in a cycling suite
+that run even if the suite is warm started. 
+
+\paragraph{One-off Asynchronous Example Suite}
+
+See suite \lstinline=[admin]:examples:async_oneoff=
+
+\subsubsection{Repeating Asynchronous Tasks}
+
+These tasks can be used to construct suites for processing asynchronous 
+satellite datasets, wherein the data arrives at (effectively) random
+intervals. The first task in the suite 
+should be of the {\em daemon} type, which runs indefinitely watching 
+for incoming data. When new data is detected it sends a message 
+that matches a registered pattern containing some unique data ID. 
+The daemon task proxy extracts the ID and dynamically registers a new
+output, containing the actual ID, that downstream tasks can trigger off.
+The downstream tasks likewise have prerequisites containing the pattern,
+and when these are satisfied the actual ID is substituted
+into their registered outputs. Each asynchronous task proxy passes the
+ID to its real task as \lstinline=$ASYNCID= so that it can process the
+correct dataset. Repeating asynchronous tasks are defined under special 
+sub-headings in the [dependencies] section of the suite.rc graph, e.g.:
+
+\begin{lstlisting}
+# SUITE.RC
+[dependencies]
+    [[ASYNCID:SATID-\d+]]
+        graph  =  "watcher:a => foo:a & bar:a => baz"
+        daemon = watcher
+[tasks]
+    [[watcher]]
+        # ...
+        [[[outputs]]]
+            a = "New dataset $(ASYNCID) ready for processing"
+    [[foo]]
+        # ...
+        [[[outputs]]]
+            a = "Products generated from dataset $(ASYNCID)"
+# ...        
+\end{lstlisting}
+
+If the asynchronous datasets happen to become available in quick succession,
+entire trees of asynchronous processing can run in parallel.
+
+\paragraph{Repeating Asynchronous Example Suite}
+
+See suite \lstinline=[admin]:examples:async_repeat=
+
+\subsection{Defining Multiple Tasks At Once}
+
+{\em Introduced at version $3.5.0$}
+
+{\em This is documented in Section~\ref{MultiTaskDef}}
+
+\subsection{Default Start And End Cycles}
+
+{\em Introduced at version $3.4.0$}
+
+\begin{myitemize}
+\item  Suite graphing now has default start and end cycles, and you may define 
+    your own default start and end cycles for graphing in the suite.rc file.
+\item  Default initial and final cycle times for running a suite can now 
+    optionally be defined in the suite.rc file, so you don't have to keep 
+    typing them on the command line, or GUI panel, for repetitive testing.
+\end{myitemize}
+
+
+\subsection{Getting More Information}
+
+For more help on any topic, see cylc command line help (which is
+comprehensive, and is included verbatim in
+Section~\ref{CommandReference}); the suite.rc reference
+(Section~\ref{SuiteRCReference}); the gcylc help menus; and the {\em
+Quick Start Guide} (Section~\ref{QuickStartGuide}); and all of the 
+examples suites installed into the central suite database.
 
 \begin{myitemize}
     \item The difference between cold-, warm-, raw-, and re-starting, a suite
@@ -3412,94 +3555,6 @@ Section~\ref{QuickStartGuide}).
 \end{myitemize}
 
 %\pagebreak
-
-\section{Asynchronous Tasks (No Cycle Time)}
-\label{AsynchronousTasks}
-
-{\em Documentation of this new feature (post version 3.4.0) will
-eventually be integrated into the preceding sections of the User Guide}.
-
-Asynchronous tasks have an arbitrary integer tag instead of a cycle
-time. Cylc can manage both asynchronous and cycling tasks within the
-same suite.
-
-\subsection{One-off Asynchronous Tasks}
-
-These tasks are defined with no sub-heading under [dependencies] 
-in the suite.rc file: 
-
-\begin{lstlisting}
-# SUITE.RC
-[dependencies]
-    graph = "foo => bar => baz"
-    [[0,12]]
-        graph  =  "baz => CyclingA => CyclingB"
-\end{lstlisting}
-
-In this listing two cycling tasks are made to wait on a chain of three 
-one-off asynchronous tasks (they can be used in entirely non-cycling
-suites, or for initial processing prior to starting the cycling tasks).
-
-\subsubsection{Comparison with One-off Non-asynchronous ``startup'' Tasks}
-
-One-off non-asynchronous startup tasks run only when a cycling suite is
-{\em cold started} and they are often associated with subsequent one-off
-{\em cold start tasks} used to bootstrap a cycling suite into existence. 
-The distinction between cold and warm starting is only meaningful for
-cycling tasks, however, so {\em one-off asynchronous tasks run every
-time a suite is started} (restarts just resurrect the prior suite state, as
-usual). Thus, while one-off asynchronous tasks can precede cycling
-tasks in the same suite, as shown above, it may be that non-asynchronous 
-startup tasks are more appropriate for this purpose, and that one-off
-asynchronous tasks are best used in constructing entirely non-cycling
-suites.
-
-\subsubsection{One-off Asynchronous Example Suite}
-
-See suite \lstinline=[admin]:examples:async_oneoff=
-
-\subsection{Repeating Asynchronous Tasks}
-
-These tasks can be used to construct suites for processing asynchronous 
-satellite datasets, wherein the data arrives at (effectively) random
-intervals. The first task in the suite 
-should be of the {\em daemon} type, which runs indefinitely watching 
-for incoming data. When new data is detected it sends a message 
-that matches a registered pattern containing some unique data ID. 
-The daemon task proxy extracts the ID and dynamically registers a new
-output, containing the actual ID, that downstream tasks can trigger off.
-The downstream tasks likewise have prerequisites containing the pattern,
-and when these are satisfied the actual ID is substituted
-into their registered outputs. Each asynchronous task proxy passes the
-ID to its real task as \lstinline=$ASYNCID= so that it can process the
-correct dataset. Repeating asynchronous tasks are defined under special 
-sub-headings in the [dependencies] section of the suite.rc graph, e.g.:
-
-\begin{lstlisting}
-# SUITE.RC
-[dependencies]
-    [[ASYNCID:SATID-\d+]]
-        graph  =  "watcher:a => foo:a & bar:a => baz"
-        daemon = watcher
-[tasks]
-    [[watcher]]
-        # ...
-        [[[outputs]]]
-            a = "New dataset $(ASYNCID) ready for processing"
-    [[foo]]
-        # ...
-        [[[outputs]]]
-            a = "Products generated from dataset $(ASYNCID)"
-# ...        
-\end{lstlisting}
-
-If the asynchronous datasets happen to become available in quick succession,
-entire trees of asynchronous processing can run in parallel.
-
-\subsubsection{Repeating Asynchronous Example Suite}
-
-See suite \lstinline=[admin]:examples:async_repeat=
-
 
 \section{Suite Design Principles}
 \label{SuiteDesignPrinciples}

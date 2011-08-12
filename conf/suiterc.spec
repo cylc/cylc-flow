@@ -729,8 +729,9 @@ manual task completion messaging = boolean( default=False )
 #>\end{myitemize}
 
 [task families]
+#> \label{SuitercTaskFamilies}
 #> A task family is a named group of tasks that appears as a single task
-#> in the suite dependency graph. Thus the entire family triggers as a group,
+#> in the suite dependency graph. The entire family triggers as a group,
 #> and downstream tasks can trigger off the entire family finishing. 
 #> Task families can have internal dependencies, and family members
 #> can also appear in the graph as non-family tasks. See
@@ -741,8 +742,18 @@ manual task completion messaging = boolean( default=False )
 #>\item {\em section:} [task families]
 #>\item {\em type:} list of task names (the family members)
 #>\item {\em default:} None
-#>\item {\em example:} \lstinline@ObsProc = ObsSurface, ObsSonde, ObsAircraft, ObsSat@
+#>\item {\em example (explicit):} \lstinline@ObsProc = ObsSurface, ObsSonde, ObsAircraft, ObsSat@
+#>\item {\em example (expression):} \lstinline@ensemble = 'list( "m" + str(i) for i in range(1,6))'@
 #>\end{myitemize}
+#> The list of family members may be defined by an explicit list of task
+#> names or a
+#> list-generating Python expression (a ``list comprehension''). The
+#> Python expression must be of the form \lstinline='list(...)'= and 
+#> not \lstinline='[...]'=, and it must be quoted to hide the internal
+#> comma in the range expression from the suite.rc parser. The
+#> example above generates the task names \lstinline=m1, m2, ..., m5=. 
+#> If tasks in a family share most configuration details, they can be 
+#> defined all at once in a single subsection under \lstinline=[tasks]=.
 
 [dependencies]
 #> The suite dependency graph should be defined under this section.
@@ -852,13 +863,31 @@ __many__ = string
 #>\end{myitemize}
 
 [tasks]
+#> \label{SuitercTasks}
     [[__many__]]
 #> Replace MANY with each task name, followed by configuration items for that
-#> task.
+#> task. Groups of tasks that need to be configured very similarly can be 
+#> defined all at once under a single section here, by replacing the individual
+#> task name with either a task family name, an explicit list of task names, 
+#> or a list-generating Python expression (a ``list comprehension'').
 #>\begin{myitemize}
 #>\item {\em section:} [tasks]
-#>\item {\em example:} \lstinline@[[TaskF]]@
+#>\item {\em example (one task):} \lstinline@[[TaskX]]@
+#>\item {\em example (family members):} \lstinline@[[FamilyF]]@
+#>\item {\em example (explicit list):} \lstinline@[[A, B, C]]@
+#>\item {\em example (expression):} \lstinline@[['list( "m" + str(i) for i in range(1,6))']]@
 #>\end{myitemize}
+#> Python list-generating expressions must be of the form
+#> \lstinline='list(...)'= and not \lstinline='[...]'=, and they must be
+#> quoted to hide the comma in the range expression from the suite.rc
+#> parser. The example above generates the task names
+#> \lstinline=m1, m2, ..., m5=.  
+#> For grouped tasks, at least a few configuration items will
+#> need to vary across the otherwise similar members. To allow this cylc
+#> replaces the variable
+#> \lstinline=$(TASK)= with the actual task name, at task definition time, 
+#> in all configuration items.  Refer to the two ``generator''
+#> example suites to see exactly how to use this feature.
 
     description = string( default="No description supplied" )
 #> A description of the task, retrievable at run time
