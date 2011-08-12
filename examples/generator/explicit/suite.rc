@@ -8,6 +8,9 @@ a Python expression (a "list comprehension")."""
 [task families]
     ObsProc = surface, sonde, aircraft
 
+[special tasks]
+    sequential = foo    # just to slow the suite down a bit
+
 [dependencies]
     [[0,6,12,18]]
         graph = "foo => ObsProc => bar"

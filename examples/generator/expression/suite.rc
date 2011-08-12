@@ -9,6 +9,9 @@ in which the task names are listed explicitly."""
     # generate a list of task names (m1, m2, ..., m5):
     ensemble = 'list( "m" + str(i) for i in range(1,6))'
 
+[special tasks]
+    sequential = foo    # just to slow the suite down a bit
+
 [dependencies]
     [[0,6,12,18]]
         graph = "foo => ensemble => bar"
