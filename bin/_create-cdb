@@ -82,9 +82,11 @@ echo " + Unregistering the originals in your private database"
 # by accident. 
 cylc unregister examples:
 
-# determine CDB directory location
-export CYLC_DIR
-CDB=$(python -c 'from cylc.conf.CylcGlobals import central_regdb_dir; print central_regdb_dir')
+# Determine CDB directory location
+# The following no longer works (see comment in lib/cylc/__init__.py)
+# CDB=$(python -c 'from cylc.conf.CylcGlobals import central_regdb_dir; print central_regdb_dir')
+# Use new secret command instead:
+CDB=$(cylc print-cdb-dir)
 
 echo
 echo " + Setting central database permissions: $CDB"

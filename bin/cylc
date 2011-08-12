@@ -421,6 +421,11 @@ if len(args) == 1:
         for key in keys:
             print key
         sys.exit(0)
+    if args[0] == 'print-cdb-dir':
+        # temporary secret argument used by create-cdb
+        from cylc.conf.CylcGlobals import central_regdb_dir
+        print central_regdb_dir
+        sys.exit(0)
     if is_help( args[0] ):
         # cylc help
         print usage
