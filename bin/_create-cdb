@@ -42,8 +42,7 @@ if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then
 fi
 
 if [[ -z CYLC_DIR ]]; then
-    echo "export \$CYLC_DIR and source \$CYLC_DIR/environment.sh"
-    echo "before running this script."
+    echo "export \$CYLC_DIR before running this script."
     exit 1
 fi
 
@@ -68,6 +67,9 @@ cylc register examples:detach $CYLC_DIR/examples/detach
 cylc register examples:async_oneoff $CYLC_DIR/examples/async/oneoff
 cylc register examples:async_repeat $CYLC_DIR/examples/async/repeating
 
+cylc register examples:generator_explicit $CYLC_DIR/examples/generator/explicit
+cylc register examples:generator_expression $CYLC_DIR/examples/generator/expression
+
 echo
 echo " + Exporting examples suites to the central database"
 # Export the example suites to the central database.
@@ -81,10 +83,11 @@ echo " + Unregistering the originals in your private database"
 cylc unregister examples:
 
 # determine CDB directory location
-CDB=$(python -c 'from CylcGlobals import central_regdb_dir; print central_regdb_dir')
+export CYLC_DIR
+CDB=$(python -c 'from cylc.conf.CylcGlobals import central_regdb_dir; print central_regdb_dir')
 
 echo
-echo " + Setting central database permissions"
+echo " + Setting central database permissions: $CDB"
 
 # Make the central db writeable by all.
 # (could be just g+w if all cylc users are in the same group).
