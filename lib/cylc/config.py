@@ -1114,6 +1114,8 @@ class config( CylcConfigObj ):
                 self.process_graph_line( line, section, graph_only )
 
         self.graph_loaded = True
+        if graph_only:
+            return
 
         # task families
         members = []
