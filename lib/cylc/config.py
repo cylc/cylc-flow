@@ -34,10 +34,9 @@
 # contrast the scheduling algorithm, for example, is almost trivial) and
 # it could do with some serious refactoring.
 #======================================================================
-
 import taskdef
+from OrderedDict import OrderedDict
 from cycle_time import ct
-from copy import deepcopy
 import re, os, sys, logging
 from mkdir_p import mkdir_p
 from validate import Validator
@@ -448,8 +447,9 @@ class config( CylcConfigObj ):
             for task in self['task families'][fam]:
                 self.member_of[ task ] = fam
 
-        # Parse task config generators.  If the [[TASK]] section name
-        # contains commas then it is a list of task names for which the
+        # Parse task config generators. If the [[TASK]] section name
+        # is a family name, or a list of task names, or is a list
+        # comprehension, then it is a list of task names for which the
         # subsequent config applies to each member. We copy the config
         # section for each member and substitute '$(TASK)' for the
         # actual task name in all config items.
@@ -471,44 +471,44 @@ class config( CylcConfigObj ):
             else:
                 # a single task name 
                 continue
-            # generate task config for each list member
+            # generate task configuration for each list member
             for name in task_names:
-                # get a copy of the full generic config section
-                tconfig = deepcopy( self['tasks'][item] )
+                # create a new task config section
+                tconfig = OrderedDict()
                 # specialise it to the actual task
-                self.specialize( name, tconfig )
-                # record the new config under the task name
+                self.specialize( name, tconfig, self['tasks'][item] )
+                # record it under the task name
                 self['tasks'][name] = tconfig
 
             if delete_item:
                 # delete the original multi-task section
                 del self['tasks'][item]
 
-    def specialize( self, name, config ):
-        # recursively specialize a generic task config section to a
-        # specific task, by replaceing '$(TASK)' with 'name' in all
-        # config items.
-        for item in config:
-            if isinstance( config[item], str ):
-                # single config item
-                config[item] = re.sub( '\$\(TASK\)', name, config[item] )
-
-            elif isinstance( config[item], list ):
+    def specialize( self, name, target, source ):
+        # recursively specialize a generator task config section
+        # ('source') to a specific config section (target) for task
+        # 'name', by replaceing '$(TASK)' with 'name' in all items.
+        for item in source:
+            if isinstance( source[item], str ):
+                # single source item
+                target[item] = re.sub( '\$\(TASK\)', name, source[item] )
+            elif isinstance( source[item], list ):
                 # a list of values 
                 newlist = []
-                for mem in config[item]:
+                for mem in source[item]:
                     if isinstance( mem, str ):
                         newlist.append( re.sub( '\$\(TASK\)', name, mem ))
                     else:
                         newlist.append( mem )
-                config[item] = newlist
-
-            elif isinstance( config[item], Section ):
-                # recursive call for a sub-section
-                self.specialize( name, config[item] )
-
+                target[item] = newlist
+            elif isinstance( source[item], Section ):
+                # recursive call for to handle a sub-section
+                if item not in target:
+                    target[item] = OrderedDict()
+                self.specialize( name, target[item], source[item] )
             else:
                 # boolean or None values
+                target[item] = source[item]
                 continue
 
     def set_trigger( self, task_name, output_name=None, offset=None, asyncid_pattern=None ):
