@@ -17,10 +17,8 @@ a Python expression (a "list comprehension")."""
 
 [environment]
     JOBS = $HOME/ObsProcessingJobs
-    # how to use task-specific values that don't contain the task name:
-    JOB_DIR_surface   = $JOBS/j1
-    JOB_DIR_sonde     = $JOBS/j2
-    JOB_DIR_aircraft  = $JOBS/j3
+    # a task-specific value that doesn't contain the task name:
+    JOB_DIR_surface   = $JOBS/xxx
 
 [tasks]
     [[ObsProc]]  # Define all tasks in the ObsProc family at once.
@@ -35,7 +33,7 @@ else
 fi
 sleep 5"""
         [[[environment]]]
-            JOB_DIR = $JOB_DIR_$(TASK)
+            JOB_DIR = ${JOB_DIR_$(TASK):-$JOBS/$(TASK)}
 
 [visualization]
     show family members = True

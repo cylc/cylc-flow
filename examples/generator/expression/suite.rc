@@ -18,12 +18,8 @@ in which the task names are listed explicitly."""
 
 [environment]
     JOBS = $HOME/ensemble
-    # how to use task-specific values that don't contain the task name:
-    JOB_DIR_m1 = $JOBS/j1
-    JOB_DIR_m2 = $JOBS/j2
-    JOB_DIR_m3 = $JOBS/j3
-    JOB_DIR_m4 = $JOBS/j4
-    JOB_DIR_m5 = $JOBS/j5
+    # a task-specific value that doesn't contain the task name:
+    JOB_DIR_m1 = $JOBS/xxx
 
 [tasks]
     [[ensemble]]  # Define all tasks in the ensemble family at once.
@@ -38,7 +34,7 @@ else
 fi
 sleep 5"""
         [[[environment]]]
-            JOB_DIR = $JOB_DIR_$(TASK)
+            JOB_DIR = ${JOB_DIR_$(TASK):-$JOBS/$(TASK)}
 
 [visualization]
     show family members = True
