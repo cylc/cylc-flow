@@ -135,9 +135,12 @@ Version number X.Y.Z incrementing:
   compatibility with recent cylc versions.
 
 3.5.0
+
  + Fixed a bug, introduced in 3.4.0, in the lockserver client program
   for manual lock management.
+
  + The cylc code base is now a Python library and the environment.sh
- script is no longer needed: the top level commands automatically
- configure access to the sub commands and library modules at run time. 
+ script is no longer needed: you just need the cylc command in $PATH.
+
  + Task generators: definition of multiple similar tasks all at once.
+ Two new examples suites illustrate this new feature.
