@@ -4222,6 +4222,17 @@ target suites - all suites are thus entirely isolated from one another.
 %comparing its cycle time (and offset) to the wall clock time.  
 
 
+\section{Known Bugs At Version THIS IS NOT A VERSIONED RELEASE}
+
+\begin{myitemize}
+    \item Conditional triggers containing both AND and OR in the same
+        expression work properly at run time, but they are not graphed
+        correctly.
+    \item Sometimes the gcylc database view does not update when a suite
+        or group has been unregistered by another process. Workaround:
+        restart gcylc.
+\end{myitemize}
+
 \section{Acknowledgements}
 
 Bernard Miville and Phil Andrews (NIWA), and David Matthews (Met
