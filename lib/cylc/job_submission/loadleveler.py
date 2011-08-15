@@ -58,4 +58,4 @@ Minimalist loadleveler job submission.
         arg = "-"
         if self.local_job_submit:
             arg = self.jobfile_path
-        self.command = '%(q_cmd)s %(arg)s' % {"q_cmd": Q_CMD, "arg": arg}
+        self.command = '%(q_cmd)s %(arg)s' % {"q_cmd": self.Q_CMD, "arg": arg}

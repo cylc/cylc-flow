@@ -34,11 +34,11 @@ be configured to allow the suite owner to execute
         # stdin redirection (< /dev/null) allows background execution 
         # even on a remote host - ssh can exit without waiting for the
         # remote process to finish.
-        template = TEMPLATE_L
+        template = self.TEMPLATE_L
         data = { "cmd": self.jobfile_path,
                  "out": self.stdout_file,
                  "err": self.stderr_file }
         if not self.local_job_submit:
-            template = TEMPLATE_R
+            template = self.TEMPLATE_R
             data["cmd"] = self.remote_jobfile_path
         self.command = template % data

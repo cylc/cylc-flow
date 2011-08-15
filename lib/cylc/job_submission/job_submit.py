@@ -114,10 +114,11 @@ class job_submit(object):
             self.remote_host = remote_host
         elif self.__class__.global_remote_host:
             self.remote_host = self.__class__.global_remote_host
+        else:
+            self.remote_host = None
 
         self.local_job_submit = (
-            (not self.remote_host)
-            and (not self.__class__.global_remote_host)
+                (not self.remote_host or self.remote_host == "localhost")
             and self.task_owner == self.suite_owner
         )
 
@@ -265,22 +266,24 @@ class job_submit(object):
         os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
 
         # change to task directory, currently $HOME 
-        cwd = os.getcwd()
-        try: 
-            os.chdir( self.homedir )
-        except OSError, e:
-            print "Failed to change to task owner's home directory"
-            print e
-            return False
+        if self.homedir:
+            try: 
+                os.chdir( self.homedir )
+            except OSError, e:
+                print "Failed to change to task owner's home directory"
+                print e
+                return False
 
         # configure command for local or remote submit
         if self.local_job_submit:
             command = self.command
             jobfile_path = self.jobfile_path
+            stdin = None
         else:
             self.destination = self.task_owner + "@" + self.remote_host
-            command = "%s %s '%s'" % (SSH, self.destination, self.command)
+            command = "%s %s '%s'" % (self.SSH, self.destination, self.command)
             jobfile_path = self.destination + ":" + self.remote_jobfile_path
+            stdin = subprocess.PIPE
 
         # execute the local command to submit the job
         if dry_run:
@@ -290,7 +293,7 @@ class job_submit(object):
 
         print " > SUBMITTING TASK: " + command
         try:
-            popen = subprocess.Popen( command, shell=True, stdin=subprocess.PIPE )
+            popen = subprocess.Popen( command, shell=True, stdin=stdin )
             if not self.local_job_submit:
                 f = open(self.jobfile_path)
                 popen.communicate(f.read())
