@@ -30,7 +30,7 @@ export TMPDIR=/path/to/my/temporary/directory
 #_______________________________________________________________________
 # For a local user install of Pyro, Graphviz, and Pygraphviz (if you
 # can't easily get them installed at system level on the cylc host):
-### PYTHONPATH=$HOME/external/installed/lib64/python2.6/site-packages:$PYTHONPATH
-### PATH=$HOME/external/installed/bin:$PATH
+### export PYTHONPATH=$HOME/external/installed/lib64/python2.6/site-packages:$PYTHONPATH
+### export PATH=$HOME/external/installed/bin:$PATH # (graphviz/bin not required by cylc)
 # (See the Cylc User Guide "Installation" Section for instructions). 
 
