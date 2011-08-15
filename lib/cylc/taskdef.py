@@ -211,7 +211,9 @@ class taskdef(object):
         # instantiating objects of this particular task class.
         base_types = []
         for foo in self.modifiers + [self.type]:
-            mod = __import__( 'cylc.task_types.' + foo, fromlist=[foo] )
+            # __import__() keyword args were introduced in Python 2.5
+            #mod = __import__( 'cylc.task_types.' + foo, fromlist=[foo] )
+            mod = __import__( 'cylc.task_types.' + foo, globals(), locals(), [foo] )
             base_types.append( getattr( mod, foo ) )
 
         tclass = type( self.name, tuple( base_types), dict())

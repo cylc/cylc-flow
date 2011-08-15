@@ -18,5 +18,7 @@
 
 
 def get_object( module_name, class_name ):
-    mod = __import__( module_name, fromlist=[class_name] )
+    # __import__() keyword args were introduced in Python 2.5
+    #mod = __import__( module_name, fromlist=[class_name] )
+    mod = __import__( module_name, globals(), locals(), [class_name] )
     return getattr( mod, class_name)
