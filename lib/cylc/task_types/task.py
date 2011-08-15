@@ -38,8 +38,6 @@ from cylc import task_state
 import logging
 import Pyro.core
 import subprocess
-#from copy import deepcopy
-from cylc.dynamic_instantiation import get_object
 from collections import deque
 
 global state_changed
@@ -340,8 +338,16 @@ class task( Pyro.core.ObjBase ):
         # construct the job launcher here so that a new one is used if
         # the task is re-triggered by the suite operator - so it will
         # get new stdout/stderr logfiles and not overwrite the old ones.
-        launcher_class = get_object( 'cylc.job_submission.' + self.job_submit_method,
-                                     self.job_submit_method )
+
+        # dynamic instantiation - don't know job sub method till run time.
+        module_name = 'cylc.job_submission.' + self.job_submit_method
+        class_name = self.job_submit_method
+        # __import__() keyword args were introduced in Python 2.5
+        #mod = __import__( module_name, fromlist=[class_name] )
+        mod = __import__( module_name, globals(), locals(), [class_name] )
+
+        launcher_class = getattr( mod, class_name )
+
         self.launcher = launcher_class(
                         self.id, self.external_task, self.env_vars, self.directives, 
                         self.manual_messaging, self.logfiles, 
