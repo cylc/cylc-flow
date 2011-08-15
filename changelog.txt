@@ -144,3 +144,11 @@ Version number X.Y.Z incrementing:
 
  + Task generators: definition of multiple similar tasks all at once.
  Two new examples suites illustrate this new feature.
+
+ 3.5.1  bug fix release 15 Aug 2011
+
+  + Fixed a Python indentation error introduced in 3.4.0, which 
+  affected the list of valid hours for tasks that appear in multiple 
+  suite.rc graph strings (i.e. tasks with different triggers at 
+  different cycle times). 
+
