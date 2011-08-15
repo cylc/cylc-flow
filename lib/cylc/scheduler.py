@@ -911,13 +911,6 @@ class scheduler(object):
         else:
             FILE.write( 'stop time : (none)\n' )
 
-        # FOR OLD STATIC TASK CLASS DEFS:
-        ####for name in self.task_name_list:
-        ####    mod = __import__( 'task_classes' )
-        ####    cls = getattr( mod, name )
-        ####    cls.dump_class_vars( FILE )
-
-        # FOR NEW DYNAMIC TASK CLASS DEFS:
         for itask in self.cycling_tasks + self.asynchronous_tasks:
             # TO DO: CHECK THIS STILL WORKS 
             itask.dump_class_vars( FILE )
