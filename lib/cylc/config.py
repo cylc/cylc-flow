@@ -867,17 +867,17 @@ class config( CylcConfigObj ):
 
             if name not in self.taskdefs:
                 self.taskdefs[ name ] = self.get_taskdef( name )
-                if section == "once":
-                    self.taskdefs[name].type = 'async_oneoff'
-                elif async:
-                    self.taskdefs[name].asyncid_pattern = asyncid_pattern
-                    if name == daemon:
-                        self.taskdefs[name].type = 'async_daemon'
-                    else:
-                        self.taskdefs[name].type = 'async_repeating'
 
+            if section == "once":
+                self.taskdefs[name].type = 'async_oneoff'
+            elif async:
+                self.taskdefs[name].asyncid_pattern = asyncid_pattern
+                if name == daemon:
+                    self.taskdefs[name].type = 'async_daemon'
                 else:
-                    self.taskdefs[ name ].set_valid_hours( section )
+                    self.taskdefs[name].type = 'async_repeating'
+            else:
+                self.taskdefs[ name ].set_valid_hours( section )
 
         if not right:
             # lefts are lone nodes; no more triggers to define.
@@ -1151,8 +1151,6 @@ class config( CylcConfigObj ):
         # sort hours list for each task
         for name in self.taskdefs:
             self.taskdefs[name].hours.sort( key=int ) 
-            #print name, self.taskdefs[name].type, self.taskdefs[name].modifiers
-
             # check that task names contain only word characters [0-9a-zA-Z_]
             # (use of r'\b' word boundary regex in conditional prerequisites
             # could fail if other characters are allowed).
