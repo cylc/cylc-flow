@@ -605,6 +605,20 @@ manual task completion messaging = boolean( default=False )
 #>\item {\em example:} \lstinline@manual task completion messaging = True@
 #>\end{myitemize}
 
+UTC mode = boolean( default=False )
+#> By default cylc runs off the suite host's system clock. Set this
+#> item True to run the suite in UTC even if the system clock is not in
+#> UTC mode. Clock-triggered tasks will trigger when the
+#> current UTC time reaches their own cycle time plus
+#> offset; and other time values used, reported, or logged by cylc will
+#> also be in UTC. 
+#>\begin{myitemize}
+#>\item {\em section:} (top level)
+#>\item {\em type:} boolean
+#>\item {\em default:} \lstinline=False= 
+#>\item {\em example:} \lstinline@UTC mode = True@
+#>\end{myitemize}
+
 [special tasks]
 #> This section identifies any tasks with special behaviour.
 #> By default tasks:

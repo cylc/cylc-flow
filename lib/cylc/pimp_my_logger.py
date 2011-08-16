@@ -20,13 +20,9 @@
 import logging, logging.handlers
 import os, sys, re
 
-# NOTE: the simulation mode clock has been replaced with a general
-# clock that returns simulation time in simulation mode, so we could replace
-# the normal log time universally now... 
-
 class LogFilter(logging.Filter):
-    # replace log message timestamps with simulation clock times
-
+    # Replace log timestamps with those of the supplied clock
+    # (which may be UTC or simulation time).
     def __init__(self, clock, name = "" ):
         logging.Filter.__init__( self, name )
         self.clock = clock
@@ -36,8 +32,7 @@ class LogFilter(logging.Filter):
         record.created = self.clock.get_epoch()
         return True
     
-def pimp_it( log, dir, roll_at_startup, level, simulation_mode, \
-        clock = None, run_task = False ):
+def pimp_it( log, dir, roll_at_startup, level, clock ):
     log.setLevel( level )
     max_bytes = 1000000
     backups = 5
@@ -62,6 +57,6 @@ def pimp_it( log, dir, roll_at_startup, level, simulation_mode, \
     h.setFormatter(f)
     log.addHandler(h)
 
-    if simulation_mode:
-        # replace logged real time with simulation clock time 
+    # replace default time stamps
+    if clock:
         log.addFilter( LogFilter( clock, "main" ))

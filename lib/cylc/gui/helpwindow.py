@@ -640,7 +640,7 @@ def shutdown_guide( w ):
     alert = tb.create_tag( None, foreground = "red" )
     bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
 
-    update_tb( tb, "Help: Stopping A Suite From Running", [bold, blue] )
+    update_tb( tb, "Help: Stopping A Running Suite", [bold, blue] )
 
     update_tb( tb, "\n\n o Stop after running tasks have finished", [bold, red] )
     update_tb( tb, "\nDo not submit any new tasks to run and "
@@ -666,7 +666,8 @@ def shutdown_guide( w ):
     update_tb( tb, "\n\n o Stop after a given wall clock time", [bold, red] )
     update_tb( tb, "\nAt the specified clock time, the suite will refrain "
             "from submitting any tasks to run, and will shut down as soon "
-            "as any running tasks have finished.")
+            "as any running tasks have finished. Specify the stop time in "
+            "UTC if the suite is running in UTC time.")
  
     update_tb( tb, "\n\n o Stop after a given task finishes (NAME%YYYYMMDDHH)", [bold, red] )
     update_tb( tb, "\nOnce no unfinished task of type NAME exists in the suite "

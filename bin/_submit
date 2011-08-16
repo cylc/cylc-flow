@@ -143,6 +143,10 @@ for var in config['cylc local environment']:
 # No TASK EVENT HOOKS are set for the submit command because there is
 # no scheduler instance watching for task failure etc. 
 
+# Running in UTC time? (else just use the system clock)
+utc = config['UTC mode']
+dclock = accelerated_clock.clock( None, None, utc, False ) 
+
 # CYLC EXECUTION ENVIRONMENT
 cylcenv = OrderedDict()
 cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
@@ -162,8 +166,8 @@ cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 if use_lockserver:
     cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( lockserver_port )
 cylcenv[ 'CYLC_SIMULATION_SLEEP'] =  config['simulation mode']['task run time in seconds']
+cylcenv[ 'CYLC_UTC' ] = str(utc)
 
-dclock = accelerated_clock.clock( None, None, False ) 
 # nasty kludge to give the simulation mode clock to task classes:
 task.task.clock = dclock
 clocktriggered.clocktriggered.clock = dclock
@@ -180,10 +184,10 @@ for var in config['directives']:
     globaldvs[ var ] = config['directives'][var]
 
 # create the log
-log = logging.getLogger()
+log = logging.getLogger( "main" )
 pimp_my_logger.pimp_it( log, logging_dir, \
         config['roll log at startup'], \
-        logging.INFO, False, None, True )
+        logging.INFO, dclock )
 
 job_submit.cylc_env = cylcenv
 job_submit.global_env = globalenv

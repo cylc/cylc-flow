@@ -18,24 +18,24 @@
 
 
 import Pyro.core
-import datetime
-from time import sleep
 import datetime, time
+from time import sleep
 
 class clock( Pyro.core.ObjBase ):
     """
     REAL TIME or ACCELERATED SIMULATION MODE clock for cylc.
 
-    In simulation mode, equate a given simulation YYYYMMDDHH with the real time at
-    initialisation, and thereafter advance simulation time at the requested
-    rate of seconds per hour.
+    In simulation mode, equate a given simulation YYYYMMDDHH with the
+    real time at initialisation, and thereafter advance simulation time
+    at the requested rate of seconds per hour.
     """
 
-    def __init__( self, rate, offset, simulation_mode ):
+    def __init__( self, rate, offset, utc, simulation_mode ):
         
         Pyro.core.ObjBase.__init__(self)
         
         self.simulation_mode = simulation_mode
+        self.utc = utc
 
         # time acceleration (N real seconds = 1 simulation hour)
         self.acceleration = rate
@@ -43,7 +43,7 @@ class clock( Pyro.core.ObjBase ):
         # start time offset (relative to start cycle time)
         self.offset_hours = offset
 
-        self.base_realtime = datetime.datetime.now() 
+        self.base_realtime = self.now() 
         self.base_simulationtime = self.base_realtime
 
         #if simulation_mode:
@@ -51,16 +51,19 @@ class clock( Pyro.core.ObjBase ):
         #    print " - accel:  " + str( self.acceleration ) + "s = 1 simulated hour"
         #    print " - offset: " + str( self.offset_hours )
 
+    def now( self ):
+        if self.utc:
+            return datetime.datetime.utcnow()
+        else:
+            return datetime.datetime.now()
 
     def set( self, ctime ):
-
         #print 'Setting simulation mode clock time'
         self.base_simulationtime = datetime.datetime( 
                 int(ctime[0:4]), int(ctime[4:6]), 
                 int(ctime[6:8]), int(ctime[8:10]))
                 
         self.base_simulationtime += datetime.timedelta( 0,0,0,0,0, self.offset_hours, 0) 
-
 
     def get_rate( self ):
         return self.acceleration
@@ -109,14 +112,12 @@ class clock( Pyro.core.ObjBase ):
         print " - start:  " + str( self.base_simulationtime )
 
     def get_datetime( self ):
-
         if not self.simulation_mode:
             # return real time
-            return datetime.datetime.now()
-
+            return self.now()
         else:
             # compute simulation time based on how much real time has passed
-            delta_real = datetime.datetime.now() - self.base_realtime
+            delta_real = self.now() - self.base_realtime
         
             # time deltas are expressed as days, seconds, microseconds
             days = delta_real.days
@@ -134,7 +135,6 @@ class clock( Pyro.core.ObjBase ):
         now =  self.get_datetime()
         YMDHms = [ str( now.year), str( now.month ), str( now.day ), str( now.hour), str( now.minute ), str( now.second ) ]
         return ':'.join( YMDHms )
-
 
     def get_epoch( self ):
         dt = self.get_datetime()

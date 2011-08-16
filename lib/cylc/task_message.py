@@ -91,12 +91,23 @@ class message(object):
             print >> sys.stderr, '$CYLC_SUITE_PORT not defined'
             sys.exit(1)
 
+        self.utc = False
+        if 'CYLC_UTC' in os.environ.keys():
+            if os.environ['CYLC_UTC'] == 'True':
+                self.utc = True
+
+    def now( self ):
+        if self.utc:
+            return datetime.datetime.utcnow()
+        else:
+            return datetime.datetime.now()
+
     def get_proxy( self ):
         # this raises an exception on failure to connect:
         return cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( self.task_id )
 
     def print_msg_sp( self, msg ):
-        now = datetime.datetime.now().strftime( "%Y/%m/%d %H:%M:%S" ) 
+        now = self.now().strftime( "%Y/%m/%d %H:%M:%S" ) 
         prefix = 'cylc (' + self.mode + ' - ' + now + '): '
         if self.priority == 'NORMAL':
             print prefix + msg
@@ -105,7 +116,7 @@ class message(object):
 
     def print_msg( self ):
         if self.msg:
-            now = datetime.datetime.now().strftime( "%Y/%m/%d %H:%M:%S" )
+            now = self.now().strftime( "%Y/%m/%d %H:%M:%S" )
             prefix = 'cylc (' + self.mode + ' - ' + now + '): '
             if self.priority == 'NORMAL':
                 print prefix + self.msg
@@ -150,6 +161,4 @@ class message(object):
         self.print_msg_sp( 'all outputs completed' )
         if self.mode == 'scheduler':
             self.get_proxy().set_all_internal_outputs_completed()
-
-
 
