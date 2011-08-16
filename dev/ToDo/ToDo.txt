@@ -7,6 +7,10 @@ can be migrated to the github issue tracker.
 _______
 GENERAL
 
+* In simulation mode, task message stdout is not in dummy clock time.
+  To correct this would require getting the current dummy time from the
+  suite.
+
 * We need to be able to distinguish cycle time and async tags
   throughout, by using distinct derived classes or preprending 
   markers such as: c:YYYYMMDDHH and a:1. Currently both are 
@@ -67,9 +71,6 @@ cls.elapsed_times.append( succeeded - started )
 
 *  Do suicide prerequisites need to be re-instated in cylc-3? Maybe they 
    are not needed now that we have conditional prerequisites?
-
-* system level install of cylc - the (non-system-level) cylc environment 
-  script is currently source automatically by cylc task job scripts.
 
 * Consider replacing finished tasks with a data structure that remembers
   what happened. More efficient for very large suites?
