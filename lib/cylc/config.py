@@ -433,12 +433,13 @@ class config( CylcConfigObj ):
         for fam in self['task families']:
             members = []
             for mem in self['task families'][fam]:
-                if re.match( '^list\(.*\)$', mem ):
-                    # python list comprehension
+                m = re.match( '^Python:(.*)$', mem )
+                if m:
+                    # python list-generating expression
                     try:
-                        members += eval( mem )
-                    except SyntaxError,x:
-                        raise SuiteConfigError, 'Python syntax error in task family: ' + mem
+                        members += eval( m.groups()[0] )
+                    except:
+                        raise SuiteConfigError, 'Python error: ' + mem
                 else:
                     members.append(mem)
             self['task families'][fam] = members
@@ -447,23 +448,24 @@ class config( CylcConfigObj ):
                 self.member_of[ task ] = fam
 
         # Parse task config generators. If the [[TASK]] section name
-        # is a family name, or a list of task names, or is a list
-        # comprehension, then it is a list of task names for which the
-        # subsequent config applies to each member. We copy the config
-        # section for each member and substitute '$(TASK)' for the
-        # actual task name in all config items.
+        # is a family name, or a list of task names, or is a list-
+        # generating Python expresion, then it is a list of task names
+        # for which the subsequent config applies to each member. We
+        # copy the config section for each member and substitute
+        # '$(TASK)' for the actual task name in all config items.
         for item in self['tasks']:
             delete_item = True
+            m = re.match( '^Python:(.*)$', item )
             if item in self['task families']:
                 # a task family
                 task_names = self.members[item]
                 delete_item = False
-            elif re.match( '^list\(.*\)$', item ):
-                # python list comprehension
+            elif m:
+                # python list-generating expression
                 try:
-                    task_names = eval( item )
+                    task_names = eval( m.groups()[0] )
                 except:
-                    raise SuiteConfigError, 'Python syntax error in task generator: ' + item
+                    raise SuiteConfigError, 'Python error: ' + item
             elif re.search( ',', item ):
                 # list of task names
                 task_names = re.split(', *', item )
@@ -751,6 +753,7 @@ class config( CylcConfigObj ):
             validity.sort( key=int )
         else:
             raise SuiteConfigError( 'ERROR: Illegal graph validity type: ' + section )
+
 
         # split line on arrows
         sequence = re.split( '\s*=>\s*', line )
@@ -1109,8 +1112,21 @@ class config( CylcConfigObj ):
                 line = re.sub( '^\s*', '', line )
                 line = re.sub( '\s*$', '', line )
 
-                # generate pygraphviz graph nodes and edges, and task definitions
-                self.process_graph_line( line, section, graph_only )
+                items = []
+                m = re.match( '^Python:(.*)$', line )
+                if m:
+                    # python list-generating expression
+                    # treat each member as a separate graph line
+                    try:
+                        items = eval(m.groups()[0])
+                    except:
+                        raise SuiteConfigError, 'Python error: ' + line
+                else:
+                    items = [line]
+ 
+                for item in items:
+                    # generate pygraphviz graph nodes and edges, and task definitions
+                    self.process_graph_line( item, section, graph_only )
 
         self.graph_loaded = True
         if graph_only:
