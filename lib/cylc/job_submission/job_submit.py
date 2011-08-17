@@ -198,7 +198,7 @@ class job_submit(object):
         now = datetime.datetime.now()
         key = ( self.task_id
                 + "-" + now.strftime("%Y%m%dT%H%M%S")
-                + "." + now.microsecond )
+                + "." + str(now.microsecond) )
         self.jobfile_path = os.path.join( self.joblog_dir, key )
         self.stdout_file = self.jobfile_path + ".out"
         self.stderr_file = self.jobfile_path + ".err"
