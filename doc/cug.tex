@@ -3277,7 +3277,7 @@ Python programming.  You can derive (in the sense of object oriented
 programming inheritance) new methods from one of the existing ones, or
 directly from cylc's job submission base class,
 \begin{lstlisting}
-$CYLC_DIR/src/job-submission/job_submit.py
+$CYLC_DIR/lib/cylc/job_submission/job_submit.py
 \end{lstlisting}
 using the existing methods as examples. Most often this should 
 merely be a matter of defining the command line used to execute the
@@ -3356,7 +3356,7 @@ To use your new method, save it in a source file with the same name
 as the job submission class (see examples above), install it in the cylc
 source tree,
 \begin{lstlisting}
-$CYLC_DIR/src/job-submission/MyNewJobSubmitMethod.py
+$CYLC_DIR/lib/cylc/job_submission/MyNewJobSubmitMethod.py
 \end{lstlisting}
 and, in the spec file \lstinline=$CYLC_DIR/conf/suiterc.spec=, 
 add its name to the list of allowed values for the 
