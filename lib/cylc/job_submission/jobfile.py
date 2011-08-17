@@ -52,13 +52,7 @@ class jobfile(object):
         # TO DO: asynchronous tasks
         self.cycle_time = tag
 
-    def write( self ):
-        # Get a new temp filename, open it, and write the task job script to it.
-
-        # TO DO: use [,dir=] argument and allow user to configure the
-        # temporary directory (default reads $TMPDIR, $TEMP, or $TMP)
-        path = tempfile.mktemp( prefix='cylc-' + self.task_id + '-' ) 
-
+    def write( self, path ):
         self.FILE = open( path, 'wb' )
         self.write_header()
         self.write_directives()
@@ -76,7 +70,7 @@ class jobfile(object):
         self.write_task_succeeded()
         self.FILE.write( '\n\n#EOF' )
         self.FILE.close() 
-        return path
+        return
 
     def write_manual_environment( self ):
         strio = StringIO.StringIO()

@@ -292,7 +292,7 @@ runahead limit in hours = integer( min=0, default=24 )
 #>\item {\em example:} \lstinline@runahead limit in hours = 48@
 #>\end{myitemize}
 
-suite log directory = string( default = string( default='$HOME/CylcSuiteLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+suite log directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/log/suite' )
 #>Cylc logs all events to a suite log file. The main log and
 #> its automatic backups are stored under this directory. {\em You must
 #> ensure the directory is suite-specific; this can be done without hard wiring by
@@ -317,7 +317,7 @@ roll log at startup = boolean( default=True )
 #>\item {\em example:} \lstinline@roll log at startup = False@
 #>\end{myitemize}
 
-state dump directory = string( default = string( default='$HOME/CylcStateDumps/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+state dump directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/state' )
 #> Suite state dump files allow cylc to restart suites from previous states. 
 #> The default state dump and its backups, and special
 #> pre-intervention state dumps are all stored under this directory.
@@ -352,7 +352,7 @@ number of state dump backups = integer( min=1, default=10 )
 #>\item {\em example:} \lstinline@number of state dump backups = 20@
 #>\end{myitemize}
 
-job submission log directory = string( default='$HOME/CylcJobLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+job submission log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/log/job' )
 #> The directory in which to put the stdout and stderr
 #> log files for the job scripts submitted by cylc when tasks are ready to run.
 #> For monolithic tasks (which don't resubmit sub-jobs themselves) these will

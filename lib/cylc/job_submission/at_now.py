@@ -24,19 +24,8 @@ Submit the task job script to the simple 'at' scheduler. The 'atd' daemon
 service must be running. For owned tasks run via sudo, /etc/sudoers must
 be configured to allow the suite owner to execute 'sudo -u TASK-OWNER at'.
     """
-    Q_CMD = "at now"
-    TEMPLATE_L = "echo \"%(cmd)s 1>%(out)s 2>%(err)s\" | %(q_cmd)s"
-    TEMPLATE_R = ( "mkdir -p $(dirname %(cmd)s)"
-                   + " && cat >%(cmd)s"
-                   + " && chmod +x %(cmd)s"
-                   + " && (" + TEMPLATE_L + ")" )
+    COMMAND_TEMPLATE = "echo \"%(jobfile_path)s 1>%(stdout_file)s 2>%(stderr_file)s\" | at now"
     def construct_jobfile_submission_command( self ):
-        template = self.TEMPLATE_L
-        data = { "cmd": self.jobfile_path,
-                 "out": self.stdout_file,
-                 "err": self.stderr_file,
-                 "q_cmd": self.Q_CMD }
-        if not self.local_job_submit:
-            template = self.TEMPLATE_R
-            data["cmd"] = self.remote_jobfile_path
-        self.command = template % data
+        self.command = self.COMMAND_TEMPLATE % { "jobfile_path": self.jobfile_path,
+                                                 "stdout_file": self.stdout_file,
+                                                 "stderr_file": self.stderr_file }

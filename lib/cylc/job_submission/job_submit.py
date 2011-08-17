@@ -40,6 +40,7 @@ If REMOTE_HOST and OWNER are defined, we ssh to 'OWNER@REMOTE_HOST'
 so passwordless ssh to remote host as OWNER must be configured.
 """
 
+import datetime
 import pwd
 import random
 import re, os
@@ -67,7 +68,13 @@ class job_submit(object):
     cylc_env = None
     owned_task_execution_method = None
 
-    SSH = "ssh -oBatchMode=yes"
+    SSH_TEMPLATE = (
+                "ssh -oBatchMode=yes %(destination)s '"
+                + "mkdir -p $(dirname %(jobfile_path)s)"
+                + " && cat >%(jobfile_path)s"
+                + " && chmod +x %(jobfile_path)s"
+                + " && %(command)s"
+                + "'" )
 
     def __init__( self, task_id, task_command, task_env, directives, 
             manual_messaging, logfiles, task_joblog_dir, task_owner,
@@ -165,7 +172,7 @@ class job_submit(object):
         # advance; otherwise cylc can create it if necessary).
         if task_joblog_dir:
             # task overrode the suite job submission log directory
-            jldir = os.path.expandvars( os.path.expanduser(task_joblog_dir))
+            jldir = os.path.expandvars( os.path.expanduser(task_joblog_dir) )
             self.joblog_dir = jldir
             if self.local_job_submit and not self.task_owner:
                 mkdir_p( jldir )
@@ -180,13 +187,6 @@ class job_submit(object):
             # if not - e.g. remote path specified absolutely - this will
             # have no effect).
             self.joblog_dir = re.sub( os.environ['HOME'] + '/', '', self.joblog_dir )
-        else:
-            # local jobs
-            if self.other_owner:
-                # make joblogdir relative to owner's home dir
-                self.joblog_dir = re.sub( os.environ['HOME'], self.homedir, self.joblog_dir )
-            else:
-                pass
 
         self.set_logfile_names()
         # Overrideable methods
@@ -195,24 +195,18 @@ class job_submit(object):
         self.set_environment()
  
     def set_logfile_names( self ):
-         # Generate stdout and stderr log files
-        if self.local_job_submit:
-            # can get a unique name locally using tempfile
-            self.stdout_file = tempfile.mktemp( 
-                prefix = self.task_id + "-",
-                suffix = ".out", 
-                dir = self.joblog_dir )
-            self.stderr_file = re.sub( '\.out$', '.err', self.stdout_file )
-        else:
-            # Remote jobs are submitted from remote $HOME, via ssh.
-            # Can't use tempfile remotely so generate a random string. 
-            rnd = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6))
-            self.stdout_file = self.task_id + '-' + rnd + '.out'
-            self.stderr_file = self.task_id + '-' + rnd + '.err'
+        now = datetime.datetime.now()
+        key = ( self.task_id
+                + "-" + now.strftime("%Y%m%dT%H%M%S")
+                + "." + now.microsecond )
+        self.jobfile_path = os.path.join( self.joblog_dir, key )
+        self.stdout_file = self.jobfile_path + ".out"
+        self.stderr_file = self.jobfile_path + ".err"
 
         # Record local logs for access by gcylc
         self.logfiles.add_path( self.stdout_file )
         self.logfiles.add_path( self.stderr_file )
+        self.logfiles.add_path( self.jobfile_path )
 
     def set_directives( self ):
         # OVERRIDE IN DERIVED CLASSES IF NECESSARY
@@ -248,19 +242,14 @@ class job_submit(object):
                 self.remote_cylc_dir, self.remote_suite_dir, 
                 self.__class__.shell, self.__class__.simulation_mode,
                 self.__class__.__name__ )
-        self.jobfile_path = jf.write()
+        jf.write( self.jobfile_path )
 
         if not self.local_job_submit:
-            # Remote jobfile path is in $HOME (it will be dumped there
-            # by scp) until we allow users to specify a remote $TMPDIR.
             self.local_jobfile_path = self.jobfile_path
-            self.remote_jobfile_path = '$HOME/' + os.path.basename( self.jobfile_path )
+            self.remote_jobfile_path = self.jobfile_path
 
         # Construct self.command, the command to submit the jobfile to run
         self.construct_jobfile_submission_command()
-
-        # add local jobfile to list of viewable logfiles
-        self.logfiles.add_path( self.jobfile_path )
 
         # make sure the jobfile is executable
         os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
@@ -281,7 +270,9 @@ class job_submit(object):
             stdin = None
         else:
             self.destination = self.task_owner + "@" + self.remote_host
-            command = "%s %s '%s'" % (self.SSH, self.destination, self.command)
+            command = self.SSH_TEMPLATE % { "destination": self.destination,
+                                            "jobfile_path": self.jobfile_path,
+                                            "command": self.command }
             jobfile_path = self.destination + ":" + self.remote_jobfile_path
             stdin = subprocess.PIPE
 
