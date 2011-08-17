@@ -1044,7 +1044,7 @@ class config( CylcConfigObj ):
                                         rname in self.members[fam]:
                                     skip = True
                             if not skip:
-                            gr_edges.append( (left, right) )
+                                gr_edges.append( (left, right) )
 
                     # next cycle
                     started = True
