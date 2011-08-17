@@ -152,3 +152,7 @@ Version number X.Y.Z incrementing:
   suite.rc graph strings (i.e. tasks with different triggers at 
   different cycle times). 
 
+3.5.2 PENDING
+ + UTC Mode: optionally run a suite on UTC time even if the suite
+ host's system clock is not in UTC mode.
+

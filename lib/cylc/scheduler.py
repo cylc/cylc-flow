@@ -331,6 +331,9 @@ class scheduler(object):
         # set suite in task class (for passing to hook scripts)
         task.task.suite = self.suite
 
+        # Running in UTC time? (else just use the system clock)
+        utc = self.config['UTC mode']
+
         # CYLC EXECUTION ENVIRONMENT
         cylcenv = OrderedDict()
         cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
@@ -346,6 +349,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
         if self.use_lockserver:
             cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port )
+        cylcenv[ 'CYLC_UTC' ] = str(utc)
 
         # SUITE.RC GLOBAL ENVIRONMENT
         globalenv = OrderedDict()
@@ -360,7 +364,7 @@ class scheduler(object):
         # CLOCK (accelerated time in simulation mode)
         rate = self.config['simulation mode']['clock rate in seconds per simulation hour']
         offset = self.config['simulation mode']['clock offset from initial cycle time in hours']
-        self.clock = accelerated_clock.clock( int(rate), int(offset), self.simulation_mode ) 
+        self.clock = accelerated_clock.clock( int(rate), int(offset), utc, self.simulation_mode ) 
 
         # nasty kludge to give the simulation mode clock to task classes:
         task.task.clock = self.clock
@@ -419,7 +423,7 @@ class scheduler(object):
         self.log = logging.getLogger( 'main' )
         pimp_my_logger.pimp_it( \
              self.log, self.logging_dir, self.config['roll log at startup'], \
-                self.logging_level, self.simulation_mode, self.clock )
+                self.logging_level, self.clock )
 
         # STATE DUMP ROLLING ARCHIVE
         arclen = self.config[ 'number of state dump backups' ]
@@ -468,7 +472,7 @@ class scheduler(object):
        # by the suite unless in practice mode, but not necessarily the
        # initial one). 
        if os.path.exists( self.state_dump_filename ):
-           backup = self.state_dump_filename + '.' + datetime.datetime.now().isoformat()
+           backup = self.state_dump_filename + '.' + self.clock.get_datetime().isoformat()
            print "Backing up the state dump file:"
            print "  " + self.state_dump_filename + " --> " + backup
            try:
@@ -510,6 +514,7 @@ class scheduler(object):
             if self.process_tasks():
                 #print "ENTERING MAIN LOOP"
                 if self.options.timing:
+                    # loop timing: use real clock even in sim mode
                     main_loop_start_time = datetime.datetime.now()
 
                 self.negotiate()
