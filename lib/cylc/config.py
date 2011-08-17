@@ -1010,6 +1010,8 @@ class config( CylcConfigObj ):
                             lctime = None
 
                         if self['visualization']['show family members']:
+                            # replace a family with its members
+                            # and show effective dependencies
                             if lname in self.members and rname in self.members:
                                 # both families
                                 for lmem in self.members[lname]:
@@ -1031,6 +1033,17 @@ class config( CylcConfigObj ):
                                 # no families
                                 gr_edges.append( (left, right) )
                         else:
+                            # if left and right are both members of the
+                            # same family, don't plot them - family
+                            # *members* will appear in the graph string
+                            # if the family has internal dependencies.
+                            skip = False
+                            for fam in self.members:
+                                print fam, self.members[fam]
+                                if lname in self.members[fam] and \
+                                        rname in self.members[fam]:
+                                    skip = True
+                            if not skip:
                             gr_edges.append( (left, right) )
 
                     # next cycle
