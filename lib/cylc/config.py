@@ -439,7 +439,6 @@ class config( CylcConfigObj ):
                         members += eval( mem )
                     except SyntaxError,x:
                         raise SuiteConfigError, 'Python syntax error in task family: ' + mem
-                    self['task families'][fam].remove( mem )
                 else:
                     members.append(mem)
             self['task families'][fam] = members
