@@ -40,9 +40,8 @@ If REMOTE_HOST and OWNER are defined, we ssh to 'OWNER@REMOTE_HOST'
 so passwordless ssh to remote host as OWNER must be configured.
 """
 
-import datetime
+import time
 import pwd
-import random
 import re, os
 import tempfile, stat
 import string
@@ -195,10 +194,7 @@ class job_submit(object):
         self.set_environment()
  
     def set_logfile_names( self ):
-        now = datetime.datetime.now()
-        key = ( self.task_id
-                + "-" + now.strftime("%Y%m%dT%H%M%S")
-                + "." + str(now.microsecond) )
+        key = ( self.task_id + "%.6f" % time.time() )
         self.jobfile_path = os.path.join( self.joblog_dir, key )
         self.stdout_file = self.jobfile_path + ".out"
         self.stderr_file = self.jobfile_path + ".err"
