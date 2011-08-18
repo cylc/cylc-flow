@@ -27,7 +27,7 @@ from cylc.gui.warning_dialog import warning_dialog
 from cylc.gui.gcapture import gcapture, gcapture_tmpfile
 from cylc.mkdir_p import mkdir_p
 
-# This is a unit test for $CYLC_DIR/src/gui/gcapture.py
+# This is a unit test for $CYLC_DIR/lib/cylc/gui/gcapture.py
 # but it may be more generally useful.
 
 parser = OptionParser( """gcapture [options] COMMAND
