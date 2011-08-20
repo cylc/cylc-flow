@@ -767,11 +767,16 @@ class scheduler(object):
         return newest
 
     def no_tasks_running( self ):
-        # return True if no tasks are submitted or running
+        # return True if no REAL tasks are submitted or running
         #--
         for itask in self.cycling_tasks + self.asynchronous_tasks:
             if itask.state.is_running() or itask.state.is_submitted():
-                return False
+                if hasattr( itask, 'is_pseudo_task' ):
+                    # ignore task families -their 'running' state just
+                    # indicates existence of running family members.
+                    continue
+                else:
+                    return False
         return True
 
     def negotiate( self ):
