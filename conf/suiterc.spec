@@ -126,6 +126,19 @@ job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw
 #>\item {\em example:} \lstinline@job submission method = at_now@
 #>\end{myitemize}
 
+job submission command template = string( default=None )
+#> Set the command template for the job submission method.
+#> The template should be suitable for substitution of the keys
+#> {\em jobfile_path}, {\em stdout_file}, {\em stderr_file} in a dict.
+#>\begin{myitemize}
+#>\item {\em section:}  (top level)
+#>\item {\em type:} string
+#>\item {\em legal values:} a string template for a dict with keys
+#> {\em jobfile_path}, {\em stdout_file}, {\em stderr_file}.
+#>\item {\em default:} None (see suite level default)
+#>\item {\em example:} \lstinline@llsubmit %(jobfile_path)s@
+#>\end{myitemize}
+
 use lockserver = boolean( default=False )
 #> The cylc lockserver generalizes traditional {\em lock files} to the network.
 #> It prevents prevents invocation of multiple instances of the same
@@ -967,6 +980,19 @@ __many__ = string
 #>\item {\em example:} \lstinline@job submission method = at_now@
 #>\end{myitemize}
 
+    job submission command template = string( default=None )
+#> Set the command template for the job submission method.
+#> The template should be suitable for substitution of the keys
+#> {\em jobfile_path}, {\em stdout_file}, {\em stderr_file} in a dict.
+#>\begin{myitemize}
+#>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:} string
+#>\item {\em legal values:} a string template for a dict with keys
+#> {\em jobfile_path}, {\em stdout_file}, {\em stderr_file}.
+#>\item {\em default:} None (see suite level default)
+#>\item {\em example:} \lstinline@llsubmit %(jobfile_path)s@
+#>\end{myitemize}
+
     job submission log directory = string( default=None )
 #> Set a job submission log directory for this task, overriding the suite
 #> default, for the stdout and stderr logs from the job scripts
@@ -1017,14 +1043,15 @@ __many__ = string
 #>\item {\em example:} \lstinline@remote host = thor.niwa.co.nz@
 #>\end{myitemize}
 
-remote shell template = string( default=None )
+    remote shell template = string( default=None )
 #> A template of the remote shell command for a submitting a remote task.
 #> The template should be suitable for substitution of the keys
 #> {\em destination}, {\em jobfile_path} and {\em command} in a dict.
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
-#>\item {\em legal values:} a string template for a dict with keys "destination", "jobfile_path" and "command"
+#>\item {\em legal values:} a string template for a dict with keys
+#> {\em destination}, {\em jobfile_path} and {\em command}.
 #>\item {\em default:} None
 #>\end{myitemize}
 

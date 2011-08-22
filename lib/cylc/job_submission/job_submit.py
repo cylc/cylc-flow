@@ -65,11 +65,12 @@ class job_submit(object):
     global_dvs = None
     cylc_env = None
     owned_task_execution_method = None
+    global_job_submit_command_template = None
 
     def __init__( self, task_id, task_command, task_env, directives, 
             manual_messaging, logfiles, task_joblog_dir, task_owner,
             remote_host, remote_cylc_dir, remote_suite_dir,
-            remote_shell_template=None ): 
+            remote_shell_template=None, job_submit_command_template=None ): 
 
         self.task_id = task_id
         self.task_command = task_command
@@ -100,6 +101,13 @@ class job_submit(object):
             self.remote_shell_template = self.__class__.global_remote_shell_template
         else:
             self.remote_shell_template = None
+
+        if job_submit_command_template:
+            self.job_submit_command_template = job_submit_command_template
+        elif self.__class__.global_job_submit_command_template:
+            self.job_submit_command_template = self.__class__.global_job_submit_command_template
+        else:
+            self.job_submit_command_template = None
 
         if remote_cylc_dir:
             self.remote_cylc_dir = remote_cylc_dir

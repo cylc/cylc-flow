@@ -30,6 +30,9 @@ be configured to allow the suite owner to execute
     # remote process to finish.
     COMMAND_TEMPLATE = "%(jobfile_path)s </dev/null 1>%(stdout_file)s 2>%(stderr_file)s &"
     def construct_jobfile_submission_command( self ):
-        self.command = self.COMMAND_TEMPLATE % { "jobfile_path": self.jobfile_path,
-                                                 "stdout_file": self.stdout_file,
-                                                 "stderr_file": self.stderr_file }
+        command_template = self.job_submit_command_template
+        if not command_template:
+            command_template = self.COMMAND_TEMPLATE
+        self.command = command_template % { "jobfile_path": self.jobfile_path,
+                                            "stdout_file": self.stdout_file,
+                                            "stderr_file": self.stderr_file }
