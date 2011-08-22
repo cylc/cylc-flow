@@ -1374,22 +1374,22 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 #> Graph plotting configuration items for suite.rc and run time graphs. 
 #> These do not affect the graph-based suite control interface.
 
-initial cycle time = integer( default=2999010106 )
+initial cycle time = integer( default=2999010100 )
 #> Initial cycle time for graph plotting.
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization]
 #>\item {\em type:} integer
-#>\item {\em default:} 2999010106
+#>\item {\em default:} 2999010100
 #>\item {\em example:} \lstinline@initial cycle time = 2011052318@
 #>\end{myitemize}
 
-final cycle time = integer( default=2999010206 )
+final cycle time = integer( default=2999010123 )
 #> Final cycle time for graph plotting. This should typically be just
 #> far enough ahead of the initial cycle time to show the full suite.
 #>\begin{myitemize}
 #>\item {\em section:}  [visualization]
 #>\item {\em type:} integer
-#>\item {\em default:} 2999010206
+#>\item {\em default:} 2999010123
 #>\item {\em example:} \lstinline@final cycle time = 2011052318@
 #>\end{myitemize}
 
