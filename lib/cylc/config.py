@@ -967,6 +967,9 @@ class config( CylcConfigObj ):
             except ValueError:
                 # nothing at this hour; find index of next hour that
                 # appears in the graph, and adjust ctime accordingly.
+
+                # TO DO: THIS DOES NOT WORK ACROSS THE 24-hour BOUNDARY
+                # (e.g. [[0]] only graph, for an 06 start ctime):
                 found = False
                 for i in range(0,len(cycles)):
                     if int(cycles[i]) > int(hour):
