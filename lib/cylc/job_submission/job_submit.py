@@ -30,7 +30,6 @@ If OWNER@REMOTE_HOST is not equivalent to whoami@localhost:
 so passwordless ssh must be configured.
 """
 
-import time
 import pwd
 import re, os
 import tempfile, stat
@@ -38,7 +37,9 @@ import string
 from cylc.mkdir_p import mkdir_p
 from jobfile import jobfile
 from cylc.dummy import dummy_command, dummy_command_fail
+import socket
 import subprocess
+import time
  
 class job_submit(object):
     # class variables that are set remotely at startup:
@@ -62,7 +63,7 @@ class job_submit(object):
                 + "mkdir -p $(dirname %(jobfile_path)s)"
                 + " && cat >%(jobfile_path)s"
                 + " && chmod +x %(jobfile_path)s"
-                + " && %(command)s"
+                + " && (%(command)s)"
                 + "'" )
 
     def __init__( self, task_id, task_command, task_env, directives, 
@@ -114,7 +115,9 @@ class job_submit(object):
             self.remote_host = None
 
         self.local_job_submit = (
-                (not self.remote_host or self.remote_host == "localhost")
+                ( not self.remote_host
+                  or self.remote_host == "localhost"
+                  or self.remote_host == socket.gethostname() )
             and self.task_owner == self.suite_owner
         )
 
@@ -133,42 +136,32 @@ class job_submit(object):
             # usual execution environment).
             self.task_owner = self.suite_owner
 
-        if not self.local_job_submit:
-            self.homedir = None
-            # (remote job submission by ssh will automatically dump
-            # us in the owner's home directory)
-        else:
-            # The job will be submitted from the task owner's home
-            # directory, in case the job submission method requires that
-            # the "running directory" exists and is writeable by the job
-            # owner (e.g. loadleveler?). The only directory we can be
-            # sure exists in advance is the home directory; in general
-            # it is difficult to create a new directory on the fly if it
-            # must exist *before the job is submitted*. E.g. for tasks
-            # that we 'sudo llsubmit' as another owner, sudo would have
-            # to be configured to allow use of 'mkdir' as well as
-            # 'llsubmit' (to llsubmit a special directory creation
-            # script in advance *and* detect when it has finished is
-            # difficult, and cylc would hang while the process was
-            # running).
-            try:
-                self.homedir = pwd.getpwnam( self.task_owner )[5]
-            except:
-                raise SystemExit( "ERROR: task " + self.task_id + " owner (" + self.task_owner + "): home dir not found" )
+        # The job will be submitted from the task owner's home
+        # directory, in case the job submission method requires that
+        # the "running directory" exists and is writeable by the job
+        # owner (e.g. loadleveler?). The only directory we can be
+        # sure exists in advance is the home directory; in general
+        # it is difficult to create a new directory on the fly if it
+        # must exist *before the job is submitted*.
+        try:
+            self.homedir = pwd.getpwnam( self.task_owner )[5]
+        except:
+            raise SystemExit( "ERROR: task %s owner (%s): home dir not found"
+                              % (self.task_id, self.task_owner) )
 
         # Job submission log directory
         # (for owned and remote tasks, this directory must exist in
         # advance; otherwise cylc can create it if necessary).
         if task_joblog_dir:
             # task overrode the suite job submission log directory
-            jldir = os.path.expandvars( os.path.expanduser(task_joblog_dir) )
-            self.joblog_dir = jldir
-            if self.local_job_submit and not self.task_owner:
-                mkdir_p( jldir )
+            self.joblog_dir = task_joblog_dir
         else:
             # use the suite job submission log directory
             # (created if necessary in config.py)
             self.joblog_dir = self.__class__.joblog_dir
+
+        self.joblog_dir = os.path.expandvars( os.path.expanduser(self.joblog_dir) )
+        mkdir_p( self.joblog_dir )
 
         if not self.local_job_submit:
             # Make joblog_dir relative to $HOME for remote tasks by
@@ -220,6 +213,15 @@ class job_submit(object):
         raise SystemExit( 'ERROR: no job submission command defined!' )
 
     def submit( self, dry_run ):
+        # change to task directory, currently $HOME 
+        if self.homedir:
+            try: 
+                os.chdir( self.homedir )
+            except OSError, e:
+                print "Failed to change to task owner's home directory"
+                print e
+                return False
+
         jf = jobfile( self.task_id, 
                 self.__class__.cylc_env, self.__class__.global_env, self.task_env, 
                 self.__class__.global_pre_scripting, self.__class__.global_post_scripting, 
@@ -239,15 +241,6 @@ class job_submit(object):
 
         # make sure the jobfile is executable
         os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
-
-        # change to task directory, currently $HOME 
-        if self.homedir:
-            try: 
-                os.chdir( self.homedir )
-            except OSError, e:
-                print "Failed to change to task owner's home directory"
-                print e
-                return False
 
         # configure command for local or remote submit
         if self.local_job_submit:
