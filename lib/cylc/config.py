@@ -954,35 +954,35 @@ class config( CylcConfigObj ):
             right = e.get_right(1, False, False, [], [])
             left  = e.get_left( 1, False, False, [], [])
             gr_edges.append( (left, right, False) )
-
+	
         cycles = self.edges.keys()
+
         if len(cycles) != 0:
             cycles.sort(key=int)
             ctime = start_ctime
-            hour = str(int(start_ctime[8:10])) # get string without zero padding
-            # TO DO: ENSURE THAT ZERO PADDING NOT USED IN SECTION HEADINGS!!!!!
-            found = True
-            try:
-                i = cycles.index( int(hour) )
-            except ValueError:
-                # nothing at this hour; find index of next hour that
-                # appears in the graph, and adjust ctime accordingly.
+            foo = ct( ctime )
 
-                # TO DO: THIS DOES NOT WORK ACROSS THE 24-hour BOUNDARY
-                # (e.g. [[0]] only graph, for an 06 start ctime):
-                found = False
-                for i in range(0,len(cycles)):
-                    if int(cycles[i]) > int(hour):
-                        found = True
-                        diff = int(cycles[i]) - int(hour)
-                        foo = ct(ctime)
-                        foo.increment( hours=diff )
-                        diffhrs = foo.subtract_hrs( ct(start_ctime) )
-                        if diffhrs > int(stop):
-                            found = False
-                        ctime = foo.get()
-                        break
+            hour = str(int(start_ctime[8:10])) # get string without zero padding
+            # TO DO: TEST ZERO PADDING IN SECTION HEADINGS
+            # TO DO: clean up ctime and hour handling in the following code, down 
+            #        to "# sort and then add edges ...". It works, but is messy.
+
+            found = True
+            for h in range( int(hour), 24 + int(hour) ):
+                diffhrs = h - int(hour)
+                if diffhrs > stop:
+                    found = False
+                    break
+                if h > 23:
+                   hh = 24 - h
+                else:
+                   hh = h
+                if hh in cycles:
+                    foo.increment( hours=diffhrs )
+                    break
             if found:
+                i = cycles.index(hh)
+                ctime = foo.get()
                 started = False
                 while True:
                     hour = cycles[i]
@@ -1064,7 +1064,6 @@ class config( CylcConfigObj ):
                                 gr_edges.append( (left, self.member_of[rname] + '%' + rctime, True ) )
                             elif method == 'twofam':
                                 gr_edges.append( (self.member_of[lname] + '%' + lctime, self.member_of[rname] + '%' + rctime, True ) )
-
 
                     # next cycle
                     started = True
@@ -1153,7 +1152,6 @@ class config( CylcConfigObj ):
             return
 
         # task families
-        members = []
         my_family = {}
         for name in self['task families']:
             try:
@@ -1165,9 +1163,6 @@ class config( CylcConfigObj ):
             mems = self['task families'][name]
             self.taskdefs[name].members = mems
             for mem in mems:
-                if mem not in members:
-                    members.append( mem )
-                    # TO DO: ALLOW MORE GENERAL INTERNAL FAMILY MEMBERS?
                 if mem not in self.taskdefs:
                     self.taskdefs[ mem ] = self.get_taskdef( mem )
                 self.taskdefs[mem].member_of = name
