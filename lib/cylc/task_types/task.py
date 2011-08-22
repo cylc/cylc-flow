@@ -355,7 +355,8 @@ class task( Pyro.core.ObjBase ):
                         self.__class__.owner,
                         self.__class__.remote_host,
                         self.__class__.remote_cylc_directory, 
-                        self.__class__.remote_suite_directory )
+                        self.__class__.remote_suite_directory,
+                        self.__class__.remote_shell_template )
 
         if self.launcher.submit( dry_run ):
             self.set_submitted()

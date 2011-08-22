@@ -170,6 +170,17 @@ remote host = string( default=None )
 #>\item {\em example:} \lstinline@remote host = foo.niwa.co.nz@
 #>\end{myitemize}
 
+remote shell template = string( default=None )
+#> A template of the remote shell command for a submitting a remote task.
+#> The template should be suitable for substitution of the keys
+#> {\em destination}, {\em jobfile_path} and {\em command} in a dict.
+#>\begin{myitemize}
+#>\item {\em section:} (top level)
+#>\item {\em type:} string
+#>\item {\em legal values:} a string template for a dict with keys "destination", "jobfile_path" and "command"
+#>\item {\em default:} None
+#>\end{myitemize}
+
 remote cylc directory = string( default=None )
 #> For tasks that declare a remote host at suite level, this defines the
 #> path to the remote cylc installation (i.e.\
@@ -1004,6 +1015,17 @@ __many__ = string
 #>\item {\em legal values:} a valid hostname on your network
 #>\item {\em default:} None
 #>\item {\em example:} \lstinline@remote host = thor.niwa.co.nz@
+#>\end{myitemize}
+
+remote shell template = string( default=None )
+#> A template of the remote shell command for a submitting a remote task.
+#> The template should be suitable for substitution of the keys
+#> {\em destination}, {\em jobfile_path} and {\em command} in a dict.
+#>\begin{myitemize}
+#>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:} string
+#>\item {\em legal values:} a string template for a dict with keys "destination", "jobfile_path" and "command"
+#>\item {\em default:} None
 #>\end{myitemize}
 
     remote cylc directory = string( default=None )

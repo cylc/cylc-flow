@@ -74,6 +74,7 @@ class taskdef(object):
 
         self.owner = None
         self.remote_host = None
+        self.remote_shell_template = None
 
         self.hook_scripts = {}
         for event in [ 'submitted', 'submission failed', 'started', 
@@ -231,6 +232,7 @@ class taskdef(object):
 
         tclass.hook_scripts = self.hook_scripts
         tclass.remote_host = self.remote_host
+        tclass.remote_shell_template = self.remote_shell_template
 
         # TO DO: can this be moved into task base class?
         tclass.job_submit_method = self.job_submit_method

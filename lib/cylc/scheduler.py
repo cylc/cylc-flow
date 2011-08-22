@@ -391,6 +391,7 @@ class scheduler(object):
 
         job_submit.global_task_owner = self.config['owner']
         job_submit.global_remote_host = self.config['remote host']
+        job_submit.global_remote_shell_template = self.config['remote shell template']
         job_submit.global_remote_cylc_dir = self.config['remote cylc directory']
         job_submit.global_remote_suite_dir = self.config['remote suite directory']
 

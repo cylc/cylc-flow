@@ -26,7 +26,7 @@ executes the task command.  Specific derived job submission classes
 define the means by which the job file itself is executed.
 
 If OWNER@REMOTE_HOST is not equivalent to whoami@localhost:
- ssh OWNER@localhost submit(FILE)
+ ssh OWNER@HOST submit(FILE)
 so passwordless ssh must be configured.
 """
 
@@ -42,11 +42,19 @@ import subprocess
 import time
  
 class job_submit(object):
+    REMOTE_SHELL_TEMPLATE = ( "ssh -oBatchMode=yes %(destination)s '"
+                              + "mkdir -p $(dirname %(jobfile_path)s)"
+                              + " && cat >%(jobfile_path)s"
+                              + " && chmod +x %(jobfile_path)s"
+                              + " && (%(command)s)"
+                              + "'" )
+
     # class variables that are set remotely at startup:
     # (e.g. 'job_submit.simulation_mode = True')
     simulation_mode = False
     global_task_owner = None
     global_remote_host = None
+    global_remote_shell_template = None
     global_remote_cylc_dir = None
     global_remote_suite_dir = None
     global_manual_messaging = False
@@ -58,17 +66,10 @@ class job_submit(object):
     cylc_env = None
     owned_task_execution_method = None
 
-    SSH_TEMPLATE = (
-                "ssh -oBatchMode=yes %(destination)s '"
-                + "mkdir -p $(dirname %(jobfile_path)s)"
-                + " && cat >%(jobfile_path)s"
-                + " && chmod +x %(jobfile_path)s"
-                + " && (%(command)s)"
-                + "'" )
-
     def __init__( self, task_id, task_command, task_env, directives, 
             manual_messaging, logfiles, task_joblog_dir, task_owner,
-            remote_host, remote_cylc_dir, remote_suite_dir ): 
+            remote_host, remote_cylc_dir, remote_suite_dir,
+            remote_shell_template=None ): 
 
         self.task_id = task_id
         self.task_command = task_command
@@ -92,6 +93,13 @@ class job_submit(object):
         else:
             self.task_owner = self.suite_owner
             self.other_owner = False
+
+        if remote_shell_template:
+            self.remote_shell_template = remote_shell_template
+        elif self.__class__.global_remote_shell_template:
+            self.remote_shell_template = self.__class__.global_remote_shell_template
+        else:
+            self.remote_shell_template = None
 
         if remote_cylc_dir:
             self.remote_cylc_dir = remote_cylc_dir
@@ -249,9 +257,12 @@ class job_submit(object):
             stdin = None
         else:
             self.destination = self.task_owner + "@" + self.remote_host
-            command = self.SSH_TEMPLATE % { "destination": self.destination,
-                                            "jobfile_path": self.jobfile_path,
-                                            "command": self.command }
+            remote_shell_template = self.remote_shell_template
+            if not remote_shell_template:
+                remote_shell_template = self.REMOTE_SHELL_TEMPLATE
+            command = remote_shell_template % { "destination": self.destination,
+                                                "jobfile_path": self.jobfile_path,
+                                                "command": self.command }
             jobfile_path = self.destination + ":" + self.remote_jobfile_path
             stdin = subprocess.PIPE
 
