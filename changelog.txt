@@ -156,3 +156,5 @@ Version number X.Y.Z incrementing:
  + UTC Mode: optionally run a suite on UTC time even if the suite
  host's system clock is not in UTC mode.
 
+ + Plot extra-family dependencies with a dotted line, when 'show family
+ members' is False.

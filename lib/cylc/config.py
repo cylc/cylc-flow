@@ -953,7 +953,7 @@ class config( CylcConfigObj ):
         for e in self.async_oneoff_edges + self.async_repeating_edges:
             right = e.get_right(1, False, False, [], [])
             left  = e.get_left( 1, False, False, [], [])
-            gr_edges.append( (left, right) )
+            gr_edges.append( (left, right, False) )
 
         cycles = self.edges.keys()
         if len(cycles) != 0:
@@ -967,6 +967,9 @@ class config( CylcConfigObj ):
             except ValueError:
                 # nothing at this hour; find index of next hour that
                 # appears in the graph, and adjust ctime accordingly.
+
+                # TO DO: THIS DOES NOT WORK ACROSS THE 24-hour BOUNDARY
+                # (e.g. [[0]] only graph, for an 06 start ctime):
                 found = False
                 for i in range(0,len(cycles)):
                     if int(cycles[i]) > int(hour):
@@ -1018,33 +1021,50 @@ class config( CylcConfigObj ):
                                     for rmem in self.members[rname]:
                                         lmemid = lmem + '%' + lctime
                                         rmemid = rmem + '%' + rctime
-                                        gr_edges.append( (lmemid, rmemid ) )
+                                        gr_edges.append( (lmemid, rmemid, False ) )
                             elif lname in self.members:
                                 # left family
                                 for mem in self.members[lname]:
                                     memid = mem + '%' + lctime
-                                    gr_edges.append( (memid, right ) )
+                                    gr_edges.append( (memid, right, False ) )
                             elif rname in self.members:
                                 # right family
                                 for mem in self.members[rname]:
                                     memid = mem + '%' + rctime
-                                    gr_edges.append( (left, memid ) )
+                                    gr_edges.append( (left, memid, False ) )
                             else:
                                 # no families
-                                gr_edges.append( (left, right) )
+                                gr_edges.append( (left, right, False ) )
                         else:
-                            # if left and right are both members of the
-                            # same family, don't plot them - family
-                            # *members* will appear in the graph string
-                            # if the family has internal dependencies.
-                            skip = False
-                            for fam in self.members:
-                                print fam, self.members[fam]
-                                if lname in self.members[fam] and \
-                                        rname in self.members[fam]:
-                                    skip = True
-                            if not skip:
-                                gr_edges.append( (left, right) )
+                            # Family members will appear in the graph string
+                            # (a) if the family has internal dependencies, and
+                            # (b) if any members have direct connections
+                            # to external tasks.
+                            method = 'nonfam'
+                            if lname in self.member_of and rname in self.member_of:
+                                # l and r are both members of families
+                                if self.member_of[lname] == self.member_of[rname]:
+                                    # both members of the same family
+                                    method = 'invis'
+                                else:
+                                    # members of different families
+                                    method = 'twofam'
+                            elif lname in self.member_of:
+                                # l is a member of a family but r is not
+                                method = 'lfam'
+                            elif rname in self.member_of:
+                                # r is a member of a family but l is not
+                                method = 'rfam'
+
+                            if method ==  'nonfam':
+                                gr_edges.append( (left, right, False ) )
+                            elif method == 'lfam':
+                                gr_edges.append( (self.member_of[lname] + '%' + lctime, right, True ) )
+                            elif method == 'rfam':
+                                gr_edges.append( (left, self.member_of[rname] + '%' + rctime, True ) )
+                            elif method == 'twofam':
+                                gr_edges.append( (self.member_of[lname] + '%' + lctime, self.member_of[rname] + '%' + rctime, True ) )
+
 
                     # next cycle
                     started = True
@@ -1067,7 +1087,7 @@ class config( CylcConfigObj ):
         # jumping around (does this help? -if not discard)
         gr_edges.sort()
         for e in gr_edges:
-            l, r = e
+            l, r, dashed = e
             if l== None and r == None:
                 pass
             elif l == None:
@@ -1075,7 +1095,10 @@ class config( CylcConfigObj ):
             elif r == None:
                 graph.add_node( l )
             else:
-                graph.add_edge( l, r )
+                if dashed:
+                    graph.add_edge( l, r, False, style='dashed' )
+                else:
+                    graph.add_edge( l, r, False )
 
         for n in graph.nodes():
             if not colored:
