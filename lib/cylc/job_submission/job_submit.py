@@ -25,19 +25,9 @@ global and task-specific environment variables, and then
 executes the task command.  Specific derived job submission classes
 define the means by which the job file itself is executed.
 
-If OWNER is defined and REMOTE_HOST is not, submit locally by:
- sudo -u OWNER submit(FILE) 
-OR
+If OWNER@REMOTE_HOST is not equivalent to whoami@localhost:
  ssh OWNER@localhost submit(FILE)
-so passwordless ssh to localhost as OWNER must be configured.
- 
-If REMOTE_HOST is defined and OWNER is not, the job file is submitted
-by copying it to the remote host, and executing the defined
-submit(FILE) on the remote host by ssh. Passwordless ssh to the remote
-host must be configured. 
-
-If REMOTE_HOST and OWNER are defined, we ssh to 'OWNER@REMOTE_HOST'
-so passwordless ssh to remote host as OWNER must be configured.
+so passwordless ssh must be configured.
 """
 
 import time
