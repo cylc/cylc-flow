@@ -49,9 +49,10 @@ class config_line:
             verbose=False, debug=False, mode=None, cheap=False ):
         self.source = source
         self.match = match
+        self.ctime = ctime
         try:
             # check the validity of the base cycle time
-            self.ctime = ct(ctime)
+            ct(ctime)
         except CycleTimeError,x:
             raise HousekeepingError, str(x)
         self.offset = offset

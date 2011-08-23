@@ -70,6 +70,8 @@ cylc register examples:async_repeat $CYLC_DIR/examples/async/repeating
 cylc register examples:generator_explicit $CYLC_DIR/examples/generator/explicit
 cylc register examples:generator_expression $CYLC_DIR/examples/generator/expression
 
+cylc register examples:families $CYLC_DIR/examples/families
+
 echo
 echo " + Exporting examples suites to the central database"
 # Export the example suites to the central database.

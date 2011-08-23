@@ -156,3 +156,16 @@ Version number X.Y.Z incrementing:
  + UTC Mode: optionally run a suite on UTC time even if the suite
  host's system clock is not in UTC mode.
 
+ + Plot extra-family dependencies with a dotted line, when 'show family
+ members' is False.
+
+ + Fixed a suite graph plotting bug: if the graph initial hour was 
+ greater than the section hour for single hour graph sections, the
+ section would be skipped even if the graph range encompassed the
+ section, due to miss-handling of the 24-hour boundary.
+
+ + Fixed a subtle bug in environment variable overriding: if a variable
+ was defined twice, the second definition would override the first as
+ it should, but it would retain the position (in the list of defined
+ variables) of the first.
+
