@@ -193,13 +193,12 @@ control_commands['lockclient'] = ['lockclient', 'lc' ]
 control_commands['verbosity' ] = ['verbosity' ]
  
 utility_commands = OrderedDict()
-utility_commands['cycletime'] = ['cycletime' ]
-utility_commands['checkvars'] = ['checkvars'] 
-utility_commands['template' ] = ['template'] 
-utility_commands['housekeeping'] = ['housekeeping'] 
-#utility_commands['transfer' ] = ['transfer'] 
-utility_commands['email-alert' ] = ['email-alert'] 
-
+utility_commands['cycletime'    ] = ['cycletime' ]
+utility_commands['checkvars'    ] = ['checkvars'] 
+utility_commands['template'     ] = ['template'] 
+utility_commands['housekeeping' ] = ['housekeeping'] 
+utility_commands['scp-transfer' ] = ['scp-transfer'] 
+utility_commands['email-alert'  ] = ['email-alert'] 
 admin_commands = OrderedDict()
 admin_commands['create-cdb'  ] = [ 'create-cdb']
 admin_commands['test-db'     ] = [ 'test-db']
@@ -377,8 +376,8 @@ comsum[ 'cycletime'    ] = 'Cycle time arithmetic'
 comsum[ 'checkvars'    ] = 'Check required environment variables en masse'
 comsum[ 'template'     ] = 'Powerful cycle time offset filename templating'
 comsum[ 'housekeeping' ] = 'Parallel archiving and cleanup on cycle time offsets'
-#comsum[ 'transfer'     ] = 'An scp-based file transfer tool'
-comsum[ 'email-alert' ] = 'Send alerts by email when tasks fail (for example)'
+comsum[ 'scp-transfer' ] = 'Scp-based file transfer for cylc suites'
+comsum[ 'email-alert'  ] = 'Send alerts by email when tasks fail (for example)'
 
 def typo( str ):
     corrected = str
