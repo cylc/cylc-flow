@@ -227,7 +227,7 @@ try:
             blit.append( 'summary updated - ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
             if simulation_mode:
-                foo = 'SIMULATION MODE:'
+                foo = 'SIMULATION:'
                 bar = str(rate) + ' real seconds = 1 hour' 
                 baz = header
                 baz = re.sub( '^.{' + str(len(foo)) + '}', foo, baz )

@@ -340,6 +340,12 @@ class CylcConfigObj( ConfigObj ):
                                 'Duplicate keyword name at line %s.',
                                 DuplicateError, infile, cur_index)
                         continue
+                    else: # envoverride = True
+                        # delete the existing item before inserting the new
+                        # one - otherwise the new one does override, but
+                        # it ends up in the position of the old one!
+                        this_section.__delitem__(key)
+
                     # CYLC change END
                 # add the key.
                 # we set unrepr because if we have got this far we will never

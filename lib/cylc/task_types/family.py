@@ -41,6 +41,9 @@ still finish successfully, as could happen if the family entered the 'failed' st
 as soon as any one member failed.
     """
 
+    # A "pseudo task" type - families do not submit real external processes.
+    is_pseudo_task = True
+
     def run_external_task( self, dry_run=False ):
         # just report started and enter the 'running' state
         # (only the family members run real tasks).
