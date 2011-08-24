@@ -21,8 +21,7 @@ from job_submit import job_submit
 class at_now( job_submit ):
     """
 Submit the task job script to the simple 'at' scheduler. The 'atd' daemon
-service must be running. For owned tasks run via sudo, /etc/sudoers must
-be configured to allow the suite owner to execute 'sudo -u TASK-OWNER at'.
+service must be running.
     """
     COMMAND_TEMPLATE = "echo \"%(jobfile_path)s 1>%(stdout_file)s 2>%(stderr_file)s\" | at now"
     def construct_jobfile_submission_command( self ):

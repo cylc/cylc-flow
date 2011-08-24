@@ -20,10 +20,7 @@ from job_submit import job_submit
 
 class background( job_submit ):
     """
-Run the task job script directly in a background shell. Owned tasks cannot
-easily be run via sudo for this method, as /etc/sudoers would have to 
-be configured to allow the suite owner to execute 
-'sudo -u TASK-OWNER JOBFILE' for any conceivable jobfile.
+Run the task job script directly in a background shell.
     """
     # stdin redirection (< /dev/null) allows background execution
     # even on a remote host - ssh can exit without waiting for the
