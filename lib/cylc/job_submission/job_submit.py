@@ -42,12 +42,14 @@ import subprocess
 import time
  
 class job_submit(object):
-    REMOTE_SHELL_TEMPLATE = ( "ssh -oBatchMode=yes %(destination)s '"
-                              + "mkdir -p $(dirname %(jobfile_path)s)"
-                              + " && cat >%(jobfile_path)s"
-                              + " && chmod +x %(jobfile_path)s"
-                              + " && (%(command)s)"
-                              + "'" )
+    REMOTE_COMMAND = ( " '"
+                       + "mkdir -p $(dirname %(jobfile_path)s)"
+                       + " && cat >%(jobfile_path)s"
+                       + " && chmod +x %(jobfile_path)s"
+                       + " && (%(command)s)"
+                       + "'" )
+    REMOTE_SHELL_TEMPLATE = "ssh -oBatchMode=yes %(destination)s" + REMOTE_COMMAND
+    SUDO_TEMPLATE = "sudo -u %(task_owner)s" + REMOTE_COMMAND
 
     # class variables that are set remotely at startup:
     # (e.g. 'job_submit.simulation_mode = True')
@@ -84,7 +86,7 @@ class job_submit(object):
         self.directives  = directives
         self.logfiles = logfiles
  
-        self.suite_owner = os.environ['USER']
+        self.suite_owner = os.getlogin()
         if task_owner:
             self.task_owner = task_owner
             self.other_owner = True
@@ -128,7 +130,7 @@ class job_submit(object):
         elif self.__class__.global_remote_host:
             self.remote_host = self.__class__.global_remote_host
         else:
-            self.remote_host = None
+            self.remote_host = "localhost"
 
         self.local_job_submit = (
                 ( not self.remote_host
@@ -160,7 +162,7 @@ class job_submit(object):
         # it is difficult to create a new directory on the fly if it
         # must exist *before the job is submitted*.
         try:
-            self.homedir = pwd.getpwnam( self.task_owner )[5]
+            self.homedir = pwd.getpwnam( self.task_owner ).pw_dir
         except:
             raise SystemExit( "ERROR: task %s owner (%s): home dir not found"
                               % (self.task_id, self.task_owner) )
@@ -229,14 +231,13 @@ class job_submit(object):
         raise SystemExit( 'ERROR: no job submission command defined!' )
 
     def submit( self, dry_run ):
-        # change to task directory, currently $HOME 
-        if self.homedir:
-            try: 
-                os.chdir( self.homedir )
-            except OSError, e:
-                print "Failed to change to task owner's home directory"
-                print e
-                return False
+        # change to $HOME 
+        try: 
+            os.chdir( pwd.getpwnam(os.getlogin()).pw_dir )
+        except OSError, e:
+            print "Failed to change to suite owner's home directory"
+            print e
+            return False
 
         jf = jobfile( self.task_id, 
                 self.__class__.cylc_env, self.__class__.global_env, self.task_env, 
@@ -263,6 +264,20 @@ class job_submit(object):
             command = self.command
             jobfile_path = self.jobfile_path
             stdin = None
+        elif self.remote_host == "localhost" \
+             and self.__class__.owned_task_execution_method == "sudo":
+            # change to task owner's $HOME 
+            try: 
+                os.chdir( self.homedir )
+            except OSError, e:
+                print "Failed to change to task owner's home directory"
+                print e
+                return False
+
+            command = self.SUDO_TEMPLATE % { "task_owner": self.task_owner,
+                                             "jobfile_path": self.jobfile_path,
+                                             "command": self.command }
+            stdin = subprocess.PIPE
         else:
             self.destination = self.task_owner + "@" + self.remote_host
             remote_shell_template = self.remote_shell_template
