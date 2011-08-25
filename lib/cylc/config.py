@@ -717,28 +717,17 @@ class config( CylcConfigObj ):
         #  An 'or' on the right side is an error:
         #  'A = > B | C'     <--- NOT ALLOWED!
 
-        # NO PARENTHESES ALLOWED FOR NOW, AS IT MAKES PARSING DIFFICULT.
-        # Instead decompose into multiple expressions: 
-        #  'A & ( B | C ) => D'               <--- don't use this
-        # is equivalent to:
-        #  'A => D' and 'B | C => D'          <--- use this instead
-        # (this might not be possible in all conceivable cases, but in 
-        # reality NWP suites have simple conditional trigger needs).
-
         # [list of valid hours], or ["once"], or ["ASYNCID:pattern"]
-        async_oneoff = False
-        async_repeat = False
-        cycling = False
+        ttype = None
         validity = []
         if section == "once":
-            async_oneoff = True
+            ttype = 'async_oneoff'
             validity = [section]
         elif re.match( '^ASYNCID:', section ):
-            async_repeat = True
+            ttype = 'async_repeating'
             validity = [section]
         elif re.match( '^[\s,\d]+$', section ):
-            cycling = True
-            # Cycling task.
+            ttype = 'cycling'
             hours = re.split( '\s*,\s*', section )
             for hr in hours:
                 hour = int( hr )
@@ -751,6 +740,7 @@ class config( CylcConfigObj ):
             raise SuiteConfigError( 'ERROR: Illegal graph validity type: ' + section )
 
         if not graph_only or self['visualization']['show family members']:
+            # replace family names with family members
             for fam in self['task families']:
                 mems = ' & '.join( self.members[fam] )
                 line = re.sub( fam, mems, line )
@@ -772,7 +762,6 @@ class config( CylcConfigObj ):
             lconditional = lgroup
  
             # parentheses are used for intercycle dependencies: (T-6) etc.
-            # so don't check for them as erroneous conditionals just yet.
 
             if rgroup:
                 # '|' (OR) is not allowed on the right side
@@ -791,49 +780,37 @@ class config( CylcConfigObj ):
             new_rights = []
             for r in rights:
                 if r:
-                    # ignore output labels on the right (they are only
-                    # meaningful on the left, in chained tasks)
+                    # ignore output labels on the right (for chained
+                    # tasks they are only meaningful on the left)
                     new_rights.append( re.sub( ':\w+', '', r ))
                 else:
                     # retain None's in order to handle lone nodes on the left
                     new_rights.append( None )
 
             rights = new_rights
-            lefts  = re.split( '\s*&\s*', lgroup )
 
-            if not cycling:
-                for n in lefts + rights:
-                    if async_oneoff:
-                        if n not in self.async_oneoff_tasks:
-                            self.async_oneoff_tasks.append(n)
-                    elif async_repeat: 
-                        if n not in self.async_oneoff_tasks:
-                            self.async_repeating_tasks.append(n)
+            ##lefts  = re.split( '\s*&\s*', lgroup )
 
-            # generate graph nodes and edges
-            sasl = False
+            ##if not cycling:
+            ##    for n in lefts + rights:
+            ##        if async_oneoff:
+            ##            if n not in self.async_oneoff_tasks:
+            ##                self.async_oneoff_tasks.append(n)
+            ##        elif async_repeat: 
+            ##            if n not in self.async_oneoff_tasks:
+            ##                self.async_repeating_tasks.append(n)
+
+            # extract task names from lexpression
+            nstr = re.sub( '[(|&)]', ' ', lexpression )
+            nstr = nstr.strip()
+            lnames = re.split( ' +', nstr )
+
             for r in rights:
-                for l in lefts:
-                    if l in self.async_oneoff_tasks + self.async_repeating_tasks:
-                        sasl = True
-                    e = edge( l,r, sasl )
-                    if async_oneoff:
-                        if e not in self.async_oneoff_edges:
-                            self.async_oneoff_edges.append( e )
-                    elif async_repeat:
-                        if e not in self.async_repeating_edges:
-                            self.async_repeating_edges.append( e )
-                    else:
-                        for val in validity:
-                            if val not in self.edges:
-                                self.edges[val] = []
-                            if e not in self.edges[val]:
-                                self.edges[val].append( e )
-
-            if not graph_only:
-                # generate task definitions
-                for r in rights:
-                    self.generate_taskdefs( lconditional, r, section )
+                if graph_only:
+                    self.generate_nodes_and_edges( lnames, r, type, validity )
+                else:
+                    self.generate_taskdefs( lnames, r, type, section )
+                    self.generate_triggers( lconditional, r, section )
  
             #for t in self.taskdefs:
             #    print self.taskdefs[t].name, self.taskdefs[t].type
@@ -844,7 +821,36 @@ class config( CylcConfigObj ):
             #   foo(T-DD)     (intercycle dep)
             #   foo:N(T-DD)   (both)
 
-    def generate_taskdefs( self, lcond, right, section ):
+    def generate_nodes_and_edges( self, lnames, right, type, validity ):
+        if type != 'cycling':
+            for n in lnames + [right]:
+                if type == 'async_oneoff':
+                    if n not in self.async_oneoff_tasks:
+                        self.async_oneoff_tasks.append(n)
+                elif type == 'async_repeat': 
+                    if n not in self.async_oneoff_tasks:
+                        self.async_repeating_tasks.append(n)
+
+        sasl = False
+        for left in lnames:
+            if left in self.async_oneoff_tasks + self.async_repeating_tasks:
+                sasl = True
+            e = edge( left, right, sasl )
+            if type == 'async_oneoff':
+                if e not in self.async_oneoff_edges:
+                    self.async_oneoff_edges.append( e )
+            elif type == 'async_repeat':
+                if e not in self.async_repeating_edges:
+                    self.async_repeating_edges.append( e )
+            else:
+                for val in validity:
+                    if val not in self.edges:
+                        self.edges[val] = []
+                    if e not in self.edges[val]:
+                        self.edges[val].append( e )
+
+    #def generate_taskdefs( self, lcond, right, section ):
+    def generate_taskdefs( self, lnames, right, type, section ):
         async = False
         asyncid_pattern = None
         m = re.match( '^ASYNCID:(.*)$', section )
