@@ -548,7 +548,6 @@ class config( CylcConfigObj ):
         if asyncid_pattern:
             trigger = re.sub( '\$\(ASYNCID\)', '(' + asyncid_pattern + ')', trigger )
  
-
         return trigger
 
     def __check_tasks( self ):
@@ -562,8 +561,7 @@ class config( CylcConfigObj ):
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
         for name in self.taskdefs:
             if name not in self['tasks']:
-                if name not in self['task families']:
-                    print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it will run as a dummy task.'
+                print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it will run as a dummy task.'
         for name in self['tasks']:
             if name not in self.taskdefs:
                 print >> sys.stderr, 'WARNING: task "' + name + '" is defined in [tasks] but not used in the graph.'
@@ -751,6 +749,11 @@ class config( CylcConfigObj ):
             validity.sort( key=int )
         else:
             raise SuiteConfigError( 'ERROR: Illegal graph validity type: ' + section )
+
+        if not graph_only or self['visualization']['show family members']:
+            for fam in self['task families']:
+                mems = ' & '.join( self.members[fam] )
+                line = re.sub( fam, mems, line )
 
         # split line on arrows
         sequence = re.split( '\s*=>\s*', line )
@@ -1036,10 +1039,6 @@ class config( CylcConfigObj ):
                                 # no families
                                 gr_edges.append( (left, right, False ) )
                         else:
-                            # Family members will appear in the graph string
-                            # (a) if the family has internal dependencies, and
-                            # (b) if any members have direct connections
-                            # to external tasks.
                             method = 'nonfam'
                             if lname in self.member_of and rname in self.member_of:
                                 # l and r are both members of families
@@ -1057,12 +1056,16 @@ class config( CylcConfigObj ):
                                 method = 'rfam'
 
                             if method ==  'nonfam':
+                                print 'ONE'
                                 gr_edges.append( (left, right, False ) )
                             elif method == 'lfam':
+                                print 'TWO'
                                 gr_edges.append( (self.member_of[lname] + '%' + lctime, right, True ) )
                             elif method == 'rfam':
+                                print 'THR'
                                 gr_edges.append( (left, self.member_of[rname] + '%' + rctime, True ) )
                             elif method == 'twofam':
+                                print 'FOU'
                                 gr_edges.append( (self.member_of[lname] + '%' + lctime, self.member_of[rname] + '%' + rctime, True ) )
 
                     # next cycle
@@ -1152,31 +1155,19 @@ class config( CylcConfigObj ):
             return
 
         # task families
-        my_family = {}
-        for name in self['task families']:
-            try:
-                self.taskdefs[name].modifiers.append("family")
-            except KeyError:
-                print >> sys.stderr, 'WARNING: family ' + name + ' is not used in the graph'
-                continue
- 
-            mems = self['task families'][name]
-            self.taskdefs[name].members = mems
-            for mem in mems:
-                if mem not in self.taskdefs:
-                    self.taskdefs[ mem ] = self.get_taskdef( mem )
-                self.taskdefs[mem].member_of = name
-                # take valid hours from the family
-                # (REPLACES HOURS if member appears in graph section)
-                self.taskdefs[mem].hours = self.taskdefs[name].hours
-                if name in self.async_oneoff_tasks:
-                    self.taskdefs[mem].type = "async_oneoff"
-                    if mem not in self.async_oneoff_tasks:
-                        self.async_oneoff_tasks.append(mem)
-                elif name in self.async_repeating_tasks:
-                    self.taskdefs[mem].type = "async_repeating"
-                    if mem not in self.async_repeating_tasks:
-                        self.async_repeating_tasks.append(mem)
+        # TO DO: IS THIS NEEDED?
+        #for name in self['task families']:
+        #    mems = self['task families'][name]
+        #    for mem in mems:
+        #        self.taskdefs[mem].member_of = name
+        #        if name in self.async_oneoff_tasks:
+        #            self.taskdefs[mem].type = "async_oneoff"
+        #            if mem not in self.async_oneoff_tasks:
+        #                self.async_oneoff_tasks.append(mem)
+        #        elif name in self.async_repeating_tasks:
+        #            self.taskdefs[mem].type = "async_repeating"
+        #            if mem not in self.async_repeating_tasks:
+        #                self.async_repeating_tasks.append(mem)
 
         # sort hours list for each task
         for name in self.taskdefs:

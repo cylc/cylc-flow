@@ -244,9 +244,6 @@ class taskdef(object):
         tclass.intercycle = self.intercycle
         tclass.follow_on = self.follow_on_task
 
-        if 'family' in self.modifiers:
-            tclass.members = self.members
-
         if self.member_of:
             tclass.member_of = self.member_of
 
@@ -392,26 +389,10 @@ class taskdef(object):
             sself.suicide_prerequisites = plain_prerequisites( sself.id )
             ##sself.add_requisites( sself.suicide_prerequisites, self.suicide_triggers )
 
-            if self.member_of:
-                foo = plain_prerequisites( sself.id )
-                foo.add( self.member_of + '%' + sself.tag + ' started' )
-                sself.prerequisites.add_requisites( foo )
-
-            if 'family' in self.modifiers:
-                # familysucceeded prerequisites (all satisfied => all
-                # members finished successfully).
-                sself.familysucceeded_prerequisites = plain_prerequisites( sself.id )
-                for member in self.members:
-                    sself.familysucceeded_prerequisites.add( member + '%' + sself.tag + ' succeeded' )
-                # familyOR prerequisites (A|A:fail and B|B:fail and ...)
-                # all satisfied => all members have either succeeded or failed.
-                sself.familyOR_prerequisites = conditional_prerequisites( sself.id )
-                expr = ''
-                for member in self.members:
-                    expr += '( ' + member + ' | ' + member + '_fail ) & '
-                    sself.familyOR_prerequisites.add( member + '%' + sself.tag + ' succeeded', member )
-                    sself.familyOR_prerequisites.add( member + '%' + sself.tag + ' failed', member + '_fail' )
-                sself.familyOR_prerequisites.set_condition( expr.rstrip('& ') )
+            #if self.member_of:
+            #    foo = plain_prerequisites( sself.id )
+            #    foo.add( self.member_of + '%' + sself.tag + ' started' )
+            #    sself.prerequisites.add_requisites( foo )
 
             sself.logfiles = logfiles()
             for lfile in self.logfiles:
