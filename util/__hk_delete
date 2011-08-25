@@ -19,7 +19,7 @@
 from optparse import OptionParser
 from cylc.housekeeping import HousekeepingError, NonIdenticalTargetError
 from cylc.hkdiff import diff
-import os, sys
+import os, sys, shutil
 
 class hk_delete:
     """
