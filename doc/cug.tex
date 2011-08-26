@@ -2135,28 +2135,18 @@ cylc do when A finishes?}
     graph = "A | B => C"
 \end{lstlisting}
 
-\paragraph{Complex Conditional Triggers}
-
-You can use any valid conditional expression, e.g.:
+Forecasting suites typically have quite simple requirements for
+conditional triggers, but should you need it you can use any valid
+conditional expression, e.g.:
 \begin{lstlisting}
 # SUITE.RC
-    # D triggers if (A) or (both B and C) succeed:
-    graph = "A | B & C => D" 
+    graph = """
+        # D triggers if A or (both B and C) succeed:
+        A | B & C => D
+        # Z triggers if both (W or X) and Y succeed.
+        (W | X) & Y => Z
+            """ 
 \end{lstlisting}
-
-\paragraph{Parenthesized Complex Conditional Triggers}
-
-{\em Parenthesized conditional expressions are currently illegal.}
-Internally cylc can handle this perfectly well, because it transforms 
-prerequisite conditions directly into Python code and gets the 
-interpreter to evaluate the result, {\em but} the cylc-3 suite.rc graph
-parser currently cannot handle general conditional expressions.
-
-This restriction should not be an impediment because forecasting suites
-tend to have simple requirements for conditional triggers (plus you can
-rely on operator precedence - AND before OR - and split large
-expressions into multiple lines). However, if there is any call for more
-complicated conditional triggers we will certainly address this problem.
 
 \subsubsection{Satisfying Intercycle Dependencies At Startup}
 \label{SatisfyingIntercycleDependenciesAtStartup}
