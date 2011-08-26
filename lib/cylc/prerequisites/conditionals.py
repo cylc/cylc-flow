@@ -63,6 +63,7 @@ class conditional_prerequisites(object):
         return not_satisfied
 
     def set_condition( self, expr ):
+        print expr
         # 'foo | bar & baz'
         # 'foo:fail | foo'
         # 'foo(T-6):out1 | baz'

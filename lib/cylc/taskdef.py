@@ -16,19 +16,14 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# THIS MODULE HANDLES DYNAMIC DEFINITION OF TASK PROXY CLASSES according
+# to information parsed from the suite.rc file via config.py. It could 
+# probably do with some refactoring to make it more transparent ...
+
 # TO DO: suicide prerequisites
 
-# ONEOFF and FOLLOWON TASKS: followon still needed but can now be
-# identified automatically from the dependency graph?
-
-#======================================================================
-# DEVELOPER NOTE: This module is for dynamic definition of task proxy
-# classes according to information parsed from the suite.rc file 
-# (particularly the suite dependency graph) via config.py. This, along 
-# with config.py graphing, is by far the most complex part of cylc (by
-# contrast the scheduling algorithm, for example, is almost trivial) and
-# it could do with some serious refactoring.
-#======================================================================
+# TO DO : ONEOFF FOLLOWON TASKS: still needed but can now be identified
+# automatically from the dependency graph?
 
 import sys, re
 from OrderedDict import OrderedDict
