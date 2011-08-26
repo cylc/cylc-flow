@@ -69,6 +69,7 @@ cylc register examples:async_repeat $CYLC_DIR/examples/async/repeating
 
 cylc register examples:generator_explicit $CYLC_DIR/examples/generator/explicit
 cylc register examples:generator_expression $CYLC_DIR/examples/generator/expression
+cylc register examples:expression $CYLC_DIR/examples/expression
 
 cylc register examples:families $CYLC_DIR/examples/families
 
