@@ -79,147 +79,39 @@ class edge( object):
 
     def get_left( self, tag, not_first_cycle, raw, startup_only, exclude ):
         # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
+        if self.left in exclude:
+            return None
 
         first_cycle = not not_first_cycle
 
-        options = []
-        starred_index = -1
+        left = self.left
 
         # strip off special outputs
-        self.left = re.sub( ':\w+', '', self.left )
+        left = re.sub( ':\w+', '', left )
 
-        m = re.search( '(\w+)\s*\(\s*T\s*-(\d+)\s*\)', self.left )
-        if m: 
-            if first_cycle:
-                # ignore intercycle
-                pass
-            else:
-                # not first cycle
-                options.append( self.left )
-
-        if self.left in exclude:
-            continue
-
-        if self.left in startup_only:
-            if not first_cycle:
-                continue
-            else:
-                # first cycle
-                if not raw:
-                    options.append( self.left )
-                    continue
-        else:
-            options.append( self.left )
-            continue
-
-        if len(options) == 0:
+        if re.search( '\[\s*T\s*-(\d+)\s*\]', left ) and first_cycle:
+            # ignore intercycle deps in first cycle
             return None
 
-        if starred_index != -1:
-            left = options[ starred_index ]
-        else:
-            #rightmost item
-            left = options[-1]
+        if left in startup_only:
+            if not first_cycle or raw:
+                return None
 
-        m = re.search( '(\w+)\s*\(\s*T\s*([+-])(\d+)\s*\)', left )
+        m = re.search( '(\w+)\s*\[\s*T\s*([+-])(\d+)\s*\]', left )
         if m: 
-            task = m.groups()[0]
-            sign = m.groups()[1]
-            offset = m.groups()[2]
+            left, sign, offset = m.groups()
             if sign != '-':
-                # TO DO: this check is redundant (already checked by
-                # graphnode processing).
+                # TO DO: this check is redundant (already checked by graphnode processing).
                 raise SuiteConfigError, "Prerequisite offsets must be negative: " + left
             foo = ct(tag)
             foo.decrement( hours=offset )
             tag = foo.get()
-        else:
-            task = left
             
         if self.sasl:
             tag = 1
-        res = task + '%' + str(tag)  # str for int tag (async)
-        return res
 
-class node( object):
-    def __init__( self, n ):
-        self.group = n
+        return left + '%' + str(tag)  # str for int tag (async)
 
-    def get( self, ctime, not_first_cycle, raw, startup_only, exclude ):
-        # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
-        #if re.search( '\|', self.left_group ):
-        OR_list = re.split('\s*\|\s*', self.group )
-
-        first_cycle = not not_first_cycle
-
-        options = []
-        starred_index = -1
-        for item in OR_list:
-            # strip off special outputs
-            item = re.sub( ':\w+', '', item )
-
-            starred = False
-            if re.search( '\*$', item ):
-                starred = True
-                item = re.sub( '\*$', '', item )
-
-            m = re.search( '(\w+)\s*\(\s*T\s*-(\d+)\s*\)', item )
-            if m: 
-                if first_cycle:
-                    # ignore intercycle
-                    continue
-                else:
-                    # not first cycle
-                    options.append( item )
-                    if starred:
-                        starred_index = len(options)-1
-                    continue
-
-            if item in exclude:
-                continue
-
-            if item in startup_only:
-                if not first_cycle:
-                    continue
-                else:
-                    # first cycle
-                    if not raw:
-                        options.append( item )
-                        if starred:
-                            starred_index = len(options)-1
-                        continue
-            else:
-                options.append( item )
-                if starred:
-                    starred_index = len(options)-1
-                continue
-
-        if len(options) == 0:
-            return None
-
-        if starred_index != -1:
-            left = options[ starred_index ]
-        else:
-            #rightmost item
-            left = options[-1]
-
-        m = re.search( '(\w+)\s*\(\s*T\s*([+-])(\d+)\s*\)', left )
-        if m: 
-            task = m.groups()[0]
-            sign = m.groups()[1]
-            offset = m.groups()[2]
-            if sign != '-':
-                # TO DO: this check is redundant (already checked by
-                # graphnode processing).
-                raise SuiteConfigError, "Prerequisite offsets must be negative: " + left
-            foo = ct(ctime)
-            foo.decrement(hours=offset)
-            ctime = foo.get()
-            res = task + '%' + ctime
-        else:
-            res = left + '%' + ctime
-            
-        return res
 
 def get_rcfiles ( suite ):
     # return a list of all rc files for this suite
@@ -684,14 +576,6 @@ class config( CylcConfigObj ):
         # is the same as:
         #  'A => C' and 'B => C'
 
-        # '|' (OR) is allowed. For graphing, the final member of an OR
-        # group is plotted, by default,
-        #  'A | B => C' : [B => C]
-        # but a * indicates which member to plot,
-        #  'A* | B => C'   : [A => C]
-        #  'A & B  | C => D'  : [C => D]
-        #  'A & B * | C => D'  : [A => D], [B => D]
-
         #  An 'or' on the right side is an error:
         #  'A = > B | C'     <--- NOT ALLOWED!
 
@@ -745,7 +629,7 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, "ERROR: OR '|' is not legal on the right side of dependencies: " + rgroup
 
                 # (T+/-N) offsets not allowed on the right side (as yet)
-                if re.search( '\(\s*T\s*[+-]\s*\d+\s*\)', rgroup ):
+                if re.search( '\[\s*T\s*[+-]\s*\d+\s*\]', rgroup ):
                     raise SuiteConfigError, "ERROR: time offsets are not legal on the right side of dependencies: " + rgroup
 
                 # now split on '&' (AND) and generate corresponding pairs
@@ -852,7 +736,7 @@ class config( CylcConfigObj ):
             trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset )
             # use fully qualified name for the expression label
             # (task name is not unique, e.g.: "F | F:fail => G")
-            label = re.sub( '[()-:]', '_', left )
+            label = re.sub( '[-\[\]:]', '_', left )
 
             ctrig[label] = trigger
 
@@ -872,7 +756,7 @@ class config( CylcConfigObj ):
                     self.taskdefs[right].add_trigger( trigger, section )
         else:
             # replace some chars for later use in regular  expressions.
-            expr = re.sub( '[-:]', '_', lexpression )
+            expr = re.sub( '[-\[\]:]', '_', lexpression )
             # using last lnode ...
             if lnode.name in self['special tasks']['startup'] or \
                     lnode.name in self.async_oneoff_tasks:

@@ -359,7 +359,6 @@ class taskdef(object):
 
         # class init function
         def tclass_init( sself, start_c_time, initial_state, stop_c_time=None, startup=False ):
-            #print self.name, self.type, self.modifiers
             sself.tag = sself.adjust_tag( start_c_time )
             if self.type != 'async_repeating' and self.type != 'async_daemon' and self.type != 'async_oneoff':
                 sself.c_time = sself.tag
