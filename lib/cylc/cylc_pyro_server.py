@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+import os, sys
 import socket
 import Pyro
 from passphrase import passphrase
@@ -51,7 +51,11 @@ class pyro_server( object ):
         # any existing client end connections will hang for a long time
         # unless we do the following (or cylc clients set a timeout,
         # presumably) which daemon.shutdown() does not do (why not?):
-        self.daemon.sock.shutdown( socket.SHUT_RDWR )
+
+        try:
+            self.daemon.sock.shutdown( socket.SHUT_RDWR )
+        except socket.error, x:
+            print >> sys.stderr, x
 
     def connect( self, obj, name, qualified=True ):
         if qualified:
