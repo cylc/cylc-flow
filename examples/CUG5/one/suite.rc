@@ -10,7 +10,7 @@ runahead limit in hours = 12
 [dependencies]
     [[ 0,6,12,18 ]]
         graph  =  """Prep => GetData => Model => PostA
-                     Model(T-6) => Model"""
+                     Model[T-6] => Model"""
     [[ 6,18 ]]
         graph = "Model => PostB"
 
