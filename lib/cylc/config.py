@@ -662,14 +662,18 @@ class config( CylcConfigObj ):
                         if ttype == 'async_oneoff':
                             if n not in self.async_oneoff_tasks:
                                 self.async_oneoff_tasks.append(n)
-                        elif ttype == 'async_repeat': 
-                            if n not in self.async_oneoff_tasks:
+                        elif ttype == 'async_repeating': 
+                            if n not in self.async_repeating_tasks:
                                 self.async_repeating_tasks.append(n)
                 if graph_only:
                     self.generate_nodes_and_edges( lnames, r, ttype, validity )
                 else:
-                    self.generate_taskdefs( lnames, r, ttype, section )
-                    self.generate_triggers( lexpression, lnames, r, section )
+                    asyncid_pattern = None
+                    if ttype == 'async_repeating':
+                        m = re.match( '^ASYNCID:(.*)$', section )
+                        asyncid_pattern = m.groups()[0]
+                    self.generate_taskdefs( lnames, r, ttype, section, asyncid_pattern )
+                    self.generate_triggers( lexpression, lnames, r, section, asyncid_pattern )
  
             # self.edges left side members can be:
             #   foo           (task name)
@@ -686,7 +690,7 @@ class config( CylcConfigObj ):
             if ttype == 'async_oneoff':
                 if e not in self.async_oneoff_edges:
                     self.async_oneoff_edges.append( e )
-            elif ttype == 'async_repeat':
+            elif ttype == 'async_repeating':
                 if e not in self.async_repeating_edges:
                     self.async_repeating_edges.append( e )
             else:
@@ -696,12 +700,7 @@ class config( CylcConfigObj ):
                     if e not in self.edges[val]:
                         self.edges[val].append( e )
 
-    def generate_taskdefs( self, lnames, right, ttype, section ):
-        if ttype == 'async_repeating':
-            m = re.match( '^ASYNCID:(.*)$', section )
-            asyncid_pattern = m.groups()[0]
-            daemon = self['dependencies'][section]['daemon']
-
+    def generate_taskdefs( self, lnames, right, ttype, section, asyncid_pattern ):
         for node in lnames + [right]:
             if not node:
                 # if right is None, lefts are lone nodes
@@ -716,16 +715,21 @@ class config( CylcConfigObj ):
                 self.taskdefs[ name ] = self.get_taskdef( name )
 
             # TO DO: setting type should be consolidated to get_taskdef()
-            if ttype != 'cycling':
-                self.taskdefs[name].type = ttype
-            if ttype == 'async_repeating':
+            if name in self.async_oneoff_tasks:
+                # this catches oneoff async tasks that begin a repeating
+                # async section as well.
+                self.taskdefs[name].type = 'async_oneoff'
+            elif ttype == 'async_repeating':
                 self.taskdefs[name].asyncid_pattern = asyncid_pattern
-                if name == daemon:
+                if name == self['dependencies'][section]['daemon']:
                     self.taskdefs[name].type = 'async_daemon'
+                else:
+                    self.taskdefs[name].type = 'async_repeating'
+
             elif ttype == 'cycling':
                 self.taskdefs[ name ].set_valid_hours( section )
 
-    def generate_triggers( self, lexpression, lnames, right, section ):
+    def generate_triggers( self, lexpression, lnames, right, section, asyncid_pattern ):
         if not right:
             # lefts are lone nodes; no more triggers to define.
             return
@@ -735,7 +739,7 @@ class config( CylcConfigObj ):
             if lnode.intercycle:
                 self.taskdefs[lnode.name].intercycle = True
 
-            trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset )
+            trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset, asyncid_pattern )
             # use fully qualified name for the expression label
             # (task name is not unique, e.g.: "F | F:fail => G")
             label = re.sub( '[-\[\]:]', '_', left )
