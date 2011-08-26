@@ -57,7 +57,7 @@ class SuiteConfigError( Exception ):
 
 class edge( object):
     def __init__( self, l, r, sasl=False ):
-        self.left_group = l
+        self.left = l
         self.right = r
         self.sasl = sasl
 
@@ -79,52 +79,38 @@ class edge( object):
 
     def get_left( self, tag, not_first_cycle, raw, startup_only, exclude ):
         # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
-        OR_list = re.split('\s*\|\s*', self.left_group )
 
         first_cycle = not not_first_cycle
 
         options = []
         starred_index = -1
-        for item in OR_list:
 
-            # strip off special outputs
-            item = re.sub( ':\w+', '', item )
+        # strip off special outputs
+        self.left = re.sub( ':\w+', '', self.left )
 
-            starred = False
-            if re.search( '\*$', item ):
-                starred = True
-                item = re.sub( '\*$', '', item )
-
-            m = re.search( '(\w+)\s*\(\s*T\s*-(\d+)\s*\)', item )
-            if m: 
-                if first_cycle:
-                    # ignore intercycle
-                    continue
-                else:
-                    # not first cycle
-                    options.append( item )
-                    if starred:
-                        starred_index = len(options)-1
-                    continue
-
-            if item in exclude:
-                continue
-
-            if item in startup_only:
-                if not first_cycle:
-                    continue
-                else:
-                    # first cycle
-                    if not raw:
-                        options.append( item )
-                        if starred:
-                            starred_index = len(options)-1
-                        continue
+        m = re.search( '(\w+)\s*\(\s*T\s*-(\d+)\s*\)', self.left )
+        if m: 
+            if first_cycle:
+                # ignore intercycle
+                pass
             else:
-                options.append( item )
-                if starred:
-                    starred_index = len(options)-1
+                # not first cycle
+                options.append( self.left )
+
+        if self.left in exclude:
+            continue
+
+        if self.left in startup_only:
+            if not first_cycle:
                 continue
+            else:
+                # first cycle
+                if not raw:
+                    options.append( self.left )
+                    continue
+        else:
+            options.append( self.left )
+            continue
 
         if len(options) == 0:
             return None
