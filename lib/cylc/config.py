@@ -603,12 +603,29 @@ class config( CylcConfigObj ):
         else:
             raise SuiteConfigError( 'ERROR: Illegal graph validity type: ' + section )
 
-        if not graph_only or self['visualization']['show family members']:
-            # replace family names with family members
-            for fam in self['task families']:
-                mems = ' & '.join( self.members[fam] )
-                line = re.sub( fam, mems, line )
 
+        # replace family names with family members
+        if not graph_only or self['visualization']['show family members']:
+            # TO DO: the following is overkill for just graphing.
+            for fam in self['task families']:
+                # fam:fail - replace with conditional expressing 
+                # "at least one member failed AND all members succeeded or failed"
+                # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail )
+                if re.search( r'\b' + fam + ':fail' + r'\b', line ):
+                    mem0 = self.members[fam][0]
+                    cond1 = mem0 + ':fail'
+                    cond2 = '( ' + mem0 + ' | ' + mem0 + ':fail )' 
+                    for mem in self.members[fam][1:]:
+                        cond1 += ' | ' + mem + ':fail'
+                        cond2 += ' & ( ' + mem + ' | ' + mem + ':fail )'
+                    cond = '( ' + cond1 + ') & ' + cond2 
+                    line = re.sub( r'\b' + fam + ':fail' + r'\b', cond, line )
+                # fam - replace with members
+                if re.search( r'\b' + fam + r'\b', line ):
+                    mems = ' & '.join( self.members[fam] )
+                    line = re.sub( r'\b' + fam + r'\b', mems, line )
+
+        print line
         # split line on arrows
         sequence = re.split( '\s*=>\s*', line )
 
