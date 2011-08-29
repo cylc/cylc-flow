@@ -173,15 +173,15 @@ task.task.clock = dclock
 clocktriggered.clocktriggered.clock = dclock
 task.task.suite = suite
 
-# SUITE.RC GLOBAL ENVIRONMENT
-globalenv = OrderedDict()
-for var in config['environment']:
-    globalenv[ var ] = config['environment'][var]
+## SUITE.RC GLOBAL ENVIRONMENT
+#globalenv = OrderedDict()
+#for var in config['environment']:
+#    globalenv[ var ] = config['environment'][var]
 
-# SUITE.RC GLOBAL DIRECTIVES
-globaldvs = OrderedDict()
-for var in config['directives']:
-    globaldvs[ var ] = config['directives'][var]
+## SUITE.RC GLOBAL DIRECTIVES
+#globaldvs = OrderedDict()
+#for var in config['directives']:
+#    globaldvs[ var ] = config['directives'][var]
 
 # create the log
 log = logging.getLogger( "main" )
@@ -190,19 +190,19 @@ pimp_my_logger.pimp_it( log, logging_dir, \
         logging.INFO, dclock )
 
 job_submit.cylc_env = cylcenv
-job_submit.global_env = globalenv
-job_submit.global_dvs = globaldvs
-job_submit.shell = config['job submission shell'] 
-job_submit.joblog_dir = config['job submission log directory']
-job_submit.global_pre_scripting = config['pre-command scripting']
-job_submit.global_post_scripting = config['post-command scripting']
-job_submit.owned_task_execution_method = config['owned task execution method']
-job_submit.global_manual_messaging = config['manual task completion messaging']
+#job_submit.global_env = globalenv
+#job_submit.global_dvs = globaldvs
+job_submit.shell = config['namespaces']['global']['job submission shell'] 
+#job_submit.joblog_dir = config['job submission log directory']
+#job_submit.global_pre_scripting = config['pre-command scripting']
+#job_submit.global_post_scripting = config['post-command scripting']
+#job_submit.owned_task_execution_method = config['owned task execution method']
+#job_submit.global_manual_messaging = config['manual task completion messaging']
 
-job_submit.global_task_owner = config['owner']
-job_submit.global_remote_host = config['remote host']
-job_submit.global_remote_cylc_dir = config['remote cylc directory']
-job_submit.global_remote_suite_dir = config['remote suite directory']
+#job_submit.global_task_owner = config['owner']
+#job_submit.global_remote_host = config['remote host']
+#job_submit.global_remote_cylc_dir = config['remote cylc directory']
+#job_submit.global_remote_suite_dir = config['remote suite directory']
 
 # intantiate the task--------------------------------------------------
 if task_name in config.get_asynchronous_task_name_list():

@@ -355,6 +355,49 @@ class config( CylcConfigObj ):
                 # delete the original multi-task section
                 del self['tasks'][item]
 
+        # NAMESPACES
+        for task in self['tasks']:
+            hier = []
+            self.get_hierarchy( self['tasks'][task]['namespace'], hier ) # [foo, bar, global]
+            hier.pop() # [foo, bar]
+            hier.reverse() # [bar, foo]
+            taskconf = {}
+            self.section_copy( taskconf, self['namespaces']['global'] )
+            for ns in hier:
+                self.inherit( taskconf, self['namespaces'][ns] )
+            self.inherit( taskconf, self['tasks'][task] )
+            self['tasks'][task] = taskconf
+
+    def get_hierarchy( self, ns, hier ):
+        hier.append( ns )
+        if ns == 'global' or not ns:
+            return
+        inherit = self['namespaces'][ns]['namespace']
+        self.get_hierarchy( inherit, hier )
+
+    def inherit( self, target, source ):
+        for item in source:
+            if isinstance( source[item], Section ):
+                self.inherit( target[item], source[item] )
+            else:
+                if source[item]:
+                    target[item] = source[item]
+
+    def section_copy( self, target, source ):
+        for item in source:
+            if isinstance( source[item], Section ):
+                # recursive call for to handle a sub-section
+                if item not in target:
+                    target[item] = OrderedDict()
+                self.section_copy( target[item], source[item] )
+            elif isinstance( source[item], list ):
+                newlist = []
+                for mem in source[item]:
+                    newlist.append( mem )
+                target[item] = newlist
+            else:
+                target[item] = source[item]
+
     def specialize( self, name, target, source ):
         # recursively specialize a generator task config section
         # ('source') to a specific config section (target) for task
@@ -496,7 +539,7 @@ class config( CylcConfigObj ):
         self['state dump directory'] =  \
                 os.path.expandvars( os.path.expanduser( self['state dump directory']))
         self['job submission log directory' ] = \
-                os.path.expandvars( os.path.expanduser( self['job submission log directory' ]))
+                os.path.expandvars( os.path.expanduser( self['namespaces']['global']['job submission log directory' ]))
         self['visualization']['run time graph']['directory'] = \
                 os.path.expandvars( os.path.expanduser( self['visualization']['run time graph']['directory']))
 
@@ -625,7 +668,6 @@ class config( CylcConfigObj ):
                     mems = ' & '.join( self.members[fam] )
                     line = re.sub( r'\b' + fam + r'\b', mems, line )
 
-        print line
         # split line on arrows
         sequence = re.split( '\s*=>\s*', line )
 
@@ -1078,34 +1120,34 @@ class config( CylcConfigObj ):
         if name not in self['tasks']:
             if strict:
                 raise SuiteConfigError, 'Task not defined: ' + name
-            # no [tasks][[name]] section defined: default dummy task
+
+            # inhabit the global namespace and carry on as usual
+            taskconfig = {}
+            self.section_copy( taskconfig, self['namespaces']['global'] )
+ 
             if self.simulation_mode:
-                # use simulation mode specific job submit method for all tasks
                 taskd.job_submit_method = self['simulation mode']['job submission method']
             else:
-                # suite default job submit method
-                taskd.job_submit_method = self['job submission method']
-            return taskd
+                # global namespace job submit method
+                taskd.job_submit_method = self['namespaces']['global']['job submission method']
+            ##return taskd
+        else:
+            taskconfig = self['tasks'][name]
 
-        taskconfig = self['tasks'][name]
         taskd.description = taskconfig['description']
 
         for lbl in taskconfig['outputs']:
             # replace $(CYCLE_TIME) with $(TAG) in explicit outputs
             taskd.outputs.append( re.sub( 'CYCLE_TIME', 'TAG', taskconfig['outputs'][lbl] ))
 
-        if not self['ignore task owners']:
+        if not taskconfig['ignore task owners']:
             taskd.owner = taskconfig['owner']
 
+        # TO DO: consolidate with just above
         if self.simulation_mode:
-            # use simulation mode specific job submit method for all tasks
             taskd.job_submit_method = self['simulation mode']['job submission method']
-        elif taskconfig['job submission method'] != None:
-            # a task-specific job submit method was specified
-            taskd.job_submit_method = taskconfig['job submission method']
         else:
-            # suite default job submit method
-            taskd.job_submit_method = self['job submission method']
+            taskd.job_submit_method = taskconfig['job submission method']
 
         taskd.job_submit_log_directory = taskconfig['job submission log directory']
 

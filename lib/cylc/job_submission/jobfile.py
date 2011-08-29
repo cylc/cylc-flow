@@ -23,21 +23,25 @@ from OrderedDict import OrderedDict
 
 class jobfile(object):
 
-    def __init__( self, task_id, cylc_env, global_env, task_env, 
-            global_pre_scripting, global_post_scripting, 
-            directive_prefix, global_dvs, directives, final_directive, 
+    def __init__( self, task_id, cylc_env, #global_env, 
+            task_env, #global_pre_scripting, global_post_scripting, 
+            directive_prefix, #global_dvs, 
+            directives, final_directive, 
             manual_messaging, task_command, remote_cylc_dir, remote_suite_dir,
-            shell, simulation_mode, job_submission_method):
+            shell, 
+            simulation_mode, job_submission_method):
+
+        print "TO DO: pre-post-scripting"
 
         self.task_id = task_id
         self.cylc_env = cylc_env
-        self.global_env = global_env
+        #self.global_env = global_env
         self.task_env = task_env
-        self.global_pre_scripting = global_pre_scripting
-        self.global_post_scripting = global_post_scripting
+        #self.global_pre_scripting = global_pre_scripting
+        #self.global_post_scripting = global_post_scripting
         self.directive_prefix = directive_prefix
         self.final_directive = final_directive
-        self.global_dvs = global_dvs
+        #self.global_dvs = global_dvs
         self.directives = directives
         self.task_command = task_command
         self.shell = shell
@@ -111,9 +115,9 @@ class jobfile(object):
     def write_directives( self ):
         # override global with task-specific directives
         dvs = OrderedDict()
-        if self.global_dvs:
-            for var in self.global_dvs.keys():
-                dvs[var] = self.global_dvs[var]
+        #if self.global_dvs:
+        #    for var in self.global_dvs.keys():
+        #        dvs[var] = self.global_dvs[var]
         if self.directives:
             for var in self.directives:
                 dvs[var] = self.directives[var]
@@ -188,14 +192,14 @@ cylc task started || exit 1""" )
         BUFFER.write( "\nexport PATH" )
 
     def write_environment_2( self ):
-        if len( self.global_env.keys()) > 0:
-            self.FILE.write( "\n\n# GLOBAL VARIABLES:" )
-            for var in self.global_env:
-                self.FILE.write( "\n" + var + "=\"" + str( self.global_env[var] ) + "\"" )
-            # export them all (see note below)
-            self.FILE.write( "\nexport" )
-            for var in self.global_env:
-                self.FILE.write( " " + var )
+        #if len( self.global_env.keys()) > 0:
+        #    self.FILE.write( "\n\n# GLOBAL VARIABLES:" )
+        #    for var in self.global_env:
+        #        self.FILE.write( "\n" + var + "=\"" + str( self.global_env[var] ) + "\"" )
+        #    # export them all (see note below)
+        #    self.FILE.write( "\nexport" )
+        #    for var in self.global_env:
+        #        self.FILE.write( " " + var )
 
         if len( self.task_env.keys()) > 0:
             self.FILE.write( "\n\n# LOCAL VARIABLES:" )
@@ -217,9 +221,9 @@ cylc task started || exit 1""" )
         if self.simulation_mode:
             # ignore extra scripting in simulation mode
             return
-        if self.global_pre_scripting:
-            self.FILE.write( "\n\n# GLOBAL PRE-COMMAND SCRIPTING:" )
-            self.FILE.write( "\n" + self.global_pre_scripting )
+        #if self.global_pre_scripting:
+        #    self.FILE.write( "\n\n# GLOBAL PRE-COMMAND SCRIPTING:" )
+        #    self.FILE.write( "\n" + self.global_pre_scripting )
 
     def write_task_command( self ):
         self.FILE.write( "\n\n# TASK COMMAND SCRIPTING:" )
@@ -229,6 +233,6 @@ cylc task started || exit 1""" )
         if self.simulation_mode:
             # ignore extra scripting in simulation mode
             return
-        if self.global_post_scripting:
-            self.FILE.write( "\n\n# GLOBAL POST-COMMAND SCRIPTING:" )
-            self.FILE.write( "\n" + self.global_post_scripting )
+        #if self.global_post_scripting:
+        #    self.FILE.write( "\n\n# GLOBAL POST-COMMAND SCRIPTING:" )
+        #    self.FILE.write( "\n" + self.global_post_scripting )

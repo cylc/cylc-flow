@@ -378,21 +378,21 @@ class scheduler(object):
         # JOB SUBMISSION
         job_submit.simulation_mode = self.simulation_mode
         job_submit.cylc_env = cylcenv
-        job_submit.global_env = globalenv
-        job_submit.global_dvs = globaldvs
-        job_submit.shell = self.config['job submission shell']
-        job_submit.joblog_dir = self.config[ 'job submission log directory' ]
+        #job_submit.global_env = globalenv
+        #job_submit.global_dvs = globaldvs
+        job_submit.shell = self.config['namespaces']['global']['job submission shell']
+        #job_submit.joblog_dir = self.config[ 'job submission log directory' ]
         if self.simulation_mode and self.failout_task_id:
             job_submit.failout_id = self.failout_task_id
-        job_submit.global_pre_scripting = self.config['pre-command scripting']
-        job_submit.global_post_scripting = self.config['post-command scripting']
-        job_submit.owned_task_execution_method = self.config['owned task execution method']
-        job_submit.global_manual_messaging = self.config['manual task completion messaging']
+        #job_submit.global_pre_scripting = self.config['pre-command scripting']
+        #job_submit.global_post_scripting = self.config['post-command scripting']
+        #job_submit.owned_task_execution_method = self.config['owned task execution method']
+        #job_submit.global_manual_messaging = self.config['manual task completion messaging']
 
-        job_submit.global_task_owner = self.config['owner']
-        job_submit.global_remote_host = self.config['remote host']
-        job_submit.global_remote_cylc_dir = self.config['remote cylc directory']
-        job_submit.global_remote_suite_dir = self.config['remote suite directory']
+        #job_submit.global_task_owner = self.config['owner']
+        #job_submit.global_remote_host = self.config['remote host']
+        #job_submit.global_remote_cylc_dir = self.config['remote cylc directory']
+        #job_submit.global_remote_suite_dir = self.config['remote suite directory']
 
         # LOCAL ENVIRONMENT
         # Access to the suite bin directory may be required for alert
