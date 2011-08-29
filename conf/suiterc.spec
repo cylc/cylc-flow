@@ -791,8 +791,7 @@ UTC mode = boolean( default=False )
 #> \label{GraphDescrip}
 #> Define the dependency graph valid for specified list of hours or asynchronous ID pattern.
 #> You can use the \lstinline=cylc graph= command, or right click 
-#> Graph in gcylc, to plot the dependency graph as you
-#> work on it.
+#> Graph in gcylc, to plot the dependency graph as you work on it.
 #> See Section~\ref{DependencyGraphs} for details.
 #>\begin{myitemize}
 #>\item {\em section:} [dependencies] $\rightarrow$ [[HOURS]]
@@ -806,6 +805,8 @@ UTC mode = boolean( default=False )
 #>   ColdFoo | foo(T-6) => foo # cold start or restart for foo
 #>   X:fail => Y               # Y triggers if X fails
 #>   X | X:fail => Z           # Z triggers if X finishes or fails
+#> # a list-generating Python expression (m1 => p1; m2 => p2; ...):
+#>   Python:list( "m" + str(i) + '=>' + "p" + str(i) for i in range(1,7))
 #>   """
 #>  \end{lstlisting}
 #>\item {\em default:} None
