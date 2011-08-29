@@ -169,7 +169,7 @@ Version number X.Y.Z incrementing:
  it should, but it would retain the position (in the list of defined
  variables) of the first.
 
-+ Task families are now just suite definition shorthand - no pseudo-task
++ Task families are now suite definition shorthand - no pseudo-task
  representing the family appears in the suite task pool. 
   
 + General conditional triggers, with parentheses, allowed.
@@ -177,4 +177,10 @@ Version number X.Y.Z incrementing:
     from round to square brackets (to avoid clashing with parentheses 
     in conditional expressions):
        foo(T-6) becomes foo[T-6]
+
++ Embedded Python expressions can now be used to generate lists of 
+family member names; lists of similar dependencies in the graph; and
+lists of task names in [tasks][[TASK]] section headings (which may
+also contain a family name as shorthand for all family members) to 
+define multiple tasks at once.
 
