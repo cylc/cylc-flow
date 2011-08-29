@@ -174,6 +174,7 @@ Version number X.Y.Z incrementing:
   
 + General conditional triggers, with parentheses, allowed.
   - WARNING: This required a change in intercycle dependency notation
-    from round to square brackets:
+    from round to square brackets (to avoid clashing with parentheses 
+    in conditional expressions):
        foo(T-6) becomes foo[T-6]
 
