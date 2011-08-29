@@ -169,3 +169,9 @@ Version number X.Y.Z incrementing:
  it should, but it would retain the position (in the list of defined
  variables) of the first.
 
++ Embedded Python expressions can now be used to generate lists of 
+family member names; lists of similar dependencies in the graph; and
+lists of task names in [tasks][[TASK]] section headings (which may
+also contain a family name as shorthand for all family members) to 
+define multiple tasks at once.
+
