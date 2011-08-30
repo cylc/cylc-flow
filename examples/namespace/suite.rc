@@ -1,0 +1,49 @@
+
+[task families]
+    ops = OPS.atovs, OPS.aircraft
+    var = VAR.ConLS, VAR.AnPF
+
+[dependencies]
+    [[0]]
+        graph = """
+                foo => ops
+                ops | ops:fail => var => bar
+                """
+
+[namespaces]
+    [[GEN]]
+        [[[environment]]]
+            GEN_A = gen_a
+            GEN_B = gen_b
+    [[OPS]]
+        command = "echo run-OPS.sh; sleep 10"
+        namespace = GEN
+        [[[environment]]]
+            GEN_B = ops_b
+    [[VAR]]
+        command = "echo run-VAR.sh; sleep 10"
+        namespace = GEN
+        [[[environment]]]
+            GEN_B = var_b
+ 
+ [tasks]
+    [[foo]]
+        namespace = GEN
+    [[OPS.atovs]]
+        [[[environment]]]
+            OPS_DATA = atovs
+    [[OPS.aircraft]]
+        command = "echo HELLO from $TASK_ID; sleep 5; echo ABORT; bin/false"
+        [[[environment]]]
+            OPS_DATA = aircraft
+    [[VAR.ConLS]]
+        [[[environment]]]
+            VAR_PROG = ConfigureLS
+    [[VAR.AnPF]]
+        command = "echo run-VAR.sh --apf; sleep 10"
+        [[[environment]]]
+            VAR_PROG = AnalysePF
+
+[visualization]
+    show family members = True
+
