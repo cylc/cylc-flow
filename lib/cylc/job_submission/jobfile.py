@@ -23,13 +23,10 @@ from OrderedDict import OrderedDict
 
 class jobfile(object):
 
-    def __init__( self, task_id, cylc_env, #global_env, 
-            task_env, #global_pre_scripting, global_post_scripting, 
-            directive_prefix, #global_dvs, 
-            directives, final_directive, 
+    def __init__( self, task_id, cylc_env, task_env, 
+            directive_prefix, directives, final_directive, 
             manual_messaging, task_command, remote_cylc_dir, remote_suite_dir,
-            shell, 
-            simulation_mode, job_submission_method):
+            shell, simulation_mode, job_submission_method):
 
         print "TO DO: pre-post-scripting"
 
@@ -192,17 +189,8 @@ cylc task started || exit 1""" )
         BUFFER.write( "\nexport PATH" )
 
     def write_environment_2( self ):
-        #if len( self.global_env.keys()) > 0:
-        #    self.FILE.write( "\n\n# GLOBAL VARIABLES:" )
-        #    for var in self.global_env:
-        #        self.FILE.write( "\n" + var + "=\"" + str( self.global_env[var] ) + "\"" )
-        #    # export them all (see note below)
-        #    self.FILE.write( "\nexport" )
-        #    for var in self.global_env:
-        #        self.FILE.write( " " + var )
-
         if len( self.task_env.keys()) > 0:
-            self.FILE.write( "\n\n# LOCAL VARIABLES:" )
+            self.FILE.write( "\n\n# ENVIRONMENT:" )
             for var in self.task_env:
                 self.FILE.write( "\n" + var + "=\"" + str( self.task_env[var] ) + "\"" )
             # export them all (see note below)
@@ -221,9 +209,6 @@ cylc task started || exit 1""" )
         if self.simulation_mode:
             # ignore extra scripting in simulation mode
             return
-        #if self.global_pre_scripting:
-        #    self.FILE.write( "\n\n# GLOBAL PRE-COMMAND SCRIPTING:" )
-        #    self.FILE.write( "\n" + self.global_pre_scripting )
 
     def write_task_command( self ):
         self.FILE.write( "\n\n# TASK COMMAND SCRIPTING:" )

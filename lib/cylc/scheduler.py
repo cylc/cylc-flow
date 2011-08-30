@@ -315,19 +315,6 @@ class scheduler(object):
         # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
         self.exclusive_suite_lock = not self.config[ 'allow multiple simultaneous instances' ]
 
-        # GLOBAL EVENT HOOK SCRIPTS
-        #task.task.global_hook_scripts[ 'submitted' ]         = self.config['task submitted hook script']
-        #task.task.global_hook_scripts[ 'submission failed' ] = self.config['task submission failed hook script']
-        #task.task.global_hook_scripts[ 'started'   ]         = self.config['task started hook script'  ]
-        #task.task.global_hook_scripts[ 'warning'   ]         = self.config['task warning hook script'  ]
-        #task.task.global_hook_scripts[ 'succeeded' ]         = self.config['task succeeded hook script' ]
-        #task.task.global_hook_scripts[ 'failed'    ]         = self.config['task failed hook script'   ]
-        #task.task.global_hook_scripts[ 'timeout'   ]         = self.config['task timeout hook script'  ]
-        # GLOBAL TIMEOUT HOOK SCRIPTS
-        #task.task.global_timeouts[ 'submission'    ]     = self.config['task submission timeout in minutes']
-        #task.task.global_timeouts[ 'execution'     ]     = self.config['task execution timeout in minutes' ]
-        #task.task.global_timeouts[ 'reset on incoming' ] = self.config['reset execution timeout on incoming messages']
-
         # set suite in task class (for passing to hook scripts)
         task.task.suite = self.suite
 
@@ -351,16 +338,6 @@ class scheduler(object):
             cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port )
         cylcenv[ 'CYLC_UTC' ] = str(utc)
 
-        ## SUITE.RC GLOBAL ENVIRONMENT
-        ##globalenv = OrderedDict()
-        ##for var in self.config['environment']:
-        ##    globalenv[ var ] = self.config['environment'][var]
-
-        ## SUITE.RC GLOBAL DIRECTIVES
-        ##globaldvs = OrderedDict()
-        ##for var in self.config['directives']:
-        ##    globaldvs[ var ] = self.config['directives'][var]
-
         # CLOCK (accelerated time in simulation mode)
         rate = self.config['simulation mode']['clock rate in seconds per simulation hour']
         offset = self.config['simulation mode']['clock offset from initial cycle time in hours']
@@ -378,23 +355,11 @@ class scheduler(object):
         # JOB SUBMISSION
         job_submit.simulation_mode = self.simulation_mode
         job_submit.cylc_env = cylcenv
-        #job_submit.global_env = globalenv
-        #job_submit.global_dvs = globaldvs
         job_submit.shell = self.config['namespaces']['global']['job submission shell']
-        #job_submit.joblog_dir = self.config[ 'job submission log directory' ]
         if self.simulation_mode and self.failout_task_id:
             job_submit.failout_id = self.failout_task_id
-        #job_submit.global_pre_scripting = self.config['pre-command scripting']
-        #job_submit.global_post_scripting = self.config['post-command scripting']
-        #job_submit.owned_task_execution_method = self.config['owned task execution method']
-        #job_submit.global_manual_messaging = self.config['manual task completion messaging']
 
-        #job_submit.global_task_owner = self.config['owner']
-        #job_submit.global_remote_host = self.config['remote host']
-        #job_submit.global_remote_cylc_dir = self.config['remote cylc directory']
-        #job_submit.global_remote_suite_dir = self.config['remote suite directory']
-
-        # LOCAL ENVIRONMENT
+        # CYLC LOCAL ENVIRONMENT
         # Access to the suite bin directory may be required for alert
         # scripts executed by the suite (it is no longer required for 
         # direct job submission methods because we now submit a job
@@ -404,6 +369,7 @@ class scheduler(object):
         # user defined local variables that may be required by alert scripts
         for var in self.config['cylc local environment']:
             os.environ[var] = self.config['cylc local environment'][var]
+
         # suite identity for alert scripts
         os.environ[ 'CYLC_MODE' ] = 'scheduler'
         os.environ[ 'CYLC_SUITE_HOST' ] =  str( self.host )

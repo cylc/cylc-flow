@@ -55,18 +55,8 @@ class job_submit(object):
     # class variables that are set remotely at startup:
     # (e.g. 'job_submit.simulation_mode = True')
     simulation_mode = False
-    #global_task_owner = None
-    #global_remote_host = None
-    #global_remote_cylc_dir = None
-    #global_remote_suite_dir = None
-    #global_manual_messaging = False
     failout_id = None
-    #global_pre_scripting = None
-    #global_post_scripting = None
-    #global_env = None
-    #global_dvs = None
     cylc_env = None
-    #owned_task_execution_method = None
 
     def __init__( self, task_id, task_command, task_env, directives, 
             manual_messaging, logfiles, task_joblog_dir, task_owner,
@@ -88,33 +78,23 @@ class job_submit(object):
         if task_owner:
             self.task_owner = task_owner
             self.other_owner = True
-        #elif self.__class__.global_task_owner:
-        #    self.task_owner = self.__class__.global_task_owner
-        #    self.other_owner = True
         else:
             self.task_owner = self.suite_owner
             self.other_owner = False
 
         if remote_cylc_dir:
             self.remote_cylc_dir = remote_cylc_dir
-        #elif self.__class__.global_remote_cylc_dir:
-        #    self.remote_cylc_dir = self.__class__.global_remote_cylc_dir
         else:
             self.remote_cylc_dir = None
   
         if remote_suite_dir:
             self.remote_suite_dir = remote_suite_dir
-        #elif self.__class__.global_remote_suite_dir:
-        #    self.remote_suite_dir = self.__class__.global_remote_suite_dir
         else:
             self.remote_suite_dir = None
 
         if remote_host:
             self.remote_host = remote_host
-        #elif self.__class__.global_remote_host:
-        #    self.remote_host = self.__class__.global_remote_host
 
-        #if remote_host or self.__class__.global_remote_host:
         if remote_host:
             self.local_job_submit = False
         else:
@@ -122,8 +102,6 @@ class job_submit(object):
 
         if manual_messaging != None:  # boolean, must distinguish None from False
             self.manual_messaging = manual_messaging
-        #elif self.__class__.global_manual_messaging != None:  # (ditto)
-        #    self.manual_messaging = self.__class__.global_manual_messaging
 
         if self.__class__.simulation_mode:
             # but ignore remote task settings in simulation mode (this allows us to
@@ -167,11 +145,6 @@ class job_submit(object):
             self.joblog_dir = jldir
             if self.local_job_submit and not self.task_owner:
                 mkdir_p( jldir )
-        #else:
-        #    # use the suite job submission log directory
-        #    # (created if necessary in config.py)
-        #    self.joblog_dir = self.__class__.joblog_dir
-
         if not self.local_job_submit:
             # Make joblog_dir relative to $HOME for remote tasks by
             # cutting the suite owner's $HOME from the path (if it exists;
@@ -239,11 +212,9 @@ class job_submit(object):
 
     def submit( self, dry_run ):
         jf = jobfile( self.task_id, 
-                self.__class__.cylc_env, #self.__class__.global_env, 
-                self.task_env, #self.__class__.global_pre_scripting, self.__class__.global_post_scripting, 
-                self.directive_prefix, #self.__class__.global_dvs, 
-                self.directives,
-                self.final_directive, self.manual_messaging, self.task_command, 
+                self.__class__.cylc_env, self.task_env, 
+                self.directive_prefix, self.directives, self.final_directive, 
+                self.manual_messaging, self.task_command, 
                 self.remote_cylc_dir, self.remote_suite_dir, 
                 self.__class__.shell, 
                 self.__class__.simulation_mode,
