@@ -86,15 +86,6 @@ class task( Pyro.core.ObjBase ):
     intercycle = False
     suite = None
 
-    #global_hook_scripts = {}
-    #for event in [ 'submitted', 'submission failed', 'started', 
-    #        'warning', 'succeeded', 'failed', 'timeout' ]:
-    #    global_hook_scripts[ event ] = None
- 
-    #global_timeouts = {}
-    #for item in [ 'submission', 'execution', 'reset on incoming' ]:
-    #    global_timeouts[ item ] = None
-
     @classmethod
     def describe( cls ):
         return cls.description 
@@ -187,22 +178,6 @@ class task( Pyro.core.ObjBase ):
         self.etc = None
         self.to_go = None
 
-        # chose task-specific and then global hook scripts
-        #for event in [ 'submitted', 'submission failed', 'started', 
-        #        'warning', 'succeeded', 'failed', 'timeout' ]:
-        #    if not self.hook_scripts[ event ]:
-        #        # if no task-specific event hook script specified
-        #        if self.__class__.global_hook_scripts[ event ]:
-        #            # then override with the global one, if any
-        #            self.hook_scripts[ event ] = self.__class__.global_hook_scripts[ event ]
-        ## chose task-specific and then global timeouts
-        #for event in [ 'submission', 'execution', 'reset on incoming' ]:
-        #    if self.timeouts[ event ] == None :                     # explicit None in case timeout is 0
-        #        # no task-specific event hook script specified
-        #        if self.__class__.global_timeouts[ event ] != None: # ditto
-        #            # so override with the global one, if any
-        #            self.timeouts[ event ] = self.__class__.global_timeouts[ event ]
-        
     def log( self, priority, message ):
         logger = logging.getLogger( "main" ) 
         message = '[' + self.id + '] -' + message
