@@ -316,17 +316,17 @@ class scheduler(object):
         self.exclusive_suite_lock = not self.config[ 'allow multiple simultaneous instances' ]
 
         # GLOBAL EVENT HOOK SCRIPTS
-        task.task.global_hook_scripts[ 'submitted' ]         = self.config['task submitted hook script']
-        task.task.global_hook_scripts[ 'submission failed' ] = self.config['task submission failed hook script']
-        task.task.global_hook_scripts[ 'started'   ]         = self.config['task started hook script'  ]
-        task.task.global_hook_scripts[ 'warning'   ]         = self.config['task warning hook script'  ]
-        task.task.global_hook_scripts[ 'succeeded' ]         = self.config['task succeeded hook script' ]
-        task.task.global_hook_scripts[ 'failed'    ]         = self.config['task failed hook script'   ]
-        task.task.global_hook_scripts[ 'timeout'   ]         = self.config['task timeout hook script'  ]
+        #task.task.global_hook_scripts[ 'submitted' ]         = self.config['task submitted hook script']
+        #task.task.global_hook_scripts[ 'submission failed' ] = self.config['task submission failed hook script']
+        #task.task.global_hook_scripts[ 'started'   ]         = self.config['task started hook script'  ]
+        #task.task.global_hook_scripts[ 'warning'   ]         = self.config['task warning hook script'  ]
+        #task.task.global_hook_scripts[ 'succeeded' ]         = self.config['task succeeded hook script' ]
+        #task.task.global_hook_scripts[ 'failed'    ]         = self.config['task failed hook script'   ]
+        #task.task.global_hook_scripts[ 'timeout'   ]         = self.config['task timeout hook script'  ]
         # GLOBAL TIMEOUT HOOK SCRIPTS
-        task.task.global_timeouts[ 'submission'    ]     = self.config['task submission timeout in minutes']
-        task.task.global_timeouts[ 'execution'     ]     = self.config['task execution timeout in minutes' ]
-        task.task.global_timeouts[ 'reset on incoming' ] = self.config['reset execution timeout on incoming messages']
+        #task.task.global_timeouts[ 'submission'    ]     = self.config['task submission timeout in minutes']
+        #task.task.global_timeouts[ 'execution'     ]     = self.config['task execution timeout in minutes' ]
+        #task.task.global_timeouts[ 'reset on incoming' ] = self.config['reset execution timeout on incoming messages']
 
         # set suite in task class (for passing to hook scripts)
         task.task.suite = self.suite
@@ -351,15 +351,15 @@ class scheduler(object):
             cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port )
         cylcenv[ 'CYLC_UTC' ] = str(utc)
 
-        # SUITE.RC GLOBAL ENVIRONMENT
-        globalenv = OrderedDict()
-        for var in self.config['environment']:
-            globalenv[ var ] = self.config['environment'][var]
+        ## SUITE.RC GLOBAL ENVIRONMENT
+        ##globalenv = OrderedDict()
+        ##for var in self.config['environment']:
+        ##    globalenv[ var ] = self.config['environment'][var]
 
-        # SUITE.RC GLOBAL DIRECTIVES
-        globaldvs = OrderedDict()
-        for var in self.config['directives']:
-            globaldvs[ var ] = self.config['directives'][var]
+        ## SUITE.RC GLOBAL DIRECTIVES
+        ##globaldvs = OrderedDict()
+        ##for var in self.config['directives']:
+        ##    globaldvs[ var ] = self.config['directives'][var]
 
         # CLOCK (accelerated time in simulation mode)
         rate = self.config['simulation mode']['clock rate in seconds per simulation hour']
