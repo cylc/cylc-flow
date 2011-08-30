@@ -211,7 +211,7 @@ remote cylc directory = string( default=None )
 #>\end{myitemize}
 #> This item is compulsory for remotely hosted tasks.
 
-remote suite directory = string( default=None )
+remote suite directory = string( default='~/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
 #> For tasks that declare a remote host at suite level, this 
 #> specifies the path to the suite definition directory on the remote host,
 #> in order to give remote tasks access to files stored there
