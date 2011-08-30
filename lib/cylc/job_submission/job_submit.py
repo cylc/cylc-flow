@@ -39,17 +39,17 @@ from jobfile import jobfile
 from cylc.dummy import dummy_command, dummy_command_fail
 import socket
 import subprocess
+#import datetime
 import time
  
 class job_submit(object):
-    REMOTE_COMMAND = ( " '"
-                       + "mkdir -p $(dirname %(jobfile_path)s)"
-                       + " && cat >%(jobfile_path)s"
-                       + " && chmod +x %(jobfile_path)s"
-                       + " && (%(command)s)"
-                       + "'" )
-    REMOTE_SHELL_TEMPLATE = "ssh -oBatchMode=yes %(destination)s" + REMOTE_COMMAND
-    SUDO_TEMPLATE = "sudo -u %(task_owner)s" + REMOTE_COMMAND
+    REMOTE_COMMAND_TEMPLATE = ( " '"
+                                + "mkdir -p $(dirname %(jobfile_path)s)"
+                                + " && cat >%(jobfile_path)s"
+                                + " && chmod +x %(jobfile_path)s"
+                                + " && (%(command)s)"
+                                + "'" )
+    SUDO_TEMPLATE = "sudo -u %s"
 
     # class variables that are set remotely at startup:
     # (e.g. 'job_submit.simulation_mode = True')
@@ -195,7 +195,12 @@ class job_submit(object):
         self.set_environment()
  
     def set_logfile_names( self ):
-        key = ( self.task_id + "%.6f" % time.time() )
+        # EITHER: Tag file name with a string that is the microseconds since epoch
+        now = time.time()
+        key = self.task_id + "-%.6f" % now
+        # OR: with a similar string based on current date/time
+        # now = datetime.datetime.now()
+        # key = self.task_id + now.strftime("-%Y%m%dT%H%M%S.") + str(now.microsecond)
         self.jobfile_path = os.path.join( self.joblog_dir, key )
         self.stdout_file = self.jobfile_path + ".out"
         self.stderr_file = self.jobfile_path + ".err"
@@ -274,18 +279,16 @@ class job_submit(object):
                 print e
                 return False
 
-            command = self.SUDO_TEMPLATE % { "task_owner": self.task_owner,
-                                             "jobfile_path": self.jobfile_path,
-                                             "command": self.command }
+            command = self.SUDO_TEMPLATE % self.task_owner
+            command += self.REMOTE_COMMAND_TEMPLATE % { "jobfile_path": self.jobfile_path,
+                                                        "command": self.command }
             stdin = subprocess.PIPE
         else:
             self.destination = self.task_owner + "@" + self.remote_host
             remote_shell_template = self.remote_shell_template
-            if not remote_shell_template:
-                remote_shell_template = self.REMOTE_SHELL_TEMPLATE
-            command = remote_shell_template % { "destination": self.destination,
-                                                "jobfile_path": self.jobfile_path,
-                                                "command": self.command }
+            command = remote_shell_template % self.destination
+            command += self.REMOTE_COMMAND_TEMPLATE % { "jobfile_path": self.jobfile_path,
+                                                        "command": self.command }
             jobfile_path = self.destination + ":" + self.remote_jobfile_path
             stdin = subprocess.PIPE
 

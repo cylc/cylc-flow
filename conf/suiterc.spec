@@ -183,7 +183,7 @@ remote host = string( default=None )
 #>\item {\em example:} \lstinline@remote host = foo.niwa.co.nz@
 #>\end{myitemize}
 
-remote shell template = string( default=None )
+remote shell template = string( default='ssh -oBatchMode=yes %s' )
 #> A template of the remote shell command for a submitting a remote task.
 #> The template should be suitable for substitution of the keys
 #> {\em destination}, {\em jobfile_path} and {\em command} in a dict.
