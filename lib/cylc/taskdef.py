@@ -16,19 +16,14 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# THIS MODULE HANDLES DYNAMIC DEFINITION OF TASK PROXY CLASSES according
+# to information parsed from the suite.rc file via config.py. It could 
+# probably do with some refactoring to make it more transparent ...
+
 # TO DO: suicide prerequisites
 
-# ONEOFF and FOLLOWON TASKS: followon still needed but can now be
-# identified automatically from the dependency graph?
-
-#======================================================================
-# DEVELOPER NOTE: This module is for dynamic definition of task proxy
-# classes according to information parsed from the suite.rc file 
-# (particularly the suite dependency graph) via config.py. This, along 
-# with config.py graphing, is by far the most complex part of cylc (by
-# contrast the scheduling algorithm, for example, is almost trivial) and
-# it could do with some serious refactoring.
-#======================================================================
+# TO DO : ONEOFF FOLLOWON TASKS: still needed but can now be identified
+# automatically from the dependency graph?
 
 import sys, re
 from OrderedDict import OrderedDict
@@ -244,9 +239,6 @@ class taskdef(object):
         tclass.intercycle = self.intercycle
         tclass.follow_on = self.follow_on_task
 
-        if 'family' in self.modifiers:
-            tclass.members = self.members
-
         if self.member_of:
             tclass.member_of = self.member_of
 
@@ -367,7 +359,6 @@ class taskdef(object):
 
         # class init function
         def tclass_init( sself, start_c_time, initial_state, stop_c_time=None, startup=False ):
-            #print self.name, self.type, self.modifiers
             sself.tag = sself.adjust_tag( start_c_time )
             if self.type != 'async_repeating' and self.type != 'async_daemon' and self.type != 'async_oneoff':
                 sself.c_time = sself.tag
@@ -392,26 +383,10 @@ class taskdef(object):
             sself.suicide_prerequisites = plain_prerequisites( sself.id )
             ##sself.add_requisites( sself.suicide_prerequisites, self.suicide_triggers )
 
-            if self.member_of:
-                foo = plain_prerequisites( sself.id )
-                foo.add( self.member_of + '%' + sself.tag + ' started' )
-                sself.prerequisites.add_requisites( foo )
-
-            if 'family' in self.modifiers:
-                # familysucceeded prerequisites (all satisfied => all
-                # members finished successfully).
-                sself.familysucceeded_prerequisites = plain_prerequisites( sself.id )
-                for member in self.members:
-                    sself.familysucceeded_prerequisites.add( member + '%' + sself.tag + ' succeeded' )
-                # familyOR prerequisites (A|A:fail and B|B:fail and ...)
-                # all satisfied => all members have either succeeded or failed.
-                sself.familyOR_prerequisites = conditional_prerequisites( sself.id )
-                expr = ''
-                for member in self.members:
-                    expr += '( ' + member + ' | ' + member + '_fail ) & '
-                    sself.familyOR_prerequisites.add( member + '%' + sself.tag + ' succeeded', member )
-                    sself.familyOR_prerequisites.add( member + '%' + sself.tag + ' failed', member + '_fail' )
-                sself.familyOR_prerequisites.set_condition( expr.rstrip('& ') )
+            #if self.member_of:
+            #    foo = plain_prerequisites( sself.id )
+            #    foo.add( self.member_of + '%' + sself.tag + ' started' )
+            #    sself.prerequisites.add_requisites( foo )
 
             sself.logfiles = logfiles()
             for lfile in self.logfiles:

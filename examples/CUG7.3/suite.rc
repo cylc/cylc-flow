@@ -9,7 +9,7 @@ task has been defined to satisfy its initial restart dependencies."""
     [[0,6,12,18]] # hours
         graph = """
 A => B & C   # B and C trigger off A
-A(T-6) => A  # A has restart files
+A[T-6] => A  # A has restart files
                 """
     [[6,18]] # hours
         graph = "C => X"

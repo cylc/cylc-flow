@@ -26,14 +26,6 @@
 # comma) ... so to reparse the file  we have to instantiate a new config
 # object.
 
-#======================================================================
-# DEVELOPER NOTE: This module together with taskdef.py is used to parse
-# the suite.rc file (particularly the dependency graph) and (a) generate
-# graph nodes and edges for graph plotting, and (b) generate task proxy 
-# classes dynamically. This is by far the most complex part of cylc (by
-# contrast the scheduling algorithm, for example, is almost trivial) and
-# it could do with some serious refactoring.
-#======================================================================
 import taskdef
 from OrderedDict import OrderedDict
 from cycle_time import ct
@@ -65,7 +57,7 @@ class SuiteConfigError( Exception ):
 
 class edge( object):
     def __init__( self, l, r, sasl=False ):
-        self.left_group = l
+        self.left = l
         self.right = r
         self.sasl = sasl
 
@@ -87,161 +79,39 @@ class edge( object):
 
     def get_left( self, tag, not_first_cycle, raw, startup_only, exclude ):
         # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
-        OR_list = re.split('\s*\|\s*', self.left_group )
+        if self.left in exclude:
+            return None
 
         first_cycle = not not_first_cycle
 
-        options = []
-        starred_index = -1
-        for item in OR_list:
+        left = self.left
 
-            # strip off special outputs
-            item = re.sub( ':\w+', '', item )
+        # strip off special outputs
+        left = re.sub( ':\w+', '', left )
 
-            starred = False
-            if re.search( '\*$', item ):
-                starred = True
-                item = re.sub( '\*$', '', item )
-
-            m = re.search( '(\w+)\s*\(\s*T\s*-(\d+)\s*\)', item )
-            if m: 
-                if first_cycle:
-                    # ignore intercycle
-                    continue
-                else:
-                    # not first cycle
-                    options.append( item )
-                    if starred:
-                        starred_index = len(options)-1
-                    continue
-
-            if item in exclude:
-                continue
-
-            if item in startup_only:
-                if not first_cycle:
-                    continue
-                else:
-                    # first cycle
-                    if not raw:
-                        options.append( item )
-                        if starred:
-                            starred_index = len(options)-1
-                        continue
-            else:
-                options.append( item )
-                if starred:
-                    starred_index = len(options)-1
-                continue
-
-        if len(options) == 0:
+        if re.search( '\[\s*T\s*-(\d+)\s*\]', left ) and first_cycle:
+            # ignore intercycle deps in first cycle
             return None
 
-        if starred_index != -1:
-            left = options[ starred_index ]
-        else:
-            #rightmost item
-            left = options[-1]
+        if left in startup_only:
+            if not first_cycle or raw:
+                return None
 
-        m = re.search( '(\w+)\s*\(\s*T\s*([+-])(\d+)\s*\)', left )
+        m = re.search( '(\w+)\s*\[\s*T\s*([+-])(\d+)\s*\]', left )
         if m: 
-            task = m.groups()[0]
-            sign = m.groups()[1]
-            offset = m.groups()[2]
+            left, sign, offset = m.groups()
             if sign != '-':
-                # TO DO: this check is redundant (already checked by
-                # graphnode processing).
+                # TO DO: this check is redundant (already checked by graphnode processing).
                 raise SuiteConfigError, "Prerequisite offsets must be negative: " + left
             foo = ct(tag)
             foo.decrement( hours=offset )
             tag = foo.get()
-        else:
-            task = left
             
         if self.sasl:
             tag = 1
-        res = task + '%' + str(tag)  # str for int tag (async)
-        return res
 
-class node( object):
-    def __init__( self, n ):
-        self.group = n
+        return left + '%' + str(tag)  # str for int tag (async)
 
-    def get( self, ctime, not_first_cycle, raw, startup_only, exclude ):
-        # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
-        #if re.search( '\|', self.left_group ):
-        OR_list = re.split('\s*\|\s*', self.group )
-
-        first_cycle = not not_first_cycle
-
-        options = []
-        starred_index = -1
-        for item in OR_list:
-            # strip off special outputs
-            item = re.sub( ':\w+', '', item )
-
-            starred = False
-            if re.search( '\*$', item ):
-                starred = True
-                item = re.sub( '\*$', '', item )
-
-            m = re.search( '(\w+)\s*\(\s*T\s*-(\d+)\s*\)', item )
-            if m: 
-                if first_cycle:
-                    # ignore intercycle
-                    continue
-                else:
-                    # not first cycle
-                    options.append( item )
-                    if starred:
-                        starred_index = len(options)-1
-                    continue
-
-            if item in exclude:
-                continue
-
-            if item in startup_only:
-                if not first_cycle:
-                    continue
-                else:
-                    # first cycle
-                    if not raw:
-                        options.append( item )
-                        if starred:
-                            starred_index = len(options)-1
-                        continue
-            else:
-                options.append( item )
-                if starred:
-                    starred_index = len(options)-1
-                continue
-
-        if len(options) == 0:
-            return None
-
-        if starred_index != -1:
-            left = options[ starred_index ]
-        else:
-            #rightmost item
-            left = options[-1]
-
-        m = re.search( '(\w+)\s*\(\s*T\s*([+-])(\d+)\s*\)', left )
-        if m: 
-            task = m.groups()[0]
-            sign = m.groups()[1]
-            offset = m.groups()[2]
-            if sign != '-':
-                # TO DO: this check is redundant (already checked by
-                # graphnode processing).
-                raise SuiteConfigError, "Prerequisite offsets must be negative: " + left
-            foo = ct(ctime)
-            foo.decrement(hours=offset)
-            ctime = foo.get()
-            res = task + '%' + ctime
-        else:
-            res = left + '%' + ctime
-            
-        return res
 
 def get_rcfiles ( suite ):
     # return a list of all rc files for this suite
@@ -433,12 +303,13 @@ class config( CylcConfigObj ):
         for fam in self['task families']:
             members = []
             for mem in self['task families'][fam]:
-                if re.match( '^list\(.*\)$', mem ):
-                    # python list comprehension
+                m = re.match( '^Python:(.*)$', mem )
+                if m:
+                    # python list-generating expression
                     try:
-                        members += eval( mem )
-                    except SyntaxError,x:
-                        raise SuiteConfigError, 'Python syntax error in task family: ' + mem
+                        members += eval( m.groups()[0] )
+                    except:
+                        raise SuiteConfigError, 'Python error: ' + mem
                 else:
                     members.append(mem)
             self['task families'][fam] = members
@@ -447,23 +318,24 @@ class config( CylcConfigObj ):
                 self.member_of[ task ] = fam
 
         # Parse task config generators. If the [[TASK]] section name
-        # is a family name, or a list of task names, or is a list
-        # comprehension, then it is a list of task names for which the
-        # subsequent config applies to each member. We copy the config
-        # section for each member and substitute '$(TASK)' for the
-        # actual task name in all config items.
+        # is a family name, or a list of task names, or is a list-
+        # generating Python expresion, then it is a list of task names
+        # for which the subsequent config applies to each member. We
+        # copy the config section for each member and substitute
+        # '$(TASK)' for the actual task name in all config items.
         for item in self['tasks']:
             delete_item = True
+            m = re.match( '^Python:(.*)$', item )
             if item in self['task families']:
                 # a task family
                 task_names = self.members[item]
                 delete_item = False
-            elif re.match( '^list\(.*\)$', item ):
-                # python list comprehension
+            elif m:
+                # python list-generating expression
                 try:
-                    task_names = eval( item )
+                    task_names = eval( m.groups()[0] )
                 except:
-                    raise SuiteConfigError, 'Python syntax error in task generator: ' + item
+                    raise SuiteConfigError, 'Python error: ' + item
             elif re.search( ',', item ):
                 # list of task names
                 task_names = re.split(', *', item )
@@ -548,7 +420,6 @@ class config( CylcConfigObj ):
         if asyncid_pattern:
             trigger = re.sub( '\$\(ASYNCID\)', '(' + asyncid_pattern + ')', trigger )
  
-
         return trigger
 
     def __check_tasks( self ):
@@ -562,8 +433,7 @@ class config( CylcConfigObj ):
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
         for name in self.taskdefs:
             if name not in self['tasks']:
-                if name not in self['task families']:
-                    print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it will run as a dummy task.'
+                print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it will run as a dummy task.'
         for name in self['tasks']:
             if name not in self.taskdefs:
                 print >> sys.stderr, 'WARNING: task "' + name + '" is defined in [tasks] but not used in the graph.'
@@ -708,39 +578,20 @@ class config( CylcConfigObj ):
         # is the same as:
         #  'A => C' and 'B => C'
 
-        # '|' (OR) is allowed. For graphing, the final member of an OR
-        # group is plotted, by default,
-        #  'A | B => C' : [B => C]
-        # but a * indicates which member to plot,
-        #  'A* | B => C'   : [A => C]
-        #  'A & B  | C => D'  : [C => D]
-        #  'A & B * | C => D'  : [A => D], [B => D]
-
         #  An 'or' on the right side is an error:
         #  'A = > B | C'     <--- NOT ALLOWED!
 
-        # NO PARENTHESES ALLOWED FOR NOW, AS IT MAKES PARSING DIFFICULT.
-        # Instead decompose into multiple expressions: 
-        #  'A & ( B | C ) => D'               <--- don't use this
-        # is equivalent to:
-        #  'A => D' and 'B | C => D'          <--- use this instead
-        # (this might not be possible in all conceivable cases, but in 
-        # reality NWP suites have simple conditional trigger needs).
-
         # [list of valid hours], or ["once"], or ["ASYNCID:pattern"]
-        async_oneoff = False
-        async_repeat = False
-        cycling = False
+        ttype = None
         validity = []
         if section == "once":
-            async_oneoff = True
+            ttype = 'async_oneoff'
             validity = [section]
         elif re.match( '^ASYNCID:', section ):
-            async_repeat = True
+            ttype = 'async_repeating'
             validity = [section]
         elif re.match( '^[\s,\d]+$', section ):
-            cycling = True
-            # Cycling task.
+            ttype = 'cycling'
             hours = re.split( '\s*,\s*', section )
             for hr in hours:
                 hour = int( hr )
@@ -752,24 +603,44 @@ class config( CylcConfigObj ):
         else:
             raise SuiteConfigError( 'ERROR: Illegal graph validity type: ' + section )
 
+
+        # replace family names with family members
+        if not graph_only or self['visualization']['show family members']:
+            # TO DO: the following is overkill for just graphing.
+            for fam in self['task families']:
+                # fam:fail - replace with conditional expressing 
+                # "at least one member failed AND all members succeeded or failed"
+                # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail )
+                if re.search( r'\b' + fam + ':fail' + r'\b', line ):
+                    mem0 = self.members[fam][0]
+                    cond1 = mem0 + ':fail'
+                    cond2 = '( ' + mem0 + ' | ' + mem0 + ':fail )' 
+                    for mem in self.members[fam][1:]:
+                        cond1 += ' | ' + mem + ':fail'
+                        cond2 += ' & ( ' + mem + ' | ' + mem + ':fail )'
+                    cond = '( ' + cond1 + ') & ' + cond2 
+                    line = re.sub( r'\b' + fam + ':fail' + r'\b', cond, line )
+                # fam - replace with members
+                if re.search( r'\b' + fam + r'\b', line ):
+                    mems = ' & '.join( self.members[fam] )
+                    line = re.sub( r'\b' + fam + r'\b', mems, line )
+
+        print line
         # split line on arrows
         sequence = re.split( '\s*=>\s*', line )
 
         # get list of pairs
         for i in [0] + range( 1, len(sequence)-1 ):
-            lgroup = sequence[i]
+            lexpression = sequence[i]
             if len(sequence) == 1:
                 # single node: no rhs group
                 rgroup = None
-                if re.search( '\|', lgroup ):
-                    raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR conditionals: " + lgroup
+                if re.search( '\|', lexpression ):
+                    raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR conditionals: " + lexpression
             else:
                 rgroup = sequence[i+1]
            
-            lconditional = lgroup
- 
             # parentheses are used for intercycle dependencies: (T-6) etc.
-            # so don't check for them as erroneous conditionals just yet.
 
             if rgroup:
                 # '|' (OR) is not allowed on the right side
@@ -777,7 +648,7 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, "ERROR: OR '|' is not legal on the right side of dependencies: " + rgroup
 
                 # (T+/-N) offsets not allowed on the right side (as yet)
-                if re.search( '\(\s*T\s*[+-]\s*\d+\s*\)', rgroup ):
+                if re.search( '\[\s*T\s*[+-]\s*\d+\s*\]', rgroup ):
                     raise SuiteConfigError, "ERROR: time offsets are not legal on the right side of dependencies: " + rgroup
 
                 # now split on '&' (AND) and generate corresponding pairs
@@ -788,73 +659,66 @@ class config( CylcConfigObj ):
             new_rights = []
             for r in rights:
                 if r:
-                    # ignore output labels on the right (they are only
-                    # meaningful on the left, in chained tasks)
+                    # ignore output labels on the right (for chained
+                    # tasks they are only meaningful on the left)
                     new_rights.append( re.sub( ':\w+', '', r ))
                 else:
                     # retain None's in order to handle lone nodes on the left
                     new_rights.append( None )
 
             rights = new_rights
-            lefts  = re.split( '\s*&\s*', lgroup )
 
-            if not cycling:
-                for n in lefts + rights:
-                    if async_oneoff:
-                        if n not in self.async_oneoff_tasks:
-                            self.async_oneoff_tasks.append(n)
-                    elif async_repeat: 
-                        if n not in self.async_oneoff_tasks:
-                            self.async_repeating_tasks.append(n)
+            # extract task names from lexpression
+            nstr = re.sub( '[(|&)]', ' ', lexpression )
+            nstr = nstr.strip()
+            lnames = re.split( ' +', nstr )
 
-            # generate graph nodes and edges
-            sasl = False
             for r in rights:
-                for l in lefts:
-                    if l in self.async_oneoff_tasks + self.async_repeating_tasks:
-                        sasl = True
-                    e = edge( l,r, sasl )
-                    if async_oneoff:
-                        if e not in self.async_oneoff_edges:
-                            self.async_oneoff_edges.append( e )
-                    elif async_repeat:
-                        if e not in self.async_repeating_edges:
-                            self.async_repeating_edges.append( e )
-                    else:
-                        for val in validity:
-                            if val not in self.edges:
-                                self.edges[val] = []
-                            if e not in self.edges[val]:
-                                self.edges[val].append( e )
-
-            if not graph_only:
-                # generate task definitions
-                for r in rights:
-                    self.generate_taskdefs( lconditional, r, section )
+                if ttype != 'cycling':
+                    for n in lnames + [r]:
+                        if ttype == 'async_oneoff':
+                            if n not in self.async_oneoff_tasks:
+                                self.async_oneoff_tasks.append(n)
+                        elif ttype == 'async_repeating': 
+                            if n not in self.async_repeating_tasks:
+                                self.async_repeating_tasks.append(n)
+                if graph_only:
+                    self.generate_nodes_and_edges( lnames, r, ttype, validity )
+                else:
+                    asyncid_pattern = None
+                    if ttype == 'async_repeating':
+                        m = re.match( '^ASYNCID:(.*)$', section )
+                        asyncid_pattern = m.groups()[0]
+                    self.generate_taskdefs( lnames, r, ttype, section, asyncid_pattern )
+                    self.generate_triggers( lexpression, lnames, r, section, asyncid_pattern )
  
-            #for t in self.taskdefs:
-            #    print self.taskdefs[t].name, self.taskdefs[t].type
-
             # self.edges left side members can be:
             #   foo           (task name)
             #   foo:N         (specific output)
             #   foo(T-DD)     (intercycle dep)
             #   foo:N(T-DD)   (both)
 
-    def generate_taskdefs( self, lcond, right, section ):
-        async = False
-        asyncid_pattern = None
-        m = re.match( '^ASYNCID:(.*)$', section )
-        if m:
-            async = True
-            asyncid_pattern = m.groups()[0]
-            daemon = self['dependencies'][section]['daemon']
+    def generate_nodes_and_edges( self, lnames, right, ttype, validity ):
+        sasl = False
+        for left in lnames:
+            if left in self.async_oneoff_tasks + self.async_repeating_tasks:
+                sasl = True
+            e = edge( left, right, sasl )
+            if ttype == 'async_oneoff':
+                if e not in self.async_oneoff_edges:
+                    self.async_oneoff_edges.append( e )
+            elif ttype == 'async_repeating':
+                if e not in self.async_repeating_edges:
+                    self.async_repeating_edges.append( e )
+            else:
+                for val in validity:
+                    if val not in self.edges:
+                        self.edges[val] = []
+                    if e not in self.edges[val]:
+                        self.edges[val].append( e )
 
-        # extract left side task names (split on '|' or '&')
-        lefts = re.split( '\s*[\|&]\s*', lcond )
-
-        # initialise the task definitions
-        for node in lefts + [right]:
+    def generate_taskdefs( self, lnames, right, ttype, section, asyncid_pattern ):
+        for node in lnames + [right]:
             if not node:
                 # if right is None, lefts are lone nodes
                 # for which we still define the taskdefs
@@ -867,75 +731,64 @@ class config( CylcConfigObj ):
             if name not in self.taskdefs:
                 self.taskdefs[ name ] = self.get_taskdef( name )
 
-            if section == "once":
+            # TO DO: setting type should be consolidated to get_taskdef()
+            if name in self.async_oneoff_tasks:
+                # this catches oneoff async tasks that begin a repeating
+                # async section as well.
                 self.taskdefs[name].type = 'async_oneoff'
-            elif async:
+            elif ttype == 'async_repeating':
                 self.taskdefs[name].asyncid_pattern = asyncid_pattern
-                if name == daemon:
+                if name == self['dependencies'][section]['daemon']:
                     self.taskdefs[name].type = 'async_daemon'
                 else:
                     self.taskdefs[name].type = 'async_repeating'
-            else:
+
+            elif ttype == 'cycling':
                 self.taskdefs[ name ].set_valid_hours( section )
 
+    def generate_triggers( self, lexpression, lnames, right, section, asyncid_pattern ):
         if not right:
             # lefts are lone nodes; no more triggers to define.
             return
+        ctrig = {}
+        for left in lnames:
+            lnode = graphnode(left)  # (GraphNodeError checked above)
+            if lnode.intercycle:
+                self.taskdefs[lnode.name].intercycle = True
 
-        # SET TRIGGERS
-        if not re.search( '\|', lcond ):
-            # lcond is a single trigger, or an '&'-only one, in which
-            # case we don't need to use conditional prerequisites (we
-            # could, but they may be less efficient due to 'eval'?).
+            trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset, asyncid_pattern )
+            # use fully qualified name for the expression label
+            # (task name is not unique, e.g.: "F | F:fail => G")
+            label = re.sub( '[-\[\]:]', '_', left )
 
-            for left in lefts:
-                # strip off '*' plotting conditional indicator
-                l = re.sub( '\s*\*', '', left )
-                lnode = graphnode( l ) # (GraphNodeError checked above)
+            ctrig[label] = trigger
 
-                trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset, asyncid_pattern )
-                if lnode.name in self['special tasks']['startup'] or lnode.name in self.async_oneoff_tasks:
+        if not re.search( '\|', lexpression ):
+            # For single triggers or '&'-only ones, which will be the
+            # vast majority, we needn't use conditional prerequisites
+            # (they may be less efficient due to python eval at run time).
+            for label in ctrig:
+                trigger = ctrig[label]
+                # using last lnode ...
+                if lnode.name in self['special tasks']['startup'] or \
+                        lnode.name in self.async_oneoff_tasks:
                     self.taskdefs[right].add_startup_trigger( trigger, section )
-                elif async:
+                elif lnode.name in self.async_repeating_tasks:
                     self.taskdefs[right].loose_prerequisites.append(trigger)
                 else:
-                    if lnode.intercycle:
-                        self.taskdefs[lnode.name].intercycle = True
                     self.taskdefs[right].add_trigger( trigger, section )
         else:
-            # Conditional with OR:
-            # Strip off '*' plotting conditional indicator
-            ctrig = {}
-            l = re.sub( '\s*\*', '', lcond )
-
-            lefts = re.split( '\s*[\|&]\s*', l)
-            for left in lefts:
-                lnode = graphnode(left)  # (GraphNodeError checked above)
-                if lnode.intercycle:
-                    self.taskdefs[lnode.name].intercycle = True
-                trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset )
-                # use fully qualified name for the expression label
-                # (task name is not unique, e.g.: "F | F:fail => G")
-
-                label = re.sub( '\(', '_', left )
-                label = re.sub( '\)', '_', label )
-                label = re.sub( '\-', '_', label )
-                label = re.sub( '\:', '_', label )
-
-                ctrig[label] = trigger
-
-            # l itself is the conditional expression, but replace some
-            # chars for later use in regular  expressions.
-
-            label = re.sub( '\(', '_', l )
-            label = re.sub( '\)', '_', label )
-            label = re.sub( '\-', '_', label )
-            label = re.sub( '\:', '_', label )
-
-            if lnode.name in self['special tasks']['startup'] or lnode.name in self.async_oneoff_tasks:
-                self.taskdefs[right].add_startup_conditional_trigger( ctrig, label, section )
+            # replace some chars for later use in regular  expressions.
+            expr = re.sub( '[-\[\]:]', '_', lexpression )
+            # using last lnode ...
+            if lnode.name in self['special tasks']['startup'] or \
+                    lnode.name in self.async_oneoff_tasks:
+                self.taskdefs[right].add_startup_conditional_trigger( ctrig, expr, section )
+            elif lnode.name in self.async_repeating_tasks:
+                # TO DO!!!!
+                raise SuiteConfigError, 'ERROR: repeating async task conditionals not done yet'
             else:
-                self.taskdefs[right].add_conditional_trigger( ctrig, label, section )
+                self.taskdefs[right].add_conditional_trigger( ctrig, expr, section )
 
     def get_graph( self, start_ctime, stop, colored=True, raw=False ):
         if not self.graph_loaded:
@@ -1036,10 +889,6 @@ class config( CylcConfigObj ):
                                 # no families
                                 gr_edges.append( (left, right, False ) )
                         else:
-                            # Family members will appear in the graph string
-                            # (a) if the family has internal dependencies, and
-                            # (b) if any members have direct connections
-                            # to external tasks.
                             method = 'nonfam'
                             if lname in self.member_of and rname in self.member_of:
                                 # l and r are both members of families
@@ -1144,39 +993,40 @@ class config( CylcConfigObj ):
                 line = re.sub( '^\s*', '', line )
                 line = re.sub( '\s*$', '', line )
 
-                # generate pygraphviz graph nodes and edges, and task definitions
-                self.process_graph_line( line, section, graph_only )
+                items = []
+                m = re.match( '^Python:(.*)$', line )
+                if m:
+                    # python list-generating expression
+                    # treat each member as a separate graph line
+                    try:
+                        items = eval(m.groups()[0])
+                    except:
+                        raise SuiteConfigError, 'Python error: ' + line
+                else:
+                    items = [line]
+ 
+                for item in items:
+                    # generate pygraphviz graph nodes and edges, and task definitions
+                    self.process_graph_line( item, section, graph_only )
 
         self.graph_loaded = True
         if graph_only:
             return
 
         # task families
-        my_family = {}
-        for name in self['task families']:
-            try:
-                self.taskdefs[name].modifiers.append("family")
-            except KeyError:
-                print >> sys.stderr, 'WARNING: family ' + name + ' is not used in the graph'
-                continue
- 
-            mems = self['task families'][name]
-            self.taskdefs[name].members = mems
-            for mem in mems:
-                if mem not in self.taskdefs:
-                    self.taskdefs[ mem ] = self.get_taskdef( mem )
-                self.taskdefs[mem].member_of = name
-                # take valid hours from the family
-                # (REPLACES HOURS if member appears in graph section)
-                self.taskdefs[mem].hours = self.taskdefs[name].hours
-                if name in self.async_oneoff_tasks:
-                    self.taskdefs[mem].type = "async_oneoff"
-                    if mem not in self.async_oneoff_tasks:
-                        self.async_oneoff_tasks.append(mem)
-                elif name in self.async_repeating_tasks:
-                    self.taskdefs[mem].type = "async_repeating"
-                    if mem not in self.async_repeating_tasks:
-                        self.async_repeating_tasks.append(mem)
+        # TO DO: IS THIS NEEDED?
+        #for name in self['task families']:
+        #    mems = self['task families'][name]
+        #    for mem in mems:
+        #        self.taskdefs[mem].member_of = name
+        #        if name in self.async_oneoff_tasks:
+        #            self.taskdefs[mem].type = "async_oneoff"
+        #            if mem not in self.async_oneoff_tasks:
+        #                self.async_oneoff_tasks.append(mem)
+        #        elif name in self.async_repeating_tasks:
+        #            self.taskdefs[mem].type = "async_repeating"
+        #            if mem not in self.async_repeating_tasks:
+        #                self.async_repeating_tasks.append(mem)
 
         # sort hours list for each task
         for name in self.taskdefs:
@@ -1185,7 +1035,7 @@ class config( CylcConfigObj ):
             # (use of r'\b' word boundary regex in conditional prerequisites
             # could fail if other characters are allowed).
             if re.search( '[^0-9a-zA-Z_]', name ):
-                # (\w allows spaces)
+                # (regex \w allows spaces)
                 raise SuiteConfigError, 'Illegal task name: ' + name
 
         self.load_raw_task_definitions()

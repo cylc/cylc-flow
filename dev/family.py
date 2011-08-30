@@ -16,9 +16,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-#import task
-#from free import free
+# THIS IS THE OBSOLETE PSEUDO-TASK IMPLEMENTATION OF TASK FAMILIES.
+# A pseudo-task object is put in the task pool to represent the family.
+# The declared family members are made to automatically trigger off it,
+# and the family object has extra prerequisites, that it attempts to 
+# get satisfied at the same time as its normal prerequisites, used to
+# determine its final state based on the states of its members.
 
 class family( object ):
     """

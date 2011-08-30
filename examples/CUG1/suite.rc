@@ -1,10 +1,10 @@
 title = "Cylc User Guide Example 1"
 
-#        B(T-6)-> B -> E   
+#        B[T-6]-> B -> E   
 #                / \   
-#  X & A(T-6)-> A   -> D 
+#  X & A[T-6]-> A   -> D 
 #                \ /    
-#        C(T-6)-> C -> F 
+#        C[T-6]-> C -> F 
 #       
 
 description = """This implements the suite that illustrates the
@@ -28,9 +28,9 @@ models."""
                     A => C => F
                     B & C => D
     
-                    ColdA | A(T-6)* | A(T-12) | A(T-18) => A
-                    ColdB | B(T-6) => B
-                    ColdC | C(T-6) => C
+                    ColdA | A[T-6]* | A[T-12] | A[T-18] => A
+                    ColdB | B[T-6] => B
+                    ColdC | C[T-6] => C
 
                     prep => X & ColdA & ColdB & ColdC"""
 [environment]
