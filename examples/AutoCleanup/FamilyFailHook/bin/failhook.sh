@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# This hook script cleans up if the fammo task family fails: it removes
-# failed family members, and the failed family itself, from the suite.
+# Hook script to clean up if the fammo family fails, by removing failed
+# members from the suite. You probably don't want to do this in practice
+# (failed tasks should be removed manually, after determining the reason
+# for the failure); but this shows how task scripts can intervene in
+# their suite.
 
 # Check inputs
 EVENT=$1; FTASK=$2; CTIME=$3; MSG=$4
@@ -20,13 +23,9 @@ for T in $FAILED_TASKS; do
     echo -n "   $T ..."
     if [[ $T == m_* ]]; then
         found_failed_member=true
-        echo "REMOVING (family member)"
+        echo "REMOVING family member"
         cylc control remove --force $CYLC_SUITE ${T}%$CTIME
     else
         echo "NOT REMOVING (not family member)"
     fi
 done
-if $found_failed_member; then
-    echo "REMOVING (family)"
-    cylc control remove --force $CYLC_SUITE ${FTASK}%$CTIME
-fi

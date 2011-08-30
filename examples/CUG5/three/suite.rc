@@ -9,11 +9,11 @@ to run out of a common I/O workspace (although the warm-cycled model
 uses a private running directory for its restart files)."""
  
 # T = 0,6,12,18 UTC:
-#                      > PostA(T)
+#                      > PostA[T]
 #                     /    
-#  GetData(T) -> Model(T)
+#  GetData[T] -> Model[T]
 #             /       \    
-#       Model(T-6)     > [6,18 UTC only] PostB(T)
+#       Model[T-6]     > (6,18 UTC only) PostB[T]
 
 [special tasks]
     startup         = Prep
@@ -24,7 +24,7 @@ uses a private running directory for its restart files)."""
     [[ 0,6,12,18 ]]
         graph  =  """Prep => GetData & ColdModel
                      GetData => Model => PostA
-                     ColdModel | Model(T-6) => Model"""
+                     ColdModel | Model[T-6] => Model"""
     [[ 6,18 ]]
         graph = "Model => PostB"
 

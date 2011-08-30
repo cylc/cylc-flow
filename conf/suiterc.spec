@@ -781,17 +781,15 @@ UTC mode = boolean( default=False )
 #>\item {\em type:} list of task names (the family members)
 #>\item {\em default:} None
 #>\item {\em example (explicit):} \lstinline@ObsProc = ObsSurface, ObsSonde, ObsAircraft, ObsSat@
-#>\item {\em example (expression):} \lstinline@ensemble = 'list( "m" + str(i) for i in range(1,6))'@
+#>\item {\em example (expression):} \lstinline@ensemble = 'Python:list( "m" + str(i) for i in range(1,6))'@
 #>\end{myitemize}
 #> The list of family members may be defined by an explicit list of task
-#> names or a
-#> list-generating Python expression (a ``list comprehension''). The
-#> Python expression must be of the form \lstinline='list(...)'= and 
-#> not \lstinline='[...]'=, and it must be quoted to hide the internal
-#> comma in the range expression from the suite.rc parser. The
-#> example above generates the task names \lstinline=m1, m2, ..., m5=. 
-#> If tasks in a family share most configuration details, they can be 
-#> defined all at once in a single subsection under \lstinline=[tasks]=.
+#> names or a list-generating Python expression (a ``list
+#> comprehension'') of the form \lstinline='Python:list(...)', quoted to
+#> hide the internal comma in the range expression from the suite.rc
+#> parser. The example above generates the task names \lstinline=m1, m2,
+#> ..., m5=. If tasks in a family share most configuration details, they
+#> can be defined all at once in a single subsection under \lstinline=[tasks]=.
 
 [dependencies]
 #> The suite dependency graph should be defined under this section.
@@ -817,8 +815,7 @@ UTC mode = boolean( default=False )
 #> \label{GraphDescrip}
 #> Define the dependency graph valid for specified list of hours or asynchronous ID pattern.
 #> You can use the \lstinline=cylc graph= command, or right click 
-#> Graph in gcylc, to plot the dependency graph as you
-#> work on it.
+#> Graph in gcylc, to plot the dependency graph as you work on it.
 #> See Section~\ref{DependencyGraphs} for details.
 #>\begin{myitemize}
 #>\item {\em section:} [dependencies] $\rightarrow$ [[HOURS]]
@@ -832,6 +829,8 @@ UTC mode = boolean( default=False )
 #>   ColdFoo | foo(T-6) => foo # cold start or restart for foo
 #>   X:fail => Y               # Y triggers if X fails
 #>   X | X:fail => Z           # Z triggers if X finishes or fails
+#> # a list-generating Python expression (m1 => p1; m2 => p2; ...):
+#>   Python:list( "m" + str(i) + '=>' + "p" + str(i) for i in range(1,7))
 #>   """
 #>  \end{lstlisting}
 #>\item {\em default:} None
@@ -913,13 +912,12 @@ __many__ = string
 #>\item {\em example (one task):} \lstinline@[[TaskX]]@
 #>\item {\em example (family members):} \lstinline@[[FamilyF]]@
 #>\item {\em example (explicit list):} \lstinline@[[A, B, C]]@
-#>\item {\em example (expression):} \lstinline@[['list( "m" + str(i) for i in range(1,6))']]@
+#>\item {\em example (expression):} \lstinline@[['Python:list( "m" + str(i) for i in range(1,6))']]@
 #>\end{myitemize}
 #> Python list-generating expressions must be of the form
-#> \lstinline='list(...)'= and not \lstinline='[...]'=, and they must be
-#> quoted to hide the comma in the range expression from the suite.rc
-#> parser. The example above generates the task names
-#> \lstinline=m1, m2, ..., m5=.  
+#> \lstinline='Python:list(...)'= and quoted to hide the comma in the
+#> range expression from the suite.rc parser. The example above
+#> generates the task names \lstinline=m1, m2, ..., m5=.  
 #> For grouped tasks, at least a few configuration items will
 #> need to vary across the otherwise similar members. To allow this cylc
 #> replaces the variable

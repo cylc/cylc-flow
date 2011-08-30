@@ -12,7 +12,7 @@ runahead limit in hours = 12
     [[ 0,6,12,18 ]]
         graph  =  """Prep => GetData & ColdModel
                      GetData => Model => PostA
-                     ColdModel | Model(T-6) => Model"""
+                     ColdModel | Model[T-6] => Model"""
     [[ 6,18 ]]
         graph = "Model => PostB"
 

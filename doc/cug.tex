@@ -1909,7 +1909,7 @@ Multiline graph strings may contain:
     \item {\bf task names}
     \item {\bf arrows} (\lstinline@=>@) for dependencies (triggers)
     \item {\bf comments} - following the \# character
-    \item {\bf conditional operators}: \lstinline=&= (AND) and \lstinline=|= (OR)
+    \item {\bf conditional expressions}: \lstinline@ (A | B) & C => D@ 
     \item {\bf explicit task output labels} - \lstinline=foo:fail=, \lstinline=foo:out1=
     \item {\bf cycle time offsets} - \lstinline=A(T-6)=
 \end{myitemize}
@@ -2135,52 +2135,18 @@ cylc do when A finishes?}
     graph = "A | B => C"
 \end{lstlisting}
 
-\paragraph{Which Task Will Be Plotted?}
-
-In a list of alternative triggers separated by OR operators, the 
-full conditional expression determines run time behaviour, but one of
-the alternatives has to be singled out in order to plot the graph: the
-rightmost task is plotted by default; to change this change the task
-order or attach an asterisk to the chosen task:
+Forecasting suites typically have quite simple requirements for
+conditional triggers, but should you need it you can use any valid
+conditional expression, e.g.:
 \begin{lstlisting}
 # SUITE.RC
-# this will plot as C => D:
-    graph = "A | B | C => D"
-# but this will plot as A => D:
-    graph = "A* | B | C => D"
+    graph = """
+        # D triggers if A or (both B and C) succeed:
+        A | B & C => D
+        # Z triggers if both (W or X) and Y succeed.
+        (W | X) & Y => Z
+            """ 
 \end{lstlisting}
-
-In future cylc releases we may allow all tasks in a conditional trigger
-to be plotted, with dotted arrows, say, to indicate the conditional nature
-of the relationship.
-
-% TO DO: !!!!! GRAPHING BUG FOR A | B & C EXPRESSIONS!!!!!!!!
-
-\paragraph{Complex Conditional Triggers With AND And OR}
-
-You can use AND and OR operators in the same expression, 
-\begin{lstlisting}
-# SUITE.RC
-    # D triggers if (A) or (both B and C) succeed:
-    graph = "A | B & C => D" 
-\end{lstlisting}
-
-{\em KNOWN BUG ALERT: complex conditional triggers work as expected in 
-cylc suites at run time, but they are currently not graphed properly.}
-
-\paragraph{Parenthesized Complex Conditional Triggers}
-
-{\em Parenthesized conditional expressions are currently illegal.}
-Internally cylc can handle this perfectly well, because it transforms 
-prerequisite conditions directly into Python code and gets the 
-interpreter to evaluate the result, {\em but} the cylc-3 suite.rc graph
-parser currently cannot handle general conditional expressions.
-
-This restriction should not be an impediment because forecasting suites
-tend to have simple requirements for conditional triggers (plus you can
-rely on operator precedence - AND before OR - and split large
-expressions into multiple lines). However, if there is any call for more
-complicated conditional triggers we will certainly address this problem.
 
 \subsubsection{Satisfying Intercycle Dependencies At Startup}
 \label{SatisfyingIntercycleDependenciesAtStartup}
@@ -4225,9 +4191,6 @@ target suites - all suites are thus entirely isolated from one another.
 \section{Known Bugs At Version THIS IS NOT A VERSIONED RELEASE}
 
 \begin{myitemize}
-    \item Conditional triggers containing both AND and OR in the same
-        expression work properly at run time, but they are not graphed
-        correctly.
     \item Sometimes the gcylc database view does not update when a suite
         or group has been unregistered by another process. Workaround:
         restart gcylc.
