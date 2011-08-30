@@ -27,6 +27,7 @@
 # object.
 
 import taskdef
+from copy import deepcopy
 from OrderedDict import OrderedDict
 from cycle_time import ct
 import re, os, sys, logging
@@ -355,14 +356,16 @@ class config( CylcConfigObj ):
                 # delete the original multi-task section
                 del self['tasks'][item]
 
-        # NAMESPACES
+        # NAMESPACE IMPLEMENTATION
         for task in self['tasks']:
             hier = []
-            self.get_hierarchy( self['tasks'][task]['namespace'], hier ) # [foo, bar, global]
+            ns = task.rsplit('.',1)[0]
+            if ns == task:
+                ns = self['tasks'][task]['namespace']
+            self.get_hierarchy( ns, hier ) # [foo, bar, global]
             hier.pop() # [foo, bar]
             hier.reverse() # [bar, foo]
-            taskconf = {}
-            self.section_copy( taskconf, self['namespaces']['global'] )
+            taskconf = self['namespaces']['global'].odict()
             for ns in hier:
                 self.inherit( taskconf, self['namespaces'][ns] )
             self.inherit( taskconf, self['tasks'][task] )
@@ -372,7 +375,9 @@ class config( CylcConfigObj ):
         hier.append( ns )
         if ns == 'global' or not ns:
             return
-        inherit = self['namespaces'][ns]['namespace']
+        inherit = ns.rsplit('.',1)[0]
+        if inherit == ns:
+            inherit = self['namespaces'][ns]['namespace']
         self.get_hierarchy( inherit, hier )
 
     def inherit( self, target, source ):
@@ -381,22 +386,7 @@ class config( CylcConfigObj ):
                 self.inherit( target[item], source[item] )
             else:
                 if source[item]:
-                    target[item] = source[item]
-
-    def section_copy( self, target, source ):
-        for item in source:
-            if isinstance( source[item], Section ):
-                # recursive call for to handle a sub-section
-                if item not in target:
-                    target[item] = OrderedDict()
-                self.section_copy( target[item], source[item] )
-            elif isinstance( source[item], list ):
-                newlist = []
-                for mem in source[item]:
-                    newlist.append( mem )
-                target[item] = newlist
-            else:
-                target[item] = source[item]
+                    target[item] = deepcopy(source[item])  # deepcopy for list values
 
     def specialize( self, name, target, source ):
         # recursively specialize a generator task config section
@@ -1073,12 +1063,14 @@ class config( CylcConfigObj ):
         # sort hours list for each task
         for name in self.taskdefs:
             self.taskdefs[name].hours.sort( key=int ) 
-            # check that task names contain only word characters [0-9a-zA-Z_]
-            # (use of r'\b' word boundary regex in conditional prerequisites
-            # could fail if other characters are allowed).
-            if re.search( '[^0-9a-zA-Z_]', name ):
-                # (regex \w allows spaces)
-                raise SuiteConfigError, 'Illegal task name: ' + name
+
+            ##### Task name legality is checked in taskdef.__init__().
+            ##### check that task names contain only word characters [0-9a-zA-Z_]
+            ##### (use of r'\b' word boundary regex in conditional prerequisites
+            ##### could fail if other characters are allowed).
+            ####if re.search( '[^0-9a-zA-Z_]', name ):
+            ####    # (regex \w allows spaces)
+            ####    raise SuiteConfigError, 'Illegal task name: ' + name
 
         self.load_raw_task_definitions()
 
@@ -1122,8 +1114,7 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, 'Task not defined: ' + name
 
             # inhabit the global namespace and carry on as usual
-            taskconfig = {}
-            self.section_copy( taskconfig, self['namespaces']['global'] )
+            taskconfig = self['namespaces']['global'].odict()
  
             if self.simulation_mode:
                 taskd.job_submit_method = self['simulation mode']['job submission method']

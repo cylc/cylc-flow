@@ -54,8 +54,8 @@ class DefinitionError( Error ):
 
 class taskdef(object):
     def __init__( self, name ):
-        if re.search( '[^\w]', name ):
-            raise DefinitionError, "ERROR: Illegal taskname: " + name
+        if re.search( '[^\w\.]', name ):
+            raise DefinitionError, "ERROR: Illegal task name: " + name
         self.name = name
         self.type = 'free'
         self.job_submit_method = 'background'
