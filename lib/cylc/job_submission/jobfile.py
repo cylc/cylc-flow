@@ -32,13 +32,9 @@ class jobfile(object):
 
         self.task_id = task_id
         self.cylc_env = cylc_env
-        #self.global_env = global_env
         self.task_env = task_env
-        #self.global_pre_scripting = global_pre_scripting
-        #self.global_post_scripting = global_post_scripting
         self.directive_prefix = directive_prefix
         self.final_directive = final_directive
-        #self.global_dvs = global_dvs
         self.directives = directives
         self.task_command = task_command
         self.shell = shell
@@ -110,27 +106,14 @@ class jobfile(object):
         self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'')
 
     def write_directives( self ):
-        # override global with task-specific directives
-        dvs = OrderedDict()
-        #if self.global_dvs:
-        #    for var in self.global_dvs.keys():
-        #        dvs[var] = self.global_dvs[var]
-        if self.directives:
-            for var in self.directives:
-                dvs[var] = self.directives[var]
-        if len( dvs.keys() ) == 0:
+        if len( self.directives.keys() ) == 0:
             return
         self.FILE.write( "\n\n# BATCH QUEUE SCHEDULER DIRECTIVES:" )
-        for d in dvs:
-            self.FILE.write( '\n' + self.directive_prefix + d + " = " + dvs[ d ] )
+        for d in self.directives:
+            self.FILE.write( '\n' + self.directive_prefix + d + " = " + self.directives[ d ] )
         self.FILE.write( '\n' + self.final_directive )
 
     def write_environment_1( self, STRIO=None ):
-        # Task-specific variables may reference other previously-defined
-        # task-specific variables, or global variables. Thus we ensure
-        # that the order of definition is preserved (and pass any such
-        # references through as-is to the task job script).
-
         if STRIO:
             BUFFER = STRIO
         else:
@@ -174,9 +157,8 @@ class jobfile(object):
 cylc task started || exit 1""" )
 
     def write_cylc_access( self, STRIO=None ):
-        # configure access to cylc prior to defining user local and
-        # global environment variables so that cylc commands can be used
-        # in them, e.g.: 
+        # configure access to cylc first so that cylc commands can be
+        # used in defining user environment variables, e.g.:
         #    NEXT_CYCLE=$( cylc util cycletime --add=6 )
         if STRIO:
             BUFFER = STRIO
@@ -218,6 +200,3 @@ cylc task started || exit 1""" )
         if self.simulation_mode:
             # ignore extra scripting in simulation mode
             return
-        #if self.global_post_scripting:
-        #    self.FILE.write( "\n\n# GLOBAL POST-COMMAND SCRIPTING:" )
-        #    self.FILE.write( "\n" + self.global_post_scripting )
