@@ -54,7 +54,9 @@ class DefinitionError( Error ):
 
 class taskdef(object):
     def __init__( self, name ):
-        if re.search( '[^\w\.]', name ):
+        if re.search( '[^0-9a-zA-Z_\.]', name ):
+            # dot for namespace syntax.
+            # regex [\w] allows spaces.
             raise DefinitionError, "ERROR: Illegal task name: " + name
         self.name = name
         self.type = 'free'

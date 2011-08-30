@@ -1064,14 +1064,6 @@ class config( CylcConfigObj ):
         for name in self.taskdefs:
             self.taskdefs[name].hours.sort( key=int ) 
 
-            ##### Task name legality is checked in taskdef.__init__().
-            ##### check that task names contain only word characters [0-9a-zA-Z_]
-            ##### (use of r'\b' word boundary regex in conditional prerequisites
-            ##### could fail if other characters are allowed).
-            ####if re.search( '[^0-9a-zA-Z_]', name ):
-            ####    # (regex \w allows spaces)
-            ####    raise SuiteConfigError, 'Illegal task name: ' + name
-
         self.load_raw_task_definitions()
 
         self.__check_tasks()
