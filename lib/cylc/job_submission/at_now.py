@@ -23,11 +23,11 @@ class at_now( job_submit ):
 Submit the task job script to the simple 'at' scheduler. The 'atd' daemon
 service must be running.
     """
-    COMMAND_TEMPLATE = "echo \"%(jobfile_path)s 1>%(stdout_file)s 2>%(stderr_file)s\" | at now"
+    COMMAND_TEMPLATE = "echo \"%s 1>%s 2>%s\" | at now"
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template
         if not command_template:
             command_template = self.COMMAND_TEMPLATE
-        self.command = command_template % { "jobfile_path": self.jobfile_path,
-                                            "stdout_file": self.stdout_file,
-                                            "stderr_file": self.stderr_file }
+        self.command = command_template % ( self.jobfile_path,
+                                            self.stdout_file,
+                                            self.stderr_file )

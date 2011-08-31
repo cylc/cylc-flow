@@ -25,11 +25,11 @@ Run the task job script directly in a background shell.
     # stdin redirection (< /dev/null) allows background execution
     # even on a remote host - ssh can exit without waiting for the
     # remote process to finish.
-    COMMAND_TEMPLATE = "%(jobfile_path)s </dev/null 1>%(stdout_file)s 2>%(stderr_file)s &"
+    COMMAND_TEMPLATE = "%s </dev/null 1>%s 2>%s &"
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template
         if not command_template:
             command_template = self.COMMAND_TEMPLATE
-        self.command = command_template % { "jobfile_path": self.jobfile_path,
-                                            "stdout_file": self.stdout_file,
-                                            "stderr_file": self.stderr_file }
+        self.command = command_template % ( self.jobfile_path,
+                                            self.stdout_file,
+                                            self.stderr_file )

@@ -128,15 +128,14 @@ job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw
 
 job submission command template = string( default=None )
 #> Set the command template for the job submission method.
-#> The template should be suitable for substitution of the keys
-#> {\em jobfile_path}, {\em stdout_file}, {\em stderr_file} in a dict.
+#> The template's 1st %s will be substituted by the job file path.
+#> Where applicable the 2nd %s and 3rd %s will be substituted by the paths to
+#> the stdout and stderr files.
 #>\begin{myitemize}
 #>\item {\em section:}  (top level)
 #>\item {\em type:} string
-#>\item {\em legal values:} a string template for a dict with keys
-#> {\em jobfile_path}, {\em stdout_file}, {\em stderr_file}.
-#>\item {\em default:} None (see suite level default)
-#>\item {\em example:} \lstinline@llsubmit %(jobfile_path)s@
+#>\item {\em legal values:} a string template
+#>\item {\em example:} \lstinline@llsubmit %s@
 #>\end{myitemize}
 
 use lockserver = boolean( default=False )
@@ -185,12 +184,11 @@ remote host = string( default=None )
 
 remote shell template = string( default='ssh -oBatchMode=yes %s' )
 #> A template of the remote shell command for a submitting a remote task.
-#> The template should be suitable for substitution of the keys
-#> {\em destination}, {\em jobfile_path} and {\em command} in a dict.
+#> The template's 1st %s will be substituted by the remote user@host.
 #>\begin{myitemize}
 #>\item {\em section:} (top level)
 #>\item {\em type:} string
-#>\item {\em legal values:} a string template for a dict with keys "destination", "jobfile_path" and "command"
+#>\item {\em legal values:} a string template
 #>\item {\em default:} None
 #>\end{myitemize}
 
@@ -980,15 +978,15 @@ __many__ = string
 
     job submission command template = string( default=None )
 #> Set the command template for the job submission method.
-#> The template should be suitable for substitution of the keys
-#> {\em jobfile_path}, {\em stdout_file}, {\em stderr_file} in a dict.
+#> The template's 1st %s will be substituted by the job file path.
+#> Where applicable the 2nd %s and 3rd %s will be substituted by the paths to
+#> the stdout and stderr files.
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
-#>\item {\em legal values:} a string template for a dict with keys
-#> {\em jobfile_path}, {\em stdout_file}, {\em stderr_file}.
+#>\item {\em legal values:} a string template
 #>\item {\em default:} None (see suite level default)
-#>\item {\em example:} \lstinline@llsubmit %(jobfile_path)s@
+#>\item {\em example:} \lstinline@llsubmit %s@
 #>\end{myitemize}
 
     job submission log directory = string( default=None )
@@ -1043,13 +1041,11 @@ __many__ = string
 
     remote shell template = string( default=None )
 #> A template of the remote shell command for a submitting a remote task.
-#> The template should be suitable for substitution of the keys
-#> {\em destination}, {\em jobfile_path} and {\em command} in a dict.
+#> The template's 1st %s will be substituted by the remote user@host.
 #>\begin{myitemize}
 #>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
 #>\item {\em type:} string
-#>\item {\em legal values:} a string template for a dict with keys
-#> {\em destination}, {\em jobfile_path} and {\em command}.
+#>\item {\em legal values:} a string template
 #>\item {\em default:} None
 #>\end{myitemize}
 
