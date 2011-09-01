@@ -57,11 +57,12 @@ class SuiteConfigError( Exception ):
         return repr(self.msg)
 
 class edge( object):
-    def __init__( self, l, r, sasl=False, suicide=False ):
+    def __init__( self, l, r, sasl=False, suicide=False, conditional=False ):
         self.left = l
         self.right = r
         self.sasl = sasl
         self.suicide = suicide
+        self.conditional = conditional
 
     def get_right( self, tag, not_first_cycle, raw, startup_only, exclude ):
         # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
@@ -726,7 +727,7 @@ class config( CylcConfigObj ):
                             if name not in self.async_repeating_tasks:
                                 self.async_repeating_tasks.append(name)
                 if graph_only:
-                    self.generate_nodes_and_edges( lnames, r, ttype, validity, suicide )
+                    self.generate_nodes_and_edges( lexpression, lnames, r, ttype, validity, suicide )
                 else:
                     asyncid_pattern = None
                     if ttype == 'async_repeating':
@@ -741,12 +742,17 @@ class config( CylcConfigObj ):
             #   foo(T-DD)     (intercycle dep)
             #   foo:N(T-DD)   (both)
 
-    def generate_nodes_and_edges( self, lnames, right, ttype, validity, suicide=False ):
+    def generate_nodes_and_edges( self, lexpression, lnames, right, ttype, validity, suicide=False ):
+        conditional = False
+        if re.search( '\|', lexpression ):
+            # plot conditional triggers differently
+            conditional = True
+ 
         sasl = False
         for left in lnames:
             if left in self.async_oneoff_tasks + self.async_repeating_tasks:
                 sasl = True
-            e = edge( left, right, sasl, suicide )
+            e = edge( left, right, sasl, suicide, conditional )
             if ttype == 'async_oneoff':
                 if e not in self.async_oneoff_edges:
                     self.async_oneoff_edges.append( e )
@@ -851,7 +857,7 @@ class config( CylcConfigObj ):
         for e in self.async_oneoff_edges + self.async_repeating_edges:
             right = e.get_right(1, False, False, [], [])
             left  = e.get_left( 1, False, False, [], [])
-            gr_edges.append( (left, right, False) )
+            gr_edges.append( (left, right, False, False, False) )
 	
         cycles = self.edges.keys()
 
@@ -886,6 +892,7 @@ class config( CylcConfigObj ):
                     hour = cycles[i]
                     for e in self.edges[hour]:
                         suicide = e.suicide
+                        conditional = e.conditional
                         right = e.get_right(ctime, started, raw, startup_exclude_list, [])
                         left  = e.get_left( ctime, started, raw, startup_exclude_list, [])
 
@@ -920,20 +927,20 @@ class config( CylcConfigObj ):
                                     for rmem in self.members[rname]:
                                         lmemid = lmem + '%' + lctime
                                         rmemid = rmem + '%' + rctime
-                                        gr_edges.append( (lmemid, rmemid, False, e.suicide ) )
+                                        gr_edges.append( (lmemid, rmemid, False, e.suicide, e.conditional ) )
                             elif lname in self.members:
                                 # left family
                                 for mem in self.members[lname]:
                                     memid = mem + '%' + lctime
-                                    gr_edges.append( (memid, right, False, e.suicide ) )
+                                    gr_edges.append( (memid, right, False, e.suicide, e.conditional ) )
                             elif rname in self.members:
                                 # right family
                                 for mem in self.members[rname]:
                                     memid = mem + '%' + rctime
-                                    gr_edges.append( (left, memid, False, e.suicide ) )
+                                    gr_edges.append( (left, memid, False, e.suicide, e.conditional ) )
                             else:
                                 # no families
-                                gr_edges.append( (left, right, False, e.suicide ) )
+                                gr_edges.append( (left, right, False, e.suicide, e.conditional ) )
                         else:
                             method = 'nonfam'
                             if lname in self.member_of and rname in self.member_of:
@@ -952,13 +959,13 @@ class config( CylcConfigObj ):
                                 method = 'rfam'
 
                             if method ==  'nonfam':
-                                gr_edges.append( (left, right, False, e.suicide ) )
+                                gr_edges.append( (left, right, False, e.suicide, e.conditional ) )
                             elif method == 'lfam':
-                                gr_edges.append( (self.member_of[lname] + '%' + lctime, right, True, e.suicide ) )
+                                gr_edges.append( (self.member_of[lname] + '%' + lctime, right, True, e.suicide, e.conditional ) )
                             elif method == 'rfam':
-                                gr_edges.append( (left, self.member_of[rname] + '%' + rctime, True, e.suicide ) )
+                                gr_edges.append( (left, self.member_of[rname] + '%' + rctime, True, e.suicide, e.conditional ) )
                             elif method == 'twofam':
-                                gr_edges.append( (self.member_of[lname] + '%' + lctime, self.member_of[rname] + '%' + rctime, True, e.suicide ) )
+                                gr_edges.append( (self.member_of[lname] + '%' + lctime, self.member_of[rname] + '%' + rctime, True, e.suicide, e.conditional ) )
 
                     # next cycle
                     started = True
@@ -981,7 +988,7 @@ class config( CylcConfigObj ):
         # jumping around (does this help? -if not discard)
         gr_edges.sort()
         for e in gr_edges:
-            l, r, dashed, suicide = e
+            l, r, dashed, suicide, conditional = e
             if l== None and r == None:
                 pass
             elif l == None:
@@ -989,12 +996,16 @@ class config( CylcConfigObj ):
             elif r == None:
                 graph.add_node( l )
             else:
+                style=None
+                arrowhead='normal'
                 if dashed:
-                    graph.add_edge( l, r, False, style='dashed' )
-                elif suicide:
-                    graph.add_edge( l, r, False, style='dashed', arrowhead='dot' )
-                else:
-                    graph.add_edge( l, r, False )
+                    style='dashed'
+                if suicide:
+                    style='dashed'
+                    arrowhead='dot'
+                if conditional:
+                    arrowhead='onormal'
+                graph.add_edge( l, r, False, style=style, arrowhead=arrowhead )
 
         for n in graph.nodes():
             if not colored:
