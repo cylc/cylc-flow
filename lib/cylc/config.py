@@ -691,9 +691,7 @@ class config( CylcConfigObj ):
                 rights = [None]
 
             suicide = False
-            print '>>>>', i, arrow[i], tasks[i]
             if arrow[i] == '=x':
-                print 'ULLLLLLLLLLLO'
                 suicide = True
 
             new_rights = []
@@ -716,12 +714,16 @@ class config( CylcConfigObj ):
             for r in rights:
                 if ttype != 'cycling':
                     for n in lnames + [r]:
+                        try:
+                            name = graphnode( n ).name
+                        except GraphNodeError, x:
+                            raise SuiteConfigError, str(x)
                         if ttype == 'async_oneoff':
-                            if n not in self.async_oneoff_tasks:
-                                self.async_oneoff_tasks.append(n)
+                            if name not in self.async_oneoff_tasks:
+                                self.async_oneoff_tasks.append(name)
                         elif ttype == 'async_repeating': 
-                            if n not in self.async_repeating_tasks:
-                                self.async_repeating_tasks.append(n)
+                            if name not in self.async_repeating_tasks:
+                                self.async_repeating_tasks.append(name)
                 if graph_only:
                     self.generate_nodes_and_edges( lnames, r, ttype, validity )
                 else:

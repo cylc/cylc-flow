@@ -178,9 +178,11 @@ Version number X.Y.Z incrementing:
     in conditional expressions):
        foo(T-6) becomes foo[T-6]
 
-+ Embedded Python expressions can now be used to generate lists of 
+ + Embedded Python expressions can now be used to generate lists of 
 family member names; lists of similar dependencies in the graph; and
 lists of task names in [tasks][[TASK]] section headings (which may
 also contain a family name as shorthand for all family members) to 
 define multiple tasks at once.
+
+ + Fixed a bug preventing use of :fail triggers with asynchronous tasks.
 
