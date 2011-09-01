@@ -1,0 +1,12 @@
+
+initial cycle time = 2010080800
+final cycle time = 2010080800
+
+[dependencies]
+    [[0]]
+        graph = """
+            foo => bar => baz
+            bar:fail => rec1 & rec2
+            rec1 => rec2
+            bar =x rec1 & rec2
+                """

@@ -659,18 +659,20 @@ class config( CylcConfigObj ):
                     line = re.sub( r'\b' + fam + r'\b', mems, line )
 
         # split line on arrows
-        sequence = re.split( '\s*=>\s*', line )
+        tokens = re.split( '\s*(=[>x])\s*', line ) # a => b =x c
+        tasks = tokens[0::2]                       # [a, b, c] 
+        arrow = tokens[1::2]                       # [=>, =x]
 
         # get list of pairs
-        for i in [0] + range( 1, len(sequence)-1 ):
-            lexpression = sequence[i]
-            if len(sequence) == 1:
+        for i in [0] + range( 1, len(tasks)-1 ):
+            lexpression = tasks[i]
+            if len(tasks) == 1:
                 # single node: no rhs group
                 rgroup = None
                 if re.search( '\|', lexpression ):
                     raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR conditionals: " + lexpression
             else:
-                rgroup = sequence[i+1]
+                rgroup = tasks[i+1]
            
             # parentheses are used for intercycle dependencies: (T-6) etc.
 
@@ -687,6 +689,12 @@ class config( CylcConfigObj ):
                 rights = re.split( '\s*&\s*', rgroup )
             else:
                 rights = [None]
+
+            suicide = False
+            print '>>>>', i, arrow[i], tasks[i]
+            if arrow[i] == '=x':
+                print 'ULLLLLLLLLLLO'
+                suicide = True
 
             new_rights = []
             for r in rights:
@@ -722,7 +730,7 @@ class config( CylcConfigObj ):
                         m = re.match( '^ASYNCID:(.*)$', section )
                         asyncid_pattern = m.groups()[0]
                     self.generate_taskdefs( lnames, r, ttype, section, asyncid_pattern )
-                    self.generate_triggers( lexpression, lnames, r, section, asyncid_pattern )
+                    self.generate_triggers( lexpression, lnames, r, section, asyncid_pattern, suicide )
  
             # self.edges left side members can be:
             #   foo           (task name)
@@ -778,7 +786,7 @@ class config( CylcConfigObj ):
             elif ttype == 'cycling':
                 self.taskdefs[ name ].set_valid_hours( section )
 
-    def generate_triggers( self, lexpression, lnames, right, section, asyncid_pattern ):
+    def generate_triggers( self, lexpression, lnames, right, section, asyncid_pattern, suicide ):
         if not right:
             # lefts are lone nodes; no more triggers to define.
             return
@@ -808,7 +816,8 @@ class config( CylcConfigObj ):
                 elif lnode.name in self.async_repeating_tasks:
                     self.taskdefs[right].loose_prerequisites.append(trigger)
                 else:
-                    self.taskdefs[right].add_trigger( trigger, section )
+                    # TO DO: ALSO CONSIDER SUICIDE FOR STARTUP AND ASYNC
+                    self.taskdefs[right].add_trigger( trigger, section, suicide )
         else:
             # replace some chars for later use in regular  expressions.
             expr = re.sub( '[-\[\]:]', '_', lexpression )
@@ -820,7 +829,8 @@ class config( CylcConfigObj ):
                 # TO DO!!!!
                 raise SuiteConfigError, 'ERROR: repeating async task conditionals not done yet'
             else:
-                self.taskdefs[right].add_conditional_trigger( ctrig, expr, section )
+                # TO DO: ALSO CONSIDER SUICIDE FOR STARTUP AND ASYNC
+                self.taskdefs[right].add_conditional_trigger( ctrig, expr, section, suicide )
 
     def get_graph( self, start_ctime, stop, colored=True, raw=False ):
         if not self.graph_loaded:
