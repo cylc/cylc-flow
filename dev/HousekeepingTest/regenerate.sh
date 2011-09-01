@@ -1,9 +1,9 @@
 #!/bin/bash
 
-ARCHIVE=$CYLC_DIR/dev/HousekeepingTest/ARC
+ARCHIVE=$PWD/dev/HousekeepingTest/ARC
 rm -rf $ARCHIVE
 
-TOPDIR=$CYLC_DIR/dev/HousekeepingTest/SRC
+TOPDIR=$PWD/dev/HousekeepingTest/SRC
 rm -rf $TOPDIR
 mkdir -p $TOPDIR
 
@@ -15,5 +15,5 @@ while (( $T < $END )); do
     echo $T
     touch $TOPDIR/foo-${T}.nc
     touch $TOPDIR/bar-${T}.nc
-    T=$( cylcutil cycletime -a 6 $T )
+    T=$( cylc util cycletime -a 6 $T )
 done

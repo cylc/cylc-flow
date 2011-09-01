@@ -27,9 +27,10 @@ from cylc.housekeeping import config_file, config_line
 usage = """1/ cylc [util] housekeeping [options] SOURCE MATCH OPER OFFSET [TARGET]
 Usage: 2/ cylc [util] housekeeping [options] FILE
 
-Parallel (as in spawning of multiple Unix processes at once) batch
-archiving and cleanup of files or directories with names that contain a
-cycle time.
+Parallel archiving and cleanup of files or directories with names
+that contain a cycle time. Matched items are grouped into batches in 
+which members are processed in parallel, by spawned sub-processes. 
+Once all batch members have completed, the next batch is processed.
 
 OPERATE ('delete', 'move', or 'copy') on items (files or directories)
 matching a Python-style regular expression MATCH in directory SOURCE
@@ -127,8 +128,10 @@ parser.add_option( "--cheapdiff", "-c",
         action="store_true", dest="cheap", default=False )
 
 parser.add_option( "--batchsize", "-b",
-        help="Batch size for parallel processing of matched files "
-        "(defaults to 1, i.e. sequential processing).",
+        help="Batch size for parallel processing of matched files. "
+        "Members of each batch (matched items) are processed in parallel; "
+        "when a batch completes, the next batch starts. Defaults to a "
+        "batch size of 1, i.e. sequential processing.",
         metavar='INT', action="store", dest="batchsize", default=1 )
 
 ( options, args ) = parser.parse_args()
