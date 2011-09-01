@@ -1,12 +1,27 @@
 
 initial cycle time = 2010080800
-final cycle time = 2010080800
+final cycle time = 2010080812
 
 [dependencies]
-    [[0]]
+    [[0,12]]
         graph = """
-            foo => bar => baz
-            bar:fail => rec1 & rec2
-            rec1 => rec2
-            bar =x rec1 & rec2
+            pre => model
+            model:fail => diagnose => recover
+            model =x diagnose & recover
+            model | recover => post
                 """
+
+[tasks]
+    [[model]]
+        command = """
+echo Hello from $TASK_ID
+sleep 10
+if [[ $(cylc util cycletime --hour) == 12 ]]; then 
+    echo "FAILING NOW!"
+    false
+else
+    echo "Succeeded"
+    true
+fi
+                  """
+
