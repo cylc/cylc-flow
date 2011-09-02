@@ -2,9 +2,13 @@
 initial cycle time = 2010080800
 final cycle time = 2010080812
 
+#[special tasks]
+#    startup = phoo
+
 [dependencies]
     [[0,12]]
         graph = """
+            #phoo => pre => model
             pre => model
             model:fail => diagnose => recover
             model =x diagnose & recover

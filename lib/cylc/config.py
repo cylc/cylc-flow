@@ -821,11 +821,11 @@ class config( CylcConfigObj ):
                 # using last lnode ...
                 if lnode.name in self['special tasks']['startup'] or \
                         lnode.name in self.async_oneoff_tasks:
-                    self.taskdefs[right].add_startup_trigger( trigger, section )
+                    self.taskdefs[right].add_startup_trigger( trigger, section, suicide )
                 elif lnode.name in self.async_repeating_tasks:
+                    # TO DO: SUICIDE FOR REPEATING ASYNC
                     self.taskdefs[right].loose_prerequisites.append(trigger)
                 else:
-                    # TO DO: ALSO CONSIDER SUICIDE FOR STARTUP AND ASYNC
                     self.taskdefs[right].add_trigger( trigger, section, suicide )
         else:
             # replace some chars for later use in regular  expressions.
@@ -833,7 +833,7 @@ class config( CylcConfigObj ):
             # using last lnode ...
             if lnode.name in self['special tasks']['startup'] or \
                     lnode.name in self.async_oneoff_tasks:
-                self.taskdefs[right].add_startup_conditional_trigger( ctrig, expr, section )
+                self.taskdefs[right].add_startup_conditional_trigger( ctrig, expr, section, suicide )
             elif lnode.name in self.async_repeating_tasks:
                 # TO DO!!!!
                 raise SuiteConfigError, 'ERROR: repeating async task conditionals not done yet'
@@ -857,7 +857,7 @@ class config( CylcConfigObj ):
         for e in self.async_oneoff_edges + self.async_repeating_edges:
             right = e.get_right(1, False, False, [], [])
             left  = e.get_left( 1, False, False, [], [])
-            gr_edges.append( (left, right, False, False, False) )
+            gr_edges.append( (left, right, False, e.suicide, e.conditional) )
 	
         cycles = self.edges.keys()
 
