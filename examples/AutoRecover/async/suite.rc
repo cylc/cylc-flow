@@ -11,11 +11,11 @@ Model post processing triggers off model or recovery tasks.
     graph = """
         pre => model
         model:fail => diagnose => recover
-        model =x diagnose & recover
+        model => !diagnose & !recover
         model | recover => post
                 """
 [tasks]
     [[model]]
         # UNCOMMENT command TO TEST FAILURE:
-        # command = false
+        command = false
 

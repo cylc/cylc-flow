@@ -660,10 +660,13 @@ class config( CylcConfigObj ):
                     mems = ' & '.join( self.members[fam] )
                     line = re.sub( r'\b' + fam + r'\b', mems, line )
 
-        # split line on arrows
-        tokens = re.split( '\s*(=[>x])\s*', line ) # a => b =x c
-        tasks = tokens[0::2]                       # [a, b, c] 
-        arrow = tokens[1::2]                       # [=>, =x]
+        # Split line on dependency arrows.
+        tasks = re.split( '\s*=>\s*', line )
+        # NOTE:  we currently use only one kind of arrow, but to use
+        # several kinds we can split the string like this:
+        #     tokens = re.split( '\s*(=[>x])\s*', line ) # a => b =x c
+        #     tasks = tokens[0::2]                       # [a, b, c] 
+        #     arrow = tokens[1::2]                       # [=>, =x]
 
         # get list of pairs
         for i in [0] + range( 1, len(tasks)-1 ):
@@ -692,10 +695,6 @@ class config( CylcConfigObj ):
             else:
                 rights = [None]
 
-            suicide = False
-            if arrow[i] == '=x':
-                suicide = True
-
             new_rights = []
             for r in rights:
                 if r:
@@ -713,7 +712,13 @@ class config( CylcConfigObj ):
             nstr = nstr.strip()
             lnames = re.split( ' +', nstr )
 
-            for r in rights:
+            for rt in rights:
+                # foo => '!bar' means task bar should suicide if foo succeeds.
+                suicide = False
+                if rt.startswith('!'):
+                    r = rt[1:]
+                    suicide = True
+
                 if ttype != 'cycling':
                     for n in lnames + [r]:
                         try:
@@ -735,12 +740,6 @@ class config( CylcConfigObj ):
                         asyncid_pattern = m.groups()[0]
                     self.generate_taskdefs( lnames, r, ttype, section, asyncid_pattern )
                     self.generate_triggers( lexpression, lnames, r, section, asyncid_pattern, suicide )
- 
-            # self.edges left side members can be:
-            #   foo           (task name)
-            #   foo:N         (specific output)
-            #   foo(T-DD)     (intercycle dep)
-            #   foo:N(T-DD)   (both)
 
     def generate_nodes_and_edges( self, lexpression, lnames, right, ttype, validity, suicide=False ):
         conditional = False
