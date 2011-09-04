@@ -22,6 +22,9 @@ class loadleveler( job_submit ):
     """
 Minimalist loadleveler job submission.
     """
+
+    COMMAND_TEMPLATE = "llsubmit %s"
+
     def set_directives( self ):
         self.directive_prefix = "# @ "
         self.final_directive  = "# @ queue"
@@ -52,4 +55,7 @@ Minimalist loadleveler job submission.
         self.directives = defaults
 
     def construct_jobfile_submission_command( self ):
-        self.command = 'llsubmit ' + self.jobfile_path
+        command_template = self.job_submit_command_template
+        if not command_template:
+            command_template = self.COMMAND_TEMPLATE
+        self.command = command_template % ( self.jobfile_path )

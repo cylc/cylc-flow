@@ -52,13 +52,7 @@ class jobfile(object):
         # TO DO: asynchronous tasks
         self.cycle_time = tag
 
-    def write( self ):
-        # Get a new temp filename, open it, and write the task job script to it.
-
-        # TO DO: use [,dir=] argument and allow user to configure the
-        # temporary directory (default reads $TMPDIR, $TEMP, or $TMP)
-        path = tempfile.mktemp( prefix='cylc-' + self.task_id + '-' ) 
-
+    def write( self, path ):
         self.FILE = open( path, 'wb' )
         self.write_header()
         self.write_directives()
@@ -76,7 +70,7 @@ class jobfile(object):
         self.write_task_succeeded()
         self.FILE.write( '\n\n#EOF' )
         self.FILE.close() 
-        return path
+        return
 
     def write_manual_environment( self ):
         strio = StringIO.StringIO()
@@ -124,15 +118,13 @@ class jobfile(object):
             self.FILE.write( '\n' + self.directive_prefix + d + " = " + dvs[ d ] )
         self.FILE.write( '\n' + self.final_directive )
 
-    def write_environment_1( self, STRIO=None ):
+    def write_environment_1( self, BUFFER=None ):
         # Task-specific variables may reference other previously-defined
         # task-specific variables, or global variables. Thus we ensure
         # that the order of definition is preserved (and pass any such
         # references through as-is to the task job script).
 
-        if STRIO:
-            BUFFER = STRIO
-        else:
+        if not BUFFER:
             BUFFER = self.FILE
 
         # Override $CYLC_DIR and CYLC_SUITE_DIR for remotely hosted tasks
@@ -172,14 +164,12 @@ class jobfile(object):
 # SEND TASK STARTED MESSAGE:
 cylc task started || exit 1""" )
 
-    def write_cylc_access( self, STRIO=None ):
+    def write_cylc_access( self, BUFFER=None ):
         # configure access to cylc prior to defining user local and
         # global environment variables so that cylc commands can be used
         # in them, e.g.: 
         #    NEXT_CYCLE=$( cylc util cycletime --add=6 )
-        if STRIO:
-            BUFFER = STRIO
-        else:
+        if not BUFFER:
             BUFFER = self.FILE
         BUFFER.write( "\n\n# ACCESS TO CYLC:" )
         BUFFER.write( "\nPATH=$CYLC_DIR/bin:$PATH" )
