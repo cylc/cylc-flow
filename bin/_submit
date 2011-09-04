@@ -201,6 +201,7 @@ job_submit.global_manual_messaging = config['manual task completion messaging']
 
 job_submit.global_task_owner = config['owner']
 job_submit.global_remote_host = config['remote host']
+job_submit.global_remote_shell_template = config['remote shell template']
 job_submit.global_remote_cylc_dir = config['remote cylc directory']
 job_submit.global_remote_suite_dir = config['remote suite directory']
 
