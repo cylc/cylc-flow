@@ -86,7 +86,7 @@ class job_submit(object):
         self.directives  = directives
         self.logfiles = logfiles
  
-        self.suite_owner = os.getlogin()
+        self.suite_owner = os.environ['USER']
         if task_owner:
             self.task_owner = task_owner
             self.other_owner = True
@@ -238,7 +238,7 @@ class job_submit(object):
     def submit( self, dry_run ):
         # change to $HOME 
         try: 
-            os.chdir( pwd.getpwnam(os.getlogin()).pw_dir )
+            os.chdir( pwd.getpwnam(self.suite_owner).pw_dir )
         except OSError, e:
             print "Failed to change to suite owner's home directory"
             print e
