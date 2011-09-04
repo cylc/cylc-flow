@@ -196,7 +196,8 @@ def scan( host, verbose=True, mine=False, silent=False ):
     # load my passphrases in case any secure suites are encountered in the scan.
     reg = localdb()
     reg.load_from_file()
-    reg_suites = reg.get_list(name_only=True)
+    #reg_suites = reg.get_list(name_only=True)
+    reg_suites = reg.get_list()
     my_passphrases = {}
     for rg in reg_suites:
         try:

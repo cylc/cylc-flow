@@ -112,7 +112,7 @@ else:
             dirs.append(dir)
  
     try:
-        db.unregister( suite, verbose=options.verbose )
+        db.unregister( suite )
     except RegistrationError, x:
         print >> sys.stderr, x
         db.unlock()

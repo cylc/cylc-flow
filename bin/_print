@@ -72,6 +72,8 @@ if options.central:
 else:
     reg = localdb()
 reg.load_from_file()
-reg.print_multi( ownerfilt=options.ownerfilt,
-        groupfilt=options.groupfilt, namefilt=options.namefilt,
-        verbose=options.verbose )
+#reg.print_multi( ownerfilt=options.ownerfilt,
+#        groupfilt=options.groupfilt, namefilt=options.namefilt,
+#        verbose=options.verbose )
+for item in reg.get_list():
+    print item
