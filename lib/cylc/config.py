@@ -625,7 +625,6 @@ class config( CylcConfigObj ):
                     mems = ' & '.join( self.members[fam] )
                     line = re.sub( r'\b' + fam + r'\b', mems, line )
 
-        print line
         # split line on arrows
         sequence = re.split( '\s*=>\s*', line )
 
