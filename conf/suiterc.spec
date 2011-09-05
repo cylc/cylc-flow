@@ -161,8 +161,8 @@ UTC mode = boolean( default=False )
 [visualization]
     initial cycle time = integer( default=2999010100 )
     final cycle time = integer( default=2999010123 )
-    show family members = boolean( default=False )
-    # TO DO: USE SUB-GRAPH FOR FAMILY MEMBERS?
+    #show family members = boolean( default=False )
+    grouped families = force_list( default=list() )
     use node color for edges = boolean( default=True )
     default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=box'))
     default edge attributes = force_list( default=list('color=black'))

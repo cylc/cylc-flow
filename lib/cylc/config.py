@@ -363,6 +363,12 @@ class config( CylcConfigObj ):
                 inherit = self['runtime'][name]['inherit']
                 if inherit:
                     name = inherit
+                    if label not in self.member_of:
+                        self.member_of[label] = {}
+                    if name not in self.members:
+                        self.members[name] = []
+                    self.member_of[label] = name
+                    self.members[name].append(label)
                 else:
                     break
             hierarchy.pop() # remove 'root'
@@ -640,9 +646,8 @@ class config( CylcConfigObj ):
         else:
             raise SuiteConfigError( 'ERROR: Illegal graph validity type: ' + section )
 
-
         # replace family names with family members
-        if not graph_only or self['visualization']['show family members']:
+        if not graph_only: # or self['visualization']['show family members']:
             # TO DO: the following is overkill for just graphing.
             for fam in self.members:
                 # fam:fail - replace with conditional expressing 
@@ -681,8 +686,6 @@ class config( CylcConfigObj ):
             else:
                 rgroup = tasks[i+1]
            
-            # parentheses are used for intercycle dependencies: (T-6) etc.
-
             if rgroup:
                 # '|' (OR) is not allowed on the right side
                 if re.search( '\|', rgroup ):
@@ -921,22 +924,26 @@ class config( CylcConfigObj ):
                             rname = None
                             lctime = None
 
-                        if self['visualization']['show family members']:
+                        #if self['visualization']['show family members']:
+                        grouped_families = self['visualization']['grouped families']
+                        if True:
                             # replace a family with its members
                             # and show effective dependencies
-                            if lname in self.members and rname in self.members:
+                            if lname in self.members and rname in self.members \
+                                    and lname not in grouped_families and \
+                                    rname not in grouped_families:
                                 # both families
                                 for lmem in self.members[lname]:
                                     for rmem in self.members[rname]:
                                         lmemid = lmem + '%' + lctime
                                         rmemid = rmem + '%' + rctime
                                         gr_edges.append( (lmemid, rmemid, False, e.suicide, e.conditional ) )
-                            elif lname in self.members:
+                            elif lname in self.members and lname not in grouped_families:
                                 # left family
                                 for mem in self.members[lname]:
                                     memid = mem + '%' + lctime
                                     gr_edges.append( (memid, right, False, e.suicide, e.conditional ) )
-                            elif rname in self.members:
+                            elif rname in self.members and rname not in grouped_families:
                                 # right family
                                 for mem in self.members[rname]:
                                     memid = mem + '%' + rctime
@@ -944,7 +951,8 @@ class config( CylcConfigObj ):
                             else:
                                 # no families
                                 gr_edges.append( (left, right, False, e.suicide, e.conditional ) )
-                        else:
+                        #else:
+                        if False:  # TO DO: FAM INTERNAL DEPS:
                             method = 'nonfam'
                             if lname in self.member_of and rname in self.member_of:
                                 # l and r are both members of families
