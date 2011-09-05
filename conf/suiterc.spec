@@ -66,16 +66,16 @@ UTC mode = boolean( default=False )
     graph = string
     daemon = string( default=None )
 
-[namespaces]
+[task run time]
     [[global]]
-        namespace = string( default=None )
+        inherit = string( default=None )
         description = string( default="No description supplied" )
         command = force_list( default=list( "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP",))
 
         job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
         job submission command template = string( default=None )
         job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=/bin/bash )
-        job submission log directory = string( default='~/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/log/job' )
+        job submission log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/log/job' )
 
         owner = string( default=None )
         owned task execution method = option( sudo, ssh, default=sudo )
@@ -117,8 +117,7 @@ UTC mode = boolean( default=False )
             __many__ = string
 
     [[__many__]]
-
-        namespace = string( default=global )
+        inherit = string( default=global )
 
         description = string( default=None )
         command = force_list( default=None )
@@ -145,59 +144,6 @@ UTC mode = boolean( default=False )
         task failed hook script = string( default=None )
         task warning hook script = string( default=None )
         task timeout hook script = string( default=None )
-
-        task submission timeout in minutes = float( default=None )
-        task execution timeout in minutes = float( default=None )
-        reset execution timeout on incoming messages = boolean( default=None )
-
-        extra log files = force_list( default=list())
-
-        pre-command scripting = string( default=None )
-        post-command scripting = string( default=None )
-
-        manual task completion messaging = boolean( default=None )
-
-        hours = force_list( default=list())
-
-        [[[environment]]]
-            __many__ = string
-
-        [[[directives]]]
-            __many__ = string
-
-        [[[outputs]]]
-            __many__ = string
-
-[tasks]
-    [[__many__]]
-
-        namespace = string( default=global )
-
-        description = string( default=None )
-        command = force_list( default=None )
-
-        job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=None )
-        job submission command template = string( default=None )
-        job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=None )
-        job submission log directory = string( default=None )
-
-        owner = string( default=None )
-        owned task execution method = option( sudo, ssh, default=None )
-        ignore task owners = boolean( default=None )
-
-        remote host = string( default=None )
-        remote cylc directory = string( default=None )
-        remote suite directory = string( default=None )
-        remote shell template = string( default=None )
-
-        task submitted hook script = string( default=None )
-        task submission failed hook script = string( default=None )
-        task started hook script = string( default=None )
-        task succeeded hook script = string( default=None )
-        task failed hook script = string( default=None )
-        task warning hook script = string( default=None )
-        task timeout hook script = string( default=None )
-
 
         task submission timeout in minutes = float( default=None )
         task execution timeout in minutes = float( default=None )

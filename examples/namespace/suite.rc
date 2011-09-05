@@ -1,7 +1,10 @@
 
+initial cycle time = 2010080800
+final cycle time = 2010080900
+
 [task families]
-    ops = OPS.atovs, OPS.aircraft
-    var = VAR.ConLS, VAR.AnPF
+    ops = atovs, aircraft
+    var = ConLS, AnPF
 
 [dependencies]
     [[0]]
@@ -10,36 +13,38 @@
                 ops | ops:fail => var => bar
                 """
 
-[namespaces]
+[task run time]
     [[GEN]]
         [[[environment]]]
             GEN_A = gen_a
             GEN_B = gen_b
     [[OPS]]
+        inherit = GEN
         command = "echo run-OPS.sh; sleep 10"
-        namespace = GEN
         [[[environment]]]
             GEN_B = ops_b
     [[VAR]]
+        inherit = GEN
         command = "echo run-VAR.sh; sleep 10"
-        namespace = GEN
         [[[environment]]]
             GEN_B = var_b
- 
- [tasks]
     [[foo]]
-        namespace = GEN
-    [[OPS.atovs]]
+        inherit = GEN
+    [[atovs]]
+        inherit = OPS
         [[[environment]]]
             OPS_DATA = atovs
-    [[OPS.aircraft]]
+    [[aircraft]]
+        inherit = OPS
         command = "echo HELLO from $TASK_ID; sleep 5; echo ABORT; bin/false"
         [[[environment]]]
             OPS_DATA = aircraft
-    [[VAR.ConLS]]
+    [[ConLS]]
+        inherit = VAR
         [[[environment]]]
             VAR_PROG = ConfigureLS
-    [[VAR.AnPF]]
+    [[AnPF]]
+        inherit = VAR
         command = "echo run-VAR.sh --apf; sleep 10"
         [[[environment]]]
             VAR_PROG = AnalysePF

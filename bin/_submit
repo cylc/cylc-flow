@@ -109,7 +109,7 @@ try:
 except SuiteConfigError,x:
     raise SystemExit(x)
 
-config.create_directories()
+config.create_directories( task_name )
 # modify logging dir for single task submit so as not to alter suite logs
 logging_dir = os.path.join( config['suite log directory'], 'submit' ) 
 mkdir_p( logging_dir )

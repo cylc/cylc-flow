@@ -64,9 +64,6 @@ except SuiteConfigError,x:
 # TO DO: TEST THE FOLLOWING WITH VARIOUS ERRORS AND CLEAN UP
 # THE RESULTING OUTPUT:
 job_submit.cylc_env = {}
-#job_submit.global_env = {}
-job_submit.shell = config['namespaces']['global']['job submission shell'] 
-job_submit.joblog_dir = config['namespaces']['global']['job submission log directory']
 ctime = '2999010112'
 print 'Instantiating Task Proxies:'
 valid = True

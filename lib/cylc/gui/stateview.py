@@ -129,7 +129,7 @@ class updater(threading.Thread):
             self.led_digits_one.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-" + str(i) + ".xpm" ))
             self.led_digits_two.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/two/digit-" + str(i) + ".xpm" ))
 
-        self.config = config( self.suite )
+        #self.config = config( self.suite )
 
     def reconnect( self ):
         try:

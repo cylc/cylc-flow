@@ -196,21 +196,16 @@ class scheduler(object):
         # LOAD SUITE CONFIG FILE
         self.config = config( self.suite, simulation_mode=self.simulation_mode )
         self.config.create_directories()
-
         self.suite_dir = self.config.get_dirname()
-
         if self.config['simulation mode only'] and not self.simulation_mode:
             raise SystemExit( "ERROR: this suite can only run in simulation mode (see suite.rc)" )
 
         # DETERMINE SUITE LOGGING AND STATE DUMP DIRECTORIES
-        self.logging_dir = os.path.join( self.config['suite log directory'] ) 
-        self.state_dump_dir   = os.path.join( self.config['state dump directory'] )
+        self.logging_dir = self.config['suite log directory']
+        self.state_dump_dir = self.config['state dump directory']
         #DISABLED if self.practice:
         #DISABLED     self.logging_dir += '-practice'
         #DISABLED     self.state_dump_dir   += '-practice'
-        # create logging and state dump directoriesif necessary
-        mkdir_p( self.logging_dir )
-        mkdir_p( self.state_dump_dir )
 
         self.banner[ 'Logging to' ] = self.logging_dir
         self.banner[ 'State dump' ] = self.state_dump_dir
