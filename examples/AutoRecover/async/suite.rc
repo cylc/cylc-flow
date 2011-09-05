@@ -1,0 +1,21 @@
+
+title = asynchronous automated failure recovery example
+
+description = """
+Model task failure triggers diagnosis and recovery tasks,
+which take themselves out of the suite if model succeeds.
+Model post processing triggers off model or recovery tasks.
+"""
+
+[dependencies]
+    graph = """
+        pre => model
+        model:fail => diagnose => recover
+        model => !diagnose & !recover
+        model | recover => post
+                """
+[tasks]
+    [[model]]
+        # UNCOMMENT command TO TEST FAILURE:
+        command = false
+

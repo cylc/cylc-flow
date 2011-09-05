@@ -57,10 +57,12 @@ class SuiteConfigError( Exception ):
         return repr(self.msg)
 
 class edge( object):
-    def __init__( self, l, r, sasl=False ):
+    def __init__( self, l, r, sasl=False, suicide=False, conditional=False ):
         self.left = l
         self.right = r
         self.sasl = sasl
+        self.suicide = suicide
+        self.conditional = conditional
 
     def get_right( self, tag, not_first_cycle, raw, startup_only, exclude ):
         # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
@@ -658,19 +660,24 @@ class config( CylcConfigObj ):
                     mems = ' & '.join( self.members[fam] )
                     line = re.sub( r'\b' + fam + r'\b', mems, line )
 
-        # split line on arrows
-        sequence = re.split( '\s*=>\s*', line )
+        # Split line on dependency arrows.
+        tasks = re.split( '\s*=>\s*', line )
+        # NOTE:  we currently use only one kind of arrow, but to use
+        # several kinds we can split the string like this:
+        #     tokens = re.split( '\s*(=[>x])\s*', line ) # a => b =x c
+        #     tasks = tokens[0::2]                       # [a, b, c] 
+        #     arrow = tokens[1::2]                       # [=>, =x]
 
         # get list of pairs
-        for i in [0] + range( 1, len(sequence)-1 ):
-            lexpression = sequence[i]
-            if len(sequence) == 1:
+        for i in [0] + range( 1, len(tasks)-1 ):
+            lexpression = tasks[i]
+            if len(tasks) == 1:
                 # single node: no rhs group
                 rgroup = None
                 if re.search( '\|', lexpression ):
                     raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR conditionals: " + lexpression
             else:
-                rgroup = sequence[i+1]
+                rgroup = tasks[i+1]
            
             # parentheses are used for intercycle dependencies: (T-6) etc.
 
@@ -705,37 +712,46 @@ class config( CylcConfigObj ):
             nstr = nstr.strip()
             lnames = re.split( ' +', nstr )
 
-            for r in rights:
+            for rt in rights:
+                # foo => '!bar' means task bar should suicide if foo succeeds.
+                suicide = False
+                if rt.startswith('!'):
+                    r = rt[1:]
+                    suicide = True
+
                 if ttype != 'cycling':
                     for n in lnames + [r]:
+                        try:
+                            name = graphnode( n ).name
+                        except GraphNodeError, x:
+                            raise SuiteConfigError, str(x)
                         if ttype == 'async_oneoff':
-                            if n not in self.async_oneoff_tasks:
-                                self.async_oneoff_tasks.append(n)
+                            if name not in self.async_oneoff_tasks:
+                                self.async_oneoff_tasks.append(name)
                         elif ttype == 'async_repeating': 
-                            if n not in self.async_repeating_tasks:
-                                self.async_repeating_tasks.append(n)
+                            if name not in self.async_repeating_tasks:
+                                self.async_repeating_tasks.append(name)
                 if graph_only:
-                    self.generate_nodes_and_edges( lnames, r, ttype, validity )
+                    self.generate_nodes_and_edges( lexpression, lnames, r, ttype, validity, suicide )
                 else:
                     asyncid_pattern = None
                     if ttype == 'async_repeating':
                         m = re.match( '^ASYNCID:(.*)$', section )
                         asyncid_pattern = m.groups()[0]
                     self.generate_taskdefs( lnames, r, ttype, section, asyncid_pattern )
-                    self.generate_triggers( lexpression, lnames, r, section, asyncid_pattern )
- 
-            # self.edges left side members can be:
-            #   foo           (task name)
-            #   foo:N         (specific output)
-            #   foo(T-DD)     (intercycle dep)
-            #   foo:N(T-DD)   (both)
+                    self.generate_triggers( lexpression, lnames, r, section, asyncid_pattern, suicide )
 
-    def generate_nodes_and_edges( self, lnames, right, ttype, validity ):
+    def generate_nodes_and_edges( self, lexpression, lnames, right, ttype, validity, suicide=False ):
+        conditional = False
+        if re.search( '\|', lexpression ):
+            # plot conditional triggers differently
+            conditional = True
+ 
         sasl = False
         for left in lnames:
             if left in self.async_oneoff_tasks + self.async_repeating_tasks:
                 sasl = True
-            e = edge( left, right, sasl )
+            e = edge( left, right, sasl, suicide, conditional )
             if ttype == 'async_oneoff':
                 if e not in self.async_oneoff_edges:
                     self.async_oneoff_edges.append( e )
@@ -778,7 +794,7 @@ class config( CylcConfigObj ):
             elif ttype == 'cycling':
                 self.taskdefs[ name ].set_valid_hours( section )
 
-    def generate_triggers( self, lexpression, lnames, right, section, asyncid_pattern ):
+    def generate_triggers( self, lexpression, lnames, right, section, asyncid_pattern, suicide ):
         if not right:
             # lefts are lone nodes; no more triggers to define.
             return
@@ -804,23 +820,25 @@ class config( CylcConfigObj ):
                 # using last lnode ...
                 if lnode.name in self['special tasks']['startup'] or \
                         lnode.name in self.async_oneoff_tasks:
-                    self.taskdefs[right].add_startup_trigger( trigger, section )
+                    self.taskdefs[right].add_startup_trigger( trigger, section, suicide )
                 elif lnode.name in self.async_repeating_tasks:
+                    # TO DO: SUICIDE FOR REPEATING ASYNC
                     self.taskdefs[right].loose_prerequisites.append(trigger)
                 else:
-                    self.taskdefs[right].add_trigger( trigger, section )
+                    self.taskdefs[right].add_trigger( trigger, section, suicide )
         else:
             # replace some chars for later use in regular  expressions.
             expr = re.sub( '[-\[\]:]', '_', lexpression )
             # using last lnode ...
             if lnode.name in self['special tasks']['startup'] or \
                     lnode.name in self.async_oneoff_tasks:
-                self.taskdefs[right].add_startup_conditional_trigger( ctrig, expr, section )
+                self.taskdefs[right].add_startup_conditional_trigger( ctrig, expr, section, suicide )
             elif lnode.name in self.async_repeating_tasks:
                 # TO DO!!!!
                 raise SuiteConfigError, 'ERROR: repeating async task conditionals not done yet'
             else:
-                self.taskdefs[right].add_conditional_trigger( ctrig, expr, section )
+                # TO DO: ALSO CONSIDER SUICIDE FOR STARTUP AND ASYNC
+                self.taskdefs[right].add_conditional_trigger( ctrig, expr, section, suicide )
 
     def get_graph( self, start_ctime, stop, colored=True, raw=False ):
         if not self.graph_loaded:
@@ -838,7 +856,7 @@ class config( CylcConfigObj ):
         for e in self.async_oneoff_edges + self.async_repeating_edges:
             right = e.get_right(1, False, False, [], [])
             left  = e.get_left( 1, False, False, [], [])
-            gr_edges.append( (left, right, False) )
+            gr_edges.append( (left, right, False, e.suicide, e.conditional) )
 	
         cycles = self.edges.keys()
 
@@ -872,6 +890,8 @@ class config( CylcConfigObj ):
                 while True:
                     hour = cycles[i]
                     for e in self.edges[hour]:
+                        suicide = e.suicide
+                        conditional = e.conditional
                         right = e.get_right(ctime, started, raw, startup_exclude_list, [])
                         left  = e.get_left( ctime, started, raw, startup_exclude_list, [])
 
@@ -906,20 +926,20 @@ class config( CylcConfigObj ):
                                     for rmem in self.members[rname]:
                                         lmemid = lmem + '%' + lctime
                                         rmemid = rmem + '%' + rctime
-                                        gr_edges.append( (lmemid, rmemid, False ) )
+                                        gr_edges.append( (lmemid, rmemid, False, e.suicide, e.conditional ) )
                             elif lname in self.members:
                                 # left family
                                 for mem in self.members[lname]:
                                     memid = mem + '%' + lctime
-                                    gr_edges.append( (memid, right, False ) )
+                                    gr_edges.append( (memid, right, False, e.suicide, e.conditional ) )
                             elif rname in self.members:
                                 # right family
                                 for mem in self.members[rname]:
                                     memid = mem + '%' + rctime
-                                    gr_edges.append( (left, memid, False ) )
+                                    gr_edges.append( (left, memid, False, e.suicide, e.conditional ) )
                             else:
                                 # no families
-                                gr_edges.append( (left, right, False ) )
+                                gr_edges.append( (left, right, False, e.suicide, e.conditional ) )
                         else:
                             method = 'nonfam'
                             if lname in self.member_of and rname in self.member_of:
@@ -938,13 +958,13 @@ class config( CylcConfigObj ):
                                 method = 'rfam'
 
                             if method ==  'nonfam':
-                                gr_edges.append( (left, right, False ) )
+                                gr_edges.append( (left, right, False, e.suicide, e.conditional ) )
                             elif method == 'lfam':
-                                gr_edges.append( (self.member_of[lname] + '%' + lctime, right, True ) )
+                                gr_edges.append( (self.member_of[lname] + '%' + lctime, right, True, e.suicide, e.conditional ) )
                             elif method == 'rfam':
-                                gr_edges.append( (left, self.member_of[rname] + '%' + rctime, True ) )
+                                gr_edges.append( (left, self.member_of[rname] + '%' + rctime, True, e.suicide, e.conditional ) )
                             elif method == 'twofam':
-                                gr_edges.append( (self.member_of[lname] + '%' + lctime, self.member_of[rname] + '%' + rctime, True ) )
+                                gr_edges.append( (self.member_of[lname] + '%' + lctime, self.member_of[rname] + '%' + rctime, True, e.suicide, e.conditional ) )
 
                     # next cycle
                     started = True
@@ -967,7 +987,7 @@ class config( CylcConfigObj ):
         # jumping around (does this help? -if not discard)
         gr_edges.sort()
         for e in gr_edges:
-            l, r, dashed = e
+            l, r, dashed, suicide, conditional = e
             if l== None and r == None:
                 pass
             elif l == None:
@@ -975,10 +995,16 @@ class config( CylcConfigObj ):
             elif r == None:
                 graph.add_node( l )
             else:
+                style=None
+                arrowhead='normal'
                 if dashed:
-                    graph.add_edge( l, r, False, style='dashed' )
-                else:
-                    graph.add_edge( l, r, False )
+                    style='dashed'
+                if suicide:
+                    style='dashed'
+                    arrowhead='dot'
+                if conditional:
+                    arrowhead='onormal'
+                graph.add_edge( l, r, False, style=style, arrowhead=arrowhead )
 
         for n in graph.nodes():
             if not colored:

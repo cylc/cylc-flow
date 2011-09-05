@@ -20,8 +20,6 @@
 # to information parsed from the suite.rc file via config.py. It could 
 # probably do with some refactoring to make it more transparent ...
 
-# TO DO: suicide prerequisites
-
 # TO DO : ONEOFF FOLLOWON TASKS: still needed but can now be identified
 # automatically from the dependency graph?
 
@@ -89,8 +87,6 @@ class taskdef(object):
         self.logfiles = []
         self.description = ['Task description has not been completed' ]
 
-        self.members = []
-        self.member_of = None
         self.follow_on_task = None
 
         self.clocktriggered_offset = None
@@ -100,9 +96,12 @@ class taskdef(object):
         # cond[6,18] = [ '(A & B)|C', 'C | D | E', ... ]
         self.cond_triggers = OrderedDict()             
         self.startup_triggers = OrderedDict()
+        self.suicide_startup_triggers = OrderedDict()
         self.suicide_triggers = OrderedDict()       
+        self.suicide_cond_triggers = OrderedDict()
         self.asynchronous_triggers = []
         self.startup_cond_triggers = OrderedDict()
+        self.suicide_startup_cond_triggers = OrderedDict()
 
         self.outputs = []     # list of special outputs; change to OrderedDict()
                               # if need to vary per cycle.
@@ -114,32 +113,52 @@ class taskdef(object):
         self.environment = OrderedDict()  # var = value
         self.directives  = OrderedDict()  # var = value
 
-    def add_trigger( self, msg, validity ):
-        if validity not in self.triggers:
-            self.triggers[ validity ] = []
-        self.triggers[ validity ].append( msg )
+    def add_trigger( self, msg, validity, suicide=False ):
+        if suicide:
+            if validity not in self.suicide_triggers:
+                self.suicide_triggers[ validity ] = []
+            self.suicide_triggers[ validity ].append( msg )
+        else:
+            if validity not in self.triggers:
+                self.triggers[ validity ] = []
+            self.triggers[ validity ].append( msg )
 
     def add_asynchronous_trigger( self, msg ):
         self.asynchronous_triggers.append( msg )
 
-    def add_startup_trigger( self, msg, validity ):
-        if validity not in self.startup_triggers:
-            self.startup_triggers[ validity ] = []
-        self.startup_triggers[ validity ].append( msg )
+    def add_startup_trigger( self, msg, validity, suicide=False ):
+        if suicide:
+            if validity not in self.suicide_startup_triggers:
+                self.suicide_startup_triggers[ validity ] = []
+            self.suicide_startup_triggers[ validity ].append( msg )
+        else:
+            if validity not in self.startup_triggers:
+                self.startup_triggers[ validity ] = []
+            self.startup_triggers[ validity ].append( msg )
 
-    def add_conditional_trigger( self, triggers, exp, validity ):
+    def add_conditional_trigger( self, triggers, exp, validity, suicide=False ):
         # triggers[label] = trigger
         # expression relates the labels
-        if validity not in self.cond_triggers:
-            self.cond_triggers[ validity ] = []
-        self.cond_triggers[ validity ].append( [ triggers, exp ] )
+        if suicide:
+            if validity not in self.suicide_cond_triggers:
+                self.suicide_cond_triggers[ validity ] = []
+            self.suicide_cond_triggers[ validity ].append( [ triggers, exp ] )
+        else:
+            if validity not in self.cond_triggers:
+                self.cond_triggers[ validity ] = []
+            self.cond_triggers[ validity ].append( [ triggers, exp ] )
 
-    def add_startup_conditional_trigger( self, triggers, exp, validity ):
+    def add_startup_conditional_trigger( self, triggers, exp, validity, suicide=False ):
         # triggers[label] = trigger
         # expression relates the labels
-        if validity not in self.startup_cond_triggers:
-            self.startup_cond_triggers[ validity ] = []
-        self.startup_cond_triggers[ validity ].append( [ triggers, exp ] )
+        if suicide:
+            if validity not in self.suicide_startup_cond_triggers:
+                self.suicide_startup_cond_triggers[ validity ] = []
+            self.suicide_startup_cond_triggers[ validity ].append( [ triggers, exp ] )
+        else:
+            if validity not in self.startup_cond_triggers:
+                self.startup_cond_triggers[ validity ] = []
+            self.startup_cond_triggers[ validity ].append( [ triggers, exp ] )
 
     def set_valid_hours( self, section ):
         if re.match( '^[\s,\d]+$', section ):
@@ -163,9 +182,6 @@ class taskdef(object):
         if 'clocktriggered' in self.modifiers:
             if self.clocktriggered_offset == None:
                 raise DefinitionError( 'ERROR: clock-triggered tasks must specify a time offset' )
-
-        if self.member_of and len( self.members ) > 0:
-            raise DefinitionError( 'ERROR: nested task families are not allowed' )
 
     def time_trans( self, strng, hours=False ):
         # Time unit translation.
@@ -248,9 +264,6 @@ class taskdef(object):
         tclass.intercycle = self.intercycle
         tclass.follow_on = self.follow_on_task
 
-        if self.member_of:
-            tclass.member_of = self.member_of
-
         def tclass_format_prerequisites( sself, preq ):
             m = re.search( '\$\(TAG\s*\-\s*(\d+)\)', preq )
             if m:
@@ -273,84 +286,77 @@ class taskdef(object):
         tclass.format_prerequisites = tclass_format_prerequisites 
 
         def tclass_add_prerequisites( sself, startup ):
-
-            if startup:
-                pp = plain_prerequisites( sself.id ) 
-                # if startup, use ONLY startup prerequisites
-                found = False
-                for val in self.startup_triggers:
-                    trigs = self.startup_triggers[ val ]
-                    if val == "once" or re.match( '^ASYNCID:', val ):
-                        for trig in trigs:
-                            found = True
-                            pp.add( sself.format_prerequisites( trig ))
-                        continue
-
-                    hours = re.split( ',\s*', val )
-                    for hr in hours:
-                        if int( sself.c_hour ) == int( hr ):
-                            for trig in trigs:
-                                found = True
-                                pp.add( sself.format_prerequisites( trig ))
-                if found:
-                    sself.prerequisites.add_requisites( pp )
-
-                # conditional triggers
-                found = False
-                for val in self.startup_cond_triggers:
-                    if val == "once" or re.match( '^ASYNCID:', val ):
-                        for ctrig in self.startup_cond_triggers[ val ]:
-                            found = True
-                            triggers, exp =  ctrig
-                            cp = conditional_prerequisites( sself.id )
-                            for label in triggers:
-                                trig = triggers[label]
-                                cp.add( sself.format_prerequisites( trig ), label )
-                            cp.set_condition( exp )
-                            sself.prerequisites.add_requisites( cp )
-                        continue
-
-                    for ctrig in self.startup_cond_triggers[ val ]:
-                        triggers, exp =  ctrig
-                        hours = re.split( ',\s*', val )
-                        for hr in hours:
-                            if int( sself.c_hour ) == int( hr ):
-                                cp = conditional_prerequisites( sself.id )
-                                for label in triggers:
-                                    trig = triggers[label]
-                                    cp.add( sself.format_prerequisites( trig ), label )
-                                cp.set_condition( exp )
-                                sself.prerequisites.add_requisites( cp )
-
+            # plain triggers
             pp = plain_prerequisites( sself.id ) 
-            for val in self.triggers:
-                if re.match( '^ASYNCID:', val ):
-                    for trig in self.triggers[ val ]:
-                        found = True
-                        pp.add( sself.format_prerequisites( trig ))
-                    continue
-
-                trigs = self.triggers[ val ]
-                hours = re.split( ',\s*', val )
-                for hr in hours:
-                    if int( sself.c_hour ) == int( hr ):
-                        for trig in trigs:
-                            pp.add( sself.format_prerequisites( trig ))
+            if startup:
+                triggers = dict( self.triggers.items() + self.startup_triggers.items() )
+            else:
+                triggers = self.triggers
+            for val in triggers:
+                for trig in triggers[ val ]:
+                    if val != "once" and not re.match( '^ASYNCID:', val ):
+                        hours = re.split( ',\s*', val )
+                        ihours = [ int(i) for i in hours ]
+                        if int( sself.c_hour ) not in ihours:
+                            continue
+                    pp.add( sself.format_prerequisites( trig ))
             sself.prerequisites.add_requisites( pp )
 
+            # plain suicide triggers
+            if startup:
+                triggers = dict( self.suicide_triggers.items() + self.suicide_startup_triggers.items() )
+            else:
+                triggers = self.suicide_triggers
+            pp = plain_prerequisites( sself.id ) 
+            for val in triggers:
+                for trig in triggers[ val ]:
+                    if val != "once" and not re.match( '^ASYNCID:', val ):
+                        hours = re.split( ',\s*', val )
+                        ihours = [ int(i) for i in hours ]
+                        if int( sself.c_hour ) not in ihours:
+                            continue
+                    pp.add( sself.format_prerequisites( trig ))
+            sself.suicide_prerequisites.add_requisites( pp )
+
             # conditional triggers
-            for val in self.cond_triggers:
-                for ctrig in self.cond_triggers[ val ]:
+            if startup:
+                triggers = dict( self.cond_triggers.items() + self.startup_cond_triggers.items() )
+            else:
+                triggers = self.cond_triggers
+            for val in triggers:
+                for ctrig in triggers[ val ]:
                     triggers, exp =  ctrig
-                    hours = re.split( ',\s*', val )
-                    for hr in hours:
-                        if int( sself.c_hour ) == int( hr ):
-                            cp = conditional_prerequisites( sself.id )
-                            for label in triggers:
-                                trig = triggers[label]
-                                cp.add( sself.format_prerequisites( trig ), label )
-                            cp.set_condition( exp )
-                            sself.prerequisites.add_requisites( cp )
+                    if val != "once" and not re.match( '^ASYNCID:', val ):
+                        hours = re.split( ',\s*', val )
+                        ihours = [ int(i) for i in hours ]
+                        if int( sself.c_hour ) not in ihours:
+                            continue
+                    cp = conditional_prerequisites( sself.id )
+                    for label in triggers:
+                        trig = triggers[label]
+                        cp.add( sself.format_prerequisites( trig ), label )
+                    cp.set_condition( exp )
+                    sself.prerequisites.add_requisites( cp )
+
+            # conditional suicide triggers
+            if startup:
+                triggers = dict( self.suicide_cond_triggers.items() + self.suicide_startup_cond_triggers.items() )
+            else:
+                triggers = self.suicide_cond_triggers
+            for val in triggers:
+                for ctrig in triggers[ val ]:
+                    triggers, exp =  ctrig
+                    if val != "once" and not re.match( '^ASYNCID:', val ):
+                        hours = re.split( ',\s*', val )
+                        ihours = [ int(i) for i in hours ]
+                        if int( sself.c_hour ) not in ihours:
+                            continue
+                    cp = conditional_prerequisites( sself.id )
+                    for label in triggers:
+                        trig = triggers[label]
+                        cp.add( sself.format_prerequisites( trig ), label )
+                    cp.set_condition( exp )
+                    sself.suicide_prerequisites.add_requisites( cp )
 
             if len( self.loose_prerequisites ) > 0:
                 lp = loose_prerequisites(sself.id)
@@ -386,16 +392,8 @@ class taskdef(object):
 
             # prerequisites
             sself.prerequisites = prerequisites()
+            sself.suicide_prerequisites = prerequisites()
             sself.add_prerequisites( startup )
-
-            ## should these be conditional too:?
-            sself.suicide_prerequisites = plain_prerequisites( sself.id )
-            ##sself.add_requisites( sself.suicide_prerequisites, self.suicide_triggers )
-
-            #if self.member_of:
-            #    foo = plain_prerequisites( sself.id )
-            #    foo.add( self.member_of + '%' + sself.tag + ' started' )
-            #    sself.prerequisites.add_requisites( foo )
 
             sself.logfiles = logfiles()
             for lfile in self.logfiles:

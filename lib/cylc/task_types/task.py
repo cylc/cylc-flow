@@ -592,13 +592,14 @@ class task( Pyro.core.ObjBase ):
     def not_fully_satisfied( self ):
         if not self.prerequisites.all_satisfied():
             return True
-        if not self.suicide_prerequisites.all_satisfied():
+        if not self.suicide_prerequisites.all_satisfied(): # TO DO: IS THIS CORRECT?
             return True
         return False
 
     def satisfy_me( self, outputs ):
         self.prerequisites.satisfy_me( outputs )
-        #self.suicide_prerequisites.satisfy_me( outputs )
+        # TO DO: DONT DO THIS IF HAVE NO SUICIDE PREREQUISITES (efficiency reasons):
+        self.suicide_prerequisites.satisfy_me( outputs )
 
     def adjust_tag( self, tag ):
         # Override to modify initial tag if necessary.

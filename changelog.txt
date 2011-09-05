@@ -198,3 +198,6 @@ define multiple tasks at once.
  + Use microseconds since epoch instead of random string for tagging a job task.
    - this allows "ls" to list things in the right order.
    - stdout and stderr files are now named after their job files.
+
+ + Fixed a bug preventing use of :fail triggers with asynchronous tasks.
+

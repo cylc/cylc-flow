@@ -34,11 +34,11 @@ use lockserver = False
                     prep => X & ColdA & ColdB & ColdC"""
 
 [namespaces]
-[[global]]
-[[[environment]]]
-    TASK_EXE_SECONDS = 10
-    WORKSPACE = /tmp/$USER/$CYLC_SUITE/common
-    RUNNING   = $WORKSPACE/running
+    [[global]]
+        [[[environment]]]
+            TASK_EXE_SECONDS = 10
+            WORKSPACE = /tmp/$USER/$CYLC_SUITE/common
+            RUNNING   = $WORKSPACE/running
 
 [tasks]
     [[prep]]
