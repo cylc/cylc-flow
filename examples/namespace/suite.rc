@@ -12,7 +12,7 @@ final cycle time = 2010080900
                 foo => ops
                 ops | ops:fail => var => bar
                 """
-[task run time]
+[runtime]
     [[root]]
         [[[environment]]]
             ROOT = "the quick brown fox"

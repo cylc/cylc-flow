@@ -539,7 +539,7 @@ class config( CylcConfigObj ):
             tasks = self['runtime'].keys()
         dirs = []
         for task in tasks:
-            dir = self['runtime'][task]['job submission log directory']
+            dir = self['runtime'][task]['job submission']['log directory']
             if dir not in dirs:
                 dirs.append(dir)
         for dir in dirs:
@@ -1096,8 +1096,6 @@ class config( CylcConfigObj ):
         for name in self.taskdefs:
             self.taskdefs[name].hours.sort( key=int ) 
 
-        self.load_raw_task_definitions()
-
         self.__check_tasks()
 
         self.tasks_loaded = True
@@ -1142,7 +1140,7 @@ class config( CylcConfigObj ):
                 taskd.job_submit_method = self['simulation mode']['job submission method']
             else:
                 # root namespace job submit method
-                taskd.job_submit_method = self['runtime']['root']['job submission method']
+                taskd.job_submit_method = self['runtime']['root']['job submission']['method']
             ##return taskd
         else:
             taskconfig = self['runtime'][name]
@@ -1153,46 +1151,47 @@ class config( CylcConfigObj ):
             # replace $(CYCLE_TIME) with $(TAG) in explicit outputs
             taskd.outputs.append( re.sub( 'CYCLE_TIME', 'TAG', taskconfig['outputs'][lbl] ))
 
-        if not taskconfig['ignore task owners']:
-            taskd.owner = taskconfig['owner']
+        if not taskconfig['ownership']['ignore owner']:
+            taskd.owner = taskconfig['ownership']['owner']
 
-        taskd.owned_task_execution_method = taskconfig['owned task execution method']
+        taskd.owned_task_execution_method = taskconfig['ownership']['local user execution method']
 
         # TO DO: consolidate with just above
         if self.simulation_mode:
             taskd.job_submit_method = self['simulation mode']['job submission method']
         else:
-            taskd.job_submit_method = taskconfig['job submission method']
+            taskd.job_submit_method = taskconfig['job submission']['method']
 
-        taskd.job_submission_shell = taskconfig['job submission shell']
+        taskd.job_submission_shell = taskconfig['job submission']['job script shell']
 
-        taskd.job_submit_command_template = taskconfig['job submission command template']
-        taskd.job_submit_log_directory = taskconfig['job submission log directory']
+        taskd.job_submit_command_template = taskconfig['job submission']['command template']
+        taskd.job_submit_log_directory = taskconfig['job submission']['log directory']
 
-        if taskconfig['remote host']:
-            taskd.remote_host = taskconfig['remote host']
+        # TO DO: don't need these tests as the default is None XXXXXXXXXXXXXXXXXXXXXXXXx
+        if taskconfig['remote']['host']:
+            taskd.remote_host = taskconfig['remote']['host']
             # consistency check
-            if not taskconfig['remote cylc directory']:
+            if not taskconfig['remote']['cylc directory']:
                 raise SuiteConfigError, name + ": tasks with a remote host must specify the remote cylc directory"
 
-        taskd.remote_shell_template = taskconfig['remote shell template']
-        taskd.remote_cylc_directory = taskconfig['remote cylc directory']
-        taskd.remote_suite_directory = taskconfig['remote suite directory']
+        taskd.remote_shell_template = taskconfig['remote']['remote shell template']
+        taskd.remote_cylc_directory = taskconfig['remote']['cylc directory']
+        taskd.remote_suite_directory = taskconfig['remote']['suite definition directory']
 
         taskd.manual_messaging = taskconfig['manual task completion messaging']
 
         # task-specific event hook scripts
-        taskd.hook_scripts[ 'submitted' ]         = taskconfig['task submitted hook script']
-        taskd.hook_scripts[ 'submission failed' ] = taskconfig['task submission failed hook script']
-        taskd.hook_scripts[ 'started'   ]         = taskconfig['task started hook script'  ]
-        taskd.hook_scripts[ 'warning'   ]         = taskconfig['task warning hook script'  ]
-        taskd.hook_scripts[ 'succeeded' ]         = taskconfig['task succeeded hook script' ]
-        taskd.hook_scripts[ 'failed'    ]         = taskconfig['task failed hook script'   ]
-        taskd.hook_scripts[ 'timeout'   ]         = taskconfig['task timeout hook script'  ]
+        taskd.hook_scripts[ 'submitted' ]         = taskconfig['event hooks']['submitted script']
+        taskd.hook_scripts[ 'submission failed' ] = taskconfig['event hooks']['submission failed script']
+        taskd.hook_scripts[ 'started'   ]         = taskconfig['event hooks']['started script'  ]
+        taskd.hook_scripts[ 'warning'   ]         = taskconfig['event hooks']['warning script'  ]
+        taskd.hook_scripts[ 'succeeded' ]         = taskconfig['event hooks']['succeeded script' ]
+        taskd.hook_scripts[ 'failed'    ]         = taskconfig['event hooks']['failed script'   ]
+        taskd.hook_scripts[ 'timeout'   ]         = taskconfig['event hooks']['timeout script'  ]
         # task-specific timeout hook scripts
-        taskd.timeouts[ 'submission'    ]     = taskconfig['task submission timeout in minutes']
-        taskd.timeouts[ 'execution'     ]     = taskconfig['task execution timeout in minutes' ]
-        taskd.timeouts[ 'reset on incoming' ] = taskconfig['reset execution timeout on incoming messages']
+        taskd.timeouts[ 'submission'    ]     = taskconfig['event hooks']['submission timeout in minutes']
+        taskd.timeouts[ 'execution'     ]     = taskconfig['event hooks']['execution timeout in minutes' ]
+        taskd.timeouts[ 'reset on incoming' ] = taskconfig['event hooks']['reset execution timeout on incoming messages']
 
         taskd.logfiles    = taskconfig[ 'extra log files' ]
         taskd.commands    = taskconfig[ 'command' ]
@@ -1246,104 +1245,3 @@ class config( CylcConfigObj ):
         if not self.tasks_loaded:
             self.load()
         return self.taskdefs[name].get_task_class()
-
-    def load_raw_task_definitions( self ):
-        # !!!!!! DEVELOPMENT USE -EXPERTS ONLY !!!!!!
-        # This method may use items defined in suite.rc:[raw task definitions]
-        # to test new task proxy class developments without bothering
-        # with suite.rc graph parsing. It is not guaranteed to be
-        # complete, i.e. you may not be able to translate all currently 
-        # graphable suites into raw form without adding to this method.
-
-        count_raw = 0
-        rawtd = self['raw task definitions']
-        for name in rawtd:
-            count_raw += 1
-            taskconfig = rawtd[name]
-            try:
-                taskd = taskdef.taskdef( name )
-            except taskdef.DefinitionError, x:
-                raise SuiteConfigError, str(x)
-
-            taskd.type = taskconfig['type']
-
-            for mod in taskconfig['type modifiers']:
-                taskd.modifiers.append(mod)
-                if mod == 'clocktriggered':
-                    taskd.clocktriggered_offset = taskconfig['clock trigger offset in hours']
-
-            for lbl in taskconfig['outputs']:
-                taskd.outputs.append( taskconfig['outputs'][lbl] )
-
-            if not self['ignore task owners']:
-                taskd.owner = taskconfig['owner']
-
-            if self.simulation_mode:
-                # use simulation mode specific job submit method for all tasks
-                taskd.job_submit_method = self['simulation mode']['job submission method']
-            elif taskconfig['job submission method'] != None:
-                # a task-specific job submit method was specified
-                taskd.job_submit_method = taskconfig['job submission method']
-            else:
-                # suite default job submit method
-                taskd.job_submit_method = self['job submission method']
-
-            taskd.job_submit_command_template = taskconfig['job submission command template']
-            taskd.job_submit_log_directory = taskconfig['job submission log directory']
-
-            if taskconfig['remote host']:
-                taskd.remote_host = taskconfig['remote host']
-                # consistency check
-                if not taskconfig['remote cylc directory']:
-                    raise SuiteConfigError, name + ": tasks with a remote host must specify the remote cylc directory"
-
-            taskd.remote_shell_template = taskconfig['remote shell template']
-            taskd.remote_cylc_directory = taskconfig['remote cylc directory']
-            taskd.remote_suite_directory = taskconfig['remote suite directory']
-            taskd.manual_messaging = taskconfig['manual task completion messaging']
-
-            taskd.hook_scripts[ 'submitted' ]         = taskconfig['task submitted hook script']
-            taskd.hook_scripts[ 'submission failed' ] = taskconfig['task submission failed hook script']
-            taskd.hook_scripts[ 'started'   ]         = taskconfig['task started hook script'  ]
-            taskd.hook_scripts[ 'warning'   ]         = taskconfig['task warning hook script'  ]
-            taskd.hook_scripts[ 'succeeded' ]         = taskconfig['task succeeded hook script' ]
-            taskd.hook_scripts[ 'failed'    ]         = taskconfig['task failed hook script'   ]
-            taskd.hook_scripts[ 'timeout'   ]         = taskconfig['task timeout hook script'  ]
-            # task-specific timeout hook scripts
-            taskd.timeouts[ 'submission'    ]     = taskconfig['task submission timeout in minutes']
-            taskd.timeouts[ 'execution'     ]     = taskconfig['task execution timeout in minutes' ]
-            taskd.timeouts[ 'reset on incoming' ] = taskconfig['reset execution timeout on incoming messages']
-
-            taskd.description = taskconfig['description']
-            taskd.commands = taskconfig['command']
-            taskd.logfiles = taskconfig['extra log files']
-            taskd.envrionment = taskconfig['environment']
-            taskd.directives = taskconfig['directives']
-
-            valid_hours = taskconfig['hours string']
-            if valid_hours:
-                # cycling tasks
-                taskd.set_valid_hours( valid_hours )
-                for lbl in taskconfig['prerequisites']:
-                    taskd.add_trigger( taskconfig['prerequisites'][lbl], valid_hours )
-            elif taskconfig['asyncid pattern']:
-                # repeating asynchronous tasks
-                taskd.asyncid_pattern = taskconfig['asyncid pattern']
-                lpre = taskconfig['prerequisites']
-                for lbl in lpre:
-                    pre = re.sub( '\$\(ASYNCID\)', '(' + taskconfig['asyncid pattern'] + ')', lpre[lbl] )
-                    taskd.loose_prerequisites.append(pre)
-            else:
-                # one-off asynchronous tasks
-                for lbl in taskconfig['prerequisites']:
-                    taskd.add_asynchronous_trigger( taskconfig['prerequisites'][lbl] )
-
-            if taskconfig['startup prerequisites']:
-                for lbl in taskconfig['startup prerequisites']:
-                    taskd.add_startup_trigger( taskconfig['startup prerequisites'][lbl], valid_hours )
- 
-            self.taskdefs[name] = taskd
-
-        if count_raw != 0:
-            print >> sys.stderr, "WARNING: this suite contains " + str(count_raw) + " raw (non-graphed) task definitions."
- 
