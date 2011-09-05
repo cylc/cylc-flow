@@ -75,7 +75,7 @@ UTC mode = boolean( default=False )
         job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
         job submission command template = string( default=None )
         job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=/bin/bash )
-        job submission log directory = string( default='$HOME/CylcJobLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+        job submission log directory = string( default='~/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/log/job' )
 
         owner = string( default=None )
         owned task execution method = option( sudo, ssh, default=sudo )
@@ -83,7 +83,7 @@ UTC mode = boolean( default=False )
 
         remote host = string( default=None )
         remote cylc directory = string( default=None )
-        remote suite directory = string( default='~/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+        remote suite directory = string( default=None )
         remote shell template = string( default='ssh -oBatchMode=yes %s' )
 
         task submitted hook script = string( default=None )
