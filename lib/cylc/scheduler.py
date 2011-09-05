@@ -355,7 +355,6 @@ class scheduler(object):
         # JOB SUBMISSION
         job_submit.simulation_mode = self.simulation_mode
         job_submit.cylc_env = cylcenv
-        job_submit.shell = self.config['namespaces']['global']['job submission shell']
         if self.simulation_mode and self.failout_task_id:
             job_submit.failout_id = self.failout_task_id
 
