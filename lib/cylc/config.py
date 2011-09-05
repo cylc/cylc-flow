@@ -115,7 +115,6 @@ class edge( object):
 
         return left + '%' + str(tag)  # str for int tag (async)
 
-
 def get_rcfiles ( suite ):
     # return a list of all rc files for this suite
     # (i.e. suite.rc plus any include-files it uses).
@@ -176,6 +175,7 @@ def get_suite_title( suite=None, path=None ):
         # in the default title being used (from conf/suiterc.spec). 
         try:
             if path:
+                print path
                 title = config( path=path ).get_title()
             else:
                 title = config( suite ).get_title()
@@ -287,7 +287,7 @@ class config( CylcConfigObj ):
 
         # parse clock-triggered tasks
         self.clock_offsets = {}
-        for item in self['special tasks']['clock-triggered']:
+        for item in self['scheduling']['special task types']['clock-triggered']:
             m = re.match( '(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)', item )
             if m:
                 task, offset = m.groups()
@@ -298,12 +298,12 @@ class config( CylcConfigObj ):
             else:
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
-        # parse families
+        # parse task families
         self.member_of = {}
         self.members = {}
-        for fam in self['task families']:
+        for fam in self['scheduling']['families']:
             members = []
-            for mem in self['task families'][fam]:
+            for mem in self['scheduling']['families'][fam]:
                 m = re.match( '^Python:(.*)$', mem )
                 if m:
                     # python list-generating expression
@@ -313,10 +313,8 @@ class config( CylcConfigObj ):
                         raise SuiteConfigError, 'Python error: ' + mem
                 else:
                     members.append(mem)
-            self['task families'][fam] = members
+                self.member_of[ mem ] = fam
             self.members[ fam ] = members
-            for task in self['task families'][fam]:
-                self.member_of[ task ] = fam
 
         # Parse task config generators. If the [[TASK]] section name
         # is a family name, or a list of task names, or is a list-
@@ -327,7 +325,7 @@ class config( CylcConfigObj ):
         for item in self['runtime']:
             delete_item = True
             m = re.match( '^Python:(.*)$', item )
-            if item in self['task families']:
+            if item in self.members:
                 # a task family
                 task_names = self.members[item]
                 delete_item = False
@@ -469,8 +467,8 @@ class config( CylcConfigObj ):
                 print >> sys.stderr, 'WARNING: task "' + name + '" is defined in [tasks] but not used in the graph.'
 
         # warn if listed special tasks are not defined
-        for type in self['special tasks']:
-            for name in self['special tasks'][type]:
+        for type in self['scheduling']['special task types']:
+            for name in self['scheduling']['special task types'][type]:
                 if type == 'clock-triggered':
                     name = re.sub('\(.*\)','',name)
                 if re.search( '[^0-9a-zA-Z_]', name ):
@@ -563,10 +561,10 @@ class config( CylcConfigObj ):
         # TO DO: automatically determine this by parsing the dependency
         #        graph - requires some thought.
         # For now user must define this:
-        return self['special tasks']['cold start']
+        return self['scheduling']['special task types']['cold-start']
 
     def get_startup_task_list( self ):
-        return self['special tasks']['startup'] + self.async_oneoff_tasks + self.async_repeating_tasks
+        return self['scheduling']['special task types']['start-up'] + self.async_oneoff_tasks + self.async_repeating_tasks
 
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
@@ -646,7 +644,7 @@ class config( CylcConfigObj ):
         # replace family names with family members
         if not graph_only or self['visualization']['show family members']:
             # TO DO: the following is overkill for just graphing.
-            for fam in self['task families']:
+            for fam in self.members:
                 # fam:fail - replace with conditional expressing 
                 # "at least one member failed AND all members succeeded or failed"
                 # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail )
@@ -792,7 +790,7 @@ class config( CylcConfigObj ):
                 self.taskdefs[name].type = 'async_oneoff'
             elif ttype == 'async_repeating':
                 self.taskdefs[name].asyncid_pattern = asyncid_pattern
-                if name == self['dependencies'][section]['daemon']:
+                if name == self['scheduling'][section]['daemon']:
                     self.taskdefs[name].type = 'async_daemon'
                 else:
                     self.taskdefs[name].type = 'async_repeating'
@@ -824,7 +822,7 @@ class config( CylcConfigObj ):
             for label in ctrig:
                 trigger = ctrig[label]
                 # using last lnode ...
-                if lnode.name in self['special tasks']['startup'] or \
+                if lnode.name in self['scheduling']['special task types']['start-up'] or \
                         lnode.name in self.async_oneoff_tasks:
                     self.taskdefs[right].add_startup_trigger( trigger, section, suicide )
                 elif lnode.name in self.async_repeating_tasks:
@@ -836,7 +834,7 @@ class config( CylcConfigObj ):
             # replace some chars for later use in regular  expressions.
             expr = re.sub( '[-\[\]:]', '_', lexpression )
             # using last lnode ...
-            if lnode.name in self['special tasks']['startup'] or \
+            if lnode.name in self['scheduling']['special task types']['start-up'] or \
                     lnode.name in self.async_oneoff_tasks:
                 self.taskdefs[right].add_startup_conditional_trigger( ctrig, expr, section, suicide )
             elif lnode.name in self.async_repeating_tasks:
@@ -1029,21 +1027,20 @@ class config( CylcConfigObj ):
 
     def load( self, graph_only=False ):
         # parse the suite dependencies section
-        for item in self['dependencies']:
+        for item in self['scheduling']['dependencies']:
             if item == 'graph':
                 # One-off asynchronous tasks.
                 section = "once"
-                graph = self['dependencies']['graph']
+                graph = self['scheduling']['dependencies']['graph']
                 if graph == None:
                     # this means no async_oneoff tasks defined
                     continue
             else:
                 section = item
                 try:
-                    graph = self['dependencies'][item]['graph']
+                    graph = self['scheduling']['dependencies'][item]['graph']
                 except IndexError:
-                    raise SuiteConfigError, 'Missing graph string in [dependencies]['+item+']'
-                #raise SuiteConfigError, 'Illegal Section: [dependencies]['+section+']'
+                    raise SuiteConfigError, 'Missing graph string in [scheduling][dependencies]['+item+']'
 
             # split the graph string into successive lines
             lines = re.split( '\s*\n\s*', graph )
@@ -1077,21 +1074,6 @@ class config( CylcConfigObj ):
         if graph_only:
             return
 
-        # task families
-        # TO DO: IS THIS NEEDED?
-        #for name in self['task families']:
-        #    mems = self['task families'][name]
-        #    for mem in mems:
-        #        self.taskdefs[mem].member_of = name
-        #        if name in self.async_oneoff_tasks:
-        #            self.taskdefs[mem].type = "async_oneoff"
-        #            if mem not in self.async_oneoff_tasks:
-        #                self.async_oneoff_tasks.append(mem)
-        #        elif name in self.async_repeating_tasks:
-        #            self.taskdefs[mem].type = "async_repeating"
-        #            if mem not in self.async_repeating_tasks:
-        #                self.async_repeating_tasks.append(mem)
-
         # sort hours list for each task
         for name in self.taskdefs:
             self.taskdefs[name].hours.sort( key=int ) 
@@ -1108,18 +1090,18 @@ class config( CylcConfigObj ):
 
         # SET ONE OFF TASK INDICATOR
         #   cold start and startup tasks are automatically one off
-        if name in self['special tasks']['one off'] or \
-            name in self['special tasks']['startup'] or \
-            name in self['special tasks']['cold start']:
+        if name in self['scheduling']['special task types']['one-off'] or \
+            name in self['scheduling']['special task types']['start-up'] or \
+            name in self['scheduling']['special task types']['cold-start']:
                 taskd.modifiers.append( 'oneoff' )
 
         # SET SEQUENTIAL TASK INDICATOR
-        if name in self['special tasks']['sequential']:
+        if name in self['scheduling']['special task types']['sequential']:
             taskd.modifiers.append( 'sequential' )
 
         # SET MODEL TASK INDICATOR
         # (TO DO - identify these tasks from the graph?)
-        elif name in self['special tasks']['models with explicit restart outputs']:
+        elif name in self['scheduling']['special task types']['tasks with explicit restart outputs']:
             taskd.type = 'tied'
         else:
             taskd.type = 'free'

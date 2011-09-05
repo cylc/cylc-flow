@@ -1,13 +1,15 @@
 
+title = 'inherit example'
+
 initial cycle time = 2010080800
 final cycle time = 2010080900
 
-[task families]
-    ops = atovs, aircraft
-    var = ConLS, AnPF
-
-[dependencies]
-    [[0]]
+[scheduling]
+    [[families]]
+     ops = atovs, aircraft
+     var = ConLS, AnPF
+    [[dependencies]]
+        [[[0]]]
         graph = """
                 foo => ops
                 ops | ops:fail => var => bar

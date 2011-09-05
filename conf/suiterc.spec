@@ -34,7 +34,7 @@ use lockserver = boolean( default=False )
 use secure passphrase = boolean( default=False )
 
 tasks to exclude at startup = force_list( default=list())
-tasks to include at startup = force_list( default=list() )
+tasks to include at startup = force_list( default=list())
 
 runahead limit in hours = integer( min=0, default=24 )
 
@@ -49,22 +49,25 @@ simulation mode only = boolean( default=False )
 allow multiple simultaneous instances = boolean( default=False )
 UTC mode = boolean( default=False )
 
-[special tasks]
-    clock-triggered = force_list( default=list())
-    startup = force_list( default=list())
-    cold start = force_list( default=list())
-    sequential = force_list( default=list())
-    one off = force_list( default=list())
-    models with explicit restart outputs = force_list( default=list())
+[scheduling]
+    # special tasks
+    [[special task types]]
+        clock-triggered = force_list( default=list())
+        start-up = force_list( default=list())
+        cold-start = force_list( default=list())
+        sequential = force_list( default=list())
+        one-off = force_list( default=list())
+        tasks with explicit restart outputs = force_list( default=list())
 
-[task families]
-    __many__ = force_list( default=None )
+    [[families]]
+        __many__ = force_list( default=None )
 
-[dependencies]
-    graph = string( default=None )
-    [[__many__]]
-    graph = string
-    daemon = string( default=None )
+    [[dependencies]]
+        # oneoff asynchronous tasks
+        graph = string( default=None )
+        [[[__many__]]]
+            graph = string( default=None )
+            daemon = string( default=None ) # async repeating tasks have one daemon per section
 
 [runtime]
     [[root]]
