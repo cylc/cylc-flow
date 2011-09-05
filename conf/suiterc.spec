@@ -66,7 +66,7 @@ UTC mode = boolean( default=False )
     graph = string
     daemon = string( default=None )
 
-[task run time]
+[runtime]
     [[root]]
         inherit = string( default=None )
         description = string( default="No description supplied" )

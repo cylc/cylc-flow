@@ -324,7 +324,7 @@ class config( CylcConfigObj ):
         # for which the subsequent config applies to each member. We
         # copy the config section for each member and substitute
         # '$(TASK)' for the actual task name in all config items.
-        for item in self['task run time']:
+        for item in self['runtime']:
             delete_item = True
             m = re.match( '^Python:(.*)$', item )
             if item in self['task families']:
@@ -348,21 +348,21 @@ class config( CylcConfigObj ):
                 # create a new task config section
                 tconfig = OrderedDict()
                 # specialise it to the actual task
-                self.specialize( name, tconfig, self['task run time'][item] )
+                self.specialize( name, tconfig, self['runtime'][item] )
                 # record it under the task name
-                self['task run time'][name] = tconfig
+                self['runtime'][name] = tconfig
 
             if delete_item:
                 # delete the original multi-task section
-                del self['task run time'][item]
+                del self['runtime'][item]
 
         # INHERITANCE IMPLEMENTATION
-        for label in self['task run time']:
+        for label in self['runtime']:
             hierarchy = []
             name = label
             while True:
                 hierarchy.append( name )
-                inherit = self['task run time'][name]['inherit']
+                inherit = self['runtime'][name]['inherit']
                 if inherit:
                     name = inherit
                 else:
@@ -370,10 +370,10 @@ class config( CylcConfigObj ):
             hierarchy.pop() # remove 'root'
             hierarchy.reverse()
             #print label, hierarchy
-            taskconf = self['task run time']['root'].odict()
+            taskconf = self['runtime']['root'].odict()
             for item in hierarchy:
-                self.inherit( taskconf, self['task run time'][item] )
-            self['task run time'][label] = taskconf
+                self.inherit( taskconf, self['runtime'][item] )
+            self['runtime'][label] = taskconf
 
         self.process_configured_directories()
 
@@ -415,7 +415,7 @@ class config( CylcConfigObj ):
     def set_trigger( self, task_name, output_name=None, offset=None, asyncid_pattern=None ):
         if output_name:
             try:
-                trigger = self['task run time'][task_name]['outputs'][output_name]
+                trigger = self['runtime'][task_name]['outputs'][output_name]
             except KeyError:
                 if output_name == 'fail':
                     trigger = task_name + '%$(TAG) failed'
@@ -455,16 +455,16 @@ class config( CylcConfigObj ):
     def __check_tasks( self ):
         # Call after all tasks are defined.
         # Note: 
-        #   (a) self['task run time'][name] 
+        #   (a) self['runtime'][name] 
         #       contains the task definition sections of the suite.rc file.
         #   (b) self.taskdefs[name]
         #       contains tasks that will be used, defined by the graph.
         # Tasks (a) may be defined but not used (e.g. commented out of the graph)
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
         for name in self.taskdefs:
-            if name not in self['task run time']:
+            if name not in self['runtime']:
                 print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it will run as a dummy task.'
-        for name in self['task run time']:
+        for name in self['runtime']:
             if name not in self.taskdefs:
                 print >> sys.stderr, 'WARNING: task "' + name + '" is defined in [tasks] but not used in the graph.'
 
@@ -475,13 +475,13 @@ class config( CylcConfigObj ):
                     name = re.sub('\(.*\)','',name)
                 if re.search( '[^0-9a-zA-Z_]', name ):
                     raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
-                if name not in self.taskdefs and name not in self['task run time']:
+                if name not in self.taskdefs and name not in self['runtime']:
                     print >> sys.stderr, 'WARNING: ' + type + ' task "' + name + '" is not defined in [tasks] or used in the graph.'
 
         # check task insertion groups contain valid tasks
         for group in self['task insertion groups']:
             for name in self['task insertion groups'][group]:
-                if name not in self['task run time'] and name not in self.taskdefs:
+                if name not in self['runtime'] and name not in self.taskdefs:
                     # This is not an error because it could be caused by
                     # temporary commenting out of a task in the graph,
                     # and it won't cause catastrophic failure of the
@@ -490,18 +490,18 @@ class config( CylcConfigObj ):
 
         # check 'tasks to exclude|include at startup' contains valid tasks
         for name in self['tasks to include at startup']:
-                if name not in self['task run time'] and name not in self.taskdefs:
+                if name not in self['runtime'] and name not in self.taskdefs:
                     raise SuiteConfigError, "ERROR: " + name + ' in "tasks to include at startup" is not defined in [tasks] or graph.'
         for name in self['tasks to exclude at startup']:
-                if name not in self['task run time'] and name not in self.taskdefs:
+                if name not in self['runtime'] and name not in self.taskdefs:
                     raise SuiteConfigError, "ERROR: " + name + ' in "tasks to exclude at startup" is not defined in [tasks] or graph.'
 
         # check graphed hours are consistent with [tasks]->[[NAME]]->hours (if defined)
         for name in self.taskdefs:
             # task 'name' is in graph
-            if name in self['task run time']:
+            if name in self['runtime']:
                 # [tasks][name] section exists
-                section_hours = [int(i) for i in self['task run time'][name]['hours'] ]
+                section_hours = [int(i) for i in self['runtime'][name]['hours'] ]
                 if len( section_hours ) == 0:
                     # no hours defined in the task section
                     break
@@ -536,10 +536,10 @@ class config( CylcConfigObj ):
         if task:
             tasks = [task]
         else:
-            tasks = self['task run time'].keys()
+            tasks = self['runtime'].keys()
         dirs = []
         for task in tasks:
-            dir = self['task run time'][task]['job submission log directory']
+            dir = self['runtime'][task]['job submission log directory']
             if dir not in dirs:
                 dirs.append(dir)
         for dir in dirs:
@@ -570,7 +570,7 @@ class config( CylcConfigObj ):
 
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
-        # not the full list of defined tasks (self['task run time'].keys())
+        # not the full list of defined tasks (self['runtime'].keys())
         if not self.tasks_loaded:
             self.load()
         tasknames = self.taskdefs.keys()
@@ -589,11 +589,11 @@ class config( CylcConfigObj ):
 
     def get_full_task_name_list( self ):
         # return list of task names used in the dependency diagram,
-        # and task sections (self['task run time'].keys())
+        # and task sections (self['runtime'].keys())
         if not self.tasks_loaded:
             self.load()
         gtasknames = self.taskdefs.keys()
-        stasknames = self['task run time'].keys()
+        stasknames = self['runtime'].keys()
         tasknames = {}
         for tn in gtasknames + stasknames:
             if tn not in tasknames:
@@ -1131,21 +1131,21 @@ class config( CylcConfigObj ):
             taskd.modifiers.append( 'clocktriggered' )
             taskd.clocktriggered_offset = self.clock_offsets[name]
 
-        if name not in self['task run time']:
+        if name not in self['runtime']:
             if strict:
                 raise SuiteConfigError, 'Task not defined: ' + name
 
             # inhabit the root namespace and carry on as usual
-            taskconfig = self['task run time']['root'].odict()
+            taskconfig = self['runtime']['root'].odict()
  
             if self.simulation_mode:
                 taskd.job_submit_method = self['simulation mode']['job submission method']
             else:
                 # root namespace job submit method
-                taskd.job_submit_method = self['task run time']['root']['job submission method']
+                taskd.job_submit_method = self['runtime']['root']['job submission method']
             ##return taskd
         else:
-            taskconfig = self['task run time'][name]
+            taskconfig = self['runtime'][name]
 
         taskd.description = taskconfig['description']
 
@@ -1220,7 +1220,7 @@ class config( CylcConfigObj ):
         # assume that the requested ctime is valid for the task.
         td = self.get_taskdef( name, strict=True )
         chour = int(ctime[8:10])
-        hours = self['task run time'][name]['hours']
+        hours = self['runtime'][name]['hours']
         if len(hours) == 0:
             # no hours defined; instantiation will fail unless we assume
             # the test hour is valid.
