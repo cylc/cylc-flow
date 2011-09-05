@@ -61,5 +61,9 @@ if ! $( echo $TASK | grep % >/dev/null 2>&1 ); then
 fi
 
 JOBSCRIPT=$( cylc submit --dry-run $SUITE $TASK | grep 'TASK JOB SCRIPT' | sed -e 's/.*: //' )
+if [[ -z $JOBSCRIPT ]]; then
+    echo "ERROR: no jobscript generated" >&2
+    exit 1
+fi
 echo "Task Job Script Generated: $JOBSCRIPT" >&2 # (only send script contents to stdout)
 cat $JOBSCRIPT
