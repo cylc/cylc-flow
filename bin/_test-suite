@@ -91,7 +91,7 @@ export TEST_X_FAIL_TIME=2010010112
 
 # startup errors (e.g. due to lockserver denying access to the suite)
 # won't be trapped here because we run cylc in the background!
-cylc run $SUITE_REG 2010010106 >> $OUT_SCHED 2>&1 &
+cylc run --debug $SUITE_REG 2010010106 >> $OUT_SCHED 2>&1 &
 echo -n "   Will wait 5 seconds for startup ... "
 sleep 5
 echo done
@@ -160,8 +160,8 @@ echo
 # PARSE OUTPUT FROM submit TO GET JOB LOG FILES:
 echo ">> RUN A SINGLE TASK (prep%2010010106) from the suite"
 FOO=$(cylc submit $SUITE_REG prep%2010010106 )
-STDOUT=$( echo $FOO | sed -e 's/.*1> //' | sed -e 's/ 2>.*//' )
-STDERR=$( echo $FOO | sed -e 's/.*2> //' | sed -e 's/ &.*$//' )
+STDOUT=$( echo $FOO | sed -e 's/.*1>//' | sed -e 's/ 2>.*//' )
+STDERR=$( echo $FOO | sed -e 's/.*2>//' | sed -e 's/ &.*$//' )
 echo "TASK OUTPUT LOGS:"
 echo "  $STDOUT"
 echo "  $STDERR"

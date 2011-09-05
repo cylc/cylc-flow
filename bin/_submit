@@ -180,7 +180,6 @@ pimp_my_logger.pimp_it( log, logging_dir, \
         logging.INFO, dclock )
 
 job_submit.cylc_env = cylcenv
-job_submit.shell = config['namespaces']['global']['job submission shell'] 
 
 # intantiate the task--------------------------------------------------
 if task_name in config.get_asynchronous_task_name_list():

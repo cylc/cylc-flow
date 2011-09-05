@@ -19,39 +19,37 @@
 """
 Job submission base class.
 
-Writes a temporary "job file" that exports the cylc execution
-environment (so the executing task can access cylc commands), suite
-global and task-specific environment variables, and then  
-executes the task command.  Specific derived job submission classes
+Writes a temporary "job file" that exports the cylc environment (so the
+executing task can access cylc commands), suite environment, and then  
+executes the task command scripting. Derived job submission classes
 define the means by which the job file itself is executed.
 
-If OWNER is defined and REMOTE_HOST is not, submit locally by:
- sudo -u OWNER submit(FILE) 
-OR
- ssh OWNER@localhost submit(FILE)
-so passwordless ssh to localhost as OWNER must be configured.
- 
-If REMOTE_HOST is defined and OWNER is not, the job file is submitted
-by copying it to the remote host with scp, and executing the defined
-submit(FILE) on the remote host by ssh. Passwordless ssh to the remote
-host must be configured. 
-
-If REMOTE_HOST and OWNER are defined, we scp and ssh to
- 'OWNER@REMOTE_HOST'
-so passwordless ssh to remote host as OWNER must be configured.
+If OWNER@REMOTE_HOST is not equivalent to whoami@localhost:
+ ssh OWNER@HOST submit(FILE)
+so passwordless ssh must be configured.
 """
 
 import pwd
-import random
 import re, os
 import tempfile, stat
 import string
 from cylc.mkdir_p import mkdir_p
 from jobfile import jobfile
 from cylc.dummy import dummy_command, dummy_command_fail
+import socket
 import subprocess
+#import datetime
+import time
  
 class job_submit(object):
+    REMOTE_COMMAND_TEMPLATE = ( " '"
+                                + "mkdir -p $(dirname %(jobfile_path)s)"
+                                + " && cat >%(jobfile_path)s"
+                                + " && chmod +x %(jobfile_path)s"
+                                + " && (%(command)s)"
+                                + "'" )
+    SUDO_TEMPLATE = "sudo -u %s"
+
     # class variables that are set remotely at startup:
     # (e.g. 'job_submit.simulation_mode = True')
     simulation_mode = False
@@ -59,8 +57,10 @@ class job_submit(object):
     cylc_env = None
 
     def __init__( self, task_id, task_command, task_env, directives, 
-            manual_messaging, logfiles, task_joblog_dir, task_owner,
-            remote_host, remote_cylc_dir, remote_suite_dir ): 
+            manual_messaging, logfiles, joblog_dir, task_owner,
+            remote_host, remote_cylc_dir, remote_suite_dir,
+            remote_shell_template, job_submit_command_template,
+            job_submission_shell, owned_task_execution_method ): 
 
         self.task_id = task_id
         self.task_command = task_command
@@ -82,6 +82,11 @@ class job_submit(object):
             self.task_owner = self.suite_owner
             self.other_owner = False
 
+        self.remote_shell_template = remote_shell_template
+        self.job_submit_command_template = job_submit_command_template
+        self.job_submission_shell = job_submission_shell
+        self.owned_task_execution_method = owned_task_execution_method
+
         if remote_cylc_dir:
             self.remote_cylc_dir = remote_cylc_dir
         else:
@@ -98,7 +103,14 @@ class job_submit(object):
         if remote_host:
             self.local_job_submit = False
         else:
-            self.local_job_submit = True
+            self.remote_host = "localhost"
+
+        self.local_job_submit = (
+                ( not self.remote_host
+                  or self.remote_host == "localhost"
+                  or self.remote_host == socket.gethostname() )
+            and self.task_owner == self.suite_owner
+        )
 
         if manual_messaging != None:  # boolean, must distinguish None from False
             self.manual_messaging = manual_messaging
@@ -113,51 +125,33 @@ class job_submit(object):
             # usual execution environment).
             self.task_owner = self.suite_owner
 
-        if not self.local_job_submit:
-            self.homedir = None
-            # (remote job submission by ssh will automatically dump
-            # us in the owner's home directory)
-        else:
-            # The job will be submitted from the task owner's home
-            # directory, in case the job submission method requires that
-            # the "running directory" exists and is writeable by the job
-            # owner (e.g. loadleveler?). The only directory we can be
-            # sure exists in advance is the home directory; in general
-            # it is difficult to create a new directory on the fly if it
-            # must exist *before the job is submitted*. E.g. for tasks
-            # that we 'sudo llsubmit' as another owner, sudo would have
-            # to be configured to allow use of 'mkdir' as well as
-            # 'llsubmit' (to llsubmit a special directory creation
-            # script in advance *and* detect when it has finished is
-            # difficult, and cylc would hang while the process was
-            # running).
-            try:
-                self.homedir = pwd.getpwnam( self.task_owner )[5]
-            except:
-                raise SystemExit( "ERROR: task " + self.task_id + " owner (" + self.task_owner + "): home dir not found" )
+        # The job will be submitted from the task owner's home
+        # directory, in case the job submission method requires that
+        # the "running directory" exists and is writeable by the job
+        # owner (e.g. loadleveler?). The only directory we can be
+        # sure exists in advance is the home directory; in general
+        # it is difficult to create a new directory on the fly if it
+        # must exist *before the job is submitted*.
+        try:
+            self.homedir = pwd.getpwnam( self.task_owner ).pw_dir
+        except:
+            raise SystemExit( "ERROR: task %s owner (%s): home dir not found"
+                              % (self.task_id, self.task_owner) )
 
         # Job submission log directory
         # (for owned and remote tasks, this directory must exist in
         # advance; otherwise cylc can create it if necessary).
-        if task_joblog_dir:
-            ### task overrode the suite job submission log directory
-            jldir = os.path.expandvars( os.path.expanduser(task_joblog_dir))
-            self.joblog_dir = jldir
-            if self.local_job_submit and not self.task_owner:
-                mkdir_p( jldir )
+        jldir = os.path.expandvars( os.path.expanduser(joblog_dir))
+        self.joblog_dir = jldir
+        if self.local_job_submit and not self.task_owner:
+            mkdir_p( jldir )
+
         if not self.local_job_submit:
             # Make joblog_dir relative to $HOME for remote tasks by
             # cutting the suite owner's $HOME from the path (if it exists;
             # if not - e.g. remote path specified absolutely - this will
             # have no effect).
             self.joblog_dir = re.sub( os.environ['HOME'] + '/', '', self.joblog_dir )
-        else:
-            # local jobs
-            if self.other_owner:
-                # make joblogdir relative to owner's home dir
-                self.joblog_dir = re.sub( os.environ['HOME'], self.homedir, self.joblog_dir )
-            else:
-                pass
 
         self.set_logfile_names()
         # Overrideable methods
@@ -166,24 +160,20 @@ class job_submit(object):
         self.set_environment()
  
     def set_logfile_names( self ):
-         # Generate stdout and stderr log files
-        if self.local_job_submit:
-            # can get a unique name locally using tempfile
-            self.stdout_file = tempfile.mktemp( 
-                prefix = self.task_id + "-",
-                suffix = ".out", 
-                dir = self.joblog_dir )
-            self.stderr_file = re.sub( '\.out$', '.err', self.stdout_file )
-        else:
-            # Remote jobs are submitted from remote $HOME, via ssh.
-            # Can't use tempfile remotely so generate a random string. 
-            rnd = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6))
-            self.stdout_file = self.task_id + '-' + rnd + '.out'
-            self.stderr_file = self.task_id + '-' + rnd + '.err'
+        # EITHER: Tag file name with a string that is the microseconds since epoch
+        now = time.time()
+        key = self.task_id + "-%.6f" % now
+        # OR: with a similar string based on current date/time
+        # now = datetime.datetime.now()
+        # key = self.task_id + now.strftime("-%Y%m%dT%H%M%S.") + str(now.microsecond)
+        self.jobfile_path = os.path.join( self.joblog_dir, key )
+        self.stdout_file = self.jobfile_path + ".out"
+        self.stderr_file = self.jobfile_path + ".err"
 
         # Record local logs for access by gcylc
         self.logfiles.add_path( self.stdout_file )
         self.logfiles.add_path( self.stderr_file )
+        self.logfiles.add_path( self.jobfile_path )
 
     def set_directives( self ):
         # OVERRIDE IN DERIVED CLASSES IF NECESSARY
@@ -211,168 +201,94 @@ class job_submit(object):
         raise SystemExit( 'ERROR: no job submission command defined!' )
 
     def submit( self, dry_run ):
+        # change to $HOME 
+        try: 
+            os.chdir( pwd.getpwnam(self.suite_owner).pw_dir )
+        except OSError, e:
+            print "Failed to change to suite owner's home directory"
+            print e
+            return False
+
         jf = jobfile( self.task_id, 
                 self.__class__.cylc_env, self.task_env, 
                 self.directive_prefix, self.directives, self.final_directive, 
                 self.manual_messaging, self.task_command, 
                 self.remote_cylc_dir, self.remote_suite_dir, 
-                self.__class__.shell, 
+                self.job_submission_shell, 
                 self.__class__.simulation_mode,
                 self.__class__.__name__ )
-        self.jobfile_path = jf.write()
+        jf.write( self.jobfile_path )
 
         if not self.local_job_submit:
-            # Remote jobfile path is in $HOME (it will be dumped there
-            # by scp) until we allow users to specify a remote $TMPDIR.
             self.local_jobfile_path = self.jobfile_path
-            self.jobfile_path = '$HOME/' + os.path.basename( self.jobfile_path )
+            self.remote_jobfile_path = self.jobfile_path
 
         # Construct self.command, the command to submit the jobfile to run
         self.construct_jobfile_submission_command()
 
-        if not self.local_job_submit:
-            self.remote_jobfile_path = self.jobfile_path
-            self.jobfile_path = self.local_jobfile_path
-
-        # Now submit it
-        if self.local_job_submit:
-            return self.submit_jobfile_local( dry_run )
-        else:
-            return self.submit_jobfile_remote( dry_run )
-
-    def submit_jobfile_local( self, dry_run  ):
-        # add local jobfile to list of viewable logfiles
-        self.logfiles.add_path( self.jobfile_path )
-
         # make sure the jobfile is executable
         os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
 
-        cwd = os.getcwd()
-        try: 
-            os.chdir( self.homedir )
-        except OSError, e:
-            print "Failed to change to task owner's home directory"
-            print e
-            return False
-        else:
-            changed_dir = True
-            new_dir = self.homedir
+        # configure command for local or remote submit
+        if self.local_job_submit:
+            command = self.command
+            jobfile_path = self.jobfile_path
+            stdin = None
+        elif self.remote_host == "localhost" \
+             and self.owned_task_execution_method == "sudo":
+            # change to task owner's $HOME 
+            try: 
+                os.chdir( self.homedir )
+            except OSError, e:
+                print "Failed to change to task owner's home directory"
+                print e
+                return False
 
-        if self.task_owner != self.suite_owner:
-            if self.__class__.owned_task_execution_method == 'sudo':
-                self.command = 'sudo -u ' + self.task_owner + ' ' + self.command
-            elif self.__class__.owned_task_execution_method == 'ssh': 
-                # TO DO: to allow remote hangup we must use: 
-                # 'ssh foo@bar baz </dev/null &'
-                # (only for direct exec? OK if baz is llsubmit, qsub, etc.?
-                self.command = 'ssh ' + self.task_owner + '@localhost ' + self.command
+            command = self.SUDO_TEMPLATE % self.task_owner
+            command += self.REMOTE_COMMAND_TEMPLATE % { "jobfile_path": self.jobfile_path,
+                                                        "command": self.command }
+            stdin = subprocess.PIPE
+        else:
+            self.destination = self.task_owner + "@" + self.remote_host
+            remote_shell_template = self.remote_shell_template
+            command = remote_shell_template % self.destination
+            command += self.REMOTE_COMMAND_TEMPLATE % { "jobfile_path": self.jobfile_path,
+                                                        "command": self.command }
+            jobfile_path = self.destination + ":" + self.remote_jobfile_path
+            stdin = subprocess.PIPE
+
+        # execute the local command to submit the job
+        if dry_run:
+            print " > TASK JOB SCRIPT: " + jobfile_path
+            print " > JOB SUBMISSION: " + command
+            return True
+
+        print " > SUBMITTING TASK: " + command
+        try:
+            popen = subprocess.Popen( command, shell=True, stdin=stdin )
+            if not self.local_job_submit:
+                f = open(self.jobfile_path)
+                popen.communicate(f.read())
+                f.close()
+            res = popen.wait()
+            if res < 0:
+                print "command terminated by signal", res
+                success = False
+            elif res > 0:
+                print "command failed", res
+                success = False
             else:
-                # this should not happen
-                raise SystemExit( 'ERROR:, unknown owned task execution method: ' + self.__class__.owned_task_execution_method )
-
-        # execute the local command to submit the job
-        if dry_run:
-            print " > TASK JOB SCRIPT: " + self.jobfile_path
-            print " > JOB SUBMISSION: " + self.command
-            success = True
-        else:
-            print " > SUBMITTING TASK: " + self.command
-
-            try:
-                res = subprocess.call( self.command, shell=True )
-                if res < 0:
-                    print "command terminated by signal", res
-                    success = False
-                elif res > 0:
-                    print "command failed", res
-                    success = False
-                else:
-                    # res == 0
-                    success = True
-            except OSError, e:
-                # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
-                # because subprocess.call( 'foo &' ) returns immediately
-                # and the failure occurs in the detached sub-shell.
-                print "Job submission failed", e
-                success = False
-
-        #if changed_dir:
-        #    # change back
-        #    os.chdir( cwd )
+                # res == 0
+                success = True
+        except OSError, e:
+            # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
+            # (i.e. cylc's simplest "background" job submit method)
+            # because a background job returns immediately and the failure
+            # occurs in the background sub-shell.
+            print "Job submission failed", e
+            success = False
 
         return success
-
-    def submit_jobfile_remote( self, dry_run ):
-        # add local jobfile to list of viewable logfiles
-        self.logfiles.add_path( self.jobfile_path )
-
-        # make sure the local jobfile is executable (file mode is preserved by scp?)
-        os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
-
-        self.destination = self.remote_host
-        self.destination = self.task_owner + '@' + self.remote_host
-
-        # copy file to $HOME for owner on remote machine
-        command_1 = 'scp ' + self.jobfile_path + ' ' + self.destination + ':'
-        if dry_run:
-            print " > LOCAL TASK JOB SCRIPT:  " + self.jobfile_path
-            print " > WOULD COPY TO REMOTE HOST AS: " + command_1
-            success = True
-        else:
-            print " > COPYING TO REMOTE HOST: " + command_1
-            try:
-                res = subprocess.call( command_1, shell=True )
-                if res < 0:
-                    print "scp terminated by signal", res
-                    success = False
-                elif res > 0:
-                    print "scp failed", res
-                    success = False
-                else:
-                    # res == 0
-                    success = True
-            except OSError, e:
-                # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
-                # (i.e. cylc's simplest "background" job submit method)
-                # because subprocess.call( 'foo &' ) returns immediately
-                # and the failure occurs in the detached sub-shell.
-                print "Failed to execute scp command", e
-                success = False
-
-        #disable jobfile deletion as we're adding it to the viewable logfile list
-        #print ' - deleting local jobfile ' + self.jobfile_path
-        #os.unlink( self.jobfile_path )
-
-        command_2 = "ssh " + self.destination + " '" + self.command + "'"
-
-        # execute the local command to submit the job
-        if dry_run:
-            print " > REMOTE TASK JOB SCRIPT: " + self.remote_jobfile_path
-            print " > REMOTE JOB SUBMISSION: " + command_2
-        else:
-            print " > SUBMITTING TASK: " + command_2
-            try:
-                res = subprocess.call( command_2, shell=True )
-                if res < 0:
-                    print "command terminated by signal", res
-                    success = False
-                elif res > 0:
-                    print "command failed", res
-                    success = False
-                else:
-                    # res == 0
-                    success = True
-            except OSError, e:
-                # THIS DOES NOT CATCH REMOTE BACKGROUND EXECUTION FAILURE
-                # (i.e. cylc's simplest "background" job submit method)
-                # as subprocess.call( 'ssh dest "foo </dev/null &"' )
-                # returns immediately and the failure occurs in the
-                # remote background sub-shell.
-                print "Job submission failed", e
-                success = False
-
-        return success
-
 
     def cleanup( self ):
         # called by task class when the job finishes

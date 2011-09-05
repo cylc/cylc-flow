@@ -30,6 +30,7 @@ initial cycle time = integer( default=None )
 final cycle time = integer( default=None )
 
 use lockserver = boolean( default=False )
+
 use secure passphrase = boolean( default=False )
 
 tasks to exclude at startup = force_list( default=list())
@@ -37,10 +38,10 @@ tasks to include at startup = force_list( default=list() )
 
 runahead limit in hours = integer( min=0, default=24 )
 
-suite log directory = string( default = string( default='$HOME/CylcSuiteLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+suite log directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/log/suite' )
 roll log at startup = boolean( default=True )
 
-state dump directory = string( default = string( default='$HOME/CylcStateDumps/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+state dump directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/state' )
 number of state dump backups = integer( min=1, default=10 )
 
 use quick task elimination = boolean( default=True )
@@ -72,6 +73,7 @@ UTC mode = boolean( default=False )
         command = force_list( default=list( "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP",))
 
         job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
+        job submission command template = string( default=None )
         job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=/bin/bash )
         job submission log directory = string( default='$HOME/CylcJobLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
 
@@ -81,7 +83,8 @@ UTC mode = boolean( default=False )
 
         remote host = string( default=None )
         remote cylc directory = string( default=None )
-        remote suite directory = string( default=None )
+        remote suite directory = string( default='~/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+        remote shell template = string( default='ssh -oBatchMode=yes %s' )
 
         task submitted hook script = string( default=None )
         task submission failed hook script = string( default=None )
@@ -121,6 +124,7 @@ UTC mode = boolean( default=False )
         command = force_list( default=None )
 
         job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=None )
+        job submission command template = string( default=None )
         job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=None )
         job submission log directory = string( default=None )
 
@@ -132,6 +136,7 @@ UTC mode = boolean( default=False )
         remote host = string( default=None )
         remote cylc directory = string( default=None )
         remote suite directory = string( default=None )
+        remote shell template = string( default=None )
 
         task submitted hook script = string( default=None )
         task submission failed hook script = string( default=None )
@@ -172,9 +177,9 @@ UTC mode = boolean( default=False )
         command = force_list( default=None )
 
         job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=None )
+        job submission command template = string( default=None )
         job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=None )
         job submission log directory = string( default=None )
-
 
         owner = string( default=None )
         owned task execution method = option( sudo, ssh, default=None )
@@ -183,6 +188,7 @@ UTC mode = boolean( default=False )
         remote host = string( default=None )
         remote cylc directory = string( default=None )
         remote suite directory = string( default=None )
+        remote shell template = string( default=None )
 
         task submitted hook script = string( default=None )
         task submission failed hook script = string( default=None )
@@ -191,6 +197,7 @@ UTC mode = boolean( default=False )
         task failed hook script = string( default=None )
         task warning hook script = string( default=None )
         task timeout hook script = string( default=None )
+
 
         task submission timeout in minutes = float( default=None )
         task execution timeout in minutes = float( default=None )

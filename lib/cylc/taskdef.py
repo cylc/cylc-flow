@@ -60,7 +60,9 @@ class taskdef(object):
             raise DefinitionError, "ERROR: Illegal task name: " + name
         self.name = name
         self.type = 'free'
-        self.job_submit_method = 'background'
+        self.job_submit_method = None
+        self.job_submission_shell = None
+        self.job_submit_command_template = None
         self.job_submit_log_directory = None
         self.remote_cylc_directory = None
         self.remote_suite_directory = None
@@ -68,9 +70,10 @@ class taskdef(object):
         self.manual_messaging = False
         self.modifiers = []
         self.asyncid_pattern = None
-
+        self.owned_task_execution_method = None
         self.owner = None
         self.remote_host = None
+        self.remote_shell_template = None
 
         self.hook_scripts = {}
         for event in [ 'submitted', 'submission failed', 'started', 
@@ -223,14 +226,18 @@ class taskdef(object):
         tclass.mean_total_elapsed_time = None
 
         tclass.owner = self.owner
+        tclass.owned_task_execution_method = self.owned_task_execution_method
 
         tclass.timeouts = self.timeouts
 
         tclass.hook_scripts = self.hook_scripts
         tclass.remote_host = self.remote_host
+        tclass.remote_shell_template = self.remote_shell_template
 
         # TO DO: can this be moved into task base class?
         tclass.job_submit_method = self.job_submit_method
+        tclass.job_submission_shell = self.job_submission_shell
+        tclass.job_submit_command_template = self.job_submit_command_template
         tclass.job_submit_log_directory = self.job_submit_log_directory
         tclass.remote_cylc_directory = self.remote_cylc_directory
         tclass.remote_suite_directory = self.remote_suite_directory

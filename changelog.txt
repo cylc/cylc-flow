@@ -169,18 +169,32 @@ Version number X.Y.Z incrementing:
  it should, but it would retain the position (in the list of defined
  variables) of the first.
 
-+ Task families are now suite definition shorthand - no pseudo-task
+ + Task families are now suite definition shorthand - no pseudo-task
  representing the family appears in the suite task pool. 
   
-+ General conditional triggers, with parentheses, allowed.
+ + General conditional triggers, with parentheses, allowed.
   - WARNING: This required a change in intercycle dependency notation
     from round to square brackets (to avoid clashing with parentheses 
     in conditional expressions):
        foo(T-6) becomes foo[T-6]
 
-+ Embedded Python expressions can now be used to generate lists of 
+ + Embedded Python expressions can now be used to generate lists of 
 family member names; lists of similar dependencies in the graph; and
 lists of task names in [tasks][[TASK]] section headings (which may
 also contain a family name as shorthand for all family members) to 
 define multiple tasks at once.
 
+ + Configurable command template for at_now, background and loadleveler. Some example use cases might be:
+  - a user may want to use batch instead of at now.
+  - a user may want to use an option of llsubmit.
+  - a user may want to use nice with a background submit.
+ + Configurable ssh command template.
+  - no longer require scp - use stdin to transfer job file.
+  - -oBatchMode=yes prevents any hang ups.
+  - (but ssh command is bit more complex.)
+  - (treat sudo submit in a similar way - not properly tested.)
+ + Alternate default directory structure.
+   - $HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/{log/suite,log/job,state}
+ + Use microseconds since epoch instead of random string for tagging a job task.
+   - this allows "ls" to list things in the right order.
+   - stdout and stderr files are now named after their job files.
