@@ -13,6 +13,9 @@ final cycle time = 2010080900
                 ops | ops:fail => var => bar
                 """
 [task run time]
+    [[root]]
+        [[[environment]]]
+            ROOT = "the quick brown fox"
     [[GEN]]
         [[[environment]]]
             GEN_A = gen_a

@@ -67,7 +67,7 @@ UTC mode = boolean( default=False )
     daemon = string( default=None )
 
 [task run time]
-    [[global]]
+    [[root]]
         inherit = string( default=None )
         description = string( default="No description supplied" )
         command = force_list( default=list( "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP",))
@@ -117,7 +117,7 @@ UTC mode = boolean( default=False )
             __many__ = string
 
     [[__many__]]
-        inherit = string( default=global )
+        inherit = string( default=root )
 
         description = string( default=None )
         command = force_list( default=None )

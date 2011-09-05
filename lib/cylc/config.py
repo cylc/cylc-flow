@@ -367,10 +367,10 @@ class config( CylcConfigObj ):
                     name = inherit
                 else:
                     break
-            hierarchy.pop() # remove 'global'
+            hierarchy.pop() # remove 'root'
             hierarchy.reverse()
             #print label, hierarchy
-            taskconf = self['task run time']['global'].odict()
+            taskconf = self['task run time']['root'].odict()
             for item in hierarchy:
                 self.inherit( taskconf, self['task run time'][item] )
             self['task run time'][label] = taskconf
@@ -1135,14 +1135,14 @@ class config( CylcConfigObj ):
             if strict:
                 raise SuiteConfigError, 'Task not defined: ' + name
 
-            # inhabit the global namespace and carry on as usual
-            taskconfig = self['task run time']['global'].odict()
+            # inhabit the root namespace and carry on as usual
+            taskconfig = self['task run time']['root'].odict()
  
             if self.simulation_mode:
                 taskd.job_submit_method = self['simulation mode']['job submission method']
             else:
-                # global namespace job submit method
-                taskd.job_submit_method = self['task run time']['global']['job submission method']
+                # root namespace job submit method
+                taskd.job_submit_method = self['task run time']['root']['job submission method']
             ##return taskd
         else:
             taskconfig = self['task run time'][name]
