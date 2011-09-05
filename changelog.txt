@@ -201,3 +201,9 @@ define multiple tasks at once.
 
  + Fixed a bug preventing use of :fail triggers with asynchronous tasks.
 
+ + New suite.rc grouping into [scheduling] and [runtime] sections. The
+   former affects *when* cylc runs a task, the latter affects what happens
+   when cylc runs a task (what it runs in what execution enviroment, and 
+   how it runs it). The runtime section allows inheritance from higher
+   levels back to the root namespace. 
+    - WARNING: this breaks existing suites!
