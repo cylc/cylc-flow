@@ -12,7 +12,6 @@ final cycle time = 2010080900
                 foo => ops
                 ops | ops:fail => var => bar
                 """
-
 [task run time]
     [[GEN]]
         [[[environment]]]
@@ -36,7 +35,7 @@ final cycle time = 2010080900
             OPS_DATA = atovs
     [[aircraft]]
         inherit = OPS
-        command = "echo HELLO from $TASK_ID; sleep 5; echo ABORT; bin/false"
+        command = "echo HELLO from $TASK_ID; sleep 5; echo ABORT; /bin/false"
         [[[environment]]]
             OPS_DATA = aircraft
     [[ConLS]]

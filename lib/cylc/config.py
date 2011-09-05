@@ -361,12 +361,14 @@ class config( CylcConfigObj ):
             hierarchy = []
             name = label
             while True:
+                hierarchy.append( name )
                 inherit = self['task run time'][name]['inherit']
                 if inherit:
                     name = inherit
                 else:
                     break
-                hierarchy.append( name )
+            hierarchy.pop() # remove 'global'
+            hierarchy.reverse()
             #print label, hierarchy
             taskconf = self['task run time']['global'].odict()
             for item in hierarchy:
