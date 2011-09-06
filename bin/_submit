@@ -137,8 +137,8 @@ if config[ 'use lockserver' ]:
 os.environ[ 'PATH' ] += ':' + suite_dir + '/bin'
 # user defined local variables. Also probably not required for
 # standalone task submit, but we'll do it for completeness.
-for var in config['cylc local environment']:
-    os.environ[var] = config['cylc local environment'][var]
+for var in config['scheduler environment']:
+    os.environ[var] = config['scheduler environment'][var]
 
 # No TASK EVENT HOOKS are set for the submit command because there is
 # no scheduler instance watching for task failure etc. 

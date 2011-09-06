@@ -352,7 +352,7 @@ class scheduler(object):
         if self.simulation_mode and self.failout_task_id:
                 job_submit.failout_id = self.failout_task_id
 
-        # CYLC LOCAL ENVIRONMENT
+        # SCHEDULER ENVIRONMENT
         # Access to the suite bin directory may be required for alert
         # scripts executed by the suite (it is no longer required for 
         # direct job submission methods because we now submit a job
@@ -360,8 +360,8 @@ class scheduler(object):
         # the task command.
         os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 
         # user defined local variables that may be required by alert scripts
-        for var in self.config['cylc local environment']:
-            os.environ[var] = self.config['cylc local environment'][var]
+        for var in self.config['scheduler environment']:
+            os.environ[var] = self.config['scheduler environment'][var]
 
         # suite identity for alert scripts
         os.environ[ 'CYLC_MODE' ] = 'scheduler'

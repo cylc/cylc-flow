@@ -179,7 +179,7 @@ UTC mode = boolean( default=False )
 [task insertion groups]
     __many__ = force_list()
 
-[cylc local environment]
+[scheduler environment]
     __many__ = string
 
 [experimental]
