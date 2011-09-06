@@ -308,7 +308,7 @@ class config( CylcConfigObj ):
             else:
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
-        # parse task families
+        # parse explicitly listed task families
         self.members = {}
         for fam in self['scheduling']['families']:
             members = []
@@ -324,17 +324,16 @@ class config( CylcConfigObj ):
                     members.append(mem)
             self.members[fam] = members
 
-        # Parse task config generators. If the [[TASK]] section name
-        # is a family name, or a list of task names, or is a list-
-        # generating Python expresion, then it is a list of task names
-        # for which the subsequent config applies to each member. We
-        # copy the config section for each member and substitute
+        # Parse task config generators. If the runtime section is an
+        # explicit family name (above), or a list of task names, or a
+        # list-generating Python expression, then it is a list of task
+        # names for which the subsequent config applies to each member.
+        # We copy the config section for each member and substitute
         # '$(TASK)' for the actual task name in all config items.
         for item in self['runtime']:
             delete_item = True
             m = re.match( '^Python:(.*)$', item )
-            if item in self.members:
-                # a task family
+            if item in self['scheduling']['families']:
                 task_names = self.members[item]
                 delete_item = False
             elif m:
@@ -383,9 +382,7 @@ class config( CylcConfigObj ):
                 self.inherit( taskconf, self['runtime'][item] )
             self['runtime'][label] = taskconf
 
-        # load task definitions
         self.load()
-
         self.__check_tasks()
 
     def inherit( self, target, source ):
@@ -778,6 +775,9 @@ class config( CylcConfigObj ):
                 # a task defined by graph only
                 # inherit the root runtime
                 self['runtime'][name] = self['runtime']['root'].odict()
+                if 'root' not in self.members:
+                    # (happens when no runtimes are defined in the suite.rc)
+                    self.members['root'] = []
                 self.members['root'].append(name)
  
             if name not in self.taskdefs:
