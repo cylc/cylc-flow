@@ -73,7 +73,7 @@ UTC mode = boolean( default=False )
     [[root]]
         inherit = string( default=None )
         description = string( default="No description supplied" )
-        command = force_list( default=list( "echo DUMMY $TASK_ID; sleep $CYLC_SIMULATION_SLEEP",))
+        command = force_list( default=list( "echo THIS is the root DUMMY command for $TASK_ID; sleep 10",))
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
         manual task completion messaging = boolean( default=False )
@@ -155,13 +155,13 @@ UTC mode = boolean( default=False )
 [simulation mode]
     clock offset from initial cycle time in hours = integer( default=24 )
     clock rate in seconds per simulation hour = integer( default=10 )
-    # exported as $CYLC_SIMULATION_SLEEP in job submission file:
-    task run time in seconds = integer( default=10 )
+    command = force_list( default=list( "echo SIMULATION MODE $TASK_ID; sleep 10; echo BYE",))
+    failure command = force_list( default=list( "echo SIMULATION MODE $TASK_ID; sleep 10; echo ABORTING; /bin/false",))
+    job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=background )
 
 [visualization]
     initial cycle time = integer( default=2999010100 )
     final cycle time = integer( default=2999010123 )
-    #show family members = boolean( default=False )
     grouped families = force_list( default=list() )
     use node color for edges = boolean( default=True )
     default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=box'))

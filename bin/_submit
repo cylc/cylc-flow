@@ -165,7 +165,6 @@ cylcenv[ 'CYLC_SUITE_OWNER' ] = owner
 cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 if use_lockserver:
     cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( lockserver_port )
-cylcenv[ 'CYLC_SIMULATION_SLEEP'] =  config['simulation mode']['task run time in seconds']
 cylcenv[ 'CYLC_UTC' ] = str(utc)
 
 # nasty kludge to give the simulation mode clock to task classes:

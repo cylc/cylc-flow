@@ -345,13 +345,12 @@ class scheduler(object):
         self.pyro.connect( self.clock, 'clock' )
 
         self.failout_task_id = self.options.failout_task_id
-        cylcenv['CYLC_SIMULATION_SLEEP'] =  self.config['simulation mode']['task run time in seconds']
 
         # JOB SUBMISSION
         job_submit.simulation_mode = self.simulation_mode
         job_submit.cylc_env = cylcenv
         if self.simulation_mode and self.failout_task_id:
-            job_submit.failout_id = self.failout_task_id
+                job_submit.failout_id = self.failout_task_id
 
         # CYLC LOCAL ENVIRONMENT
         # Access to the suite bin directory may be required for alert

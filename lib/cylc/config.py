@@ -1082,11 +1082,12 @@ class config( CylcConfigObj ):
 
         taskd.owned_task_execution_method = taskconfig['ownership']['local user execution method']
 
-        # TO DO: consolidate with just above
         if self.simulation_mode:
             taskd.job_submit_method = self['simulation mode']['job submission method']
+            taskd.commands = self['simulation mode']['command']
         else:
             taskd.job_submit_method = taskconfig['job submission']['method']
+            taskd.commands    = taskconfig['command']
 
         taskd.job_submission_shell = taskconfig['job submission']['job script shell']
 
@@ -1120,7 +1121,6 @@ class config( CylcConfigObj ):
         taskd.timeouts[ 'reset on incoming' ] = taskconfig['event hooks']['reset execution timeout on incoming messages']
 
         taskd.logfiles    = taskconfig[ 'extra log files' ]
-        taskd.commands    = taskconfig[ 'command' ]
         taskd.environment = taskconfig[ 'environment' ]
         taskd.directives  = taskconfig[ 'directives' ]
 

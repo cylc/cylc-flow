@@ -35,7 +35,6 @@ import tempfile, stat
 import string
 from cylc.mkdir_p import mkdir_p
 from jobfile import jobfile
-from cylc.dummy import dummy_command, dummy_command_fail
 import socket
 import subprocess
 #import datetime
@@ -64,11 +63,8 @@ class job_submit(object):
 
         self.task_id = task_id
         self.task_command = task_command
-        if self.__class__.simulation_mode:
-            if self.__class__.failout_id != self.task_id:
-                self.task_command = dummy_command
-            else: 
-                self.task_command = dummy_command_fail
+        if self.__class__.simulation_mode and self.__class__.failout_id == self.task_id:
+            self.task_command = '/bin/false'
 
         self.task_env = task_env
         self.directives  = directives

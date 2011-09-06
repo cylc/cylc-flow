@@ -34,7 +34,6 @@ from prerequisites.conditionals import conditional_prerequisites
 from task_output_logs import logfiles
 from collections import deque
 from outputs import outputs
-from dummy import dummy_command
 from cycle_time import ct
 
 class Error( Exception ):
@@ -108,8 +107,7 @@ class taskdef(object):
 
         self.loose_prerequisites = [] # asynchronous tasks
 
-        # default to dummy task for tasks in graph but not in the [tasks] section.
-        self.commands = [ dummy_command ] # list of commands
+        self.commands = [] # list of commands
         self.environment = OrderedDict()  # var = value
         self.directives  = OrderedDict()  # var = value
 

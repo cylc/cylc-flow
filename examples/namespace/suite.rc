@@ -54,5 +54,5 @@ final cycle time = 2010080900
 
 [visualization]
 #    show family members = True
-    grouped families = GEN
+    grouped families = OPS
 
