@@ -126,6 +126,18 @@ job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw
 #>\item {\em example:} \lstinline@job submission method = at_now@
 #>\end{myitemize}
 
+job submission command template = string( default=None )
+#> Set the command template for the job submission method.
+#> The template's 1st %s will be substituted by the job file path.
+#> Where applicable the 2nd %s and 3rd %s will be substituted by the paths to
+#> the stdout and stderr files.
+#>\begin{myitemize}
+#>\item {\em section:}  (top level)
+#>\item {\em type:} string
+#>\item {\em legal values:} a string template
+#>\item {\em example:} \lstinline@llsubmit %s@
+#>\end{myitemize}
+
 use lockserver = boolean( default=False )
 #> The cylc lockserver generalizes traditional {\em lock files} to the network.
 #> It prevents prevents invocation of multiple instances of the same
@@ -170,6 +182,16 @@ remote host = string( default=None )
 #>\item {\em example:} \lstinline@remote host = foo.niwa.co.nz@
 #>\end{myitemize}
 
+remote shell template = string( default='ssh -oBatchMode=yes %s' )
+#> A template of the remote shell command for a submitting a remote task.
+#> The template's 1st %s will be substituted by the remote user@host.
+#>\begin{myitemize}
+#>\item {\em section:} (top level)
+#>\item {\em type:} string
+#>\item {\em legal values:} a string template
+#>\item {\em default:} None
+#>\end{myitemize}
+
 remote cylc directory = string( default=None )
 #> For tasks that declare a remote host at suite level, this defines the
 #> path to the remote cylc installation (i.e.\
@@ -187,7 +209,7 @@ remote cylc directory = string( default=None )
 #>\end{myitemize}
 #> This item is compulsory for remotely hosted tasks.
 
-remote suite directory = string( default=None )
+remote suite directory = string( default='~/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
 #> For tasks that declare a remote host at suite level, this 
 #> specifies the path to the suite definition directory on the remote host,
 #> in order to give remote tasks access to files stored there
@@ -292,7 +314,7 @@ runahead limit in hours = integer( min=0, default=24 )
 #>\item {\em example:} \lstinline@runahead limit in hours = 48@
 #>\end{myitemize}
 
-suite log directory = string( default = string( default='$HOME/CylcSuiteLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+suite log directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/log/suite' )
 #>Cylc logs all events to a suite log file. The main log and
 #> its automatic backups are stored under this directory. {\em You must
 #> ensure the directory is suite-specific; this can be done without hard wiring by
@@ -317,7 +339,7 @@ roll log at startup = boolean( default=True )
 #>\item {\em example:} \lstinline@roll log at startup = False@
 #>\end{myitemize}
 
-state dump directory = string( default = string( default='$HOME/CylcStateDumps/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+state dump directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/state' )
 #> Suite state dump files allow cylc to restart suites from previous states. 
 #> The default state dump and its backups, and special
 #> pre-intervention state dumps are all stored under this directory.
@@ -352,7 +374,7 @@ number of state dump backups = integer( min=1, default=10 )
 #>\item {\em example:} \lstinline@number of state dump backups = 20@
 #>\end{myitemize}
 
-job submission log directory = string( default='$HOME/CylcJobLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME' )
+job submission log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/log/job' )
 #> The directory in which to put the stdout and stderr
 #> log files for the job scripts submitted by cylc when tasks are ready to run.
 #> For monolithic tasks (which don't resubmit sub-jobs themselves) these will
@@ -954,6 +976,19 @@ __many__ = string
 #>\item {\em example:} \lstinline@job submission method = at_now@
 #>\end{myitemize}
 
+    job submission command template = string( default=None )
+#> Set the command template for the job submission method.
+#> The template's 1st %s will be substituted by the job file path.
+#> Where applicable the 2nd %s and 3rd %s will be substituted by the paths to
+#> the stdout and stderr files.
+#>\begin{myitemize}
+#>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:} string
+#>\item {\em legal values:} a string template
+#>\item {\em default:} None (see suite level default)
+#>\item {\em example:} \lstinline@llsubmit %s@
+#>\end{myitemize}
+
     job submission log directory = string( default=None )
 #> Set a job submission log directory for this task, overriding the suite
 #> default, for the stdout and stderr logs from the job scripts
@@ -1002,6 +1037,16 @@ __many__ = string
 #>\item {\em legal values:} a valid hostname on your network
 #>\item {\em default:} None
 #>\item {\em example:} \lstinline@remote host = thor.niwa.co.nz@
+#>\end{myitemize}
+
+    remote shell template = string( default=None )
+#> A template of the remote shell command for a submitting a remote task.
+#> The template's 1st %s will be substituted by the remote user@host.
+#>\begin{myitemize}
+#>\item {\em section:}  [tasks] $\rightarrow$ [[TASK]]
+#>\item {\em type:} string
+#>\item {\em legal values:} a string template
+#>\item {\em default:} None
 #>\end{myitemize}
 
     remote cylc directory = string( default=None )

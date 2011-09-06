@@ -626,7 +626,6 @@ class config( CylcConfigObj ):
                     mems = ' & '.join( self.members[fam] )
                     line = re.sub( r'\b' + fam + r'\b', mems, line )
 
-        print line
         # split line on arrows
         sequence = re.split( '\s*=>\s*', line )
 
@@ -1108,6 +1107,7 @@ class config( CylcConfigObj ):
             # suite default job submit method
             taskd.job_submit_method = self['job submission method']
 
+        taskd.job_submit_command_template = taskconfig['job submission command template']
         taskd.job_submit_log_directory = taskconfig['job submission log directory']
 
         if taskconfig['remote host']:
@@ -1116,6 +1116,7 @@ class config( CylcConfigObj ):
             if not taskconfig['remote cylc directory']:
                 raise SuiteConfigError, name + ": tasks with a remote host must specify the remote cylc directory"
 
+        taskd.remote_shell_template = taskconfig['remote shell template']
         taskd.remote_cylc_directory = taskconfig['remote cylc directory']
         taskd.remote_suite_directory = taskconfig['remote suite directory']
 
@@ -1228,6 +1229,7 @@ class config( CylcConfigObj ):
                 # suite default job submit method
                 taskd.job_submit_method = self['job submission method']
 
+            taskd.job_submit_command_template = taskconfig['job submission command template']
             taskd.job_submit_log_directory = taskconfig['job submission log directory']
 
             if taskconfig['remote host']:
@@ -1236,6 +1238,7 @@ class config( CylcConfigObj ):
                 if not taskconfig['remote cylc directory']:
                     raise SuiteConfigError, name + ": tasks with a remote host must specify the remote cylc directory"
 
+            taskd.remote_shell_template = taskconfig['remote shell template']
             taskd.remote_cylc_directory = taskconfig['remote cylc directory']
             taskd.remote_suite_directory = taskconfig['remote suite directory']
             taskd.manual_messaging = taskconfig['manual task completion messaging']

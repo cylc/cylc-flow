@@ -18,7 +18,6 @@
 
 
 import os, sys
-from cylc.job_submission.job_submit import job_submit
 from optparse import OptionParser
 from cylc.config import config, SuiteConfigError
 from cylc.taskdef import DefinitionError
