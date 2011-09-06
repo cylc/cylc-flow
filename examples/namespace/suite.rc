@@ -16,6 +16,8 @@ final cycle time = 2010080900
                 #aircraft => atovs
                 """
 [runtime]
+    [[foo]]
+    [[wazza]]
     #[[baz]]
     #[[bar1]]
     #    inherit = baz
@@ -59,5 +61,5 @@ final cycle time = 2010080900
 
 [visualization]
 #    show family members = True
-    grouped families = OPS#,baz
+    grouped families = GEN#,baz
 

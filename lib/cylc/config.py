@@ -190,8 +190,6 @@ class config( CylcConfigObj ):
         self.simulation_mode = simulation_mode
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
         self.taskdefs = {}
-        self.tasks_loaded = False
-        self.graph_loaded = False
 
         self.async_oneoff_edges = []
         self.async_oneoff_tasks = []
@@ -285,6 +283,15 @@ class config( CylcConfigObj ):
                 print >> sys.stderr, '  ERROR: Illegal entry:', extra 
             raise SuiteConfigError, "ERROR: Illegal suite.rc entry(s) found"
 
+        # environment interpoloation in directory paths
+        self['suite log directory'] = \
+                os.path.expandvars( os.path.expanduser( self['suite log directory']))
+        self['state dump directory'] =  \
+                os.path.expandvars( os.path.expanduser( self['state dump directory']))
+        self['visualization']['run time graph']['directory'] = \
+                os.path.expandvars( os.path.expanduser( self['visualization']['run time graph']['directory']))
+
+
         # parse clock-triggered tasks
         self.clock_offsets = {}
         for item in self['scheduling']['special task types']['clock-triggered']:
@@ -313,8 +320,10 @@ class config( CylcConfigObj ):
                         raise SuiteConfigError, 'Python error: ' + mem
                 else:
                     members.append(mem)
-                self.member_of[ mem ] = fam
-            self.members[ fam ] = members
+                if mem not in self.member_of:
+                    self.member_of[ mem ] = []
+                self.member_of[mem].append(fam)
+            self.members[fam] = members
 
         # Parse task config generators. If the [[TASK]] section name
         # is a family name, or a list of task names, or is a list-
@@ -354,7 +363,7 @@ class config( CylcConfigObj ):
                 # delete the original multi-task section
                 del self['runtime'][item]
 
-        # INHERITANCE IMPLEMENTATION
+        # RUNTIME INHERITANCE
         for label in self['runtime']:
             hierarchy = []
             name = label
@@ -364,10 +373,10 @@ class config( CylcConfigObj ):
                 if inherit:
                     name = inherit
                     if label not in self.member_of:
-                        self.member_of[label] = {}
+                        self.member_of[label] = []
+                    self.member_of[label].append(name)
                     if name not in self.members:
                         self.members[name] = []
-                    self.member_of[label] = name
                     self.members[name].append(label)
                 else:
                     break
@@ -379,7 +388,16 @@ class config( CylcConfigObj ):
                 self.inherit( taskconf, self['runtime'][item] )
             self['runtime'][label] = taskconf
 
-        self.process_configured_directories()
+        for fam in self.members:
+            print
+            print fam
+            for mem in self.members[fam]:
+                print ' ', mem 
+
+        # load task definitions
+        self.load()
+
+        self.__check_tasks()
 
     def inherit( self, target, source ):
         for item in source:
@@ -467,10 +485,12 @@ class config( CylcConfigObj ):
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
         for name in self.taskdefs:
             if name not in self['runtime']:
-                print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it will run as a dummy task.'
-        for name in self['runtime']:
-            if name not in self.taskdefs:
-                print >> sys.stderr, 'WARNING: task "' + name + '" is defined in [tasks] but not used in the graph.'
+                print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it inherits the root runtime.'
+                self['runtime'][name] = self['runtime']['root'].odict()
+ 
+        #for name in self['runtime']:
+        #    if name not in self.taskdefs:
+        #        print >> sys.stderr, 'WARNING: runtime "' + name + '" is not used in the graph.'
 
         # warn if listed special tasks are not defined
         for type in self['scheduling']['special task types']:
@@ -523,15 +543,6 @@ class config( CylcConfigObj ):
         # 'sequential' and 'clock-triggered' at the time, but not both
         # 'model' and 'sequential' at the same time.
 
-    def process_configured_directories( self ):
-        # absolute path, but can use ~user, env vars ($HOME etc.):
-        self['suite log directory'] = \
-                os.path.expandvars( os.path.expanduser( self['suite log directory']))
-        self['state dump directory'] =  \
-                os.path.expandvars( os.path.expanduser( self['state dump directory']))
-        self['visualization']['run time graph']['directory'] = \
-                os.path.expandvars( os.path.expanduser( self['visualization']['run time graph']['directory']))
-
     def create_directories( self, task=None ):
         # create suite log, state, and job log directories
         for dir in [ self['suite log directory'], self['state dump directory']]:
@@ -575,16 +586,12 @@ class config( CylcConfigObj ):
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
         # not the full list of defined tasks (self['runtime'].keys())
-        if not self.tasks_loaded:
-            self.load()
         tasknames = self.taskdefs.keys()
         tasknames.sort(key=str.lower)  # case-insensitive sort
         return tasknames
 
     def get_asynchronous_task_name_list( self ):
         names = []
-        if not self.tasks_loaded:
-            self.load()
         for tn in self.taskdefs:
             if self.taskdefs[tn].type == 'async_repeating' or self.taskdefs[tn].type == 'async_daemon' or self.taskdefs[tn].type == 'async_oneoff':
                 names.append(tn)
@@ -594,8 +601,6 @@ class config( CylcConfigObj ):
     def get_full_task_name_list( self ):
         # return list of task names used in the dependency diagram,
         # and task sections (self['runtime'].keys())
-        if not self.tasks_loaded:
-            self.load()
         gtasknames = self.taskdefs.keys()
         stasknames = self['runtime'].keys()
         tasknames = {}
@@ -647,7 +652,8 @@ class config( CylcConfigObj ):
             raise SuiteConfigError( 'ERROR: Illegal graph validity type: ' + section )
 
         # replace family names with family members
-        if not graph_only: # or self['visualization']['show family members']:
+        #if not graph_only: # or self['visualization']['show family members']:
+        if False:
             # TO DO: the following is overkill for just graphing.
             for fam in self.members:
                 # fam:fail - replace with conditional expressing 
@@ -738,9 +744,9 @@ class config( CylcConfigObj ):
                         elif ttype == 'async_repeating': 
                             if name not in self.async_repeating_tasks:
                                 self.async_repeating_tasks.append(name)
-                if graph_only:
-                    self.generate_nodes_and_edges( lexpression, lnames, r, ttype, validity, suicide )
-                else:
+                
+                self.generate_nodes_and_edges( lexpression, lnames, r, ttype, validity, suicide )
+                if not graph_only:
                     asyncid_pattern = None
                     if ttype == 'async_repeating':
                         m = re.match( '^ASYNCID:(.*)$', section )
@@ -848,8 +854,6 @@ class config( CylcConfigObj ):
                 self.taskdefs[right].add_conditional_trigger( ctrig, expr, section, suicide )
 
     def get_graph( self, start_ctime, stop, colored=True, raw=False ):
-        if not self.graph_loaded:
-            self.load(graph_only=True)
         if colored:
             graph = graphing.CGraph( self.suite, self['visualization'] )
         else:
@@ -927,8 +931,7 @@ class config( CylcConfigObj ):
                         #if self['visualization']['show family members']:
                         grouped_families = self['visualization']['grouped families']
                         if True:
-                            # replace a family with its members
-                            # and show effective dependencies
+                            # REPLACE A FAMILY WITH ITS MEMBERS
                             if lname in self.members and rname in self.members \
                                     and lname not in grouped_families and \
                                     rname not in grouped_families:
@@ -1034,6 +1037,7 @@ class config( CylcConfigObj ):
         return prev
 
     def load( self, graph_only=False ):
+        print 'PARSING SUITE GRAPH'
         # parse the suite dependencies section
         for item in self['scheduling']['dependencies']:
             if item == 'graph':
@@ -1078,17 +1082,9 @@ class config( CylcConfigObj ):
                     # generate pygraphviz graph nodes and edges, and task definitions
                     self.process_graph_line( item, section, graph_only )
 
-        self.graph_loaded = True
-        if graph_only:
-            return
-
         # sort hours list for each task
         for name in self.taskdefs:
             self.taskdefs[name].hours.sort( key=int ) 
-
-        self.__check_tasks()
-
-        self.tasks_loaded = True
 
     def get_taskdef( self, name, strict=False ):
         try:
@@ -1119,7 +1115,7 @@ class config( CylcConfigObj ):
             taskd.modifiers.append( 'clocktriggered' )
             taskd.clocktriggered_offset = self.clock_offsets[name]
 
-        if name not in self['runtime']:
+        if name not in self['runtime']: # TO DO: THIS IS NOT POSSIBLE ANYMORE?
             if strict:
                 raise SuiteConfigError, 'Task not defined: ' + name
 
@@ -1192,9 +1188,6 @@ class config( CylcConfigObj ):
 
     def get_task_proxy( self, name, ctime, state, stopctime, startup ):
         # get a proxy for a task in the dependency graph.
-        if not self.tasks_loaded:
-            # load all tasks defined by the graph
-            self.load()
         return self.taskdefs[name].get_task_class()( ctime, state, stopctime, startup )
 
     def get_task_proxy_raw( self, name, ctime, state, stopctime,
@@ -1232,6 +1225,4 @@ class config( CylcConfigObj ):
         return tdclass
 
     def get_task_class( self, name ):
-        if not self.tasks_loaded:
-            self.load()
         return self.taskdefs[name].get_task_class()
