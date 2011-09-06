@@ -640,8 +640,9 @@ class config( CylcConfigObj ):
 
         # REPLACE FAMILY NAMES WITH THE TRUE MEMBER DEPENDENCIES
         for fam in self.members:
-            # fam:fail - replace with conditional expressing 
-            # "at least one member failed AND all members succeeded or failed"
+            # fam:fail - replace with conditional expressing this:
+            # "one or more members failed AND (all members either
+            # succeeded or failed)":
             # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail )
             if re.search( r'\b' + fam + ':fail' + r'\b', line ):
                 mem0 = self.members[fam][0]
@@ -856,7 +857,8 @@ class config( CylcConfigObj ):
         for e in self.async_oneoff_edges + self.async_repeating_edges:
             right = e.get_right(1, False, False, [], [])
             left  = e.get_left( 1, False, False, [], [])
-            gr_edges.append( (left, right, False, e.suicide, e.conditional) )
+            nl, nr = self.close_families( left, right )
+            gr_edges.append( (nl, nr, False, e.suicide, e.conditional) )
 	
         cycles = self.edges.keys()
 
@@ -898,7 +900,6 @@ class config( CylcConfigObj ):
                         if left == None and right == None:
                             # nothing to add to the graph
                             continue
-
                         if left != None and not e.sasl:
                             lname, lctime = re.split( '%', left )
                             sct = ct(start_ctime)
@@ -916,22 +917,7 @@ class config( CylcConfigObj ):
                         else:
                             rname = None
                             lctime = None
-
-                        # Replace family members with family nodes if requested.
-                        nl, nr = left, right
-                        for fam in self['visualization']['grouped families']:
-                            if lname in self.members[fam] and rname in self.members[fam]:
-                                # l and r are both members of fam
-                                #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
-                                nl,nr = fam + '%'+lctime, fam + '%'+rctime
-                                break
-                            elif lname in self.members[fam]:
-                                # l is a member of fam
-                                nl = fam + '%'+lctime
-                            elif rname in self.members[fam]:
-                                # r is a member of fam
-                                nr = fam + '%'+rctime
-
+                        nl, nr = self.close_families( left, right )
                         gr_edges.append( ( nl, nr, False, e.suicide, e.conditional ) )
 
                     # next cycle
@@ -980,6 +966,24 @@ class config( CylcConfigObj ):
                 n.attr['fillcolor'] = 'cornsilk'
 
         return graph
+
+    def close_families( self, nl, nr ):
+        # Replace family members with family nodes if requested.
+        lname, ltag = nl.split('%')
+        rname, rtag = nr.split('%')
+        for fam in self['visualization']['grouped families']:
+            if lname in self.members[fam] and rname in self.members[fam]:
+                # l and r are both members of fam
+                #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
+                nl,nr = fam + '%'+ltag, fam + '%'+rtag
+                break
+            elif lname in self.members[fam]:
+                # l is a member of fam
+                nl = fam + '%'+ltag
+            elif rname in self.members[fam]:
+                # r is a member of fam
+                nr = fam + '%'+rtag
+        return nl, nr
 
     def prev_cycle( self, cycle, cycles ):
         i = cycles.index( cycle )
