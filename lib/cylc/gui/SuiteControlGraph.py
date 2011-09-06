@@ -108,6 +108,14 @@ Dependency graph based GUI suite control interface.
         menu_root = gtk.MenuItem( task_id )
         menu_root.set_submenu( menu )
 
+        group_item = gtk.MenuItem( 'Group' )
+        group_item.connect( 'activate', self.grouping, name, True )
+        menu.append( group_item )
+
+        ungroup_item = gtk.MenuItem( 'Group' )
+        ungroup_item.connect( 'activate', self.grouping, name, False )
+        menu.append( ungroup_item )
+
         timezoom_item_direct = gtk.MenuItem( 'Focus on ' + ctime )
         timezoom_item_direct.connect( 'activate', self.focused_timezoom_direct, ctime )
 
@@ -164,6 +172,14 @@ Dependency graph based GUI suite control interface.
         # prevent a memory leak? But I'm not sure how to do this as yet.)
 
         return True
+
+    def grouping( self, w, name, group ):
+        if group:
+            self.x.group.append(name)
+        else:
+            self.x.ungroup.append(name)
+        self.x.action_required = True
+        self.x.best_fit = True
 
     def collapse_subtree( self, w, id ):
         self.x.collapse.append(id)

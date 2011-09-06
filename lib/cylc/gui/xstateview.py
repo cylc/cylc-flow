@@ -93,6 +93,9 @@ class xupdater(threading.Thread):
 
         self.collapse = []
 
+        self.group = []
+        self.ungroup = []
+
         self.graph_frame_count = 0
 
     def reconnect( self ):
@@ -318,7 +321,9 @@ class xupdater(threading.Thread):
 
         #if diffhrs < 25:
         #    diffhrs = 25
-        self.graphw = self.suiterc.get_graph( oldest, diffhrs, colored=False, raw=raw ) 
+        self.graphw = self.suiterc.get_graph( oldest, diffhrs, colored=False, raw=raw, group_nodes=self.group, ungroup_nodes=self.ungroup ) 
+        self.group = []
+        self.ungroup = []
 
         self.rem_nodes = []
 

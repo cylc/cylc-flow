@@ -362,6 +362,7 @@ class config( CylcConfigObj ):
                 del self['runtime'][item]
 
         # RUNTIME INHERITANCE
+        self.family_hierarchy = {}
         for label in self['runtime']:
             hierarchy = []
             name = label
@@ -375,12 +376,15 @@ class config( CylcConfigObj ):
                     self.members[name].append(label)
                 else:
                     break
+            self.family_hierarchy[label] = deepcopy(hierarchy)
             hierarchy.pop() # remove 'root'
             hierarchy.reverse()
             taskconf = self['runtime']['root'].odict()
             for item in hierarchy:
                 self.inherit( taskconf, self['runtime'][item] )
             self['runtime'][label] = taskconf
+
+        self.closed_families = self['visualization']['grouped families']
 
         self.load()
         self.__check_tasks()
@@ -471,7 +475,6 @@ class config( CylcConfigObj ):
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
         for name in self.taskdefs:
             if name not in self['runtime']:
-                print '-----------', name
                 print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it inherits the root runtime.'
                 self['runtime'][name] = self['runtime']['root'].odict()
  
@@ -778,6 +781,7 @@ class config( CylcConfigObj ):
                 if 'root' not in self.members:
                     # (happens when no runtimes are defined in the suite.rc)
                     self.members['root'] = []
+                    self.family_hierarchy[name] = ['root']
                 self.members['root'].append(name)
  
             if name not in self.taskdefs:
@@ -844,7 +848,31 @@ class config( CylcConfigObj ):
                 # TO DO: ALSO CONSIDER SUICIDE FOR STARTUP AND ASYNC
                 self.taskdefs[right].add_conditional_trigger( ctrig, expr, section, suicide )
 
-    def get_graph( self, start_ctime, stop, colored=True, raw=False ):
+    def get_graph( self, start_ctime, stop, colored=True, raw=False, group_nodes=[], ungroup_nodes=[] ):
+        for node in group_nodes:
+            if node != 'root':
+                parent = self.family_hierarchy[node][1]
+                print 'closing', parent
+                if parent not in self.closed_families:
+                    self.closed_families.append( parent )
+        for node in ungroup_nodes:
+            print 'opening', node
+            if node in self.closed_families:
+                    self.closed_families.remove(node)
+            # group its immediate sub nodes
+            closeme = []
+            for fam in self.family_hierarchy:
+                if fam == 'root' or fam == node:
+                    continue
+                if node == self.family_hierarchy[fam][1]:
+                    if fam in self.members:
+                        # (else has no members to close)
+                        closeme.append(fam)
+            for mem in closeme:
+                print '   closing', mem
+                if mem not in self.closed_families:
+                    self.closed_families.append(mem)
+
         if colored:
             graph = graphing.CGraph( self.suite, self['visualization'] )
         else:
@@ -970,7 +998,7 @@ class config( CylcConfigObj ):
         # Replace family members with family nodes if requested.
         lname, ltag = nl.split('%')
         rname, rtag = nr.split('%')
-        for fam in self['visualization']['grouped families']:
+        for fam in self.closed_families:
             if lname in self.members[fam] and rname in self.members[fam]:
                 # l and r are both members of fam
                 #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
