@@ -306,7 +306,6 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
         # parse task families
-        self.member_of = {}
         self.members = {}
         for fam in self['scheduling']['families']:
             members = []
@@ -320,9 +319,6 @@ class config( CylcConfigObj ):
                         raise SuiteConfigError, 'Python error: ' + mem
                 else:
                     members.append(mem)
-                if mem not in self.member_of:
-                    self.member_of[ mem ] = []
-                self.member_of[mem].append(fam)
             self.members[fam] = members
 
         # Parse task config generators. If the [[TASK]] section name
@@ -372,9 +368,6 @@ class config( CylcConfigObj ):
                 inherit = self['runtime'][name]['inherit']
                 if inherit:
                     name = inherit
-                    if label not in self.member_of:
-                        self.member_of[label] = []
-                    self.member_of[label].append(name)
                     if name not in self.members:
                         self.members[name] = []
                     self.members[name].append(label)
@@ -382,17 +375,10 @@ class config( CylcConfigObj ):
                     break
             hierarchy.pop() # remove 'root'
             hierarchy.reverse()
-            #print label, hierarchy
             taskconf = self['runtime']['root'].odict()
             for item in hierarchy:
                 self.inherit( taskconf, self['runtime'][item] )
             self['runtime'][label] = taskconf
-
-        for fam in self.members:
-            print
-            print fam
-            for mem in self.members[fam]:
-                print ' ', mem 
 
         # load task definitions
         self.load()
@@ -485,6 +471,7 @@ class config( CylcConfigObj ):
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
         for name in self.taskdefs:
             if name not in self['runtime']:
+                print '-----------', name
                 print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it inherits the root runtime.'
                 self['runtime'][name] = self['runtime']['root'].odict()
  
@@ -611,7 +598,7 @@ class config( CylcConfigObj ):
         all_tasknames.sort(key=str.lower)  # case-insensitive sort
         return all_tasknames
 
-    def process_graph_line( self, line, section, graph_only=False ):
+    def process_graph_line( self, line, section ):
         # Extract dependent pairs from the suite.rc textual dependency
         # graph to use in constructing graphviz graphs.
 
@@ -651,27 +638,24 @@ class config( CylcConfigObj ):
         else:
             raise SuiteConfigError( 'ERROR: Illegal graph validity type: ' + section )
 
-        # replace family names with family members
-        #if not graph_only: # or self['visualization']['show family members']:
-        if False:
-            # TO DO: the following is overkill for just graphing.
-            for fam in self.members:
-                # fam:fail - replace with conditional expressing 
-                # "at least one member failed AND all members succeeded or failed"
-                # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail )
-                if re.search( r'\b' + fam + ':fail' + r'\b', line ):
-                    mem0 = self.members[fam][0]
-                    cond1 = mem0 + ':fail'
-                    cond2 = '( ' + mem0 + ' | ' + mem0 + ':fail )' 
-                    for mem in self.members[fam][1:]:
-                        cond1 += ' | ' + mem + ':fail'
-                        cond2 += ' & ( ' + mem + ' | ' + mem + ':fail )'
-                    cond = '( ' + cond1 + ') & ' + cond2 
-                    line = re.sub( r'\b' + fam + ':fail' + r'\b', cond, line )
-                # fam - replace with members
-                if re.search( r'\b' + fam + r'\b', line ):
-                    mems = ' & '.join( self.members[fam] )
-                    line = re.sub( r'\b' + fam + r'\b', mems, line )
+        # REPLACE FAMILY NAMES WITH THE TRUE MEMBER DEPENDENCIES
+        for fam in self.members:
+            # fam:fail - replace with conditional expressing 
+            # "at least one member failed AND all members succeeded or failed"
+            # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail )
+            if re.search( r'\b' + fam + ':fail' + r'\b', line ):
+                mem0 = self.members[fam][0]
+                cond1 = mem0 + ':fail'
+                cond2 = '( ' + mem0 + ' | ' + mem0 + ':fail )' 
+                for mem in self.members[fam][1:]:
+                    cond1 += ' | ' + mem + ':fail'
+                    cond2 += ' & ( ' + mem + ' | ' + mem + ':fail )'
+                cond = '( ' + cond1 + ') & ' + cond2 
+                line = re.sub( r'\b' + fam + ':fail' + r'\b', cond, line )
+            # fam - replace with members
+            if re.search( r'\b' + fam + r'\b', line ):
+                mems = ' & '.join( self.members[fam] )
+                line = re.sub( r'\b' + fam + r'\b', mems, line )
 
         # Split line on dependency arrows.
         tasks = re.split( '\s*=>\s*', line )
@@ -746,13 +730,12 @@ class config( CylcConfigObj ):
                                 self.async_repeating_tasks.append(name)
                 
                 self.generate_nodes_and_edges( lexpression, lnames, r, ttype, validity, suicide )
-                if not graph_only:
-                    asyncid_pattern = None
-                    if ttype == 'async_repeating':
-                        m = re.match( '^ASYNCID:(.*)$', section )
-                        asyncid_pattern = m.groups()[0]
-                    self.generate_taskdefs( lnames, r, ttype, section, asyncid_pattern )
-                    self.generate_triggers( lexpression, lnames, r, section, asyncid_pattern, suicide )
+                asyncid_pattern = None
+                if ttype == 'async_repeating':
+                    m = re.match( '^ASYNCID:(.*)$', section )
+                    asyncid_pattern = m.groups()[0]
+                self.generate_taskdefs( lnames, r, ttype, section, asyncid_pattern )
+                self.generate_triggers( lexpression, lnames, r, section, asyncid_pattern, suicide )
 
     def generate_nodes_and_edges( self, lexpression, lnames, right, ttype, validity, suicide=False ):
         conditional = False
@@ -789,6 +772,12 @@ class config( CylcConfigObj ):
             except GraphNodeError, x:
                 raise SuiteConfigError, str(x)
 
+            if name not in self['runtime']:
+                # a task defined by graph only
+                # inherit the root runtime
+                self['runtime'][name] = self['runtime']['root'].odict()
+                self.members['root'].append(name)
+ 
             if name not in self.taskdefs:
                 self.taskdefs[ name ] = self.get_taskdef( name )
 
@@ -928,58 +917,22 @@ class config( CylcConfigObj ):
                             rname = None
                             lctime = None
 
-                        #if self['visualization']['show family members']:
-                        grouped_families = self['visualization']['grouped families']
-                        if True:
-                            # REPLACE A FAMILY WITH ITS MEMBERS
-                            if lname in self.members and rname in self.members \
-                                    and lname not in grouped_families and \
-                                    rname not in grouped_families:
-                                # both families
-                                for lmem in self.members[lname]:
-                                    for rmem in self.members[rname]:
-                                        lmemid = lmem + '%' + lctime
-                                        rmemid = rmem + '%' + rctime
-                                        gr_edges.append( (lmemid, rmemid, False, e.suicide, e.conditional ) )
-                            elif lname in self.members and lname not in grouped_families:
-                                # left family
-                                for mem in self.members[lname]:
-                                    memid = mem + '%' + lctime
-                                    gr_edges.append( (memid, right, False, e.suicide, e.conditional ) )
-                            elif rname in self.members and rname not in grouped_families:
-                                # right family
-                                for mem in self.members[rname]:
-                                    memid = mem + '%' + rctime
-                                    gr_edges.append( (left, memid, False, e.suicide, e.conditional ) )
-                            else:
-                                # no families
-                                gr_edges.append( (left, right, False, e.suicide, e.conditional ) )
-                        #else:
-                        if False:  # TO DO: FAM INTERNAL DEPS:
-                            method = 'nonfam'
-                            if lname in self.member_of and rname in self.member_of:
-                                # l and r are both members of families
-                                if self.member_of[lname] == self.member_of[rname]:
-                                    # both members of the same family
-                                    method = 'invis'
-                                else:
-                                    # members of different families
-                                    method = 'twofam'
-                            elif lname in self.member_of:
-                                # l is a member of a family but r is not
-                                method = 'lfam'
-                            elif rname in self.member_of:
-                                # r is a member of a family but l is not
-                                method = 'rfam'
+                        # Replace family members with family nodes if requested.
+                        nl, nr = left, right
+                        for fam in self['visualization']['grouped families']:
+                            if lname in self.members[fam] and rname in self.members[fam]:
+                                # l and r are both members of fam
+                                #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
+                                nl,nr = fam + '%'+lctime, fam + '%'+rctime
+                                break
+                            elif lname in self.members[fam]:
+                                # l is a member of fam
+                                nl = fam + '%'+lctime
+                            elif rname in self.members[fam]:
+                                # r is a member of fam
+                                nr = fam + '%'+rctime
 
-                            if method ==  'nonfam':
-                                gr_edges.append( (left, right, False, e.suicide, e.conditional ) )
-                            elif method == 'lfam':
-                                gr_edges.append( (self.member_of[lname] + '%' + lctime, right, True, e.suicide, e.conditional ) )
-                            elif method == 'rfam':
-                                gr_edges.append( (left, self.member_of[rname] + '%' + rctime, True, e.suicide, e.conditional ) )
-                            elif method == 'twofam':
-                                gr_edges.append( (self.member_of[lname] + '%' + lctime, self.member_of[rname] + '%' + rctime, True, e.suicide, e.conditional ) )
+                        gr_edges.append( ( nl, nr, False, e.suicide, e.conditional ) )
 
                     # next cycle
                     started = True
@@ -1036,7 +989,7 @@ class config( CylcConfigObj ):
             prev = cycles[i-1]
         return prev
 
-    def load( self, graph_only=False ):
+    def load( self ):
         print 'PARSING SUITE GRAPH'
         # parse the suite dependencies section
         for item in self['scheduling']['dependencies']:
@@ -1080,7 +1033,7 @@ class config( CylcConfigObj ):
  
                 for item in items:
                     # generate pygraphviz graph nodes and edges, and task definitions
-                    self.process_graph_line( item, section, graph_only )
+                    self.process_graph_line( item, section )
 
         # sort hours list for each task
         for name in self.taskdefs:
@@ -1115,21 +1068,8 @@ class config( CylcConfigObj ):
             taskd.modifiers.append( 'clocktriggered' )
             taskd.clocktriggered_offset = self.clock_offsets[name]
 
-        if name not in self['runtime']: # TO DO: THIS IS NOT POSSIBLE ANYMORE?
-            if strict:
-                raise SuiteConfigError, 'Task not defined: ' + name
-
-            # inhabit the root namespace and carry on as usual
-            taskconfig = self['runtime']['root'].odict()
- 
-            if self.simulation_mode:
-                taskd.job_submit_method = self['simulation mode']['job submission method']
-            else:
-                # root namespace job submit method
-                taskd.job_submit_method = self['runtime']['root']['job submission']['method']
-            ##return taskd
-        else:
-            taskconfig = self['runtime'][name]
+        # get the task runtime
+        taskconfig = self['runtime'][name]
 
         taskd.description = taskconfig['description']
 

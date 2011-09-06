@@ -13,16 +13,9 @@ final cycle time = 2010080900
             graph = """
                 foo => OPS
                 OPS | OPS:fail => VAR => baz
-                #aircraft => atovs
+                atovs => atovs_post
                 """
 [runtime]
-    [[foo]]
-    [[wazza]]
-    #[[baz]]
-    #[[bar1]]
-    #    inherit = baz
-    #[[bar2]]
-    #    inherit = baz
     [[root]]
         [[[environment]]]
             ROOT = "the quick brown fox"
@@ -61,5 +54,5 @@ final cycle time = 2010080900
 
 [visualization]
 #    show family members = True
-    grouped families = GEN#,baz
+    grouped families = GEN
 
