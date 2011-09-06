@@ -23,21 +23,18 @@ from OrderedDict import OrderedDict
 
 class jobfile(object):
 
-    def __init__( self, task_id, cylc_env, global_env, task_env, 
-            global_pre_scripting, global_post_scripting, 
-            directive_prefix, global_dvs, directives, final_directive, 
+    def __init__( self, task_id, cylc_env, task_env, 
+            directive_prefix, directives, final_directive, 
             manual_messaging, task_command, remote_cylc_dir, remote_suite_dir,
             shell, simulation_mode, job_submission_method):
 
+        print "TO DO: pre-post-scripting"
+
         self.task_id = task_id
         self.cylc_env = cylc_env
-        self.global_env = global_env
         self.task_env = task_env
-        self.global_pre_scripting = global_pre_scripting
-        self.global_post_scripting = global_post_scripting
         self.directive_prefix = directive_prefix
         self.final_directive = final_directive
-        self.global_dvs = global_dvs
         self.directives = directives
         self.task_command = task_command
         self.shell = shell
@@ -103,27 +100,14 @@ class jobfile(object):
         self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'')
 
     def write_directives( self ):
-        # override global with task-specific directives
-        dvs = OrderedDict()
-        if self.global_dvs:
-            for var in self.global_dvs.keys():
-                dvs[var] = self.global_dvs[var]
-        if self.directives:
-            for var in self.directives:
-                dvs[var] = self.directives[var]
-        if len( dvs.keys() ) == 0:
+        if len( self.directives.keys() ) == 0:
             return
         self.FILE.write( "\n\n# BATCH QUEUE SCHEDULER DIRECTIVES:" )
-        for d in dvs:
-            self.FILE.write( '\n' + self.directive_prefix + d + " = " + dvs[ d ] )
+        for d in self.directives:
+            self.FILE.write( '\n' + self.directive_prefix + d + " = " + self.directives[ d ] )
         self.FILE.write( '\n' + self.final_directive )
 
     def write_environment_1( self, BUFFER=None ):
-        # Task-specific variables may reference other previously-defined
-        # task-specific variables, or global variables. Thus we ensure
-        # that the order of definition is preserved (and pass any such
-        # references through as-is to the task job script).
-
         if not BUFFER:
             BUFFER = self.FILE
 
@@ -165,9 +149,8 @@ class jobfile(object):
 cylc task started || exit 1""" )
 
     def write_cylc_access( self, BUFFER=None ):
-        # configure access to cylc prior to defining user local and
-        # global environment variables so that cylc commands can be used
-        # in them, e.g.: 
+        # configure access to cylc first so that cylc commands can be
+        # used in defining user environment variables, e.g.:
         #    NEXT_CYCLE=$( cylc util cycletime --add=6 )
         if not BUFFER:
             BUFFER = self.FILE
@@ -178,17 +161,8 @@ cylc task started || exit 1""" )
         BUFFER.write( "\nexport PATH" )
 
     def write_environment_2( self ):
-        if len( self.global_env.keys()) > 0:
-            self.FILE.write( "\n\n# GLOBAL VARIABLES:" )
-            for var in self.global_env:
-                self.FILE.write( "\n" + var + "=\"" + str( self.global_env[var] ) + "\"" )
-            # export them all (see note below)
-            self.FILE.write( "\nexport" )
-            for var in self.global_env:
-                self.FILE.write( " " + var )
-
         if len( self.task_env.keys()) > 0:
-            self.FILE.write( "\n\n# LOCAL VARIABLES:" )
+            self.FILE.write( "\n\n# ENVIRONMENT:" )
             for var in self.task_env:
                 self.FILE.write( "\n" + var + "=\"" + str( self.task_env[var] ) + "\"" )
             # export them all (see note below)
@@ -207,9 +181,6 @@ cylc task started || exit 1""" )
         if self.simulation_mode:
             # ignore extra scripting in simulation mode
             return
-        if self.global_pre_scripting:
-            self.FILE.write( "\n\n# GLOBAL PRE-COMMAND SCRIPTING:" )
-            self.FILE.write( "\n" + self.global_pre_scripting )
 
     def write_task_command( self ):
         self.FILE.write( "\n\n# TASK COMMAND SCRIPTING:" )
@@ -219,6 +190,3 @@ cylc task started || exit 1""" )
         if self.simulation_mode:
             # ignore extra scripting in simulation mode
             return
-        if self.global_post_scripting:
-            self.FILE.write( "\n\n# GLOBAL POST-COMMAND SCRIPTING:" )
-            self.FILE.write( "\n" + self.global_post_scripting )

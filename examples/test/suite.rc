@@ -32,10 +32,13 @@ use lockserver = False
                     ColdC | C[T-6] => C
 
                     prep => X & ColdA & ColdB & ColdC"""
-[environment]
-    TASK_EXE_SECONDS = 10
-    WORKSPACE = /tmp/$USER/$CYLC_SUITE/common
-    RUNNING   = $WORKSPACE/running
+
+[namespaces]
+    [[global]]
+        [[[environment]]]
+            TASK_EXE_SECONDS = 10
+            WORKSPACE = /tmp/$USER/$CYLC_SUITE/common
+            RUNNING   = $WORKSPACE/running
 
 [tasks]
     [[prep]]

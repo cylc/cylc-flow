@@ -1,0 +1,69 @@
+#!/bin/bash
+
+#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: Copyright (C) 2008-2011 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -e
+
+usage() {
+    echo ""
+    echo "USAGE: cylc [util] jobscript [options] SUITE TASK"
+    echo ""
+    echo "Generate a task job script and print it to stdout."
+    echo ""
+    echo "Here's how to capture the script in the vim editor:"
+    echo "  % cylc jobscript SUITE TASK | vim -"
+    echo "Emacs unfortunately cannot read from stdin:"
+    echo "  % cylc jobscript SUITE TASK > tmp.sh; emacs tmp.sh"
+    echo ""
+    echo "This command wraps 'cylc [control] submit --dry-run'."
+    echo ""
+    echo "Options:"
+    echo "  -h,--help   - print this usage message."
+    echo ""
+    echo "Arguments:"
+    echo "  SUITE       - GROUP:NAME of the target suite."
+    echo "  TASK        - Task NAME or ID (NAME%CYCLE_TIME)"
+    echo "       (if you omit cycle time one will be supplied)."
+}
+
+if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then
+    usage
+    exit 0
+fi
+
+if [[ $# != 2 ]]; then
+    usage
+    echo
+    echo "ERROR: wrong number of arguments"
+    exit 1
+fi
+
+SUITE=$1
+TASK=$2
+
+# supply a cycle time if necessary
+if ! $( echo $TASK | grep % >/dev/null 2>&1 ); then
+    TASK=${TASK}%2999010100
+fi
+
+JOBSCRIPT=$( cylc submit --dry-run $SUITE $TASK | grep 'TASK JOB SCRIPT' | sed -e 's/.*: //' )
+if [[ -z $JOBSCRIPT ]]; then
+    echo "ERROR: no jobscript generated" >&2
+    exit 1
+fi
+echo "Task Job Script Generated: $JOBSCRIPT" >&2 # (only send script contents to stdout)
+cat $JOBSCRIPT

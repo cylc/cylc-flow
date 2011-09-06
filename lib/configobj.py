@@ -21,6 +21,7 @@ from __future__ import generators
 import os
 import re
 import sys
+from OrderedDict import OrderedDict
 
 from codecs import BOM_UTF8, BOM_UTF16, BOM_UTF16_BE, BOM_UTF16_LE
 
@@ -794,6 +795,27 @@ class Section(dict):
             newdict[entry] = this_entry
         return newdict
 
+
+    def odict(self):
+        """
+        Return a deepcopy of self as an ordered dictionary.
+        
+        All members that are ``Section`` instances are recursively turned to
+        ordered dictionaries - by calling their ``odict`` method.
+        """
+        newdict = OrderedDict()
+        for entry in self:
+            this_entry = self[entry]
+            if isinstance(this_entry, Section):
+                this_entry = this_entry.odict()
+            elif isinstance(this_entry, list):
+                # create a copy rather than a reference
+                this_entry = list(this_entry)
+            elif isinstance(this_entry, tuple):
+                # create a copy rather than a reference
+                this_entry = tuple(this_entry)
+            newdict[entry] = this_entry
+        return newdict
 
     def merge(self, indict):
         """

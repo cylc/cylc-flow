@@ -109,7 +109,7 @@ try:
 except SuiteConfigError,x:
     raise SystemExit(x)
 
-config.create_directories()
+config.create_directories( task_name )
 # modify logging dir for single task submit so as not to alter suite logs
 logging_dir = os.path.join( config['suite log directory'], 'submit' ) 
 mkdir_p( logging_dir )
@@ -137,8 +137,8 @@ if config[ 'use lockserver' ]:
 os.environ[ 'PATH' ] += ':' + suite_dir + '/bin'
 # user defined local variables. Also probably not required for
 # standalone task submit, but we'll do it for completeness.
-for var in config['cylc local environment']:
-    os.environ[var] = config['cylc local environment'][var]
+for var in config['scheduler environment']:
+    os.environ[var] = config['scheduler environment'][var]
 
 # No TASK EVENT HOOKS are set for the submit command because there is
 # no scheduler instance watching for task failure etc. 
@@ -165,23 +165,12 @@ cylcenv[ 'CYLC_SUITE_OWNER' ] = owner
 cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 if use_lockserver:
     cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( lockserver_port )
-cylcenv[ 'CYLC_SIMULATION_SLEEP'] =  config['simulation mode']['task run time in seconds']
 cylcenv[ 'CYLC_UTC' ] = str(utc)
 
 # nasty kludge to give the simulation mode clock to task classes:
 task.task.clock = dclock
 clocktriggered.clocktriggered.clock = dclock
 task.task.suite = suite
-
-# SUITE.RC GLOBAL ENVIRONMENT
-globalenv = OrderedDict()
-for var in config['environment']:
-    globalenv[ var ] = config['environment'][var]
-
-# SUITE.RC GLOBAL DIRECTIVES
-globaldvs = OrderedDict()
-for var in config['directives']:
-    globaldvs[ var ] = config['directives'][var]
 
 # create the log
 log = logging.getLogger( "main" )
@@ -190,20 +179,6 @@ pimp_my_logger.pimp_it( log, logging_dir, \
         logging.INFO, dclock )
 
 job_submit.cylc_env = cylcenv
-job_submit.global_env = globalenv
-job_submit.global_dvs = globaldvs
-job_submit.shell = config['job submission shell'] 
-job_submit.joblog_dir = config['job submission log directory']
-job_submit.global_pre_scripting = config['pre-command scripting']
-job_submit.global_post_scripting = config['post-command scripting']
-job_submit.owned_task_execution_method = config['owned task execution method']
-job_submit.global_manual_messaging = config['manual task completion messaging']
-
-job_submit.global_task_owner = config['owner']
-job_submit.global_remote_host = config['remote host']
-job_submit.global_remote_shell_template = config['remote shell template']
-job_submit.global_remote_cylc_dir = config['remote cylc directory']
-job_submit.global_remote_suite_dir = config['remote suite directory']
 
 # intantiate the task--------------------------------------------------
 if task_name in config.get_asynchronous_task_name_list():

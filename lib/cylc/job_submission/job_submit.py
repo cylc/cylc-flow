@@ -19,10 +19,9 @@
 """
 Job submission base class.
 
-Writes a temporary "job file" that exports the cylc execution
-environment (so the executing task can access cylc commands), suite
-global and task-specific environment variables, and then  
-executes the task command.  Specific derived job submission classes
+Writes a temporary "job file" that exports the cylc environment (so the
+executing task can access cylc commands), suite environment, and then  
+executes the task command scripting. Derived job submission classes
 define the means by which the job file itself is executed.
 
 If OWNER@REMOTE_HOST is not equivalent to whoami@localhost:
@@ -36,7 +35,6 @@ import tempfile, stat
 import string
 from cylc.mkdir_p import mkdir_p
 from jobfile import jobfile
-from cylc.dummy import dummy_command, dummy_command_fail
 import socket
 import subprocess
 #import datetime
@@ -54,33 +52,19 @@ class job_submit(object):
     # class variables that are set remotely at startup:
     # (e.g. 'job_submit.simulation_mode = True')
     simulation_mode = False
-    global_task_owner = None
-    global_remote_host = None
-    global_remote_shell_template = None
-    global_remote_cylc_dir = None
-    global_remote_suite_dir = None
-    global_manual_messaging = False
     failout_id = None
-    global_pre_scripting = None
-    global_post_scripting = None
-    global_env = None
-    global_dvs = None
     cylc_env = None
-    owned_task_execution_method = None
-    global_job_submit_command_template = None
 
     def __init__( self, task_id, task_command, task_env, directives, 
-            manual_messaging, logfiles, task_joblog_dir, task_owner,
+            manual_messaging, logfiles, joblog_dir, task_owner,
             remote_host, remote_cylc_dir, remote_suite_dir,
-            remote_shell_template=None, job_submit_command_template=None ): 
+            remote_shell_template, job_submit_command_template,
+            job_submission_shell, owned_task_execution_method ): 
 
         self.task_id = task_id
         self.task_command = task_command
-        if self.__class__.simulation_mode:
-            if self.__class__.failout_id != self.task_id:
-                self.task_command = dummy_command
-            else: 
-                self.task_command = dummy_command_fail
+        if self.__class__.simulation_mode and self.__class__.failout_id == self.task_id:
+            self.task_command = '/bin/false'
 
         self.task_env = task_env
         self.directives  = directives
@@ -90,45 +74,30 @@ class job_submit(object):
         if task_owner:
             self.task_owner = task_owner
             self.other_owner = True
-        elif self.__class__.global_task_owner:
-            self.task_owner = self.__class__.global_task_owner
-            self.other_owner = True
         else:
             self.task_owner = self.suite_owner
             self.other_owner = False
 
-        if remote_shell_template:
-            self.remote_shell_template = remote_shell_template
-        elif self.__class__.global_remote_shell_template:
-            self.remote_shell_template = self.__class__.global_remote_shell_template
-        else:
-            self.remote_shell_template = None
-
-        if job_submit_command_template:
-            self.job_submit_command_template = job_submit_command_template
-        elif self.__class__.global_job_submit_command_template:
-            self.job_submit_command_template = self.__class__.global_job_submit_command_template
-        else:
-            self.job_submit_command_template = None
+        self.remote_shell_template = remote_shell_template
+        self.job_submit_command_template = job_submit_command_template
+        self.job_submission_shell = job_submission_shell
+        self.owned_task_execution_method = owned_task_execution_method
 
         if remote_cylc_dir:
             self.remote_cylc_dir = remote_cylc_dir
-        elif self.__class__.global_remote_cylc_dir:
-            self.remote_cylc_dir = self.__class__.global_remote_cylc_dir
         else:
             self.remote_cylc_dir = None
   
         if remote_suite_dir:
             self.remote_suite_dir = remote_suite_dir
-        elif self.__class__.global_remote_suite_dir:
-            self.remote_suite_dir = self.__class__.global_remote_suite_dir
         else:
             self.remote_suite_dir = None
 
         if remote_host:
             self.remote_host = remote_host
-        elif self.__class__.global_remote_host:
-            self.remote_host = self.__class__.global_remote_host
+
+        if remote_host:
+            self.local_job_submit = False
         else:
             self.remote_host = "localhost"
 
@@ -141,8 +110,6 @@ class job_submit(object):
 
         if manual_messaging != None:  # boolean, must distinguish None from False
             self.manual_messaging = manual_messaging
-        elif self.__class__.global_manual_messaging != None:  # (ditto)
-            self.manual_messaging = self.__class__.global_manual_messaging
 
         if self.__class__.simulation_mode:
             # but ignore remote task settings in simulation mode (this allows us to
@@ -170,16 +137,10 @@ class job_submit(object):
         # Job submission log directory
         # (for owned and remote tasks, this directory must exist in
         # advance; otherwise cylc can create it if necessary).
-        if task_joblog_dir:
-            # task overrode the suite job submission log directory
-            self.joblog_dir = task_joblog_dir
-        else:
-            # use the suite job submission log directory
-            # (created if necessary in config.py)
-            self.joblog_dir = self.__class__.joblog_dir
-
-        self.joblog_dir = os.path.expandvars( os.path.expanduser(self.joblog_dir) )
-        mkdir_p( self.joblog_dir )
+        jldir = os.path.expandvars( os.path.expanduser(joblog_dir))
+        self.joblog_dir = jldir
+        if self.local_job_submit and not self.task_owner:
+            mkdir_p( jldir )
 
         if not self.local_job_submit:
             # Make joblog_dir relative to $HOME for remote tasks by
@@ -245,12 +206,12 @@ class job_submit(object):
             return False
 
         jf = jobfile( self.task_id, 
-                self.__class__.cylc_env, self.__class__.global_env, self.task_env, 
-                self.__class__.global_pre_scripting, self.__class__.global_post_scripting, 
-                self.directive_prefix, self.__class__.global_dvs, self.directives,
-                self.final_directive, self.manual_messaging, self.task_command, 
+                self.__class__.cylc_env, self.task_env, 
+                self.directive_prefix, self.directives, self.final_directive, 
+                self.manual_messaging, self.task_command, 
                 self.remote_cylc_dir, self.remote_suite_dir, 
-                self.__class__.shell, self.__class__.simulation_mode,
+                self.job_submission_shell, 
+                self.__class__.simulation_mode,
                 self.__class__.__name__ )
         jf.write( self.jobfile_path )
 
@@ -270,7 +231,7 @@ class job_submit(object):
             jobfile_path = self.jobfile_path
             stdin = None
         elif self.remote_host == "localhost" \
-             and self.__class__.owned_task_execution_method == "sudo":
+             and self.owned_task_execution_method == "sudo":
             # change to task owner's $HOME 
             try: 
                 os.chdir( self.homedir )

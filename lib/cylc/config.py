@@ -18,8 +18,13 @@
 
 # TO DO: check for multiple definition of same prerequisites, e.g. via
 # two cycle-time sections in the graph.
+
 # TO DO: document use foo(T-6):out1, not foo:out1 with $(CYCLE_TIME-6) in
 # the explicit output message - so the graph will plot correctly.
+
+# TO DO: document that cylc hour sections must be unique, but can
+# overlap: [[[0]]] and [[[0,12]]]; but if the same dependency is 
+# defined twice it will result in a "duplicate prerequisite" error.
 
 # NOTE: configobj.reload() apparently does not revalidate (list-forcing
 # is not done, for example, on single value lists with no trailing
@@ -27,6 +32,7 @@
 # object.
 
 import taskdef
+from copy import deepcopy
 from OrderedDict import OrderedDict
 from cycle_time import ct
 import re, os, sys, logging
@@ -56,10 +62,12 @@ class SuiteConfigError( Exception ):
         return repr(self.msg)
 
 class edge( object):
-    def __init__( self, l, r, sasl=False ):
+    def __init__( self, l, r, sasl=False, suicide=False, conditional=False ):
         self.left = l
         self.right = r
         self.sasl = sasl
+        self.suicide = suicide
+        self.conditional = conditional
 
     def get_right( self, tag, not_first_cycle, raw, startup_only, exclude ):
         # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
@@ -100,9 +108,7 @@ class edge( object):
         m = re.search( '(\w+)\s*\[\s*T\s*([+-])(\d+)\s*\]', left )
         if m: 
             left, sign, offset = m.groups()
-            if sign != '-':
-                # TO DO: this check is redundant (already checked by graphnode processing).
-                raise SuiteConfigError, "Prerequisite offsets must be negative: " + left
+            # sign must be negative but this is already checked by graphnode processing.
             foo = ct(tag)
             foo.decrement( hours=offset )
             tag = foo.get()
@@ -111,7 +117,6 @@ class edge( object):
             tag = 1
 
         return left + '%' + str(tag)  # str for int tag (async)
-
 
 def get_rcfiles ( suite ):
     # return a list of all rc files for this suite
@@ -173,6 +178,7 @@ def get_suite_title( suite=None, path=None ):
         # in the default title being used (from conf/suiterc.spec). 
         try:
             if path:
+                print path
                 title = config( path=path ).get_title()
             else:
                 title = config( suite ).get_title()
@@ -187,8 +193,6 @@ class config( CylcConfigObj ):
         self.simulation_mode = simulation_mode
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
         self.taskdefs = {}
-        self.tasks_loaded = False
-        self.graph_loaded = False
 
         self.async_oneoff_edges = []
         self.async_oneoff_tasks = []
@@ -283,11 +287,18 @@ class config( CylcConfigObj ):
                 print >> sys.stderr, '  ERROR: Illegal entry:', extra 
             raise SuiteConfigError, "ERROR: Illegal suite.rc entry(s) found"
 
-        self.process_configured_directories()
+        # environment interpoloation in directory paths
+        self['suite log directory'] = \
+                os.path.expandvars( os.path.expanduser( self['suite log directory']))
+        self['state dump directory'] =  \
+                os.path.expandvars( os.path.expanduser( self['state dump directory']))
+        self['visualization']['run time graph']['directory'] = \
+                os.path.expandvars( os.path.expanduser( self['visualization']['run time graph']['directory']))
+
 
         # parse clock-triggered tasks
         self.clock_offsets = {}
-        for item in self['special tasks']['clock-triggered']:
+        for item in self['scheduling']['special task types']['clock-triggered']:
             m = re.match( '(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)', item )
             if m:
                 task, offset = m.groups()
@@ -298,12 +309,11 @@ class config( CylcConfigObj ):
             else:
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
-        # parse families
-        self.member_of = {}
+        # parse explicitly listed task families
         self.members = {}
-        for fam in self['task families']:
+        for fam in self['scheduling']['families']:
             members = []
-            for mem in self['task families'][fam]:
+            for mem in self['scheduling']['families'][fam]:
                 m = re.match( '^Python:(.*)$', mem )
                 if m:
                     # python list-generating expression
@@ -313,22 +323,18 @@ class config( CylcConfigObj ):
                         raise SuiteConfigError, 'Python error: ' + mem
                 else:
                     members.append(mem)
-            self['task families'][fam] = members
-            self.members[ fam ] = members
-            for task in self['task families'][fam]:
-                self.member_of[ task ] = fam
+            self.members[fam] = members
 
-        # Parse task config generators. If the [[TASK]] section name
-        # is a family name, or a list of task names, or is a list-
-        # generating Python expresion, then it is a list of task names
-        # for which the subsequent config applies to each member. We
-        # copy the config section for each member and substitute
+        # Parse task config generators. If the runtime section is an
+        # explicit family name (above), or a list of task names, or a
+        # list-generating Python expression, then it is a list of task
+        # names for which the subsequent config applies to each member.
+        # We copy the config section for each member and substitute
         # '$(TASK)' for the actual task name in all config items.
-        for item in self['tasks']:
+        for item in self['runtime']:
             delete_item = True
             m = re.match( '^Python:(.*)$', item )
-            if item in self['task families']:
-                # a task family
+            if item in self['scheduling']['families']:
                 task_names = self.members[item]
                 delete_item = False
             elif m:
@@ -348,13 +354,45 @@ class config( CylcConfigObj ):
                 # create a new task config section
                 tconfig = OrderedDict()
                 # specialise it to the actual task
-                self.specialize( name, tconfig, self['tasks'][item] )
+                self.specialize( name, tconfig, self['runtime'][item] )
                 # record it under the task name
-                self['tasks'][name] = tconfig
+                self['runtime'][name] = tconfig
 
             if delete_item:
                 # delete the original multi-task section
-                del self['tasks'][item]
+                del self['runtime'][item]
+
+        # RUNTIME INHERITANCE
+        for label in self['runtime']:
+            hierarchy = []
+            name = label
+            while True:
+                hierarchy.append( name )
+                inherit = self['runtime'][name]['inherit']
+                if inherit:
+                    name = inherit
+                    if name not in self.members:
+                        self.members[name] = []
+                    self.members[name].append(label)
+                else:
+                    break
+            hierarchy.pop() # remove 'root'
+            hierarchy.reverse()
+            taskconf = self['runtime']['root'].odict()
+            for item in hierarchy:
+                self.inherit( taskconf, self['runtime'][item] )
+            self['runtime'][label] = taskconf
+
+        self.load()
+        self.__check_tasks()
+
+    def inherit( self, target, source ):
+        for item in source:
+            if isinstance( source[item], Section ):
+                self.inherit( target[item], source[item] )
+            else:
+                if source[item]:
+                    target[item] = deepcopy(source[item])  # deepcopy for list values
 
     def specialize( self, name, target, source ):
         # recursively specialize a generator task config section
@@ -386,7 +424,7 @@ class config( CylcConfigObj ):
     def set_trigger( self, task_name, output_name=None, offset=None, asyncid_pattern=None ):
         if output_name:
             try:
-                trigger = self['tasks'][task_name]['outputs'][output_name]
+                trigger = self['runtime'][task_name]['outputs'][output_name]
             except KeyError:
                 if output_name == 'fail':
                     trigger = task_name + '%$(TAG) failed'
@@ -426,33 +464,36 @@ class config( CylcConfigObj ):
     def __check_tasks( self ):
         # Call after all tasks are defined.
         # Note: 
-        #   (a) self['tasks'][name] 
+        #   (a) self['runtime'][name] 
         #       contains the task definition sections of the suite.rc file.
         #   (b) self.taskdefs[name]
         #       contains tasks that will be used, defined by the graph.
         # Tasks (a) may be defined but not used (e.g. commented out of the graph)
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
         for name in self.taskdefs:
-            if name not in self['tasks']:
-                print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it will run as a dummy task.'
-        for name in self['tasks']:
-            if name not in self.taskdefs:
-                print >> sys.stderr, 'WARNING: task "' + name + '" is defined in [tasks] but not used in the graph.'
+            if name not in self['runtime']:
+                print '-----------', name
+                print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it inherits the root runtime.'
+                self['runtime'][name] = self['runtime']['root'].odict()
+ 
+        #for name in self['runtime']:
+        #    if name not in self.taskdefs:
+        #        print >> sys.stderr, 'WARNING: runtime "' + name + '" is not used in the graph.'
 
         # warn if listed special tasks are not defined
-        for type in self['special tasks']:
-            for name in self['special tasks'][type]:
+        for type in self['scheduling']['special task types']:
+            for name in self['scheduling']['special task types'][type]:
                 if type == 'clock-triggered':
                     name = re.sub('\(.*\)','',name)
                 if re.search( '[^0-9a-zA-Z_]', name ):
                     raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
-                if name not in self.taskdefs and name not in self['tasks']:
+                if name not in self.taskdefs and name not in self['runtime']:
                     print >> sys.stderr, 'WARNING: ' + type + ' task "' + name + '" is not defined in [tasks] or used in the graph.'
 
         # check task insertion groups contain valid tasks
         for group in self['task insertion groups']:
             for name in self['task insertion groups'][group]:
-                if name not in self['tasks'] and name not in self.taskdefs:
+                if name not in self['runtime'] and name not in self.taskdefs:
                     # This is not an error because it could be caused by
                     # temporary commenting out of a task in the graph,
                     # and it won't cause catastrophic failure of the
@@ -461,18 +502,18 @@ class config( CylcConfigObj ):
 
         # check 'tasks to exclude|include at startup' contains valid tasks
         for name in self['tasks to include at startup']:
-                if name not in self['tasks'] and name not in self.taskdefs:
+                if name not in self['runtime'] and name not in self.taskdefs:
                     raise SuiteConfigError, "ERROR: " + name + ' in "tasks to include at startup" is not defined in [tasks] or graph.'
         for name in self['tasks to exclude at startup']:
-                if name not in self['tasks'] and name not in self.taskdefs:
+                if name not in self['runtime'] and name not in self.taskdefs:
                     raise SuiteConfigError, "ERROR: " + name + ' in "tasks to exclude at startup" is not defined in [tasks] or graph.'
 
         # check graphed hours are consistent with [tasks]->[[NAME]]->hours (if defined)
         for name in self.taskdefs:
             # task 'name' is in graph
-            if name in self['tasks']:
+            if name in self['runtime']:
                 # [tasks][name] section exists
-                section_hours = [int(i) for i in self['tasks'][name]['hours'] ]
+                section_hours = [int(i) for i in self['runtime'][name]['hours'] ]
                 if len( section_hours ) == 0:
                     # no hours defined in the task section
                     break
@@ -484,30 +525,29 @@ class config( CylcConfigObj ):
                 if len(bad_hours) > 0:
                     raise SuiteConfigError, 'ERROR: [tasks]->[[' + name + ']]->hours disallows the graphed hour(s) ' + ','.join(bad_hours)
 
-        # TO DO: check listed family members in the same way
         # TO DO: check that any multiple appearance of same task  in
         # 'special tasks' is valid. E.g. a task can be both
         # 'sequential' and 'clock-triggered' at the time, but not both
         # 'model' and 'sequential' at the same time.
 
-    def process_configured_directories( self ):
-        # absolute path, but can use ~user, env vars ($HOME etc.):
-        self['suite log directory'] = \
-                os.path.expandvars( os.path.expanduser( self['suite log directory']))
-        self['state dump directory'] =  \
-                os.path.expandvars( os.path.expanduser( self['state dump directory']))
-        self['job submission log directory' ] = \
-                os.path.expandvars( os.path.expanduser( self['job submission log directory' ]))
-        self['visualization']['run time graph']['directory'] = \
-                os.path.expandvars( os.path.expanduser( self['visualization']['run time graph']['directory']))
-
-    def create_directories( self ):
-        # create logging, state, and job log directories if necessary
-        for dir in [
-            self['suite log directory'], 
-            self['state dump directory'],
-            self['job submission log directory']]: 
+    def create_directories( self, task=None ):
+        # create suite log, state, and job log directories
+        for dir in [ self['suite log directory'], self['state dump directory']]:
             mkdir_p( dir )
+        
+        if task:
+            tasks = [task]
+        else:
+            tasks = self['runtime'].keys()
+        dirs = []
+        for task in tasks:
+            dir = self['runtime'][task]['job submission']['log directory']
+            if dir not in dirs:
+                dirs.append(dir)
+        for dir in dirs:
+            d = os.path.expandvars( os.path.expanduser( dir ))
+            print 'CREATING:', dir
+            mkdir_p( d )
 
     def get_filename( self ):
         return self.file
@@ -522,27 +562,22 @@ class config( CylcConfigObj ):
         return self['description']
 
     def get_coldstart_task_list( self ):
-        # TO DO: automatically determine this by parsing the dependency
-        #        graph - requires some thought.
+        # TO DO: automatically determine this by parsing the dependency graph?
         # For now user must define this:
-        return self['special tasks']['cold start']
+        return self['scheduling']['special task types']['cold-start']
 
     def get_startup_task_list( self ):
-        return self['special tasks']['startup'] + self.async_oneoff_tasks + self.async_repeating_tasks
+        return self['scheduling']['special task types']['start-up'] + self.async_oneoff_tasks + self.async_repeating_tasks
 
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
-        # not the full list of defined tasks (self['tasks'].keys())
-        if not self.tasks_loaded:
-            self.load()
+        # not the full list of defined tasks (self['runtime'].keys())
         tasknames = self.taskdefs.keys()
         tasknames.sort(key=str.lower)  # case-insensitive sort
         return tasknames
 
     def get_asynchronous_task_name_list( self ):
         names = []
-        if not self.tasks_loaded:
-            self.load()
         for tn in self.taskdefs:
             if self.taskdefs[tn].type == 'async_repeating' or self.taskdefs[tn].type == 'async_daemon' or self.taskdefs[tn].type == 'async_oneoff':
                 names.append(tn)
@@ -551,11 +586,9 @@ class config( CylcConfigObj ):
 
     def get_full_task_name_list( self ):
         # return list of task names used in the dependency diagram,
-        # and task sections (self['tasks'].keys())
-        if not self.tasks_loaded:
-            self.load()
+        # and task sections (self['runtime'].keys())
         gtasknames = self.taskdefs.keys()
-        stasknames = self['tasks'].keys()
+        stasknames = self['runtime'].keys()
         tasknames = {}
         for tn in gtasknames + stasknames:
             if tn not in tasknames:
@@ -564,7 +597,7 @@ class config( CylcConfigObj ):
         all_tasknames.sort(key=str.lower)  # case-insensitive sort
         return all_tasknames
 
-    def process_graph_line( self, line, section, graph_only=False ):
+    def process_graph_line( self, line, section ):
         # Extract dependent pairs from the suite.rc textual dependency
         # graph to use in constructing graphviz graphs.
 
@@ -604,44 +637,45 @@ class config( CylcConfigObj ):
         else:
             raise SuiteConfigError( 'ERROR: Illegal graph validity type: ' + section )
 
+        # REPLACE FAMILY NAMES WITH THE TRUE MEMBER DEPENDENCIES
+        for fam in self.members:
+            # fam:fail - replace with conditional expressing this:
+            # "one or more members failed AND (all members either
+            # succeeded or failed)":
+            # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail )
+            if re.search( r'\b' + fam + ':fail' + r'\b', line ):
+                mem0 = self.members[fam][0]
+                cond1 = mem0 + ':fail'
+                cond2 = '( ' + mem0 + ' | ' + mem0 + ':fail )' 
+                for mem in self.members[fam][1:]:
+                    cond1 += ' | ' + mem + ':fail'
+                    cond2 += ' & ( ' + mem + ' | ' + mem + ':fail )'
+                cond = '( ' + cond1 + ') & ' + cond2 
+                line = re.sub( r'\b' + fam + ':fail' + r'\b', cond, line )
+            # fam - replace with members
+            if re.search( r'\b' + fam + r'\b', line ):
+                mems = ' & '.join( self.members[fam] )
+                line = re.sub( r'\b' + fam + r'\b', mems, line )
 
-        # replace family names with family members
-        if not graph_only or self['visualization']['show family members']:
-            # TO DO: the following is overkill for just graphing.
-            for fam in self['task families']:
-                # fam:fail - replace with conditional expressing 
-                # "at least one member failed AND all members succeeded or failed"
-                # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail )
-                if re.search( r'\b' + fam + ':fail' + r'\b', line ):
-                    mem0 = self.members[fam][0]
-                    cond1 = mem0 + ':fail'
-                    cond2 = '( ' + mem0 + ' | ' + mem0 + ':fail )' 
-                    for mem in self.members[fam][1:]:
-                        cond1 += ' | ' + mem + ':fail'
-                        cond2 += ' & ( ' + mem + ' | ' + mem + ':fail )'
-                    cond = '( ' + cond1 + ') & ' + cond2 
-                    line = re.sub( r'\b' + fam + ':fail' + r'\b', cond, line )
-                # fam - replace with members
-                if re.search( r'\b' + fam + r'\b', line ):
-                    mems = ' & '.join( self.members[fam] )
-                    line = re.sub( r'\b' + fam + r'\b', mems, line )
-
-        # split line on arrows
-        sequence = re.split( '\s*=>\s*', line )
+        # Split line on dependency arrows.
+        tasks = re.split( '\s*=>\s*', line )
+        # NOTE:  we currently use only one kind of arrow, but to use
+        # several kinds we can split the string like this:
+        #     tokens = re.split( '\s*(=[>x])\s*', line ) # a => b =x c
+        #     tasks = tokens[0::2]                       # [a, b, c] 
+        #     arrow = tokens[1::2]                       # [=>, =x]
 
         # get list of pairs
-        for i in [0] + range( 1, len(sequence)-1 ):
-            lexpression = sequence[i]
-            if len(sequence) == 1:
+        for i in [0] + range( 1, len(tasks)-1 ):
+            lexpression = tasks[i]
+            if len(tasks) == 1:
                 # single node: no rhs group
                 rgroup = None
                 if re.search( '\|', lexpression ):
                     raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR conditionals: " + lexpression
             else:
-                rgroup = sequence[i+1]
+                rgroup = tasks[i+1]
            
-            # parentheses are used for intercycle dependencies: (T-6) etc.
-
             if rgroup:
                 # '|' (OR) is not allowed on the right side
                 if re.search( '\|', rgroup ):
@@ -673,37 +707,47 @@ class config( CylcConfigObj ):
             nstr = nstr.strip()
             lnames = re.split( ' +', nstr )
 
-            for r in rights:
+            for rt in rights:
+                # foo => '!bar' means task bar should suicide if foo succeeds.
+                suicide = False
+                if rt.startswith('!'):
+                    r = rt[1:]
+                    suicide = True
+                else:
+                    r = rt
+
                 if ttype != 'cycling':
                     for n in lnames + [r]:
+                        try:
+                            name = graphnode( n ).name
+                        except GraphNodeError, x:
+                            raise SuiteConfigError, str(x)
                         if ttype == 'async_oneoff':
-                            if n not in self.async_oneoff_tasks:
-                                self.async_oneoff_tasks.append(n)
+                            if name not in self.async_oneoff_tasks:
+                                self.async_oneoff_tasks.append(name)
                         elif ttype == 'async_repeating': 
-                            if n not in self.async_repeating_tasks:
-                                self.async_repeating_tasks.append(n)
-                if graph_only:
-                    self.generate_nodes_and_edges( lnames, r, ttype, validity )
-                else:
-                    asyncid_pattern = None
-                    if ttype == 'async_repeating':
-                        m = re.match( '^ASYNCID:(.*)$', section )
-                        asyncid_pattern = m.groups()[0]
-                    self.generate_taskdefs( lnames, r, ttype, section, asyncid_pattern )
-                    self.generate_triggers( lexpression, lnames, r, section, asyncid_pattern )
- 
-            # self.edges left side members can be:
-            #   foo           (task name)
-            #   foo:N         (specific output)
-            #   foo(T-DD)     (intercycle dep)
-            #   foo:N(T-DD)   (both)
+                            if name not in self.async_repeating_tasks:
+                                self.async_repeating_tasks.append(name)
+                
+                self.generate_nodes_and_edges( lexpression, lnames, r, ttype, validity, suicide )
+                asyncid_pattern = None
+                if ttype == 'async_repeating':
+                    m = re.match( '^ASYNCID:(.*)$', section )
+                    asyncid_pattern = m.groups()[0]
+                self.generate_taskdefs( lnames, r, ttype, section, asyncid_pattern )
+                self.generate_triggers( lexpression, lnames, r, section, asyncid_pattern, suicide )
 
-    def generate_nodes_and_edges( self, lnames, right, ttype, validity ):
+    def generate_nodes_and_edges( self, lexpression, lnames, right, ttype, validity, suicide=False ):
+        conditional = False
+        if re.search( '\|', lexpression ):
+            # plot conditional triggers differently
+            conditional = True
+ 
         sasl = False
         for left in lnames:
             if left in self.async_oneoff_tasks + self.async_repeating_tasks:
                 sasl = True
-            e = edge( left, right, sasl )
+            e = edge( left, right, sasl, suicide, conditional )
             if ttype == 'async_oneoff':
                 if e not in self.async_oneoff_edges:
                     self.async_oneoff_edges.append( e )
@@ -728,6 +772,15 @@ class config( CylcConfigObj ):
             except GraphNodeError, x:
                 raise SuiteConfigError, str(x)
 
+            if name not in self['runtime']:
+                # a task defined by graph only
+                # inherit the root runtime
+                self['runtime'][name] = self['runtime']['root'].odict()
+                if 'root' not in self.members:
+                    # (happens when no runtimes are defined in the suite.rc)
+                    self.members['root'] = []
+                self.members['root'].append(name)
+ 
             if name not in self.taskdefs:
                 self.taskdefs[ name ] = self.get_taskdef( name )
 
@@ -738,7 +791,7 @@ class config( CylcConfigObj ):
                 self.taskdefs[name].type = 'async_oneoff'
             elif ttype == 'async_repeating':
                 self.taskdefs[name].asyncid_pattern = asyncid_pattern
-                if name == self['dependencies'][section]['daemon']:
+                if name == self['scheduling'][section]['daemon']:
                     self.taskdefs[name].type = 'async_daemon'
                 else:
                     self.taskdefs[name].type = 'async_repeating'
@@ -746,7 +799,7 @@ class config( CylcConfigObj ):
             elif ttype == 'cycling':
                 self.taskdefs[ name ].set_valid_hours( section )
 
-    def generate_triggers( self, lexpression, lnames, right, section, asyncid_pattern ):
+    def generate_triggers( self, lexpression, lnames, right, section, asyncid_pattern, suicide ):
         if not right:
             # lefts are lone nodes; no more triggers to define.
             return
@@ -770,29 +823,29 @@ class config( CylcConfigObj ):
             for label in ctrig:
                 trigger = ctrig[label]
                 # using last lnode ...
-                if lnode.name in self['special tasks']['startup'] or \
+                if lnode.name in self['scheduling']['special task types']['start-up'] or \
                         lnode.name in self.async_oneoff_tasks:
-                    self.taskdefs[right].add_startup_trigger( trigger, section )
+                    self.taskdefs[right].add_startup_trigger( trigger, section, suicide )
                 elif lnode.name in self.async_repeating_tasks:
+                    # TO DO: SUICIDE FOR REPEATING ASYNC
                     self.taskdefs[right].loose_prerequisites.append(trigger)
                 else:
-                    self.taskdefs[right].add_trigger( trigger, section )
+                    self.taskdefs[right].add_trigger( trigger, section, suicide )
         else:
             # replace some chars for later use in regular  expressions.
             expr = re.sub( '[-\[\]:]', '_', lexpression )
             # using last lnode ...
-            if lnode.name in self['special tasks']['startup'] or \
+            if lnode.name in self['scheduling']['special task types']['start-up'] or \
                     lnode.name in self.async_oneoff_tasks:
-                self.taskdefs[right].add_startup_conditional_trigger( ctrig, expr, section )
+                self.taskdefs[right].add_startup_conditional_trigger( ctrig, expr, section, suicide )
             elif lnode.name in self.async_repeating_tasks:
                 # TO DO!!!!
                 raise SuiteConfigError, 'ERROR: repeating async task conditionals not done yet'
             else:
-                self.taskdefs[right].add_conditional_trigger( ctrig, expr, section )
+                # TO DO: ALSO CONSIDER SUICIDE FOR STARTUP AND ASYNC
+                self.taskdefs[right].add_conditional_trigger( ctrig, expr, section, suicide )
 
     def get_graph( self, start_ctime, stop, colored=True, raw=False ):
-        if not self.graph_loaded:
-            self.load(graph_only=True)
         if colored:
             graph = graphing.CGraph( self.suite, self['visualization'] )
         else:
@@ -806,7 +859,8 @@ class config( CylcConfigObj ):
         for e in self.async_oneoff_edges + self.async_repeating_edges:
             right = e.get_right(1, False, False, [], [])
             left  = e.get_left( 1, False, False, [], [])
-            gr_edges.append( (left, right, False) )
+            nl, nr = self.close_families( left, right )
+            gr_edges.append( (nl, nr, False, e.suicide, e.conditional) )
 	
         cycles = self.edges.keys()
 
@@ -816,10 +870,8 @@ class config( CylcConfigObj ):
             foo = ct( ctime )
 
             hour = str(int(start_ctime[8:10])) # get string without zero padding
-            # TO DO: TEST ZERO PADDING IN SECTION HEADINGS
             # TO DO: clean up ctime and hour handling in the following code, down 
             #        to "# sort and then add edges ...". It works, but is messy.
-
             found = True
             for h in range( int(hour), 24 + int(hour) ):
                 diffhrs = h - int(hour)
@@ -840,13 +892,14 @@ class config( CylcConfigObj ):
                 while True:
                     hour = cycles[i]
                     for e in self.edges[hour]:
+                        suicide = e.suicide
+                        conditional = e.conditional
                         right = e.get_right(ctime, started, raw, startup_exclude_list, [])
                         left  = e.get_left( ctime, started, raw, startup_exclude_list, [])
 
                         if left == None and right == None:
                             # nothing to add to the graph
                             continue
-
                         if left != None and not e.sasl:
                             lname, lctime = re.split( '%', left )
                             sct = ct(start_ctime)
@@ -864,55 +917,8 @@ class config( CylcConfigObj ):
                         else:
                             rname = None
                             lctime = None
-
-                        if self['visualization']['show family members']:
-                            # replace a family with its members
-                            # and show effective dependencies
-                            if lname in self.members and rname in self.members:
-                                # both families
-                                for lmem in self.members[lname]:
-                                    for rmem in self.members[rname]:
-                                        lmemid = lmem + '%' + lctime
-                                        rmemid = rmem + '%' + rctime
-                                        gr_edges.append( (lmemid, rmemid, False ) )
-                            elif lname in self.members:
-                                # left family
-                                for mem in self.members[lname]:
-                                    memid = mem + '%' + lctime
-                                    gr_edges.append( (memid, right, False ) )
-                            elif rname in self.members:
-                                # right family
-                                for mem in self.members[rname]:
-                                    memid = mem + '%' + rctime
-                                    gr_edges.append( (left, memid, False ) )
-                            else:
-                                # no families
-                                gr_edges.append( (left, right, False ) )
-                        else:
-                            method = 'nonfam'
-                            if lname in self.member_of and rname in self.member_of:
-                                # l and r are both members of families
-                                if self.member_of[lname] == self.member_of[rname]:
-                                    # both members of the same family
-                                    method = 'invis'
-                                else:
-                                    # members of different families
-                                    method = 'twofam'
-                            elif lname in self.member_of:
-                                # l is a member of a family but r is not
-                                method = 'lfam'
-                            elif rname in self.member_of:
-                                # r is a member of a family but l is not
-                                method = 'rfam'
-
-                            if method ==  'nonfam':
-                                gr_edges.append( (left, right, False ) )
-                            elif method == 'lfam':
-                                gr_edges.append( (self.member_of[lname] + '%' + lctime, right, True ) )
-                            elif method == 'rfam':
-                                gr_edges.append( (left, self.member_of[rname] + '%' + rctime, True ) )
-                            elif method == 'twofam':
-                                gr_edges.append( (self.member_of[lname] + '%' + lctime, self.member_of[rname] + '%' + rctime, True ) )
+                        nl, nr = self.close_families( left, right )
+                        gr_edges.append( ( nl, nr, False, e.suicide, e.conditional ) )
 
                     # next cycle
                     started = True
@@ -935,7 +941,7 @@ class config( CylcConfigObj ):
         # jumping around (does this help? -if not discard)
         gr_edges.sort()
         for e in gr_edges:
-            l, r, dashed = e
+            l, r, dashed, suicide, conditional = e
             if l== None and r == None:
                 pass
             elif l == None:
@@ -943,10 +949,16 @@ class config( CylcConfigObj ):
             elif r == None:
                 graph.add_node( l )
             else:
+                style=None
+                arrowhead='normal'
                 if dashed:
-                    graph.add_edge( l, r, False, style='dashed' )
-                else:
-                    graph.add_edge( l, r, False )
+                    style='dashed'
+                if suicide:
+                    style='dashed'
+                    arrowhead='dot'
+                if conditional:
+                    arrowhead='onormal'
+                graph.add_edge( l, r, False, style=style, arrowhead=arrowhead )
 
         for n in graph.nodes():
             if not colored:
@@ -954,6 +966,24 @@ class config( CylcConfigObj ):
                 n.attr['fillcolor'] = 'cornsilk'
 
         return graph
+
+    def close_families( self, nl, nr ):
+        # Replace family members with family nodes if requested.
+        lname, ltag = nl.split('%')
+        rname, rtag = nr.split('%')
+        for fam in self['visualization']['grouped families']:
+            if lname in self.members[fam] and rname in self.members[fam]:
+                # l and r are both members of fam
+                #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
+                nl,nr = fam + '%'+ltag, fam + '%'+rtag
+                break
+            elif lname in self.members[fam]:
+                # l is a member of fam
+                nl = fam + '%'+ltag
+            elif rname in self.members[fam]:
+                # r is a member of fam
+                nr = fam + '%'+rtag
+        return nl, nr
 
     def prev_cycle( self, cycle, cycles ):
         i = cycles.index( cycle )
@@ -963,23 +993,23 @@ class config( CylcConfigObj ):
             prev = cycles[i-1]
         return prev
 
-    def load( self, graph_only=False ):
+    def load( self ):
+        print 'PARSING SUITE GRAPH'
         # parse the suite dependencies section
-        for item in self['dependencies']:
+        for item in self['scheduling']['dependencies']:
             if item == 'graph':
                 # One-off asynchronous tasks.
                 section = "once"
-                graph = self['dependencies']['graph']
+                graph = self['scheduling']['dependencies']['graph']
                 if graph == None:
                     # this means no async_oneoff tasks defined
                     continue
             else:
                 section = item
                 try:
-                    graph = self['dependencies'][item]['graph']
+                    graph = self['scheduling']['dependencies'][item]['graph']
                 except IndexError:
-                    raise SuiteConfigError, 'Missing graph string in [dependencies]['+item+']'
-                #raise SuiteConfigError, 'Illegal Section: [dependencies]['+section+']'
+                    raise SuiteConfigError, 'Missing graph string in [scheduling][dependencies]['+item+']'
 
             # split the graph string into successive lines
             lines = re.split( '\s*\n\s*', graph )
@@ -1007,42 +1037,11 @@ class config( CylcConfigObj ):
  
                 for item in items:
                     # generate pygraphviz graph nodes and edges, and task definitions
-                    self.process_graph_line( item, section, graph_only )
-
-        self.graph_loaded = True
-        if graph_only:
-            return
-
-        # task families
-        # TO DO: IS THIS NEEDED?
-        #for name in self['task families']:
-        #    mems = self['task families'][name]
-        #    for mem in mems:
-        #        self.taskdefs[mem].member_of = name
-        #        if name in self.async_oneoff_tasks:
-        #            self.taskdefs[mem].type = "async_oneoff"
-        #            if mem not in self.async_oneoff_tasks:
-        #                self.async_oneoff_tasks.append(mem)
-        #        elif name in self.async_repeating_tasks:
-        #            self.taskdefs[mem].type = "async_repeating"
-        #            if mem not in self.async_repeating_tasks:
-        #                self.async_repeating_tasks.append(mem)
+                    self.process_graph_line( item, section )
 
         # sort hours list for each task
         for name in self.taskdefs:
             self.taskdefs[name].hours.sort( key=int ) 
-            # check that task names contain only word characters [0-9a-zA-Z_]
-            # (use of r'\b' word boundary regex in conditional prerequisites
-            # could fail if other characters are allowed).
-            if re.search( '[^0-9a-zA-Z_]', name ):
-                # (regex \w allows spaces)
-                raise SuiteConfigError, 'Illegal task name: ' + name
-
-        self.load_raw_task_definitions()
-
-        self.__check_tasks()
-
-        self.tasks_loaded = True
 
     def get_taskdef( self, name, strict=False ):
         try:
@@ -1052,91 +1051,77 @@ class config( CylcConfigObj ):
 
         # SET ONE OFF TASK INDICATOR
         #   cold start and startup tasks are automatically one off
-        if name in self['special tasks']['one off'] or \
-            name in self['special tasks']['startup'] or \
-            name in self['special tasks']['cold start']:
+        if name in self['scheduling']['special task types']['one-off'] or \
+            name in self['scheduling']['special task types']['start-up'] or \
+            name in self['scheduling']['special task types']['cold-start']:
                 taskd.modifiers.append( 'oneoff' )
 
         # SET SEQUENTIAL TASK INDICATOR
-        if name in self['special tasks']['sequential']:
+        if name in self['scheduling']['special task types']['sequential']:
             taskd.modifiers.append( 'sequential' )
 
         # SET MODEL TASK INDICATOR
-        # (TO DO - identify these tasks from the graph?)
-        elif name in self['special tasks']['models with explicit restart outputs']:
+        # (TO DO - can we identify these tasks from the graph?)
+        elif name in self['scheduling']['special task types']['tasks with explicit restart outputs']:
             taskd.type = 'tied'
         else:
             taskd.type = 'free'
-
-        # ONLY USING FREE TASK FOR NOW (MODELS MUST BE SEQUENTIAL)
 
         # SET CLOCK-TRIGGERED TASKS
         if name in self.clock_offsets:
             taskd.modifiers.append( 'clocktriggered' )
             taskd.clocktriggered_offset = self.clock_offsets[name]
 
-        if name not in self['tasks']:
-            if strict:
-                raise SuiteConfigError, 'Task not defined: ' + name
-            # no [tasks][[name]] section defined: default dummy task
-            if self.simulation_mode:
-                # use simulation mode specific job submit method for all tasks
-                taskd.job_submit_method = self['simulation mode']['job submission method']
-            else:
-                # suite default job submit method
-                taskd.job_submit_method = self['job submission method']
-            return taskd
-
-        taskconfig = self['tasks'][name]
+        # get the task runtime
+        taskconfig = self['runtime'][name]
         taskd.description = taskconfig['description']
 
         for lbl in taskconfig['outputs']:
             # replace $(CYCLE_TIME) with $(TAG) in explicit outputs
             taskd.outputs.append( re.sub( 'CYCLE_TIME', 'TAG', taskconfig['outputs'][lbl] ))
 
-        if not self['ignore task owners']:
-            taskd.owner = taskconfig['owner']
+        if not taskconfig['ownership']['ignore owner']:
+            taskd.owner = taskconfig['ownership']['owner']
+
+        taskd.owned_task_execution_method = taskconfig['ownership']['local user execution method']
 
         if self.simulation_mode:
-            # use simulation mode specific job submit method for all tasks
             taskd.job_submit_method = self['simulation mode']['job submission method']
-        elif taskconfig['job submission method'] != None:
-            # a task-specific job submit method was specified
-            taskd.job_submit_method = taskconfig['job submission method']
+            taskd.commands = self['simulation mode']['command']
         else:
-            # suite default job submit method
-            taskd.job_submit_method = self['job submission method']
+            taskd.job_submit_method = taskconfig['job submission']['method']
+            taskd.commands    = taskconfig['command']
 
-        taskd.job_submit_command_template = taskconfig['job submission command template']
-        taskd.job_submit_log_directory = taskconfig['job submission log directory']
+        taskd.job_submission_shell = taskconfig['job submission']['job script shell']
 
-        if taskconfig['remote host']:
-            taskd.remote_host = taskconfig['remote host']
-            # consistency check
-            if not taskconfig['remote cylc directory']:
-                raise SuiteConfigError, name + ": tasks with a remote host must specify the remote cylc directory"
+        taskd.job_submit_command_template = taskconfig['job submission']['command template']
+        taskd.job_submit_log_directory = taskconfig['job submission']['log directory']
 
-        taskd.remote_shell_template = taskconfig['remote shell template']
-        taskd.remote_cylc_directory = taskconfig['remote cylc directory']
-        taskd.remote_suite_directory = taskconfig['remote suite directory']
+        taskd.remote_host = taskconfig['remote']['host']
+        if taskd.remote_host:
+            if not taskconfig['remote']['cylc directory']:
+                raise SuiteConfigError, name + ": remotely hosted tasks must specify the remote cylc directory"
+
+        taskd.remote_shell_template = taskconfig['remote']['remote shell template']
+        taskd.remote_cylc_directory = taskconfig['remote']['cylc directory']
+        taskd.remote_suite_directory = taskconfig['remote']['suite definition directory']
 
         taskd.manual_messaging = taskconfig['manual task completion messaging']
 
         # task-specific event hook scripts
-        taskd.hook_scripts[ 'submitted' ]         = taskconfig['task submitted hook script']
-        taskd.hook_scripts[ 'submission failed' ] = taskconfig['task submission failed hook script']
-        taskd.hook_scripts[ 'started'   ]         = taskconfig['task started hook script'  ]
-        taskd.hook_scripts[ 'warning'   ]         = taskconfig['task warning hook script'  ]
-        taskd.hook_scripts[ 'succeeded' ]         = taskconfig['task succeeded hook script' ]
-        taskd.hook_scripts[ 'failed'    ]         = taskconfig['task failed hook script'   ]
-        taskd.hook_scripts[ 'timeout'   ]         = taskconfig['task timeout hook script'  ]
+        taskd.hook_scripts[ 'submitted' ]         = taskconfig['event hooks']['submitted script']
+        taskd.hook_scripts[ 'submission failed' ] = taskconfig['event hooks']['submission failed script']
+        taskd.hook_scripts[ 'started'   ]         = taskconfig['event hooks']['started script'  ]
+        taskd.hook_scripts[ 'warning'   ]         = taskconfig['event hooks']['warning script'  ]
+        taskd.hook_scripts[ 'succeeded' ]         = taskconfig['event hooks']['succeeded script' ]
+        taskd.hook_scripts[ 'failed'    ]         = taskconfig['event hooks']['failed script'   ]
+        taskd.hook_scripts[ 'timeout'   ]         = taskconfig['event hooks']['timeout script'  ]
         # task-specific timeout hook scripts
-        taskd.timeouts[ 'submission'    ]     = taskconfig['task submission timeout in minutes']
-        taskd.timeouts[ 'execution'     ]     = taskconfig['task execution timeout in minutes' ]
-        taskd.timeouts[ 'reset on incoming' ] = taskconfig['reset execution timeout on incoming messages']
+        taskd.timeouts[ 'submission'    ]     = taskconfig['event hooks']['submission timeout in minutes']
+        taskd.timeouts[ 'execution'     ]     = taskconfig['event hooks']['execution timeout in minutes' ]
+        taskd.timeouts[ 'reset on incoming' ] = taskconfig['event hooks']['reset execution timeout on incoming messages']
 
         taskd.logfiles    = taskconfig[ 'extra log files' ]
-        taskd.commands    = taskconfig[ 'command' ]
         taskd.environment = taskconfig[ 'environment' ]
         taskd.directives  = taskconfig[ 'directives' ]
 
@@ -1144,9 +1129,6 @@ class config( CylcConfigObj ):
 
     def get_task_proxy( self, name, ctime, state, stopctime, startup ):
         # get a proxy for a task in the dependency graph.
-        if not self.tasks_loaded:
-            # load all tasks defined by the graph
-            self.load()
         return self.taskdefs[name].get_task_class()( ctime, state, stopctime, startup )
 
     def get_task_proxy_raw( self, name, ctime, state, stopctime,
@@ -1161,7 +1143,7 @@ class config( CylcConfigObj ):
         # assume that the requested ctime is valid for the task.
         td = self.get_taskdef( name, strict=True )
         chour = int(ctime[8:10])
-        hours = self['tasks'][name]['hours']
+        hours = self['runtime'][name]['hours']
         if len(hours) == 0:
             # no hours defined; instantiation will fail unless we assume
             # the test hour is valid.
@@ -1184,107 +1166,4 @@ class config( CylcConfigObj ):
         return tdclass
 
     def get_task_class( self, name ):
-        if not self.tasks_loaded:
-            self.load()
         return self.taskdefs[name].get_task_class()
-
-    def load_raw_task_definitions( self ):
-        # !!!!!! DEVELOPMENT USE -EXPERTS ONLY !!!!!!
-        # This method may use items defined in suite.rc:[raw task definitions]
-        # to test new task proxy class developments without bothering
-        # with suite.rc graph parsing. It is not guaranteed to be
-        # complete, i.e. you may not be able to translate all currently 
-        # graphable suites into raw form without adding to this method.
-
-        count_raw = 0
-        rawtd = self['raw task definitions']
-        for name in rawtd:
-            count_raw += 1
-            taskconfig = rawtd[name]
-            try:
-                taskd = taskdef.taskdef( name )
-            except taskdef.DefinitionError, x:
-                raise SuiteConfigError, str(x)
-
-            taskd.type = taskconfig['type']
-
-            for mod in taskconfig['type modifiers']:
-                taskd.modifiers.append(mod)
-                if mod == 'clocktriggered':
-                    taskd.clocktriggered_offset = taskconfig['clock trigger offset in hours']
-
-            for lbl in taskconfig['outputs']:
-                taskd.outputs.append( taskconfig['outputs'][lbl] )
-
-            if not self['ignore task owners']:
-                taskd.owner = taskconfig['owner']
-
-            if self.simulation_mode:
-                # use simulation mode specific job submit method for all tasks
-                taskd.job_submit_method = self['simulation mode']['job submission method']
-            elif taskconfig['job submission method'] != None:
-                # a task-specific job submit method was specified
-                taskd.job_submit_method = taskconfig['job submission method']
-            else:
-                # suite default job submit method
-                taskd.job_submit_method = self['job submission method']
-
-            taskd.job_submit_command_template = taskconfig['job submission command template']
-            taskd.job_submit_log_directory = taskconfig['job submission log directory']
-
-            if taskconfig['remote host']:
-                taskd.remote_host = taskconfig['remote host']
-                # consistency check
-                if not taskconfig['remote cylc directory']:
-                    raise SuiteConfigError, name + ": tasks with a remote host must specify the remote cylc directory"
-
-            taskd.remote_shell_template = taskconfig['remote shell template']
-            taskd.remote_cylc_directory = taskconfig['remote cylc directory']
-            taskd.remote_suite_directory = taskconfig['remote suite directory']
-            taskd.manual_messaging = taskconfig['manual task completion messaging']
-
-            taskd.hook_scripts[ 'submitted' ]         = taskconfig['task submitted hook script']
-            taskd.hook_scripts[ 'submission failed' ] = taskconfig['task submission failed hook script']
-            taskd.hook_scripts[ 'started'   ]         = taskconfig['task started hook script'  ]
-            taskd.hook_scripts[ 'warning'   ]         = taskconfig['task warning hook script'  ]
-            taskd.hook_scripts[ 'succeeded' ]         = taskconfig['task succeeded hook script' ]
-            taskd.hook_scripts[ 'failed'    ]         = taskconfig['task failed hook script'   ]
-            taskd.hook_scripts[ 'timeout'   ]         = taskconfig['task timeout hook script'  ]
-            # task-specific timeout hook scripts
-            taskd.timeouts[ 'submission'    ]     = taskconfig['task submission timeout in minutes']
-            taskd.timeouts[ 'execution'     ]     = taskconfig['task execution timeout in minutes' ]
-            taskd.timeouts[ 'reset on incoming' ] = taskconfig['reset execution timeout on incoming messages']
-
-            taskd.description = taskconfig['description']
-            taskd.commands = taskconfig['command']
-            taskd.logfiles = taskconfig['extra log files']
-            taskd.envrionment = taskconfig['environment']
-            taskd.directives = taskconfig['directives']
-
-            valid_hours = taskconfig['hours string']
-            if valid_hours:
-                # cycling tasks
-                taskd.set_valid_hours( valid_hours )
-                for lbl in taskconfig['prerequisites']:
-                    taskd.add_trigger( taskconfig['prerequisites'][lbl], valid_hours )
-            elif taskconfig['asyncid pattern']:
-                # repeating asynchronous tasks
-                taskd.asyncid_pattern = taskconfig['asyncid pattern']
-                lpre = taskconfig['prerequisites']
-                for lbl in lpre:
-                    pre = re.sub( '\$\(ASYNCID\)', '(' + taskconfig['asyncid pattern'] + ')', lpre[lbl] )
-                    taskd.loose_prerequisites.append(pre)
-            else:
-                # one-off asynchronous tasks
-                for lbl in taskconfig['prerequisites']:
-                    taskd.add_asynchronous_trigger( taskconfig['prerequisites'][lbl] )
-
-            if taskconfig['startup prerequisites']:
-                for lbl in taskconfig['startup prerequisites']:
-                    taskd.add_startup_trigger( taskconfig['startup prerequisites'][lbl], valid_hours )
- 
-            self.taskdefs[name] = taskd
-
-        if count_raw != 0:
-            print >> sys.stderr, "WARNING: this suite contains " + str(count_raw) + " raw (non-graphed) task definitions."
- 

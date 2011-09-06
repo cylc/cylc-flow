@@ -1142,11 +1142,11 @@ The cylc forecast suite metascheduler.
         logs = []
         jsfound = False
         for f in logfiles:
-            if re.search( 'cylc-', f ):
+            if f.endswith('.err') or f.endswith('.out'):
+                logs.append(f)
+            else:
                 jsfound = True
                 js = f
-            else:
-                logs.append(f)
 
         window.set_size_request(800, 300)
         if jsonly:

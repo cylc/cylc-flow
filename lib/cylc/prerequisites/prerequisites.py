@@ -62,10 +62,10 @@ class prerequisites(object):
 
     def count( self ):
         # how many messages are stored
-        len = 0
+        count = 0
         for reqs in self.container:
-            len += len( reqs.satisfied.keys() )
-        return len
+            count += len( reqs.satisfied.keys() )
+        return count
 
     def dump( self ):
         # return an array of strings representing each message and its state

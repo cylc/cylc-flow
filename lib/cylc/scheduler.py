@@ -196,21 +196,16 @@ class scheduler(object):
         # LOAD SUITE CONFIG FILE
         self.config = config( self.suite, simulation_mode=self.simulation_mode )
         self.config.create_directories()
-
         self.suite_dir = self.config.get_dirname()
-
         if self.config['simulation mode only'] and not self.simulation_mode:
             raise SystemExit( "ERROR: this suite can only run in simulation mode (see suite.rc)" )
 
         # DETERMINE SUITE LOGGING AND STATE DUMP DIRECTORIES
-        self.logging_dir = os.path.join( self.config['suite log directory'] ) 
-        self.state_dump_dir   = os.path.join( self.config['state dump directory'] )
+        self.logging_dir = self.config['suite log directory']
+        self.state_dump_dir = self.config['state dump directory']
         #DISABLED if self.practice:
         #DISABLED     self.logging_dir += '-practice'
         #DISABLED     self.state_dump_dir   += '-practice'
-        # create logging and state dump directoriesif necessary
-        mkdir_p( self.logging_dir )
-        mkdir_p( self.state_dump_dir )
 
         self.banner[ 'Logging to' ] = self.logging_dir
         self.banner[ 'State dump' ] = self.state_dump_dir
@@ -315,19 +310,6 @@ class scheduler(object):
         # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
         self.exclusive_suite_lock = not self.config[ 'allow multiple simultaneous instances' ]
 
-        # GLOBAL EVENT HOOK SCRIPTS
-        task.task.global_hook_scripts[ 'submitted' ]         = self.config['task submitted hook script']
-        task.task.global_hook_scripts[ 'submission failed' ] = self.config['task submission failed hook script']
-        task.task.global_hook_scripts[ 'started'   ]         = self.config['task started hook script'  ]
-        task.task.global_hook_scripts[ 'warning'   ]         = self.config['task warning hook script'  ]
-        task.task.global_hook_scripts[ 'succeeded' ]         = self.config['task succeeded hook script' ]
-        task.task.global_hook_scripts[ 'failed'    ]         = self.config['task failed hook script'   ]
-        task.task.global_hook_scripts[ 'timeout'   ]         = self.config['task timeout hook script'  ]
-        # GLOBAL TIMEOUT HOOK SCRIPTS
-        task.task.global_timeouts[ 'submission'    ]     = self.config['task submission timeout in minutes']
-        task.task.global_timeouts[ 'execution'     ]     = self.config['task execution timeout in minutes' ]
-        task.task.global_timeouts[ 'reset on incoming' ] = self.config['reset execution timeout on incoming messages']
-
         # set suite in task class (for passing to hook scripts)
         task.task.suite = self.suite
 
@@ -351,16 +333,6 @@ class scheduler(object):
             cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port )
         cylcenv[ 'CYLC_UTC' ] = str(utc)
 
-        # SUITE.RC GLOBAL ENVIRONMENT
-        globalenv = OrderedDict()
-        for var in self.config['environment']:
-            globalenv[ var ] = self.config['environment'][var]
-
-        # SUITE.RC GLOBAL DIRECTIVES
-        globaldvs = OrderedDict()
-        for var in self.config['directives']:
-            globaldvs[ var ] = self.config['directives'][var]
-
         # CLOCK (accelerated time in simulation mode)
         rate = self.config['simulation mode']['clock rate in seconds per simulation hour']
         offset = self.config['simulation mode']['clock offset from initial cycle time in hours']
@@ -373,29 +345,14 @@ class scheduler(object):
         self.pyro.connect( self.clock, 'clock' )
 
         self.failout_task_id = self.options.failout_task_id
-        cylcenv['CYLC_SIMULATION_SLEEP'] =  self.config['simulation mode']['task run time in seconds']
 
         # JOB SUBMISSION
         job_submit.simulation_mode = self.simulation_mode
         job_submit.cylc_env = cylcenv
-        job_submit.global_env = globalenv
-        job_submit.global_dvs = globaldvs
-        job_submit.shell = self.config['job submission shell']
-        job_submit.joblog_dir = self.config[ 'job submission log directory' ]
         if self.simulation_mode and self.failout_task_id:
-            job_submit.failout_id = self.failout_task_id
-        job_submit.global_pre_scripting = self.config['pre-command scripting']
-        job_submit.global_post_scripting = self.config['post-command scripting']
-        job_submit.owned_task_execution_method = self.config['owned task execution method']
-        job_submit.global_manual_messaging = self.config['manual task completion messaging']
+                job_submit.failout_id = self.failout_task_id
 
-        job_submit.global_task_owner = self.config['owner']
-        job_submit.global_remote_host = self.config['remote host']
-        job_submit.global_remote_shell_template = self.config['remote shell template']
-        job_submit.global_remote_cylc_dir = self.config['remote cylc directory']
-        job_submit.global_remote_suite_dir = self.config['remote suite directory']
-
-        # LOCAL ENVIRONMENT
+        # SCHEDULER ENVIRONMENT
         # Access to the suite bin directory may be required for alert
         # scripts executed by the suite (it is no longer required for 
         # direct job submission methods because we now submit a job
@@ -403,8 +360,9 @@ class scheduler(object):
         # the task command.
         os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 
         # user defined local variables that may be required by alert scripts
-        for var in self.config['cylc local environment']:
-            os.environ[var] = self.config['cylc local environment'][var]
+        for var in self.config['scheduler environment']:
+            os.environ[var] = self.config['scheduler environment'][var]
+
         # suite identity for alert scripts
         os.environ[ 'CYLC_MODE' ] = 'scheduler'
         os.environ[ 'CYLC_SUITE_HOST' ] =  str( self.host )
