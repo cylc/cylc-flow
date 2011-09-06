@@ -18,8 +18,13 @@
 
 # TO DO: check for multiple definition of same prerequisites, e.g. via
 # two cycle-time sections in the graph.
+
 # TO DO: document use foo(T-6):out1, not foo:out1 with $(CYCLE_TIME-6) in
 # the explicit output message - so the graph will plot correctly.
+
+# TO DO: document that cylc hour sections must be unique, but can
+# overlap: [[[0]]] and [[[0,12]]]; but if the same dependency is 
+# defined twice it will result in a "duplicate prerequisite" error.
 
 # NOTE: configobj.reload() apparently does not revalidate (list-forcing
 # is not done, for example, on single value lists with no trailing
@@ -103,9 +108,7 @@ class edge( object):
         m = re.search( '(\w+)\s*\[\s*T\s*([+-])(\d+)\s*\]', left )
         if m: 
             left, sign, offset = m.groups()
-            if sign != '-':
-                # TO DO: this check is redundant (already checked by graphnode processing).
-                raise SuiteConfigError, "Prerequisite offsets must be negative: " + left
+            # sign must be negative but this is already checked by graphnode processing.
             foo = ct(tag)
             foo.decrement( hours=offset )
             tag = foo.get()
@@ -524,7 +527,6 @@ class config( CylcConfigObj ):
                 if len(bad_hours) > 0:
                     raise SuiteConfigError, 'ERROR: [tasks]->[[' + name + ']]->hours disallows the graphed hour(s) ' + ','.join(bad_hours)
 
-        # TO DO: check listed family members in the same way
         # TO DO: check that any multiple appearance of same task  in
         # 'special tasks' is valid. E.g. a task can be both
         # 'sequential' and 'clock-triggered' at the time, but not both
@@ -562,8 +564,7 @@ class config( CylcConfigObj ):
         return self['description']
 
     def get_coldstart_task_list( self ):
-        # TO DO: automatically determine this by parsing the dependency
-        #        graph - requires some thought.
+        # TO DO: automatically determine this by parsing the dependency graph?
         # For now user must define this:
         return self['scheduling']['special task types']['cold-start']
 
@@ -868,10 +869,8 @@ class config( CylcConfigObj ):
             foo = ct( ctime )
 
             hour = str(int(start_ctime[8:10])) # get string without zero padding
-            # TO DO: TEST ZERO PADDING IN SECTION HEADINGS
             # TO DO: clean up ctime and hour handling in the following code, down 
             #        to "# sort and then add edges ...". It works, but is messy.
-
             found = True
             for h in range( int(hour), 24 + int(hour) ):
                 diffhrs = h - int(hour)
@@ -1061,7 +1060,7 @@ class config( CylcConfigObj ):
             taskd.modifiers.append( 'sequential' )
 
         # SET MODEL TASK INDICATOR
-        # (TO DO - identify these tasks from the graph?)
+        # (TO DO - can we identify these tasks from the graph?)
         elif name in self['scheduling']['special task types']['tasks with explicit restart outputs']:
             taskd.type = 'tied'
         else:
@@ -1074,7 +1073,6 @@ class config( CylcConfigObj ):
 
         # get the task runtime
         taskconfig = self['runtime'][name]
-
         taskd.description = taskconfig['description']
 
         for lbl in taskconfig['outputs']:
@@ -1098,12 +1096,10 @@ class config( CylcConfigObj ):
         taskd.job_submit_command_template = taskconfig['job submission']['command template']
         taskd.job_submit_log_directory = taskconfig['job submission']['log directory']
 
-        # TO DO: don't need these tests as the default is None XXXXXXXXXXXXXXXXXXXXXXXXx
-        if taskconfig['remote']['host']:
-            taskd.remote_host = taskconfig['remote']['host']
-            # consistency check
+        taskd.remote_host = taskconfig['remote']['host']
+        if taskd.remote_host:
             if not taskconfig['remote']['cylc directory']:
-                raise SuiteConfigError, name + ": tasks with a remote host must specify the remote cylc directory"
+                raise SuiteConfigError, name + ": remotely hosted tasks must specify the remote cylc directory"
 
         taskd.remote_shell_template = taskconfig['remote']['remote shell template']
         taskd.remote_cylc_directory = taskconfig['remote']['cylc directory']
