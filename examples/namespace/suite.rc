@@ -54,6 +54,4 @@ final cycle time = 2010080900
         inherit = baz
 
 [visualization]
-#    show family members = True
-    grouped families = OPS
-
+    #collapsed families = OPS, VAR, baz, root

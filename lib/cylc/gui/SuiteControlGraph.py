@@ -108,14 +108,6 @@ Dependency graph based GUI suite control interface.
         menu_root = gtk.MenuItem( task_id )
         menu_root.set_submenu( menu )
 
-        group_item = gtk.MenuItem( 'Group' )
-        group_item.connect( 'activate', self.grouping, name, True )
-        menu.append( group_item )
-
-        ungroup_item = gtk.MenuItem( 'UnGroup' )
-        ungroup_item.connect( 'activate', self.grouping, name, False )
-        menu.append( ungroup_item )
-
         timezoom_item_direct = gtk.MenuItem( 'Focus on ' + ctime )
         timezoom_item_direct.connect( 'activate', self.focused_timezoom_direct, ctime )
 
@@ -124,6 +116,13 @@ Dependency graph based GUI suite control interface.
 
         timezoom_reset_item = gtk.MenuItem( 'Focus Reset' )
         timezoom_reset_item.connect( 'activate', self.focused_timezoom_direct, None )
+
+        group_item = gtk.MenuItem( 'Group' )
+        group_item.connect( 'activate', self.grouping, name, True )
+        ungroup_item = gtk.MenuItem( 'UnGroup' )
+        ungroup_item.connect( 'activate', self.grouping, name, False )
+        ungroupall_item = gtk.MenuItem( 'Recursive UnGroup' )
+        ungroupall_item.connect( 'activate', self.grouping, name, False, True )
 
         if type == 'collapsed subtree':
             title_item = gtk.MenuItem( 'Subtree: ' + task_id )
@@ -152,6 +151,12 @@ Dependency graph based GUI suite control interface.
             menu.append( timezoom_reset_item )
 
             menu.append( gtk.SeparatorMenuItem() )
+            menu.append( group_item )
+            menu.append( ungroup_item )
+            menu.append( ungroupall_item )
+
+            menu.append( gtk.SeparatorMenuItem() )
+
             collapse_item = gtk.MenuItem( 'Collapse Subtree' )
             menu.append( collapse_item )
             collapse_item.connect( 'activate', self.collapse_subtree, task_id )
@@ -173,7 +178,8 @@ Dependency graph based GUI suite control interface.
 
         return True
 
-    def grouping( self, w, name, group ):
+    def grouping( self, w, name, group, all=False ):
+        self.x.ungroupall = all
         if group:
             self.x.group.append(name)
         else:

@@ -349,11 +349,19 @@ class config( CylcConfigObj ):
                 hierarchy.append( name )
                 inherit = self['runtime'][name]['inherit']
                 if inherit:
+                    if inherit not in self['runtime']:
+                        raise SuiteConfigError, 'Undefined parent runtime: ' + inherit
+                        # To allow familes defined implicitly by use in the graph and member
+                        # runtime inheritance: 1/ add name to runtime and inherit from root;
+                        # 2/ set the hierarchy for name to [name,root]; 3/ add members to
+                        # self.members[name]; 4/ add each member to self.members[root].
                     name = inherit
                     if name not in self.members:
                         self.members[name] = []
                     self.members[name].append(label)
                 else:
+                    #if hierarchy[-1] != 'root':
+                    #    hierarchy.append('root')
                     break
             self.family_hierarchy[label] = deepcopy(hierarchy)
             hierarchy.pop() # remove 'root'
@@ -363,11 +371,7 @@ class config( CylcConfigObj ):
                 self.inherit( taskconf, self['runtime'][item] )
             self['runtime'][label] = taskconf
 
-        #for fam in self.explicit_task_families:
-        #    for mem in self.explicity_task_families[fam]:
-        #        self.family_hierarchy[mem] = [mem, fam, 'root']
-
-        self.closed_families = self['visualization']['grouped families']
+        self.closed_families = self['visualization']['collapsed families']
 
         self.load()
         self.__check_tasks()
@@ -831,31 +835,24 @@ class config( CylcConfigObj ):
                 # TO DO: ALSO CONSIDER SUICIDE FOR STARTUP AND ASYNC
                 self.taskdefs[right].add_conditional_trigger( ctrig, expr, section, suicide )
 
-    def get_graph( self, start_ctime, stop, colored=True, raw=False, group_nodes=[], ungroup_nodes=[] ):
+    def get_graph( self, start_ctime, stop, colored=True, raw=False, group_nodes=[], ungroup_nodes=[], ungroup_all=False ):
+
         for node in group_nodes:
             if node != 'root':
                 parent = self.family_hierarchy[node][1]
                 #print 'closing', parent
                 if parent not in self.closed_families:
                     self.closed_families.append( parent )
+
         for node in ungroup_nodes:
             #print 'opening', node
             if node in self.closed_families:
-                    self.closed_families.remove(node)
-            continue
-            # group its immediate sub nodes
-            closeme = []
-            for fam in self.family_hierarchy:
-                if fam == 'root' or fam == node:
-                    continue
-                if node == self.family_hierarchy[fam][1]:
-                    if fam in self.members:
-                        # (else has no members to close)
-                        closeme.append(fam)
-            for mem in closeme:
-                #print '   closing', mem
-                if mem not in self.closed_families:
-                    self.closed_families.append(mem)
+                self.closed_families.remove(node)
+            if ungroup_all:
+                for fam in deepcopy(self.closed_families):
+                    if fam in self.members[node]:
+                        #print '  opening', fam
+                        self.closed_families.remove(fam)
 
         if colored:
             graph = graphing.CGraph( self.suite, self['visualization'] )
@@ -982,7 +979,17 @@ class config( CylcConfigObj ):
         # Replace family members with family nodes if requested.
         lname, ltag = nl.split('%')
         rname, rtag = nr.split('%')
-        for fam in self.closed_families:
+
+        # for nested families, only consider the outermost one
+        clf = deepcopy( self.closed_families )
+        for i in self.closed_families:
+            for j in self.closed_families:
+                if i in self.members[j]:
+                    # i is a member of j
+                    if i in clf:
+                        clf.remove( i )
+
+        for fam in clf:
             if lname in self.members[fam] and rname in self.members[fam]:
                 # l and r are both members of fam
                 #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
