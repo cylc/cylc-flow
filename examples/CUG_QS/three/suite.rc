@@ -34,6 +34,13 @@ uses a private running directory for its restart files)."""
             TASK_EXE_SECONDS = 5
             WORKSPACE = /tmp/$USER/$CYLC_SUITE/common
 
+# HERE'S HOW TO GET ALL TASKS IN THIS SUITE TO RUN ON A REMOTE HOST:
+#        [[[remote]]]
+#            host = foo.bar.baz
+#            cylc directory = /path/to/remote/cylc-x.y.z
+#            suite definition directory = /path/to/remote/suite/definition
+#            remote shell template = "ssh -o BatchMode=yes -v %s"
+
     [[Prep]]
         description = "prepare the suite workspace for a new run"
         command = clean-workspace.sh $WORKSPACE
