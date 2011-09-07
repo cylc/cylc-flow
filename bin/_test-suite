@@ -104,6 +104,19 @@ fi
 
 # WAIT FOR ALL TASKS AT 2010010112 TO FINISH 
 # at which point the suite is stalled because X failed.
+
+echo
+echo ">> WAITING for X%2010010112 to fail"
+echo -n "   ."
+READY=false
+while ! $READY; do
+    READY=true
+    ! grep "X%2010010112 failed" $LOG > /dev/null 2>&1 && READY=false
+    echo -n .
+    sleep 1
+done
+echo done
+
 echo
 echo ">> WAITING for suite to stall at 2010010112 due to failed X"
 echo -n "   ."
@@ -113,8 +126,6 @@ while ! $READY; do
     for TASK in A B C D E F; do
         ! grep "${TASK}%2010010106 succeeded" $LOG > /dev/null 2>&1 && READY=false
     done
-    #! grep "X%2010010112 failed" $LOG && READY=false
-    ! grep "X%2010010112 failed" $LOG > /dev/null 2>&1 && READY=false
     echo -n .
     sleep 1
 done

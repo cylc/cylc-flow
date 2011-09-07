@@ -699,7 +699,7 @@ class config( CylcConfigObj ):
             for rt in rights:
                 # foo => '!bar' means task bar should suicide if foo succeeds.
                 suicide = False
-                if rt.startswith('!'):
+                if rt and rt.startswith('!'):
                     r = rt[1:]
                     suicide = True
                 else:
@@ -707,6 +707,8 @@ class config( CylcConfigObj ):
 
                 if ttype != 'cycling':
                     for n in lnames + [r]:
+                        if not n:
+                            continue
                         try:
                             name = graphnode( n ).name
                         except GraphNodeError, x:
@@ -1029,7 +1031,8 @@ class config( CylcConfigObj ):
         return prev
 
     def load( self ):
-        print 'PARSING SUITE GRAPH'
+        # (to stderr: the admin test suite parses 'cylc log output') 
+        print >> sys.stderr, 'PARSING SUITE GRAPH'
         # parse the suite dependencies section
         for item in self['scheduling']['dependencies']:
             if item == 'graph':

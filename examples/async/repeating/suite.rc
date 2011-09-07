@@ -4,18 +4,19 @@ description = """A tree of asynchronous tasks triggered by a random
 satellite pass or similar, plus some cycling tasks. Asynchronous
 processing runs in parallel if the data comes in quickly."""
 
-[dependencies]
+[scheduling]
+    [[dependencies]]
     # make everything wait on a oneoff asynchronous task
     graph = "prep"
-    [[ASYNCID:SATID-\d+]]
+    [[[ASYNCID:SATID-\d+]]]
         graph = """prep => watcher:a => upload:a & archive:a"""
         daemon = watcher
 
-    [[0,12]]
+    [[[0,12]]]
         # a couple of cycling tasks in the same suite, because we can.
         graph = "prep => A => B"
 
-[tasks]
+[runtime]
     [[watcher]]
         description = "watch for incoming satellite data"
         command = watcher.sh
