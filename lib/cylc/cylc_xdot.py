@@ -111,6 +111,7 @@ class MyDotWindow( xdot.DotWindow ):
     def parse_graph( self ):
         # reparse the graph
         self.suiterc = config.config( self.suite )
+        family_nodes = self.suiterc.members.keys()
         self.suitercfile = self.suiterc.get_filename()
         if self.ctime != None and self.stop_after != None:
             graph = self.suiterc.get_graph( self.ctime, self.stop_after, raw=self.raw )
@@ -121,6 +122,12 @@ class MyDotWindow( xdot.DotWindow ):
             # timedelta: days, seconds, microseconds; ignoring microseconds
             stop = stop_delta.days * 24 + stop_delta.seconds / 3600
             graph = self.suiterc.get_graph( one, stop, raw=self.raw )
+
+        for node in graph.nodes():
+            name, tag = node.get_name().split('%')
+            if name in family_nodes:
+                node.attr['shape'] = 'doubleoctagon'
+
         self.set_dotcode( graph.string() )
         if self.outfile and not self.disable_output_image:
             try:

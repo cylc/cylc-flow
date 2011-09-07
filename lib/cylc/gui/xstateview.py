@@ -89,9 +89,17 @@ class xupdater(threading.Thread):
         self.reconnect()
 
         self.suiterc = suiterc
+        self.family_nodes = suiterc.members.keys()
+
         self.graph_warned = {}
 
         self.collapse = []
+
+        self.group = []
+        self.ungroup = []
+        self.ungroup_recursive = False
+        self.group_all = False
+        self.ungroup_all = False
 
         self.graph_frame_count = 0
 
@@ -228,6 +236,7 @@ class xupdater(threading.Thread):
         self.graphw.add_node( 'failed' )
         self.graphw.add_node( 'held' )
         self.graphw.add_node( 'base' )
+        self.graphw.add_node( 'family' )
 
         waiting = self.graphw.get_node( 'waiting' )
         submitted = self.graphw.get_node( 'submitted' )
@@ -236,11 +245,15 @@ class xupdater(threading.Thread):
         failed = self.graphw.get_node( 'failed' )
         held = self.graphw.get_node( 'held' )
         base = self.graphw.get_node( 'base' )
+        family = self.graphw.get_node( 'family' )
 
-        for node in [ waiting, submitted, running, succeeded, failed, held, base ]:
+
+        for node in [ waiting, submitted, running, succeeded, failed, held, base, family ]:
             node.attr['style'] = 'filled'
             node.attr['shape'] = 'ellipse'
             node.attr['URL'] = 'KEY'
+
+        family.attr['shape'] = 'doubleoctagon'
 
         waiting.attr['fillcolor'] = 'cadetblue2'
         waiting.attr['color'] = 'cadetblue4'
@@ -254,13 +267,16 @@ class xupdater(threading.Thread):
         failed.attr['color'] = 'firebrick3'
         base.attr['fillcolor'] = 'cornsilk'
         base.attr['color'] = 'black'
+        family.attr['fillcolor'] = 'cornsilk'
+        family.attr['color'] = 'black'
         held.attr['fillcolor'] = 'yellow'
         held.attr['color'] = 'black'
 
         self.graphw.add_edge( base, waiting, autoURL=False, style='invis')
         self.graphw.add_edge( waiting, submitted, autoURL=False, style='invis')
         self.graphw.add_edge( submitted, running, autoURL=False, style='invis')
-        self.graphw.add_edge( running, succeeded, autoURL=False, style='invis')
+
+        self.graphw.add_edge( family, succeeded, autoURL=False, style='invis')
         self.graphw.add_edge( succeeded, failed, autoURL=False, style='invis')
         self.graphw.add_edge( failed, held, autoURL=False, style='invis')
 
@@ -318,9 +334,24 @@ class xupdater(threading.Thread):
 
         #if diffhrs < 25:
         #    diffhrs = 25
-        self.graphw = self.suiterc.get_graph( oldest, diffhrs, colored=False, raw=raw ) 
+        self.graphw = self.suiterc.get_graph( oldest, diffhrs,
+                colored=False, raw=raw, group_nodes=self.group,
+                ungroup_nodes=self.ungroup,
+                ungroup_recursive=self.ungroup_recursive, 
+                group_all=self.group_all, ungroup_all=self.ungroup_all) 
+        self.group = []
+        self.ungroup = []
+        self.group_all = False
+        self.ungroup_all = False
+        self.ungroup_recursive = False
 
         self.rem_nodes = []
+
+        # FAMILIES
+        for node in self.graphw.nodes():
+            name, tag = node.get_name().split('%')
+            if name in self.family_nodes:
+                node.attr['shape'] = 'doubleoctagon'
 
         # CROPPING
         if self.crop:

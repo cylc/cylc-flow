@@ -59,9 +59,6 @@ UTC mode = boolean( default=False )
         one-off = force_list( default=list())
         tasks with explicit restart outputs = force_list( default=list())
 
-    [[families]]
-        __many__ = force_list( default=None )
-
     [[dependencies]]
         # oneoff asynchronous tasks
         graph = string( default=None )
@@ -162,7 +159,7 @@ UTC mode = boolean( default=False )
 [visualization]
     initial cycle time = integer( default=2999010100 )
     final cycle time = integer( default=2999010123 )
-    grouped families = force_list( default=list() )
+    collapsed families = force_list( default=list() )
     use node color for edges = boolean( default=True )
     default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=box'))
     default edge attributes = force_list( default=list('color=black'))

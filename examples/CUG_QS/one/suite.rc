@@ -3,16 +3,17 @@ description = "(See the Cylc User Guide)"
 
 runahead limit in hours = 12
  
-[special tasks]
-    startup         = Prep
-    clock-triggered = GetData(1)
+[scheduling]
+    [[special task types]]
+        start-up         = Prep
+        clock-triggered = GetData(1)
 
-[dependencies]
-    [[ 0,6,12,18 ]]
-        graph  =  """Prep => GetData => Model => PostA
+    [[dependencies]]
+        [[[ 0,6,12,18 ]]]
+            graph  =  """Prep => GetData => Model => PostA
                      Model[T-6] => Model"""
-    [[ 6,18 ]]
-        graph = "Model => PostB"
+        [[[ 6,18 ]]]
+            graph = "Model => PostB"
 
 [visualization] # optional
     [[node groups]]

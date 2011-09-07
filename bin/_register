@@ -44,14 +44,18 @@ if len(args) != 2:
 # NEW REGISTRATION: cylc register SUITE PATH
 suite = args[0]
 rdir = args[1]
+if rdir.endswith('suite.rc'):
+    rdir = os.path.dirname(rdir)
 if not os.path.isdir( rdir ):
-    print "Second argument is not a valid directory: " + rdir
+    print "Second argument is not a valid suite directory: " + rdir
     print "Trying reversed arguments..."
     # + cylc register PATH SUITE 
     suite = args[1]
     rdir = args[0]
-if not os.path.isdir( rdir ):
-    raise SystemExit( 'ERROR: Suite definition PATH not valid: ' + rdir )
+    if rdir.endswith('suite.rc'):
+        rdir = os.path.dirname(rdir)
+        if not os.path.isdir( rdir ):
+            raise SystemExit( 'ERROR: Suite definition PATH not valid: ' + rdir )
 
 # get suite title by parsing the config file
 try:

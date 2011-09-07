@@ -438,12 +438,12 @@ use \lstinline=cylc db print --central= on the command line.
 %\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
 \begin{lstlisting}
 $ cylc db print --central
- admin:examples:CUG1    "Cylc User Guide Example 1"  ~admin/cylc/examples/CUG1
- admin:examples:CUG73   "Cylc User Guide <SNIP>"     ~admin/cylc/examples/CUG7.3
- admin:examples:CUG74   "A two-task test suite"      ~admin/cylc/examples/CUG7.4
- admin:examples:CUG_QS1 "Cylc User Guide <SNIP> "    ~/dmin/cylc/examples/CUG5/one
- admin:examples:CUG_QS2 "Cylc User Guide <SNIP>"     ~admin/cylc/examples/CUG5/two
- admin:examples:CUG_QS3 "Cylc User Guide <SNIP>"     ~admin/cylc/examples/CUG5/three
+ admin:examples:CUG_1    "Cylc User Guide Example 1"  ~admin/cylc/examples/CUG_1
+ admin:examples:CUG_73   "Cylc User Guide <SNIP>"     ~admin/cylc/examples/CUG_7.3
+ admin:examples:CUG_74   "A two-task test suite"      ~admin/cylc/examples/CUG_7.4
+ admin:examples:CUG_QS1 "Cylc User Guide <SNIP> "    ~/dmin/cylc/examples/CUG_QS/one
+ admin:examples:CUG_QS2 "Cylc User Guide <SNIP>"     ~admin/cylc/examples/CUG_QS/two
+ admin:examples:CUG_QS3 "Cylc User Guide <SNIP>"     ~admin/cylc/examples/CUG_QS/three
  admin:examples:FFHook  "family failure hook <SNIP>" ~admin/cylc/examples/<SNIP>
  admin:examples:FFTask  "family failure clean <SNIP>"~admin/cylc/examples/<SNIP>
 DONE
@@ -798,9 +798,9 @@ the central suite database during cylc installation,
 %\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
 \begin{lstlisting}
 $ cylc database print --central | grep Quick
- admin:examples:CUG_QS1 "<SNIP>Quick Start Example 1" ~admin/cylc/examples/CUG5/one
- admin:examples:CUG_QS2 "<SNIP>Quick Start Example 2" ~admin/cylc/examples/CUG5/two
- admin:examples:CUG_QS3 "<SNIP>Quick Start Example 3" ~admin/cylc/examples/CUG5/three
+ admin:examples:CUG_QS1 "<SNIP>Quick Start Example 1" ~admin/cylc/examples/CUG_QS/one
+ admin:examples:CUG_QS2 "<SNIP>Quick Start Example 2" ~admin/cylc/examples/CUG_QS/two
+ admin:examples:CUG_QS3 "<SNIP>Quick Start Example 3" ~admin/cylc/examples/CUG_QS/three
 DONE
 \end{lstlisting}
 %\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
@@ -876,20 +876,20 @@ Here's how to do the same thing on the command line:
 \begin{lstlisting}
 $ cylc db import admin:examples: $HOME/suites/examples
 Matched:
-   admin:examples:CUG1
-   admin:examples:CUG73
-   admin:examples:CUG74
+   admin:examples:CUG_1
+   admin:examples:CUG_73
+   admin:examples:CUG_74
    admin:examples:CUG_QS1
    admin:examples:CUG_QS2
    admin:examples:CUG_QS3
    admin:examples:FFHook
    admin:examples:FFTask
 Locking database /home/oliverh/.cylc/LDB/db
-REGISTERED examples:CUG1 "<SNIP> Example 1" ~oliverh/suites/examples/CUG1
+REGISTERED examples:CUG_1 "<SNIP> Example 1" ~oliverh/suites/examples/CUG_1
 Copying suite definition
-REGISTERED examples:CUG73 "<SNIP> Graph Example" ~oliverh/suites/examples/CUG73
+REGISTERED examples:CUG_73 "<SNIP> Graph Example" ~oliverh/suites/examples/CUG_73
 Copying suite definition
-REGISTERED examples:CUG74 "A two-task test suite" ~oliverh/suites/examples/CUG74
+REGISTERED examples:CUG_74 "A two-task test suite" ~oliverh/suites/examples/CUG_74
 Copying suite definition
 REGISTERED examples:CUG_QS1 "<SNIP> Example 1" ~oliverh/suites/examples/CUG_QS1
 Copying suite definition
@@ -953,7 +953,7 @@ for a screenshot and instructions.
 
 You should see the following suite.rc file in your editor: 
 
-\lstinputlisting{../examples/CUG5/one/suite.rc}
+\lstinputlisting{../examples/CUG_QS/one/suite.rc}
 
 This defines a complete, valid, runnable suite. To understand suite.rc
 files in detail, read {\em Suite Definition}
@@ -1320,7 +1320,7 @@ $ cylc grep OUTPUT_DIR examples:CUG3
 SUITE: examples:CUG_QS3
 PATTERN: OUTPUT_DIR
 
-FILE: /home/admin/cylc/examples/CUG5/three/suite.rc
+FILE: /home/admin/cylc/examples/CUG_QS/three/suite.rc
    SECTION: [tasks]->[[GetData]]->[[[environment]]]
       [47]:             GETDATA_OUTPUT_DIR = $WORKSPACE
    SECTION: [tasks]->[[ColdModel]]->[[[environment]]]
@@ -1332,19 +1332,19 @@ FILE: /home/admin/cylc/examples/CUG5/three/suite.rc
    SECTION: [tasks]->[[PostB]]->[[[environment]]]
       [77]:             POSTB_OUTPUT_DIR = $WORKSPACE
 
-FILE: /home/admin/cylc/examples/CUG5/three/bin/PostA.sh
+FILE: /home/admin/cylc/examples/CUG_QS/three/bin/PostA.sh
    [7]: cylc checkvars -c POSTA_OUTPUT_DIR
    [21]: touch $POSTA_OUTPUT_DIR/surface-wind.products
 
-FILE: /home/admin/cylc/examples/CUG5/three/bin/GetData.sh
+FILE: /home/admin/cylc/examples/CUG_QS/three/bin/GetData.sh
    [6]: cylc checkvars -c GETDATA_OUTPUT_DIR
    [11]: touch $GETDATA_OUTPUT_DIR/obs-${CYCLE_TIME}.nc
 
-FILE: /home/admin/cylc/examples/CUG5/three/bin/PostB.sh
+FILE: /home/admin/cylc/examples/CUG_QS/three/bin/PostB.sh
    [7]: cylc checkvars -c POSTB_OUTPUT_DIR
    [21]: touch $POSTB_OUTPUT_DIR/precip.products
 
-FILE: /home/admin/cylc/examples/CUG5/three/bin/Model.sh
+FILE: /home/admin/cylc/examples/CUG_QS/three/bin/Model.sh
    [11]: cylc checkvars -c MODEL_OUTPUT_DIR MODEL_RUNNING_DIR
    [54]: touch $MODEL_OUTPUT_DIR/surface-winds-${CYCLE_TIME}.nc
    [55]: touch $MODEL_OUTPUT_DIR/precipitation-${CYCLE_TIME}.nc
@@ -1407,7 +1407,7 @@ Suite.rc Reference}, Appendix~\ref{SuiteRCReference}) are suite-specific.
 After editing a suite always validate it to check for errors, via 
 gcylc or the \lstinline=cylc validate SUITE= command.
 Figure~\ref{fig-validate-eg} shows validation of 
-{\em examples:CUG73} (unfortunately the suite was registered under 
+{\em examples:CUG_73} (unfortunately the suite was registered under 
 a different name when the screenshot was taken). Note the warnings
 that the tasks will be dummied out, as discussed above. 
 
@@ -1415,8 +1415,8 @@ that the tasks will be dummied out, as discussed above.
     \begin{center}
         \includegraphics[width=0.5\textwidth]{screenshots/validate-eg.png}
     \end{center}
-    \caption[Suite {\em examples:CUG73} Validation.]{\small Suite
-    {examples:CUG73} Validation.}
+    \caption[Suite {\em examples:CUG_73} Validation.]{\small Suite
+    {examples:CUG_73} Validation.}
 \label{fig-validate-eg}
 \end{figure}
 
@@ -1854,7 +1854,7 @@ Figure~\ref{fig-dep-eg-1} shows an example alongside its graphical
 representation, plotted with,
 \lstset{language=bash}
 \begin{lstlisting}
-$ cylc graph examples:CUG73 2011052200 2011052206
+$ cylc graph examples:CUG_73 2011052200 2011052206
 # (or use right-click Graph in gcylc)
 \end{lstlisting}
 
@@ -3063,15 +3063,15 @@ option causes it to generate the job script for inspection and show how
 it would be executed with the chosen job submission method. The
 following listing illustrates using the two task example suite of
 Section~\ref{ATaskDefinitionExample} (also registered as {\em
-examples:CUG74} in the central suite database):
+examples:CUG_74} in the central suite database):
 
 \begin{lstlisting}
-% cylc submit --dry-run examples:CUG74 A%2011052400
+% cylc submit --dry-run examples:CUG_74 A%2011052400
 DRY RUN: create the task job script and show how it would be executed.
  > TASK JOB SCRIPT: /tmp/cylc-A%2011052400-jfHtqy
  > JOB SUBMISSION: /tmp/cylc-A%2011052400-jfHtqy </dev/null 1>
-     /home/oliverh/CylcJobLogs/examples/CUG74/A%2011052400-DuaPUt.out 2>
-     /home/oliverh/CylcJobLogs/examples/CUG74/A%2011052400-DuaPUt.err &
+     /home/oliverh/CylcJobLogs/examples/CUG_74/A%2011052400-DuaPUt.out 2>
+     /home/oliverh/CylcJobLogs/examples/CUG_74/A%2011052400-DuaPUt.err &
 \end{lstlisting}
 
 Here is the generated job script:
@@ -3092,10 +3092,10 @@ export CYLC_DIR="/home/oliverh/cylc"
 export CYLC_MODE="submit"
 export CYLC_SUITE_HOST="oliverh-33191VL.greta.niwa.co.nz"
 export CYLC_SUITE_PORT="NONE"
-export CYLC_SUITE_DIR="/home/oliverh/cylc/examples/CUG7.4"
-export CYLC_SUITE="examples:CUG74"
+export CYLC_SUITE_DIR="/home/oliverh/cylc/examples/CUG_7.4"
+export CYLC_SUITE="examples:CUG_74"
 export CYLC_SUITE_GROUP="examples"
-export CYLC_SUITE_NAME="CUG74"
+export CYLC_SUITE_NAME="CUG_74"
 export CYLC_SUITE_OWNER="oliverh"
 export CYLC_USE_LOCKSERVER="True"
 export CYLC_LOCKSERVER_PORT="7767"
@@ -4006,7 +4006,7 @@ been disabled in the current release pending testing.}
 %suite interventions, with complete safety.
 %
 %\begin{lstlisting}
-%cylc restart --practice examples:CUG1
+%cylc restart --practice examples:CUG_1
 %\end{lstlisting}
 %
 %This will start a simulation mode clone of an existing suite from the

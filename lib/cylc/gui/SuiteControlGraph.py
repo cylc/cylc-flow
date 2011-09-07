@@ -117,6 +117,13 @@ Dependency graph based GUI suite control interface.
         timezoom_reset_item = gtk.MenuItem( 'Focus Reset' )
         timezoom_reset_item.connect( 'activate', self.focused_timezoom_direct, None )
 
+        group_item = gtk.MenuItem( 'Group' )
+        group_item.connect( 'activate', self.grouping, name, True )
+        ungroup_item = gtk.MenuItem( 'UnGroup' )
+        ungroup_item.connect( 'activate', self.grouping, name, False )
+        ungroup_rec_item = gtk.MenuItem( 'Recursive UnGroup' )
+        ungroup_rec_item.connect( 'activate', self.grouping, name, False, True )
+
         if type == 'collapsed subtree':
             title_item = gtk.MenuItem( 'Subtree: ' + task_id )
             title_item.set_sensitive(False)
@@ -144,6 +151,12 @@ Dependency graph based GUI suite control interface.
             menu.append( timezoom_reset_item )
 
             menu.append( gtk.SeparatorMenuItem() )
+            menu.append( group_item )
+            menu.append( ungroup_item )
+            menu.append( ungroup_rec_item )
+
+            menu.append( gtk.SeparatorMenuItem() )
+
             collapse_item = gtk.MenuItem( 'Collapse Subtree' )
             menu.append( collapse_item )
             collapse_item.connect( 'activate', self.collapse_subtree, task_id )
@@ -164,6 +177,15 @@ Dependency graph based GUI suite control interface.
         # prevent a memory leak? But I'm not sure how to do this as yet.)
 
         return True
+
+    def grouping( self, w, name, group, rec=False ):
+        self.x.ungroup_recursive = rec
+        if group:
+            self.x.group.append(name)
+        else:
+            self.x.ungroup.append(name)
+        self.x.action_required = True
+        self.x.best_fit = True
 
     def collapse_subtree( self, w, id ):
         self.x.collapse.append(id)
@@ -213,9 +235,25 @@ Dependency graph based GUI suite control interface.
         self.view_menu.append( expand_item )
         expand_item.connect( 'activate', self.expand_all_subtrees )
 
+        group_item = gtk.MenuItem( '_Group All Families' )
+        self.view_menu.append( group_item )
+        group_item.connect( 'activate', self.group_all_families, True )
+
+        ungroup_item = gtk.MenuItem( '_UnGroup All Families' )
+        self.view_menu.append( ungroup_item )
+        ungroup_item.connect( 'activate', self.group_all_families, False )
+
         key_item = gtk.MenuItem( 'Toggle Graph _Key' )
         self.view_menu.append( key_item )
         key_item.connect( 'activate', self.toggle_key )
+
+    def group_all_families( self, w, group ):
+        if group:
+            self.x.group_all = True
+        else:
+            self.x.ungroup_all = True
+        self.x.action_required = True
+        self.x.best_fit = True
 
     def toggle_crop( self, w ):
         self.x.crop = not self.x.crop

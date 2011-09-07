@@ -1,5 +1,4 @@
 title = "Cylc User Guide Quick Start Example 3"
-#description = "(See the Cylc User Guide)"
 
 description = """A clock-triggered data-gathering task, a warm-cycled
 model, and two post-processing tasks (one runs every second cycle). The
@@ -15,24 +14,26 @@ uses a private running directory for its restart files)."""
 #             /       \    
 #       Model[T-6]     > (6,18 UTC only) PostB[T]
 
-[special tasks]
-    startup         = Prep
-    cold start       = ColdModel
-    clock-triggered = GetData(1)
+[scheduling]
+    [[special task types]]
+        start-up         = Prep
+        cold-start       = ColdModel
+        clock-triggered = GetData(1)
 
-[dependencies]
-    [[ 0,6,12,18 ]]
-        graph  =  """Prep => GetData & ColdModel
+    [[dependencies]]
+        [[[ 0,6,12,18 ]]]
+            graph  =  """Prep => GetData & ColdModel
                      GetData => Model => PostA
                      ColdModel | Model[T-6] => Model"""
-    [[ 6,18 ]]
-        graph = "Model => PostB"
+        [[[ 6,18 ]]]
+            graph = "Model => PostB"
 
-[environment]
-TASK_EXE_SECONDS = 5
-WORKSPACE = /tmp/$USER/$CYLC_SUITE/common
+[runtime]
+    [[root]]
+        [[[environment]]]
+            TASK_EXE_SECONDS = 5
+            WORKSPACE = /tmp/$USER/$CYLC_SUITE/common
 
-[tasks]
     [[Prep]]
         description = "prepare the suite workspace for a new run"
         command = clean-workspace.sh $WORKSPACE

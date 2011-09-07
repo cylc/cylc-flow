@@ -15,15 +15,16 @@ should only be modified with extreme caution."""
 # LOCKSERVER OFF: we're only testing scheduling functionality here.
 use lockserver = False
 
-[special tasks]
-    startup          = prep
+[scheduling]
+    [[special task types]]
+    start-up          = prep
     sequential       = A, B, C
-    cold start        = ColdA, ColdB, ColdC
+    cold-start        = ColdA, ColdB, ColdC
     clock-triggered  = X(1)
 
-[dependencies]
-    [[0,6,12,18]]
-        graph =  """X => A => B => E
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph =  """X => A => B => E
                     A => C => F
                     B & C => D
     
@@ -33,14 +34,13 @@ use lockserver = False
 
                     prep => X & ColdA & ColdB & ColdC"""
 
-[namespaces]
-    [[global]]
+[runtime]
+    [[root]]
         [[[environment]]]
             TASK_EXE_SECONDS = 10
             WORKSPACE = /tmp/$USER/$CYLC_SUITE/common
             RUNNING   = $WORKSPACE/running
 
-[tasks]
     [[prep]]
         description = "clean out the suite workspace for a new run"
         command = clean-workspace.sh $WORKSPACE
@@ -109,7 +109,6 @@ use lockserver = False
  
 [visualization]
     default node attributes = "style=filled"
-    show family members = True
     [[node groups]]
         models = A, B, C
         cold   = ColdA, ColdB, ColdC

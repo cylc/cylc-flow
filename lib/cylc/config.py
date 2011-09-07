@@ -199,6 +199,8 @@ class config( CylcConfigObj ):
         self.async_repeating_edges = []
         self.async_repeating_tasks = []
 
+        self.family_hierarchy = {}
+
         if suite:
             self.suite = suite
             try:
@@ -295,7 +297,6 @@ class config( CylcConfigObj ):
         self['visualization']['run time graph']['directory'] = \
                 os.path.expandvars( os.path.expanduser( self['visualization']['run time graph']['directory']))
 
-
         # parse clock-triggered tasks
         self.clock_offsets = {}
         for item in self['scheduling']['special task types']['clock-triggered']:
@@ -309,35 +310,15 @@ class config( CylcConfigObj ):
             else:
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
-        # parse explicitly listed task families
         self.members = {}
-        for fam in self['scheduling']['families']:
-            members = []
-            for mem in self['scheduling']['families'][fam]:
-                m = re.match( '^Python:(.*)$', mem )
-                if m:
-                    # python list-generating expression
-                    try:
-                        members += eval( m.groups()[0] )
-                    except:
-                        raise SuiteConfigError, 'Python error: ' + mem
-                else:
-                    members.append(mem)
-            self.members[fam] = members
-
-        # Parse task config generators. If the runtime section is an
-        # explicit family name (above), or a list of task names, or a
-        # list-generating Python expression, then it is a list of task
-        # names for which the subsequent config applies to each member.
-        # We copy the config section for each member and substitute
-        # '$(TASK)' for the actual task name in all config items.
+        # Parse task config generators. If the runtime section is a list
+        # of task names or a list-generating Python expression, then the
+        # subsequent config applies to each member. We copy the config
+        # section for each member and substitute '$(TASK)' for the
+        # actual task name in all items.
         for item in self['runtime']:
-            delete_item = True
             m = re.match( '^Python:(.*)$', item )
-            if item in self['scheduling']['families']:
-                task_names = self.members[item]
-                delete_item = False
-            elif m:
+            if m:
                 # python list-generating expression
                 try:
                     task_names = eval( m.groups()[0] )
@@ -358,9 +339,8 @@ class config( CylcConfigObj ):
                 # record it under the task name
                 self['runtime'][name] = tconfig
 
-            if delete_item:
-                # delete the original multi-task section
-                del self['runtime'][item]
+            # delete the original multi-task section
+            del self['runtime'][item]
 
         # RUNTIME INHERITANCE
         for label in self['runtime']:
@@ -370,18 +350,29 @@ class config( CylcConfigObj ):
                 hierarchy.append( name )
                 inherit = self['runtime'][name]['inherit']
                 if inherit:
+                    if inherit not in self['runtime']:
+                        raise SuiteConfigError, 'Undefined parent runtime: ' + inherit
+                        # To allow familes defined implicitly by use in the graph and member
+                        # runtime inheritance: 1/ add name to runtime and inherit from root;
+                        # 2/ set the hierarchy for name to [name,root]; 3/ add members to
+                        # self.members[name]; 4/ add each member to self.members[root].
                     name = inherit
                     if name not in self.members:
                         self.members[name] = []
                     self.members[name].append(label)
                 else:
+                    #if hierarchy[-1] != 'root':
+                    #    hierarchy.append('root')
                     break
+            self.family_hierarchy[label] = deepcopy(hierarchy)
             hierarchy.pop() # remove 'root'
             hierarchy.reverse()
             taskconf = self['runtime']['root'].odict()
             for item in hierarchy:
                 self.inherit( taskconf, self['runtime'][item] )
             self['runtime'][label] = taskconf
+
+        self.closed_families = self['visualization']['collapsed families']
 
         self.load()
         self.__check_tasks()
@@ -472,7 +463,6 @@ class config( CylcConfigObj ):
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
         for name in self.taskdefs:
             if name not in self['runtime']:
-                print '-----------', name
                 print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it inherits the root runtime.'
                 self['runtime'][name] = self['runtime']['root'].odict()
  
@@ -710,7 +700,7 @@ class config( CylcConfigObj ):
             for rt in rights:
                 # foo => '!bar' means task bar should suicide if foo succeeds.
                 suicide = False
-                if rt.startswith('!'):
+                if rt and rt.startswith('!'):
                     r = rt[1:]
                     suicide = True
                 else:
@@ -718,6 +708,8 @@ class config( CylcConfigObj ):
 
                 if ttype != 'cycling':
                     for n in lnames + [r]:
+                        if not n:
+                            continue
                         try:
                             name = graphnode( n ).name
                         except GraphNodeError, x:
@@ -779,6 +771,7 @@ class config( CylcConfigObj ):
                 if 'root' not in self.members:
                     # (happens when no runtimes are defined in the suite.rc)
                     self.members['root'] = []
+                self.family_hierarchy[name] = [name, 'root']
                 self.members['root'].append(name)
  
             if name not in self.taskdefs:
@@ -791,7 +784,7 @@ class config( CylcConfigObj ):
                 self.taskdefs[name].type = 'async_oneoff'
             elif ttype == 'async_repeating':
                 self.taskdefs[name].asyncid_pattern = asyncid_pattern
-                if name == self['scheduling'][section]['daemon']:
+                if name == self['scheduling']['dependencies'][section]['daemon']:
                     self.taskdefs[name].type = 'async_daemon'
                 else:
                     self.taskdefs[name].type = 'async_repeating'
@@ -845,7 +838,38 @@ class config( CylcConfigObj ):
                 # TO DO: ALSO CONSIDER SUICIDE FOR STARTUP AND ASYNC
                 self.taskdefs[right].add_conditional_trigger( ctrig, expr, section, suicide )
 
-    def get_graph( self, start_ctime, stop, colored=True, raw=False ):
+    def get_graph( self, start_ctime, stop, colored=True, raw=False,
+            group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
+            group_all=False, ungroup_all=False ):
+
+        if group_all:
+            for fam in self.members:
+                #if fam != 'root':
+                if fam not in self.closed_families:
+                    self.closed_families.append( fam )
+
+        elif ungroup_all:
+            self.closed_families = []
+
+        elif len(group_nodes) > 0:
+            for node in group_nodes:
+                if node != 'root':
+                    parent = self.family_hierarchy[node][1]
+                    #print 'closing', parent
+                    if parent not in self.closed_families:
+                        self.closed_families.append( parent )
+
+        elif len(ungroup_nodes) > 0:
+            for node in ungroup_nodes:
+                #print 'opening', node
+                if node in self.closed_families:
+                    self.closed_families.remove(node)
+                if ungroup_recursive:
+                    for fam in deepcopy(self.closed_families):
+                        if fam in self.members[node]:
+                            #print '  opening', fam
+                            self.closed_families.remove(fam)
+
         if colored:
             graph = graphing.CGraph( self.suite, self['visualization'] )
         else:
@@ -969,9 +993,23 @@ class config( CylcConfigObj ):
 
     def close_families( self, nl, nr ):
         # Replace family members with family nodes if requested.
-        lname, ltag = nl.split('%')
-        rname, rtag = nr.split('%')
-        for fam in self['visualization']['grouped families']:
+        lname, ltag = None, None
+        rname, rtag = None, None
+        if nl:
+            lname, ltag = nl.split('%')
+        if nr:
+            rname, rtag = nr.split('%')
+
+        # for nested families, only consider the outermost one
+        clf = deepcopy( self.closed_families )
+        for i in self.closed_families:
+            for j in self.closed_families:
+                if i in self.members[j]:
+                    # i is a member of j
+                    if i in clf:
+                        clf.remove( i )
+
+        for fam in clf:
             if lname in self.members[fam] and rname in self.members[fam]:
                 # l and r are both members of fam
                 #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
@@ -994,7 +1032,8 @@ class config( CylcConfigObj ):
         return prev
 
     def load( self ):
-        print 'PARSING SUITE GRAPH'
+        # (to stderr: the admin test suite parses 'cylc log output') 
+        print >> sys.stderr, 'PARSING SUITE GRAPH'
         # parse the suite dependencies section
         for item in self['scheduling']['dependencies']:
             if item == 'graph':

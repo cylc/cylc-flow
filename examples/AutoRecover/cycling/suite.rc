@@ -6,19 +6,18 @@ which take themselves out of the suite if model succeeds.
 Model post processing triggers off model or recovery tasks.
 """
 
-
 initial cycle time = 2010080800
 final cycle time = 2010080812
 
 [scheduling]
     [[dependencies]]
-    [[[0,12]]]
-        graph = """
-            pre => model
-            model:fail => diagnose => recover
-            model => !diagnose & !recover
-            model | recover => post
-                """
+        [[[0,12]]]
+            graph = """
+pre => model
+model:fail => diagnose => recover
+model => !diagnose & !recover
+model | recover => post
+                    """
 [runtime]
     [[model]]
         description = "a task that succeeds at O UTC and fails at 12 UTC"
