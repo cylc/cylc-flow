@@ -59,9 +59,6 @@ UTC mode = boolean( default=False )
         one-off = force_list( default=list())
         tasks with explicit restart outputs = force_list( default=list())
 
-    [[families]]
-        __many__ = force_list( default=None )
-
     [[dependencies]]
         # oneoff asynchronous tasks
         graph = string( default=None )

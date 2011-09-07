@@ -5,9 +5,6 @@ initial cycle time = 2010080800
 final cycle time = 2010080900
 
 [scheduling]
-    [[families]]
-        # families not defined by runtime inheritance
-        baz = bar1, bar2
     [[dependencies]]
         [[[0]]]
             graph = """
@@ -51,6 +48,10 @@ final cycle time = 2010080900
         command = "echo run-VAR.sh --apf; sleep 10"
         [[[environment]]]
             VAR_PROG = AnalysePF
+
+    [[baz]]
+    [[bar1,bar2]]
+        inherit = baz
 
 [visualization]
 #    show family members = True

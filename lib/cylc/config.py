@@ -199,6 +199,8 @@ class config( CylcConfigObj ):
         self.async_repeating_edges = []
         self.async_repeating_tasks = []
 
+        self.family_hierarchy = {}
+
         if suite:
             self.suite = suite
             try:
@@ -308,35 +310,15 @@ class config( CylcConfigObj ):
             else:
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
-        # parse explicitly listed task families
         self.members = {}
-        for fam in self['scheduling']['families']:
-            members = []
-            for mem in self['scheduling']['families'][fam]:
-                m = re.match( '^Python:(.*)$', mem )
-                if m:
-                    # python list-generating expression
-                    try:
-                        members += eval( m.groups()[0] )
-                    except:
-                        raise SuiteConfigError, 'Python error: ' + mem
-                else:
-                    members.append(mem)
-            self.members[fam] = members
-
-        # Parse task config generators. If the runtime section is an
-        # explicit family name (above), or a list of task names, or a
-        # list-generating Python expression, then it is a list of task
-        # names for which the subsequent config applies to each member.
-        # We copy the config section for each member and substitute
-        # '$(TASK)' for the actual task name in all config items.
+        # Parse task config generators. If the runtime section is a list
+        # of task names or a list-generating Python expression, then the
+        # subsequent config applies to each member. We copy the config
+        # section for each member and substitute '$(TASK)' for the
+        # actual task name in all items.
         for item in self['runtime']:
-            delete_item = True
             m = re.match( '^Python:(.*)$', item )
-            if item in self['scheduling']['families']:
-                task_names = self.members[item]
-                delete_item = False
-            elif m:
+            if m:
                 # python list-generating expression
                 try:
                     task_names = eval( m.groups()[0] )
@@ -357,12 +339,10 @@ class config( CylcConfigObj ):
                 # record it under the task name
                 self['runtime'][name] = tconfig
 
-            if delete_item:
-                # delete the original multi-task section
-                del self['runtime'][item]
+            # delete the original multi-task section
+            del self['runtime'][item]
 
         # RUNTIME INHERITANCE
-        self.family_hierarchy = {}
         for label in self['runtime']:
             hierarchy = []
             name = label
@@ -383,6 +363,10 @@ class config( CylcConfigObj ):
             for item in hierarchy:
                 self.inherit( taskconf, self['runtime'][item] )
             self['runtime'][label] = taskconf
+
+        #for fam in self.explicit_task_families:
+        #    for mem in self.explicity_task_families[fam]:
+        #        self.family_hierarchy[mem] = [mem, fam, 'root']
 
         self.closed_families = self['visualization']['grouped families']
 
@@ -781,7 +765,7 @@ class config( CylcConfigObj ):
                 if 'root' not in self.members:
                     # (happens when no runtimes are defined in the suite.rc)
                     self.members['root'] = []
-                    self.family_hierarchy[name] = ['root']
+                self.family_hierarchy[name] = [name, 'root']
                 self.members['root'].append(name)
  
             if name not in self.taskdefs:
