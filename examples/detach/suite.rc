@@ -4,14 +4,15 @@ description = """This suite runs a single task that internally submits a
 'model executable' before detaching and exiting immediately - so we have
 to handle task completion messaging manually - see the User Guide 8.4.3."""
 
-[special tasks]
-    sequential = model
+[scheduling]
+    [[special task types]]
+        sequential = model
 
-[dependencies]
-    [[0,6,12,18]]
+    [[dependencies]]
+        [[[0,6,12,18]]]
         graph = "model"
 
-[tasks]
+[runtime]
     [[model]]
         manual task completion messaging = True
         command = model-wrapper.sh  # invoke the task via a custom wrapper
