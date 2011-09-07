@@ -16,29 +16,32 @@ This suite configures them all to use a common I/O workspace, except for
 private running directories for the restart files of the warm-cycled
 models."""
 
-[special tasks]
-    startup          = prep
-    sequential       = A, B, C
-    cold start        = ColdA, ColdB, ColdC
-    clock-triggered  = X(1)
+[scheduling]
+    [[special task types]]
+        start-up         = prep
+        sequential       = A, B, C
+        cold-start       = ColdA, ColdB, ColdC
+        clock-triggered  = X(1)
 
-[dependencies]
-    [[0,6,12,18]]
-        graph =  """X => A => B => E
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph =  """X => A => B => E
                     A => C => F
                     B & C => D
     
-                    ColdA | A[T-6]* | A[T-12] | A[T-18] => A
+                    ColdA | A[T-6] | A[T-12] | A[T-18] => A
                     ColdB | B[T-6] => B
                     ColdC | C[T-6] => C
 
                     prep => X & ColdA & ColdB & ColdC"""
-[environment]
+
+[runtime]
+    [[root]]
+        [[[environment]]]
     TASK_EXE_SECONDS = 10
     WORKSPACE = /tmp/$USER/$CYLC_SUITE/common
     RUNNING   = $WORKSPACE/running
 
-[tasks]
     [[prep]]
         description = "clean out the suite workspace for a new run"
         command = clean-workspace.sh $WORKSPACE
@@ -107,7 +110,6 @@ models."""
  
 [visualization]
     default node attributes = "style=filled"
-    show family members = True
     [[node groups]]
         models = A, B, C
         cold   = ColdA, ColdB, ColdC

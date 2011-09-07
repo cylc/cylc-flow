@@ -4,25 +4,26 @@ runahead limit in hours = 6
 description = """An example suite in which a special task is
 used to automatically clean up a failed task family."""
 
-[task families]
-    fammo = m_foo, m_bar, m_baz
-
-[special tasks]
-    sequential = A, fammo  # (just to slow the suite down)
-
-[dependencies]
-    [[0,6,12,18]]
-        graph =  """A => fammo
+[scheduling]
+    [[special task types]]
+        sequential = A, fammo  # (just to slow the suite down)
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph =  """A => fammo
                     fammo | fammo:fail => B
                     fammo | fammo:fail => fammo_cleanup"""
-[tasks]
+[runtime]
+    [[fammo]]
+
     [[fammo_cleanup]]
         command = fammo_cleanup.sh
 
     [[m_foo]]
+        inherit = fammo
         command = sleep 8 
 
     [[m_bar]]
+        inherit = fammo
         # This task fails at 6,18 and succeeds at 0,12
         command = """
 HH=${CYCLE_TIME#????????} 
@@ -35,4 +36,5 @@ sleep 5
 $COMMAND"""
 
     [[m_baz]]
+        inherit = fammo
         command = sleep 10

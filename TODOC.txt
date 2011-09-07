@@ -1,0 +1,2 @@
+
+OLD * notation for conditional expressions is now invalide - but should check evals for 'invalid syntax'!!!

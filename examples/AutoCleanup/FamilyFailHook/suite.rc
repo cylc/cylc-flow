@@ -4,23 +4,25 @@ runahead limit in hours = 6
 description = """An example suite in which a task failure hook script is
 used to automatically clean up a failed task family."""
 
-[task families]
-    fammo = m_foo, m_bar, m_baz
+[scheduling]
+    [[special task types]]
+        sequential = A, fammo  # (just to slow the suite down)
 
-[special tasks]
-    sequential = A, fammo  # (just to slow the suite down)
-
-[dependencies]
-    [[0,6,12,18]]
-        graph =  """A => fammo
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph =  """A => fammo
                     fammo | fammo:fail => B"""
-[tasks]
+[runtime]
     [[fammo]]
-        task failed hook script = failhook.sh
+        [[[event hooks]]]
+            failed script = failhook.sh
     [[m_foo]]
+        inherit = fammo
         command = sleep 8 
     [[m_bar]]
+        inherit = fammo
         # This family member always fails
         command = "sleep 5; /bin/false"
     [[m_baz]]
+        inherit = fammo
         command = sleep 10
