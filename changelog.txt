@@ -199,6 +199,12 @@ Version number X.Y.Z incrementing:
 
  + Fixed a bug preventing use of :fail triggers with asynchronous tasks.
 
+ + New "suicide" triggers: graph = "A => !B" means B will take itself out of 
+ the suite (after spawning, if it is a cycling task) if A succeeds. This can
+ be used for automated recovery from task failures using sub-trees of tasks
+ that tag along with a model (say) waiting for it to fail, but
+ automatically removing themselves if it does not fail.
+
  + NEW SUITE.RC GROUPING INTO [SCHEDULING] AND [RUNTIME] SECTIONS. The
    former affects *when* cylc runs a task, the latter affects what happens
    when cylc runs a task (what it runs in what execution enviroment, and 
