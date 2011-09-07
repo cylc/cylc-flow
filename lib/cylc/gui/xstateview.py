@@ -97,7 +97,9 @@ class xupdater(threading.Thread):
 
         self.group = []
         self.ungroup = []
-        self.ungroupall = False
+        self.ungroup_recursive = False
+        self.group_all = False
+        self.ungroup_all = False
 
         self.graph_frame_count = 0
 
@@ -332,10 +334,16 @@ class xupdater(threading.Thread):
 
         #if diffhrs < 25:
         #    diffhrs = 25
-        self.graphw = self.suiterc.get_graph( oldest, diffhrs, colored=False, raw=raw, group_nodes=self.group, ungroup_nodes=self.ungroup, ungroup_all=self.ungroupall ) 
+        self.graphw = self.suiterc.get_graph( oldest, diffhrs,
+                colored=False, raw=raw, group_nodes=self.group,
+                ungroup_nodes=self.ungroup,
+                ungroup_recursive=self.ungroup_recursive, 
+                group_all=self.group_all, ungroup_all=self.ungroup_all) 
         self.group = []
         self.ungroup = []
-        self.ungroupall = False
+        self.group_all = False
+        self.ungroup_all = False
+        self.ungroup_recursive = False
 
         self.rem_nodes = []
 

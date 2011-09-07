@@ -835,24 +835,37 @@ class config( CylcConfigObj ):
                 # TO DO: ALSO CONSIDER SUICIDE FOR STARTUP AND ASYNC
                 self.taskdefs[right].add_conditional_trigger( ctrig, expr, section, suicide )
 
-    def get_graph( self, start_ctime, stop, colored=True, raw=False, group_nodes=[], ungroup_nodes=[], ungroup_all=False ):
+    def get_graph( self, start_ctime, stop, colored=True, raw=False,
+            group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
+            group_all=False, ungroup_all=False ):
 
-        for node in group_nodes:
-            if node != 'root':
-                parent = self.family_hierarchy[node][1]
-                #print 'closing', parent
-                if parent not in self.closed_families:
-                    self.closed_families.append( parent )
+        if group_all:
+            for fam in self.members:
+                #if fam != 'root':
+                if fam not in self.closed_families:
+                    self.closed_families.append( fam )
 
-        for node in ungroup_nodes:
-            #print 'opening', node
-            if node in self.closed_families:
-                self.closed_families.remove(node)
-            if ungroup_all:
-                for fam in deepcopy(self.closed_families):
-                    if fam in self.members[node]:
-                        #print '  opening', fam
-                        self.closed_families.remove(fam)
+        elif ungroup_all:
+            self.closed_families = []
+
+        elif len(group_nodes) > 0:
+            for node in group_nodes:
+                if node != 'root':
+                    parent = self.family_hierarchy[node][1]
+                    #print 'closing', parent
+                    if parent not in self.closed_families:
+                        self.closed_families.append( parent )
+
+        elif len(ungroup_nodes) > 0:
+            for node in ungroup_nodes:
+                #print 'opening', node
+                if node in self.closed_families:
+                    self.closed_families.remove(node)
+                if ungroup_recursive:
+                    for fam in deepcopy(self.closed_families):
+                        if fam in self.members[node]:
+                            #print '  opening', fam
+                            self.closed_families.remove(fam)
 
         if colored:
             graph = graphing.CGraph( self.suite, self['visualization'] )
