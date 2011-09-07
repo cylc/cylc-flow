@@ -990,8 +990,12 @@ class config( CylcConfigObj ):
 
     def close_families( self, nl, nr ):
         # Replace family members with family nodes if requested.
-        lname, ltag = nl.split('%')
-        rname, rtag = nr.split('%')
+        lname, ltag = None, None
+        rname, rtag = None, None
+        if nl:
+            lname, ltag = nl.split('%')
+        if nr:
+            rname, rtag = nr.split('%')
 
         # for nested families, only consider the outermost one
         clf = deepcopy( self.closed_families )
