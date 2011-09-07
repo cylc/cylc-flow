@@ -305,7 +305,7 @@ class scheduler(object):
         self.pyro.connect( self.suite_state, 'state_summary')
 
         # USE QUICK TASK ELIMINATION?
-        self.use_quick = self.config['use quick task elimination'] 
+        self.use_quick = self.config['development']['use quick task elimination'] 
 
         # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
         self.exclusive_suite_lock = not self.config[ 'allow multiple simultaneous instances' ]

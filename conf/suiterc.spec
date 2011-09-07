@@ -43,7 +43,6 @@ roll log at startup = boolean( default=True )
 state dump directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/state' )
 number of state dump backups = integer( min=1, default=10 )
 
-use quick task elimination = boolean( default=True )
 simulation mode only = boolean( default=False )
 allow multiple simultaneous instances = boolean( default=False )
 UTC mode = boolean( default=False )
@@ -176,5 +175,6 @@ UTC mode = boolean( default=False )
 [scheduler environment]
     __many__ = string
 
-[experimental]
+[development]
+    use quick task elimination = boolean( default=True )
     live graph movie = boolean( default=False )

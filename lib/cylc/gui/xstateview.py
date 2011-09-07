@@ -487,7 +487,7 @@ class xupdater(threading.Thread):
 
         self.action_required = False
 
-        if self.suiterc["experimental"]["live graph movie"]:
+        if self.suiterc["development"]["live graph movie"]:
             self.graph_frame_count += 1
             self.graphw.write( os.path.join( self.suiterc["visualization"]["run time graph directory"], 'live' + '-' + str( self.graph_frame_count ) + '.dot' ))
 
