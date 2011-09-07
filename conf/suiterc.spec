@@ -30,7 +30,6 @@ initial cycle time = integer( default=None )
 final cycle time = integer( default=None )
 
 use lockserver = boolean( default=False )
-
 use secure passphrase = boolean( default=False )
 
 tasks to exclude at startup = force_list( default=list())
@@ -50,7 +49,6 @@ allow multiple simultaneous instances = boolean( default=False )
 UTC mode = boolean( default=False )
 
 [scheduling]
-    # special tasks
     [[special task types]]
         clock-triggered = force_list( default=list())
         start-up = force_list( default=list())
@@ -60,11 +58,10 @@ UTC mode = boolean( default=False )
         tasks with explicit restart outputs = force_list( default=list())
 
     [[dependencies]]
-        # oneoff asynchronous tasks
         graph = string( default=None )
         [[[__many__]]]
             graph = string( default=None )
-            daemon = string( default=None ) # async repeating tasks have one daemon per section
+            daemon = string( default=None )
 
 [runtime]
     [[root]]
