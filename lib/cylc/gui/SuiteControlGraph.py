@@ -112,7 +112,7 @@ Dependency graph based GUI suite control interface.
         group_item.connect( 'activate', self.grouping, name, True )
         menu.append( group_item )
 
-        ungroup_item = gtk.MenuItem( 'Group' )
+        ungroup_item = gtk.MenuItem( 'UnGroup' )
         ungroup_item.connect( 'activate', self.grouping, name, False )
         menu.append( ungroup_item )
 

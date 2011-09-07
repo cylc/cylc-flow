@@ -296,7 +296,6 @@ class config( CylcConfigObj ):
         self['visualization']['run time graph']['directory'] = \
                 os.path.expandvars( os.path.expanduser( self['visualization']['run time graph']['directory']))
 
-
         # parse clock-triggered tasks
         self.clock_offsets = {}
         for item in self['scheduling']['special task types']['clock-triggered']:
@@ -836,13 +835,14 @@ class config( CylcConfigObj ):
         for node in group_nodes:
             if node != 'root':
                 parent = self.family_hierarchy[node][1]
-                print 'closing', parent
+                #print 'closing', parent
                 if parent not in self.closed_families:
                     self.closed_families.append( parent )
         for node in ungroup_nodes:
-            print 'opening', node
+            #print 'opening', node
             if node in self.closed_families:
                     self.closed_families.remove(node)
+            continue
             # group its immediate sub nodes
             closeme = []
             for fam in self.family_hierarchy:
@@ -853,7 +853,7 @@ class config( CylcConfigObj ):
                         # (else has no members to close)
                         closeme.append(fam)
             for mem in closeme:
-                print '   closing', mem
+                #print '   closing', mem
                 if mem not in self.closed_families:
                     self.closed_families.append(mem)
 
