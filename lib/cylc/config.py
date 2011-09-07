@@ -783,7 +783,7 @@ class config( CylcConfigObj ):
                 self.taskdefs[name].type = 'async_oneoff'
             elif ttype == 'async_repeating':
                 self.taskdefs[name].asyncid_pattern = asyncid_pattern
-                if name == self['scheduling'][section]['daemon']:
+                if name == self['scheduling']['dependencies'][section]['daemon']:
                     self.taskdefs[name].type = 'async_daemon'
                 else:
                     self.taskdefs[name].type = 'async_repeating'

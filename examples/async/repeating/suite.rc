@@ -6,15 +6,15 @@ processing runs in parallel if the data comes in quickly."""
 
 [scheduling]
     [[dependencies]]
-    # make everything wait on a oneoff asynchronous task
-    graph = "prep"
-    [[[ASYNCID:SATID-\d+]]]
-        graph = """prep => watcher:a => upload:a & archive:a"""
-        daemon = watcher
+        # make everything wait on a oneoff asynchronous task
+        graph = "prep"
+        [[[ASYNCID:SATID-\d+]]]
+            graph = """prep => watcher:a => upload:a & archive:a"""
+            daemon = watcher
 
-    [[[0,12]]]
-        # a couple of cycling tasks in the same suite, because we can.
-        graph = "prep => A => B"
+        [[[0,12]]]
+            # a couple of cycling tasks in the same suite, because we can.
+            graph = "prep => A => B"
 
 [runtime]
     [[watcher]]
