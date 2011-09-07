@@ -156,9 +156,6 @@ Version number X.Y.Z incrementing:
  + UTC Mode: optionally run a suite on UTC time even if the suite
  host's system clock is not in UTC mode.
 
- + Plot extra-family dependencies with a dotted line, when 'show family
- members' is False.
-
  + Fixed a suite graph plotting bug: if the graph initial hour was 
  greater than the section hour for single hour graph sections, the
  section would be skipped even if the graph range encompassed the
@@ -174,17 +171,18 @@ Version number X.Y.Z incrementing:
   
  + General conditional triggers, with parentheses, allowed.
   - WARNING: This required a change in intercycle dependency notation
-    from round to square brackets (to avoid clashing with parentheses 
+    from ROUND to SQUARE brackets (to avoid clashing with parentheses 
     in conditional expressions):
        foo(T-6) becomes foo[T-6]
 
- + Embedded Python expressions can now be used to generate lists of 
-family member names; lists of similar dependencies in the graph; and
-lists of task names in [tasks][[TASK]] section headings (which may
-also contain a family name as shorthand for all family members) to 
-define multiple tasks at once.
+ + Embedded list-generating Python expressions can now be used to
+ generate related dependencies in the graph (e.g. for the internal
+ dependencies of an ensemble); and lists of task names or
+ list-generating Python expressions in task config section headings,
+ to define multiple tasks at once.
 
- + Configurable command template for at_now, background and loadleveler. Some example use cases might be:
+ + Configurable command template for at_now, background and loadleveler.
+ Some example use cases might be:
   - a user may want to use batch instead of at now.
   - a user may want to use an option of llsubmit.
   - a user may want to use nice with a background submit.
@@ -201,9 +199,14 @@ define multiple tasks at once.
 
  + Fixed a bug preventing use of :fail triggers with asynchronous tasks.
 
- + New suite.rc grouping into [scheduling] and [runtime] sections. The
+ + NEW SUITE.RC GROUPING INTO [SCHEDULING] AND [RUNTIME] SECTIONS. The
    former affects *when* cylc runs a task, the latter affects what happens
    when cylc runs a task (what it runs in what execution enviroment, and 
-   how it runs it). The runtime section allows inheritance from higher
+   how it runs it). The RUNTIME SECTION ALLOWS INHERITANCE from higher
    levels back to the root namespace. 
-    - WARNING: this breaks existing suites!
+    - WARNING: there are a number of changes associated with this item
+      that will break existing suite.rc files.
+
+ + Task families, as defined by the runtime inheritance hierarchy, can
+ now be individually expanded or collapsed for graph plotting, and in the 
+ graph suite control GUI.
