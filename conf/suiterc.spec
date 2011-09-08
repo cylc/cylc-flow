@@ -81,11 +81,9 @@ UTC mode = boolean( default=False )
             # tasks, and also for the task stdout and stderr logs for local tasks.
             # All environment variables are interpolated out before use.
             # Remote tasks must also define a [[[remote]]] log directory. 
-        [[[ownership]]]
-            owner = string( default=None )
-            ignore = boolean( default=False )
         [[[remote]]]
             host = string( default=None )
+            owner = string( default=None )
             cylc directory = string( default=None )
             suite definition directory = string( default=None )
             remote shell template = string( default='ssh -oBatchMode=yes %s' )
@@ -133,11 +131,9 @@ UTC mode = boolean( default=False )
             command template = string( default=None )
             job script shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=None )
             log directory = string( default=None )
-        [[[ownership]]]
-            owner = string( default=None )
-            ignore = boolean( default=None )
         [[[remote]]]
             host = string( default=None )
+            owner = string( default=None )
             cylc directory = string( default=None )
             suite definition directory = string( default=None )
             remote shell template = string( default=None )

@@ -68,14 +68,6 @@ class job_submit(object):
         self.directives  = directives
         self.logfiles = logfiles
  
-        self.suite_owner = os.environ['USER']
-        if task_owner:
-            self.task_owner = task_owner
-            self.other_owner = True
-        else:
-            self.task_owner = self.suite_owner
-            self.other_owner = False
-
         self.job_submit_command_template = job_submit_command_template
         self.job_submission_shell = job_submission_shell
 
@@ -83,33 +75,35 @@ class job_submit(object):
             self.manual_messaging = manual_messaging
 
         # Local job script path: Tag with microseconds since epoch
+        # (used by both local and remote tasks)
         now = time.time()
         tag = self.task_id + "-%.6f" % now
         self.local_jobfile_path = os.path.join( log_dir, tag )
-        # The local job log directory is created in config.py
+        # The directory is created in config.py
         self.logfiles.add_path( self.local_jobfile_path )
-
-        self.remote_host = remote_host
+        
+        self.suite_owner = os.environ['USER']
         self.remote_shell_template = remote_shell_template
         self.remote_cylc_dir = remote_cylc_dir
         self.remote_suite_dir = remote_suite_dir
 
-        # TO DO: OOPS THE FOLLOWING if;elif IS BROKEN FOR OWNED LOCAL TASKS, and sim mode
-        if not remote_host or remote_host == "localhost" or remote_host == socket.gethostname():
-            self.local = True
-            # stdout and stderr log file paths:
-            self.stdout_file = self.local_jobfile_path + ".out"
-            self.stderr_file = self.local_jobfile_path + ".err"
-            # Record paths of local log files for access by gcylc
-            self.logfiles.add_path( self.stdout_file)
-            self.logfiles.add_path( self.stderr_file)
-            # Used in command construction:
-            self.jobfile_path = self.local_jobfile_path
-
-        elif not self.__class__.simulation_mode:
-            # Ignore remote hosting in simulation mode, so we can
-            # dummy-run these suites outside of normal environment.
+        # Use remote job submission if (a) not simulation mode, (b) a
+        # remote host is defined or task owner is defined.
+        if not self.__class__.simulation_mode and \
+            ( remote_host and remote_host != "localhost" and remote_host != socket.gethostname() ) or \
+            ( task_owner and task_owner != self.suite_owner ):
+                    
             self.local = False
+            if task_owner:
+                self.task_owner = task_owner
+            else:
+                task_owner = self.suite_owner
+
+            if remote_host:
+                self.remote_host = remote_host
+            else:
+                self.remote_host = socket.gethostname()
+
             # Remote job script and stdout and stderr logs:
             self.remote_jobfile_path = os.path.join( remote_log_dir, tag )
             self.stdout_file = self.remote_jobfile_path + ".out"
@@ -119,6 +113,16 @@ class job_submit(object):
             self.logfiles.add_path( self.task_owner + '@' + self.remote_host + ':' + self.stderr_file)
             # Used in command construction:
             self.jobfile_path = self.remote_jobfile_path
+        else:
+            self.local = True
+            # stdout and stderr log file paths:
+            self.stdout_file = self.local_jobfile_path + ".out"
+            self.stderr_file = self.local_jobfile_path + ".err"
+            # Record paths of local log files for access by gcylc
+            self.logfiles.add_path( self.stdout_file)
+            self.logfiles.add_path( self.stderr_file)
+            # Used in command construction:
+            self.jobfile_path = self.local_jobfile_path
 
         # Overrideable methods
         self.set_directives()

@@ -1114,8 +1114,7 @@ class config( CylcConfigObj ):
             # replace $(CYCLE_TIME) with $(TAG) in explicit outputs
             taskd.outputs.append( re.sub( 'CYCLE_TIME', 'TAG', taskconfig['outputs'][lbl] ))
 
-        if not taskconfig['ownership']['ignore']:
-            taskd.owner = taskconfig['ownership']['owner']
+        taskd.owner = taskconfig['remote']['owner']
 
         if self.simulation_mode:
             taskd.job_submit_method = self['simulation mode']['job submission method']
@@ -1132,7 +1131,7 @@ class config( CylcConfigObj ):
         # this is only used locally, so interpolate environment variables out now:
 
         # Remotely hosted tasks
-        if taskconfig['remote']['host']:
+        if taskconfig['remote']['host'] or taskconfig['remote']['owner']:
             taskd.remote_host = taskconfig['remote']['host']
             if not taskconfig['remote']['cylc directory']:
                 raise SuiteConfigError, name + ": remote tasks must specify the remote cylc directory"

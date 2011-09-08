@@ -65,9 +65,9 @@ class taskdef(object):
         self.manual_messaging = False
         self.modifiers = []
         self.asyncid_pattern = None
-        self.owner = None
 
         self.remote_host = None
+        self.owner = None
         self.remote_shell_template = None
         self.remote_cylc_directory = None
         self.remote_suite_directory = None
@@ -240,13 +240,11 @@ class taskdef(object):
         tclass.elapsed_times = []
         tclass.mean_total_elapsed_time = None
 
-        tclass.owner = self.owner
-
         tclass.timeouts = self.timeouts
-
         tclass.hook_scripts = self.hook_scripts
 
         tclass.remote_host = self.remote_host
+        tclass.owner = self.owner
         tclass.remote_shell_template = self.remote_shell_template
         tclass.remote_cylc_directory = self.remote_cylc_directory
         tclass.remote_suite_directory = self.remote_suite_directory
@@ -257,7 +255,6 @@ class taskdef(object):
         tclass.job_submit_command_template = self.job_submit_command_template
         tclass.job_submit_log_directory = self.job_submit_log_directory
         tclass.manual_messaging = self.manual_messaging
-        tclass.owner = self.owner
 
         tclass.valid_hours = self.hours
 
