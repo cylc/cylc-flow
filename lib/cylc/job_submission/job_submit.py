@@ -94,6 +94,7 @@ class job_submit(object):
         self.remote_cylc_dir = remote_cylc_dir
         self.remote_suite_dir = remote_suite_dir
 
+        # TO DO: OOPS THE FOLLOWING if;elif IS BROKEN FOR OWNED LOCAL TASKS, and sim mode
         if not remote_host or remote_host == "localhost" or remote_host == socket.gethostname():
             self.local = True
             # stdout and stderr log file paths:
