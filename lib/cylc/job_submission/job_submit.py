@@ -92,12 +92,12 @@ class job_submit(object):
         if not self.__class__.simulation_mode and \
             ( remote_host and remote_host != "localhost" and remote_host != socket.gethostname() ) or \
             ( task_owner and task_owner != self.suite_owner ):
-                    
+            # REMOTE
             self.local = False
             if task_owner:
                 self.task_owner = task_owner
             else:
-                task_owner = self.suite_owner
+                self.task_owner = self.suite_owner
 
             if remote_host:
                 self.remote_host = remote_host
@@ -114,7 +114,9 @@ class job_submit(object):
             # Used in command construction:
             self.jobfile_path = self.remote_jobfile_path
         else:
+            # LOCAL
             self.local = True
+            self.task_owner = self.suite_owner
             # stdout and stderr log file paths:
             self.stdout_file = self.local_jobfile_path + ".out"
             self.stderr_file = self.local_jobfile_path + ".err"
