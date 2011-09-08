@@ -1,32 +1,35 @@
 title = "A complex task family example"
 
 description = """
-A suite with families whose members also have extra-family dependencies 
-that are plotted with dotted lines when 'show family members = False'."""
+A suite containing families with extra-family dependencies."""
 
-[special tasks]
-    sequential = FAMx 
+[scheduling]
+    [[special task types]]
+        sequential = FAMx 
 
-[task families]
-    FAMx = x1, x2
-    FAMy = y1, y2
+    [[dependencies]]
+        [[[12]]]
+            graph = """
+# main graph:
+A => FAMx => B => FAMy => C
+# internal:
+x1 => x2 
+y1 => y2
+# extra-family:
+v => x1
+x1 => w
+# member of one family to member of another:
+x1 => y1 
+                    """
+[runtime]
+    [[FAMx,FAMy]]
+    [[x1,x2]]
+        inherit = FAMx
+    [[y1,y2]]
+        inherit = FAMy
 
-[dependencies]
-    [[12]]
-        graph = """
-        # main graph:
-        A => FAMx => B => FAMy => C
-        # internal:
-        x1 => x2 
-        y1 => y2
-        # extra-family:
-        v => x1
-        x1 => w
-        # member of one family to member of another:
-        x1 => y1 
-        """
 [visualization]
-    #show family members = True
+    collapsed families = FAMx, FAMy
     use node color for edges = False
     [[node groups]]
         FAMx = FAMx, x1, x2

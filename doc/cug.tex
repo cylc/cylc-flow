@@ -1407,7 +1407,7 @@ Suite.rc Reference}, Appendix~\ref{SuiteRCReference}) are suite-specific.
 After editing a suite always validate it to check for errors, via 
 gcylc or the \lstinline=cylc validate SUITE= command.
 Figure~\ref{fig-validate-eg} shows validation of 
-{\em examples:CUG_73} (unfortunately the suite was registered under 
+\lstinline=examples:CUG_73= (unfortunately the suite was registered under 
 a different name when the screenshot was taken). Note the warnings
 that the tasks will be dummied out, as discussed above. 
 
@@ -1415,8 +1415,8 @@ that the tasks will be dummied out, as discussed above.
     \begin{center}
         \includegraphics[width=0.5\textwidth]{screenshots/validate-eg.png}
     \end{center}
-    \caption[Suite {\em examples:CUG_73} Validation.]{\small Suite
-    {examples:CUG_73} Validation.}
+    \caption[Suite \lstinline=examples:CUG_73= Validation.]{\small Suite
+    \lstinline=examples:CUG_73= Validation}.
 \label{fig-validate-eg}
 \end{figure}
 
@@ -3062,8 +3062,8 @@ runs a single task exactly as the suite would. The \lstinline=--dry-run=
 option causes it to generate the job script for inspection and show how
 it would be executed with the chosen job submission method. The
 following listing illustrates using the two task example suite of
-Section~\ref{ATaskDefinitionExample} (also registered as {\em
-examples:CUG_74} in the central suite database):
+Section~\ref{ATaskDefinitionExample} (also registered as 
+\lstinline=examples:CUG_74= in the central suite database):
 
 \begin{lstlisting}
 % cylc submit --dry-run examples:CUG_74 A%2011052400

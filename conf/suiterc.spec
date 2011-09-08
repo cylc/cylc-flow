@@ -30,7 +30,6 @@ initial cycle time = integer( default=None )
 final cycle time = integer( default=None )
 
 use lockserver = boolean( default=False )
-
 use secure passphrase = boolean( default=False )
 
 tasks to exclude at startup = force_list( default=list())
@@ -44,13 +43,11 @@ roll log at startup = boolean( default=True )
 state dump directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/state' )
 number of state dump backups = integer( min=1, default=10 )
 
-use quick task elimination = boolean( default=True )
 simulation mode only = boolean( default=False )
 allow multiple simultaneous instances = boolean( default=False )
 UTC mode = boolean( default=False )
 
 [scheduling]
-    # special tasks
     [[special task types]]
         clock-triggered = force_list( default=list())
         start-up = force_list( default=list())
@@ -60,11 +57,10 @@ UTC mode = boolean( default=False )
         tasks with explicit restart outputs = force_list( default=list())
 
     [[dependencies]]
-        # oneoff asynchronous tasks
         graph = string( default=None )
         [[[__many__]]]
             graph = string( default=None )
-            daemon = string( default=None ) # async repeating tasks have one daemon per section
+            daemon = string( default=None )
 
 [runtime]
     [[root]]
@@ -81,15 +77,28 @@ UTC mode = boolean( default=False )
             command template = string( default=None )
             job script shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=/bin/bash )
             log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/log/job' )
-        [[[ownership]]]
-            owner = string( default=None )
-            local user execution method = option( sudo, ssh, default=sudo )
-            ignore owner = boolean( default=False )
+            # This log directory is used for the task job script for local and remote
+            # tasks, and also for the task stdout and stderr logs for local tasks.
+            # All environment variables are interpolated out before use.
+            # Remote tasks must also define a [[[remote]]] log directory. 
         [[[remote]]]
             host = string( default=None )
+            owner = string( default=None )
             cylc directory = string( default=None )
             suite definition directory = string( default=None )
             remote shell template = string( default='ssh -oBatchMode=yes %s' )
+            log directory = string( default=None )
+            # This log directory is used for task job script and stdout
+            # and stderr logs for remote tasks. Suite identity variables
+            # will be interpolated out locally before use, but other
+            # environment variables (such as $HOME) are left alone for
+            # interpolation on the remote host. Whether or not you can
+            # use (non suite identity) environment variables thus
+            # depends on the job submission method. For submission via
+            # loadleveler, for example, the stdout and stderr paths have
+            # to be written as directives to the job script prior to 
+            # submission, and loadleveler does not interpolate
+            # environment variables in its job directives.
         [[[event hooks]]]
             submitted script = string( default=None )
             submission failed script  = string( default=None )
@@ -122,15 +131,13 @@ UTC mode = boolean( default=False )
             command template = string( default=None )
             job script shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=None )
             log directory = string( default=None )
-        [[[ownership]]]
-            owner = string( default=None )
-            task execution method = option( sudo, ssh, default=None )
-            ignore owner = boolean( default=None )
         [[[remote]]]
             host = string( default=None )
+            owner = string( default=None )
             cylc directory = string( default=None )
             suite definition directory = string( default=None )
             remote shell template = string( default=None )
+            log directory = string( default=None )
         [[[event hooks]]]
             submitted script = string( default=None )
             submission failed script  = string( default=None )
@@ -179,5 +186,6 @@ UTC mode = boolean( default=False )
 [scheduler environment]
     __many__ = string
 
-[experimental]
+[development]
+    use quick task elimination = boolean( default=True )
     live graph movie = boolean( default=False )

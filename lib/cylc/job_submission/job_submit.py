@@ -25,30 +25,28 @@ executes the task command scripting. Derived job submission classes
 define the means by which the job file itself is executed.
 
 If OWNER@REMOTE_HOST is not equivalent to whoami@localhost:
- ssh OWNER@HOST submit(FILE)
+   ssh OWNER@HOST submit(FILE)
 so passwordless ssh must be configured.
 """
 
 import pwd
-import re, os
-import tempfile, stat
-import string
+import re, os, sys
 from cylc.mkdir_p import mkdir_p
+import stat
+import string
 from jobfile import jobfile
 import socket
 import subprocess
-#import datetime
 import time
  
 class job_submit(object):
     REMOTE_COMMAND_TEMPLATE = ( " '"
-                                + "mkdir -p $(dirname %(jobfile_path)s)"
-                                + " && cat >%(jobfile_path)s"
-                                + " && chmod +x %(jobfile_path)s"
-                                + " && (%(command)s)"
-                                + "'" )
-    SUDO_TEMPLATE = "sudo -u %s"
-
+            + "mkdir -p $(dirname %(jobfile_path)s)"
+            + " && cat >%(jobfile_path)s"
+            + " && chmod +x %(jobfile_path)s"
+            + " && (%(command)s)"
+            + "'" )
+ 
     # class variables that are set remotely at startup:
     # (e.g. 'job_submit.simulation_mode = True')
     simulation_mode = False
@@ -56,10 +54,10 @@ class job_submit(object):
     cylc_env = None
 
     def __init__( self, task_id, task_command, task_env, directives, 
-            manual_messaging, logfiles, joblog_dir, task_owner,
+            manual_messaging, logfiles, log_dir, task_owner,
             remote_host, remote_cylc_dir, remote_suite_dir,
-            remote_shell_template, job_submit_command_template,
-            job_submission_shell, owned_task_execution_method ): 
+            remote_shell_template, remote_log_dir, 
+            job_submit_command_template, job_submission_shell ): 
 
         self.task_id = task_id
         self.task_command = task_command
@@ -70,107 +68,69 @@ class job_submit(object):
         self.directives  = directives
         self.logfiles = logfiles
  
-        self.suite_owner = os.environ['USER']
-        if task_owner:
-            self.task_owner = task_owner
-            self.other_owner = True
-        else:
-            self.task_owner = self.suite_owner
-            self.other_owner = False
-
-        self.remote_shell_template = remote_shell_template
         self.job_submit_command_template = job_submit_command_template
         self.job_submission_shell = job_submission_shell
-        self.owned_task_execution_method = owned_task_execution_method
-
-        if remote_cylc_dir:
-            self.remote_cylc_dir = remote_cylc_dir
-        else:
-            self.remote_cylc_dir = None
-  
-        if remote_suite_dir:
-            self.remote_suite_dir = remote_suite_dir
-        else:
-            self.remote_suite_dir = None
-
-        if remote_host:
-            self.remote_host = remote_host
-
-        if remote_host:
-            self.local_job_submit = False
-        else:
-            self.remote_host = "localhost"
-
-        self.local_job_submit = (
-                ( not self.remote_host
-                  or self.remote_host == "localhost"
-                  or self.remote_host == socket.gethostname() )
-            and self.task_owner == self.suite_owner
-        )
 
         if manual_messaging != None:  # boolean, must distinguish None from False
             self.manual_messaging = manual_messaging
 
-        if self.__class__.simulation_mode:
-            # but ignore remote task settings in simulation mode (this allows us to
-            # dummy-run suites with remote tasks if outside of their 
-            # usual execution environment).
-            self.local_job_submit = True
-            # Ignore task owners in simulation mode (this allows us to
-            # dummy-run suites with owned tasks if outside of their 
-            # usual execution environment).
+        # Local job script path: Tag with microseconds since epoch
+        # (used by both local and remote tasks)
+        now = time.time()
+        tag = self.task_id + "-%.6f" % now
+        self.local_jobfile_path = os.path.join( log_dir, tag )
+        # The directory is created in config.py
+        self.logfiles.add_path( self.local_jobfile_path )
+        
+        self.suite_owner = os.environ['USER']
+        self.remote_shell_template = remote_shell_template
+        self.remote_cylc_dir = remote_cylc_dir
+        self.remote_suite_dir = remote_suite_dir
+
+        # Use remote job submission if (a) not simulation mode, (b) a
+        # remote host is defined or task owner is defined.
+        if not self.__class__.simulation_mode and \
+            ( remote_host and remote_host != "localhost" and remote_host != socket.gethostname() ) or \
+            ( task_owner and task_owner != self.suite_owner ):
+            # REMOTE
+            self.local = False
+            if task_owner:
+                self.task_owner = task_owner
+            else:
+                self.task_owner = self.suite_owner
+
+            if remote_host:
+                self.remote_host = remote_host
+            else:
+                self.remote_host = socket.gethostname()
+
+            # Remote job script and stdout and stderr logs:
+            self.remote_jobfile_path = os.path.join( remote_log_dir, tag )
+            self.stdout_file = self.remote_jobfile_path + ".out"
+            self.stderr_file = self.remote_jobfile_path + ".err"
+            # Record remote paths (currently not accessible by gcylc):
+            self.logfiles.add_path( self.task_owner + '@' + self.remote_host + ':' + self.stdout_file)
+            self.logfiles.add_path( self.task_owner + '@' + self.remote_host + ':' + self.stderr_file)
+            # Used in command construction:
+            self.jobfile_path = self.remote_jobfile_path
+        else:
+            # LOCAL
+            self.local = True
             self.task_owner = self.suite_owner
+            # stdout and stderr log file paths:
+            self.stdout_file = self.local_jobfile_path + ".out"
+            self.stderr_file = self.local_jobfile_path + ".err"
+            # Record paths of local log files for access by gcylc
+            self.logfiles.add_path( self.stdout_file)
+            self.logfiles.add_path( self.stderr_file)
+            # Used in command construction:
+            self.jobfile_path = self.local_jobfile_path
 
-        # The job will be submitted from the task owner's home
-        # directory, in case the job submission method requires that
-        # the "running directory" exists and is writeable by the job
-        # owner (e.g. loadleveler?). The only directory we can be
-        # sure exists in advance is the home directory; in general
-        # it is difficult to create a new directory on the fly if it
-        # must exist *before the job is submitted*.
-        try:
-            self.homedir = pwd.getpwnam( self.task_owner ).pw_dir
-        except:
-            raise SystemExit( "ERROR: task %s owner (%s): home dir not found"
-                              % (self.task_id, self.task_owner) )
-
-        # Job submission log directory
-        # (for owned and remote tasks, this directory must exist in
-        # advance; otherwise cylc can create it if necessary).
-        jldir = os.path.expandvars( os.path.expanduser(joblog_dir))
-        self.joblog_dir = jldir
-        if self.local_job_submit and not self.task_owner:
-            mkdir_p( jldir )
-
-        if not self.local_job_submit:
-            # Make joblog_dir relative to $HOME for remote tasks by
-            # cutting the suite owner's $HOME from the path (if it exists;
-            # if not - e.g. remote path specified absolutely - this will
-            # have no effect).
-            self.joblog_dir = re.sub( os.environ['HOME'] + '/', '', self.joblog_dir )
-
-        self.set_logfile_names()
         # Overrideable methods
-        self.set_directives()  # (logfiles used here!)
+        self.set_directives()
         self.set_scripting()
         self.set_environment()
  
-    def set_logfile_names( self ):
-        # EITHER: Tag file name with a string that is the microseconds since epoch
-        now = time.time()
-        key = self.task_id + "-%.6f" % now
-        # OR: with a similar string based on current date/time
-        # now = datetime.datetime.now()
-        # key = self.task_id + now.strftime("-%Y%m%dT%H%M%S.") + str(now.microsecond)
-        self.jobfile_path = os.path.join( self.joblog_dir, key )
-        self.stdout_file = self.jobfile_path + ".out"
-        self.stderr_file = self.jobfile_path + ".err"
-
-        # Record local logs for access by gcylc
-        self.logfiles.add_path( self.stdout_file )
-        self.logfiles.add_path( self.stderr_file )
-        self.logfiles.add_path( self.jobfile_path )
-
     def set_directives( self ):
         # OVERRIDE IN DERIVED CLASSES IF NECESSARY
         # self.directives['name'] = value
@@ -197,12 +157,11 @@ class job_submit(object):
         raise SystemExit( 'ERROR: no job submission command defined!' )
 
     def submit( self, dry_run ):
-        # change to $HOME 
         try: 
             os.chdir( pwd.getpwnam(self.suite_owner).pw_dir )
         except OSError, e:
-            print "Failed to change to suite owner's home directory"
-            print e
+            print >> sys.stderr, "Failed to change to suite owner's home directory"
+            print >> sys.stderr, e
             return False
 
         jf = jobfile( self.task_id, 
@@ -213,65 +172,43 @@ class job_submit(object):
                 self.job_submission_shell, 
                 self.__class__.simulation_mode,
                 self.__class__.__name__ )
-        jf.write( self.jobfile_path )
-
-        if not self.local_job_submit:
-            self.local_jobfile_path = self.jobfile_path
-            self.remote_jobfile_path = self.jobfile_path
+        # write the job file
+        jf.write( self.local_jobfile_path )
+        # make it executable
+        os.chmod( self.local_jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
+        print "> GENERATED JOB SCRIPT: " + self.local_jobfile_path
 
         # Construct self.command, the command to submit the jobfile to run
         self.construct_jobfile_submission_command()
-
-        # make sure the jobfile is executable
-        os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
-
-        # configure command for local or remote submit
-        if self.local_job_submit:
-            command = self.command
-            jobfile_path = self.jobfile_path
+    
+        if self.local:
             stdin = None
-        elif self.remote_host == "localhost" \
-             and self.owned_task_execution_method == "sudo":
-            # change to task owner's $HOME 
-            try: 
-                os.chdir( self.homedir )
-            except OSError, e:
-                print "Failed to change to task owner's home directory"
-                print e
-                return False
-
-            command = self.SUDO_TEMPLATE % self.task_owner
-            command += self.REMOTE_COMMAND_TEMPLATE % { "jobfile_path": self.jobfile_path,
-                                                        "command": self.command }
-            stdin = subprocess.PIPE
+            command = self.command
         else:
-            self.destination = self.task_owner + "@" + self.remote_host
-            remote_shell_template = self.remote_shell_template
-            command = remote_shell_template % self.destination
-            command += self.REMOTE_COMMAND_TEMPLATE % { "jobfile_path": self.jobfile_path,
-                                                        "command": self.command }
-            jobfile_path = self.destination + ":" + self.remote_jobfile_path
             stdin = subprocess.PIPE
+            command = self.__class__.REMOTE_COMMAND_TEMPLATE % { "jobfile_path": self.jobfile_path, "command": self.command }
+            destination = self.task_owner + "@" + self.remote_host
+            command = self.remote_shell_template % destination + command
 
         # execute the local command to submit the job
         if dry_run:
-            print " > TASK JOB SCRIPT: " + jobfile_path
-            print " > JOB SUBMISSION: " + command
+            print "> THIS IS A DRY RUN. HERE'S HOW I WOULD SUBMIT THE TASK:"
+            print command
             return True
 
         print " > SUBMITTING TASK: " + command
         try:
             popen = subprocess.Popen( command, shell=True, stdin=stdin )
-            if not self.local_job_submit:
-                f = open(self.jobfile_path)
+            if not self.local:
+                f = open(self.local_jobfile_path)
                 popen.communicate(f.read())
                 f.close()
             res = popen.wait()
             if res < 0:
-                print "command terminated by signal", res
+                print >> sys.stderr, "command terminated by signal", res
                 success = False
             elif res > 0:
-                print "command failed", res
+                print >> sys.stderr, "command failed", res
                 success = False
             else:
                 # res == 0
@@ -281,20 +218,9 @@ class job_submit(object):
             # (i.e. cylc's simplest "background" job submit method)
             # because a background job returns immediately and the failure
             # occurs in the background sub-shell.
-            print "Job submission failed", e
+            print >> sys.stderr, "Job submission failed", e
             success = False
+            raise
 
         return success
 
-    def cleanup( self ):
-        # called by task class when the job finishes
-        
-        # DISABLE JOBFILE DELETION AS WE'RE ADDING IT TO THE VIEWABLE LOGFILE LIST
-        return 
-
-        if not self.local_job_submit:
-            print ' - deleting remote jobfile ' + self.jobfile_path
-            os.system( 'ssh ' + self.destination + ' rm ' + self.jobfile_path )
-        else:
-            print ' - deleting local jobfile ' + self.jobfile_path
-            os.unlink( self.jobfile_path )

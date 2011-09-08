@@ -64,6 +64,8 @@ cylc register examples:FFTask $CYLC_DIR/examples/AutoCleanup/FamilyFailTask
 
 cylc register examples:detach $CYLC_DIR/examples/detach
 
+cylc register examples:inherit $CYLC_DIR/examples/inherit
+
 cylc register examples:async_oneoff $CYLC_DIR/examples/async/oneoff
 cylc register examples:async_repeat $CYLC_DIR/examples/async/repeating
 

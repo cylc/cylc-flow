@@ -31,6 +31,7 @@ Minimalist loadleveler job submission.
 
         defaults = {}
         defaults[ 'job_name' ] = self.task_id
+
         defaults[ 'output'   ] = self.stdout_file
         defaults[ 'error'    ] = self.stderr_file
 

@@ -60,7 +60,7 @@ if ! $( echo $TASK | grep % >/dev/null 2>&1 ); then
     TASK=${TASK}%2999010100
 fi
 
-JOBSCRIPT=$( cylc submit --dry-run $SUITE $TASK | grep 'TASK JOB SCRIPT' | sed -e 's/.*: //' )
+JOBSCRIPT=$( cylc submit --dry-run $SUITE $TASK | grep 'GENERATED JOB SCRIPT' | sed -e 's/.*: //' )
 if [[ -z $JOBSCRIPT ]]; then
     echo "ERROR: no jobscript generated" >&2
     exit 1

@@ -225,17 +225,6 @@ class config( CylcConfigObj ):
         if not os.path.isfile( self.file ):
             raise SuiteConfigError, 'File not found: ' + self.file
 
-        # now export CYLC_SUITE, CYLC_SUITE_GROUP, and CYLC_SUITE_NAME
-        # to the local environment so that these variables can be used
-        # in directories defined in the suite config file (see use of 
-        # os.path.expandvars() below).
-
-        #cylc_suite_owner, cylc_suite_group, cylc_suite_name = regsplit( self.suite ).get()
-        os.environ['CYLC_SUITE'] = self.suite
-        #os.environ['CYLC_SUITE_GROUP' ] = cylc_suite_group
-        #os.environ['CYLC_SUITE_NAME'  ] = cylc_suite_name
-        os.environ['CYLC_SUITE_DIR'   ] = self.dir
-
         self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc.spec')
 
         # load config
@@ -288,14 +277,6 @@ class config( CylcConfigObj ):
             for extra in extras:
                 print >> sys.stderr, '  ERROR: Illegal entry:', extra 
             raise SuiteConfigError, "ERROR: Illegal suite.rc entry(s) found"
-
-        # environment interpoloation in directory paths
-        self['suite log directory'] = \
-                os.path.expandvars( os.path.expanduser( self['suite log directory']))
-        self['state dump directory'] =  \
-                os.path.expandvars( os.path.expanduser( self['state dump directory']))
-        self['visualization']['run time graph']['directory'] = \
-                os.path.expandvars( os.path.expanduser( self['visualization']['run time graph']['directory']))
 
         # parse clock-triggered tasks
         self.clock_offsets = {}
@@ -373,9 +354,30 @@ class config( CylcConfigObj ):
             self['runtime'][label] = taskconf
 
         self.closed_families = self['visualization']['collapsed families']
-
+        self.process_directories()
         self.load()
         self.__check_tasks()
+
+    def process_directories(self):
+        # Environment variable interpolation in directory paths.
+        # (allow use of suite identity variables):
+        os.environ['CYLC_SUITE'] = self.suite
+        os.environ['CYLC_SUITE_DIR'   ] = self.dir
+        self['suite log directory'] = \
+                os.path.expandvars( os.path.expanduser( self['suite log directory']))
+        self['state dump directory'] =  \
+                os.path.expandvars( os.path.expanduser( self['state dump directory']))
+        self['visualization']['run time graph']['directory'] = \
+                os.path.expandvars( os.path.expanduser( self['visualization']['run time graph']['directory']))
+
+        for item in self['runtime']:
+            # Local job sub log directories: interpolate all environment variables.
+            self['runtime'][item]['job submission']['log directory'] = os.path.expandvars( os.path.expanduser( self['runtime'][item]['job submission']['log directory']))
+            # Remote job sub log directories: just suite identity - local variables aren't relevant.
+            if self['runtime'][item]['remote']['log directory']:
+                for var in ['CYLC_SUITE', 'CYLC_SUITE_DIR']: 
+                    self['runtime'][item]['remote']['log directory'] = re.sub( '\${'+var+'}'+r'\b', os.environ[var], self['runtime'][item]['remote']['log directory'])
+                    self['runtime'][item]['remote']['log directory'] = re.sub( '\$'+var+r'\b',      os.environ[var], self['runtime'][item]['remote']['log directory'])
 
     def inherit( self, target, source ):
         for item in source:
@@ -521,24 +523,13 @@ class config( CylcConfigObj ):
         # 'model' and 'sequential' at the same time.
 
     def create_directories( self, task=None ):
-        # create suite log, state, and job log directories
-        for dir in [ self['suite log directory'], self['state dump directory']]:
-            mkdir_p( dir )
-        
-        if task:
-            tasks = [task]
-        else:
-            tasks = self['runtime'].keys()
-        dirs = []
-        for task in tasks:
-            dir = self['runtime'][task]['job submission']['log directory']
-            if dir not in dirs:
-                dirs.append(dir)
-        for dir in dirs:
-            d = os.path.expandvars( os.path.expanduser( dir ))
-            print 'CREATING:', dir
+        # Create suite log, state, and local job log directories.
+        dirs = [ self['suite log directory'], self['state dump directory'] ]
+        for item in self['runtime']:
+            dirs.append( self['runtime'][item]['job submission']['log directory'] )
+        for d in dirs:
             mkdir_p( d )
-
+        
     def get_filename( self ):
         return self.file
 
@@ -1119,10 +1110,7 @@ class config( CylcConfigObj ):
             # replace $(CYCLE_TIME) with $(TAG) in explicit outputs
             taskd.outputs.append( re.sub( 'CYCLE_TIME', 'TAG', taskconfig['outputs'][lbl] ))
 
-        if not taskconfig['ownership']['ignore owner']:
-            taskd.owner = taskconfig['ownership']['owner']
-
-        taskd.owned_task_execution_method = taskconfig['ownership']['local user execution method']
+        taskd.owner = taskconfig['remote']['owner']
 
         if self.simulation_mode:
             taskd.job_submit_method = self['simulation mode']['job submission method']
@@ -1134,16 +1122,25 @@ class config( CylcConfigObj ):
         taskd.job_submission_shell = taskconfig['job submission']['job script shell']
 
         taskd.job_submit_command_template = taskconfig['job submission']['command template']
+
         taskd.job_submit_log_directory = taskconfig['job submission']['log directory']
+        # this is only used locally, so interpolate environment variables out now:
 
-        taskd.remote_host = taskconfig['remote']['host']
-        if taskd.remote_host:
+        # Remotely hosted tasks
+        if taskconfig['remote']['host'] or taskconfig['remote']['owner']:
+            taskd.remote_host = taskconfig['remote']['host']
             if not taskconfig['remote']['cylc directory']:
-                raise SuiteConfigError, name + ": remotely hosted tasks must specify the remote cylc directory"
+                raise SuiteConfigError, name + ": remote tasks must specify the remote cylc directory"
+            if not taskconfig['remote']['log directory']:
+                raise SuiteConfigError, name + ": remote tasks must specify a remote log directory"
+            if not taskconfig['remote']['suite definition directory']:
+                print >> sys.stderr, 'WARNING: task ' + name + ' does not specify a remote suite directory'
+                print >> sys.stderr, '(this is only an error if the task needs access to the suite directory)'
 
-        taskd.remote_shell_template = taskconfig['remote']['remote shell template']
-        taskd.remote_cylc_directory = taskconfig['remote']['cylc directory']
-        taskd.remote_suite_directory = taskconfig['remote']['suite definition directory']
+            taskd.remote_shell_template = taskconfig['remote']['remote shell template']
+            taskd.remote_cylc_directory = taskconfig['remote']['cylc directory']
+            taskd.remote_suite_directory = taskconfig['remote']['suite definition directory']
+            taskd.remote_log_directory  = taskconfig['remote']['log directory']
 
         taskd.manual_messaging = taskconfig['manual task completion messaging']
 

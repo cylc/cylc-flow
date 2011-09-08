@@ -305,7 +305,7 @@ class scheduler(object):
         self.pyro.connect( self.suite_state, 'state_summary')
 
         # USE QUICK TASK ELIMINATION?
-        self.use_quick = self.config['use quick task elimination'] 
+        self.use_quick = self.config['development']['use quick task elimination'] 
 
         # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
         self.exclusive_suite_lock = not self.config[ 'allow multiple simultaneous instances' ]
@@ -353,27 +353,17 @@ class scheduler(object):
                 job_submit.failout_id = self.failout_task_id
 
         # SCHEDULER ENVIRONMENT
-        # Access to the suite bin directory may be required for alert
-        # scripts executed by the suite (it is no longer required for 
-        # direct job submission methods because we now submit a job
-        # script that source $CYLC_DIR/environment.sh prior to executing
-        # the task command.
+        # Access to the suite bin directory for alert scripts executed
+        # by the scheduler. 
         os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 
-        # user defined local variables that may be required by alert scripts
+        # User defined local variables that may be required by alert scripts
         for var in self.config['scheduler environment']:
             os.environ[var] = self.config['scheduler environment'][var]
 
-        # suite identity for alert scripts
-        os.environ[ 'CYLC_MODE' ] = 'scheduler'
-        os.environ[ 'CYLC_SUITE_HOST' ] =  str( self.host )
-        os.environ[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port() )
-        os.environ[ 'CYLC_SUITE' ] = self.suite
-        suite_owner, suite_group, suite_name = regsplit( self.suite ).get()
-        os.environ[ 'CYLC_SUITE_GROUP' ] = suite_group
-        os.environ[ 'CYLC_SUITE_NAME' ] = suite_name
-        os.environ[ 'CYLC_SUITE_DIR' ] = self.suite_dir
-        os.environ[ 'CYLC_SUITE_OWNER' ] = self.owner
-        os.environ[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
+        # suite identity for alert scripts (which are executed by the scheduler).
+        # Also put cylcenv variables in the scheduler environment
+        for var in cylcenv:
+            os.environ[var] = cylcenv[var]
 
         # LIST OF ALL TASK NAMES
         self.task_name_list = self.config.get_task_name_list()
