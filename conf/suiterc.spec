@@ -77,6 +77,10 @@ UTC mode = boolean( default=False )
             command template = string( default=None )
             job script shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=/bin/bash )
             log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/log/job' )
+            # This log directory is used for the task job script for local and remote
+            # tasks, and also for the task stdout and stderr logs for local tasks.
+            # All environment variables are interpolated out before use.
+            # Remote tasks must also define a [[[remote]]] log directory. 
         [[[ownership]]]
             owner = string( default=None )
             ignore = boolean( default=False )
@@ -85,6 +89,18 @@ UTC mode = boolean( default=False )
             cylc directory = string( default=None )
             suite definition directory = string( default=None )
             remote shell template = string( default='ssh -oBatchMode=yes %s' )
+            log directory = string( default=None )
+            # This log directory is used for task job script and stdout
+            # and stderr logs for remote tasks. Suite identity variables
+            # will be interpolated out locally before use, but other
+            # environment variables (such as $HOME) are left alone for
+            # interpolation on the remote host. Whether or not you can
+            # use (non suite identity) environment variables thus
+            # depends on the job submission method. For submission via
+            # loadleveler, for example, the stdout and stderr paths have
+            # to be written as directives to the job script prior to 
+            # submission, and loadleveler does not interpolate
+            # environment variables in its job directives.
         [[[event hooks]]]
             submitted script = string( default=None )
             submission failed script  = string( default=None )
@@ -125,6 +141,7 @@ UTC mode = boolean( default=False )
             cylc directory = string( default=None )
             suite definition directory = string( default=None )
             remote shell template = string( default=None )
+            log directory = string( default=None )
         [[[event hooks]]]
             submitted script = string( default=None )
             submission failed script  = string( default=None )
