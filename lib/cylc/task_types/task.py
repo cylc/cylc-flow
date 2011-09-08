@@ -333,8 +333,7 @@ class task( Pyro.core.ObjBase ):
                         self.__class__.remote_suite_directory,
                         self.__class__.remote_shell_template,
                         self.__class__.job_submit_command_template,
-                        self.__class__.job_submission_shell,
-                        self.__class__.owned_task_execution_method )
+                        self.__class__.job_submission_shell )
 
         if self.launcher.submit( dry_run ):
             self.set_submitted()
@@ -450,9 +449,6 @@ class task( Pyro.core.ObjBase ):
                         self.set_failed( 'succeeded before all outputs were completed' )
                     else:
                         self.set_succeeded_hook()
-                        if self.launcher:
-                            # ('family' tasks have no launcher)
-                            self.launcher.cleanup()
             else:
                 # this output has already been satisfied
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already completed):" )

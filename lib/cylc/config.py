@@ -524,20 +524,6 @@ class config( CylcConfigObj ):
         for dir in [ self['suite log directory'], self['state dump directory']]:
             mkdir_p( dir )
         
-        if task:
-            tasks = [task]
-        else:
-            tasks = self['runtime'].keys()
-        dirs = []
-        for task in tasks:
-            dir = self['runtime'][task]['job submission']['log directory']
-            if dir not in dirs:
-                dirs.append(dir)
-        for dir in dirs:
-            d = os.path.expandvars( os.path.expanduser( dir ))
-            print 'CREATING:', dir
-            mkdir_p( d )
-
     def get_filename( self ):
         return self.file
 
@@ -1118,10 +1104,8 @@ class config( CylcConfigObj ):
             # replace $(CYCLE_TIME) with $(TAG) in explicit outputs
             taskd.outputs.append( re.sub( 'CYCLE_TIME', 'TAG', taskconfig['outputs'][lbl] ))
 
-        if not taskconfig['ownership']['ignore owner']:
+        if not taskconfig['ownership']['ignore']:
             taskd.owner = taskconfig['ownership']['owner']
-
-        taskd.owned_task_execution_method = taskconfig['ownership']['local user execution method']
 
         if self.simulation_mode:
             taskd.job_submit_method = self['simulation mode']['job submission method']

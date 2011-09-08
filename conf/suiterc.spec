@@ -79,8 +79,7 @@ UTC mode = boolean( default=False )
             log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/log/job' )
         [[[ownership]]]
             owner = string( default=None )
-            local user execution method = option( sudo, ssh, default=sudo )
-            ignore owner = boolean( default=False )
+            ignore = boolean( default=False )
         [[[remote]]]
             host = string( default=None )
             cylc directory = string( default=None )
@@ -120,8 +119,7 @@ UTC mode = boolean( default=False )
             log directory = string( default=None )
         [[[ownership]]]
             owner = string( default=None )
-            task execution method = option( sudo, ssh, default=None )
-            ignore owner = boolean( default=None )
+            ignore = boolean( default=None )
         [[[remote]]]
             host = string( default=None )
             cylc directory = string( default=None )

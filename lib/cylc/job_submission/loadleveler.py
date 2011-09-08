@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from job_submit import job_submit
+import re, os
 
 class loadleveler( job_submit ):
     """
@@ -31,8 +32,18 @@ Minimalist loadleveler job submission.
 
         defaults = {}
         defaults[ 'job_name' ] = self.task_id
-        defaults[ 'output'   ] = self.stdout_file
-        defaults[ 'error'    ] = self.stderr_file
+
+        # Loadleveler does not interpret environment variables such as
+        # $HOME in the stdout and stderr file paths. So expand 'em out
+        stdout = self.expand_local( self.stdout_file )
+        stderr = self.expand_local( self.stderr_file )
+        if not self.local:
+            # Now factor out $HOME and level a relative path in case
+            # the remote and local home directories are different.
+            stdout = re.sub( '^' + os.environ['HOME'] + '/', '', stdout )
+            stderr = re.sub( '^' + os.environ['HOME'] + '/', '', stderr )
+        defaults[ 'output'   ] = stdout
+        defaults[ 'error'    ] = stderr
 
         # NOTE ON SHELL DIRECTIVE: on AIX, '#@ shell = /bin/bash'
         # results in the job executing in a non-login shell (.profile

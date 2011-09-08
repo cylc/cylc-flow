@@ -129,17 +129,6 @@ if config[ 'use lockserver' ]:
     if not suite_lock( suite, suite_dir, host, lockserver_port, 'submit' ).request_suite_access():
         raise SystemExit( 'ERROR: failed to acquire a suite lock' )
 
-# LOCAL ENVIRONMENT
-# Provide access to the suite bin directory. This is probably no longer
-# required for standalone task submit as we no longer execute task 
-# commands directly (it's now done by executing a temporary job script
-# that configures the suite bin path explicitly).  
-os.environ[ 'PATH' ] += ':' + suite_dir + '/bin'
-# user defined local variables. Also probably not required for
-# standalone task submit, but we'll do it for completeness.
-for var in config['scheduler environment']:
-    os.environ[var] = config['scheduler environment'][var]
-
 # No TASK EVENT HOOKS are set for the submit command because there is
 # no scheduler instance watching for task failure etc. 
 
@@ -166,6 +155,17 @@ cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 if use_lockserver:
     cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( lockserver_port )
 cylcenv[ 'CYLC_UTC' ] = str(utc)
+
+# SCHEDULER ENVIRONMENT
+# Access to the suite bin directory for alert scripts executed
+# by the scheduler (probably not required for single submit).
+os.environ['PATH'] = suite_dir + '/bin:' + os.environ['PATH'] 
+# User-defined variables in the scheduler environment
+for var in config['scheduler environment']:
+    os.environ[var] = config['scheduler environment'][var]
+# Also put cylcenv variables in the scheduler environment
+for var in cylcenv:
+    os.environ[var] = cylcenv[var]
 
 # nasty kludge to give the simulation mode clock to task classes:
 task.task.clock = dclock
@@ -196,9 +196,7 @@ except KeyError, x:
         sys.exit(1)
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------
-if options.dry_run:
-    print "DRY RUN: create the task job script and show how it would be executed."
-else:
+if not options.dry_run:
     print "Logging directory: " + logging_dir
     print
 task_proxy.run_external_task( dry_run=options.dry_run )
