@@ -26,16 +26,7 @@ parser = OptionParser( usage = """cylc [db] reregister [options] FROM TO
 Change the registration of a particular suite, or group of suites.
 
 Arguments:
-    FROM, TO  - suite registrations: 
-                  OWNER:GROUP:NAME (Central DB), or
-                        GROUP:NAME (Private DB)
-                or registration group (note trailing colon!):
-                  OWNER:GROUP: (Central DB), or
-                        GROUP: (Private DB)""" )
-
-parser.add_option( "-v", "--verbose",
-        help="Turn on verbose output.",
-        action="store_true", default=False, dest="verbose" )
+    FROM, TO  - suite registrations.""" )
 
 ( options, args ) = parser.parse_args()
 
@@ -44,18 +35,6 @@ if len(args) != 2:
 
 arg_from = args[0]
 arg_to = args[1]
-
-m = re.match( '^(.*):$', arg_from )
-n = re.match( '^(.*):$', arg_to )
-if m:
-    reregister_group = True
-    group_from = m.groups()[0]
-    if n:
-        group_to = n.groups()[0]
-    else:
-        raise SystemExit( 'Inconsistent command arguments' )
-else: 
-    reregister_group = False
 
 try:
     reg = getdb( arg_from )
@@ -66,23 +45,13 @@ reg.load_from_file()
 
 changed = False
 
-if not reregister_group:
-    try:
-        if reg.reregister( arg_from, arg_to, verbose=options.verbose ):
-            changed = True
-    except RegistrationError, x:
-        print >> sys.stderr, x
-        reg.unlock()
-        sys.exit(1)
-
-else:
-    try:
-        if reg.reregister_group( group_from, group_to, verbose=options.verbose ):
-            changed = True
-    except RegistrationError, x:
-        print >> sys.stderr, x
-        reg.unlock()
-        sys.exit(1)
+try:
+    if reg.reregister( arg_from, arg_to ):
+        changed = True
+except RegistrationError, x:
+    print >> sys.stderr, x
+    reg.unlock()
+    sys.exit(1)
 
 if changed:
     reg.dump_to_file()

@@ -111,8 +111,11 @@ class db_updater(threading.Thread):
         ts = self.regd_treestore
         if iter:
             opath = ts.get_path(iter)
+            # get parent iter before pruning in case we prune last item at this level
+            piter = ts.iter_parent(iter)
         else:
             opath = None
+            piter = None
 
         def my_get_iter( item ):
             # find the TreeIter pointing at item at this level
@@ -151,11 +154,8 @@ class db_updater(threading.Thread):
                 # removed the item pointed to
                 # TO DO: NEED TO WORRY ABOUT OTHERS AT THIS LEVEL?
                 iter = None
-            else:
-                piter = ts.iter_parent(iter)
         else:
             iter = None
-            piter = None
 
         # add new items at this level
         for item in new_items:

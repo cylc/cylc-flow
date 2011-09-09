@@ -170,28 +170,33 @@ class regdb(object):
         self.items[suite] = dir, des
 
     def get( self, suite ):
-        print suite
         try:
             dir, des = self.items[suite]
         except KeyError:
             raise SuiteNotRegisteredError, "Suite not registered: " + suite
         return dir, des
 
-    def get_list( self ):
+    def get_list( self, filter=None ):
         res = []
         for key in self.items:
+            if filter:
+                if not re.search(filter, key):
+                    continue
             dir, des = self.items[key]
             res.append( [key, dir, des] )
         return res
 
     def unregister( self, suite ):
-        # LOCKING HANDLED BY CALLERS
+        res = False
         for key in self.items.keys():
             if key.startswith(suite):
                 print 'UNREGISTERING', key 
                 del self.items[key]
+                res = True
+        return res
 
     def reregister( self, srce, targ, title=None ):
+        res = False
         for key in self.items.keys():
             if key.startswith(srce):
                 tmp = self.items[key]
@@ -199,6 +204,8 @@ class regdb(object):
                 print 'REREGISTERED', key, 'to', newkey
                 del self.items[key]
                 self.items[newkey] = tmp
+                res = True
+        return res
          
     def check_valid( self, suite ):
         for key, val in self.items:

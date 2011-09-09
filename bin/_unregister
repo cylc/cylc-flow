@@ -33,12 +33,7 @@ If you accidentally unregister a running suite, just reregister it under
 the same GROUP:NAME name to regain access to it.
 
 Arguments:
-    SUITE - suite registration:
-            OWNER:GROUP:NAME (Central DB), or
-                  GROUP:NAME (Private DB), or
-          or registration group (note trailing colon!):
-            OWNER:GROUP: (Central DB), or 
-                  GROUP: (Private DB)""" )
+    SUITE - suite registration.""" )
 
 parser.add_option( "--obliterate",
         help="Delete the suite definition directory too (!DANGEROUS!).",
@@ -51,10 +46,6 @@ parser.add_option( "--force",
 parser.add_option( "--gcylc",
         help="(DO NOT USE THIS OPTION).",
         action="store_true", default=False, dest="gcylc" )
-
-parser.add_option( "-v", "--verbose",
-        help="Turn on verbose output.",
-        action="store_true", default=False, dest="verbose" )
 
 ( options, args ) = parser.parse_args()
 
@@ -72,55 +63,30 @@ except RegistrationError, x:
 
 dirs = []
 
-group_unreg = False
-m = re.match( '^(\w+):(\w+):$', suite)
-if m:
-    owner, group = m.groups()
-    group_unreg = True
-else:
-    n = re.match( '^(\w+):$', suite)
-    if n:
-        group_unreg = True
-        group = n.groups()[0]
-
-if group_unreg:
-    if options.obliterate:
-        try:
-            regs = db.get_list( groupfilt='^' + group + '$' )
-        except RegistrationError, x:
-            raise SystemExit(x)
-        else:
-            for suite, dir, descr in regs:
-                dirs.append(dir)
+if options.obliterate:
     try:
-        db.unregister_group_fast( group )
+        regs = db.get_list( filter='^' + suite )
     except RegistrationError, x:
-        print >> sys.stderr, x
-        db.unlock()
-        sys.exit(1)
+        raise SystemExit(x)
     else:
-        db.dump_to_file()
-        db.unlock()
-else:
-    if options.obliterate:
-        try:
-            dir, descr = db.get( suite )
-        except RegistrationError, x:
-            db.unlock()
-            raise SystemExit(x)
-        else:
+        for junk, dir, junk in regs:
             dirs.append(dir)
- 
-    try:
-        db.unregister( suite )
-    except RegistrationError, x:
-        print >> sys.stderr, x
-        db.unlock()
-        sys.exit(1)
-    else:
-        db.dump_to_file()
-        db.unlock()
 
+changed = False
+
+try:
+    if db.unregister( suite ):
+        changed = True
+except RegistrationError, x:
+    print >> sys.stderr, x
+    db.unlock()
+    sys.exit(1)
+
+if changed:
+    db.dump_to_file()
+
+db.unlock()
+ 
 # TO DO: should this be inside the db lock in the case of
 # central copied registrations (probably not).
 if options.obliterate:
@@ -130,6 +96,8 @@ if options.obliterate:
         # confirmed by dialog
         really_obliterate = True
     else:
+        for dir in dirs:
+            print dir
         response = raw_input( "DO YOU REALLY WANT TO DELETE THE SUITE DEFINITION DIRECTORY(S) (y/n)?" )
         if response == 'y':
             really_obliterate = True
