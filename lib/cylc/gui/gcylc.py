@@ -110,13 +110,18 @@ class db_updater(threading.Thread):
                 state, descr, dir = value
                 iter = self.regd_treestore.append(piter, [item, state, descr, dir, None, None, None ] )
 
-    def update_treestore( self, new, iter=None ):
+    def update_treestore( self, new, iter ):
+        # iter is None for an empty treestore (no suites registered)
+
         ts = self.regd_treestore
-        opath = None
+
         if iter:
             opath = ts.get_path(iter)
+        else:
+            opath = None
 
         def my_get_iter( item ):
+            # find the TreeIter pointing at item at this level
             if not opath:
                 return None
             iter = ts.get_iter(opath)
@@ -127,19 +132,41 @@ class db_updater(threading.Thread):
                 iter = ts.iter_next( iter )
             return None
 
+        # new items at this level
         new_items = new.keys()
         old_items = []
+        prune = []
+
+        #if iter and not ts.iter_is_valid(iter): # nec?
+        #    iter = None
+
         while iter:
+            # iterate through old items at this level
             item, state, descr, dir = ts.get( iter, 0,1,2,3 )
-            old_items.append(item)
-            iter = ts.iter_next( iter )
+            if item not in new_items:
+                # prune old items that do not appear in new
+                res = ts.remove( iter )
+                if not res: # Nec?
+                    iter = None
+            else:
+                old_items.append(item)
+                iter = ts.iter_next( iter )
+
+        # return to original iter
+        if opath:
+            try:
+                iter = ts.get_iter(opath)
+            except ValueError:
+                # removed the item pointed to
+                # TO DO: NEED TO WORRY ABOUT OTHERS AT THIS LEVEL?
+                iter = None
+            else:
+                piter = ts.iter_parent(iter)
+        else:
+            iter = None
+            piter = None
 
         # add new items at this level
-        iter = ts.get_iter(opath)
-        piter = None
-        if iter:
-            piter = ts.iter_parent(iter)
-
         for item in new_items:
             if item not in old_items:
                 # new data wasn't in old - add it
@@ -201,207 +228,6 @@ class db_updater(threading.Thread):
         #self.oldtree = deepcopy( self.newtree )
         self.construct_newtree()
         self.update_treestore(  self.newtree, self.regd_treestore.get_iter_first() )
-
-#        # remove any old data not found in the new data.
-#        # change any old data that is different in the new data
-#        # (later we'll add any new data not found in the old data)
-#            oldtree = {}
-#            ts = self.regd_treestore
-#            oiter = ts.get_iter_first()
-#            while oiter:
-#                # get owner
-#                row = []
-#                for col in range( ts.get_n_columns() ):
-#                    row.append( ts.get_value( oiter, col))
-#                owner = row[0]
-#                #print 'OWNER', owner
-#                oldtree[owner] = {}
-#                if owner not in newtree:
-#                    # remove owner
-#                    #print 'removing owner ', owner
-#                    res = ts.remove(oiter)
-#                    if not ts.iter_is_valid(oiter):
-#                        oiter = None
-#                else:
-#                    # owner still exists, check it
-#                    giter = ts.iter_children(oiter)
-#                    while giter:
-#                        # get group
-#                        ch_row = []
-#                        for col in range( ts.get_n_columns()):
-#                            ch_row.append( ts.get_value(giter,col))
-#                        group = ch_row[0]
-#                        #print '  GROUP', group
-#
-#                        oldtree[owner][group] = {}
-#                        if group not in newtree[owner]:
-#                            # remove group
-#                            #print '  removing group ', group
-#                            res = ts.remove(giter)
-#                            if not ts.iter_is_valid(giter):
-#                                giter = None
-#                        else:
-#                            # group still exists, check it
-#                            niter = ts.iter_children(giter)
-#                            while niter:
-#                                # get name
-#                                chch_row = []
-#                                for col in range( ts.get_n_columns()):
-#                                    chch_row.append( ts.get_value(niter,col))
-#                                [name, state, descr, dir, junk, junk, junk ] = chch_row
-#                                oldtree[owner][group][name] = [state, descr, dir ]
-#                                #print '    REG', name, state, descr, dir
-#
-#                                if name not in newtree[owner][group]:
-#                                    # remove name
-#                                    #print '    removing reg ', name
-#                                    res = ts.remove(niter)
-#                                    if not ts.iter_is_valid(niter):
-#                                        niter = None
-#                                elif oldtree[owner][group][name] != newtree[owner][group][name]:
-#                                    # data changed
-#                                    # print '    changing reg ', name
-#                                    state, descr, dir = newtree[owner][group][name]
-#                                    col1, col2, col3  = self.statecol( state )
-#                                    foo = ts.prepend( giter, [ name ] + [ state, '<i>' + descr + '</i>', dir, col1, col2, col3  ] )
-#                                    res = ts.remove(niter)
-#                                    if not ts.iter_is_valid(niter):
-#                                        niter = None
-#                                else:
-#                                    niter = ts.iter_next( niter )
-#                            giter = ts.iter_next( giter )
-#                    oiter = ts.iter_next(oiter)  
-#        else:
-#            owner = self.owner
-#            oldtree = {}
-#            oldtree[owner] = {}
-#            ts = self.regd_treestore
-#            giter = ts.get_iter_first()
-#            while giter:
-#                # get group
-#                while giter:
-#                   # get group
-#                   ch_row = []
-#                   for col in range( ts.get_n_columns()):
-#                       ch_row.append( ts.get_value(giter,col))
-#                   group = ch_row[0]
-#                   #print '  GROUP', group
-#
-#                   oldtree[owner][group] = {}
-#                   if owner not in newtree or group not in newtree[owner]:
-#                       # remove group
-#                       #print '  removing group ', group
-#                       res = ts.remove(giter)
-#                       if not ts.iter_is_valid(giter):
-#                           giter = None
-#                   else:
-#                       # group still exists, check it
-#                       niter = ts.iter_children(giter)
-#                       while niter:
-#                           # get name
-#                           chch_row = []
-#                           for col in range( ts.get_n_columns()):
-#                               chch_row.append( ts.get_value(niter,col))
-#                           [name, state, descr, dir, junk, junk, junk ] = chch_row
-#                           oldtree[owner][group][name] = [state, descr, dir ]
-#                           #print '    REG', name, state, descr, dir
-#
-#                           if name not in newtree[owner][group]:
-#                               # remove name
-#                               #print '    removing reg ', name
-#                               res = ts.remove(niter)
-#                               if not ts.iter_is_valid(niter):
-#                                   niter = None
-#                           elif oldtree[owner][group][name] != newtree[owner][group][name]:
-#                               # data changed
-#                               #print '    changing reg ', name
-#                               state, descr, dir = newtree[owner][group][name]
-#                               col1, col2, col3  = self.statecol( state )
-#                               if state != '-':
-#                                   ts.set_value( giter,4,col2)
-#                               else:
-#                                   ts.set_value( giter,4,None)
-#                               foo = ts.prepend( giter, [ name ] + [ state, '<i>' + descr + '</i>', dir, col1, col2, col3  ] )
-#                               res = ts.remove(niter)
-#                               if not ts.iter_is_valid(niter):
-#                                   niter = None
-#                           else:
-#                               niter = ts.iter_next( niter )
-#                       giter = ts.iter_next( giter )
-#
-#        if self.is_cdb:
-#            for owner in newtree:
-#                if owner not in oldtree:
-#                    # new owner: insert all of its data
-#                    oiter = ts.append( None, [owner, None, None, None, None, None, None ] )
-#                    for group in newtree[owner]:
-#                        giter = ts.append( oiter, [group, None, None, None, None, None, None ] )
-#                        for name in newtree[owner][group]:
-#                            state, descr, dir = newtree[owner][group][name]
-#                            col1, col2, col3 = self.statecol( state )
-#                            niter = ts.append( giter, [name] + [state, '<i>' + descr + '</i>', dir, col1, col2, col3 ])
-#                    continue
-#
-#                # owner already in the treemodel, find it
-#                oiter = self.search_level( ts, ts.get_iter_first(), self.match_func, (0, owner ))
-#
-#                for group in newtree[owner]:
-#                    if group not in oldtree[owner]:
-#                        # new group: insert all of its data
-#                        giter = ts.append( oiter, [ group, None, None, None, None, None, None ] )
-#                        for name in newtree[owner][group]:
-#                            state, descr, dir = newtree[owner][group][name]
-#                            col1, col2, col3 = self.statecol( state )
-#                            niter = ts.append( giter, [name] + [state, '<i>' + descr +'</i>', dir, col1, col2, col3 ])
-#                        continue
-#
-#                    # group already in the treemodel, find it
-#                    giter = self.search_level( ts, ts.iter_children(oiter), self.match_func, (0, group))
-#
-#                    for name in newtree[owner][group]:
-#                        if name not in oldtree[owner][group]:
-#                            # new name, insert it and its data
-#                            state, descr, dir = newtree[owner][group][name]
-#                            col1, col2, col3  = self.statecol( state )
-#                            niter = ts.append( giter, [name] + [ state, '<i>' + descr + '</i>', dir, col1, col2, col3 ])
-#                            continue
-#
-#        else:
-#            for owner in newtree:
-##                if owner not in oldtree:
-#                    # new owner: insert all of its data
-#                    for group in newtree[owner]:
-#                        giter = ts.append( None, [group, None, None, None, None, None, None ] )
-#                        for name in newtree[owner][group]:
-#                            state, descr, dir = newtree[owner][group][name]
-#                            col1, col2, col3 = self.statecol( state )
-#                            niter = ts.append( giter, [name] + [state, '<i>' + descr + '</i>', dir, col1, col2, col3 ])
-#                    continue
-#
-#                # owner already in the treemodel, find it
-#                #oiter = self.search_level( ts, ts.get_iter_first(), self.match_func, (0, owner ))
-#                oiter = ts.get_iter_first()
-#
-#                for group in newtree[owner]:
-#                    if owner not in oldtree or group not in oldtree[owner]:
-#                        # new group: insert all of its data
-#                        giter = ts.append( None, [ group, None, None, None, None, None, None ] )
-#                        for name in newtree[owner][group]:
-#                            state, descr, dir = newtree[owner][group][name]
-#                            col1, col2, col3  = self.statecol( state )
-#                            niter = ts.append( giter, [name] + [state, '<i>' + descr + '</i>', dir, col1, col2, col3  ])
-#                        continue
-#
-#                    # group already in the treemodel, find it
-#                    giter = self.search_level( ts, ts.get_iter_first(), self.match_func, (0, group))
-#    
-#                    for name in newtree[owner][group]:
-#                        if name not in oldtree[owner][group]:
-#                            # new name, insert it and its data
-#                            state, descr, dir = newtree[owner][group][name]
-#                            col1, col2, col3  = self.statecol( state )
-#                            niter = ts.append( giter, [name] + [ state, '<i>' + descr + '</i>', dir, col1, col2, col3  ])
-#                            continue
  
     def statecol( self, state ):
         grnbg = '#19ae0a'
