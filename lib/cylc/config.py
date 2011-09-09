@@ -40,7 +40,7 @@ from mkdir_p import mkdir_p
 from validate import Validator
 from configobj import get_extra_values, flatten_errors, Section
 from cylcconfigobj import CylcConfigObj, ConfigObjError
-from registration import getdb, RegistrationError
+from registration import localdb, centraldb, RegistrationError
 from graphnode import graphnode, GraphNodeError
 
 try:
@@ -118,12 +118,15 @@ class edge( object):
 
         return left + '%' + str(tag)  # str for int tag (async)
 
-def get_rcfiles ( suite ):
+def get_rcfiles ( suite, central=False ):
     # return a list of all rc files for this suite
     # (i.e. suite.rc plus any include-files it uses).
     rcfiles = []
+    if central:
+        reg = centraldb()
+    else:
+        reg = localdb()
     try:
-        reg = getdb( suite )
         reg.load_from_file()
         dir, descr = reg.get( suite )
     except RegistrationError, x:
@@ -136,12 +139,15 @@ def get_rcfiles ( suite ):
             rcfiles.append(os.path.join( dir, m.groups()[0]))
     return rcfiles
 
-def get_suite_title( suite=None, path=None ):
+def get_suite_title( suite=None, path=None, central=False ):
     # cheap suite title extraction for use by the registration
     # database commands - uses very minimal parsing of suite.rc
     if suite:
+        if central:
+            reg = centraldb()
+        else:
+            reg = localdb()
         try:
-            reg = getdb( suite )
             reg.load_from_file()
             dir, descr = reg.get( suite )
         except RegistrationError, x:
@@ -179,7 +185,7 @@ def get_suite_title( suite=None, path=None ):
         try:
             if path:
                 print path
-                title = config( path=path ).get_title()
+                title = config( path=path, central=False ).get_title()
             else:
                 title = config( suite ).get_title()
         except SuiteConfigError, x:
@@ -189,7 +195,7 @@ def get_suite_title( suite=None, path=None ):
     return title
 
 class config( CylcConfigObj ):
-    def __init__( self, suite=None, simulation_mode=False, path=None ):
+    def __init__( self, suite=None, simulation_mode=False, path=None, central=False ):
         self.simulation_mode = simulation_mode
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
         self.taskdefs = {}
@@ -203,8 +209,11 @@ class config( CylcConfigObj ):
 
         if suite:
             self.suite = suite
+            if central:
+                reg = centraldb()
+            else:
+                reg = localdb()
             try:
-                reg = getdb( suite )
                 reg.load_from_file()
                 self.dir, descr = reg.get( suite )
             except RegistrationError, x:

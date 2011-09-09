@@ -20,8 +20,7 @@
 from shutil import rmtree
 import os, re, sys
 from optparse import OptionParser
-from cylc.registration import getdb, RegistrationError
-from cylc.config import config, SuiteConfigError
+from cylc.registration import localdb, centraldb, RegistrationError
 
 parser = OptionParser( usage = """cylc [db] unregister|delete [OPTIONS] SUITE
 
@@ -33,15 +32,23 @@ If you accidentally unregister a running suite, just reregister it under
 the same GROUP:NAME name to regain access to it.
 
 Arguments:
-    SUITE - suite registration.""" )
+    SUITE - suite or group registration, or filter.""" )
 
-parser.add_option( "--obliterate",
+parser.add_option( "--delete",
         help="Delete the suite definition directory too (!DANGEROUS!).",
         action="store_true", default=False, dest="obliterate" )
 
-parser.add_option( "--force",
+parser.add_option( "--filter",
+        help="SUITE is a Python regular expression for matching suites.",
+        action="store_true", default=False, dest="flter" )
+
+parser.add_option( "-f", "--force",
         help="Don't ask for confirmation before obliterating suite definitions",
         action="store_true", default=False, dest="force" )
+
+parser.add_option( "-c", "--central",
+        help="Target the central suite database.",
+        action="store_true", default=False, dest="central" )
 
 parser.add_option( "--gcylc",
         help="(DO NOT USE THIS OPTION).",
@@ -52,31 +59,41 @@ parser.add_option( "--gcylc",
 if len(args) != 1:
     parser.error( "Wrong number of arguments" )
 
-suite = args[0]
+arg = args[0]
 
+if options.central:
+    db = centraldb()
+else:
+    db = localdb()
 try:
-    db = getdb( suite )
     db.lock()
     db.load_from_file()
 except RegistrationError, x:
     raise SystemExit(x)
 
 dirs = []
-
 if options.obliterate:
+    # get list of directories to delete
     try:
-        regs = db.get_list( filter='^' + suite )
+        if options.flter:
+            regs = db.get_filtered_list( arg )
     except RegistrationError, x:
         raise SystemExit(x)
     else:
         for junk, dir, junk in regs:
-            dirs.append(dir)
+            if dir not in dirs:
+                dirs.append(dir)
 
 changed = False
 
 try:
-    if db.unregister( suite ):
-        changed = True
+    if options.flter:
+        if db.unregister_filtered( arg ):
+            changed = True
+    else:
+        if db.unregister( arg ):
+            changed = True
+
 except RegistrationError, x:
     print >> sys.stderr, x
     db.unlock()
@@ -96,15 +113,15 @@ if options.obliterate:
         # confirmed by dialog
         really_obliterate = True
     else:
+        print "Suite definition directories to delete:"
         for dir in dirs:
-            print dir
-        response = raw_input( "DO YOU REALLY WANT TO DELETE THE SUITE DEFINITION DIRECTORY(S) (y/n)?" )
+            print ' -', dir
+        response = raw_input( "DO YOU REALLY WANT TO DELETE THESE SUITE DEFINITION DIRECTORY(S) (y/n)?" )
         if response == 'y':
             really_obliterate = True
     if really_obliterate and len(dirs)>0:
         print "DELETING SUITE DEFINITIONS:"
         for dir in dirs:
-            print '  - ', dir
             try:
                 rmtree(dir)
             except OSError, x:

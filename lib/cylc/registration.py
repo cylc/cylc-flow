@@ -176,20 +176,30 @@ class regdb(object):
             raise SuiteNotRegisteredError, "Suite not registered: " + suite
         return dir, des
 
-    def get_list( self, filter=None ):
+    def get_list( self, filtr=None ):
         res = []
         for key in self.items:
-            if filter:
-                if not re.search(filter, key):
+            if filtr:
+                print filtr, key
+                if not re.search(filtr, key):
                     continue
             dir, des = self.items[key]
             res.append( [key, dir, des] )
         return res
 
+    def unregister_filtered( self, regex ):
+        res = False
+        for key in self.items.keys():
+            if re.search( regex, key ):
+                print 'UNREGISTERING', key 
+                del self.items[key]
+                res = True
+        return res
+
     def unregister( self, suite ):
         res = False
         for key in self.items.keys():
-            if key.startswith(suite):
+            if re.match( '^' + suite + r'\b', key):
                 print 'UNREGISTERING', key 
                 del self.items[key]
                 res = True
@@ -261,28 +271,6 @@ class centraldb( regdb ):
             else:
                 # ERROR, another suite is already using this registration
                 raise SuiteTakenError( suite )
-
-def getdb( suite ):
-    #type = None
-    #    if re.match( '^(\w+):(\w+):(\w+)$', suite ):
-    #        # owner:group:name
-    #        type = 'central'
-    #    elif re.match( '^(\w+):(\w+)$', suite ): 
-    #        # group:name
-    #        type = 'local'
-    #    elif re.match('^(\w+):(\w+):$', suite ):
-    #        # owner:group:
-    #        type = 'central'
-    #    elif re.match('^(\w+):$', suite ):
-    #        # group:
-    #        type = 'local'
-    #    else:
-    #        raise RegistrationError, 'Illegal suite GROUP:NAME: ' + suite
-#
-    #    if type == 'central':
-#            return centraldb()
-#        else:
-     return localdb()
 
 if __name__ == '__main__':
     foo = regdb('DB','db')

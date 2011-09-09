@@ -45,10 +45,10 @@ debug = False
 class db_updater(threading.Thread):
 
     count = 0
-    def __init__(self, owner, regd_treestore, db, is_cdb, host, filter=None ):
+    def __init__(self, owner, regd_treestore, db, is_cdb, host, filtr=None ):
         self.__class__.count += 1
         self.me = self.__class__.count
-        self.filter = filter
+        self.filtr = filtr
         self.db = db
         self.is_cdb = is_cdb
         self.owner = owner
@@ -443,7 +443,7 @@ The cylc forecast suite metascheduler.
     def collapse_all( self, w, view ):
         view.collapse_all()
 
-    def start_updater(self, filter=None ):
+    def start_updater(self, filtr=None ):
         if self.cdb:
             db = centraldb()
             #self.db_button.set_label( "_Local/Central DB" )
@@ -456,7 +456,7 @@ The cylc forecast suite metascheduler.
             self.updater.quit = True # does this take effect?
         #not necessary: self.regd_treestore.clear()
         self.updater = db_updater( self.owner, self.regd_treestore, 
-                db, self.cdb, self.host, filter )
+                db, self.cdb, self.host, filtr )
         self.updater.update()
         self.updater.start()
 
@@ -465,10 +465,10 @@ The cylc forecast suite metascheduler.
                 action=gtk.FILE_CHOOSER_ACTION_OPEN,
                 buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,
                     gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-        filter = gtk.FileFilter()
-        filter.set_name("cylc suite.rc files")
-        filter.add_pattern("suite\.rc")
-        dialog.add_filter( filter )
+        filtr = gtk.FileFilter()
+        filtr.set_name("cylc suite.rc files")
+        filtr.add_pattern("suite\.rc")
+        dialog.add_filter( filtr )
 
         response = dialog.run()
         if response != gtk.RESPONSE_OK:
@@ -531,18 +531,18 @@ The cylc forecast suite metascheduler.
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def filter(self, w, filter_e ):
-        filter = filter_e.get_text()
+    def filter(self, w, filtr_e ):
+        filtr = filtr_e.get_text()
         try:
-            re.compile( filter )
+            re.compile( filtr )
         except:
             warning_dialog( "Bad Expression: " + filt ).warn()
-            self.filter_reset( w, filter_e )
+            self.filtr_reset( w, filtr_e )
             return
-        self.start_updater( filter )
+        self.start_updater( filtr )
 
-    def filter_reset(self, w, filter_e ):
-        filter_e.set_text('')
+    def filter_reset(self, w, filtr_e ):
+        filtr_e.set_text('')
         self.start_updater()
 
     def filter_popup(self, w):
