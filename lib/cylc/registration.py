@@ -41,11 +41,19 @@ class RegistrationError( Exception ):
     def __str__( self ):
         return repr(self.msg)
 
-class RegistrationTakenError( RegistrationError ):
+class SuiteTakenError( RegistrationError ):
     def __init__( self, suite, owner=None ):
-        self.msg = "ERROR: Another suite is registered as " + suite
+        self.msg = "ERROR: " + suite + " is already a registered suite."
         if owner:
             self.msg += ' (' + owner + ')'
+
+class NotAGroupError( RegistrationError ):
+    def __init__( self, reg ):
+        self.msg = "ERROR: " + reg + " is a registered suite, not a group."
+
+class IsAGroupError( RegistrationError ):
+    def __init__( self, reg ):
+        self.msg = "ERROR: " + reg + " is already a register group."
 
 class SuiteNotRegisteredError( RegistrationError ):
     def __init__( self, suite ):
@@ -94,14 +102,14 @@ class regdb(object):
         if os.path.exists( self.lockfile ):
             print "lock file:", self.lockfile
             raise DatabaseLockedError, 'ERROR: ' + self.file + ' is locked'
-        print "Locking database " + self.file
+        print "   (locking database " + self.file + ")"
         lockfile = open( self.lockfile, 'wb' )
         #lockfile.write( self.user + '\n' )
         lockfile.write( str(datetime.datetime.now()))
         lockfile.close()
 
     def unlock( self ):
-        print "Unlocking database " + self.file
+        print "   (unlocking database " + self.file + ")"
         try:
             os.unlink( self.lockfile )
         except OSError, x:
@@ -152,12 +160,17 @@ class regdb(object):
             dir = os.path.join( os.environ['PWD'], dir )
 
         for key in self.items.keys():
-            if key.startswith(suite) or suite.startswith(key):
-                raise RegistrationTakenError, suite
+            if key == suite:
+                raise SuiteTakenError, suite
+            elif key.startswith(suite + ':'):
+                raise IsAGroupError, suite
+            elif suite.startswith(key + ':'):
+                raise NotAGroupError, key
 
         self.items[suite] = dir, des
 
     def get( self, suite ):
+        print suite
         try:
             dir, des = self.items[suite]
         except KeyError:
@@ -199,9 +212,6 @@ class regdb(object):
 class localdb( regdb ):
     """
     Local (user-specific) suite registration database.
-    Internally, registration uses 'owner:group:name' 
-    as for the central suite database, but for local
-    single-user use, owner is stripped off.
     """
     def __init__( self, file=None ):
         if file:
@@ -243,7 +253,7 @@ class centraldb( regdb ):
                 return
             else:
                 # ERROR, another suite is already using this registration
-                raise RegistrationTakenError( suite )
+                raise SuiteTakenError( suite )
 
 def getdb( suite ):
     #type = None

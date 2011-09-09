@@ -20,6 +20,7 @@ import gobject
 #import pygtk
 #pygtk.require('2.0')
 import gtk
+from copy import deepcopy
 import time, os, re
 import threading
 from cylc.cycle_time import ct, CycleTimeError
@@ -60,24 +61,102 @@ class db_updater(threading.Thread):
         super(db_updater, self).__init__()
         self.running_choices = []
 
+        self.newtree = {}
+
         self.db.load_from_file()
         self.regd_choices = []
         #self.regd_choices = self.db.get_list( self.ownerfilt, self.groupfilt, self.namefilt ) 
         self.regd_choices = self.db.get_list()
+
+        self.construct_newtree()
+        self.build_treestore( self.newtree )
+
+    def construct_newtree( self ):
+        # construct self.newtree[one][two]...[nnn] = [state, descr, dir ]
+        self.running_choices_changed()
+        ports = {}
+        for suite in self.running_choices:
+            reg, port = suite
+            ports[ reg ] = port
+
+        self.newtree = {}
+        for reg in self.regd_choices:
+            suite, suite_dir, descr = reg
+            suite_dir = re.sub( '^' + os.environ['HOME'], '~', suite_dir )
+            if suite in ports:
+                state = 'port ' + str(ports[suite])
+            else:
+                state = '-'
+
+            # reg 
+            nest2 = self.newtree
+            regpath = suite.split(':')
+            for key in regpath[:-1]:
+                if key not in nest2:
+                    nest2[key] = {}
+                nest2 = nest2[key]
+            nest2[regpath[-1]] = [ state, descr, suite_dir ]
 
     def build_treestore( self, data, piter=None ):
         items = data.keys()
         items.sort()
         for item in items:
             value = data[item]
-            try:
-                state, descr, dir = value
-            except:
-                state, descr, dir = None, None, None
-            # final three items are col, col, col
-            iter = self.regd_treestore.append(piter, [item, state, descr, dir, None, None, None ] )
             if isinstance( value, dict ):
+                # final three items are colours
+                iter = self.regd_treestore.append(piter, [item, None, None, None, None, None, None ] )
                 self.build_treestore(value, iter)
+            else:
+                state, descr, dir = value
+                iter = self.regd_treestore.append(piter, [item, state, descr, dir, None, None, None ] )
+
+    def update_treestore( self, new, iter=None ):
+        ts = self.regd_treestore
+        opath = None
+        if iter:
+            opath = ts.get_path(iter)
+
+        def my_get_iter( item ):
+            if not opath:
+                return None
+            iter = ts.get_iter(opath)
+            while iter:
+                val, = ts.get( iter, 0 ) 
+                if val == item:
+                    return iter
+                iter = ts.iter_next( iter )
+            return None
+
+        new_items = new.keys()
+        old_items = []
+        while iter:
+            item, state, descr, dir = ts.get( iter, 0,1,2,3 )
+            old_items.append(item)
+            iter = ts.iter_next( iter )
+
+        # add new items at this level
+        iter = ts.get_iter(opath)
+        piter = None
+        if iter:
+            piter = ts.iter_parent(iter)
+
+        for item in new_items:
+            if item not in old_items:
+                # new data wasn't in old - add it
+                if isinstance( new[item], dict ):
+                    xiter = ts.append(piter, [item] + [None, None, None, None, None, None] )
+                    self.build_treestore( new[item], xiter )
+                else:
+                    yiter = ts.append(piter, [item] + new[item] + [None, None, None] )
+            else:
+                # new data was already in old
+                if isinstance( new[item], dict ):
+                    # check lower levels
+                    niter = my_get_iter( item )
+                    if niter:
+                        chiter = ts.iter_children(niter)
+                        if chiter:
+                            self.update_treestore( new[item], chiter )
 
     def run( self ):
         global debug
@@ -85,7 +164,7 @@ class db_updater(threading.Thread):
             print '* thread', self.me, 'starting'
         while not self.quit:
             if self.running_choices_changed() or self.regd_choices_changed():
-                gobject.idle_add( self.update_liststore )
+                gobject.idle_add( self.update )
             time.sleep(1)
         else:
             if debug:
@@ -113,44 +192,19 @@ class db_updater(threading.Thread):
         else:
             return False
 
-    def update_liststore( self ):
+    def update( self ):
         # it is expected that a single user will not have a huge number
         # of suites, and registrations will change infrequently,
         # so just clear and recreate the list rather than 
         # adjusting element-by-element.
         ##print "Updating list of available suites"
-        ports = {}
-        for suite in self.running_choices:
-            reg, port = suite
-            ports[ reg ] = port
+        #self.oldtree = deepcopy( self.newtree )
+        self.construct_newtree()
+        self.update_treestore(  self.newtree, self.regd_treestore.get_iter_first() )
 
-        # construct newtree[one][two]...[nnn] = [state, descr, dir ]
-        newtree = {}
-        for reg in self.regd_choices:
-            suite, suite_dir, descr = reg
-            suite_dir = re.sub( '^' + os.environ['HOME'], '~', suite_dir )
-            if suite in ports:
-                state = 'port ' + str(ports[suite])
-            else:
-                state = '-'
-
-            # reg 
-            nest2 = newtree
-            regpath = suite.split(':')
-            for key in regpath[:-1]:
-                if key not in nest2:
-                    nest2[key] = {}
-                nest2 = nest2[key]
-            nest2[regpath[-1]] = [ state, descr, suite_dir ]
-
-        self.regd_treestore.clear()
-        self.build_treestore( newtree )
-
-#        # construct tree of the old data, 
 #        # remove any old data not found in the new data.
 #        # change any old data that is different in the new data
 #        # (later we'll add any new data not found in the old data)
-#        if self.is_cdb:
 #            oldtree = {}
 #            ts = self.regd_treestore
 #            oiter = ts.get_iter_first()
@@ -588,7 +642,7 @@ The cylc forecast suite metascheduler.
         #not necessary: self.regd_treestore.clear()
         self.updater = db_updater( self.owner, self.regd_treestore, 
                 db, self.cdb, self.host, ownerfilt, groupfilt, namefilt )
-        self.updater.update_liststore()
+        self.updater.update()
         self.updater.start()
 
     def newreg_popup( self, w ):
@@ -612,34 +666,25 @@ The cylc forecast suite metascheduler.
 
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Add A Suite" )
+        window.set_title( "Register A Suite" )
 
         vbox = gtk.VBox()
 
         label = gtk.Label( dir )
         vbox.pack_start( label, True )
-        label = gtk.Label( 'Register As:' )
-        vbox.pack_start( label, True )
 
         box = gtk.HBox()
-        label = gtk.Label( 'Group' )
+        label = gtk.Label( 'As:' )
         box.pack_start( label, True )
-        group_entry = gtk.Entry()
-        box.pack_start (group_entry, True)
+        as_entry = gtk.Entry()
+        box.pack_start (as_entry, True)
         vbox.pack_start( box )
 
-        box = gtk.HBox()
-        label = gtk.Label( 'Name' )
-        box.pack_start( label, True )
-        name_entry = gtk.Entry()
-        box.pack_start (name_entry, True)
-        vbox.pack_start(box)
-
-        cancel_button = gtk.Button( "_Close" )
+        cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         apply_button = gtk.Button( "_Register" )
-        apply_button.connect("clicked", self.new_reg, window, dir, group_entry, name_entry )
+        apply_button.connect("clicked", self.new_reg, window, dir, as_entry )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.register )
@@ -653,10 +698,8 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def new_reg( self, b, w, dir, group_e, name_e ):
-        group = group_e.get_text()
-        name = name_e.get_text()
-        reg = group + ':' + name
+    def new_reg( self, b, w, dir, reg_e ):
+        reg = reg_e.get_text()
         command = "cylc register " + reg + ' ' + dir
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
