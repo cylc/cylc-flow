@@ -45,13 +45,10 @@ debug = False
 class db_updater(threading.Thread):
 
     count = 0
-    def __init__(self, owner, regd_treestore, db, is_cdb, host, 
-            ownerfilt=None, groupfilt=None, namefilt=None ):
+    def __init__(self, owner, regd_treestore, db, is_cdb, host, filter=None ):
         self.__class__.count += 1
         self.me = self.__class__.count
-        self.ownerfilt = ownerfilt
-        self.groupfilt = groupfilt
-        self.namefilt = namefilt
+        self.filter = filter
         self.db = db
         self.is_cdb = is_cdb
         self.owner = owner
@@ -65,7 +62,6 @@ class db_updater(threading.Thread):
 
         self.db.load_from_file()
         self.regd_choices = []
-        #self.regd_choices = self.db.get_list( self.ownerfilt, self.groupfilt, self.namefilt ) 
         self.regd_choices = self.db.get_list()
 
         self.construct_newtree()
@@ -112,9 +108,7 @@ class db_updater(threading.Thread):
 
     def update_treestore( self, new, iter ):
         # iter is None for an empty treestore (no suites registered)
-
         ts = self.regd_treestore
-
         if iter:
             opath = ts.get_path(iter)
         else:
@@ -136,9 +130,6 @@ class db_updater(threading.Thread):
         new_items = new.keys()
         old_items = []
         prune = []
-
-        #if iter and not ts.iter_is_valid(iter): # nec?
-        #    iter = None
 
         while iter:
             # iterate through old items at this level
@@ -211,7 +202,6 @@ class db_updater(threading.Thread):
         if not self.db.changed_on_disk():
             return False
         self.db.load_from_file()
-        #regs = self.db.get_list( self.ownerfilt, self.groupfilt, self.namefilt ) 
         regs = self.db.get_list()
         if regs != self.regd_choices:
             self.regd_choices = regs
@@ -295,7 +285,6 @@ class MainApp(object):
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
         self.regd_treeview = gtk.TreeView()
-        # [owner>]group>name, state, title, dir, color1, color2, color3
         self.regd_treestore = gtk.TreeStore( str, str, str, str, str, str, str )
         self.regd_treeview.set_model(self.regd_treestore)
         self.regd_treeview.set_rules_hint(True)
@@ -454,7 +443,7 @@ The cylc forecast suite metascheduler.
     def collapse_all( self, w, view ):
         view.collapse_all()
 
-    def start_updater(self, ownerfilt=None, groupfilt=None, namefilt=None):
+    def start_updater(self, filter=None ):
         if self.cdb:
             db = centraldb()
             #self.db_button.set_label( "_Local/Central DB" )
@@ -467,7 +456,7 @@ The cylc forecast suite metascheduler.
             self.updater.quit = True # does this take effect?
         #not necessary: self.regd_treestore.clear()
         self.updater = db_updater( self.owner, self.regd_treestore, 
-                db, self.cdb, self.host, ownerfilt, groupfilt, namefilt )
+                db, self.cdb, self.host, filter )
         self.updater.update()
         self.updater.start()
 
@@ -542,24 +531,18 @@ The cylc forecast suite metascheduler.
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def filter(self, w, owner_e, group_e, name_e ):
-        ownerfilt = owner_e.get_text()
-        groupfilt = group_e.get_text()
-        namefilt = name_e.get_text()
-        for filt in ownerfilt, groupfilt, namefilt:
-            try:
-                re.compile( filt )
-            except:
-                warning_dialog( "Bad Expression: " + filt ).warn()
-                self.filter_reset( w, owner_e, group_e, name_e )
-                return
-        self.start_updater( ownerfilt, groupfilt, namefilt )
+    def filter(self, w, filter_e ):
+        filter = filter_e.get_text()
+        try:
+            re.compile( filter )
+        except:
+            warning_dialog( "Bad Expression: " + filt ).warn()
+            self.filter_reset( w, filter_e )
+            return
+        self.start_updater( filter )
 
-    def filter_reset(self, w, owner_e, group_e, name_e ):
-        if self.cdb:
-            owner_e.set_text('')
-        group_e.set_text('')
-        name_e.set_text('')
+    def filter_reset(self, w, filter_e ):
+        filter_e.set_text('')
         self.start_updater()
 
     def filter_popup(self, w):
@@ -569,37 +552,20 @@ The cylc forecast suite metascheduler.
         vbox = gtk.VBox()
 
         box = gtk.HBox()
-        label = gtk.Label( 'Owner' )
+        label = gtk.Label( 'Filter' )
         box.pack_start( label, True )
-        owner_entry = gtk.Entry()
-        if not self.cdb:
-            owner_entry.set_text( self.owner )
-            owner_entry.set_sensitive( False )
-        box.pack_start (owner_entry, True)
+        filter_entry = gtk.Entry()
+        box.pack_start (filter_entry, True)
         vbox.pack_start( box )
-
-        box = gtk.HBox()
-        label = gtk.Label( 'Group' )
-        box.pack_start( label, True )
-        group_entry = gtk.Entry()
-        box.pack_start (group_entry, True)
-        vbox.pack_start( box )
-
-        box = gtk.HBox()
-        label = gtk.Label( 'Name' )
-        box.pack_start( label, True )
-        name_entry = gtk.Entry()
-        box.pack_start (name_entry, True)
-        vbox.pack_start(box)
 
         cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: self.filter_window.destroy() )
 
         apply_button = gtk.Button( "_Apply" )
-        apply_button.connect("clicked", self.filter, owner_entry, group_entry, name_entry )
+        apply_button.connect("clicked", self.filter, filter_entry )
 
         reset_button = gtk.Button( "_Reset" )
-        reset_button.connect("clicked", self.filter_reset, owner_entry, group_entry, name_entry )
+        reset_button.connect("clicked", self.filter_reset, filter_entry )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.filter )
@@ -718,57 +684,32 @@ The cylc forecast suite metascheduler.
 
         model, iter = selection.get_selected()
 
-        # assume right-click on lowest level
-        group_clicked = False
-
-        if self.cdb:
-            one = model.get_value( iter, 0 )
-            try:
-                iter2 = model.iter_parent( iter )
-                two = model.get_value( iter2, 0 )
-            except TypeError:
-                # no parent => clicked on owner; do nothing
-                return
-            else:
-                # parent exists => clicked on name or group
-                try:
-                    iter3 = model.iter_parent(iter2)
-                    three = model.get_value( iter3, 0 )
-                except TypeError:
-                    # no grandparent => clicked on group
-                    group_clicked = True
-                    group = one
-                    owner = two
-                else:
-                    # grandparent exists => clicked on name
-                    name = one
-                    group = two
-                    owner = three
+        item, state, descr, suite_dir = model.get( iter, 0,1,2,3 )
+        if not suite_dir:
+            group_clicked = True
         else:
-            owner = self.owner
-            one = model.get_value( iter, 0 )
-            try:
-                iter2 = model.iter_parent( iter )
-                two = model.get_value( iter2, 0 )
-            except TypeError:
-                # no parent => clicked on group
-                group_clicked = True
-                group = one
-            else:
-                # parent exists => clicked on name
-                name = one
-                group = two
+            group_clicked = False
  
-        state = model.get_value( iter, 1 ) 
-        descr = model.get_value( iter, 2 )
-        suite_dir = model.get_value( iter, 3 )
-
         menu = gtk.Menu()
 
         menu_root = gtk.MenuItem( 'foo' )
         menu_root.set_submenu( menu )
 
+        def get_reg( item, iter ):
+            reg = item
+            if iter:
+                par = model.iter_parent( iter )
+                if par:
+                    val, = model.get(par, 0)
+                    reg = get_reg( val, par ) + ':' + reg
+            return reg
+
+        reg = get_reg( item, iter )
+        if self.cdb:
+            owner = reg.split(':')[0]
+
         if group_clicked:
+            group = reg
             # MENU OPTIONS FOR GROUPS
             if not self.cdb:
                 copy_item = gtk.MenuItem( 'C_opy' )
@@ -793,17 +734,13 @@ The cylc forecast suite metascheduler.
 
             del_item = gtk.MenuItem( '_Unregister' )
             menu.append( del_item )
-            del_item.connect( 'activate', self.unregister_group_popup, owner, group )
+            del_item.connect( 'activate', self.unregister_group_popup, group )
             if self.cdb:
                 if owner != self.owner:
                     del_item.set_sensitive( False )
 
         else:
             # MENU OPTIONS FOR SUITES
-            if self.cdb:
-                reg = owner + ':' + group + ':' + name
-            else:
-                reg = group + ':' + name
             if not self.cdb:
                 con_item = gtk.MenuItem( '_Control (tree)')
                 menu.append( con_item )
@@ -903,10 +840,10 @@ The cylc forecast suite metascheduler.
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
         return True
 
-    def unregister_group_popup( self, w, owner, group ):
+    def unregister_group_popup( self, w, group ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Unregister '" + owner + ':' + group + "'")
+        window.set_title( "Unregister " + group )
 
         vbox = gtk.VBox()
 
@@ -917,7 +854,7 @@ The cylc forecast suite metascheduler.
         oblit_cb.set_active(False)
 
         ok_button = gtk.Button( "_Unregister" )
-        ok_button.connect("clicked", self.unregister_group, window, owner, group, oblit_cb )
+        ok_button.connect("clicked", self.unregister_group, window, group, oblit_cb )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.unregister )
@@ -935,9 +872,7 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def unregister_group( self, b, w, owner, group, oblit_cb ):
-        if self.cdb:
-            group = owner + ':' + group
+    def unregister_group( self, b, w, group, oblit_cb ):
         options = ''
         if oblit_cb.get_active():
             res = question_dialog( "!DANGER! !DANGER! !DANGER! !DANGER! !DANGER! !DANGER!\n"
