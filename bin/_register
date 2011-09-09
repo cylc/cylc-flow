@@ -74,4 +74,3 @@ except RegistrationError, x:
     sys.exit(1)
 reg.unlock()
 reg.dump_to_file()
-sys.exit(0)

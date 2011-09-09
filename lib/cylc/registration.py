@@ -146,18 +146,19 @@ class regdb(object):
         output.close()
 
     def register( self, suite, dir, des='(no description supplied)' ):
-        # remove trailing '/'
-        dir = dir.rstrip( '/' )
-        # remove leading './'
-        dir = re.sub( '^\.\/', '', dir )
-        # Also strip / off name in case of registering same name as dir 
-        # whilst sitting one level up from the suite dir itself, using
-        # tab completion, and getting the args the wrong way around.
-        suite = suite.rstrip( '/' )
-        # make registered path absolute # see NOTE:ABSPATH above
+        if not dir.startswith( '->' ):  # alias for another reg
+            # remove trailing '/'
+            dir = dir.rstrip( '/' )
+            # remove leading './'
+            dir = re.sub( '^\.\/', '', dir )
+            # Also strip / off name in case of registering same name as dir 
+            # whilst sitting one level up from the suite dir itself, using
+            # tab completion, and getting the args the wrong way around.
+            suite = suite.rstrip( '/' )
+            # make registered path absolute # see NOTE:ABSPATH above
 
-        if not re.search( '^/', dir ):
-            dir = os.path.join( os.environ['PWD'], dir )
+            if not re.search( '^/', dir ):
+                dir = os.path.join( os.environ['PWD'], dir )
 
         for key in self.items.keys():
             if key == suite:
@@ -170,6 +171,7 @@ class regdb(object):
         self.items[suite] = dir, des
 
     def get( self, suite ):
+        suite, title = self.unalias(suite)
         try:
             dir, des = self.items[suite]
         except KeyError:
@@ -216,6 +218,18 @@ class regdb(object):
                 self.items[newkey] = tmp
                 res = True
         return res
+
+    def alias( self, suite, alias ):
+        suite, title = self.unalias( suite )
+        self.register( alias, '->' + suite, title )
+
+    def unalias( self, alias ):
+        print '...', alias
+        dir, title = self.items[alias]
+        if dir.startswith('->'):
+            alias = dir[2:]
+            dir, title = self.items[alias]
+        return alias, title
          
     def check_valid( self, suite ):
         for key, val in self.items:
