@@ -1,11 +1,3 @@
-* check all filter expression for validity, on the command line, by re.compile().
 
-*  put reg.load_from_file() in separate try block after reg.lock() -
-  then catch load errors and unlock or retry the load.
-
-try:
-    reg.lock()
-    reg.load_from_file()
-except RegistrationError, x:
-    raise SystemExit(x)
+* combine all registration exception handling as in bin/_print
 

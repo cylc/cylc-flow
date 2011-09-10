@@ -21,59 +21,39 @@ from optparse import OptionParser
 from cylc.registration import localdb, centraldb, RegistrationError
 from cylc.config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc [db] print [options]
-     $ cylc [db] pr                      # print all
-     $ cylc [db] pr [FILTER options]     # print some
+parser = OptionParser( usage = """cylc [db] print [--central] [FILTER]
 
-Print private or central suite registrations, which associate a suite name
-with a suite definition directory (stored in $HOME/.cylc/registrations).
-Cylc commands target a particular suite using its registered name.
+Print private or central suite registrations.
 
 FILTERING: 
   (a) The filter patterns are Regular Expressions, not shell globs, so
 the general wildcard is '.*' (match zero or more of anything), NOT '*'.
   (b) For our purposes there is an implicit wildcard at the end of each
 pattern ('foo' is the same as 'foo.*'); use the string end marker to
-stop this ('foo$' matches only literal 'foo').
-  (c) Omission of an item filter is taken to mean "match any of item".""" )
+stop this ('foo$' matches only literal 'foo').""" )
 
-parser.add_option( "-o", "--ofilt",
-        help="Owner filter Regular Expression.",
-        metavar="RE", action="store", default=None, dest="ownerfilt" )
-
-parser.add_option( "-g", "--gfilt",
-        help="Group filter Regular Expression.",
-        metavar="RE", action="store", default=None, dest="groupfilt" )
-
-parser.add_option( "-n", "--nfilt",
-        help="Name filter Regular Expression.",
-        metavar="RE", action="store", default=None, dest="namefilt" )
-
-parser.add_option( "-c","--centraldb",
+parser.add_option( "-c","--central",
         help="Print suite registrations from the central database.",
         action="store_true", default=False, dest="central" )
 
-parser.add_option( "-v", "--verbose",
-        help="Turn on verbose output.",
-        action="store_true", default=False, dest="verbose" )
-
 ( options, args ) = parser.parse_args()
 
-# check for valid regular expressions:
-for filt in options.ownerfilt, options.groupfilt, options.namefilt:
-    if filt:
-        try:
-            re.compile( filt )
-        except:
-            raise SystemExit( 'Bad expression: ' + filt )
+if len(args) == 0:
+    regfilter = None
+elif len(args) == 1:
+    regfilter = args[0]
+else:
+    parser.error( "Wrong number of arguments.")
 
 if options.central:
     reg = centraldb()
 else:
     reg = localdb()
-reg.load_from_file()
-#reg.print_multi( ownerfilt=options.ownerfilt,
-#        groupfilt=options.groupfilt, namefilt=options.namefilt,
-#        verbose=options.verbose )
-for item in reg.get_list():
-    print item
+
+try:
+    reg.load_from_file()
+    for item in reg.get_list(regfilter):
+        print item
+except RegistrationError,x:
+    print >> sys.stderr, x
+    sys.exit(1)

@@ -62,15 +62,11 @@ except SuiteConfigError,x:
 reg = localdb()
 try:
     reg.lock()
-except RegistrationError, x:
-    raise SystemExit(x)
-
-reg.load_from_file()
-try:
+    reg.load_from_file()
     reg.register( suite, rdir, title )
+    reg.dump_to_file()
+    reg.unlock()
 except RegistrationError, x:
     print >> sys.stderr, x
     reg.unlock()
     sys.exit(1)
-reg.unlock()
-reg.dump_to_file()

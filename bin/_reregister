@@ -23,7 +23,7 @@ from cylc.config import config, SuiteConfigError
 
 parser = OptionParser( usage = """cylc [db] reregister [options] FROM TO
 
-Change the registration of a particular suite, or group of suites.
+Change the registration path of a suite or group.
 
 Arguments:
     FROM, TO  - suite or group registrations.""" )
@@ -44,22 +44,14 @@ if options.central:
     reg = centraldb()
 else:
     reg = localdb()
+
 try:
     reg.lock()
     reg.load_from_file()
-except RegistrationError, x:
-    raise SystemExit(x)
-
-changed = False
-
-try:
-    if reg.reregister( arg_from, arg_to ):
-        changed = True
-except RegistrationError, x:
+    reg.reregister( arg_from, arg_to )
+    reg.dump_to_file()
+    reg.unlock()
+except RegistrationError,x:
     print >> sys.stderr, x
     reg.unlock()
     sys.exit(1)
-
-if changed:
-    reg.dump_to_file()
-reg.unlock()

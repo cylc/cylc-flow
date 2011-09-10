@@ -41,6 +41,18 @@ class RegistrationError( Exception ):
     def __str__( self ):
         return repr(self.msg)
 
+class InvalidFilterError( RegistrationError ):
+    def __init__( self, regfilter ):
+        self.msg = "ERROR, Invalid filter expression: " + regfilter
+
+class SuiteNotFoundError( RegistrationError ):
+    def __init__( self, suite ):
+        self.msg = "ERROR, suite not found: " + suite
+
+class SuiteOrGroupNotFoundError( RegistrationError ):
+    def __init__( self, sog ):
+        self.msg = "ERROR, suite or group not found: " + sog
+
 class SuiteTakenError( RegistrationError ):
     def __init__( self, suite, owner=None ):
         self.msg = "ERROR: " + suite + " is already a registered suite."
@@ -109,11 +121,12 @@ class regdb(object):
         lockfile.close()
 
     def unlock( self ):
-        print "   (unlocking database " + self.file + ")"
-        try:
-            os.unlink( self.lockfile )
-        except OSError, x:
-            print x
+        if os.path.exists( self.lockfile ):
+            print "   (unlocking database " + self.file + ")"
+            try:
+                os.unlink( self.lockfile )
+            except OSError, x:
+                raise
 
     def changed_on_disk( self ):
         # use to detect ONE change in database since we read it,
@@ -137,7 +150,11 @@ class regdb(object):
             self.mtime_at_load = time.time()
             return
         input = open( self.file, 'rb' )
-        self.items = pickle.load( input )
+        try:
+            self.items = pickle.load( input )
+        except Exception, x:
+            input.close()
+            raise RegistrationError, 'ERROR: failed to read database, ' + self.file
         input.close()
 
     def dump_to_file( self ):
@@ -178,13 +195,18 @@ class regdb(object):
             raise SuiteNotRegisteredError, "Suite not registered: " + suite
         return dir, des
 
-    def get_list( self, filtr=None ):
+    def get_list( self, regfilter=None ):
+        # Return a list of all registered suites, or a filtered list.
+        # The list can be empty if no suites are registered, or if 
+        # the filter rejects all registered suites.
         res = []
         for key in self.items:
-            if filtr:
-                print filtr, key
-                if not re.search(filtr, key):
-                    continue
+            if regfilter:
+                try:
+                    if not re.search(regfilter, key):
+                        continue
+                except:
+                    raise InvalidFilterError, regfilter
             dir, des = self.items[key]
             res.append( [key, dir, des] )
         return res
@@ -208,7 +230,7 @@ class regdb(object):
         return res
 
     def reregister( self, srce, targ, title=None ):
-        res = False
+        found = False
         for key in self.items.keys():
             if key.startswith(srce):
                 tmp = self.items[key]
@@ -216,16 +238,19 @@ class regdb(object):
                 print 'REREGISTERED', key, 'to', newkey
                 del self.items[key]
                 self.items[newkey] = tmp
-                res = True
-        return res
+                found = True
+        if not found:
+            raise SuiteOrGroupNotFoundError, srce
 
     def alias( self, suite, alias ):
         suite, title = self.unalias( suite )
         self.register( alias, '->' + suite, title )
 
     def unalias( self, alias ):
-        print '...', alias
-        dir, title = self.items[alias]
+        try:
+            dir, title = self.items[alias]
+        except KeyError:
+            raise SuiteNotFoundError, alias
         if dir.startswith('->'):
             alias = dir[2:]
             dir, title = self.items[alias]
