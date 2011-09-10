@@ -109,6 +109,10 @@ class regdb(object):
         #self.user = os.environ['USER']
         self.mtime_at_load = None
         self.lockfile = os.path.join( self.dir, 'lock' )
+        self.statehash = None
+
+    def get_hash(self):
+        return hash( str(sorted(self.items.items())))
 
     def lock( self ):
         if os.path.exists( self.lockfile ):
@@ -156,11 +160,19 @@ class regdb(object):
             input.close()
             raise RegistrationError, 'ERROR: failed to read database, ' + self.file
         input.close()
+        # record state at load
+        self.statehash = self.get_hash()
 
     def dump_to_file( self ):
-        output = open( self.file, 'w' )
-        pickle.dump( self.items, output )
-        output.close()
+        newhash = self.get_hash()
+        if newhash != self.statehash:
+            print "REWRITING DATABASE"
+            output = open( self.file, 'w' )
+            pickle.dump( self.items, output )
+            output.close()
+            self.statehash = newhash
+        else:
+            print "   (database unchanged)"
 
     def register( self, suite, dir, des='(no description supplied)' ):
         if not dir.startswith( '->' ):  # alias for another reg
@@ -211,23 +223,19 @@ class regdb(object):
             res.append( [key, dir, des] )
         return res
 
-    def unregister_filtered( self, regex ):
-        res = False
+    def unregister( self, exp, regfilter=False ):
+        if not regfilter:
+            # plain suite or group given
+            exp = '^' + exp + r'\b'
+        dirs = []
         for key in self.items.keys():
-            if re.search( regex, key ):
+            if re.search( exp, key ):
                 print 'UNREGISTERING', key 
+                print self.items[key]
+                dir, junk = self.items[key]
+                dirs.append(dir)
                 del self.items[key]
-                res = True
-        return res
-
-    def unregister( self, suite ):
-        res = False
-        for key in self.items.keys():
-            if re.match( '^' + suite + r'\b', key):
-                print 'UNREGISTERING', key 
-                del self.items[key]
-                res = True
-        return res
+        return dirs
 
     def reregister( self, srce, targ, title=None ):
         found = False

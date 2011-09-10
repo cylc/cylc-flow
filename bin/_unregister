@@ -16,23 +16,22 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 from shutil import rmtree
 import os, re, sys
 from optparse import OptionParser
 from cylc.registration import localdb, centraldb, RegistrationError
 
-parser = OptionParser( usage = """cylc [db] unregister|delete [OPTIONS] SUITE
+parser = OptionParser( usage = """cylc [db] unregister [OPTIONS] SUITE
 
-Remove suite (or suite group) registrations from your private, or the
-central, suite database.  By default this does not actually delete 
-suite definition directories.
+Remove a suite, a group of suites, or a list of matching suites, from
+private or central suite database. This does not delete suite definition
+directories unless you specify the '--delete' option.
 
 If you accidentally unregister a running suite, just reregister it under
-the same GROUP:NAME name to regain access to it.
+the same registration path to regain access to it.
 
 Arguments:
-    SUITE - suite or group registration, or filter.""" )
+    SUITE - suite or group registration, or expression (--filter).""" )
 
 parser.add_option( "--delete",
         help="Delete the suite definition directory too (!DANGEROUS!).",
@@ -40,7 +39,7 @@ parser.add_option( "--delete",
 
 parser.add_option( "--filter",
         help="SUITE is a Python regular expression for matching suites.",
-        action="store_true", default=False, dest="flter" )
+        action="store_true", default=False, dest="regfilter" )
 
 parser.add_option( "-f", "--force",
         help="Don't ask for confirmation before obliterating suite definitions",
@@ -65,45 +64,18 @@ if options.central:
     db = centraldb()
 else:
     db = localdb()
+
 try:
     db.lock()
     db.load_from_file()
-except RegistrationError, x:
-    raise SystemExit(x)
-
-dirs = []
-if options.obliterate:
-    # get list of directories to delete
-    try:
-        if options.flter:
-            regs = db.get_filtered_list( arg )
-    except RegistrationError, x:
-        raise SystemExit(x)
-    else:
-        for junk, dir, junk in regs:
-            if dir not in dirs:
-                dirs.append(dir)
-
-changed = False
-
-try:
-    if options.flter:
-        if db.unregister_filtered( arg ):
-            changed = True
-    else:
-        if db.unregister( arg ):
-            changed = True
-
+    dirs = db.unregister( arg )
+    db.dump_to_file()
+    db.unlock()
 except RegistrationError, x:
     print >> sys.stderr, x
     db.unlock()
     sys.exit(1)
 
-if changed:
-    db.dump_to_file()
-
-db.unlock()
- 
 # TO DO: should this be inside the db lock in the case of
 # central copied registrations (probably not).
 if options.obliterate:
