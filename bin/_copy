@@ -16,20 +16,20 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.mkdir_p import mkdir_p
 import os, re, sys
 from shutil import copytree
 from optparse import OptionParser
-from cylc.registration import localdb, RegistrationError, SuiteTakenError
-from cylc.regprompt import prompt
+from cylc.mkdir_p import mkdir_p
+from cylc.registration import localdb, centraldb, RegistrationError, SuiteTakenError, DatabaseLockedError
 
-parser = OptionParser( usage = """cylc [db] copy|cp [OPTIONS] FROM TO TOPDIR
+parser = OptionParser( usage = """cylc [db] copy|cp [OPTIONS] FROM TO DIR
 
-Copy suites or group of suites in your private suite database. Note that 
-you can also register an existing suite under a different name (cylc
-register) or alias (cylc alias).  Groups of suites are copied to 
-sub-directories of TOPDIR by translating the registration path into
-a directory path.
+Copy suites or group of suites in your private suite database.  Suites
+are copied to sub-directories of TOPDIR by translating the registration
+path into a directory path.
+
+Note that you can also register an existing suite under a different name
+(cylc register) or alias (cylc alias). 
 
 Arguments:
     FROM, TO - private suite or group registrations
@@ -39,7 +39,17 @@ parser.add_option( "--dry-run",
         help="Show what would be copied.",
         action="store_true", default=False, dest="dryrun" )
 
-
+# hidden arguments for import from and export to central db
+c_import = False
+c_export = False
+if '--import' in sys.argv:
+    c_import = True
+    sys.argv.remove( '--import' ) 
+elif '--export' in sys.argv:
+    c_export = True
+    sys.argv.remove( '--export' ) 
+    sys.argv.append( os.path.join( centraldb.dir ))
+    
 ( options, args ) = parser.parse_args()
 
 if len(args) != 3:
@@ -49,13 +59,25 @@ arg_from = args[0].rstrip(':')
 arg_to = args[1].rstrip(':')
 arg_dir = args[2]
 
-db = localdb()
+if c_import:
+    sourcedb = centraldb()
+    targetdb = localdb()
+elif c_export:
+    sourcedb = localdb()
+    targetdb = centraldb()
+else:
+    sourcedb = localdb()
+    targetdb = sourcedb
 
 try:
-    db.lock()
-    db.load_from_file()
+    if c_import or c_export:
+        targetdb.lock()
+        targetdb.load_from_file()
+    else:
+        sourcedb.lock()
+    sourcedb.load_from_file()
 
-    fsuites = db.get_list( '^' + arg_from + r'\b' )
+    fsuites = sourcedb.get_list( '^' + arg_from + r'\b' )
     if len(fsuites) == 0:
         raise RegistrationError, 'ERROR, no suites matched: ' + suites_from
 
@@ -76,7 +98,7 @@ try:
             continue
 
         try:
-            db.register( treg, tdir, ftitle )
+            targetdb.register( treg, tdir, ftitle )
         except SuiteTakenError, x:
             print >> sys.stderr, 'WARNING, ' + str(x)
             continue
@@ -85,14 +107,12 @@ try:
             print >> sys.stderr, 'WARNING: skipping copy, directory already exists: ' + tdir
             continue
 
-        # HUH?: os.path.dirname(ldir), below, returns an empty string.
-
         tdir = os.path.abspath( tdir )
         try:
             mkdir_p( os.path.dirname(tdir))
         except Exception,x:
             print >> sys.stderr, x
-            db.unregister(treg)
+            targetdb.unregister(treg)
             continue
 
         print 'Copying suite definition for', treg 
@@ -100,13 +120,19 @@ try:
             copytree( fdir, tdir )
         except OSError, x:
             print >> sys.stderr,x
-            db.unregister( treg )
+            targetdb.unregister( treg )
             continue
 
-    db.dump_to_file()
-    db.unlock()
+    targetdb.dump_to_file()
+    targetdb.unlock()
+    if c_import or c_export:
+        sourcedb.unlock()
 
+except DatabaseLockedError, x:
+    raise SystemExit(x)
 except RegistrationError, x:
     print >> sys.stderr, x
-    db.unlock()
+    targetdb.unlock()
+    if c_import or c_export:
+        sourcedb.unlock()
     sys.exit(1)

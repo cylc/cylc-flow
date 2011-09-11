@@ -16,152 +16,25 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.mkdir_p import mkdir_p
-import os, re, sys
-from shutil import copytree
+from cylc.execute import execute
 from optparse import OptionParser
-from cylc.registration import localdb, centraldb, regsplit, RegistrationError
-from cylc.regprompt import prompt
 
 parser = OptionParser( usage = """cylc [db] export [OPTIONS] SOURCE [TARGET]
 
-Export private suite or group registrations to the central database. The central
-database can be a reference to the owner's suite definition, or we can copy
-the suite definition to [CentralDB]/owner/group/name/.
+Export private suites to the central database.
 
 Arguments:
-    SOURCE  - Private database suite registration GROUP:NAME
-    TARGET  - Central database suite registration OWNER:GROUP:NAME""" )  
-
-parser.add_option( "-c", "--copy",
-        help="Copy the suite definition directory to the central database.",
-        action="store_true", default=False, dest="copydir" )
+    SOURCE  - suite registration""" )  
 
 ( options, args ) = parser.parse_args()
 
-if len(args) < 1 or len(args) > 2:
+source = args[0]
+if len(args) == 2:
+    target = args[1]
+elif len(args) == 1:
+    target = args[0]
+else:
     parser.error('Wrong number of arguments')
 
-local = localdb()
-central = centraldb() 
-owner = os.environ['USER']
-
-source = args[0]
-if len( args ) == 2:
-    target = args[1]
-else:
-    target = source
-
-m = re.match( '^(.*):$', source )
-n = re.match( '^(.*):$', target )
-if m:
-    # export a whole group
-    fromgroup = m.groups()[0]
-    if n:
-        togroup = n.groups()[0]
-    else:
-        raise SystemExit( 'Inconsistent command arguments' )
-
-    # retrieve registrations
-    local.load_from_file()
-    try:
-        lsuites = local.get_list( groupfilt='^' + fromgroup + '$' )
-    except RegistrationError, x:
-        raise SystemExit(x)
-
-    print 'Matched:'
-    for lsuite, ldir, ldescr in lsuites:
-        lowner, lgroup, lname = regsplit( lsuite ).get()
-        print '  ' + lgroup + ':' + lname
-
-    # export to central
-    try:
-        central.lock()
-    except RegistrationError, x:
-        raise SystemExit(x)
-    central.load_from_file()
-    changed = False
- 
-    for lsuite, ldir, ldescr in lsuites:
-        lowner, lgroup, lname = regsplit( lsuite ).get()
-        cgroup = togroup
-        cname = lname
-        creg = lowner + ':' + cgroup + ':' + cname
-        if options.copydir:
-            cdir = os.path.join( central.dir, lowner, cgroup, cname )
-        else:
-            cdir = ldir
-        try:
-            central.register( creg, cdir, ldescr )
-        except RegistrationError, x:
-            print >> sys.stderr, x
-        else:
-            if not options.copydir:
-                changed = True
-            else:
-                if os.path.exists( cdir ):
-                    print >> sys.stderr, "Error, directory exists: " + cdir
-                    central.unregister( creg )
-                else:
-                    try:
-                        mkdir_p( os.path.dirname(cdir) )
-                    except Exception,x:
-                        print >> sys.stderr, x
-                        central.unregister(creg)
-                    else:
-                        print 'Copying suite definition for', creg 
-                        try:
-                            copytree( ldir, cdir )
-                        except OSError, x:
-                            print >> sys.stderr,x
-                            central.unregister( creg )
-                        else:
-                            changed = True
-else:
-    # single suite
-    changed = False
-    try:
-        local.load_from_file()
-        ldir, descr = local.get( source )
-    except RegistrationError, x:
-        print >> sys.stderr, x
-    else:
-        lowner, lgroup, lname = regsplit( source ).get()
-        cowner, cgroup, cname = regsplit( target ).get()
-        if options.copydir:
-            cdir = os.path.join( central.dir, lowner, cgroup, cname )
-        else:
-            cdir = ldir
-        try:
-            central.lock()
-            central.load_from_file()
-            central.register( target, cdir, descr )
-        except RegistrationError, x:
-            print >> sys.stderr, x
-            central.unlock()
-        else:
-            if not options.copydir:
-                changed = True
-            else:
-                if os.path.exists( cdir ):
-                    print >> sys.stderr, "Error, directory exists: " + cdir
-                    central.unregister( target )
-                else:
-                    try:
-                        mkdir_p( os.path.dirname(cdir) )
-                    except Exception,x:
-                        print >> sys.stderr, x
-                        central.unregister(target)
-                    else:
-                        print 'Copying suite definition for', target 
-                        try:
-                            copytree( ldir, cdir )
-                        except OSError, x:
-                            print >> sys.stderr,x
-                            central.unregister( target )
-                        else:
-                            changed = True
- 
-if changed:
-    central.dump_to_file()
-central.unlock()
+command = 'cylc db copy --export ' + source + ' ' + target
+execute( command.split(' '))

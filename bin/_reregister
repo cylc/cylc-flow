@@ -16,10 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, re, sys
+import sys
 from optparse import OptionParser
-from cylc.registration import localdb, centraldb, RegistrationError
-from cylc.config import config, SuiteConfigError
+from cylc.registration import localdb, centraldb, RegistrationError, DatabaseLockedError
 
 parser = OptionParser( usage = """cylc [db] reregister [options] FROM TO
 
@@ -51,6 +50,9 @@ try:
     db.reregister( arg_from, arg_to )
     db.dump_to_file()
     db.unlock()
+
+except DatabaseLockedError, x:
+    raise SystemExit(x)
 except RegistrationError,x:
     print >> sys.stderr, x
     db.unlock()

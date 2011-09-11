@@ -16,8 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 from optparse import OptionParser
-from cylc.registration import localdb, centraldb, RegistrationError
+from cylc.registration import localdb, centraldb, RegistrationError, DatabaseLockedError
 from cylc.config import get_suite_title, SuiteConfigError
 
 parser = OptionParser( usage = """cylc [db] check-registrations [options]
@@ -30,6 +31,10 @@ also updates the titles of suites owned by others).""" )
 parser.add_option( "-c","--central",
         help="Print suite registrations from the central database.",
         action="store_true", default=False, dest="central" )
+
+parser.add_option( "-u","--unregister",
+        help="Unregister invalid registrations.",
+        action="store_true", default=False, dest="unregister" )
 
 ( options, args ) = parser.parse_args()
 
@@ -59,18 +64,26 @@ try:
         else:
             if new_title != title:
                 db.reregister( suite, suite, title=new_title )
-    db.dump_to_file()
-    db.unlock()
-
     if len(invalid) > 0:
         print 'ERROR,', len(invalid), 'invalid registrations (not suite.rc file):'
         for i in invalid:
-            print ' -', i
+            if options.unregister:
+                db.unregister(i)
+            else:
+                print ' -', i
 
     if len(readerror) > 0:
         print 'ERROR,', len(readerror), 'title parse failures (bad suite.rc file):'
         for i in readerror:
             print ' -', i
 
-except RegistrationError, x:
+    db.dump_to_file()
+    db.unlock()
+
+except DatabaseLockedError, x:
     raise SystemExit(x)
+except RegistrationError, x:
+    print >> sys.stderr, x
+    db.unlock()
+    sys.exit(1)
+

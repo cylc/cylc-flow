@@ -16,160 +16,31 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.mkdir_p import mkdir_p
-import os, re, sys
-from shutil import copytree
+from cylc.execute import execute
 from optparse import OptionParser
-from cylc.registration import localdb, centraldb, regsplit, RegistrationError
-from cylc.regprompt import prompt
 
 parser = OptionParser( usage = """cylc [db] import [OPTIONS] SOURCE [TARGET] DIR
 
-Import suites or groups from the central registration database.
+Import suites from the central registration database.
 
 Arguments:
-    SOURCE    - Central database registration OWNER:GROUP:NAME or OWNER:GROUP:
-    [TARGET]  - Private database registration GROUP:NAME or GROUP:
-                (omit TARGET to keep the central GROUP:NAME or GROUP:)
-    DIR    - destination for the imported suite definition (must not exist).
-             or top level directory for imported groups.""" )
+    SOURCE    - Central database registration
+    [TARGET]  - Private database registration
+                (omit TARGET to keep the central reg)
+    DIR       - top level directory for the imported suite definition.""" )
 
 ( options, args ) = parser.parse_args()
 
 if len(args) != 2 and len(args) != 3:
     parser.error('Illegal number of arguments')
 
-local = localdb()
-central = centraldb() 
+source = args[0]
+if len(args) == 3:
+    target = args[1]
+    dir = args[2]
+elif len(args) == 2:
+    target = source
+    dir = args[1]
 
-arg_central = args[0]
-if len(args) == 2:
-    arg_local = arg_central
-    arg_dir = args[1]
-else:
-    arg_local = args[1]
-    arg_dir = args[2]
-
-topdir = arg_dir
-
-m = re.match( '^(\w+):(\w+):$', arg_central )
-n = re.match( '^(.*):$', arg_local )
-if m:
-    # copy a whole group
-    fromowner, fromgroup = m.groups()
-    if n:
-        togroup = n.groups()[0]
-    else:
-        raise SystemExit( 'Inconsistent command arguments' )
-
-    # retrieve registrations
-    central.load_from_file()
-    try:
-        csuites = central.get_list( ownerfilt='^' + fromowner + '$',
-                groupfilt='^' + fromgroup + '$' )
-    except RegistrationError, x:
-        raise SystemExit(x)
-
-    print 'Matched:'
-    for csuite, cdir, cdescr in csuites:
-        cowner, cgroup, cname = regsplit( csuite ).get()
-        print '  ', cowner + ':' + cgroup + ':' + cname
-
-    # import to local
-    try:
-        local.lock()
-    except RegistrationError, x:
-        raise SystemExit(x)
-    local.load_from_file()
-    changed = False
- 
-    for csuite, cdir, cdescr in csuites:
-        cowner, cgroup, cname = regsplit( csuite ).get()
-        lgroup = togroup
-        lname = cname
-
-        #ldir = os.path.join( topdir, lgroup, lname )
-        ldir = os.path.join( topdir, lname )
-        if os.path.exists( ldir ):
-            print >> sys.stderr, 'WARNING: skipping import, directory already exists: ' + ldir
-            continue
-        lreg = lgroup + ':' + lname
-        try:
-            local.register( lreg, ldir, cdescr )
-        except RegistrationError, x:
-            print >> sys.stderr, x
-        else:
-            # Make path absolute in case user specified a single
-            # component relative path such as "foo", in which case
-            # os.path.dirname(ldir), below, returns an empty string.
-            ldir = os.path.abspath( ldir )
-            print 'Copying suite definition'
-            try:
-                mkdir_p( os.path.dirname(ldir))
-            except Exception,x:
-                print >> sys.stderr, x
-                local.unregister(lreg)
-            else:
-                try:
-                    copytree( cdir, ldir )
-                except OSError, x:
-                    print >> sys.stderr,x
-                    local.unregister( lreg )
-                else:
-                    changed = True
-    if changed:
-        local.dump_to_file()
-    local.unlock()
-
-else:
-    # single suite
-    creg = arg_central
-    lreg = arg_local
-    ldir = arg_dir
-
-    # retrieve central registration
-    central.load_from_file()
-    try:
-        cdir, cdescr = central.get( creg )
-    except RegistrationError, x:
-        raise SystemExit(x)
-
-    if os.path.exists( ldir ):
-        raise SystemExit( 'ERROR, destination directory already exists: ' + ldir )
-
-    # import to local
-    try:
-        local.lock()
-    except RegistrationError, x:
-        raise SystemExit(x)
-    local.load_from_file()
- 
-    try:
-        local.register( lreg, ldir, cdescr )
-    except RegistrationError, x:
-        print >> sys.stderr, x
-        local.unlock()
-        sys.exit(1)
-    else:
-        # Make path absolute in case user specified a single
-        # component relative path such as "foo", in which case
-        # os.path.dirname(ldir), below, returns an empty string.
-        ldir = os.path.abspath( ldir )
-        print 'Copying suite definition'
-        try:
-            mkdir_p( os.path.dirname(ldir))
-        except Exception,x:
-            print >> sys.stderr, x
-            local.unregister( lreg )
-            local.unlock()
-        else:
-            try:
-                copytree( cdir, ldir )
-            except OSError, x:
-                print >> sys.stderr,x
-                local.unregister( lreg )
-                local.unlock()
-            else:
-                local.dump_to_file()
-                local.unlock()
-
+command = 'cylc db copy --import ' + source + ' ' + target + ' ' + dir
+execute( command.split(' '))

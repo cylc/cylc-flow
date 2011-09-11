@@ -22,7 +22,7 @@ from cylc.registration import localdb, centraldb, RegistrationError
 def print_tree( tree, indent='' ):
     for item in tree:
         if isinstance( tree[item], dict ):
-            print indent + item
+            print indent + item + ' >'
             print_tree( tree[item], indent + '  ' )
         else:
             print indent + item + ' : ' + tree[item]

@@ -94,6 +94,7 @@ class regdb(object):
     A simple suite registration database.
     """
     def __init__( self, dir, file ):
+        self.user = os.environ['USER']
         self.dir = dir
         self.file = file
         # items[one][two]...[name] = (dir,description)
@@ -106,7 +107,6 @@ class regdb(object):
                 print "ERROR: failed to create directory:", self.dir
                 print x
                 sys.exit(1)
-        #self.user = os.environ['USER']
         self.mtime_at_load = None
         self.lockfile = os.path.join( self.dir, 'lock' )
         self.statehash = None
@@ -120,7 +120,7 @@ class regdb(object):
             raise DatabaseLockedError, 'ERROR: ' + self.file + ' is locked'
         print "   (locking database " + self.file + ")"
         lockfile = open( self.lockfile, 'wb' )
-        #lockfile.write( self.user + '\n' )
+        lockfile.write( 'locked by ' + self.user + '\n' )
         lockfile.write( str(datetime.datetime.now()))
         lockfile.close()
 
@@ -282,13 +282,14 @@ class localdb( regdb ):
     """
     Local (user-specific) suite registration database.
     """
+    dir = local_regdb_dir
     def __init__( self, file=None ):
         if file:
             # use for testing
             dir = os.path.dirname( file )
         else:
             # file in which to store suite registrations
-            dir = local_regdb_dir
+            dir = self.__class__.dir
             file = os.path.join( dir, 'db' )
         regdb.__init__(self, dir, file)
 
@@ -296,54 +297,17 @@ class centraldb( regdb ):
     """
     Central registration database for sharing suites between users.
     """
+    dir = central_regdb_dir
     def __init__( self, file=None ):
         if file:
             # use for testing
             dir = os.path.dirname( file )
         else:
             # file in which to store suite registrations
-            dir = central_regdb_dir
+            dir = self.__class__.dir
             file = os.path.join( dir, 'db' )
         regdb.__init__(self, dir, file )
 
-        # ...FORWARD...
-        owner, group, name = regsplit( suite ).get()
-        if owner != self.user and not safe:
-            raise RegistrationError, 'You cannot register as another user'
-        try:
-            regdir, descr = self.items[owner][group][name]
-        except KeyError:
-            # not registered  yet, do it below.
-            pass
-        else:
-            if regdir == dir:
-                # OK, this suite is already registered
-                self.print_reg( suite, prefix='(ALREADY REGISTERED)' )
-                return
-            else:
-                # ERROR, another suite is already using this registration
-                raise SuiteTakenError( suite )
-
-if __name__ == '__main__':
-    foo = regdb('DB','db')
-    foo.register( 'a:d', '/a/d',  'ad' )
-    foo.register( 'a:b:d', '/a/b/d', 'abd' )
-    foo.register( 'a:b', '/a/b/c', 'abc' )
-    print foo.items
-    #print foo.get( 'a:b:c' )
-    #print foo.get( 'a:d' )
-    #foo.unregister( 'a:d' )
-    #print foo.items
-    #foo.reregister( 'a:b', 'c:twat' )
-    #print foo.items
-    #print foo.get( 'a:d' )
-    #print foo.get( 'a:b:c' )
-    #print foo.items
-
-    #try:
-    #    print foo.get( 'a:f:c' )
-    #except SuiteNotRegisteredError:
-    #    print foo.items
-    #    sys.exit(1)
-    #print foo.get( 'a:x:c' )
+    def register( self, suite, dir, des='(no description supplied)' ):
+        regdb.register( self, self.user + ':' + suite, dir, des )
 
