@@ -23,32 +23,35 @@ from cylc.registration import localdb, centraldb, RegistrationError, DatabaseLoc
 
 parser = OptionParser( usage = """cylc [db] unregister [OPTIONS] SUITE
 
-Remove a suite, a group of suites, or a list of matching suites, from
-private or central suite database. This does not delete suite definition
-directories unless you specify the '--delete' option.
+Unregister suites from your private database, or remove your suites from
+the central suite database. This does not delete the corresponding suite
+definition directories unless you use the '--delete' option.
 
 If you accidentally unregister a running suite, just reregister it under
-the same registration path to regain access to it.
+the same name to regain access to it.
 
 Arguments:
     SUITE - suite or group registration, or expression (--filter).""" )
 
-parser.add_option( "--filter",
-        help="SUITE is a Python regular expression for matching suites.",
-        action="store_true", default=False, dest="regfilter" )
-
-parser.add_option( "--delete",
+parser.add_option( "-d", "--delete",
         help="Delete the suite definition directory too (!DANGEROUS!).",
         action="store_true", default=False, dest="obliterate" )
 
 parser.add_option( "-f", "--force",
-        help="Don't ask for confirmation before deleting suite"
-        "definition directories",
+        help="Don't ask for confirmation before deleting suites.",
         action="store_true", default=False, dest="force" )
 
 parser.add_option( "-c", "--central",
         help="Target the central suite database.",
         action="store_true", default=False, dest="central" )
+
+parser.add_option( "--filter",
+        help="SUITE is a Python regular expression for matching suites.",
+        action="store_true", default=False, dest="regfilter" )
+
+parser.add_option( "--dry-run",
+        help="Just show what I would do.",
+        action="store_true", default=False, dest="dryrun" )
 
 ( options, args ) = parser.parse_args()
 
@@ -63,36 +66,48 @@ else:
     db = localdb()
 
 try:
-    db.lock()
+    if not options.dryrun:
+        db.lock()
+    else:
+        print "This is DRY RUN - reported actions will not take effect:\n"
     db.load_from_file()
     dirs = db.unregister( arg )
-    db.dump_to_file()
-    db.unlock()
+    if not options.dryrun:
+        db.dump_to_file()
+        db.unlock()
 
 except DatabaseLockedError, x:
     raise SystemExit(x)
 except RegistrationError, x:
     print >> sys.stderr, x
-    db.unlock()
+    if not options.dryrun:
+        db.unlock()
     sys.exit(1)
 
 # TO DO: should this be inside the db lock in the case of
 # central copied registrations (probably not).
+n = len(dirs)
+if n == 0:
+    print 'No suites unregistered.'
+    sys.exit(0)
+
+print len(dirs), 'suites unregistered.'
+
 if options.obliterate:
+    for dir in dirs:
+        print 'DELETING ', dir
+
+    if options.dryrun:
+        sys.exit(0)
+
     really_obliterate = False
-    print "Suite(s) successfully unregistered."
     if options.force:
-        # confirmed by dialog
         really_obliterate = True
     else:
-        print "Suite definition directories to delete:"
-        for dir in dirs:
-            print ' -', dir
-        response = raw_input( "DO YOU REALLY WANT TO DELETE THESE SUITE DEFINITION DIRECTORY(S) (y/n)?" )
+        response = raw_input( "DO YOU REALLY WANT TO DELETE THESE SUITES (y/n)?" )
         if response == 'y':
             really_obliterate = True
     if really_obliterate and len(dirs)>0:
-        print "DELETING SUITE DEFINITIONS:"
         for dir in dirs:
             try:
                 rmtree(dir)
