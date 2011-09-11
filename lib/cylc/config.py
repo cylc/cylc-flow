@@ -215,6 +215,7 @@ class config( CylcConfigObj ):
                 reg = localdb()
             try:
                 reg.load_from_file()
+                self.suite, junk = reg.unalias( self.suite )
                 self.dir, descr = reg.get( suite )
             except RegistrationError, x:
                 raise SuiteConfigError(str(x))
