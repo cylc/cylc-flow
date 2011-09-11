@@ -16,16 +16,30 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 from optparse import OptionParser
 from cylc.registration import localdb, centraldb, RegistrationError
 
-def print_tree( tree, level=1):
-    for item in tree:
-        if isinstance( tree[item], dict ):
-            print '   '*(level-1) + '   ' + item
-            print_tree( tree[item], level+1 )
+def print_tree( tree, prefix=''):
+    keys = tree.keys()
+    keys.sort()
+    for item in keys:
+        if item == keys[-1]:
+            pprefix = prefix + ' `-'
         else:
-            print '   '*(level-1) + ' |-' + item + ' : ' + tree[item]
+            pprefix = prefix + ' |-'
+
+        pp = pprefix
+        pp = re.sub( '^ [`|]-', '', pp )
+        pp = re.sub( '- ', '  ', pp )
+        pp = re.sub( '` ', '  ', pp )
+
+        if isinstance( tree[item], dict ):
+            print pp + item
+            print_tree( tree[item], pprefix )
+        else:
+            print pp + item + ' . . . ' + tree[item]
+
 
 parser = OptionParser( usage = """cylc [db] print [--central] [FILTER]
 
@@ -75,7 +89,7 @@ try:
                 if key not in sub:
                     sub[key] = {}
                 sub = sub[key]
-            sub[regpath[-1]] = dir + ' : ' + title
+            sub[regpath[-1]] = dir + ' ' + title
         print_tree(tree)
 
 except RegistrationError,x:
