@@ -19,13 +19,13 @@
 from optparse import OptionParser
 from cylc.registration import localdb, centraldb, RegistrationError
 
-def print_tree( tree, indent='' ):
+def print_tree( tree, level=1):
     for item in tree:
         if isinstance( tree[item], dict ):
-            print indent + item + ' >'
-            print_tree( tree[item], indent + '  ' )
+            print '   '*(level-1) + '   ' + item
+            print_tree( tree[item], level+1 )
         else:
-            print indent + item + ' : ' + tree[item]
+            print '   '*(level-1) + ' |-' + item + ' : ' + tree[item]
 
 parser = OptionParser( usage = """cylc [db] print [--central] [FILTER]
 

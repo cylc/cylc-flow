@@ -23,7 +23,7 @@ from shutil import copy
 import subprocess
 from optparse import OptionParser
 from collections import deque
-from cylc.registration import getdb, RegistrationError
+from cylc.registration import localdb, centraldb, RegistrationError
 from cylc.mkdir_p import mkdir_p
 
 included = []
@@ -182,6 +182,10 @@ parser.add_option( "--inline", "-i",
         help="Edit with include-files inlined as described above.",
         action="store_true", default=False, dest="inline" )
 
+parser.add_option( "--central",
+        help="Target the central suite database.",
+        action="store_true", default=False, dest="central" )
+
 parser.add_option( "--cleanup",
         help="Remove backup files left by previous inlined edit sessions.",
         action="store_true", default=False, dest="cleanup" )
@@ -211,10 +215,14 @@ except KeyError:
 # find location of the suite definition directory
 global suitedir
 
+if options.central:
+    db = centraldb()
+else:
+    db = localdb()
+
 try:
-    reg = getdb( suite )
-    reg.load_from_file()
-    suitedir, descr = reg.get( suite )
+    db.load_from_file()
+    suitedir, descr = db.get( suite )
 except RegistrationError,x:
     raise SystemExit(x)
 
