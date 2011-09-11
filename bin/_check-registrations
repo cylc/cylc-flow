@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: Copyright (C) 2008-2011 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import sys
+from optparse import OptionParser
+from cylc.registration import localdb, centraldb, RegistrationError
+from cylc.config import get_suite_title, SuiteConfigError
+
+parser = OptionParser( usage = """cylc [db] check-registrations [options]
+
+Check a suite database for invalid registrations (no suite definition 
+directory or suite.rc file) and refresh suite titles in case they have
+changed since the suite was registered (for the central database this
+also updates the titles of suites owned by others).""" )
+
+parser.add_option( "-c","--central",
+        help="Print suite registrations from the central database.",
+        action="store_true", default=False, dest="central" )
+
+( options, args ) = parser.parse_args()
+
+if options.central:
+    reg = centraldb()
+else:
+    reg = localdb()
+
+invalid = []    # no suite.rc file
+readerror = []  # can't read title (suite.rc parse error)
+try:
+    reg.lock()
+    reg.load_from_file()
+    # check validity
+    invalid = reg.get_invalid()
+    # refresh titles
+    changed = []
+    for suite, dir, title in reg.get_list():
+        if suite in invalid:
+            continue
+        try:
+            new_title = get_suite_title( suite )
+
+        except SuiteConfigError,x:
+            readerror.append(suite)
+
+        else:
+            if new_title != title:
+                reg.reregister( suite, suite, title=new_title )
+    reg.dump_to_file()
+    reg.unlock()
+
+    if len(invalid) > 0:
+        print 'ERROR,', len(invalid), 'invalid registrations (not suite.rc file):'
+        for i in invalid:
+            print ' -', i
+
+    if len(readerror) > 0:
+        print 'ERROR,', len(readerror), 'title parse failures (bad suite.rc file):'
+        for i in readerror:
+            print ' -', i
+
+except RegistrationError, x:
+    print >> sys.stderr, x
+    sys.exit(1)
+

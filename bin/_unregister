@@ -33,25 +33,22 @@ the same registration path to regain access to it.
 Arguments:
     SUITE - suite or group registration, or expression (--filter).""" )
 
-parser.add_option( "--delete",
-        help="Delete the suite definition directory too (!DANGEROUS!).",
-        action="store_true", default=False, dest="obliterate" )
-
 parser.add_option( "--filter",
         help="SUITE is a Python regular expression for matching suites.",
         action="store_true", default=False, dest="regfilter" )
 
+parser.add_option( "--delete",
+        help="Delete the suite definition directory too (!DANGEROUS!).",
+        action="store_true", default=False, dest="obliterate" )
+
 parser.add_option( "-f", "--force",
-        help="Don't ask for confirmation before obliterating suite definitions",
+        help="Don't ask for confirmation before deleting suite"
+        "definition directories",
         action="store_true", default=False, dest="force" )
 
 parser.add_option( "-c", "--central",
         help="Target the central suite database.",
         action="store_true", default=False, dest="central" )
-
-parser.add_option( "--gcylc",
-        help="(DO NOT USE THIS OPTION).",
-        action="store_true", default=False, dest="gcylc" )
 
 ( options, args ) = parser.parse_args()
 
@@ -81,7 +78,7 @@ except RegistrationError, x:
 if options.obliterate:
     really_obliterate = False
     print "Suite(s) successfully unregistered."
-    if options.gcylc or options.force:
+    if options.force:
         # confirmed by dialog
         really_obliterate = True
     else:

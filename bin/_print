@@ -52,8 +52,8 @@ else:
 
 try:
     reg.load_from_file()
-    for item in reg.get_list(regfilter):
-        print item
+    for suite, dir, title in reg.get_list(regfilter):
+        print suite, dir, title
 except RegistrationError,x:
     print >> sys.stderr, x
     sys.exit(1)

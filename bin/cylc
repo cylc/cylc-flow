@@ -220,7 +220,7 @@ database_commands['print'     ] = [ 'print' ]
 database_commands['get-dir'   ] = [ 'get-dir' ]
 database_commands['export'    ] = [ 'export' ]
 database_commands['import'    ] = [ 'import' ]
-database_commands['refresh'   ] = [ 'refresh', 'check' ]
+database_commands['check-registrations'   ] = [ 'check-registrations' ]
 
 preparation_commands = OrderedDict()
 preparation_commands['gcylc'   ] = information_commands['gcylc']
@@ -329,7 +329,7 @@ comsum[ 'print'      ] = 'Print private or central suite registrations'
 comsum[ 'get-dir'    ] = 'Print a suite definition directory path'
 comsum[ 'import'     ] = 'Import central registrations to your private database'
 comsum[ 'export'     ] = 'Export private registrations to the central database'
-comsum[ 'refresh'    ] = 'Check for invalid registrations and update titles'
+comsum[ 'check-registrations'] = 'Report invalid registrations and update suite titles'
 # preparation
 comsum[ 'edit'       ] = 'Edit a suite.rc file in $EDITOR, optionally inlined'
 comsum[ 'inline'     ] = 'View suite.rc files in $EDITOR, include-files inlined'

@@ -881,7 +881,7 @@ The cylc forecast suite metascheduler.
                 options = '--obliterate '
             else:
                 return False
-        command = "cylc unregister --gcylc " + options + group + ":"
+        command = "cylc unregister --force " + options + group + ":"
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -929,7 +929,7 @@ The cylc forecast suite metascheduler.
             else:
                 return False
  
-        command = "cylc unregister --gcylc " + options + reg
+        command = "cylc unregister --force " + options + reg
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()

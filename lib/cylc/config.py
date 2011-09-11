@@ -189,9 +189,9 @@ def get_suite_title( suite=None, path=None, central=False ):
             else:
                 title = config( suite ).get_title()
         except SuiteConfigError, x:
-            print >> sys.stderr, 'ERROR: suite.rc parse failure!'
-            raise SystemExit( str(x) )
-
+            #print >> sys.stderr, 'ERROR: suite.rc parse failure!'
+            #raise SystemExit( str(x) )
+            raise
     return title
 
 class config( CylcConfigObj ):

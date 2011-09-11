@@ -241,11 +241,13 @@ class regdb(object):
         found = False
         for key in self.items.keys():
             if key.startswith(srce):
-                tmp = self.items[key]
+                dir, old_title = self.items[key]
                 newkey = re.sub( '^'+srce, targ, key )
                 print 'REREGISTERED', key, 'to', newkey
                 del self.items[key]
-                self.items[newkey] = tmp
+                if not title:
+                    title = old_title
+                self.items[newkey] = dir, title
                 found = True
         if not found:
             raise SuiteOrGroupNotFoundError, srce
@@ -260,18 +262,21 @@ class regdb(object):
         except KeyError:
             raise SuiteNotFoundError, alias
         if dir.startswith('->'):
-            alias = dir[2:]
-            dir, title = self.items[alias]
-        return alias, title
+            target = dir[2:]
+            dir, title = self.items[target]
+        else:
+            target = alias
+        return target, title
          
-    def check_valid( self, suite ):
-        for key, val in self.items:
-            dir, des = val
-            if not os.path.isdir( dir ):
-                raise RegistrationNotValidError, 'Directory not found: ' + dir
-            file = os.path.join( dir, 'suite.rc' )
-            if not os.path.isfile( file ): 
-                raise RegistrationNotValidError, 'File not found: ' + file
+    def get_invalid( self ):
+        invalid = []
+        for item in self.items:
+            reg, title = self.unalias(item)
+            dir, tit = self.items[reg]
+            rcfile = os.path.join( dir, 'suite.rc' )
+            if not os.path.isfile( rcfile ): 
+                invalid.append( item )
+        return invalid
 
 class localdb( regdb ):
     """
