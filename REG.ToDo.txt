@@ -1,3 +1,0 @@
-
-* combine all registration exception handling as in bin/_print
-

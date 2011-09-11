@@ -22,7 +22,7 @@ from optparse import OptionParser
 from OrderedDict import OrderedDict
 from cylc.config import config, SuiteConfigError
 from cylc.mkdir_p import mkdir_p
-from cylc.registration import getdb, regsplit, RegistrationError
+from cylc.registration import localdb, RegistrationError
 from cylc.execute import execute
 from cylc.job_submission.job_submit import job_submit
 from cylc import pimp_my_logger
@@ -86,7 +86,7 @@ host = socket.getfqdn()
 
 # find location of the suite definition directory --------------------
 try:
-    reg = getdb(suite)
+    reg = localdb()
     reg.load_from_file()
     suite_dir,descr = reg.get( suite )
 except RegistrationError,x:
@@ -147,9 +147,6 @@ cylcenv[ 'CYLC_SUITE_HOST' ] = host
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
 cylcenv[ 'CYLC_SUITE_DIR' ] = suite_dir
 cylcenv[ 'CYLC_SUITE' ] = suite
-suite_owner, suite_group, suite_name = regsplit( suite ).get()
-cylcenv[ 'CYLC_SUITE_GROUP' ] = suite_group
-cylcenv[ 'CYLC_SUITE_NAME' ] = suite_name
 cylcenv[ 'CYLC_SUITE_OWNER' ] = owner
 cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 if use_lockserver:
