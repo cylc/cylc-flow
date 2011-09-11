@@ -876,7 +876,7 @@ The cylc forecast suite metascheduler.
             res = question_dialog( "!DANGER! !DANGER! !DANGER! !DANGER! !DANGER! !DANGER!\n"
                     "?Do you REALLY want to delete ALL suite definition directories in group '" + group + "'?").ask()
             if res == gtk.RESPONSE_YES:
-                options = '--obliterate '
+                options = '--delete '
             else:
                 return False
         command = "cylc unregister --notify-completion --force " + options + group + ":"
@@ -923,7 +923,7 @@ The cylc forecast suite metascheduler.
             res = question_dialog( "!DANGER! !DANGER! !DANGER! !DANGER! !DANGER! !DANGER!\n"
                     "?Do you REALLY want to delete " + dir + '?').ask()
             if res == gtk.RESPONSE_YES:
-                options = '--obliterate '
+                options = '--delete '
             else:
                 return False
  
@@ -1020,6 +1020,10 @@ The cylc forecast suite metascheduler.
         self.gcapture_windows.append(foo)
         foo.run()
         w.destroy()
+
+    def ownerless( self, creg ):
+        # remove owner from a central suite registration
+        return ':'.join( creg.split(':')[1:] )
  
     def import_suite_popup( self, w, reg ):
         window = gtk.Window()
@@ -1030,22 +1034,13 @@ The cylc forecast suite metascheduler.
         #label = gtk.Label( 'Import ' + reg + ' as:' )
 
         owner = self.owner
-        cowner, cgroup, cname = re.split( ':', reg )
 
         box = gtk.HBox()
-        label = gtk.Label( 'Target Group' )
+        label = gtk.Label( 'Target Registration' )
         box.pack_start( label, True )
-        group_entry = gtk.Entry()
-        group_entry.set_text( cgroup )
-        box.pack_start (group_entry, True)
-        vbox.pack_start( box )
-
-        box = gtk.HBox()
-        label = gtk.Label( 'Target Name' )
-        box.pack_start( label, True )
-        name_entry = gtk.Entry()
-        name_entry.set_text( cname )
-        box.pack_start (name_entry, True)
+        newreg_entry = gtk.Entry()
+        newreg_entry.set_text( self.ownerless(reg) )
+        box.pack_start (newreg_entry, True)
         vbox.pack_start(box)
 
         box = gtk.HBox()
@@ -1059,7 +1054,7 @@ The cylc forecast suite metascheduler.
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Import" )
-        ok_button.connect("clicked", self.import_suite, window, reg, group_entry, name_entry, def_entry )
+        ok_button.connect("clicked", self.import_suite, window, reg, newreg_entry, def_entry )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.importx )
@@ -1073,13 +1068,12 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def import_suite( self, b, w, reg, group_entry, name_entry, def_entry ):
-        group = group_entry.get_text()
-        name  = name_entry.get_text()
+    def import_suite( self, b, w, reg, newreg_entry, def_entry ):
+        newreg  = newreg_entry.get_text()
         dir = def_entry.get_text()
-        if not self.check_entries( [group, name, dir] ):
+        if not self.check_entries( [newreg, dir] ):
             return False
-        command = "cylc import --notify-completion " + reg + ' ' + group + ':' + name + ' ' + dir
+        command = "cylc import --notify-completion " + reg + ' ' + newreg + ' ' + dir
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1094,23 +1088,14 @@ The cylc forecast suite metascheduler.
         #label = gtk.Label( 'Export ' + reg + ' as:' )
 
         owner = self.owner
-        junk, group, name = regsplit( reg ).get()
 
         box = gtk.HBox()
-        label = gtk.Label( 'Target Group' )
+        label = gtk.Label( 'Target Registration' )
         box.pack_start( label, True )
-        group_entry = gtk.Entry()
-        group_entry.set_text( group )
-        box.pack_start (group_entry, True)
+        newreg_entry = gtk.Entry()
+        newreg_entry.set_text( group )
+        box.pack_start (newreg_entry, True)
         vbox.pack_start( box )
-
-        box = gtk.HBox()
-        label = gtk.Label( 'Target Name' )
-        box.pack_start( label, True )
-        name_entry = gtk.Entry()
-        name_entry.set_text( name )
-        box.pack_start (name_entry, True)
-        vbox.pack_start(box)
 
         copy_cb = gtk.CheckButton( "Copy the suite definition directory" )
         copy_cb.set_active(False)
@@ -1120,7 +1105,7 @@ The cylc forecast suite metascheduler.
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Export" )
-        ok_button.connect("clicked", self.export_suite, window, reg, group_entry, name_entry, copy_cb )
+        ok_button.connect("clicked", self.export_suite, window, reg, newreg_entry, name_entry, copy_cb )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.export )
@@ -1134,8 +1119,8 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def export_suite( self, b, w, reg, group_entry, name_entry, copy_cb ):
-        group = group_entry.get_text()
+    def export_suite( self, b, w, reg, newreg_entry, name_entry, copy_cb ):
+        group = newreg_entry.get_text()
         name  = name_entry.get_text()
         if not self.check_entries( [group, name] ):
             return False

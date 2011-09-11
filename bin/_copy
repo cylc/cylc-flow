@@ -48,7 +48,7 @@ if '--import' in sys.argv:
 elif '--export' in sys.argv:
     c_export = True
     sys.argv.remove( '--export' ) 
-    sys.argv.append( os.path.join( centraldb.dir ))
+    sys.argv.append( os.path.join( centraldb.dir, os.environ['USER'] ))
     
 ( options, args ) = parser.parse_args()
 
@@ -79,7 +79,7 @@ try:
 
     fsuites = sourcedb.get_list( '^' + arg_from + r'\b' )
     if len(fsuites) == 0:
-        raise RegistrationError, 'ERROR, no suites matched: ' + suites_from
+        raise RegistrationError, 'ERROR, no suites matched: ' + fsuites
 
     if options.dryrun:
         print 'DRY RUN, I would copy:'

@@ -231,7 +231,7 @@ class regdb(object):
         for key in self.items.keys():
             if re.search( exp, key ):
                 print 'UNREGISTERING', key 
-                print self.items[key]
+                #print self.items[key]
                 dir, junk = self.items[key]
                 dirs.append(dir)
                 del self.items[key]
