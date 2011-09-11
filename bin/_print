@@ -35,7 +35,7 @@ def print_tree( tree, prefix=''):
         pp = re.sub( '` ', '  ', pp )
 
         if isinstance( tree[item], dict ):
-            print pp + item
+            print pp + '(' + item + ')'
             print_tree( tree[item], pprefix )
         else:
             print pp + item + ' . . . ' + tree[item]
