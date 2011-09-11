@@ -20,26 +20,59 @@ import re
 from optparse import OptionParser
 from cylc.registration import localdb, centraldb, RegistrationError
 
-def print_tree( tree, prefix=''):
+a_hbar = '-'
+a_vbar = '|'
+a_tee = a_vbar + a_hbar
+a_trm = '`' + a_hbar
+a_exptee = '\|' + a_hbar
+
+u_hbar = u'\u2500'
+u_vbar = u'\u2502'
+u_tee = u'\u251C' + u_hbar
+u_trm = u'\u2514' + u_hbar
+
+def get_padding( reglist ):
+    maxlen = 0
+    for reg in reglist:
+        items = reg[0].split(':')
+        for i in range(0,len(items)-1):
+            tmp = i*3 + len(items[i])
+            if tmp > maxlen:
+                maxlen = tmp
+    return (maxlen+1) * ' '
+
+def print_tree( tree, padding, unicode=False, prefix=''):
+    if unicode:
+        vbar = u_vbar
+        trm = u_trm
+        tee = u_tee
+        exptee= tee
+    else:
+        vbar = a_vbar
+        trm = a_trm
+        tee = a_tee
+        exptee = a_exptee
+
     keys = tree.keys()
     keys.sort()
     for item in keys:
         if item == keys[-1]:
-            pprefix = prefix + ' `-'
+            pprefix = prefix + ' ' + trm
         else:
-            pprefix = prefix + ' |-'
+            pprefix = prefix + ' ' + tee
 
         pp = pprefix
-        pp = re.sub( '^ [`|]-', '', pp )
-        pp = re.sub( '- ', '  ', pp )
-        pp = re.sub( '` ', '  ', pp )
+        pp = re.sub( '^ (' + trm + '|' + tee + ')', '', pp )
+        pp = re.sub( trm + ' ', '  ', pp )
+        pp = re.sub( exptee + ' ', vbar + ' ', pp )
 
+        result = pp + item 
+        line = result + padding[ len(result): ]
         if isinstance( tree[item], dict ):
-            print pp + '(' + item + ')'
-            print_tree( tree[item], pprefix )
+            print line
+            print_tree( tree[item], padding, unicode, pprefix )
         else:
-            print pp + item + ' . . . ' + tree[item]
-
+            print line + tree[item]
 
 parser = OptionParser( usage = """cylc [db] print [--central] [FILTER]
 
@@ -59,6 +92,11 @@ parser.add_option( "-c","--central",
 parser.add_option( "-t","--tree",
         help="Print suite registrations in nested tree form.",
         action="store_true", default=False, dest="tree" )
+
+parser.add_option( "-u","--unicode",
+        help="Use  unicode box drawing characters with --tree.",
+        action="store_true", default=False, dest="unicode" )
+
 
 ( options, args ) = parser.parse_args()
 
@@ -89,8 +127,10 @@ try:
                 if key not in sub:
                     sub[key] = {}
                 sub = sub[key]
-            sub[regpath[-1]] = dir + ' ' + title
-        print_tree(tree)
+            sub[regpath[-1]] = dir + ' | ' + title
+        pad = get_padding( allsuites )
+        print pad
+        print_tree(tree, pad, options.unicode )
 
 except RegistrationError,x:
     raise SystemExit(x)
