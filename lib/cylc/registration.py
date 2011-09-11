@@ -231,10 +231,16 @@ class regdb(object):
         for key in self.items.keys():
             if re.search( exp, key ):
                 print 'UNREGISTERING', key 
-                #print self.items[key]
                 dir, junk = self.items[key]
                 dirs.append(dir)
                 del self.items[key]
+        # check for aliases that now need to be unregistered
+        for key in self.items.keys():
+            dir, junk = self.items[key]
+            if dir.startswith('->'):
+                if re.search( exp, dir[2:] ):
+                    print 'UNREGISTERING invalidated alias', key 
+                    del self.items[key]
         return dirs
 
     def reregister( self, srce, targ, title=None ):
