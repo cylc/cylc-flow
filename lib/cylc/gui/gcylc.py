@@ -515,7 +515,7 @@ The cylc forecast suite metascheduler.
 
     def new_reg( self, b, w, dir, reg_e ):
         reg = reg_e.get_text()
-        command = "cylc register " + reg + ' ' + dir
+        command = "cylc register --notify-completion" + reg + ' ' + dir
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -526,7 +526,7 @@ The cylc forecast suite metascheduler.
             options = '-c'
         else:
             options = ''
-        command = "cylc refresh " + options
+        command = "cylc check-registrations --notify-completion" + options
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -881,7 +881,7 @@ The cylc forecast suite metascheduler.
                 options = '--obliterate '
             else:
                 return False
-        command = "cylc unregister --force " + options + group + ":"
+        command = "cylc unregister --notify-completion --force " + options + group + ":"
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -929,7 +929,7 @@ The cylc forecast suite metascheduler.
             else:
                 return False
  
-        command = "cylc unregister --force " + options + reg
+        command = "cylc unregister --notify-completion --force " + options + reg
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1017,7 +1017,7 @@ The cylc forecast suite metascheduler.
         dir = def_entry.get_text()
         if not self.check_entries( [group, dir] ):
             return False
-        command = "cylc import " + fowner + ':' + fgroup + ': ' + group + ': ' + dir
+        command = "cylc import --notify-completion " + fowner + ':' + fgroup + ': ' + group + ': ' + dir
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1081,7 +1081,7 @@ The cylc forecast suite metascheduler.
         dir = def_entry.get_text()
         if not self.check_entries( [group, name, dir] ):
             return False
-        command = "cylc import " + reg + ' ' + group + ':' + name + ' ' + dir
+        command = "cylc import --notify-completion " + reg + ' ' + group + ':' + name + ' ' + dir
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1144,7 +1144,7 @@ The cylc forecast suite metascheduler.
         options = ''
         if copy_cb.get_active():
             options = '--copy '
-        command = "cylc export " + options + reg + ' ' + group + ':' + name
+        command = "cylc export --notify-completion " + options + reg + ' ' + group + ':' + name
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1206,7 +1206,7 @@ The cylc forecast suite metascheduler.
         tto = g + ':' + n
         if self.cdb:
             tto = reg_owner + ':' + tto
-        command = "cylc reregister " + reg + ' ' + tto
+        command = "cylc reregister --notify-completion " + reg + ' ' + tto
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1249,7 +1249,7 @@ The cylc forecast suite metascheduler.
         if self.cdb:
             g_from = self.owner + ':' + g_from
             g_to = self.owner + ':' + g_to
-        command = "cylc reregister " + g_from + ': ' + g_to + ":"
+        command = "cylc reregister --notify-completion " + g_from + ': ' + g_to + ":"
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1299,7 +1299,7 @@ The cylc forecast suite metascheduler.
         options = ''
         if copy_cb.get_active():
             options = '--copy '
-        command = "cylc export " + options + lgroup + ': ' + group + ":"
+        command = "cylc export --notify-completion " + options + lgroup + ': ' + group + ":"
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1361,7 +1361,7 @@ The cylc forecast suite metascheduler.
             return False
         g_to += ':'
         g_from += ':'
-        command = "cylc copy " + g_from + ' ' + g_to + ' ' + dir
+        command = "cylc copy --notify-completion " + g_from + ' ' + g_to + ' ' + dir
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1484,7 +1484,7 @@ The cylc forecast suite metascheduler.
             opts = ' -n '
         if not self.check_entries( chk ):
             return False
-        command = "cylc diff " + opts + reg + ' ' + group + ':' + name
+        command = "cylc diff --notify-completion " + opts + reg + ' ' + group + ':' + name
         foo = gcapture_tmpfile( command, self.tmpdir, 800 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1501,7 +1501,7 @@ The cylc forecast suite metascheduler.
             dir = ''
         if not self.check_entries( chk ):
             return False
-        command = "cylc copy " + reg + ' ' + group + ':' + name + ' ' + dir
+        command = "cylc copy --notify-completion " + reg + ' ' + group + ':' + name + ' ' + dir
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1628,7 +1628,7 @@ The cylc forecast suite metascheduler.
         options = ''
         if nobin_cb.get_active():
             options += ' -x '
-        command = "cylc search " + options + ' ' + pattern + ' ' + reg 
+        command = "cylc search --notify-completion " + options + ' ' + pattern + ' ' + reg 
         foo = gcapture_tmpfile( command, self.tmpdir, height=500 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1668,7 +1668,7 @@ The cylc forecast suite metascheduler.
             options += ' -w '
         options += ' ' + reg + ' ' + start + ' ' + stop
 
-        command = "cylc graph " + options
+        command = "cylc graph --notify-completion " + options
         foo = gcapture_tmpfile( command, self.tmpdir )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1739,7 +1739,7 @@ The cylc forecast suite metascheduler.
                 extra += ' -l'
             if sngcb.get_active():
                 extra += ' -s'
-            command = "cylc inline -g " + extra + ' ' + reg
+            command = "cylc inline --notify-completion -g " + extra + ' ' + reg
             foo = gcapture_tmpfile( command, self.tmpdir )
             self.gcapture_windows.append(foo)
             foo.run()
@@ -1748,20 +1748,20 @@ The cylc forecast suite metascheduler.
                 extra = '-i '
             else:
                 extra = ''
-            command = "cylc edit -g " + extra + ' ' + reg
+            command = "cylc edit --notify-completion -g " + extra + ' ' + reg
             foo = gcapture_tmpfile( command, self.tmpdir )
             self.gcapture_windows.append(foo)
             foo.run()
         return False
 
     def validate_suite( self, w, name ):
-        command = "cylc validate " + name 
+        command = "cylc validate --notify-completion " + name 
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
 
     def dump_suite( self, w, name ):
-        command = "cylc dump " + name
+        command = "cylc dump --notify-completion " + name
         foo = gcapture_tmpfile( command, self.tmpdir, 400, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1805,19 +1805,19 @@ The cylc forecast suite metascheduler.
         options = ''
         if dryrun_cb.get_active():
             options = '--dry-run'
-        command = "cylc submit " + options + " " + reg + " " + task_entry.get_text()
+        command = "cylc submit --notify-completion " + options + " " + reg + " " + task_entry.get_text()
         foo = gcapture_tmpfile( command, self.tmpdir, 500, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
 
     def describe_suite( self, w, name ):
-        command = "cylc describe " + name  
+        command = "cylc describe --notify-completion " + name  
         foo = gcapture_tmpfile( command, self.tmpdir, 500, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
 
     def list_suite( self, w, name ):
-        command = "cylc list " + name
+        command = "cylc list --notify-completion " + name
         foo = gcapture_tmpfile( command, self.tmpdir, 300, 400 )
         self.gcapture_windows.append(foo)
         foo.run()

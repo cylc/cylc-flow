@@ -409,6 +409,12 @@ if len(sys.argv) == 1:
 
 args = sys.argv[1:]
 
+if '--notify-completion' in args:
+    notify = True
+    args.remove('--notify-completion')
+else:
+    notify = False
+
 if len(args) == 1:
     if args[0] == 'categories':
         # secret argument for document processing
@@ -557,17 +563,6 @@ for item in command_args:
     else:
         args_new.append( item )
 args = args_new
-
-notify=False
-if command not in ['cycletime', 'template', 'log', 'checkvars', 'get-dir',
-        'message', 'started', 'succeeded', 'failed', 'submit', 'jobscript',
-        'task-message', 'task-started', 'task-succeeded', 'task-failed',
-        'test-db', 'test-suite', 'warranty', 'conditions']:
-    # notify => print 'DONE' when command is completed, which is 
-    # helpful for gui command capture windows. But some commands return
-    # specific results by stdout, which we don't want to contaminate.
-    # ('cylc log' output is used by the scheduler test script).
-    notify=True
 
 # construct command to execute
 # DEPRECATED TASK COMMANDS (backward compatibility):
