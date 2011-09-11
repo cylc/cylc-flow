@@ -85,6 +85,7 @@ try:
         print 'DRY RUN, I would copy:'
 
     for fsuite in fsuites:
+        print
         fsuite, fdir, ftitle = fsuite
 
         treg = re.sub( r'\b' + arg_from + r'\b', arg_to, fsuite ) 
@@ -93,18 +94,18 @@ try:
         tdir = '/'.join( tmp.split(':') )
         tdir = os.path.join( arg_dir, tdir )
 
-        print fsuite, "-->", treg, 'in', tdir
         if options.dryrun:
             continue
 
         try:
             targetdb.register( treg, tdir, ftitle )
         except SuiteTakenError, x:
-            print >> sys.stderr, 'WARNING, ' + str(x)
+            print >> sys.stderr, 'ERROR, ' + str(x)
             continue
 
         if os.path.exists( tdir ):
-            print >> sys.stderr, 'WARNING: skipping copy, directory already exists: ' + tdir
+            print >> sys.stderr, 'ERROR, directory already exists: ' + tdir
+            targetdb.unregister(treg)
             continue
 
         tdir = os.path.abspath( tdir )

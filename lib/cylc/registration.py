@@ -197,6 +197,7 @@ class regdb(object):
             elif suite.startswith(key + ':'):
                 raise NotAGroupError, key
 
+        print 'REGISTERING', suite, '--->', dir
         self.items[suite] = dir, des
 
     def get( self, suite ):
