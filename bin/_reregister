@@ -41,17 +41,17 @@ arg_from = args[0]
 arg_to = args[1]
 
 if options.central:
-    reg = centraldb()
+    db = centraldb()
 else:
-    reg = localdb()
+    db = localdb()
 
 try:
-    reg.lock()
-    reg.load_from_file()
-    reg.reregister( arg_from, arg_to )
-    reg.dump_to_file()
-    reg.unlock()
+    db.lock()
+    db.load_from_file()
+    db.reregister( arg_from, arg_to )
+    db.dump_to_file()
+    db.unlock()
 except RegistrationError,x:
     print >> sys.stderr, x
-    reg.unlock()
+    db.unlock()
     sys.exit(1)

@@ -18,10 +18,10 @@
 
 import os, re, sys
 from optparse import OptionParser
-from cylc.registration import getdb, RegistrationError
+from cylc.registration import localdb, centraldb, RegistrationError
 from cylc.config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc [db] get-dir SUITE
+parser = OptionParser( usage = """cylc [db] get-directory SUITE
 
 Retrieve and print a suite definition directory path.
 How to move to a suite definition directory, for the lazy: 
@@ -30,6 +30,10 @@ How to move to a suite definition directory, for the lazy:
 Arguments:
     SUITE - target suite.""" )
 
+parser.add_option( "-c", "--central",
+        help="Target the central suite database.",
+        action="store_true", default=False, dest="central" )
+
 ( options, args ) = parser.parse_args()
 
 if len(args) != 1:
@@ -37,11 +41,14 @@ if len(args) != 1:
 
 suite = args[0]
 
+if options.central:
+    db = centraldb()
+else:
+    db = localdb()
+
 try:
-    reg = getdb(suite)
-    reg.load_from_file()
-    dir, title = reg.get( suite )
+    db.load_from_file()
+    dir, title = db.get( suite )
+    print dir
 except RegistrationError, x:
     raise SystemExit(x)
-else:
-    print dir

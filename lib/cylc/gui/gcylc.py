@@ -83,8 +83,6 @@ class db_updater(threading.Thread):
                 state = 'port ' + str(ports[suite])
             else:
                 state = '-'
-
-            # reg 
             nest2 = self.newtree
             regpath = suite.split(':')
             for key in regpath[:-1]:

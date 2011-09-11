@@ -41,14 +41,14 @@ if len(args) != 2:
 suite = args[0]
 alias = args[1]
 
-reg = localdb()
+db = localdb()
 try:
-    reg.lock()
-    reg.load_from_file()
-    reg.alias( suite, alias )
-    reg.dump_to_file()
-    reg.unlock()
+    db.lock()
+    db.load_from_file()
+    db.alias( suite, alias )
+    db.dump_to_file()
+    db.unlock()
 except RegistrationError, x:
     print >> sys.stderr, x
-    reg.unlock()
+    db.unlock()
     sys.exit(1)
