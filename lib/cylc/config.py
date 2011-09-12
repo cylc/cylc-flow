@@ -118,8 +118,9 @@ class edge( object):
         return left + '%' + str(tag)  # str for int tag (async)
 
 class config( CylcConfigObj ):
-    def __init__( self, suite, suiterc, simulation_mode=False ):
+    def __init__( self, suite, suiterc, simulation_mode=False, verbose=False ):
         self.simulation_mode = simulation_mode
+        self.verbose = verbose
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
         self.taskdefs = {}
 
@@ -143,29 +144,32 @@ class config( CylcConfigObj ):
 
         self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc.spec')
 
-        print "LOADING SUITE CONFIG"
+        if self.verbose:
+            print "LOADING SUITE CONFIG"
         try:
             CylcConfigObj.__init__( self, self.file, configspec=self.spec )
         except ConfigObjError, x:
             raise SuiteConfigError, x
 
-        print "VALIDATING"
+        if self.verbose:
+            print "VALIDATING"
         # validate and convert to correct types
         val = Validator()
         test = self.validate( val, preserve_errors=True )
         if test != True:
             # Validation failed
             failed_items = flatten_errors( self, test )
-            for item in failed_items:
-                sections, key, result = item
-                print ' ',
-                for sec in sections:
-                    print sec, '->',
-                print key
-                if result == False:
-                    print "Required item missing."
-                else:
-                    print result
+            if self.verbose:
+                for item in failed_items:
+                    sections, key, result = item
+                    print ' ',
+                    for sec in sections:
+                        print sec, '->',
+                    print key
+                    if result == False:
+                        print "Required item missing."
+                    else:
+                        print result
             raise SuiteConfigError, "ERROR: suite.rc validation failed"
         
         extras = []
@@ -207,7 +211,8 @@ class config( CylcConfigObj ):
             else:
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
-        print "PARSING TASK RUNTIMES"
+        if self.verbose:
+            print "PARSING TASK RUNTIMES"
         self.members = {}
         # Parse task config generators. If the runtime section is a list
         # of task names or a list-generating Python expression, then the
@@ -764,19 +769,16 @@ class config( CylcConfigObj ):
             for node in group_nodes:
                 if node != 'root':
                     parent = self.family_hierarchy[node][1]
-                    #print 'closing', parent
                     if parent not in self.closed_families:
                         self.closed_families.append( parent )
 
         elif len(ungroup_nodes) > 0:
             for node in ungroup_nodes:
-                #print 'opening', node
                 if node in self.closed_families:
                     self.closed_families.remove(node)
                 if ungroup_recursive:
                     for fam in deepcopy(self.closed_families):
                         if fam in self.members[node]:
-                            #print '  opening', fam
                             self.closed_families.remove(fam)
 
         if colored:
@@ -941,8 +943,8 @@ class config( CylcConfigObj ):
         return prev
 
     def load( self ):
-        # (to stderr: the admin test suite parses 'cylc log output') 
-        print >> sys.stderr, 'PARSING SUITE GRAPH'
+        if self.verbose:
+            print 'PARSING SUITE GRAPH'
         # parse the suite dependencies section
         for item in self['scheduling']['dependencies']:
             if item == 'graph':

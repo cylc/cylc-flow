@@ -167,6 +167,7 @@ information_commands['show'     ] = ['show'       ]
 information_commands['log'      ] = ['log'        ]
 information_commands['monitor'  ] = ['monitor'  ]
 information_commands['nudge'    ] = ['nudge' ]
+information_commands['get-config'    ] = ['get-config' ]
 
 control_commands = OrderedDict()
 control_commands['gcylc'  ] = information_commands[ 'gcylc' ]
@@ -298,12 +299,17 @@ but they provide structure to the command set, and they disambiguate
 highly abbreviated commands. Some commands are aliased (ls|list), and 
 some common typos are automatically corrected (cylc,cycl; help,hlep).
 
-Note that 'SUITE' refers to a suite's registered [OWNER:]GROUP:NAME, 
-and 'TASK' refers to the unique NAME%TAG of a task in a suite. For 
-cycling tasks TAG is a cycle time (e.g. foo%2011080806), and for 
-asynchronous tasks it is an integer preceded by 'a:' (e.g. foo%a:1).
+SUITE is a registration path ('foo', 'foo/bar', 'foo/bar/baz' etc.).
+These allow you to organise suites in a sensible hierarchy, in your
+private suite database, regardless of the actual location of the suite
+definition directory on disk. In the central suite database the first
+component of the registration path is the suite owner's username.
 
-How to drill down to usage help for a particular command:
+TASK is the unique identity of a task in a suite: NAME%TAG, where TAG
+is a cycle time (YYYYMMDDHH) for cycling tasks, or an integer preceded
+by 'a:' for asynchronous tasks (e.g. foo%a:1).
+
+Here's how to drill down to command usage help for a particular command:
   $ cylc help ............... list all available categories (this page)
   $ cylc help prep .......... list commands in category 'preparation'
   $ cylc help [prep] edit ... command usage help for 'cylc [prep] edit'

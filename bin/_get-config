@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: Copyright (C) 2008-2011 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import os, sys
+from optparse import OptionParser
+from cylc.registration import dbgetter, RegistrationError
+from cylc.config import config, SuiteConfigError
+
+parser = OptionParser( usage = """cylc [db] get-config SUITE [HIERARCHY]
+
+Print configuration items parsed from a suite definition (including any 
+defaults not explicitly set in the suite.rc file). This enables scripts
+to control suites or process their output without assuming directory
+locations and so on.
+
+Config items containing spaces must be quoted. If the requested config
+item is not a single value the corresponding internal data structure (a
+nested Python dict) will be printed verbatim.
+
+#________________________________________________________________EXAMPLE
+# excerpt from a suite definition registered as foo.bar.baz:
+use lockserver = True
+[runtime]
+    [[modelX]]
+        [[[environment]]]
+            OUTPUT_DIR=/oper/live/modelX/output
+#_______________________________________________________________________
+
+$ cylc get-config foo.bar.baz 'use lockserver'
+$ True
+
+$ cylc get-config foo.bar.baz runtime modelX environment OUTPUT_DIR
+$ /oper/live/modelX/output
+
+Arguments:
+    SUITE - target suite.
+    HIERARCHY - list of suite.rc item hierarchy elements.""" )
+
+parser.add_option( "-c", "--central",
+        help="Target the central suite database.",
+        action="store_true", default=False, dest="central" )
+
+( options, args ) = parser.parse_args()
+
+if len(args) < 1:
+    parser.error( "Wrong number of arguments" )
+
+reg = args[0]
+dbg = dbgetter( options.central )
+try:
+    suite, suiterc = dbg.get_suite(reg)
+except RegistrationError, x:
+    raise SystemExit(x)
+
+try:
+    config = config( suite, suiterc )
+except SuiteConfigError,x:
+    raise SystemExit(x)
+
+res = config
+got = []
+for item in args[1:]:
+    try:
+        res = res[item]
+    except KeyError:
+        print >> sys.stderr, 'ERROR, no such item: ' + ' -> '.join( got ) + ' -> ' + item
+        sys.exit(1)
+    got.append(item)
+
+print res
+    

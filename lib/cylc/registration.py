@@ -29,18 +29,6 @@ from conf.CylcGlobals import central_regdb_dir, local_regdb_dir
 # UM, which then core dumps. Manual use of $PWD to absolutize a relative
 # path, on GPFS, results in a shorter string ... so I use this for now.
 
-class dbgetter:
-    def __init__( self, central=False ):
-        if central:
-            self.db = centraldb()
-        else:
-            self.db = localdb()
-    def get_suite( self, reg ):
-        self.db.load_from_file()
-        suite, junk = self.db.unalias( reg )
-        suiterc = self.db.getrc( suite )
-        return suite, suiterc
-
 class RegistrationError( Exception ):
     """
     Attributes:
@@ -103,11 +91,54 @@ class RegistrationNotValidError( RegistrationError ):
 class DatabaseLockedError( RegistrationError ):
     pass
 
+class RegPathError( RegistrationError ):
+    def __init__( self, reg ):
+        self.msg = "ERROR, illegal registration path: " + reg
+
+class reg_path( object ):
+    #sep_re = '[./:]'
+    #sep = '/'
+    sep = ':'
+    def __init__( self, path ):
+        if isinstance( path, list ):
+            # Take a list of path components:
+            self.path = self.__class__.sep.join( path )
+        else:
+            # Or a delimited path (allow foo.bar.baz, or foo:bar:baz, or
+            # foo/bar/baz on input, but store as foo/bar/baz):
+
+            # First strip trailing '/' in case the user registered same
+            # name as dir whilst sitting one level up from the suite dir
+            # itself, using tab completion, and got the args order wrong.
+            path = path.rstrip( '/' )
+            #self.path = sep.join( path.split( sep_re ) )
+            self.path = path
+
+    def get( self ):
+        return self.path
+
+class dbgetter:
+    # Used in cylc commands to quickly get the unaliased suite
+    # registration path and suite.rc file path from the input suite
+    # registration path.
+    def __init__( self, central=False ):
+        if central:
+            self.db = centraldb()
+        else:
+            self.db = localdb()
+    def get_suite( self, reg ):
+        self.db.load_from_file()
+        suite, junk = self.db.unalias( reg )
+        suiterc = self.db.getrc( suite )
+        return suite, suiterc
+
+
 class regdb(object):
     """
     A simple suite registration database.
     """
-    def __init__( self, dir, file ):
+    def __init__( self, dir, file, verbose=False ):
+        self.verbose = verbose
         self.user = os.environ['USER']
         self.dir = dir
         self.file = file
@@ -130,9 +161,10 @@ class regdb(object):
 
     def lock( self ):
         if os.path.exists( self.lockfile ):
-            print "lock file:", self.lockfile
+            print >> sys.stderr, "lock file:", self.lockfile
             raise DatabaseLockedError, 'ERROR: ' + self.file + ' is locked'
-        print "   (locking database " + self.file + ")"
+        if self.verbose:
+            print "   (locking database " + self.file + ")"
         lockfile = open( self.lockfile, 'wb' )
         lockfile.write( 'locked by ' + self.user + '\n' )
         lockfile.write( str(datetime.datetime.now()))
@@ -140,7 +172,8 @@ class regdb(object):
 
     def unlock( self ):
         if os.path.exists( self.lockfile ):
-            print "   (unlocking database " + self.file + ")"
+            if self.verbose:
+                print "   (unlocking database " + self.file + ")"
             try:
                 os.unlink( self.lockfile )
             except OSError, x:
@@ -161,7 +194,8 @@ class regdb(object):
             return False
         
     def load_from_file( self ):
-        print "LOADING " + self.file
+        if self.verbose:
+            print "LOADING " + self.file
         try:
             self.mtime_at_load = os.stat(self.file).st_mtime
         except OSError:
@@ -181,41 +215,41 @@ class regdb(object):
     def dump_to_file( self ):
         newhash = self.get_hash()
         if newhash != self.statehash:
-            print "REWRITING DATABASE"
+            if self.verbose:
+                print "REWRITING DATABASE"
             output = open( self.file, 'w' )
             pickle.dump( self.items, output )
             output.close()
             self.statehash = newhash
         else:
-            print "   (database unchanged)"
+            if self.verbose:
+                print "   (database unchanged)"
 
-    def register( self, suite, dir, des='(no description supplied)' ):
+    def register( self, reg, dir, des='(no description supplied)' ):
+        suite = reg_path( reg ).get()
         if not dir.startswith( '->' ):  # alias for another reg
-            # remove trailing '/'
+            # Remove trailing '/'
             dir = dir.rstrip( '/' )
-            # remove leading './'
+            # Remove leading './'
             dir = re.sub( '^\.\/', '', dir )
-            # Also strip / off name in case of registering same name as dir 
-            # whilst sitting one level up from the suite dir itself, using
-            # tab completion, and getting the args the wrong way around.
-            suite = suite.rstrip( '/' )
-            # make registered path absolute # see NOTE:ABSPATH above
-
+            # Make registered path absolute # see NOTE:ABSPATH above
             if not re.search( '^/', dir ):
                 dir = os.path.join( os.environ['PWD'], dir )
 
         for key in self.items.keys():
             if key == suite:
                 raise SuiteTakenError, suite
-            elif key.startswith(suite + ':'):
+            elif key.startswith(suite + reg_path.sep ):
                 raise IsAGroupError, suite
-            elif suite.startswith(key + ':'):
+            elif suite.startswith(key + reg_path.sep ):
                 raise NotAGroupError, key
 
-        print 'REGISTERING', suite, '--->', dir
+        if self.verbose:
+            print 'REGISTERING', suite, '--->', dir
         self.items[suite] = dir, des
 
-    def get( self, suite ):
+    def get( self, reg ):
+        suite = reg_path(reg).get()
         suite, title = self.unalias(suite)
         try:
             dir, des = self.items[suite]
@@ -223,7 +257,8 @@ class regdb(object):
             raise SuiteNotRegisteredError, "Suite not registered: " + suite
         return dir, des
 
-    def getrc( self, suite ):
+    def getrc( self, reg ):
+        suite = reg_path(reg).get()
         dir, junk = self.get( suite )
         return os.path.join( dir, 'suite.rc' )
 
@@ -250,7 +285,8 @@ class regdb(object):
         dirs = []
         for key in self.items.keys():
             if re.search( exp, key ):
-                print 'UNREGISTERING', key 
+                if self.verbose:
+                    print 'UNREGISTERING', key 
                 dir, junk = self.items[key]
                 dirs.append(dir)
                 del self.items[key]
@@ -259,7 +295,8 @@ class regdb(object):
             dir, junk = self.items[key]
             if dir.startswith('->'):
                 if re.search( exp, dir[2:] ):
-                    print 'UNREGISTERING invalidated alias', key 
+                    if self.verbose:
+                        print 'UNREGISTERING invalidated alias', key 
                     del self.items[key]
         return dirs
 
@@ -269,7 +306,8 @@ class regdb(object):
             if key.startswith(srce):
                 dir, old_title = self.items[key]
                 newkey = re.sub( '^'+srce, targ, key )
-                print 'REREGISTERED', key, 'to', newkey
+                if self.verbose:
+                    print 'REREGISTERED', key, 'to', newkey
                 del self.items[key]
                 if not title:
                     title = old_title
@@ -377,7 +415,7 @@ class localdb( regdb ):
     Local (user-specific) suite registration database.
     """
     dir = local_regdb_dir
-    def __init__( self, file=None ):
+    def __init__( self, file=None, verbose=False):
         if file:
             # use for testing
             dir = os.path.dirname( file )
@@ -385,14 +423,14 @@ class localdb( regdb ):
             # file in which to store suite registrations
             dir = self.__class__.dir
             file = os.path.join( dir, 'db' )
-        regdb.__init__(self, dir, file)
+        regdb.__init__(self, dir, file, verbose)
 
 class centraldb( regdb ):
     """
     Central registration database for sharing suites between users.
     """
     dir = central_regdb_dir
-    def __init__( self, file=None ):
+    def __init__( self, file=None, verbose=False ):
         if file:
             # use for testing
             dir = os.path.dirname( file )
@@ -400,8 +438,8 @@ class centraldb( regdb ):
             # file in which to store suite registrations
             dir = self.__class__.dir
             file = os.path.join( dir, 'db' )
-        regdb.__init__(self, dir, file )
+        regdb.__init__(self, dir, file, verbose )
 
     def register( self, suite, dir, des='(no description supplied)' ):
-        regdb.register( self, self.user + ':' + suite, dir, des )
+        regdb.register( self, self.user + reg_path.sep + suite, dir, des )
 
