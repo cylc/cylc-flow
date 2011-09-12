@@ -37,13 +37,15 @@ class MyDotWindow( xdot.DotWindow ):
         </toolbar>
     </ui>
     '''
-    def __init__(self, suite, ctime, stop_after, raw, outfile=None ):
+    def __init__(self, suite, suiterc, watch, ctime, stop_after, raw, outfile=None ):
         self.outfile = outfile
         self.disable_output_image = False
         self.suite = suite
+        self.file = suiterc
         self.ctime = ctime
         self.raw = raw
         self.stop_after = stop_after
+        self.watch = []
 
         gtk.Window.__init__(self)
 
@@ -94,7 +96,7 @@ class MyDotWindow( xdot.DotWindow ):
         # find all suite.rc include-files
         self.rc_mtimes = {}
         self.rc_last_mtimes = {}
-        for rc in config.get_rcfiles( self.suite ):
+        for rc in watch:
             while True:
                 try:
                     self.rc_last_mtimes[rc] = os.stat(rc).st_mtime
@@ -110,9 +112,8 @@ class MyDotWindow( xdot.DotWindow ):
 
     def parse_graph( self ):
         # reparse the graph
-        self.suiterc = config.config( self.suite )
+        self.suiterc = config.config( self.suite, self.file )
         family_nodes = self.suiterc.members.keys()
-        self.suitercfile = self.suiterc.get_filename()
         if self.ctime != None and self.stop_after != None:
             graph = self.suiterc.get_graph( self.ctime, self.stop_after, raw=self.raw )
         else:

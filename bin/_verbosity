@@ -16,11 +16,11 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-import os,sys
+import sys
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
+from cylc.registration import dbgetter, RegistrationError
 
 parser = PromptOptionParser( """cylc [control] verbosity [options] SUITE LEVEL
 
@@ -41,7 +41,12 @@ verbosity = args[1]
 if verbosity not in vchoices:
     parser.error( "Illegal logging level, " + verbosity )
 
-suite = parser.get_suite_name()
+reg = parser.get_suite_name()
+dbg = dbgetter()
+try:
+    suite, junk = dbg.get_suite(reg)
+except RegistrationError, x:
+    raise SystemExit(x)
 
 try:
     proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )

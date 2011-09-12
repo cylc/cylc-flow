@@ -37,10 +37,10 @@ tasks to include at startup = force_list( default=list())
 
 runahead limit in hours = integer( min=0, default=24 )
 
-suite log directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE/log/suite' )
+suite log directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG/log/suite' )
 roll log at startup = boolean( default=True )
 
-state dump directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE/state' )
+state dump directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG/state' )
 number of state dump backups = integer( min=1, default=10 )
 
 simulation mode only = boolean( default=False )
@@ -76,7 +76,7 @@ UTC mode = boolean( default=False )
             method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=background )
             command template = string( default=None )
             job script shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=/bin/bash )
-            log directory = string( default='$HOME/cylc-run/$CYLC_SUITE/log/job' )
+            log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_REG/log/job' )
             # This log directory is used for the task job script for local and remote
             # tasks, and also for the task stdout and stderr logs for local tasks.
             # All environment variables are interpolated out before use.

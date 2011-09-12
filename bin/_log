@@ -17,12 +17,11 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, re, sys
-from cylc.config import config, SuiteConfigError
 from optparse import OptionParser
-from shutil import copy
 import tempfile
 import subprocess
-from cylc.registration import RegistrationError
+from cylc.registration import dbgetter, RegistrationError
+from cylc.config import config, SuiteConfigError
 from cylc.mkdir_p import mkdir_p
  
 parser = OptionParser( """cylc [info] log [options] SUITE 
@@ -61,13 +60,16 @@ parser.add_option( "-e", "--edit",
 if len(args) != 1:
     parser.error( "wrong number of arguments" )
 
+reg = args[0]
+
+dbg = dbgetter()
 try:
-    suite = args[0]
+    suite, suiterc = dbg.get_suite(reg)
 except RegistrationError, x:
     raise SystemExit(x)
 
 try:
-    filename = os.path.join( config( suite )['suite log directory'], 'log' )
+    filename = os.path.join( config( suite, suiterc )['suite log directory'], 'log' )
 except SuiteConfigError, x:
     raise SystemExit(x)
  

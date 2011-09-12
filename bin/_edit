@@ -23,7 +23,7 @@ from shutil import copy
 import subprocess
 from optparse import OptionParser
 from collections import deque
-from cylc.registration import localdb, centraldb, RegistrationError
+from cylc.registration import dbgetter, RegistrationError
 from cylc.mkdir_p import mkdir_p
 
 included = []
@@ -200,7 +200,7 @@ parser.add_option( "--gui", "-g",
 if len(args) != 1:
     parser.error( "wrong number of arguments" )
 
-suite = args[0]
+reg = args[0]
 
 if options.geditor:
     edvar = 'GEDITOR'
@@ -215,23 +215,18 @@ except KeyError:
 # find location of the suite definition directory
 global suitedir
 
-if options.central:
-    db = centraldb()
-else:
-    db = localdb()
-
+dbg = dbgetter( options.central )
 try:
-    db.load_from_file()
-    suitedir, descr = db.get( suite )
-except RegistrationError,x:
+    suite, suiterc = dbg.get_suite(reg)
+except RegistrationError, x:
     raise SystemExit(x)
+
+suitedir = os.path.dirname(suiterc)
 
 if options.cleanup:
     # remove backup files left by inlined editing sessions
     cleanup( suitedir )
     sys.exit(0)
-
-suiterc = os.path.join( suitedir, 'suite.rc' )
 
 if not options.inline:
     # plain old editing.

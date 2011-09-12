@@ -48,4 +48,5 @@ if not cylc_mode.mode().is_raw():
         # failed to connect to lockserver
         msg = "FAILED TO CONNECT TO A LOCKSERVER" 
         message( msg ).send_failed()
+        raise
         sys.exit(1)

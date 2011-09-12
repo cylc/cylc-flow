@@ -30,6 +30,7 @@ import os, re, sys
 from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
 from time import sleep
 from cylc.CylcOptionParsers import NoPromptOptionParser_u
+from cylc.registration import dbgetter, RegistrationError
 
 compress = True
 
@@ -48,14 +49,18 @@ parser.add_option( "-a", "--align",
 
 ( options, args ) = parser.parse_args()
 
-suite = parser.get_suite_name()
+reg = parser.get_suite_name()
+dbg = dbgetter()
+try:
+    suite, junk = dbg.get_suite(reg)
+except RegistrationError, x:
+    raise SystemExit(x)
 
 header = 'waiting submitted running held failed'
 header = '                                     '
 ctrl_end = "\033[0m"
 #key = "\033[1;36mwaiting\033[0m \033[1;32msubmitted\033[0m \033[1;37;42mrunning\033[1;37;43m held \033[1;37;41mfailed" + ctrl_end 
 key = "\033[1;36mwait'g\033[0m\033[1;32m sub'd\033[0m done\033[1;37;42m running\033[1;37;43m held \033[1;37;41mfailed" + ctrl_end 
-
 
 #print
 #print "here we go ..."

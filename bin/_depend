@@ -21,7 +21,7 @@ from cylc.taskid import id, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
-from cylc.CylcError import CylcError
+from cylc.registration import dbgetter, RegistrationError
 
 parser = PromptOptionParser( """cylc [control] depend [options] SUITE TASK DEP
 
@@ -42,9 +42,15 @@ of TASK, and they will not persist in TASK across a suite restart.""",
 if len(args) != 3:
     parser.error( "Wrong number of arguments." )
 
-suite = parser.get_suite_name()
+reg = parser.get_suite_name()
 task_id = args[1]
 dep = args[2]
+
+dbg = dbgetter()
+try:
+    suite, junk = dbg.get_suite(reg)
+except RegistrationError, x:
+    raise SystemExit(x)
 
 m = re.match( '^(\w+)%(\w+)$', dep )
 if m:

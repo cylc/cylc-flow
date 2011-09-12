@@ -40,7 +40,6 @@ from mkdir_p import mkdir_p
 from validate import Validator
 from configobj import get_extra_values, flatten_errors, Section
 from cylcconfigobj import CylcConfigObj, ConfigObjError
-from registration import localdb, centraldb, RegistrationError
 from graphnode import graphnode, GraphNodeError
 
 try:
@@ -118,84 +117,8 @@ class edge( object):
 
         return left + '%' + str(tag)  # str for int tag (async)
 
-def get_rcfiles ( suite, central=False ):
-    # return a list of all rc files for this suite
-    # (i.e. suite.rc plus any include-files it uses).
-    rcfiles = []
-    if central:
-        reg = centraldb()
-    else:
-        reg = localdb()
-    try:
-        reg.load_from_file()
-        dir, descr = reg.get( suite )
-    except RegistrationError, x:
-        raise SuiteConfigError(str(x))
-    suiterc = os.path.join( dir, 'suite.rc' )
-    rcfiles.append( suiterc )
-    for line in open( suiterc, 'rb' ):
-        m = re.match( '^\s*%include\s+([\/\w\-\.]+)', line )
-        if m:
-            rcfiles.append(os.path.join( dir, m.groups()[0]))
-    return rcfiles
-
-def get_suite_title( suite=None, path=None, central=False ):
-    # cheap suite title extraction for use by the registration
-    # database commands - uses very minimal parsing of suite.rc
-    if suite:
-        if central:
-            reg = centraldb()
-        else:
-            reg = localdb()
-        try:
-            reg.load_from_file()
-            dir, descr = reg.get( suite )
-        except RegistrationError, x:
-            raise SuiteConfigError(str(x))
-        file = os.path.join( dir, 'suite.rc' )
-    elif path:
-        # allow load by path so that suite title can be parsed for
-        # new suite registrations.
-        suite = '(None)'
-        file = os.path.join( path, 'suite.rc' )
-    else:
-        raise SuiteConfigError, 'ERROR, config.get_suite_title(): suite registration or path required'
-
-    if not os.path.isfile( file ):
-        raise SuiteConfigError, 'File not found: ' + file
-
-    found = False
-    for line in open( file, 'rb' ):
-        m = re.match( '^\s*title\s*=\s*(.*)$', line )
-        if m:
-            title = m.groups()[0]
-            # strip trailing space
-            title = title.rstrip()
-            # NOTE: ANY TRAILING COMMENT WILL BE INCLUDED IN THE TITLE
-            #     (but this doesn't really matter for our purposes)
-            # (stripping isn't trivial in general - what about strings?)
-            found = True
-            break
-
-    if not found:
-        print >> sys.stderr, 'WARNING: ' + suite + ' title not found by suite.rc search - doing full parse.'
-        # This means the title is defined in a suite.rc include-file, or
-        # is not defined. In the latter case, a full parse will result
-        # in the default title being used (from conf/suiterc.spec). 
-        try:
-            if path:
-                print path
-                title = config( path=path, central=False ).get_title()
-            else:
-                title = config( suite ).get_title()
-        except SuiteConfigError, x:
-            #print >> sys.stderr, 'ERROR: suite.rc parse failure!'
-            #raise SystemExit( str(x) )
-            raise
-    return title
-
 class config( CylcConfigObj ):
-    def __init__( self, suite=None, simulation_mode=False, path=None, central=False ):
+    def __init__( self, suite, suiterc, simulation_mode=False ):
         self.simulation_mode = simulation_mode
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
         self.taskdefs = {}
@@ -207,42 +130,26 @@ class config( CylcConfigObj ):
 
         self.family_hierarchy = {}
 
-        if suite:
-            self.suite = suite
-            if central:
-                reg = centraldb()
-            else:
-                reg = localdb()
-            try:
-                reg.load_from_file()
-                self.suite, junk = reg.unalias( self.suite )
-                self.dir, descr = reg.get( suite )
-            except RegistrationError, x:
-                raise SuiteConfigError(str(x))
-            self.file = os.path.join( self.dir, 'suite.rc' )
-        elif path:
-            # allow load by path so that suite title can be parsed for
-            # new suite registrations.
-            self.suite = 'fooWx_:barWx_'
-            self.dir = path
-            self.file = os.path.join( path, 'suite.rc' )
-        elif 'CYLC_SUITE' in os.environ:
-            self.suite = os.environ[ 'CYLC_SUITE' ]
-            self.file = os.path.join( os.environ[ 'CYLC_SUITE_DIR' ], 'suite.rc' ),
-        else:
-            raise SuiteConfigError, 'ERROR: Suite Undefined'
+        self.suite = suite
+        self.file = suiterc
+        self.dir = os.path.dirname(suiterc)
+
+        #elif 'CYLC_SUITE_REG' in os.environ:
+        #    self.suite = os.environ[ 'CYLC_SUITE_REG' ]
+        #    self.file = os.path.join( os.environ[ 'CYLC_SUITE_DIR' ], 'suite.rc' ),
 
         if not os.path.isfile( self.file ):
             raise SuiteConfigError, 'File not found: ' + self.file
 
         self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc.spec')
 
-        # load config
+        print "LOADING SUITE CONFIG"
         try:
             CylcConfigObj.__init__( self, self.file, configspec=self.spec )
         except ConfigObjError, x:
             raise SuiteConfigError, x
 
+        print "VALIDATING"
         # validate and convert to correct types
         val = Validator()
         test = self.validate( val, preserve_errors=True )
@@ -259,7 +166,6 @@ class config( CylcConfigObj ):
                     print "Required item missing."
                 else:
                     print result
- 
             raise SuiteConfigError, "ERROR: suite.rc validation failed"
         
         extras = []
@@ -301,6 +207,7 @@ class config( CylcConfigObj ):
             else:
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
+        print "PARSING TASK RUNTIMES"
         self.members = {}
         # Parse task config generators. If the runtime section is a list
         # of task names or a list-generating Python expression, then the
@@ -371,7 +278,8 @@ class config( CylcConfigObj ):
     def process_directories(self):
         # Environment variable interpolation in directory paths.
         # (allow use of suite identity variables):
-        os.environ['CYLC_SUITE'] = self.suite
+        os.environ['CYLC_SUITE_REG'] = self.suite
+        os.environ['CYLC_SUITE_REGPATH'] = re.sub( ':', '/', self.suite )
         os.environ['CYLC_SUITE_DIR'   ] = self.dir
         self['suite log directory'] = \
                 os.path.expandvars( os.path.expanduser( self['suite log directory']))
@@ -385,7 +293,7 @@ class config( CylcConfigObj ):
             self['runtime'][item]['job submission']['log directory'] = os.path.expandvars( os.path.expanduser( self['runtime'][item]['job submission']['log directory']))
             # Remote job sub log directories: just suite identity - local variables aren't relevant.
             if self['runtime'][item]['remote']['log directory']:
-                for var in ['CYLC_SUITE', 'CYLC_SUITE_DIR']: 
+                for var in ['CYLC_SUITE_REGPATH', 'CYLC_SUITE_DIR', 'CYLC_SUITE_REG']: 
                     self['runtime'][item]['remote']['log directory'] = re.sub( '\${'+var+'}'+r'\b', os.environ[var], self['runtime'][item]['remote']['log directory'])
                     self['runtime'][item]['remote']['log directory'] = re.sub( '\$'+var+r'\b',      os.environ[var], self['runtime'][item]['remote']['log directory'])
 

@@ -16,9 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import os
 from optparse import OptionParser
-from cylc.registration import localdb, centraldb, RegistrationError
+from cylc.registration import dbgetter, RegistrationError
 
 parser = OptionParser( usage = """cylc [db] get-directory SUITE
 
@@ -38,16 +38,11 @@ parser.add_option( "-c", "--central",
 if len(args) != 1:
     parser.error( "Wrong number of arguments" )
 
-suite = args[0]
-
-if options.central:
-    db = centraldb()
-else:
-    db = localdb()
-
+reg = args[0]
+dbg = dbgetter( options.central )
 try:
-    db.load_from_file()
-    dir, title = db.get( suite )
-    print dir
+    suite, suiterc = dbg.get_suite(reg)
 except RegistrationError, x:
     raise SystemExit(x)
+
+print os.path.dirname(suiterc)

@@ -24,8 +24,8 @@ parser = OptionParser( usage = """cylc [db] alias [options] SUITE ALIAS
 
 Define a short alias for a full suite registeration. This differs from 
 simply registering the target suite under a different name - at run time
-the run time suite identity variables ($CYLC_SUITE etc.) will refer to
-the original suite registration.
+the run time suite identity variables ($CYLC_SUITE_REG etc.) will refer
+to the original suite registration.
 
 Arguments:
      SUITE  -  Private suite database registration.

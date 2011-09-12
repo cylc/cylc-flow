@@ -29,7 +29,17 @@ from conf.CylcGlobals import central_regdb_dir, local_regdb_dir
 # UM, which then core dumps. Manual use of $PWD to absolutize a relative
 # path, on GPFS, results in a shorter string ... so I use this for now.
 
-# local and central suite registration
+class dbgetter:
+    def __init__( self, central=False ):
+        if central:
+            self.db = centraldb()
+        else:
+            self.db = localdb()
+    def get_suite( self, reg ):
+        self.db.load_from_file()
+        suite, junk = self.db.unalias( reg )
+        suiterc = self.db.getrc( suite )
+        return suite, suiterc
 
 class RegistrationError( Exception ):
     """
@@ -48,6 +58,10 @@ class InvalidFilterError( RegistrationError ):
 class SuiteNotFoundError( RegistrationError ):
     def __init__( self, suite ):
         self.msg = "ERROR, suite not found: " + suite
+
+class SuiteTitleNotFoundError( RegistrationError ):
+    def __init__( self, suite ):
+        self.msg = "ERROR, suite title not found by simple parsing: " + suite
 
 class SuiteOrGroupNotFoundError( RegistrationError ):
     def __init__( self, sog ):
@@ -104,8 +118,8 @@ class regdb(object):
             try:
                 os.makedirs( self.dir )
             except Exception,x:
-                print "ERROR: failed to create directory:", self.dir
-                print x
+                print >> sys.stderr, "ERROR, failed to create directory:", self.dir
+                print >> sys.stderr, x
                 sys.exit(1)
         self.mtime_at_load = None
         self.lockfile = os.path.join( self.dir, 'lock' )
@@ -147,6 +161,7 @@ class regdb(object):
             return False
         
     def load_from_file( self ):
+        print "LOADING " + self.file
         try:
             self.mtime_at_load = os.stat(self.file).st_mtime
         except OSError:
@@ -207,6 +222,10 @@ class regdb(object):
         except KeyError:
             raise SuiteNotRegisteredError, "Suite not registered: " + suite
         return dir, des
+
+    def getrc( self, suite ):
+        dir, junk = self.get( suite )
+        return os.path.join( dir, 'suite.rc' )
 
     def get_list( self, regfilter=None ):
         # Return a list of all registered suites, or a filtered list.
@@ -284,6 +303,74 @@ class regdb(object):
             if not os.path.isfile( rcfile ): 
                 invalid.append( item )
         return invalid
+
+    def refresh_suite_title( self, suite=None, path=None ):
+        suite, junk = self.unalias(suite)
+        # cheap suite title extraction
+        if suite:
+            try:
+                dir, title = self.items[suite]
+            except KeyError:
+                raise SuiteNotFoundError, suite
+            file = os.path.join( dir, 'suite.rc' )
+        elif path:
+            # load by path for new registrations.
+            suite = '(None)'
+            file = os.path.join( path, 'suite.rc' )
+        else:
+            raise RegistrationError, 'ERROR, suite registration or path required'
+
+        if not os.path.isfile( file ):
+            raise RegistrationError, 'File not found: ' + file
+
+        found = False
+        for line in open( file, 'rb' ):
+            m = re.match( '^\s*title\s*=\s*(.*)$', line )
+            if m:
+                title = m.groups()[0]
+                # strip trailing space
+                title = title.rstrip()
+                # NOTE: ANY TRAILING COMMENT WILL BE INCLUDED IN THE TITLE
+                #     (but this doesn't really matter for our purposes)
+                # (stripping isn't trivial in general - what about strings?)
+                found = True
+                break
+
+        if not found:
+            raise SuiteTitleNotFoundError, "Suite title not found."
+        #    print >> sys.stderr, 'WARNING: ' + suite + ' title not found by suite.rc search - doing full parse.'
+        #    # This means the title is defined in a suite.rc include-file, or
+        #    # is not defined. In the latter case, a full parse will result
+        #    # in the default title being used (from conf/suiterc.spec). 
+        #    try:
+        #        if path:
+        #            print path
+        #            title = config( path=path, central=False ).get_title()
+        #        else:
+        #            title = config( suite ).get_title()
+        #    except SuiteConfigError, x:
+        #        #print >> sys.stderr, 'ERROR: suite.rc parse failure!'
+        #        #raise SystemExit( str(x) )
+        #        raise
+        return title
+
+    def get_rcfiles ( self, suite ):
+        suite, junk = self.unalias(suite)
+        # return a list of all include-files used by this suite
+        # TO DO: THIS NEEDS TO BE MADE RECURSIVE
+        # (only used by cylc_xdot to check if graph has changed).
+        rcfiles = []
+        try:
+            dir, junk = self.items[suite]
+        except KeyError:
+            raise SuiteNotFoundError, suite
+        suiterc = os.path.join( dir, 'suite.rc' )
+        rcfiles.append( suiterc )
+        for line in open( suiterc, 'rb' ):
+            m = re.match( '^\s*%include\s+([\/\w\-\.]+)', line )
+            if m:
+                rcfiles.append(os.path.join( dir, m.groups()[0]))
+        return rcfiles
 
 class localdb( regdb ):
     """

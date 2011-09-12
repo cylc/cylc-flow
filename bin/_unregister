@@ -95,7 +95,7 @@ print len(dirs), 'suites unregistered.'
 
 if options.obliterate:
     for dir in dirs:
-        print 'DELETING ', dir
+        print 'DELETE ', dir
 
     if options.dryrun:
         sys.exit(0)

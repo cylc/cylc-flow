@@ -18,10 +18,10 @@
 
 import sys
 from optparse import OptionParser
-from cylc.registration import localdb, centraldb, RegistrationError, DatabaseLockedError
-from cylc.config import get_suite_title, SuiteConfigError
+from cylc.registration import dbgetter, RegistrationError, DatabaseLockedError, SuiteTitleNotFoundError
+from cylc.config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc [db] check-registrations [options]
+parser = OptionParser( usage = """cylc [db] refresh [options]
 
 Check a suite database for invalid registrations (no suite definition 
 directory or suite.rc file) and refresh suite titles in case they have
@@ -38,10 +38,7 @@ parser.add_option( "-u","--unregister",
 
 ( options, args ) = parser.parse_args()
 
-if options.central:
-    db = centraldb()
-else:
-    db = localdb()
+db = dbgetter(options.cental).db
 
 invalid = []    # no suite.rc file
 readerror = []  # can't read title (suite.rc parse error)
@@ -56,9 +53,17 @@ try:
         if suite in invalid:
             continue
         try:
-            new_title = get_suite_title( suite )
+            new_title = db.refresh_suite_title( suite )
+        except SuiteTitleNotFoundError,x:
+            print "Failed to get title for " + suite + ", trying full parse."
+            try:
+                suiterc = db.getrc(suite)
+                title = config( suite, suiterc ).get_title()
+            except SuiteConfigError,x:
+                print >> sys.stderr, x
 
-        except SuiteConfigError,x:
+        except RegistrationError,x:
+            print >> sys.stderr, x
             readerror.append(suite)
 
         else:

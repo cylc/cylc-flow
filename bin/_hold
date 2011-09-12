@@ -16,11 +16,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys, re
+import sys
 from cylc.taskid import id, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
+from cylc.registration import dbgetter, RegistrationError
 
 parser = PromptOptionParser( """cylc [control] hold [options] SUITE [TASK]
 
@@ -37,7 +38,13 @@ See also 'cylc [control] release'.""",
 if len(args) > 2:
     parser.error("too many arguments")
  
-suite = parser.get_suite_name()
+reg = parser.get_suite_name()
+dbg = dbgetter()
+try:
+    suite, junk = dbg.get_suite(reg)
+except RegistrationError, x:
+    raise SystemExit(x)
+
 task_only = False
 if len(args) == 2:
     task_only = True

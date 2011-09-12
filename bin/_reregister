@@ -18,7 +18,7 @@
 
 import sys
 from optparse import OptionParser
-from cylc.registration import localdb, centraldb, RegistrationError, DatabaseLockedError
+from cylc.registration import dbgetter, RegistrationError, DatabaseLockedError
 
 parser = OptionParser( usage = """cylc [db] reregister [options] FROM TO
 
@@ -39,10 +39,7 @@ if len(args) != 2:
 arg_from = args[0]
 arg_to = args[1]
 
-if options.central:
-    db = centraldb()
-else:
-    db = localdb()
+db = dbgetter( options.central ).db
 
 try:
     db.lock()

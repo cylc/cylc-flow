@@ -18,7 +18,7 @@
 
 import re
 from optparse import OptionParser
-from cylc.registration import localdb, centraldb, RegistrationError
+from cylc.registration import dbgetter, RegistrationError
 
 a_hbar = '-'
 a_vbar = '|'
@@ -108,11 +108,7 @@ elif len(args) == 1:
 else:
     parser.error( "Wrong number of arguments.")
 
-if options.central:
-    db = centraldb()
-else:
-    db = localdb()
-
+db = dbgetter(options.central).db
 try:
     db.load_from_file()
     allsuites = db.get_list(regfilter)

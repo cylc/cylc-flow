@@ -19,7 +19,7 @@
 import os, re, sys
 from optparse import OptionParser
 from collections import deque
-from cylc.registration import getdb, RegistrationError
+from cylc.registration import dbgetter, RegistrationError
 
 def include_files( suitedir, inf ):
     outf = []
@@ -84,18 +84,24 @@ See also:
   cylc prep inline 
 
 Arguments:
-  SUITE   - Suite database registration [OWNER:]GROUP:NAME
-            (user OWNER: to access the central database).
+  SUITE   - Suite database registration
   PATTERN - (list of) Python-style regular expression(s).
   """)
 
 parser.add_option( "-x", help="Do not search in the suite bin directory",
         action="store_false", default=True, dest="search_bin" )
 
+parser.add_option( "-c", "--central", 
+        help="Target the central database.",
+        action="store_true", default=False, dest="central" )
+
 ( options, args ) = parser.parse_args()
 
-#if len(args) != 2:
-#    parser.error( "wrong number of arguments" )
+print
+print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+print 'WARNING: SEARCH HAS NOT YET BEEN UPDATED FOR RUNTIME INHERITANCE AND GENERATORS'
+print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+print
 
 arg0 = args[0]
 arg1n = '|'.join(args[1:])
@@ -103,34 +109,28 @@ argn = args[-1]
 argn1 = '|'.join(args[0:-1])
 
 # find location of the suite definition directory
+dbg = dbgetter( options.central )
 try:
-    reg = getdb( argn )
-    reg.load_from_file()
-    reg.get( argn )
+    suite, suiterc = dbg.get_suite( argn )
 except RegistrationError,x:
     print >> sys.stderr, x
     print "Trying reversed arguments..."
     try:
-        reg = getdb( arg0 )
-        reg.load_from_file()
-        reg.get( arg0 )
+        suite, suiterc = dbg.get_suite( arg0 )
     except RegistrationError,x:
         raise SystemExit(x)
     else:
         # cylc prep search SUITE PATTERN
-        suite = arg0
         pattern = arg1n
-        print 'SUITE:', suite
+        print 'SUITE:', suite, suiterc
         print 'PATTERN:', pattern
 else:
     # cylc prep search PATTERN SUITE
-    suite = argn
     pattern = argn1
-    print 'SUITE:', suite
+    print 'SUITE:', suite, suiterc
     print 'PATTERN:', pattern
 
-suitedir, descr = reg.get( suite )
-suiterc = os.path.join( suitedir, 'suite.rc' )
+suitedir = os.path.dirname( suiterc )
 
 if os.path.isfile( suiterc ):
     h = open( suiterc, 'rb' )

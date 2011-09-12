@@ -19,6 +19,7 @@
 from cylc.CylcOptionParsers import NoPromptOptionParser_u
 from cylc.port_scan import get_port, SuiteIdentificationError
 from cylc.conf.CylcGlobals import pyro_base_port, pyro_port_range
+from cylc.registration import dbgetter, RegistrationError
 
 parser = NoPromptOptionParser_u( """cylc [discover] ping [options] SUITE
     
@@ -41,7 +42,12 @@ if options.print_ports:
 if len( args ) != 1:
     parser.error( "Wrong number of arguments" ) 
 
-suite = args[0]
+reg = args[0]
+dbg = dbgetter()
+try:
+    suite, junk = dbg.get_suite(reg)
+except RegistrationError, x:
+    raise SystemExit(x)
 
 try:
     port = get_port( suite, owner=options.owner, host=options.host )

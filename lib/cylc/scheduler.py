@@ -29,7 +29,6 @@ from cycle_time import ct
 import pimp_my_logger
 import accelerated_clock 
 import re, os, sys, shutil
-from execute import execute
 from rolling_archive import rolling_archive
 from cylc_pyro_server import pyro_server
 from state_summary import state_summary
@@ -42,6 +41,7 @@ from locking.suite_lock import suite_lock
 from suite_id import identifier
 from mkdir_p import mkdir_p
 from config import config, SuiteConfigError
+from cylc.registration import localdb, RegistrationError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
 
@@ -149,7 +149,17 @@ class scheduler(object):
 
     def parse_commandline( self ):
         # SUITE NAME
-        self.suite = self.args[0]
+        suite = self.args[0]
+
+        # find location of the suite definition directory
+        try:
+            db = localdb()
+            db.load_from_file()
+            self.suite_dir, junk = db.get(suite)
+            self.suiterc = db.getrc(suite)
+            self.suite, junk = db.unalias(suite)
+        except RegistrationError,x:
+            raise SystemExit(x)
 
         # MODE OF OPERATION (REAL, SIMULATION, practice)
         #DISABLED if self.options.simulation_mode and self.options.practice_mode:
@@ -193,9 +203,8 @@ class scheduler(object):
 
     def configure_suite( self ):
         # LOAD SUITE CONFIG FILE
-        self.config = config( self.suite, simulation_mode=self.simulation_mode )
+        self.config = config( self.suite, self.suiterc, simulation_mode=self.simulation_mode )
         self.config.create_directories()
-        self.suite_dir = self.config.get_dirname()
         if self.config['simulation mode only'] and not self.simulation_mode:
             raise SystemExit( "ERROR: this suite can only run in simulation mode (see suite.rc)" )
 
@@ -321,7 +330,8 @@ class scheduler(object):
         cylcenv[ 'CYLC_MODE' ] = 'scheduler'
         cylcenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
         cylcenv[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
-        cylcenv[ 'CYLC_SUITE' ] = self.suite
+        cylcenv[ 'CYLC_SUITE_REG' ] = self.suite
+        cylcenv[ 'CYLC_SUITE_REGPATH' ] = re.sub( ':', '/', self.suite )
         cylcenv[ 'CYLC_SUITE_DIR' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner
         cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )

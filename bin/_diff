@@ -16,11 +16,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import os, sys
 from optparse import OptionParser
 from cylc.config import config, SuiteConfigError
-from cylc.taskdef import DefinitionError
+from cylc.registration import dbgetter, RegistrationError
 
 n_oone = 0
 n_otwo = 0
@@ -103,7 +102,7 @@ inlining.
 Seemingly identical suites (immediately after copying one from the
 other, for instance) can differ slightly if they use default
 configuration items, such as the default job submission log directory,
-that are suite-specific (i.e. they include $CYLC_SUITE etc.).
+that are suite-specific (i.e. they include $CYLC_SUITE_REG etc.).
 
 Files in the suite bin directory, and other files held in the suite
 definition directory, are not currently differenced (they may be
@@ -114,39 +113,36 @@ Arguments:
    SUITE1, SUITE2  - suite registrations [OWNER:]GROUP:NAME
                     (use OWNER: to access the central database)""")
 
-parser.add_option( "-d", "--debug", help="print the "
-        "exception traceback for validation errors.",
-        action="store_true", default=False, dest="debug" )
-
 parser.add_option( "-n", "--nested", help="print suite.rc "
         "section headings in nested form.",
         action="store_true", default=False, dest="nested" )
+
+parser.add_option( "-c", "--central", 
+        help="target the central database.",
+        action="store_true", default=False, dest="central" )
 
 (options, args) = parser.parse_args()
 
 if len(args) != 2:
     parser.error( "Wrong number or arguments" )
 else:
-    suite1 = args[0]
-    suite2 = args[1]
+    reg1 = args[0]
+    reg2 = args[1]
 
-print "Parsing", suite1
+dbg = dbgetter( options.central )
 try:
-    config1 = config( suite1 )
-except SuiteConfigError,x:
-    if options.debug:
-        raise
-    else:
-        raise SystemExit(x)
+    suite1, suite1rc = dbg.get_suite(reg1)
+    suite2, suite2rc = dbg.get_suite(reg2)
+except RegistrationError, x:
+    raise SystemExit(x)
 
-print "Parsing", suite2
 try:
-    config2 = config( suite2 )
+    print "Parsing", suite1
+    config1 = config( suite1, suite1rc )
+    print "Parsing", suite2
+    config2 = config( suite2, suite2rc )
 except SuiteConfigError,x:
-    if options.debug:
-        raise
-    else:
-        raise SystemExit(x)
+    raise SystemExit(x)
 
 if config1 == config2: # does this work, or do we need to do key by key comparison?
     print "Suite definitions " + suite1 + " and " + suite2 + " are identical."

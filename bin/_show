@@ -15,12 +15,13 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import os, re, sys
+ 
+import sys
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import NoPromptOptionParser_u
 from cylc.port_scan import SuiteIdentificationError
 from cylc.taskid import id, InvalidTaskIDError, InvalidCycleTimeError
+from cylc.registration import dbgetter, RegistrationError
 
 parser = NoPromptOptionParser_u( """cylc [info] show [options] SUITE [NAME[%TAG]]
 
@@ -33,7 +34,12 @@ start time has been reached.""",
 
 (options, args) = parser.parse_args()
 
-suite = parser.get_suite_name()
+reg = parser.get_suite_name()
+dbg = dbgetter()
+try:
+    suite, junk = dbg.get_suite(reg)
+except RegistrationError, x:
+    raise SystemExit(x)
 
 prnt_suite = False
 prnt_name = False
