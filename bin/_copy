@@ -82,7 +82,7 @@ try:
 
     fsuites = sourcedb.get_list( '^' + arg_from + r'\b' )
     if len(fsuites) == 0:
-        raise RegistrationError, 'ERROR, no suites matched: ' + fsuites
+        raise RegistrationError, 'ERROR, no suites matched: ' + arg_from
 
     if options.dryrun:
         print 'DRY RUN, I would copy:'

@@ -324,8 +324,10 @@ class task( Pyro.core.ObjBase ):
         launcher_class = getattr( mod, class_name )
 
         self.launcher = launcher_class(
-                        self.id, self.external_task, self.env_vars, self.directives, 
-                        self.manual_messaging, self.logfiles, 
+                        self.id, self.precommand, self.external_task,
+                        self.postcommand, self.env_vars,
+                        self.directives, self.manual_messaging,
+                        self.logfiles, 
                         self.__class__.job_submit_log_directory,
                         self.__class__.owner,
                         self.__class__.remote_host,

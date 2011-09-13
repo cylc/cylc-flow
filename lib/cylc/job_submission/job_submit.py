@@ -53,14 +53,17 @@ class job_submit(object):
     failout_id = None
     cylc_env = None
 
-    def __init__( self, task_id, task_command, task_env, directives, 
+    def __init__( self, task_id, pre_command, task_command,
+            post_command, task_env, directives, 
             manual_messaging, logfiles, log_dir, task_owner,
             remote_host, remote_cylc_dir, remote_suite_dir,
             remote_shell_template, remote_log_dir, 
             job_submit_command_template, job_submission_shell ): 
 
         self.task_id = task_id
+        self.pre_command = pre_command
         self.task_command = task_command
+        self.post_command = post_command
         if self.__class__.simulation_mode and self.__class__.failout_id == self.task_id:
             self.task_command = '/bin/false'
 
@@ -167,7 +170,8 @@ class job_submit(object):
         jf = jobfile( self.task_id, 
                 self.__class__.cylc_env, self.task_env, 
                 self.directive_prefix, self.directives, self.final_directive, 
-                self.manual_messaging, self.task_command, 
+                self.manual_messaging, self.pre_command,
+                self.task_command, self.post_command,
                 self.remote_cylc_dir, self.remote_suite_dir, 
                 self.job_submission_shell, 
                 self.__class__.simulation_mode,

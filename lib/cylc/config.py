@@ -410,12 +410,12 @@ class config( CylcConfigObj ):
                     print >> sys.stderr, 'WARNING: task "' + name + '" of insertion group "' + group + '" is not defined.'
 
         # check 'tasks to exclude|include at startup' contains valid tasks
-        for name in self['scheduling']['include at start-up']:
+        for name in self['scheduling']['special tasks']['include at start-up']:
                 if name not in self['runtime'] and name not in self.taskdefs:
-                    raise SuiteConfigError, "ERROR: " + name + ' in "scheduling -> include at start-up" is not defined'
-        for name in self['scheduling']['exclude at start-up']:
+                    raise SuiteConfigError, "ERROR: " + name + ' in "scheduling -> special tasks -> include at start-up" is not defined'
+        for name in self['scheduling']['special tasks']['exclude at start-up']:
                 if name not in self['runtime'] and name not in self.taskdefs:
-                    raise SuiteConfigError, "ERROR: " + name + ' in "scheduling -> exclude at start-up" is not defined'
+                    raise SuiteConfigError, "ERROR: " + name + ' in "scheduling -> special tasks -> exclude at start-up" is not defined'
 
         # check graphed hours are consistent with [tasks]->[[NAME]]->hours (if defined)
         for name in self.taskdefs:
@@ -1031,7 +1031,9 @@ class config( CylcConfigObj ):
             taskd.commands = self['simulation mode']['command']
         else:
             taskd.job_submit_method = taskconfig['job submission']['method']
-            taskd.commands    = taskconfig['command']
+            taskd.commands   = taskconfig['command']
+            taskd.precommand = taskconfig['pre-command scripting'] 
+            taskd.postcommand = taskconfig['post-command scripting'] 
 
         taskd.job_submission_shell = taskconfig['job submission']['job script shell']
 

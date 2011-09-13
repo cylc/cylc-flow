@@ -23,9 +23,10 @@ from OrderedDict import OrderedDict
 
 class jobfile(object):
 
-    def __init__( self, task_id, cylc_env, task_env, 
-            directive_prefix, directives, final_directive, 
-            manual_messaging, task_command, remote_cylc_dir, remote_suite_dir,
+    def __init__( self, task_id, cylc_env, task_env, directive_prefix,
+            directives, final_directive, manual_messaging,
+            precommand_scripting, command_scripting,
+            postcommand_scripting, remote_cylc_dir, remote_suite_dir,
             shell, simulation_mode, job_submission_method):
 
         print "TO DO: pre-post-scripting"
@@ -36,7 +37,9 @@ class jobfile(object):
         self.directive_prefix = directive_prefix
         self.final_directive = final_directive
         self.directives = directives
-        self.task_command = task_command
+        self.precommand_scripting = precommand_scripting
+        self.command_scripting = command_scripting
+        self.postcommand_scripting = postcommand_scripting
         self.shell = shell
         self.simulation_mode = simulation_mode
         self.job_submission_method = job_submission_method
@@ -62,7 +65,7 @@ class jobfile(object):
         if self.manual_messaging:
             self.write_manual_environment()
         self.write_pre_scripting()
-        self.write_task_command()
+        self.write_command_scripting()
         self.write_post_scripting()
         self.write_task_succeeded()
         self.FILE.write( '\n\n#EOF' )
@@ -181,12 +184,17 @@ cylc task started || exit 1""" )
         if self.simulation_mode:
             # ignore extra scripting in simulation mode
             return
+        self.FILE.write( "\n\n# PRE-COMMAND SCRIPTING:" )
+        self.FILE.write( "\n" + self.precommand_scripting )
 
-    def write_task_command( self ):
+    def write_command_scripting( self ):
         self.FILE.write( "\n\n# TASK COMMAND SCRIPTING:" )
-        self.FILE.write( "\n" + self.task_command )
+        self.FILE.write( "\n" + self.command_scripting )
 
     def write_post_scripting( self ):
         if self.simulation_mode:
             # ignore extra scripting in simulation mode
             return
+        self.FILE.write( "\n\n# POST COMMAND SCRIPTING:" )
+        self.FILE.write( "\n" + self.postcommand_scripting )
+

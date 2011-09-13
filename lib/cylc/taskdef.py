@@ -109,6 +109,9 @@ class taskdef(object):
         self.loose_prerequisites = [] # asynchronous tasks
 
         self.commands = [] # list of commands
+        self.precommand = None
+        self.postcommand = None
+
         self.environment = OrderedDict()  # var = value
         self.directives  = OrderedDict()  # var = value
 
@@ -383,6 +386,8 @@ class taskdef(object):
 
             for command in self.commands:
                 sself.external_tasks.append( command )
+            sself.precommand = self.precommand
+            sself.postcommand = self.postcommand
  
             if 'clocktriggered' in self.modifiers:
                 sself.real_time_delay =  float( self.clocktriggered_offset )
