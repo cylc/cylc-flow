@@ -16,7 +16,8 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# NOTE: MAKE SURE THE LOCKSERVER IS ON IF THE TEST SUITE USES IT.
+# TO DO: use 'cylc ping' to determine if the suite is running when it
+# should be.
 
 set -e; trap "echo 'TEST FAILED (see output log)'" ERR
 
@@ -24,7 +25,7 @@ usage() {
     echo "USAGE: cylc [admin] test-suite [--help]"
     echo ""
     echo "Run an automated test of core cylc functionality using a new copy of"
-    echo "the 'examples:test' suite. This should be used to check that new"
+    echo "the 'examples.admin.test' suite. This should be used to check that new"
     echo "developments in the cylc codebase have not introduced serious bugs."
     echo "The test runs a suite registered as 'test'; to watch its progress"
     echo "use 'cylc view'. Aside from timing differences results should be the"
@@ -57,7 +58,7 @@ if [[ $# != 0 ]]; then
     fi
 fi
 
-SUITE_REG=Z1TtestQrX:foobar
+SUITE_REG=Z1TtestQrX.foobar
 SUITE_DIR=${TMPDIR:-/tmp/$USER}/Z1TtestQrX/foobar
 
 # START FROM A CLEAN SLATE
@@ -68,19 +69,16 @@ fi
 rm -rf $SUITE_DIR
 echo done
 
-# COPY THE SUITE
-#echo -n ">> COPYING examples:test to $SUITE_DIR ... "
-#cylc db copy examples:test $SUITE_REG $SUITE_DIR
-
-echo -n ">> IMPORTING examples:test to $SUITE_DIR ... "
-cylc db import examples:test $SUITE_REG $SUITE_DIR
+# IMPORT THE SUITE
+echo -n ">> IMPORTING ${USER}.examples.admin.test to $SUITE_DIR ... "
+cylc db import ${USER}.examples.admin.test $SUITE_REG $SUITE_DIR
 
 # log file for stdout and stderr
 OUT=test.out; OUT_SCHED=test-suite.out
 rm -f $OUT $OUT_SCHED
 
 # suite log
-LOG=$( cylc info log -p $SUITE_REG )
+LOG=$( cylc info get-config $SUITE_REG 'suite log directory' )/log
 # remove old test log
 rm -rf $LOG
 
