@@ -312,7 +312,7 @@ class regdb(object):
     def get_invalid( self ):
         invalid = []
         for reg in self.items:
-            suite = self.unalias(item)
+            suite = self.unalias(reg)
             dir, junk = self.items[suite]
             rcfile = os.path.join( dir, 'suite.rc' )
             if not os.path.isfile( rcfile ): 

@@ -377,7 +377,7 @@ class scheduler(object):
         # PIMP THE SUITE LOG
         self.log = logging.getLogger( 'main' )
         pimp_my_logger.pimp_it( \
-             self.log, self.logging_dir, self.config['roll log at startup'], \
+             self.log, self.logging_dir, self.config['roll log at start-up'], \
                 self.logging_level, self.clock )
 
         # STATE DUMP ROLLING ARCHIVE
@@ -1503,8 +1503,8 @@ class scheduler(object):
                 break
 
     def filter_initial_task_list( self, inlist ):
-        included_by_rc  = self.config['scheduling']['include at start-up']
-        excluded_by_rc  = self.config['scheduling']['exclude at start-up']
+        included_by_rc  = self.config['scheduling']['special tasks']['include at start-up']
+        excluded_by_rc  = self.config['scheduling']['special tasks']['exclude at start-up']
         outlist = []
         for name in inlist:
             if name in excluded_by_rc:

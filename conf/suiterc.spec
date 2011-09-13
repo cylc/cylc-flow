@@ -30,7 +30,7 @@ use lockserver = boolean( default=False )
 use secure passphrase = boolean( default=False )
 
 suite log directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite' )
-roll log at startup = boolean( default=True )
+roll log at start-up = boolean( default=True )
 
 state dump directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/state' )
 number of state dump backups = integer( min=1, default=10 )

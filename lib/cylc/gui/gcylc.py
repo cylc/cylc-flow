@@ -141,6 +141,13 @@ class db_updater(threading.Thread):
                     iter = None
             else:
                 old_items.append(item)
+                # update old items that do appear in new
+                if not isinstance( new[item], dict ):
+                    state, descr, dir = new[item]
+                    sc = self.statecol(state)
+                    ni = new[item]
+                    ts.set( iter, 0, item, 1, ni[0], 2, ni[1], 3, ni[2], 4, sc[0], 5, sc[1], 6, sc[2] )
+                # continue
                 iter = ts.iter_next( iter )
 
         # return to original iter
@@ -162,7 +169,7 @@ class db_updater(threading.Thread):
                     xiter = ts.append(piter, [item] + [None, None, None, None, None, None] )
                     self.build_treestore( new[item], xiter )
                 else:
-                    yiter = ts.append(piter, [item] + new[item] + [None, None, None] )
+                    yiter = ts.append(piter, [item] + new[item], self.statecol(state)) #[None, None, None] )
             else:
                 # new data was already in old
                 if isinstance( new[item], dict ):
@@ -523,7 +530,7 @@ The cylc forecast suite metascheduler.
             options = '-c'
         else:
             options = ''
-        command = "cylc check-registrations --notify-completion" + options
+        command = "cylc refresh --notify-completion" + options
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
