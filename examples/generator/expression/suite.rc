@@ -6,7 +6,7 @@ the task names are generated automatically by a Python expression (a
 in which the task names are listed explicitly."""
 
 [scheduling]
-    [[special task types]]
+    [[special tasks]]
         sequential = foo    # just to slow the suite down a bit
     [[dependencies]]
         [[[0,6,12,18]]]

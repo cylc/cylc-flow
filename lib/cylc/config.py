@@ -16,10 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# TO DO: check for multiple definition of same prerequisites, e.g. via
-# two cycle-time sections in the graph.
-
-# TO DO: document use foo(T-6):out1, not foo:out1 with $(CYCLE_TIME-6) in
+# TO DO: document use foo[T-6]:out1, not foo:out1 with $(CYCLE_TIME-6) in
 # the explicit output message - so the graph will plot correctly.
 
 # TO DO: document that cylc hour sections must be unique, but can
@@ -197,7 +194,7 @@ class config( CylcConfigObj ):
 
         # parse clock-triggered tasks
         self.clock_offsets = {}
-        for item in self['scheduling']['special task types']['clock-triggered']:
+        for item in self['scheduling']['special tasks']['clock-triggered']:
             m = re.match( '(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)', item )
             if m:
                 task, offset = m.groups()
@@ -393,8 +390,8 @@ class config( CylcConfigObj ):
         #        print >> sys.stderr, 'WARNING: runtime "' + name + '" is not used in the graph.'
 
         # warn if listed special tasks are not defined
-        for type in self['scheduling']['special task types']:
-            for name in self['scheduling']['special task types'][type]:
+        for type in self['scheduling']['special tasks']:
+            for name in self['scheduling']['special tasks'][type]:
                 if type == 'clock-triggered':
                     name = re.sub('\(.*\)','',name)
                 if re.search( '[^0-9a-zA-Z_]', name ):
@@ -413,12 +410,12 @@ class config( CylcConfigObj ):
                     print >> sys.stderr, 'WARNING: task "' + name + '" of insertion group "' + group + '" is not defined.'
 
         # check 'tasks to exclude|include at startup' contains valid tasks
-        for name in self['tasks to include at startup']:
+        for name in self['scheduling']['include at start-up']:
                 if name not in self['runtime'] and name not in self.taskdefs:
-                    raise SuiteConfigError, "ERROR: " + name + ' in "tasks to include at startup" is not defined in [tasks] or graph.'
-        for name in self['tasks to exclude at startup']:
+                    raise SuiteConfigError, "ERROR: " + name + ' in "scheduling -> include at start-up" is not defined'
+        for name in self['scheduling']['exclude at start-up']:
                 if name not in self['runtime'] and name not in self.taskdefs:
-                    raise SuiteConfigError, "ERROR: " + name + ' in "tasks to exclude at startup" is not defined in [tasks] or graph.'
+                    raise SuiteConfigError, "ERROR: " + name + ' in "scheduling -> exclude at start-up" is not defined'
 
         # check graphed hours are consistent with [tasks]->[[NAME]]->hours (if defined)
         for name in self.taskdefs:
@@ -465,10 +462,10 @@ class config( CylcConfigObj ):
     def get_coldstart_task_list( self ):
         # TO DO: automatically determine this by parsing the dependency graph?
         # For now user must define this:
-        return self['scheduling']['special task types']['cold-start']
+        return self['scheduling']['special tasks']['cold-start']
 
     def get_startup_task_list( self ):
-        return self['scheduling']['special task types']['start-up'] + self.async_oneoff_tasks + self.async_repeating_tasks
+        return self['scheduling']['special tasks']['start-up'] + self.async_oneoff_tasks + self.async_repeating_tasks
 
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
@@ -727,7 +724,7 @@ class config( CylcConfigObj ):
             for label in ctrig:
                 trigger = ctrig[label]
                 # using last lnode ...
-                if lnode.name in self['scheduling']['special task types']['start-up'] or \
+                if lnode.name in self['scheduling']['special tasks']['start-up'] or \
                         lnode.name in self.async_oneoff_tasks:
                     self.taskdefs[right].add_startup_trigger( trigger, section, suicide )
                 elif lnode.name in self.async_repeating_tasks:
@@ -739,7 +736,7 @@ class config( CylcConfigObj ):
             # replace some chars for later use in regular  expressions.
             expr = re.sub( '[-\[\]:]', '_', lexpression )
             # using last lnode ...
-            if lnode.name in self['scheduling']['special task types']['start-up'] or \
+            if lnode.name in self['scheduling']['special tasks']['start-up'] or \
                     lnode.name in self.async_oneoff_tasks:
                 self.taskdefs[right].add_startup_conditional_trigger( ctrig, expr, section, suicide )
             elif lnode.name in self.async_repeating_tasks:
@@ -998,18 +995,18 @@ class config( CylcConfigObj ):
 
         # SET ONE OFF TASK INDICATOR
         #   cold start and startup tasks are automatically one off
-        if name in self['scheduling']['special task types']['one-off'] or \
-            name in self['scheduling']['special task types']['start-up'] or \
-            name in self['scheduling']['special task types']['cold-start']:
+        if name in self['scheduling']['special tasks']['one-off'] or \
+            name in self['scheduling']['special tasks']['start-up'] or \
+            name in self['scheduling']['special tasks']['cold-start']:
                 taskd.modifiers.append( 'oneoff' )
 
         # SET SEQUENTIAL TASK INDICATOR
-        if name in self['scheduling']['special task types']['sequential']:
+        if name in self['scheduling']['special tasks']['sequential']:
             taskd.modifiers.append( 'sequential' )
 
         # SET MODEL TASK INDICATOR
         # (TO DO - can we identify these tasks from the graph?)
-        elif name in self['scheduling']['special task types']['tasks with explicit restart outputs']:
+        elif name in self['scheduling']['special tasks']['explicit restart outputs']:
             taskd.type = 'tied'
         else:
             taskd.type = 'free'

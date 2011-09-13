@@ -17,7 +17,7 @@ private running directories for the restart files of the warm-cycled
 models."""
 
 [scheduling]
-    [[special task types]]
+    [[special tasks]]
         start-up         = prep
         sequential       = A, B, C
         cold-start       = ColdA, ColdB, ColdC

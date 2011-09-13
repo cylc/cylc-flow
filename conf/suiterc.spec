@@ -26,16 +26,8 @@
 title = string( default="No title supplied" )
 description = string( default="No description supplied" )
 
-initial cycle time = integer( default=None )
-final cycle time = integer( default=None )
-
 use lockserver = boolean( default=False )
 use secure passphrase = boolean( default=False )
-
-tasks to exclude at startup = force_list( default=list())
-tasks to include at startup = force_list( default=list())
-
-runahead limit in hours = integer( min=0, default=24 )
 
 suite log directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite' )
 roll log at startup = boolean( default=True )
@@ -48,13 +40,22 @@ allow multiple simultaneous instances = boolean( default=False )
 UTC mode = boolean( default=False )
 
 [scheduling]
-    [[special task types]]
+    initial cycle time = integer( default=None )
+    final cycle time = integer( default=None )
+    
+    runahead limit in hours = integer( min=0, default=24 )
+
+    [[special tasks]]
         clock-triggered = force_list( default=list())
         start-up = force_list( default=list())
         cold-start = force_list( default=list())
         sequential = force_list( default=list())
         one-off = force_list( default=list())
-        tasks with explicit restart outputs = force_list( default=list())
+
+        explicit restart outputs = force_list( default=list())
+
+        exclude at start-up = force_list( default=list())
+        include at start-up = force_list( default=list())
 
     [[dependencies]]
         graph = string( default=None )

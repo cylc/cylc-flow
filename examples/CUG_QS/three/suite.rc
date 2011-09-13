@@ -15,7 +15,7 @@ uses a private running directory for its restart files)."""
 #       Model[T-6]     > (6,18 UTC only) PostB[T]
 
 [scheduling]
-    [[special task types]]
+    [[special tasks]]
         start-up         = Prep
         cold-start       = ColdModel
         clock-triggered = GetData(1)

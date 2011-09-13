@@ -134,7 +134,7 @@ class scheduler(object):
         self.configure_suite()
 
         # MAXIMUM RUNAHEAD HOURS
-        self.runahead = self.config['runahead limit in hours']
+        self.runahead = self.config['scheduling']['runahead limit in hours']
 
         self.print_banner()
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD (PROVIDED IN DERIVED CLASSES) 
@@ -235,18 +235,18 @@ class scheduler(object):
         else:
             if not self.start_time:
                 # No initial cycle time provided on the command line.
-                if self.config['initial cycle time']:
+                if self.config['scheduling']['initial cycle time']:
                     # Use suite.rc initial cycle time, if one is defined.
-                    self.start_time = str(self.config['initial cycle time'])
+                    self.start_time = str(self.config['scheduling']['initial cycle time'])
                 if self.options.stop_time:
                     # But a final cycle time was provided on the command line.
                     # NOTE: this will have to be changed if we use a STOP
                     # arg instead of the '--until=STOP' option - then it
                     # will not be possible to use STOP without START. 
                     self.stop_time = self.options.stop_time
-                elif self.config['final cycle time']:
+                elif self.config['scheduling']['final cycle time']:
                     # Use suite.rc final cycle time, if one is defined.
-                    self.stop_time = str(self.config['final cycle time'])
+                    self.stop_time = str(self.config['scheduling']['final cycle time'])
             else:
                 # An initial cycle time was provided on the command line
                 # => also use command line final cycle time, if provided,
@@ -1503,8 +1503,8 @@ class scheduler(object):
                 break
 
     def filter_initial_task_list( self, inlist ):
-        included_by_rc  = self.config[ 'tasks to include at startup'   ]
-        excluded_by_rc  = self.config[ 'tasks to exclude at startup'   ]
+        included_by_rc  = self.config['scheduling']['include at start-up']
+        excluded_by_rc  = self.config['scheduling']['exclude at start-up']
         outlist = []
         for name in inlist:
             if name in excluded_by_rc:

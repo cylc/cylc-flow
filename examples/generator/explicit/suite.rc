@@ -6,7 +6,7 @@ generator example in which the task names are generated automatically by
 a Python expression (a "list comprehension")."""
 
 [scheduling]
-    [[special task types]]
+    [[special tasks]]
         sequential = foo    # just to slow the suite down a bit
 
     [[dependencies]]

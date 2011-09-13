@@ -1,11 +1,11 @@
 title = family failure cleanup task example
-runahead limit in hours = 6
 
 description = """An example suite in which a special task is
 used to automatically clean up a failed task family."""
 
 [scheduling]
-    [[special task types]]
+    runahead limit in hours = 6
+    [[special tasks]]
         sequential = A, fammo  # (just to slow the suite down)
     [[dependencies]]
         [[[0,6,12,18]]]

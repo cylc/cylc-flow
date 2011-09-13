@@ -16,7 +16,7 @@ should only be modified with extreme caution."""
 use lockserver = False
 
 [scheduling]
-    [[special task types]]
+    [[special tasks]]
     start-up          = prep
     sequential       = A, B, C
     cold-start        = ColdA, ColdB, ColdC
