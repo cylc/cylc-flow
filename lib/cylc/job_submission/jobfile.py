@@ -181,7 +181,7 @@ cylc task started || exit 1""" )
             # FOO=$( ecko foo )  # error trapped
 
     def write_pre_scripting( self ):
-        if self.simulation_mode:
+        if self.simulation_mode or not self.precommand_scripting:
             # ignore extra scripting in simulation mode
             return
         self.FILE.write( "\n\n# PRE-COMMAND SCRIPTING:" )
@@ -192,7 +192,7 @@ cylc task started || exit 1""" )
         self.FILE.write( "\n" + self.command_scripting )
 
     def write_post_scripting( self ):
-        if self.simulation_mode:
+        if self.simulation_mode or not self.postcommand_scripting:
             # ignore extra scripting in simulation mode
             return
         self.FILE.write( "\n\n# POST COMMAND SCRIPTING:" )

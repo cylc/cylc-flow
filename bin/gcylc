@@ -35,7 +35,7 @@ from cylc.mkdir_p import mkdir_p
 from cylc.passphrase import passphrase
 from cylc.gui.gcylc import MainApp
 from cylc.config import config, SuiteConfigError
-from cylc.registration import localdb, RegistrationError
+from cylc.registration import dbgetter, RegistrationError
 
 parser = OptionParser( """gcylc [SUITE]
 
@@ -107,19 +107,20 @@ if len( args ) == 0:
     gtk.main()
     sys.exit(0)
 
-suite = args[0]
+reg = args[0]
 
 # get suite definition directory
-reg = localdb()
-reg.load_from_file()
+dbg = dbgetter()
 try:
-    suite_dir, descr = reg.get( suite )
+    suite, suiterc = dbg.get_suite(reg)
 except RegistrationError, x:
-    raise SystemExit( x )
+    raise SystemExit(x)
+
+suite_dir = os.path.dirname(suiterc)
 
 # get suite logging directory
 try:
-    logging_dir = os.path.join( config( suite )['suite log directory'] )
+    logging_dir = os.path.join( config( suite, suiterc )['suite log directory'] )
 except SuiteConfigError,x:
     raise SystemExit(x)
 

@@ -55,7 +55,7 @@ and associated methods for their control widgets.
         self.owner = owner
         self.imagedir = imagedir
 
-        self.suiterc = config( self.suite )
+        self.suiterc = config( self.suite, os.path.join( self.suite_dir, 'suite.rc' ) )
 
         self.connection_lost = False # (not used)
         self.quitters = []
