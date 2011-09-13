@@ -18,5 +18,5 @@ model | recover => post
 [runtime]
     [[model]]
         # UNCOMMENT command TO TEST FAILURE:
-        # command = false
+        # command scripting = false
 

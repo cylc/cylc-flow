@@ -213,6 +213,10 @@ Version number X.Y.Z incrementing:
     - WARNING: there are a number of changes associated with this item
       that will break existing suite.rc files.
 
++ 'command =' config item changed to 'command scripting =' for consistency
+  with 'pre-' and 'post-command scripting', and because it has long since
+  ceased to be a single command.
+
  + Task families, as defined by the runtime inheritance hierarchy, can
  now be individually expanded or collapsed for graph plotting, and in the 
  graph suite control GUI.

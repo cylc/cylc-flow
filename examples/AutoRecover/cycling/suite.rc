@@ -21,7 +21,7 @@ model | recover => post
 [runtime]
     [[model]]
         description = "a task that succeeds at O UTC and fails at 12 UTC"
-        command = """
+        command scripting = """
 echo Hello from $TASK_ID
 sleep 10
 if [[ $(cylc util cycletime --hour) == 12 ]]; then 

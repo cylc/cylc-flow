@@ -67,7 +67,7 @@ UTC mode = boolean( default=False )
     [[root]]
         inherit = string( default=None )
         description = string( default="No description supplied" )
-        command = force_list( default=list( "echo THIS is the root DUMMY command for $TASK_ID; sleep 10",))
+        command scripting = force_list( default=list( "echo THIS is the root DUMMY command for $TASK_ID; sleep 10",))
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
         manual task completion messaging = boolean( default=False )
@@ -121,7 +121,7 @@ UTC mode = boolean( default=False )
     [[__many__]]
         inherit = string( default=root )
         description = string( default=None )
-        command = force_list( default=None )
+        command scripting = force_list( default=None )
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
         manual task completion messaging = boolean( default=None )
@@ -160,8 +160,7 @@ UTC mode = boolean( default=False )
 [simulation mode]
     clock offset from initial cycle time in hours = integer( default=24 )
     clock rate in seconds per simulation hour = integer( default=10 )
-    command = force_list( default=list( "echo SIMULATION MODE $TASK_ID; sleep 10; echo BYE",))
-    failure command = force_list( default=list( "echo SIMULATION MODE $TASK_ID; sleep 10; echo ABORTING; /bin/false",))
+    command scripting = force_list( default=list( "echo SIMULATION MODE $TASK_ID; sleep 10; echo BYE",))
     job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=background )
 
 [visualization]

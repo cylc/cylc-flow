@@ -15,7 +15,7 @@ to handle task completion messaging manually - see the User Guide 8.4.3."""
 [runtime]
     [[model]]
         manual task completion messaging = True
-        command = model-wrapper.sh  # invoke the task via a custom wrapper
+        command scripting = model-wrapper.sh  # invoke the task via a custom wrapper
         [[[environment]]]
             # location of native job scripts to modify for this suite:
             NATIVESCRIPTS = $CYLC_SUITE_REG_NAME_DIR/native

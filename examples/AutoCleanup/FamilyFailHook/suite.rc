@@ -18,11 +18,11 @@ used to automatically clean up a failed task family."""
             failed script = failhook.sh
     [[m_foo]]
         inherit = fammo
-        command = sleep 8 
+        command scripting = sleep 8 
     [[m_bar]]
         inherit = fammo
         # This family member always fails
-        command = "sleep 5; /bin/false"
+        command scripting = "sleep 5; /bin/false"
     [[m_baz]]
         inherit = fammo
-        command = sleep 10
+        command scripting = sleep 10

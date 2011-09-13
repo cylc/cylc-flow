@@ -27,7 +27,7 @@ in which the task names are listed explicitly."""
     [['Python:list( "m" + str(i) for i in range(1,7)) + list( "p" + str(i) for i in range(1,7))']]
         inherit = ensemble
         description = "Task $(TASK) of the ensemble family"
-        command = """
+        command scripting = """
 cylc task message "Hello 1 from $(TASK) aka $TASK_NAME"
 sleep 5
 if [[ $TASK_NAME = m3 ]]; then # how to distinguish tasks at run time.

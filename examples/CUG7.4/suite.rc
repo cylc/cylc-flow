@@ -18,11 +18,11 @@ simulation mode only = True
 
     [[A]]                 # TASK A SETTINGS
         description = "Task A, does something"
-        command = A.sh
+        command scripting = A.sh
         [[[environment]]] # TASK A ENVIRONMENT
             INPUT = foo-${NEXT_CYCLE}.txt
     [[B]]                 # TASK B SETTINGS
         description = "Task B, does something else"
-        command = B.sh -i $INPUT
+        command scripting = B.sh -i $INPUT
         [[[environment]]] # TASK B ENVIRONMENT
             INPUT = bar-${NEXT_CYCLE}.txt

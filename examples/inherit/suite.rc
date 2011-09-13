@@ -25,12 +25,12 @@ To see the effect, examine task job scripts generated with the
             GEN_B = gen_b
     [[OPS]]
         inherit = GEN
-        command = "echo run-OPS.sh; sleep 10"
+        command scripting = "echo run-OPS.sh; sleep 10"
         [[[environment]]]
             GEN_B = ops_b
     [[VAR]]
         inherit = GEN
-        command = "echo run-VAR.sh; sleep 10"
+        command scripting = "echo run-VAR.sh; sleep 10"
         [[[environment]]]
             GEN_B = var_b
     [[atovs]]
@@ -39,7 +39,7 @@ To see the effect, examine task job scripts generated with the
             OPS_DATA = atovs
     [[aircraft]]
         inherit = OPS
-        command = "echo HELLO from $TASK_ID; sleep 5; echo ABORT; /bin/false"
+        command scripting = "echo HELLO from $TASK_ID; sleep 5; echo ABORT; /bin/false"
         [[[environment]]]
             OPS_DATA = aircraft
     [[ConLS]]
@@ -48,7 +48,7 @@ To see the effect, examine task job scripts generated with the
             VAR_PROG = ConfigureLS
     [[AnPF]]
         inherit = VAR
-        command = "echo run-VAR.sh --apf; sleep 10"
+        command scripting = "echo run-VAR.sh --apf; sleep 10"
         [[[environment]]]
             VAR_PROG = AnalysePF
     [[baz]]

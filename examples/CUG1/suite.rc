@@ -44,67 +44,67 @@ models."""
 
     [[prep]]
         description = "clean out the suite workspace for a new run"
-        command = clean-workspace.sh $WORKSPACE
+        command scripting = clean-workspace.sh $WORKSPACE
     [[X]]
         description = "retrieve real time data for model A"
-        command = X.sh
+        command scripting = X.sh
         [[[environment]]]
             OUTPUT_DIR = $WORKSPACE
     [[A]]
         description = "model A - weather forecast"
-        command = A.sh
+        command scripting = A.sh
         [[[environment]]]
             INPUT_DIR = $WORKSPACE
             OUTPUT_DIR = $WORKSPACE
             RUNNING_DIR = $RUNNING/A
     [[B]]
         description = "model B - sea state forecast"
-        command = B.sh
+        command scripting = B.sh
         [[[environment]]]
             INPUT_DIR = $WORKSPACE
             OUTPUT_DIR = $WORKSPACE
             RUNNING_DIR = $RUNNING/B
     [[C]]
         description = "model C - river flow forecast"
-        command = C.sh
+        command scripting = C.sh
         [[[environment]]]
             INPUT_DIR = $WORKSPACE
             OUTPUT_DIR = $WORKSPACE
             RUNNING_DIR = $RUNNING/C
     [[D]]
         description = "combined post processing for models B and C"
-        command = D.sh
+        command scripting = D.sh
         [[[environment]]]
             INPUT_DIR = $WORKSPACE
             OUTPUT_DIR = $WORKSPACE
     [[E]]
         description = "post processing for model B"
-        command = E.sh
+        command scripting = E.sh
         [[[environment]]]
             INPUT_DIR = $WORKSPACE
             OUTPUT_DIR = $WORKSPACE
     [[F]]
         description = "post processing for model F"
-        command = F.sh
+        command scripting = F.sh
         [[[environment]]]
             INPUT_DIR = $WORKSPACE
             OUTPUT_DIR = $WORKSPACE
 
     [[ColdA]]
         description = "cold start model A"
-        command = ColdA.sh
+        command scripting = ColdA.sh
         [[[environment]]]
             RUNNING_DIR = $RUNNING/A
  
     [[ColdB]]
         description = "model B"
-        command = ColdB.sh
+        command scripting = ColdB.sh
         [[[environment]]]
             RUNNING_DIR = $RUNNING/B
  
     [[ColdC]]
         description = "model C"
-        command = ColdC.sh
+        command scripting = ColdC.sh
         [[[environment]]]
             RUNNING_DIR = $RUNNING/C
  

@@ -1028,10 +1028,10 @@ class config( CylcConfigObj ):
 
         if self.simulation_mode:
             taskd.job_submit_method = self['simulation mode']['job submission method']
-            taskd.commands = self['simulation mode']['command']
+            taskd.commands = self['simulation mode']['command scripting']
         else:
             taskd.job_submit_method = taskconfig['job submission']['method']
-            taskd.commands   = taskconfig['command']
+            taskd.commands   = taskconfig['command scripting']
             taskd.precommand = taskconfig['pre-command scripting'] 
             taskd.postcommand = taskconfig['post-command scripting'] 
 

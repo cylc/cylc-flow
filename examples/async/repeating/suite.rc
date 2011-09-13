@@ -19,18 +19,18 @@ processing runs in parallel if the data comes in quickly."""
 [runtime]
     [[watcher]]
         description = "watch for incoming satellite data"
-        command = watcher.sh
+        command scripting = watcher.sh
         [[[outputs]]]
             a = "$(ASYNCID) ready for processing"
 
     [[upload]]
         description = "upload new satellite data"
-        command = upload.sh
+        command scripting = upload.sh
        [[[outputs]]]
             a = "$(ASYNCID) uploaded"
 
     [[archive]]
         description = "archive new satellite data"
-        command = archive.sh
+        command scripting = archive.sh
         [[[outputs]]]
             a = "$(ASYNCID) archived"

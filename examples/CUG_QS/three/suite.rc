@@ -43,17 +43,17 @@ uses a private running directory for its restart files)."""
 
     [[Prep]]
         description = "prepare the suite workspace for a new run"
-        command = clean-workspace.sh $WORKSPACE
+        command scripting = clean-workspace.sh $WORKSPACE
 
     [[GetData]]
         description = "retrieve data for the current cycle time"
-        command = GetData.sh
+        command scripting = GetData.sh
         [[[environment]]]
             GETDATA_OUTPUT_DIR = $WORKSPACE
 
     [[ColdModel]]
         description = "cold start the forecast model"
-        command = Model.sh --coldstart
+        command scripting = Model.sh --coldstart
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
             MODEL_OUTPUT_DIR = $WORKSPACE
@@ -61,7 +61,7 @@ uses a private running directory for its restart files)."""
 
     [[Model]]
         description = "the forecast model"
-        command = Model.sh
+        command scripting = Model.sh
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
             MODEL_OUTPUT_DIR = $WORKSPACE
@@ -69,14 +69,14 @@ uses a private running directory for its restart files)."""
  
     [[PostA]]
         description = "post processing for model, every cycle"
-        command = PostA.sh
+        command scripting = PostA.sh
         [[[environment]]]
             POSTA_INPUT_DIR = $WORKSPACE
             POSTA_OUTPUT_DIR = $WORKSPACE
 
     [[PostB]]
         description = "post processing for model, 6,18 UTC only"
-        command = PostB.sh
+        command scripting = PostB.sh
         [[[environment]]]
             POSTB_INPUT_DIR = $WORKSPACE
             POSTB_OUTPUT_DIR = $WORKSPACE
