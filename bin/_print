@@ -99,6 +99,10 @@ parser.add_option( "-p","--pretty",
         help="Use unicode box drawing characters in tree views.",
         action="store_true", default=False, dest="unicode" )
 
+parser.add_option( "--fail",
+        help="Fail (exit 1) if no matching suites are found.",
+        action="store_true", default=False, dest="fail" )
+
 ( options, args ) = parser.parse_args()
 
 if len(args) == 0:
@@ -112,6 +116,8 @@ db = dbgetter(options.central).db
 try:
     db.load_from_file()
     allsuites = db.get_list(regfilter)
+    if options.fail and len(allsuites) == 0:
+        raise SystemExit( 'ERROR: no suites matched.' )
     if not options.tree:
         for suite, dir, title in allsuites:
             print suite, '|', title, '|', dir

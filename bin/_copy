@@ -20,8 +20,8 @@ import os, re, sys
 from shutil import copytree
 from optparse import OptionParser
 from cylc.mkdir_p import mkdir_p
-from cylc.registration import delimiter, delimiter_re, localdb,
-    centraldb, RegistrationError, SuiteTakenError, DatabaseLockedError
+from cylc.registration import delimiter, delimiter_re, localdb, \
+        centraldb, RegistrationError, SuiteTakenError, DatabaseLockedError
 
 parser = OptionParser( usage = """cylc [db] copy|cp [OPTIONS] FROM TO DIR
 
@@ -88,7 +88,6 @@ try:
         print 'DRY RUN, I would copy:'
 
     for fsuite in fsuites:
-        print
         fsuite, fdir, ftitle = fsuite
 
         treg = re.sub( r'\b' + arg_from + r'\b', arg_to, fsuite ) 
