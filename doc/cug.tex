@@ -1615,7 +1615,7 @@ A cylc {\em suite definition directory} contains:
                 copy a suite
             \item files in the suite definition directory can be
                 accessed portably by tasks at run time 
-                through the environment variable \lstinline=$CYLC_SUITE_DIR=
+                through the environment variable \lstinline=$CYLC_SUITE_DEF_PATH=
                 supplied by the suite (see
                 {\em Task Execution Environment}
                 (Section~\ref{TaskExecutionEnvironment})
@@ -1760,7 +1760,7 @@ job submission method = loadleveler
 
 [environment]
     # ENVIRONMENT VARIABLES AVAILABLE TO ALL TASKS
-    WORKSPACE = /$TMPDIR/$CYLC_SUITE_REGPATH
+    WORKSPACE = /$TMPDIR/$CYLC_SUITE_REG_PATH
 
 [tasks]
     # COMMAND AND EXECUTION ENVIRONMENT FOR EACH TASK
@@ -2532,8 +2532,8 @@ $CYCLE_SUITE_DIR
 And it may need to use the task and suite identity variables (e.g.\ to 
 make portable suites that write all output to suite-specific locations):
 \begin{lstlisting}
-$CYLC_SUITE_REGNAME    # foo.bar.baz (for example)
-$CYLC_SUITE_REGPATH    # foo/bar/baz
+$CYLC_SUITE_REG_NAME   # foo.bar.baz (for example)
+$CYLC_SUITE_REG_PATH   # foo/bar/baz
 $TASK_NAME             # X
 $TASK_ID               # X%2011051118
 \end{lstlisting}
@@ -2988,7 +2988,7 @@ job submission method = loadleveler
 
 Specifying the remote cylc directory gives remote tasks access 
 to cylc commands; and the remote suite directory gives them 
-access to suite files via \lstinline=$CYLC_SUITE_DIR=, and to the
+access to suite files via \lstinline=$CYLC_SUITE_DEF_PATH=, and to the
 suite bin directory via \lstinline=$PATH= (automatically configured by
 the cylc environment script).
 
@@ -3091,9 +3091,9 @@ export CYLC_DIR="/home/oliverh/cylc"
 export CYLC_MODE="submit"
 export CYLC_SUITE_HOST="oliverh-33191VL.greta.niwa.co.nz"
 export CYLC_SUITE_PORT="NONE"
-export CYLC_SUITE_DIR="/home/oliverh/cylc/examples/CUG_7.4"
-export CYLC_SUITE_REGNAME="examples:CUG_74"
-export CYLC_SUITE_REGPATH="examples/CUG_74"
+export CYLC_SUITE_DEF_PATH="/home/oliverh/cylc/examples/CUG_7.4"
+export CYLC_SUITE_REG_NAME="examples:CUG_74"
+export CYLC_SUITE_REG_PATH="examples/CUG_74"
 export CYLC_SUITE_OWNER="oliverh"
 export CYLC_USE_LOCKSERVER="True"
 export CYLC_LOCKSERVER_PORT="7767"
@@ -3107,7 +3107,7 @@ export CYCLE_TIME=2011052400
 # ACCESS TO CYLC:
 PATH=$CYLC_DIR/bin:$PATH
 # Access to the suite bin dir:
-PATH=$CYLC_SUITE_DIR/bin:$PATH
+PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH
 export PATH
 
 # SET ERROR TRAPPING:
@@ -3218,7 +3218,7 @@ You can set the location for these task output logs in the
 suite.rc file; the default is,
 \begin{lstlisting}
 # SUITE.RC
-job submission log directory = $HOME/CylcJobLogs/$CYLC_SUITE_REGPATH
+job submission log directory = $HOME/CylcJobLogs/$CYLC_SUITE_REG_PATH
 \end{lstlisting}
 
 How the stdout and stderr streams are directed into these files depends
@@ -3689,7 +3689,7 @@ For the ultimate in portability, construct suites in which all task I/O
 paths are dynamically configured to be user and suite (registration)
 specific, e.g.
 \begin{lstlisting}
-$HOME/output/$CYLC_SUITE_REGPATH
+$HOME/output/$CYLC_SUITE_REG_PATH
 \end{lstlisting}
 (these variables are automatically exported to the task execution
 environment by cylc - see {\em Task Execution Environment},
@@ -3742,7 +3742,7 @@ like in a suite definition directory;\footnote{If you copy a suite using
 cylc commands or gcylc, the entire suite definition directory
 will be copied.} other files there will be ignored by cylc but
 suite tasks can access them via the
-\lstinline=$CYLC_SUITE_DIR= variable that cylc automatically 
+\lstinline=$CYLC_SUITE_DEF_PATH= variable that cylc automatically 
 exports into the task execution environment. Disk space is cheap - if
 all programs, ancillary files, control files (etc.) required by the
 suite are stored in the suite

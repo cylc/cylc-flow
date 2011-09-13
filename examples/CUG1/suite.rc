@@ -39,7 +39,7 @@ models."""
     [[root]]
         [[[environment]]]
     TASK_EXE_SECONDS = 10
-    WORKSPACE = /tmp/$USER/$CYLC_SUITE_REGNAME/common
+    WORKSPACE = /tmp/$USER/$CYLC_SUITE_REG_NAME/common
     RUNNING   = $WORKSPACE/running
 
     [[prep]]

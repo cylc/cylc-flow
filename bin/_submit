@@ -33,7 +33,7 @@ from cylc.task_types import task
 from cylc.task_types import clocktriggered
 from cylc import accelerated_clock
 from cylc.port_scan import SuiteIdentificationError
-from cylc.registration import reg_path
+from cylc.registration import delimiter_re
 
 usage = """cylc [task] submit|single [options] SUITE TASK
 
@@ -146,9 +146,9 @@ else:
     cylcenv[ 'CYLC_MODE' ] = 'submit'
 cylcenv[ 'CYLC_SUITE_HOST' ] = host
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
-cylcenv[ 'CYLC_SUITE_DIR' ] = suite_dir
-cylcenv[ 'CYLC_SUITE_REGNAME' ] = suite
-cylcenv[ 'CYLC_SUITE_REGPATH' ] = re.sub( reg_path.sep, '/', suite )
+cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = suite_dir
+cylcenv[ 'CYLC_SUITE_REG_NAME' ] = suite
+cylcenv[ 'CYLC_SUITE_REG_PATH' ] = re.sub( delimiter_re, '/', suite )
 cylcenv[ 'CYLC_SUITE_OWNER' ] = owner
 cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 if use_lockserver:

@@ -111,11 +111,11 @@ class jobfile(object):
         if not BUFFER:
             BUFFER = self.FILE
 
-        # Override $CYLC_DIR and CYLC_SUITE_DIR for remotely hosted tasks
+        # Override $CYLC_DIR and CYLC_SUITE_DEF_PATH for remotely hosted tasks
         if self.remote_cylc_dir:
             self.cylc_env['CYLC_DIR'] = self.remote_cylc_dir
         if self.remote_suite_dir:
-            self.cylc_env['CYLC_SUITE_DIR'] = self.remote_suite_dir
+            self.cylc_env['CYLC_SUITE_DEF_PATH'] = self.remote_suite_dir
 
         BUFFER.write( "\n\n# CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY:" )
         for var in self.cylc_env:
@@ -157,7 +157,7 @@ cylc task started || exit 1""" )
         BUFFER.write( "\n\n# ACCESS TO CYLC:" )
         BUFFER.write( "\nPATH=$CYLC_DIR/bin:$PATH" )
         BUFFER.write( "\n# Access to the suite bin dir:" )
-        BUFFER.write( "\nPATH=$CYLC_SUITE_DIR/bin:$PATH" )
+        BUFFER.write( "\nPATH=$CYLC_SUITE_DEF_PATH/bin:$PATH" )
         BUFFER.write( "\nexport PATH" )
 
     def write_environment_2( self ):

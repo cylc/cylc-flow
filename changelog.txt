@@ -202,8 +202,8 @@ Version number X.Y.Z incrementing:
  + New "suicide" triggers: graph = "A => !B" means B will take itself out of 
  the suite (after spawning, if it is a cycling task) if A succeeds. This can
  be used for automated recovery from task failures using sub-trees of tasks
- that tag along with a model (say) waiting for it to fail, but
- automatically removing themselves if it does not fail.
+ that tag along with a model (say) waiting for it to fail, but which
+ automatically remove themselves if the model does not fail.
 
  + NEW SUITE.RC GROUPING INTO [SCHEDULING] AND [RUNTIME] SECTIONS. The
    former affects *when* cylc runs a task, the latter affects what happens
@@ -216,3 +216,15 @@ Version number X.Y.Z incrementing:
  + Task families, as defined by the runtime inheritance hierarchy, can
  now be individually expanded or collapsed for graph plotting, and in the 
  graph suite control GUI.
+
+ + SUITE REGISTRATION:
+   - changed from GROUP:NAME to an arbitrarily nested path (foo,
+     foo.bar, foo.bar.baz, etc.)  Delimiter changed from colon to dot to
+     avoid problems with use of suite identity in PATH variables.
+   - run time suite identity variables are now:
+     CYLC_SUITE_REGNAME    # foo.bar.baz
+     CYLC_SUITE_REGPATH    # foo/bar/baz
+     CYLC_SUITE_DEFPATH    # suite definition directory
+
+ + New command 'cylc get-config' to retrieve any suite configuration data.
+

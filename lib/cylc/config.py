@@ -41,7 +41,7 @@ from validate import Validator
 from configobj import get_extra_values, flatten_errors, Section
 from cylcconfigobj import CylcConfigObj, ConfigObjError
 from graphnode import graphnode, GraphNodeError
-from registration import reg_path
+from registration import delimiter_re
 
 try:
     import graphing
@@ -280,9 +280,9 @@ class config( CylcConfigObj ):
     def process_directories(self):
         # Environment variable interpolation in directory paths.
         # (allow use of suite identity variables):
-        os.environ['CYLC_SUITE_REGNAME'] = self.suite
-        os.environ['CYLC_SUITE_REGPATH'] = re.sub( reg_path.sep, '/', self.suite )
-        os.environ['CYLC_SUITE_DIR'    ] = self.dir
+        os.environ['CYLC_SUITE_REG_NAME'] = self.suite
+        os.environ['CYLC_SUITE_REG_PATH'] = re.sub( delimiter_re, '/', self.suite )
+        os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
         self['suite log directory'] = \
                 os.path.expandvars( os.path.expanduser( self['suite log directory']))
         self['state dump directory'] =  \
@@ -295,7 +295,7 @@ class config( CylcConfigObj ):
             self['runtime'][item]['job submission']['log directory'] = os.path.expandvars( os.path.expanduser( self['runtime'][item]['job submission']['log directory']))
             # Remote job sub log directories: just suite identity - local variables aren't relevant.
             if self['runtime'][item]['remote']['log directory']:
-                for var in ['CYLC_SUITE_REGPATH', 'CYLC_SUITE_DIR', 'CYLC_SUITE_REGNAME']: 
+                for var in ['CYLC_SUITE_REG_PATH', 'CYLC_SUITE_DEF_PATH', 'CYLC_SUITE_REG_NAME']: 
                     self['runtime'][item]['remote']['log directory'] = re.sub( '\${'+var+'}'+r'\b', os.environ[var], self['runtime'][item]['remote']['log directory'])
                     self['runtime'][item]['remote']['log directory'] = re.sub( '\$'+var+r'\b',      os.environ[var], self['runtime'][item]['remote']['log directory'])
 

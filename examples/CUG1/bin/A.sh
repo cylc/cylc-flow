@@ -16,7 +16,7 @@ for PRE in $ONE $TWO; do
     fi
 done
 
-echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_REGNAME"
+echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_REG_NAME"
 sleep $TASK_EXE_SECONDS
 
 # generate a restart file for the next three cycles

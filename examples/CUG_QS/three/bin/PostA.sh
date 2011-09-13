@@ -13,7 +13,7 @@ if [[ ! -f $PRE ]]; then
     exit 1
 fi
 
-echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_REGNAME"
+echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_REG_NAME"
 
 sleep $TASK_EXE_SECONDS
 

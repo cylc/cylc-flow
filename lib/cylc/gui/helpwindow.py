@@ -369,10 +369,9 @@ account of default values that are not explicitly defined, it disregards
 the order of configuration items, and it sees include-file content after
 inlining.
 
-Seemingly identical suites (immediately after copying one from the
-other, for instance) can differ slightly if they use default
+Seemingly identical suites can differ slightly if they use default
 configuration items, such as the default job submission log directory,
-that are suite-specific (i.e. the includes $CYLC_SUITE_NAME etc.).
+that are suite-specific (i.e. they include $CYLC_SUITE_REG_NAME etc.).
 
 Files in the suite bin directory, and other files held in the suite
 definition directory, are not currently differenced (they may be

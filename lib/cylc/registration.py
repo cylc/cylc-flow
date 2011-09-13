@@ -21,6 +21,9 @@ import datetime, time
 import os, sys, re
 from conf.CylcGlobals import central_regdb_dir, local_regdb_dir
 
+delimiter = '.'
+delimiter_re = '\.'
+
 # NOTE:ABSPATH (see below)
 #   dir = os.path.abspath( dir )
 # On GPFS os.path.abspath() returns the full path with fileset
@@ -95,30 +98,8 @@ class RegPathError( RegistrationError ):
     def __init__( self, reg ):
         self.msg = "ERROR, illegal registration path: " + reg
 
-class reg_path( object ):
-    sep = '.'
-    def __init__( self, path ):
-        if isinstance( path, list ):
-            # Take a list of path components:
-            self.path = self.__class__.sep.join( path )
-        else:
-            # Or a delimited path (allow foo.bar.baz, or foo:bar:baz, or
-            # foo/bar/baz on input, but store as foo/bar/baz):
-
-            # First strip trailing '/' in case the user registered same
-            # name as dir whilst sitting one level up from the suite dir
-            # itself, using tab completion, and got the args order wrong.
-            path = path.rstrip( '/' )
-            #self.path = sep.join( path.split( sep_re ) )
-            self.path = path
-
-    def get( self ):
-        return self.path
-
 class dbgetter:
-    # Used in cylc commands to quickly get the unaliased suite
-    # registration path and suite.rc file path from the input suite
-    # registration path.
+    # Use to get unaliased suite registration data from an input registration.
     def __init__( self, central=False ):
         if central:
             self.db = centraldb()
@@ -126,7 +107,7 @@ class dbgetter:
             self.db = localdb()
     def get_suite( self, reg ):
         self.db.load_from_file()
-        suite, junk = self.db.unalias( reg )
+        suite = self.db.unalias( reg )
         suiterc = self.db.getrc( suite )
         return suite, suiterc
 
@@ -222,8 +203,7 @@ class regdb(object):
             if self.verbose:
                 print "   (database unchanged)"
 
-    def register( self, reg, dir, des='(no description supplied)' ):
-        suite = reg_path( reg ).get()
+    def register( self, suite, dir, des='(no description supplied)' ):
         if not dir.startswith( '->' ):  # alias for another reg
             # Remove trailing '/'
             dir = dir.rstrip( '/' )
@@ -236,9 +216,9 @@ class regdb(object):
         for key in self.items.keys():
             if key == suite:
                 raise SuiteTakenError, suite
-            elif key.startswith(suite + reg_path.sep ):
+            elif key.startswith(suite + delimiter ):
                 raise IsAGroupError, suite
-            elif suite.startswith(key + reg_path.sep ):
+            elif suite.startswith(key + delimiter ):
                 raise NotAGroupError, key
 
         if self.verbose:
@@ -246,8 +226,7 @@ class regdb(object):
         self.items[suite] = dir, des
 
     def get( self, reg ):
-        suite = reg_path(reg).get()
-        suite, title = self.unalias(suite)
+        suite = self.unalias(reg)
         try:
             dir, des = self.items[suite]
         except KeyError:
@@ -255,8 +234,7 @@ class regdb(object):
         return dir, des
 
     def getrc( self, reg ):
-        suite = reg_path(reg).get()
-        dir, junk = self.get( suite )
+        dir, junk = self.get( reg )
         return os.path.join( dir, 'suite.rc' )
 
     def get_list( self, regfilter=None ):
@@ -313,9 +291,11 @@ class regdb(object):
         if not found:
             raise SuiteOrGroupNotFoundError, srce
 
-    def alias( self, suite, alias ):
-        suite, title = self.unalias( suite )
-        self.register( alias, '->' + suite, title )
+    def alias( self, reg, alias ):
+        suite = self.unalias( reg )
+        junk, title = self.items[suite]
+        pseudodir = '->' + suite
+        self.register( alias, pseudodir, title )
 
     def unalias( self, alias ):
         try:
@@ -327,20 +307,20 @@ class regdb(object):
             dir, title = self.items[target]
         else:
             target = alias
-        return target, title
+        return target
          
     def get_invalid( self ):
         invalid = []
-        for item in self.items:
-            reg, title = self.unalias(item)
-            dir, tit = self.items[reg]
+        for reg in self.items:
+            suite = self.unalias(item)
+            dir, junk = self.items[suite]
             rcfile = os.path.join( dir, 'suite.rc' )
             if not os.path.isfile( rcfile ): 
-                invalid.append( item )
+                invalid.append( reg )
         return invalid
 
     def refresh_suite_title( self, suite ):
-        suite, junk = self.unalias(suite)
+        suite = self.unalias(suite)
         # cheap suite title extraction
         try:
             dir, title = self.items[suite]
@@ -384,7 +364,7 @@ class regdb(object):
         #        raise
 
     def get_rcfiles ( self, suite ):
-        suite, junk = self.unalias(suite)
+        suite = self.unalias(suite)
         # return a list of all include-files used by this suite
         # TO DO: THIS NEEDS TO BE MADE RECURSIVE
         # (only used by cylc_xdot to check if graph has changed).
@@ -432,5 +412,5 @@ class centraldb( regdb ):
         regdb.__init__(self, dir, file, verbose )
 
     def register( self, suite, dir, des='(no description supplied)' ):
-        regdb.register( self, self.user + reg_path.sep + suite, dir, des )
+        regdb.register( self, self.user + delimiter + suite, dir, des )
 

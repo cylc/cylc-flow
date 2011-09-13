@@ -21,7 +21,7 @@ from optparse import OptionParser
 from cylc.registration import dbgetter, RegistrationError
 from cylc.config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc [db] get-config SUITE [HIERARCHY]
+parser = OptionParser( usage = """cylc [info] get-config SUITE [HIERARCHY]
 
 Print configuration items parsed from a suite definition (including any 
 defaults not explicitly set in the suite.rc file). This enables scripts

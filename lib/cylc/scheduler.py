@@ -41,7 +41,7 @@ from locking.suite_lock import suite_lock
 from suite_id import identifier
 from mkdir_p import mkdir_p
 from config import config, SuiteConfigError
-from cylc.registration import localdb, RegistrationError
+from cylc.registration import delimiter_re, localdb, RegistrationError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
 
@@ -157,7 +157,7 @@ class scheduler(object):
             db.load_from_file()
             self.suite_dir, junk = db.get(suite)
             self.suiterc = db.getrc(suite)
-            self.suite, junk = db.unalias(suite)
+            self.suite = db.unalias(suite)
         except RegistrationError,x:
             raise SystemExit(x)
 
@@ -330,9 +330,9 @@ class scheduler(object):
         cylcenv[ 'CYLC_MODE' ] = 'scheduler'
         cylcenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
         cylcenv[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
-        cylcenv[ 'CYLC_SUITE_REGNAME' ] = self.suite
-        cylcenv[ 'CYLC_SUITE_REGPATH' ] = re.sub( ':', '/', self.suite )
-        cylcenv[ 'CYLC_SUITE_DIR' ] = self.suite_dir
+        cylcenv[ 'CYLC_SUITE_REG_NAME' ] = self.suite
+        cylcenv[ 'CYLC_SUITE_REG_PATH' ] = re.sub( delimiter_re, '/', self.suite )
+        cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner
         cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
         if self.use_lockserver:

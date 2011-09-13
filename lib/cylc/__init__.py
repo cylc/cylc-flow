@@ -37,8 +37,8 @@ def environ_init(argv0=None):
         os.environ['CYLC_DIR'] = cylc_dir
 
     dirs = [os.path.join(cylc_dir, 'util'), os.path.join(cylc_dir, 'bin')]
-    if os.getenv('CYLC_SUITE_DIR', ''):
-        dirs.append(os.getenv('CYLC_SUITE_DIR'))
+    if os.getenv('CYLC_SUITE_DEF_PATH', ''):
+        dirs.append(os.getenv('CYLC_SUITE_DEF_PATH'))
     environ_path_add(dirs)
     environ_path_add([os.path.join(cylc_dir, 'lib')], 'PYTHONPATH')
 

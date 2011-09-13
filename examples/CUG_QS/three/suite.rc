@@ -32,7 +32,7 @@ uses a private running directory for its restart files)."""
     [[root]]
         [[[environment]]]
             TASK_EXE_SECONDS = 5
-            WORKSPACE = /tmp/$USER/$CYLC_SUITE_REGNAME/common
+            WORKSPACE = /tmp/$USER/$CYLC_SUITE_REG_NAME/common
 
 # HERE'S HOW TO GET ALL TASKS IN THIS SUITE TO RUN ON A REMOTE HOST:
 #        [[[remote]]]

@@ -18,6 +18,6 @@ to handle task completion messaging manually - see the User Guide 8.4.3."""
         command = model-wrapper.sh  # invoke the task via a custom wrapper
         [[[environment]]]
             # location of native job scripts to modify for this suite:
-            NATIVESCRIPTS = $CYLC_SUITE_REGNAME_DIR/native
+            NATIVESCRIPTS = $CYLC_SUITE_REG_NAME_DIR/native
             # output path prefix for detached model stdout and stderr:
             PREFIX = $HOME/detach

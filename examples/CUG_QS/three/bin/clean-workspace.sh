@@ -12,7 +12,7 @@ fi
 # execution time may be set in suite.rc
 TASK_EXE_SECONDS=${TASK_EXE_SECONDS:-10}
 
-echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_REGNAME"
+echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_REG_NAME"
 
 sleep $TASK_EXE_SECONDS
 
