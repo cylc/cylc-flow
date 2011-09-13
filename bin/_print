@@ -18,7 +18,7 @@
 
 import re
 from optparse import OptionParser
-from cylc.registration import dbgetter, RegistrationError
+from cylc.registration import dbgetter, reg_path, RegistrationError
 
 a_hbar = '-'
 a_vbar = '|'
@@ -34,7 +34,7 @@ u_trm = u'\u2514' + u_hbar
 def get_padding( reglist ):
     maxlen = 0
     for reg in reglist:
-        items = reg[0].split(':')
+        items = reg[0].split( reg_path.sep )
         for i in range(0,len(items)):
             tmp = 2*i + 1 + len(items[i])
             if i == 0:
@@ -114,17 +114,17 @@ try:
     allsuites = db.get_list(regfilter)
     if not options.tree:
         for suite, dir, title in allsuites:
-            print suite, '|', dir, '|', title
+            print suite, '|', title, '|', dir
     else:
         tree = {}
         for suite, dir, title in allsuites:
-            regpath = suite.split(':') 
+            regpath = suite.split( reg_path.sep ) 
             sub = tree
             for key in regpath[:-1]:
                 if key not in sub:
                     sub[key] = {}
                 sub = sub[key]
-            sub[regpath[-1]] = dir + ' | ' + title
+            sub[regpath[-1]] = title + ' | ' + dir
         pad = get_padding( allsuites )
         print_tree(tree, pad, options.unicode )
 

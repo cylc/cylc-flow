@@ -22,13 +22,20 @@ from cylc.registration import localdb, RegistrationError, DatabaseLockedError
 
 parser = OptionParser( usage = """cylc [db] alias [options] SUITE ALIAS 
 
-Define a short alias for a full suite registeration. This differs from 
-simply registering the target suite under a different name - at run time
-the run time suite identity variables ($CYLC_SUITE_REG etc.) will refer
-to the original suite registration.
+Define an alias for another suite such that run time identity 
+corresponds to the target suite.
+
+  $ cylc alias global:ensemble:parallel:test3 bob
+  $ cylc edit bob
+  $ cylc run  bob     # work with global:ensemble:parallel:test3
+  $ cylc stop bob
+
+Note that this differs from registering the target suite definition
+under another name with 'cylc register' - in that case run time suite
+identity corresponds to the new registration name. 
 
 Arguments:
-     SUITE  -  Private suite database registration.
+     SUITE  -  Target suite registration (private database only).
      ALIAS  -  An alternative name for the same suite.""" )
 
 ( options, args ) = parser.parse_args()
@@ -36,7 +43,6 @@ Arguments:
 if len(args) != 2:
     parser.error( "Wrong number of arguments" )
 
-# NEW REGISTRATION: cylc register SUITE PATH
 suite = args[0]
 alias = args[1]
 

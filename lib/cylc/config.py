@@ -41,6 +41,7 @@ from validate import Validator
 from configobj import get_extra_values, flatten_errors, Section
 from cylcconfigobj import CylcConfigObj, ConfigObjError
 from graphnode import graphnode, GraphNodeError
+from registration import reg_path
 
 try:
     import graphing
@@ -134,10 +135,6 @@ class config( CylcConfigObj ):
         self.suite = suite
         self.file = suiterc
         self.dir = os.path.dirname(suiterc)
-
-        #elif 'CYLC_SUITE_REG' in os.environ:
-        #    self.suite = os.environ[ 'CYLC_SUITE_REG' ]
-        #    self.file = os.path.join( os.environ[ 'CYLC_SUITE_DIR' ], 'suite.rc' ),
 
         if not os.path.isfile( self.file ):
             raise SuiteConfigError, 'File not found: ' + self.file
@@ -283,9 +280,9 @@ class config( CylcConfigObj ):
     def process_directories(self):
         # Environment variable interpolation in directory paths.
         # (allow use of suite identity variables):
-        os.environ['CYLC_SUITE_REG'] = self.suite
-        os.environ['CYLC_SUITE_REGPATH'] = re.sub( ':', '/', self.suite )
-        os.environ['CYLC_SUITE_DIR'   ] = self.dir
+        os.environ['CYLC_SUITE_REGNAME'] = self.suite
+        os.environ['CYLC_SUITE_REGPATH'] = re.sub( reg_path.sep, '/', self.suite )
+        os.environ['CYLC_SUITE_DIR'    ] = self.dir
         self['suite log directory'] = \
                 os.path.expandvars( os.path.expanduser( self['suite log directory']))
         self['state dump directory'] =  \
@@ -298,7 +295,7 @@ class config( CylcConfigObj ):
             self['runtime'][item]['job submission']['log directory'] = os.path.expandvars( os.path.expanduser( self['runtime'][item]['job submission']['log directory']))
             # Remote job sub log directories: just suite identity - local variables aren't relevant.
             if self['runtime'][item]['remote']['log directory']:
-                for var in ['CYLC_SUITE_REGPATH', 'CYLC_SUITE_DIR', 'CYLC_SUITE_REG']: 
+                for var in ['CYLC_SUITE_REGPATH', 'CYLC_SUITE_DIR', 'CYLC_SUITE_REGNAME']: 
                     self['runtime'][item]['remote']['log directory'] = re.sub( '\${'+var+'}'+r'\b', os.environ[var], self['runtime'][item]['remote']['log directory'])
                     self['runtime'][item]['remote']['log directory'] = re.sub( '\$'+var+r'\b',      os.environ[var], self['runtime'][item]['remote']['log directory'])
 

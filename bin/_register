@@ -19,7 +19,6 @@
 import os, sys
 from optparse import OptionParser
 from cylc.registration import localdb, RegistrationError, DatabaseLockedError
-from cylc.config import get_suite_title, SuiteConfigError
 
 parser = OptionParser( usage = """cylc [db] register [options] SUITE PATH
 
@@ -53,17 +52,12 @@ if not os.path.isdir( rdir ):
         if not os.path.isdir( rdir ):
             raise SystemExit( 'ERROR: Suite definition PATH not valid: ' + rdir )
 
-# get suite title by parsing the config file
-try:
-    title = get_suite_title( path=rdir, central=False )
-except SuiteConfigError,x:
-    raise SystemExit(x)
-
 db = localdb()
 try:
     db.lock()
     db.load_from_file()
-    db.register( suite, rdir, title )
+    db.register( suite, rdir, 'No Title' )
+    db.refresh_suite_title( suite )
     db.dump_to_file()
     db.unlock()
 

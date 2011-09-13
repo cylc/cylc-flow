@@ -5,7 +5,7 @@ set -e
 cylc checkvars  TASK_EXE_SECONDS
 cylc checkvars -c OUTPUT_DIR
 
-echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE"
+echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_REGNAME"
 sleep $TASK_EXE_SECONDS
 
 if [[ ! -z $TEST_X_FAIL_TIME ]]; then

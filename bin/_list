@@ -49,6 +49,6 @@ try:
 except SuiteConfigError,x:
     raise SystemExit(x)
 
-print 'TASK LIST:'
+#print 'TASK LIST:'
 for task in config.get_task_name_list():
     print ' ', task

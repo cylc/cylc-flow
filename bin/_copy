@@ -20,7 +20,7 @@ import os, re, sys
 from shutil import copytree
 from optparse import OptionParser
 from cylc.mkdir_p import mkdir_p
-from cylc.registration import localdb, centraldb, RegistrationError, SuiteTakenError, DatabaseLockedError
+from cylc.registration import reg_path, localdb, centraldb, RegistrationError, SuiteTakenError, DatabaseLockedError
 
 parser = OptionParser( usage = """cylc [db] copy|cp [OPTIONS] FROM TO DIR
 
@@ -55,8 +55,10 @@ elif '--export' in sys.argv:
 if len(args) != 3:
     parser.error('Wrong number of arguments')
 
-arg_from = args[0].rstrip(':')
-arg_to = args[1].rstrip(':')
+# strip reg_path delimiter off the end, in case the user left it on
+# to indicate a group (which is not necessary, but may seem sensible).
+arg_from = args[0].rstrip(reg_path.sep)
+arg_to = args[1].rstrip(reg_path.sep)
 arg_dir = args[2]
 
 if c_import:
@@ -90,8 +92,8 @@ try:
 
         treg = re.sub( r'\b' + arg_from + r'\b', arg_to, fsuite ) 
 
-        tmp = re.sub( arg_to + ':', '', treg ) 
-        tdir = '/'.join( tmp.split(':') )
+        tmp = re.sub( arg_to + reg_path.sep, '', treg ) 
+        tdir = '/'.join( tmp.split(reg_path.sep) )
         tdir = os.path.join( arg_dir, tdir )
 
         if options.dryrun:

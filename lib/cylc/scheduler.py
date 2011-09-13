@@ -330,7 +330,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_MODE' ] = 'scheduler'
         cylcenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
         cylcenv[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
-        cylcenv[ 'CYLC_SUITE_REG' ] = self.suite
+        cylcenv[ 'CYLC_SUITE_REGNAME' ] = self.suite
         cylcenv[ 'CYLC_SUITE_REGPATH' ] = re.sub( ':', '/', self.suite )
         cylcenv[ 'CYLC_SUITE_DIR' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner

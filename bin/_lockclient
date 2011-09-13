@@ -38,7 +38,7 @@ def check_suite_spec( name ):
     reg = localdb()
     reg.load_from_file()
     try:
-        suite_dir, descr = reg.get( name )
+        suite_dir, title = reg.get( name )
     except RegistrationError,x:
         raise SystemExit(x)
     return suite_dir
@@ -46,11 +46,10 @@ def check_suite_spec( name ):
 def check_task_spec( task_spec ):
     # GROUP:NAME:TASK%CYCLE_TIME
     try:
-        group, name, task_id = task_spec.split( ':' )
+        suite, task_id = task_spec.split( ':' )
     except:
         raise SystemExit( task_spec + " - Please specify SUITE:TASK_NAME%CYCLE_TIME" )
 
-    suite = group + ':' + name
     check_suite_spec( suite )
 
     try:

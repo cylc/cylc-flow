@@ -96,9 +96,7 @@ class RegPathError( RegistrationError ):
         self.msg = "ERROR, illegal registration path: " + reg
 
 class reg_path( object ):
-    #sep_re = '[./:]'
-    #sep = '/'
-    sep = ':'
+    sep = '.'
     def __init__( self, path ):
         if isinstance( path, list ):
             # Take a list of path components:
@@ -131,7 +129,6 @@ class dbgetter:
         suite, junk = self.db.unalias( reg )
         suiterc = self.db.getrc( suite )
         return suite, suiterc
-
 
 class regdb(object):
     """
@@ -342,22 +339,14 @@ class regdb(object):
                 invalid.append( item )
         return invalid
 
-    def refresh_suite_title( self, suite=None, path=None ):
+    def refresh_suite_title( self, suite ):
         suite, junk = self.unalias(suite)
         # cheap suite title extraction
-        if suite:
-            try:
-                dir, title = self.items[suite]
-            except KeyError:
-                raise SuiteNotFoundError, suite
-            file = os.path.join( dir, 'suite.rc' )
-        elif path:
-            # load by path for new registrations.
-            suite = '(None)'
-            file = os.path.join( path, 'suite.rc' )
-        else:
-            raise RegistrationError, 'ERROR, suite registration or path required'
-
+        try:
+            dir, title = self.items[suite]
+        except KeyError:
+            raise SuiteNotFoundError, suite
+        file = os.path.join( dir, 'suite.rc' )
         if not os.path.isfile( file ):
             raise RegistrationError, 'File not found: ' + file
 
@@ -375,7 +364,10 @@ class regdb(object):
                 break
 
         if not found:
-            raise SuiteTitleNotFoundError, "Suite title not found."
+            print >> sys.stderr, "WARNING: title not found by simple search, for " + suite
+
+        self.items[suite] = dir, title
+
         #    print >> sys.stderr, 'WARNING: ' + suite + ' title not found by suite.rc search - doing full parse.'
         #    # This means the title is defined in a suite.rc include-file, or
         #    # is not defined. In the latter case, a full parse will result
@@ -390,7 +382,6 @@ class regdb(object):
         #        #print >> sys.stderr, 'ERROR: suite.rc parse failure!'
         #        #raise SystemExit( str(x) )
         #        raise
-        return title
 
     def get_rcfiles ( self, suite ):
         suite, junk = self.unalias(suite)

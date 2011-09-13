@@ -27,14 +27,13 @@ from cylc.cycle_time import ct, CycleTimeError
 from cylc.config import config, SuiteConfigError
 from cylc import cylc_pyro_client
 from cylc.port_scan import scan, SuiteIdentificationError
-from cylc.registration import localdb, centraldb, RegistrationError
+from cylc.registration import reg_path, localdb, centraldb, RegistrationError
 from warning_dialog import warning_dialog, info_dialog, question_dialog
 import helpwindow 
 from gcapture import gcapture, gcapture_tmpfile
 from cylc.mkdir_p import mkdir_p
 from cylc_logviewer import cylc_logviewer
 
-#debug = True
 debug = False
 
 # WHY LAUNCH CONTROL GUIS AS STANDALONE APPS (via gcapture) rather than
@@ -84,7 +83,7 @@ class db_updater(threading.Thread):
             else:
                 state = '-'
             nest2 = self.newtree
-            regpath = suite.split(':')
+            regpath = suite.split(reg_path.sep)
             for key in regpath[:-1]:
                 if key not in nest2:
                     nest2[key] = {}
@@ -699,12 +698,12 @@ The cylc forecast suite metascheduler.
                 par = model.iter_parent( iter )
                 if par:
                     val, = model.get(par, 0)
-                    reg = get_reg( val, par ) + ':' + reg
+                    reg = get_reg( val, par ) + reg_path.sep + reg
             return reg
 
         reg = get_reg( item, iter )
         if self.cdb:
-            owner = reg.split(':')[0]
+            owner = reg.split(reg_path.sep)[0]
 
         if group_clicked:
             group = reg
@@ -1023,7 +1022,7 @@ The cylc forecast suite metascheduler.
 
     def ownerless( self, creg ):
         # remove owner from a central suite registration
-        return ':'.join( creg.split(':')[1:] )
+        return reg_path.sep.join( creg.split(reg_path.sep)[1:] )
  
     def import_suite_popup( self, w, reg ):
         window = gtk.Window()

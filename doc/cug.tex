@@ -1760,7 +1760,7 @@ job submission method = loadleveler
 
 [environment]
     # ENVIRONMENT VARIABLES AVAILABLE TO ALL TASKS
-    WORKSPACE = /$TMPDIR/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME
+    WORKSPACE = /$TMPDIR/$CYLC_SUITE_REGPATH
 
 [tasks]
     # COMMAND AND EXECUTION ENVIRONMENT FOR EACH TASK
@@ -2532,9 +2532,8 @@ $CYCLE_SUITE_DIR
 And it may need to use the task and suite identity variables (e.g.\ to 
 make portable suites that write all output to suite-specific locations):
 \begin{lstlisting}
-$CYLC_SUITE            # e.g. foo:bar
-$CYLC_SUITE_GROUP      # foo
-$CYLC_SUITE_NAME       # bar 
+$CYLC_SUITE_REGNAME    # foo.bar.baz (for example)
+$CYLC_SUITE_REGPATH    # foo/bar/baz
 $TASK_NAME             # X
 $TASK_ID               # X%2011051118
 \end{lstlisting}
@@ -3093,9 +3092,8 @@ export CYLC_MODE="submit"
 export CYLC_SUITE_HOST="oliverh-33191VL.greta.niwa.co.nz"
 export CYLC_SUITE_PORT="NONE"
 export CYLC_SUITE_DIR="/home/oliverh/cylc/examples/CUG_7.4"
-export CYLC_SUITE="examples:CUG_74"
-export CYLC_SUITE_GROUP="examples"
-export CYLC_SUITE_NAME="CUG_74"
+export CYLC_SUITE_REGNAME="examples:CUG_74"
+export CYLC_SUITE_REGPATH="examples/CUG_74"
 export CYLC_SUITE_OWNER="oliverh"
 export CYLC_USE_LOCKSERVER="True"
 export CYLC_LOCKSERVER_PORT="7767"
@@ -3220,7 +3218,7 @@ You can set the location for these task output logs in the
 suite.rc file; the default is,
 \begin{lstlisting}
 # SUITE.RC
-job submission log directory = $HOME/CylcJobLogs/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME
+job submission log directory = $HOME/CylcJobLogs/$CYLC_SUITE_REGPATH
 \end{lstlisting}
 
 How the stdout and stderr streams are directed into these files depends
@@ -3691,7 +3689,7 @@ For the ultimate in portability, construct suites in which all task I/O
 paths are dynamically configured to be user and suite (registration)
 specific, e.g.
 \begin{lstlisting}
-$HOME/output/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/
+$HOME/output/$CYLC_SUITE_REGPATH
 \end{lstlisting}
 (these variables are automatically exported to the task execution
 environment by cylc - see {\em Task Execution Environment},

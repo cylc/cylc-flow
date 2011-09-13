@@ -9,7 +9,7 @@ if [[ $# != 1 ]]; then
     exit 1
 fi
 
-echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE"
+echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_REGNAME"
 sleep $TASK_EXE_SECONDS
 
 if [[ $# == 1 ]]; then
