@@ -630,15 +630,12 @@ your cylc installation by running the automated suite database test
 
 \subsection{Upgrading To A New Cylc Version}
 
-This is just a matter of unpacking the new cylc release and re-running
-\lstinline=cylc admin create-cdb= to replace the old example suites with
-the new ones in the central suite database. 
-
-Note however that the central database is currently associated with a 
-particular cylc installation - it i held in \lstinline=$CYLC_DIR/CDB=.
-Consequently you need to copy the old CDB into the new cylc installation
-prior to running \lstinline=cylc admin create-cdb=, in order to retain
-all suites registered in the old central database.
+This is just a matter of unpacking the new cylc release, copying the old 
+central database into the new cylc installation,\footnote{
+The central database is currently associated with a particular cylc
+installation - it is held in \lstinline=$CYLC_DIR/CDB=.}
+and re-running \lstinline=cylc admin create-cdb= to upload the new
+example suites. 
 
 %\pagebreak
 \section{Cylc Screenshots}

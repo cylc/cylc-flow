@@ -49,7 +49,6 @@ if '--import' in sys.argv:
 elif '--export' in sys.argv:
     c_export = True
     sys.argv.remove( '--export' ) 
-    sys.argv.append( os.path.join( centraldb.dir, os.environ['USER'] ))
     
 ( options, args ) = parser.parse_args()
 
@@ -88,12 +87,13 @@ try:
         print 'DRY RUN, I would copy:'
 
     for fsuite in fsuites:
-        fsuite, fdir, ftitle = fsuite
+        freg, fdir, ftitle = fsuite
 
-        treg = re.sub( r'\b' + arg_from + r'\b', arg_to, fsuite ) 
+        treg = re.sub( r'\b' + arg_from + r'\b', arg_to, freg ) 
 
-        tmp = re.sub( arg_to + delimiter_re, '', treg ) 
-        tdir = '/'.join( tmp.split(delimiter) )
+        #tmp = re.sub( arg_to + delimiter_re, '', treg ) 
+        #tdir = '/'.join( tmp.split(delimiter) )
+        tdir = '/'.join( treg.split(delimiter) )
         tdir = os.path.join( arg_dir, tdir )
 
         if options.dryrun:

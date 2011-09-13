@@ -411,6 +411,10 @@ class centraldb( regdb ):
             file = os.path.join( dir, 'db' )
         regdb.__init__(self, dir, file, verbose )
 
-    def register( self, suite, dir, des='(no description supplied)' ):
-        regdb.register( self, self.user + delimiter + suite, dir, des )
+    def register( self, suite, dir, des='(no description supplied)', owner=None ):
+        if owner:
+            user = owner
+        else:
+            user = self.user
+        regdb.register( self, user + delimiter + suite, dir, des )
 

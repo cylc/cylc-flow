@@ -299,14 +299,13 @@ but they provide structure to the command set, and they disambiguate
 highly abbreviated commands. Some commands are aliased (ls|list), and 
 some common typos are automatically corrected (cylc,cycl; help,hlep).
 
-SUITE is a name registered for a suite definition directory and then
-used for all suite access, so that you don't have to remember its actual
-location on disk. SUITE can be a simple name or a dot-delimited list
-so that suites can be organised like a directory tree.
-   $ cylc edit trials.global.test3
+Where: SUITE is a name registered for a suite definition directory and
+then used for all suite access, so that you don't have to remember the
+location on disk. It can be a simple name (foo) or a dot-delimited list
+(foo.bar.baz) so that suites can be organised like a directory tree.
 
-TASK is the unique identity of a task in a suite: NAME%TAG, where TAG
-is a cycle time (YYYYMMDDHH) for cycling tasks, or an integer value for
+And: TASK is the identity of a single task in a suite: NAME%TAG, where
+TAG is a cycle time (YYYYMMDDHH) for cycling tasks, or an integer for
 asynchronous tasks (preceded by 'a:' on the command line, e.g. foo%a:1).
 
 Here's how to drill down to command usage help for a particular command:

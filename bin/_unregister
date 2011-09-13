@@ -110,6 +110,7 @@ if options.obliterate:
     if really_obliterate and len(dirs)>0:
         for dir in dirs:
             try:
+                print dir
                 rmtree(dir)
             except OSError, x:
                 print >> sys.stderr, "Failed to delete " + dir

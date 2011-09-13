@@ -16,15 +16,18 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys, re, os
 from cylc.execute import execute
 from optparse import OptionParser
+from cylc.registration import centraldb
 
 parser = OptionParser( usage = """cylc [db] export [OPTIONS] SOURCE [TARGET]
 
 Export private suites to the central database.
 
 Arguments:
-    SOURCE  - suite registration""" )  
+    SOURCE  - private source registration
+    TARGET  - central target registration""" )  
 
 ( options, args ) = parser.parse_args()
 
@@ -36,5 +39,8 @@ elif len(args) == 1:
 else:
     parser.error('Wrong number of arguments')
 
-command = 'cylc db copy --export ' + source + ' ' + target
-execute( command.split(' '))
+owner = os.environ['USER']
+target_dir = os.path.join( centraldb.dir, owner )
+
+command = 'cylc db copy --export ' + source + ' ' + target + ' ' + target_dir
+execute( re.split(' +', command) )

@@ -521,18 +521,14 @@ The cylc forecast suite metascheduler.
 
     def new_reg( self, b, w, dir, reg_e ):
         reg = reg_e.get_text()
-        command = "cylc register --notify-completion" + reg + ' ' + dir
+        command = "cylc register --notify-completion " + reg + ' ' + dir
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
         w.destroy()
 
     def refresh( self, w ):
-        if self.cdb:
-            options = '-c'
-        else:
-            options = ''
-        command = "cylc refresh " + self.dbopt + " --notify-completion" + options
+        command = "cylc refresh " + self.dbopt + " --notify-completion"
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1003,7 +999,7 @@ The cylc forecast suite metascheduler.
         label = gtk.Label( 'Target Registration' )
         box.pack_start( label, True )
         newreg_entry = gtk.Entry()
-        newreg_entry.set_text( group )
+        newreg_entry.set_text( reg )
         box.pack_start (newreg_entry, True)
         vbox.pack_start( box )
 
