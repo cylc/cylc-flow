@@ -58,27 +58,39 @@ if [[ $# != 0 ]]; then
     fi
 fi
 
-SUITE_REG=Z1TtestQrX.foobar
-SUITE_DIR=${TMPDIR:-/tmp/$USER}/Z1TtestQrX/foobar
+# seconds since epoch
+SSE=$( date +%s )
 
-# START FROM A CLEAN SLATE
-if cylc db unreg $SUITE_REG > /dev/null 2>&1; then
-    echo -n ">> pre-start cleanup..."
-    echo "unregistered old test suite"
+SUITE_REG=test.$SSE
+SUITE_DIR=$TMPDIR
+
+CYLC_VERSION=$( cylc -v )
+if [[ $CYLC_VERSION == "THIS IS NOT A VERSIONED RELEASE" ]]; then
+    # we are in a cylc git repository - get most recent tag
+    # and append seconds since epoch.
+    CYLC_VERSION=$( git tag | tail -1 )
 fi
-rm -rf $SUITE_DIR
-echo done
+CYLC_VERSION=$( echo $CYLC_VERSION | tr '.' 'p' )
+
+# take the first matching suite of this cylc version in the central database
+# (cylc admin create-cdb appends $SSE if run from a git repository)
+SOURCE_SUITE=$( cylc db pr -c cylc-${CYLC_VERSION}.*\.admin\.test | sed -e 's/ |.*//' | head -1 )
+if [[ -z $SOURCE_SUITE ]]; then
+    echo "ERROR, admin.test suite not found!"
+    echo "Have you run 'cylc admin create-cdb'?"
+    exit 1
+fi
 
 # IMPORT THE SUITE
-echo -n ">> IMPORTING ${USER}.examples.admin.test to $SUITE_DIR ... "
-cylc db import ${USER}.examples.admin.test $SUITE_REG $SUITE_DIR
+echo -n ">> IMPORTING $SOURCE_SUITE ... "
+cylc db import $SOURCE_SUITE $SUITE_REG $SUITE_DIR
 
 # log file for stdout and stderr
 OUT=test.out; OUT_SCHED=test-suite.out
 rm -f $OUT $OUT_SCHED
 
 # suite log
-LOG=$( cylc info get-config $SUITE_REG cylc logging directory' )/log
+LOG=$( cylc info get-config $SUITE_REG cylc logging directory )/log
 # remove old test log
 rm -rf $LOG
 
