@@ -42,7 +42,6 @@ debug = False
 # out with the gcylc stdout and stderr streams.
 
 class db_updater(threading.Thread):
-
     count = 0
     def __init__(self, owner, regd_treestore, db, is_cdb, host, filtr=None ):
         self.__class__.count += 1
@@ -61,10 +60,12 @@ class db_updater(threading.Thread):
 
         self.db.load_from_file()
         self.regd_choices = []
-        self.regd_choices = self.db.get_list()
+        self.regd_choices = self.db.get_list(filtr)
 
+        # not needed:
+        # self.build_treestore( self.newtree )
         self.construct_newtree()
-        self.build_treestore( self.newtree )
+        self.update( )
 
     def construct_newtree( self ):
         # construct self.newtree[one][two]...[nnn] = [state, descr, dir ]
@@ -102,6 +103,16 @@ class db_updater(threading.Thread):
             else:
                 state, descr, dir = value
                 iter = self.regd_treestore.append(piter, [item, state, descr, dir, None, None, None ] )
+
+    def update( self ):
+        # it is expected that a single user will not have a huge number
+        # of suites, and registrations will change infrequently,
+        # so just clear and recreate the list rather than adjusting
+        # element-by-element. 
+        ##print "Updating list of available suites"
+        #self.oldtree = deepcopy( self.newtree )
+        self.construct_newtree()
+        self.update_treestore( self.newtree, self.regd_treestore.get_iter_first() )
 
     def update_treestore( self, new, iter ):
         # iter is None for an empty treestore (no suites registered)
@@ -207,23 +218,13 @@ class db_updater(threading.Thread):
         if not self.db.changed_on_disk():
             return False
         self.db.load_from_file()
-        regs = self.db.get_list()
+        regs = self.db.get_list(self.filtr)
         if regs != self.regd_choices:
             self.regd_choices = regs
             return True
         else:
             return False
 
-    def update( self ):
-        # it is expected that a single user will not have a huge number
-        # of suites, and registrations will change infrequently,
-        # so just clear and recreate the list rather than 
-        # adjusting element-by-element.
-        ##print "Updating list of available suites"
-        #self.oldtree = deepcopy( self.newtree )
-        self.construct_newtree()
-        self.update_treestore(  self.newtree, self.regd_treestore.get_iter_first() )
- 
     def statecol( self, state ):
         grnbg = '#19ae0a'
         grnfg = '#030'
@@ -460,10 +461,7 @@ The cylc forecast suite metascheduler.
             #self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:
             self.updater.quit = True # does this take effect?
-        #not necessary: self.regd_treestore.clear()
-        self.updater = db_updater( self.owner, self.regd_treestore, 
-                db, self.cdb, self.host, filtr )
-        self.updater.update()
+        self.updater = db_updater( self.owner, self.regd_treestore, db, self.cdb, self.host, filtr )
         self.updater.start()
 
     def newreg_popup( self, w ):
