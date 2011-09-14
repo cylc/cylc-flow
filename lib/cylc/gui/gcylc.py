@@ -27,7 +27,7 @@ from cylc.cycle_time import ct, CycleTimeError
 from cylc.config import config, SuiteConfigError
 from cylc import cylc_pyro_client
 from cylc.port_scan import scan, SuiteIdentificationError
-from cylc.registration import delimiter, localdb, centraldb, RegistrationError
+from cylc.registration import delimiter, dbgetter, localdb, centraldb, RegistrationError
 from warning_dialog import warning_dialog, info_dialog, question_dialog
 import helpwindow 
 from gcapture import gcapture, gcapture_tmpfile
@@ -754,9 +754,13 @@ The cylc forecast suite metascheduler.
                 menu.append( cong_item )
                 cong_item.connect( 'activate', self.launch_controller, reg, state, True )
 
+                menu.append( gtk.SeparatorMenuItem() )
+
                 subm_item = gtk.MenuItem( '_Submit A Task')
                 menu.append( subm_item )
                 subm_item.connect( 'activate', self.submit_task_popup, reg )
+
+                menu.append( gtk.SeparatorMenuItem() )
 
                 out_item = gtk.MenuItem( 'View _Output')
                 menu.append( out_item )
@@ -1594,13 +1598,13 @@ The cylc forecast suite metascheduler.
         window.destroy()
         clv.quit()
 
-    def view_log( self, w, suite ):
+    def view_log( self, w, reg ):
+        suite, rcfile = dbgetter(self.cdb).get_suite(reg)
         try:
-            suiterc = config( suite )
+            suiterc = config( suite, rcfile )
         except SuiteConfigError, x:
             warning_dialog( str(x) + \
-                    '\n\nThe suite.rc file must be parsed\n'
-                    ' to determine the suite log path.' ).warn()
+                    '\n\n Suite.rc parsing failed (needed\nto determine the suite log path.' ).warn()
             return
         logdir = os.path.join( suiterc['cylc']['logging']['directory'] )
         cylc_logviewer( 'log', logdir, suiterc.get_task_name_list() )
