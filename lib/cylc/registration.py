@@ -263,7 +263,10 @@ class regdb(object):
                 if self.verbose:
                     print 'UNREGISTERING', key 
                 dir, junk = self.items[key]
-                dirs.append(dir)
+                if dir not in dirs:
+                    # (there could be multiple registrations of the same
+                    # suite defintion).
+                    dirs.append(dir)
                 del self.items[key]
         # check for aliases that now need to be unregistered
         for key in self.items.keys():

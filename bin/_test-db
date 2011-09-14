@@ -114,13 +114,13 @@ echo cylc db pr --central ${USER}.$GRP
 cylc db pr --central ${USER}.$GRP
 
 echo
-echo "> TEST13: delete $REG2 from LDB"
-echo cylc db unreg --delete -f $REG2
-cylc db unreg --delete -f $REG2
+echo "> TEST13: unregister $REG2 from LDB"
+echo cylc db unreg $REG2
+cylc db unreg $REG2
 
 echo
 echo "> TEST14: delete the rest of group $GRP from LDB"
-echo cylc db unreg $GRP
+echo cylc db unreg --delete -f $GRP
 cylc db unreg --delete -f $GRP
 
 echo
