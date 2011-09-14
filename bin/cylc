@@ -259,14 +259,15 @@ for dct in [
  
 general_usage = """
 USAGE:
+  cylc -v,--version                               # cylc version
   cylc help,--help,-h,?                           # this help page
-  cylc -v,--version                               # release version
   cylc help CATEGORY                              # help by category
   cylc CATEGORY help                              # (ditto)
   cylc help [CATEGORY] COMMAND                    # command help
   cylc [CATEGORY] COMMAND help,--help             # (ditto)
-
-  cylc [CATEGORY] COMMAND [options] SUITE [args]  # command syntax"""
+Command syntax:
+  cylc [CATEGORY] COMMAND [options] SUITE [arguments]
+  cylc [CATEGORY] COMMAND [options] SUITE TASK [arguments]"""
 
 # topic summaries
 catsum = OrderedDict()
@@ -281,37 +282,32 @@ catsum['control'     ]   = "running, monitoring, and controlling suites."
 catsum['task'        ]   = "running single tasks, and task messaging commands."
 catsum['utility'     ]   = "cycle time arithmetic, filename templating, etc."
 
-# was in help doc:
-##Cylc suites are not artificially grouped by forecast cycle; tasks from
-##multiple cycles run at once, during catchup operation, to the maximum
-##extent allowed by the suite dependency graph.
-
 usage = """cylc release version: """ + cylc_version + """
 """ + general_usage + """
 
-Any unique abbreviation can be used for a COMMAND or CATEGORY, e.g.:
-  $ cylc control trigger SUITE TASK  # manually trigger TASK in SUITE
+Commands and categories can be abbreviated. Categories organise the
+command set and disambiguate highly abbreviated commands:
+  $ cylc control trigger SUITE TASK  # trigger TASK in SUITE
   $ cylc con trig SUITE TASK         # ditto
   $ cylc c t SUITE TASK              # ditto!
-Use of categories is optional,
-  $ cylc trig SUITE TASK             # ditto
-but they provide structure to the command set, and they disambiguate
-highly abbreviated commands. Some commands are aliased (ls|list), and 
-some common typos are automatically corrected (cylc,cycl; help,hlep).
+  $ cylc trigger SUITE TASK          # use of categories is optional
 
-Where: SUITE is a name registered for a suite definition directory and
-then used for all suite access, so that you don't have to remember the
-location on disk. It can be a simple name (foo) or a dot-delimited list
-(foo.bar.baz) so that suites can be organised like a directory tree.
+Some commands and categories are aliased (db|database, cp|copy) and
+some common typographical errors are corrected (e.g. cycl => cylc).
 
-And: TASK is the identity of a single task in a suite: NAME%TAG, where
-TAG is a cycle time (YYYYMMDDHH) for cycling tasks, or an integer for
-asynchronous tasks (preceded by 'a:' on the command line, e.g. foo%a:1).
+Cylc commands target a particular suite via a name (SUITE) registered in
+a suite database (private, or central for sharing suites) so that you
+don't need to remember the location of the suite definition on disk. 
+Suite names can be grouped and organised like a directory tree using
+a dot delimiter, e.g. baz, bar.baz, foo.bar.baz, foo.bar.baz-test ...
+TASK is the identity of a single task in a suite: NAME%TAG, where for
+cycling tasks TAG is a cycle time (YYYYMMDDHH) and for asynchronous
+tasks it is an integer (preceded by 'a:' on the command line: foo%a:1).
 
 Here's how to drill down to command usage help for a particular command:
   $ cylc help ............... list all available categories (this page)
   $ cylc help prep .......... list commands in category 'preparation'
-  $ cylc help [prep] edit ... command usage help for 'cylc [prep] edit'
+  $ cylc help prep edit ..... command usage help for 'cylc [prep] edit'
 
 Command CATEGORIES:"""
 
