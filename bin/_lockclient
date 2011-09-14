@@ -71,11 +71,7 @@ if __name__ == "__main__":
 This is the command line client interface to the cylc lockserver daemon,
 for server interrogation and manual lock management.
 
-Use of the lockserver is optional:
-#_____________________
-# SUITE.RC
-use lockserver = False
-#---------------------
+Use of the lockserver is optional (see suite.rc documentation)
 
 Manual lock acquisition is mainly for testing purposes, but manual
 release may be required to remove stale locks if a suite or task dies

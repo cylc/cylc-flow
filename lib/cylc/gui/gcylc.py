@@ -854,7 +854,7 @@ The cylc forecast suite metascheduler.
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        oblit_cb = gtk.CheckButton( "_Delete suite definition directory" )
+        oblit_cb = gtk.CheckButton( "_Delete suite definition directories" )
         oblit_cb.set_active(False)
 
         ok_button = gtk.Button( "_Unregister" )
@@ -1602,7 +1602,7 @@ The cylc forecast suite metascheduler.
                     '\n\nThe suite.rc file must be parsed\n'
                     ' to determine the suite log path.' ).warn()
             return
-        logdir = os.path.join( suiterc['suite log directory'] )
+        logdir = os.path.join( suiterc['cylc']['logging']['directory'] )
         cylc_logviewer( 'log', logdir, suiterc.get_task_name_list() )
 
     def view_output( self, w, name, state ):

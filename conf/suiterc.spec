@@ -14,55 +14,67 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# THIS SPEC FILE DEFINES ALL LEGAL ENTRIES IN CYLC SUITE.RC FILES.
+#_______________________________________________________________________
+#            THIS IS THE CYLC SUITE.RC SPECIFICATION FILE
+#-----------------------------------------------------------------------
+# Entries are documented in suite.rc reference in the Cylc User Guide. 
 
-# NOTE: A CONFIGOBJ or VALIDATE BUG? LIST CONSTRUCTOR FAILS IF LAST LIST
-# ELEMENT IS FOLLOWED BY A SPACE (OR DOES IT JUST NEED A TRAILING COMMA?):
-#   GOOD:
-# foo = string_list( default=list('foo','bar'))
-#   BAD:
-# bar = string_list( default=list('foo','bar' ))
+# _________________________________________________________MAIN SECTIONS
+# [cylc]          - how cylc itself behaves when running this suite.
+# [scheduling]    - items affecting when a task is deemed ready to run.
+# [runtime]       - what to execute (and how) when a task is ready.
+# [visualization] - for suite graphing and the graph-based control GUI.
 
+#_______________________________________________________________________
+# WARNING: a CONFIGOBJ or VALIDATE bug? list constructor fails if final
+# element is followed by a space (or does it just need a trailing comma?):
+#   GOOD: foo = string_list( default=list('foo','bar'))
+#   BAD:  bar = string_list( default=list('foo','bar' ))
+
+#___________________________________________________________________HEAD
 title = string( default="No title supplied" )
 description = string( default="No description supplied" )
-
-use lockserver = boolean( default=False )
-use secure passphrase = boolean( default=False )
-
-suite log directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite' )
-roll log at start-up = boolean( default=True )
-
-state dump directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/state' )
-number of state dump backups = integer( min=1, default=10 )
-
-simulation mode only = boolean( default=False )
-allow multiple simultaneous instances = boolean( default=False )
-UTC mode = boolean( default=False )
-
+#___________________________________________________________________CYLC
+[cylc]
+    UTC mode = boolean( default=False )
+    simulation mode only = boolean( default=False )
+    use secure passphrase = boolean( default=False )
+    [[logging]]
+        directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite' )
+        roll over at start-up = boolean( default=True )
+    [[state dumps]]
+        directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/state' )
+        number of backups = integer( min=1, default=10 )
+    [[lockserver]]
+        enable = boolean( default=False )
+        allow multiple simultaneous suite instances = boolean( default=False )
+    [[environment]]
+        __many__ = string
+    [[simulation mode]]
+        clock offset from initial cycle time in hours = integer( default=24 )
+        clock rate in seconds per simulation hour = integer( default=10 )
+        command scripting = force_list( default=list( "echo SIMULATION MODE $TASK_ID; sleep 10; echo BYE",))
+        job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=background )
+#_____________________________________________________________SCHEDULING
 [scheduling]
     initial cycle time = integer( default=None )
     final cycle time = integer( default=None )
-    
     runahead limit in hours = integer( min=0, default=24 )
-
     [[special tasks]]
         clock-triggered = force_list( default=list())
         start-up = force_list( default=list())
         cold-start = force_list( default=list())
         sequential = force_list( default=list())
         one-off = force_list( default=list())
-
         explicit restart outputs = force_list( default=list())
-
         exclude at start-up = force_list( default=list())
         include at start-up = force_list( default=list())
-
     [[dependencies]]
         graph = string( default=None )
         [[[__many__]]]
             graph = string( default=None )
             daemon = string( default=None )
-
+#________________________________________________________________RUNTIME
 [runtime]
     [[root]]
         inherit = string( default=None )
@@ -78,10 +90,6 @@ UTC mode = boolean( default=False )
             command template = string( default=None )
             job script shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=/bin/bash )
             log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job' )
-            # This log directory is used for the task job script for local and remote
-            # tasks, and also for the task stdout and stderr logs for local tasks.
-            # All environment variables are interpolated out before use.
-            # Remote tasks must also define a [[[remote]]] log directory. 
         [[[remote]]]
             host = string( default=None )
             owner = string( default=None )
@@ -89,17 +97,6 @@ UTC mode = boolean( default=False )
             suite definition directory = string( default=None )
             remote shell template = string( default='ssh -oBatchMode=yes %s' )
             log directory = string( default=None )
-            # This log directory is used for task job script and stdout
-            # and stderr logs for remote tasks. Suite identity variables
-            # will be interpolated out locally before use, but other
-            # environment variables (such as $HOME) are left alone for
-            # interpolation on the remote host. Whether or not you can
-            # use (non suite identity) environment variables thus
-            # depends on the job submission method. For submission via
-            # loadleveler, for example, the stdout and stderr paths have
-            # to be written as directives to the job script prior to 
-            # submission, and loadleveler does not interpolate
-            # environment variables in its job directives.
         [[[event hooks]]]
             submitted script = string( default=None )
             submission failed script  = string( default=None )
@@ -156,13 +153,7 @@ UTC mode = boolean( default=False )
             __many__ = string
         [[[outputs]]]
             __many__ = string
-
-[simulation mode]
-    clock offset from initial cycle time in hours = integer( default=24 )
-    clock rate in seconds per simulation hour = integer( default=10 )
-    command scripting = force_list( default=list( "echo SIMULATION MODE $TASK_ID; sleep 10; echo BYE",))
-    job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=background )
-
+#__________________________________________________________VISUALIZATION
 [visualization]
     initial cycle time = integer( default=2999010100 )
     final cycle time = integer( default=2999010123 )
@@ -174,18 +165,12 @@ UTC mode = boolean( default=False )
         __many__ = force_list( default=list())
     [[node attributes]]
         __many__ = force_list( default=list())
-
     [[run time graph]]
         enable = boolean( default=False )
         cutoff in hours = integer( default=24 )
         directory = string( default='$CYLC_SUITE_DEF_PATH/graphing')
-
-[task insertion groups]
-    __many__ = force_list()
-
-[scheduler environment]
-    __many__ = string
-
+#____________________________________________________________DEVELOPMENT
 [development]
     use quick task elimination = boolean( default=True )
     live graph movie = boolean( default=False )
+

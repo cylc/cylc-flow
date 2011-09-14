@@ -30,11 +30,11 @@ filtering. This command is a convenience: you don't need to
 know the log file location on disk.
 
 Arguments:
-  SUITE - Private suite database registration GROUP:NAME
-          of the suite whose log you want to view.""")
+  SUITE - Target suite.""")
 
 parser.add_option( "-p", "--print", 
-        help="Print the suite log file location and exit.",
+        help="Print the suite log file location and exit. This is "
+        "equivalent to 'cylc get-config SUITE cylc logging directory'.",
         action="store_true", default=False, dest="print_location" )
 
 parser.add_option( "-t", "--task", 
@@ -69,7 +69,7 @@ except RegistrationError, x:
     raise SystemExit(x)
 
 try:
-    filename = os.path.join( config( suite, suiterc )['suite log directory'], 'log' )
+    filename = os.path.join( config( suite, suiterc )['cylc']['logging']['directory'], 'log' )
 except SuiteConfigError, x:
     raise SystemExit(x)
  

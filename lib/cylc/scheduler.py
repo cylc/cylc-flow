@@ -205,12 +205,12 @@ class scheduler(object):
         # LOAD SUITE CONFIG FILE
         self.config = config( self.suite, self.suiterc, simulation_mode=self.simulation_mode )
         self.config.create_directories()
-        if self.config['simulation mode only'] and not self.simulation_mode:
+        if self.config['cylc']['simulation mode only'] and not self.simulation_mode:
             raise SystemExit( "ERROR: this suite can only run in simulation mode (see suite.rc)" )
 
         # DETERMINE SUITE LOGGING AND STATE DUMP DIRECTORIES
-        self.logging_dir = self.config['suite log directory']
-        self.state_dump_dir = self.config['state dump directory']
+        self.logging_dir = self.config['cylc']['logging']['directory']
+        self.state_dump_dir = self.config['cylc']['state dumps']['directory']
         #DISABLED if self.practice:
         #DISABLED     self.logging_dir += '-practice'
         #DISABLED     self.state_dump_dir   += '-practice'
@@ -280,7 +280,7 @@ class scheduler(object):
         self.blocked = False
 
         # USE LOCKSERVER?
-        self.use_lockserver = self.config['use lockserver']
+        self.use_lockserver = self.config['cylc']['lockserver']['enable']
         if self.use_lockserver:
             # check that user is running a lockserver
             # DO THIS BEFORE CONFIGURING PYRO FOR THE SUITE
@@ -297,7 +297,7 @@ class scheduler(object):
         #DISABLED else:
         suitename = self.suite
         try:
-            self.pyro = pyro_server( suitename, use_passphrase=self.config['use secure passphrase'] )
+            self.pyro = pyro_server( suitename, use_passphrase=self.config['cylc']['use secure passphrase'] )
         except SecurityError, x:
             print >> sys.stderr, 'SECURITY ERROR (secure passphrase problem)'
             raise SystemExit( str(x) )
@@ -316,13 +316,13 @@ class scheduler(object):
         self.use_quick = self.config['development']['use quick task elimination'] 
 
         # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
-        self.exclusive_suite_lock = not self.config[ 'allow multiple simultaneous instances' ]
+        self.exclusive_suite_lock = not self.config['cylc']['lockserver']['allow multiple simultaneous suite instances']
 
         # set suite in task class (for passing to hook scripts)
         task.task.suite = self.suite
 
         # Running in UTC time? (else just use the system clock)
-        utc = self.config['UTC mode']
+        utc = self.config['cylc']['UTC mode']
 
         # CYLC EXECUTION ENVIRONMENT
         cylcenv = OrderedDict()
@@ -340,8 +340,8 @@ class scheduler(object):
         cylcenv[ 'CYLC_UTC' ] = str(utc)
 
         # CLOCK (accelerated time in simulation mode)
-        rate = self.config['simulation mode']['clock rate in seconds per simulation hour']
-        offset = self.config['simulation mode']['clock offset from initial cycle time in hours']
+        rate = self.config['cylc']['simulation mode']['clock rate in seconds per simulation hour']
+        offset = self.config['cylc']['simulation mode']['clock offset from initial cycle time in hours']
         self.clock = accelerated_clock.clock( int(rate), int(offset), utc, self.simulation_mode ) 
 
         # nasty kludge to give the simulation mode clock to task classes:
@@ -363,8 +363,9 @@ class scheduler(object):
         # by the scheduler. 
         os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 
         # User defined local variables that may be required by alert scripts
-        for var in self.config['scheduler environment']:
-            os.environ[var] = self.config['scheduler environment'][var]
+        senv = self.config['cylc']['environment']
+        for var in senv:
+            os.environ[var] = senv[var]
 
         # suite identity for alert scripts (which are executed by the scheduler).
         # Also put cylcenv variables in the scheduler environment
@@ -377,11 +378,11 @@ class scheduler(object):
         # PIMP THE SUITE LOG
         self.log = logging.getLogger( 'main' )
         pimp_my_logger.pimp_it( \
-             self.log, self.logging_dir, self.config['roll log at start-up'], \
+             self.log, self.logging_dir, self.config['cylc']['logging']['roll over at start-up'], \
                 self.logging_level, self.clock )
 
         # STATE DUMP ROLLING ARCHIVE
-        arclen = self.config[ 'number of state dump backups' ]
+        arclen = self.config[ 'cylc']['state dumps']['number of backups' ]
         self.state_dump_archive = rolling_archive( self.state_dump_filename, arclen )
 
         # REMOTE CONTROL INTERFACE
@@ -1212,13 +1213,14 @@ class scheduler(object):
 
         self.log.info( "Servicing task insertion request" )
 
-        if ins_name in ( self.config[ 'task insertion groups' ] ):
-            self.log.info( "Servicing group insertion request" )
-            ids = []
-            for name in self.config[ 'task insertion groups' ][ins_name]:
-                ids.append( name + '%' + ins_ctime )
-        else:
-            ids = [ ins_id ]
+        #### TASK INSERTION GROUPS TEMPORARILY DISABLED
+        ###if ins_name in ( self.config[ 'task insertion groups' ] ):
+        ###    self.log.info( "Servicing group insertion request" )
+        ###    ids = []
+        ###    for name in self.config[ 'task insertion groups' ][ins_name]:
+        ###        ids.append( name + '%' + ins_ctime )
+        ###else:
+        ids = [ ins_id ]
 
         rejected = []
         inserted = []

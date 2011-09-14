@@ -30,8 +30,33 @@
 # bar = string_list( default=list('foo','bar' ))
 
 
-#------>> NEW STUFF FROM MATT's JOB SUBMIT BRANCH:
+#------>> NEW STUFF FROM MATT's JOB SUBMIT BRANCH (ETC):
 
+#[runtime]
+#[[root]]
+#[[[job submission]]]
+            log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job' )
+            # This log directory is used for the task job script for local and remote
+            # tasks, and also for the task stdout and stderr logs for local tasks.
+            # All environment variables are interpolated out before use.
+            # Remote tasks must also define a [[[remote]]] log directory. 
+
+#[runtime]
+#[[root]]
+#[[[remote]]]
+            log directory = string( default=None )
+            # This log directory is used for task job script and stdout
+            # and stderr logs for remote tasks. Suite identity variables
+            # will be interpolated out locally before use, but other
+            # environment variables (such as $HOME) are left alone for
+            # interpolation on the remote host. Whether or not you can
+            # use (non suite identity) environment variables thus
+            # depends on the job submission method. For submission via
+            # loadleveler, for example, the stdout and stderr paths have
+            # to be written as directives to the job script prior to 
+            # submission, and loadleveler does not interpolate
+            # environment variables in its job directives.
+ 
 remote shell template = string( default='ssh -oBatchMode=yes %s' )
 #> A template of the remote shell command for a submitting a remote task.
 #> The template's 1st %s will be substituted by the remote user@host.

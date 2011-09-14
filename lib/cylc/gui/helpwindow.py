@@ -459,7 +459,8 @@ you cannot run with duplicate tasks in the suite!
 Task insertion groups are just a convenience to allow insertion
 of multiple tasks at once (e.g. a handful of tasks required to cold
 start part of a suite after certain problems have occured). These must
-be defined in the suite.rc file [task insertion groups] section.""")
+be defined in the suite.rc file (TEMPORARILY DISABLE PENDING USE OF
+RUNTIME GROUPS FOR INSERTION ETC.).""")
     help.show()
 
 def submit( b ):

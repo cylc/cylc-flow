@@ -32,10 +32,10 @@ corresponds to the target suite.
 
 Note that this differs from registering the target suite definition
 under another name with 'cylc register' - in that case run time suite
-identity corresponds to the new registration name. 
+identity corresponds to the new registered name. 
 
 Arguments:
-     SUITE  -  Target suite registration (private database only).
+     SUITE  -  Target suite.
      ALIAS  -  An alternative name for the same suite.""" )
 
 ( options, args ) = parser.parse_args()

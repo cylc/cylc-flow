@@ -13,7 +13,9 @@ This copy is used by the 'cylc admin test-suite' command and
 should only be modified with extreme caution."""
 
 # LOCKSERVER OFF: we're only testing scheduling functionality here.
-use lockserver = False
+[cylc]
+    [[lockserver]]
+        enable = False
 
 [scheduling]
     [[special tasks]]

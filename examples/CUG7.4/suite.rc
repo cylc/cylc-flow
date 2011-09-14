@@ -1,9 +1,10 @@
 title = "A two-task test suite"
 description = "Used as an example in Section 7.4 of the user guide"
 
-# This suite can only run in simulation mode because its tasks' command 
-# scripting calls non-existent scripts.
-simulation mode only = True
+[cylc]
+    # This suite can only run in simulation mode because its tasks' command 
+    # scripting calls non-existent scripts.
+    simulation mode only = True
 
 [scheduling]
     [[dependencies]]

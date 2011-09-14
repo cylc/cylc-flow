@@ -112,11 +112,11 @@ except SuiteConfigError,x:
 
 config.create_directories( task_name )
 # modify logging dir for single task submit so as not to alter suite logs
-logging_dir = os.path.join( config['suite log directory'], 'submit' ) 
+logging_dir = os.path.join( config['cylc']['logging']['directory'], 'submit' ) 
 mkdir_p( logging_dir )
 
 use_lockserver = False
-if config[ 'use lockserver' ]:
+if config['cylc']['lockserver']['enable']:
     use_lockserver = True
     try:
         lockserver_port = lockserver( host ).get_port()
@@ -134,7 +134,7 @@ if config[ 'use lockserver' ]:
 # no scheduler instance watching for task failure etc. 
 
 # Running in UTC time? (else just use the system clock)
-utc = config['UTC mode']
+utc = config['cylc']['UTC mode']
 dclock = accelerated_clock.clock( None, None, utc, False ) 
 
 # CYLC EXECUTION ENVIRONMENT
@@ -160,8 +160,9 @@ cylcenv[ 'CYLC_UTC' ] = str(utc)
 # by the scheduler (probably not required for single submit).
 os.environ['PATH'] = suite_dir + '/bin:' + os.environ['PATH'] 
 # User-defined variables in the scheduler environment
-for var in config['scheduler environment']:
-    os.environ[var] = config['scheduler environment'][var]
+senv = config['cylc']['environment']
+for var in senv:
+    os.environ[var] = senv[var]
 # Also put cylcenv variables in the scheduler environment
 for var in cylcenv:
     os.environ[var] = cylcenv[var]
@@ -174,7 +175,7 @@ task.task.suite = suite
 # create the log
 log = logging.getLogger( "main" )
 pimp_my_logger.pimp_it( log, logging_dir, \
-        config['roll log at start-up'], \
+        config['cylc']['logging']['roll over at start-up'], \
         logging.INFO, dclock )
 
 job_submit.cylc_env = cylcenv

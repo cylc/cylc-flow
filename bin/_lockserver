@@ -380,11 +380,7 @@ submitted outside of their suite using 'cylc submit').
 The command line user interface for interrogating the daemon, and
 for manual lock management, is 'cylc lockclient'.
 
-Use of the lockserver is optional:
-#_____________________
-# SUITE.RC
-use lockserver = False
-#---------------------
+Use of the lockserver is optional (see suite.rc documentation).
 
 The lockserver reads a config file that specifies the location of the
 daemon's process ID, state, and log files. The default config file 

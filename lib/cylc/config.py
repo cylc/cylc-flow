@@ -280,10 +280,10 @@ class config( CylcConfigObj ):
         os.environ['CYLC_SUITE_REG_NAME'] = self.suite
         os.environ['CYLC_SUITE_REG_PATH'] = re.sub( delimiter_re, '/', self.suite )
         os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
-        self['suite log directory'] = \
-                os.path.expandvars( os.path.expanduser( self['suite log directory']))
-        self['state dump directory'] =  \
-                os.path.expandvars( os.path.expanduser( self['state dump directory']))
+        self['cylc']['logging']['directory'] = \
+                os.path.expandvars( os.path.expanduser( self['cylc']['logging']['directory']))
+        self['cylc']['state dumps']['directory'] =  \
+                os.path.expandvars( os.path.expanduser( self['cylc']['state dumps']['directory']))
         self['visualization']['run time graph']['directory'] = \
                 os.path.expandvars( os.path.expanduser( self['visualization']['run time graph']['directory']))
 
@@ -399,15 +399,17 @@ class config( CylcConfigObj ):
                 if name not in self.taskdefs and name not in self['runtime']:
                     print >> sys.stderr, 'WARNING: ' + type + ' task "' + name + '" is not defined in [tasks] or used in the graph.'
 
-        # check task insertion groups contain valid tasks
-        for group in self['task insertion groups']:
-            for name in self['task insertion groups'][group]:
-                if name not in self['runtime'] and name not in self.taskdefs:
-                    # This is not an error because it could be caused by
-                    # temporary commenting out of a task in the graph,
-                    # and it won't cause catastrophic failure of the
-                    # insert command.
-                    print >> sys.stderr, 'WARNING: task "' + name + '" of insertion group "' + group + '" is not defined.'
+        # TASK INSERTION GROUPS TEMPORARILY DISABLED PENDING USE OF
+        # RUNTIME GROUPS FOR INSERTION ETC.
+        ### check task insertion groups contain valid tasks
+        ##for group in self['task insertion groups']:
+        ##    for name in self['task insertion groups'][group]:
+        ##        if name not in self['runtime'] and name not in self.taskdefs:
+        ##            # This is not an error because it could be caused by
+        ##            # temporary commenting out of a task in the graph,
+        ##            # and it won't cause catastrophic failure of the
+        ##            # insert command.
+        ##            print >> sys.stderr, 'WARNING: task "' + name + '" of insertion group "' + group + '" is not defined.'
 
         # check 'tasks to exclude|include at startup' contains valid tasks
         for name in self['scheduling']['special tasks']['include at start-up']:
@@ -441,7 +443,7 @@ class config( CylcConfigObj ):
 
     def create_directories( self, task=None ):
         # Create suite log, state, and local job log directories.
-        dirs = [ self['suite log directory'], self['state dump directory'] ]
+        dirs = [ self['cylc']['logging']['directory'], self['cylc']['state dumps']['directory'] ]
         for item in self['runtime']:
             dirs.append( self['runtime'][item]['job submission']['log directory'] )
         for d in dirs:
@@ -1027,8 +1029,8 @@ class config( CylcConfigObj ):
         taskd.owner = taskconfig['remote']['owner']
 
         if self.simulation_mode:
-            taskd.job_submit_method = self['simulation mode']['job submission method']
-            taskd.commands = self['simulation mode']['command scripting']
+            taskd.job_submit_method = self['cylc']['simulation mode']['job submission method']
+            taskd.commands = self['cylc']['simulation mode']['command scripting']
         else:
             taskd.job_submit_method = taskconfig['job submission']['method']
             taskd.commands   = taskconfig['command scripting']

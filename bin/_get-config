@@ -34,14 +34,16 @@ nested Python dict) will be printed verbatim.
 
 #________________________________________________________________EXAMPLE
 # excerpt from a suite definition registered as foo.bar.baz:
-use lockserver = True
+[cylc]
+    [[lockserver]]
+        enable = True
 [runtime]
     [[modelX]]
         [[[environment]]]
             OUTPUT_DIR=/oper/live/modelX/output
 #_______________________________________________________________________
 
-$ cylc get-config foo.bar.baz 'use lockserver'
+$ cylc get-config foo.bar.baz cylc lockserver enable
 $ True
 
 $ cylc get-config foo.bar.baz runtime modelX environment OUTPUT_DIR

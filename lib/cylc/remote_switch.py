@@ -122,8 +122,9 @@ class remote_switch( Pyro.core.ObjBase ):
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )
         ins_name = self._name_from_id( ins_id )
-        if not self._task_type_exists( ins_name ) and \
-                ins_name not in self.config[ 'task insertion groups' ]:
+        if not self._task_type_exists( ins_name ):
+            # TASK INSERTION GROUPS TEMPORARILY DISABLED
+            #and ins_name not in self.config[ 'task insertion groups' ]:
             return result( False, "No such task type or group: " + ins_name )
         ins = ins_id
         # insert a new task or task group into the suite

@@ -78,7 +78,7 @@ OUT=test.out; OUT_SCHED=test-suite.out
 rm -f $OUT $OUT_SCHED
 
 # suite log
-LOG=$( cylc info get-config $SUITE_REG 'suite log directory' )/log
+LOG=$( cylc info get-config $SUITE_REG cylc logging directory' )/log
 # remove old test log
 rm -rf $LOG
 

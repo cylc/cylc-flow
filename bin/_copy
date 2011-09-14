@@ -25,11 +25,11 @@ from cylc.registration import delimiter, delimiter_re, localdb, \
 
 parser = OptionParser( usage = """cylc [db] copy|cp [OPTIONS] FROM TO DIR
 
-Copy suites or group of suites in your private suite database.  Suites
-are copied to sub-directories of TOPDIR by translating the registration
+Copy suites or group of suites in your private suite database. Suites
+are copied to sub-directories of DIR by translating the registration
 path into a directory path.
 
-Note that you can also register an existing suite under a different name
+Note that you can also register a existing suite under a different name
 (cylc register) or alias (cylc alias). 
 
 Arguments:
@@ -91,8 +91,6 @@ try:
 
         treg = re.sub( r'\b' + arg_from + r'\b', arg_to, freg ) 
 
-        #tmp = re.sub( arg_to + delimiter_re, '', treg ) 
-        #tdir = '/'.join( tmp.split(delimiter) )
         tdir = '/'.join( treg.split(delimiter) )
         tdir = os.path.join( arg_dir, tdir )
 

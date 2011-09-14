@@ -120,7 +120,7 @@ suite_dir = os.path.dirname(suiterc)
 
 # get suite logging directory
 try:
-    logging_dir = os.path.join( config( suite, suiterc )['suite log directory'] )
+    logging_dir = os.path.join( config( suite, suiterc )['cylc']['logging']['directory'] )
 except SuiteConfigError,x:
     raise SystemExit(x)
 
