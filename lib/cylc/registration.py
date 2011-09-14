@@ -70,7 +70,7 @@ class NotAGroupError( RegistrationError ):
 
 class IsAGroupError( RegistrationError ):
     def __init__( self, reg ):
-        self.msg = "ERROR: " + reg + " is already a register group."
+        self.msg = "ERROR: " + reg + " is already a registered group."
 
 class SuiteNotRegisteredError( RegistrationError ):
     def __init__( self, suite ):

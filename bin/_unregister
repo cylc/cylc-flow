@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import os, sys
 from shutil import rmtree
 from optparse import OptionParser
 from cylc.registration import localdb, centraldb, RegistrationError, DatabaseLockedError
@@ -110,8 +110,18 @@ if options.obliterate:
     if really_obliterate and len(dirs)>0:
         for dir in dirs:
             try:
-                print dir
                 rmtree(dir)
             except OSError, x:
                 print >> sys.stderr, "Failed to delete " + dir
                 print >> sys.stderr, x
+            # recursively remove empty superdirs
+            tmp = dir
+            while True:
+                tmp = os.path.split(tmp)[0]
+                try:
+                    os.rmdir(tmp)
+                except OSError:
+                    break
+                else:
+                    print 'Removed empty directory', tmp
+
