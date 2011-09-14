@@ -744,15 +744,13 @@ The cylc forecast suite metascheduler.
         else:
             # MENU OPTIONS FOR SUITES
             if not self.cdb:
-                con_item = gtk.MenuItem( '_Control (tree)')
+                con_item = gtk.MenuItem( '_Control GUI (tree)')
                 menu.append( con_item )
                 con_item.connect( 'activate', self.launch_controller, reg, state )
 
-                cong_item = gtk.MenuItem( '_Control (graph)')
+                cong_item = gtk.MenuItem( '_Control GUI (graph)')
                 menu.append( cong_item )
                 cong_item.connect( 'activate', self.launch_controller, reg, state, True )
-
-                menu.append( gtk.SeparatorMenuItem() )
 
                 subm_item = gtk.MenuItem( '_Submit A Task')
                 menu.append( subm_item )
@@ -760,11 +758,11 @@ The cylc forecast suite metascheduler.
 
                 menu.append( gtk.SeparatorMenuItem() )
 
-                out_item = gtk.MenuItem( 'View _Output')
+                out_item = gtk.MenuItem( 'View Suite _Output')
                 menu.append( out_item )
                 out_item.connect( 'activate', self.view_output, reg, state )
 
-                out_item = gtk.MenuItem( 'View _Log')
+                out_item = gtk.MenuItem( 'View Suite _Log')
                 menu.append( out_item )
                 out_item.connect( 'activate', self.view_log, reg )
 
@@ -776,14 +774,19 @@ The cylc forecast suite metascheduler.
 
                 menu.append( gtk.SeparatorMenuItem() )
 
-            search_item = gtk.MenuItem( '_Describe' )
+            search_item = gtk.MenuItem( 'Get _Description' )
             menu.append( search_item )
             search_item.connect( 'activate', self.describe_suite, reg )
 
-            search_item = gtk.MenuItem( '_List Tasks' )
+            search_item = gtk.MenuItem( 'Get Task _List' )
             menu.append( search_item )
             search_item.connect( 'activate', self.list_suite, reg )
 
+            if not self.cdb:
+                jobs_item = gtk.MenuItem( '_Get A Job Script')
+                menu.append( jobs_item )
+                jobs_item.connect( 'activate', self.jobscript_popup, reg )
+    
             menu.append( gtk.SeparatorMenuItem() )
     
             edit_item = gtk.MenuItem( '_Edit' )
@@ -1442,15 +1445,44 @@ The cylc forecast suite metascheduler.
         self.gcapture_windows.append(foo)
         foo.run()
 
+    def jobscript_popup( self, w, reg ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Generate A Task Job Script for Suite '" + reg + "'")
+
+        vbox = gtk.VBox()
+
+        label = gtk.Label("Task ID (NAME%YYYYMMDDHH)" )
+        task_entry = gtk.Entry()
+        hbox = gtk.HBox()
+        hbox.pack_start( label, True )
+        hbox.pack_start(task_entry, True) 
+        vbox.pack_start( hbox )
+ 
+        cancel_button = gtk.Button( "_Close" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        ok_button = gtk.Button( "_Generate" )
+        ok_button.connect("clicked", self.jobscript, reg, task_entry )
+
+        #help_button = gtk.Button( "_Help" )
+        #help_button.connect("clicked", helpwindow.jobscript
+
+        hbox = gtk.HBox()
+        hbox.pack_start( ok_button, False )
+        hbox.pack_end( cancel_button, False )
+        #hbox.pack_end( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
     def submit_task_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Submit Task from Suite '" + reg + "'")
 
         vbox = gtk.VBox()
-
-        dryrun_cb = gtk.CheckButton( "Dry Run (just generate the task job script)" )
-        vbox.pack_start (dryrun_cb, True)
 
         label = gtk.Label("Task ID (NAME%YYYYMMDDHH)" )
         task_entry = gtk.Entry()
@@ -1463,7 +1495,7 @@ The cylc forecast suite metascheduler.
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Submit" )
-        ok_button.connect("clicked", self.submit_task, reg, dryrun_cb, task_entry )
+        ok_button.connect("clicked", self.submit_task, reg, task_entry )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.submit )
@@ -1477,12 +1509,15 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def submit_task( self, w, reg, dryrun_cb, task_entry ):
-        options = ''
-        if dryrun_cb.get_active():
-            options = '--dry-run'
-        command = "cylc submit --notify-completion " + options + " " + reg + " " + task_entry.get_text()
+    def submit_task( self, w, reg, task_entry ):
+        command = "cylc submit --notify-completion " + reg + " " + task_entry.get_text()
         foo = gcapture_tmpfile( command, self.tmpdir, 500, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
+    def jobscript( self, w, reg, task_entry ):
+        command = "cylc jobscript " + reg + " " + task_entry.get_text()
+        foo = gcapture_tmpfile( command, self.tmpdir, 800, 800 )
         self.gcapture_windows.append(foo)
         foo.run()
 

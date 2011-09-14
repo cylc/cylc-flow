@@ -29,8 +29,6 @@ class jobfile(object):
             postcommand_scripting, remote_cylc_dir, remote_suite_dir,
             shell, simulation_mode, job_submission_method):
 
-        print "TO DO: pre-post-scripting"
-
         self.task_id = task_id
         self.cylc_env = cylc_env
         self.task_env = task_env

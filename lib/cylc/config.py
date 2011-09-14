@@ -1108,10 +1108,12 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, name + " has no hours defined in graph or [tasks]"
             if test:
                 # used by the 'cylc validate' command
-                print >> sys.stderr, "WARNING: no hours in graph or [tasks][["+name+"]]; task can be 'submit'ed but not inserted into the suite."
+                # THIS IS NOW PROBABLY A RUNTIME GROUP, NOT A TASK.
+                #print >> sys.stderr, "WARNING: no hours in graph or runtime; task can only be used with 'cylc submit'."
+                pass
             else:
-                # if 'submit'ed alone (see just above):
-                print >> sys.stderr, "WARNING: " + name + ": no hours in graph or [tasks][["+name+"]]; task can be 'submit'ed but not inserted into the suite."
+                # if 'submit'ed alone:
+                print >> sys.stderr, "WARNING: " + name + ": no hours in graph or runtime; task can only be used with 'cylc submit'."
                 print >> sys.stderr, "WARNING: " + name + ": no hours defined - task will be submitted with the exact cycle time " + ctime
             td.hours = [ chour ]
         else:
