@@ -52,6 +52,7 @@ class db_updater(threading.Thread):
         self.owner = owner
         self.quit = False
         self.host = host
+        self.reload = False
         self.regd_treestore = regd_treestore
         super(db_updater, self).__init__()
         self.running_choices = []
@@ -65,7 +66,7 @@ class db_updater(threading.Thread):
         # not needed:
         # self.build_treestore( self.newtree )
         self.construct_newtree()
-        self.update( )
+        self.update()
 
     def construct_newtree( self ):
         # construct self.newtree[one][two]...[nnn] = [state, descr, dir ]
@@ -105,14 +106,14 @@ class db_updater(threading.Thread):
                 iter = self.regd_treestore.append(piter, [item, state, descr, dir, None, None, None ] )
 
     def update( self ):
-        # it is expected that a single user will not have a huge number
-        # of suites, and registrations will change infrequently,
-        # so just clear and recreate the list rather than adjusting
-        # element-by-element. 
-        ##print "Updating list of available suites"
-        #self.oldtree = deepcopy( self.newtree )
+        #print "Updating list of available suites"
         self.construct_newtree()
-        self.update_treestore( self.newtree, self.regd_treestore.get_iter_first() )
+        if self.reload:
+            self.regd_treestore.clear()
+            self.build_treestore( self.newtree )
+            self.reload = False
+        else:
+            self.update_treestore( self.newtree, self.regd_treestore.get_iter_first() )
 
     def update_treestore( self, new, iter ):
         # iter is None for an empty treestore (no suites registered)
@@ -146,18 +147,34 @@ class db_updater(threading.Thread):
             # iterate through old items at this level
             item, state, descr, dir = ts.get( iter, 0,1,2,3 )
             if item not in new_items:
-                # prune old items that do not appear in new
+                # old item is not in new - prune it
                 res = ts.remove( iter )
                 if not res: # Nec?
                     iter = None
             else:
+                # old item is in new - update it in case it changed
                 old_items.append(item)
                 # update old items that do appear in new
+                chiter = ts.iter_children(iter)
                 if not isinstance( new[item], dict ):
+                    # new item is not a group - update title etc.
                     state, descr, dir = new[item]
                     sc = self.statecol(state)
                     ni = new[item]
                     ts.set( iter, 0, item, 1, ni[0], 2, ni[1], 3, ni[2], 4, sc[0], 5, sc[1], 6, sc[2] )
+                    if chiter:
+                        # old item was a group - kill its children
+                        while chiter:
+                            res = ts.remove( chiter )
+                            if not res:
+                                chiter = None
+                else:
+                    # new item is a group
+                    if not chiter:
+                        # old item was not a group
+                        ts.set( iter, 0, item, 1, None, 2, None, 3, None, 4, None, 5, None, 6, None )
+                        self.build_treestore( new[item], iter )
+
                 # continue
                 iter = ts.iter_next( iter )
 
@@ -197,7 +214,7 @@ class db_updater(threading.Thread):
         if debug:
             print '* thread', self.me, 'starting'
         while not self.quit:
-            if self.running_choices_changed() or self.regd_choices_changed():
+            if self.running_choices_changed() or self.regd_choices_changed() or self.reload:
                 gobject.idle_add( self.update )
             time.sleep(1)
         else:
@@ -327,9 +344,13 @@ class MainApp(object):
         view_menu.append( collapse_item )
         collapse_item.connect( 'activate', self.collapse_all, self.regd_treeview )
 
-        refresh_item = gtk.MenuItem( '_Refresh' )
+        refresh_item = gtk.MenuItem( '_Refresh Titles' )
         view_menu.append( refresh_item )
         refresh_item.connect( 'activate', self.refresh )
+
+        reload_item = gtk.MenuItem( '_Reload' )
+        view_menu.append( reload_item )
+        reload_item.connect( 'activate', self.reload )
 
         db_menu = gtk.Menu()
         db_menu_root = gtk.MenuItem( '_Database' )
@@ -524,6 +545,10 @@ The cylc forecast suite metascheduler.
         self.gcapture_windows.append(foo)
         foo.run()
         w.destroy()
+
+    def reload( self, w ):
+        # tell updated to reconstruct the treeview from scratch
+        self.updater.reload = True
 
     def refresh( self, w ):
         command = "cylc refresh " + self.dbopt + " --notify-completion"
