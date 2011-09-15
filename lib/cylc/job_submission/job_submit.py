@@ -84,6 +84,15 @@ class job_submit(object):
         self.local_jobfile_path = os.path.join( log_dir, tag )
         # The directory is created in config.py
         self.logfiles.add_path( self.local_jobfile_path )
+
+        # Local stdout and stderr log file paths:
+        self.stdout_file = self.local_jobfile_path + ".out"
+        self.stderr_file = self.local_jobfile_path + ".err"
+        # Record paths of local log files for access by gcylc
+        # (only works for remote tasks if there is a shared file system or
+        # the output files are returned by, for instance, a hook script)
+        self.logfiles.add_path( self.stdout_file)
+        self.logfiles.add_path( self.stderr_file)
         
         self.suite_owner = os.environ['USER']
         self.remote_shell_template = remote_shell_template
@@ -111,21 +120,12 @@ class job_submit(object):
             self.remote_jobfile_path = os.path.join( remote_log_dir, tag )
             self.stdout_file = self.remote_jobfile_path + ".out"
             self.stderr_file = self.remote_jobfile_path + ".err"
-            # Record remote paths (currently not accessible by gcylc):
-            self.logfiles.add_path( self.task_owner + '@' + self.remote_host + ':' + self.stdout_file)
-            self.logfiles.add_path( self.task_owner + '@' + self.remote_host + ':' + self.stderr_file)
             # Used in command construction:
             self.jobfile_path = self.remote_jobfile_path
         else:
             # LOCAL
             self.local = True
             self.task_owner = self.suite_owner
-            # stdout and stderr log file paths:
-            self.stdout_file = self.local_jobfile_path + ".out"
-            self.stderr_file = self.local_jobfile_path + ".err"
-            # Record paths of local log files for access by gcylc
-            self.logfiles.add_path( self.stdout_file)
-            self.logfiles.add_path( self.stderr_file)
             # Used in command construction:
             self.jobfile_path = self.local_jobfile_path
 
