@@ -81,7 +81,7 @@ class db_updater(threading.Thread):
             suite, suite_dir, descr = reg
             suite_dir = re.sub( '^' + os.environ['HOME'], '~', suite_dir )
             if suite in ports:
-                state = 'port ' + str(ports[suite])
+                state = str(ports[suite])
             else:
                 state = '-'
             nest2 = self.newtree
@@ -415,7 +415,7 @@ class MainApp(object):
         self.regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'State', cr, text=1, foreground=4, background=5 )
+        tvc = gtk.TreeViewColumn( 'Port', cr, text=1, foreground=4, background=5 )
         tvc.set_resizable(True)
         # not sure how this sorting works
         #tvc.set_sort_column_id(1)
