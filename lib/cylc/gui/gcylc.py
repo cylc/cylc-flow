@@ -494,7 +494,7 @@ The cylc forecast suite metascheduler.
 
     def command_help( self, w, cat='', com='' ):
         command = "cylc " + cat + " " + com + " help"
-        foo = gcapture_tmpfile( command, self.tmpdir, 600, 600 )
+        foo = gcapture_tmpfile( command, self.tmpdir, 700, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
 

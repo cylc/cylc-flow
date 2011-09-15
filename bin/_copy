@@ -25,17 +25,40 @@ from cylc.registration import delimiter, delimiter_re, localdb, \
 
 parser = OptionParser( usage = """cylc [db] copy|cp [OPTIONS] SOURCE TARGET TOPDIR
 
-Makes copies of suites or groups of suites in your private database (to
-get your own copies of suites in the central database use 'cylc import'). 
+Make copies of suites, or groups of suites, in your private database
+(to get copies of suites in the central database use 'cylc import'). 
+
+SOURCE and TARGET are hierarchical suite registrations (foo.bar.baz). 
+Consider the following two suites:
+
+% cylc db print '^foo'     # printed in flat form
+foo.bar.waz | "Test Suite One" | /tmp/oliverh/waz
+foo.bar.baz | "Test Suite Two" | /tmp/oliverh/baz
+
+% cylc db print -t '^foo'  # printed in tree from
+foo      
+ `-bar   
+    |-baz | "Test Suite One" | /tmp/oliverh/baz
+    `-waz | "Test Suite Two" | /tmp/oliverh/waz
+       
+When copying groups of suites SOURCE 
+Suites are copied into a directory tree under TOPDIR whose structure
+reflects the target registration. When groups of suites are copied 
+the target registration is determined by TARGET and lower levels
+
+you specify a SOURCE that has no lower levels a single suite will be copied.
+If SOURCE is a group of suites (i.e. there are unspecified lower levels
+SOURCE.REGi, say, for some range i), the contained suite definitions are copied to a directory
+tree 
+
+If SOURCE contains lower levels REG1 through REGn, say, (i.e. SOURCE.REG1 
+through SOURCE.REGn where REGi may also have lower levels) then the
+contained suite definitions will be copied to TOPDIR/TARGET/REGi_PATH
+where REGi_PATH is obtained by substituting '.' for '/' in REGi etc.,
+and then registered as TARGET.REGi.
 
 If SOURCE is a suite, the suite definition directory will be copied to
-TOPDIR/TARGET and registered as TARGET.
-
-If SOURCE is a group containing suites SOURCE.REG1, SOURCE.REG2 etc.,
-the suite definitions will be copied to TOPDIR/TARGET/REG1_PATH etc.,
-where REG1_PATH is obtained by substituting '.' for '/' in REG1 etc.,
-and registered as TARGET.REG1 etc.
-
+TOPDIR/TARGET and registered as TARGET.  
 Note that you do not need to create suite groups before using them.
 
 Arguments:
