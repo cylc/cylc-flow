@@ -1052,13 +1052,14 @@ class config( CylcConfigObj ):
             taskd.remote_host = taskconfig['remote']['host']
             if not taskconfig['remote']['cylc directory']:
                 raise SuiteConfigError, name + ": remote tasks must specify the remote cylc directory"
-            if not taskconfig['remote']['log directory']:
-                raise SuiteConfigError, name + ": remote tasks must specify a remote log directory"
 
             taskd.remote_shell_template = taskconfig['remote']['remote shell template']
             taskd.remote_cylc_directory = taskconfig['remote']['cylc directory']
             taskd.remote_suite_directory = taskconfig['remote']['suite definition directory']
-            taskd.remote_log_directory  = taskconfig['remote']['log directory']
+            if not taskconfig['remote']['log directory']:
+                taskd.remote_log_directory  = taskd.job_submit_log_directory
+            else:
+                taskd.remote_log_directory  = taskconfig['remote']['log directory']
 
         taskd.manual_messaging = taskconfig['manual task completion messaging']
 
