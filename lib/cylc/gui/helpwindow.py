@@ -277,7 +277,7 @@ def filter( b ):
     help = helpwindow( "Filter Help", 300, """
 Change suite visibility by filtering on group and/or name with
 (Python-style) regular expressions (so, for example, the
-wildcard is '.*, not '*' as in a shell glob expression).
+wildcard is '.*' not '*' as in a shell glob expression).
 
 Leaving a filter entry blank is equivalent to '.*' (i.e. match
 anything).
@@ -292,147 +292,9 @@ but no implicit string end character ('$'). Examples:
 %i (foo|bar) - match 'foo' or 'bar' followed by anything""")
     help.show()
 
-def edit( b ):
-    help = helpwindow( "Edit Help", 400, """
-By default ('Edit') this changes the current working directory to
-your suite definition directory (so that you can easily open include 
-files and suite bin scripts) and spawns your $GEDITOR on the suite.rc
-file.
-
-Choosing 'Edit Inlined' lets you edit a copy of the suite.rc file with
-all include-files inlined; changes will be split back out into the
-include files when you exit from the editor (see 'cylc prep edit --help'
-for more information).
-
-Note that for gcylc, as opposed to the command line 'cylc edit', you
-must use a GUI editor such as emacs or gvim, or else run your editor in
-a terminal:
-%i export GEDITOR=emacs
-%i export GEDITOR=xemacs
-%i export GEDITOR='gvim -f'       # (*) see below
-%i export GEDITOR='xterm -e vim'  # run vim in a new xterminal
-
-If $GEDITOR is not defined, $EDITOR will be tried, but this will fail
-if it is not a GUI editor or an in-terminal invocation as shown above.
-
-(*) The '-f' option is required to prevent gvim detaching from the
-parent process, which is important for inlined editing (the parent 
-process has to know when you exit from the editor).
-""")
-    help.show()
- 
 def todo( b) :
     help = helpwindow( "Commands or command options not yet implemented in the GUI", 300, """
 %h2 'cylc restart --no-release' option: don't release held tasks on restarting a suite.""")
-    help.show()
-
-def graph( b ):
-    help = helpwindow( "Graph Help", 300, """
-Plot suite dependency graphs.  The graph will update in real time as you
-edit the suite [dependencies] or [visualization] sections (unless those
-sections are in an include file - the viewer only watches for changes in
-suite.rc).
-
-Asynchronous tasks are plotted once. 
-
-For cycling tasks, initial and final cycles for plotting can be defined
-in the suite.rc file, and optionally overridden here.
-
-%h3 Optional Output File
-an image file of type determined by the file extension will be written
-(and rewritten if the graph changes). See 'cylc [prep] graph --help' for
-more information on available file types.""")
-    help.show()
-
-def search( b ):
-    help = helpwindow( "Search Help", 300, """
-Search for matches to a (Python-style) regular expression in a suite
-definition directory (i.e. suite.rc file and include-files, and any
-scripts in the suite bin directory). Suite.rc matches are reported by
-suite definition Section and filename  (in case of include-files).
-
-Partial matches are allowed (i.e. there is no implicit string start
-('^') or end ('$') character in the pattern. Examples:
-
-%i foo - matches 'foo', 'foobar', 'barfoo', ...
-%i ^foo$ - matches 'foo' only
-%i (?i)foo - case-insensitive (matches 'foo', 'Food', 'bFOOb',...)
-%i (foo|bar) - match 'foo' or 'bar' preceded or followed by anything""")
-    help.show()
-
-def compare( b ):
-    help = helpwindow( "Compare/Diff Help", 200, """
-Compare two suite definitions and display any differences.
-
-NOTE: differencing is done after parsing the suite.rc files so it takes
-account of default values that are not explicitly defined, it disregards
-the order of configuration items, and it sees include-file content after
-inlining.
-
-Seemingly identical suites can differ slightly if they use default
-configuration items, such as the default job submission log directory,
-that are suite-specific (i.e. they include $CYLC_SUITE_REG_NAME etc.).
-
-Files in the suite bin directory, and other files held in the suite
-definition directory, are not currently differenced (they may be
-important in task implementations, but are not part of the suite
-definition).
-""")
-    help.show()
-
-
-def copy( b ):
-    help = helpwindow( "Copy Help", 200, """
-Copy the defintion of a registered suite to the specified location and
-register it under the new group:name. You can use environment variables
-such as '$HOME' in the directory path. If you click 'Reference
-Only' the suite definition will not be copied and the new registration
-will point to the original suite.""")
-    help.show()
-
-def copy_group( b ):
-    help = helpwindow( "Copy Group Help", 200, """
-Copy an entire group of registered suites into sub-directories of the
-specified location and register each group member under the new group
-name. You can use environment variables such as '$HOME' in the directory
-path. If you click 'Reference Only', the member suite definitions will
-not be copied and the new registrations will point to the original suites.""")
-    help.show()
-
-def unregister( b ):
-    help = helpwindow( "Unregister Help", 200, """
-Delete a suite or group of suites from the registration database, 
-optionally deleting their suite definition directories as well.""")
-    help.show()
-
-def reregister( b ):
-    help = helpwindow( "Reregister Help", 200, """
-Change the group and/or name (or group) under which a suite (or a group
-of suites) is registered.""")
-    help.show()
-
-def register( b ):
-    help = helpwindow( "Register Help", 200, """
-Register a suite under a given group and name. This has to be done
-before you can run a suite because all cylc commands refer to suites by
-their registered GROUP:NAME.""")
-    help.show()
-
-def importx( b ):
-    help = helpwindow( "Import Help", 200, """
-Import a suite (or group of suites) from the central database, making it
-(or them) available to you to modify and use. The suite definition directory
-will be copied from the registered location to the location your specify
-here.  You can use environment variables such as '$HOME' in the directory
-path.""")
-    help.show()
-
-def export( b ):
-    help = helpwindow( "Export Help", 200, """
-Export a suite (or group of suites) to the central database to make it
-(or them) available to others. You can choose to copy the entire suite
-definition directory to the central database, or to have the central
-registration refer to your original suite definition directory.""")
     help.show()
 
 def capture( b ):
@@ -461,12 +323,6 @@ of multiple tasks at once (e.g. a handful of tasks required to cold
 start part of a suite after certain problems have occured). These must
 be defined in the suite.rc file (TEMPORARILY DISABLE PENDING USE OF
 RUNTIME GROUPS FOR INSERTION ETC.).""")
-    help.show()
-
-def submit( b ):
-    help = helpwindow( "Submit Task Help", 200, """
-Submit a single task from the suite, exactly as it would be submitted by the
-suite.""")
     help.show()
 
 def change_runahead( b ):

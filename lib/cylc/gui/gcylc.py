@@ -494,7 +494,7 @@ The cylc forecast suite metascheduler.
 
     def command_help( self, w, cat='', com='' ):
         command = "cylc " + cat + " " + com + " help"
-        foo = gcapture_tmpfile( command, self.tmpdir, 800, 800 )
+        foo = gcapture_tmpfile( command, self.tmpdir, 600, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
 
@@ -543,11 +543,11 @@ The cylc forecast suite metascheduler.
 
         vbox = gtk.VBox()
 
-        label = gtk.Label( dir )
+        label = gtk.Label( 'PATH: ' + dir )
         vbox.pack_start( label, True )
 
         box = gtk.HBox()
-        label = gtk.Label( 'Register As:' )
+        label = gtk.Label( 'SUITE:' )
         box.pack_start( label, True )
         as_entry = gtk.Entry()
         box.pack_start (as_entry, True)
@@ -560,7 +560,7 @@ The cylc forecast suite metascheduler.
         apply_button.connect("clicked", self.new_reg, window, dir, as_entry )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.register )
+        help_button.connect("clicked", self.command_help, 'db', 'register' )
 
         hbox = gtk.HBox()
         hbox.pack_start( apply_button, False )
@@ -606,7 +606,7 @@ The cylc forecast suite metascheduler.
     def filter_popup(self, w):
         self.filter_window = gtk.Window()
         self.filter_window.set_border_width(5)
-        self.filter_window.set_title( "Filter" )
+        self.filter_window.set_title( "PATTERN" )
         vbox = gtk.VBox()
 
         box = gtk.HBox()
@@ -869,6 +869,10 @@ The cylc forecast suite metascheduler.
                 copy_item = gtk.MenuItem( 'Co_py' )
                 menu.append( copy_item )
                 copy_item.connect( 'activate', self.copy_popup, reg )
+
+                alias_item = gtk.MenuItem( '_Alias' )
+                menu.append( alias_item )
+                alias_item.connect( 'activate', self.alias_popup, reg )
     
             if self.cdb:
                 imp_item = gtk.MenuItem( 'I_mport' )
@@ -907,10 +911,53 @@ The cylc forecast suite metascheduler.
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
         return True
 
+
+    def alias_popup( self, w, reg ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Alias A Suite")
+
+        vbox = gtk.VBox()
+        label = gtk.Label( "SUITE: " + reg )
+        vbox.pack_start( label )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'ALIAS:' )
+        box.pack_start( label, True )
+        alias_entry = gtk.Entry()
+        alias_entry.set_text( self.ownerless(reg) )
+        box.pack_start (alias_entry, True)
+        vbox.pack_start(box)
+
+        cancel_button = gtk.Button( "_Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        ok_button = gtk.Button( "_Alias" )
+        ok_button.connect("clicked", self.alias_suite, window, reg, alias_entry )
+
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", self.command_help, 'db', 'alias' )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( ok_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def alias_suite( self, b, w, reg, alias_entry ):
+        command = "cylc alias --notify-completion " + reg + " " + alias_entry.get_text()
+        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+        w.destroy()
+
     def unregister_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Unregister '" + reg + "'")
+        window.set_title( "Unregister Suite(s)")
 
         vbox = gtk.VBox()
 
@@ -924,9 +971,9 @@ The cylc forecast suite metascheduler.
         ok_button.connect("clicked", self.unregister_suites, window, reg, oblit_cb )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.unregister )
+        help_button.connect("clicked", self.command_help, 'db', 'unregister' )
 
-        label = gtk.Label( "Unregister suite(s) " + reg + "?" )
+        label = gtk.Label( "SUITE: " + reg )
         vbox.pack_start( label )
         vbox.pack_start( oblit_cb )
 
@@ -1147,11 +1194,13 @@ The cylc forecast suite metascheduler.
     def compare_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Compare '" + reg + "'")
+        window.set_title( "Compare")
 
         vbox = gtk.VBox()
+        label = gtk.Label("SUITE1: " + reg)
+        vbox.pack_start(label)
 
-        label = gtk.Label("Other Suite" )
+        label = gtk.Label("SUITE2:" )
         name_entry = gtk.Entry()
         name_entry.set_text( reg )
         hbox = gtk.HBox()
@@ -1159,7 +1208,7 @@ The cylc forecast suite metascheduler.
         hbox.pack_start(name_entry, True) 
         vbox.pack_start( hbox )
 
-        nested_cb = gtk.CheckButton( "Nested Sections" )
+        nested_cb = gtk.CheckButton( "Nested section headings" )
         nested_cb.set_active(False)
         vbox.pack_start (nested_cb, True)
 
@@ -1170,7 +1219,7 @@ The cylc forecast suite metascheduler.
         ok_button.connect("clicked", self.compare_suites, window, reg, name_entry, nested_cb )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.compare )
+        help_button.connect("clicked", self.command_help, 'prep', 'compare'  )
 
         hbox = gtk.HBox()
         hbox.pack_start( ok_button, False )
@@ -1254,28 +1303,31 @@ The cylc forecast suite metascheduler.
     def search_suite_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Suite Search Options for '" + reg + "'")
+        window.set_title( "Suite Search" )
 
         vbox = gtk.VBox()
 
-        nobin_cb = gtk.CheckButton( "Don't Search Suite bin Directory" )
-        vbox.pack_start (nobin_cb, True)
+        label = gtk.Label("SUITE: " + reg )
+        vbox.pack_start(label)
 
-        label = gtk.Label("Search Pattern" )
+        label = gtk.Label("PATTERN" )
         pattern_entry = gtk.Entry()
         hbox = gtk.HBox()
         hbox.pack_start( label )
         hbox.pack_start(pattern_entry, True) 
         vbox.pack_start( hbox )
- 
-        cancel_button = gtk.Button( "_Close" )
+
+        nobin_cb = gtk.CheckButton( "Don't search bin/ directory" )
+        vbox.pack_start (nobin_cb, True)
+
+        cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Search" )
         ok_button.connect("clicked", self.search_suite, reg, nobin_cb, pattern_entry )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.search )
+        help_button.connect("clicked", self.command_help, 'prep', 'search' )
 
         hbox = gtk.HBox()
         hbox.pack_start( ok_button, False )
@@ -1295,14 +1347,13 @@ The cylc forecast suite metascheduler.
 
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Dependency Graph '" + reg + "'")
-
-        box = gtk.HBox()
+        window.set_title( "Plot Suite Dependency Graph")
 
         vbox = gtk.VBox()
-        vbox.pack_start(box, True)
 
-        label = gtk.Label("Optional Output File" )
+        label = gtk.Label("SUITE: " + reg )
+
+        label = gtk.Label("[output FILE]" )
         outputfile_entry = gtk.Entry()
         hbox = gtk.HBox()
         hbox.pack_start( label )
@@ -1320,7 +1371,7 @@ The cylc forecast suite metascheduler.
         override_cb = gtk.CheckButton( "Override default initial and final cycles?" )
         vbox.pack_start(override_cb)
  
-        label = gtk.Label("Initial Cycle" )
+        label = gtk.Label("[START]: " )
         start_entry = gtk.Entry()
         start_entry.set_max_length(10)
         ic_hbox = gtk.HBox()
@@ -1330,7 +1381,7 @@ The cylc forecast suite metascheduler.
         label.set_sensitive(False)
         vbox.pack_start(ic_hbox)
 
-        label = gtk.Label("Final Cycle" )
+        label = gtk.Label("[STOP]:" )
         stop_entry = gtk.Entry()
         stop_entry.set_max_length(10)
         fc_hbox = gtk.HBox()
@@ -1349,7 +1400,7 @@ The cylc forecast suite metascheduler.
                 warm_rb, outputfile_entry, start_entry, stop_entry, override_cb )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.graph )
+        help_button.connect("clicked", self.command_help, 'prep', 'graph' )
 
         hbox = gtk.HBox()
         hbox.pack_start( ok_button, False )
@@ -1452,14 +1503,14 @@ The cylc forecast suite metascheduler.
 
         view_inlined_rb.connect( "toggled", self.view_inlined_toggled, view_inlined_rb, hbox )
 
-        cancel_button = gtk.Button( "_Cancel" )
+        cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         ok_button = gtk.Button( "_Edit" )
         ok_button.connect("clicked", self.edit_suite, window, reg, edit_rb,
                 edit_inlined_rb, view_inlined_rb, mark_cb, label_cb, nojoin_cb, single_cb )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.edit )
+        help_button.connect("clicked", self.command_help, 'prep', 'edit' )
 
         hbox = gtk.HBox()
         hbox.pack_start( ok_button, False )
@@ -1513,11 +1564,13 @@ The cylc forecast suite metascheduler.
     def jobscript_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Generate A Task Job Script for Suite '" + reg + "'")
+        window.set_title( "Generate A Task Job Script")
 
         vbox = gtk.VBox()
+        label = gtk.Label("SUITE: " + reg )
+        vbox.pack_start( label )
 
-        label = gtk.Label("Task ID (NAME%YYYYMMDDHH)" )
+        label = gtk.Label("TASK: " )
         task_entry = gtk.Entry()
         hbox = gtk.HBox()
         hbox.pack_start( label, True )
@@ -1530,13 +1583,13 @@ The cylc forecast suite metascheduler.
         ok_button = gtk.Button( "_Generate" )
         ok_button.connect("clicked", self.jobscript, reg, task_entry )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", helpwindow.jobscript
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", self.command_help, 'util', 'jobscript' )
 
         hbox = gtk.HBox()
         hbox.pack_start( ok_button, False )
         hbox.pack_end( cancel_button, False )
-        #hbox.pack_end( help_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -1545,25 +1598,27 @@ The cylc forecast suite metascheduler.
     def submit_task_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Submit Task from Suite '" + reg + "'")
+        window.set_title( "Submit A Single Task")
 
         vbox = gtk.VBox()
-
-        label = gtk.Label("Task ID (NAME%YYYYMMDDHH)" )
+        label = gtk.Label("SUITE: " + reg )
+        vbox.pack_start( label )
+ 
+        label = gtk.Label("TASK" )
         task_entry = gtk.Entry()
         hbox = gtk.HBox()
         hbox.pack_start( label, True )
         hbox.pack_start(task_entry, True) 
         vbox.pack_start( hbox )
  
-        cancel_button = gtk.Button( "_Close" )
+        cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Submit" )
         ok_button.connect("clicked", self.submit_task, reg, task_entry )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.submit )
+        help_button.connect("clicked", self.command_help, 'task', 'submit' )
 
         hbox = gtk.HBox()
         hbox.pack_start( ok_button, False )
