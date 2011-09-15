@@ -39,8 +39,8 @@ and registered as TARGET.REG1 etc.
 Note that you do not need to create suite groups before using them.
 
 Arguments:
-    SOURCE - Source suite or group name
-    TARGET - Target suite or group name
+    SOURCE - Source suite or group
+    TARGET - Target suite or group
     TOPDIR - Destination directory for copied suite definitions""" )
 
 parser.add_option( "--dry-run",

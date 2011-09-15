@@ -33,7 +33,7 @@ class NoPromptOptionParser_u( OptionParser ):
         usage += """
 
 Arguments:
-   SUITE                Registered GROUP:NAME of the target suite.""" 
+   SUITE                Target suite.""" 
 
         self.n_args = 1  # suite name
         if extra_args:
@@ -109,8 +109,8 @@ class NoPromptOptionParser( OptionParser ):
 
 You must be the owner of the target suite to use this command.
 
-arguments:
-   SUITE                Registered GROUP:NAME of the target suite.""" 
+Arguments:
+   SUITE                Target suite.""" 
 
         self.n_args = 1  # suite name
         if extra_args:

@@ -35,7 +35,7 @@ one, that reports that message as an output).
 Prerequisites added on the fly are not propagated to the successors
 of TASK, and they will not persist in TASK across a suite restart.""",
 [ 'TASK                 Target task.',
-  'DEP                  The new dependency for the target task.' ] )
+  'DEP                  New dependency for the target task.' ] )
 
 (options, args) = parser.parse_args()
 

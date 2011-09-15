@@ -19,15 +19,15 @@
 from cylc.execute import execute
 from optparse import OptionParser
 
-parser = OptionParser( usage = """cylc [db] import [OPTIONS] SOURCE [TARGET] DIR
+parser = OptionParser( usage = """cylc [db] import [OPTIONS] SOURCE [TARGET] TOPDIR
 
 Import suites from the central registration database.
 
 Arguments:
     SOURCE    - Central database registration
-    [TARGET]  - Private database registration
+    TARGET    - Private database registration
                 (omit TARGET to keep the central reg)
-    DIR       - top level directory for the imported suite definition.""" )
+    TOPDIR    - top level directory for the imported suite definition.""" )
 
 ( options, args ) = parser.parse_args()
 

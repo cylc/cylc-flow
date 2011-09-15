@@ -23,11 +23,14 @@ from cylc.registration import centraldb
 
 parser = OptionParser( usage = """cylc [db] export [OPTIONS] SOURCE [TARGET]
 
-Export private suites to the central database.
+Export suites or groups of suites to the central suite database. 
+
+Central registrations always start with the suite owner's username. If a
+target name is not given ... 
 
 Arguments:
-    SOURCE  - private source registration
-    TARGET  - central target registration""" )  
+    SOURCE  - Suite to export to the central database
+    TARGET  - Target central suite name, if different from SOURCE.""" )  
 
 ( options, args ) = parser.parse_args()
 

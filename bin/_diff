@@ -94,20 +94,17 @@ parser = OptionParser( """cylc [prep] diff|compare [options] SUITE1 SUITE2
 
 Compare two suite definitions and display any differences.
 
-NOTE: differencing is done after parsing the suite.rc files so it takes
+Differencing is done after parsing the suite.rc files so it takes
 account of default values that are not explicitly defined, it disregards
-the order of configuration items, and it sees include-file content after
-inlining.
+the order of configuration items, and it sees any include-file content
+after inlining has occurred.
 
-Seemingly identical suites (immediately after copying one from the
-other, for instance) can differ slightly if they use default
+Seemingly identical suites can differ slightly if they use default
 configuration items, such as the default job submission log directory,
 that are suite-specific (i.e. they include $CYLC_SUITE_REG_NAME etc.).
 
-Files in the suite bin directory, and other files held in the suite
-definition directory, are not currently differenced (they may be
-important in task implementations, but are not part of the suite
-definition).
+Files in the suite bin directory and other sub-directories of the 
+suite definition directory are not currently differenced.
 
 Arguments:
    SUITE1, SUITE2  - suites to compare.""")

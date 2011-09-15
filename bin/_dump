@@ -16,10 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Dump the current state of all suite tasks to stdout.
-"""
-
 import os, sys
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import NoPromptOptionParser_u
@@ -28,13 +24,12 @@ from cylc.registration import dbgetter, RegistrationError
 
 parser = NoPromptOptionParser_u( """cylc [info] dump [options] SUITE 
 
-Print suite and task state information to stdout. All available
-information is printed by default. Output is designed to be
-grep-friendly. For small suites 'watch cylc [info] dump SUITE' is an 
-effective non-gui real time monitor.
+Print current suite state information (e.g. the state of each task). For
+small suites 'watch cylc [info] dump SUITE' is an effective non-GUI real
+time monitor (but see also 'cylc monitor').
 
-For more information about a specific task, such as the current 
-state of each registered prerequisite and output, see 'cylc [info] show'.
+For more information about a specific task, such as the current state of
+its prerequisites and outputs, see 'cylc [info] show'.
 
 Examples:
  Display the state of all running tasks, sorted by cycle time:
@@ -50,7 +45,7 @@ parser.add_option( "-t", "--tasks", help="Task states only.",
         action="store_true", default=False, dest="tasks_only" )
 
 parser.add_option( "-s", "--sort", help="Task states only; "
-        "sort by cycle instead of name.",
+        "sort by cycle time instead of name.",
         action="store_true", default=False, dest="sort_by_cycle" )
 
 ( options, args ) = parser.parse_args()

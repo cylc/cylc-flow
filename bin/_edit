@@ -170,13 +170,8 @@ You can set both $GEDITOR and $EDITOR to a GUI editor if you like, but
 $GEDITOR at least *must* be a GUI editor, or an in-terminal invocation 
 of a non-GUI editor, if you want to spawn editing sessions via gcylc.
 
-See also:
-    cylc prep search 
-    cylc prep inline
-    cylc prep validate
-
 Arguments:
-  SUITE   - registered GROUP:NAME of the target suite.""")
+  SUITE         Target suite.""")
 
 parser.add_option( "--inline", "-i", 
         help="Edit with include-files inlined as described above.",
