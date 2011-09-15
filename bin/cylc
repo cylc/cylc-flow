@@ -284,24 +284,24 @@ catsum['utility'     ]   = "cycle time arithmetic, filename templating, etc."
 usage = """cylc release version: """ + cylc_version + """
 """ + general_usage + """
 
-Commands and categories can be abbreviated. Categories organise the
-command set and disambiguate highly abbreviated commands:
+Commands and categories can be abbreviated. Use of categories is
+optional, but they can disambiguate highly abbreviated commands:
   $ cylc control trigger SUITE TASK  # trigger TASK in SUITE
   $ cylc con trig SUITE TASK         # ditto
   $ cylc c t SUITE TASK              # ditto!
   $ cylc trigger SUITE TASK          # use of categories is optional
 
-Some commands and categories are aliased (db|database, cp|copy) and
-some common typographical errors are corrected (e.g. cycl => cylc).
-
-Cylc commands target a particular suite via a name (SUITE) registered in
-a suite database (private, or central for sharing suites) so that you
+SUITE - cylc commands target suites via database registrations, so you
 don't need to remember the location of the suite definition on disk. 
-Suite names can be grouped and organised like a directory tree using
-a dot delimiter, e.g. baz, bar.baz, foo.bar.baz, foo.bar.baz-test ...
-TASK is the identity of a single task in a suite: NAME%TAG, where for
-cycling tasks TAG is a cycle time (YYYYMMDDHH) and for asynchronous
+Suite registrations can be organised like a directory tree, but with a
+dot delimiter: baz, bar.baz, foo.bar.baz, foo.bar.baz-test, and so on.
+
+TASK - the unique identitifier of a task in a suite is NAME%TAG, where
+for cycling tasks TAG is a cycle time (YYYYMMDDHH) and for asynchronous
 tasks it is an integer (preceded by 'a:' on the command line: foo%a:1).
+
+Example: to remove a task 'foo%2011080806' from a running suite 'oper':
+  $ cylc remove oper foo%2011080806
 
 Here's how to drill down to command usage help for a particular command:
   $ cylc help ............... list all available categories (this page)
@@ -309,6 +309,9 @@ Here's how to drill down to command usage help for a particular command:
   $ cylc help prep edit ..... command usage help for 'cylc [prep] edit'
 
 Command CATEGORIES:"""
+
+#Some commands and categories are aliased (db|database, cp|copy) and
+#some common typographical errors are corrected (e.g. cycl => cylc).
 
 # command summaries
 comsum = OrderedDict()
@@ -429,6 +432,13 @@ if len(args) == 1:
         keys.sort()
         for key in keys:
             print key
+        sys.exit(0)
+    if args[0].startswith( 'category=' ):
+        # secret argument for gcylc
+        category = args[0][9:]
+        commands = eval( category + '_commands')
+        for command in commands:
+            print command
         sys.exit(0)
     if args[0] == 'print-cdb-dir':
         # temporary secret argument used by create-cdb

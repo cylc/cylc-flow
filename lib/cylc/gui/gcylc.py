@@ -20,7 +20,7 @@ import gobject
 #import pygtk
 #pygtk.require('2.0')
 import gtk
-from copy import deepcopy
+import subprocess
 import time, os, re
 import threading
 from cylc.cycle_time import ct, CycleTimeError
@@ -29,7 +29,7 @@ from cylc import cylc_pyro_client
 from cylc.port_scan import scan, SuiteIdentificationError
 from cylc.registration import delimiter, dbgetter, localdb, centraldb, RegistrationError
 from warning_dialog import warning_dialog, info_dialog, question_dialog
-import helpwindow 
+import helpwindow
 from gcapture import gcapture, gcapture_tmpfile
 from cylc.mkdir_p import mkdir_p
 from cylc_logviewer import cylc_logviewer
@@ -375,6 +375,10 @@ class MainApp(object):
         help_menu.append( guide_item )
         guide_item.connect( 'activate', helpwindow.main )
 
+        chelp_menu = gtk.MenuItem( 'Command Help' )
+        help_menu.append( chelp_menu )
+        self.construct_command_menu( chelp_menu )
+
         cug_pdf_item = gtk.MenuItem( 'Cylc User Guide (_PDF)' )
         help_menu.append( cug_pdf_item )
         cug_pdf_item.connect( 'activate', self.launch_cug, True )
@@ -448,6 +452,28 @@ class MainApp(object):
         self.window.add(vbox)
         self.window.show_all()
 
+    def construct_command_menu( self, menu ):
+        cat_menu = gtk.Menu()
+        menu.set_submenu( cat_menu )
+
+        cylc_help_item = gtk.MenuItem( 'cylc' )
+        cat_menu.append( cylc_help_item )
+        cylc_help_item.connect( 'activate', self.command_help )
+
+        cout = subprocess.Popen( ["cylc", "categories"], stdout=subprocess.PIPE ).communicate()[0]
+        categories = cout.rstrip().split()
+        for category in categories: 
+            foo_item = gtk.MenuItem( category )
+            cat_menu.append( foo_item )
+            com_menu = gtk.Menu()
+            foo_item.set_submenu( com_menu )
+            cout = subprocess.Popen( ["cylc", "category="+category ], stdout=subprocess.PIPE ).communicate()[0]
+            commands = cout.rstrip().split()
+            for command in commands:
+                bar_item = gtk.MenuItem( command )
+                com_menu.append( bar_item )
+                bar_item.connect( 'activate', self.command_help, category, command )
+
     def about( self, bt ):
         about = gtk.AboutDialog()
         if gtk.gtk_version[0] ==2:
@@ -466,8 +492,15 @@ The cylc forecast suite metascheduler.
         about.run()
         about.destroy()
 
+    def command_help( self, w, cat='', com='' ):
+        command = "cylc " + cat + " " + com + " help"
+        foo = gcapture_tmpfile( command, self.tmpdir, 800, 800 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
     def expand_all( self, w, view ):
         view.expand_all()
+
     def collapse_all( self, w, view ):
         view.collapse_all()
 
@@ -966,13 +999,14 @@ The cylc forecast suite metascheduler.
     def import_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Import '" + reg + "' from central database")
+        window.set_title( "Import Suite(s)")
 
         vbox = gtk.VBox()
-        #label = gtk.Label( 'Import ' + reg + ' as:' )
+        label = gtk.Label( 'SOURCE: ' + reg )
+        vbox.pack_start( label )
 
         box = gtk.HBox()
-        label = gtk.Label( 'Target Registration' )
+        label = gtk.Label( 'TARGET:' )
         box.pack_start( label, True )
         newreg_entry = gtk.Entry()
         newreg_entry.set_text( self.ownerless(reg) )
@@ -980,7 +1014,7 @@ The cylc forecast suite metascheduler.
         vbox.pack_start(box)
 
         box = gtk.HBox()
-        label = gtk.Label( 'Target Directory' )
+        label = gtk.Label( 'TOPDIR' )
         box.pack_start( label, True )
         dir_entry = gtk.Entry()
         box.pack_start (dir_entry, True)
@@ -993,7 +1027,7 @@ The cylc forecast suite metascheduler.
         ok_button.connect("clicked", self.import_suites, window, reg, newreg_entry, dir_entry )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.importx )
+        help_button.connect("clicked", self.command_help, 'db', 'import' )
 
         hbox = gtk.HBox()
         hbox.pack_start( ok_button, False )
@@ -1018,15 +1052,14 @@ The cylc forecast suite metascheduler.
     def export_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Export '" + reg + "' to central database")
+        window.set_title( "Export Suite(s)")
 
         vbox = gtk.VBox()
-        #label = gtk.Label( 'Export ' + reg + ' as:' )
-
-        owner = self.owner
+        label = gtk.Label( 'SOURCE: ' + reg )
+        vbox.pack_start( label )
 
         box = gtk.HBox()
-        label = gtk.Label( 'Target Registration' )
+        label = gtk.Label( 'TARGET:' )
         box.pack_start( label, True )
         newreg_entry = gtk.Entry()
         newreg_entry.set_text( reg )
@@ -1040,7 +1073,7 @@ The cylc forecast suite metascheduler.
         ok_button.connect("clicked", self.export_suites, window, reg, newreg_entry )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.export )
+        help_button.connect("clicked", self.command_help, 'db', 'export' )
 
         hbox = gtk.HBox()
         hbox.pack_start( ok_button, False )
@@ -1070,11 +1103,14 @@ The cylc forecast suite metascheduler.
     def reregister_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Reregister '" + reg + "'")
+        window.set_title( "Reregister Suite(s)" )
 
         vbox = gtk.VBox()
+
+        label = gtk.Label("SOURCE: " + reg )
+        vbox.pack_start( label )
  
-        label = gtk.Label("Target Name" )
+        label = gtk.Label("TARGET: " )
         name_entry = gtk.Entry()
         name_entry.set_text( reg )
         hbox = gtk.HBox()
@@ -1089,7 +1125,7 @@ The cylc forecast suite metascheduler.
         ok_button.connect("clicked", self.reregister_suites, window, reg, name_entry )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.reregister )
+        help_button.connect("clicked", self.command_help, 'db', 'reregister' )
 
         hbox = gtk.HBox()
         hbox.pack_start( ok_button, False )
@@ -1146,13 +1182,17 @@ The cylc forecast suite metascheduler.
         window.show_all()
 
     def copy_popup( self, w, reg ):
+
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Copy '" + reg + "'")
+        window.set_title( "Copy Suite(s)")
 
         vbox = gtk.VBox()
 
-        label = gtk.Label("Target Registration Name" )
+        label = gtk.Label("SOURCE: " + reg )
+        vbox.pack_start( label )
+
+        label = gtk.Label("TARGET" )
         name_entry = gtk.Entry()
         name_entry.set_text( reg )
         hbox = gtk.HBox()
@@ -1161,7 +1201,7 @@ The cylc forecast suite metascheduler.
         vbox.pack_start( hbox )
 
         box = gtk.HBox()
-        label = gtk.Label( 'Target Directory' )
+        label = gtk.Label( 'TOPDIR' )
         box.pack_start( label, True )
         dir_entry = gtk.Entry()
         box.pack_start (dir_entry, True)
@@ -1174,7 +1214,7 @@ The cylc forecast suite metascheduler.
         ok_button.connect("clicked", self.copy_suites, window, reg, name_entry, dir_entry )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.copy )
+        help_button.connect("clicked", self.command_help, 'db', 'copy')
 
         hbox = gtk.HBox()
         hbox.pack_start( ok_button, False )
