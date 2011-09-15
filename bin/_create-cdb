@@ -25,11 +25,22 @@ usage() {
     echo ""
     echo "USAGE: cylc [admin] create-cdb"
     echo ""
-    echo "This admin command should be used by the cylc administrator"
-    echo "to create the central suite registration database immediately"
-    echo "after installing cylc, or to upgrade the centrally held cylc"
-    echo "example suites after upgrading to a new cylc version. It can"
-    echo "be run multiple times without adverse effect."
+    echo "This command is used by the cylc administrator to create the"
+    echo "central suite registration database immediately after"
+    echo "installing cylc, or to upgrade the centrally held cylc"
+    echo "example suites after upgrading to a new cylc version."
+    echo "It can be run multiple times without adverse effect."
+    echo ""
+    echo "The example suites are registered with the cylc version"
+    echo "number in the registration path so that multiple versions"
+    echo "can be retained."
+    echo ""
+    echo "Seconds since epoch are also appended to the cylc version"
+    echo "number to allow successive uploads at the same version"
+    echo "without deleting previous uploads (in case they have been"
+    echo "modified). You can then rename the uploaded examples group"
+    echo "and delete old versions if necessary."
+    echo ""
 }
 
 if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then
@@ -42,18 +53,15 @@ if [[ -z CYLC_DIR ]]; then
     exit 1
 fi
 
-# register locally under seconds since epoch, to avoid clashes
-# with example suites imported to the admin user's private db.
 SSE=$( date +%s )
 
 CYLC_VERSION=$( cylc -v )
 if [[ $CYLC_VERSION == "THIS IS NOT A VERSIONED RELEASE" ]]; then
     # we are in a cylc git repository - get most recent tag
-    # and append seconds since epoch.
-    CYLC_VERSION=$( git tag | tail -1 )-$SSE
+    CYLC_VERSION=$( git tag | tail -1 )-post
 fi
 
-TOP=cylc-$( echo $CYLC_VERSION | tr '.' 'p' )
+TOP=cylc-$( echo $CYLC_VERSION | tr '.' 'p' )-$SSE
 
 echo " + Registering example suites"
 cylc register ${TOP}.admin.test $CYLC_DIR/examples/test

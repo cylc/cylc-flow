@@ -7,10 +7,9 @@ title = "Cylc Admin Test Suite"
 #        C[T-6]-> C -> F 
 #       
 
-description = """This is a copy of the suite implementation for
-the examples that illustrates the Cylc User Guide Introduction.
-This copy is used by the 'cylc admin test-suite' command and 
-should only be modified with extreme caution."""
+description = """This is a version of the suite that illustrates the
+Cylc User Guide introductory section. It is used copy by the admin 
+'test-suite' command and should be modified with extreme caution."""
 
 # LOCKSERVER OFF: we're only testing scheduling functionality here.
 [cylc]

@@ -27,10 +27,7 @@ parser = PromptOptionParser("""cylc [control] block [options] SUITE
 A blocked suite refuses to comply with intervention commands until
 deliberately unblocked. This is a crude security measure to guard
 against accidental intervention in your own suites. It may be a 
-useful aid when running multiple suites at once.
-
-(Not to be confused with the 'lock' and 'unlock' commands, which
-are associated with the cylc lockserver).""")
+useful aid when running multiple suites at once.""")
 
 (options, args) = parser.parse_args()
 

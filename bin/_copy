@@ -23,20 +23,25 @@ from cylc.mkdir_p import mkdir_p
 from cylc.registration import delimiter, delimiter_re, localdb, \
         centraldb, RegistrationError, SuiteTakenError, DatabaseLockedError
 
-parser = OptionParser( usage = """cylc [db] copy|cp [OPTIONS] FROM TO DIR
+parser = OptionParser( usage = """cylc [db] copy|cp [OPTIONS] SOURCE TARGET TOPDIR
 
-Make copies of suites or group of suites in your private suite database 
-(to copy suites from the central database use 'cylc import'). Suite
-definition directories are copied to sub-directories of DIR by
-translating the registration path into a directory path.
+Makes copies of suites or groups of suites in your private database (to
+get your own copies of suites in the central database use 'cylc import'). 
 
-Note that you can also register an existing suite under a different name
-(cylc register) or an alias (cylc alias). 
+If SOURCE is a suite, the suite definition directory will be copied to
+TOPDIR/TARGET and registered as TARGET.
+
+If SOURCE is a group containing suites SOURCE.REG1, SOURCE.REG2 etc.,
+the suite definitions will be copied to TOPDIR/TARGET/REG1_PATH etc.,
+where REG1_PATH is obtained by substituting '.' for '/' in REG1 etc.,
+and registered as TARGET.REG1 etc.
+
+Note that you do not need to create suite groups before using them.
 
 Arguments:
-    FROM - Source suite or group.
-    To   - Target suite or group.
-    DIR  - Destination for copied suite definition directories.""" )
+    SOURCE - Source suite or group name
+    TARGET - Target suite or group name
+    TOPDIR - Destination directory for copied suite definitions""" )
 
 parser.add_option( "--dry-run",
         help="Show what would be copied.",

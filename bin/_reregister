@@ -20,7 +20,7 @@ import sys
 from optparse import OptionParser
 from cylc.registration import dbgetter, RegistrationError, DatabaseLockedError
 
-parser = OptionParser( usage = """cylc [db] reregister [options] FROM TO
+parser = OptionParser( usage = """cylc [db] reregister|rename [options] FROM TO
 
 Change the registration path of a suite or group.
 
