@@ -1054,9 +1054,6 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, name + ": remote tasks must specify the remote cylc directory"
             if not taskconfig['remote']['log directory']:
                 raise SuiteConfigError, name + ": remote tasks must specify a remote log directory"
-            if not taskconfig['remote']['suite definition directory']:
-                print >> sys.stderr, 'WARNING: task ' + name + ' does not specify a remote suite directory'
-                print >> sys.stderr, '(this is only an error if the task needs access to the suite directory)'
 
             taskd.remote_shell_template = taskconfig['remote']['remote shell template']
             taskd.remote_cylc_directory = taskconfig['remote']['cylc directory']

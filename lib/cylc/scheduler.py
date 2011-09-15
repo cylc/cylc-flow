@@ -332,7 +332,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
         cylcenv[ 'CYLC_SUITE_REG_NAME' ] = self.suite
         cylcenv[ 'CYLC_SUITE_REG_PATH' ] = re.sub( delimiter_re, '/', self.suite )
-        cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
+        cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', self.suite_dir )
         cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner
         cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
         if self.use_lockserver:
