@@ -34,14 +34,19 @@ nested Python dict) will be printed verbatim.
 
 #________________________________________________________________EXAMPLE
 # excerpt from a suite definition registered as foo.bar.baz:
+title = local area implementation of modelX
 [cylc]
     [[lockserver]]
         enable = True
 [runtime]
     [[modelX]]
+        command scripting = run-model.sh
         [[[environment]]]
             OUTPUT_DIR=/oper/live/modelX/output
 #_______________________________________________________________________
+
+$ cylc get-config foo.bar.baz title
+$ local area implementation of modelX
 
 $ cylc get-config foo.bar.baz cylc lockserver enable
 $ True

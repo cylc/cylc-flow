@@ -1547,8 +1547,9 @@ The cylc forecast suite metascheduler.
         foo.run()
 
     def describe_suite( self, w, name ):
-        command = "cylc describe " + self.dbopt + " --notify-completion " + name  
-        foo = gcapture_tmpfile( command, self.tmpdir, 500, 400 )
+        command = """echo '> TITLE:'; cylc get-config """ + self.dbopt + name + """ title; echo
+echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion " + name + " description"
+        foo = gcapture_tmpfile( command, self.tmpdir, 800, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
 
