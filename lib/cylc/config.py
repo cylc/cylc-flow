@@ -1057,7 +1057,7 @@ class config( CylcConfigObj ):
             taskd.remote_cylc_directory = taskconfig['remote']['cylc directory']
             taskd.remote_suite_directory = taskconfig['remote']['suite definition directory']
             if not taskconfig['remote']['log directory']:
-                taskd.remote_log_directory  = taskd.job_submit_log_directory
+                taskd.remote_log_directory  = re.sub( os.environ['HOME'] + '/', '', taskd.job_submit_log_directory )
             else:
                 taskd.remote_log_directory  = taskconfig['remote']['log directory']
 
