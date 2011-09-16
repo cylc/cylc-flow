@@ -79,10 +79,6 @@ attempt will be made to action the command with the arguments reversed.
 
 For case insenstive matching use '(?i)PATTERN'.
 
-See also: 
-  cylc prep edit
-  cylc prep inline 
-
 Arguments:
   SUITE   - Suite database registration
   PATTERN - (list of) Python-style regular expression(s).

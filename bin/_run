@@ -39,7 +39,10 @@ tasks in previous cycles):
   1/ Cold start (the default) -- start from scratch with special tasks 
   2/ Warm start (-w,--warm)   -- assume a previous cycle 
   3/ Raw  start (-r,--raw)    -- assume nothing
-(These are all the same for a suite that has no intercycle dependencies).
+These are all the same for a suite that has no intercycle dependencies.
+Otherwise, cold start tasks should be defined in the suite.rc file:
+# SUITE.RC:
+[scheduling]->[[special tasks]]->cold-start = task1, task2, ...
 
 1/ COLD START -- start from scratch, with special one off "cold start
 tasks" to satisfy the initial dependencies of any tasks that normally
@@ -54,49 +57,29 @@ the cold, warm, and raw start methods. For a cold start, each task,
 including designated cold start tasks, starts in the 'waiting' state
 (i.e. prerequisites not satisfied) at the initial cycle time or at the
 next valid cycle time thereafter for the task. 
-  SUITE.RC: [special tasks] -> cold start = task1, task2, ...
 
-2/ WARM START:
-    This assumes that there was a previous cycle (from a previous suite
-run - in which case a 'cylc restart' may be an option too) or that files
-required from previous cycles have been put in place by some external
-means. Start up is as for a cold start, except that designated
-cold start tasks are inserted in the 'succeeded' state (i.e. outputs
-completed). The cold start task list must be defined in the suite config
-file:
-  SUITE.RC: [special tasks] -> cold start = task1, task2, ...
+2/ WARM START -- this assumes that there was a previous cycle (from a
+previous suite run - in which case a 'cylc restart' may be an option
+too) or that files required from previous cycles have been put in place
+by some external means. Start up is as for a cold start, except that
+designated cold start tasks are inserted in the 'succeeded' state (i.e.
+outputs completed).
 
-3/ RAW START:
-    This starts the suite as if in mid run without any special handling
-- any tasks that depend on previous cycles will have to be triggered
-manually. Start up is as for a cold start, except that designated
-cold start tasks are excluded from the suite. The cold start task list
-must be defined in the suite config file:
-  SUITE.RC: [special tasks] -> cold start = task1, task2, ...
-
-If you provide an initial cycle time on the command line, the suite.rc
-initial AND final cycle times, if set, will be ignored.
- 
-NOTE:
-  SUITE.RC: [special tasks]-> startup = task1, task2, ...
-Start up tasks are one off tasks that are used only in a cold start; any
-dependence on a start up task is ignored in subsequent cycles. This 
-allows you to make everything wait on one or more start up tasks that
-could, for example, clean out suite workspaces when a suite is started
-from scratch (cold start).
+3/ RAW START -- this starts the suite as if in mid run without any
+special handling - any tasks that depend on previous cycles will have to
+be triggered manually. Start up is as for a cold start, except that
+designated cold start tasks are excluded from the suite.
 
 NOTE: daemonize important suites with the POSIX nohup command:
   $ nohup cylc [con] run SUITE [START] > suite.out 2> suite.err &
 
-See also:
-    cylc [control] restart
-    cylc [control] stop|shutdown
-
 Arguments:
-   SUITE                Private database registration GROUP:NAME of the
-                        suite you want to run.
-   [START]              (optional) Initial cycle time (YYYYMMDDHH). This will
-                        override a start time set in the suite.rc file.""" 
+   SUITE                Target suite.
+   START                Initial cycle time. This is optional if defined in the 
+                        suite.rc file, in which case the command line
+                        takes priority (and a suite.rc final cycle time
+                        will be ignored), and is not required if the
+                        suite contains no cycling tasks.""" 
 
         self.parser = OptionParser( usage )
 

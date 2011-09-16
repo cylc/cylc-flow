@@ -34,12 +34,7 @@ Force a task's state to:
  
 Resetting a task to 'ready' will cause it to trigger immediately unless
 the suite is held, in which case the task will trigger when normal
-operation is resumed.
-
-See also:
-   cylc [control] trigger
-   cylc [control] hold
-   cylc [control] release""",
+operation is resumed.""",
 [ 'TASK                 The target task.'] )
 
 parser.add_option( "--ready", 

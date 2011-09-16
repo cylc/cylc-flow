@@ -24,7 +24,7 @@ a_hbar = '-'
 a_vbar = '|'
 a_tee = a_vbar + a_hbar
 a_trm = '`' + a_hbar
-a_exptee = '\|' + a_hbar
+a_tee_re = '\|' + a_hbar
 
 u_hbar = u'\u2500'
 u_vbar = u'\u2502'
@@ -48,12 +48,12 @@ def print_tree( tree, padding, unicode=False, prefix=''):
         vbar = u_vbar
         trm = u_trm
         tee = u_tee
-        exptee= tee
+        tee_re= tee
     else:
         vbar = a_vbar
         trm = a_trm
         tee = a_tee
-        exptee = a_exptee
+        tee_re = a_tee_re
 
     keys = tree.keys()
     keys.sort()
@@ -64,9 +64,9 @@ def print_tree( tree, padding, unicode=False, prefix=''):
             pprefix = prefix + ' ' + tee
 
         pp = pprefix
-        pp = re.sub( '^ (' + trm + '|' + tee + ')', '', pp )
+        pp = re.sub( '^ (' + trm + '|' + tee_re + ')', '', pp )
         pp = re.sub( trm + ' ', '  ', pp )
-        pp = re.sub( exptee + ' ', vbar + ' ', pp )
+        pp = re.sub( tee_re + ' ', vbar + ' ', pp )
 
         result = pp + item 
         line = result + padding[ len(result): ]

@@ -24,16 +24,15 @@ from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
 from cylc.registration import dbgetter, RegistrationError
 
-parser = PromptOptionParser( """cylc [control] remove|kill [options] SUITE TASK|TAG
+parser = PromptOptionParser( """cylc [control] remove|kill [options] SUITE TARGET
 
-Remove a task, or all tasks with a common TAG (cycle time or
+Remove a single task, or all tasks with a common TAG (cycle time or
 asynchronous 'a:INT'), from a running suite. 
-See also 'cylc [control] purge'.
 
-Target tasks will be forced to spawn successors before being removed, if
-they have not done so already (unless: --no-spawn).""",
-["""TASK                 Target task.
-   TAG                  Target cycle or asynchronous tag ('a:INTEGER')."""])
+Target tasks will be forced to spawn successors before being removed if
+they have not done so already, unless you use '--no-spawn'.""",
+["""TARGET      NAME%CYCLE or NAME%a:TAG to remove a single task;
+               CYCLE or a:TAG to remove all tasks with the same tag."""])
 
 parser.add_option( "--no-spawn", 
         help="Do not spawn successors before removal.",

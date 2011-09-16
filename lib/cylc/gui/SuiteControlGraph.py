@@ -25,22 +25,32 @@ from xstateview import xupdater
 #from warning_dialog import warning_dialog, info_dialog
 from cylc.cycle_time import ct
 from cylc.cylc_xdot import xdot_widgets
+from gcapture import gcapture_tmpfile
 
 class ControlGraph(ControlAppBase):
     """
 Dependency graph based GUI suite control interface.
     """
     def __init__(self, suite, owner, host, port, suite_dir, logging_dir,
-            imagedir, readonly=False ):
+            imagedir, tmpdir, readonly=False ):
 
         ControlAppBase.__init__(self, suite, owner, host, port,
                 suite_dir, logging_dir, imagedir, readonly=False )
 
         self.userguide_item.connect( 'activate', helpwindow.userguide, True )
 
+        self.tmpdir = tmpdir
+        self.gcapture_windows = []
+
         self.x = xupdater( self.suite, self.suiterc, self.owner, self.host, self.port,
                 self.label_mode, self.label_status, self.label_time, self.label_block, self.xdot )
         self.x.start()
+
+    def command_help( self, w, cat='', com='' ):
+        command = "cylc " + cat + " " + com + " help"
+        foo = gcapture_tmpfile( command, self.tmpdir, 700, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
 
     def get_control_widgets(self ):
         self.xdot = xdot_widgets()
@@ -510,10 +520,17 @@ class StandaloneControlGraphApp( ControlGraph ):
         gobject.threads_init()
         ControlGraph.__init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly )
  
+    def quit_gcapture( self ):
+        for gwindow in self.gcapture_windows:
+            if not gwindow.quit_already:
+                gwindow.quit( None, None )
+
     def delete_event(self, widget, event, data=None):
+        self.quit_gcapture()
         ControlGraph.delete_event( self, widget, event, data )
         gtk.main_quit()
 
     def click_exit( self, foo ):
+        self.quit_gcapture()
         ControlGraph.click_exit( self, foo )
         gtk.main_quit()

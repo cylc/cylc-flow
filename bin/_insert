@@ -26,13 +26,11 @@ from cylc.registration import dbgetter, RegistrationError
 
 parser = PromptOptionParser( """cylc [control] insert [options] SUITE TASK[%STOP]
 
-Insert a single task or a task group into a running suite. Task groups must be
-defined in the suite config (suite.rc) file. 
-
-Inserted tasks will spawn successors as normal, unless they are 'one off' tasks.
-See also 'cylc task submit', for running single tasks without a scheduler.""",
-[ 'TASK                 Target task or insertion group.',
-  'STOP                 Optional stop tag (e.g. final cycle time).' ]
+Insert a task into a running suite. Inserted tasks will spawn successors
+as normal unless they are 'one-off' tasks.
+See also 'cylc [task] submit', for running single tasks without the scheduler.""",
+[ 'TASK                 Task to insert (NAME%TAG).',
+  'STOP                 Optional stop TAG (e.g. a final cycle time).' ]
 )
 
 (options, args) = parser.parse_args()

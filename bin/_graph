@@ -40,11 +40,11 @@ parser = OptionParser( """1/ cylc [prep] graph [options] SUITE [START [STOP]]
 Plot cylc dependency graphs in a pannable, zoomable viewer.
 
 The viewer updates automatically when the suite.rc file is saved during
-editing. By default the full cold start graph is plotted, but you omit
+editing. By default the full cold start graph is plotted; you can omit
 cold start tasks with the '-w,--warmstart' option.  Specify the optional
 initial and final cycle time arguments to override the suite.rc defaults.
 
-Graph viewer controls:
+GRAPH VIEWER CONTROLS:
     * Left-click to center the graph on a node.
     * Left-drag to pan the view.
     * Zoom buttons, mouse-wheel, or ctrl-left-drag to zoom in and out.
@@ -52,9 +52,9 @@ Graph viewer controls:
     * "Best Fit" and "Normal Size" - self-explanatory.
 
 Arguments:
-  SUITE   - suite registration [OWNER:]GROUP:NAME
-  START   - (optional) Initial cycle time (YYYYMMDDHH) to plot.
-  STOP    - (optional) Final cycle time (YYYYMMDDHH) to plot (default=START).
+  SUITE   - Target suite. 
+  START   - Initial cycle time to plot (default=2999010100)
+  STOP    - Final cycle time to plot (default=START).
   """)
 
 #parser.add_option( "-l", "--live", 
@@ -65,7 +65,8 @@ Arguments:
 #    action="store_true", default=False, dest="updatelive" )
 
 parser.add_option( "-w", "--warmstart", 
-    help="Plot the raw start graph instead of cold start.",
+    help="Plot the mid-stream warm start graph (technically this is "
+    "termed a 'raw start' in cylc).",
     action="store_true", default=False, dest="rawstart" )
 
 parser.add_option( "-f", "--file", 

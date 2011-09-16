@@ -37,7 +37,8 @@ from cylc.gui.gcylc import MainApp
 from cylc.config import config, SuiteConfigError
 from cylc.registration import dbgetter, RegistrationError
 
-parser = OptionParser( """gcylc [SUITE]
+parser = OptionParser( """cylc gcylc [SUITE]
+       gcylc [SUITE]
 
 This is the cylc graphical user interface. It is functionally equivalent
 to the command line interface ('cylc help') in most respects.
@@ -58,10 +59,10 @@ suite control and monitoring interface; with it, the
 newer dependency graph based interface.
 
 NOTE: daemonize important suites with the POSIX nohup command:
-    $ nohup gcylc [options] [SUITE] &
+    $ nohup gcylc [options] SUITE &
 
 Arguments:
-    [SUITE]                  registered GROUP:NAME of a suite.""")
+    SUITE      Target suite.""")
 
 #parser.add_option( "--host",
 #        help="cylc suite host (defaults to localhost).",
@@ -135,8 +136,8 @@ else:
 
 if options.depgraph:
     from cylc.gui.SuiteControlGraph import StandaloneControlGraphApp
-    app = StandaloneControlGraphApp( suite, owner, host, port, suite_dir, logging_dir, imagedir )
+    app = StandaloneControlGraphApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, tmpdir )
 else:
     from cylc.gui.SuiteControlTree import StandaloneControlTreeApp
-    app = StandaloneControlTreeApp( suite, owner, host, port, suite_dir, logging_dir, imagedir )
+    app = StandaloneControlTreeApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, tmpdir )
 gtk.main()

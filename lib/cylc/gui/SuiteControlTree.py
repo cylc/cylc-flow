@@ -20,20 +20,24 @@ from SuiteControl import ControlAppBase
 import gtk
 import os, re
 import gobject
-from stateview import updater
 import helpwindow
+from stateview import updater
+from gcapture import gcapture_tmpfile
 
 class ControlTree(ControlAppBase):
     """
 Text treeview base GUI suite control interface.
     """
     def __init__(self, suite, owner, host, port, suite_dir, logging_dir,
-            imagedir, readonly=False ):
+            imagedir, tmpdir, readonly=False ):
 
         ControlAppBase.__init__(self, suite, owner, host, port,
                 suite_dir, logging_dir, imagedir, readonly=False )
 
         self.userguide_item.connect( 'activate', helpwindow.userguide, False )
+
+        self.tmpdir = tmpdir
+        self.gcapture_windows = []
 
         self.tfilt = ''
         self.full_task_headings()
@@ -42,6 +46,12 @@ Text treeview base GUI suite control interface.
                 self.ttreeview, self.task_list, self.label_mode,
                 self.label_status, self.label_time, self.label_block )
         self.t.start()
+
+    def command_help( self, w, cat='', com='' ):
+        command = "cylc " + cat + " " + com + " help"
+        foo = gcapture_tmpfile( command, self.tmpdir, 700, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
 
     def get_control_widgets( self ):
         # Load task list from suite config.
@@ -365,10 +375,17 @@ class StandaloneControlTreeApp( ControlTree ):
         gobject.threads_init()
         ControlTree.__init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly )
  
+    def quit_gcapture( self ):
+        for gwindow in self.gcapture_windows:
+            if not gwindow.quit_already:
+                gwindow.quit( None, None )
+
     def delete_event(self, widget, event, data=None):
+        self.quit_gcapture()
         ControlTree.delete_event( self, widget, event, data )
         gtk.main_quit()
 
     def click_exit( self, foo ):
+        self.quit_gcapture()
         ControlTree.click_exit( self, foo )
         gtk.main_quit()

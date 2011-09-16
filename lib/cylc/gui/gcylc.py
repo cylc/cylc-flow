@@ -81,7 +81,7 @@ class db_updater(threading.Thread):
             suite, suite_dir, descr = reg
             suite_dir = re.sub( '^' + os.environ['HOME'], '~', suite_dir )
             if suite in ports:
-                state = 'port ' + str(ports[suite])
+                state = str(ports[suite])
             else:
                 state = '-'
             nest2 = self.newtree
@@ -375,7 +375,7 @@ class MainApp(object):
         help_menu.append( guide_item )
         guide_item.connect( 'activate', helpwindow.main )
 
-        chelp_menu = gtk.MenuItem( 'Command Help' )
+        chelp_menu = gtk.MenuItem( 'All Commands' )
         help_menu.append( chelp_menu )
         self.construct_command_menu( chelp_menu )
 
@@ -415,7 +415,7 @@ class MainApp(object):
         self.regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'State', cr, text=1, foreground=4, background=5 )
+        tvc = gtk.TreeViewColumn( 'Port', cr, text=1, foreground=4, background=5 )
         tvc.set_resizable(True)
         # not sure how this sorting works
         #tvc.set_sort_column_id(1)
@@ -494,7 +494,7 @@ The cylc forecast suite metascheduler.
 
     def command_help( self, w, cat='', com='' ):
         command = "cylc " + cat + " " + com + " help"
-        foo = gcapture_tmpfile( command, self.tmpdir, 600, 600 )
+        foo = gcapture_tmpfile( command, self.tmpdir, 700, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
 

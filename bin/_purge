@@ -40,7 +40,7 @@ will be logged by cylc before the purge is actioned.)
 
 UNDERSTANDING HOW PURGE WORKS: cylc identifies tasks that depend on 
 the root task, and then on its downstream dependents, and then on
-theirs, etc., but simulating what would happen if the root task were to
+theirs, etc., by simulating what would happen if the root task were to
 trigger: it artificially sets the root task to the "succeeded" state
 then negotatiates dependencies and artificially sets any tasks whose
 prerequisites get satisfied to "succeeded"; then it negotiates
@@ -57,7 +57,7 @@ Consequently:
 [development note: post cylc-3.0 we should be able to identify tasks
 that depend on the purge root by using the suite dependency graph, even
 if they have not spawned into the cycle time of the root yet.]""",
-["TASK                 Task at which to start the purge.",
+["TASK                 Task (NAME%CYCLE) at which to start the purge.",
  "STOP                 Cycle time (inclusive!) at which to stop purging."] )
 
 (options, args) = parser.parse_args()

@@ -37,11 +37,7 @@ parser = PromptOptionParser( """cylc [control] stop|shutdown [options] SUITE [ST
 3/ With [--now], shut down immediately, regardless of tasks still running.
    WARNING: beware of orphaning tasks that are still running at shutdown;
    these may need to be killed manually, and they will (by default) be
-   resubmitted if the suite is restarted.
-
-See also:
-    cylc [control] start|run
-    cylc [control] restart""", 
+   resubmitted if the suite is restarted.""",
     [ """STOP                 a/ task TAG (cycle time or 'a:INTEGER'), or
                         b/ YYYY/MM/DD-HH:mm (clock time), or
                         c/ TASK (task ID).""" ] )

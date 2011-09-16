@@ -25,23 +25,61 @@ from cylc.registration import delimiter, delimiter_re, localdb, \
 
 parser = OptionParser( usage = """cylc [db] copy|cp [OPTIONS] SOURCE TARGET TOPDIR
 
-Makes copies of suites or groups of suites in your private database (to
-get your own copies of suites in the central database use 'cylc import'). 
+Make copies of suites, or groups of suites, in your private database
+(to get copies of suites in the central database use 'cylc import'). 
 
-If SOURCE is a suite, the suite definition directory will be copied to
-TOPDIR/TARGET and registered as TARGET.
+Cylc suites have hierarchical "registration names" that are analogous to
+file paths in a directory tree (but which are not necessarily related to
+the actual directory paths in which the suite definitions are stored!).
+Consider the following three suites:
 
-If SOURCE is a group containing suites SOURCE.REG1, SOURCE.REG2 etc.,
-the suite definitions will be copied to TOPDIR/TARGET/REG1_PATH etc.,
-where REG1_PATH is obtained by substituting '.' for '/' in REG1 etc.,
-and registered as TARGET.REG1 etc.
+% cylc db print '^foo'     # printed in flat form
+foo.bag     | "Test Suite Zero" | /tmp/oliverh/zero
+foo.bar.waz | "Test Suite Two"  | /tmp/oliverh/two
+foo.bar.baz | "Test Suite One"  | /tmp/oliverh/one
 
-Note that you do not need to create suite groups before using them.
+% cylc db print -t '^foo'  # printed in tree from
+foo      
+ |-bag    "Test Suite Zero" | /tmp/oliverh/zero
+ `-bar   
+   |-baz  "Test Suite One"  | /tmp/oliverh/one
+   `-waz  "Test Suite Two"  | /tmp/oliverh/two
+
+These suites are stored in a flat directory structure under $TMPDIR, but
+they are organised in the suite database as a group 'foo' that contains
+the suite 'foo.bag' and a group 'foo.bar', which in turn contains the
+suites 'foo.bar.baz' and 'foo.bar.waz'.
+
+When you copy suites with this command, the target registration names
+are determined by TARGET and the name structure underneath SOURCE, and
+the suite definition directories are copied into a directory tree under
+TOPDIR whose structure reflects the target registration names. If this
+is not what you want, you can copy suite definition directories manually
+and then register the copied directories manually with 'cylc register'.
+
+EXAMPLES (using the three suites above):
+
+% cylc db copy foo.bar.baz red $TMPDIR       # suite to suite
+  Copying suite definition for red
+% cylc db print '^red'
+  red | "Test Suite One" | /tmp/oliverh/red
+
+% cylc copy foo.bar.baz blue.green $TMPDIR   # suite to group
+  Copying suite definition for blue.green
+% cylc db pr '^blue'
+  blue.green | "Test Suite One" | /tmp/oliverh/blue/green
+
+% cylc copy foo.bar orange $TMPDIR           # group to group
+  Copying suite definition for orange.waz
+  Copying suite definition for orange.baz
+% cylc db pr '^orange'
+  orange.waz | "Test Suite Two" | /tmp/oliverh/orange/waz
+  orange.baz | "Test Suite One" | /tmp/oliverh/orange/baz
 
 Arguments:
     SOURCE - Source suite or group
     TARGET - Target suite or group
-    TOPDIR - Destination directory for copied suite definitions""" )
+    TOPDIR - Destination for copied suite definition directories""" )
 
 parser.add_option( "--dry-run",
         help="Show what would be copied.",
