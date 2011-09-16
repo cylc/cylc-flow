@@ -14,12 +14,13 @@ A suite containing families with extra-family dependencies."""
 A => FAMx => B => FAMy => C
 # internal:
 x1 => x2 
-y1 => y2
-# extra-family:
-v => x1
-x1 => w
 # member of one family to member of another:
-x1 => y1 
+x2 => y2
+# extra-family:
+y1 => D => y2
+E => x1 => F
+x1 | x2 => G
+y1 | H => I
                     """
 [runtime]
     [[FAMx,FAMy]]
