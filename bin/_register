@@ -22,14 +22,39 @@ from cylc.registration import localdb, RegistrationError, DatabaseLockedError
 
 parser = OptionParser( usage = """cylc [db] register [options] SUITE PATH
 
-Register a suite in your private suite database. Suite registrations
-associate a GROUP and a NAME with a suite definition directory. This 
-must be done before you can use a suite - cylc commands reference a
-particular suite by its GROUP:NAME.
+Register a suite in your private suite database.
+
+Cylc commands target suites via names registered in a suite database so
+that you don't need to continually re-type the actual location of the
+suite definition directory on disk. Suite names are hierarchical like
+directory paths but delimited by '.' (foo.bar.baz), allowing suites to
+be grouped and organised into tree-like structures. Groups are virtual
+and do not need to be explicitly created before use.
+
+EXAMPLES, for suite definition directories $TMPDIR/(one,two,three,four):
+
+% cylc db reg bob         $TMPDIR/one
+% cylc db reg foo.bag     $TMPDIR/two
+% cylc db reg foo.bar.baz $TMPDIR/three
+% cylc db reg foo.bar.waz $TMPDIR/four
+
+% cylc db pr '^foo'             # print in flat form
+  bob         | "Test Suite One"   | /tmp/oliverh/one
+  foo.bag     | "Test Suite Two"   | /tmp/oliverh/two
+  foo.bar.baz | "Test Suite Four"  | /tmp/oliverh/three
+  foo.bar.waz | "Test Suite Three" | /tmp/oliverh/four
+
+% cylc db pr -t '^foo'          # print in tree form
+  bob        "Test Suite One"   | /tmp/oliverh/one
+  foo      
+   |-bag     "Test Suite Two"   | /tmp/oliverh/two
+   `-bar   
+     |-baz   "Test Suite Three" | /tmp/oliverh/three
+     `-waz   "Test Suite Four"  | /tmp/oliverh/four
 
 Arguments:
-     SUITE  -  Private suite database registration GROUP:NAME
-     PATH   -  A cylc suite definition directory location.""" )
+     SUITE  -  The new hierarchical suite registration name.
+     PATH   -  A cylc suite definition directory.""" )
 
 ( options, args ) = parser.parse_args()
 

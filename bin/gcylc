@@ -136,8 +136,8 @@ else:
 
 if options.depgraph:
     from cylc.gui.SuiteControlGraph import StandaloneControlGraphApp
-    app = StandaloneControlGraphApp( suite, owner, host, port, suite_dir, logging_dir, imagedir )
+    app = StandaloneControlGraphApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, tmpdir )
 else:
     from cylc.gui.SuiteControlTree import StandaloneControlTreeApp
-    app = StandaloneControlTreeApp( suite, owner, host, port, suite_dir, logging_dir, imagedir )
+    app = StandaloneControlTreeApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, tmpdir )
 gtk.main()

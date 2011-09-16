@@ -196,7 +196,6 @@ utility_commands = OrderedDict()
 utility_commands['cycletime'    ] = ['cycletime' ]
 utility_commands['checkvars'    ] = ['checkvars'] 
 utility_commands['template'     ] = ['template'] 
-utility_commands['jobscript'    ] = ['jobscript'] 
 utility_commands['housekeeping' ] = ['housekeeping'] 
 utility_commands['scp-transfer' ] = ['scp-transfer'] 
 utility_commands['email-alert'  ] = ['email-alert'] 
@@ -230,6 +229,7 @@ preparation_commands['validate'] = [ 'validate'    ]
 preparation_commands['search'  ] = [ 'search', 'grep' ]
 preparation_commands['graph'   ] = [ 'graph'    ]
 preparation_commands['diff'    ] = [ 'diff', 'compare' ]
+preparation_commands['jobscript' ] = ['jobscript'] 
 
 discovery_commands = OrderedDict()
 discovery_commands['ping'] = [ 'ping' ]
@@ -287,21 +287,19 @@ usage = """cylc release version: """ + cylc_version + """
 Commands and categories can be abbreviated. Use of categories is
 optional, but they can disambiguate highly abbreviated commands:
   $ cylc control trigger SUITE TASK  # trigger TASK in SUITE
+  $ cylc trigger SUITE TASK          # ditto
   $ cylc con trig SUITE TASK         # ditto
-  $ cylc c t SUITE TASK              # ditto!
-  $ cylc trigger SUITE TASK          # use of categories is optional
+  $ cylc c t SUITE TASK              # ditto
 
-SUITE - cylc commands target suites via database registrations, so you
-don't need to remember the location of the suite definition on disk. 
-Suite registrations can be organised like a directory tree, but with a
-dot delimiter: baz, bar.baz, foo.bar.baz, foo.bar.baz-test, and so on.
+SUITE - cylc commands target suites via names registered in a suite
+database so that you don't need to continually re-type the actual
+location of the suite definition directory on disk. Suite names are
+hierarchical like directory paths but delimited by '.' (foo.bar.baz),
+allowing suites to be grouped and organised into tree-like structures.
 
-TASK - the unique identitifier of a task in a suite is NAME%TAG, where
+TASK - is a unique identitifier of a task in a suite: NAME%TAG, where
 for cycling tasks TAG is a cycle time (YYYYMMDDHH) and for asynchronous
 tasks it is an integer (preceded by 'a:' on the command line: foo%a:1).
-
-Example: to remove a task 'foo%2011080806' from a running suite 'oper':
-  $ cylc remove oper foo%2011080806
 
 Here's how to drill down to command usage help for a particular command:
   $ cylc help ............... list all available categories (this page)

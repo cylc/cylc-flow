@@ -44,7 +44,7 @@ def check_suite_spec( name ):
     return suite_dir
 
 def check_task_spec( task_spec ):
-    # GROUP:NAME:TASK%CYCLE_TIME
+    # SUITE:TASK%CYCLE_TIME
     try:
         suite, task_id = task_spec.split( ':' )
     except:

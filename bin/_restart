@@ -45,16 +45,11 @@ cut-and-paste the filename from the log to the command line).
 NOTE: daemonize important suites with the POSIX nohup command:
     nohup cylc [con] restart SUITE YYYYMMDDHH > suite.out 2> suite.err &
 
-See also:
-    cylc [control] run
-    cylc [control] stop|shutdown
-
 Arguments:
-   SUITE                Private database registration GROUP:NAME of the
-                        suite you want to restart.
-   [FILE]               Optional non-default state dump file (assumed to
-                        be in the suite state dump directory unless you
-                        supply the file path).""" 
+   SUITE                Target suite.
+   FILE                 Optional non-default state dump file (assumed to
+                        reside in the suite state dump directory unless
+                        you give the full path).""" 
 
         self.parser = OptionParser( usage )
         self.parser.add_option( "--no-reset", 

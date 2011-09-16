@@ -375,7 +375,7 @@ class MainApp(object):
         help_menu.append( guide_item )
         guide_item.connect( 'activate', helpwindow.main )
 
-        chelp_menu = gtk.MenuItem( 'Command Help' )
+        chelp_menu = gtk.MenuItem( 'All Commands' )
         help_menu.append( chelp_menu )
         self.construct_command_menu( chelp_menu )
 

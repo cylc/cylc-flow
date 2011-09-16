@@ -28,12 +28,7 @@ parser = PromptOptionParser( """cylc [control] trigger [options] SUITE TASK
 
 Force a task to trigger immediately (unless the suite is paused, 
 in which case it will trigger when normal operation is resumed).
-This is just a special case of the 'reset' command.
-
-See also:
-   cylc [control] reset
-   cylc [control] hold
-   cylc [control] release""",
+This is just a special case of the 'reset' command.""",
 [ 'TASK                 The target task.'] )
 
 (options, args) = parser.parse_args()

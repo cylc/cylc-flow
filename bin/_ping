@@ -26,7 +26,7 @@ parser = NoPromptOptionParser_u( """cylc [discover] ping [options] SUITE
 Check that SUITE is running. 
 
 Arguments:
-SUITE             Target suite registration GROUP:NAME.""" )
+SUITE             Target suite.""" )
 
 parser.add_option( "--print-ports",
         help="Print cylc's configured port range.",

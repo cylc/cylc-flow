@@ -104,10 +104,7 @@ You can set both $GEDITOR and $EDITOR to a GUI editor if you like, but
 $GEDITOR at least *must* be a GUI editor, or an in-terminal invocation 
 of a non-GUI editor, if you want to spawn editing sessions via gcylc.
 
-See also:
-    cylc prep search
-    cylc prep edit
-    cylc prep validate
+See also: cylc prep edit
 
 Arguments:
   SUITE   - suite registration""")

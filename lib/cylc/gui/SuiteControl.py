@@ -329,20 +329,30 @@ The cylc forecast suite metascheduler.
 
         return False
 
+    def jobscript( self, w, suite, task ):
+        command = "cylc jobscript " + suite + " " + task
+        foo = gcapture_tmpfile( command, self.tmpdir, 800, 800 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
     def get_right_click_menu_items( self, task_id ):
         name, ctime = task_id.split('%')
 
         items = []
 
-        js_item = gtk.MenuItem( 'View Job Script' )
+        js_item = gtk.MenuItem( 'View The Job Script' )
         items.append( js_item )
         js_item.connect( 'activate', self.view_task_info, task_id, True )
 
-        info_item = gtk.MenuItem( 'View Output' )
+        js2_item = gtk.MenuItem( 'View New Job Script' )
+        items.append( js2_item )
+        js2_item.connect( 'activate', self.jobscript, self.suite, task_id )
+
+        info_item = gtk.MenuItem( 'View Task Output' )
         items.append( info_item )
         info_item.connect( 'activate', self.view_task_info, task_id, False )
 
-        info_item = gtk.MenuItem( 'View State' )
+        info_item = gtk.MenuItem( 'View Task State' )
         items.append( info_item )
         info_item.connect( 'activate', self.popup_requisites, task_id )
 
@@ -428,12 +438,15 @@ The cylc forecast suite metascheduler.
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
         vbox = gtk.VBox()
-        label = gtk.Label( 'Limit in HOURS (omit for no limit)' )
 
+        label = gtk.Label( 'SUITE: ' + self.suite )
+        vbox.pack_start( label, True )
+ 
         entry = gtk.Entry()
         #entry.connect( "activate", self.change_runahead_entry, window, task_id )
 
         hbox = gtk.HBox()
+        label = gtk.Label( 'HOURS' )
         hbox.pack_start( label, True )
         hbox.pack_start (entry, True)
         vbox.pack_start( hbox )
@@ -445,7 +458,7 @@ The cylc forecast suite metascheduler.
         start_button.connect("clicked", self.change_runahead, entry, window )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.change_runahead )
+        help_button.connect("clicked", self.command_help, "control", "maxrunahead" )
 
         hbox = gtk.HBox()
         hbox.pack_start( cancel_button, True )
@@ -486,17 +499,23 @@ The cylc forecast suite metascheduler.
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title( "Add A Prequisite To " + task_id )
+        window.set_title( "Add A Prequisite" )
         #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
         vbox = gtk.VBox()
-        label = gtk.Label( 'Task (NAME%YYYYMMDDHH) or prerequisite message' )
+
+        label = gtk.Label( 'SUITE: ' + self.suite )
+        vbox.pack_start( label, True )
+
+        label = gtk.Label( 'TASK: ' + task_id )
+        vbox.pack_start( label, True )
+         
+        label = gtk.Label( 'DEP (NAME%TAG or message)' )
 
         entry = gtk.Entry()
-        #entry.connect( "activate", self.add_prerequisite_entry, window, task_id )
 
         hbox = gtk.HBox()
         hbox.pack_start( label, True )
@@ -509,13 +528,14 @@ The cylc forecast suite metascheduler.
         start_button = gtk.Button( "_Add" )
         start_button.connect("clicked", self.add_prerequisite, entry, window, task_id )
 
-        hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, True )
-        hbox.pack_start(start_button, True)
-        vbox.pack_start( hbox )
-
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.add_prerequisite )
+        help_button.connect("clicked", self.command_help, "control", "depend" )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( start_button, True)
+        hbox.pack_start( help_button, True )
+        hbox.pack_start( cancel_button, True )
+        vbox.pack_start( hbox )
 
         window.add( vbox )
         window.show_all()
@@ -659,8 +679,20 @@ The cylc forecast suite metascheduler.
             msg = "hold " + task_id + "?"
         else:
             msg = "release " + task_id + "?"
+
         prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+
+        prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
         response = prompt.run()
+
+        while response == gtk.RESPONSE_HELP:
+            if stop:
+                self.command_help( "control", "hold" )
+            else:
+                self.command_help( "control", "release" )
+
+            response = prompt.run()
+
         prompt.destroy()
         if response != gtk.RESPONSE_OK:
             return
@@ -683,7 +715,14 @@ The cylc forecast suite metascheduler.
     def reset_task_state( self, b, task_id, state ):
         msg = "reset " + task_id + " to " + state +"?"
         prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+
+        prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
         response = prompt.run()
+
+        while response == gtk.RESPONSE_HELP:
+            self.command_help( "control", "reset" )
+            response = prompt.run()
+
         prompt.destroy()
         if response != gtk.RESPONSE_OK:
             return
@@ -701,8 +740,16 @@ The cylc forecast suite metascheduler.
 
     def kill_task( self, b, task_id ):
         msg = "remove " + task_id + " (after spawning)?"
+
         prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+
+        prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
         response = prompt.run()
+
+        while response == gtk.RESPONSE_HELP:
+            self.command_help( "control", "remove" )
+            response = prompt.run()
+
         prompt.destroy()
         if response != gtk.RESPONSE_OK:
             return
@@ -720,7 +767,14 @@ The cylc forecast suite metascheduler.
     def kill_task_nospawn( self, b, task_id ):
         msg = "remove " + task_id + " (without spawning)?"
         prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+
+        prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
         response = prompt.run()
+
+        while response == gtk.RESPONSE_HELP:
+            self.command_help( "control", "remove" )
+            response = prompt.run()
+
         prompt.destroy()
         if response != gtk.RESPONSE_OK:
             return
@@ -768,12 +822,16 @@ The cylc forecast suite metascheduler.
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title( "Stop Suite '" + self.suite + "'")
+        window.set_title( "Stop Suite")
 
         vbox = gtk.VBox()
 
-        flabel = gtk.Label( "Shut down the suite:" )
+        flabel = gtk.Label( "SUITE: " + self.suite )
         vbox.pack_start (flabel, True)
+
+        flabel = gtk.Label( "Stop the suite when?" )
+        vbox.pack_start (flabel, True)
+
 
         stop_rb = gtk.RadioButton( None, "After running tasks have finished" )
         vbox.pack_start (stop_rb, True)
@@ -783,7 +841,7 @@ The cylc forecast suite metascheduler.
         vbox.pack_start (stopat_rb, True)
 
         st_box = gtk.HBox()
-        label = gtk.Label( "Cycle or 'a:INT'" )
+        label = gtk.Label( "STOP (cycle or 'a:INT')" )
         st_box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(10)
@@ -796,7 +854,7 @@ The cylc forecast suite metascheduler.
         vbox.pack_start (stopct_rb, True)
 
         sc_box = gtk.HBox()
-        label = gtk.Label( 'YYYY/MM/DD-HH:mm' )
+        label = gtk.Label( 'STOP (YYYY/MM/DD-HH:mm)' )
         sc_box.pack_start( label, True )
         stopclock_entry = gtk.Entry()
         stopclock_entry.set_max_length(16)
@@ -811,7 +869,7 @@ The cylc forecast suite metascheduler.
         stop_rb.set_active(True)
 
         tt_box = gtk.HBox()
-        label = gtk.Label( 'NAME%TAG' )
+        label = gtk.Label( 'STOP (task NAME%TAG)' )
         tt_box.pack_start( label, True )
         stoptask_entry = gtk.Entry()
         stoptask_entry.set_sensitive(False)
@@ -834,7 +892,7 @@ The cylc forecast suite metascheduler.
                 stoptime_entry, stopclock_entry, stoptask_entry )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.shutdown_guide )
+        help_button.connect("clicked", self.command_help, "control", "stop" )
 
         hbox = gtk.HBox()
         hbox.pack_start( stop_button, False )
@@ -895,7 +953,7 @@ The cylc forecast suite metascheduler.
         vbox.pack_start( box )
 
         ic_box = gtk.HBox()
-        label = gtk.Label( 'Initial Cycle (may be optional)' )
+        label = gtk.Label( 'START (cycle, may be optional)' )
         ic_box.pack_start( label, True )
         ctime_entry = gtk.Entry()
         ctime_entry.set_max_length(10)
@@ -905,7 +963,7 @@ The cylc forecast suite metascheduler.
         vbox.pack_start( ic_box )
 
         fc_box = gtk.HBox()
-        label = gtk.Label( 'Final Cycle (always optional)' )
+        label = gtk.Label( 'STOP (cycle, always optional)' )
         fc_box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(10)
@@ -915,7 +973,7 @@ The cylc forecast suite metascheduler.
         vbox.pack_start( fc_box )
 
         is_box = gtk.HBox()
-        label = gtk.Label( 'Initial State (FILE)' )
+        label = gtk.Label( 'FILE (state dump, optional)' )
         is_box.pack_start( label, True )
         statedump_entry = gtk.Entry()
         statedump_entry.set_text( 'state' )
@@ -958,13 +1016,17 @@ The cylc forecast suite metascheduler.
                 ctime_entry, stoptime_entry, no_reset_cb, 
                 statedump_entry, optgroups )
 
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.start_guide )
+        help_run_button = gtk.Button( "_Help Run" )
+        help_run_button.connect("clicked", self.command_help, "control", "run" )
+
+        help_restart_button = gtk.Button( "_Help Restart" )
+        help_restart_button.connect("clicked", self.command_help, "control", "restart" )
 
         hbox = gtk.HBox()
         hbox.pack_start( start_button, False )
         hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
+        hbox.pack_end( help_run_button, False )
+        hbox.pack_end( help_restart_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -993,20 +1055,20 @@ The cylc forecast suite metascheduler.
         hbox.pack_start (entry, True)
         vbox.pack_start( hbox )
 
-        cancel_button = gtk.Button( "_Cancel" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
         start_button = gtk.Button( "_Purge" )
         start_button.connect("clicked", self.purge_cycle_button, entry, window, task_id )
 
-        hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, True )
-        hbox.pack_start(start_button, True)
-        vbox.pack_start( hbox )
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", self.command_help, "control", "purge" )
 
-        # TO DO:
-        #help_button = gtk.Button( "Help" )
-        #help_button.connect("clicked", self.purge_guide )
+        cancel_button = gtk.Button( "_Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( start_button, True)
+        hbox.pack_start( help_button, True)
+        hbox.pack_start( cancel_button, True )
+        vbox.pack_start( hbox )
 
         window.add( vbox )
         window.show_all()
@@ -1044,7 +1106,7 @@ The cylc forecast suite metascheduler.
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title( "Insert a Task or Insertion Group" )
+        window.set_title( "Insert Task" )
         #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
@@ -1052,15 +1114,18 @@ The cylc forecast suite metascheduler.
 
         vbox = gtk.VBox()
 
+        label = gtk.Label( 'SUITE: ' + self.suite )
+        vbox.pack_start( label, True )
+ 
         hbox = gtk.HBox()
-        label = gtk.Label( 'Task or Group ID' )
+        label = gtk.Label( 'TASK (NAME%TAG)' )
         hbox.pack_start( label, True )
         entry_taskorgroup = gtk.Entry()
         hbox.pack_start (entry_taskorgroup, True)
         vbox.pack_start(hbox)
 
         hbox = gtk.HBox()
-        label = gtk.Label( 'Final TAG (optional)' )
+        label = gtk.Label( 'STOP (optional final tag, temporary tasks)' )
         hbox.pack_start( label, True )
         entry_stoptag = gtk.Entry()
         entry_stoptag.set_max_length(10)
@@ -1068,7 +1133,7 @@ The cylc forecast suite metascheduler.
         vbox.pack_start(hbox)
  
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.insertion )
+        help_button.connect("clicked", self.command_help, "control", "insert" )
 
         hbox = gtk.HBox()
         insert_button = gtk.Button( "_Insert" )
@@ -1261,6 +1326,10 @@ The cylc forecast suite metascheduler.
         self.userguide_item = gtk.MenuItem( '_GUI Quick Guide' )
         help_menu.append( self.userguide_item )
 
+        chelp_menu = gtk.MenuItem( 'Control Commands' )
+        help_menu.append( chelp_menu )
+        self.construct_command_menu( chelp_menu )
+
         cug_pdf_item = gtk.MenuItem( 'Cylc User Guide (_PDF)' )
         help_menu.append( cug_pdf_item )
         cug_pdf_item.connect( 'activate', self.launch_cug, True )
@@ -1282,6 +1351,18 @@ The cylc forecast suite metascheduler.
         self.menu_bar.append( view_menu_root )
         self.menu_bar.append( start_menu_root )
         self.menu_bar.append( help_menu_root )
+
+    def construct_command_menu( self, menu ):
+        com_menu = gtk.Menu()
+        menu.set_submenu( com_menu )
+        cout = subprocess.Popen( ["cylc", "category=control" ], stdout=subprocess.PIPE ).communicate()[0]
+        commands = cout.rstrip().split()
+        for command in commands:
+            if command == "gcylc":
+                continue
+            bar_item = gtk.MenuItem( command )
+            com_menu.append( bar_item )
+            bar_item.connect( 'activate', self.command_help, "control", command )
 
     def create_info_bar( self ):
         self.label_status = gtk.Label( "status..." )

@@ -20,7 +20,7 @@ set -e
 
 usage() {
     echo ""
-    echo "USAGE: cylc [util] jobscript [options] SUITE TASK"
+    echo "USAGE: cylc [prep] jobscript [options] SUITE TASK"
     echo ""
     echo "Generate a task job script and print it to stdout."
     echo ""
@@ -35,9 +35,9 @@ usage() {
     echo "  -h,--help   - print this usage message."
     echo ""
     echo "Arguments:"
-    echo "  SUITE       - GROUP:NAME of the target suite."
-    echo "  TASK        - Task NAME or ID (NAME%CYCLE_TIME)"
-    echo "       (if you omit cycle time one will be supplied)."
+    echo "  SUITE       - Target suite."
+    echo "  TASK        - Task NAME or NAME%YYYYMMDDHH (if you omit"
+    echo "                the cycle time 2999010100 will be used)."
 }
 
 if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then
