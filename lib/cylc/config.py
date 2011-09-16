@@ -184,7 +184,7 @@ class config( CylcConfigObj ):
             ##print 'Extra entry in section: %s. Entry %r is a %s' % (section_string, name, section_or_value)
 
             # Ignore any entries beginning with "_" so that they can be used for string interpolation
-            if not re.search( '^_', name ):
+            if not name.startswith( '_' ):
                 extra = ' '
                 for sec in sections:
                     extra += sec + ' -> '
