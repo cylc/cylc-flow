@@ -185,7 +185,7 @@ class job_submit(object):
         # Construct self.command, the command to submit the jobfile to run
         self.construct_jobfile_submission_command()
     
-        if self.local:
+        if self.local or self.simulation_mode:
             stdin = None
             command = self.command
         else:
