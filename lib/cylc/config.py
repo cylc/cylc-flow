@@ -1063,17 +1063,17 @@ class config( CylcConfigObj ):
         taskd.manual_messaging = taskconfig['manual task completion messaging']
 
         # task-specific event hook scripts
-        taskd.hook_scripts[ 'submitted' ]         = taskconfig['event hooks']['submitted script']
-        taskd.hook_scripts[ 'submission failed' ] = taskconfig['event hooks']['submission failed script']
-        taskd.hook_scripts[ 'started'   ]         = taskconfig['event hooks']['started script'  ]
-        taskd.hook_scripts[ 'warning'   ]         = taskconfig['event hooks']['warning script'  ]
-        taskd.hook_scripts[ 'succeeded' ]         = taskconfig['event hooks']['succeeded script' ]
-        taskd.hook_scripts[ 'failed'    ]         = taskconfig['event hooks']['failed script'   ]
-        taskd.hook_scripts[ 'timeout'   ]         = taskconfig['event hooks']['timeout script'  ]
+        taskd.hook_scripts[ 'submitted' ]         = taskconfig['task event hook scripts']['submitted']
+        taskd.hook_scripts[ 'submission failed' ] = taskconfig['task event hook scripts']['submission failed']
+        taskd.hook_scripts[ 'started'   ]         = taskconfig['task event hook scripts']['started'  ]
+        taskd.hook_scripts[ 'warning'   ]         = taskconfig['task event hook scripts']['warning'  ]
+        taskd.hook_scripts[ 'succeeded' ]         = taskconfig['task event hook scripts']['succeeded' ]
+        taskd.hook_scripts[ 'failed'    ]         = taskconfig['task event hook scripts']['failed'   ]
+        taskd.hook_scripts[ 'timeout'   ]         = taskconfig['task event hook scripts']['timeout'  ]
         # task-specific timeout hook scripts
-        taskd.timeouts[ 'submission'    ]     = taskconfig['event hooks']['submission timeout in minutes']
-        taskd.timeouts[ 'execution'     ]     = taskconfig['event hooks']['execution timeout in minutes' ]
-        taskd.timeouts[ 'reset on incoming' ] = taskconfig['event hooks']['reset execution timeout on incoming messages']
+        taskd.timeouts[ 'submission'    ]     = taskconfig['task event hook scripts']['submission timeout in minutes']
+        taskd.timeouts[ 'execution'     ]     = taskconfig['task event hook scripts']['execution timeout in minutes' ]
+        taskd.timeouts[ 'reset on incoming' ] = taskconfig['task event hook scripts']['reset execution timeout on incoming messages']
 
         taskd.logfiles    = taskconfig[ 'extra log files' ]
         taskd.environment = taskconfig[ 'environment' ]
