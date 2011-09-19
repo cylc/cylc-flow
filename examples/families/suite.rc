@@ -3,6 +3,10 @@ title = "A complex task family example"
 description = """
 A suite containing families with extra-family dependencies."""
 
+# Also tests ConfigObj string interpolation
+# (with cylc ignoring items that begin with '_')
+_hello = HELLO
+
 [scheduling]
     [[special tasks]]
         sequential = FAMx 
@@ -23,6 +27,9 @@ x1 | x2 => G
 y1 | H => I
                     """
 [runtime]
+    [[root]]
+        # Use string interpolation here:
+        command scripting = "echo Running on $(hostname) in $PWD: %(_hello)s; sleep 10; echo BYE"
     [[FAMx,FAMy]]
     [[x1,x2]]
         inherit = FAMx

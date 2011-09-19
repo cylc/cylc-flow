@@ -1055,7 +1055,6 @@ class config( CylcConfigObj ):
         taskd.job_submit_command_template = taskconfig['job submission']['command template']
 
         taskd.job_submit_log_directory = taskconfig['job submission']['log directory']
-        # this is only used locally, so interpolate environment variables out now:
 
         # Remotely hosted tasks
         if taskconfig['remote']['host'] or taskconfig['remote']['owner']:
@@ -1066,10 +1065,10 @@ class config( CylcConfigObj ):
             taskd.remote_shell_template = taskconfig['remote']['remote shell template']
             taskd.remote_cylc_directory = taskconfig['remote']['cylc directory']
             taskd.remote_suite_directory = taskconfig['remote']['suite definition directory']
-            if not taskconfig['remote']['log directory']:
-                taskd.remote_log_directory  = re.sub( os.environ['HOME'] + '/', '', taskd.job_submit_log_directory )
-            else:
+            if taskconfig['remote']['log directory']:
                 taskd.remote_log_directory  = taskconfig['remote']['log directory']
+            else:
+                taskd.remote_log_directory  = re.sub( os.environ['HOME'] + '/', '', taskd.job_submit_log_directory )
 
         taskd.manual_messaging = taskconfig['manual task completion messaging']
 
