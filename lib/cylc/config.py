@@ -116,7 +116,7 @@ class edge( object):
         return left + '%' + str(tag)  # str for int tag (async)
 
 class config( CylcConfigObj ):
-    def __init__( self, suite, suiterc, simulation_mode=False, verbose=False ):
+    def __init__( self, suite, suiterc, simulation_mode=False, verbose=True ):
         self.simulation_mode = simulation_mode
         self.verbose = verbose
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]

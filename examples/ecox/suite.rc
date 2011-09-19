@@ -1,5 +1,5 @@
 title = EcoConnect Operational Suite
-description = EcoConnect Operation, circa August 2011
+description = "EcoConnect Operation, circa August 2011"
 
 # This is a version of the NIWA suite ecoconnect suite with some
 # operational settings removed (e.g. remote task ownership and 
