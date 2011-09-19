@@ -219,7 +219,7 @@ description = "EcoConnect Operation, circa August 2011"
 
 [visualization]
     #use node color for edges = False
-    #collapsed families = NZWAVE, NZTIDE, NCEP, RICOM, TOPNET, MOS, #GLOBALWAVE, #GLOBALNWP, #CLEANUP, #UKMO, OPS, VAR#, GEN#, NZLAM 
+    collapsed families = NZWAVE, NZTIDE, NCEP, RICOM, TOPNET, MOS, GLOBALWAVE, GLOBALNWP, CLEANUP, UKMO, OPS, VAR, GEN, NZLAM 
     [[node groups]]
         g_ukmet = ext_check_globalwind_ukmet, ext_check_globalice_ukmet, ext_check_bgerr_ukmet, ext_check_obstore_ukmet, ext_check_frames_ukmet, \
 		  ext_check_sst_ukmet, ext_get_globalwind_ukmet, ext_get_globalice_ukmet, ext_get_bgerr_ukmet, ext_get_obstore_ukmet, ext_get_frames_ukmet, \
