@@ -129,6 +129,8 @@ class config( CylcConfigObj ):
 
         self.family_hierarchy = {}
 
+        self.families_used_in_graph = []
+
         self.suite = suite
         self.file = suiterc
         self.dir = os.path.dirname(suiterc)
@@ -273,6 +275,10 @@ class config( CylcConfigObj ):
             self['runtime'][label] = taskconf
 
         self.closed_families = self['visualization']['collapsed families']
+        for cfam in self.closed_families:
+            if cfam not in self.members:
+                print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
+                self.closed_families.remove( cfam )
         self.process_directories()
         self.load()
         self.__check_tasks()
@@ -547,6 +553,8 @@ class config( CylcConfigObj ):
             # succeeded or failed)":
             # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail )
             if re.search( r'\b' + fam + ':fail' + r'\b', line ):
+                if fam not in self.families_used_in_graph:
+                    self.families_used_in_graph.append(fam)
                 mem0 = self.members[fam][0]
                 cond1 = mem0 + ':fail'
                 cond2 = '( ' + mem0 + ' | ' + mem0 + ':fail )' 
@@ -557,6 +565,8 @@ class config( CylcConfigObj ):
                 line = re.sub( r'\b' + fam + ':fail' + r'\b', cond, line )
             # fam - replace with members
             if re.search( r'\b' + fam + r'\b', line ):
+                if fam not in self.families_used_in_graph:
+                    self.families_used_in_graph.append(fam)
                 mems = ' & '.join( self.members[fam] )
                 line = re.sub( r'\b' + fam + r'\b', mems, line )
 
@@ -1064,17 +1074,17 @@ class config( CylcConfigObj ):
         taskd.manual_messaging = taskconfig['manual task completion messaging']
 
         # task-specific event hook scripts
-        taskd.hook_scripts[ 'submitted' ]         = taskconfig['event hooks']['submitted script']
-        taskd.hook_scripts[ 'submission failed' ] = taskconfig['event hooks']['submission failed script']
-        taskd.hook_scripts[ 'started'   ]         = taskconfig['event hooks']['started script'  ]
-        taskd.hook_scripts[ 'warning'   ]         = taskconfig['event hooks']['warning script'  ]
-        taskd.hook_scripts[ 'succeeded' ]         = taskconfig['event hooks']['succeeded script' ]
-        taskd.hook_scripts[ 'failed'    ]         = taskconfig['event hooks']['failed script'   ]
-        taskd.hook_scripts[ 'timeout'   ]         = taskconfig['event hooks']['timeout script'  ]
+        taskd.hook_scripts[ 'submitted' ]         = taskconfig['task event hook scripts']['submitted']
+        taskd.hook_scripts[ 'submission failed' ] = taskconfig['task event hook scripts']['submission failed']
+        taskd.hook_scripts[ 'started'   ]         = taskconfig['task event hook scripts']['started'  ]
+        taskd.hook_scripts[ 'warning'   ]         = taskconfig['task event hook scripts']['warning'  ]
+        taskd.hook_scripts[ 'succeeded' ]         = taskconfig['task event hook scripts']['succeeded' ]
+        taskd.hook_scripts[ 'failed'    ]         = taskconfig['task event hook scripts']['failed'   ]
+        taskd.hook_scripts[ 'timeout'   ]         = taskconfig['task event hook scripts']['timeout'  ]
         # task-specific timeout hook scripts
-        taskd.timeouts[ 'submission'    ]     = taskconfig['event hooks']['submission timeout in minutes']
-        taskd.timeouts[ 'execution'     ]     = taskconfig['event hooks']['execution timeout in minutes' ]
-        taskd.timeouts[ 'reset on incoming' ] = taskconfig['event hooks']['reset execution timeout on incoming messages']
+        taskd.timeouts[ 'submission'    ]     = taskconfig['task event hook scripts']['submission timeout in minutes']
+        taskd.timeouts[ 'execution'     ]     = taskconfig['task event hook scripts']['execution timeout in minutes' ]
+        taskd.timeouts[ 'reset on incoming' ] = taskconfig['task event hook scripts']['reset execution timeout on incoming messages']
 
         taskd.logfiles    = taskconfig[ 'extra log files' ]
         taskd.environment = taskconfig[ 'environment' ]

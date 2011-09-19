@@ -320,11 +320,12 @@ class taskdef(object):
 
             # conditional triggers
             if startup:
-                triggers = dict( self.cond_triggers.items() + self.startup_cond_triggers.items() )
+                ctriggers = dict( self.cond_triggers.items() + self.startup_cond_triggers.items() )
             else:
-                triggers = self.cond_triggers
-            for val in triggers:
-                for ctrig in triggers[ val ]:
+                ctriggers = self.cond_triggers
+
+            for val in ctriggers.keys():
+                for ctrig in ctriggers[ val ]:
                     triggers, exp =  ctrig
                     if val != "once" and not re.match( '^ASYNCID:', val ):
                         hours = re.split( ',\s*', val )
@@ -340,11 +341,11 @@ class taskdef(object):
 
             # conditional suicide triggers
             if startup:
-                triggers = dict( self.suicide_cond_triggers.items() + self.suicide_startup_cond_triggers.items() )
+                ctriggers = dict( self.suicide_cond_triggers.items() + self.suicide_startup_cond_triggers.items() )
             else:
-                triggers = self.suicide_cond_triggers
-            for val in triggers:
-                for ctrig in triggers[ val ]:
+                ctriggers = self.suicide_cond_triggers
+            for val in ctriggers:
+                for ctrig in ctriggers[ val ]:
                     triggers, exp =  ctrig
                     if val != "once" and not re.match( '^ASYNCID:', val ):
                         hours = re.split( ',\s*', val )
