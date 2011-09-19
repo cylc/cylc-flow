@@ -90,6 +90,7 @@ class xupdater(threading.Thread):
 
         self.suiterc = suiterc
         self.family_nodes = suiterc.members.keys()
+        self.graphed_family_nodes = suiterc.families_used_in_graph
 
         self.graph_warned = {}
 
@@ -236,7 +237,8 @@ class xupdater(threading.Thread):
         self.graphw.add_node( 'failed' )
         self.graphw.add_node( 'held' )
         self.graphw.add_node( 'base' )
-        self.graphw.add_node( 'family' )
+        self.graphw.add_node( 'runtime family' )
+        self.graphw.add_node( 'trigger family' )
 
         waiting = self.graphw.get_node( 'waiting' )
         submitted = self.graphw.get_node( 'submitted' )
@@ -245,15 +247,17 @@ class xupdater(threading.Thread):
         failed = self.graphw.get_node( 'failed' )
         held = self.graphw.get_node( 'held' )
         base = self.graphw.get_node( 'base' )
-        family = self.graphw.get_node( 'family' )
+        family = self.graphw.get_node( 'runtime family' )
+        grfamily = self.graphw.get_node( 'trigger family' )
 
 
-        for node in [ waiting, submitted, running, succeeded, failed, held, base, family ]:
+        for node in [ waiting, submitted, running, succeeded, failed, held, base, family, grfamily ]:
             node.attr['style'] = 'filled'
             node.attr['shape'] = 'ellipse'
             node.attr['URL'] = 'KEY'
 
-        family.attr['shape'] = 'doubleoctagon'
+        family.attr['shape'] = 'doublecircle'
+        grfamily.attr['shape'] = 'doubleoctagon'
 
         waiting.attr['fillcolor'] = 'cadetblue2'
         waiting.attr['color'] = 'cadetblue4'
@@ -269,16 +273,19 @@ class xupdater(threading.Thread):
         base.attr['color'] = 'black'
         family.attr['fillcolor'] = 'cornsilk'
         family.attr['color'] = 'black'
+        grfamily.attr['fillcolor'] = 'cornsilk'
+        grfamily.attr['color'] = 'black'
         held.attr['fillcolor'] = 'yellow'
         held.attr['color'] = 'black'
 
-        self.graphw.add_edge( base, waiting, autoURL=False, style='invis')
         self.graphw.add_edge( waiting, submitted, autoURL=False, style='invis')
         self.graphw.add_edge( submitted, running, autoURL=False, style='invis')
 
-        self.graphw.add_edge( family, succeeded, autoURL=False, style='invis')
         self.graphw.add_edge( succeeded, failed, autoURL=False, style='invis')
         self.graphw.add_edge( failed, held, autoURL=False, style='invis')
+
+        self.graphw.add_edge( base, grfamily, autoURL=False, style='invis')
+        self.graphw.add_edge( grfamily, family, autoURL=False, style='invis')
 
     def set_live_node_attr( self, node, id, shape=None ):
         # override base graph URL to distinguish live tasks
@@ -351,7 +358,10 @@ class xupdater(threading.Thread):
         for node in self.graphw.nodes():
             name, tag = node.get_name().split('%')
             if name in self.family_nodes:
-                node.attr['shape'] = 'doubleoctagon'
+                if name in self.graphed_family_nodes:
+                    node.attr['shape'] = 'doubleoctagon'
+                else:
+                    node.attr['shape'] = 'doublecircle'
 
         # CROPPING
         if self.crop:

@@ -129,6 +129,8 @@ class config( CylcConfigObj ):
 
         self.family_hierarchy = {}
 
+        self.families_used_in_graph = []
+
         self.suite = suite
         self.file = suiterc
         self.dir = os.path.dirname(suiterc)
@@ -544,6 +546,8 @@ class config( CylcConfigObj ):
             # succeeded or failed)":
             # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail )
             if re.search( r'\b' + fam + ':fail' + r'\b', line ):
+                if fam not in self.families_used_in_graph:
+                    self.families_used_in_graph.append(fam)
                 mem0 = self.members[fam][0]
                 cond1 = mem0 + ':fail'
                 cond2 = '( ' + mem0 + ' | ' + mem0 + ':fail )' 
@@ -554,6 +558,8 @@ class config( CylcConfigObj ):
                 line = re.sub( r'\b' + fam + ':fail' + r'\b', cond, line )
             # fam - replace with members
             if re.search( r'\b' + fam + r'\b', line ):
+                if fam not in self.families_used_in_graph:
+                    self.families_used_in_graph.append(fam)
                 mems = ' & '.join( self.members[fam] )
                 line = re.sub( r'\b' + fam + r'\b', mems, line )
 

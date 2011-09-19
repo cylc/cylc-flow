@@ -114,6 +114,7 @@ class MyDotWindow( xdot.DotWindow ):
         # reparse the graph
         self.suiterc = config.config( self.suite, self.file )
         family_nodes = self.suiterc.members.keys()
+        graphed_family_nodes = self.suiterc.families_used_in_graph
         if self.ctime != None and self.stop_after != None:
             graph = self.suiterc.get_graph( self.ctime, self.stop_after, raw=self.raw )
         else:
@@ -127,7 +128,10 @@ class MyDotWindow( xdot.DotWindow ):
         for node in graph.nodes():
             name, tag = node.get_name().split('%')
             if name in family_nodes:
-                node.attr['shape'] = 'doubleoctagon'
+                if name in graphed_family_nodes:
+                    node.attr['shape'] = 'doubleoctagon'
+                else:
+                    node.attr['shape'] = 'doublecircle'
 
         self.set_dotcode( graph.string() )
         if self.outfile and not self.disable_output_image:
