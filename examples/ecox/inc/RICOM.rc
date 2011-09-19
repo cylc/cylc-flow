@@ -1,0 +1,33 @@
+    [[ricom]]
+        inherit = RICOM
+        description = "The RiCOM storm surge model"
+        command scripting = ${HOME}/bin/run_ricom_scripts/run_ricom-nzl 
+
+    [[ricom_ncl]]
+        inherit = RICOM
+        description = "ricom ncl postprocessing"
+        command scripting = /${SYS}/ecoconnect/vis_${SYS}/bin/vis_scripts/vis_ricom.sh
+
+    [[ricom_products]]
+        inherit = RICOM
+        description = "RiCOM forecast product generation and ingestion"
+        command scripting = convert_ingest.sh
+        [[[environment]]]
+            PRODUCT_DIR   = ${HOME}/running/ricom-nzl/product
+            SERVICE     = ricom_products
+
+    [[ricom_housekeeping]]
+        inherit = RICOM
+        description = "Archiving and cleanup for the ricom sub-system."
+        command scripting = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/ricom_housekeeping.conf
+
+    [[ricom_cold]]
+        inherit = RICOM
+        description = """Oneoff dummy task to supply initial RiCOM restart
+prerequisites. The real restart file(s) are assumed to have been
+provided by an initial external spinup experiment.  Ricom will fail if
+it runs out of restart files (4 available) but capture the failure and
+automatically do a cold start. One week spinup is required before the
+output is considered usable."""
+
+

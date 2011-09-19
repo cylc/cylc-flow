@@ -1,0 +1,121 @@
+    # the remaining variables in this section are for the NZLAM sub-system
+    __NWP = /$SYS/ecoconnect/nwp_$SYS
+
+    #__________________________
+    # TOP LEVEL I/O DIRECTORIES
+
+    INPUT_DIR   = $__NWP/input
+    OUTPUT_DIR  = $__NWP/output/nzlam_12
+    RUNNING_DIR = $__NWP/running/nzlam_12
+    CONTROL_DIR = $__NWP/control/nzlam_12
+
+    #_________________
+    # COMPONENT_BUILDS
+    UM_EXECUTABLE      = $__NWP/build/nzlam_12/um/xabgz/xabgz.exe
+    CYLC_OPS_BUILD_DIR = $__NWP/build/nzlam_12/ops/oaamz
+    CYLC_VAR_BUILD_DIR = $__NWP/build/nzlam_12/var/vaahz
+
+    #_______________________________________
+    # UM, OPS, VAR processed job directories
+
+    GLtoGL_RECON_JOBDIR = $__NWP/control/nzlam_12/umui/xabga
+    GLtoNZ_RECON_JOBDIR = $__NWP/control/nzlam_12/umui/xabgb
+    NZtoNZ_RECON_JOBDIR = $__NWP/control/nzlam_12/umui/xabgc
+
+    WARMSTART_RUNID  = xabge
+    WARMSTART_JOBDIR = $__NWP/control/nzlam_12/umui/$WARMSTART_RUNID
+    COLDSTART_JOBDIR = $__NWP/control/nzlam_12/umui/xabgd
+
+    VAR_CONFIGURELS_JOBDIR   = $__NWP/control/nzlam_12/varui/vaaha
+    VAR_ANALYSEPF_JOBDIR     = $__NWP/control/nzlam_12/varui/vaahb
+
+    OPS_AIRCRAFTSONDE_JOBDIR = $__NWP/control/nzlam_12/opsui/oaama
+    OPS_AIRS_JOBDIR          = $__NWP/control/nzlam_12/opsui/oaamb
+    OPS_ATOVS_JOBDIR         = $__NWP/control/nzlam_12/opsui/oaamc
+    OPS_GPSRO_JOBDIR         = $__NWP/control/nzlam_12/opsui/oaamd
+    OPS_IASI_JOBDIR          = $__NWP/control/nzlam_12/opsui/oaame
+    OPS_SATWIND_JOBDIR       = $__NWP/control/nzlam_12/opsui/oaamf
+    OPS_SURFACESCATT_JOBDIR  = $__NWP/control/nzlam_12/opsui/oaamg
+
+    #_____________________
+    # EXTERNAL INPUT FILES
+
+    TEMPLATE_REDUCED_GLOBAL_DUMP = $INPUT_DIR/qwqgHH.reduced.YYYYMMDDHH.T+3
+    TEMPLATE_GLOBAL_DUMP         = $INPUT_DIR/qwqgHH.YYYYMMDDHH.T+3
+    TEMPLATE_FRAMES_FILE         = $INPUT_DIR/YYYYMMDD_frame_qgHH_niwa
+    TEMPLATE_BGERR_FILE          = $INPUT_DIR/qwq3HH_YYYYMMDDHH_bgerr
+    TEMPLATE_OBSTORE_DIR         = $INPUT_DIR/qwq3HH.YYYYMMDDHH.obstore
+    TEMPLATE_OBSTORE_DIR_TGZ     = $INPUT_DIR/qwq3HH_YYYYMMDDHH_obstore.tar.gz
+
+    #___________________
+    # OUTPUT DIRECTORIES
+
+    TEMPLATE_CYCLE_OUTPUT     = $RUNNING_DIR/YYYYMMDDHH
+    TEMPLATE_LOGFILE_DIR      = $TEMPLATE_CYCLE_OUTPUT/logs
+    TEMPLATE_LISTING_DIR      = $TEMPLATE_CYCLE_OUTPUT/listing
+    TEMPLATE_STATS_DIR        = $TEMPLATE_CYCLE_OUTPUT/stats
+    TEMPLATE_STAGING_DIR      = $TEMPLATE_CYCLE_OUTPUT/staging
+    TEMPLATE_DATAM_DIR        = $TEMPLATE_STAGING_DIR
+    TEMPLATE_DATAW_DIR        = $TEMPLATE_STAGING_DIR
+
+    #_________________________
+    # SUITE INTERMEDIATE FILES
+
+    TEMPLATE_CXBACK_DIR    = $TEMPLATE_STAGING_DIR/cxback
+    TEMPLATE_LSBACK_DIR    = $TEMPLATE_STAGING_DIR/lsback
+    TEMPLATE_VAROB_DIR     = $TEMPLATE_STAGING_DIR/varob
+    TEMPLATE_VARCX_DIR     = $TEMPLATE_STAGING_DIR/varcx
+    TEMPLATE_LSDUMP_DIR    = $TEMPLATE_STAGING_DIR/lsdumps
+    TEMPLATE_PPVAR_FILE    = $TEMPLATE_LSBACK_DIR/ppvar.um
+    TEMPLATE_PP7CX_FILE    = $TEMPLATE_CXBACK_DIR/pp7cx.um
+    TEMPLATE_ALABC_FILE    = $TEMPLATE_STAGING_DIR/nzlam.alabc
+    TEMPLATE_VAR_INCR_FILE = $TEMPLATE_STAGING_DIR/var-incr.um
+    TEMPLATE_RESTART_DUMP  = $TEMPLATE_DATAM_DIR/${WARMSTART_RUNID}a_da003
+    TEMPLATE_RECONFIGURED_RESTART_DUMP = $TEMPLATE_DATAM_DIR/${WARMSTART_RUNID}a_da003.recon
+
+    #___________________________________________
+    # UM output fieldsfiles - final destinations
+
+    TEMPLATE_pp0 = $OUTPUT_DIR/tn_YYYYMMDDHH_utc_nzlam_12.um
+    TEMPLATE_pp1 = $OUTPUT_DIR/sls_YYYYMMDDHH_utc_nzlam_12.um
+    TEMPLATE_pc  = $OUTPUT_DIR/met_YYYYMMDDHH_utc_nzlam_12.um
+    TEMPLATE_pi  = $OUTPUT_DIR/escape_YYYYMMDDHH_utc_nzlam_12.um
+
+    #____________________
+    # STATIC CONTROL FILES
+
+    __CTRL                      = $CONTROL_DIR/PS24_NAE_controlfiles
+    __UM_CTRL                   = $CONTROL_DIR/um/vn7.4/ctldata
+
+    # OPS
+    CYLC_OPS_STATIONLIST_DIR    = $__CTRL/OPS/control/StationLists/ATMOS/CAM/PS24
+    CYLC_OPS_SONDECOEFFS_DIR    = $__CTRL/OPS/control/Sonde_coeffs/my/L70/v2
+    CYLC_OPS_RTTOV7COEFFS_DIR   = $__CTRL/Data/RTTOV7_coeffs/default/v18
+    CYLC_OPS_SATRADCOEFFS_DIR   = $__CTRL/Data/SatRad_coeffs/my/v35
+    CYLC_OPS_SATRADBIASES_DIR   = $__CTRL/Data/SatRad_biases/my/v3
+    CYLC_OPS_SATWINDNL_DIR      = $__CTRL/OPS/control/Satwind_namelists/default/v5
+    CYLC_OPS_SCATWINDCOEFFS_DIR = $__CTRL/OPS/control/Scatwind_coeffs/default/v14
+    CYLC_OPS_GPSROCOEFFS_DIR    = $__CTRL/Data/GPSRO_coeffs/my/v3
+
+    # VAR_ConfigureLS
+    CYLC_VAR_GRID               = $__CTRL/VAR/control/Grid/162162_70
+    CYLC_VAR_RC_PPXREFU_DIR     = $__CTRL/VAR/control/Var_PPXref/gl_ND/v10
+
+
+    CYLC_UM_STASHMASTER         = $__UM_CTRL/STASHmaster
+    CYLC_UM_ANCILMASTER         = $__UM_CTRL/ANCILmaster
+    CYLC_VERT_LEV               = $__UM_CTRL/vert/vertlevs_L70_80km
+
+    # VAR AnalysePF
+    CYLC_VAR_COVACC             = $__CTRL/Data/Var_CovStats_64/my/N216L70/v1/CovStats
+    CYLC_VAR_RHPARMS_DIR        = $CYLC_OPS_SONDECOEFFS_DIR
+    CYLC_VAR_SATRADCOEFFS_DIR   = $CYLC_OPS_SATRADCOEFFS_DIR
+    CYLC_VAR_RTTOV7COEFFS_DIR   = $CYLC_OPS_RTTOV7COEFFS_DIR
+    CYLC_VAR_UMGRID             = $__CTRL/VAR/control/Grid/324324_70
+    CYLC_VAR_PFRECONGRID        = $CYLC_VAR_GRID
+
+    # makebc
+    MAKEBC_NAMELIST = $CONTROL_DIR/makebc/nzlam_frames_full_L70.nl
+    # (oper suite handles all OPS and VAR control files in this way).
+
+
