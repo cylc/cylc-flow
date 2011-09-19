@@ -14,8 +14,8 @@ used to automatically clean up a failed task family."""
                     fammo | fammo:fail => B"""
 [runtime]
     [[fammo]]
-        [[[event hooks]]]
-            failed script = failhook.sh
+        [[[task event hook scripts]]]
+            failed = failhook.sh
     [[m_foo]]
         inherit = fammo
         command scripting = sleep 8 
