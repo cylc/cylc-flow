@@ -57,7 +57,7 @@ except RegistrationError, x:
 
 print "Parsing Suite Definition"
 try:
-    config = config( suite, suiterc )
+    config = config( suite, suiterc, verbose=True )
 except SuiteConfigError,x:
     raise SystemExit(x)
 

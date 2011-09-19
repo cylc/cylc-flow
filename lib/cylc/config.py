@@ -116,7 +116,7 @@ class edge( object):
         return left + '%' + str(tag)  # str for int tag (async)
 
 class config( CylcConfigObj ):
-    def __init__( self, suite, suiterc, simulation_mode=False, verbose=True ):
+    def __init__( self, suite, suiterc, simulation_mode=False, verbose=False ):
         self.simulation_mode = simulation_mode
         self.verbose = verbose
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
@@ -141,14 +141,14 @@ class config( CylcConfigObj ):
         self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc.spec')
 
         if self.verbose:
-            print "LOADING SUITE CONFIG"
+            print "LOADING suite.rc"
         try:
             CylcConfigObj.__init__( self, self.file, configspec=self.spec )
         except ConfigObjError, x:
             raise SuiteConfigError, x
 
         if self.verbose:
-            print "VALIDATING"
+            print "VALIDATING against the suite.rc specification."
         # validate and convert to correct types
         val = Validator()
         test = self.validate( val, preserve_errors=True )
@@ -197,7 +197,8 @@ class config( CylcConfigObj ):
                 print >> sys.stderr, '  ERROR: Illegal entry:', extra 
             raise SuiteConfigError, "ERROR: Illegal suite.rc entry(s) found"
 
-        # parse clock-triggered tasks
+        if self.verbose:
+            print "PARSING clock-triggered tasks"
         self.clock_offsets = {}
         for item in self['scheduling']['special tasks']['clock-triggered']:
             m = re.match( '(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)', item )
@@ -211,7 +212,7 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
         if self.verbose:
-            print "PARSING TASK RUNTIMES"
+            print "PARSING runtime generator expressions"
         self.members = {}
         # Parse task config generators. If the runtime section is a list
         # of task names or a list-generating Python expression, then the
@@ -243,6 +244,9 @@ class config( CylcConfigObj ):
 
             # delete the original multi-task section
             del self['runtime'][item]
+
+        if self.verbose:
+            print "PARSING runtime hierarchies"
 
         # RUNTIME INHERITANCE
         for label in self['runtime']:
