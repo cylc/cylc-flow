@@ -146,7 +146,7 @@ else:
     cylcenv[ 'CYLC_MODE' ] = 'submit'
 cylcenv[ 'CYLC_SUITE_HOST' ] = host
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
-cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = suite_dir
+cylcenv[ 'CYLC_SUITE_DEF_PATH' ] =  re.sub( os.environ['HOME'], '$HOME', suite_dir )
 cylcenv[ 'CYLC_SUITE_REG_NAME' ] = suite
 cylcenv[ 'CYLC_SUITE_REG_PATH' ] = re.sub( delimiter_re, '/', suite )
 cylcenv[ 'CYLC_SUITE_OWNER' ] = owner
