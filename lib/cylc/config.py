@@ -272,6 +272,10 @@ class config( CylcConfigObj ):
             self['runtime'][label] = taskconf
 
         self.closed_families = self['visualization']['collapsed families']
+        for cfam in self.closed_families:
+            if cfam not in self.members:
+                print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
+                self.closed_families.remove( cfam )
         self.process_directories()
         self.load()
         self.__check_tasks()
