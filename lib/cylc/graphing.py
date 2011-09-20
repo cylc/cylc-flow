@@ -151,6 +151,12 @@ class CGraph( CGraphPlain ):
 
     def add_edge( self, l, r, autoURL=True, **attr ):
         # l and r are cylc task IDs 
+        if l == r:
+            # pygraphviz 1.1 adds a node instead of a self-edge
+            # which results in a KeyError in get_edge() below.
+            self.add_node( l, autoURL, **attr )
+            return
+
         pygraphviz.AGraph.add_edge( self, l, r, **attr )
 
         nl = self.get_node( l )
