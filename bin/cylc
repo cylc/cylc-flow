@@ -226,6 +226,7 @@ preparation_commands['gcylc'   ] = information_commands['gcylc']
 preparation_commands['edit'    ] = [ 'edit'    ]
 preparation_commands['inline'  ] = [ 'inline'    ]
 preparation_commands['validate'] = [ 'validate'    ]
+preparation_commands['list'    ] = ['list', 'ls' ]
 preparation_commands['search'  ] = [ 'search', 'grep' ]
 preparation_commands['graph'   ] = [ 'graph'    ]
 preparation_commands['diff'    ] = [ 'diff', 'compare' ]
@@ -339,7 +340,7 @@ comsum[ 'search'     ] = 'An intelligent search tool for cylc suites'
 comsum[ 'graph'      ] = 'A dependency graph viewer that updates as you edit'
 comsum[ 'diff'       ] = 'Compare two suite definitions and print differences'
 # information
-comsum[ 'list'       ] = 'Print a suite\'s task list'
+comsum[ 'list'       ] = 'Print a suite\'s task list or full runtime hierarchy'
 comsum[ 'dump'       ] = 'Print the state of each task in a running suite'
 comsum[ 'show'       ] = 'Print task-specific information (prerequisites...)'
 comsum[ 'log'        ] = 'Print or view suite logs, with filtering'

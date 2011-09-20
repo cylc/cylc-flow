@@ -42,6 +42,15 @@ parser.add_option( "-c", "--central",
         help="target the central database.",
         action="store_true", default=False, dest="central" )
 
+parser.add_option( "-p","--pretty",
+        help="Use unicode box drawing characters when printing "
+        "the suite runtime inheritance hierarchy.",
+        action="store_true", default=False, dest="pretty" )
+
+parser.add_option( "-v","--verbose",
+        help="Print extra information from the validation process.",
+        action="store_true", default=False, dest="verbose" )
+
 (options, args) = parser.parse_args()
 
 if len(args) != 1:
@@ -55,9 +64,10 @@ try:
 except RegistrationError, x:
     raise SystemExit(x)
 
-print "Parsing Suite Definition"
+if options.verbose:
+    print "Parsing Suite Definition"
 try:
-    config = config( suite, suiterc, verbose=True )
+    config = config( suite, suiterc, verbose=options.verbose )
 except SuiteConfigError,x:
     raise SystemExit(x)
 
@@ -66,15 +76,18 @@ except SuiteConfigError,x:
 # THE RESULTING OUTPUT:
 job_submit.cylc_env = {}
 ctime = '2999010112'
-print 'Instantiating Task Proxies:'
+
+if options.verbose:
+    print 'Instantiating Task Proxies:'
+
 valid = True
+result = {}
 for tn in config.get_full_task_name_list():
-    print '  - ', tn, '...', 
     try:
         # tasks used in the suite dependency graph
         task_proxy = config.get_task_proxy( tn, ctime, 'waiting', stopctime=None, startup=True )
     except SuiteConfigError or DefinitionError,x:
-        print >> sys.stderr, x
+        result[tn] = False, x
         valid = False
     except KeyError, x:
         # task not used (not in graph - already warned above)
@@ -82,12 +95,15 @@ for tn in config.get_full_task_name_list():
             # tasks defined but not used in the suite graph
             task_proxy = config.get_task_proxy_raw( tn, ctime, 'waiting', stopctime=None, startup=True, test=True, strict=False )
         except SuiteConfigError or DefinitionError, x:
-            print >> sys.stderr, x
+            result[tn] = False, x
             valid = False
         else:
-            print 'OK'
+            result[tn] = True, 'OK'
     else:
-        print 'OK'
+        result[tn] = True, 'OK'
+
+if options.verbose:
+    config.print_inheritance_tree( result, pretty=options.pretty )
 
 if valid:
     print "Suite " + suite + " validates OK."

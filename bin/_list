@@ -21,20 +21,34 @@ from optparse import OptionParser
 from cylc.config import config, SuiteConfigError
 from cylc.registration import dbgetter, RegistrationError
 
-parser = OptionParser( """cylc [info] list|ls [OPTIONS] SUITE
+parser = OptionParser( """cylc [info|prep] list|ls [OPTIONS] SUITE [FILTER]
 
-Parse a suite config file and print the configured task list.
+Parse a suite and print its task list or inheritance hierarchy.
 
 Arguments:
-   SUITE    - suite registration""")
+   SUITE    - Target suite
+   FILTER   - regular expression filter on task names.""")
 
 parser.add_option( "-c", "--central", 
         help="Target the central database.",
         action="store_true", default=False, dest="central" )
 
+parser.add_option( "-t","--tree",
+        help="Print the full runtime inheritance hierarchy.",
+        action="store_true", default=False, dest="tree" )
+
+parser.add_option( "-p","--pretty",
+        help="Use unicode box drawing characters when printing "
+        "the suite runtime inheritance hierarchy.",
+        action="store_true", default=False, dest="pretty" )
+
 (options, args) = parser.parse_args()
 
-if len(args) != 1:
+if len(args) == 1:
+    filter = None
+elif len(args) == 2:
+    filter = args[1]
+else:
     parser.error( "Wrong number or arguments" )
 
 reg = args[0]
@@ -49,6 +63,7 @@ try:
 except SuiteConfigError,x:
     raise SystemExit(x)
 
-#print 'TASK LIST:'
-for task in config.get_task_name_list():
-    print ' ', task
+if options.tree:
+    config.print_inheritance_tree( filter=filter, pretty=options.pretty )
+else:
+    config.print_task_list( filter=filter )

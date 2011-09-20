@@ -836,9 +836,15 @@ The cylc forecast suite metascheduler.
             menu.append( search_item )
             search_item.connect( 'activate', self.describe_suite, reg )
 
-            search_item = gtk.MenuItem( 'Get Task _List' )
-            menu.append( search_item )
-            search_item.connect( 'activate', self.list_suite, reg )
+            list_item = gtk.MenuItem( 'Get Task _List' )
+            menu.append( list_item )
+            list_item.connect( 'activate', self.list_suite, reg )
+
+            tree_item = gtk.MenuItem( 'Get Task _Tree' )
+            menu.append( tree_item )
+            # use "-tp" for unicode box-drawing characters (seems to be
+            # OK in pygtk textview).
+            tree_item.connect( 'activate', self.list_suite, reg, '-tp' )
 
             if not self.cdb:
                 jobs_item = gtk.MenuItem( '_Get A Job Script')
@@ -1648,9 +1654,9 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def list_suite( self, w, name ):
-        command = "cylc list " + self.dbopt + " --notify-completion " + name
-        foo = gcapture_tmpfile( command, self.tmpdir, 300, 400 )
+    def list_suite( self, w, name, opt='' ):
+        command = "cylc list " + self.dbopt + " " + opt + " --notify-completion " + name
+        foo = gcapture_tmpfile( command, self.tmpdir, 800, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
 

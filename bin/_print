@@ -19,17 +19,7 @@
 import re
 from optparse import OptionParser
 from cylc.registration import dbgetter, RegistrationError, delimiter
-
-a_hbar = '-'
-a_vbar = '|'
-a_tee = a_vbar + a_hbar
-a_trm = '`' + a_hbar
-a_tee_re = '\|' + a_hbar
-
-u_hbar = u'\u2500'
-u_vbar = u'\u2502'
-u_tee = u'\u251C' + u_hbar
-u_trm = u'\u2514' + u_hbar
+from cylc.print_tree import print_tree
 
 def get_padding( reglist ):
     maxlen = 0
@@ -42,39 +32,6 @@ def get_padding( reglist ):
             if tmp > maxlen:
                 maxlen = tmp
     return (maxlen+1) * ' '
-
-def print_tree( tree, padding, unicode=False, prefix=''):
-    if unicode:
-        vbar = u_vbar
-        trm = u_trm
-        tee = u_tee
-        tee_re= tee
-    else:
-        vbar = a_vbar
-        trm = a_trm
-        tee = a_tee
-        tee_re = a_tee_re
-
-    keys = tree.keys()
-    keys.sort()
-    for item in keys:
-        if item == keys[-1]:
-            pprefix = prefix + ' ' + trm
-        else:
-            pprefix = prefix + ' ' + tee
-
-        pp = pprefix
-        pp = re.sub( '^ (' + trm + '|' + tee_re + ')', '', pp )
-        pp = re.sub( trm + ' ', '  ', pp )
-        pp = re.sub( tee_re + ' ', vbar + ' ', pp )
-
-        result = pp + item 
-        line = result + padding[ len(result): ]
-        if isinstance( tree[item], dict ):
-            print line
-            print_tree( tree[item], padding, unicode, pprefix )
-        else:
-            print line + tree[item]
 
 parser = OptionParser( usage = """cylc [db] print [--central] [FILTER]
 

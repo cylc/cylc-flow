@@ -34,19 +34,23 @@ To see the effect, examine task job scripts generated with the
         [[[environment]]]
             GEN_B = var_b
     [[atovs]]
+        description = "OPS ATOVS obs processing"
         inherit = OPS
         [[[environment]]]
             OPS_DATA = atovs
     [[aircraft]]
+        description = "OPS aircraft obs processing"
         inherit = OPS
         command scripting = "echo HELLO from $TASK_ID; sleep 5; echo ABORT; /bin/false"
         [[[environment]]]
             OPS_DATA = aircraft
     [[ConLS]]
+        description = "runs VAR ConfigureLS"
         inherit = VAR
         [[[environment]]]
             VAR_PROG = ConfigureLS
     [[AnPF]]
+        description = "runs VAR AnalysePF"
         inherit = VAR
         command scripting = "echo run-VAR.sh --apf; sleep 10"
         [[[environment]]]
@@ -54,6 +58,13 @@ To see the effect, examine task job scripts generated with the
     [[baz]]
     [[bar1,bar2]]
         inherit = baz
+        description = "Task $(TASK) of baz"
+    [[atovs_post]]
+        inherit = OPS
+        description = "OPS ATOVS postprocessing"
+
+    [[prepobs]]
+        description = "obs preprocessing"
 
 [visualization]
     collapsed families = OPS, VAR, baz

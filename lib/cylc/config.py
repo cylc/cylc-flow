@@ -39,6 +39,7 @@ from configobj import get_extra_values, flatten_errors, Section
 from cylcconfigobj import CylcConfigObj, ConfigObjError
 from graphnode import graphnode, GraphNodeError
 from registration import delimiter_re
+from cylc.print_tree import print_tree
 
 try:
     import graphing
@@ -116,6 +117,7 @@ class edge( object):
         return left + '%' + str(tag)  # str for int tag (async)
 
 class config( CylcConfigObj ):
+
     def __init__( self, suite, suiterc, simulation_mode=False, verbose=False ):
         self.simulation_mode = simulation_mode
         self.verbose = verbose
@@ -155,17 +157,17 @@ class config( CylcConfigObj ):
         if test != True:
             # Validation failed
             failed_items = flatten_errors( self, test )
-            if self.verbose:
-                for item in failed_items:
-                    sections, key, result = item
-                    print ' ',
-                    for sec in sections:
-                        print sec, '->',
-                    print key
-                    if result == False:
-                        print "Required item missing."
-                    else:
-                        print result
+            # Always print reason for validation failure
+            for item in failed_items:
+                sections, key, result = item
+                print ' ',
+                for sec in sections:
+                    print sec, '->',
+                print key
+                if result == False:
+                    print "Required item missing."
+                else:
+                    print result
             raise SuiteConfigError, "ERROR: suite.rc validation failed"
         
         extras = []
@@ -285,7 +287,93 @@ class config( CylcConfigObj ):
                 self.closed_families.remove( cfam )
         self.process_directories()
         self.load()
+
+        self.family_tree = {}
+        self.task_runtimes = {}
+        self.define_inheritance_tree( self.family_tree, self.family_hierarchy )
+        self.prune_inheritance_tree( self.family_tree, self.task_runtimes )
+
         self.__check_tasks()
+
+    def define_inheritance_tree( self, tree, hierarchy ):
+        # combine inheritance hierarchies into a tree structure.
+        for rt in hierarchy:
+            hier = deepcopy(hierarchy[rt])
+            hier.reverse()
+            foo = tree
+            for item in hier:
+                if item not in foo:
+                    foo[item] = {}
+                foo = foo[item]
+
+    def prune_inheritance_tree( self, tree, runtimes ):
+        # When self.family_tree is constructed leaves are {}. This
+        # replaces the leaves with first line of task description, and
+        # populates self.task_runtimes with just the leaves (tasks).
+        for item in tree:
+            skeys = tree[item].keys() 
+            if len( skeys ) > 0:
+                self.prune_inheritance_tree(tree[item], runtimes)
+            else:
+                description = self['runtime'][item]['description']
+                dlines = re.split( '\n', description )
+                dline1 = dlines[0]
+                if len(dlines) > 1:
+                    dline1 += '...'
+                tree[item] = dline1
+                runtimes[item] = self['runtime'][item]
+
+    def print_task_list( self, filter=None, labels=None, pretty=False ):
+        # determine padding for alignment of task descriptions
+        tasks = self.task_runtimes.keys()
+        maxlen = 0
+        for task in tasks:
+            if len(task) > maxlen:
+                maxlen = len(task)
+        padding = (maxlen+1) * ' '
+
+        for task in tasks:
+            if filter:
+                if not re.search( filter, task ):
+                    continue
+            # print first line of task description
+            description = self['runtime'][task]['description']
+            dlines = re.split( '\n', description )
+            dline1 = dlines[0]
+            if len(dlines) > 1:
+                dline1 += '...'
+            print task + padding[ len(task): ] + dline1
+
+    def print_inheritance_tree( self, filter=None, labels=None, pretty=False ):
+        # determine padding for alignment of task descriptions
+        if filter:
+            trt = {}
+            ft = {}
+            fh = {}
+            for item in self.family_hierarchy:
+                if item not in self.task_runtimes:
+                    continue
+                if not re.search( filter, item ):
+                    continue
+                fh[item] = self.family_hierarchy[item]
+            self.define_inheritance_tree( ft, fh )
+            self.prune_inheritance_tree( ft, trt )
+        else:
+            fh = self.family_hierarchy
+            ft = self.family_tree
+
+        maxlen = 0
+        for rt in fh:
+            items = deepcopy(fh[rt])
+            items.reverse()
+            for i in range(0,len(items)):
+                tmp = 2*i + 1 + len(items[i])
+                if i == 0:
+                    tmp -= 1
+                if tmp > maxlen:
+                    maxlen = tmp
+        padding = (maxlen+1) * ' '
+        print_tree( ft, padding=padding, unicode=pretty, labels=labels )
 
     def process_directories(self):
         # Environment variable interpolation in directory paths.
@@ -498,17 +586,10 @@ class config( CylcConfigObj ):
         return names
 
     def get_full_task_name_list( self ):
-        # return list of task names used in the dependency diagram,
-        # and task sections (self['runtime'].keys())
-        gtasknames = self.taskdefs.keys()
-        stasknames = self['runtime'].keys()
-        tasknames = {}
-        for tn in gtasknames + stasknames:
-            if tn not in tasknames:
-                tasknames[tn] = True
-        all_tasknames = tasknames.keys()
-        all_tasknames.sort(key=str.lower)  # case-insensitive sort
-        return all_tasknames
+        # return full list of *task* (runtime hierarchy leaves) names 
+        tasknames = self.task_runtimes.keys()
+        tasknames.sort(key=str.lower)  # case-insensitive sort
+        return tasknames
 
     def process_graph_line( self, line, section ):
         # Extract dependent pairs from the suite.rc textual dependency
