@@ -177,6 +177,8 @@ class task( Pyro.core.ObjBase ):
         self.succeeded_time = None
         self.etc = None
         self.to_go = None
+        self.hook_script = None
+        self.hook_events = []
 
     def log( self, priority, message ):
         logger = logging.getLogger( "main" ) 
@@ -325,7 +327,7 @@ class task( Pyro.core.ObjBase ):
 
         self.launcher = launcher_class(
                         self.id, self.precommand, self.external_task,
-                        self.postcommand, self.env_vars,
+                        self.postcommand, self.env_vars, self.namespace_hierarchy, 
                         self.directives, self.manual_messaging,
                         self.logfiles, 
                         self.__class__.job_submit_log_directory,

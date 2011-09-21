@@ -7,7 +7,7 @@
 OUTPUT=$HOME/output
 ARCHIVE=/path/to/archive
 
-# Copy files to archive immediately (offset 0 from $CYCLE_TIME)
+# Copy files to archive immediately (offset 0 from $CYLC_TASK_CYCLE_TIME)
 $OUTPUT   foo-(\d{10})\.nc   copy        6         $ARCHIVE/YYYYMM/DD
 
 # Delete the same files after 24 hours (with respect to current cycle

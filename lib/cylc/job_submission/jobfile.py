@@ -23,9 +23,9 @@ from OrderedDict import OrderedDict
 
 class jobfile(object):
 
-    def __init__( self, task_id, cylc_env, task_env, directive_prefix,
-            directives, final_directive, manual_messaging,
-            precommand_scripting, command_scripting,
+    def __init__( self, task_id, cylc_env, task_env, ns_hier, 
+            directive_prefix, directives, final_directive,
+            manual_messaging, precommand_scripting, command_scripting,
             postcommand_scripting, remote_cylc_dir, remote_suite_dir,
             shell, simulation_mode, job_submission_method):
 
@@ -44,8 +44,9 @@ class jobfile(object):
         self.remote_cylc_dir = remote_cylc_dir
         self.remote_suite_dir = remote_suite_dir
         self.manual_messaging = manual_messaging
+        self.namespace_hierarchy = ns_hier
 
-        # Get NAME%CYCLETIME (cycling tasks) or NAME%TAG (asynchronous tasks)
+        # Get NAME%CYCLE (cycling tasks) or NAME%TAG (asynchronous tasks)
         ( self.task_name, tag ) = task_id.split( '%' )
         # TO DO: asynchronous tasks
         self.cycle_time = tag
@@ -123,9 +124,16 @@ class jobfile(object):
             BUFFER.write( "\nexport " + var + "=" + str( self.cylc_env[var] ) )
 
         BUFFER.write( "\n\n# TASK IDENTITY:" )
+        BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
+        BUFFER.write( "\nexport CYLC_TASK_NAME=" + self.task_name )
+        BUFFER.write( "\nexport CYLC_TASK_CYCLE_TIME=" + self.cycle_time )
+        BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.namespace_hierarchy) + '"')
+
+        BUFFER.write( "\n# deprecated (backward compatibility):" )
         BUFFER.write( "\nexport TASK_ID=" + self.task_id )
         BUFFER.write( "\nexport TASK_NAME=" + self.task_name )
         BUFFER.write( "\nexport CYCLE_TIME=" + self.cycle_time )
+        BUFFER.write( '\nexport TASK_NAMESPACES="' + ' '.join( self.namespace_hierarchy) + '"')
 
     def write_err_trap( self ):
         self.FILE.write( '\n\n# SET ERROR TRAPPING:' )

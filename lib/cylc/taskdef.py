@@ -52,7 +52,7 @@ class DefinitionError( Error ):
 class taskdef(object):
     def __init__( self, name ):
         if re.search( '[^0-9a-zA-Z_\.]', name ):
-            # dot for namespace syntax.
+            # dot for namespace syntax (NOT USED).
             # regex [\w] allows spaces.
             raise DefinitionError, "ERROR: Illegal task name: " + name
 
@@ -114,6 +114,8 @@ class taskdef(object):
 
         self.environment = OrderedDict()  # var = value
         self.directives  = OrderedDict()  # var = value
+
+        self.namespace_hierarchy = []
 
     def add_trigger( self, msg, validity, suicide=False ):
         if suicide:
@@ -263,6 +265,8 @@ class taskdef(object):
 
         tclass.intercycle = self.intercycle
         tclass.follow_on = self.follow_on_task
+
+        tclass.namespace_hierarchy = self.namespace_hierarchy
 
         def tclass_format_prerequisites( sself, preq ):
             m = re.search( '\$\(TAG\s*\-\s*(\d+)\)', preq )

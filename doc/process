@@ -31,51 +31,6 @@ if [[ $# > 0 ]]; then
     done
 fi
 
-# GENERATE suite.rc ENTRY REFERENCE .................................
-perl <<eof
-open FOO, "<", "conf/suiterc.spec" or die \$!;
-open BAR, ">", "doc/suiterc.spec.tex" or die \$!;
-\$depth = 1;
-while( <FOO> ) {
-    chomp;
-    if ( m/^#>IGNORE$/ ) {
-        \$ignore = 1;
-    } elsif ( m/^#>RESUME$/ ) {
-        \$ignore = 0;
-    }
-    if ( \$ignore == 1 ) {
-        next;
-    }
-    if ( m/^\s*\[\[\[.*\]\]\]\s*\$/ ) {
-        \$depth = 3;
-    } elsif ( m/^\s*\[\[.*\]\]\s*\$/ ) {
-        \$depth = 2;
-    } elsif ( m/^\s*\[.*\]\s*\$/ ) {
-        \$depth = 1;
-    }
-    if ( \$depth == 1) {
-        s@^([\w \-\_]+)=.*@\\\subsubsection{\1}@;
-    } elsif ( \$depth == 2 ) {
-        s@^([\w \-\_]+)=.*@\\\paragraph{\1}@;
-    } elsif ( \$depth == 3 ) {
-        s@^([\w \-\_]+)=.*@\\\subparagraph{\1}@;
-    }
-
-    s@^\s*(\[\[\[.*\]\]\])\s*\$@\\\paragraph{\1}@; 
-    s@^\s*(\[\[.*\]\])\s*\$@\\\subsubsection{\1}@; 
-    s@^\s*(\[.*\])\s*\$@\\\subsection{\1}@; 
-
-    s@^(.*)__many__(.*)@\1\\\textless MANY\\\textgreater\2@;
-    s@^#>RESUME@@;
-    s@^#>@@;
-    s@^\s*#.*@@;
-
-    print BAR "\$_\n";
-}
-close(FOO);
-close(BAR);
-eof
-
 # GENERATE COMMAND REFERENCE CHAPTER CONTENTS -----------------------
 if $FORCE_COMMANDS; then
     rm -rf doc/command-usage; mkdir -p doc/command-usage
@@ -119,10 +74,9 @@ fi
 cd doc
 
 pdflatex cug-pdf.tex
-pdflatex cug-pdf.tex
-pdflatex cug-pdf.tex
-
 $PDF_ONLY && exit 0
+pdflatex cug-pdf.tex
+pdflatex cug-pdf.tex
 
 rm *.aux
 

@@ -54,7 +54,7 @@ class job_submit(object):
     cylc_env = None
 
     def __init__( self, task_id, pre_command, task_command,
-            post_command, task_env, directives, 
+            post_command, task_env, ns_hier, directives, 
             manual_messaging, logfiles, log_dir, task_owner,
             remote_host, remote_cylc_dir, remote_suite_dir,
             remote_shell_template, remote_log_dir, 
@@ -68,6 +68,7 @@ class job_submit(object):
             self.task_command = '/bin/false'
 
         self.task_env = task_env
+        self.namespace_hierarchy = ns_hier
         self.directives  = directives
         self.logfiles = logfiles
  
@@ -168,7 +169,7 @@ class job_submit(object):
             return False
 
         jf = jobfile( self.task_id, 
-                self.__class__.cylc_env, self.task_env, 
+                self.__class__.cylc_env, self.task_env, self.namespace_hierarchy, 
                 self.directive_prefix, self.directives, self.final_directive, 
                 self.manual_messaging, self.pre_command,
                 self.task_command, self.post_command,

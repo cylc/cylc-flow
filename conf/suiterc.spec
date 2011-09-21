@@ -32,8 +32,8 @@
 #   BAD:  bar = string_list( default=list('foo','bar' ))
 
 #___________________________________________________________________HEAD
-title = string( default="No title supplied" )
-description = string( default="No description supplied" )
+title = string( default="No title provided" )
+description = string( default="No description provided" )
 #___________________________________________________________________CYLC
 [cylc]
     UTC mode = boolean( default=False )
@@ -51,10 +51,11 @@ description = string( default="No description supplied" )
     [[environment]]
         __many__ = string
     [[simulation mode]]
-        clock offset from initial cycle time in hours = integer( default=24 )
-        clock rate in seconds per simulation hour = integer( default=10 )
-        command scripting = force_list( default=list( "echo SIMULATION MODE $TASK_ID; sleep 10; echo BYE",))
-        job submission method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=background )
+        clock offset = integer( default=24 )
+        clock rate = integer( default=10 )
+        command scripting = force_list( default=list( "echo SIMULATION MODE $CYLC_TASK_ID; sleep 10; echo BYE",))
+        [[[job submission]]]
+            method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=background )
 #_____________________________________________________________SCHEDULING
 [scheduling]
     initial cycle time = integer( default=None )
@@ -78,17 +79,17 @@ description = string( default="No description supplied" )
 [runtime]
     [[root]]
         inherit = string( default=None )
-        description = string( default="No description supplied" )
-        command scripting = force_list( default=list( "echo THIS is the root DUMMY command for $TASK_ID; sleep 10",))
+        description = string( default="No description provided" )
+        command scripting = force_list( default=list( "echo DUMMY $CYLC_TASK_ID; sleep 10; echo BYE",))
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
-        manual task completion messaging = boolean( default=False )
+        manual completion messaging = boolean( default=False )
         hours = force_list( default=list())
         extra log files = force_list( default=list())
         [[[job submission]]]
             method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=background )
             command template = string( default=None )
-            job script shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=/bin/bash )
+            job script shell = string( default='/bin/bash' )
             log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job' )
         [[[remote]]]
             host = string( default=None )
@@ -121,13 +122,13 @@ description = string( default="No description supplied" )
         command scripting = force_list( default=None )
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
-        manual task completion messaging = boolean( default=None )
+        manual completion messaging = boolean( default=None )
         hours = force_list( default=list())
         extra log files = force_list( default=list())
         [[[job submission]]]
             method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=None )
             command template = string( default=None )
-            job script shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=None )
+            job script shell = string( default=None )
             log directory = string( default=None )
         [[[remote]]]
             host = string( default=None )

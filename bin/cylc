@@ -302,7 +302,7 @@ TASK - is a unique identitifier of a task in a suite: NAME%TAG, where
 for cycling tasks TAG is a cycle time (YYYYMMDDHH) and for asynchronous
 tasks it is an integer (preceded by 'a:' on the command line: foo%a:1).
 
-Here's how to drill down to command usage help for a particular command:
+Here's how to drill down to usage help for a particular command:
   $ cylc help ............... list all available categories (this page)
   $ cylc help prep .......... list commands in category 'preparation'
   $ cylc help prep edit ..... command usage help for 'cylc [prep] edit'

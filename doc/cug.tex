@@ -2802,6 +2802,7 @@ This must match one of the task's registered outputs:
 otherwise it will just be logged as a progress report or similar.
 
 \subsubsection{Tasks With Initiating Processes That Detach And Exit Early}
+\label{DetachingTasks}
 
 Tasks with initiating scripts or processes that spawn jobs internally
 (e.g.\ to a batch queue scheduler or to another host) and then
@@ -2814,10 +2815,10 @@ the task is really finished. To disable automatic completion messaging:
 
 \begin{lstlisting}
 # SUITE.RC
-manual task completion messaging = True  # global setting
+manual completion = True  # global setting
 [tasks]
     [ [foo]]
-        manual task completion messaging = True  # task-specific setting
+        manual completion = True  # task-specific setting
 \end{lstlisting}
 
 Reporting success or failure is just a matter of calling the cylc
@@ -3786,44 +3787,18 @@ as required.
 \pagebreak
 
 \appendix
-\section{Suite.rc Reference}
-\label{SuiteRCReference}
 
-This section documents all legal entries in a suite.rc file. The
-information is extracted from the specification file
-\lstinline=$CYLC_DIR/conf/suiterc.spec= during document processing, so
-that the User Guide is automatically kept up to date.  Section 
-headings are generated with the same nesting structure as the file
-itself to make it easy to get at the documentation you need by clicking on 
-hyperlinks in the PDF document contents page.
+\input{suiterc.tex}
 
-Most suites will only need a few of these settings - many configuration
-items have default values that should be sufficient, some are probably
-only needed
-for critical operational suites (e.g.\ secure passphrases and task event
-hooks), and some are primarily used for cylc development (e.g.\ simulation
-mode configuration). In general your suite.rc files shouldn't be a 
-lot more complicated than those of the cylc example suites.
 
-%\subsection{Overview}
-%
-%Details of suite.rc syntax are described in
-%Section~\ref{SuiteRCFile}. For this section it suffices to say that
-%every entry in the file is of the form:
-%\begin{lstlisting}
-%item = value
-%\end{lstlisting}
-%where \lstinline=item= may be a phrase containing spaces, and
-%\lstinline=value= may be an integer, float, boolean (True/False),
-%string, multiline string, or a comma-separated list of any of the
-%%former.  suite.rc files are validated against
-%\lstinline=$CYLC_DIR/conf/suiterc.spec=, which defines what
-%items are allowed, and places constraints on what values are legal for
-%each item.
 
-\input{suiterc.spec.tex}
 
-%\pagebreak
+
+
+
+
+
+\pagebreak
 
 \section{Command Reference}
 \label{CommandReference}

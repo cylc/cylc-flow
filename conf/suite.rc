@@ -1,0 +1,97 @@
+# SUITE.RC DEFAULTS ____________________________________________________
+# This file shows all cylc configuration items in context, with defaults 
+# ______________________________________________________________________
+# DEVELOPER NOTE: this must be in sync with $CYLC_DIR/conf/suiterc.spec
+
+title = "No title provided" # DEFAULT
+description = "No description provided" # DEFAULT
+
+[cylc]
+    UTC mode = False  # DEFAULT
+    simulation mode only = False  # DEFAULT
+    use secure passphrase = False  # DEFAULT
+    [[logging]]
+        directory = '$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite' # DEFAULT
+        roll over at start-up = True  # DEFAULT
+    [[state dumps]]
+        directory = '$HOME/cylc-run/$CYLC_SUITE_REG_NAME/state' # DEFAULT
+        number of backups = 10  # DEFAULT
+    [[lockserver]]
+        enable = False # DEFAULT
+        allow simultaneous instances = False # DEFAULT
+    [[environment]]
+        # None
+    [[simulation mode]]
+        clock offset = 24  # DEFAULT
+        clock rate = 10  # DEFAULT
+        command scripting = "echo SIMULATION MODE $CYLC_TASK_ID; sleep 10; echo BYE"  # DEFAULT
+        [[[job submission]]]
+            method = background  # DEFAULT
+[scheduling]
+    initial cycle time = None
+    final cycle time = None
+    runahead limit = 24 # DEFAULT
+    [[special tasks]]
+        clock-triggered = None
+        start-up = None
+        cold-start = None
+        sequential = None
+        one-off = None
+        explicit restart outputs = None
+        exclude at start-up = None
+        include at start-up = None
+    [[dependencies]]
+        graph = None
+        [[[__many__]]]
+            graph = None
+            daemon = None
+[runtime]
+    [[root]]
+        inherit = None # (other namespaces inherit first from root)
+        description = "No description provided"  # DEFAULT
+        pre-command scripting = None
+        command scripting = "echo DUMMY $CYLC_TASK_ID; sleep 10; echo BYE"  # DEFAULT
+        post-command scripting = None
+        manual completion = False  # DEFAULT
+        [[[job submission]]]
+            method = background  # DEFAULT
+            command template = None
+            job script shell = /bin/bash  # DEFAULT
+            log directory = '$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job'  # DEFAULT
+        [[[remote]]]
+            host = None
+            owner = None
+            cylc directory = None
+            suite definition directory = None
+            remote shell template = 'ssh -oBatchMode=yes %s' # DEFAULT
+            log directory = None
+        [[[event hooks]]]
+            script = None
+            events = None
+            submission timeout = None
+            execution timeout = None
+            reset time = False  # DEFAULT
+        [[[environment]]]
+            # (SUITE AND TASK IDENTITY VARIABLES ARE PROVIDED)
+        [[[directives]]]
+            # None
+        [[[outputs]]]
+            # None
+
+[visualization]
+    initial cycle time = 2999010100  # DEFAULT
+    final cycle time = 2999010123 # DEFAULT
+    collapsed families = None
+    use node color for edges = True  # DEFAULT
+    default node attributes = 'style=unfilled', 'color=black', 'shape=box'  # DEFAULT
+    default edge attributes = 'color=black'  # DEFAULT
+    [[node groups]]
+        # None
+    [[node attributes]]
+        # None
+    [[run time graph]]
+        enable = False  # DEFAULT
+        cutoff = 24  # DEFAULT
+        directory = '$CYLC_SUITE_DEF_PATH/graphing'  # DEFAULT
+
+

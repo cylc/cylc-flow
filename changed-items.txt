@@ -1,0 +1,26 @@
+clock offset from initial cycle time in hours -> clock offset
+
+allow multiple simultaneous suite instances -> allow simultaneous instances
+
+clock rate in seconds per simulation hour -> clock rate
+
+[simulation mode] job submission method -> [simulation mode] [[job submission]] method
+
+runahead limit in hours -> runahead limit
+
+manual task completion messaging -> manual completion
+
+task event hooks ->  event hooks
+                  1/ single script
+                  2/ list of events to handle
+                  3/ "in minutes" chopped
+                  4/ "reset execution timer on messages" -> "reset timer"
+
+run time graph 'cutoff in hours' -> cutoff
+
+job script shell -> shell
+
+TO DO: matt's namespace hierarchy environment variable.
+
+"no X supplied" -> "no X provided"
+

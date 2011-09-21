@@ -41,7 +41,7 @@ To see the effect, examine task job scripts generated with the
     [[aircraft]]
         description = "OPS aircraft obs processing"
         inherit = OPS
-        command scripting = "echo HELLO from $TASK_ID; sleep 5; echo ABORT; /bin/false"
+        command scripting = "echo HELLO from $CYLC_TASK_ID; sleep 5; echo ABORT; /bin/false"
         [[[environment]]]
             OPS_DATA = aircraft
     [[ConLS]]

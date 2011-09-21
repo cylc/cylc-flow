@@ -23,6 +23,9 @@
 # overlap: [[[0]]] and [[[0,12]]]; but if the same dependency is 
 # defined twice it will result in a "duplicate prerequisite" error.
 
+# TO DO: check that mid-level families used in the graph are replaced
+# by *task* members, not *family* members.
+
 # NOTE: configobj.reload() apparently does not revalidate (list-forcing
 # is not done, for example, on single value lists with no trailing
 # comma) ... so to reparse the file  we have to instantiate a new config
@@ -130,7 +133,6 @@ class config( CylcConfigObj ):
         self.async_repeating_tasks = []
 
         self.family_hierarchy = {}
-
         self.families_used_in_graph = []
 
         self.suite = suite
@@ -1173,6 +1175,10 @@ class config( CylcConfigObj ):
         taskd.logfiles    = taskconfig[ 'extra log files' ]
         taskd.environment = taskconfig[ 'environment' ]
         taskd.directives  = taskconfig[ 'directives' ]
+
+        foo = deepcopy(self.family_hierarchy[ name ])
+        foo.reverse()
+        taskd.namespace_hierarchy = foo
 
         return taskd
 
