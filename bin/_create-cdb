@@ -58,6 +58,9 @@ SSE=$( date +%s )
 CYLC_VERSION=$( cylc -v )
 if [[ $CYLC_VERSION == "THIS IS NOT A VERSIONED RELEASE" ]]; then
     # we are in a cylc git repository - get most recent tag
+    CYLC=$( which cylc )
+    CYLC_DIR=${CYLC%/bin/cylc}
+    cd $CYLC_DIR
     CYLC_VERSION=$( git tag | tail -1 )-post
 fi
 
@@ -92,6 +95,8 @@ cylc register ${TOP}.examples.generator.explicit $CYLC_DIR/examples/generator/ex
 cylc register ${TOP}.examples.generator.expression $CYLC_DIR/examples/generator/expression
 
 cylc register ${TOP}.examples.families $CYLC_DIR/examples/families
+
+cylc register ${TOP}.examples.ecox $CYLC_DIR/examples/ecox
 
 echo " + Exporting ${TOP}.examples to the central database"
 # This will create the new database file if necessary.
