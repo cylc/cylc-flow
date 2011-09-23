@@ -1137,7 +1137,7 @@ class config( CylcConfigObj ):
             taskd.precommand = taskconfig['pre-command scripting'] 
             taskd.postcommand = taskconfig['post-command scripting'] 
 
-        taskd.job_submission_shell = taskconfig['job submission']['job script shell']
+        taskd.job_submission_shell = taskconfig['job submission']['shell']
 
         taskd.job_submit_command_template = taskconfig['job submission']['command template']
 
@@ -1157,20 +1157,17 @@ class config( CylcConfigObj ):
             else:
                 taskd.remote_log_directory  = re.sub( os.environ['HOME'] + '/', '', taskd.job_submit_log_directory )
 
-        taskd.manual_messaging = taskconfig['manual task completion messaging']
+        taskd.manual_messaging = taskconfig['manual completion']
 
-        # task-specific event hook scripts
-        taskd.hook_scripts[ 'submitted' ]         = taskconfig['task event hook scripts']['submitted']
-        taskd.hook_scripts[ 'submission failed' ] = taskconfig['task event hook scripts']['submission failed']
-        taskd.hook_scripts[ 'started'   ]         = taskconfig['task event hook scripts']['started'  ]
-        taskd.hook_scripts[ 'warning'   ]         = taskconfig['task event hook scripts']['warning'  ]
-        taskd.hook_scripts[ 'succeeded' ]         = taskconfig['task event hook scripts']['succeeded' ]
-        taskd.hook_scripts[ 'failed'    ]         = taskconfig['task event hook scripts']['failed'   ]
-        taskd.hook_scripts[ 'timeout'   ]         = taskconfig['task event hook scripts']['timeout'  ]
-        # task-specific timeout hook scripts
-        taskd.timeouts[ 'submission'    ]     = taskconfig['task event hook scripts']['submission timeout in minutes']
-        taskd.timeouts[ 'execution'     ]     = taskconfig['task event hook scripts']['execution timeout in minutes' ]
-        taskd.timeouts[ 'reset on incoming' ] = taskconfig['task event hook scripts']['reset execution timeout on incoming messages']
+        taskd.hook_script = taskconfig['event hooks']['script']
+        taskd.hook_events = taskconfig['event hooks']['events']
+        for event in taskd.hook_events:
+            if event not in ['submitted', 'started', 'succeeded', 'failed', 'submission_failed', 'timeout' ]:
+                raise SuiteConfigError, name + ": illegal event hook: " + event
+
+        taskd.submission_timeout = taskconfig['event hooks']['submission timeout']
+        taskd.execution_timeout  = taskconfig['event hooks']['execution timeout']
+        taskd.reset_timer = taskconfig['event hooks']['reset timer']
 
         taskd.logfiles    = taskconfig[ 'extra log files' ]
         taskd.environment = taskconfig[ 'environment' ]

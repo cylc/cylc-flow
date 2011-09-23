@@ -73,14 +73,11 @@ class taskdef(object):
         self.remote_suite_directory = None
         self.remote_log_directory = None
 
-        self.hook_scripts = {}
-        for event in [ 'submitted', 'submission failed', 'started', 
-                'warning', 'succeeded', 'failed', 'timeout' ]:
-            self.hook_scripts[ event ] = None
-
-        self.timeouts = {}
-        for item in [ 'submission', 'execution', 'reset on incoming' ]:
-            self.timeouts[ item ] = None
+        self.hook_script = None
+        self.hook_events = []
+        self.submission_timeout = None
+        self.execution_timeout = None
+        self.reset_timer = None
 
         self.intercycle = False
         self.hours = []
@@ -245,8 +242,11 @@ class taskdef(object):
         tclass.elapsed_times = []
         tclass.mean_total_elapsed_time = None
 
-        tclass.timeouts = self.timeouts
-        tclass.hook_scripts = self.hook_scripts
+        tclass.hook_script = self.hook_script
+        tclass.hook_events = self.hook_events
+        tclass.submission_timeout = self.submission_timeout
+        tclass.execution_timeout  = self.execution_timeout
+        tclass.reset_timer =self.reset_timer
 
         tclass.remote_host = self.remote_host
         tclass.owner = self.owner

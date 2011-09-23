@@ -47,7 +47,7 @@ description = string( default="No description provided" )
         number of backups = integer( min=1, default=10 )
     [[lockserver]]
         enable = boolean( default=False )
-        allow multiple simultaneous suite instances = boolean( default=False )
+        simultaneous instances = boolean( default=False )
     [[environment]]
         __many__ = string
     [[simulation mode]]
@@ -60,7 +60,7 @@ description = string( default="No description provided" )
 [scheduling]
     initial cycle time = integer( default=None )
     final cycle time = integer( default=None )
-    runahead limit in hours = integer( min=0, default=24 )
+    runahead limit = integer( min=0, default=24 )
     [[special tasks]]
         clock-triggered = force_list( default=list())
         start-up = force_list( default=list())
@@ -83,13 +83,13 @@ description = string( default="No description provided" )
         command scripting = force_list( default=list( "echo DUMMY $CYLC_TASK_ID; sleep 10; echo BYE",))
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
-        manual completion messaging = boolean( default=False )
+        manual completion = boolean( default=False )
         hours = force_list( default=list())
         extra log files = force_list( default=list())
         [[[job submission]]]
             method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=background )
             command template = string( default=None )
-            job script shell = string( default='/bin/bash' )
+            shell = string( default='/bin/bash' )
             log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job' )
         [[[remote]]]
             host = string( default=None )
@@ -98,17 +98,12 @@ description = string( default="No description provided" )
             suite definition directory = string( default=None )
             remote shell template = string( default='ssh -oBatchMode=yes %s' )
             log directory = string( default=None )
-        [[[task event hook scripts]]]
-            submitted = string( default=None )
-            submission failed = string( default=None )
-            started = string( default=None )
-            succeeded = string( default=None )
-            failed = string( default=None )
-            warning = string( default=None )
-            timeout = string( default=None )
-            submission timeout in minutes = float( default=None )
-            execution timeout in minutes = float( default=None )
-            reset execution timeout on incoming messages = boolean( default=False )
+        [[[event hooks]]]
+            script = string( default=None )
+            events = force_list( default=list() )
+            submission timeout = float( default=None )
+            execution timeout = float( default=None )
+            reset timer = boolean( default=False )
         [[[environment]]]
             __many__ = string
         [[[directives]]]
@@ -122,13 +117,13 @@ description = string( default="No description provided" )
         command scripting = force_list( default=None )
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
-        manual completion messaging = boolean( default=None )
+        manual completion = boolean( default=None )
         hours = force_list( default=list())
         extra log files = force_list( default=list())
         [[[job submission]]]
             method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, default=None )
             command template = string( default=None )
-            job script shell = string( default=None )
+            shell = string( default=None )
             log directory = string( default=None )
         [[[remote]]]
             host = string( default=None )
@@ -137,17 +132,12 @@ description = string( default="No description provided" )
             suite definition directory = string( default=None )
             remote shell template = string( default=None )
             log directory = string( default=None )
-        [[[task event hook scripts]]]
-            submitted = string( default=None )
-            submission failed = string( default=None )
-            started = string( default=None )
-            succeeded = string( default=None )
-            failed = string( default=None )
-            warning = string( default=None )
-            timeout = string( default=None )
-            submission timeout in minutes = float( default=None )
-            execution timeout in minutes = float( default=None )
-            reset task execution timeout on incoming messages = boolean( default=None )
+        [[[event hooks]]]
+            script = string( default=None )
+            events = force_list( default=list() )
+            submission timeout = float( default=None )
+            execution timeout = float( default=None )
+            reset timer = boolean( default=False )
         [[[environment]]]
             __many__ = string
         [[[directives]]]
@@ -168,7 +158,7 @@ description = string( default="No description provided" )
         __many__ = force_list( default=list())
     [[run time graph]]
         enable = boolean( default=False )
-        cutoff in hours = integer( default=24 )
+        cutoff = integer( default=24 )
         directory = string( default='$CYLC_SUITE_DEF_PATH/graphing')
 #____________________________________________________________DEVELOPMENT
 [development]
