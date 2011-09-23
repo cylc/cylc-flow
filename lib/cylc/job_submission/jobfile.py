@@ -68,7 +68,7 @@ class jobfile(object):
         self.write_work_directory_remove()
         self.write_task_succeeded()
         self.write_eof()
-        self.FILE.close() 
+        self.FILE.close()
         return
 
     def write_header( self ):
@@ -151,7 +151,7 @@ mkdir -p $CYLC_SUITE_DEF_PATH/share || true
 
 # WORK DIRECTORY CREATE
 mkdir -p $CYLC_SUITE_DEF_PATH/work || true
-mkdir $CYLC_SUITE_DEF_PATH/work/$TASK_ID
+mkdir -p $CYLC_SUITE_DEF_PATH/work/$TASK_ID
 cd $CYLC_SUITE_DEF_PATH/work/$TASK_ID""" )
 
     def write_environment_2( self ):
@@ -219,7 +219,7 @@ rmdir $CYLC_SUITE_DEF_PATH/work/$TASK_ID 2>/dev/null || true""" )
             self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE:')
             self.FILE.write( '\ncylc task succeeded' )
             self.FILE.write( '\n\necho "JOB SCRIPT EXITING (TASK SUCCEEDED)"')
-        self.FILE.write( '\ntrap "" EXIT' )            
+        self.FILE.write( '\ntrap "" EXIT' )
 
     def write_eof( self ):
         self.FILE.write( '\n\n#EOF' )
