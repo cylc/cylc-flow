@@ -16,9 +16,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import os, re, sys
 from optparse import OptionParser
-from cylc.registration import dbgetter, RegistrationError, DatabaseLockedError, SuiteTitleNotFoundError
+from cylc.registration import delimiter, dbgetter, \
+    RegistrationError, DatabaseLockedError, SuiteTitleNotFoundError
 from cylc.config import config, SuiteConfigError
 
 parser = OptionParser( usage = """cylc [db] refresh [options] SUITE
@@ -39,9 +40,13 @@ parser.add_option( "-u","--unregister",
         help="Automatically unregister invalid registrations.",
         action="store_true", default=False, dest="unregister" )
 
+parser.add_option( "-v","--verbose",
+        help="Print extra information.",
+        action="store_true", default=False, dest="verbose" )
+
 ( options, args ) = parser.parse_args()
 
-db = dbgetter(options.central).db
+db = dbgetter(central=options.central, verbose=options.verbose).db
 
 if len(args) == 0:
     pattern = None
@@ -49,6 +54,15 @@ elif len(args) == 1:
     pattern = args[0]
 else:
     parser.error( "Wrong number of arguments")
+
+if options.central:
+    # only allow users to refresh their own suites
+    owner = os.environ['USER']
+    if not pattern:
+        pattern = owner + delimiter
+    else:
+        if not pattern.startswith( owner + delimiter ):
+            pattern = owner + delimiter + pattern
 
 invalid = []    # no suite.rc file
 readerror = []  # can't read title (suite.rc parse error)
@@ -59,7 +73,13 @@ try:
     invalid = db.get_invalid()
     # refresh titles
     changed = []
-    for suite, dir, title in db.get_list( pattern ):
+    items = db.get_list( pattern ) 
+    if len(items) == 0:
+        if pattern:
+            print 'No suites found to match', pattern
+        else:
+            print 'No suites found'
+    for suite, dir, title in items:
         if suite in invalid:
             continue
         try:
