@@ -27,8 +27,8 @@ Unregister suites from your private database, or remove your suites from
 the central suite database. This does not delete the corresponding suite
 definition directories unless you use the '--delete' option.
 
-If you accidentally unregister a running suite, just reregister it under
-the same name to regain access to it.
+If you accidentally unregister a running suite, just register it again 
+under the original name to regain access to it.
 
 Arguments:
     SUITE - suite or group registration, or filter expression.""" )

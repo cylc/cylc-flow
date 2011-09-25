@@ -278,17 +278,15 @@ class regdb(object):
                     del self.items[key]
         return dirs
 
-    def reregister( self, srce, targ, title=None ):
+    def reregister( self, srce, targ ):
         found = False
         for key in self.items.keys():
             if key.startswith(srce):
-                dir, old_title = self.items[key]
+                dir, title = self.items[key]
                 newkey = re.sub( '^'+srce, targ, key )
                 if self.verbose:
                     print 'REREGISTERED', key, 'to', newkey
                 del self.items[key]
-                if not title:
-                    title = old_title
                 self.items[newkey] = dir, title
                 found = True
         if not found:
