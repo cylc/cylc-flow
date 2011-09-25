@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
+import os, re
 from optparse import OptionParser
 from cylc.registration import dbgetter, RegistrationError, delimiter
 from cylc.print_tree import print_tree
@@ -56,6 +56,18 @@ parser.add_option( "-p","--pretty",
         help="Use unicode box drawing characters in tree views.",
         action="store_true", default=False, dest="unicode" )
 
+parser.add_option( "-a","--align",
+        help="Align columns.",
+        action="store_true", default=False, dest="align" )
+
+parser.add_option( "-x",
+        help="don't print suite definition directory paths.",
+        action="store_true", default=False, dest="x" )
+
+parser.add_option( "-y",
+        help="Don't print suite titles.",
+        action="store_true", default=False, dest="y" )
+
 parser.add_option( "--fail",
         help="Fail (exit 1) if no matching suites are found.",
         action="store_true", default=False, dest="fail" )
@@ -76,18 +88,61 @@ try:
     if options.fail and len(allsuites) == 0:
         raise SystemExit( 'ERROR: no suites matched.' )
     if not options.tree:
+        if options.align:
+            maxlen_suite = 0
+            maxlen_title = 0
+            for suite, dir, title in allsuites:
+                if len(suite) > maxlen_suite:
+                    maxlen_suite = len(suite)
+                if len(title) > maxlen_title:
+                    maxlen_title = len(title)
+            spacer_suite = maxlen_suite * ' ' 
+            spacer_title = maxlen_title * ' ' 
         for suite, dir, title in allsuites:
-            print suite, '|', title, '|', dir
+            dir = re.sub( '^' + os.environ['HOME'], '~', dir )
+            if options.align:
+                suite = suite + spacer_suite[ len(suite): ]
+                title = title + spacer_title[ len(title): ]
+            if not options.x and not options.y:
+                line = suite + ' | ' + title + ' | ' + dir 
+            elif not options.y:
+                line = suite + ' | ' + title
+            elif not options.x:
+                line = suite + ' | ' + dir
+            else:
+                line = suite
+            print line
     else:
         tree = {}
+        if options.align:
+            maxlen_title = 0
+            for suite, dir, title in allsuites:
+                if len(title) > maxlen_title:
+                    maxlen_title = len(title)
+            spacer_title = maxlen_title * ' ' 
+ 
         for suite, dir, title in allsuites:
+            dir = re.sub( '^' + os.environ['HOME'], '~', dir )
+            if options.align:
+                title = title + spacer_title[ len(title): ]
             regpath = suite.split( delimiter ) 
             sub = tree
             for key in regpath[:-1]:
                 if key not in sub:
                     sub[key] = {}
                 sub = sub[key]
-            sub[regpath[-1]] = title + ' | ' + dir
+            if not options.x and not options.y:
+                line = title + ' | ' + dir 
+            elif not options.y:
+                #line = ' | ' + title
+                line = ' ' + title
+            elif not options.x:
+                #line = ' | ' + dir
+                line = ' ' + dir
+            else:
+                line = ''
+            sub[regpath[-1]] = line
+
         pad = get_padding( allsuites )
         print_tree(tree, pad, options.unicode )
 

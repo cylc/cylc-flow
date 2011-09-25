@@ -1,4 +1,5 @@
 # SUITE.RC
+title = "The suite.rc reference appendix example"
 [scheduling]
     [[dependencies]]
         graph = "foo => obs => bar"
