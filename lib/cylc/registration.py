@@ -94,6 +94,9 @@ class RegistrationNotValidError( RegistrationError ):
 class DatabaseLockedError( RegistrationError ):
     pass
 
+class OwnerError( RegistrationError ):
+    pass
+
 class RegPathError( RegistrationError ):
     def __init__( self, reg ):
         self.msg = "ERROR, illegal registration path: " + reg
@@ -418,4 +421,13 @@ class centraldb( regdb ):
         else:
             user = self.user
         regdb.register( self, user + delimiter + suite, dir, des )
+
+    def reregister( self, srce, targ ):
+        sreglist = srce.split(delimiter)
+        treglist = targ.split(delimiter)
+        if sreglist[0] != self.user:
+            raise OwnerError, 'ERROR: You are not the owner of ' + srce
+        if treglist[0] != self.user:
+            raise OwnerError, 'ERROR: You cannot change your own username'
+        regdb.reregister( self, srce, targ )
 
