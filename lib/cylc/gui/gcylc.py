@@ -1556,7 +1556,7 @@ The cylc forecast suite metascheduler.
         return False
 
     def validate_suite( self, w, name ):
-        command = "cylc validate " + self.dbopt + " --notify-completion " + name 
+        command = "cylc validate -v " + self.dbopt + " --notify-completion " + name 
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()

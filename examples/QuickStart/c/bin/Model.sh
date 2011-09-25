@@ -25,7 +25,7 @@ else
     COLDSTART=false
 fi
  
-echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_REG_NAME"
+echo "Hello from $CYLC_TASK_NAME at $CYLC_TASK_CYCLE_TIME in $CYLC_SUITE_REG_NAME"
 sleep $TASK_EXE_SECONDS
 
 if $COLDSTART; then

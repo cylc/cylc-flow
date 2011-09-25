@@ -1,7 +1,7 @@
 \section{Suite.rc Reference}
 \label{SuiteRCReference}
 
-This appendix documents all legal entries in a suite.rc file.  Most
+This appendix documents all legal entries in a suite.rc file. Most
 suites will only need to explicitly configure a few of these items -
 many of them have sensible default values, some may only be needed for
 critical operational suites (e.g.\ secure passphrases), and some are
@@ -9,168 +9,9 @@ primarily used for cylc development. In general your suite.rc files
 shouldn't be a lot more complicated than those of the cylc example
 suites.
 
-\subsection{Overview}
-
-Cylc suite.rc files are parsed directly into a nested data structure
-that mirrors the file section nesting. This makes it very easy to
-add new configuration items to cylc.
-
-\subsubsection{Validation}
-
-Cylc suite.rc files are automatically validated against a spec,
-\lstinline=$CYLC_DIR/conf/suiterc.spec=, that defines all legal
-entries, values, options, and defaults. Some values, however, are
-complex strings that require further parsing by cylc to determine
-their correctness.
-
-\subsubsection{Syntax}
-
-\begin{myitemize}
-    \item {\bf All entries} are of the form \lstinline@item = value@ 
-        (some values require post-validation parsing).
-    \item {\bf Comments} follow a hash character (\#) to the end of the line.
-    \item {\bf List Values} are comma separated.
-    \item {\bf Strings} must be quoted if they contain commas 
-        (which indicate list values).
-    \item {\bf Multiline Strings} must be triple-quoted.
-    \item {\bf Boolean Values} are written as True or False (capitalized).
-    \item {\bf White Space} is ignored; indentation can be used for clarity.
-    \item {\bf Continuation Lines} follow a trailing backslash.
-    \item {\bf [Section Headings]} are enclosed in square brackets.
-    \item {\bf [[Subsection Nesting]]} is indicated by the number of square brackets.
-    %% This is reasonably obvious:
-    %%\item Sections are closed by the next section heading, so top level items within a section must be defined
-    %%    before any further subsections.
-    \item {\bf Duplicate Items} are illegal, except in
-        \lstinline=environment= and \lstinline=directives=
-        sections.\footnote{This was
-        originally intended to allow 
-        individual tasks to override specific environment variables set
-        in an include-file used in multiple tasks.  However, namespace 
-        inheritance now provides a better way to do this in most cases.}
-    \item {\bf Include-files} can be used, and may be multiply-included
-        and nested. Inclusion boundaries are arbitrary (they can span
-        sections).  Include-file paths should be specified portably
-        relative to the suite definition directory, e.g.:
-\begin{lstlisting}
-# include the file $CYLC_SUITE_DEF_PATH/inc/foo.rc:
-%include inc/foo.rc
-\end{lstlisting}
-    \end{myitemize}
-
-\subsubsection{Gross File Structure}
-
-Cylc suite.rc files consist of a suite title and description followed by
-configuration items grouped under several top level section headings:
-
-\begin{myitemize}
-    \item {\bf [cylc] } - how cylc itself behaves when running this suite.
-    \item {\bf [scheduling] } - configures when tasks are ready to run.
-    \item {\bf [runtime] } - how, where, and what to execute when a
-        task is ready to run.
-    \item {\bf [visualization] } - suite graphing and the graph-based
-        control GUI.
-\end{myitemize}
-
-\subsubsection{Namespaces - Inheritance Of Runtime Properties}
-\label{NIORP}
-
-The [runtime] section configures what to execute, and where and how,
-when tasks are ready to run. The sections immediately below [runtime]
-are, for want of a better term, {\em namespaces}\footnote{We use the
-term namespace in loose analogy with its meaning in modern programming
-languages.  Possible future enhancements to cylc, such as ability to
-import specific items from other namespaces rather than just wholesale
-inheritance, may tighten the analogy.} that define runtime properties
-for individual tasks or for families of tasks.  A namespace represents a
-family if other namespaces inherit from it (overriding properties as
-required). This allows configuration of related tasks without
-repetition. 
-
-Any namespace that does not explicitly inherit from another
-automatically inherits from the {\em root} namespace (below).
-Namespaces thus form a tree-like hierarchy of nested task
-families in which the leaves are the individual tasks of the suite. 
-
-\paragraph{The Root Namespace - Runtime Defaults}
-
-All namespaces inherit first from the root namespace, which provides
-defaults for some configuration items. The defaults are sufficient to
-to allow simple test suites to be defined by dependency graph alone
-(command scripting, for example, defaults to printing a
-simple message, sleeping for ten seconds, and then exiting). 
-Suite default values can be changed by explicitly configuring root.
-
-Default values are documented along with each suite.rc item below. See
-also Section~\ref{SuiteDefaults}, which shows default values in context. 
-
-\paragraph{Triggering, And Triggering Off, Families}
-
-Family names can be used in the suite graph as shorthand for the
-effective dependencies on member tasks. Member dependencies are
-substituted in such a way that downstream tasks will not
-trigger until all family members have either succeeded or failed.
-
-\paragraph{An Example}
-
-The following suite.rc file defines a default job
-submission method and one environment variable; and 
-a family called {\em obs} that contains the tasks {\em land} and {\em
-ship}, each of which add to or override some of their inherited
-properties.
-
-\lstinputlisting{../examples/appendix/suite.rc}
-
-You can use \lstinline=cylc get-config= to look at the final value 
-of any item:
-\begin{lstlisting}
-$ cylc db reg $CYLC_DIR/examples/appendix appx
-$ cylc get-config appx runtime land environment RUNNING_DIR
-$HOME/running/$CYLC_TASK_NAME
-\end{lstlisting}
-
-Also, \lstinline=cylc jobscript= generates the job scripts used by cylc
-to run tasks; and the namespace hierarchy itself can be printed with
-\lstinline=cylc list --tree=:
-
-\begin{lstlisting}
-$ cylc list -t appx
-root      
- |-obs    
- | |-land land obs processing
- | `-ship ship obs processing
- |-prep   No description provided
- `-prod   No description provided
-\end{lstlisting}
-
-\paragraph{Collapsible Task Families In Suite Graphing And GUIs}
-
-Nested families from the namespace inheritance hierarchy 
-can be expanded or collapsed in suite graphs 
-([visualization] $\rightarrow$ collapsed families) and by menu options
-in the graph-based suite control GUI (this will also be added to the
-text treeview control GUI in a future release).
-
-\subsubsection{String Interpolation}
-
-Configuration items beginning with an underscore are ignored by cylc, but may be
-used with the string interpolation mechanism provided by the ConfigObj file format. 
-An example:
-
-\begin{lstlisting}
-# SUITE.RC
-_greeting = HELLO
-[runtime]
-    [[root]]
-        command scripting = """
-    echo %(_greeting)s from $TASK_ID; sleep 10; echo BYE
-                            """
-\end{lstlisting}
-Then, assuming this suite is registered as \lstinline=foo=,
-\begin{lstlisting}
-$ cylc get-config foo runtime root 'command scripting'
-['echo HELLO from $TASK_ID; sleep 10; echo BYE']
-\end{lstlisting}
+See also {\em Suite Definition - Suite.rc Overview}
+(Section~\ref{SuiteRCFile}) for a descriptive overview of suite.rc
+files.
 
 \subsection{Top Level Items}
 
@@ -758,7 +599,7 @@ main command scripting). See also {\em post-command scripting}, below.
  \begin{lstlisting}
     pre-command scripting = """
       . $HOME/.profile
-      echo Hello from suite $CYLC_SUITE_REG_NAME!"""
+      echo Hello from suite ${CYLC_SUITE_REG_NAME}!"""
  \end{lstlisting}
 \end{myitemize}
 
@@ -1115,12 +956,14 @@ Replace \_\_OUTPUT\_\_ with any number of labelled output messages.
  \end{lstlisting}
  where the item name must match the output label associated with
  this task in the suite dependency graph, e.g.:
+\lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
     [dependencies]
         graph = TaskA:foo => TaskB
  \end{lstlisting}
 \end{myitemize}
+\lstset{language=transcript}
 
 \subsection{[visualization]}
 
@@ -1287,5 +1130,6 @@ fact, to define simple test suites by dependency graph alone
 simple message, sleeping for ten seconds, and then exiting). The
 following listing shows all current legal items and any default values:
 
+\lstset{language=suiterc}
 \lstinputlisting{../conf/suite.rc}
-
+\lstset{language=transcript}

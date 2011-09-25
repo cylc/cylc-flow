@@ -14,7 +14,7 @@ description = "EcoConnect Operation, circa August 2011"
 [cylc]
     simulation mode only = True
     [[simulation mode]]
-        clock offset from initial cycle time in hours = 0
+        clock offset = 0
 
 [scheduling]
     runahead limit = 48

@@ -410,7 +410,7 @@ class config( CylcConfigObj ):
     def specialize( self, name, target, source ):
         # recursively specialize a generator task config section
         # ('source') to a specific config section (target) for task
-        # 'name', by replaceing '$(TASK)' with 'name' in all items.
+        # 'name', by replacing '$(TASK)' with 'name' in all items.
         for item in source:
             if isinstance( source[item], str ):
                 # single source item

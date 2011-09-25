@@ -150,7 +150,7 @@ try:
             print >> sys.stderr, x
             continue
 
-        print 'COPYING', fdir, 'to', tdir 
+        print 'COPY', fdir, '\n  TO', tdir 
         try:
             copytree( fdir, tdir )
         except OSError, x:

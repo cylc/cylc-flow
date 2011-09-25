@@ -54,7 +54,7 @@ if [[ -z CYLC_DIR ]]; then
 fi
 
 override=false
-if [[ $CYLC_ADMIN_CREATE_CDB_OVERRIDE ]]; then
+if [[ $CYLC_ADMIN_OVERRIDE ]]; then
     # HIDDEN OVERRIDE FOR USER GUIDE
     override=true
     CYLC_VERSION=x.y.z
@@ -72,14 +72,16 @@ fi
 echo " + Registering example suites"
 cylc register ${TOP}.admin.test $CYLC_DIR/examples/test
 
-cylc register ${TOP}.examples.CUG.1 $CYLC_DIR/examples/CUG1
+cylc register ${TOP}.UserGuide.1 $CYLC_DIR/examples/CUG1
 
-cylc register ${TOP}.examples.CUG.QS1 $CYLC_DIR/examples/CUG_QS/one
-cylc register ${TOP}.examples.CUG.QS2 $CYLC_DIR/examples/CUG_QS/two
-cylc register ${TOP}.examples.CUG.QS3 $CYLC_DIR/examples/CUG_QS/three
+cylc register ${TOP}.UserGuide.QuickStart.one   $CYLC_DIR/examples/CUG_QS/one
+cylc register ${TOP}.UserGuide.QuickStart.two   $CYLC_DIR/examples/CUG_QS/two
+cylc register ${TOP}.UserGuide.QuickStart.three $CYLC_DIR/examples/CUG_QS/three
 
-cylc register ${TOP}.examples.CUG.73 $CYLC_DIR/examples/CUG7.3
-cylc register ${TOP}.examples.CUG.74 $CYLC_DIR/examples/CUG7.4
+cylc register ${TOP}.UserGuide.73 $CYLC_DIR/examples/CUG7.3
+cylc register ${TOP}.UserGuide.74 $CYLC_DIR/examples/CUG7.4
+
+cylc register ${TOP}.UserGuide.appendix $CYLC_DIR/examples/appendix
 
 cylc register ${TOP}.examples.AutoCleanup.FFHook $CYLC_DIR/examples/AutoCleanup/FamilyFailHook
 cylc register ${TOP}.examples.AutoCleanup.FFTask $CYLC_DIR/examples/AutoCleanup/FamilyFailTask
@@ -101,14 +103,11 @@ cylc register ${TOP}.examples.families $CYLC_DIR/examples/families
 
 cylc register ${TOP}.examples.ecox $CYLC_DIR/examples/ecox
 
-echo " + Exporting ${TOP}.examples to the central database"
+echo " + Exporting ${TOP} to the central database"
 # This will create the new database file if necessary.
-cylc export ${TOP}.examples ${TOP}.examples
-cylc export ${TOP}.admin ${TOP}.admin
+cylc export ${TOP}
 
-if [[ $CYLC_ADMIN_CREATE_CDB_EXIT_EARLY ]]; then
-    exit 0
-fi
+$override && exit 0
 
 echo " + Unregistering the originals in your private database"
 # We don't want the admin user accidentally modifying the originals.
@@ -116,8 +115,7 @@ cylc unregister ${TOP}
 
 echo " + Importing copies of ${TOP}.examples to your private database"
 # We don't want the admin user accidentally modifying the originals.
-cylc import ${USER}.${TOP}.examples ${TOP}.examples $TMPDIR
-cylc import ${USER}.${TOP}.admin ${TOP}.examples $TMPDIR
+cylc import ${USER}.${TOP} ${TOP} $TMPDIR
 
 # Determine CDB directory location
 # The following no longer works (see comment in lib/cylc/__init__.py)

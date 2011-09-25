@@ -3,7 +3,7 @@ title = "The suite.rc reference appendix example"
 [scheduling]
     [[dependencies]]
         graph = "foo => obs => bar"
-                # (this is shorthand for "foo => land & ship => bar")
+             # (this is shorthand for "foo => land & ship => bar")
 [runtime]
     [[root]] # base namespace for all tasks (defines suite-wide defaults)
         [[[job submission]]]
