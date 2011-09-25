@@ -54,6 +54,10 @@ parser.add_option( "--filter",
         "indicated for unregistering, for safety reasons. ",
         action="store_true", default=False, dest="regfilter" )
 
+parser.add_option( "-v","--verbose",
+        help="Print extra information.",
+        action="store_true", default=False, dest="verbose" )
+
 ( options, args ) = parser.parse_args()
 
 if len(args) != 1:
@@ -62,9 +66,9 @@ if len(args) != 1:
 arg = args[0]
 
 if options.central:
-    db = centraldb(verbose=True)
+    db = centraldb( verbose=options.verbose )
 else:
-    db = localdb(verbose=True)
+    db = localdb( verbose=options.verbose )
 
 try:
     if not options.dryrun:

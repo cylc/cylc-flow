@@ -20,6 +20,7 @@ import pickle
 import datetime, time
 import os, sys, re
 from conf.CylcGlobals import central_regdb_dir, local_regdb_dir
+from config import config, SuiteConfigError
 
 delimiter = '.'
 delimiter_re = '\.'
@@ -32,6 +33,34 @@ delimiter_re = '\.'
 # UM, which then core dumps. Manual use of $PWD to absolutize a relative
 # path, on GPFS, results in a shorter string ... so I use this for now.
 
+        ## cheap suite title extraction WAS USED IN refresh()
+        #try:
+        #    dir, title = self.items[suite]
+        #except KeyError:
+        #    raise SuiteNotFoundError, suite
+        #file = os.path.join( dir, 'suite.rc' )
+        #if not os.path.isfile( file ):
+        #    raise RegistrationError, 'File not found: ' + file
+        #
+        #found = False
+        #for line in open( file, 'rb' ):
+        #    m = re.match( '^\s*title\s*=\s*(.*)$', line )
+        #    if m:
+        #        title = m.groups()[0]
+        #        # strip trailing space
+        #        title = title.rstrip()
+        #        # NOTE: ANY TRAILING COMMENT WILL BE INCLUDED IN THE TITLE
+        #        #     (but this doesn't really matter for our purposes)
+        #        # (stripping isn't trivial in general - what about strings?)
+        #        found = True
+        #        break
+        #
+        #if not found:
+        #    print >> sys.stderr, "WARNING: title not found by simple search, for " + suite
+        #    # This means the title is defined in a suite.rc include-file, or
+        #    # is not defined. In the latter case, a full parse will result
+        #    # in the default title being used (from conf/suiterc.spec). 
+ 
 class RegistrationError( Exception ):
     """
     Attributes:
@@ -103,11 +132,11 @@ class RegPathError( RegistrationError ):
 
 class dbgetter:
     # Use to get unaliased suite registration data from an input registration.
-    def __init__( self, central=False ):
+    def __init__( self, central=False, verbose=False ):
         if central:
-            self.db = centraldb()
+            self.db = centraldb(verbose=verbose)
         else:
-            self.db = localdb()
+            self.db = localdb(verbose=verbose)
     def get_suite( self, reg ):
         self.db.load_from_file()
         suite = self.db.unalias( reg )
@@ -123,7 +152,7 @@ class regdb(object):
         self.user = os.environ['USER']
         self.dir = dir
         self.file = file
-        # items[one][two]...[name] = (dir,description)
+        # items[one][two]...[name] = (dir,title)
         self.items = {}
         # create initial database directory if necessary
         if not os.path.exists( self.dir ):
@@ -206,16 +235,7 @@ class regdb(object):
             if self.verbose:
                 print "   (database unchanged)"
 
-    def register( self, suite, dir, des='(no description supplied)' ):
-        if not dir.startswith( '->' ):  # alias for another reg
-            # Remove trailing '/'
-            dir = dir.rstrip( '/' )
-            # Remove leading './'
-            dir = re.sub( '^\.\/', '', dir )
-            # Make registered path absolute # see NOTE:ABSPATH above
-            if not re.search( '^/', dir ):
-                dir = os.path.join( os.environ['PWD'], dir )
-
+    def register( self, suite, dir ):
         for key in self.items.keys():
             if key == suite:
                 raise SuiteTakenError, suite
@@ -224,17 +244,36 @@ class regdb(object):
             elif suite.startswith(key + delimiter ):
                 raise NotAGroupError, key
 
-        if self.verbose:
-            print 'REGISTERING', suite, '--->', dir
-        self.items[suite] = dir, des
+        if dir.startswith( '->' ):
+            # (alias: dir points to target suite reg)
+            title = self.get_suite_title( dir[2:] )
+            # use the lowest level alias
+            target = self.unalias( dir[2:] )
+            dir = '->' + target
+        else:
+            # Remove trailing '/'
+            dir = dir.rstrip( '/' )
+            # Remove leading './'
+            dir = re.sub( '^\.\/', '', dir )
+            # Make registered path absolute # see NOTE:ABSPATH above
+            if not re.search( '^/', dir ):
+                dir = os.path.join( os.environ['PWD'], dir )
+            title = self.get_suite_title( suite, path=dir )
+
+        #if self.verbose:
+        print 'REGISTER', suite + ':', dir
+
+        # if title contains newlines we just use the first line here
+        title = title.split('\n')[0]
+        self.items[suite] = dir, title
 
     def get( self, reg ):
         suite = self.unalias(reg)
         try:
-            dir, des = self.items[suite]
+            dir, title = self.items[suite]
         except KeyError:
             raise SuiteNotRegisteredError, "Suite not registered: " + suite
-        return dir, des
+        return dir, title
 
     def getrc( self, reg ):
         dir, junk = self.get( reg )
@@ -245,15 +284,15 @@ class regdb(object):
         # The list can be empty if no suites are registered, or if 
         # the filter rejects all registered suites.
         res = []
-        for key in self.items:
+        for suite in self.items:
             if regfilter:
                 try:
-                    if not re.search(regfilter, key):
+                    if not re.search(regfilter, suite):
                         continue
                 except:
                     raise InvalidFilterError, regfilter
-            dir, des = self.items[key]
-            res.append( [key, dir, des] )
+            dir, title = self.items[suite]
+            res.append( [suite, dir, title] )
         return res
 
     def unregister( self, exp, regfilter=False ):
@@ -263,9 +302,9 @@ class regdb(object):
         dirs = []
         for key in self.items.keys():
             if re.search( exp, key ):
-                if self.verbose:
-                    print 'UNREGISTERING', key 
+                #if self.verbose:
                 dir, junk = self.items[key]
+                print 'UNREGISTER', key + ':', dir 
                 if dir not in dirs:
                     # (there could be multiple registrations of the same
                     # suite defintion).
@@ -276,8 +315,8 @@ class regdb(object):
             dir, junk = self.items[key]
             if dir.startswith('->'):
                 if re.search( exp, dir[2:] ):
-                    if self.verbose:
-                        print 'UNREGISTERING invalidated alias', key 
+                    #if self.verbose:
+                    print 'UNREGISTER (invalidated alias)', key + ':', dir 
                     del self.items[key]
         return dirs
 
@@ -287,19 +326,17 @@ class regdb(object):
             if key.startswith(srce):
                 dir, title = self.items[key]
                 newkey = re.sub( '^'+srce, targ, key )
-                if self.verbose:
-                    print 'REREGISTERED', key, 'to', newkey
+                #if self.verbose:
+                print 'REREGISTER', key, 'to', newkey
                 del self.items[key]
                 self.items[newkey] = dir, title
                 found = True
         if not found:
             raise SuiteOrGroupNotFoundError, srce
 
-    def alias( self, reg, alias ):
-        suite = self.unalias( reg )
-        junk, title = self.items[suite]
+    def alias( self, suite, alias ):
         pseudodir = '->' + suite
-        self.register( alias, pseudodir, title )
+        self.register( alias, pseudodir )
 
     def unalias( self, alias ):
         try:
@@ -307,8 +344,7 @@ class regdb(object):
         except KeyError:
             raise SuiteNotFoundError, alias
         if dir.startswith('->'):
-            target = dir[2:]
-            dir, title = self.items[target]
+            target = self.unalias( dir[2:] )
         else:
             target = alias
         return target
@@ -323,49 +359,30 @@ class regdb(object):
                 invalid.append( reg )
         return invalid
 
-    def refresh_suite_title( self, suite ):
-        suite = self.unalias(suite)
-        # cheap suite title extraction
+    def get_suite_title( self, suite, path=None ):
+        if path:
+            suiterc = os.path.join( path, 'suite.rc' )
+        else:
+            suite = self.unalias(suite)
+            suiterc = self.getrc( suite )
         try:
-            dir, title = self.items[suite]
-        except KeyError:
-            raise SuiteNotFoundError, suite
-        file = os.path.join( dir, 'suite.rc' )
-        if not os.path.isfile( file ):
-            raise RegistrationError, 'File not found: ' + file
+            title = config( suite, suiterc ).get_title()
+        except SuiteConfigError:
+            title = "SUITE PARSING ERROR"
+        return title
 
-        found = False
-        for line in open( file, 'rb' ):
-            m = re.match( '^\s*title\s*=\s*(.*)$', line )
-            if m:
-                title = m.groups()[0]
-                # strip trailing space
-                title = title.rstrip()
-                # NOTE: ANY TRAILING COMMENT WILL BE INCLUDED IN THE TITLE
-                #     (but this doesn't really matter for our purposes)
-                # (stripping isn't trivial in general - what about strings?)
-                found = True
-                break
-
-        if not found:
-            print >> sys.stderr, "WARNING: title not found by simple search, for " + suite
-
-        self.items[suite] = dir, title
-
-        #    print >> sys.stderr, 'WARNING: ' + suite + ' title not found by suite.rc search - doing full parse.'
-        #    # This means the title is defined in a suite.rc include-file, or
-        #    # is not defined. In the latter case, a full parse will result
-        #    # in the default title being used (from conf/suiterc.spec). 
-        #    try:
-        #        if path:
-        #            print path
-        #            title = config( path=path, central=False ).get_title()
-        #        else:
-        #            title = config( suite ).get_title()
-        #    except SuiteConfigError, x:
-        #        #print >> sys.stderr, 'ERROR: suite.rc parse failure!'
-        #        #raise SystemExit( str(x) )
-        #        raise
+    def refresh_suite_title( self, suite ):
+        dir, title = self.items[suite]
+        new_title = self.get_suite_title( suite )
+        if title == new_title:
+            #if self.verbose:
+            print 'unchanged:', suite#, '->', title
+            changed = False
+        else:
+            print 'RETITLED:', suite #, '->', new_title
+            changed = True
+            self.items[suite] = dir, new_title
+        return changed
 
     def get_rcfiles ( self, suite ):
         suite = self.unalias(suite)
@@ -415,12 +432,12 @@ class centraldb( regdb ):
             file = os.path.join( dir, 'db' )
         regdb.__init__(self, dir, file, verbose )
 
-    def register( self, suite, dir, des='(no description supplied)', owner=None ):
+    def register( self, suite, dir, owner=None ):
         if owner:
             user = owner
         else:
             user = self.user
-        regdb.register( self, user + delimiter + suite, dir, des )
+        regdb.register( self, user + delimiter + suite, dir )
 
     def reregister( self, srce, targ ):
         sreglist = srce.split(delimiter)

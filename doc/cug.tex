@@ -416,7 +416,7 @@ script, or logging in again, you should be able to run cylc:
 
 \begin{lstlisting}
 $ cylc --version
-3.x.y
+x.y.z
 \end{lstlisting}
 
 \subsection{Creating The Central Suite Database}
@@ -523,7 +523,7 @@ Now you should be able to get cylc to print its release version:
 \begin{lstlisting}
 $ . $HOME/.profile   # (or log in again)
 $ cylc -v
-3.x.y
+x.y.z
 \end{lstlisting}
 If this command aborts and says that Pyro is not installed or is not available,
 then you have either not installed Pyro (check the output of the installation 
@@ -604,7 +604,7 @@ not installed pygraphviz properly, {\em or} you have not configured your
 PYTHONPATH to point to the installed pygraphviz modules, {\em or} you have not
 sourced the cylc environment script since updating its PYTHONPATH.
 Finally, if you have installed pygraphviz and configured your PYTHONPATH
-properly but graphviz itself has not been installed properly (or if the
+but graphviz itself has not been installed properly (or if the
 graphviz libraries have been deleted since you installed pygraphviz)
 then the initial pygraphiz import will be successful but a lower level
 import will fail when the pygraphviz modules cannot load the underlying

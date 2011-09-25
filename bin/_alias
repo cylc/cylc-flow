@@ -39,6 +39,10 @@ Arguments:
      SUITE  -  Target suite.
      ALIAS  -  An alternative name for the same suite.""" )
 
+parser.add_option( "-v","--verbose",
+        help="Print extra information.",
+        action="store_true", default=False, dest="verbose" )
+
 ( options, args ) = parser.parse_args()
 
 if len(args) != 2:
@@ -47,7 +51,7 @@ if len(args) != 2:
 suite = args[0]
 alias = args[1]
 
-db = localdb()
+db = localdb( verbose=options.verbose )
 try:
     db.lock()
     db.load_from_file()

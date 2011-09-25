@@ -41,7 +41,6 @@ from validate import Validator
 from configobj import get_extra_values, flatten_errors, Section
 from cylcconfigobj import CylcConfigObj, ConfigObjError
 from graphnode import graphnode, GraphNodeError
-from registration import delimiter_re
 from cylc.print_tree import print_tree
 
 try:
@@ -381,7 +380,8 @@ class config( CylcConfigObj ):
         # Environment variable interpolation in directory paths.
         # (allow use of suite identity variables):
         os.environ['CYLC_SUITE_REG_NAME'] = self.suite
-        os.environ['CYLC_SUITE_REG_PATH'] = re.sub( delimiter_re, '/', self.suite )
+        # registration.delimiter_re ('\.') removed to avoid circular import!
+        os.environ['CYLC_SUITE_REG_PATH'] = re.sub( '\.', '/', self.suite )
         os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
         self['cylc']['logging']['directory'] = \
                 os.path.expandvars( os.path.expanduser( self['cylc']['logging']['directory']))

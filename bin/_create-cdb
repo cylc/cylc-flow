@@ -53,18 +53,21 @@ if [[ -z CYLC_DIR ]]; then
     exit 1
 fi
 
-SSE=$( date +%s )
-
-CYLC_VERSION=$( cylc -v )
-if [[ $CYLC_VERSION == "THIS IS NOT A VERSIONED RELEASE" ]]; then
-    # we are in a cylc git repository - get most recent tag
-    CYLC=$( which cylc )
-    CYLC_DIR=${CYLC%/bin/cylc}
-    cd $CYLC_DIR
-    CYLC_VERSION=$( git tag | tail -1 )-post
+override=false
+if [[ $CYLC_ADMIN_CREATE_CDB_OVERRIDE ]]; then
+    # HIDDEN OVERRIDE FOR USER GUIDE
+    override=true
+    CYLC_VERSION=x.y.z
+    TOP=cylc-$( echo $CYLC_VERSION | tr '.' '_' )
+else
+    CYLC_VERSION=$( cylc -v )
+    if [[ $CYLC_VERSION == "THIS IS NOT A VERSIONED RELEASE" ]]; then
+        # we are in a cylc git repository - get most recent tag
+        CYLC_VERSION=$( git tag | tail -1 )-post
+    fi
+    SSE=$( date +%s )
+    TOP=cylc-$( echo $CYLC_VERSION | tr '.' '_' )-$SSE
 fi
-
-TOP=cylc-$( echo $CYLC_VERSION | tr '.' 'p' )-$SSE
 
 echo " + Registering example suites"
 cylc register ${TOP}.admin.test $CYLC_DIR/examples/test
@@ -102,6 +105,10 @@ echo " + Exporting ${TOP}.examples to the central database"
 # This will create the new database file if necessary.
 cylc export ${TOP}.examples ${TOP}.examples
 cylc export ${TOP}.admin ${TOP}.admin
+
+if [[ $CYLC_ADMIN_CREATE_CDB_EXIT_EARLY ]]; then
+    exit 0
+fi
 
 echo " + Unregistering the originals in your private database"
 # We don't want the admin user accidentally modifying the originals.

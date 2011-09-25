@@ -16,6 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 from cylc.execute import execute
 from optparse import OptionParser
 
@@ -29,10 +30,11 @@ Arguments:
                 (omit TARGET to keep the central reg)
     TOPDIR    - top level directory for the imported suite definition.""" )
 
-( options, args ) = parser.parse_args()
+parser.add_option( "-v","--verbose",
+        help="Print extra information.",
+        action="store_true", default=False, dest="verbose" )
 
-if len(args) != 2 and len(args) != 3:
-    parser.error('Illegal number of arguments')
+( options, args ) = parser.parse_args()
 
 source = args[0]
 if len(args) == 3:
@@ -41,6 +43,13 @@ if len(args) == 3:
 elif len(args) == 2:
     target = source
     dir = args[1]
+else:
+    parser.error('Illegal number of arguments')
 
-command = 'cylc db copy --import ' + source + ' ' + target + ' ' + dir
-execute( command.split(' '))
+if options.verbose:
+    verbose = '-v '
+else:
+    verbose = ' '
+
+command = 'cylc db copy --import ' + verbose + source + ' ' + target + ' ' + dir
+execute( re.split('\s+', command ))
