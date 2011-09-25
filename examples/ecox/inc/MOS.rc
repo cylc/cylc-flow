@@ -2,8 +2,8 @@
         inherit = MOS
         description = "Generate NZLAM mos coefficients."
         command scripting = /${SYS}/ecoconnect/mos_${SYS}/bin/generate_nzlam_mos_coeff.sh
-        [[[task event hook scripts]]]
-            execution timeout in minutes = 90
+        [[[event hooks]]]
+            execution timeout = 90
 
     [[mos_nzlam_apply]]
         inherit = MOS

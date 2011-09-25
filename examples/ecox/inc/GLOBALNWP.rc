@@ -13,8 +13,8 @@
         [[[environment]]]
             PRODUCT_DIR  = ${HOME}/running/global/product
             SERVICE     = globalnwp_products
-        [[[task event hook scripts]]]
-            execution timeout in minutes = 90
+        [[[event hooks]]]
+            execution timeout = 90
 
     [[globalnwp_housekeeping]]
         inherit = GLOBALNWP

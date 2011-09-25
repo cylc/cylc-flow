@@ -1,7 +1,7 @@
     [[nzwave]]
         inherit = NZWAVE
         description = "The NZWAVE model"
-        manual task completion messaging = True
+        manual completion = True
         command scripting = ${HOME}/bin/scripts/run_nzwave_12
     [[nzwave_ncl]]
         inherit = NZWAVE

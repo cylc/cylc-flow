@@ -2,7 +2,7 @@ title = "Cylc User Guide Quick Start Example 1"
 description = "(See the Cylc User Guide)"
  
 [scheduling]
-    runahead limit in hours = 12
+    runahead limit = 12
     [[special tasks]]
         start-up         = Prep
         clock-triggered = GetData(1)

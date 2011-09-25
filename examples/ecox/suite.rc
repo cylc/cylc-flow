@@ -17,7 +17,7 @@ description = "EcoConnect Operation, circa August 2011"
         clock offset from initial cycle time in hours = 0
 
 [scheduling]
-    runahead limit in hours = 48
+    runahead limit = 48
     initial cycle time = 2010080806
     final cycle time = 2010080806
 
@@ -161,15 +161,15 @@ description = "EcoConnect Operation, circa August 2011"
         [[[environment]]]
             SYS = "${USER##*_}"
             ARCHIVE = /$SYS/archive/ecoconnect
-        #[[[task event hook scripts]]]
+        #[[[event hooks]]]
         #    started = nagios.sh
         #    failed = nagios.sh
         #    warning = nagios.sh
         #    succeeded = nagios.sh
         #    submission failed = nagios.sh
         #    timeout = nagios.sh
-        #    submission timeout in minutes = 2
-        #    execution timeout in minutes = 30
+        #    submission timeout = 2
+        #    execution timeout = 30
 
     [[UKMO]]
         description = "UK Met Office data retrieval"
@@ -219,7 +219,7 @@ description = "EcoConnect Operation, circa August 2011"
 
 [visualization]
     #use node color for edges = False
-    collapsed families = NZWAVE, NZTIDE, NCEP, RICOM, TOPNET, MOS, GLOBALWAVE, GLOBALNWP, CLEANUP, UKMO, OPS, VAR, GEN, NZLAM 
+    #collapsed families = NZWAVE, NZTIDE, NCEP, RICOM, TOPNET, MOS, GLOBALWAVE, GLOBALNWP, CLEANUP, UKMO, OPS, VAR, GEN, NZLAM 
     [[node groups]]
         g_ukmet = ext_check_globalwind_ukmet, ext_check_globalice_ukmet, ext_check_bgerr_ukmet, ext_check_obstore_ukmet, ext_check_frames_ukmet, \
 		  ext_check_sst_ukmet, ext_get_globalwind_ukmet, ext_get_globalice_ukmet, ext_get_bgerr_ukmet, ext_get_obstore_ukmet, ext_get_frames_ukmet, \

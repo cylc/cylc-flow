@@ -12,8 +12,8 @@
             SERVICE = ext_check_bgerr_ukmet
     	[[[directives]]]
             wall_clock_limit = "12:00:10,12:00:00"
-         [[[task event hook scripts]]]
-            execution timeout in minutes = 60
+         [[[event hooks]]]
+            execution timeout = 60
    
     [[ext_check_obstore_ukmet]]
         inherit = UKMO
@@ -30,8 +30,8 @@ cycle is available for download."""
             SERVICE = ext_check_obstore_ukmet
 	    [[[directives]]]
 	        wall_clock_limit = "12:00:10,12:00:00"
-        [[[task event hook scripts]]] 
-            execution timeout in minutes = 60
+        [[[event hooks]]] 
+            execution timeout = 60
  
     [[ext_check_frames_ukmet]]
         inherit = UKMO
@@ -49,8 +49,8 @@ available on their ftp site"""
             TIMEOUT = 90
     	[[[directives]]]
 	        wall_clock_limit = "12:00:10,12:00:00"
-        [[[task event hook scripts]]]
-            execution timeout in minutes = 90
+        [[[event hooks]]]
+            execution timeout = 90
 
     [[ext_check_globalwind_ukmet]]
         inherit = UKMO
@@ -67,8 +67,8 @@ is available for download."""
             SERVICE = ext_check_globalwind_ukmet
 	    [[[directives]]]
             wall_clock_limit = "12:00:10,12:00:00"
-        [[[task event hook scripts]]]
-            execution timeout in minutes = 60
+        [[[event hooks]]]
+            execution timeout = 60
 
     [[ext_check_globalice_ukmet]]
         inherit = UKMO
@@ -85,8 +85,8 @@ is available for download."""
             SERVICE = ext_check_globalice_ukmet
 	    [[[directives]]]
 	        wall_clock_limit = "12:00:10,12:00:00"
-        [[[task event hook scripts]]]
-            execution timeout in minutes = 60
+        [[[event hooks]]]
+            execution timeout = 60
 
     [[ext_check_sst_ukmet]]
         inherit = UKMO
@@ -102,8 +102,8 @@ is available for download."""
             TIMEOUT = 120
 	    [[[directives]]]
 	        wall_clock_limit = "4:00:10,4:00:00"
-        [[[task event hook scripts]]]
-            execution timeout in minutes = 120
+        [[[event hooks]]]
+            execution timeout = 120
 
     [[ext_check_dump_ukmet]]
         inherit = UKMO
@@ -121,8 +121,8 @@ is available for download."""
             SERVICE = ext_check_dump_ukmet
 	    [[[directives]]]
 	        wall_clock_limit = "4:00:10,4:00:00"
-        [[[task event hook scripts]]]
-            execution timeout in minutes = 60
+        [[[event hooks]]]
+            execution timeout = 60
 
     [[ext_get_bgerr_ukmet]]
         inherit = UKMO
@@ -184,8 +184,8 @@ is available for download."""
             CHECKFILE   = ${PREV_CYCLE_TIME}_frames_checksum.txt
 	    [[[directives]]]
 	        wall_clock_limit = "1:00:10,1:00:00"
-        [[[task event hook scripts]]]
-            execution timeout in minutes = 60
+        [[[event hooks]]]
+            execution timeout = 60
 
     [[ext_get_globalwind_ukmet]]
         inherit = UKMO
@@ -207,8 +207,8 @@ is available for download."""
 	        CHECKSUM  =  1
 	    [[[directives]]]
             wall_clock_limit = "2:00:10,2:00:00"
-        [[[task event hook scripts]]]
-            execution timeout in minutes = 90
+        [[[event hooks]]]
+            execution timeout = 90
 
     [[ext_get_globalice_ukmet]]
         inherit = UKMO
@@ -271,7 +271,7 @@ when needed."""
             CHECKFILE   = None
 	    [[[directives]]]
 	        wall_clock_limit = "8:00:10,8:00:00"
-        [[[task event hook scripts]]]
-            execution timeout in minutes = 300
+        [[[event hooks]]]
+            execution timeout = 300
 
 

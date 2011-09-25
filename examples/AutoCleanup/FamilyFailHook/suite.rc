@@ -4,7 +4,7 @@ description = """An example suite in which a task failure hook script is
 used to automatically clean up a failed task family."""
 
 [scheduling]
-    runahead limit in hours = 6
+    runahead limit = 6
     [[special tasks]]
         sequential = A, fammo  # (just to slow the suite down)
 
@@ -14,8 +14,9 @@ used to automatically clean up a failed task family."""
                     fammo | fammo:fail => B"""
 [runtime]
     [[fammo]]
-        [[[task event hook scripts]]]
-            failed = failhook.sh
+        [[[event hooks]]]
+            script = failhook.sh
+            events = failed
     [[m_foo]]
         inherit = fammo
         command scripting = sleep 8 

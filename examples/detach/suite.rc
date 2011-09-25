@@ -1,4 +1,4 @@
-title = Custom Task Wrapper Example
+title = "Custom Task Wrapper Example"
 
 description = """This suite runs a single task that internally submits a
 'model executable' before detaching and exiting immediately - so we have
@@ -14,7 +14,7 @@ to handle task completion messaging manually - see the User Guide 8.4.3."""
 
 [runtime]
     [[model]]
-        manual task completion messaging = True
+        manual completion = True
         command scripting = model-wrapper.sh  # invoke the task via a custom wrapper
         [[[environment]]]
             # location of native job scripts to modify for this suite:

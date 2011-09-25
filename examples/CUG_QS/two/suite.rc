@@ -2,7 +2,7 @@ title = "Cylc User Guide Quick Start Example 2"
 description = "(See the Cylc User Guide)"
 
 [scheduling]
-    runahead limit in hours = 12
+    runahead limit = 12
     [[special tasks]]
         start-up         = Prep
         cold-start       = ColdModel

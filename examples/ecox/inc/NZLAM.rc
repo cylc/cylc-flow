@@ -9,7 +9,7 @@
     [[OPS_Satwind]]
         inherit = OPS
         description = "OPS Extract and Process Satwind observations"
-        manual task completion messaging = True
+        manual completion = True
         command scripting = OPS-wrapper.sh
         [[[environment]]]
             OPSUI_JOB_DIR     = $OPS_SATWIND_JOBDIR
@@ -20,7 +20,7 @@
     [[OPS_ATOVS]]
         inherit = OPS
         description = "OPS Extract and Process ATOVS observations"
-        manual task completion messaging = True
+        manual completion = True
         command scripting = OPS-wrapper.sh
         [[[environment]]]
             OPSUI_JOB_DIR     = $OPS_ATOVS_JOBDIR
@@ -31,7 +31,7 @@
     [[OPS_IASI]]
         inherit = OPS
         description = "OPS Extract and Process IASI observations"
-        manual task completion messaging = True
+        manual completion = True
         command scripting = OPS-wrapper.sh
         [[[environment]]]
             OPSUI_JOB_DIR     = $OPS_IASI_JOBDIR
@@ -42,7 +42,7 @@
     [[OPS_SurfaceScatt]]
         inherit = OPS
         description = "OPS Extract and Process Surface and Scatterometer observations"
-        manual task completion messaging = True
+        manual completion = True
         command scripting = OPS-wrapper.sh
         [[[environment]]]
             OPSUI_JOB_DIR     = $OPS_SURFACESCATT_JOBDIR
@@ -53,7 +53,7 @@
     [[OPS_GPSRO]]
         inherit = OPS
         description = "OPS Extract and Process GPSRO observations"
-        manual task completion messaging = True
+        manual completion = True
         command scripting = OPS-wrapper.sh
         [[[environment]]]
             OPSUI_JOB_DIR     = $OPS_GPSRO_JOBDIR
@@ -64,7 +64,7 @@
     [[OPS_AIRS]]
         inherit = OPS
         description = "OPS Extract and Process AIRS observations"
-        manual task completion messaging = True
+        manual completion = True
         command scripting = OPS-wrapper.sh
         [[[environment]]]
             OPSUI_JOB_DIR     = $OPS_AIRS_JOBDIR
@@ -75,7 +75,7 @@
     [[OPS_AircraftSonde]]
         inherit = OPS
         description = "OPS Extract and Process Aircraft and Sonde observations"
-        manual task completion messaging = True
+        manual completion = True
         command scripting = OPS-wrapper.sh
         [[[environment]]]
             OPSUI_JOB_DIR     = $OPS_AIRCRAFTSONDE_JOBDIR
@@ -92,7 +92,7 @@
     [[UM_NZtoNZ_recon]]
         inherit = NZLAM
         description = "Reconfigure the NZLAM model restart dump"
-        manual task completion messaging = True
+        manual completion = True
         command scripting = """
 export UMRECON_INPUTDUMP=$( cylc template -s 6 TEMPLATE_RESTART_DUMP ) 
 export UMRECON_OUTPUTDUMP=$( cylc template -s 6 TEMPLATE_RECONFIGURED_RESTART_DUMP ) 
@@ -106,7 +106,7 @@ UMrecon-wrapper.sh"""
     [[UM_GLtoNZ_recon]]
         inherit = NZLAM
         description = "Reconfigure the cold start dump for the NZLAM"
-        manual task completion messaging = True
+        manual completion = True
 	command scripting = """
 export UMRECON_INPUTDUMP=$(  cylc template -s 6 TEMPLATE_GLOBAL_DUMP ) 
 export UMRECON_OUTPUTDUMP=$( cylc template -s 6 TEMPLATE_RESTART_DUMP ) 
@@ -122,7 +122,7 @@ UMrecon-wrapper.sh"""
         description = """Reconfigure a reduced UM global model dump to add
 in global ancillary fields and generate a full sized UM global global
 start dump."""
-        manual task completion messaging = True
+        manual completion = True
 	command scripting = """
 export UMRECON_INPUTDUMP=$(  cylc template -s 6 TEMPLATE_REDUCED_GLOBAL_DUMP ) 
 export UMRECON_OUTPUTDUMP=$( cylc template -s 6 TEMPLATE_GLOBAL_DUMP ) 
@@ -136,7 +136,7 @@ UMrecon-wrapper.sh"""
     [[UM_nzlam]]
         inherit = NZLAM
         description = "NZLAM warm cycle forecast"
-        manual task completion messaging = True
+        manual completion = True
         command scripting = """
 export UM_PPVARFILE=$( cylc template TEMPLATE_PPVAR_FILE )
 export UM_PP7CXFILE=$( cylc template TEMPLATE_PP7CX_FILE )
@@ -157,7 +157,7 @@ UM-wrapper.sh"""
     [[UM_nzlam_coldstart]]
         inherit = NZLAM
         description = NZLAM initial forecast from global model start dump.
-        manual task completion messaging = True
+        manual completion = True
         command scripting = """
 export UM_STARTDUMP=$( cylc template -s 6 $TEMPLATE_RESTART_DUMP )
 export UM_PPVARFILE=$( cylc template -s 6 TEMPLATE_PPVAR_FILE   )
@@ -173,7 +173,7 @@ UM-wrapper.sh"""
     [[VAR_AnalysePF]]
         inherit = VAR
         description = "VAR Analysis"
-        manual task completion messaging = True
+        manual completion = True
         command scripting = VAR-wrapper.sh
         [[[environment]]]
             VARUI_JOB_DIR    = $VAR_ANALYSEPF_JOBDIR
@@ -184,7 +184,7 @@ UM-wrapper.sh"""
     [[VAR_ConfigureLS]]
         inherit = VAR
         description = "VAR Reconfiguration"
-        manual task completion messaging = True
+        manual completion = True
         command scripting = VAR-wrapper.sh
         [[[environment]]]
             VARUI_JOB_DIR    = $VAR_CONFIGURELS_JOBDIR
@@ -305,8 +305,8 @@ directories to the suite output directory, renaming them appropriately."""
         [[[environment]]]
             PRODUCT_DIR   = ${HOME}/running/nzlam_12/product
             SERVICE     = nzlam_products
-        [[[task event hook scripts]]]
-            execution timeout in minutes = 240
+        [[[event hooks]]]
+            execution timeout = 240
 	[[[directives]]]
 	    wall_clock_limit = "8:00:10,8:00:00"
 
@@ -316,8 +316,8 @@ directories to the suite output directory, renaming them appropriately."""
         command scripting = cylc housekeeping --mode=0775 -b 4 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/nzlam_housekeeping.conf
     	[[[directives]]]
 	        wall_clock_limit = "4:00:10,4:00:00"
-        [[[task event hook scripts]]]
-            execution timeout in minutes = 360
+        [[[event hooks]]]
+            execution timeout = 360
 
     [[make_alabc]]
         inherit = NZLAM

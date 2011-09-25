@@ -10,7 +10,7 @@ available)."""
     [[globalwave]]
         inherit = GLOBALWAVE
         description = "The globalwave model."
-        manual task completion messaging = True
+        manual completion = True
         command scripting = ${HOME}/bin/scripts/run_globalwave_120_only
 
     [[globalwave_ncl]]
