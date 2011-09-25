@@ -255,7 +255,7 @@ class regdb(object):
 
     def unregister( self, exp, regfilter=False ):
         if not regfilter:
-            # plain suite or group given
+            # Plain suite or group given; must match from beginning.
             exp = '^' + exp + r'\b'
         dirs = []
         for key in self.items.keys():
