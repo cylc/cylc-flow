@@ -150,9 +150,11 @@ export CYLC_SUITE_SHARE_PATH
 mkdir -p $CYLC_SUITE_DEF_PATH/share || true
 
 # WORK DIRECTORY CREATE
-mkdir -p $CYLC_SUITE_DEF_PATH/work || true
-mkdir -p $CYLC_SUITE_DEF_PATH/work/$TASK_ID
-cd $CYLC_SUITE_DEF_PATH/work/$TASK_ID""" )
+CYLC_TASK_WORK_PATH=$CYLC_SUITE_DEF_PATH/work/$TASK_ID
+export CYLC_TASK_WORK_PATH
+mkdir -p $(dirname $CYLC_TASK_WORK_PATH) || true
+mkdir -p $CYLC_TASK_WORK_PATH
+cd $CYLC_TASK_WORK_PATH""" )
 
     def write_environment_2( self ):
         if len( self.task_env.keys()) > 0:
@@ -204,7 +206,7 @@ cd $CYLC_SUITE_DEF_PATH/work/$TASK_ID""" )
 
 # WORK DIRECTORY REMOVE
 cd
-rmdir $CYLC_SUITE_DEF_PATH/work/$TASK_ID 2>/dev/null || true""" )
+rmdir $CYLC_TASK_WORK_PATH 2>/dev/null || true""" )
 
     def write_task_succeeded( self ):
         if self.manual_messaging:
