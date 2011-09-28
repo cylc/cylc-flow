@@ -62,6 +62,7 @@ class taskdef(object):
         self.job_submission_shell = None
         self.job_submit_command_template = None
         self.job_submit_log_directory = None
+        self.job_submit_work_directory = None
         self.manual_messaging = False
         self.modifiers = []
         self.asyncid_pattern = None
@@ -257,6 +258,7 @@ class taskdef(object):
         tclass.job_submission_shell = self.job_submission_shell
         tclass.job_submit_command_template = self.job_submit_command_template
         tclass.job_submit_log_directory = self.job_submit_log_directory
+        tclass.job_submit_work_directory = self.job_submit_work_directory
         tclass.manual_messaging = self.manual_messaging
 
         tclass.valid_hours = self.hours

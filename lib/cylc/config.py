@@ -1140,6 +1140,7 @@ class config( CylcConfigObj ):
         taskd.job_submit_command_template = taskconfig['job submission']['command template']
 
         taskd.job_submit_log_directory = taskconfig['job submission']['log directory']
+        taskd.job_submit_work_directory = taskconfig['job submission']['work directory']
 
         # Remotely hosted tasks
         if taskconfig['remote']['host'] or taskconfig['remote']['owner']:

@@ -27,7 +27,7 @@ class jobfile(object):
             directives, final_directive, manual_messaging,
             precommand_scripting, command_scripting,
             postcommand_scripting, remote_cylc_dir, remote_suite_dir,
-            shell, simulation_mode, job_submission_method ):
+            shell, work_dir, simulation_mode, job_submission_method ):
 
         self.task_id = task_id
         self.cylc_env = cylc_env
@@ -39,6 +39,7 @@ class jobfile(object):
         self.command_scripting = command_scripting
         self.postcommand_scripting = postcommand_scripting
         self.shell = shell
+        self.work_dir = work_dir
         self.simulation_mode = simulation_mode
         self.job_submission_method = job_submission_method
         self.remote_cylc_dir = remote_cylc_dir
@@ -150,11 +151,11 @@ export CYLC_SUITE_SHARE_PATH
 mkdir -p $CYLC_SUITE_DEF_PATH/share || true
 
 # WORK DIRECTORY CREATE
-CYLC_TASK_WORK_PATH=$CYLC_SUITE_DEF_PATH/work/$TASK_ID
+CYLC_TASK_WORK_PATH=%(work_dir)s
 export CYLC_TASK_WORK_PATH
 mkdir -p $(dirname $CYLC_TASK_WORK_PATH) || true
 mkdir -p $CYLC_TASK_WORK_PATH
-cd $CYLC_TASK_WORK_PATH""" )
+cd $CYLC_TASK_WORK_PATH""" % { "work_dir": self.work_dir } )
 
     def write_environment_2( self ):
         if len( self.task_env.keys()) > 0:

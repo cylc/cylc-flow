@@ -22,7 +22,7 @@ from _ecox import ecox
 class ll_raw_ecox( ecox, ll_raw ):
     def __init__( self, task_id, pre_command, task_command,
             post_command, task_env, directives, manual_messaging,
-            logfiles, log_dir, task_owner, remote_host, remote_cylc_dir,
+            logfiles, log_dir, work_dir, task_owner, remote_host, remote_cylc_dir,
             remote_suite_dir, remote_shell_template, remote_log_dir,
             job_submit_command_template, job_submission_shell ): 
 
@@ -30,6 +30,6 @@ class ll_raw_ecox( ecox, ll_raw ):
 
         loadleveler.__init__( self, task_id, pre_command, task_command,
             post_command, task_env, directives, manual_messaging,
-            logfiles, log_dir, task_owner, remote_host, remote_cylc_dir,
+            logfiles, log_dir, work_dir, task_owner, remote_host, remote_cylc_dir,
             remote_suite_dir, remote_shell_template, remote_log_dir,
             job_submit_command_template, job_submission_shell )
