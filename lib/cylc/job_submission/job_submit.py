@@ -55,7 +55,7 @@ class job_submit(object):
 
     def __init__( self, task_id, pre_command, task_command,
             post_command, task_env, directives, 
-            manual_messaging, logfiles, log_dir, work_dir, task_owner,
+            manual_messaging, logfiles, log_dir, share_dir, work_dir, task_owner,
             remote_host, remote_cylc_dir, remote_suite_dir,
             remote_shell_template, remote_log_dir, 
             job_submit_command_template, job_submission_shell ): 
@@ -71,6 +71,7 @@ class job_submit(object):
         self.directives  = directives
         self.logfiles = logfiles
  
+        self.share_dir = share_dir
         self.work_dir = work_dir
         self.job_submit_command_template = job_submit_command_template
         self.job_submission_shell = job_submission_shell
@@ -175,6 +176,7 @@ class job_submit(object):
                 self.task_command, self.post_command,
                 self.remote_cylc_dir, self.remote_suite_dir, 
                 self.job_submission_shell, 
+                self.share_dir,
                 self.work_dir,
                 self.__class__.simulation_mode,
                 self.__class__.__name__ )

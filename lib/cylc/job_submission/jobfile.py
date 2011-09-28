@@ -27,7 +27,7 @@ class jobfile(object):
             directives, final_directive, manual_messaging,
             precommand_scripting, command_scripting,
             postcommand_scripting, remote_cylc_dir, remote_suite_dir,
-            shell, work_dir, simulation_mode, job_submission_method ):
+            shell, share_dir, work_dir, simulation_mode, job_submission_method ):
 
         self.task_id = task_id
         self.cylc_env = cylc_env
@@ -39,6 +39,7 @@ class jobfile(object):
         self.command_scripting = command_scripting
         self.postcommand_scripting = postcommand_scripting
         self.shell = shell
+        self.share_dir = share_dir
         self.work_dir = work_dir
         self.simulation_mode = simulation_mode
         self.job_submission_method = job_submission_method
@@ -143,10 +144,11 @@ class jobfile(object):
 cylc task started || exit 1""" )
 
     def write_work_directory_create( self ):
+        data = { "share_dir": self.share_dir,  "work_dir": self.work_dir }
         self.FILE.write( """
 
 # SHARE DIRECTORY CREATE
-CYLC_SUITE_SHARE_PATH=$CYLC_SUITE_DEF_PATH/share
+CYLC_SUITE_SHARE_PATH=%(share_dir)s
 export CYLC_SUITE_SHARE_PATH
 mkdir -p $CYLC_SUITE_DEF_PATH/share || true
 
@@ -155,7 +157,7 @@ CYLC_TASK_WORK_PATH=%(work_dir)s
 export CYLC_TASK_WORK_PATH
 mkdir -p $(dirname $CYLC_TASK_WORK_PATH) || true
 mkdir -p $CYLC_TASK_WORK_PATH
-cd $CYLC_TASK_WORK_PATH""" % { "work_dir": self.work_dir } )
+cd $CYLC_TASK_WORK_PATH""" % data )
 
     def write_environment_2( self ):
         if len( self.task_env.keys()) > 0:

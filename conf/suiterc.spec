@@ -90,6 +90,7 @@ description = string( default="No description supplied" )
             command template = string( default=None )
             job script shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=/bin/bash )
             log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job' )
+            share directory = string( default='$CYLC_SUITE_DEF_PATH/share' )
             work directory = string( default='$CYLC_SUITE_DEF_PATH/work/$TASK_ID' )
         [[[remote]]]
             host = string( default=None )

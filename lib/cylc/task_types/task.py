@@ -329,6 +329,7 @@ class task( Pyro.core.ObjBase ):
                         self.directives, self.manual_messaging,
                         self.logfiles, 
                         self.__class__.job_submit_log_directory,
+                        self.__class__.job_submit_share_directory,
                         self.__class__.job_submit_work_directory,
                         self.__class__.owner,
                         self.__class__.remote_host,
