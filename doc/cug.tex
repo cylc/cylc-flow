@@ -2961,6 +2961,45 @@ programs that implement them. Multiple tasks can call the same script
 (etc.) with varying inputs supplied by their respective command lines
 and execution environments.
 
+Figure~\ref{fig-namespaces} illustrates successive expansion of nested task
+families in the {\em namespaces} example suite, which has the following
+namespace hierarchy:
+\begin{lstlisting}
+% cylc list --tree cylc-x:y:z.namespaces
+root              
+ |-GEN            
+ | |-OPS          
+ | | |-aircraft   OPS aircraft obs processing
+ | | |-atovs      OPS ATOVS obs processing
+ | | `-atovs_post OPS ATOVS postprocessing
+ | `-VAR          
+ |   |-AnPF       runs VAR AnalysePF
+ |   `-ConLS      runs VAR ConfigureLS
+ |-baz            
+ | |-bar1         Task bar1 of baz
+ | `-bar2         Task bar2 of baz
+ |-foo            No description provided
+ `-prepobs        obs preprocessing
+ \end{lstlisting}
+
+\begin{figure}
+\begin{minipage}[t]{0.3\textwidth}
+    \begin{center}
+        \includegraphics[width=\textwidth]{screenshots/inherit/inherit-2.png}
+    \end{center}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.3\textwidth}
+    \begin{center}
+        \includegraphics[width=\textwidth]{screenshots/inherit/inherit-3.png}
+    \end{center}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.3\textwidth}
+    \begin{center}
+        \includegraphics[width=\textwidth]{screenshots/inherit/inherit-4.png}
+    \end{center}
+\end{minipage}
 
 \begin{minipage}[t]{0.3\textwidth}
     \begin{center}
@@ -3609,6 +3648,7 @@ suite.rc {\em job submission method} configuration items at suite level
 and in the tasks section.
 
 %\pagebreak
+
 
 \section{In Brief}
 
