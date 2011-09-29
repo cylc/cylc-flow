@@ -129,12 +129,6 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_CYCLE_TIME=" + self.cycle_time )
         BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.namespace_hierarchy) + '"')
 
-        BUFFER.write( "\n# deprecated (backward compatibility):" )
-        BUFFER.write( "\nexport TASK_ID=" + self.task_id )
-        BUFFER.write( "\nexport TASK_NAME=" + self.task_name )
-        BUFFER.write( "\nexport CYCLE_TIME=" + self.cycle_time )
-        BUFFER.write( '\nexport TASK_NAMESPACES="' + ' '.join( self.namespace_hierarchy) + '"')
-
     def write_err_trap( self ):
         self.FILE.write( '\n\n# SET ERROR TRAPPING:' )
         self.FILE.write( '\nset -u # Fail when using an undefined variable' )

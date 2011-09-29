@@ -7,8 +7,8 @@ cylc checkvars -d INPUT_DIR
 cylc checkvars -c OUTPUT_DIR
 
 # CHECK INPUT FILES EXIST
-ONE=$INPUT_DIR/sea-state-${CYCLE_TIME}.nc
-TWO=$INPUT_DIR/river-flow-${CYCLE_TIME}.nc
+ONE=$INPUT_DIR/sea-state-${CYLC_TASK_CYCLE_TIME}.nc
+TWO=$INPUT_DIR/river-flow-${CYLC_TASK_CYCLE_TIME}.nc
 for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
         echo "ERROR, file not found $PRE" >&2
@@ -16,7 +16,7 @@ for PRE in $ONE $TWO; do
     fi
 done
 
-echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_REG_NAME"
+echo "Hello from $TASK_NAME at $CYLC_TASK_CYCLE_TIME in $CYLC_SUITE_REG_NAME"
 
 sleep $TASK_EXE_SECONDS
 

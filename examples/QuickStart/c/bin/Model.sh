@@ -30,14 +30,14 @@ sleep $TASK_EXE_SECONDS
 
 if $COLDSTART; then
     # just generate a restart file for this cycle
-    touch $MODEL_RUNNING_DIR/A-${CYCLE_TIME}.restart
+    touch $MODEL_RUNNING_DIR/A-${CYLC_TASK_CYCLE_TIME}.restart
     echo "Goodbye"
     exit 0
 fi
 
 # CHECK INPUT FILES EXIST
-ONE=$MODEL_INPUT_DIR/obs-${CYCLE_TIME}.nc
-TWO=$MODEL_RUNNING_DIR/A-${CYCLE_TIME}.restart
+ONE=$MODEL_INPUT_DIR/obs-${CYLC_TASK_CYCLE_TIME}.nc
+TWO=$MODEL_RUNNING_DIR/A-${CYLC_TASK_CYCLE_TIME}.restart
 for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
         echo "ERROR, file not found $PRE" >&2
@@ -51,7 +51,7 @@ touch $MODEL_RUNNING_DIR/A-$(cylc cycletime --add=12).restart
 touch $MODEL_RUNNING_DIR/A-$(cylc cycletime --add=18).restart
 
 # model outputs
-touch $MODEL_OUTPUT_DIR/surface-winds-${CYCLE_TIME}.nc
-touch $MODEL_OUTPUT_DIR/precipitation-${CYCLE_TIME}.nc
+touch $MODEL_OUTPUT_DIR/surface-winds-${CYLC_TASK_CYCLE_TIME}.nc
+touch $MODEL_OUTPUT_DIR/precipitation-${CYLC_TASK_CYCLE_TIME}.nc
 
 echo "Goodbye"

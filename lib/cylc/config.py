@@ -16,8 +16,8 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# TO DO: document use foo[T-6]:out1, not foo:out1 with $(CYCLE_TIME-6) in
-# the explicit output message - so the graph will plot correctly.
+# TO DO: document use foo[T-6]:out1, not foo:out1 with
+# $(CYLC_TASK_CYCLE_TIME-6) in the output message.
 
 # TO DO: document that cylc hour sections must be unique, but can
 # overlap: [[[0]]] and [[[0,12]]]; but if the same dependency is 
@@ -444,8 +444,8 @@ class config( CylcConfigObj ):
                 else:
                     raise SuiteConfigError, "ERROR: Task '" + task_name + "' does not define output '" + output_name  + "'"
             else:
-                # replace $(CYCLE_TIME) with $(TAG) in explicit outputs
-                trigger = re.sub( 'CYCLE_TIME', 'TAG', trigger )
+                # replace $(CYLC_TASK_CYCLE_TIME) with $(TAG) in explicit outputs
+                trigger = re.sub( 'CYLC_TASK_CYCLE_TIME', 'TAG', trigger )
         else:
             trigger = task_name + '%$(TAG) succeeded'
 
@@ -1123,8 +1123,8 @@ class config( CylcConfigObj ):
         taskd.description = taskconfig['description']
 
         for lbl in taskconfig['outputs']:
-            # replace $(CYCLE_TIME) with $(TAG) in explicit outputs
-            taskd.outputs.append( re.sub( 'CYCLE_TIME', 'TAG', taskconfig['outputs'][lbl] ))
+            # replace $(CYLC_TASK_CYCLE_TIME) with $(TAG) in explicit outputs
+            taskd.outputs.append( re.sub( 'CYLC_TASK_CYCLE_TIME', 'TAG', taskconfig['outputs'][lbl] ))
 
         taskd.owner = taskconfig['remote']['owner']
 

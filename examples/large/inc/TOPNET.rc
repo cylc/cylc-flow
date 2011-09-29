@@ -5,7 +5,7 @@
         [[[environment]]]
             OUT_DIR = ${HOME}/input/topnet
             START_DATE  = $(cylc cycletime -s 48)
-            FILEOUT = topnet_rain_clidb_${START_DATE}_${CYCLE_TIME}_utc.nc
+            FILEOUT = topnet_rain_clidb_${START_DATE}_${CYLC_TASK_CYCLE_TIME}_utc.nc
             RUN_DIR  = ${HOME}/bin/ecan
             NHH = 48
             SERVICE = ecan_rain_obs
@@ -46,12 +46,12 @@
             SRCE    = tdserver2008.niwa.co.nz
             SRCE_LOC    = ~/
             DEST_LOC    = ${HOME}/output/td2cf
-            FILENAME    = streamobs_${CYCLE_TIME}_utc_ods_nz.nc
+            FILENAME    = streamobs_${CYLC_TASK_CYCLE_TIME}_utc_ods_nz.nc
             SRCE_USER   = Topnet
             SERVICE = ext_get_streamq
             KEEP    = 0
             FAST    = 0
-            FILEOUT = streamq_${CYCLE_TIME}_utc_ods_nz.nc
+            FILEOUT = streamq_${CYLC_TASK_CYCLE_TIME}_utc_ods_nz.nc
             TIMEOUT = 45
             CHECKSUM    = 0
             CHECKFILE   = None

@@ -7,7 +7,7 @@ cylc checkvars -d INPUT_DIR
 cylc checkvars -c OUTPUT_DIR
 
 # CHECK INPUT FILES EXIST
-PRE=$INPUT_DIR/surface-winds-${CYCLE_TIME}.nc
+PRE=$INPUT_DIR/surface-winds-${CYLC_TASK_CYCLE_TIME}.nc
 if [[ ! -f $PRE ]]; then
     echo "ERROR, file not found $PRE" >&2
     exit 1

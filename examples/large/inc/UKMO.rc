@@ -8,7 +8,7 @@
             DEST_LOC    = ${HOME}/output
             SRCE_USER   = niwa
             TIMEOUT = 60 
-            FILENAME    = ${CYCLE_TIME}_bgerr_checksum.txt
+            FILENAME    = ${CYLC_TASK_CYCLE_TIME}_bgerr_checksum.txt
             SERVICE = ext_check_bgerr_ukmet
     	[[[directives]]]
             wall_clock_limit = "12:00:10,12:00:00"
@@ -26,7 +26,7 @@ cycle is available for download."""
             DEST_LOC    = ${HOME}/output
             SRCE_USER   = niwa
             TIMEOUT = 60 
-            FILENAME    = ${CYCLE_TIME}_obstore_checksum.txt  
+            FILENAME    = ${CYLC_TASK_CYCLE_TIME}_obstore_checksum.txt  
             SERVICE = ext_check_obstore_ukmet
 	    [[[directives]]]
 	        wall_clock_limit = "12:00:10,12:00:00"
@@ -43,8 +43,8 @@ available on their ftp site"""
             SRCE_LOC    = ~/
             DEST_LOC    = ${HOME}/output
             SRCE_USER   = niwa
-            PREV_CYCLE_TIME  = $( cylc cycletime -s 6 )
-            FILENAME   = ${PREV_CYCLE_TIME}_frames_checksum.txt
+            PREV_CYLC_TASK_CYCLE_TIME  = $( cylc cycletime -s 6 )
+            FILENAME   = ${PREV_CYLC_TASK_CYCLE_TIME}_frames_checksum.txt
             SERVICE = ext_check_frames_ukmet
             TIMEOUT = 90
     	[[[directives]]]
@@ -63,7 +63,7 @@ is available for download."""
             DEST_LOC    = ${HOME}/output
             SRCE_USER   = niwa
             TIMEOUT = 60 
-            FILENAME    = ${CYCLE_TIME}_10mwind_checksum.txt
+            FILENAME    = ${CYLC_TASK_CYCLE_TIME}_10mwind_checksum.txt
             SERVICE = ext_check_globalwind_ukmet
 	    [[[directives]]]
             wall_clock_limit = "12:00:10,12:00:00"
@@ -81,7 +81,7 @@ is available for download."""
             DEST_LOC    = ${HOME}/output
             SRCE_USER   = niwa
             TIMEOUT = 60 
-            FILENAME = ${CYCLE_TIME}_ice_checksum.txt
+            FILENAME = ${CYLC_TASK_CYCLE_TIME}_ice_checksum.txt
             SERVICE = ext_check_globalice_ukmet
 	    [[[directives]]]
 	        wall_clock_limit = "12:00:10,12:00:00"
@@ -97,7 +97,7 @@ is available for download."""
             SRCE_LOC    = ~/
             DEST_LOC    = ${HOME}/output
             SRCE_USER   = niwa
-            FILENAME    = sst.${CYCLE_TIME}.anc.gz
+            FILENAME    = sst.${CYLC_TASK_CYCLE_TIME}.anc.gz
             SERVICE = ext_check_sst_ukmet
             TIMEOUT = 120
 	    [[[directives]]]
@@ -115,9 +115,9 @@ is available for download."""
             DEST_LOC    = ${HOME}/output
             SRCE_USER   = niwa
             TIMEOUT = 60 
-            PREV_CYCLE_TIME  = $( cylc cycletime -s 6 )
-            HH  = ${PREV_CYCLE_TIME:8:2}
-            FILENAME  = qwqg${HH}.reduced.${PREV_CYCLE_TIME}.T+3.gz  
+            PREV_CYLC_TASK_CYCLE_TIME  = $( cylc cycletime -s 6 )
+            HH  = ${PREV_CYLC_TASK_CYCLE_TIME:8:2}
+            FILENAME  = qwqg${HH}.reduced.${PREV_CYLC_TASK_CYCLE_TIME}.T+3.gz  
             SERVICE = ext_check_dump_ukmet
 	    [[[directives]]]
 	        wall_clock_limit = "4:00:10,4:00:00"
@@ -137,11 +137,11 @@ is available for download."""
             KEEP    = 1
             FAST    = 1
             CHECKSUM    = 1
-            HH          = ${CYCLE_TIME:8:2}
-            FILENAME    = qwq3${HH}.${CYCLE_TIME}.bgerr.gz
+            HH          = ${CYLC_TASK_CYCLE_TIME:8:2}
+            FILENAME    = qwq3${HH}.${CYLC_TASK_CYCLE_TIME}.bgerr.gz
             SERVICE     = ext_get_bgerr_ukmet
-            FILEOUT = qwq3${HH}_${CYCLE_TIME}_bgerr.gz
-            CHECKFILE   = ${CYCLE_TIME}_bgerr_checksum.txt
+            FILEOUT = qwq3${HH}_${CYLC_TASK_CYCLE_TIME}_bgerr.gz
+            CHECKFILE   = ${CYLC_TASK_CYCLE_TIME}_bgerr_checksum.txt
 
     [[ext_get_obstore_ukmet]]
         inherit = UKMO
@@ -156,11 +156,11 @@ is available for download."""
             KEEP    = 1
             FAST    = 1
             CHECKSUM    = 1
-            HH          = ${CYCLE_TIME:8:2}
-            FILENAME    = qwq3${HH}.${CYCLE_TIME}.obstore.tar.gz
+            HH          = ${CYLC_TASK_CYCLE_TIME:8:2}
+            FILENAME    = qwq3${HH}.${CYLC_TASK_CYCLE_TIME}.obstore.tar.gz
             SERVICE = ext_get_obstore_ukmet
-            FILEOUT = qwq3${HH}_${CYCLE_TIME}_obstore.tar.gz
-            CHECKFILE   = ${CYCLE_TIME}_obstore_checksum.txt
+            FILEOUT = qwq3${HH}_${CYLC_TASK_CYCLE_TIME}_obstore.tar.gz
+            CHECKFILE   = ${CYLC_TASK_CYCLE_TIME}_obstore_checksum.txt
 
     [[ext_get_frames_ukmet]]
         inherit = UKMO
@@ -172,16 +172,16 @@ is available for download."""
             DEST_LOC = ${HOME}/output
             SRCE_USER = niwa
             SERVICE = ext_get_frames_ukmet
-            PREV_CYCLE_TIME   = $( cylc cycletime -s 6 )
-            YMD = ${PREV_CYCLE_TIME:0:8}
-            HH          = ${PREV_CYCLE_TIME:8:2}
+            PREV_CYLC_TASK_CYCLE_TIME   = $( cylc cycletime -s 6 )
+            YMD = ${PREV_CYLC_TASK_CYCLE_TIME:0:8}
+            HH          = ${PREV_CYLC_TASK_CYCLE_TIME:8:2}
             FILENAME    = ${YMD}_frame_qg${HH}_niwa_*.gz
             KEEP = 1
             FAST = 3
             FILEOUT = ${YMD}_frame_qg${HH}_niwa_*.gz
             TIMEOUT = 5
             CHECKSUM = 1
-            CHECKFILE   = ${PREV_CYCLE_TIME}_frames_checksum.txt
+            CHECKFILE   = ${PREV_CYLC_TASK_CYCLE_TIME}_frames_checksum.txt
 	    [[[directives]]]
 	        wall_clock_limit = "1:00:10,1:00:00"
         [[[event hooks]]]
@@ -196,11 +196,11 @@ is available for download."""
             SRCE_LOC = ~/
             DEST_LOC = ${HOME}/output
             SRCE_USER = niwa
-            HH          = ${CYCLE_TIME:8:2}
-            FILENAME    = qwqg${HH}.${CYCLE_TIME}.10mwind.gz
+            HH          = ${CYLC_TASK_CYCLE_TIME:8:2}
+            FILENAME    = qwqg${HH}.${CYLC_TASK_CYCLE_TIME}.10mwind.gz
             SERVICE = ext_get_globalwind_ukmet
-            FILEOUT = qwqg${HH}_${CYCLE_TIME}_10mwind.gz
-            CHECKFILE   = ${CYCLE_TIME}_10mwind_checksum.txt
+            FILEOUT = qwqg${HH}_${CYLC_TASK_CYCLE_TIME}_10mwind.gz
+            CHECKFILE   = ${CYLC_TASK_CYCLE_TIME}_10mwind_checksum.txt
 	        KEEP = 1
     	    FAST = 1
 	        TIMEOUT = 45
@@ -223,10 +223,10 @@ is available for download."""
     	    FAST =   1
 	        TIMEOUT = 45
 	        CHECKSUM  =  1
-            FILENAME    = qwgl.daily.${CYCLE_TIME}.ice.gz
+            FILENAME    = qwgl.daily.${CYLC_TASK_CYCLE_TIME}.ice.gz
             SERVICE = ext_get_globalice_ukmet
-            FILEOUT = qwgl_daily_${CYCLE_TIME}_ice.gz
-            CHECKFILE   = ${CYCLE_TIME}_ice_checksum.txt 
+            FILEOUT = qwgl_daily_${CYLC_TASK_CYCLE_TIME}_ice.gz
+            CHECKFILE   = ${CYLC_TASK_CYCLE_TIME}_ice_checksum.txt 
 	    [[[directives]]]
 	        wall_clock_limit = "2:00:10,2:00:00"
                                
@@ -242,9 +242,9 @@ is available for download."""
 	        KEEP =   1
     	    FAST =   1
 	        TIMEOUT = 45
-            FILENAME    = sst.${CYCLE_TIME}.anc.gz 
+            FILENAME    = sst.${CYLC_TASK_CYCLE_TIME}.anc.gz 
             SERVICE = ext_get_sst_ukmet
-            FILEOUT = sst.${CYCLE_TIME}.anc.gz
+            FILEOUT = sst.${CYLC_TASK_CYCLE_TIME}.anc.gz
             CHECKSUM = 0
             CHECKFILE = None
 
@@ -262,9 +262,9 @@ when needed."""
 	        KEEP =   1
     	    FAST =   1
 	        TIMEOUT = 45
-            HH          = ${CYCLE_TIME:8:2}
-            PREV_CYCLE_TIME   = $( cylc cycletime -s 6 )
-            FILENAME    = qwqg${HH}.reduced.${PREV_CYCLE_TIME}.T+3.gz
+            HH          = ${CYLC_TASK_CYCLE_TIME:8:2}
+            PREV_CYLC_TASK_CYCLE_TIME   = $( cylc cycletime -s 6 )
+            FILENAME    = qwqg${HH}.reduced.${PREV_CYLC_TASK_CYCLE_TIME}.T+3.gz
             SERVICE     = ext_get_dump_ukmet
             FILEOUT = $FILENAME
             CHECKSUM    = 0

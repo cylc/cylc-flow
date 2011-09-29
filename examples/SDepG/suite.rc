@@ -1,9 +1,9 @@
 title = "Cylc User Guide Dependency Graph Example"
 
-description = """This suite implements the example at the start of
-Section 7.3 of the Cylc User Guide. You will need to trigger task A
-manually to get the suite running initially, because no cold start 
-task has been defined to satisfy its initial restart dependencies."""
+description = """User Guide section Scheduling - Dependency Graphs
+You will need to trigger task A manually to get the suite running
+because no cold start task has been defined to satisfy its initial
+restart dependencies."""
 
 [scheduling]
     [[dependencies]]

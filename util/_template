@@ -32,7 +32,7 @@ STRING can be the name of an environment variable containing a template
 string OR the template string itself. In the template, 'YYYY', 'MM',
 'DD', or 'HH' will be replaced with computed cycle time components.
 
-   $ export CYCLE_TIME=2010082318 # (as from task execution environment)
+   $ export CYLC_TASK_CYCLE_TIME=2010082318
 
    $ cylc template -s 6 fooHH-YYYYMMDD.nc #explicit name convention
   foo12-20100823.nc
@@ -51,7 +51,7 @@ detect accidental use of undefined environment variables.
 Arguments:
    STRING       A template string, or the name of an env variable that
                 contains a template.
-   CYCLE        Cycle time (YYYYMMDDHH) defaults to $CYCLE_TIME.""" )
+   CYCLE        (YYYYMMDDHH) defaults to $CYLC_TASK_CYCLE_TIME.""" )
 
 parser.add_option( "-s", "--subtract", metavar="HOURS",
         help="Subtract HOURS from CYCLE", 
@@ -88,9 +88,9 @@ if len(args) == 2:
  
 if not cycle:
     # cycle time must be defined in the environment
-    if 'CYCLE_TIME' in os.environ:
+    if 'CYLC_TASK_CYCLE_TIME' in os.environ:
         try:
-            cycle = ct( os.environ[ 'CYCLE_TIME' ] )
+            cycle = ct( os.environ[ 'CYLC_TASK_CYCLE_TIME' ] )
         except CycleTimeError, x:
             raise SystemExit(x)
     else:

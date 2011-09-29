@@ -3,7 +3,7 @@
         description = """The NZTIDE model. Has artificial dependence on
 nzwave_12, for synchronous product generation. Not defined as a forecast
 model because it does not have any restart outputs."""
-        command scripting = ${HOME}/bin/scripts/run_nztide_fc $CYCLE_TIME
+        command scripting = ${HOME}/bin/scripts/run_nztide_fc $CYLC_TASK_CYCLE_TIME
 
     [[nztide_ncl]]
         inherit = NZTIDE

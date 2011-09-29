@@ -7,8 +7,8 @@ cylc checkvars -d INPUT_DIR
 cylc checkvars -c OUTPUT_DIR RUNNING_DIR
 
 # CHECK INPUT FILES EXIST
-ONE=$INPUT_DIR/precipitation-${CYCLE_TIME}.nc
-TWO=$RUNNING_DIR/C-${CYCLE_TIME}.restart
+ONE=$INPUT_DIR/precipitation-${CYLC_TASK_CYCLE_TIME}.nc
+TWO=$RUNNING_DIR/C-${CYLC_TASK_CYCLE_TIME}.restart
 for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
         echo "ERROR, file not found $PRE" >&2
@@ -16,7 +16,7 @@ for PRE in $ONE $TWO; do
     fi
 done
 
-echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_REG_NAME"
+echo "Hello from $TASK_NAME at $CYLC_TASK_CYCLE_TIME in $CYLC_SUITE_REG_NAME"
 
 sleep $TASK_EXE_SECONDS
 
@@ -26,6 +26,6 @@ touch $RUNNING_DIR/C-$(cylc cycletime --add=12).restart
 touch $RUNNING_DIR/C-$(cylc cycletime --add=18).restart
 
 # model outputs
-touch $OUTPUT_DIR/river-flow-${CYCLE_TIME}.nc
+touch $OUTPUT_DIR/river-flow-${CYLC_TASK_CYCLE_TIME}.nc
 
 echo "Goodbye"

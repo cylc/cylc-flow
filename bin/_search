@@ -198,7 +198,7 @@ for line in lines:
             print '   SECTION:', section_key
 
         # Print the pattern match, with line number
-        print '      [' + str(line_no) + ']:', line.rstrip('\n')
+        print '      (' + str(line_no) + '):', line.rstrip('\n')
 
 if not options.search_bin:
     sys.exit(0)
@@ -233,4 +233,4 @@ for file in os.listdir( bin ):
             if new_file:
                 print '\nFILE:', os.path.join( bin, file )
                 new_file = False
-            print '   ['+str(count)+']: ' + line
+            print '   ('+str(count)+'): ' + line

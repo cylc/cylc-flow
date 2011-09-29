@@ -26,7 +26,7 @@ used to automatically clean up a failed task family."""
         inherit = fammo
         # This task fails at 6,18 and succeeds at 0,12
         command scripting = """
-HH=${CYCLE_TIME#????????} 
+HH=${CYLC_TASK_CYCLE_TIME#????????} 
 if (( HH == 6 || HH == 18 )); then
     COMMAND=/bin/false
 else

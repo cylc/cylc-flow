@@ -39,7 +39,7 @@ can also be retrieved from a suite at run time with
 
 \subsection{[cylc]}
 
-This section configures various aspects of cylc's behaviour.
+This section is for aspects of suite configuration that are not task-related.
 
 \subsubsection[UTC mode]{ [cylc] $\rightarrow$ UTC mode}
 
@@ -245,7 +245,7 @@ from a delay and subsequent transition to real time operation.
 The command scripting to execute for all tasks when running in simulation mode.
 \begin{myitemize}
 \item {\em type:} string
-\item {\em default:} \lstinline=echo SIMULATION MODE $TASK_ID; sleep 10; echo BYE=
+\item {\em default:} \lstinline=echo SIMULATION MODE $CYLC_TASK_ID; sleep 10; echo BYE=
 \end{myitemize}
 
 \paragraph[{[[[}job submission{]]]} ]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ [[[job submission]]]} 
@@ -582,7 +582,7 @@ do automated failure recovery in cylc.
 
 \begin{myitemize}
 \item {\em type:} (a list of) strings (each )
-\item {\em root default:} \lstinline=echo DUMMY $TASK_ID; sleep 10; echo BYE=
+\item {\em root default:} \lstinline=echo DUMMY $CYLC_TASK_ID; sleep 10; echo BYE=
 \end{myitemize}
 
 \paragraph[pre-command scripting]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ pre-command scripting}

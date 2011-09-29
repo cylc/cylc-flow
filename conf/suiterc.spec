@@ -20,7 +20,7 @@
 # Entries are documented in suite.rc reference in the Cylc User Guide. 
 
 # _________________________________________________________MAIN SECTIONS
-# [cylc]          - how cylc itself behaves when running this suite.
+# [cylc]          - non task-related suite config.
 # [scheduling]    - items affecting when a task is deemed ready to run.
 # [runtime]       - what to execute (and how) when a task is ready.
 # [visualization] - for suite graphing and the graph-based control GUI.

@@ -6,13 +6,11 @@ description = "(see the Cylc User Guide)"
     [[special tasks]]
         start-up        = Prep
         clock-triggered = GetData(1)
-
     [[dependencies]]
-        [[[ 0,6,12,18 ]]]
-            graph  = """
-                     Prep => GetData => Model => PostA
-                     Model[T-6] => Model"""
-        [[[ 6,18 ]]]
+        [[[0,6,12,18]]]
+            graph  = """Prep => GetData => Model => PostA
+                        Model[T-6] => Model"""
+        [[[6,18]]]
             graph = "Model => PostB"
 
 [visualization] # optional

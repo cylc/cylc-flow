@@ -203,9 +203,9 @@ directories to the suite output directory, renaming them appropriately."""
         description = "Converts the NZLAM UM met file to NetCDF format."
         command scripting = um_conv_nc.sh
         [[[environment]]]
-            FILEIN  = met_${CYCLE_TIME}_utc_nzlam_12_*.um
+            FILEIN  = met_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12_*.um
             FILEIN_LOC  = ${HOME}/output/nzlam_12
-            FILEOUT = met_${CYCLE_TIME}_utc_nzlam_12_*.nc
+            FILEOUT = met_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12_*.nc
             FILEOUT_LOC = ${HOME}/output/nzlam_12
             FILEATT = attribute_met_nzlam-12.txt
             FILEATT_LOC = /${SYS}/ecoconnect/nwp_${SYS}/control/nzlam_12/netcdf-attr
@@ -213,7 +213,7 @@ directories to the suite output directory, renaming them appropriately."""
             GUNZIP  = 0
             UM2NC_O = met_ 
             UM2NC_P = _nzlam_12
-            UM2NC_CT    = ${CYCLE_TIME}
+            UM2NC_CT    = ${CYLC_TASK_CYCLE_TIME}
             OPTIONS = -f -t -i -c
             FIELDS  = 23 24 33 409 3209 3210 3236 3245 3248 3281 3282 3283 4201 4203 5201 5205 5215 5216 5226 6203 8223 9203 9204 9205 9216 15229 15242 15243 15244 16202 16203 16222 16256
             SERVICE = nzlam_conv_met
@@ -224,9 +224,9 @@ directories to the suite output directory, renaming them appropriately."""
         description = "Clean NetCDF tn file."
         command scripting = llclean.sh 
         [[[environment]]]
-            FILEIN  = tn_${CYCLE_TIME}_utc_nzlam_12.nc
+            FILEIN  = tn_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12.nc
             FILEIN_LOC  = ${HOME}/output/nzlam_12
-            FILEOUT = tn_${CYCLE_TIME}_utc_nzlam_12.nc
+            FILEOUT = tn_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12.nc
             FILEOUT_LOC = ${HOME}/output/nzlam_12
             SERVICE = tn_llclean
 
@@ -235,9 +235,9 @@ directories to the suite output directory, renaming them appropriately."""
         description = "Converts the NZLAM UM met file to NetCDF format."
         command scripting = um_conv_nc.sh
         [[[environment]]]
-            FILEIN  = sls_${CYCLE_TIME}_utc_nzlam_12.um
+            FILEIN  = sls_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12.um
             FILEIN_LOC  = ${HOME}/output/nzlam_12
-            FILEOUT = sls_${CYCLE_TIME}_utc_nzlam_12.nc
+            FILEOUT = sls_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12.nc
             FILEOUT_LOC = ${HOME}/output/nzlam_12
             FILEATT = attribute_sls_nzlam-12.txt
             FILEATT_LOC = /${SYS}/ecoconnect/nwp_${SYS}/control/nzlam_12/netcdf-attr
@@ -245,7 +245,7 @@ directories to the suite output directory, renaming them appropriately."""
             GUNZIP  = 0
             UM2NC_O = sls_
             UM2NC_P = _nzlam_12
-            UM2NC_CT    = ${CYCLE_TIME}
+            UM2NC_CT    = ${CYLC_TASK_CYCLE_TIME}
             OPTIONS = -f -t -i -c
             FIELDS  = All
             SERVICE = nzlam_conv_sls 
@@ -255,9 +255,9 @@ directories to the suite output directory, renaming them appropriately."""
         description = "Converts the NZLAM UM TN file to NetCDF format."
         command scripting = um_conv_nc.sh
         [[[environment]]]
-            FILEIN  = tn_${CYCLE_TIME}_utc_nzlam_12.um
+            FILEIN  = tn_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12.um
             FILEIN_LOC  = ${HOME}/output/nzlam_12
-            FILEOUT = tn_${CYCLE_TIME}_utc_nzlam_12.nc
+            FILEOUT = tn_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12.nc
             FILEOUT_LOC = ${HOME}/output/nzlam_12
             FILEATT = attribute_tn_nzlam-12.txt
             FILEATT_LOC = /${SYS}/ecoconnect/nwp_${SYS}/control/nzlam_12/netcdf-attr
@@ -265,7 +265,7 @@ directories to the suite output directory, renaming them appropriately."""
             GUNZIP  = 0
             UM2NC_O = tn_
             UM2NC_P = _nzlam_12
-            UM2NC_CT    = ${CYCLE_TIME}
+            UM2NC_CT    = ${CYLC_TASK_CYCLE_TIME}
             OPTIONS = -f -t -i -c
             FIELDS  = 33 409 1235 2207 3236 3209 3210 3245 5226
             SERVICE = nzlam_conv_tn
@@ -275,9 +275,9 @@ directories to the suite output directory, renaming them appropriately."""
         description = "Converts the NZLAM UM Energy Scape file to NetCDF format."
         command scripting = um_conv_nc.sh
         [[[environment]]]
-            FILEIN  = escape_${CYCLE_TIME}_utc_nzlam_12*.um
+            FILEIN  = escape_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12*.um
             FILEIN_LOC  = ${HOME}/output/nzlam_12
-            FILEOUT = escape_${CYCLE_TIME}_utc_nzlam_12*.nc
+            FILEOUT = escape_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12*.nc
             FILEOUT_LOC = ${HOME}/output/nzlam_12
             FILEATT = attribute_escape_nzlam-12.txt
             FILEATT_LOC = /${SYS}/ecoconnect/nwp_${SYS}/control/nzlam_12/netcdf-attr
@@ -285,7 +285,7 @@ directories to the suite output directory, renaming them appropriately."""
             GUNZIP  = 0
             UM2NC_O = escape_
             UM2NC_P = _nzlam_12
-            UM2NC_CT    = ${CYCLE_TIME}
+            UM2NC_CT    = ${CYLC_TASK_CYCLE_TIME}
             OPTIONS = -f -t -i -c
             FIELDS  = All 
             SERVICE = nzlam_conv_escape

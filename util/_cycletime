@@ -29,13 +29,13 @@ sdtout. Examples:
    $ cylc cycletime -s 6 2010082318
   2010082312
 
-   # offset from $CYCLE_TIME:
-   $ export CYCLE_TIME=2010082318  # or task execution environment
+   # offset from $CYLC_TASK_CYCLE_TIME:
+   $ export CYLC_TASK_CYCLE_TIME=2010082318
    $ cylc cycletime -s 6 
   2010082312
 
 Arguments:
-   CYCLE        Cycle time (YYYYMMDDHH) defaults to $CYCLE_TIME.""" )
+   CYCLE        (YYYYMMDDHH) defaults to $CYLC_TASK_CYCLE_TIME.""" )
 
 parser.add_option( "-s", "--subtract", metavar="HOURS",
         help="Subtract HOURS from CYCLE", 
@@ -65,11 +65,11 @@ parser.add_option( "--hour", help="Print only HH of result",
 
 if len( args ) == 0:
     # input cycle time must be definied in the environment.
-    if 'CYCLE_TIME' not in os.environ:
-        parser.error( "Provide CYCLE arg, or define $CYCLE_TIME" )
+    if 'CYLC_TASK_CYCLE_TIME' not in os.environ:
+        parser.error( "Provide CYCLE arg, or define $CYLC_TASK_CYCLE_TIME" )
     else:
         try:
-            cycle = ct(os.environ[ 'CYCLE_TIME' ])
+            cycle = ct(os.environ[ 'CYLC_TASK_CYCLE_TIME' ])
         except CycleTimeError, x:
             raise SystemExit(x)
     # DONE (no args)

@@ -7,14 +7,12 @@ description = "(Quick Start a plus a cold-start task)"
         start-up        = Prep
         cold-start      = ColdModel
         clock-triggered = GetData(1)
-
     [[dependencies]]
-        [[[ 0,6,12,18 ]]]
-            graph  = """
-                     Prep => GetData & ColdModel
-                     GetData => Model => PostA
-                     ColdModel | Model[T-6] => Model"""
-        [[[ 6,18 ]]]
+        [[[0,6,12,18]]]
+            graph  = """Prep => GetData & ColdModel
+                        GetData => Model => PostA
+                        ColdModel | Model[T-6] => Model"""
+        [[[6,18]]]
             graph = "Model => PostB"
 
 [visualization] # optional

@@ -70,7 +70,7 @@ upstream tasks.
     \begin{center}
         \includegraphics[width=6cm]{images/dep-one-cycle.png} 
     \end{center}
-    \caption[A single cycle dependency graph for a simple suite]{\small
+    \caption[A single cycle dependency graph for a simple suite]{\scriptsize
     The dependency graph for a single forecast cycle of a simple example
     suite. Tasks {\em a, b,} and {\em c} represent forecast models,
     {\em d, e} and {\em f} are post processing or product generation
@@ -83,7 +83,7 @@ upstream tasks.
     \begin{center}
         \includegraphics[width=8cm]{images/timeline-one.png}
     \end{center}
-    \caption[A single cycle job schedule for real time operation]{\small
+    \caption[A single cycle job schedule for real time operation]{\scriptsize
     The optimal job schedule for two consecutive cycles of our example
     suite during real time operation, assuming that all tasks trigger 
     off upstream tasks finishing completely. The horizontal extent of
@@ -105,7 +105,7 @@ diagrams.
     \begin{center}
         \includegraphics[width=10cm]{images/dep-two-cycles-linked.png} 
     \end{center}
-    \caption[What if the external driving data is available early?]{\small If
+    \caption[What if the external driving data is available early?]{\scriptsize If
     the external driving data is available in advance, can we start
     running the next cycle early?} 
     \label{fig-dep-two-linked}
@@ -116,7 +116,7 @@ diagrams.
         \includegraphics[width=6cm]{images/timeline-one-c.png} 
     \end{center}
     \caption[Attempted overlap of consective single-cycle job
-    schedules]{\small A naive attempt to overlap two consecutive cycles
+    schedules]{\scriptsize A naive attempt to overlap two consecutive cycles
     using the single-cycle dependency graph. The red shaded tasks will
     fail because of dependency violations (or will not be able to run
     because of upstream dependency violations).} 
@@ -127,7 +127,7 @@ diagrams.
     \begin{center}
         \includegraphics[width=8cm]{images/timeline-one-a.png} 
     \end{center}
-    \caption[The only safe multicycle job schedule?]{\small The best
+    \caption[The only safe multicycle job schedule?]{\scriptsize The best
     that can be done {\em in general} when intercycle dependence is
     ignored.} 
     \label{fig-job-no-overlap}
@@ -199,7 +199,7 @@ failures) won't result in dependency violations.
     \begin{center}
         \includegraphics[width=8cm]{images/dep-multi-cycle.png} 
     \end{center}
-    \caption[The complete multicycle dependency graph]{\small The complete
+    \caption[The complete multicycle dependency graph]{\scriptsize The complete
     dependency graph for the example suite, assuming the least possible
     intercycle dependence: the forecast models ($a$, $b$, and $c$)
     depend on their own previous instances. The dashed arrows show
@@ -211,7 +211,7 @@ failures) won't result in dependency violations.
     \begin{center}
         \includegraphics[width=6cm]{images/timeline-two-cycles-optimal.png} 
     \end{center}
-    \caption[The optimal two-cycle job schedule]{\small The optimal two
+    \caption[The optimal two-cycle job schedule]{\scriptsize The optimal two
     cycle job schedule when the next cycle's driving data is available in
     advance, possible in principle when intercycle dependence is
     handled explicitly.} 
@@ -232,7 +232,7 @@ with dependency violations.
     \begin{center}
         \includegraphics[width=12cm]{images/timeline-three.png} 
     \end{center}
-    \caption[Comparison of job schedules after a delay]{\small Job
+    \caption[Comparison of job schedules after a delay]{\scriptsize Job
     schedules for the example suite after a delay of almost one whole
     forecast cycle, when intercycle dependence is
     taken into account (above the time axis), and when they are not
@@ -247,7 +247,7 @@ with dependency violations.
         \includegraphics[width=8cm]{images/timeline-two.png}
     \end{center} 
     \caption[Optimal job schedule when all external data is
-    available]{\small Job schedules for the example suite in case study
+    available]{\scriptsize Job schedules for the example suite in case study
     mode, or after a long delay, when the external driving data are
     available many cycles in advance. Above the time axis is the optimal
     schedule obtained when the suite is constrained only by its true
@@ -305,7 +305,7 @@ even more efficient job schedule.
     \begin{center} 
         \includegraphics[width=8cm]{images/task-pool.png}
     \end{center} 
-    \caption[The cylc task pool]{\small How cylc sees a suite, in
+    \caption[The cylc task pool]{\scriptsize How cylc sees a suite, in
     contrast to the multicycle dependency graph of Figure~\ref{fig-dep-multi}.
     Task colors represent different cycle times, and the small squares
     and circles represent different prerequisites and outputs. A task
@@ -340,13 +340,6 @@ inter-task dependence equally, cylc in effect gets a pool of tasks to
 self-organise by negotiating their own dependencies so that optimal
 scheduling, as described in the previous section, emerges naturally at
 run time.
-
-%Perhaps the most difficult problem encountered during cylc
-%implementation was how to arrange that every task proxy object exists by
-%the time it is needed, but not too much earlier, and does not die too
-%long after it is no longer needed. This engendered no small amount
-%of hair pulling and teeth gnashing, but once achieved the complexities
-%therein are entirely hidden from the user.
 
 %\pagebreak
 \section{Installation} 
@@ -454,7 +447,8 @@ use \lstinline=cylc db print= on the command line:
    `-QuickStart       
      |-a          Quick Start Example A
      |-b          Quick Start Example B
-     `-c          Quick Start Example C
+     |-c          Quick Start Example C
+     `-z          Quick Start Example Z
 \end{lstlisting}
 where \lstinline=<admin>= should be replaced with the username of the
 cylc installation account on your system. Type
@@ -661,7 +655,7 @@ numbers attached to ensure uniqueness.
     \begin{center}
         \includegraphics[width=0.8\textwidth]{screenshots/commandhelp.png}
     \end{center}
-\caption[\small The cylc command line interface]{The cylc command line interface}
+\caption[The cylc command line interface]{\scriptsize The cylc command line interface}
 \label{fig-command-help}
 \end{figure} 
 
@@ -669,7 +663,7 @@ numbers attached to ensure uniqueness.
     \begin{center}
         \includegraphics[width=1.0\textwidth]{screenshots/db.png}
     \end{center}
-\caption[gcylc showing a private suite database]{\small
+\caption[gcylc showing a private suite database]{\scriptsize
 gcylc showing a private suite database, with one suite running 
 on port 7766.}
 \label{fig-db}
@@ -679,7 +673,7 @@ on port 7766.}
     \begin{center}
         \includegraphics[width=1.0\textwidth]{screenshots/cdb.png}
     \end{center}
-\caption[gcylc showing the central suite database]{\small
+\caption[gcylc showing the central suite database]{\scriptsize
 gcylc showing the central suite database.}
 \label{fig-cdb}
 \end{figure} 
@@ -688,7 +682,7 @@ gcylc showing the central suite database.}
     \begin{center}
         \includegraphics[height=0.35\textheight]{screenshots/simple-suiterc.png}]
     \end{center}
-    \caption[A simple cylc suite definition edited in {\em vim}]{\small
+    \caption[A simple cylc suite definition edited in {\em vim}]{\scriptsize
     A simple cylc suite definition edited in {\em vim}}
     \label{fig-cylc-vim} 
 \end{figure} 
@@ -698,7 +692,7 @@ gcylc showing the central suite database.}
         \includegraphics[height=0.35\textheight]{screenshots/simple-18-cold.png}
     \end{center}
     \caption[The suite definition of Figure~\ref{fig-cylc-vim} graphed
-    by cylc.]{\small The suite definition of Figure~\ref{fig-cylc-vim}
+    by cylc.]{\scriptsize The suite definition of Figure~\ref{fig-cylc-vim}
     graphed by cylc.}
 \label{fig-simple-graph-2}
 \end{figure} 
@@ -707,7 +701,7 @@ gcylc showing the central suite database.}
     \begin{center}
         \includegraphics[width=0.8\textwidth]{screenshots/control-trad.png}
     \end{center}
-\caption[The suite control GUI, treeview interface.]{\small The suite
+\caption[The suite control GUI, treeview interface.]{\scriptsize The suite
 control GUI, treeview interface.}
 \label{fig-gcylc-treeview}
 \end{figure} 
@@ -716,7 +710,7 @@ control GUI, treeview interface.}
     \begin{center}
         \includegraphics[width=0.8\textwidth]{screenshots/control-graph.png}
     \end{center}
-\caption[The suite control GUI, graph interface.]{\small The suite control GUI, graph interface.}
+\caption[The suite control GUI, graph interface.]{\scriptsize The suite control GUI, graph interface.}
 \label{fig-gcylc-graph}
 \end{figure} 
 
@@ -724,7 +718,7 @@ control GUI, treeview interface.}
     \begin{center}
         \includegraphics[width=\textwidth]{screenshots/ecox-1.png}
     \end{center}
-\caption[A large operational suite graphed by cylc.]{\small A large
+\caption[A large operational suite graphed by cylc.]{\scriptsize A large
 operational suite graphed by cylc.}
 \label{fig-ecox-1}
 \end{figure} 
@@ -734,7 +728,7 @@ operational suite graphed by cylc.}
         \includegraphics[width=0.8\textwidth]{screenshots/ecox-2.png}
     \end{center}
     \caption[The large suite of Figure~\ref{fig-ecox-1} running]
-    {\small The large suite of Figure~\ref{fig-ecox-1} running.}
+    {\scriptsize The large suite of Figure~\ref{fig-ecox-1} running.}
 \label{fig-ecox-2}
 \end{figure} 
 
@@ -772,38 +766,43 @@ operation.
 
 \section{Cylc's Example Suites}
 
-Cylc has been designed from the ground up to make testing and
-prototyping very easy. Simply drawing (in text) a dependency graph in a
+Cylc has been designed from the ground up to make prototyping and testing
+new suites very easy. Simply drawing (in text) a dependency graph in a
 new suite definition creates a valid suite that you can run (the tasks
 will be {\em dummy tasks} that default to emitting an identifying
 message, sleeping for a few seconds, and then exiting; but you can then
 arrange for particular tasks to do more complex things by configuring
-command scripting or calling external commands, scripts, or
-executables).
+task runtime properties appropriately).
 
-As such, cylc has quite a number of example suites that illustrate most
-facets of suite construction. They are all runnable and can be copied
-and modified by users to test almost anything. Some just configure a
-suite dependency graph, in which case cylc will run dummy tasks 
-according to the graph; some also configure task runtime properties 
-(e.g.\ command scripting and environment variables) within the suite
-definition; and some have real task implementations that generate 
-and consume real files and which will fail if they are not executed in
-the right order. 
+Cylc has quite a number of example suites intended to illustrate most
+facets of suite construction. These are held centrally under
+\lstinline=$CYLC_DIR/examples= and are exported to the central suite
+database, accessible to all users, when cylc is installed. They all run
+``out the box" and can be copied and modified by users to test almost
+anything.  Some of them just configure a suite dependency graph, in
+which case cylc will run dummy tasks according to the graph; some also
+configure task runtime properties (e.g.\ command scripting and
+environment variables) within the suite definition; and some have real
+task implementations that generate and consume real files and which will
+fail if they are not executed in the right order.  All of the example
+suites use their registration names, portably via suite and task
+identity variable supplied by cylc (this is in fact the default
+situation) in all suite and task I/O paths, so you can run multiple
+copies of the same example suite at once, under different names, without
+changing anything in the suite definition.
 
 \subsection{Using The Example Suites}
 
-The master example suites are held centrally under
-\lstinline=$CYLC_DIR/examples=, but they are exported to the central
-suite database for general use during the cylc installation 
-process (see Section~\ref{Installation}).  Use \lstinline=gcylc= or 
-\lstinline=cylc db print --central <admin>= to see what's available.
-Throughout the User Guide any reference to an example suite uses
-\lstinline=<admin>= as the username of the account under which cylc is
-installed (the suite owner's username is used as the first component of
-a suite name in the central database); replace this as appropriate for
-your local cylc installation, and import the suite to your private
-database so that you can run it and modify it.
+Use \lstinline=gcylc= or \lstinline=cylc db print --central <admin>= to
+see the example suites that are currently available. Note that here, 
+and throughout the User Guide, any reference to an example suite in
+the central database will use \lstinline=<admin>= as the username of the
+account under which cylc is installed (the suite owner's username is
+always the first component of a suite name in the central database);
+replace this as appropriate for your local cylc installation. Now 
+use \lstinline=cylc import= to copy an example suite (or some subset of 
+them, or all of them at once) to your private database so that you can
+modify it and run it:
 \begin{lstlisting}
 % cylc db print --central --tree <admin>.*\.QuickStart
 # or just this:
@@ -813,23 +812,25 @@ oliverh
    `-QuickStart 
      |-a   Quick Start Example A | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/a
      |-b   Quick Start Example B | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/b
-     `-c   Quick Start Example C | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/c
-% cylc db import <admin>.cylc-x:y:z.QuickStart.a eg.a $TMPDIR
-COPY /home/<admin>/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/a 
-  TO /tmp/eg/a
-REGISTER eg.one: /tmp/eg/a
+     |-c   Quick Start Example C | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/c
+     `-z   Quick Start Example Z | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/z
+% cylc db import <admin>.cylc-x:y:z.QuickStart.z eg.z $TMPDIR
+COPY /home/<admin>/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/z 
+  TO /tmp/oliver/eg/z
+REGISTER eg.z: /tmp/oliver/eg/z
 
 % cylc db print eg
-eg.a | Quick Start Example A | /tmp/eg/a
+eg.z | Quick Start Example Z | /tmp/oliver/eg/z
 
-% cylc db edit eg.a
+% cylc prep edit eg.z
 \end{lstlisting}
 
-All of the example suites use their registration names, portably via
-suite and task identity variable supplied by cylc, in all suite 
-and task I/O paths, so you can run multiple copies (or even instances)
-of the same example suite at once, under different names, without 
-changing anything in the suite definition.
+\lstset{language=suiterc}
+\lstinputlisting{../examples/QuickStart/z/suite.rc}
+\lstset{language=transcript}
+(This suite is explained in the {\em Quick Start Guide},
+Section~\ref{QuickStartGuide}).
+
 
 \subsection{Choosing The Initial Cycle Time}
 
@@ -863,7 +864,8 @@ during cylc installation,
    `-QuickStart 
      |-a        Quick Start Example A | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/a
      |-b        Quick Start Example B | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/b
-     `-c        Quick Start Example C | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/c
+     |-c        Quick Start Example C | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/c
+     `-z        Quick Start Example Z | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/z
 \end{lstlisting}
 
 \subsection{Configuring Your Environment For Cylc}
@@ -884,9 +886,8 @@ displays suites accessible to all users (see Figure~\ref{fig-cdb}).
 \subsubsection{Central Suite Database Actions}
 
 You can't run suites directly from the central database, but you can
-perform the following actions by right-clicking on  suites in the
-central database (or using the cylc command line):
-
+perform the following actions by right-clicking on central suites (or
+by the cylc command line):
 \begin{myenumerate}
     \item retrieve the suite description,
     \item list tasks in the suite,
@@ -900,7 +901,6 @@ central database (or using the cylc command line):
     \item unreregister or delete the suite or group (if you own it),
     \item reregister the suite or group (if you own it).
 \end{myenumerate}
-
 Some operations, such as unregistering and importing, can be done on
 groups of tasks - just right-click on the group name.
 
@@ -920,18 +920,18 @@ directories in the group.  Equivalently, on the command line:
 \begin{lstlisting}
 % cylc db import <admin>.cylc-x:y:z.QuickStart Quickstart $TMPDIR
 COPY /home/<admin>/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/a 
-  TO /tmp/QuickStart/a
-REGISTER QuickStart.a: /tmp/QuickStart/a
+  TO /tmp/oliver/QuickStart/a
+REGISTER QuickStart.a: /tmp/oliver/QuickStart/a
 COPY /home/<admin>/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/b 
-  TO /tmp/QuickStart/b
-REGISTER QuickStart.b: /tmp/QuickStart/b
+  TO /tmp/oliver/QuickStart/b
+REGISTER QuickStart.b: /tmp/oliver/QuickStart/b
 COPY /home/<admin>/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/c 
-  TO /tmp/QuickStart/c
-REGISTER QuickStart.c: /tmp/QuickStart/c
+  TO /tmp/oliver/QuickStart/c
+REGISTER QuickStart.c: /tmp/oliver/QuickStart/c
 \end{lstlisting}
 
 Note that you can also import individual suites, and that
-registration groups do not need to be created explicitly, they
+registration groups do not need to be created explicitly - they
 are automatically created and deleted as required. 
 
 Now switch gcylc back to your private database and confirm that you have a
@@ -939,9 +939,10 @@ copy of the example suites; on the command line:
 \begin{lstlisting}
 % cylc db pr -t Quick
 QuickStart    
- |-a       Quick Start Example A | /tmp/QuickStart/a
- |-b       Quick Start Example B | /tmp/QuickStart/b
- `-c       Quick Start Example C | /tmp/QuickStart/c
+ |-a       Quick Start Example A | /tmp/oliver/QuickStart/a
+ |-b       Quick Start Example B | /tmp/oliver/QuickStart/b
+ |-c       Quick Start Example C | /tmp/oliver/QuickStart/c
+ `-z       Quick Start Example Z | /tmp/oliver/QuickStart/z
 \end{lstlisting}
 
 \subsubsection{Private Suite Database Actions}
@@ -985,19 +986,23 @@ name and choose `Edit'; or use the edit command:
 This opens the suite definition in your editor (\lstinline=$EDITOR=, or
 \lstinline=$GEDITOR= from gcylc) {\em from the suite definition
 directory so that you can easily open other suite files in the
-editor}. You can of course do this manually but this way is quick and
-convenient and you don't have to remember suite definition directory
-locations. For suites that use include-files you can optionally edit the
-file inlined; it will be split back into its constituent include-files
-when you save the file and exit the editor. If you use the vim editor
-you can have nice cylc-specific syntax highlighting and section folding
-- see Section~\ref{SyntaxHighlighting}.
+editor}. You can of course do this manually, but by using the cylc
+interface you don't have to remember suite definition directory
+locations. For the rare occasions that you do need to move to a 
+suite definition directory, you can do this:
+\begin{lstlisting}
+% cd $( cylc db get-dir QuickStart.a )
+\end{lstlisting}
+Suites that use include-files can optionally be edited in a temporarily
+inlined state - the inline file will be split back into its constituent
+include-files when you save it and exit the editor. 
 
-You should see the following suite.rc file in your editor: 
-
+Anyway, you should now see the following suite.rc file in your editor: 
 \lstset{language=suiterc}
 \lstinputlisting{../examples/QuickStart/a/suite.rc}
 \lstset{language=transcript}
+(Note that if you use the vim editor you can have cylc-specific syntax
+highlighting and section folding - see Section~\ref{SyntaxHighlighting}).
 
 This defines a complete, valid, runnable suite.  Here's how to interpret
 it: At 0, 6, 12, and 18 hours each day a clock-triggered task called GetData
@@ -1060,37 +1065,44 @@ editor.}
     \begin{center}
         \includegraphics[width=0.7\textwidth]{screenshots/QuickStartA-graph18.png}
     \end{center}
-    \caption[The {\em QuickStart.a} dependency graph]{\small The
-    {\em QuickStart.a} dependency graph.}
+    \caption[The {\em QuickStart.a} dependency graph]{\scriptsize The
+    {\em QuickStart.a} dependency graph, plotted by cylc.}
 \label{fig-QuickStartA-graph18}
 \end{figure}
 
 \subsection{Running The QuickStart.a Suite}
 
-Each cylc task has command scripting that is called to invoke task
+Each cylc task defines command scripting to invoke the right external
 processing when the task is ready to run. This has not been explicilty
-configured been defined in our example suite so the tasks all default to
-using the dummy task command line inherited from the {\em root
-namespace} (see Section~\ref{SuiteDefinition}):
+configured in the example suite, so it defaults, for all tasks, to the
+{\em dummy task} scripting inherited from the {\em root namespace} (see
+Section~\ref{SuiteDefinition}):
 \begin{lstlisting}
 % cylc get-config QuickStart.a runtime GetData 'command scripting'
 ['echo DUMMY $CYLC_TASK_ID; sleep 10; echo BYE']
 \end{lstlisting}
 where \lstinline=$CYLC_TASK_ID= is the unique identifier by which 
 cylc knows the task (\lstinline=NAME%CYCLE=) exported to each task's
-execution environment by cylc. The `runtime' argument refers to the top
-level suite.rc section that defines task run time properties including 
-command scripting (which in this case defaults to the root namespace). 
+execution environment by cylc. The command arguments reflect the suite
+definition section nesting. If it were explicitly configured in the 
+example suite definition it would look like this:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[GetData]]
+        command scripting = "echo DUMMY $CYLC_TASK_ID; sleep 10; echo BYE"
+\end{lstlisting}
+\lstset{language=transcript}
 
 Now start a suite control GUI by right-clicking on the suite in gcylc
-and choosing `Control (graph)'.  You can also open a treeview control
-GUI for the same suite, if you like. Multiple GUIs running at the same
-time will automatically connect to the same running suite (they won't
-try to run separate instances). Note also that if you shut down a 
-suite control GUI, the suite will keep running. You can reconnect 
-to it later by opening another control GUI.
-{\em See {\em The Graph-Based Suite Control GUI}, 
-Section~\ref{TheGraphBasedcontrolGUI}.}
+and choosing `Control (graph)'.  You can also open a text treeview
+control GUI for the same suite, if you like. Multiple GUIs running at
+the same time will automatically connect to the same running suite (they
+won't try to run separate instances). Note also that if you shut down a
+suite control GUI, the suite will keep running. You can reconnect to it
+later by opening another control GUI.
+%See {\em The Graph-Based Suite Control GUI},
+%Section~\ref{TheGraphBasedcontrolGUI}.
 
 In the control GUI click on Control $\rightarrow$ Run, enter an initial
 cold-start cycle time (e.g.\ 2011052306), and select ``Hold (pause) on
@@ -1111,7 +1123,7 @@ Figure~\ref{fig-QuickStartA-ControlStart00}.
     \begin{center}
         \includegraphics[width=0.8\textwidth]{screenshots/QuickStartA-ControlStart06.png}
     \end{center}
-    \caption[Suite {\em QuickStart.a} at startup, 06 or 18 hours.]{\small
+    \caption[Suite {\em QuickStart.a} at startup, 06 or 18 hours.]{\scriptsize
     Suite {\em QuickStart:one} at startup with an initial
     cycle time ending in 06 or 18 hours. Blue nodes indicate tasks
     in the waiting state.}
@@ -1123,7 +1135,7 @@ Figure~\ref{fig-QuickStartA-ControlStart00}.
         \includegraphics[width=0.8\textwidth]{screenshots/QuickStartA-ControlStart00.png}
     \end{center}
     \caption[Suite {\em QuickStart.a} at startup, 00 or 12
-    hours]{\small Suite {\em QuickStart.a} at startup with an
+    hours]{\scriptsize Suite {\em QuickStart.a} at startup with an
     initial cycle time ending in 00 or 12 hours. Blue nodes represent 
     tasks in the waiting state and off-white nodes are tasks from the 
     base graph, defined in the suite.rc file, that aren't currently live
@@ -1151,7 +1163,7 @@ and~\ref{fig-QuickStartA-ControlStalled}.
         \includegraphics[width=0.8\textwidth]{screenshots/QuickStartA-ControlRunning.png}
     \end{center}
     \caption[Suite {\em QuickStart.a} running.]
-    {\small Suite {\em QuickStart.a} running, showing multiple
+    {\scriptsize Suite {\em QuickStart.a} running, showing multiple
     instances of the clock-triggered GetData task running at once.}
     \label{fig-QuickStartA-ControlRunning}
 \end{figure} 
@@ -1160,7 +1172,7 @@ and~\ref{fig-QuickStartA-ControlStalled}.
         \includegraphics[width=0.8\textwidth]{screenshots/QuickStartA-ControlStalled.png}
     \end{center}
     \caption[ Suite {\em QuickStart.a} stalled.]
-    {\small Suite {\em QuickStart.a} stalled after the
+    {\scriptsize Suite {\em QuickStart.a} stalled after the
     clock-triggered GetData tasks have finished, because of Model's
     previous-cycle dependence and the suite runahead limit (see main
     text).}
@@ -1185,7 +1197,7 @@ successor that is 24 hours ahead.} because clock triggered tasks are
 then constrained by the wall clock, and other tasks have to wait on
 them, generally speaking.
 
-\subsubsection{Viewing Task States}
+\subsubsection{Viewing The State Of Tasks}
 
 If you're wondering why a particular task has not triggered yet in a
 running suite you can view the current state of its prerequisites 
@@ -1199,7 +1211,7 @@ Figure~\ref{fig-QuickStartA-ModelState}.
         \includegraphics[width=0.4\textwidth]{screenshots/QuickStartA-ModelState.png}
     \end{center}
     \caption[Viewing current task state in gcylc]
-{\small Viewing current task state after right-clicking on a task in gcylc. The
+{\scriptsize Viewing current task state after right-clicking on a task in gcylc. The
     same information is available from the \lstinline=cylc show= command.}
     \label{fig-QuickStartA-ModelState}
 \end{figure} 
@@ -1256,21 +1268,21 @@ looks like this:
 [scheduling]
     [[dependencies]]
         [[[ 0,6,12,18 ]]]
-            graph  = """
-                     Prep => GetData & ColdModel
-                     GetData => Model => PostA
-                     ColdModel | Model[T-6] => Model"""
+            graph  = """Prep => GetData & ColdModel
+                        GetData => Model => PostA
+                        ColdModel | Model[T-6] => Model"""
         [[[ 6,18 ]]]
             graph = "Model => PostB"
 \end{lstlisting}
-In other words, Model can trigger off {\em either} its previous-cycle
-self {\em or} ColdModel in the same cycle. 
+\lstset{language=transcript}
+In other words, Model[T] can trigger off {\em either} Model[T-6] {\em or} 
+ColdModel[T]. 
 
 \begin{figure}
     \begin{center}
         \includegraphics[width=0.7\textwidth]{screenshots/QuickStartB-graph18.png}
     \end{center}
-    \caption[The {\em QuickStart.b} graph with model cold-start task.]{\small
+    \caption[The {\em QuickStart.b} graph with model cold-start task.]{\scriptsize
     The {\em QuickStart.b} dependency graph showing a model cold
     start task.}
 \label{fig-QuickStartB-graph18}
@@ -1337,7 +1349,7 @@ you reconnect to the suite with a new control GUI.
     \begin{center}
         \includegraphics[width=0.7\textwidth]{screenshots/suite-output.png}
     \end{center}
-\caption[Cylc suite stdout/stderr example.]{\small Cylc suite stdout/stderr example.}
+\caption[Cylc suite stdout/stderr example.]{\scriptsize Cylc suite stdout/stderr example.}
 \label{fig-suite-output}
 \end{figure}
 
@@ -1347,19 +1359,32 @@ The cylc suite log records every event that occurs (incoming messages from tasks
 and so on) along with the time of the event. The top level logging directory,
 under which a suite-specific log is written, is configurable in the suite.rc file.
 Suite logs are (optionally) rolled over at start-up and the five most
-recent back ups are kept automatically.
+recent back ups are kept.
 
 \begin{figure}
     \begin{center}
         \includegraphics[width=0.7\textwidth]{screenshots/suite-log.png}
     \end{center}
-\caption[ A cylc suite log viewed via gcylc.]{\small A cylc suite log viewed via gcylc.}
+\caption[ A cylc suite log viewed via gcylc.]{\scriptsize A cylc suite log viewed via gcylc.}
 \label{fig-suite-log}
 \end{figure}
 
 Figure~\ref{fig-suite-log} shows a suite log viewed from within gcylc. The 
 \lstinline=cylc log= command also enables viewing and filtering of suite logs
-without having to remember the actual log file location.
+without having to remember the actual log file location. But if you want 
+to know the location:
+\begin{lstlisting}
+% cylc get-config --directories QuickStart.a
+SUITE LOG DIRECTORY:
+  /home/oliverh/cylc-run/QuickStart.a/log/suite
+SUITE STATE DUMP DIRECTORY:
+  /home/oliverh/cylc-run/QuickStart.a/state
+JOB SUBMISSION LOG DIRECTORIES:
+  + root: /home/oliverh/cylc-run/QuickStart.a/log/job
+\end{lstlisting}
+(There would be other job submission log directories listed here if 
+any of the tasks in the suite had overridden the default location 
+set by the root namespace).
 
 \subsubsection{Task stdout And stderr Logs}
 
@@ -1373,57 +1398,56 @@ suite name hierarchy, e.g.\ foo.bar.baz):
 % get-config QuickStart.a runtime GetData 'job submission' 'log directory'
 /home/oliverh/cylc-run/QuickStart.a/log/job
 \end{lstlisting}
+(or use the \lstinline=--directories= argument as shown just above).
 
-These files will contain the complete stdout and stderr
-record for tasks whose initiating processes do not detach and exit
-before all task processing is finished.  The final location of the
-internal output of detaching tasks, whose initiating processes submit
-internal jobs before exiting early, is up to the task implementation.
+These files will contain the complete stdout and stderr record for tasks
+whose initiating processes do not detach and exit before all task
+processing is finished. The location of output generated by secondary
+processes, if the original process detaches and exits early, is up to
+the task implementation (of said secondary processes, specifically).
 
 \subsection{Searching A Suite}
 
 The cylc suite search tool reports matches in the suite.rc file
-by line number, suite section, and file, even if nested include-files
-are used, and by file and line number for matches in the suite bin
-directory.  The following output listing is from a search of
-the {\em examples:CUG3} suite, which has some task scripts in the suite
-bin directory. 
+by line number, suite section, and file, even if include-files
+are used (and even if they are nested), and by file and line number for
+matches in the suite bin directory. The following output listing is from
+a search of the {\em QuickStart.c} suite. 
 \begin{lstlisting}
 % cylc grep OUTPUT_DIR QuickStart.c
-
+\end{lstlisting}
+\lstset{language=suiterc}
+\begin{lstlisting}
 SUITE: QuickStart.c /tmp/oliverh/QuickStart/c/suite.rc
 PATTERN: OUTPUT_DIR
 
 FILE: /tmp/oliverh/QuickStart/c/suite.rc
    SECTION: [runtime]->[[GetData]]->[[[environment]]]
-      [53]:             GETDATA_OUTPUT_DIR = $WORKSPACE
-   SECTION: [runtime]->[[ColdModel]]->[[[environment]]]
-      [60]:             MODEL_OUTPUT_DIR = $WORKSPACE
-   SECTION: [runtime]->[[Model]]->[[[environment]]]
-      [68]:             MODEL_OUTPUT_DIR = $WORKSPACE
-   SECTION: [runtime]->[[PostA]]->[[[environment]]]
-      [76]:             POSTA_OUTPUT_DIR = $WORKSPACE
-   SECTION: [runtime]->[[PostB]]->[[[environment]]]
-      [83]:             POSTB_OUTPUT_DIR = $WORKSPACE
+      (40):             GETDATA_OUTPUT_DIR = $WORKSPACE
+   SECTION: [runtime]->[[Models]]->[[[environment]]]
+      (45):             MODEL_OUTPUT_DIR = $WORKSPACE
+   SECTION: [runtime]->[[Post]]->[[[environment]]]
+      (60):             OUTPUT_DIR = $WORKSPACE
 
 FILE: /tmp/oliverh/QuickStart/c/bin/PostB.sh
-   [7]: cylc checkvars -c POSTB_OUTPUT_DIR
-   [21]: touch $POSTB_OUTPUT_DIR/precip.products
+   (7): cylc checkvars -c OUTPUT_DIR
+   (21): touch $OUTPUT_DIR/precip.products
 
 FILE: /tmp/oliverh/QuickStart/c/bin/Model.sh
-   [11]: cylc checkvars -c MODEL_OUTPUT_DIR MODEL_RUNNING_DIR
-   [54]: touch $MODEL_OUTPUT_DIR/surface-winds-${CYCLE_TIME}.nc
-   [55]: touch $MODEL_OUTPUT_DIR/precipitation-${CYCLE_TIME}.nc
+   (11): cylc checkvars -c MODEL_OUTPUT_DIR MODEL_RUNNING_DIR
+   (54): touch $MODEL_OUTPUT_DIR/surface-winds-${CYLC_TASK_CYCLE_TIME}.nc
+   (55): touch $MODEL_OUTPUT_DIR/precipitation-${CYLC_TASK_CYCLE_TIME}.nc
 
 FILE: /tmp/oliverh/QuickStart/c/bin/PostA.sh
-   [7]: cylc checkvars -c POSTA_OUTPUT_DIR
-   [21]: touch $POSTA_OUTPUT_DIR/surface-wind.products
+   (7): cylc checkvars -c OUTPUT_DIR
+   (21): touch $OUTPUT_DIR/surface-wind.products
 
 FILE: /tmp/oliverh/QuickStart/c/bin/GetData.sh
-   [6]: cylc checkvars -c GETDATA_OUTPUT_DIR
-   [11]: touch $GETDATA_OUTPUT_DIR/obs-${CYCLE_TIME}.nc
+   (6): cylc checkvars -c GETDATA_OUTPUT_DIR
+   (11): touch $GETDATA_OUTPUT_DIR/obs-${CYLC_TASK_CYCLE_TIME}.nc
 \end{lstlisting}
 (Suite search is also available from the gcylc right-click menu).
+\lstset{language=transcript}
 
 \subsection{Comparing Suites}
 
@@ -1434,58 +1458,38 @@ command line results in:
 \lstset{language=transcript}
 \begin{lstlisting}
 % cylc diff QuickStart.a QuickStart.b
+\end{lstlisting}
+\lstset{language=suiterc}
+\begin{lstlisting}
 Parsing QuickStart.a
 Parsing QuickStart.b
 Suite definitions QuickStart.a and QuickStart.b differ.
-
-1 items only in QuickStart.a (<)
-
-   [visualization] [[node attributes]]
- <   Model = ['style=filled', 'fillcolor=red']
-
-4 items only in QuickStart.b (>)
-
-   [visualization] [[node groups]]
- >   models = ['ColdModel', 'Model']
-
-   [runtime] [[ColdModel]]
- >   inherit = None
- >   description = No description provided
- >   command scripting = ['echo DUMMY $CYLC_TASK_ID; sleep 10; echo BYE']
-
-[!SNIP!]
-12 common items differ QuickStart.a(<) QuickStart.b(>)
-
+!SNIP!
+13 common items differ QuickStart.a(<) QuickStart.b(>)
    (top)
- <   title = Cylc User Guide Quick Start Example 1
- >   title = Cylc User Guide Quick Start Example 2
-
-   [scheduling] [[dependencies]] [[[0,6,12,18]]]
- <   graph = 
-                     Prep => GetData => Model => PostA
-                     Model[T-6] => Model
- >   graph = Prep => GetData & ColdModel
-                     GetData => Model => PostA
-                     ColdModel | Model[T-6] => Model
-
-   [scheduling] [[special tasks]]
- <   cold-start = []
- >   cold-start = ['ColdModel']
-
-   [cylc] [[state dumps]]
- <   directory = /home/oliverh/cylc-run/QuickStart.a/state
- >   directory = /home/oliverh/cylc-run/QuickStart.b/state
+ <   description = (see the Cylc User Guide)
+ >   description = (Quick Start a plus a cold-start task)
+ <   title = Quick Start Example A
+ >   title = Quick Start Example B
 
    [cylc] [[logging]]
  <   directory = /home/oliverh/cylc-run/QuickStart.a/log/suite
  >   directory = /home/oliverh/cylc-run/QuickStart.b/log/suite
 
- [!SNIP!]
+   [scheduling] [[dependencies]] [[[0,6,12,18]]]
+ <   graph = Prep => GetData => Model => PostA
+                        Model(T-6) => Model
+ >   graph = Prep => GetData & ColdModel
+                        GetData => Model => PostA
+                        ColdModel | Model(T-6) => Model
+!SNIP!
 \end{lstlisting}
-(some output has been omitted for brevity). Note that the {\em suite log
-directory} items differ even though they are not explicitly defined in 
-either suite.  That is because their default values (see the {\em
-Suite.rc Reference}, Appendix~\ref{SuiteRCReference}) are suite-specific.
+\lstset{language=transcript}
+(much of the diff output has been omitted here for the sake of brevity).
+Note that suite log directories and the like may differ even though they
+are not explicitly configured in either suite, because their default
+values (see the {\em Suite.rc Reference},
+Appendix~\ref{SuiteRCReference}) are suite-registration-specific.
 
 \subsection{Validating A Suite}
 
@@ -1688,17 +1692,14 @@ A cylc {\em suite definition directory} contains:
         \begin{myitemize}
             \item The entire directory tree is copied if you copy the
                 suite with cylc or gcylc.
-            \item The suite definition directory can be accessed
-                portably through  
-                \lstinline=$CYLC_SUITE_DEF_PATH=
-                in task execution environments
-                (Section~\ref{TaskExecutionEnvironment}).
+            \item Tasks access via \lstinline=$CYLC_SUITE_DEF_PATH=
+                ({\em Task Execution Environment}, 
+                Section~\ref{TaskExecutionEnvironment}).
             \item Holding everything in one place makes proper suite
                 revision control possible.
         \end{myitemize}
 \end{myitemize}
-
-Here's an imaginary example,
+An imaginary example:
 \lstset{language=transcript}
 \begin{lstlisting}
 /path/to/my/suite   # suite definition directory
@@ -1809,12 +1810,12 @@ Cylc suite.rc files consist of a suite title and description followed by
 configuration items grouped under several top level section headings:
 
 \begin{myitemize}
-    \item {\bf [cylc] } - how cylc itself behaves when running this suite, e.g.:
+    \item {\bf [cylc] } - aspects of suite configuration that are not task-related, e.g.:
         \begin{myitemize}
             \item simulation mode
             \item suite logging and state dump directories
         \end{myitemize}
-    \item {\bf [scheduling] } - items allowing cylc to determine when tasks are ready to run.
+    \item {\bf [scheduling] } - determines when tasks are ready to run.
         \begin{myitemize}
             \item lists of tasks with special behaviour (e.g. clock-triggered tasks)
             \item the suite dependency graph, defining the relationships
@@ -1838,14 +1839,14 @@ configuration items grouped under several top level section headings:
 Cylc suite.rc files are automatically validated against a specification
 file that defines all legal entries, values, options, and defaults 
 (\lstinline=$CYLC_DIR/conf/suiterc.spec=). This detects any formatting
-errors, typographic errors, illegal items and illegal values. Some
-values are complex strings that require further parsing by cylc to
-determine their correctness (this is also done during validation). 
-All legal entries are documented in the {\em Suite.rc Reference}
-(Appendix~\ref{SuiteRCReference}).
+errors, typographic errors, illegal items and illegal values prior to 
+run time. Some values are complex strings that require further parsing
+by cylc to determine their correctness (this is also done during
+validation). All legal entries are documented in the {\em Suite.rc
+Reference} (Appendix~\ref{SuiteRCReference}).
 
-The validator reports the line numbers of detected errors. 
-
+The validator reports the line numbers of detected errors. Here's an 
+example showing a subsection heading with a missing right bracket.
 \begin{lstlisting}
 % cylc validate foo.bar
 Parsing Suite Config File
@@ -1870,21 +1871,20 @@ An example:
 _greeting = HELLO
 [runtime]
     [[root]]
-        command scripting = """
-    echo %(_greeting)s from $TASK_ID; sleep 10; echo BYE
-                            """
+        command scripting = "echo %(_greeting)s from $CYLC_TASK_ID; sleep 10; echo BYE"
 \end{lstlisting}
 \lstset{language=transcript}
 Then, assuming this suite is registered as \lstinline=foo=,
 \begin{lstlisting}
 % cylc get-config foo runtime root 'command scripting'
-['echo HELLO from $TASK_ID; sleep 10; echo BYE']
+['echo HELLO from $CYLC_TASK_ID; sleep 10; echo BYE']
 \end{lstlisting}
 
 \subsection{Scheduling - Dependency Graphs}
 \label{DependencyGraphs}
  
-The [scheduling] section of a suite.rc file defines the relationships
+The \lstinline=[scheduling]= section of a suite.rc file defines the
+relationships
 between tasks in a suite - the information that allows cylc to determine
 when tasks are ready to run. The most important component of this is the
 suite dependency graph. Cylc graph notation makes clear textual
@@ -1914,9 +1914,9 @@ the suite graph, plotted with,
 This is actually a complete valid suite that you can run (it runs
 dummy tasks according to the suite graph, because no runtime 
 properties have been defined, and you'll need to trigger task A manually
-to get the suite started because A[T] depends on its own previous
-instance A[T-6] and at start-up there is no previous cycle to satisfy
-that prerequisite - how to handle this properly is described in 
+to get the suite started because A[T] depends on A[T-6] and at
+start-up there is no previous cycle to satisfy that dependence - how to
+handle this properly is described in 
 {\em Satisfying Intercycle Dependencies At Start-Up}
 (Section~\ref{SatisfyingIntercycleDependenceAtStartUp}) and in the
 {\em Quick Start Guide} (Section~\ref{QuickStartGuide}).
@@ -1948,7 +1948,7 @@ A[T-6] => A  # Model A restart trigger
         \includegraphics[width=\textwidth]{screenshots/dep-eg-1.png}
     \end{center}
 \end{minipage}
-\caption[Dependency Graph Example 1.]{\small Dependency Graph Example 1.}
+\caption[Dependency Graph Example 1.]{\scriptsize Dependency Graph Example 1.}
 \label{fig-dep-eg-1}
 \end{figure}
 
@@ -2021,10 +2021,8 @@ together to ``follow a path'' through the graph. So this,
 \lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
-    graph = """
-            A => B  # B triggers off A
-            B => C  # C triggers off B
-            """
+    graph = """A => B  # B triggers off A
+               B => C  # C triggers off B"""
 \end{lstlisting}
 is equivalent to this:
 \begin{lstlisting}
@@ -2055,10 +2053,8 @@ can appear in multiple pairs or chains}. Separately defined triggers
 for the same task have an AND relationship. So this:
 \begin{lstlisting}
 # SUITE.RC
-    graph = """
-            A => X  # X triggers off A
-            B => X  # X also triggers off B
-            """
+    graph = """A => X  # X triggers off A
+               B => X  # X also triggers off B"""
 \end{lstlisting}
 is equivalent to this:
 \begin{lstlisting}
@@ -2100,6 +2096,10 @@ tasks. Additionally, there may be multiple graph strings (under different
 VALIDITY sections) for cycling tasks, if there are some tasks with
 different dependencies at different cycle times.
 
+{\bf The small suite definitions used in the following subsections can
+be found in the central database registered under the {\em validity}
+group name.} 
+
 \paragraph{One-off Asynchronous Tasks}
 
 Figure~\ref{fig-test1} shows how to define a small suite of one-off
@@ -2125,7 +2125,7 @@ title = some one-off asynchronous tasks
         \includegraphics[width=0.25\textwidth]{screenshots/test1.png}
     \end{center}
 \end{minipage}
-\caption[One-off Asynchronous Tasks]{\small One-off Asynchronous Tasks.}
+\caption[One-off Asynchronous Tasks]{\scriptsize One-off Asynchronous Tasks.}
 \label{fig-test1}
 \end{figure}
 
@@ -2155,14 +2155,17 @@ title = some one-off asynchronous tasks
         \includegraphics[width=\textwidth]{screenshots/test2.png}
     \end{center}
 \end{minipage}
-\caption[Cycling Tasks]{\small Cycling Tasks.}
+\caption[Cycling Tasks]{\scriptsize Cycling Tasks.}
 \label{fig-test2}
 \end{figure}
 
 \paragraph{Combined Graphs}
 
 You can have a suite of cycling tasks that wait on a group of one-off
-asynchronous tasks, as shown in Figure~\ref{fig-test4}.
+asynchronous tasks, as shown in Figure~\ref{fig-test4}. Alternatively,
+you can use {\em one-off synchronous task} instead of asynchronous 
+tasks, if it is appropriate for the initial non-cycling tasks to have 
+a cycle time - see Figure~\ref{fig-test5}.
 
 \subparagraph{Synchronous Start-up vs One-off Asynchronous Tasks}
 
@@ -2185,7 +2188,7 @@ asynchronous tasks will only run in a cold-start}.
 \begin{lstlisting}
 # SUITE.RC
 title = one-off async and cycling tasks
-# (with dependence between cyclest too)
+# (with dependence between cycles too)
 [scheduling]
     [[dependencies]]
         graph = "prep1 => prep2"
@@ -2203,8 +2206,39 @@ title = one-off async and cycling tasks
         \includegraphics[width=\textwidth]{screenshots/test4.png}
     \end{center}
 \end{minipage}
-\caption[One-off Asynchronous and Cycling Tasks]{\small One-off Asynchronous and Cycling Tasks.}
+\caption[One-off Asynchronous and Cycling Tasks]{\scriptsize One-off
+asynchronous and cycling tasks in the same suite.}
 \label{fig-test4}
+\end{figure}
+
+\begin{figure}
+\begin{minipage}[b]{0.5\textwidth}
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+title = one-off start-up and cycling tasks
+# (with dependence between cycles too)
+[scheduling]
+    [[special tasks]]
+        start-up = prep1, prep2
+    [[dependencies]]
+        [[[0,12]]]
+            graph = """
+    prep1 => prep2 => foo => bar & baz => waz
+    foo[T-12] => foo
+                    """
+\end{lstlisting}
+\lstset{language=transcript}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.5\textwidth}
+    \begin{center}
+        \includegraphics[width=\textwidth]{screenshots/test5.png}
+    \end{center}
+\end{minipage}
+\caption[One-off Synchronous and Cycling Tasks]{\scriptsize One-off
+synchronous and cycling tasks in the same suite.}
+\label{fig-test5}
 \end{figure}
 
 \paragraph{Repeating Asynchronous Tasks}
@@ -2262,7 +2296,7 @@ title = a suite of repeating asynchronous tasks
         \includegraphics[width=0.45\textwidth]{screenshots/test6.png}
     \end{center}
 \end{minipage}
-\caption[Repeating Asynchronous Tasks]{\small Repeating Asynchronous Tasks.}
+\caption[Repeating Asynchronous Tasks]{\scriptsize Repeating Asynchronous Tasks.}
 \label{fig-test3}
 \end{figure}
 
@@ -2312,7 +2346,7 @@ output that the upstream task completes before it finishes.}
 [runtime]
     [[A]]
         [[[outputs]]]
-            out1 = "NWP products uploaded for $(CYCLE_TIME)"
+            out1 = "NWP products uploaded for $(CYLC_TASK_CYCLE_TIME)"
 \end{lstlisting}
 Task A must emit this message when the actual output has been completed - 
 see {\em Reporting Internal Outputs Completed}, Section~\ref{RIOC}.
@@ -2353,19 +2387,19 @@ provide a concise alternative to defining multiple triggers separately:
     graph = "A & B => C"
 # is equivalent to:
     graph = """A => C
-            B => C"""
+               B => C"""
 # 2/ this:
     graph = "A => B & C"
 # is equivalent to:
     graph = """A => B
-            A => C"""
+               A => C"""
 # 3/ and this:
     graph = "A & B => C & D"
 # is equivalent to this:
     graph = """A => C
-            B => C
-            A => D
-            B => D"""
+               B => C
+               A => D
+               B => D"""
 \end{lstlisting}
 
 OR operators (\lstinline=|=), for truly conditional triggers,
@@ -2575,17 +2609,17 @@ cycles in case the next cycle (or the next and the next-next, and so on)
 cycle has to be omitted: 
 \begin{lstlisting}
 # SUITE.RC
-[special tasks]
-    sequential = A
-[dependencies]
-    [[0,6,12,18]]
-        # Model A cold-start and restart dependencies:
-        graph = """
-   ColdA | A[T-6] | A[T-12] | A[T-18] | A[T-24] => A
-                """
+[scheduling]
+    [[special tasks]]
+        sequential = A
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            # Model A cold-start and restart dependencies:
+            graph = "ColdA | A[T-6] | A[T-12] | A[T-18] | A[T-24] => A"
 \end{lstlisting}
-In other words, task A can trigger off its cold-start task, {\em or} off
-its own previous instance, {\em or} the instance before that, and so on.
+In other words, task A can trigger off a cotemporal cold-start task,
+{\em or} off its own previous instance, {\em or} off the instance before
+that, and so on.
 Restart dependencies are unusual because although A {\em could}
 trigger off A[T-12] we don't actually want it to do so unless A[T-6]
 fails and can't be fixed. {\em This is why Task A, above, is declared to be
@@ -2635,15 +2669,13 @@ not this is worth the effort depends on your needs.
         explicit restart outputs = A
     [[dependencies]]
         [[[0,6,12,18]]]
-            graph = """
-  ColdA | A[T-18]:res18 | A[T-12]:res12| A[T-6]:res6 => A
-                    """
+            graph = "ColdA | A[T-18]:res18 | A[T-12]:res12| A[T-6]:res6 => A"
 [runtime]
     [[A]]
         [[[outputs]]]
-            r6  = restart files completed for $(CYCLE_TIME+6)
-            r12 = restart files completed for $(CYCLE_TIME+12)
-            r18 = restart files completed for $(CYCLE_TIME+18)
+            r6  = restart files completed for $(CYLC_TASK_CYCLE_TIME+6)
+            r12 = restart files completed for $(CYLC_TASK_CYCLE_TIME+12)
+            r18 = restart files completed for $(CYLC_TASK_CYCLE_TIME+18)
 \end{lstlisting}
 
 
@@ -2749,7 +2781,7 @@ cylc utility commands:
 \paragraph{User-defined Environment Variables}
 
 The user-defined environment is the sum of a task's inherited
-[[[environment]]] sections.
+\lstinline=[[[environment]]]= sections.
 \begin{lstlisting}
 # SUITE.RC
 [runtime]
@@ -3135,7 +3167,7 @@ have been completed:
 # (task foo implementation)
 # ...
 # report an output completed:
-cylc task message "foo products uploaded for $CYCLE_TIME"
+cylc task message "foo products uploaded for $CYLC_TASK_CYCLE_TIME"
 \end{lstlisting}
 This must match one of the task's registered outputs:
 \lstset{language=suiterc}
@@ -3148,7 +3180,7 @@ This must match one of the task's registered outputs:
 [runtime]
     [[foo]]
         [[[outputs]]]
-            output1 = "foo products uploaded for $(CYCLE_TIME)"
+            output1 = "foo products uploaded for $(CYLC_TASK_CYCLE_TIME)"
 \end{lstlisting}
 otherwise it will just be logged as a progress report or similar. {\em Note
 the required round brackets around the suite.rc cycle time variable.}
@@ -3578,7 +3610,6 @@ and in the tasks section.
 
 %\pagebreak
 
-
 \section{In Brief}
 
 For more help on any topic, see cylc command line help (which is
@@ -3636,7 +3667,7 @@ examples suites installed into the central suite database.
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        command scripting = "cylc run SUITE $CYCLE_TIME --until=$CYCLE_TIME"
+        command scripting = "cylc run SUITE $CYLC_TASK_CYCLE_TIME --until=$CYLC_TASK_CYCLE_TIME"
 \end{lstlisting}
 \end{myitemize}
 \lstset{language=transcript}

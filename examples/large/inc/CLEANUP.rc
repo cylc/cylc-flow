@@ -12,7 +12,7 @@
         	MAIN_LOG_DIR = ${HOME}/.cylc/logging/ecoconnect
         	TASK_LIST_FILE = task_list.csv
         	TASK_LIST_DIR = ${CYLC_SUITE_DEF_PATH}/control
-		    OUTPUT_FILE = task_stats_${CYCLE_TIME}.csv
+		    OUTPUT_FILE = task_stats_${CYLC_TASK_CYCLE_TIME}.csv
         	OUTPUT_DIR = ${HOME}/output/stats
 
     [[cycle_check_transfer]]
@@ -20,8 +20,8 @@
         description = "Transfer statistics file to web server."
         command scripting = cylc util scp-transfer
         [[[environment]]]
-        	SRCE = ${HOME}/output/stats/task_stats_${CYCLE_TIME}.csv ${HOME}/output/stats/task_stats_${CYCLE_TIME}.csv
-        	DEST = ecoconnect_oper@pa.niwa.co.nz:/oper/ecoconnect_oper/public_html/eco_check/stats/task_stats_latest.csv ecoconnect_oper@pa.niwa.co.nz:/oper/ecoconnect_oper/public_html/eco_check/stats/task_stats_${CYCLE_TIME}.csv
+        	SRCE = ${HOME}/output/stats/task_stats_${CYLC_TASK_CYCLE_TIME}.csv ${HOME}/output/stats/task_stats_${CYLC_TASK_CYCLE_TIME}.csv
+        	DEST = ecoconnect_oper@pa.niwa.co.nz:/oper/ecoconnect_oper/public_html/eco_check/stats/task_stats_latest.csv ecoconnect_oper@pa.niwa.co.nz:/oper/ecoconnect_oper/public_html/eco_check/stats/task_stats_${CYLC_TASK_CYCLE_TIME}.csv
 
     [[jobsubmission_housekeeping]]
         inherit = CLEANUP
