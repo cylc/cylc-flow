@@ -152,52 +152,68 @@ Version number X.Y.Z incrementing:
   suite.rc graph strings (i.e. tasks with different triggers at 
   different cycle times). 
 
-3.5.2 PENDING
- + UTC Mode: optionally run a suite on UTC time even if the suite
+4.0.0 PENDING
+
++ WARNING cylc-4.0 IS NOT ENTIRELY BACKWARD COMPATIBLE with 3.x
+due to significant changes to suite.rc structure and item names. 
+ Suggested suite upgrade strategy: 
+    1/ read this changelog, then
+    2/ use 'cylc validate' to see which items are no longer valid ...
+    3/ ... then consult the suite.rc reference, and 
+    4/ examine the cylc example suites if necessary
+Future changes will be more incremental and we will ensure backward
+compatibility or provide a clear (possibly automated) upgrade path.
+
++ UTC Mode: optionally run a suite on UTC time even if the suite
  host's system clock is not in UTC mode.
 
- + Fixed a suite graph plotting bug: if the graph initial hour was 
++ Fixed a suite graph plotting bug: if the graph initial hour was 
  greater than the section hour for single hour graph sections, the
  section would be skipped even if the graph range encompassed the
  section, due to miss-handling of the 24-hour boundary.
 
- + Fixed a subtle bug in environment variable overriding: if a variable
++ Fixed a subtle bug in environment variable overriding: if a variable
  was defined twice, the second definition would override the first as
  it should, but it would retain the position (in the list of defined
  variables) of the first.
 
- + Task families are now suite definition shorthand - no pseudo-task
- representing the family appears in the suite task pool. 
-  
- + General conditional triggers, with parentheses, allowed.
++ General parenthesized conditional triggers
   - WARNING: This required a change in intercycle dependency notation
     from ROUND to SQUARE brackets (to avoid clashing with parentheses 
     in conditional expressions):
        foo(T-6) becomes foo[T-6]
 
- + Embedded list-generating Python expressions can now be used to
++ Embedded list-generating Python expressions can now be used to
  generate related dependencies in the graph (e.g. for the internal
  dependencies of an ensemble); and lists of task names or
  list-generating Python expressions in task config section headings,
  to define multiple tasks at once.
 
- + Configurable command template for at_now, background and loadleveler.
++ Configurable command template for at_now, background and loadleveler.
  Some example use cases might be:
   - a user may want to use batch instead of at now.
   - a user may want to use an option of llsubmit.
   - a user may want to use nice with a background submit.
- + Configurable ssh command template.
+
++ Configurable ssh command template.
   - no longer require scp - use stdin to transfer job file.
   - -oBatchMode=yes prevents any hang ups.
   - (but ssh command is bit more complex.)
-  - (treat sudo submit in a similar way - not properly tested.)
- + Alternate default directory structure.
-   - $HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/{log/suite,log/job,state}
- + Use microseconds since epoch instead of random string for tagging a job task.
-   - this allows "ls" to list things in the right order.
-   - stdout and stderr files are now named after their job files.
 
- + Fixed a bug preventing use of :fail triggers with asynchronous tasks.
++ sudo job submission (for other owner on the suite host) removed. Now
+use ssh as for remote hosts.
+
++ New default directory structure.
+  - $HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/{log/suite,log/job,state}
+
++ Task logs now go to the proper directory tree on remote hosts (and remote 
+directories are created on the fly if necessary).
+
++ Use microseconds since epoch instead of random string for tagging a job task.
+   - this allows "ls" to list things in the right order.
+   - stdout and stderr files are now named after their task job scripts.
+
++ Fixed a bug preventing use of :fail triggers with asynchronous tasks.
 
  + New "suicide" triggers: graph = "A => !B" means B will take itself out of 
  the suite (after spawning, if it is a cycling task) if A succeeds. This can
@@ -205,30 +221,49 @@ Version number X.Y.Z incrementing:
  that tag along with a model (say) waiting for it to fail, but which
  automatically remove themselves if the model does not fail.
 
- + NEW SUITE.RC GROUPING INTO [SCHEDULING] AND [RUNTIME] SECTIONS. The
-   former affects *when* cylc runs a task, the latter affects what happens
-   when cylc runs a task (what it runs in what execution enviroment, and 
-   how it runs it). The RUNTIME SECTION ALLOWS INHERITANCE from higher
-   levels back to the root namespace. 
-    - WARNING: there are a number of changes associated with this item
-      that will break existing suite.rc files.
++ MAJOR CHANGE TO SUITE.RC STRUCTURE: [CYLC}, [SCHEDULING] AND [RUNTIME].
+  [scheduling] determines when tasks are ready to run. [runtime] determines
+  what runs, and how and where, when a task is ready; and allows family and 
+  task runtime properties to be defined in a "namespace inheritance
+  hierarchy". WARNING: there are a number of changes associated with this
+  item that will break existing suite.rc files.
+
++ Task families are now defined by the runtime namespace hierarchy and when
+used in the graph, are suite definition shorthand only - no pseudo-task
+ representing the family appears in the suite task pool. 
+
++ Collapsible nested namespace families in suite graphing and graph
+based control GUI. 
 
 + 'command =' config item changed to 'command scripting =' for consistency
   with 'pre-' and 'post-command scripting', and because it has long since
   ceased to be a single command.
 
- + Task families, as defined by the runtime inheritance hierarchy, can
++ Task families, as defined by the runtime inheritance hierarchy, can
  now be individually expanded or collapsed for graph plotting, and in the 
  graph suite control GUI.
 
- + SUITE REGISTRATION:
++ New command 'cylc get-config' to retrieve any suite configuration data.
+
++ gcylc entry labels made consistent with command help, and gcylc Help
+ buttons now call command help on the fly.
+
++ SUITE REGISTRATION:
    - changed from GROUP:NAME to an arbitrarily nested path (foo,
      foo.bar, foo.bar.baz, etc.)  Delimiter changed from colon to dot to
      avoid problems with use of suite identity in PATH variables.
-   - run time suite identity variables are now:
-     CYLC_SUITE_REGNAME    # foo.bar.baz
-     CYLC_SUITE_REGPATH    # foo/bar/baz
-     CYLC_SUITE_DEFPATH    # suite definition directory
 
- + New command 'cylc get-config' to retrieve any suite configuration data.
++ suite identity variables changed for new registration names:
+    CYLC_SUITE_REGNAME    # foo.bar.baz
+    CYLC_SUITE_REGPATH    # foo/bar/baz
+    CYLC_SUITE_DEFPATH    # suite definition directory
++ task identity variables made consistent with suite identity variables:
+    CYLC_TASK_ID
+    CYLC_TASK_NAME
+    CYLC_CYCLE_TIME
+    CYLC_TASK_NAMESPACE_HIERARCHY  # <-- new
+
++ 'cylc admin test-suite' now detects failures properly.
+
++ Updated the User Guide for all the above.
 
