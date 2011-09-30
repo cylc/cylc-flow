@@ -260,7 +260,7 @@ based control GUI.
 + task identity variables made consistent with suite identity variables:
     CYLC_TASK_ID
     CYLC_TASK_NAME
-    CYLC_CYCLE_TIME
+    CYLC_TASK_CYCLE_TIME
     CYLC_TASK_NAMESPACE_HIERARCHY  # <-- new
 
 + 'cylc admin test-suite' now detects failures properly.
