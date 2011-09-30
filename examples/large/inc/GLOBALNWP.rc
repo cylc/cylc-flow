@@ -1,0 +1,86 @@
+    [[globalnwp_ncl]]
+        inherit = GLOBALNWP
+        description = "Global surface wind and pressure ncl postprocessing."
+        command scripting = /${SYS}/ecoconnect/vis_${SYS}/bin/vis_scripts/vis_globalnwp.sh
+        [[[environment]]]
+            SRCE_DIR    = /${SYS}/ecoconnect/ecoconnect_${SYS}/output
+            SRCE_FILENAME   = sls_${CYLC_TASK_CYCLE_TIME}_utc_global_sfcwind.nc
+
+    [[globalnwp_products]]
+        inherit = GLOBALNWP
+        description = "Global surface wind and pressure forecast product generation and ingestion."
+        command scripting = convert_ingest.sh
+        [[[environment]]]
+            PRODUCT_DIR  = ${HOME}/running/global/product
+            SERVICE     = globalnwp_products
+        [[[event hooks]]]
+            execution timeout = 90
+
+    [[globalnwp_housekeeping]]
+        inherit = GLOBALNWP
+        description = "Archiving and cleanup for the globalnwp sub-system."
+        command scripting = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/globalnwp_housekeeping.conf
+
+    [[sls_globalwind_copy]]
+        inherit = GLOBALNWP
+        description = "Copy the converted SLS wind file to the required directory."
+	    command scripting = cp ${SRCE_LOC}/${SRCE_FILENAME} ${DEST_LOC}/${DEST_FILENAME} 
+        [[[environment]]]
+            SRCE_FILENAME = sls_${CYLC_TASK_CYCLE_TIME}_utc_global_sfcwind.nc
+            SRCE_LOC   = /${SYS}/ecoconnect/ecoconnect_${SYS}/output
+            DEST_FILENAME   = sls_${CYLC_TASK_CYCLE_TIME}_utc_global_sfcwind.nc
+            DEST_LOC    = /${SYS}/ecoconnect/wave_${SYS}/input/globalwave_120
+
+    [[sls_globalice_copy]]
+        inherit = GLOBALNWP
+        description = "Copy the converted SLS ice file to the required directory."
+	    command scripting = cp ${SRCE_LOC}/${SRCE_FILENAME} ${DEST_LOC}/${DEST_FILENAME} 
+        [[[environment]]]
+            SRCE_FILENAME = sls_${CYLC_TASK_CYCLE_TIME}_utc_global_seaice.nc
+            SRCE_LOC   = /${SYS}/ecoconnect/ecoconnect_${SYS}/output
+            DEST_FILENAME   = sls_${CYLC_TASK_CYCLE_TIME}_utc_global_seaice.nc
+            DEST_LOC    = /${SYS}/ecoconnect/wave_${SYS}/input/globalwave_120
+
+    [[globalnwp_conv_wind]]
+        inherit = GLOBALNWP
+        description = "Converts the UM global 10m wind file to netcdf format."
+        command scripting = um_conv_nc.sh
+        [[[environment]]]
+            HH      = ${CYLC_TASK_CYCLE_TIME:8:2}
+            FILEIN = qwqg${HH}_${CYLC_TASK_CYCLE_TIME}_10mwind.gz 
+            FILEIN_LOC  = ${HOME}/output
+            FILEOUT = sls_${CYLC_TASK_CYCLE_TIME}_utc_global_sfcwind.nc
+            FILEOUT_LOC = ${HOME}/output
+            FILEATT = attribute_sls_global.txt
+            FILEATT_LOC = /${SYS}/ecoconnect/wave_${SYS}/control/globalwave_120
+            MULTIFILE = 0
+            GUNZIP  = 1
+            UM2NC_O = sls_
+            UM2NC_P = _global_sfcwind
+            UM2NC_CT    = ${CYLC_TASK_CYCLE_TIME}
+            OPTIONS = -f -t -i
+            FIELDS  = All
+            SERVICE = globalnwp_conv_wind
+
+    [[globalnwp_conv_ice]]
+        inherit = GLOBALNWP
+        description = "Converts the UM global sea ice file to netcdf format."
+        command scripting = um_conv_nc.sh
+        [[[environment]]]
+            ICE_CYLC_TASK_CYCLE_TIME = $( cylc cycletime -s 18 )
+            FILEIN  = qwgl_daily_${CYLC_TASK_CYCLE_TIME}_ice.gz
+            FILEIN_LOC  = ${HOME}/output
+            FILEOUT = sls_${CYLC_TASK_CYCLE_TIME}_utc_global_seaice.nc
+            FILEOUT_LOC = ${HOME}/output
+            FILEATT = attribute_sls_global.txt
+            FILEATT_LOC = /${SYS}/ecoconnect/wave_${SYS}/control/globalwave_120
+            MULTIFILE = 0
+            GUNZIP  = 1
+            UM2NC_O = sls_
+            UM2NC_P = _global_seaice
+            UM2NC_CT = ${ICE_CYLC_TASK_CYCLE_TIME}
+            OPTIONS = -f -t -i
+            FIELDS  = All
+            SERVICE = globalnwp_conv_ice
+
+

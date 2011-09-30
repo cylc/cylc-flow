@@ -170,8 +170,8 @@ class lockserver( Pyro.core.ObjBase ):
         return suite + ':' + task_id
 
     def get_suite( self, lock_id ):
-        (group, name, id) = lock_id.split(':')
-        return group + ':' + name
+        (suite, task_id) = lock_id.split(':')
+        return suite
 
     def get_suite_string( self, suite, suite_dir ):
         return suite + '-->' + suite_dir
@@ -229,8 +229,8 @@ class lockserver( Pyro.core.ObjBase ):
         # release task locks with no associated suite lock
         # (acquired manually, or through 'cylc task submit').
         for lock in self.locked.keys():
-            ( group, name, id ) = lock.split( ':' )
-            self.release( id, group + ':' + name )
+            ( suite, task_id ) = lock.split( ':' )
+            self.release( task_id, suite )
 
         self.dump_state()
         return
@@ -335,7 +335,7 @@ class lockserver( Pyro.core.ObjBase ):
         result = True
         if suite_dir in self.exclusive:
             if suite not in self.exclusive[ suite_dir ]:
-                self.log.warning( "suite release group name error" )
+                self.log.warning( "suite release error" )
                 result = False
             else:
                 del self.exclusive[ suite_dir ]
@@ -343,7 +343,7 @@ class lockserver( Pyro.core.ObjBase ):
         elif suite_dir in self.inclusive:
             names = self.inclusive[ suite_dir ]
             if suite not in names:
-                self.log.warning( "suite release group name error" )
+                self.log.warning( "suite release error" )
                 result = False
             elif len( names ) == 1:
                 del self.inclusive[ suite_dir ]

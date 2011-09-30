@@ -36,8 +36,8 @@ OPERATE ('delete', 'move', or 'copy') on items (files or directories)
 matching a Python-style regular expression MATCH in directory SOURCE
 whose names contain a cycle time (as YYYYMMDDHH, or YYYYMMDD and HH
 separately) more than OFFSET (integer hours) earlier than a base cycle
-time (which can be $CYCLE_TIME if called by a cylc task, or otherwise
-specified on the command line). 
+time (which can be $CYLC_TASK_CYCLE_TIME if called by a cylc task, or
+otherwise specified on the command line). 
 
 FILE is a housekeeping config file containing one or more of lines of:
 
@@ -88,7 +88,7 @@ parser = OptionParser( usage )
 
 parser.add_option( "--cycletime",
         metavar='YYYYMMDDHH',
-        help="Cycle time, defaults to $CYCLE_TIME",
+        help="Cycle time, defaults to $CYLC_TASK_CYCLE_TIME",
         action="store", dest="ctime" )
 
 #parser.add_option( "--dry-run",
@@ -141,10 +141,10 @@ if len(args) != 1  and len( args ) != 4 and len(args) != 5:
 
 if options.ctime:
     ctime = options.ctime
-elif 'CYCLE_TIME' in os.environ:
-    ctime = os.environ[ 'CYCLE_TIME' ]
+elif 'CYLC_TASK_CYCLE_TIME' in os.environ:
+    ctime = os.environ[ 'CYLC_TASK_CYCLE_TIME' ]
 else:
-    parser.error( "Use --cycletime or define $CYCLE_TIME" )
+    parser.error( "Use --cycletime or define $CYLC_TASK_CYCLE_TIME" )
 
 batchsize = options.batchsize
 try:

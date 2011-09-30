@@ -606,7 +606,7 @@ The cylc forecast suite metascheduler.
     def filter_popup(self, w):
         self.filter_window = gtk.Window()
         self.filter_window.set_border_width(5)
-        self.filter_window.set_title( "PATTERN" )
+        self.filter_window.set_title( "FILTER" )
         vbox = gtk.VBox()
 
         box = gtk.HBox()
@@ -816,11 +816,11 @@ The cylc forecast suite metascheduler.
 
                 menu.append( gtk.SeparatorMenuItem() )
 
-                out_item = gtk.MenuItem( 'View Suite _Output')
+                out_item = gtk.MenuItem( 'Suite _Output')
                 menu.append( out_item )
                 out_item.connect( 'activate', self.view_output, reg, state )
 
-                out_item = gtk.MenuItem( 'View Suite _Log')
+                out_item = gtk.MenuItem( 'Suite _Log')
                 menu.append( out_item )
                 out_item.connect( 'activate', self.view_log, reg )
 
@@ -832,22 +832,22 @@ The cylc forecast suite metascheduler.
 
                 menu.append( gtk.SeparatorMenuItem() )
 
-            search_item = gtk.MenuItem( 'Get _Description' )
+            search_item = gtk.MenuItem( '_Description' )
             menu.append( search_item )
             search_item.connect( 'activate', self.describe_suite, reg )
 
-            list_item = gtk.MenuItem( 'Get Task _List' )
+            list_item = gtk.MenuItem( 'Task _List' )
             menu.append( list_item )
             list_item.connect( 'activate', self.list_suite, reg )
 
-            tree_item = gtk.MenuItem( 'Get Task _Tree' )
+            tree_item = gtk.MenuItem( '_Namespaces' )
             menu.append( tree_item )
             # use "-tp" for unicode box-drawing characters (seems to be
             # OK in pygtk textview).
             tree_item.connect( 'activate', self.list_suite, reg, '-tp' )
 
             if not self.cdb:
-                jobs_item = gtk.MenuItem( '_Get A Job Script')
+                jobs_item = gtk.MenuItem( 'Get A _Job Script')
                 menu.append( jobs_item )
                 jobs_item.connect( 'activate', self.jobscript_popup, reg )
     
@@ -1556,7 +1556,7 @@ The cylc forecast suite metascheduler.
         return False
 
     def validate_suite( self, w, name ):
-        command = "cylc validate " + self.dbopt + " --notify-completion " + name 
+        command = "cylc validate -v " + self.dbopt + " --notify-completion " + name 
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1648,7 +1648,7 @@ The cylc forecast suite metascheduler.
         foo.run()
 
     def describe_suite( self, w, name ):
-        command = """echo '> TITLE:'; cylc get-config """ + self.dbopt + name + """ title; echo
+        command = """echo '> TITLE:'; cylc get-config """ + self.dbopt + " " + name + """ title; echo
 echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion " + name + " description"
         foo = gcapture_tmpfile( command, self.tmpdir, 800, 400 )
         self.gcapture_windows.append(foo)
@@ -1656,7 +1656,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
 
     def list_suite( self, w, name, opt='' ):
         command = "cylc list " + self.dbopt + " " + opt + " --notify-completion " + name
-        foo = gcapture_tmpfile( command, self.tmpdir, 800, 600 )
+        foo = gcapture_tmpfile( command, self.tmpdir, 600, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
 

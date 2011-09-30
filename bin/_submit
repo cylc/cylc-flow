@@ -47,7 +47,7 @@ exclusive suite lock (which means you cannot running multiple instances
 of the suite at once, even under different registrations) then the
 lockserver will let you 'submit' a task from the suite only under the
 same registration, and only if the task is not locked (which would mean
-the same task, NAME%CYCLE_TIME, is currently running in the suite). 
+the same task, NAME%CYCLE, is currently running in the suite). 
 
 Arguments:
    SUITE           Registered name of the target suite.

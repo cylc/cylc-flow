@@ -34,14 +34,19 @@
 % prevent double digit sub-sections crowding the toc line
 \addtolength\cftsubsecnumwidth{0.5em}  % see tocloft manual
 
-\definecolor{codeblock}{rgb}{0.95,0.95,0.95}
+\definecolor{codeblock}{rgb}{0.95,0.95,1.0}
 %\definecolor{keywords}{rgb}{1.0,0.3,0.0}
 \definecolor{keywords}{rgb}{0.7,0.1,1.0}
 %\definecolor{comments}{rgb}{0.0,0.7,0.8}
-\definecolor{comments}{rgb}{1.0,0.0,0.0}
+\definecolor{comments}{rgb}{1.0,0.4,0.0}
 \definecolor{identifiers}{rgb}{0.0,0.2,0.5}
 \definecolor{strings}{rgb}{0.0,0.6,0.0}
-\definecolor{basic}{rgb}{0.0,0.2,0.8}
+\definecolor{basic}{rgb}{0.1,0.1,0.2}
+\definecolor{command}{rgb}{0.0,0.2,0.1}
+\definecolor{transcr}{rgb}{0.0,0.2,0.4}
+\definecolor{level1}{rgb}{1.0,0.2,1.0}
+\definecolor{level2}{rgb}{0.6,0.0,0.6}
+\definecolor{level3}{rgb}{0.2,0.0,0.2}
 
 % hyperlink color:
 %\definecolor{linkc}{rgb}{0,0.2,0.68}
@@ -49,14 +54,15 @@
 %\hypersetup{colorlinks=true, linkcolor=linkc}
 \hypersetup{colorlinks=true, linkcolor=blue}
 
-\definecolor{shadecolor}{rgb}{0.9,0.9,0.1}
+%\definecolor{shadecolor}{rgb}{0.9,0.9,0.1}
 
 \lstset{
 language=,
 %xleftmargin=2em,
 %frame=single,
 backgroundcolor=\color{codeblock},
-basicstyle=\color{basic}\footnotesize\ttfamily,
+%basicstyle=\color{basic}\footnotesize\ttfamily,
+basicstyle=\color{basic}\scriptsize\ttfamily,
 identifierstyle=\color{identifiers},
 keywordstyle=\color{keywords},
 commentstyle=\color{comments},
@@ -66,19 +72,22 @@ showstringspaces=false,
 %numberstyle=\color{Gray}
 }
 
-\lstset{
-language=bash,
-numbers=left,
+\lstdefinelanguage{transcript}
+{
+string=[b]{"},
+comment=[l][\color{comments}]{\#},
+morecomment=[l][\color{command}]{\%},
 }
 
-%\lstdefinelanguage{cylctaskdef}
-%{
-%morekeywords={INHERIT,TASK,FAMILY,DESCRIPTION,SCRIPTING,TYPE,LOGFILES,CONTACT_DELAY,OWNER,REMOTE_HOST,HOURS,COMMAND,MEMBERS,MEMBER_OF,ENVIRONMENT,DIRECTIVES,PREREQUISITES,COLDSTART_PREREQUISITES,SUICIDE_PREREQUISITES,OUTPUTS,N_RESTART_OUTPUTS,INTERCYCLE,FOLLOW_ON,conditional},
-%sensitive=false,
-%morecomment=[l]{\#},
-%morestring=[b]\",
-%numbers=left,
-%}
+\lstdefinelanguage{suiterc}
+{
+string=[b]{"},
+sensitive=true,
+comment=[l]{\#},
+morecomment=[s][\color{level1}]{[}{]},
+morecomment=[s][\color{level2}]{[[}{]]},
+morecomment=[s][\color{level3}]{[[[}{]]]},
+}
 
 \lstdefinelanguage{usage}
 {

@@ -1,0 +1,5 @@
+[scheduling]
+    [[dependencies]]
+        [[[0,12]]]
+            graph = "foo => bar & baz => waz"
+

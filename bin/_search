@@ -77,6 +77,11 @@ Note that the order of command line arguments conforms to grep command usage
 However, if the second argument is not found to be a registered suite, an
 attempt will be made to action the command with the arguments reversed.
 
+Note that this command performs a text search on the suite definition,
+rather than search all item names and values in the data structure that 
+results from parsing the suite definition. Both types of search may be
+implemented in the future.
+
 For case insenstive matching use '(?i)PATTERN'.
 
 Arguments:
@@ -92,12 +97,6 @@ parser.add_option( "-c", "--central",
         action="store_true", default=False, dest="central" )
 
 ( options, args ) = parser.parse_args()
-
-print
-print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-print 'WARNING: SEARCH HAS NOT YET BEEN UPDATED FOR RUNTIME INHERITANCE AND GENERATORS'
-print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-print
 
 arg0 = args[0]
 arg1n = '|'.join(args[1:])
@@ -163,7 +162,7 @@ for line in lines:
             inc_file = None
             continue
 
-    m = re.match( '\s*(\[+\s*([\w ]+)\s*\]+)', line )
+    m = re.match( '\s*(\[+\s*(.+)\s*\]+)', line )
     if m:
         # new section heading detected
         heading = m.groups()[0] 
@@ -199,7 +198,7 @@ for line in lines:
             print '   SECTION:', section_key
 
         # Print the pattern match, with line number
-        print '      [' + str(line_no) + ']:', line.rstrip('\n')
+        print '      (' + str(line_no) + '):', line.rstrip('\n')
 
 if not options.search_bin:
     sys.exit(0)
@@ -234,4 +233,4 @@ for file in os.listdir( bin ):
             if new_file:
                 print '\nFILE:', os.path.join( bin, file )
                 new_file = False
-            print '   ['+str(count)+']: ' + line
+            print '   ('+str(count)+'): ' + line

@@ -1,0 +1,67 @@
+    [[ecan_rain_obs]]
+        inherit = TOPNET
+        description = "Create rain observation NetCDF file for Topnet."
+        command scripting = $HOME/bin/ecan/ecan_rain2netcdf.sh
+        [[[environment]]]
+            OUT_DIR = ${HOME}/input/topnet
+            START_DATE  = $(cylc cycletime -s 48)
+            FILEOUT = topnet_rain_clidb_${START_DATE}_${CYLC_TASK_CYCLE_TIME}_utc.nc
+            RUN_DIR  = ${HOME}/bin/ecan
+            NHH = 48
+            SERVICE = ecan_rain_obs
+
+    [[topnet]]
+        inherit = TOPNET
+        description = "The TopNet model"
+        command scripting = ${HOME}/bin/run_topnet.sh
+
+    [[topnet_ncl]]
+        inherit = TOPNET
+        description = "TopNet ncl postprocessing"
+        command scripting = /${SYS}/ecoconnect/vis_${SYS}/bin/vis_scripts/vis_topnet.sh
+
+    [[topnet_products]]
+        inherit = TOPNET
+        description = "TopNet forecast product generation."
+        command scripting = convert_ingest.sh
+         [[[environment]]]
+            PRODUCT_DIR   = ${HOME}/running/topnet/product
+            SERVICE     = topnet_products
+
+    [[topnet_housekeeping]]
+        inherit = TOPNET
+        description = "Archiving and cleanup for the TopNet sub-system."
+        command scripting = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/topnet_housekeeping.conf
+
+    [[ext_create_streamflow]]
+        inherit = TOPNET
+        description = "Create streamflow data on Tideda server."
+        command scripting = create_streamflow.sh
+
+    [[ext_get_streamq]]
+        inherit = TOPNET
+        description = "Get the streamq file from TDServer, so Topnet can run."
+        command scripting = file_transfer_ftp.sh
+        [[[environment]]]
+            SRCE    = tdserver2008.niwa.co.nz
+            SRCE_LOC    = ~/
+            DEST_LOC    = ${HOME}/output/td2cf
+            FILENAME    = streamobs_${CYLC_TASK_CYCLE_TIME}_utc_ods_nz.nc
+            SRCE_USER   = Topnet
+            SERVICE = ext_get_streamq
+            KEEP    = 0
+            FAST    = 0
+            FILEOUT = streamq_${CYLC_TASK_CYCLE_TIME}_utc_ods_nz.nc
+            TIMEOUT = 45
+            CHECKSUM    = 0
+            CHECKFILE   = None
+
+    [[topnet_cold]]
+        inherit = TOPNET
+        description = """Oneoff dummy task to supply initial TopNet restart
+prerequisites. The real restart file(s) are assumed to have been
+provided by an initial TopNet spinup experiment.  Topnet has 2 restart
+files. Topnet will run automatically in cold start but results will be
+useless.  Topnet needs at least 2 weeks of spinup."""
+
+

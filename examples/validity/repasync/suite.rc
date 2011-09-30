@@ -1,0 +1,6 @@
+[scheduling]
+    [[dependencies]]
+        [[[ASYNCID:satX-\d{6}]]]
+            graph = "foo => bar & baz => waz"
+            daemon = foo
+

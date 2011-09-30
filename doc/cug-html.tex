@@ -34,14 +34,19 @@
 % prevent double digit sub-sections crowding the toc line
 \addtolength\cftsubsecnumwidth{0.5em}  % see tocloft manual
 
-\definecolor{codeblock}{rgb}{0.95,0.95,0.95}
+\definecolor{codeblock}{rgb}{0.95,0.95,1.0}
 %\definecolor{keywords}{rgb}{1.0,0.3,0.0}
 \definecolor{keywords}{rgb}{0.7,0.1,1.0}
 %\definecolor{comments}{rgb}{0.0,0.7,0.8}
-\definecolor{comments}{rgb}{1.0,0.0,0.0}
+\definecolor{comments}{rgb}{1.0,0.4,0.0}
 \definecolor{identifiers}{rgb}{0.0,0.2,0.5}
 \definecolor{strings}{rgb}{0.0,0.6,0.0}
-\definecolor{basic}{rgb}{0.0,0.2,0.8}
+\definecolor{basic}{rgb}{0.1,0.1,0.2}
+\definecolor{command}{rgb}{0.0,0.2,0.1}
+\definecolor{transcr}{rgb}{0.0,0.2,0.4}
+\definecolor{level1}{rgb}{1.0,0.2,1.0}
+\definecolor{level2}{rgb}{0.6,0.0,0.6}
+\definecolor{level3}{rgb}{0.2,0.0,0.2}
 
 % hyperlink color:
 %\definecolor{linkc}{rgb}{0,0.2,0.68}
@@ -72,6 +77,23 @@ numbers=left,
 basicstyle=\color{basic}\ttfamily,
 }
 
+\lstdefinelanguage{transcript}
+{
+string=[b]{"},
+comment=[l][\color{comments}]{\#},
+morecomment=[l][\color{command}]{\%},
+}
+
+\lstdefinelanguage{suiterc}
+{
+string=[b]{"},
+sensitive=true,
+comment=[l]{\#},
+morecomment=[s][\color{level1}]{[}{]},
+morecomment=[s][\color{level2}]{[[}{]]},
+morecomment=[s][\color{level3}]{[[[}{]]]},
+}
+
 \lstdefinelanguage{usage}
 {
 %string=[b]{"},
@@ -96,7 +118,6 @@ numbers=none,
 language=usage,
 basicstyle=\color{basic}\ttfamily,
 }
-
 
 % allow \paragraph as subsubsubsection
 % and \subparagraph as subsubsubsubsection

@@ -54,7 +54,7 @@ class job_submit(object):
     cylc_env = None
 
     def __init__( self, task_id, pre_command, task_command,
-            post_command, task_env, directives, 
+            post_command, task_env, ns_hier, directives, 
             manual_messaging, logfiles, log_dir, share_dir, work_dir, task_owner,
             remote_host, remote_cylc_dir, remote_suite_dir,
             remote_shell_template, remote_log_dir, 
@@ -68,6 +68,7 @@ class job_submit(object):
             self.task_command = '/bin/false'
 
         self.task_env = task_env
+        self.namespace_hierarchy = ns_hier
         self.directives  = directives
         self.logfiles = logfiles
  
@@ -170,7 +171,7 @@ class job_submit(object):
             return False
 
         jf = jobfile( self.task_id, 
-                self.__class__.cylc_env, self.task_env, 
+                self.__class__.cylc_env, self.task_env, self.namespace_hierarchy, 
                 self.directive_prefix, self.directives, self.final_directive, 
                 self.manual_messaging, self.pre_command,
                 self.task_command, self.post_command,
@@ -184,7 +185,7 @@ class job_submit(object):
         jf.write( self.local_jobfile_path )
         # make it executable
         os.chmod( self.local_jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
-        print "> GENERATED JOB SCRIPT: " + self.local_jobfile_path
+        print "GENERATED JOB SCRIPT: " + self.local_jobfile_path
 
         # Construct self.command, the command to submit the jobfile to run
         self.construct_jobfile_submission_command()
@@ -200,11 +201,11 @@ class job_submit(object):
 
         # execute the local command to submit the job
         if dry_run:
-            print "> THIS IS A DRY RUN. HERE'S HOW I WOULD SUBMIT THE TASK:"
+            print "THIS IS A DRY RUN. HERE'S HOW I WOULD SUBMIT THE TASK:"
             print command
             return True
 
-        print " > SUBMITTING TASK: " + command
+        print "SUBMITTING TASK: " + command
         try:
             popen = subprocess.Popen( command, shell=True, stdin=stdin )
             if not self.local:

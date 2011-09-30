@@ -1,0 +1,277 @@
+    [[ext_check_bgerr_ukmet]]
+        inherit = UKMO
+        description = "Check if the UK MetOffice bgerr file is available for download"
+        command scripting = file_check_ftp.sh
+        [[[environment]]]
+            SRCE    = ftpops.metoffice.gov.uk
+            SRCE_LOC    = ~/
+            DEST_LOC    = ${HOME}/output
+            SRCE_USER   = niwa
+            TIMEOUT = 60 
+            FILENAME    = ${CYLC_TASK_CYCLE_TIME}_bgerr_checksum.txt
+            SERVICE = ext_check_bgerr_ukmet
+    	[[[directives]]]
+            wall_clock_limit = "12:00:10,12:00:00"
+         [[[event hooks]]]
+            execution timeout = 60
+   
+    [[ext_check_obstore_ukmet]]
+        inherit = UKMO
+        description = """Check if UK MetOffice obstore data for the current
+cycle is available for download."""
+        command scripting = file_check_ftp.sh
+       [[[environment]]]
+            SRCE    = ftpops.metoffice.gov.uk
+            SRCE_LOC    = ~/
+            DEST_LOC    = ${HOME}/output
+            SRCE_USER   = niwa
+            TIMEOUT = 60 
+            FILENAME    = ${CYLC_TASK_CYCLE_TIME}_obstore_checksum.txt  
+            SERVICE = ext_check_obstore_ukmet
+	    [[[directives]]]
+	        wall_clock_limit = "12:00:10,12:00:00"
+        [[[event hooks]]] 
+            execution timeout = 60
+ 
+    [[ext_check_frames_ukmet]]
+        inherit = UKMO
+        description = """Check if the UK MetOffice Frame checksum file is
+available on their ftp site"""
+        command scripting = file_check_ftp.sh
+        [[[environment]]]
+            SRCE    = ftpops.metoffice.gov.uk
+            SRCE_LOC    = ~/
+            DEST_LOC    = ${HOME}/output
+            SRCE_USER   = niwa
+            PREV_CYLC_TASK_CYCLE_TIME  = $( cylc cycletime -s 6 )
+            FILENAME   = ${PREV_CYLC_TASK_CYCLE_TIME}_frames_checksum.txt
+            SERVICE = ext_check_frames_ukmet
+            TIMEOUT = 90
+    	[[[directives]]]
+	        wall_clock_limit = "12:00:10,12:00:00"
+        [[[event hooks]]]
+            execution timeout = 90
+
+    [[ext_check_globalwind_ukmet]]
+        inherit = UKMO
+        description = """Check if the Global wind file for the current cycle
+is available for download."""
+        command scripting = file_check_ftp.sh
+        [[[environment]]]
+            SRCE    = ftpops.metoffice.gov.uk
+            SRCE_LOC    = ~/
+            DEST_LOC    = ${HOME}/output
+            SRCE_USER   = niwa
+            TIMEOUT = 60 
+            FILENAME    = ${CYLC_TASK_CYCLE_TIME}_10mwind_checksum.txt
+            SERVICE = ext_check_globalwind_ukmet
+	    [[[directives]]]
+            wall_clock_limit = "12:00:10,12:00:00"
+        [[[event hooks]]]
+            execution timeout = 60
+
+    [[ext_check_globalice_ukmet]]
+        inherit = UKMO
+        description = """Check if the Global ice file for the current cycle
+is available for download."""
+        command scripting = file_check_ftp.sh
+        [[[environment]]]
+            SRCE    = ftpops.metoffice.gov.uk
+            SRCE_LOC    = ~/
+            DEST_LOC    = ${HOME}/output
+            SRCE_USER   = niwa
+            TIMEOUT = 60 
+            FILENAME = ${CYLC_TASK_CYCLE_TIME}_ice_checksum.txt
+            SERVICE = ext_check_globalice_ukmet
+	    [[[directives]]]
+	        wall_clock_limit = "12:00:10,12:00:00"
+        [[[event hooks]]]
+            execution timeout = 60
+
+    [[ext_check_sst_ukmet]]
+        inherit = UKMO
+        description = "Check if the UK MetOffice sst file is available for download"
+        command scripting = file_check_ftp.sh
+        [[[environment]]]
+            SRCE    = ftpops.metoffice.gov.uk
+            SRCE_LOC    = ~/
+            DEST_LOC    = ${HOME}/output
+            SRCE_USER   = niwa
+            FILENAME    = sst.${CYLC_TASK_CYCLE_TIME}.anc.gz
+            SERVICE = ext_check_sst_ukmet
+            TIMEOUT = 120
+	    [[[directives]]]
+	        wall_clock_limit = "4:00:10,4:00:00"
+        [[[event hooks]]]
+            execution timeout = 120
+
+    [[ext_check_dump_ukmet]]
+        inherit = UKMO
+        description = "Check if the UK MetOffice T+3 dump file is available for download"
+        command scripting = file_check_ftp.sh
+        [[[environment]]]
+            SRCE    = ftpops.metoffice.gov.uk
+            SRCE_LOC    = ~/
+            DEST_LOC    = ${HOME}/output
+            SRCE_USER   = niwa
+            TIMEOUT = 60 
+            PREV_CYLC_TASK_CYCLE_TIME  = $( cylc cycletime -s 6 )
+            HH  = ${PREV_CYLC_TASK_CYCLE_TIME:8:2}
+            FILENAME  = qwqg${HH}.reduced.${PREV_CYLC_TASK_CYCLE_TIME}.T+3.gz  
+            SERVICE = ext_check_dump_ukmet
+	    [[[directives]]]
+	        wall_clock_limit = "4:00:10,4:00:00"
+        [[[event hooks]]]
+            execution timeout = 60
+
+    [[ext_get_bgerr_ukmet]]
+        inherit = UKMO
+        description = "Get the UK MetOffice bgerr file"
+        command scripting = file_transfer_ftp.sh
+        [[[environment]]]
+            SRCE = ftpops.metoffice.gov.uk
+            SRCE_LOC = ~/
+            DEST_LOC = ${HOME}/output
+            SRCE_USER = niwa
+            TIMEOUT = 60
+            KEEP    = 1
+            FAST    = 1
+            CHECKSUM    = 1
+            HH          = ${CYLC_TASK_CYCLE_TIME:8:2}
+            FILENAME    = qwq3${HH}.${CYLC_TASK_CYCLE_TIME}.bgerr.gz
+            SERVICE     = ext_get_bgerr_ukmet
+            FILEOUT = qwq3${HH}_${CYLC_TASK_CYCLE_TIME}_bgerr.gz
+            CHECKFILE   = ${CYLC_TASK_CYCLE_TIME}_bgerr_checksum.txt
+
+    [[ext_get_obstore_ukmet]]
+        inherit = UKMO
+        description = "Get the UK MetOffice obstore file"
+        command scripting = file_transfer_ftp.sh
+        [[[environment]]]
+            SRCE = ftpops.metoffice.gov.uk
+            SRCE_LOC = ~/
+            DEST_LOC = ${HOME}/output
+            SRCE_USER = niwa
+            TIMEOUT = 60
+            KEEP    = 1
+            FAST    = 1
+            CHECKSUM    = 1
+            HH          = ${CYLC_TASK_CYCLE_TIME:8:2}
+            FILENAME    = qwq3${HH}.${CYLC_TASK_CYCLE_TIME}.obstore.tar.gz
+            SERVICE = ext_get_obstore_ukmet
+            FILEOUT = qwq3${HH}_${CYLC_TASK_CYCLE_TIME}_obstore.tar.gz
+            CHECKFILE   = ${CYLC_TASK_CYCLE_TIME}_obstore_checksum.txt
+
+    [[ext_get_frames_ukmet]]
+        inherit = UKMO
+        description = "Get the UK MetOffice Frame files"
+        command scripting = file_transfer_ftp.sh
+        [[[environment]]]
+            SRCE = ftpops.metoffice.gov.uk
+            SRCE_LOC = ~/
+            DEST_LOC = ${HOME}/output
+            SRCE_USER = niwa
+            SERVICE = ext_get_frames_ukmet
+            PREV_CYLC_TASK_CYCLE_TIME   = $( cylc cycletime -s 6 )
+            YMD = ${PREV_CYLC_TASK_CYCLE_TIME:0:8}
+            HH          = ${PREV_CYLC_TASK_CYCLE_TIME:8:2}
+            FILENAME    = ${YMD}_frame_qg${HH}_niwa_*.gz
+            KEEP = 1
+            FAST = 3
+            FILEOUT = ${YMD}_frame_qg${HH}_niwa_*.gz
+            TIMEOUT = 5
+            CHECKSUM = 1
+            CHECKFILE   = ${PREV_CYLC_TASK_CYCLE_TIME}_frames_checksum.txt
+	    [[[directives]]]
+	        wall_clock_limit = "1:00:10,1:00:00"
+        [[[event hooks]]]
+            execution timeout = 60
+
+    [[ext_get_globalwind_ukmet]]
+        inherit = UKMO
+        description = "Get the UK MetOffice globalwind file"
+        command scripting = file_transfer_ftp.sh
+        [[[environment]]]
+            SRCE = ftpops.metoffice.gov.uk
+            SRCE_LOC = ~/
+            DEST_LOC = ${HOME}/output
+            SRCE_USER = niwa
+            HH          = ${CYLC_TASK_CYCLE_TIME:8:2}
+            FILENAME    = qwqg${HH}.${CYLC_TASK_CYCLE_TIME}.10mwind.gz
+            SERVICE = ext_get_globalwind_ukmet
+            FILEOUT = qwqg${HH}_${CYLC_TASK_CYCLE_TIME}_10mwind.gz
+            CHECKFILE   = ${CYLC_TASK_CYCLE_TIME}_10mwind_checksum.txt
+	        KEEP = 1
+    	    FAST = 1
+	        TIMEOUT = 45
+	        CHECKSUM  =  1
+	    [[[directives]]]
+            wall_clock_limit = "2:00:10,2:00:00"
+        [[[event hooks]]]
+            execution timeout = 90
+
+    [[ext_get_globalice_ukmet]]
+        inherit = UKMO
+        description = "Get the UK MetOffice globalice file"
+        command scripting = file_transfer_ftp.sh
+        [[[environment]]]
+            SRCE = ftpops.metoffice.gov.uk
+            SRCE_LOC = ~/
+            DEST_LOC = ${HOME}/output
+            SRCE_USER = niwa
+	        KEEP =   1
+    	    FAST =   1
+	        TIMEOUT = 45
+	        CHECKSUM  =  1
+            FILENAME    = qwgl.daily.${CYLC_TASK_CYCLE_TIME}.ice.gz
+            SERVICE = ext_get_globalice_ukmet
+            FILEOUT = qwgl_daily_${CYLC_TASK_CYCLE_TIME}_ice.gz
+            CHECKFILE   = ${CYLC_TASK_CYCLE_TIME}_ice_checksum.txt 
+	    [[[directives]]]
+	        wall_clock_limit = "2:00:10,2:00:00"
+                               
+    [[ext_get_sst_ukmet]]
+        inherit = UKMO
+        description = "Get the UK MetOffice sst file"
+        command scripting = file_transfer_ftp.sh
+        [[[environment]]]
+            SRCE = ftpops.metoffice.gov.uk
+            SRCE_LOC = ~/
+            DEST_LOC = ${HOME}/output
+            SRCE_USER = niwa
+	        KEEP =   1
+    	    FAST =   1
+	        TIMEOUT = 45
+            FILENAME    = sst.${CYLC_TASK_CYCLE_TIME}.anc.gz 
+            SERVICE = ext_get_sst_ukmet
+            FILEOUT = sst.${CYLC_TASK_CYCLE_TIME}.anc.gz
+            CHECKSUM = 0
+            CHECKFILE = None
+
+    [[ext_get_dump_ukmet]]
+        inherit = UKMO
+        description = """Get the UK MetOffice T+3 dump file. This task is
+only used during an initial coldstart, and thereafter should be inserted
+when needed."""  
+        command scripting = file_transfer_ftp.sh
+        [[[environment]]]
+            SRCE = ftpops.metoffice.gov.uk
+            SRCE_LOC = ~/
+            DEST_LOC = ${HOME}/output
+            SRCE_USER = niwa
+	        KEEP =   1
+    	    FAST =   1
+	        TIMEOUT = 45
+            HH          = ${CYLC_TASK_CYCLE_TIME:8:2}
+            PREV_CYLC_TASK_CYCLE_TIME   = $( cylc cycletime -s 6 )
+            FILENAME    = qwqg${HH}.reduced.${PREV_CYLC_TASK_CYCLE_TIME}.T+3.gz
+            SERVICE     = ext_get_dump_ukmet
+            FILEOUT = $FILENAME
+            CHECKSUM    = 0
+            CHECKFILE   = None
+	    [[[directives]]]
+	        wall_clock_limit = "8:00:10,8:00:00"
+        [[[event hooks]]]
+            execution timeout = 300
+
+

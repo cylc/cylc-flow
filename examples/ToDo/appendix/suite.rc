@@ -1,0 +1,33 @@
+# SUITE.RC
+title = "The suite.rc reference appendix example"
+[scheduling]
+    [[dependencies]]
+        graph = "foo => obs => bar"
+             # (this is shorthand for "foo => land & ship => bar")
+[runtime]
+    [[root]] # base namespace for all tasks (defines suite-wide defaults)
+        [[[job submission]]]
+            method = at_now
+        [[[environment]]]
+            COLOR = red
+    [[obs]]  # family (inherited by land, ship); implicitly inherits root
+        [[[environment]]]
+            RUNNING_DIR = $HOME/running/$CYLC_TASK_NAME
+    [[land]] # a task (a leaf on the inheritance tree) in the obs family
+        inherit = obs
+        description = land obs processing
+        command scripting = run-land.sh
+    [[ship]] # a task (a leaf on the inheritance tree) in the obs family
+        inherit = obs
+        description = ship obs processing
+        command scripting = run-ship.sh
+        [[[job submission]]]
+            method = loadleveler
+        [[[environment]]]
+            RUNNING_DIR = $HOME/running/ship  # override obs environment
+            OUTPUT_DIR = $HOME/output/ship    # add to obs environment
+    [[foo]]
+        # dummy task - just inherits from root
+
+    # [[bar]] is implicitly defined and inherits from root (this is
+    # equivalent to the [[foo]] section above)

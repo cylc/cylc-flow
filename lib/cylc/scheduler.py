@@ -133,8 +133,8 @@ class scheduler(object):
         self.check_not_running_already()
         self.configure_suite()
 
-        # MAXIMUM RUNAHEAD HOURS
-        self.runahead = self.config['scheduling']['runahead limit in hours']
+        # RUNAHEAD LIMIT
+        self.runahead = self.config['scheduling']['runahead limit']
 
         self.print_banner()
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD (PROVIDED IN DERIVED CLASSES) 
@@ -316,7 +316,7 @@ class scheduler(object):
         self.use_quick = self.config['development']['use quick task elimination'] 
 
         # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
-        self.exclusive_suite_lock = not self.config['cylc']['lockserver']['allow multiple simultaneous suite instances']
+        self.exclusive_suite_lock = not self.config['cylc']['lockserver']['simultaneous instances']
 
         # set suite in task class (for passing to hook scripts)
         task.task.suite = self.suite
@@ -340,8 +340,8 @@ class scheduler(object):
         cylcenv[ 'CYLC_UTC' ] = str(utc)
 
         # CLOCK (accelerated time in simulation mode)
-        rate = self.config['cylc']['simulation mode']['clock rate in seconds per simulation hour']
-        offset = self.config['cylc']['simulation mode']['clock offset from initial cycle time in hours']
+        rate = self.config['cylc']['simulation mode']['clock rate']
+        offset = self.config['cylc']['simulation mode']['clock offset']
         self.clock = accelerated_clock.clock( int(rate), int(offset), utc, self.simulation_mode ) 
 
         # nasty kludge to give the simulation mode clock to task classes:
@@ -1529,7 +1529,7 @@ class scheduler(object):
         if not self.start_time:
             # only do cold and warmstarts for now.
             self.runtime_graph_finalized = True
-        self.runtime_graph_cutoff = self.config['visualization']['run time graph']['cutoff in hours']
+        self.runtime_graph_cutoff = self.config['visualization']['run time graph']['cutoff']
 
     def update_runtime_graph( self, task ):
         if self.runtime_graph_finalized:

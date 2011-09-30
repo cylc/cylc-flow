@@ -44,18 +44,18 @@ def check_suite_spec( name ):
     return suite_dir
 
 def check_task_spec( task_spec ):
-    # SUITE:TASK%CYCLE_TIME
+    # SUITE:TASK%CYCLE
     try:
         suite, task_id = task_spec.split( ':' )
     except:
-        raise SystemExit( task_spec + " - Please specify SUITE:TASK_NAME%CYCLE_TIME" )
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK%CYCLE" )
 
     check_suite_spec( suite )
 
     try:
         (name, tag) = task_id.split( '%' )
     except ValueError:
-        raise SystemExit( task_spec + " - Please specify SUITE:TASK_NAME%CYCLE_TIME" )
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK%CYCLE" )
  
     try:
         cycle = ct(tag).get()
@@ -87,10 +87,10 @@ See also:
             list_all=False, get_filenames=False )
 
     parser.add_option( "--acquire-task", help="Acquire a task lock.",
-            metavar="SUITE:NAME%CYCLE", action="store", dest="acquire" )
+            metavar="SUITE:TASK%CYCLE", action="store", dest="acquire" )
 
     parser.add_option( "--release-task", help="Release a task lock.",
-            metavar="SUITE:NAME%CYCLE", action="store", dest="release" )
+            metavar="SUITE:TASK%CYCLE", action="store", dest="release" )
 
     parser.add_option( "--acquire-suite", help="Acquire an exclusive suite lock.",
             metavar="SUITE", action="store", dest="suite_acquire" )

@@ -1,0 +1,9 @@
+[scheduling]
+    [[dependencies]]
+        graph = "prep1 => prep2"
+        [[[0,12]]]
+            graph = """
+    prep2 => foo => bar & baz => waz
+    foo[T-12] => foo
+                    """
+

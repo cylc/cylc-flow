@@ -81,9 +81,9 @@ Arguments:
     TARGET - Target suite or group
     TOPDIR - Destination for copied suite definition directories""" )
 
-parser.add_option( "--dry-run",
-        help="Show what would be copied.",
-        action="store_true", default=False, dest="dryrun" )
+parser.add_option( "-v","--verbose",
+        help="Print extra information.",
+        action="store_true", default=False, dest="verbose" )
 
 # hidden arguments for import from and export to central db
 c_import = False
@@ -107,13 +107,13 @@ arg_to = args[1].rstrip(delimiter)
 arg_dir = args[2]
 
 if c_import:
-    sourcedb = centraldb()
-    targetdb = localdb()
+    sourcedb = centraldb( verbose=options.verbose )
+    targetdb = localdb( verbose=options.verbose )
 elif c_export:
-    sourcedb = localdb()
-    targetdb = centraldb()
+    sourcedb = localdb( verbose=options.verbose )
+    targetdb = centraldb( verbose=options.verbose )
 else:
-    sourcedb = localdb()
+    sourcedb = localdb( verbose=options.verbose )
     targetdb = sourcedb
 
 try:
@@ -124,49 +124,43 @@ try:
         sourcedb.lock()
     sourcedb.load_from_file()
 
-    fsuites = sourcedb.get_list( '^' + arg_from + r'\b' )
-    if len(fsuites) == 0:
+    flist = sourcedb.get_list( '^' + arg_from + r'\b' )
+    if len(flist) == 0:
         raise RegistrationError, 'ERROR, no suites matched: ' + arg_from
 
-    if options.dryrun:
-        print 'DRY RUN, I would copy:'
-
-    for fsuite in fsuites:
-        freg, fdir, ftitle = fsuite
+    for item in flist:
+        freg, fdir, ftitle = item
+         # if freg is aliased, get the target suite definition dir
+        fdir, junk = sourcedb.get( freg )
 
         treg = re.sub( r'\b' + arg_from + r'\b', arg_to, freg ) 
 
         tdir = '/'.join( treg.split(delimiter) )
         tdir = os.path.join( arg_dir, tdir )
 
-        if options.dryrun:
-            continue
-
-        try:
-            targetdb.register( treg, tdir, ftitle )
-        except SuiteTakenError, x:
-            print >> sys.stderr, 'ERROR, ' + str(x)
-            continue
-
         if os.path.exists( tdir ):
-            print >> sys.stderr, 'ERROR, directory already exists: ' + tdir
-            targetdb.unregister(treg)
+            print >> sys.stderr, 'SKIPPING, directory already exists: ' + tdir
             continue
 
         tdir = os.path.abspath( tdir )
+        #print 'Making directory ', tdir
         try:
             mkdir_p( os.path.dirname(tdir))
         except Exception,x:
             print >> sys.stderr, x
-            targetdb.unregister(treg)
             continue
 
-        print 'Copying suite definition for', treg 
+        print 'COPY', fdir, '\n  TO', tdir 
         try:
             copytree( fdir, tdir )
         except OSError, x:
             print >> sys.stderr,x
-            targetdb.unregister( treg )
+            continue
+
+        try:
+            targetdb.register( treg, tdir )
+        except SuiteTakenError, x:
+            print >> sys.stderr, 'ERROR, ' + str(x)
             continue
 
     targetdb.dump_to_file()

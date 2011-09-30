@@ -16,12 +16,15 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# TO DO: document use foo[T-6]:out1, not foo:out1 with $(CYCLE_TIME-6) in
-# the explicit output message - so the graph will plot correctly.
+# TO DO: document use foo[T-6]:out1, not foo:out1 with
+# $(CYLC_TASK_CYCLE_TIME-6) in the output message.
 
 # TO DO: document that cylc hour sections must be unique, but can
 # overlap: [[[0]]] and [[[0,12]]]; but if the same dependency is 
 # defined twice it will result in a "duplicate prerequisite" error.
+
+# TO DO: check that mid-level families used in the graph are replaced
+# by *task* members, not *family* members.
 
 # NOTE: configobj.reload() apparently does not revalidate (list-forcing
 # is not done, for example, on single value lists with no trailing
@@ -38,7 +41,6 @@ from validate import Validator
 from configobj import get_extra_values, flatten_errors, Section
 from cylcconfigobj import CylcConfigObj, ConfigObjError
 from graphnode import graphnode, GraphNodeError
-from registration import delimiter_re
 from cylc.print_tree import print_tree
 
 try:
@@ -130,7 +132,6 @@ class config( CylcConfigObj ):
         self.async_repeating_tasks = []
 
         self.family_hierarchy = {}
-
         self.families_used_in_graph = []
 
         self.suite = suite
@@ -379,7 +380,8 @@ class config( CylcConfigObj ):
         # Environment variable interpolation in directory paths.
         # (allow use of suite identity variables):
         os.environ['CYLC_SUITE_REG_NAME'] = self.suite
-        os.environ['CYLC_SUITE_REG_PATH'] = re.sub( delimiter_re, '/', self.suite )
+        # registration.delimiter_re ('\.') removed to avoid circular import!
+        os.environ['CYLC_SUITE_REG_PATH'] = re.sub( '\.', '/', self.suite )
         os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
         self['cylc']['logging']['directory'] = \
                 os.path.expandvars( os.path.expanduser( self['cylc']['logging']['directory']))
@@ -408,7 +410,7 @@ class config( CylcConfigObj ):
     def specialize( self, name, target, source ):
         # recursively specialize a generator task config section
         # ('source') to a specific config section (target) for task
-        # 'name', by replaceing '$(TASK)' with 'name' in all items.
+        # 'name', by replacing '$(TASK)' with 'name' in all items.
         for item in source:
             if isinstance( source[item], str ):
                 # single source item
@@ -442,8 +444,8 @@ class config( CylcConfigObj ):
                 else:
                     raise SuiteConfigError, "ERROR: Task '" + task_name + "' does not define output '" + output_name  + "'"
             else:
-                # replace $(CYCLE_TIME) with $(TAG) in explicit outputs
-                trigger = re.sub( 'CYCLE_TIME', 'TAG', trigger )
+                # replace $(CYLC_TASK_CYCLE_TIME) with $(TAG) in explicit outputs
+                trigger = re.sub( 'CYLC_TASK_CYCLE_TIME', 'TAG', trigger )
         else:
             trigger = task_name + '%$(TAG) succeeded'
 
@@ -1121,8 +1123,8 @@ class config( CylcConfigObj ):
         taskd.description = taskconfig['description']
 
         for lbl in taskconfig['outputs']:
-            # replace $(CYCLE_TIME) with $(TAG) in explicit outputs
-            taskd.outputs.append( re.sub( 'CYCLE_TIME', 'TAG', taskconfig['outputs'][lbl] ))
+            # replace $(CYLC_TASK_CYCLE_TIME) with $(TAG) in explicit outputs
+            taskd.outputs.append( re.sub( 'CYLC_TASK_CYCLE_TIME', 'TAG', taskconfig['outputs'][lbl] ))
 
         taskd.owner = taskconfig['remote']['owner']
 
@@ -1135,7 +1137,7 @@ class config( CylcConfigObj ):
             taskd.precommand = taskconfig['pre-command scripting'] 
             taskd.postcommand = taskconfig['post-command scripting'] 
 
-        taskd.job_submission_shell = taskconfig['job submission']['job script shell']
+        taskd.job_submission_shell = taskconfig['job submission']['shell']
 
         taskd.job_submit_command_template = taskconfig['job submission']['command template']
 
@@ -1157,24 +1159,25 @@ class config( CylcConfigObj ):
             else:
                 taskd.remote_log_directory  = re.sub( os.environ['HOME'] + '/', '', taskd.job_submit_log_directory )
 
-        taskd.manual_messaging = taskconfig['manual task completion messaging']
+        taskd.manual_messaging = taskconfig['manual completion']
 
-        # task-specific event hook scripts
-        taskd.hook_scripts[ 'submitted' ]         = taskconfig['task event hook scripts']['submitted']
-        taskd.hook_scripts[ 'submission failed' ] = taskconfig['task event hook scripts']['submission failed']
-        taskd.hook_scripts[ 'started'   ]         = taskconfig['task event hook scripts']['started'  ]
-        taskd.hook_scripts[ 'warning'   ]         = taskconfig['task event hook scripts']['warning'  ]
-        taskd.hook_scripts[ 'succeeded' ]         = taskconfig['task event hook scripts']['succeeded' ]
-        taskd.hook_scripts[ 'failed'    ]         = taskconfig['task event hook scripts']['failed'   ]
-        taskd.hook_scripts[ 'timeout'   ]         = taskconfig['task event hook scripts']['timeout'  ]
-        # task-specific timeout hook scripts
-        taskd.timeouts[ 'submission'    ]     = taskconfig['task event hook scripts']['submission timeout in minutes']
-        taskd.timeouts[ 'execution'     ]     = taskconfig['task event hook scripts']['execution timeout in minutes' ]
-        taskd.timeouts[ 'reset on incoming' ] = taskconfig['task event hook scripts']['reset execution timeout on incoming messages']
+        taskd.hook_script = taskconfig['event hooks']['script']
+        taskd.hook_events = taskconfig['event hooks']['events']
+        for event in taskd.hook_events:
+            if event not in ['submitted', 'started', 'succeeded', 'failed', 'submission_failed', 'timeout' ]:
+                raise SuiteConfigError, name + ": illegal event hook: " + event
+
+        taskd.submission_timeout = taskconfig['event hooks']['submission timeout']
+        taskd.execution_timeout  = taskconfig['event hooks']['execution timeout']
+        taskd.reset_timer = taskconfig['event hooks']['reset timer']
 
         taskd.logfiles    = taskconfig[ 'extra log files' ]
         taskd.environment = taskconfig[ 'environment' ]
         taskd.directives  = taskconfig[ 'directives' ]
+
+        foo = deepcopy(self.family_hierarchy[ name ])
+        foo.reverse()
+        taskd.namespace_hierarchy = foo
 
         return taskd
 

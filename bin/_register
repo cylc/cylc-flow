@@ -56,6 +56,10 @@ Arguments:
      SUITE  -  The new hierarchical suite registration name.
      PATH   -  A cylc suite definition directory.""" )
 
+parser.add_option( "-v","--verbose",
+        help="Print extra information.",
+        action="store_true", default=False, dest="verbose" )
+
 ( options, args ) = parser.parse_args()
 
 if len(args) != 2:
@@ -77,12 +81,11 @@ if not os.path.isdir( rdir ):
         if not os.path.isdir( rdir ):
             raise SystemExit( 'ERROR: Suite definition PATH not valid: ' + rdir )
 
-db = localdb()
+db = localdb( verbose=options.verbose )
 try:
     db.lock()
     db.load_from_file()
-    db.register( suite, rdir, 'No Title' )
-    db.refresh_suite_title( suite )
+    db.register( suite, rdir )
     db.dump_to_file()
     db.unlock()
 

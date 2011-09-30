@@ -16,30 +16,23 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# This script creates the central suite database and registers the
-# cylc example suites in it. Rerunning it has no ill effects.
-
 set -e
 
 usage() {
     echo ""
     echo "USAGE: cylc [admin] create-cdb"
     echo ""
-    echo "This command is used by the cylc administrator to create the"
-    echo "central suite registration database immediately after"
-    echo "installing cylc, or to upgrade the centrally held cylc"
-    echo "example suites after upgrading to a new cylc version."
-    echo "It can be run multiple times without adverse effect."
+    echo "This command is used by the cylc administrator to create the central"
+    echo "suite database immediately after installing cylc, or to upgrade the"
+    echo "centrally held cylc example suites after upgrading to a new version."
     echo ""
-    echo "The example suites are registered with the cylc version"
-    echo "number in the registration path so that multiple versions"
-    echo "can be retained."
+    echo "The example suites are registered with the cylc version number in "
+    echo "the registration path so that multiple versions can be retained."
     echo ""
-    echo "Seconds since epoch are also appended to the cylc version"
-    echo "number to allow successive uploads at the same version"
-    echo "without deleting previous uploads (in case they have been"
-    echo "modified). You can then rename the uploaded examples group"
-    echo "and delete old versions if necessary."
+    echo "Seconds since epoch are also appended to the cylc version number to"
+    echo "allow multiple uploads at the same cylc version (in case the examples"
+    echo "need to be modified). You can then rename the uploaded examples group"
+    echo "and unregister any older uploads if necessary."
     echo ""
 }
 
@@ -48,69 +41,50 @@ if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then
     exit 0
 fi
 
-if [[ -z CYLC_DIR ]]; then
-    echo "export \$CYLC_DIR before running this script."
+if [[ -z $CYLC_DIR ]]; then
+    echo "\$CYLC_DIR is not defined. Run this script via the cylc main"
+    echo "command interface: 'cylc admin create-cdb'"
     exit 1
 fi
 
-SSE=$( date +%s )
-
-CYLC_VERSION=$( cylc -v )
-if [[ $CYLC_VERSION == "THIS IS NOT A VERSIONED RELEASE" ]]; then
-    # we are in a cylc git repository - get most recent tag
-    CYLC=$( which cylc )
-    CYLC_DIR=${CYLC%/bin/cylc}
-    cd $CYLC_DIR
-    CYLC_VERSION=$( git tag | tail -1 )-post
+override=false
+if [[ $CYLC_ADMIN_OVERRIDE ]]; then
+    # HIDDEN OVERRIDE FOR USER GUIDE
+    override=true
+    CYLC_VERSION=x.y.z
+    TOP=cylc-$( echo $CYLC_VERSION | tr '.' ':' )
+else
+    CYLC_VERSION=$( cylc -v )
+    if [[ $CYLC_VERSION == "THIS IS NOT A VERSIONED RELEASE" ]]; then
+        # we are in a cylc git repository - get most recent tag
+        CYLC_VERSION=$( git tag | tail -1 )X
+    fi
+    SSE=$( date +%s )
+    TOP=cylc-$( echo $CYLC_VERSION | tr '.' ':' )-$SSE
 fi
 
-TOP=cylc-$( echo $CYLC_VERSION | tr '.' 'p' )-$SSE
-
 echo " + Registering example suites"
-cylc register ${TOP}.admin.test $CYLC_DIR/examples/test
+cd $CYLC_DIR/examples
+SUITE_RCS=$( find . -name suite.rc | sed -e 's@./@@' )
+for SUITE_RC in $SUITE_RCS; do
+    SUITE_DEF_DIR=$( dirname $SUITE_RC )
+    SUITE_REG_NAME=${TOP}.$( echo $SUITE_DEF_DIR | tr '/' '.' )
+    cylc db register $SUITE_REG_NAME $SUITE_DEF_DIR
+done
 
-cylc register ${TOP}.examples.CUG.1 $CYLC_DIR/examples/CUG1
-
-cylc register ${TOP}.examples.CUG.QS1 $CYLC_DIR/examples/CUG_QS/one
-cylc register ${TOP}.examples.CUG.QS2 $CYLC_DIR/examples/CUG_QS/two
-cylc register ${TOP}.examples.CUG.QS3 $CYLC_DIR/examples/CUG_QS/three
-
-cylc register ${TOP}.examples.CUG.73 $CYLC_DIR/examples/CUG7.3
-cylc register ${TOP}.examples.CUG.74 $CYLC_DIR/examples/CUG7.4
-
-cylc register ${TOP}.examples.AutoCleanup.FFHook $CYLC_DIR/examples/AutoCleanup/FamilyFailHook
-cylc register ${TOP}.examples.AutoCleanup.FFTask $CYLC_DIR/examples/AutoCleanup/FamilyFailTask
-
-cylc register ${TOP}.examples.detach $CYLC_DIR/examples/detach
-
-cylc register ${TOP}.examples.inherit $CYLC_DIR/examples/inherit
-
-cylc register ${TOP}.examples.async.oneoff $CYLC_DIR/examples/async/oneoff
-cylc register ${TOP}.examples.async.repeat $CYLC_DIR/examples/async/repeating
-
-cylc register ${TOP}.examples.autorecover.async $CYLC_DIR/examples/AutoRecover/async
-cylc register ${TOP}.examples.autorecover.cyclng $CYLC_DIR/examples/AutoRecover/cycling
-
-cylc register ${TOP}.examples.generator.explicit $CYLC_DIR/examples/generator/explicit
-cylc register ${TOP}.examples.generator.expression $CYLC_DIR/examples/generator/expression
-
-cylc register ${TOP}.examples.families $CYLC_DIR/examples/families
-
-cylc register ${TOP}.examples.ecox $CYLC_DIR/examples/ecox
-
-echo " + Exporting ${TOP}.examples to the central database"
+echo " + Exporting examples to the central database"
 # This will create the new database file if necessary.
-cylc export ${TOP}.examples ${TOP}.examples
-cylc export ${TOP}.admin ${TOP}.admin
+cylc export $TOP
+
+$override && exit 0
 
 echo " + Unregistering the originals in your private database"
 # We don't want the admin user accidentally modifying the originals.
-cylc unregister ${TOP}
+cylc unregister $TOP
 
-echo " + Importing copies of ${TOP}.examples to your private database"
+echo " + Importing copies of examples to your private database"
 # We don't want the admin user accidentally modifying the originals.
-cylc import ${USER}.${TOP}.examples ${TOP}.examples $TMPDIR
-cylc import ${USER}.${TOP}.admin ${TOP}.examples $TMPDIR
+cylc import ${USER}.$TOP $TOP $TMPDIR
 
 # Determine CDB directory location
 # The following no longer works (see comment in lib/cylc/__init__.py)
@@ -124,5 +98,16 @@ echo " + Setting central database permissions: $CDB"
 # (could be just g+w if all cylc users are in the same group).
 chmod go+rwx $CDB
 chmod go+rw $CDB/db
+
+echo
+echo "______________________________________________________________________"
+echo "NOTE: the example suites have been registered with seconds since epoch"
+echo "appended to the cylc version group name: $TOP"
+echo "This is to ensure uniqueness in case you modify the example suites and"
+echo "upload them again at the same cylc version. You may want to reregister"
+echo "the group to plain cylc-$CYLC_VERSION after deleting older uploads."
+echo "----------------------------------------------------------------------"
+echo
+echo
 
 echo "DONE"

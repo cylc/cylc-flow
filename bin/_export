@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, re, os
+import re, os
 from cylc.execute import execute
 from optparse import OptionParser
 from cylc.registration import centraldb
@@ -32,6 +32,10 @@ Arguments:
     SOURCE  - Suite to export to the central database
     TARGET  - Target central suite name, if different from SOURCE.""" )  
 
+parser.add_option( "-v","--verbose",
+        help="Print extra information.",
+        action="store_true", default=False, dest="verbose" )
+
 ( options, args ) = parser.parse_args()
 
 source = args[0]
@@ -45,5 +49,10 @@ else:
 owner = os.environ['USER']
 target_dir = os.path.join( centraldb.dir, owner )
 
-command = 'cylc db copy --export ' + source + ' ' + target + ' ' + target_dir
-execute( re.split(' +', command) )
+if options.verbose:
+    verbose = '-v '
+else:
+    verbose = ' '
+
+command = 'cylc db copy --export ' + verbose + source + ' ' + target + ' ' + target_dir
+execute( re.split('\s+', command) )

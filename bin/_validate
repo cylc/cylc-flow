@@ -103,7 +103,7 @@ for tn in config.get_full_task_name_list():
         result[tn] = True, 'OK'
 
 if options.verbose:
-    config.print_inheritance_tree( result, pretty=options.pretty )
+    config.print_inheritance_tree( labels=result, pretty=options.pretty )
 
 if valid:
     print "Suite " + suite + " validates OK."
