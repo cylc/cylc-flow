@@ -91,14 +91,13 @@ class scheduler(object):
                 help="Shut down after all tasks have PASSED this cycle time.",
                 metavar="YYYYMMDDHH", action="store", dest="stop_time" )
 
-        self.parser.add_option( "--pause-at",
-                help="Refrain from running tasks AFTER this cycle time.",
-                metavar="YYYYMMDDHH", action="store", dest="pause_time" )
-
-        self.parser.add_option( "--paused", help="Pause immediately on "
-                "starting to allow intervention in the suite state "
-                "before resuming operation.",
+        self.parser.add_option( "--hold", help="Pause (don't run tasks) "
+                "immediately on starting.",
                 action="store_true", default=False, dest="startpaused" )
+
+        self.parser.add_option( "--hold-after",
+                help="Hold (don't run tasks) AFTER this cycle time.",
+                metavar="YYYYMMDDHH", action="store", dest="pause_time" )
 
         self.parser.add_option( "-s", "--simulation-mode",
                 help="Use dummy tasks that masquerade as the real thing, "
