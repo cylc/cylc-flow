@@ -167,7 +167,7 @@ class remote_switch( Pyro.core.ObjBase ):
         if self.pool.paused():
             return result( True, "(the suite is already paused)" )
 
-        self.pool.set_suite_hold()
+        self.pool.hold_suite()
         # process, to update state summary
         self.process_tasks = True
         return result( True, "Tasks that are ready to run will not be submitted" )
@@ -175,9 +175,9 @@ class remote_switch( Pyro.core.ObjBase ):
     def resume( self ):
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )
-        if not self.pool.paused() and not self.pool.stopping():
-            return result( True, "(the suite is not paused)" )
-        self.pool.unset_suite_hold()
+        #if not self.pool.paused() and not self.pool.stopping():
+        #    return result( True, "(the suite is not paused)" )
+        self.pool.release_suite()
         # process, to update state summary
         self.process_tasks = True
         self.halt = False
@@ -218,7 +218,7 @@ class remote_switch( Pyro.core.ObjBase ):
     def set_hold_time( self, ctime ):
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )
-        self.pool.set_suite_hold( ctime )
+        self.pool.hold_suite( ctime )
         # process, to update state summary
         self.process_tasks = True
         return result( True, "The suite will pause when all tasks have passed " + ctime )
@@ -236,7 +236,7 @@ class remote_switch( Pyro.core.ObjBase ):
     def shutdown_now( self ):
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )
-        self.pool.set_suite_hold()
+        self.pool.hold_suite()
         self.halt_now = True
         # process, to update state summary
         self.process_tasks = True

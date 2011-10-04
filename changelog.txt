@@ -267,3 +267,6 @@ based control GUI.
 
 + Updated the User Guide for all the above.
 
++ suite hold is now implemented by holding all waiting tasks instead of
+just not running them - this is more transparent to the suite operator.
+

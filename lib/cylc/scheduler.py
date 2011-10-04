@@ -91,13 +91,13 @@ class scheduler(object):
                 help="Shut down after all tasks have PASSED this cycle time.",
                 metavar="YYYYMMDDHH", action="store", dest="stop_time" )
 
-        self.parser.add_option( "--hold", help="Pause (don't run tasks) "
+        self.parser.add_option( "--hold", help="Hold (don't run tasks) "
                 "immediately on starting.",
-                action="store_true", default=False, dest="startpaused" )
+                action="store_true", default=False, dest="start_held" )
 
         self.parser.add_option( "--hold-after",
                 help="Hold (don't run tasks) AFTER this cycle time.",
-                metavar="YYYYMMDDHH", action="store", dest="pause_time" )
+                metavar="YYYYMMDDHH", action="store", dest="hold_time" )
 
         self.parser.add_option( "-s", "--simulation-mode",
                 help="Use dummy tasks that masquerade as the real thing, "
@@ -265,15 +265,15 @@ class scheduler(object):
             self.banner[ 'Stopping at' ] = self.stop_time
 
         # PAUSE TIME?
-        self.suite_hold_now = False
-        self.pause_time = None
-        if self.options.pause_time:
+        self.hold_suite_now = False
+        self.hold_time = None
+        if self.options.hold_time:
             try:
-                self.pause_time = ct( self.options.pause_time ).get()
+                self.hold_time = ct( self.options.hold_time ).get()
             except CycleTimeError, x:
                 raise SystemExit(x)
-            #    self.parser.error( "invalid cycle time: " + self.pause_time )
-            self.banner[ 'Pausing at' ] = self.pause_time
+            #    self.parser.error( "invalid cycle time: " + self.hold_time )
+            self.banner[ 'Pausing at' ] = self.hold_time
 
         # start in unblocked state
         self.blocked = False
@@ -451,14 +451,13 @@ class scheduler(object):
         #DISABLED if not self.practice:
         #DISABLED     self.back_up_statedump_file()
 
-        if self.pause_time:
+        if self.hold_time:
             # TO DO: HANDLE STOP AND PAUSE TIMES THE SAME WAY?
-            self.set_suite_hold( self.pause_time )
+            self.hold_suite( self.hold_time )
 
-        if self.options.startpaused:
-            self.suite_hold_now = True
-            print "\nSTARTING in PAUSED state ('cylc resume' to continue)\n"
-            self.log.warning( "Starting PAUSED: no tasks will be submitted")
+        if self.options.start_held:
+            self.log.warning( "Held on start-up (no tasks will be submitted)")
+            self.hold_suite()
         else:
             print "\nSTARTING\n"
 
@@ -495,15 +494,19 @@ class scheduler(object):
             #        # don't stop if any tasks are waiting, submitted, or running
             #        stop_now = False
             #        break
+
             #if stop_now:                 
             if True:
-                #for itask in self.cycling_tasks:
+                if self.hold_suite_now or self.hold_time:
+                    # don't stop if the suite is held
+                    stop_now = False
                 for itask in self.cycling_tasks + self.asynchronous_tasks:
                     # find any reason not to stop
                     if not itask.state.is_succeeded() and not itask.state.is_held():
                         # don't stop if any tasks are waiting, submitted, or running
                         stop_now = False
                         break
+                for itask in self.cycling_tasks:
                     if itask.state.is_succeeded() and not itask.state.has_spawned():
                         # Check for tasks that are succeeded but not spawned.
                         # If they are older than the suite stop time they
@@ -517,6 +520,7 @@ class scheduler(object):
                         else:
                             stop_now = False
                             break
+
             if stop_now:
                 self.log.warning( "ALL TASKS FINISHED OR HELD" )
                 break
@@ -533,8 +537,8 @@ class scheduler(object):
             if self.stop_clock_time:
                 now = self.clock.get_datetime()
                 if now > self.stop_clock_time:
-                    self.log.warning( "SUITE HAS REACHED STOP TIME " + self.stop_clock_time.isoformat() )
-                    self.set_suite_hold()
+                    self.log.warning( "SUITE STOP TIME REACHED: " + self.stop_clock_time.isoformat() )
+                    self.hold_suite()
                     self.remote.halt = True
                     # now reset self.stop_clock_time so we don't do this check again.
                     self.stop_clock_time = None
@@ -551,7 +555,7 @@ class scheduler(object):
                                 stop = False
                 if stop:
                     self.log.warning( "No unfinished STOP TASK (" + name + ") older than " + tag + " remains" )
-                    self.set_suite_hold()
+                    self.hold_suite()
                     self.remote.halt = True
                     # now reset self.stop_task so we don't do this check again.
                     self.stop_task = None
@@ -638,20 +642,27 @@ class scheduler(object):
         self.log.warning( "Setting stop task: " + taskid )
         self.stop_task = taskid
 
-    def set_suite_hold( self, ctime = None ):
-        self.log.warning( 'pre-hold state dump: ' + self.dump_state( new_file = True ))
+    def hold_suite( self, ctime = None ):
+        #self.log.warning( 'pre-hold state dump: ' + self.dump_state( new_file = True ))
         if ctime:
-            self.pause_time = ctime
-            self.log.warning( "HOLD: no new tasks will run from " + ctime )
+            self.log.warning( "Setting suite hold cycle time: " + ctime )
+            self.hold_time = ctime
         else:
-            self.suite_hold_now = True
-            self.log.warning( "HOLD: no more tasks will run")
+            self.hold_suite_now = True
+            self.log.warning( "Holding all tasks now")
+            for itask in self.cycling_tasks + self.asynchronous_tasks:
+                if itask.state.is_waiting():
+                    itask.state.set_status('held')
 
-    def unset_suite_hold( self ):
-        if self.suite_hold_now:
+    def release_suite( self ):
+        if self.hold_suite_now:
             self.log.warning( "RELEASE: new tasks will run when ready")
-            self.suite_hold_now = False
-            self.pause_time = None
+            self.hold_suite_now = False
+            self.hold_time = None
+        for itask in self.cycling_tasks + self.asynchronous_tasks:
+            if itask.state.is_held():
+                itask.state.set_status('waiting')
+ 
         # TO DO: write a separate method for cancelling a stop time:
         #if self.stop_time:
         #    self.log.warning( "UNSTOP: unsetting suite stop time")
@@ -673,7 +684,7 @@ class scheduler(object):
         self.stop_task = None
  
     def paused( self ):
-        return self.suite_hold_now
+        return self.hold_suite_now
 
     def stopping( self ):
         if self.stop_time or self.stop_clock_time:
@@ -682,7 +693,7 @@ class scheduler(object):
             return False
 
     def will_pause_at( self ):
-        return self.pause_time
+        return self.hold_time
 
     def get_oldest_unfailed_c_time( self ):
         # return the cycle time of the oldest task
@@ -697,9 +708,21 @@ class scheduler(object):
                 oldest = itask.c_time
         return oldest
 
+    def get_oldest_async_tag( self ):
+        # return the tag of the oldest non-daemon task
+        oldest = 9999999999
+        for itask in self.asynchronous_tasks:
+            #if itask.state.is_failed():  # uncomment for earliest NON-FAILED 
+            #    continue
+            if itask.is_daemon():
+                continue
+            if int( itask.tag ) < oldest:
+                oldest = int(itask.tag)
+        return oldest
+
     def get_oldest_c_time( self ):
         # return the cycle time of the oldest task
-        oldest = ct('9999122823').get()
+        oldest = '9999122823'
         for itask in self.cycling_tasks:
             #if itask.state.is_failed():  # uncomment for earliest NON-FAILED 
             #    continue
@@ -768,16 +791,8 @@ class scheduler(object):
         # tell each task to run if it is ready
         # unless the suite is on hold
         #--
-        if self.suite_hold_now:
-            # general suite hold
-            self.log.debug( 'not asking any tasks to run (general suite hold in place)' )
-            return
 
         for itask in self.cycling_tasks:
-            if self.pause_time:
-                if int( itask.c_time ) > int( self.pause_time ):
-                    self.log.debug( 'not asking ' + itask.id + ' to run (' + self.pause_time + ' hold in place)' )
-                    continue
             if itask.run_if_ready():
                 global graphing_disabled
                 if not graphing_disabled:
@@ -787,13 +802,27 @@ class scheduler(object):
 
         for itask in self.asynchronous_tasks:
             if itask.run_if_ready():
-                pass
-        # TO DO: RUN TIME GRAPH EXPECTS CTIMES
-        #        if not graphing_disabled and not self.runtime_graph_finalized:
-        #            # add tasks to the runtime graph at the point
-        #            # when they start running.
-        #            self.update_runtime_graph( itask )
+                if not graphing_disabled and not self.runtime_graph_finalized:
+                    # add tasks to the runtime graph when they start running.
+                    self.update_runtime_graph_async( itask )
 
+    def check_hold_spawned_task( self, old_task, new_task ):
+        if self.hold_suite_now:
+            new_task.log( 'WARNING', "HOLDING (general suite hold) " )
+            new_task.state.set_status('held')
+        elif self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
+            # we've reached the suite stop time
+            new_task.log( 'WARNING', "HOLDING (beyond suite stop cycle) " + self.stop_time )
+            new_task.state.set_status('held')
+        elif self.hold_time and int( new_task.c_time ) > int( self.hold_time ):
+            # we've reached the suite hold time
+            new_task.log( 'WARNING', "HOLDING (beyond suite hold cycle) " + self.hold_time )
+            new_task.state.set_status('held')
+        elif old_task.stop_c_time and int( new_task.c_time ) > int( old_task.stop_c_time ):
+            # this task has a stop time configured, and we've reached it
+            new_task.log( 'WARNING', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
+            new_task.state.set_status('held')
+ 
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
         # the slowest task, and if foo(T) spawns
@@ -816,14 +845,7 @@ class scheduler(object):
 
                 # dynamic task object creation by task and module name
                 new_task = itask.spawn( 'waiting' )
-                if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
-                    # we've reached the suite stop time
-                    new_task.log( 'WARNING', "HOLDING at configured suite stop time " + self.stop_time )
-                    new_task.state.set_status('held')
-                if itask.stop_c_time and int( new_task.c_time ) > int( itask.stop_c_time ):
-                    # this task has a stop time configured, and we've reached it
-                    new_task.log( 'WARNING', "HOLDING at configured task stop time " + itask.stop_c_time )
-                    new_task.state.set_status('held')
+                self.check_hold_spawned_task( itask, new_task )
                 # perpetuate the task stop time, if there is one
                 new_task.stop_c_time = itask.stop_c_time
                 self.insert( new_task )
@@ -844,14 +866,7 @@ class scheduler(object):
             itask.log( 'DEBUG', 'forced spawning')
             # dynamic task object creation by task and module name
             new_task = itask.spawn( 'waiting' )
-            if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
-                # we've reached the suite stop time
-                new_task.log( 'WARNING', "HOLDING at configured suite stop time " + self.stop_time )
-                new_task.state.set_status('held')
-            if itask.stop_c_time and int( new_task.c_time ) > int( itask.stop_c_time ):
-                # this task has a stop time configured, and we've reached it
-                new_task.log( 'WARNING', "STOPPING at configured task stop time " + itask.stop_c_time )
-                new_task.state.set_status('held')
+            self.check_hold_spawned_task( itask, new_task )
             # perpetuate the task stop time, if there is one
             new_task.stop_c_time = itask.stop_c_time
             self.insert( new_task )
@@ -1546,6 +1561,30 @@ class scheduler(object):
         tt = ct( task.c_time )
         delta1 = tt.subtract(st)
         if delta1 >= delta2:
+            return
+        for id in task.get_resolved_dependencies():
+            l = id
+            r = task.id 
+            self.runtime_graph.add_edge( l,r )
+            self.write_runtime_graph()
+
+    def update_runtime_graph_async( self, task ):
+        if self.runtime_graph_finalized:
+            return
+        # stop if all tasks are beyond the first tag
+        # (currently hardwired)
+        cutoff = 2
+        st = 1
+        ot = self.get_oldest_async_tag()
+        delta1 = ot - st
+        if delta1 >= cutoff:
+            self.finalize_runtime_graph()
+            return
+        # ignore task if its tag is beyond the first tag 
+        st = 1
+        tt = int( task.tag )
+        delta1 = tt - st 
+        if delta1 >= cutoff:
             return
         for id in task.get_resolved_dependencies():
             l = id

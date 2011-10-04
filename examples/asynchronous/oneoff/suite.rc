@@ -10,3 +10,9 @@ description = "A suite containing one-off asynchronous and cycling tasks."
             graph = "three => A => B"
             # 2) or start them immediately:
             # graph = "A => B"
+[runtime]
+    [[root]]
+        command scripting = "sleep 2; true"
+[visualization]
+    [[run time graph]]
+        enable = True
