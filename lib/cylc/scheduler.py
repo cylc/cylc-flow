@@ -458,7 +458,7 @@ class scheduler(object):
         if self.options.startpaused:
             self.suite_hold_now = True
             print "\nSTARTING in PAUSED state ('cylc resume' to continue)\n"
-            self.log.critical( "Starting PAUSED: no tasks will be submitted")
+            self.log.warning( "Starting PAUSED: no tasks will be submitted")
         else:
             print "\nSTARTING\n"
 
@@ -527,13 +527,13 @@ class scheduler(object):
 
             if self.remote.halt_now:
                 if not self.no_tasks_running():
-                    self.log.critical( "STOP ORDERED WITH TASKS STILL RUNNING" )
+                    self.log.warning( "STOPPING NOW: some running tasks will be orphaned" )
                 break
 
             if self.stop_clock_time:
                 now = self.clock.get_datetime()
                 if now > self.stop_clock_time:
-                    self.log.critical( "SUITE HAS REACHED STOP TIME " + self.stop_clock_time.isoformat() )
+                    self.log.warning( "SUITE HAS REACHED STOP TIME " + self.stop_clock_time.isoformat() )
                     self.set_suite_hold()
                     self.remote.halt = True
                     # now reset self.stop_clock_time so we don't do this check again.
@@ -550,7 +550,7 @@ class scheduler(object):
                             if int(itag) <= int(tag):
                                 stop = False
                 if stop:
-                    self.log.critical( "No unfinished STOP TASK (" + name + ") older than " + tag + " remains" )
+                    self.log.warning( "No unfinished STOP TASK (" + name + ") older than " + tag + " remains" )
                     self.set_suite_hold()
                     self.remote.halt = True
                     # now reset self.stop_task so we don't do this check again.
@@ -642,19 +642,19 @@ class scheduler(object):
         self.log.warning( 'pre-hold state dump: ' + self.dump_state( new_file = True ))
         if ctime:
             self.pause_time = ctime
-            self.log.critical( "HOLD: no new tasks will run from " + ctime )
+            self.log.warning( "HOLD: no new tasks will run from " + ctime )
         else:
             self.suite_hold_now = True
-            self.log.critical( "HOLD: no more tasks will run")
+            self.log.warning( "HOLD: no more tasks will run")
 
     def unset_suite_hold( self ):
         if self.suite_hold_now:
-            self.log.critical( "RELEASE: new tasks will run when ready")
+            self.log.warning( "RELEASE: new tasks will run when ready")
             self.suite_hold_now = False
             self.pause_time = None
         # TO DO: write a separate method for cancelling a stop time:
         #if self.stop_time:
-        #    self.log.critical( "UNSTOP: unsetting suite stop time")
+        #    self.log.warning( "UNSTOP: unsetting suite stop time")
         #    self.stop_time = None
 
     def will_stop_at( self ):
@@ -774,16 +774,16 @@ class scheduler(object):
             return
 
         for itask in self.cycling_tasks:
-                if self.pause_time:
-                    if int( itask.c_time ) > int( self.pause_time ):
-                        self.log.debug( 'not asking ' + itask.id + ' to run (' + self.pause_time + ' hold in place)' )
-                        continue
-                if itask.run_if_ready():
-                    global graphing_disabled
-                    if not graphing_disabled:
-                        if not self.runtime_graph_finalized:
-                            # add tasks to the runtime graph when they start running.
-                            self.update_runtime_graph( itask )
+            if self.pause_time:
+                if int( itask.c_time ) > int( self.pause_time ):
+                    self.log.debug( 'not asking ' + itask.id + ' to run (' + self.pause_time + ' hold in place)' )
+                    continue
+            if itask.run_if_ready():
+                global graphing_disabled
+                if not graphing_disabled:
+                    if not self.runtime_graph_finalized:
+                        # add tasks to the runtime graph when they start running.
+                        self.update_runtime_graph( itask )
 
         for itask in self.asynchronous_tasks:
             if itask.run_if_ready():
