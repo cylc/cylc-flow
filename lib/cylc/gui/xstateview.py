@@ -231,6 +231,7 @@ class xupdater(threading.Thread):
 
     def add_graph_key(self):
         self.graphw.add_node( 'waiting' )
+        self.graphw.add_node( 'runahead' )
         self.graphw.add_node( 'submitted' )
         self.graphw.add_node( 'running' )
         self.graphw.add_node( 'succeeded' )
@@ -241,6 +242,7 @@ class xupdater(threading.Thread):
         self.graphw.add_node( 'trigger family' )
 
         waiting = self.graphw.get_node( 'waiting' )
+        runahead = self.graphw.get_node( 'runahead' )
         submitted = self.graphw.get_node( 'submitted' )
         running = self.graphw.get_node( 'running' )
         succeeded = self.graphw.get_node( 'succeeded' )
@@ -251,7 +253,7 @@ class xupdater(threading.Thread):
         grfamily = self.graphw.get_node( 'trigger family' )
 
 
-        for node in [ waiting, submitted, running, succeeded, failed, held, base, family, grfamily ]:
+        for node in [ waiting, runahead, submitted, running, succeeded, failed, held, base, family, grfamily ]:
             node.attr['style'] = 'filled'
             node.attr['shape'] = 'ellipse'
             node.attr['URL'] = 'KEY'
@@ -261,6 +263,8 @@ class xupdater(threading.Thread):
 
         waiting.attr['fillcolor'] = 'cadetblue2'
         waiting.attr['color'] = 'cadetblue4'
+        runahead.attr['fillcolor'] = 'cadetblue'
+        runahead.attr['color'] = 'cadetblue4'
         submitted.attr['fillcolor'] = 'orange'
         submitted.attr['color'] = 'darkorange3'
         running.attr['fillcolor'] = 'green'
@@ -280,6 +284,7 @@ class xupdater(threading.Thread):
 
         self.graphw.add_edge( waiting, submitted, autoURL=False, style='invis')
         self.graphw.add_edge( submitted, running, autoURL=False, style='invis')
+        self.graphw.add_edge( running, runahead, autoURL=False, style='invis')
 
         self.graphw.add_edge( succeeded, failed, autoURL=False, style='invis')
         self.graphw.add_edge( failed, held, autoURL=False, style='invis')
@@ -308,6 +313,9 @@ class xupdater(threading.Thread):
         elif self.state_summary[id]['state'] == 'held':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'yellow'
+        elif self.state_summary[id]['state'] == 'runahead':
+            node.attr['style'] = 'filled'
+            node.attr['fillcolor'] = 'cadetblue'
 
         if shape:
             node.attr['shape'] = shape

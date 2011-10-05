@@ -133,7 +133,7 @@ class scheduler(object):
         self.configure_suite()
 
         # RUNAHEAD LIMIT
-        self.runahead = self.config['scheduling']['runahead limit']
+        self.runahead_limit = self.config['scheduling']['runahead limit']
 
         self.print_banner()
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD (PROVIDED IN DERIVED CLASSES) 
@@ -651,7 +651,7 @@ class scheduler(object):
             self.hold_suite_now = True
             self.log.warning( "Holding all tasks now")
             for itask in self.cycling_tasks + self.asynchronous_tasks:
-                if itask.state.is_waiting():
+                if itask.state.is_waiting() or itask.state.is_runahead():
                     itask.state.set_status('held')
 
     def release_suite( self ):
@@ -789,12 +789,20 @@ class scheduler(object):
 
     def run_tasks( self ):
         # tell each task to run if it is ready
-        # unless the suite is on hold
-        #--
-
+        global graphing_disabled
+        ouct = self.get_oldest_unfailed_c_time() 
         for itask in self.cycling_tasks:
+            if self.runahead_limit and ( itask.state.is_waiting() or itask.state.is_runahead() ):
+                foo = ct( itask.c_time )
+                foo.decrement( hours=self.runahead_limit )
+                if int( foo.get() ) >= int( ouct ):
+                    # beyond the runahead limit
+                    itask.log( 'DEBUG', "HOLDING (runahead limit)" )
+                    itask.state.set_status('runahead')
+                else:
+                    itask.state.set_status('waiting')
+
             if itask.run_if_ready():
-                global graphing_disabled
                 if not graphing_disabled:
                     if not self.runtime_graph_finalized:
                         # add tasks to the runtime graph when they start running.
@@ -828,18 +836,7 @@ class scheduler(object):
         # the slowest task, and if foo(T) spawns
         #--
 
-        # update oldest suite cycle time
-        oldest_unfailed_ctime = self.get_oldest_unfailed_c_time() 
         for itask in self.cycling_tasks:
-            if self.runahead:
-                # if a runahead limit is defined, check for violations
-                foo = ct( itask.c_time )
-                foo.decrement( hours=self.runahead )
-                if int( foo.get() ) > int( oldest_unfailed_ctime ):
-                    # too far ahead: don't spawn this task.
-                    itask.log( 'DEBUG', "delaying spawning (too far ahead)" )
-                    continue
-
             if itask.ready_to_spawn():
                 itask.log( 'DEBUG', 'spawning')
 
@@ -856,7 +853,6 @@ class scheduler(object):
                 # dynamic task object creation by task and module name
                 new_task = itask.spawn( 'waiting' )
                 self.insert( new_task )
-
 
     def force_spawn( self, itask ):
         if itask.state.has_spawned():

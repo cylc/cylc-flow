@@ -268,5 +268,12 @@ based control GUI.
 + Updated the User Guide for all the above.
 
 + suite hold is now implemented by holding all waiting tasks instead of
-just not running them - this is more transparent to the suite operator.
+just not running them - this is more transparent to the user.
+
++ RUNAHEAD LIMIT:
+    - now implemented by putting tasks into a special 'runahead' held
+      state, rather than just delaying spawning. This is more
+      transparent to the user.
+    - now applies if (Ttask-Toldest) >= limit (was '>'). This generally 
+    makes the limit shorter by one cycle, but is more intuitive.
 
