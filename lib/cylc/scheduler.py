@@ -139,6 +139,7 @@ class scheduler(object):
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD (PROVIDED IN DERIVED CLASSES) 
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
         self.load_tasks()
+        self.initial_oldest_ctime = self.get_oldest_c_time()
 
         global graphing_disabled
         if not self.config['visualization']['run time graph']['enable']:
@@ -1536,16 +1537,17 @@ class scheduler(object):
                 os.path.join( odir, 'runtime-graph.dot' )
         self.runtime_graph = graphing.CGraph( title, self.config['visualization'] )
         self.runtime_graph_finalized = False
-        if not self.start_time:
-            # only do cold and warmstarts for now.
-            self.runtime_graph_finalized = True
         self.runtime_graph_cutoff = self.config['visualization']['run time graph']['cutoff']
 
     def update_runtime_graph( self, task ):
         if self.runtime_graph_finalized:
             return
-        # stop if all tasks are more than configured hours beyond suite start time
-        st = ct( self.start_time )
+        # stop if all tasks are more than cutoff hours beyond suite start time
+        if self.start_time:
+            st = ct( self.start_time )
+        else:
+            st = ct( self.initial_oldest_ctime )
+
         ot = ct( self.get_oldest_c_time() )
         delta1 = ot.subtract( st )
         delta2 = datetime.timedelta( 0, 0, 0, 0, 0, self.runtime_graph_cutoff, 0 )
@@ -1553,7 +1555,7 @@ class scheduler(object):
             self.finalize_runtime_graph()
             return
         # ignore task if its ctime more than configured hrs beyond suite start time?
-        st = ct( self.start_time )
+        st = st
         tt = ct( task.c_time )
         delta1 = tt.subtract(st)
         if delta1 >= delta2:
@@ -1568,19 +1570,13 @@ class scheduler(object):
         if self.runtime_graph_finalized:
             return
         # stop if all tasks are beyond the first tag
-        # (currently hardwired)
-        cutoff = 2
-        st = 1
         ot = self.get_oldest_async_tag()
-        delta1 = ot - st
-        if delta1 >= cutoff:
+        if ot > 1:
             self.finalize_runtime_graph()
             return
-        # ignore task if its tag is beyond the first tag 
-        st = 1
+        # ignore tasks beyond the first tag 
         tt = int( task.tag )
-        delta1 = tt - st 
-        if delta1 >= cutoff:
+        if tt > 1:
             return
         for id in task.get_resolved_dependencies():
             l = id

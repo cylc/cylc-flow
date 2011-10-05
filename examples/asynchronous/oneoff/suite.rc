@@ -13,6 +13,3 @@ description = "A suite containing one-off asynchronous and cycling tasks."
 [runtime]
     [[root]]
         command scripting = "sleep 2; true"
-[visualization]
-    [[run time graph]]
-        enable = True
