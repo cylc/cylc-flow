@@ -161,15 +161,11 @@ description = "EcoConnect Operation, circa August 2011"
         [[[environment]]]
             SYS = "${USER##*_}"
             ARCHIVE = /$SYS/archive/ecoconnect
-        #[[[event hooks]]]
-        #    started = nagios.sh
-        #    failed = nagios.sh
-        #    warning = nagios.sh
-        #    succeeded = nagios.sh
-        #    submission failed = nagios.sh
-        #    timeout = nagios.sh
-        #    submission timeout = 2
-        #    execution timeout = 30
+        [[[event hooks]]]
+            script = nagios.sh
+            events = started,failed,succeeded,submission_failed,timeout
+            submission timeout = 2
+            execution timeout = 30
 
     [[UKMO]]
         description = "UK Met Office data retrieval"
