@@ -16,6 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 import tempfile
 import StringIO
 from cylc import cycle_time
@@ -183,10 +184,13 @@ cd $CYLC_TASK_WORK_PATH""" % data )
             strio = StringIO.StringIO()
             self.write_environment_1( strio )
             self.write_cylc_access( strio )
+            # now escape quotes in the environment string
+            str = strio.getvalue()
+            strio.close()
+            str = re.sub('"', '\\"', str )
             self.FILE.write( '\n\n# SUITE AND TASK IDENTITY FOR CUSTOM TASK WRAPPERS:')
             self.FILE.write( '\n# (contains embedded newlines so usage may require "QUOTES")' )
-            self.FILE.write( '\nexport CYLC_SUITE_ENVIRONMENT="' + strio.getvalue() + '"' )
-            strio.close()
+            self.FILE.write( '\nexport CYLC_SUITE_ENVIRONMENT="' + str + '"' )
 
     def write_pre_scripting( self ):
         if self.simulation_mode or not self.precommand_scripting:
