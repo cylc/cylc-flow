@@ -1129,7 +1129,7 @@ class config( CylcConfigObj ):
         taskd.owner = taskconfig['remote']['owner']
 
         if self.simulation_mode:
-            taskd.job_submit_method = self['cylc']['simulation mode']['job submission method']
+            taskd.job_submit_method = self['cylc']['simulation mode']['job submission']['method']
             taskd.commands = self['cylc']['simulation mode']['command scripting']
         else:
             taskd.job_submit_method = taskconfig['job submission']['method']
