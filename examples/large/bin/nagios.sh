@@ -13,7 +13,9 @@ TASK_TIME=${CYLC_TASK_ID##*%}
 SYS="${USER##*_}"
 case $SYS in
     oper)
-        export NAGIOS=/usr/bin/nagios_submit
+        # DISABLE NAGIOS ALERTING IN DEMO SUITE
+        #export NAGIOS=/usr/bin/nagios_submit
+        export NAGIOS='echo nagios: '
         export FACILITY=local0
     ;;
     *)
@@ -62,5 +64,3 @@ case $EVENT in
         echo "NAGIOS not alerted."
     ;;
 esac
-
-exit 0
