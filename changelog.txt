@@ -204,7 +204,7 @@ compatibility or provide a clear (possibly automated) upgrade path.
 use ssh as for remote hosts.
 
 + New default directory structure.
-  - $HOME/cylc-run/$CYLC_SUITE_GROUP/$CYLC_SUITE_NAME/{log/suite,log/job,state}
+  - $HOME/cylc-run/$CYLC_SUITE_REG_NAME/{log/suite,log/job,state}
 
 + Task logs now go to the proper directory tree on remote hosts (and remote 
 directories are created on the fly if necessary).
@@ -221,42 +221,41 @@ directories are created on the fly if necessary).
  that tag along with a model (say) waiting for it to fail, but which
  automatically remove themselves if the model does not fail.
 
-+ MAJOR CHANGE TO SUITE.RC STRUCTURE: [CYLC}, [SCHEDULING] AND [RUNTIME].
-  [scheduling] determines when tasks are ready to run. [runtime] determines
-  what runs, and how and where, when a task is ready; and allows family and 
-  task runtime properties to be defined in a "namespace inheritance
-  hierarchy". WARNING: there are a number of changes associated with this
-  item that will break existing suite.rc files.
++ MAJOR CHANGE TO SUITE.RC STRUCTURE: 
+  * better organization under new top level sections:
+  [cylc] - non task-related suite config. 
+  [scheduling] - determines when tasks are ready to run
+  [runtime] - determines what runs, and how and where, when a task is ready
+  * under [runtime] family and task properties are defined by a
+  "namespace inheritance hierarchy" that allows common configuration of
+  related tasks without repetition. 
+WARNING: there are a number of changes associated with this item that
+will break existing suite.rc files.
 
-+ Task families are now defined by the runtime namespace hierarchy and when
-used in the graph, are suite definition shorthand only - no pseudo-task
- representing the family appears in the suite task pool. 
-
-+ Collapsible nested namespace families in suite graphing and graph
-based control GUI. 
++ Task families are now defined by the runtime namespace hierarchy.
+  * when used in the graph, they are suite definition shorthand only
+   (no pseudo-task representing the family appears in the task pool). 
+  * can be individually expanded or collapsed for graph plotting, and in
+   the graph-based suite control GUI.
 
 + 'command =' config item changed to 'command scripting =' for consistency
   with 'pre-' and 'post-command scripting', and because it has long since
   ceased to be a single command.
-
-+ Task families, as defined by the runtime inheritance hierarchy, can
- now be individually expanded or collapsed for graph plotting, and in the 
- graph suite control GUI.
 
 + New command 'cylc get-config' to retrieve any suite configuration data.
 
 + gcylc entry labels made consistent with command help, and gcylc Help
  buttons now call command help on the fly.
 
-+ SUITE REGISTRATION:
++ MAJOR CHANGE TO SUITE REGISTRATION SYNTAX:
    - changed from GROUP:NAME to an arbitrarily nested path (foo,
      foo.bar, foo.bar.baz, etc.)  Delimiter changed from colon to dot to
      avoid problems with use of suite identity in PATH variables.
 
 + suite identity variables changed for new registration names:
-    CYLC_SUITE_REGNAME    # foo.bar.baz
-    CYLC_SUITE_REGPATH    # foo/bar/baz
-    CYLC_SUITE_DEFPATH    # suite definition directory
+    CYLC_SUITE_REG_NAME    # foo.bar.baz
+    CYLC_SUITE_REG_PATH    # foo/bar/baz
+    CYLC_SUITE_DEF_PATH    # suite definition directory
 + task identity variables made consistent with suite identity variables:
     CYLC_TASK_ID
     CYLC_TASK_NAME
