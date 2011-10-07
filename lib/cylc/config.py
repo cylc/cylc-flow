@@ -1161,16 +1161,25 @@ class config( CylcConfigObj ):
 
         taskd.manual_messaging = taskconfig['manual completion']
 
-        taskd.hook_script = taskconfig['event hooks']['script']
-        taskd.hook_events = taskconfig['event hooks']['events']
-        for event in taskd.hook_events:
-            if event not in ['submitted', 'started', 'succeeded', 'failed', 'submission_failed', 'timeout' ]:
-                raise SuiteConfigError, name + ": illegal event hook: " + event
+        if not self.simulation_mode or \
+                self['cylc']['simulation mode']['event hooks']['enable']:
+            taskd.hook_script = taskconfig['event hooks']['script']
+            taskd.hook_events = taskconfig['event hooks']['events']
+            for event in taskd.hook_events:
+                if event not in ['submitted', 'started', 'succeeded', 'failed', 'submission_failed', 'timeout' ]:
+                    raise SuiteConfigError, name + ": illegal event hook: " + event
+            taskd.submission_timeout = taskconfig['event hooks']['submission timeout']
+            taskd.execution_timeout  = taskconfig['event hooks']['execution timeout']
+            taskd.reset_timer = taskconfig['event hooks']['reset timer']
 
-        taskd.submission_timeout = taskconfig['event hooks']['submission timeout']
-        taskd.execution_timeout  = taskconfig['event hooks']['execution timeout']
-        taskd.reset_timer = taskconfig['event hooks']['reset timer']
-
+        if len(taskd.hook_events) > 0 and not taskd.hook_script:
+            print >> sys.stderr, 'WARNING:', taskd.name, 'defines hook events but no hook script'
+        if taskd.execution_timeout or taskd.submission_timeout or taskd.reset_timer:
+            if 'timeout' not in taskd.hook_events:
+                print >> sys.stderr, 'WARNING:', taskd.name, 'configures timeouts but does not handle timeout events'
+            if not taskd.hook_script:
+                print >> sys.stderr, 'WARNING:', taskd.name, 'configures timeouts but no hook script'
+        
         taskd.logfiles    = taskconfig[ 'extra log files' ]
         taskd.environment = taskconfig[ 'environment' ]
         taskd.directives  = taskconfig[ 'directives' ]

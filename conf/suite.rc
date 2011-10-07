@@ -1,5 +1,6 @@
 # SUITE.RC DEFAULTS ____________________________________________________
-# This file shows all cylc configuration items in context, with defaults 
+# This file shows ALL cylc configuration items in context, with defaults 
+# Below 'None' is the Python undefined value; '(none)' is more general.
 # ______________________________________________________________________
 # DEVELOPER NOTE: this must be in sync with $CYLC_DIR/conf/suiterc.spec
 
@@ -20,31 +21,33 @@ description = "No description provided" # DEFAULT
         enable = False # DEFAULT
         allow simultaneous instances = False # DEFAULT
     [[environment]]
-        # None
+        # (none)
     [[simulation mode]]
         clock offset = 24  # DEFAULT
         clock rate = 10  # DEFAULT
         command scripting = "echo SIMULATION MODE $CYLC_TASK_ID; sleep 10; echo BYE"  # DEFAULT
         [[[job submission]]]
             method = background  # DEFAULT
+        [[[event hooks]]]
+            enable = False # DEFAULT
 [scheduling]
     initial cycle time = None
     final cycle time = None
     runahead limit = 24 # DEFAULT
     [[special tasks]]
-        clock-triggered = None
-        start-up = None
-        cold-start = None
-        sequential = None
-        one-off = None
-        explicit restart outputs = None
-        exclude at start-up = None
-        include at start-up = None
+        clock-triggered = (none)
+        start-up = (none)
+        cold-start = (none)
+        sequential = (none)
+        one-off = (none)
+        explicit restart outputs = (none)
+        exclude at start-up = (none)
+        include at start-up = (none)
     [[dependencies]]
         graph = None
         [[[__many__]]]
             graph = None
-            daemon = None
+            daemon = (none)
 [runtime]
     [[root]]
         inherit = None # (other namespaces inherit first from root)
@@ -67,28 +70,28 @@ description = "No description provided" # DEFAULT
             log directory = None
         [[[event hooks]]]
             script = None
-            events = None
+            events = (none)
             submission timeout = None
             execution timeout = None
             reset time = False  # DEFAULT
         [[[environment]]]
             # (SUITE AND TASK IDENTITY VARIABLES ARE PROVIDED)
         [[[directives]]]
-            # None
+            # (none)
         [[[outputs]]]
-            # None
+            # (none)
 
 [visualization]
     initial cycle time = 2999010100  # DEFAULT
     final cycle time = 2999010123 # DEFAULT
-    collapsed families = None
+    collapsed families = (none)
     use node color for edges = True  # DEFAULT
     default node attributes = 'style=unfilled', 'color=black', 'shape=box'  # DEFAULT
     default edge attributes = 'color=black'  # DEFAULT
     [[node groups]]
-        # None
+        # (none)
     [[node attributes]]
-        # None
+        # (none)
     [[run time graph]]
         enable = False  # DEFAULT
         cutoff = 24  # DEFAULT
