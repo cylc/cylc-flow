@@ -26,7 +26,6 @@
 #  (b) called by a task that was run manually on the command line
 
 import os, sys
-import socket
 import datetime
 import cylc_pyro_client
 
@@ -78,8 +77,7 @@ class message(object):
             pass
         else:
             # we always define the host explicitly, but could
-            # default to localhost's fully qualified domain name
-            # like this:   self.host = socket.getfqdn()
+            # default to localhost's fully qualified domain name.
             print >> sys.stderr, '$CYLC_SUITE_HOST not defined'
             sys.exit(1)
 

@@ -19,10 +19,11 @@
 
 import os, sys
 import gtk
-import socket
 from optparse import OptionParser
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
+
+from cylc.hostname import hostname
 
 # check Pyro is installed
 try:
@@ -66,7 +67,7 @@ Arguments:
 
 #parser.add_option( "--host",
 #        help="cylc suite host (defaults to localhost).",
-#        metavar="HOST", action="store", default=socket.getfqdn(),
+#        metavar="HOST", action="store", default=hostname,
 #        dest="host" )
 
 parser.add_option( "-g", "--graph",
@@ -95,7 +96,7 @@ except Exception,x:
 imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
 
 #host = options.host
-host = socket.getfqdn()
+host = hostname
 owner = os.environ["USER"]
 
 if len( args ) == 1:

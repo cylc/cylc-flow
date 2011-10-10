@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re, os, sys, socket, logging
+import re, os, sys, logging
 from time import sleep
 from optparse import OptionParser
 from OrderedDict import OrderedDict
@@ -32,6 +32,7 @@ from cylc.locking.lockserver import lockserver
 from cylc.task_types import task
 from cylc.task_types import clocktriggered
 from cylc import accelerated_clock
+from cylc.hostname import hostname
 from cylc.port_scan import SuiteIdentificationError
 from cylc.registration import delimiter_re
 
@@ -52,7 +53,6 @@ the same task, NAME%CYCLE, is currently running in the suite).
 Arguments:
    SUITE           Registered name of the target suite.
    TASK            Identity of the task to run (NAME%YYYYMMDDHH).""" 
-
 
 def commandline_parser():
     parser = OptionParser( usage )
@@ -82,8 +82,6 @@ if len( args ) != 2:
 # get input args------------------------------------------------------
 reg = args[0]
 task_id = args[1]
-
-host = socket.getfqdn()
 
 # find location of the suite definition directory --------------------
 dbg = dbgetter()
@@ -119,7 +117,7 @@ use_lockserver = False
 if config['cylc']['lockserver']['enable']:
     use_lockserver = True
     try:
-        lockserver_port = lockserver( host ).get_port()
+        lockserver_port = lockserver( hostname ).get_port()
     except SuiteIdentificationError, x:
         raise SystemExit( 'Lockserver not found. See \'cylc lockserver status\'')
 
@@ -127,7 +125,7 @@ if config['cylc']['lockserver']['enable']:
     # suite has an exclusive lock, we can use submit only via the
     # same suite registration. submit does not need to call
     # release_suite_access()
-    if not suite_lock( suite, suite_dir, host, lockserver_port, 'submit' ).request_suite_access():
+    if not suite_lock( suite, suite_dir, hostname, lockserver_port, 'submit' ).request_suite_access():
         raise SystemExit( 'ERROR: failed to acquire a suite lock' )
 
 # No TASK EVENT HOOKS are set for the submit command because there is
@@ -144,7 +142,7 @@ if options.sched:
     cylcenv[ 'CYLC_MODE' ] = 'scheduler'
 else:
     cylcenv[ 'CYLC_MODE' ] = 'submit'
-cylcenv[ 'CYLC_SUITE_HOST' ] = host
+cylcenv[ 'CYLC_SUITE_HOST' ] = hostname
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
 cylcenv[ 'CYLC_SUITE_DEF_PATH' ] =  re.sub( os.environ['HOME'], '$HOME', suite_dir )
 cylcenv[ 'CYLC_SUITE_REG_NAME' ] = suite

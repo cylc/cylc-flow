@@ -22,8 +22,8 @@
 
 import os
 import re
-import socket
 from optparse import OptionParser
+from hostname import hostname
 
 #class NoPromptOptionParser( OptionParser ):
 class NoPromptOptionParser_u( OptionParser ):
@@ -50,7 +50,7 @@ Arguments:
 
         self.add_option( "--host",
                 help="Cylc suite host (defaults to local host).",
-                metavar="HOST", action="store", default=socket.getfqdn(),
+                metavar="HOST", action="store", default=hostname,
                 dest="host" )
 
         #self.add_option( "--port",
@@ -122,7 +122,7 @@ Arguments:
 
         #self.add_option( "--host",
         #        help="Cylc suite host (default: localhost).",
-        #        metavar="HOSTNAME", action="store", default=socket.getfqdn(),
+        #        metavar="HOSTNAME", action="store", default=hostname,
         #        dest="host" )
 
         #self.add_option( "--port",

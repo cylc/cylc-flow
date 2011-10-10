@@ -20,6 +20,7 @@ import os, sys, re
 import socket
 from optparse import OptionParser
 from cylc.port_scan import scan
+from cylc.hostname import hostname
 from cylc.conf.CylcGlobals import pyro_base_port, pyro_port_range
 
 parser = OptionParser( """cylc [discover] scan [options]
@@ -29,7 +30,7 @@ indicates a secure suite owned by somebody else.""" )
 
 parser.add_option( "--host",
         help="Cylc suite host (defaults to localhost).",
-        metavar="HOST", action="store", default=socket.getfqdn(),
+        metavar="HOST", action="store", default=hostname,
         dest="host" )
 
 parser.add_option( "--print-ports",

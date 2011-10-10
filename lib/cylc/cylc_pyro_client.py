@@ -17,15 +17,15 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
-import socket
 import Pyro.core, Pyro.errors
 from optparse import OptionParser
+from hostname import hostname
 from time import sleep
 from passphrase import passphrase, PassphraseNotFoundError, SecurityError
 from port_scan import get_port, check_port
 
 class client( object ):
-    def __init__( self, suite, owner=os.environ['USER'], host=socket.getfqdn(), port=None ):
+    def __init__( self, suite, owner=os.environ['USER'], host=hostname, port=None ):
         self.suite = suite
         self.owner = owner
         self.host = host

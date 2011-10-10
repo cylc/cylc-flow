@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import Pyro.core
-import os,sys,socket
+import os,sys
 import os
 
 from lockserver import lockserver
@@ -89,8 +89,7 @@ class task_lock(object):
                 pass
             else:
                 # we always define the host explicitly, but could
-                # default to localhost's fully qualified domain name
-                # like this:   self.host = socket.getfqdn()
+                # default to localhost's fully qualified domain name.
                 print >> sys.stderr, '$CYLC_SUITE_HOST not defined'
                 sys.exit(1)
 

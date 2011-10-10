@@ -16,7 +16,8 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, socket
+import os
+from hostname import hostname
 from registration import localdb
 from passphrase import passphrase
 import Pyro.errors, Pyro.core
@@ -110,7 +111,7 @@ def suiteid( name, owner, host, port=None ):
 def cylcid_uri( host, port ):
     return 'PYROLOC://' + host + ':' + str(port) + '/cylcid' 
 
-def get_port( suite, owner=os.environ['USER'], host=socket.getfqdn(), pphrase=None, timeout=None, silent=False ):
+def get_port( suite, owner=os.environ['USER'], host=hostname, pphrase=None, timeout=None, silent=False ):
     # Scan ports until a particular suite is found.
 
     # does this suite have a secure passphrase defined?
@@ -153,7 +154,7 @@ def get_port( suite, owner=os.environ['USER'], host=socket.getfqdn(), pphrase=No
                 pass
     raise SuiteNotFoundError, "Suite not running: " + suiteid( suite, owner, host )
 
-def check_port( suite, port, owner=os.environ['USER'], host=socket.getfqdn(), timeout=None, silent=False ):
+def check_port( suite, port, owner=os.environ['USER'], host=hostname, timeout=None, silent=False ):
     # is a particular suite running at host:port?
 
     # does this suite have a secure passphrase defined?

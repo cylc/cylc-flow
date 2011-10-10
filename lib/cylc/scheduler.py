@@ -21,7 +21,7 @@
 from task_types import task
 from task_types import clocktriggered
 from prerequisites.plain_prerequisites import plain_prerequisites
-import socket
+from hostname import hostname
 import logging
 import datetime
 import port_scan
@@ -64,7 +64,7 @@ class scheduler(object):
         self.owner = os.environ['USER']
 
         # SUITE HOST
-        self.host= socket.getfqdn()
+        self.host= hostname
 
         # STARTUP BANNER
         self.banner = {}
