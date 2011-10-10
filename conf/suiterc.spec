@@ -62,7 +62,7 @@ description = string( default="No description provided" )
 [scheduling]
     initial cycle time = integer( default=None )
     final cycle time = integer( default=None )
-    runahead limit = integer( min=0, default=24 )
+    runahead limit = integer( min=0, default=25 )
     [[special tasks]]
         clock-triggered = force_list( default=list())
         start-up = force_list( default=list())
