@@ -262,6 +262,22 @@ available method can be used but the default is probably sufficient for simulati
     \item {\em default:} \lstinline=background=
 \end{myitemize}
 
+\paragraph[{[[[}event hooks{]]]} ]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ [[[event hooks]]]} 
+
+Configure event hooks for simulation mode.
+
+\subparagraph[method]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ enable } 
+
+Currently event hooks are ignored by default in simulation mode. If you 
+enable them, be aware that timeouts are relative to the accelerated
+simulation mode clock (which normally runs very quickly) and may need to
+be redefined accordingly.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} Fals=
+\end{myitemize}
+
 \subsection{[scheduling]}
 
 This section provides cylc with the information it needs to determine

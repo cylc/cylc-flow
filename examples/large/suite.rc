@@ -162,6 +162,8 @@ description = "EcoConnect Operation, circa August 2011"
             SYS = "${USER##*_}"
             ARCHIVE = /$SYS/archive/ecoconnect
         [[[event hooks]]]
+            # note that timeout values are redefined in some tasks
+            # ALSO: event hooks are ignored by default in simulation mode.
             script = nagios.sh
             events = started,failed,succeeded,submission_failed,timeout
             submission timeout = 2
