@@ -562,6 +562,7 @@ class scheduler(object):
                     self.stop_task = None
 
             self.check_timeouts()
+            self.release_runahead()
 
             # REMOTE METHOD HANDLING; with no timeout and single- threaded pyro,
             # handleRequests() returns after one or more remote method
@@ -579,30 +580,23 @@ class scheduler(object):
 
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
-        answer = False
+        process = False
         if task.state_changed:
-            # cause one pass through the main loop
-            answer = True
             # reset task.state_changed
             task.state_changed = False
-            
-        if self.remote.process_tasks:
-            # cause one pass through the main loop
-            answer = True
+            process = True
+        elif self.remote.process_tasks:
             # reset the remote control flag
             self.remote.process_tasks = False
-            
-        if self.waiting_clocktriggered_task_ready():
-            # This method actually returns True if ANY task is ready to run,
+            process = True
+        elif self.waiting_clocktriggered_task_ready():
+            # This actually returns True if ANY task is ready to run,
             # not just clock-triggered tasks (but this should not matter).
             # For a clock-triggered task, this means its time offset is
-            # up AND prerequisites are satisfied, so it can't result in
-            # multiple passes through the main loop.
-
-            # cause one pass through the main loop
-            answer = True
-
-        return answer
+            # up AND its prerequisites are satisfied; it won't result
+            # in multiple passes through the main loop.
+            process = True
+        return process
 
     def shutdown( self ):
         # called by main command
@@ -788,21 +782,21 @@ class scheduler(object):
                 # on its special family member prerequisites.
                 itask.check_requisites()
 
+    def release_runahead( self ):
+        if self.runahead_limit:
+            ouct = self.get_oldest_unfailed_c_time() 
+            for itask in self.cycling_tasks:
+                if itask.state.is_runahead():
+                    foo = ct( itask.c_time )
+                    foo.decrement( hours=self.runahead_limit )
+                    if int( foo.get() ) < int( ouct ):
+                        itask.log( 'DEBUG', "RELEASING (runahead limit)" )
+                        itask.state.set_status('waiting')
+
     def run_tasks( self ):
         # tell each task to run if it is ready
         global graphing_disabled
-        ouct = self.get_oldest_unfailed_c_time() 
         for itask in self.cycling_tasks:
-            if self.runahead_limit and ( itask.state.is_waiting() or itask.state.is_runahead() ):
-                foo = ct( itask.c_time )
-                foo.decrement( hours=self.runahead_limit )
-                if int( foo.get() ) >= int( ouct ):
-                    # beyond the runahead limit
-                    itask.log( 'DEBUG', "HOLDING (runahead limit)" )
-                    itask.state.set_status('runahead')
-                else:
-                    itask.state.set_status('waiting')
-
             if itask.run_if_ready():
                 if not graphing_disabled:
                     if not self.runtime_graph_finalized:
@@ -831,16 +825,22 @@ class scheduler(object):
             # this task has a stop time configured, and we've reached it
             new_task.log( 'WARNING', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
             new_task.state.set_status('held')
- 
+        elif self.runahead_limit:
+            ouct = self.get_oldest_unfailed_c_time() 
+            foo = ct( new_task.c_time )
+            foo.decrement( hours=self.runahead_limit )
+            if int( foo.get() ) >= int( ouct ):
+                # beyond the runahead limit
+                new_task.log( 'DEBUG', "HOLDING (runahead limit)" )
+                new_task.state.set_status('runahead')
+
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
         # the slowest task, and if foo(T) spawns
-        #--
 
         for itask in self.cycling_tasks:
             if itask.ready_to_spawn():
                 itask.log( 'DEBUG', 'spawning')
-
                 # dynamic task object creation by task and module name
                 new_task = itask.spawn( 'waiting' )
                 self.check_hold_spawned_task( itask, new_task )
