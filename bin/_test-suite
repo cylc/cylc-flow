@@ -114,7 +114,7 @@ echo
 echo ">> WAITING for suite to stall at 2010010112 due to failed X"
 echo -n "   ."
 while true; do
-    cylc dump $SUITE_REG | grep running > /dev/null 2>&1 || break
+    cylc dump $SUITE_REG | egrep 'running|submitted' > /dev/null 2>&1 || break
     echo -n .
     sleep 1
 done
