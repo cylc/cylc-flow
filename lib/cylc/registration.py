@@ -212,12 +212,17 @@ class regdb(object):
             # no file: no suites registered  yet
             self.mtime_at_load = time.time()
             return
+
         input = open( self.file, 'rb' )
-        try:
-            self.items = pickle.load( input )
-        except Exception, x:
-            input.close()
-            raise RegistrationError, 'ERROR: failed to read database, ' + self.file
+        while True:
+            try:
+                self.items = pickle.load( input )
+            except Exception, x:
+                print >> sys.stderr, 'WARNING, failed to unpickle suite database  ' + self.file
+                print >> sys.stderr, 'Trying again in 1 second ...'
+                time.sleep(1)
+            else:
+                break
         input.close()
         # record state at load
         self.statehash = self.get_hash()
