@@ -26,9 +26,9 @@ Register an alias for suite. Using the alias on the command line is
 entirely equivalent to using target suite name (and if you run a suite
 via an alias, run time identity will correspond to the target suite).
 
-  $ cylc alias global:ensemble:parallel:test3 bob
+  $ cylc alias global.ensemble.parallel.test3 bob
   $ cylc edit bob
-  $ cylc run  bob     # work with global:ensemble:parallel:test3
+  $ cylc run  bob     # work with global.ensemble.parallel.test3
   $ cylc stop bob
 
 This differs from registering the target suite definition under another
