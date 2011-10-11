@@ -320,9 +320,13 @@ class MainApp(object):
         file_menu_root = gtk.MenuItem( '_File' )
         file_menu_root.set_submenu( file_menu )
 
-        self.reg_new_item = gtk.MenuItem( '_New Suite Registration' )
+        self.reg_new_item = gtk.MenuItem( '_Register Existing Suite' )
         self.reg_new_item.connect( 'activate', self.newreg_popup )
         file_menu.append( self.reg_new_item )
+
+        self.reg_new_item2 = gtk.MenuItem( '_Register A New Suite' )
+        self.reg_new_item2.connect( 'activate', self.newreg2_popup )
+        file_menu.append( self.reg_new_item2 )
 
         exit_item = gtk.MenuItem( 'E_xit gcylc' )
         exit_item.connect( 'activate', self.delete_all_event, None )
@@ -519,7 +523,7 @@ The cylc forecast suite metascheduler.
         self.updater.start()
 
     def newreg_popup( self, w ):
-        dialog = gtk.FileChooserDialog(title='Register A Suite',
+        dialog = gtk.FileChooserDialog(title='Register Existing Suite (choose a suite.rc file)',
                 action=gtk.FILE_CHOOSER_ACTION_OPEN,
                 buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,
                     gtk.STOCK_OPEN,gtk.RESPONSE_OK))
@@ -539,7 +543,67 @@ The cylc forecast suite metascheduler.
 
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Register A Suite" )
+        window.set_title( "New Registration" )
+
+        vbox = gtk.VBox()
+
+        label = gtk.Label( 'PATH: ' + dir )
+        vbox.pack_start( label, True )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'SUITE:' )
+        box.pack_start( label, True )
+        as_entry = gtk.Entry()
+        box.pack_start (as_entry, True)
+        vbox.pack_start( box )
+
+        cancel_button = gtk.Button( "_Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        apply_button = gtk.Button( "_Register" )
+        apply_button.connect("clicked", self.new_reg, window, dir, as_entry )
+
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", self.command_help, 'db', 'register' )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( apply_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def newreg2_popup( self, w ):
+        dialog = gtk.FileChooserDialog(title='Register New Suite (choose or create suite definition directory)',
+                action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,
+                    gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+
+        response = dialog.run()
+        if response != gtk.RESPONSE_OK:
+            dialog.destroy()
+            return False
+
+        res = dialog.get_filename()
+        dialog.destroy()
+
+        if os.path.isdir( res ):
+            suiterc = os.path.join( res, 'suite.rc' )
+        else:
+            warning_dialog( res + " is not a directory" ).warn()
+            return False
+            
+        if not os.path.isfile( suiterc ):
+            info_dialog( "creating empty suite.rc file: " + suiterc ).inform()
+            os.system( 'touch ' + suiterc )
+
+        dir = os.path.dirname( suiterc )
+
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "New Suite" )
 
         vbox = gtk.VBox()
 

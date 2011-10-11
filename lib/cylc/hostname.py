@@ -19,5 +19,5 @@ except:
         print >> sys.stderr, "  ... got", hostname
     #except socket.gaierror:  # (any exception here will do)
     except:
-        print >> sys.stderr, "ERROR: Unable to determine hostname. Check your network settings."
+        print >> sys.stderr, "ERROR: Unable to determine hostname. Check network settings."
         sys.exit(1)

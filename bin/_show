@@ -25,10 +25,10 @@ from cylc.registration import dbgetter, RegistrationError
 
 parser = NoPromptOptionParser_u( """cylc [info] show [options] SUITE [NAME[%TAG]]
 
-Print global or task-specific information from a running suite: title and
-task list, task descriptions, current state of task prerequisites and
-outputs and, for clock-triggered tasks, whether or not their delayed
-start time has been reached.""",
+Print global or task-specific information from a running suite: title
+and task list, task descriptions, current state of task prerequisites
+and outputs and, for clock-triggered tasks, whether the delayed start
+time is up yet.""",
 ["""NAME                 Name of a task type. 
    TAG                  Cycle time, or asynchronous tag 'a:INT'."""] )
 
