@@ -1,8 +1,8 @@
 #/bin/bash
 set -e
 
-# A custom wrapper for the 'model' task from examples:detach.
-# See documentation in the Cylc User Guide, Section 8.4.3.
+# A custom wrapper for the 'model' task from examples:detaching.
+# See documentation in the Cylc User Guide.
 
 # Check inputs:
 # location of pristine native job scripts:

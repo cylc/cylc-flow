@@ -10,6 +10,8 @@ _greeting = HELLO
 [scheduling]
     initial cycle time = 2011010112
     final cycle time = 2011010312
+    [[special tasks]]
+        sequential = A  # (just to slow the suite down a bit)
     [[dependencies]]
         [[[12]]]
             graph = """

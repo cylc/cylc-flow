@@ -9,6 +9,7 @@ description  = "(Quick Start b plus real tasks)"
 # private running directory for its restart files).
  
 [scheduling]
+    runahead limit = 12
     initial cycle time = 2011010106
     final cycle time = 2011010200
     [[special tasks]]

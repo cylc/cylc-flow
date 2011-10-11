@@ -1,5 +1,5 @@
 # SUITE.RC
-title = "The suite.rc reference appendix example"
+title = "The suite.rc reference appendix example. NOT RUNNABLE."
 [scheduling]
     initial cycle time = 2011010106
     final cycle time = 2011010200
