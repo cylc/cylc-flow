@@ -7,7 +7,7 @@ usage() {
     echo "USAGE: cylc [admin] check-examples"
     echo ""
     echo "Check that all cylc example suites validate successfully."
-    echo "Should done immediatedly prior to rolling a new release."
+    echo "Do this immediatedly prior to rolling a new cylc release."
 }
 
 if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then
