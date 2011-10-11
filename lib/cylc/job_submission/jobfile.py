@@ -211,6 +211,9 @@ cd $CYLC_TASK_WORK_PATH""" % data )
         self.FILE.write( "\n" + self.postcommand_scripting )
 
     def write_work_directory_remove( self ):
+        if self.manual_messaging:
+            # don't remove the running directory of detaching tasks
+            return
         self.FILE.write( """
 
 # WORK DIRECTORY REMOVE
