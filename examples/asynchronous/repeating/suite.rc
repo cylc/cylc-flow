@@ -5,6 +5,8 @@ satellite pass or similar, plus some cycling tasks. Asynchronous
 processing runs in parallel if the data comes in quickly."""
 
 [scheduling]
+    initial cycle time = 2011010100
+    final cycle time = 2011010212
     [[dependencies]]
         # make everything wait on a oneoff asynchronous task
         graph = "prep"

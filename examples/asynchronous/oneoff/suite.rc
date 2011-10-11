@@ -1,8 +1,9 @@
 title = "demo suite: one-off asynchronous tasks"
-
 description = "A suite containing one-off asynchronous and cycling tasks."
 
 [scheduling]
+    initial cycle time = 2011010112
+    final cycle time = 2011010312
     [[dependencies]]
         graph = """one => two & three => four"""
         [[[12]]]

@@ -5,9 +5,10 @@ description = """This suite runs a single task that internally submits a
 to handle task completion messaging manually - see the User Guide 8.4.3."""
 
 [scheduling]
+    initial cycle time = 2011010106
+    final cycle time = 2011010200
     [[special tasks]]
         sequential = model
-
     [[dependencies]]
         [[[0,6,12,18]]]
         graph = "model"

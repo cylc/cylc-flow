@@ -1,6 +1,8 @@
 # SUITE.RC
 title = "The suite.rc reference appendix example"
 [scheduling]
+    initial cycle time = 2011010106
+    final cycle time = 2011010200
     [[dependencies]]
         graph = "foo => obs => bar"
              # (this is shorthand for "foo => land & ship => bar")

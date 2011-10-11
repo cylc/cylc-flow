@@ -8,9 +8,8 @@ A suite containing families with extra-family dependencies."""
 _greeting = HELLO
 
 [scheduling]
-    [[special tasks]]
-        sequential = FAMx 
-
+    initial cycle time = 2011010112
+    final cycle time = 2011010312
     [[dependencies]]
         [[[12]]]
             graph = """

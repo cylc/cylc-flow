@@ -6,8 +6,8 @@ To see the effect, examine task job scripts generated with the
 'cylc util jobscript' command."""
 
 [scheduling]
-    initial cycle time = 2010080800
-    final cycle time = 2010080900
+    initial cycle time = 2011010100
+    final cycle time = 2011010300
     [[dependencies]]
         [[[0]]]
             graph = """

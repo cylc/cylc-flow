@@ -1,4 +1,6 @@
 [scheduling]
+    initial cycle time = 2011010100
+    final cycle time = 2011010200
     [[special tasks]]
         start-up = prep1, prep2
     [[dependencies]]

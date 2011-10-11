@@ -18,8 +18,8 @@ description = "EcoConnect Operation, circa August 2011"
 
 [scheduling]
     runahead limit = 48
-    initial cycle time = 2010080806
-    final cycle time = 2010080806
+    initial cycle time = 2011010106
+    final cycle time = 2011010206
 
     [[special tasks]]
         sequential = topnet, ricom, nztide, mos_nzlam_coeffs, \

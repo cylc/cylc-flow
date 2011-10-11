@@ -3,6 +3,8 @@ description = "(see the Cylc User Guide)"
  
 [scheduling]
     runahead limit = 12
+    initial cycle time = 2011010106
+    final cycle time = 2011010200
     [[special tasks]]
         start-up        = Prep
         clock-triggered = GetData(1)

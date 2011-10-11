@@ -6,6 +6,8 @@ the task names are generated automatically by a Python expression (a
 in which the task names are listed explicitly."""
 
 [scheduling]
+    initial cycle time = 2011010106
+    final cycle time = 2011010200
     [[special tasks]]
         sequential = foo    # just to slow the suite down a bit
     [[dependencies]]

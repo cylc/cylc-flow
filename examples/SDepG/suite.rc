@@ -6,6 +6,8 @@ because no cold start task has been defined to satisfy its initial
 restart dependencies."""
 
 [scheduling]
+    initial cycle time = 2011010106
+    final cycle time = 2011010200
     [[dependencies]]
         [[[0,6,12,18]]] # hours
             graph = """
