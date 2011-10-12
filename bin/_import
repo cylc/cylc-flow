@@ -22,13 +22,16 @@ from optparse import OptionParser
 
 parser = OptionParser( usage = """cylc [db] import [OPTIONS] SOURCE [TARGET] TOPDIR
 
-Import suites from the central registration database.
+Import suites or groups of suites from the central registration database
+to your private database. Import semantics are the same as for the copy
+command. The directory path of imported suite definitions under TOPDIR 
+will reflect the corresponding suite names, with '.' replaced by '/'.
+See 'cylc db copy --help' for examples.
 
 Arguments:
-    SOURCE    - Central database registration
-    TARGET    - Private database registration
-                (omit TARGET to keep the central reg)
-    TOPDIR    - top level directory for the imported suite definition.""" )
+    SOURCE    - Central suite or group (e.g. alice.lam.test).
+   [TARGET]   - Private suite or group (omit to use SOURCE: lam.test).
+    TOPDIR    - Top directory for imported suite definitions.""" )
 
 parser.add_option( "-v","--verbose",
         help="Print extra information.",

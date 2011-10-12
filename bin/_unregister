@@ -31,7 +31,7 @@ If you accidentally unregister a running suite, just register it again
 under the original name to regain access to it.
 
 Arguments:
-    SUITE - suite or group registration, or filter expression.""" )
+    SUITE - suite or group name, or filter expression.""" )
 
 parser.add_option( "-d", "--delete",
         help="Delete the suite definition directory too (!DANGEROUS!).",

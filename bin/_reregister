@@ -22,10 +22,12 @@ from cylc.registration import dbgetter, RegistrationError, DatabaseLockedError
 
 parser = OptionParser( usage = """cylc [db] reregister|rename [options] SOURCE TARGET
 
-Change the registration path of a suite or group.
+Change the hierarchical registration name of a suite or group.
+Example:
+  cylc db rereg foo.bar.baz test.baz
 
 Arguments:
-    SOURCE, TARGET  - suite or group registrations.""" )
+    SOURCE, TARGET  - suite or group names.""" )
 
 parser.add_option( "-c", "--central",
         help="Target the central suite database.",
