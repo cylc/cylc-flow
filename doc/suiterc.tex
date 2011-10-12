@@ -15,6 +15,9 @@ files.
 
 \subsection{Top Level Items}
 
+The only top level configuration items at present are the suite title
+and description.
+
 \subsubsection{title}
 
 The suite title is displayed in the gcylc suite database window. It can
@@ -39,7 +42,8 @@ can also be retrieved from a suite at run time with
 
 \subsection{[cylc]}
 
-This section is for aspects of suite configuration that are not task-related.
+This section is for suite configuration that is not specifically
+task-related.
 
 \subsubsection[UTC mode]{ [cylc] $\rightarrow$ UTC mode}
 
@@ -266,22 +270,22 @@ available method can be used but the default is probably sufficient for simulati
 
 Configure event hooks for simulation mode.
 
-\subparagraph[method]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ enable } 
+\subparagraph[enable]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ enable } 
 
-Currently event hooks are ignored by default in simulation mode. If you 
-enable them, be aware that timeouts are relative to the accelerated
-simulation mode clock (which normally runs very quickly) and may need to
-be redefined accordingly.
+Currently event hooks are disabled by default in simulation mode. They
+can be enabled in order to test automated alerts, for example, without
+running the real suite tasks, but be aware that timeouts will be 
+relative to the accelerated simulation mode clock which by default runs
+very quickly.
 
 \begin{myitemize}
     \item {\em type:} boolean
-    \item {\em default:} Fals=
+    \item {\em default:} False
 \end{myitemize}
 
 \subsection{[scheduling]}
 
-This section provides cylc with the information it needs to determine
-when tasks are ready to run.
+This section determines when tasks are ready to run.
 
 \subsubsection[initial cycle time]{[scheduling] $\rightarrow$ initial cycle time}
 
@@ -559,21 +563,47 @@ is associated with a particular asynchronous ID.
 \subsection{[runtime]}
 
 This section defines how, where, and what to execute when tasks are
-ready to run. Subsections below define an inheritance hierarchy of 
-{\em namespaces}, described in Section~\ref{NIORP}, culminating in
-individual tasks.
+ready to run. Runtime subsections define an inheritance hierarchy of 
+{\em namespaces}, each of which represents a family of tasks or an
+individual task, as described in Section~\ref{NIORP}).
 
 \subsubsection[{[[}\_\_NAME\_\_{]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]]}
 
-Replace \_\_NAME\_\_ with each namespace (family or task) name. 
+Replace \_\_NAME\_\_ with a namespace name, or a comma separated list of
+names, or a Python expression that generates a list of names; and repeat
+as needed to define all tasks in the suite.
+
+A namespace represents a family if several other namespaces inherit from
+it; it represents an individual task if it is a leaf on the inheritance
+tree (i.e.\ no other namespaces inherit from it).
+
+\begin{myitemize}
+\item {\em legal values:} 
+    \begin{myitemize}
+        \item \lstinline=[[foo]]=
+        \item \lstinline=[[foo, bar, baz]]=
+        \item \lstinline=[['Python:list( "m" + str(i) for i in range(0,25))']]=
+    \end{myitemize}
+\end{myitemize}
+
+If multiple names are listed, the subsequent namespace configuration
+items apply to each member, but any instance of \lstinline=$(TASK)= 
+in any value will be replaced by cylc with the actual namespace name.
+This can be used to define many tasks that are almost identical.
+
 All namespaces inherit initially from {\em root}, which you can
 explicitly configure to override or provide default runtime settings for
 all tasks in the suite.
 
 \paragraph[inherit]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ inherit}
 
+Specify another namepace here that this one should inherit all of its
+runtime configuration from; specific items can then be overridden as
+required. Note that many of the available items are left undefined even
+in the root namespace.
+
 \begin{myitemize}
-\item {\em type:} namespace to inherit from
+\item {\em type:} string (another namespace name)
 \item {\em default:} root
 \end{myitemize}
 
@@ -660,7 +690,8 @@ scripts to run.
 \label{RuntimeJobSubMethods}
 
 Cylc currently has a handful of defined job submission methods.
-See also {\em Task Execution}, Section~\ref{TaskExecution}.
+{\em Task Job Submission} (Section~\ref{TaskJobSubmission}) 
+explains how job submission works, and how to define new methods.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -710,21 +741,20 @@ to be modified slightly to allow use of the C shell.
 \subparagraph[log directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ log directory}
 \label{LocalLog}
 
-This log directory is used for the task job script for local and remote
-tasks, and also for the task stdout and stderr logs for local tasks.
-It may contain environment variables, including the suite identity variables.
-%all environment variables are interpolated out before use?
-For tasks that don't resubmit internal sub-jobs and then detach, these
-stdout and stderr logs will be complete job logs.
-
+This is where task job scripts, and the stdout and stderr logs for local
+tasks, are written. The directory path may contain environment
+variables, including suite identity variables to make the path
+suite-specific (as the default value does).
 %? Remote tasks must also define a [[[remote]]] log directory. 
 %? For owned tasks, the suite owner's home directory is replaced by the
-%task owner's.
-
-The stdout and stderr log file names are constructed on the fly, with a
-unique numerical extension (seconds since epoch) so that rerunning a
-task will not overwrite its former log files. The filenames are recorded 
-for access via suite control GUIs.
+%? task owner's.
+The job script filename is constructed, just before job submission,
+from the task ID and {\em seconds since epoch}, and then {\em .out} and
+{\em .err} are appended to construct the stdout and stderr log names,
+respectively. These filenames are thus unique even if a task
+gets retriggered, and yet will be correctly time ordered if the log
+directory is listed. The filenames are also recorded by each task proxy 
+for access via cylc commands and the suite control GUIs.
 
 \begin{myitemize}
 \item {\em type:} string (directory path, may contain environment variables)
@@ -733,8 +763,8 @@ for access via suite control GUIs.
 
 \paragraph[{[[[}remote{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]]}
 
-Configuration of remote hosting requirements (i.e.\ tasks that run on 
-platforms other than the suite host). If a remote host is specified cylc
+Remote hosting configuration, for tasks that need to run on platforms
+other than the suite host. If a remote host is specified cylc
 will attempt to execute the task on that host by passwordless ssh.
 Relevant task scripts and executables, cylc itself, and possibly all or
 part of the suite definition directory, must be installed on the remote
@@ -904,10 +934,10 @@ Section~\ref{TaskExecutionEnvironment}.
 
 \subparagraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}
 
-Replace \_\_VARIABLE\_\_ with any number of environment variable
-assignment expressions valid in the job submission shell.  Order of
-definition is preserved, so values can refer to previously defined
-variables.
+Replace \_\_VARIABLE\_\_ with an environment variable assignment
+expression, which must be valid in the job submission shell, and repeat
+for as many environment variables as you need. Order of definition is
+preserved, so values can refer to previously defined variables.
 
 \begin{myitemize}
 \item {\em type:} string (any environment variable assignment
