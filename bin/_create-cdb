@@ -52,7 +52,7 @@ if [[ $CYLC_ADMIN_OVERRIDE ]]; then
     # HIDDEN OVERRIDE FOR USER GUIDE
     override=true
     CYLC_VERSION=x.y.z
-    TOP=cylc-$( echo $CYLC_VERSION | tr '.' ':' )
+    TOP=cylc-$( echo $CYLC_VERSION | tr '.' '-' )
 else
     CYLC_VERSION=$( cylc -v )
     if [[ $CYLC_VERSION == "THIS IS NOT A VERSIONED RELEASE" ]]; then
@@ -60,7 +60,7 @@ else
         CYLC_VERSION=$( git tag | tail -1 )X
     fi
     SSE=$( date +%s )
-    TOP=cylc-$( echo $CYLC_VERSION | tr '.' ':' )-$SSE
+    TOP=cylc-$( echo $CYLC_VERSION | tr '.' '-' )-$SSE
 fi
 
 echo " + Registering example suites"
