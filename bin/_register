@@ -31,6 +31,11 @@ directory paths but delimited by '.' (foo.bar.baz), allowing suites to
 be grouped and organised into tree-like structures. Groups are virtual
 and do not need to be explicitly created before use.
 
+Legal name characters are letters, digits, underscore, and hyphen. The
+period '.' is the registration hierarchy delimiter. Colon cannot be used
+because of the potential for trouble with PATH variables if the suite
+name is used in certain directory paths.
+
 EXAMPLES, for suite definition directories $TMPDIR/(one,two,three,four):
 
 % cylc db reg bob         $TMPDIR/one
