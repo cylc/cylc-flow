@@ -151,8 +151,8 @@ description = string( default="No description provided" )
             __many__ = string
 #__________________________________________________________VISUALIZATION
 [visualization]
-    initial cycle time = integer( default=2999010100 )
-    final cycle time = integer( default=2999010123 )
+    initial cycle time = integer( default=None )
+    final cycle time = integer( default=None )
     collapsed families = force_list( default=list() )
     use node color for edges = boolean( default=True )
     default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=box'))

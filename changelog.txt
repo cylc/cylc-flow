@@ -276,3 +276,7 @@ just not running them - this is more transparent to the user.
     - now applies if (Ttask-Toldest) >= limit (was '>'). This generally 
     makes the limit shorter by one cycle, but is more intuitive.
 
++ Default start and stop times, if defined, are now displayed in the 
+ GUI start panel.
+
+

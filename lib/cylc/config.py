@@ -296,6 +296,26 @@ class config( CylcConfigObj ):
 
         self.__check_tasks()
 
+        # Default visualization start and stop cycles (defined here
+        # rather than in the spec file so we can set a sensible stop
+        # time if only the start time is specified by the user).
+        vizfinal = False
+        vizstart = False
+        if self['visualization']['initial cycle time']:
+            vizstart = True
+        if self['visualization']['final cycle time']:
+            vizfinal = True
+
+        if vizstart and vizfinal:
+            pass
+        elif vizstart:
+            self['visualization']['final cycle time'] = self['visualization']['initial cycle time']
+        elif vizfinal:
+            self['visualization']['initial cycle time'] = self['visualization']['final cycle time']
+        else:
+            self['visualization']['initial cycle time'] = 2999010100
+            self['visualization']['final cycle time'] = 2999010123
+  
     def define_inheritance_tree( self, tree, hierarchy ):
         # combine inheritance hierarchies into a tree structure.
         for rt in hierarchy:

@@ -82,8 +82,8 @@ description = "No description provided" # DEFAULT
             # (none)
 
 [visualization]
-    initial cycle time = 2999010100  # DEFAULT
-    final cycle time = 2999010123 # DEFAULT
+    initial cycle time = 2999010100  # DEFAULT (via config.py, not suiterc.spec)
+    final cycle time = 2999010123 # DEFAULT (via config.py, not suiterc.spec)
     collapsed families = (none)
     use node color for edges = True  # DEFAULT
     default node attributes = 'style=unfilled', 'color=black', 'shape=box'  # DEFAULT

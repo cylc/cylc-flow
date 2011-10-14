@@ -1438,36 +1438,39 @@ The cylc forecast suite metascheduler.
         hbox.pack_start (warm_rb, True)
         vbox.pack_start( hbox, True )
 
-        override_cb = gtk.CheckButton( "Override default initial and final cycles?" )
-        vbox.pack_start(override_cb)
+        suite, rcfile = dbgetter(self.cdb).get_suite(reg)
+        try:
+            suiterc = config( suite, rcfile )
+        except SuiteConfigError, x:
+            warning_dialog( str(x) + \
+                    '\n\n Suite.rc parsing failed (needed\nfor default start and stop cycles.' ).warn()
+            return
+        defstartc = suiterc['visualization']['initial cycle time']
+        defstopc  = suiterc['visualization']['final cycle time']
  
         label = gtk.Label("[START]: " )
         start_entry = gtk.Entry()
         start_entry.set_max_length(10)
+        start_entry.set_text( str(defstartc) )
         ic_hbox = gtk.HBox()
         ic_hbox.pack_start( label )
         ic_hbox.pack_start(start_entry, True) 
-        start_entry.set_sensitive(False)
-        label.set_sensitive(False)
         vbox.pack_start(ic_hbox)
 
         label = gtk.Label("[STOP]:" )
         stop_entry = gtk.Entry()
         stop_entry.set_max_length(10)
+        stop_entry.set_text( str(defstopc) )
         fc_hbox = gtk.HBox()
         fc_hbox.pack_start( label )
         fc_hbox.pack_start(stop_entry, True) 
-        label.set_sensitive(False)
-        stop_entry.set_sensitive(False)
         vbox.pack_start (fc_hbox, True)
-
-        override_cb.connect( "toggled", self.override_cb_toggled, ic_hbox, fc_hbox )
 
         cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         ok_button = gtk.Button( "_Graph" )
         ok_button.connect("clicked", self.graph_suite, reg, suite_dir,
-                warm_rb, outputfile_entry, start_entry, stop_entry, override_cb )
+                warm_rb, outputfile_entry, start_entry, stop_entry )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", self.command_help, 'prep', 'graph' )
@@ -1481,13 +1484,6 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def override_cb_toggled( self, w, icbox, fcbox ):
-        for ch in icbox.get_children() + fcbox.get_children():
-            if w.get_active():
-                ch.set_sensitive(True)
-            else:
-                ch.set_sensitive(False)
-
     def search_suite( self, w, reg, nobin_cb, pattern_entry ):
         pattern = pattern_entry.get_text()
         options = ''
@@ -1499,17 +1495,14 @@ The cylc forecast suite metascheduler.
         foo.run()
 
     def graph_suite( self, w, reg, suite_dir, warm_rb, outputfile_entry,
-            start_entry, stop_entry, override_cb ):
+            start_entry, stop_entry ):
 
         options = ''
         ofile = outputfile_entry.get_text()
         if ofile != '':
             options += ' -o ' + ofile
 
-        if not override_cb.get_active():
-            start = ''
-            stop = ''
-        else:
+        if True:
             start = start_entry.get_text()
             stop = stop_entry.get_text()
             if start != '':
