@@ -93,6 +93,12 @@ class SuiteTakenError( RegistrationError ):
         if owner:
             self.msg += ' (' + owner + ')'
 
+class IllegalNameError( RegistrationError ):
+    def __init__( self, suite, owner=None ):
+        self.msg = "ERROR, illegal name: " + suite
+        if owner:
+            self.msg += ' (' + owner + ')'
+
 class NotAGroupError( RegistrationError ):
     def __init__( self, reg ):
         self.msg = "ERROR: " + reg + " is a registered suite, not a group."
@@ -125,10 +131,6 @@ class DatabaseLockedError( RegistrationError ):
 
 class OwnerError( RegistrationError ):
     pass
-
-class RegPathError( RegistrationError ):
-    def __init__( self, reg ):
-        self.msg = "ERROR, illegal registration path: " + reg
 
 class dbgetter:
     # Use to get unaliased suite registration data from an input registration.
@@ -241,6 +243,12 @@ class regdb(object):
                 print "   (database unchanged)"
 
     def register( self, suite, dir ):
+        # Suite names may contain word characters [a-zA-Z0-9_], and dots
+        # (the registration hierarchy delimiter), and hyphens. They may
+        # not contain colons because this would prevent use of reg name
+        # based paths in PATH variables
+        if re.search( '[^\w.-]', suite ):
+            raise IllegalNameError( suite ) 
         for key in self.items.keys():
             if key == suite:
                 raise SuiteTakenError, suite
