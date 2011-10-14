@@ -965,22 +965,22 @@ The cylc forecast suite metascheduler.
         vbox.pack_start( box )
 
         ic_box = gtk.HBox()
-        label = gtk.Label( 'START (cycle, may be optional)' )
+        label = gtk.Label( 'START (cycle)' )
         ic_box.pack_start( label, True )
         ctime_entry = gtk.Entry()
         ctime_entry.set_max_length(10)
-        #if self.suiterc['initial cycle time']:
-        #    ctime_entry.set_text( str(self.suiterc['initial cycle time']) )
+        if self.suiterc['scheduling']['initial cycle time']:
+            ctime_entry.set_text( str(self.suiterc['scheduling']['initial cycle time']) )
         ic_box.pack_start (ctime_entry, True)
         vbox.pack_start( ic_box )
 
         fc_box = gtk.HBox()
-        label = gtk.Label( 'STOP (cycle, always optional)' )
+        label = gtk.Label( 'STOP (cycle, optional)' )
         fc_box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(10)
-        #if self.suiterc['final cycle time']:
-        #    stoptime_entry.set_text( str(self.suiterc['final cycle time']) )
+        if self.suiterc['scheduling']['final cycle time']:
+            stoptime_entry.set_text( str(self.suiterc['scheduling']['final cycle time']) )
         fc_box.pack_start (stoptime_entry, True)
         vbox.pack_start( fc_box )
 
