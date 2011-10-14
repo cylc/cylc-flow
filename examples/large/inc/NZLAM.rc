@@ -232,7 +232,7 @@ directories to the suite output directory, renaming them appropriately."""
 
     [[nzlam_conv_sls]]
         inherit = NZLAM
-        description = "Converts the NZLAM UM met file to NetCDF format."
+        description = "Converts the NZLAM UM sls file to NetCDF format."
         command scripting = um_conv_nc.sh
         [[[environment]]]
             FILEIN  = sls_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12.um

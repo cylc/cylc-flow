@@ -2651,15 +2651,13 @@ not this is worth the effort depends on your needs.
 \label{NIORP}
 
 The \lstinline=[runtime]= section of a suite.rc file configures what to
-execute, and
-where and how, when tasks are ready to run. The sections immediately
-below [runtime] are, for want of a better term, {\em
-namespaces}\footnote{We use the
-term namespace in loose analogy with its meaning in modern programming
-languages.  Possible future enhancements to cylc, such as ability to
-import specific items from other namespaces rather than just wholesale
-inheritance, may tighten the analogy.} that define runtime properties
-for individual tasks or for families of tasks.
+execute, and where and how, when tasks are ready to run. The sections
+immediately below [runtime] are, for want of a better term, {\em
+namespaces}\footnote{We use the term namespace in loose analogy with its
+meaning in modern programming languages.  Possible future enhancements
+to cylc, such as ability to import specific items from other namespaces
+rather than just wholesale inheritance, may tighten the analogy.} that
+define runtime properties for individual tasks or for families of tasks.
 
 Every namespace contains the same set of configuration items (see the
 {\em Suite.rc Reference}, Appendix~\ref{SuiteRCReference}, for the
@@ -2679,6 +2677,19 @@ collapsed in suite graphs, and in the graph-based suite control GUI
 (this will also be added to the text treeview control GUI in a future
 release). See {\em Visualization} (Section~\ref{viso}) for more on this. 
 
+\subsubsection{Namespace Names}
+
+Namespace names may contain letters, digits, underscores, and hyphens.
+They may not contain colons (which would preclude use of directory paths
+involving the registration name in \lstinline=$PATH= variables). They 
+may not contain the `.' character (it will be interpreted 
+as the namespace hierarchy delimiter, separating groups and names). 
+{\em Task names should not be hardwired into task implementations.}
+Rather, task and suite identity should be extracted portably from the
+task execution environment supplied by cylc 
+(Section~\ref{TaskExecutionEnvironment}) - then to rename a task you
+can just change its name in the suite.rc file.
+
 \subsubsection{Root - Runtime Defaults}
 
 The root namespace, at the base of the inheritance hierarchy,
@@ -2694,15 +2705,6 @@ configuration item in Appendix~\ref{SuiteRCReference}, and
 Section~\ref{SuiteDefaults} shows them all in context. 
 You can override them or provide your own defaults for other items by
 explicitly configuring the root namespace. 
-
-\subsubsection{Names}
-
-Namespace (task and family) names can contain letters, digits, and
-underscores. {\em Task names should not be hard wired into task
-implementations} because task and suite identity can be extracted
-portably from the task execution environment supplied by cylc 
-(Section~\ref{TaskExecutionEnvironment}). Then to rename a task you
-can just change its name in the suite.rc file.
 
 \subsubsection{Defining Multiple Namespaces At Once}
 \label{MultiTaskDef}

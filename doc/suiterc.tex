@@ -573,6 +573,18 @@ Replace \_\_NAME\_\_ with a namespace name, or a comma separated list of
 names, or a Python expression that generates a list of names; and repeat
 as needed to define all tasks in the suite.
 
+Namespace names may contain letters, digits, underscores, and hyphens.
+They may not contain colons (which would preclude use of directory paths
+involving the registration name in \lstinline=$PATH= variables). They 
+may not contain the `.' character (it will be interpreted 
+as the namespace hierarchy delimiter, separating groups and names). 
+{\em Task names should not be hardwired into task implementations.}
+Rather, task and suite identity should be extracted portably from the
+task execution environment supplied by cylc 
+(Section~\ref{TaskExecutionEnvironment}) - then to rename a task you
+can just change its name in the suite.rc file.
+
+
 A namespace represents a family if several other namespaces inherit from
 it; it represents an individual task if it is a leaf on the inheritance
 tree (i.e.\ no other namespaces inherit from it).
