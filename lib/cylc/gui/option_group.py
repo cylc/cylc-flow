@@ -19,13 +19,16 @@
 import gtk
 
 class controlled_option_group(object):
-    def __init__( self, title, option=None ):
+    def __init__( self, title, option=None, reverse=False ):
         self.title = title
         self.option = option
         self.entries = {}        # name -> ( entry, label, option )
         self.arg_entries = {}    # name -> ( entry, label )
         self.checkbutton = gtk.CheckButton( title )
         self.checkbutton.connect( "toggled", self.greyout )
+        if reverse:
+            self.checkbutton.set_active(True)
+            self.greyout()
         
     def greyout( self, data=None ):
         if self.checkbutton.get_active():

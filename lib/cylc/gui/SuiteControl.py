@@ -57,6 +57,10 @@ and associated methods for their control widgets.
 
         self.suiterc = config( self.suite, os.path.join( self.suite_dir, 'suite.rc' ) )
 
+        self.sim_only=False
+        if self.suiterc['cylc']['simulation mode only']:
+            self.sim_only=True
+ 
         self.connection_lost = False # (not used)
         self.quitters = []
 
@@ -1004,7 +1008,7 @@ The cylc forecast suite metascheduler.
         rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ic_box, is_box, no_reset_cb )
         restart_rb.connect(   "toggled", self.startup_method, "re",   ic_box, is_box, no_reset_cb )
 
-        dmode_group = controlled_option_group( "Simulation Mode", "--simulation-mode" )
+        dmode_group = controlled_option_group( "Simulation Mode", option="--simulation-mode", reverse=self.sim_only )
         dmode_group.add_entry('Fail A Task (NAME%YYYYMMDDHH)', '--fail=')
         dmode_group.pack( vbox )
         
