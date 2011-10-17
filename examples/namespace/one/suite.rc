@@ -1,5 +1,7 @@
 # SUITE.RC
-title = "The suite.rc reference appendix example. NOT RUNNABLE."
+title = "User Guide [runtime] example."
+[cylc]
+    simulation mode only = True # (no task implementations)
 [scheduling]
     initial cycle time = 2011010106
     final cycle time = 2011010200
@@ -29,7 +31,7 @@ title = "The suite.rc reference appendix example. NOT RUNNABLE."
             RUNNING_DIR = $HOME/running/ship  # override obs environment
             OUTPUT_DIR = $HOME/output/ship    # add to obs environment
     [[foo]]
-        # dummy task - just inherits from root
+        # (just inherits from root)
 
-    # [[bar]] is implicitly defined and inherits from root (this is
-    # equivalent to the [[foo]] section above)
+    # The task [[bar]] is implicitly defined by its presence in the
+    # graph. It is also a dummy task that just inherits from root.

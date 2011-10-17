@@ -1647,8 +1647,8 @@ A cylc {\em suite definition directory} contains:
                 used by, suite tasks.
             \item Automatically added to \lstinline=$PATH= in task
                 execution environments.
-            \item Technically optional, as tasks can call external
-                commands, scripts, or programs; or can be scripted 
+            \item Technically optional as tasks can call external
+                commands, scripts, or programs; or they can be scripted 
                 entirely within the suite.rc file.
         \end{myitemize}
     \item {\bf Any other sub-directories and files} - documentation,
@@ -1656,7 +1656,8 @@ A cylc {\em suite definition directory} contains:
         \begin{myitemize}
             \item The entire directory tree is copied if you copy the
                 suite with cylc or gcylc.
-            \item Access via \lstinline=$CYLC_SUITE_DEF_PATH= at run time
+            \item Run time task access via 
+                \lstinline=$CYLC_SUITE_DEF_PATH= 
                 (Section~\ref{TaskExecutionEnvironment}).
             \item Holding everything in one place makes proper suite
                 revision control possible.
@@ -1734,8 +1735,8 @@ The following pseudo-listing illustrates suite.rc syntax:
 # a full line comment
 an item = value # a trailing comment
 a boolean item = True # or False
-a string item = the quick brown fox # quotes optional ...
-another string item = "the quick, brown fox" # ... unless containing commas
+one string item = the quick brown fox # string quotes optional ...
+two string item = "the quick, brown fox" # ... unless internal commas
 a multiline string item = """the quick brown fox
 jumped over the lazy dog""" # triple quoted
 a list item = foo, bar, baz   # comma separated
@@ -1773,23 +1774,23 @@ Cylc suite.rc files consist of a suite title and description followed by
 configuration items grouped under several top level section headings:
 
 \begin{myitemize}
-    \item {\bf [cylc] } - aspects of suite configuration that are not task-related, e.g.:
+    \item {\bf [cylc] } - {\em non task-related suite configuration}
         \begin{myitemize}
-            \item simulation mode
-            \item suite logging and state dump directories
+            \item suite logging directories, simulation mode, UTC mode, etc.
         \end{myitemize}
-    \item {\bf [scheduling] } - determines when tasks are ready to run.
+    \item {\bf [scheduling] } - {\em determines when tasks are ready to run}
         \begin{myitemize}
-            \item lists of tasks with special behaviour (e.g. clock-triggered tasks)
-            \item the suite dependency graph, defining the relationships
-                between tasks
+            \item tasks with special behaviour, e.g. clock-triggered tasks
+            \item the dependency graph, defines relationships between tasks
         \end{myitemize}
-    \item {\bf [runtime] } - how, where, and what to execute when a task is ready to run.
+    \item {\bf [runtime] } - {\em determines how, where, and what to
+        execute when tasks are ready}
         \begin{myitemize}
-            \item command scripting, environment, job submission
-                methods, remote hosting, etc.
-            \item a {\em namespace inheritance hierarchy} groups common properties.
-            \item suite-wide defaults in the {\em root} namespace.
+            \item command scripting, environment, job submission, remote
+                hosting, etc.
+            \item suite-wide defaults in the {\em root} namespace
+            \item a nested family hierarchy with common properties
+                inherited by related tasks
         \end{myitemize}
     \item {\bf [visualization] } - suite graphing and the graph-based control GUI.
 \end{myitemize}
@@ -1819,8 +1820,8 @@ _validate foo.bar failed:  1
 
 If the suite.rc file contains include-files use \lstinline=cylc inline=
 (or the gcylc right-click `Edit' inline option) to view an inlined copy
-with correct line numbers.
-
+with correct line numbers (you can also edit suites in a temporarily
+inlined state using \lstinline=cylc edit --inline=).
 
 \subsubsection{String Interpolation}
 
@@ -1845,6 +1846,7 @@ Then, assuming this suite is registered as \lstinline=foo=,
 \subsection{Scheduling - Dependency Graphs}
 \label{DependencyGraphs}
  
+\lstset{language=suiterc}
 The \lstinline=[scheduling]= section of a suite.rc file defines the
 relationships
 between tasks in a suite - the information that allows cylc to determine
@@ -1873,10 +1875,10 @@ the suite graph, plotted with,
 % cylc graph SDepG 2011052200 2011052206
 # (or use right-click Graph in gcylc)
 \end{lstlisting}
-This is actually a complete valid suite that you can run (it runs
-dummy tasks according to the suite graph, because no runtime 
-properties have been defined, and you'll need to trigger task A manually
-to get the suite started because A[T] depends on A[T-6] and at
+This is actually a complete, valid, runnable suite (it will use default 
+runtime properties such as dummy command scripting, because no runtime 
+properties are explicitly defined, and you'll need to trigger task A
+manually to get the suite started because A[T] depends on A[T-6] and at
 start-up there is no previous cycle to satisfy that dependence - how to
 handle this properly is described in 
 {\em Satisfying Intercycle Dependencies At Start-Up}
@@ -2056,12 +2058,12 @@ and comments to make the graph structure as clear as possible.
 A suite definition can contain multiple graph strings that are combined
 to generate the final graph. There are different graph VALIDITY section
 headings (the heading of the suite.rc section that encloses the graph
-string) for one-off asynchronous, cycling, and repeating asynchronous
+string) for cycling, one-off asynchronous, and repeating asynchronous
 tasks. Additionally, there may be multiple graph strings (under different
-VALIDITY sections) for cycling tasks, if there are some tasks with
-different dependencies at different cycle times.
+VALIDITY sections) for cycling tasks, for tasks with different
+dependencies at different cycle times.
 
-{\bf The small suite definitions used in the following subsections can
+{\em The small suite definitions used in the following subsections can
 be found in the central database registered under the {\em validity}
 group name.} 
 
@@ -2515,15 +2517,16 @@ task A to satisfy B's prerequisites.
 
 A {\em cold-start} task is a special one-off task used to satisfy the
 initial previous-cycle dependence of another cotemporal task. In effect, 
-the cold-start task masquerades as its counterpart's previous-cycle trigger. 
+the cold-start task masquerades as the previous-cycle trigger of its
+associated cycling task. 
 
-A cold-start task may invoke real processing (to generate the files that
-are normally generated by the cycling task that it masquerades as) or it
-could be a dummy task that represents some external spinup process
-(presumably resulting in the same files) that has to be completed before
-the suite is started (in this case the cold-start task in cylc will just
-report itself successfully completed, thereby satisfying the
-aforementioned dependencies).
+A cold-start task may invoke real processing, probably to generate the
+files that are normally produced by the associated cycling task; or it
+could be a dummy task that represents some external spinup process,
+presumably resulting in the same files, that has to be completed before
+the suite is started. In the latter case the cold-start task can 
+just report itself successfully completed after checking that the 
+required files are present.
 
 This kind of relationship can easily be expressed with a conditional
 trigger:
@@ -2536,12 +2539,11 @@ trigger:
         [[[0,6,12,18]]]
             graph = "ColdFoo | Bar[T-6] => Foo"
 \end{lstlisting}
-Now the graph says that Foo[T] can trigger off {\em either} Bar[T-6] {\em or} 
-ColdFoo[T]. At start-up ColdFoo will do the job, and thereafter Bar[T-6]
-will do it.
+i.e.\ Foo[T] can trigger off {\em either} Bar[T-6] {\em or} ColdFoo[T].
+At start-up ColdFoo will do the job, and thereafter Bar[T-6] will do it.
 
-{\em A cold-task can also be inserted into the suite at run time 
-to cold-start just the task that it is associated with, if a problem of 
+{\em Cold-start tasks can also be inserted into the suite at run time 
+to cold-start just their associated cycling tasks, if a problem of 
 some kind prevents continued normal cycling}.
 
 \paragraph{Warm-Starting A Suite}
@@ -2552,17 +2554,17 @@ but also because they play a critical role in suite warm-starts.
 A suite that has previously been running and was then shut down 
 can be warm-started at a particular cycle time, an alternative to {\em
 restarting} from a previous state (although restarting is preferred
-because a warm start is likely to involve re-running some of the tasks).
-Warm-starts assume the existence of a previous cycle (i.e.\ that any
-files from the previous cycle that are required by the
-new cycle will be in place already). So no cold-start tasks need to run
-{\em but} cylc itself doesn't know the details of the previous cycle (it
-would if you did a restart from the previous state rather than a warm
-start) so it still has to solve the bootstrapping problem to get the
-suite started. It does this by starting the suite with designated cold
-start tasks already in the succeeded state. In other words, the cold
-start tasks stand for the previous finished cycle, rather than actually
-running processes that masquerade as the previous cycle.
+because a warm start is likely to involve re-running some tasks).
+A warm-start assumes the existence of a previous cycle (i.e.\ that any
+files from the previous cycle required by the new cycle are in place
+already) so cold-start tasks do not need to run {\em but} cylc itself
+does not know the details of the previous cycle (it does in a restart,
+but not in a warm-start) so it still has to solve the bootstrapping
+problem to get the suite started. It does this by starting the suite
+with designated cold start tasks in the {\em succeeded} state - in other
+words finished cold start tasks stand in for the previous finished cycle,
+rather than pretending to be a running previous cycle as they do in a
+cold-start.
 
 \subsubsection{Model Restart Dependencies}
 \label{ModelRestartDependencies}
@@ -2650,12 +2652,12 @@ not this is worth the effort depends on your needs.
 
 The \lstinline=[runtime]= section of a suite.rc file configures what to
 execute, and where and how, when tasks are ready to run. The sections
-immediately below [runtime] are, for want of a better term, {\em
-namespaces}\footnote{We use the term namespace in loose analogy with its
+immediately below \lstinline=[runtime]= are, for want of a better term,
+{\em namespaces}\footnote{We use the term namespace in loose analogy with its
 meaning in modern programming languages.  Possible future enhancements
 to cylc, such as ability to import specific items from other namespaces
 rather than just wholesale inheritance, may tighten the analogy.} that
-define runtime properties for individual tasks or for families of tasks.
+define runtime properties for individual tasks and families of tasks.
 
 Every namespace contains the same set of configuration items (see the
 {\em Suite.rc Reference}, Appendix~\ref{SuiteRCReference}, for the
@@ -2675,17 +2677,27 @@ collapsed in suite graphs, and in the graph-based suite control GUI
 (this will also be added to the text treeview control GUI in a future
 release). See {\em Visualization} (Section~\ref{viso}) for more on this. 
 
+The following listing of the {\em namespace.one} example suite (which
+you can import from the central database if you like) illustrates basic
+runtime property inheritance. How it works should be reasonable clear by
+inspection; if not read on.
+
+\lstset{language=suiterc}
+\lstinputlisting{../examples/namespace/one/suite.rc}
+\lstset{language=transcript}
+
 \subsubsection{Namespace Names}
 
 Namespace names may contain letters, digits, underscores, and hyphens.
-They may not contain colons (which would preclude use of directory paths
-involving the registration name in \lstinline=$PATH= variables). They 
-may not contain the `.' character (it will be interpreted 
-as the namespace hierarchy delimiter, separating groups and names). 
-{\em Task names should not be hardwired into task implementations.}
-Rather, task and suite identity should be extracted portably from the
+They may not contain colons as that would preclude use of suite 
+registration names in shell \lstinline=$PATH= variables. The 
+`.' character is the suite registration hierarchy delimiter (which
+separates suite registration groups and names, e.g.\
+my\_suites.test.foo). 
+{\em Task names should not be hardwired into task implementations}
+because task and suite identity can be extracted portably from the
 task execution environment supplied by cylc 
-(Section~\ref{TaskExecutionEnvironment}) - then to rename a task you
+(Section~\ref{TaskExecutionEnvironment}) - then to rename a task, 
 can just change its name in the suite.rc file.
 
 \subsubsection{Root - Runtime Defaults}
@@ -2717,7 +2729,7 @@ Any occurrence of \lstinline=$(TASK)=, in any configuration items in
 the namespace, will be replaced with the actual name of the task or
 family prior to run time. 
 
-{\bf The two annotated {\em multidef} example suites use this feature.}
+{\em The two annotated {\em multidef} example suites use this feature.}
 
 \subsubsection{Task Execution Environment}
 \label{TaskExecutionEnvironment}
