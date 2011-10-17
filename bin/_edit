@@ -152,25 +152,24 @@ in your $EDITOR. This is a convenience so that you can edit the suite
 without having to remember the suite definition location.
 
 2/ Edit suite.rc files WITH INCLUDE-FILES INLINED between special
-markers. The file will be split into its constituent include-files
-again when you exit the editor.  Include-files can be nested or
-multiply-included (in which case only the first inclusion will be
-inlined).
+markers.  The real suite.rc file is temporarily replaced so that 
+THE INLINED SUITE.RC FILE IS THE "LIVE" FILE DURING EDITING. The 
+inlined suite.rc file gets split up again when you exit the
+editor. Include-files can be nested or multiply-included; in the
+latter case only the first inclusion is inlined (this serves to 
+prevent conflicting changes being made to the same file).
 
-3/ Remove backup files left by previous *inlined* edit sessions.
+3/ Remove backup files left by previous INLINED edit sessions.
 
-INLINED EDITING SAFETY: The suite.rc file and any include-files are
-automatically backed up prior to an inlined editing session. Then
-the original suite.rc file is replaced by the inlined version, with
-special include-file marker comments and a warning message at the top
-(so: YOU CAN USE THE SUITE WHILE THE INLINED EDIT SESSION IS STILL OPEN,
-and: if the editor is killed mid-session just start another session via
-this command to recover from the last saved inlined version of the
-file). On exiting the editor, if any of the original include files are
-found to have changed while the inlined file was being edited, you will
-be warned and the affected files will be written to safe backups instead
-of overwriting the originals. FOR LARGE OR IMPORTANT SUITES YOU SHOULD
-BE USING A REVISION CONTROL SYSTEM FOR ULTIMATE SAFETY IN ANY CASE.
+INLINED EDITING SAFETY: The suite.rc file and any include-files used 
+by it are automatically backed up prior to an inlined editing session.
+If the editor dies mid-session just invoke 'cylc edit -i' again to
+recover from the last saved inlined file. On exiting the editor, if any
+of the original include-files are found to have changed during editing
+(due to external intervention) you will be warned and the affected files
+will be written to new backups instead of overwriting the originals.
+FOR IMPORTANT SUITES YOU SHOULD USE REVISION CONTROL IN ANY CASE,
+regardless of inlined editing.
 
 The edit process is spawned in the foreground as follows:
   $(G)EDITOR suite.rc
