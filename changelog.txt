@@ -279,4 +279,8 @@ just not running them - this is more transparent to the user.
 + Default start and stop times, if defined, are now displayed in the 
  GUI start panel (and the same for suite graph plotting).
 
-
++ Inlined editing of suite.rc files that use include-files: the 
+ temporarily inlined file is now the live file during the editing
+ session - i.e. changes take effect, for graphing or running the
+ suite etc., whenever the inlined file is saved rather than on
+ exiting the edit session.
