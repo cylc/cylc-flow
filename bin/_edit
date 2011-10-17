@@ -39,12 +39,27 @@ def cleanup( suitedir ):
                 print ' + ' + re.sub( suitedir + '/', '', file )
                 os.unlink( os.path.join( root, file ))
 
-def include_files( inf ):
+def include_files( inf, level=None ):
     # using globals here for commonality across recursive calls:
     global suitedir
     global included
     global modtimes
     outf = []
+    if level == None:
+        # suite.rc itself
+        level = ''
+        outf.append("# !WARNING!\n" )
+        outf.append("# !WARNING! This suite.rc file has been inlined by 'cylc edit -i'. Include-files\n" )
+        outf.append("# !WARNING! are automatically split out, and this message removed, when the edit\n" )
+        outf.append("# !WARNING! session concludes. IF YOU ARE EDITING THIS FILE MANUALLY THEN EITHER:\n" )
+        outf.append("# !WARNING! (a) you have a concurrent inlined session; exit now and return to it\n" )
+        outf.append("# !WARNING!  OR\n" )
+        outf.append("# !WARNING! (b) a previous inlined session crashed; exit now and use 'cylc edit'\n" )
+        outf.append("# !WARNING!  to recover the session. Note also that 'cylc edit' backs up suite.rc\n" )
+        outf.append("# !WARNING!  and any include-files immediately prior to an inlined edit session.\n" )
+        outf.append("# !WARNING!\n" )
+    else:
+        level += ' > '
     for line in inf:
         m = re.match( '\s*%include\s+([\w/\-\.]+)\s*$', line )
         if m:
@@ -59,13 +74,13 @@ def include_files( inf ):
                 modtimes[inc] = os.stat( inc ).st_mtime
                 if os.path.isfile(inc):
                     #print " + inlining", inc
-                    outf.append('++++ START INLINED INCLUDE FILE ' + match  + ' (DO NOT DELETE THIS LINE!)\n')
+                    outf.append('#++++ START INLINED INCLUDE FILE ' + match  + ' (DO NOT DELETE THIS LINE!)\n')
                     h = open(inc, 'rb')
                     inc = h.readlines()
                     h.close()
                     # recursive inclusion
-                    outf.extend( include_files( inc ))
-                    outf.append('---- END INLINED INCLUDE FILE ' + match  + ' (DO NOT DELETE THIS LINE!)\n')
+                    outf.extend( include_files( inc, level ))
+                    outf.append('#---- END INLINED INCLUDE FILE ' + match  + ' (DO NOT DELETE THIS LINE!)\n')
                 else:
                     raise SystemExit( "File not found: " + inc )
             else:
@@ -76,29 +91,31 @@ def include_files( inf ):
     return outf
 
 def split_file( lines, file, level=None ):
-    if level == None:
-        level = ''
-    else:
-        level += ' > '
-
     global suitedir
     global modtimes
     global newfiles
 
-    # check mod time on the target file
-    mtime = os.stat( file ).st_mtime
-    if mtime != modtimes[file]:
-        # oops - original file has changed on disk since we started editing
-        f = re.sub( suitedir + '/', '', file )
-        file = file + '.EDIT.NEW.' + datetime.datetime.now().isoformat()
-    newfiles.append(file)
+    if level == None:
+        # suite.rc itself
+        level = ''
+    else:
+        level += ' > '
+        # check mod time on the target file
+        mtime = os.stat( file ).st_mtime
+        if mtime != modtimes[file]:
+            # oops - original file has changed on disk since we started editing
+            f = re.sub( suitedir + '/', '', file )
+            file = file + '.EDIT.NEW.' + datetime.datetime.now().isoformat()
+        newfiles.append(file)
 
     inclines = []
     fnew = open( file, 'wb' )
     match_on = False
     for line in lines:
+        if re.match( '^# !WARNING!', line ):
+            continue
         if not match_on:
-            m = re.match('^\+\+\+\+ START INLINED INCLUDE FILE ([\w\/\.\-]+)', line )
+            m = re.match('^#\+\+\+\+ START INLINED INCLUDE FILE ([\w\/\.\-]+)', line )
             if m:
                 match_on = True
                 inc_filename = m.groups()[0]
@@ -108,7 +125,7 @@ def split_file( lines, file, level=None ):
                 fnew.write(line)
         else:
             # match on, go to end of the 'on' include-file
-            m = re.match('^\-\-\-\- END INLINED INCLUDE FILE ' + inc_filename, line )
+            m = re.match('^#\-\-\-\- END INLINED INCLUDE FILE ' + inc_filename, line )
             if m:
                 match_on = False
                 # now split this lot, in case of nested inclusions
@@ -134,31 +151,30 @@ parser = OptionParser( """1/ cylc [prep] edit SUITE
 in your $EDITOR. This is a convenience so that you can edit the suite
 without having to remember the suite definition location.
 
-2/ Edit suite config (suite.rc) files with include-files inlined between
-special markers. After the file is saved *and you exit the editor* 
-the file will be split into its constituent include-files again. 
-This can be used for quick global suite editing when parameters of
-interest span several include-files. Include-files can be nested or
+2/ Edit suite.rc files WITH INCLUDE-FILES INLINED between special
+markers. The file will be split into its constituent include-files
+again when you exit the editor.  Include-files can be nested or
 multiply-included (in which case only the first inclusion will be
 inlined).
 
 3/ Remove backup files left by previous *inlined* edit sessions.
 
-SAFETY: If any of the original files are found to have changed while the
-inlined file is being edited, you will be warned on exiting the editor
-and the affected files will be written to safe backup copies instead of
-overwriting the originals.  This safety measure notwithstanding, it is
-recommended that you manage suite definitions with a revision control
-system so that (a) you can easily check that new changes are as you
-expect, and (b) you can easily back out in case of disaster.
-
-NOTE: in the inlined edit mode you must save and exit the editor
-before your changes are applied to the actual suite definition!
+INLINED EDITING SAFETY: The suite.rc file and any include-files are
+automatically backed up prior to an inlined editing session. Then
+the original suite.rc file is replaced by the inlined version, with
+special include-file marker comments and a warning message at the top
+(so: YOU CAN USE THE SUITE WHILE THE INLINED EDIT SESSION IS STILL OPEN,
+and: if the editor is killed mid-session just start another session via
+this command to recover from the last saved inlined version of the
+file). On exiting the editor, if any of the original include files are
+found to have changed while the inlined file was being edited, you will
+be warned and the affected files will be written to safe backups instead
+of overwriting the originals. FOR LARGE OR IMPORTANT SUITES YOU SHOULD
+BE USING A REVISION CONTROL SYSTEM FOR ULTIMATE SAFETY IN ANY CASE.
 
 The edit process is spawned in the foreground as follows:
-  (usage 1/): $(G)EDITOR suite.rc
-  (usage 2/): $(G)EDITOR <inlined-suite.rc-file in $TMPDIR>
-$GEDITOR or $EDITOR, and $TMDPIR, must be defined in your environment. 
+  $(G)EDITOR suite.rc
+$GEDITOR or $EDITOR, and $TMDPIR, must be in your environment. 
 
 Examples:
    export EDITOR=vim
@@ -286,7 +302,8 @@ else:
     parser.error("File not found: " + suiterc )
 
 # write the inlined suite.rc to a temporary file
-editfile = tempfile.mktemp( suffix = ".rc", prefix = suite + '.', dir = tmpdir )
+#editfile = tempfile.mktemp( suffix = ".rc", prefix = suite + '.', dir = tmpdir )
+editfile = suiterc
 h = open( editfile, 'wb' )
 h.writelines( lines )
 h.close()
