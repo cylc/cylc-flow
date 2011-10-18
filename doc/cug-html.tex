@@ -71,21 +71,23 @@ numbers=left,
 %%numberstyle=\color{Gray}
 }
 
-\lstset{
-language=bash,
-numbers=left,
-basicstyle=\color{basic}\ttfamily,
-}
-
 \lstdefinelanguage{transcript}
 {
+showstringspaces=false,
 string=[b]{"},
 comment=[l][\color{comments}]{\#},
 morecomment=[l][\color{command}]{\%},
 }
 
+%\lstset{
+%language=bash,
+%basicstyle=\color{blue}\ttfamily,
+%stringstyle=\color{black},
+%}
+
 \lstdefinelanguage{suiterc}
 {
+showstringspaces=false,
 string=[b]{"},
 sensitive=true,
 comment=[l]{\#},
@@ -159,7 +161,6 @@ basicstyle=\color{basic}\ttfamily,
     \setlength{\parsep}{0pt}
     \setlength{\topsep}{0pt}
     }{\end{enumerate}}
-
 
 
 \begin{document}

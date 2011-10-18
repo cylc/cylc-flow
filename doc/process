@@ -80,6 +80,6 @@ pdflatex cug-pdf.tex
 
 rm *.aux
 
-htlatex cug-html.tex "xhtml,3,next"
-htlatex cug-html.tex "xhtml,3,next"
+htlatex cug-html.tex "cug-html.cfg,xhtml,3,next"
+htlatex cug-html.tex "cug-html.cfg,xhtml,3,next"
 

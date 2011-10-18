@@ -7,8 +7,7 @@ usage() {
     echo "Make a release tarball from the cylc git repo in \$CYLC_DIR"
     echo "  \$CYLC_DIR and \$TMPDIR must be set."
     echo "If --tag is specified the repository will be tagged with"
-    echo "the new version number."
-    echo "Note that the release tarball ends up in \$HOME."
+    echo "the new version number. The tarball ends up in \$HOME."
 }
 TAG=false
 if [[ $# == 2 ]]; then
