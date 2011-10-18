@@ -318,19 +318,20 @@ gcylc suite start panel.
 
 \subsubsection[runahead limit]{[scheduling] $\rightarrow$ runahead limit}
 
-If a task's cycle time is greater than the oldest non-failed task by
-more than this limit, it will be prevented from spawning a successor
-until the slowest tasks catch up sufficiently. Failed tasks (which are
-not automatically removed from a suite) do not trigger the runahead
-limit (but downstream tasks that can't run because of them will).
-In real time operation the runahead limit is of little consequence
-because the suite will be constrained by its clock-triggered tasks
-(the limit must be long enough to cover the range of tasks present in
-the suite, however; a task that only runs once per day, for instance,
-needs to spawn 24 hours ahead). The runahead limit is intended to stop
-fast unconstrained tasks in historical trials (i.e.\ sustained catch up
-operation) from running off into the future and potentially
-swamping the system. 
+A cycling task spawns a successor either when it starts running or, for
+sequential tasks, when it finishes. If the successor's cycle time is
+ahead of the oldest non-failed task by more than the runahead limit it 
+will be put into special ``runahead held'' state until other tasks
+catch up sufficiently. Failed tasks (which are not automatically removed
+from a suite) do not activate the runahead limit, but downstream tasks
+that can't run because of them will. In real time operation the runahead
+limit is of little consequence because the suite will be constrained by
+its clock-triggered tasks (the limit must be long enough to cover the
+range of tasks present in the suite, however; a task that only runs once
+per day, for instance, needs to spawn 24 hours ahead). The runahead
+limit is intended to stop quick-running unconstrained tasks in
+historical trials (i.e.\ sustained catch up operation) from running off
+into the future and potentially swamping the system. 
 
 \begin{myitemize}
     \item {\em type:} integer ($\geq 0$, hours)
