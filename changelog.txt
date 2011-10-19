@@ -152,7 +152,7 @@ Version number X.Y.Z incrementing:
   suite.rc graph strings (i.e. tasks with different triggers at 
   different cycle times). 
 
-4.0.0 PENDING
+4.0.0-rc1
 
 + WARNING cylc-4.0 IS NOT ENTIRELY BACKWARD COMPATIBLE with 3.x
 due to significant changes to suite.rc structure and item names. 
@@ -284,3 +284,10 @@ just not running them - this is more transparent to the user.
  session - i.e. changes take effect, for graphing or running the
  suite etc., whenever the inlined file is saved rather than on
  exiting the edit session.
+
+ 4.0.0-rc2 PENDING
+
++ Bug fix: suite validation output aborted if an error occurred 
+during task proxy instantiation.
+
+
