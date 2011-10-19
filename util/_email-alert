@@ -2,12 +2,6 @@
 
 # A cylc task event hook script that sends an email when called. 
 
-# To get an email when any task in your suite fails, for example:
-#________________________________________________
-# (SUITE.RC)
-# task failed hook script = cylc email-alert
-#________________________________________________
-
 # Cylc calls event hook scripts with the following arguments:
 #   EVENT SUITE TASKID MESSAGE
 # See the Cylc User Guide Suite.rc Reference for more information.
@@ -20,9 +14,14 @@ usage() {
     echo "a task in your suite fails, for example, do this:"
     echo ""
     echo "# SUITE.RC"
-    echo "task failed hook script = cylc email-alert # globally or per task"
-    echo "[cylc local environment]"
-    echo "   MAIL_ADDRESS = foo@bar.baz.waz"
+    echo "[cylc]"
+    echo "   [[environment]]"
+    echo "      MAIL_ADDRESS = foo@bar.baz.waz"
+    echo "[runtime]"
+    echo "   [[__NAME__]]  # (namespace: 'root' or family or task name)"
+    echo "      [[[event hooks]]]"
+    echo "         events = failed"
+    echo "         script = cylc email-alert"
     echo ""
     echo "See the Suite.rc Reference (Cylc User Guide) for details."
 }
