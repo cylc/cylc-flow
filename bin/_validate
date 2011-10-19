@@ -108,4 +108,4 @@ if options.verbose:
 if valid:
     print "Suite " + suite + " validates OK."
 else:
-    print >> sys.stderr, "ERROR: Suite validation failed (errors detected)"
+    raise SystemExit( "ERROR: Suite validation failed (errors detected)" )

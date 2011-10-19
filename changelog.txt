@@ -290,4 +290,5 @@ just not running them - this is more transparent to the user.
 + Bug fix: suite validation output aborted if an error occurred 
 during task proxy instantiation.
 
++ 'cylc validate' now returns exit status 1 if validation fails.
 
