@@ -160,7 +160,7 @@ os.environ['PATH'] = suite_dir + '/bin:' + os.environ['PATH']
 # User-defined variables in the scheduler environment
 senv = config['cylc']['environment']
 for var in senv:
-    os.environ[var] = senv[var]
+    os.environ[var] = os.path.expandvars(senv[var])
 # Also put cylcenv variables in the scheduler environment
 for var in cylcenv:
     os.environ[var] = cylcenv[var]

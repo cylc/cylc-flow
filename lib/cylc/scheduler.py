@@ -365,7 +365,7 @@ class scheduler(object):
         # User defined local variables that may be required by alert scripts
         senv = self.config['cylc']['environment']
         for var in senv:
-            os.environ[var] = senv[var]
+            os.environ[var] = os.path.expandvars(senv[var])
 
         # suite identity for alert scripts (which are executed by the scheduler).
         # Also put cylcenv variables in the scheduler environment

@@ -2,7 +2,11 @@
 # This file shows ALL cylc configuration items in context, with defaults. 
 # Below, 'None' is the Python undefined value; '(none)' is more general.
 # ______________________________________________________________________
-# DEVELOPER NOTE: must be kept in sync with $CYLC_DIR/conf/suiterc.spec.
+# DEVELOPER NOTE: this file must be be kept up to date with the suite.rc
+# specification file $CYLC_DIR/conf/suiterc.spec, AND with higher level
+# handling of configuration items (e.g. remote logging directories
+# default to the local logging directories; this is effected within cylc
+# not via the specification file).
 
 title = "No title provided" # DEFAULT
 description = "No description provided" # DEFAULT
@@ -65,9 +69,9 @@ description = "No description provided" # DEFAULT
             host = None
             owner = None
             cylc directory = None
-            suite definition directory = None
+            suite definition directory = (local directory with '$HOME' replaced) # DEFAULT
+            log directory = (local directory with '$HOME' replaced) # DEFAULT
             remote shell template = 'ssh -oBatchMode=yes %s' # DEFAULT
-            log directory = None
         [[[event hooks]]]
             script = None
             events = (none)

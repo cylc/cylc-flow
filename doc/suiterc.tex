@@ -1,6 +1,8 @@
 \section{Suite.rc Reference}
 \label{SuiteRCReference}
 
+\lstset{language=bash}
+
 This appendix documents all legal entries in a suite.rc file. Most
 suites will only need to explicitly configure a few of these items -
 many of them have sensible default values, some may only be needed for
@@ -118,15 +120,16 @@ suite is started or restarted.
 
 \subsubsection[{[[}state dumps{]]}]{ [cylc] $\rightarrow$ [[state dumps]] }
 
- Suite state dump files allow cylc to restart a suite from previous
- states of operation. 
+ State dump files allow cylc to restart suites from previous states of
+ operation. 
 
 \paragraph[directory]{[cylc] $\rightarrow$ [[state dumps]] $\rightarrow$ directory}
 
- The default state dump file and its backups, and any special
- pre-intervention state dumps, are stored under this directory.  If you
- change the directory make sure it remains suite-specific by using
- suite identity environment variables in the path.
+ The rolling archive of suite state dump files, backups of the default 
+ state dump, and any special pre-intervention state dumps, are stored
+ under this directory.  If you change this directory make sure it
+ remains suite-specific by using suite identity environment variables in
+ the path.
 
 \begin{myitemize}
     \item {\em type:} string (directory path, may contain environment variables)
@@ -196,26 +199,20 @@ submission method - use task runtime environments for this purpose}.
 
 \paragraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}
 
-Replace \_\_VARIABLE\_\_ with any number of environment variable
-assignment expressions valid in the shell in which you run cylc. 
-Order of definition is preserved, so values can refer to previously
-defined variables.
+Replace \_\_VARIABLE\_\_ with an environment variable assignment and
+repeat for as many local environment variables as you need. 
+Values may contain local environment variables. General shell variable
+expansion expressions will not be expanded (these are legal in 
+task runtime environments, however).
 
-% !!!!!!!!! TO DO: TEST EXPANSION EXPRESSIONS ETC. !!!!!!!!!!!!!
-%
-%\begin{myitemize}
-%    \item {\em type:} multiple \lstinline@item = value@ lines
-%    \item {\em default:} (none)
-%    \item {\em legal values:} any valid environment variable assignment
-%        expression. White space around the `$=$' is fine (the
-%        \lstinline=suite.rc= file is not a shell script). 
-%    \item {\em examples:} 
-%        \begin{myitemize}
-%            \item \lstinline@FOO = $HOME/bar/baz@
-%            \item \lstinline@BAZ = $(echo "hello world")@
-%            \item \lstinline@WAZ = ${FOO%.jpg}.png@
-%        \end{myitemize}
-%\end{myitemize}
+\begin{myitemize}
+    \item {\em type:} string (may contain local environment variables).
+    \item {\em default:} (none)
+    \item {\em examples:} 
+        \begin{myitemize}
+            \item \lstinline@FOO = $HOME/foo@
+        \end{myitemize}
+\end{myitemize}
 
 \subsubsection[{[[}simulation mode{]]}]{[cylc] $\rightarrow$ [[simulation mode]] }
 
@@ -248,7 +245,8 @@ from a delay and subsequent transition to real time operation.
 
 The command scripting to execute for all tasks when running in simulation mode.
 \begin{myitemize}
-\item {\em type:} string
+\item {\em type:} string (scripting valid in job submission shell;
+    triple quote for multiple lines)
 \item {\em default:} \lstinline=echo SIMULATION MODE $CYLC_TASK_ID; sleep 10; echo BYE=
 \end{myitemize}
 
@@ -285,18 +283,17 @@ very quickly.
 
 \subsection{[scheduling]}
 
-This section determines when tasks are ready to run.
+This section allows cylc to determine when tasks are ready to run.
 
 \subsubsection[initial cycle time]{[scheduling] $\rightarrow$ initial cycle time}
 
 At startup each cycling task (unless specifically excluded under
 [special tasks]) will be inserted into the suite with this cycle time,
 or with the closest subsequent valid cycle time for the task. Note that
-whether or not {\em cold start tasks}, specified under [special tasks],
+whether or not {\em cold-start tasks}, specified under [special tasks],
 are inserted, and in what state they are inserted, depends on the start
-up method - cold, warm, or raw.  Alternatively you can provide or
-override the initial cycle time on the command line or in the gcylc
-suite start panel.
+up method - cold, warm, or raw.  If this item is provided you can 
+override it on the command line or in the gcylc suite start panel.
 
 \begin{myitemize}
     \item {\em type:} integer (YYYYMMDDHH)
@@ -307,9 +304,8 @@ suite start panel.
 
 Cycling tasks are held (i.e.\ not allowed to spawn a successor) once they
 pass the final cycle time, if one is specified. Once all tasks have
-achieved this state the suite will shut down. Alternatively you can
-provide, or override, the final cycle time on the command line or in the 
-gcylc suite start panel.
+achieved this state the suite will shut down. If this item is provided you 
+can override it on the command line or in the gcylc suite start panel.
 
 \begin{myitemize}
     \item {\em type:} integer (YYYYMMDDHH)
@@ -322,17 +318,16 @@ A cycling task spawns a successor either when it starts running or, for
 sequential tasks, when it finishes. If the successor's cycle time is
 ahead of the oldest non-failed task by more than the runahead limit it 
 will be put into special ``runahead held'' state until other tasks
-catch up sufficiently. Failed tasks (which are not automatically removed
-from a suite) do not activate the runahead limit, but downstream tasks
-that can't run because of them will. In real time operation the runahead
-limit is of little consequence because the suite will be constrained by
-its clock-triggered tasks (the limit must be long enough to cover the
-range of tasks present in the suite, however; a task that only runs once
-per day, for instance, needs to spawn 24 hours ahead). The runahead
-limit is intended to stop quick-running unconstrained tasks in
-historical trials (i.e.\ sustained catch up operation) from running off
-into the future and potentially swamping the system. 
-
+catch up sufficiently. This prevents quick-running unconstrained tasks
+in historical trials (i.e.\ sustained catch up operation) from running
+off into the future and potentially swamping the system. In real time
+operation the runahead limit is of little consequence because the suite
+will be constrained by its clock-triggered tasks (the limit must be long
+enough to cover the range of tasks present in the suite, however; a task
+that only runs once per day, for instance, needs to spawn 24 hours
+ahead).  Failed tasks, which are not automatically removed from a suite,
+are ignored when computing the runahead limit (but tasks that can't run
+because they depend on a failed task are not ignored). 
 \begin{myitemize}
     \item {\em type:} integer ($\geq 0$, hours)
     \item {\em default:} $24$
@@ -341,9 +336,10 @@ into the future and potentially swamping the system.
 \subsubsection[{[[}special tasks{]]}]{[scheduling] $\rightarrow$ [[special tasks]]}
 
 This section identifies any tasks with special behaviour. By default
-(non special behaviour) tasks submit as soon as their prerequisites are
-satisfied, and they spawn a successor at the next valid cycle time for
-the task as soon as they enter the running state\footnote{Spawning any
+(i.e.\ non ``special'' behaviour) tasks submit as soon as their
+prerequisites are satisfied, and they spawn a successor at the next
+valid cycle time for the task as soon as they enter the running
+state\footnote{Spawning any
 earlier than this brings no advantage in terms of functional
 parallelism.}
 
@@ -351,27 +347,24 @@ parallelism.}
 
 Clock-triggered tasks wait on a wall clock time specified as an offset
 {\em in hours} relative to their own cycle time, in addition to any
-dependence they have on other tasks. Generally speaking, only tasks that
-wait on external real time data need to be clock-triggered.
-
+dependence they have on other tasks. {\em Generally speaking, only tasks
+that wait on external real time data need to be clock-triggered}.
 \begin{myitemize}
     \item {\em type:} list of tasknames with offsets (hours, positive or negative)
     \item {\em default:} (none)
     \item {\em example:} \lstinline@clock-triggered = foo(1.5), bar(2.25)@
 \end{myitemize}
-
-Clock-triggered tasks currently can't be triggered manually prior to
-their trigger time. This will change in a future cylc release. In the
-meantime if you need to do this you can run the task manually outside of
-the suite with \lstinline=cylc submit=, and then force the in-suite task
-to the `succeeded' state so that downstream tasks can trigger off it. 
+{\em Clock-triggered tasks cannot be triggered manually prior to
+their trigger time}. Workaround: just run the task alone 
+with \lstinline=cylc submit= then set the in-suite task's state to
+`succeeded' so that downstream tasks can trigger off it. 
 
 \paragraph[start-up]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ start-up}
 
 Start-up tasks are one-off tasks that are only used when a suite is cold
-started (i.e.\ starting up without assuming any previous
-cycle). A start-up task can be used to clean out or prepare a suite
-workspace, for example, before other tasks run. 
+started (i.e.\ starting up without assuming any previous cycle). They
+can be used to clean out or prepare a suite workspace, for example,
+before other tasks run. 
 
 \begin{myitemize}
     \item {\em type:} list of task names
@@ -389,7 +382,7 @@ generated by its previous forecast, when there is no previous forecast.
 This is required when cold-starting the suite, but cold-start tasks can
 also be inserted into a running suite to restart a model that has had to
 skip some cycles after running into problems (e.g.\ critical
-inputs not available). Cold start tasks can invoke real cold-start
+inputs not available). Cold-start tasks can invoke real cold-start
 processes, or they can just be dummy tasks that represent some external
 process that has to be completed before the suite is started.
 
@@ -502,7 +495,11 @@ cycling tasks starting (if you make the first cycling tasks depend on
 the last one-off ones). But note that synchronous {\em start-up} tasks
 can also be used for the latter purpose.  See Section~\ref{GraphDescrip}
 below for graph string syntax, and Section~\ref{DependencyGraphs}.
-
+\begin{myitemize}
+    \item {\em type:} string 
+    \item {\em example:} (see Section~\ref{GraphDescrip} below)
+\end{myitemize}
+ 
 \paragraph[{[[[}\_\_VALIDITY\_\_{]]]}]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_VALIDITY\_\_]]]}
 
 Replace VALIDITY with a comma-separated list of integer hours, $0\leq
@@ -536,7 +533,7 @@ Section~\ref{DependencyGraphs}.
 graph = """
    foo => bar => baz & waz   # baz and waz both trigger off bar
    baz:out1 => faz           # faz triggers off an internal output of baz
-   ColdFoo | foo(T-6) => foo # cold start or restart for foo
+   ColdFoo | foo(T-6) => foo # cold-start or restart for foo
    X:fail => Y               # Y triggers if X fails
    X => !Y                   # Y suicides if X succeeds
    X | X:fail => Z           # Z triggers if X finishes or fails
@@ -586,9 +583,9 @@ task execution environment supplied by cylc
 can just change its name in the suite.rc file.
 
 
-A namespace represents a family if several other namespaces inherit from
-it; it represents an individual task if it is a leaf on the inheritance
-tree (i.e.\ no other namespaces inherit from it).
+A namespace represents a family if other namespaces inherit from it; it
+represents a task if it is a leaf on the inheritance tree (i.e.\ no
+other namespaces inherit from it).
 
 \begin{myitemize}
 \item {\em legal values:} 
@@ -610,9 +607,9 @@ all tasks in the suite.
 
 \paragraph[inherit]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ inherit}
 
-Specify another namepace here that this one should inherit all of its
-runtime configuration from; specific items can then be overridden as
-required. Note that many of the available items are left undefined even
+Specify here the namepace from which this namespace should inherit all
+of its runtime configuration; specific items can then be overridden
+as required. Note that many of the available items are left undefined even
 in the root namespace.
 
 \begin{myitemize}
@@ -646,10 +643,11 @@ do automated failure recovery in cylc.
 
 \paragraph[pre-command scripting]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ pre-command scripting}
 
-Scripting executed immediately {\em before} the command scripting. This
-would typically be used to add scripting to every task in a family (for
-individual tasks you could just incorporate the extra commands into the
-main command scripting). See also {\em post-command scripting}, below.
+Scripting to be executed immediately {\em before} the command scripting.
+This would typically be used to add scripting to every task in a family
+(for individual tasks you could just incorporate the extra commands into
+the main command scripting). See also {\em post-command scripting},
+below.
 
 \begin{myitemize}
 \item {\em type:} string, or a list of strings
@@ -804,7 +802,8 @@ User name under which to access the remote host, via passwordless ssh.
 
 \subparagraph[cylc directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ cylc directory}
 
-The path to the cylc installation on the remote host.
+The path to the cylc installation on the remote host (this is a required
+item for tasks that define a remote host).
 
 \begin{myitemize}
 \item {\em type:} string (a valid directory path on the remote host)
@@ -823,7 +822,7 @@ interpretation on the remote host).
 
 \begin{myitemize}
 \item {\em type:} string (a valid directory path on the remote host)
-\item {\em default:} (none)
+\item {\em default:} (local suite definition path with \lstinline=$HOME= replaced)
 \end{myitemize}
  
 \subparagraph[remote shell template]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ remote shell template }
@@ -848,6 +847,11 @@ recorded for access via gcylc. You could use an event hook script to
 automatically retrieve remote log files on task completion to make them
 available as for local task logs.
 
+\begin{myitemize}
+\item {\em type:} string (a valid directory path on the remote host)
+\item {\em default:} (local log path with \lstinline=$HOME= replaced)
+\end{myitemize}
+ 
 \paragraph[{[[[}event hooks{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]]}
 
 Cylc can call a nominated script when certain events, such as task
@@ -954,7 +958,7 @@ preserved, so values can refer to previously defined variables.
 
 \begin{myitemize}
 \item {\em type:} string (any environment variable assignment
- expression valid in the job submission shell
+ expression valid in the job submission shell)
 
 \item {\em default:} (none)
 \item {\em legal values:}  (Section~\ref{JobSubShell}). White space
