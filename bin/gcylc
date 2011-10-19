@@ -54,10 +54,9 @@ to suite control and monitoring.
     2/ gcylc [-g,--graph] SUITE &
 This directly invokes a suite control and monitoring application for a
 particular suite. Alternatively you can get this by right-clicking on 
-the suite in the main gcylc suite database viewer (1/ above).
-Without the -g,--graph option you'll get the standard filtered treeview
-suite control and monitoring interface; with it, the
-newer dependency graph based interface.
+the suite in the main gcylc suite database viewer (1/ above). Without
+the -g option you'll get a filtered text treeview GUI; with it, a
+dependency graph based GUI.
 
 NOTE: daemonize important suites with the POSIX nohup command:
     $ nohup gcylc [options] SUITE &

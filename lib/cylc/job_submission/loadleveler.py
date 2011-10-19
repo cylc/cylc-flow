@@ -44,11 +44,9 @@ Minimalist loadleveler job submission.
         # task job script).
         defaults[ 'shell'    ] = '/bin/ksh'
 
-        # NOTE ON INITIALDIR directive: if the initial "running dir"
-        # does not exist (or is not writable by the user?) loadleveler
-        # will hold the job. However, this is not an issue for us
-        # because cylc task job scripts are always submitted from $HOME.
-        # add (or override with) taskdef directives
+        # NOTE if the initial "running dir" does not exist (or is not
+        # writable by the user?) loadleveler will hold the job. Use
+        # the 'initialdir' directive to fix this.
 
         # In case the user wants to override the above defaults:
         for d in self.directives:
