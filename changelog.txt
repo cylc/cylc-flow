@@ -292,3 +292,8 @@ during task proxy instantiation.
 
 + 'cylc validate' now returns exit status 1 if validation fails.
 
++ restored full syntax highlighting to the User Guide.
+
++ corrected 'cylc email-alert' command help.
+
+
