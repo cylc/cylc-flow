@@ -152,6 +152,7 @@ Version number X.Y.Z incrementing:
   suite.rc graph strings (i.e. tasks with different triggers at 
   different cycle times). 
 
+________________________________________________________________________
 4.0.0-rc1
 
 + WARNING cylc-4.0 IS NOT ENTIRELY BACKWARD COMPATIBLE with 3.x
@@ -285,7 +286,8 @@ just not running them - this is more transparent to the user.
  suite etc., whenever the inlined file is saved rather than on
  exiting the edit session.
 
- 4.0.0-rc2 PENDING
+________________________________________________________________________
+ 4.0.0-rc2
 
 + Bug fix: suite validation output aborted if an error occurred 
 during task proxy instantiation.
@@ -296,5 +298,5 @@ during task proxy instantiation.
 
 + corrected 'cylc email-alert' command help.
 
-+ the new work and share directories finished off and documented.
++ completed and documented the new task work and share directories
 
