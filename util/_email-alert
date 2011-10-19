@@ -1,29 +1,26 @@
 #!/bin/bash
 
-# A cylc task event hook script that sends an email when called. 
-
-# Cylc calls event hook scripts with the following arguments:
-#   EVENT SUITE TASKID MESSAGE
-# See the Cylc User Guide Suite.rc Reference for more information.
 
 usage() {
     echo "USAGE: cylc email-alert EVENT SUITE TASKID MESSAGE"
     echo ""
-    echo "A cylc event hook script that sends an email alert. The arguments"
-    echo "are supplied automatically by cylc. To get an email alert whenever"
-    echo "a task in your suite fails, for example, do this:"
+    echo "This is a simple cylc event hook script that sends an email."
+    echo "The command line arguments are supplied automatically by cylc."
+    echo ""
+    echo "For example, to get an email alert whenever any task fails:"
     echo ""
     echo "# SUITE.RC"
     echo "[cylc]"
     echo "   [[environment]]"
     echo "      MAIL_ADDRESS = foo@bar.baz.waz"
     echo "[runtime]"
-    echo "   [[__NAME__]]  # (namespace: 'root' or family or task name)"
+    echo "   [[root]]"
     echo "      [[[event hooks]]]"
     echo "         events = failed"
     echo "         script = cylc email-alert"
     echo ""
-    echo "See the Suite.rc Reference (Cylc User Guide) for details."
+    echo "See the Suite.rc Reference (Cylc User Guide) for more information"
+    echo "on event hooks and event handler scripts."
 }
 
 if [[ $# = 1 ]]; then
