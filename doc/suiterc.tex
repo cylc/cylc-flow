@@ -772,6 +772,37 @@ for access via cylc commands and the suite control GUIs.
 \item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job=
 \end{myitemize}
 
+\subparagraph[work directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ work directory}
+\label{LocalWork}
+
+Each task runs in its own working directory. The work directory is
+created on the fly by the task job script prior to executing the task
+command scripting. For non-detaching tasks the work directory is 
+removed, if it is empty, before the job script exits. It can be accessed
+by tasks at run time via the environment variable 
+\lstinline=$CYLC_TASK_WORK_PATH=.
+
+\begin{myitemize}
+\item {\em type:} string (directory path, may contain environment variables)
+\item {\em default:} \lstinline=$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID=
+\end{myitemize}
+
+\subparagraph[share directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ share directory}
+\label{LocalShare}
+
+This is intended as a shared data directory for multiple tasks. As
+such it should be defined at root level, if for all tasks; or in a
+family namespace, if for a subset of tasks; however, it can be 
+made unique for every task if you like. The share directory is
+created on the fly by the task job script prior to executing the task
+command scripting. It can be accessed by tasks at run time via the
+environment variable \lstinline=$CYLC_SUITE_SHARE_PATH=.
+
+\begin{myitemize}
+\item {\em type:} string (directory path, may contain environment variables)
+\item {\em default:} \lstinline=$CYLC_SUITE_DEF_PATH/share=
+\end{myitemize}
+
 \paragraph[{[[[}remote{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]]}
 
 Remote hosting configuration, for tasks that need to run on platforms
@@ -817,8 +848,8 @@ remote tasks require access to files stored there (via
 \lstinline=$CYLC_SUITE_DEF_PATH=) or in the suite bin directory (via
 \lstinline=$PATH=).  If this item is not defined, the local suite
 definition directory path will be assumed, with the suite owner's home
-directory (if present) replaced by \lstinline='$HOME'= (for
-interpretation on the remote host). 
+directory, if present, replaced by \lstinline='$HOME'= for
+interpretation on the remote host. 
 
 \begin{myitemize}
 \item {\em type:} string (a valid directory path on the remote host)
@@ -840,8 +871,8 @@ The template's first \%s will be substituted by the remote user@host.
 This log directory is used for the stdout and stderr logs of remote
 tasks. The directory will be created on the fly if necessary. If not
 specified, the local log path will be used (see~\ref{LocalLog}) with the
-suite owner's home directory path (if present) replaced by
-\lstinline='$HOME'= (for interpretation on the remote host).  The stdout
+suite owner's home directory path, if present, replaced by
+\lstinline='$HOME'= for interpretation on the remote host.  The stdout
 and stderr log file names are the same as for local tasks, and are
 recorded for access via gcylc. You could use an event hook script to
 automatically retrieve remote log files on task completion to make them
@@ -852,6 +883,32 @@ available as for local task logs.
 \item {\em default:} (local log path with \lstinline=$HOME= replaced)
 \end{myitemize}
  
+\subparagraph[work directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ work directory}
+
+Use this item if you need to override the local task work directory 
+(see~\ref{LocalWork}). If omitted, the local directory will be used with
+the suite owner's home directory path, if present,
+replaced by \lstinline='$HOME'= for interpretation on 
+the remote host.
+
+\begin{myitemize}
+\item {\em type:} string (directory path, may contain environment variables)
+\item {\em default:} (local task work path with \lstinline=$HOME= replaced)
+\end{myitemize}
+
+\subparagraph[share directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ share directory}
+
+Use this item if you need to override the local share directory 
+(see~\ref{LocalShare}). If omitted, the local directory will be used
+with the suite owner's home directory path, if present, replaced by
+\lstinline='$HOME'= for interpretation on the remote host.
+
+\begin{myitemize}
+\item {\em type:} string (directory path, may contain environment variables)
+\item {\em default:} (local task share path with \lstinline=$HOME= replaced)
+\end{myitemize}
+
+
 \paragraph[{[[[}event hooks{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]]}
 
 Cylc can call a nominated script when certain events, such as task

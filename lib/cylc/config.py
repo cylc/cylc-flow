@@ -1139,7 +1139,10 @@ class config( CylcConfigObj ):
             taskd.clocktriggered_offset = self.clock_offsets[name]
 
         # get the task runtime
-        taskconfig = self['runtime'][name]
+        try:
+            taskconfig = self['runtime'][name]
+        except KeyError:
+            raise SuiteConfigError, "Task not found: " + name
         taskd.description = taskconfig['description']
 
         for lbl in taskconfig['outputs']:
@@ -1175,9 +1178,31 @@ class config( CylcConfigObj ):
             taskd.remote_cylc_directory = taskconfig['remote']['cylc directory']
             taskd.remote_suite_directory = taskconfig['remote']['suite definition directory']
             if taskconfig['remote']['log directory']:
+                # (Unlike for the work and share directories below, we
+                # need to retain local and remote log directory paths - 
+                # the local one is still used for the task job script). 
                 taskd.remote_log_directory  = taskconfig['remote']['log directory']
             else:
+                # TO DO: SHOULD THIS BE REPLACED BY '$HOME' NOT ''?
                 taskd.remote_log_directory  = re.sub( os.environ['HOME'] + '/', '', taskd.job_submit_log_directory )
+
+            if taskconfig['remote']['work directory']:
+                # Replace local work directory.
+                taskd.job_submit_work_directory  = taskconfig['remote']['work directory']
+            else:
+                # Use local work directory path, but replace home dir
+                # (if present) with literal '$HOME' for interpretation
+                # on the remote host.
+                taskd.job_submit_work_directory  = re.sub( os.environ['HOME'] + '/', '$HOME', taskd.job_submit_work_directory )
+
+            if taskconfig['remote']['share directory']:
+                # Replace local share directory.
+                taskd.job_submit_share_directory  = taskconfig['remote']['share directory']
+            else:
+                # Use local share directory path, but replace home dir
+                # (if present) with literal '$HOME' for interpretation
+                # on the remote host.
+                taskd.job_submit_share_directory  = re.sub( os.environ['HOME'] + '/', '$HOME', taskd.job_submit_share_directory )
 
         taskd.manual_messaging = taskconfig['manual completion']
 

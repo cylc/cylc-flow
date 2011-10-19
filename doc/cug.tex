@@ -964,8 +964,6 @@ When suites are copied, the suite definition directories are copied into
 a directory tree, under the target directory, that reflects the
 registration name hierarchy. \lstinline=cylc copy --help= has some explicit examples.
 
-
-
 The same functionality is also available by right-clicking on suites
 or groups in the gcylc GUI, as shown in Figure~\ref{fig-db}.
 
@@ -2785,9 +2783,7 @@ $CYLC_TASK_NAME                  # X
 $CYLC_TASK_CYCLE_TIME            # 2011051118
 $CYLC_TASK_NAMESPACE_HIERARCHY   # "root postproc X" (e.g.)
 \end{lstlisting}
-
 The suite identify variables provided to tasks by cylc are:
-
 \begin{lstlisting}
 $CYLC_SUITE_DEF_PATH   # $HOME/mysuites/baz (e.g.)
 $CYLC_SUITE_REG_NAME   # foo.bar.baz (e.g.)
@@ -2803,11 +2799,29 @@ directory path. This can be used when configuring suite logging
 directories and the like to put suite output in a directory tree that
 reflects the suite registration hierarchy (as opposed to the namespace
 hierarchy).
+
+Some of these variables are also used by cylc task messaging commands in
+order to automatically target the right task proxy object in the right
+suite.
+
+\paragraph{Suite Share And Task Work Directories}
+
+The following variables, and the directories they represent, are also
+available to running tasks:
+\begin{lstlisting}
+$CYLC_TASK_WORK_PATH     # task running directory
+$CYLC_SUITE_SHARE_PATH   # suite shared directory
+\end{lstlisting}
+These two directories are configured in the suite.rc file, and they are
+created on the fly, if necessary, by task job scripts prior to executing 
+the task command scripting. The job script changes directory to the 
+work/running directory before executing the task command scripting. 
+The shared directory is intended as a shared data directory for multiple
+tasks (however, the directory path can be different for different 
+families of tasks or individual tasks if you like).
+
 \lstset{language=transcript}
 
-Some of the suite and task identity variables are also used
-by cylc task messaging commands in order to automatically target the
-right task proxy object in the right suite.
 
 \paragraph{Environment Variable Evaluation}
 
@@ -3357,7 +3371,7 @@ export CYLC_DIR=/home/oliverh/cylc
 export CYLC_MODE=submit
 export CYLC_SUITE_HOST=oliverh-33586DL.greta.niwa.co.nz
 export CYLC_SUITE_PORT=NONE
-export CYLC_SUITE_DEF_PATH=$HOME/cylc/examples/QuickStart/c
+export CYLC_SUITE_DEF_PATH=/tmp/oliverh/QuickStart/c
 export CYLC_SUITE_REG_NAME=QuickStart.c
 export CYLC_SUITE_REG_PATH=QuickStart/c
 export CYLC_SUITE_OWNER=oliverh
@@ -3385,7 +3399,7 @@ HANDLE_TRAP() {
   trap "" EXIT
   exit 0
 }
-# Trap any signals which could cause the script to exit
+# Trap signals that could cause this script to exit:
 trap "HANDLE_TRAP EXIT" EXIT
 trap "HANDLE_TRAP ERR"  ERR
 trap "HANDLE_TRAP TERM" TERM
@@ -3393,6 +3407,18 @@ trap "HANDLE_TRAP XCPU" XCPU
 
 # SEND TASK STARTED MESSAGE:
 cylc task started || exit 1
+
+# SHARE DIRECTORY CREATE:
+CYLC_SUITE_SHARE_PATH=$CYLC_SUITE_DEF_PATH/share
+export CYLC_SUITE_SHARE_PATH
+mkdir -p $CYLC_SUITE_DEF_PATH/share || true
+
+# WORK DIRECTORY CREATE:
+CYLC_TASK_WORK_PATH=$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID
+export CYLC_TASK_WORK_PATH
+mkdir -p $(dirname $CYLC_TASK_WORK_PATH) || true
+mkdir -p $CYLC_TASK_WORK_PATH
+cd $CYLC_TASK_WORK_PATH
 
 # ENVIRONMENT:
 TASK_EXE_SECONDS="5"
@@ -3404,6 +3430,10 @@ export TASK_EXE_SECONDS WORKSPACE MODEL_INPUT_DIR MODEL_OUTPUT_DIR MODEL_RUNNING
 
 # TASK COMMAND SCRIPTING:
 Model.sh
+
+# WORK DIRECTORY REMOVE:
+cd
+rmdir $CYLC_TASK_WORK_PATH 2>/dev/null || true
 
 # SEND TASK SUCCEEDED MESSAGE:
 cylc task succeeded
@@ -3698,17 +3728,6 @@ advantages to fine-graining:
         (consider tasks that move files around, for example).
 
 \end{myitemize}
-
-\subsection{Use Include-Files For Groups Of Related Tasks}
-
-Suite.rc include-files can be used just to help organise tasks into
-convenient groups in very large suites (and with \lstinline=cylc edit= 
-you can edit a temporarily inlined file to get a global view). 
-But they are most useful for handling the repetitive definition of
-groups of similar tasks, because the same inclusion can be used multiple
-times in the same suite.rc file.  See {\em Include Files}
-(Section~\ref{IncludeFiles}).
-
 
 \subsection{Make Tasks Rerunnable}
 

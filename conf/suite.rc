@@ -65,12 +65,16 @@ description = "No description provided" # DEFAULT
             command template = None
             shell = /bin/bash  # DEFAULT
             log directory = '$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job'  # DEFAULT
+            share directory = '$CYLC_SUITE_DEF_PATH/share' # DEFAULT
+            work directory = '$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID' # DEFAULT
         [[[remote]]]
             host = None
             owner = None
             cylc directory = None
             suite definition directory = (local directory with '$HOME' replaced) # DEFAULT
-            log directory = (local directory with '$HOME' replaced) # DEFAULT
+            log directory  = (local directory with '$HOME' replaced) # DEFAULT
+            share directory = (local directory with '$HOME' replaced) # DEFAULT 
+            work directory = (local directory with '$HOME' replaced) # DEFAULT
             remote shell template = 'ssh -oBatchMode=yes %s' # DEFAULT
         [[[event hooks]]]
             script = None

@@ -296,4 +296,5 @@ during task proxy instantiation.
 
 + corrected 'cylc email-alert' command help.
 
++ the new work and share directories finished off and documented.
 

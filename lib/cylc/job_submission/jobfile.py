@@ -134,7 +134,7 @@ class jobfile(object):
         self.FILE.write( '\n  trap "" EXIT' )
         self.FILE.write( '\n  exit 0' )
         self.FILE.write( '\n}' )
-        self.FILE.write( '\n# Trap any signals which could cause the script to exit' )
+        self.FILE.write( '\n# Trap signals that could cause this script to exit:' )
         self.FILE.write( '\ntrap "HANDLE_TRAP EXIT" EXIT' )
         self.FILE.write( '\ntrap "HANDLE_TRAP ERR"  ERR' )
         self.FILE.write( '\ntrap "HANDLE_TRAP TERM" TERM' )
@@ -150,12 +150,12 @@ cylc task started || exit 1""" )
         data = { "share_dir": self.share_dir,  "work_dir": self.work_dir }
         self.FILE.write( """
 
-# SHARE DIRECTORY CREATE
+# SHARE DIRECTORY CREATE:
 CYLC_SUITE_SHARE_PATH=%(share_dir)s
 export CYLC_SUITE_SHARE_PATH
-mkdir -p $CYLC_SUITE_DEF_PATH/share || true
+mkdir -p $CYLC_SUITE_SHARE_PATH || true
 
-# WORK DIRECTORY CREATE
+# WORK DIRECTORY CREATE:
 CYLC_TASK_WORK_PATH=%(work_dir)s
 export CYLC_TASK_WORK_PATH
 mkdir -p $(dirname $CYLC_TASK_WORK_PATH) || true
@@ -174,7 +174,7 @@ cd $CYLC_TASK_WORK_PATH""" % data )
 
             # NOTE: the reason for separate export of user-specified
             # variables is this: inline export does not activate the
-            # error trap if sub-expressions fail, e.g. (not typo in
+            # error trap if sub-expressions fail, e.g. (note typo in
             # 'echo' command name):
             # export FOO=$( ecko foo )  # error not trapped!
             # FOO=$( ecko foo )  # error trapped
@@ -216,7 +216,7 @@ cd $CYLC_TASK_WORK_PATH""" % data )
             return
         self.FILE.write( """
 
-# WORK DIRECTORY REMOVE
+# WORK DIRECTORY REMOVE:
 cd
 rmdir $CYLC_TASK_WORK_PATH 2>/dev/null || true""" )
 
