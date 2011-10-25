@@ -300,3 +300,8 @@ during task proxy instantiation.
 
 + completed and documented the new task work and share directories
 
+________________________________________________________________________
+ 4.0.0 PENDING
+
++ documented a subtlety of namespace environment variable override.
+

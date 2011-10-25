@@ -2755,7 +2755,7 @@ cylc utility commands:
             REFERENCE_TIME = $( cylc util cycletime --add=6 )
 \end{lstlisting}
 
-\paragraph{User-defined Environment Variables}
+\paragraph{User Environment Variables}
 
 The user-defined environment is the sum of a task's inherited
 \lstinline=[[[environment]]]= sections.
@@ -2768,10 +2768,49 @@ The user-defined environment is the sum of a task's inherited
             SHAPE = circle
     [[foo]]
         [[[environment]]]
-            COLOR = blue  # this overrides the root environment
+            COLOR = blue  # root override
+            TEXURE = rough # new variable
 \end{lstlisting}         
-This results in a task {\em foo} with \lstinline@COLOR=blue@
-and \lstinline@SHAPE=circle@ in its environment.
+This results in a task {\em foo} with
+\lstinline@SHAPE=circle@,
+\lstinline@COLOR=blue@, and
+\lstinline@TEXTURE=rough@ in its environment.
+
+\paragraph{Overriding Environment Variables}
+
+When you override inherited namespace items the original parent
+item definition is {\em replaced} by the new definition. This applies to
+all items including those in the environment sub-sections which,
+strictly speaking, are not ``environment variables'' until they are
+written, post inheritance processing, to the task job script that
+executes the associated task. Consequently, if you override an
+environment variable you cannot also access the original parent value:
+\begin{lstlisting}
+# SUITE.RC
+[runtime]
+    [[foo]]
+        [[[environment]]]
+            COLOR = red
+    [[bar]]
+        inherit = foo
+        [[[environment]]]
+            tmp = $COLOR        # !! ERROR: $COLOR is undefined here
+            COLOR = dark-$tmp   # !! as this overrides COLOR in foo.
+\end{lstlisting}
+The compressed variant of this, \lstinline@COLOR = dark-$COLOR@, is 
+also in error for the same reason.  To achieve the desired result you
+must use a different name for the parent variable:
+\begin{lstlisting}
+# SUITE.RC
+[runtime]
+    [[foo]]
+        [[[environment]]]
+            FOO_COLOR = red
+    [[bar]]
+        inherit = foo
+        [[[environment]]]
+            COLOR = dark-$FOO_COLOR  # OK
+\end{lstlisting}
 
 \paragraph{Suite And Task Identity Variables}
 
@@ -3940,8 +3979,7 @@ your suite to ensure that the final products never arrive out of
 sequence.  One way of doing this would be to have a final ``product
 upload'' task that depends on completion of all the real product
 generation tasks at the same cycle time, and then declare it to be
-sequential so that successive instances cannot run out
-of sequence, or in parallel, even if the opportunity arises.
+sequential.
 
 \subsection{Clock-triggered Tasks Wait On External Data}
 
