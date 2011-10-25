@@ -1789,7 +1789,7 @@ class DotWindow(gtk.Window):
 
     def set_dotcode(self, dotcode, filename='<stdin>'):
         if self.widget.set_dotcode(dotcode, filename):
-            self.set_title(os.path.basename(filename) + ' - Dot Viewer')
+            self.set_title(os.path.basename(filename) + ' - Suite Dependency Graph Viewer')
             self.widget.zoom_to_fit()
 
     def set_xdotcode(self, xdotcode, filename='<stdin>'):

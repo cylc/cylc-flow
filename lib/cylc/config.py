@@ -120,7 +120,7 @@ class edge( object):
 
 class config( CylcConfigObj ):
 
-    def __init__( self, suite, suiterc, simulation_mode=False, verbose=False ):
+    def __init__( self, suite, suiterc, simulation_mode=False, verbose=False, collapsed=[] ):
         self.simulation_mode = simulation_mode
         self.verbose = verbose
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
@@ -281,11 +281,17 @@ class config( CylcConfigObj ):
                 self.inherit( taskconf, self['runtime'][item] )
             self['runtime'][label] = taskconf
 
-        self.closed_families = self['visualization']['collapsed families']
+        collapsed_rc = self['visualization']['collapsed families']
+        if len( collapsed ) > 0:
+            # this overrides the rc file item
+            self.closed_families = collapsed
+        else:
+            self.closed_families = collapsed_rc
         for cfam in self.closed_families:
             if cfam not in self.members:
                 print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
                 self.closed_families.remove( cfam )
+
         self.process_directories()
         self.load()
 

@@ -26,11 +26,65 @@ from optparse import OptionParser
 from cylc import config
 from cylc.registration import dbgetter, RegistrationError
 
+# DEVELOPER NOTE: family grouping controls via the viewer toolbar and
+# right-click menu have been rather hastily stuck on to the original
+# viewer, via changes to this file and to lib/cylc/cylc_xdot.py - all
+# of which could stand some refactoring to streamline the code a bit.
+
 try:
     from cylc.cylc_xdot import MyDotWindow
 except Exception, x:
     print >> sys.stderr, str(x)
     raise SystemExit( "Cylc graphing disabled" )
+
+def on_url_clicked( widget, url, event, window ):
+    if event.button != 3:
+        return False
+    # URL is node ID
+    right_click_menu( event, url, type='live task', window=window )
+
+def right_click_menu( event, task_id, type='live task', window=None ):
+    name, ctime = task_id.split('%')
+
+    menu = gtk.Menu()
+    menu_root = gtk.MenuItem( task_id )
+    menu_root.set_submenu( menu )
+
+    group_item = gtk.MenuItem( 'Group' )
+    group_item.connect( 'activate', grouping, name, window, False, False )
+    ungroup_item = gtk.MenuItem( 'UnGroup' )
+    ungroup_item.connect( 'activate', grouping, name, window, True, False )
+    ungroup_rec_item = gtk.MenuItem( 'Recursive UnGroup' )
+    ungroup_rec_item.connect( 'activate', grouping, name, window, True, True )
+
+    title_item = gtk.MenuItem( task_id )
+    title_item.set_sensitive(False)
+    menu.append( title_item )
+
+    menu.append( gtk.SeparatorMenuItem() )
+
+    menu.append( group_item )
+    menu.append( ungroup_item )
+    menu.append( ungroup_rec_item )
+
+    menu.show_all()
+    menu.popup( None, None, None, event.button, event.time )
+
+    # TO DO: popup menus are not automatically destroyed and can be
+    # reused if saved; however, we need to reconstruct or at least
+    # alter ours dynamically => should destroy after each use to
+    # prevent a memory leak? But I'm not sure how to do this as yet.)
+
+    return True
+
+def grouping( w, name, window, un, recursive ):
+    if not un:
+        window.get_graph( group_nodes=[name] )
+    else:
+        if recursive:
+            window.get_graph( ungroup_nodes=[name], ungroup_recursive=True )
+        else:
+            window.get_graph( ungroup_nodes=[name], ungroup_recursive=False )
 
 parser = OptionParser( """1/ cylc [prep] graph [options] SUITE [START [STOP]]
      Plot the suite.rc dependency graph for SUITE.
@@ -50,7 +104,15 @@ GRAPH VIEWER CONTROLS:
     * Left-drag to pan the view.
     * Zoom buttons, mouse-wheel, or ctrl-left-drag to zoom in and out.
     * Shift-left-drag to zoom in on a box.
-    * "Best Fit" and "Normal Size" - self-explanatory.
+    * Also: "Best Fit" and "Normal Size".
+  Family (namespace) grouping controls:
+    Toolbar:
+    * "group" - group all families up to root.
+    * "ungroup" - recursively ungroup all families.
+    Right-click menu:
+    * "group" - close this node's parent family.
+    * "ungroup" - open this family node.
+    * "recursive ungroup" - ungroup all families below this node.
 
 Arguments:
   SUITE   - Target suite. 
@@ -157,11 +219,15 @@ if options.rawstart:
     raw = True
 
 window = MyDotWindow( suite, suiterc, watchers, start_ctime, stop, raw, options.outputfile )
-try:
-    window.parse_graph()
-except config.SuiteConfigError, x:
-    raise SystemExit(x)
-window.connect( 'destroy', gtk.main_quit)
+
+window.widget.connect( 'clicked', on_url_clicked, window )
+
+#try:
+window.get_graph()
+#except config.SuiteConfigError, x:
+#    raise SystemExit(x)
+#window.connect( 'destroy', gtk.main_quit)
+
 #if options.updatelive:
 # checking periodically for file changed
 gobject.timeout_add(1000, window.update)

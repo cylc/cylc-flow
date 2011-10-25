@@ -47,12 +47,6 @@ Text treeview base GUI suite control interface.
                 self.label_status, self.label_time, self.label_block )
         self.t.start()
 
-    def command_help( self, w, cat='', com='' ):
-        command = "cylc " + cat + " " + com + " help"
-        foo = gcapture_tmpfile( command, self.tmpdir, 700, 600 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
     def get_control_widgets( self ):
         # Load task list from suite config.
         ### TO DO: For suites that are already running, or for dynamically

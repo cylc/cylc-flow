@@ -266,7 +266,6 @@ and associated methods for their control widgets.
             warning_dialog( 'Error: failed to start ' + self.suite ).warn()
             success = False
 
-
     def unblock_suite( self, bt ):
         try:
             god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
@@ -1492,3 +1491,10 @@ The cylc forecast suite metascheduler.
         foo = gcapture_tmpfile( command, tmpdir )
         foo.run()
  
+    def command_help( self, w, cat='', com='' ):
+        command = "cylc " + cat + " " + com + " help"
+        foo = gcapture_tmpfile( command, self.tmpdir, 700, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
+

@@ -46,12 +46,6 @@ Dependency graph based GUI suite control interface.
                 self.label_mode, self.label_status, self.label_time, self.label_block, self.xdot )
         self.x.start()
 
-    def command_help( self, w, cat='', com='' ):
-        command = "cylc " + cat + " " + com + " help"
-        foo = gcapture_tmpfile( command, self.tmpdir, 700, 600 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
     def get_control_widgets(self ):
         self.xdot = xdot_widgets()
         self.xdot.widget.connect( 'clicked', self.on_url_clicked )

@@ -17,6 +17,8 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from graphing import xdot
+from gui import helpwindow
+import subprocess
 import gtk
 import time
 import gobject
@@ -34,6 +36,10 @@ class MyDotWindow( xdot.DotWindow ):
             <toolitem action="ZoomOut"/>
             <toolitem action="ZoomFit"/>
             <toolitem action="Zoom100"/>
+            <toolitem action="Group"/>
+            <toolitem action="UnGroup"/>
+            <separator expand="true"/> 
+            <toolitem action="Help"/>
         </toolbar>
     </ui>
     '''
@@ -71,12 +77,24 @@ class MyDotWindow( xdot.DotWindow ):
         actiongroup = gtk.ActionGroup('Actions')
         self.actiongroup = actiongroup
 
+        # create new stock icons for group and ungroup actions
+        imagedir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
+        factory = gtk.IconFactory()
+        for i in [ 'group', 'ungroup' ]:
+            pixbuf = gtk.gdk.pixbuf_new_from_file( imagedir + '/' + i + '.png' )
+            iconset = gtk.IconSet(pixbuf)
+            factory.add( i, iconset )
+        factory.add_default()
+
         # Create actions
         actiongroup.add_actions((
-            ('ZoomIn', gtk.STOCK_ZOOM_IN, None, None, None, self.widget.on_zoom_in),
-            ('ZoomOut', gtk.STOCK_ZOOM_OUT, None, None, None, self.widget.on_zoom_out),
-            ('ZoomFit', gtk.STOCK_ZOOM_FIT, None, None, None, self.widget.on_zoom_fit),
-            ('Zoom100', gtk.STOCK_ZOOM_100, None, None, None, self.widget.on_zoom_100),
+            ('ZoomIn', gtk.STOCK_ZOOM_IN, None, None, 'Zoom In', self.widget.on_zoom_in),
+            ('ZoomOut', gtk.STOCK_ZOOM_OUT, None, None, 'Zoom Out', self.widget.on_zoom_out),
+            ('ZoomFit', gtk.STOCK_ZOOM_FIT, None, None, 'Zoom Fit', self.widget.on_zoom_fit),
+            ('Zoom100', gtk.STOCK_ZOOM_100, None, None, 'Zoom 100', self.widget.on_zoom_100),
+            ('Group', 'group', None, None, 'Group All Families', self.group_all),
+            ('UnGroup', 'ungroup', None, None, 'Ungroup All Families', self.ungroup_all),
+            ('Help', gtk.STOCK_HELP, None, None, 'Help', helpwindow.graph_viewer ),
         ))
 
         # Add the actiongroup to the uimanager
@@ -86,10 +104,15 @@ class MyDotWindow( xdot.DotWindow ):
         uimanager.add_ui_from_string(self.ui)
 
         # Create a Toolbar
+
         toolbar = uimanager.get_widget('/ToolBar')
         vbox.pack_start(toolbar, False)
-
         vbox.pack_start(self.widget)
+
+        eb = gtk.EventBox()
+        eb.add( gtk.Label( "right-click on nodes to control family grouping" ) )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
+        vbox.pack_start( eb, False )
 
         self.set_focus(self.widget)
 
@@ -109,21 +132,41 @@ class MyDotWindow( xdot.DotWindow ):
                     break
 
         self.show_all()
+        self.load_config()
 
-    def parse_graph( self ):
-        # reparse the graph
-        self.suiterc = config.config( self.suite, self.file )
+    def load_config( self, reload=False ):
+        if reload:
+            print 'Reloading the suite.rc file.'
+            self.suiterc = config.config( self.suite, self.file, collapsed=self.suiterc.closed_families )
+        else:
+            self.suiterc = config.config( self.suite, self.file )
+
+    def group_all( self, w ):
+        self.get_graph( group_all=True )
+
+    def ungroup_all( self, w ):
+        self.get_graph( ungroup_all=True )
+
+    def get_graph( self, group_nodes=[], ungroup_nodes=[], 
+            ungroup_recursive=False, ungroup_all=False, group_all=False ):
         family_nodes = self.suiterc.members.keys()
         graphed_family_nodes = self.suiterc.families_used_in_graph
+
         if self.ctime != None and self.stop_after != None:
-            graph = self.suiterc.get_graph( self.ctime, self.stop_after, raw=self.raw )
+            one = self.ctime
+            stop = self.stop_after
         else:
             one = str( self.suiterc['visualization']['initial cycle time'])
             two = str(self.suiterc['visualization']['final cycle time'])
             stop_delta = ct(two).subtract( ct(one) )
             # timedelta: days, seconds, microseconds; ignoring microseconds
             stop = stop_delta.days * 24 + stop_delta.seconds / 3600
-            graph = self.suiterc.get_graph( one, stop, raw=self.raw )
+
+        graph = self.suiterc.get_graph( self.ctime, self.stop_after, 
+                colored=True, raw=self.raw, 
+                group_nodes=group_nodes, ungroup_nodes=ungroup_nodes, 
+                ungroup_recursive=ungroup_recursive, 
+                group_all=group_all, ungroup_all=ungroup_all )
 
         for node in graph.nodes():
             name, tag = node.get_name().split('%')
@@ -160,8 +203,8 @@ class MyDotWindow( xdot.DotWindow ):
                     break
 
         if reparse:
-            print 'Reparsing graph'
-            self.parse_graph()
+            self.load_config(reload=True)
+            self.get_graph()
         return True
 
 

@@ -309,6 +309,30 @@ use system resources) and [2] you will lose access to the output streams
 output goes to special files that can be accessed again).""")
     help.show()
 
+def graph_viewer( b ):
+    help = helpwindow( "Graph Viewer Help", 500, """The graph viewer plots suite dependency graphs parsed from the suite.rc
+file. The viewer updates automatically when the suite.rc file is saved
+during editing (however, the [visualization] -> 'collapsed families' item
+only affects the initial plot, after which any manual changes to family
+node grouping, using the viewer controls, take precedence).
+
+%h2 Controls
+
+%i Center the graph: left-click on a node.
+%i Pan: left-drag.
+%i Zoom: Tool bar, mouse-wheel, Ctrl-left-drag, Shift-left-drag (box zoom).
+%i Best Fit and Normal Size: Tool bar.
+
+%h3 Family Grouping, Toolbar:
+%i "group" - group all families up to root.
+%i "ungroup" - recursively ungroup all families.
+
+%h3 Family Grouping, Right-click menu:
+%i "group" - close this node's parent family.
+%i "ungroup" - open this family node.
+%i "recursive ungroup" - ungroup all families below this node.""")
+    help.show()
+
 
 #-----------------------------------------------------------------------
 # TO DO: THE FOLLOWING HELP WINDOWS SHOULD BE REDONE IN FORMATTED STRING 
