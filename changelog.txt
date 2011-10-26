@@ -305,3 +305,5 @@ ________________________________________________________________________
 
 + documented a subtlety of namespace environment variable override.
 
++ vertical task name labelling in the GUI "LED light panel".
+
