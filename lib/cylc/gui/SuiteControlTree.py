@@ -133,12 +133,24 @@ Text treeview base GUI suite control interface.
 
     def reset_led_headings( self ):
         tvcs = self.led_treeview.get_columns()
+        labels = []
         for n in range( 1,1+len( self.task_list) ):
-            heading = self.led_headings[n]
-            # double on underscores or they get turned into underlines
-            # (may be related to keyboard mnemonics for button labels?)
-            heading = re.sub( '_', '__', heading )
-            tvcs[n].set_title( heading )
+            labels.append(gtk.Label(self.led_headings[n]))
+            labels[-1].set_use_underline(False)
+            labels[-1].set_angle(90)
+            labels[-1].show()
+            label_box = gtk.VBox()
+            label_box.pack_start(labels[-1], expand=False, fill=False)
+            label_box.show()
+            tvcs[n].set_widget( label_box )
+        max_pixel_length = -1
+        for label in labels:
+            x, y = label.get_layout().get_size()
+            if x > max_pixel_length:
+                max_pixel_length = x
+        for label in labels:
+            while label.get_layout().get_size()[0] < max_pixel_length:
+                label.set_text(label.get_text() + ' ')
 
     def ledview_widgets( self ):
         types = tuple( [gtk.gdk.Pixbuf]* (10 + len( self.task_list)))
