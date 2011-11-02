@@ -1563,7 +1563,7 @@ class scheduler(object):
         for id in task.get_resolved_dependencies():
             l = id
             r = task.id 
-            self.runtime_graph.add_edge( l,r )
+            self.runtime_graph.add_edge( l,r,False )
             self.write_runtime_graph()
 
     def update_runtime_graph_async( self, task ):
@@ -1581,7 +1581,7 @@ class scheduler(object):
         for id in task.get_resolved_dependencies():
             l = id
             r = task.id 
-            self.runtime_graph.add_edge( l,r )
+            self.runtime_graph.add_edge( l,r,False )
             self.write_runtime_graph()
 
     def write_runtime_graph( self ):

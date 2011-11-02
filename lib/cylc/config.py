@@ -1002,9 +1002,9 @@ class config( CylcConfigObj ):
             if l== None and r == None:
                 pass
             elif l == None:
-                graph.add_node( r )
+                graph.cylc_add_node( r, True )
             elif r == None:
-                graph.add_node( l )
+                graph.cylc_add_node( l, True )
             else:
                 style=None
                 arrowhead='normal'
@@ -1015,7 +1015,7 @@ class config( CylcConfigObj ):
                     arrowhead='dot'
                 if conditional:
                     arrowhead='onormal'
-                graph.add_edge( l, r, False, style=style, arrowhead=arrowhead )
+                graph.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead )
 
         for n in graph.nodes():
             if not colored:

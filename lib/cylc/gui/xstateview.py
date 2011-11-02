@@ -230,27 +230,27 @@ class xupdater(threading.Thread):
             self.best_fit = False
 
     def add_graph_key(self):
-        self.graphw.add_node( 'waiting' )
-        self.graphw.add_node( 'runahead' )
-        self.graphw.add_node( 'submitted' )
-        self.graphw.add_node( 'running' )
-        self.graphw.add_node( 'succeeded' )
-        self.graphw.add_node( 'failed' )
-        self.graphw.add_node( 'held' )
-        self.graphw.add_node( 'base' )
-        self.graphw.add_node( 'runtime family' )
-        self.graphw.add_node( 'trigger family' )
+        self.graphw.cylc_add_node( 'waiting', True )
+        self.graphw.cylc_add_node( 'runahead', True )
+        self.graphw.cylc_add_node( 'submitted', True )
+        self.graphw.cylc_add_node( 'running', True )
+        self.graphw.cylc_add_node( 'succeeded', True )
+        self.graphw.cylc_add_node( 'failed', True )
+        self.graphw.cylc_add_node( 'held', True )
+        self.graphw.cylc_add_node( 'base', True )
+        self.graphw.cylc_add_node( 'runtime family', True )
+        self.graphw.cylc_add_node( 'trigger family', True )
 
-        waiting = self.graphw.get_node( 'waiting' )
-        runahead = self.graphw.get_node( 'runahead' )
-        submitted = self.graphw.get_node( 'submitted' )
-        running = self.graphw.get_node( 'running' )
-        succeeded = self.graphw.get_node( 'succeeded' )
-        failed = self.graphw.get_node( 'failed' )
-        held = self.graphw.get_node( 'held' )
-        base = self.graphw.get_node( 'base' )
-        family = self.graphw.get_node( 'runtime family' )
-        grfamily = self.graphw.get_node( 'trigger family' )
+        waiting = self.graphw.get_node( 'waiting', True )
+        runahead = self.graphw.get_node( 'runahead', True )
+        submitted = self.graphw.get_node( 'submitted', True )
+        running = self.graphw.get_node( 'running', True )
+        succeeded = self.graphw.get_node( 'succeeded', True )
+        failed = self.graphw.get_node( 'failed', True )
+        held = self.graphw.get_node( 'held', True )
+        base = self.graphw.get_node( 'base', True )
+        family = self.graphw.get_node( 'runtime family', True )
+        grfamily = self.graphw.get_node( 'trigger family', True )
 
 
         for node in [ waiting, runahead, submitted, running, succeeded, failed, held, base, family, grfamily ]:
@@ -282,15 +282,15 @@ class xupdater(threading.Thread):
         held.attr['fillcolor'] = 'yellow'
         held.attr['color'] = 'black'
 
-        self.graphw.add_edge( waiting, submitted, autoURL=False, style='invis')
-        self.graphw.add_edge( submitted, running, autoURL=False, style='invis')
-        self.graphw.add_edge( running, runahead, autoURL=False, style='invis')
+        self.graphw.cylc_add_edge( waiting, submitted, False, style='invis')
+        self.graphw.cylc_add_edge( submitted, running, False, style='invis')
+        self.graphw.cylc_add_edge( running, runahead, False, style='invis')
 
-        self.graphw.add_edge( succeeded, failed, autoURL=False, style='invis')
-        self.graphw.add_edge( failed, held, autoURL=False, style='invis')
+        self.graphw.cylc_add_edge( succeeded, failed, False, style='invis')
+        self.graphw.cylc_add_edge( failed, held, False, style='invis')
 
-        self.graphw.add_edge( base, grfamily, autoURL=False, style='invis')
-        self.graphw.add_edge( grfamily, family, autoURL=False, style='invis')
+        self.graphw.cylc_add_edge( base, grfamily, False, style='invis')
+        self.graphw.cylc_add_edge( grfamily, family, False, style='invis')
 
     def set_live_node_attr( self, node, id, shape=None ):
         # override base graph URL to distinguish live tasks
@@ -447,7 +447,7 @@ class xupdater(threading.Thread):
 
             # replace collapsed node with a stand-in
             new_node_label = 'SUBTREE:' + id
-            self.graphw.add_node( new_node_label )
+            self.graphw.cylc_add_node( new_node_label, True )
             new_node = self.graphw.get_node( new_node_label )
             #new_node.attr['shape'] = 'doublecircle'
             new_node.attr['shape'] = 'tripleoctagon'
@@ -457,7 +457,7 @@ class xupdater(threading.Thread):
             new_node.attr['URL'] = new_node_label
 
             for n in self.graphw.predecessors( node ):
-                self.graphw.add_edge( n, new_node, autoURL=False )
+                self.graphw.cylc_add_edge( n, new_node, True )
 
             name, topctime = id.split('%')
             for n in self.feedins:
@@ -465,7 +465,7 @@ class xupdater(threading.Thread):
                 #self.follow_up(n,topctime)
                 #if n not in self.collapsems and n not in self.feedintops:
                 if n not in self.collapsems:
-                    self.graphw.add_edge( n, new_node, autoURL=False )
+                    self.graphw.cylc_add_edge( n, new_node, True )
                 #for m in self.feedintops:
                 #    self.graphw.remove_node( m )
 
@@ -493,15 +493,14 @@ class xupdater(threading.Thread):
         # and family members that aren't plotted in the main graph).
         for state in extra_node_ids:
             for id in extra_node_ids[state]:
-                self.graphw.add_node( id )
+                self.graphw.cylc_add_node( id, True )
                 self.set_live_node_attr( self.graphw.get_node(id), id, shape='box')
             # add invisible edges to force vertical alignment
             for i in range( 0, len(extra_node_ids[state])):
                if i == len(extra_node_ids[state]) -1:
                    break
-               self.graphw.add_edge( extra_node_ids[state][i],
-                       extra_node_ids[state][i+1], autoURL=False,
-                       style='invis')
+               self.graphw.cylc_add_edge( extra_node_ids[state][i],
+                       extra_node_ids[state][i+1], True, style='invis')
 
         self.action_required = False
 

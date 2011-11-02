@@ -30,8 +30,10 @@ class GraphvizError( Exception ):
     def __str__( self ):
         return repr(self.msg)
 
-# TO DO: CONSOLIDATE THE FOLLOWING TESTS WITH THE OTHER GRAPH-DISABLING
-# TESTS IN CYLC.
+# TO DO:
+# 1/ Consolidate graph-disabling tests within cylc.
+# 2/ Does we still need autoURL below?
+
 try:
     import pygraphviz
 except ImportError:
@@ -71,7 +73,7 @@ class CGraphPlain( pygraphviz.AGraph ):
         else:
             return []
 
-    def add_node( self, n, autoURL=True, **attr ):
+    def cylc_add_node( self, n, autoURL, **attr ):
         pygraphviz.AGraph.add_node( self, n, **attr )
         node = self.get_node(n)
         label = re.sub( ddmmhh, tformat, n )
@@ -79,7 +81,7 @@ class CGraphPlain( pygraphviz.AGraph ):
         if autoURL:
             node.attr['URL'] = n
 
-    def add_edge( self, l, r, autoURL=True, **attr ):
+    def cylc_add_edge( self, l, r, autoURL, **attr ):
         # l and r are cylc task IDs 
         pygraphviz.AGraph.add_edge( self, l, r, **attr )
 
@@ -138,7 +140,7 @@ class CGraph( CGraphPlain ):
                         self.task_attr[item] = []
                     self.task_attr[item].append( attr )
 
-    def add_node( self, n, autoURL=True, **attr ):
+    def cylc_add_node( self, n, autoURL, **attr ):
         pygraphviz.AGraph.add_node( self, n, **attr )
         node = self.get_node(n)
         label = re.sub( ddmmhh, tformat, n )
@@ -149,12 +151,12 @@ class CGraph( CGraphPlain ):
             attr, value = re.split( '\s*=\s*', item )
             node.attr[ attr ] = value
 
-    def add_edge( self, l, r, autoURL=True, **attr ):
+    def cylc_add_edge( self, l, r, autoURL, **attr ):
         # l and r are cylc task IDs 
         if l == r:
             # pygraphviz 1.1 adds a node instead of a self-edge
             # which results in a KeyError in get_edge() below.
-            self.add_node( l, autoURL, **attr )
+            self.cylc_add_node( l, autoURL, **attr )
             return
 
         pygraphviz.AGraph.add_edge( self, l, r, **attr )
