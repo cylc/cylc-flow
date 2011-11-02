@@ -307,3 +307,5 @@ ________________________________________________________________________
 
 + vertical task name labelling in the GUI "LED light panel".
 
++ interactive family grouping controls for the graph viewer.
+
