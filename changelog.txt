@@ -301,7 +301,7 @@ during task proxy instantiation.
 + completed and documented the new task work and share directories
 
 ________________________________________________________________________
- 4.0.0 PENDING
+ 4.0.0-rc3
 
 + documented a subtlety of namespace environment variable override.
 
@@ -309,3 +309,5 @@ ________________________________________________________________________
 
 + interactive family grouping controls for the graph viewer.
 
+________________________________________________________________________
+PENDING (none)
