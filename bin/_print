@@ -33,7 +33,7 @@ def get_padding( reglist ):
                 maxlen = tmp
     return (maxlen+1) * ' '
 
-parser = OptionParser( usage = """cylc [db] print [--central] [FILTER]
+parser = OptionParser( usage = """cylc [db] print [options] [FILTER]
 
 Print private or central suite registrations.
 
