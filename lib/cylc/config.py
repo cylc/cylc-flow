@@ -323,8 +323,9 @@ class config( CylcConfigObj ):
             for name in task_names:
                 # create a new task config section
                 tconfig = OrderedDict()
-                # specialise it to the actual task
-                self.specialize( name, tconfig, self['runtime'][item] )
+                # replicate the actual task config
+                self.replicate( name, tconfig, self['runtime'][item] )
+                self.interpolate( name, tconfig, '\$\(NAMESPACE\)' )
                 # record it under the task name
                 self['runtime'][name] = tconfig
 
@@ -363,6 +364,9 @@ class config( CylcConfigObj ):
             for item in hierarchy:
                 self.inherit( taskconf, self['runtime'][item] )
             self['runtime'][label] = taskconf
+
+        for item in self['runtime']:
+            self.interpolate( item, self['runtime'][item], '\$\(TASK\)' )
 
         collapsed_rc = self['visualization']['collapsed families']
         if len( collapsed ) > 0:
@@ -516,31 +520,37 @@ class config( CylcConfigObj ):
                 if source[item]:
                     target[item] = deepcopy(source[item])  # deepcopy for list values
 
-    def specialize( self, name, target, source ):
-        # recursively specialize a generator task config section
-        # ('source') to a specific config section (target) for task
-        # 'name', by replacing '$(TASK)' with 'name' in all items.
+    def replicate( self, name, target, source ):
+        # recursively replicate a generator task config section
+        for item in source:
+            if isinstance( source[item], Section ):
+                # recursive call for to handle a sub-section
+                if item not in target:
+                    target[item] = OrderedDict()
+                self.replicate( name, target[item], source[item] )
+            else:
+                target[item] = source[item]
+
+    def interpolate( self, name, source, pattern ):
+        # replace '$(TASK)' with 'name' in all items.
         for item in source:
             if isinstance( source[item], str ):
                 # single source item
-                target[item] = re.sub( '\$\(TASK\)', name, source[item] )
+                source[item] = re.sub( pattern, name, source[item] )
             elif isinstance( source[item], list ):
                 # a list of values 
                 newlist = []
                 for mem in source[item]:
                     if isinstance( mem, str ):
-                        newlist.append( re.sub( '\$\(TASK\)', name, mem ))
+                        newlist.append( re.sub( pattern, name, mem ))
                     else:
                         newlist.append( mem )
-                target[item] = newlist
+                source[item] = newlist
             elif isinstance( source[item], Section ):
                 # recursive call for to handle a sub-section
-                if item not in target:
-                    target[item] = OrderedDict()
-                self.specialize( name, target[item], source[item] )
+                self.interpolate( name, source[item], pattern )
             else:
                 # boolean or None values
-                target[item] = source[item]
                 continue
 
     def set_trigger( self, task_name, output_name=None, offset=None, asyncid_pattern=None ):
