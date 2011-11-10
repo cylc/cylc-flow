@@ -310,4 +310,7 @@ ________________________________________________________________________
 + interactive family grouping controls for the graph viewer.
 
 ________________________________________________________________________
-PENDING (none)
+PENDING
+
++ bug fix 'cylc graph' - was failing if no initial and final cycle times
+  provided by command line or suite.rc file.

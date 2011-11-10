@@ -23,7 +23,7 @@ import gtk
 import gtk.gdk
 import gobject
 from optparse import OptionParser
-from cylc import config
+#from cylc import config
 from cylc.registration import dbgetter, RegistrationError
 
 # DEVELOPER NOTE: family grouping controls via the viewer toolbar and

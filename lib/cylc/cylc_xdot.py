@@ -162,7 +162,7 @@ class MyDotWindow( xdot.DotWindow ):
             # timedelta: days, seconds, microseconds; ignoring microseconds
             stop = stop_delta.days * 24 + stop_delta.seconds / 3600
 
-        graph = self.suiterc.get_graph( self.ctime, self.stop_after, 
+        graph = self.suiterc.get_graph( one, stop, 
                 colored=True, raw=self.raw, 
                 group_nodes=group_nodes, ungroup_nodes=ungroup_nodes, 
                 ungroup_recursive=ungroup_recursive, 
