@@ -57,7 +57,7 @@ description = string( default="No description provided" )
         [[[event hooks]]]
             enable = boolean( default=False )
         [[[job submission]]]
-            method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, pbs, sge, default=background )
+            method = option( at_now, background, loadleveler, pbs, sge, default=background )
 #_____________________________________________________________SCHEDULING
 [scheduling]
     initial cycle time = integer( default=None )
@@ -89,7 +89,7 @@ description = string( default="No description provided" )
         hours = force_list( default=list())
         extra log files = force_list( default=list())
         [[[job submission]]]
-            method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, pbs, sge, default=background )
+            method = option( at_now, background, loadleveler, pbs, sge, default=background )
             command template = string( default=None )
             shell = string( default='/bin/bash' )
             log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job' )
@@ -127,7 +127,7 @@ description = string( default="No description provided" )
         hours = force_list( default=list())
         extra log files = force_list( default=list())
         [[[job submission]]]
-            method = option( at_now, background, loadleveler, ll_ecox, ll_raw, ll_raw_ecox, pbs, sge, default=None )
+            method = option( at_now, background, loadleveler, pbs, sge, default=None )
             command template = string( default=None )
             shell = string( default=None )
             log directory = string( default=None )

@@ -700,21 +700,18 @@ scripts to run.
 \subparagraph[method]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ method}
 \label{RuntimeJobSubMethods}
 
-Cylc currently has a handful of defined job submission methods.
-{\em Task Job Submission} (Section~\ref{TaskJobSubmission}) 
-explains how job submission works, and how to define new methods.
-
+See {\em Task Job Submission} (Section~\ref{TaskJobSubmission}) 
+for how job submission works, and how to define new methods.
+Cylc has a number of built in job submission methods:
 \begin{myitemize}
 \item {\em type:} string
 \item {\em legal values:} 
    \begin{myitemize}
-       \item \lstinline=background= - direct background execution
-       \item \lstinline=at_now= - the rudimentary Unix `at' scheduler
-       \item \lstinline=loadleveler= - loadleveler, generic (with
- directives defined in the suite.rc file) 
-       \item \lstinline=ll_ecox= - loadleveler, customized for
-                    EcoConnect triplicate environment at NIWA
-       \item \lstinline=ll_raw= - loadleveler, for existing job scripts
+       \item {\em background} - direct background execution
+       \item {\em at\_now} - the rudimentary Unix \lstinline=at= scheduler
+       \item {\em loadleveler} - \lstinline=llsubmit=, with directives defined in the suite.rc file 
+       \item {\em pbs} - PBS \lstinline=qsub=, with directives defined in the suite.rc file 
+       \item {\em sge} - Sun Grid Engine \lstinline=qsub=, with directives defined in the suite.rc file 
    \end{myitemize}
 \item {\em default:} \lstinline=background=
 \end{myitemize}
@@ -1037,8 +1034,8 @@ preserved, so values can refer to previously defined variables.
 
 Batch queue scheduler directives, or similar.  Whether or not these are
 used depends on the job submission method. For the loadleveler method,
-for example, directives are written to the top of the task job script in
-the format required by loadleveler.
+directives are written to the top of the task job script in
+the format required by loadleveler; and similarly for PBS, and so on.
 
 \subparagraph[\_\_DIRECTIVE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_DIRECTIVE\_\_}
 

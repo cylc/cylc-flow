@@ -3496,44 +3496,100 @@ forecasting systems:
 
 \begin{myitemize}
 
-    \item \lstinline=background= - run tasks directly in a background shell.
+    \item {\bf background} - run tasks directly in a background shell.
 
-     \item \lstinline=at_now= - submit tasks to the rudimentary
+     \item {\bf at\_now} - submit tasks to the rudimentary Unix 
          \lstinline=at= scheduler (\lstinline=atd= must be running).
 
 \end{myitemize}
 
-Tasks in a real forecasting system should be submitted to a batch queue
-scheduler or cross-platform resource manager such as {\em loadleveler}
-(IBM). Methods currently available are:
+Tasks in a real forecasting system would normally be submitted to a
+batch queue scheduler. Current built-in methods are:
 
 \begin{myitemize} 
     
-    \item \lstinline=loadleveler= - This method submits general
-        (non loadleveler-specific) task scripts to loadleveler. 
-        Any {\em directives} you provide in the 
-        suite.rc file 
-        will be written to the job script, which will then 
-        be submitted to run via \lstinline=llsubmit=. 
+    \item {\bf loadleveler} - submits task job scripts to loadleveler
+        using the \lstinline=llsubmit= command. 
+        Loadleveler directives provided in the suite.rc file: 
 
-    \item \lstinline=ll_raw= - This method submits loadleveler-ready
-        scripts (i.e.\ scripts containing hardwired directives) to
-        loadleveler.  This may be necessary for complex (e.g.\
-        multi-step) jobs. The original script is copied to
-        make the temporary job script, and cylc environment
-        scripting is inserted into it immediately after the loadleveler
-        directives.
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[runtime]
+    [[__NAME__]]
+        [[[directives]]] 
+            foo = bar
+            baz = waz
+\end{lstlisting}
+        are written to the top of the task job script like this: 
+\lstset{language=bash}
+\begin{lstlisting}
+#!/bin/bash
+# DIRECTIVES
+# @ foo = bar
+# @ baz = waz
+# @ queue
+\end{lstlisting}
 
-    \item \lstinline=ll_ecox= - This is derived from the basic 
-        \lstinline=loadleveler= method. It automatically adapts certain
-        task parameters (such as owner username) to NIWA's EcoConnect
-        operational environment so that the same suite definition
-        can be used in distinct {\em oper}, {\em test,} and {\em devel}
-        environments in which the suite and task owners, and their home
-        directories, vary accordingly.
+    \item {\bf pbs} - submits task job scripts to PBS
+        using the \lstinline=qsub= command. 
+        PBS directives provided in the suite.rc file: 
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[runtime]
+    [[__NAME__]]
+        [[[directives]]] 
+            -q = foo
+            -l = 'nodes=1,walltime=00:01:00'
+\end{lstlisting}
+        are written to the top of the task job script like this: 
+\lstset{language=bash}
+\begin{lstlisting}
+#!/bin/bash
+# DIRECTIVES
+#PBS -q foo
+#PBS -l nodes=1,walltime=00:01:00
+\end{lstlisting}
 
+    \item {\bf sge} - submits task job scripts to Sun Grid Engine
+        using the \lstinline=qsub= command. 
+        SGE directives provided in the suite.rc file: 
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[runtime]
+    [[__NAME__]]
+        [[[directives]]] 
+            -cwd = ' '
+            -q = foo
+            -l = 'h_data=1024M,h_rt=24:00:00'
+\end{lstlisting}
+        are written to the top of the task job script like this: 
+\lstset{language=bash}
+\begin{lstlisting}
+#!/bin/bash
+# DIRECTIVES
+#$ -cwd
+#$ -q foo
+#$ -l h_data=1024M,h_rt=24:00:00
+\end{lstlisting}
 \end{myitemize}
 
+Note that {\em multiple entries for the same PBS or SGE option must be
+comma-separated on the same line}, in the suite.rc file. This is because
+repeating the option on another line will override the previous entry,
+not add to it. And, the right-hand side must be quoted to hide the
+comma from the suite.rc parser (commas are allowed only for list
+values; directives are treated as singular).
+
+Note also that {\em to get a naked option flag such as \lstinline=-cwd= 
+in SGE you must give a quoted blank space as the directive value.}
+
+Finally, {\em default directives are provided to set the job name and
+stdout and stderr file paths}. These can be overridden if you wish
+(but stdout/stderr directory paths should be set via the
+appropriate suite.rc item rather than using the directives here).
 
 \subsection{Whither Task stdout And stderr?}
 \label{WhitherStdoutAndStderr}
@@ -3627,29 +3683,29 @@ service must be running.
                                             self.stderr_file )
 \end{lstlisting}
 
-Finally, even the \lstinline=loadleveler= method is quite simple:
+And here is the \lstinline=PBS= method is quite simple:
 
 \begin{lstlisting}
-#!/usr/bin/env python
 
+#!/usr/bin/env python
 from job_submit import job_submit
 
-class loadleveler( job_submit ):
+class pbs( job_submit ):
     """
-Minimalist loadleveler job submission.
+PBS qsub job submission.
     """
-    COMMAND_TEMPLATE = "llsubmit %s"
+
+    COMMAND_TEMPLATE = "qsub %s"
 
     def set_directives( self ):
-        self.directive_prefix = "# @ "
-        self.final_directive  = "# @ queue"
+        self.directive_prefix = "#PBS"
+        self.final_directive  = None
+        self.directive_connector = " "
 
         defaults = {}
-        defaults[ 'job_name' ] = self.task_id
-
-        defaults[ 'output'   ] = self.stdout_file
-        defaults[ 'error'    ] = self.stderr_file
-        defaults[ 'shell'    ] = '/bin/ksh'
+        defaults[ '-N' ] = self.task_id
+        defaults[ '-o' ] = self.stdout_file
+        defaults[ '-e' ] = self.stderr_file
 
         # In case the user wants to override the above defaults:
         for d in self.directives:
