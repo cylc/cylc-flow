@@ -379,7 +379,7 @@ class MainApp(object):
         help_menu.append( guide_item )
         guide_item.connect( 'activate', helpwindow.main )
 
-        chelp_menu = gtk.MenuItem( 'All Commands' )
+        chelp_menu = gtk.MenuItem( 'Command Help' )
         help_menu.append( chelp_menu )
         self.construct_command_menu( chelp_menu )
 
@@ -457,6 +457,7 @@ class MainApp(object):
         self.window.show_all()
 
     def construct_command_menu( self, menu ):
+        # ALL COMMANDS
         cat_menu = gtk.Menu()
         menu.set_submenu( cat_menu )
 

@@ -1349,7 +1349,7 @@ The cylc forecast suite metascheduler.
         self.userguide_item = gtk.MenuItem( '_GUI Quick Guide' )
         help_menu.append( self.userguide_item )
 
-        chelp_menu = gtk.MenuItem( 'Control Commands' )
+        chelp_menu = gtk.MenuItem( 'Command Help' )
         help_menu.append( chelp_menu )
         self.construct_command_menu( chelp_menu )
 
@@ -1376,16 +1376,39 @@ The cylc forecast suite metascheduler.
         self.menu_bar.append( help_menu_root )
 
     def construct_command_menu( self, menu ):
-        com_menu = gtk.Menu()
-        menu.set_submenu( com_menu )
-        cout = subprocess.Popen( ["cylc", "category=control" ], stdout=subprocess.PIPE ).communicate()[0]
-        commands = cout.rstrip().split()
-        for command in commands:
-            if command == "gcylc":
-                continue
-            bar_item = gtk.MenuItem( command )
-            com_menu.append( bar_item )
-            bar_item.connect( 'activate', self.command_help, "control", command )
+        ## # JUST CONTROL COMMANDS:
+        ## com_menu = gtk.Menu()
+        ## menu.set_submenu( com_menu )
+        ## cout = subprocess.Popen( ["cylc", "category=control" ], stdout=subprocess.PIPE ).communicate()[0]
+        ## commands = cout.rstrip().split()
+        ## for command in commands:
+        ##     if command == "gcylc":
+        ##         continue
+        ##     bar_item = gtk.MenuItem( command )
+        ##     com_menu.append( bar_item )
+        ##     bar_item.connect( 'activate', self.command_help, "control", command )
+        # ALL COMMANDS
+        # ALL COMMANDS
+        cat_menu = gtk.Menu()
+        menu.set_submenu( cat_menu )
+
+        cylc_help_item = gtk.MenuItem( 'cylc' )
+        cat_menu.append( cylc_help_item )
+        cylc_help_item.connect( 'activate', self.command_help )
+
+        cout = subprocess.Popen( ["cylc", "categories"], stdout=subprocess.PIPE ).communicate()[0]
+        categories = cout.rstrip().split()
+        for category in categories: 
+            foo_item = gtk.MenuItem( category )
+            cat_menu.append( foo_item )
+            com_menu = gtk.Menu()
+            foo_item.set_submenu( com_menu )
+            cout = subprocess.Popen( ["cylc", "category="+category ], stdout=subprocess.PIPE ).communicate()[0]
+            commands = cout.rstrip().split()
+            for command in commands:
+                bar_item = gtk.MenuItem( command )
+                com_menu.append( bar_item )
+                bar_item.connect( 'activate', self.command_help, category, command )
 
     def create_info_bar( self ):
         self.label_status = gtk.Label( "status..." )
