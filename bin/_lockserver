@@ -449,10 +449,15 @@ Arguments:
     for f in pid_file, log_file, state_file:
         # make parent directory if necessary
         pdir = os.path.dirname( f ) 
-        print pdir
+        #print pdir
         if not os.path.isdir(pdir):
-            print 'creating it'
-            mkdir_p(pdir)
+            #print 'creating it'
+            try:
+                mkdir_p(pdir)
+            except Exception, x:
+                print >> sys.stderr, x
+                print >> sys.stderr, 'ERROR, illegal dir?', pdir
+                sys.exit(1)
 
     print "PID File:        ", pid_file
     print "Logging To:      ", log_file

@@ -314,3 +314,7 @@ PENDING
 
 + bug fix 'cylc graph' - was failing if no initial and final cycle times
   provided by command line or suite.rc file.
+
++ better error messages for any failed attempt to create a directory, e.g.
+  if the user supplies an illegal $TMPDIR or suite copy target directory.
+

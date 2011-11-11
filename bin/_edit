@@ -279,11 +279,14 @@ elif 'SCRATCH' in os.environ:
     tmpdir = os.environ['SCRATCH']
 else:
     raise SystemExit( "ERROR: export $TMPDIR or $SCRATCH before 'cylc edit --inline'" )
+
+# create $TMPDIR if necessary
 try:
-    # create $TMPDIR if necessary
     mkdir_p( tmpdir )
 except Exception,x:
-    raise SystemExit(x)
+    print >> sys.stderr, x
+    print >> sys.stderr, 'ERROR, illegal tmpdir?', tmpdir
+    sys.exit(1)
 
 # read the suite.rc file
 if os.path.isfile( suiterc ):

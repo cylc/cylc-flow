@@ -1532,7 +1532,13 @@ class scheduler(object):
         title = 'suite ' + self.suite + ' run-time dependency graph'
         # create output directory if necessary
         odir = self.config['visualization']['run time graph']['directory']
-        mkdir_p( odir )
+        try:
+            mkdir_p( odir )
+        except Exception,x:
+            print >> sys.stderr, x
+            print >> sys.stderr, 'ERROR, illegal run time graph dir?', odir
+            sys.exit(1)
+
         self.runtime_graph_file = \
                 os.path.join( odir, 'runtime-graph.dot' )
         self.runtime_graph = graphing.CGraph( title, self.config['visualization'] )

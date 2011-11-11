@@ -147,6 +147,7 @@ try:
         try:
             mkdir_p( os.path.dirname(tdir))
         except Exception,x:
+            print >> sys.stderr, 'ERROR, illegal target directory?', tdir
             print >> sys.stderr, x
             continue
 

@@ -1757,7 +1757,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             try:
                 mkdir_p( pdir )
             except Exception, x:
-                warning_dialog( str(x) ).warn()
+                warning_dialog( str(x) + '\n' + 'ERROR: Illegal directory for suite stdout? ' + pdir ).warn()
                 return False
 
             stdoutf = prefix + '.out'

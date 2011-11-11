@@ -31,7 +31,6 @@ so passwordless ssh must be configured.
 
 import pwd
 import re, os, sys
-from cylc.mkdir_p import mkdir_p
 import stat
 import string
 from jobfile import jobfile

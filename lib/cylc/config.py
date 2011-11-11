@@ -574,9 +574,15 @@ class config( CylcConfigObj ):
         # Create suite log, state, and local job log directories.
         dirs = [ self['cylc']['logging']['directory'], self['cylc']['state dumps']['directory'] ]
         for item in self['runtime']:
-            dirs.append( self['runtime'][item]['job submission']['log directory'] )
+            d = self['runtime'][item]['job submission']['log directory']
+            if d not in dirs:
+                dirs.append(d)
         for d in dirs:
-            mkdir_p( d )
+            try:
+                mkdir_p( d )
+            except Exception, x:
+                print >> sys.stderr, x
+                raise SuiteConfigError, 'ERROR, illegal dir? ' + d
         
     def get_filename( self ):
         return self.file

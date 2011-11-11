@@ -105,13 +105,20 @@ owner = os.environ['USER']
 # load suite config item --------------------------------------------
 try:
     config = config( suite, suiterc )
+    config.create_directories( task_name )
 except SuiteConfigError,x:
     raise SystemExit(x)
 
-config.create_directories( task_name )
 # modify logging dir for single task submit so as not to alter suite logs
 logging_dir = os.path.join( config['cylc']['logging']['directory'], 'submit' ) 
-mkdir_p( logging_dir )
+
+# create logging dir if necessary
+try:
+    mkdir_p( logging_dir )
+except Exception,x:
+    print >> sys.stderr, x
+    print >> sys.stderr, 'ERROR, illegal logging directory?', logging_dir
+    sys.exit(1)
 
 use_lockserver = False
 if config['cylc']['lockserver']['enable']:
