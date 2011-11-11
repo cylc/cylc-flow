@@ -7,6 +7,9 @@ can be migrated to the github issue tracker.
 _______
 GENERAL
 
+* Suite validation problem: missing '=' causes crash due to configobj
+  error.
+
 * In simulation mode, task message stdout is not in dummy clock time.
   To correct this would require getting the current dummy time from the
   suite.
@@ -18,23 +21,6 @@ GENERAL
   set a stop time of '1' in a cycling suite, and the suite will
   stop as soon as all running tasks have finished.
 
-* Restarting a suite with a failed family but no failed members fails 
-  (can be tested in dummy mode):
-  Traceback (most recent call last):
-    File "/oper/admin/ecoconnect_admin/cylc-3.3.5/bin/_restart", line 260, in ?
-server.run()
-    File "/oper/admin/ecoconnect_admin/cylc-3.3.5/src/scheduler.py", line 469, in run
-self.negotiate()
-    File "/oper/admin/ecoconnect_admin/cylc-3.3.5/src/scheduler.py", line 746, in negotiate
-itask.check_requisites()
-    File "/oper/admin/ecoconnect_admin/cylc-3.3.5/src/task-types/family.py", line 60, in check_requisites
-    self.incoming( 'NORMAL', self.id + ' succeeded' )
-    File "/oper/admin/ecoconnect_admin/cylc-3.3.5/src/task-types/task.py", line 461, in incoming
-self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
-    File "/oper/admin/ecoconnect_admin/cylc-3.3.5/src/task-types/task.py", line 139, in update_mean_total_elapsed_time
-cls.elapsed_times.append( succeeded - started )
-    TypeError: unsupported operand type(s) for -: 'datetime.datetime' and 'NoneType'
-
 * Consider changing the task pool list to a dictionary indexed by task
   ID. This would avoid having to loop through the pool to find a task.
 * Also, consider a major change to the scheduling algorithm that would
@@ -43,9 +29,6 @@ cls.elapsed_times.append( succeeded - started )
   each task could just ask those tasks, rather than all of them (via the
   broker) for satisfaction. We could then eliminate the broker, and
   may significantly increase efficiency for very large suites?
-
-* suite validation problem: missing '=' causes crash due to configobj
-  error.
 
 * lockserver configuration is currently installation-wide under
   $CYLC_DIR/conf - should allow user override.
@@ -60,8 +43,6 @@ cls.elapsed_times.append( succeeded - started )
  (consider also: clock-triggered tasks downstream of the purge root -
  they won't trigger in the purge simulation if their time is not up yet?)
 
-* dummy_command module not needed due to default command in suite.rc?
-
 * a 'nudge' that just updates task state info, without going through
   the full task processing loop?
 
@@ -69,20 +50,17 @@ cls.elapsed_times.append( succeeded - started )
   final task in the 'held' state, not just delete them? (see 'STOPPING'
   in bin/_run
 
-*  Do suicide prerequisites need to be re-instated in cylc-3? Maybe they 
-   are not needed now that we have conditional prerequisites?
-
 * Consider replacing finished tasks with a data structure that remembers
   what happened. More efficient for very large suites?
 
-* IMPORTANT: rationalize suite shutdown criteria in main loop.
+* Rationalize suite shutdown criteria in main loop.
 
 * exclude failed tasks in the cleanup algorithms.
   Failed mean prereqs were satisfied so we don't need to keep 
   upstream tasks around. This may depend on the next item:
 * cleanup algorithm and failed tasks: test with userguide suite in dummy
   mode, failing C and F. In case of F, why do none of A,B,C get
-  removed? 
+  removed?  (THESE ARE NOW FIXED?)
 
 * exclude inserted spinup/temporary tasks from runahead check?
   (or manually alter the check - this should be fine because the
@@ -123,16 +101,11 @@ cls.elapsed_times.append( succeeded - started )
 
 * allow $CYLC_DIR/conf overrides by user in .cylc?
 
-* db export, copy, import should take group: as target even for single suites.
-
 * clean up src/gui/textload.py and use of it: it was quickly hacked out
   of the tailing logviewer and should be treated separately and more simply.
 
-* CANNOT USE a suite reg GROUP:NAME as a suite definition dir
-  as the colon screws up the PATH to the suite bin directory.
-
 * tasks that are not in the dep graph can now be run with 'submit';
-  should we allow insertion too?
+  should we allow insertion too? (still relevant in cylc-4 or not?)
 
 * clean up prerequisites classes - put all in one module? (same with
   outputs + requisites?)
@@ -149,11 +122,6 @@ cls.elapsed_times.append( succeeded - started )
 
 * locking code could be simplified or cleaned up a bit now that
   the lockserver is user-specific?
-
-* consider calling task-started from task execution script instead of
-  cylc-wrapper or task scripts: this would eliminate submitted state
-  failures, and allow error trapping on tasks with significant
-  in-suiterc scripting (and scripting-only tasks?)
 
 * currently all task reset commands go through the 'remote' object,
   which all suites have, but we could get a proxy for the task proxy directly,
@@ -176,9 +144,6 @@ cls.elapsed_times.append( succeeded - started )
 * Check that the user-defined task names do not clash with
   parent class or attribute names.
 
-* Do some more profiling of execution time with cProfile and pstats,
-  to identify areas where we might be able to make efficiency gains.
-
 * --port= does not prevent port scan for lockserver?
   check for non-essential port scanning, esp. in gui.
   (see GUI note below)
@@ -191,9 +156,6 @@ cls.elapsed_times.append( succeeded - started )
   (owner.suite.obj): prevent accidentally intervening in the wrong
   suite when using explicit port numbers (if we allow that). Also, 
   is this still required?
-
-* temporary job submission filenames should contain the suite name
-  so that automated cleanup processes can distinguish between suites.
 
 * Python re: check use of re m.group() and m.groups(): 
 
@@ -234,14 +196,8 @@ cls.elapsed_times.append( succeeded - started )
   makedirs() will fail.  This could happen if the user tries to use
   files in $PWD without specifying the full path.
 
-* example system implementations should always use $USER in temp dir
-  paths, to avoid interference between users. (done?)
-
 * allow insertion of tasks in 'spawned already' state, for oneoff runs 
   of non-oneoff tasks?
-
-* stop (without --now) won't cause shutdown if a task family (but not
-  it's members) has just triggered?
 
 * task state at initialization: there's no point in giving initial
   state of "finished" for example, if this does not result in setting
@@ -282,9 +238,6 @@ cls.elapsed_times.append( succeeded - started )
   to check that which returns a result before continuing (e.g. if 
   the task script has not been set executable). 
 
-* DAEMON TASKS: as for asynchronous tasks, demonstrated in cylc-2; go
-  back, check, and complete, for cylc-3.
-
 * consider reset --no-spawn (Bernard tried to reset a waiting unspawned
   task to finished, which made it spawn ... is this the desired
   behaviour?)
@@ -293,6 +246,7 @@ cls.elapsed_times.append( succeeded - started )
   automatically because we USED TO restart with failed tasks in the 
   'waiting' state (not 'ready') - thus the aforementioned peers may be
   required to satisfy the failed task's prerequisites post resetting.
+  (still relevant in cylc-4 or not?)
 
 * consider task proc loop invocation - could we separate summary update
   vs task processing (e.g. when a task fails we have to run pointlessly
