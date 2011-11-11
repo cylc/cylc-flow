@@ -91,6 +91,8 @@ except RegistrationError,x:
     raise SystemExit(x)
 suite_dir = os.path.dirname(suiterc)
 
+sys.path.append( os.path.join( suite_dir, 'python' ))
+
 # check task ---------------------------------------------------------
 try:
     tid = id( task_id )

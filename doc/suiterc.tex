@@ -708,7 +708,7 @@ Cylc has a number of built in job submission methods:
 \item {\em legal values:} 
    \begin{myitemize}
        \item {\em background} - direct background execution
-       \item {\em at\_now} - the rudimentary Unix \lstinline=at= scheduler
+       \item {\em at} - the rudimentary Unix \lstinline=at= scheduler
        \item {\em loadleveler} - \lstinline=llsubmit=, with directives defined in the suite.rc file 
        \item {\em pbs} - PBS \lstinline=qsub=, with directives defined in the suite.rc file 
        \item {\em sge} - Sun Grid Engine \lstinline=qsub=, with directives defined in the suite.rc file 
@@ -1032,10 +1032,12 @@ preserved, so values can refer to previously defined variables.
 
 \paragraph[{[[[}directives{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[directives]]]}
 
-Batch queue scheduler directives, or similar.  Whether or not these are
-used depends on the job submission method. For the loadleveler method,
-directives are written to the top of the task job script in
-the format required by loadleveler; and similarly for PBS, and so on.
+Batch queue scheduler directives.  Whether or not these are used depends
+on the job submission method. For the built-in loadleveler, pbs, and sge
+methods directives are written to the top of the task job script in
+the correct format for the method. Specifying directives individually
+like this allows use of default directives that can be individually
+overridden at lower levels of the runtime namespace hierarchy.
 
 \subparagraph[\_\_DIRECTIVE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_DIRECTIVE\_\_}
 
@@ -1046,6 +1048,9 @@ Replace \_\_DIRECTIVE\_\_ with each directive assignment, e.g.
 \item {\em type:} string
 \item {\em default:} (none)
 \end{myitemize}
+
+Example directives for the built-in job submission methods are shown in
+Section~\ref{AvailableMethods}.
 
 \paragraph[{[[[}outputs{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[outputs]]]}
 

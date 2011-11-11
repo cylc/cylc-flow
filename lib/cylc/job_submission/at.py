@@ -18,7 +18,7 @@
 
 from job_submit import job_submit
 
-class at_now( job_submit ):
+class at( job_submit ):
     """
 Submit the task job script to the simple 'at' scheduler. The 'atd' daemon
 service must be running.

@@ -1639,15 +1639,24 @@ A cylc {\em suite definition directory} contains:
             \item And any include-files used in it (see below; may be
                 kept in sub-directories).
         \end{myitemize}
-    \item {\bf A suite \lstinline=bin/= directory}.
+    \item {\bf A \lstinline=bin/= sub-directory}.
         \begin{myitemize}
             \item For scripts and executables that implement, or are
                 used by, suite tasks.
             \item Automatically added to \lstinline=$PATH= in task
                 execution environments.
-            \item Technically optional as tasks can call external
+            \item {\em Optional} - tasks can call external
                 commands, scripts, or programs; or they can be scripted 
                 entirely within the suite.rc file.
+        \end{myitemize}
+    \item {\bf A \lstinline=python/= sub-directory}.
+        \begin{myitemize}
+            \item For user-defined job-submission methods (see
+                Section~\ref{TaskJobSubmission}).
+            \item {\em Optional} - new job submission methods, if
+                needed, can be installed into the cylc source tree, or
+                in any directory added to \lstinline=PYTHONPATH= in 
+                your environment.
         \end{myitemize}
     \item {\bf Any other sub-directories and files} - documentation,
         control files, etc.
@@ -1656,7 +1665,7 @@ A cylc {\em suite definition directory} contains:
                 suite with cylc or gcylc.
             \item Run time task access via 
                 \lstinline=$CYLC_SUITE_DEF_PATH= 
-                (Section~\ref{TaskExecutionEnvironment}).
+                (see Section~\ref{TaskExecutionEnvironment}).
             \item Holding everything in one place makes proper suite
                 revision control possible.
         \end{myitemize}
@@ -1820,6 +1829,10 @@ If the suite.rc file contains include-files use \lstinline=cylc inline=
 (or the gcylc right-click `Edit' inline option) to view an inlined copy
 with correct line numbers (you can also edit suites in a temporarily
 inlined state using \lstinline=cylc edit --inline=).
+
+Validation does not check the validity of chosen job submission methods;
+this is to allow users to extend cylc with their own job submission 
+methods, which are by definition unknown to the suiterc.spec file.
 
 \subsubsection{String Interpolation}
 
@@ -3379,7 +3392,7 @@ you can set a default for the suite and override it on a per task basis:
             method = loadleveler
    [[foo]] # just task foo
         [[[job submission]]]
-            method = at_now 
+            method = at 
 \end{lstlisting}
 
 The actual command line used to submit the job script is written to
@@ -3486,25 +3499,23 @@ trap "" EXIT
 You can also generate a job script and print it directly to stdout, with
 \lstinline=cylc jobscript=.
 
-
-\subsection{Available Methods}
+\subsection{Built-in Job Submission Methods}
 \label{AvailableMethods}
 
-There are two basic job submission methods that should be available on
-any platform, sufficient for running cylc's example suites if not real
-forecasting systems:
+Cylc has a number of built in job submission methods. If these do 
+not suite your needs you can extend cylc with your own user-defined 
+methods (below, Section~\ref{DefiningNewJobSubmissionMethods}).
 
 \begin{myitemize}
-
     \item {\bf background} - run tasks directly in a background shell.
 
-     \item {\bf at\_now} - submit tasks to the rudimentary Unix 
+    \item {\bf at} - submit tasks to the rudimentary Unix 
          \lstinline=at= scheduler (\lstinline=atd= must be running).
 
 \end{myitemize}
 
-Tasks in a real forecasting system would normally be submitted to a
-batch queue scheduler. Current built-in methods are:
+Tasks in a real forecasting system would normally be submitted to an
+industrial strength batch queue scheduler. Current built-in methods are:
 
 \begin{myitemize} 
     
@@ -3531,7 +3542,7 @@ batch queue scheduler. Current built-in methods are:
 # @ queue
 \end{lstlisting}
 
-    \item {\bf pbs} - submits task job scripts to PBS
+    \item {\bf pbs} - submits task job scripts to PBS (or Torque)
         using the \lstinline=qsub= command. 
         PBS directives provided in the suite.rc file: 
 \lstset{language=suiterc}
@@ -3565,7 +3576,7 @@ batch queue scheduler. Current built-in methods are:
             -q = foo
             -l = 'h_data=1024M,h_rt=24:00:00'
 \end{lstlisting}
-        are written to the top of the task job script like this: 
+are written to the top of the task job script like this: 
 \lstset{language=bash}
 \begin{lstlisting}
 #!/bin/bash
@@ -3623,11 +3634,12 @@ job logs. {\em They can be viewed updating in real time in the suite
 control GUIs}. 
 
 \subsection{Defining New Job Submission Methods}
+\label{DefiningNewJobSubmissionMethods}
 
-Defining a new job submission method requires some minimal amount of
-Python programming.  You can derive (in the sense of object oriented
-programming inheritance) new methods from one of the existing ones, or
-directly from cylc's job submission base class,
+Defining a new job submission method requires some minimal Python
+programming. You can derive (in the sense of object oriented programming
+inheritance) new methods from one of the existing ones, or directly from
+cylc's job submission base class,
 \lstset{language=transcript}
 \begin{lstlisting}
 $CYLC_DIR/lib/cylc/job_submission/job_submit.py
@@ -3661,19 +3673,20 @@ Run the task job script directly in a background shell.
                                             self.stderr_file )
 \end{lstlisting}
 
-Here is the \lstinline=at_now= method:
+Here is the \lstinline=at= method:
 
 \begin{lstlisting}
 #!/usr/bin/env python
 
 from job_submit import job_submit
 
-class at_now( job_submit ):
+class at( job_submit ):
     """
 Submit the task job script to the simple 'at' scheduler. The 'atd' daemon
 service must be running.
     """
     COMMAND_TEMPLATE = "echo \"%s 1>%s 2>%s\" | at now"
+
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template
         if not command_template:
@@ -3683,7 +3696,7 @@ service must be running.
                                             self.stderr_file )
 \end{lstlisting}
 
-And here is the \lstinline=PBS= method is quite simple:
+And here is the \lstinline=pbs= method:
 
 \begin{lstlisting}
 
@@ -3719,17 +3732,88 @@ PBS qsub job submission.
         self.command = command_template % ( self.jobfile_path )
 \end{lstlisting}
 
-To use your new method, save it in a source file with the same name
-as the job submission class (see examples above), install it in the cylc
-source tree,
-\lstset{language=transcript}
+Note that to change the form of the command used to submit a  job you do
+not need to create a new job submission method; just override the
+COMMAND\_TEMPLATE in the relevant job submission section of your
+suite.rc file.
+
+\subsubsection{An Example}
+
+The following user-defined job submission class, called {\em qsub},
+overrides the built-in {\em pbs} class to change the directive 
+prefix from \lstinline=#PBS= to \lstinline=#QSUB=:
+
 \begin{lstlisting}
-$CYLC_DIR/lib/cylc/job_submission/MyNewJobSubmitMethod.py
+#!/usr/bin/env python
+
+# to import from outside of the cylc source tree:
+from cylc.job_submission.pbs import pbs
+# OR, from $CYLC_DIR/lib/cylc/job_submission
+# from pbs import pbs
+
+class qsub( pbs ):
+    """
+This is a user-defined job submission method that overrides the '#PBS'
+directive prefix of the built-in pbs method.
+    """
+    def set_directives( self ):
+        pbs.set_directives( self )
+        # override the '#PBS' directive prefix
+        self.directive_prefix = "#QSUB"
 \end{lstlisting}
-and, in the spec file \lstinline=$CYLC_DIR/conf/suiterc.spec=, 
-add its name to the list of allowed values for the 
-suite.rc {\em job submission method} configuration items at suite level
-and in the tasks section.
+
+To check that this works correctly save the new source file to
+\lstinline=qsub.py= in one of the allowed locations (see just below),
+use it in a suite definition:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.rc
+# $HOME/test/suite.rc
+[scheduling]
+    [[dependencies]]
+        graph = "a"
+[runtime]
+    [[root]]
+        [[[job submission]]]
+            method = qsub
+        [[[directives]]]
+            -I = bar=baz
+            -l = 'nodes=1,walltime=00:01:00'
+            -cwd = ' '
+\end{lstlisting}
+And generate a job script to see the resulting directives:
+\lstset{language=bash}
+\begin{lstlisting}
+$ cylc db reg test $HOME/test
+$ cylc jobscript test a | grep QSUB 
+#QSUB -e /home/oliverh/cylc-run/pbs/log/job/a%1-1321046049.703576.err
+#QSUB -l nodes=1,walltime=00:01:00
+#QSUB -o /home/oliverh/cylc-run/pbs/log/job/a%1-1321046049.703576.out
+#QSUB -N a%1
+#QSUB -I bar=baz
+#QSUB -cwd  
+\end{lstlisting}
+
+\subsubsection{Where To Put New Job Submission Modules}
+
+You new job submission class code should be saved to a file with 
+the same name as the class (plus ``.py'' extension). It can reside 
+in any of the following locations, depending on how generally useful
+the new method is and whether or not you have write-access to the cylc
+source tree:
+\begin{myitemize}
+    \item a \lstinline=python= sub-directory of your suite definition
+        directory.
+    \item any directory in, or added to, your \lstinline=PYTHONPATH= 
+        environment variable.
+    \item in the \lstinline=lib/cylc/job_submission= directory of
+        the cylc source tree.
+\end{myitemize}
+Note that the form of the import statement at the top of the new 
+user-defined Python module differs depending on whether or not 
+the file is installed in the Python source tree (see the comment
+at the top of the example file above).
+
 
 %\pagebreak
 

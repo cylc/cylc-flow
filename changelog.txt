@@ -318,3 +318,8 @@ PENDING
 + better error messages for any failed attempt to create a directory, e.g.
   if the user supplies an illegal $TMPDIR or suite copy target directory.
 
++ JOB-SUBMISSION:
+    - added support for PBS and SGE (qsub)
+    - provided a simple mechanism for user-defined job submission methods
+    - removed NIWA-specific job submission methods from the source tree
+

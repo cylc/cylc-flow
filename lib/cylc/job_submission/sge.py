@@ -18,7 +18,7 @@
 
 from job_submit import job_submit
 
-class pbs( job_submit ):
+class sge( job_submit ):
     """
 SGE qsub job submission.
     """

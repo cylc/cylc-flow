@@ -315,11 +315,21 @@ class task( Pyro.core.ObjBase ):
         # get new stdout/stderr logfiles and not overwrite the old ones.
 
         # dynamic instantiation - don't know job sub method till run time.
-        module_name = 'cylc.job_submission.' + self.job_submit_method
-        class_name = self.job_submit_method
-        # __import__() keyword args were introduced in Python 2.5
+        module_name = self.job_submit_method
+        class_name  = self.job_submit_method
+        # NOTE: not using__import__() keyword arguments:
         #mod = __import__( module_name, fromlist=[class_name] )
-        mod = __import__( module_name, globals(), locals(), [class_name] )
+        # as these were only introduced in Python 2.5.
+        try:
+            # try to import built-in job submission classes first
+            mod = __import__( 'cylc.job_submission.' + module_name, globals(), locals(), [class_name] )
+        except ImportError:
+            try:
+                # else try for user-defined job submission classes, in sys.path
+                mod = __import__( module_name, globals(), locals(), [class_name] )
+            except ImportError, x:
+                print >> sys.stderr, x
+                raise SystemExit( 'ERROR importing job submission method: ' + class_name )
 
         launcher_class = getattr( mod, class_name )
 
