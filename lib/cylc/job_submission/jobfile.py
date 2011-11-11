@@ -25,15 +25,17 @@ from OrderedDict import OrderedDict
 class jobfile(object):
 
     def __init__( self, task_id, cylc_env, task_env, ns_hier, 
-            directive_prefix, directives, final_directive,
-            manual_messaging, precommand_scripting, command_scripting,
-            postcommand_scripting, remote_cylc_dir, remote_suite_dir,
-            shell, share_dir, work_dir, simulation_mode, job_submission_method ):
+            directive_prefix, directive_connector, directives,
+            final_directive, manual_messaging, precommand_scripting,
+            command_scripting, postcommand_scripting, remote_cylc_dir,
+            remote_suite_dir, shell, share_dir, work_dir,
+            simulation_mode, job_submission_method ):
 
         self.task_id = task_id
         self.cylc_env = cylc_env
         self.task_env = task_env
         self.directive_prefix = directive_prefix
+        self.directive_connector = directive_connector
         self.final_directive = final_directive
         self.directives = directives
         self.precommand_scripting = precommand_scripting
@@ -84,10 +86,11 @@ class jobfile(object):
     def write_directives( self ):
         if len( self.directives.keys() ) == 0:
             return
-        self.FILE.write( "\n\n# BATCH QUEUE SCHEDULER DIRECTIVES:" )
+        self.FILE.write( "\n\n# DIRECTIVES:" )
         for d in self.directives:
-            self.FILE.write( '\n' + self.directive_prefix + d + " = " + self.directives[ d ] )
-        self.FILE.write( '\n' + self.final_directive )
+            self.FILE.write( '\n' + self.directive_prefix + ' ' + d + self.directive_connector + self.directives[ d ] )
+        if self.final_directive:
+            self.FILE.write( '\n' + self.final_directive )
 
     def write_task_job_script_starting( self ):
         self.FILE.write( '\n\necho "TASK JOB SCRIPT STARTING"')

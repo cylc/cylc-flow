@@ -18,35 +18,22 @@
 
 from job_submit import job_submit
 
-class loadleveler( job_submit ):
+class pbs( job_submit ):
     """
-Loadleveler job submission.
+PBS qsub job submission.
     """
 
-    COMMAND_TEMPLATE = "llsubmit %s"
+    COMMAND_TEMPLATE = "qsub %s"
 
     def set_directives( self ):
-        self.directive_prefix = "# @"
-        self.directive_connector = " = "
-        self.final_directive  = "# @ queue"
+        self.directive_prefix = "#PBS"
+        self.final_directive  = None
+        self.directive_connector = " "
 
         defaults = {}
-        defaults[ 'job_name' ] = self.task_id
-        defaults[ 'output'   ] = self.stdout_file
-        defaults[ 'error'    ] = self.stderr_file
-
-        # NOTE ON SHELL DIRECTIVE: on AIX at NIWA '#@ shell = /bin/bash'
-        # results in the job executing in a non-login shell (.profile
-        # not sourced) whereas /bin/ksh does get a login shell. WTF?! In
-        # any case this directive appears to affect only the shell *from
-        # which the task job script is executed*, NOT the shell *in which it
-        # is executed* (that is determined by the '#!' at the top of the
-        # task job script).
-        defaults[ 'shell'    ] = '/bin/ksh'
-
-        # NOTE if the initial "running dir" does not exist (or is not
-        # writable by the user?) loadleveler will hold the job. Use
-        # the 'initialdir' directive to fix this.
+        defaults[ '-N' ] = self.task_id
+        defaults[ '-o' ] = self.stdout_file
+        defaults[ '-e' ] = self.stderr_file
 
         # In case the user wants to override the above defaults:
         for d in self.directives:

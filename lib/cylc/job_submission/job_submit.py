@@ -141,9 +141,11 @@ class job_submit(object):
         # self.directives['name'] = value
 
         # Prefix, e.g. '#QSUB ' (qsub), or '#@ ' (loadleveler)
-        self.directive_prefix = "# FOO "
+        self.directive_prefix = "# DIRECTIVE_PREFIX "
         # Final directive, WITH PREFIX, e.g. '#@ queue' for loadleveler
-        self.final_directive = " # FINAL"
+        self.final_directive = " # FINAL_DIRECTIVE"
+        # Connector, e.g. ' = ' for loadleveler, ' ' for qsub
+        self.directive_connector = " DIRECTIVE_CONNECTOR "
 
     def set_scripting( self ):
         # OVERRIDE IN DERIVED CLASSES IF NECESSARY
@@ -171,7 +173,8 @@ class job_submit(object):
 
         jf = jobfile( self.task_id, 
                 self.__class__.cylc_env, self.task_env, self.namespace_hierarchy, 
-                self.directive_prefix, self.directives, self.final_directive, 
+                self.directive_prefix, self.directive_connector,
+                self.directives, self.final_directive, 
                 self.manual_messaging, self.pre_command,
                 self.task_command, self.post_command,
                 self.remote_cylc_dir, self.remote_suite_dir, 
