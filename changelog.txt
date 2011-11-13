@@ -310,18 +310,24 @@ ________________________________________________________________________
 + interactive family grouping controls for the graph viewer.
 
 ________________________________________________________________________
-PENDING
+4.0.0-rc4
 
-+ bug fix 'cylc graph' - was failing if no initial and final cycle times
-  provided by command line or suite.rc file.
++ bug fix 'cylc graph' - it was failing if no initial or final cycle
+times were provided by command line or in the suite.rc file.
 
-+ better error messages for any failed attempt to create a directory, e.g.
-  if the user supplies an illegal $TMPDIR or suite copy target directory.
++ better error messages for any failed attempt to create a directory,
+if the user gives an illegal $TMPDIR or suite copy target directory.
 
 + JOB-SUBMISSION:
-    - added support for PBS and SGE (qsub)
-    - provided a simple mechanism for user-defined job submission methods
-    - removed NIWA-specific job submission methods from the source tree
+   - added support for PBS and SGE (qsub)
+   - provided a simple mechanism for user-defined job submission methods
+   - removed NIWA-specific job submission methods from the source tree
 
 + fixed a recently introduced fatal bug in the 'cylc [admin] test-db'
-  script (it referred to an example suite that has since been renamed).
+script (it referred to an example suite that has since been renamed).
+
+________________________________________________________________________
+PENDING
+
+(currently nothing)
+
