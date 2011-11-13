@@ -323,3 +323,5 @@ PENDING
     - provided a simple mechanism for user-defined job submission methods
     - removed NIWA-specific job submission methods from the source tree
 
++ fixed a recently introduced fatal bug in the 'cylc [admin] test-db'
+  script (it referred to an example suite that has since been renamed).
