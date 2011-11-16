@@ -329,5 +329,6 @@ script (it referred to an example suite that has since been renamed).
 ________________________________________________________________________
 PENDING
 
-(currently nothing)
++ a new "scripting" suite.rc item for remote tasks (e.g. to source the
+remote task owner's login scripts, which is not done by ssh).
 

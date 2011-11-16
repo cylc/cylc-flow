@@ -1216,6 +1216,8 @@ class config( CylcConfigObj ):
                 # on the remote host.
                 taskd.job_submit_share_directory  = re.sub( os.environ['HOME'] + '/', '$HOME', taskd.job_submit_share_directory )
 
+            taskd.remote_scripting = taskconfig['remote']['scripting']
+
         taskd.manual_messaging = taskconfig['manual completion']
 
         if not self.simulation_mode or \

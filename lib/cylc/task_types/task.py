@@ -347,6 +347,7 @@ class task( Pyro.core.ObjBase ):
                         self.__class__.remote_suite_directory,
                         self.__class__.remote_shell_template,
                         self.__class__.remote_log_directory,
+                        self.__class__.remote_scripting,
                         self.__class__.job_submit_command_template,
                         self.__class__.job_submission_shell )
 

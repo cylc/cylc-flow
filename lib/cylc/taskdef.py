@@ -74,6 +74,7 @@ class taskdef(object):
         self.remote_cylc_directory = None
         self.remote_suite_directory = None
         self.remote_log_directory = None
+        self.remote_scripting = None
 
         self.hook_script = None
         self.hook_events = []
@@ -256,6 +257,7 @@ class taskdef(object):
         tclass.remote_cylc_directory = self.remote_cylc_directory
         tclass.remote_suite_directory = self.remote_suite_directory
         tclass.remote_log_directory = self.remote_log_directory
+        tclass.remote_scripting = self.remote_scripting
 
         tclass.job_submit_method = self.job_submit_method
         tclass.job_submission_shell = self.job_submission_shell

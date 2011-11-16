@@ -838,6 +838,22 @@ item for tasks that define a remote host).
 \item {\em default:} (none)
 \end{myitemize}
 
+\subparagraph[scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ scripting}
+
+A scripting section for remote
+tasks. This intended use for this environment configuration for remote
+jobs, typically sourcing the task owner's login scripts - because ssh
+(by which means cylc submits remote tasks) does not do this.
+If defined, it is written to the top of the task job script because
+it may be define variables needed by cylc itself - if Pyro has been
+installed locally by a user instead of at system level, for example.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} (none)
+\item {\em example:} \lstinline=scripting = ". $HOME/.profile"=
+\end{myitemize}
+
 \subparagraph[suite definition directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$  suite definition directory}
 
 The path to the suite definition directory on the remote host, needed if

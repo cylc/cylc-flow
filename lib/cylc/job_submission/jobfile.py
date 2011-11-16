@@ -28,7 +28,7 @@ class jobfile(object):
             directive_prefix, directive_connector, directives,
             final_directive, manual_messaging, precommand_scripting,
             command_scripting, postcommand_scripting, remote_cylc_dir,
-            remote_suite_dir, shell, share_dir, work_dir,
+            remote_suite_dir, remote_scripting, shell, share_dir, work_dir,
             simulation_mode, job_submission_method ):
 
         self.task_id = task_id
@@ -48,6 +48,7 @@ class jobfile(object):
         self.job_submission_method = job_submission_method
         self.remote_cylc_dir = remote_cylc_dir
         self.remote_suite_dir = remote_suite_dir
+        self.remote_scripting = remote_scripting
         self.manual_messaging = manual_messaging
         self.namespace_hierarchy = ns_hier
 
@@ -61,6 +62,7 @@ class jobfile(object):
         self.write_header()
         self.write_directives()
         self.write_task_job_script_starting()
+        self.write_remote_scripting()
         self.write_environment_1()
         self.write_cylc_access()
         self.write_err_trap()
@@ -94,6 +96,16 @@ class jobfile(object):
 
     def write_task_job_script_starting( self ):
         self.FILE.write( '\n\necho "TASK JOB SCRIPT STARTING"')
+
+    def write_remote_scripting( self, BUFFER=None ):
+        # This can be used for remote environment set up,
+        # e.g. ". $HOME/.profile" as ssh does not source .profile.
+        if not BUFFER:
+            BUFFER = self.FILE
+        if not self.remote_scripting:
+            return
+        BUFFER.write( "\n\n# REMOTE SCRIPTING:\n" )
+        BUFFER.write( self.remote_scripting )
 
     def write_environment_1( self, BUFFER=None ):
         if not BUFFER:
@@ -185,6 +197,7 @@ cd $CYLC_TASK_WORK_PATH""" % data )
     def write_manual_environment( self ):
         if self.manual_messaging:
             strio = StringIO.StringIO()
+            self.write_remote_scripting( strio )
             self.write_environment_1( strio )
             self.write_cylc_access( strio )
             # now escape quotes in the environment string

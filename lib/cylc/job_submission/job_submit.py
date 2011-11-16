@@ -56,7 +56,7 @@ class job_submit(object):
             post_command, task_env, ns_hier, directives, 
             manual_messaging, logfiles, log_dir, share_dir, work_dir, task_owner,
             remote_host, remote_cylc_dir, remote_suite_dir,
-            remote_shell_template, remote_log_dir, 
+            remote_shell_template, remote_log_dir, remote_scripting,
             job_submit_command_template, job_submission_shell ): 
 
         self.task_id = task_id
@@ -100,6 +100,7 @@ class job_submit(object):
         self.remote_shell_template = remote_shell_template
         self.remote_cylc_dir = remote_cylc_dir
         self.remote_suite_dir = remote_suite_dir
+        self.remote_scripting = remote_scripting
 
         # Use remote job submission if (a) not simulation mode, (b) a
         # remote host is defined or task owner is defined.
@@ -177,10 +178,9 @@ class job_submit(object):
                 self.directives, self.final_directive, 
                 self.manual_messaging, self.pre_command,
                 self.task_command, self.post_command,
-                self.remote_cylc_dir, self.remote_suite_dir, 
+                self.remote_cylc_dir, self.remote_suite_dir, self.remote_scripting,
                 self.job_submission_shell, 
-                self.share_dir,
-                self.work_dir,
+                self.share_dir, self.work_dir,
                 self.__class__.simulation_mode,
                 self.__class__.__name__ )
         # write the job file
