@@ -1648,7 +1648,7 @@ The cylc forecast suite metascheduler.
         ok_button.connect("clicked", self.jobscript, reg, task_entry )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'util', 'jobscript' )
+        help_button.connect("clicked", self.command_help, 'prep', 'jobscript' )
 
         hbox = gtk.HBox()
         hbox.pack_start( ok_button, False )
