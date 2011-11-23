@@ -44,6 +44,13 @@ from graphnode import graphnode, GraphNodeError
 from cylc.print_tree import print_tree
 
 try:
+    from jinja2 import Environment, FileSystemLoader
+except ImportError:
+    jinja2_loaded = False
+else:
+    jinja2_loaded = True
+
+try:
     import graphing
 except:
     graphing_disabled = True
@@ -145,8 +152,28 @@ class config( CylcConfigObj ):
 
         if self.verbose:
             print "LOADING suite.rc"
+        # check first line
+        f = open( self.file )
+        fline = f.readline()
+        f.close()
+        if fline.startswith( '#!jinja2' ):
+            # This suite.rc file requires processing with jinja2.
+            if not jinja2_loaded:
+                print >> sys.stderr, 'ERROR: This suite requires processing with the Jinja2 template engine'
+                print >> sys.stderr, 'ERROR: but the Jinja2 modules are not installed in your PYTHONPATH.'
+                raise SuiteConfigError, 'Aborting (Jinja2 required).'
+            if self.verbose:
+                print "Processing the suite with Jinja2"
+            env = Environment( loader=FileSystemLoader(self.dir) )
+            template = env.get_template('suite.rc')
+            # convert unicode to plain string (configobj doesn't like?)
+            suiterc = str( template.render() )
+            suiterc = suiterc.split('\n') # pass a list of lines to configobj
+        else:
+            # This is a plain suite.rc file.
+            suiterc = self.file # pass the filename to configobj
         try:
-            CylcConfigObj.__init__( self, self.file, configspec=self.spec )
+            CylcConfigObj.__init__( self, suiterc, configspec=self.spec )
         except ConfigObjError, x:
             raise SuiteConfigError, x
 
