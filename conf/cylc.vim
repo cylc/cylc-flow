@@ -3,7 +3,7 @@
 
 " Put this file in $HOME/.vim/syntax/ directory.
 
-" And put the following in .vimrc file, for file type recognition:
+" And put the following in .vimrc for file type recognition:
 
 "augroup filetype
 "  au! BufRead,BufnewFile suite.rc   set filetype=cylc
@@ -12,6 +12,11 @@
 
 " syncing from start of file is best, but may be slow for large files:
 syn sync fromstart
+
+syn match jinja2 '{%.\{-}%}'
+syn match jinja2variable '{{.\{-}}}'
+"syn match jinja2comment '{#.\{-}#}'
+syn region jinja2comment start='{#' end='#}'
 
 syn match cylcSectionA '\[.*\]'
 syn match cylcSectionB '\[\[.*\]\]'
@@ -32,13 +37,20 @@ syntax keyword ToDo TODO ToDo contained
 syn match cylcComment excludenl '#.*' contains=ToDo
 syn match cylcCommentInString '#.*[^"']' contained contains=ToDo
 
+syn match jinja2InString '{%.\{-}[^"']%}' contained
+syn match jinja2variableInString '{{.\{-}[^"']}}' contained
+syn match jinja2commentInString '{#.\{-}[^"']#}' contained
+
 syn region cylcString start=+"+ end=+"+ skip=+\\"+ 
 syn region cylcString start=+'+ end=+'+ skip=+\\'+ 
-syn region cylcString start=+"""+ end=+"""+ contains=cylcCommentInString keepend
-syn region cylcString start=+'''+ end=+'''+ contains=cylcCommentInString keepend
+syn region cylcString start=+"""+ end=+"""+ contains=jinja2InString,jinja2commentInString,jinja2variableInString,cylcCommentInString keepend
+syn region cylcString start=+'''+ end=+'''+ contains=jinja2InString,jinja2commentInString,jinja2variableInString,cylcCommentInString keepend
 
 " TO DO: replace the following with cylc-specific groups as for cylcSectionA,B,C:
 hi def link cylcCommentInString Comment
+hi def link jinja2InString jinja2
+hi def link jinja2commentInString jinja2comment
+hi def link jinja2variableInString jinja2variable
 hi def link cylcComment Comment
 hi def link cylcInlineMarker Statement
 hi def link cylcString String
@@ -46,15 +58,18 @@ hi def link cylcItem Special
 hi def link cylcInline Statement
 hi def link cylcInclude Statement
 
-
 hi Normal ctermfg=DarkGrey guifg=#444444
 
 hi cylcSectionC ctermfg=DarkRed guifg=#550044 term=bold cterm=bold gui=bold
 hi cylcSectionB ctermfg=DarkRed guifg=#9900aa term=bold cterm=bold gui=bold
 hi cylcSectionA ctermfg=DarkRed guifg=#ff00ee term=bold cterm=bold gui=bold
 
+hi jinja2         ctermfg=DarkGreen guifg=#a3b732 term=bold cterm=bold gui=bold
+hi jinja2comment  ctermfg=DarkGreen guifg=#809032 term=bold cterm=bold gui=bold 
+hi jinja2variable ctermfg=DarkGreen guifg=#b0a672 term=bold cterm=bold gui=bold
+
 hi Comment ctermfg=LightBlue guifg=#ff4422 term=bold cterm=bold gui=bold 
 hi cylcCommentInString ctermfg=LightBlue guifg=#ff8844 term=bold cterm=bold gui=bold 
-hi String ctermfg=DarkGreen guifg=#126412
+hi String ctermfg=DarkGreen guifg=#12c428
 hi Special term=Underline cterm=Underline gui=Underline ctermfg=DarkGrey guifg=#4444aa
 hi Statement ctermbg=Yellow guibg=#bcff84 guifg=#222222
