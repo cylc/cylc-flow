@@ -25,6 +25,14 @@ from config import config, SuiteConfigError
 delimiter = '.'
 delimiter_re = '\.'
 
+def check_name( suite ):
+    # Suite names may contain word characters [a-zA-Z0-9_], and dots
+    # (the registration hierarchy delimiter), and hyphens. They may
+    # not contain colons because this would prevent use of reg name
+    # based paths in PATH variables
+    if re.search( '[^\w.-]', suite ):
+        raise IllegalNameError( suite ) 
+
 # NOTE:ABSPATH (see below)
 #   dir = os.path.abspath( dir )
 # On GPFS os.path.abspath() returns the full path with fileset
@@ -243,12 +251,7 @@ class regdb(object):
                 print "   (database unchanged)"
 
     def register( self, suite, dir ):
-        # Suite names may contain word characters [a-zA-Z0-9_], and dots
-        # (the registration hierarchy delimiter), and hyphens. They may
-        # not contain colons because this would prevent use of reg name
-        # based paths in PATH variables
-        if re.search( '[^\w.-]', suite ):
-            raise IllegalNameError( suite ) 
+        check_name( suite )
         for key in self.items.keys():
             if key == suite:
                 raise SuiteTakenError, suite
@@ -334,6 +337,7 @@ class regdb(object):
         return dirs
 
     def reregister( self, srce, targ ):
+        check_name( targ )
         found = False
         for key in self.items.keys():
             if key.startswith(srce):

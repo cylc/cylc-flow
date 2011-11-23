@@ -20,7 +20,7 @@ import os, re, sys
 from shutil import copytree
 from optparse import OptionParser
 from cylc.mkdir_p import mkdir_p
-from cylc.registration import delimiter, delimiter_re, localdb, \
+from cylc.registration import delimiter, delimiter_re, localdb, check_name, \
         centraldb, RegistrationError, SuiteTakenError, DatabaseLockedError
 
 parser = OptionParser( usage = """cylc [db] copy|cp [OPTIONS] SOURCE TARGET TOPDIR
@@ -105,6 +105,11 @@ if len(args) != 3:
 arg_from = args[0].rstrip(delimiter)
 arg_to = args[1].rstrip(delimiter)
 arg_dir = args[2]
+
+try:
+    check_name(arg_to)
+except RegistrationError, x:
+    raise SystemExit(x)
 
 if c_import:
     sourcedb = centraldb( verbose=options.verbose )
