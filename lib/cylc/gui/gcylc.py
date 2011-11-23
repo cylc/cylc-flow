@@ -866,115 +866,133 @@ The cylc forecast suite metascheduler.
 
         else:
             # MENU OPTIONS FOR SUITES
+            infomenu_item = gtk.MenuItem( 'Information' )
+            infomenu = gtk.Menu()
+            infomenu_item.set_submenu(infomenu)
+ 
             if not self.cdb:
-                con_item = gtk.MenuItem( '_Control GUI (tree)')
-                menu.append( con_item )
+                ctrlmenu_item = gtk.MenuItem( 'Control' )
+                ctrlmenu = gtk.Menu()
+                ctrlmenu_item.set_submenu(ctrlmenu)
+ 
+                con_item = gtk.MenuItem( '_Dot Suite Control GUI')
+                ctrlmenu.append( con_item )
                 con_item.connect( 'activate', self.launch_controller, reg, state )
 
-                cong_item = gtk.MenuItem( '_Control GUI (graph)')
-                menu.append( cong_item )
+                cong_item = gtk.MenuItem( '_Graph Suite Control GUI')
+                ctrlmenu.append( cong_item )
                 cong_item.connect( 'activate', self.launch_controller, reg, state, True )
 
-                subm_item = gtk.MenuItem( '_Submit A Task')
-                menu.append( subm_item )
+                subm_item = gtk.MenuItem( '_Submit A Single Task')
+                ctrlmenu.append( subm_item )
                 subm_item.connect( 'activate', self.submit_task_popup, reg )
 
-                menu.append( gtk.SeparatorMenuItem() )
-
-                out_item = gtk.MenuItem( 'Suite _Output')
-                menu.append( out_item )
+                out_item = gtk.MenuItem( 'Suite _Stdout')
+                infomenu.append( out_item )
                 out_item.connect( 'activate', self.view_output, reg, state )
 
                 out_item = gtk.MenuItem( 'Suite _Log')
-                menu.append( out_item )
+                infomenu.append( out_item )
                 out_item.connect( 'activate', self.view_log, reg )
 
                 if state != '-':
                     # suite is running
                     dump_item = gtk.MenuItem( 'D_ump Suite State' )
-                    menu.append( dump_item )
+                    infomenu.append( dump_item )
                     dump_item.connect( 'activate', self.dump_suite, reg )
 
-                menu.append( gtk.SeparatorMenuItem() )
-
             search_item = gtk.MenuItem( '_Description' )
-            menu.append( search_item )
+            infomenu.append( search_item )
             search_item.connect( 'activate', self.describe_suite, reg )
 
-            list_item = gtk.MenuItem( 'Task _List' )
-            menu.append( list_item )
-            list_item.connect( 'activate', self.list_suite, reg )
+            listitem = gtk.MenuItem( '_Task List' )
+            infomenu.append( listitem )
+            listmenu = gtk.Menu()
+            listitem.set_submenu(listmenu)
+ 
+            flat_item = gtk.MenuItem( '_Flat' )
+            listmenu.append( flat_item )
+            flat_item.connect( 'activate', self.list_suite, reg )
 
-            tree_item = gtk.MenuItem( '_Namespaces' )
-            menu.append( tree_item )
+            tree_item = gtk.MenuItem( '_Tree' )
+            listmenu.append( tree_item )
             # use "-tp" for unicode box-drawing characters (seems to be
             # OK in pygtk textview).
             tree_item.connect( 'activate', self.list_suite, reg, '-tp' )
 
             if not self.cdb:
-                jobs_item = gtk.MenuItem( 'Get A _Job Script')
-                menu.append( jobs_item )
+                jobs_item = gtk.MenuItem( '_Job Script')
+                infomenu.append( jobs_item )
                 jobs_item.connect( 'activate', self.jobscript_popup, reg )
     
-            menu.append( gtk.SeparatorMenuItem() )
+            prepmenu_item = gtk.MenuItem( 'Preparation' )
+            prepmenu = gtk.Menu()
+            prepmenu_item.set_submenu(prepmenu)
     
             edit_item = gtk.MenuItem( '_Edit' )
-            menu.append( edit_item )
+            prepmenu.append( edit_item )
             edit_item.connect( 'activate', self.edit_suite_popup, reg )
     
             view_item = gtk.MenuItem( '_View' )
-            menu.append( view_item )
+            prepmenu.append( view_item )
             view_item.connect( 'activate', self.view_suite_popup, reg )
  
             graph_item = gtk.MenuItem( '_Graph' )
-            menu.append( graph_item )
+            prepmenu.append( graph_item )
             graph_item.connect( 'activate', self.graph_suite_popup, reg, suite_dir )
 
             search_item = gtk.MenuItem( '_Search' )
-            menu.append( search_item )
+            prepmenu.append( search_item )
             search_item.connect( 'activate', self.search_suite_popup, reg )
 
             val_item = gtk.MenuItem( '_Validate' )
-            menu.append( val_item )
+            prepmenu.append( val_item )
             val_item.connect( 'activate', self.validate_suite, reg )
     
-            menu.append( gtk.SeparatorMenuItem() )
+            dbmenu_item = gtk.MenuItem( 'Database' )
+            dbmenu = gtk.Menu()
+            dbmenu_item.set_submenu(dbmenu)
     
             if not self.cdb:
                 copy_item = gtk.MenuItem( 'Co_py' )
-                menu.append( copy_item )
+                dbmenu.append( copy_item )
                 copy_item.connect( 'activate', self.copy_popup, reg )
 
                 alias_item = gtk.MenuItem( '_Alias' )
-                menu.append( alias_item )
+                dbmenu.append( alias_item )
                 alias_item.connect( 'activate', self.alias_popup, reg )
     
             if self.cdb:
                 imp_item = gtk.MenuItem( 'I_mport' )
-                menu.append( imp_item )
+                dbmenu.append( imp_item )
                 imp_item.connect( 'activate', self.import_popup, reg )
             else:
                 exp_item = gtk.MenuItem( 'E_xport' )
-                menu.append( exp_item )
+                dbmenu.append( exp_item )
                 exp_item.connect( 'activate', self.export_popup, reg )
     
             compare_item = gtk.MenuItem( 'Co_mpare' )
-            menu.append( compare_item )
+            dbmenu.append( compare_item )
             compare_item.connect( 'activate', self.compare_popup, reg )
  
             reregister_item = gtk.MenuItem( '_Reregister' )
-            menu.append( reregister_item )
+            dbmenu.append( reregister_item )
             reregister_item.connect( 'activate', self.reregister_popup, reg )
             if self.cdb:
                 if owner != self.owner:
                     reregister_item.set_sensitive( False )
     
             del_item = gtk.MenuItem( '_Unregister' )
-            menu.append( del_item )
+            dbmenu.append( del_item )
             del_item.connect( 'activate', self.unregister_popup, reg )
             if self.cdb:
                 if owner != self.owner:
                     del_item.set_sensitive( False )
+
+            menu.append( prepmenu_item )
+            menu.append( ctrlmenu_item )
+            menu.append( infomenu_item )
+            menu.append( dbmenu_item )
 
         menu.show_all()
         # button only:
