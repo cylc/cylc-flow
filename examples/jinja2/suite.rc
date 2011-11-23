@@ -1,0 +1,54 @@
+#!jinja2
+{% set HOST = "SuperComputer" %}
+{% set CITIES = ['NewYork', 'Philadelphia', 'Newark', 'Houston', 'SantaFe', 'Chicago'] %}
+{% set CITYJOBS = ['one', 'two', 'three', 'four'] %}
+{% set WALL_CLOCK_LIMIT_MINS = 20 %}
+
+{% set CLEANUP = True %}
+
+[scheduling]
+    [[ dependencies ]]
+{% if CLEANUP %}
+        [[[23]]]
+            graph = "clean"
+{% endif %}
+        [[[0,12]]]
+            graph = """
+                    setup => get_lbc & get_ic # foo
+{% for CITY in CITIES %} {# comment #}
+                    get_lbc => {{ CITY }}_one
+                    get_ic => {{ CITY }}_two
+                    {{ CITY }}_one & {{ CITY }}_two => {{ CITY }}_three & {{ CITY }}_four
+{% if CLEANUP %}
+                    {{ CITY }}_three & {{ CITY }}_four => cleanup
+{% endif %}
+{% endfor %}
+                    """
+[runtime]
+    [[on_{{ HOST }} ]]
+        [[[remote]]]
+            host = {{ HOST }}
+            cylc directory = /path/to/cylc
+        [[[directives]]]
+            wall_clock_limit = "00:{{ WALL_CLOCK_LIMIT_MINS|int() + 2 }}:00,00:{{ WALL_CLOCK_LIMIT_MINS }}:00"
+
+{% for CITY in CITIES %}
+    [[ {{ CITY }} ]]
+        inherit = on_{{ HOST }}
+{% for JOB in CITYJOBS %}
+    [[ {{ CITY }}_{{ JOB }} ]]
+        inherit = {{ CITY }}
+{% endfor %}
+{% endfor %}
+
+[visualization]
+    initial cycle time = 2011080812
+    final cycle time = 2011080823
+    [[node groups]]
+        cleaning = clean, cleanup
+    [[node attributes]]
+        cleaning = 'style=filled', 'fillcolor=yellow'
+        NewYork = 'style=filled', 'fillcolor=lightblue'        
+{% for JOB in CITYJOBS %}
+        NewYork_{{ JOB }} = 'style=filled', 'fillcolor=lightblue'        
+{% endfor %}
