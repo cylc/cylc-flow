@@ -17,13 +17,21 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, re, sys
-from shutil import move
-import subprocess
+import datetime
 import tempfile
+from shutil import copy
+import subprocess
 from optparse import OptionParser
 from collections import deque
 from cylc.registration import dbgetter, RegistrationError
 from cylc.mkdir_p import mkdir_p
+
+try:
+    from jinja2 import Template
+except ImportError:
+    jinja2_loaded = False
+else:
+    jinja2_loaded = True
 
 done = []
 
@@ -45,6 +53,11 @@ def continuation_lines( inf ):
 def include_files( suitedir, inf, mark=False, single=False, label=False, level=None ):
     if level == None:
         level = ''
+        # suite.rc itself
+        level = ''
+        outf.append("# !WARNING!\n" )
+        outf.append("# !WARNING! This is an INLINED TEMPORARY COPY of the original suite.rc file.\n" )
+        outf.append("# !WARNING!\n\n" )
     else:
         if mark:
             level += '!'
@@ -79,24 +92,20 @@ def include_files( suitedir, inf, mark=False, single=False, label=False, level=N
             outf.append(level + line)
     return outf
 
-parser = OptionParser( """cylc [prep] inline [options] SUITE 
 
-View a temporary copy of a suite config (suite.rc) file in your $EDITOR
-(or GUI $GEDITOR) exactly as the config file parser sees it: with
-include-files inlined and continuation lines joined. This can be used to
-get a quick global view of a suite that uses include-files, or to trace
-parsing errors by line number (suite validation is sufficiently
-informative, however, that you should not need to do this).
+parser = OptionParser( """cylc [prep] view [options] SUITE 
 
-If you want to edit the suite, in inlined form or not, or to view it
-without inlined include-files, use the 'cylc prep edit' command.
+View a read-only temporary copy of a suite definition (suite.rc file) in
+your editor. If the suite uses include-files you can view it inlined. If
+it uses a template engine such as Jinja2 you can view the processed file.
 
-The read-only edit process is spawned in the foreground as follows:
-  $(G)EDITOR <temporary-inlined-file-in-$TMPDIR>
-$GEDITOR or $EDITOR, and $TMDPIR, must be defined in your environment. 
+The edit process is spawned in the foreground as follows:
+  $(G)EDITOR suite.rc
+$GEDITOR or $EDITOR, and $TMDPIR, must be in your environment. 
+
 Examples:
    export EDITOR=vim
-   export GEDITOR='gvim -f'       # -f: do not detach from parent shell!!
+   export GEDITOR='gvim -f'      # -f: do not detach from parent shell!!
    export EDITOR='xterm -e vim'  # for gcylc, if gvim is not available
    export GEDITOR=emacs
    export EDITOR='emacs -nw'
@@ -104,35 +113,42 @@ You can set both $GEDITOR and $EDITOR to a GUI editor if you like, but
 $GEDITOR at least *must* be a GUI editor, or an in-terminal invocation 
 of a non-GUI editor, if you want to spawn editing sessions via gcylc.
 
-See also: cylc prep edit
+See also 'cylc [prep] edit'.
 
 Arguments:
-  SUITE   - suite registration""")
+  SUITE         Target suite.""")
 
-parser.add_option( "-c", "--central", 
-        help="Target the central database.",
-        action="store_true", default=False, dest="central" )
+parser.add_option( "--inline", "-i", 
+        help="Inline any include-files.",
+        action="store_true", default=False, dest="inline" )
+
+parser.add_option( "--process", "-p",
+        help="View the suite after template engine processing.",
+        action="store_true", default=False, dest="process" )
 
 parser.add_option( "--mark", "-m", 
-        help="Mark inclusions in the left margin (line numbers will "
-        "still correspond to those reported by the parser).",
+        help="(With '-i') Mark inclusions in the left margin.",
         action="store_true", default=False, dest="mark" )
 
 parser.add_option( "--label", "-l", 
-        help="Label file inclusion boundaries with the file name "
-        "(line numbers will not correspond to those reported by the parser).",
+        help="(With '-i') Label file inclusions with the file name. "
+        "Line numbers will not correspond to those reported by the parser.",
         action="store_true", default=False, dest="label" )
+
+parser.add_option( "--single", "-s", 
+        help="(With '-i') Inline only the first instances of any "
+        "multiply-included files. Line numbers will not correspond to "
+        "those reported by the parser.",
+        action="store_true", default=False, dest="single" )
 
 parser.add_option( "--nojoin", "-n", 
         help="Do not join continuation lines (line numbers will "
         "not correspond to those reported by the parser).",
         action="store_true", default=False, dest="nojoin" )
 
-parser.add_option( "--single", "-s", 
-        help="Inline and label just the first instance of any "
-        "multiply-included file (line numbers will not correspond to "
-        "those reported by the parser).",
-        action="store_true", default=False, dest="single" )
+parser.add_option( "--central",
+        help="Target the central suite database.",
+        action="store_true", default=False, dest="central" )
 
 parser.add_option( "--gui", "-g", 
         help="Use GUI editor $GEDITOR instead of $EDITOR. This option is "
@@ -145,6 +161,20 @@ if len(args) != 1:
     parser.error( "wrong number of arguments" )
 
 reg = args[0]
+
+if options.geditor:
+    edvar = 'GEDITOR'
+else:
+    edvar = 'EDITOR'
+
+try:
+    editor = os.environ[edvar]
+except KeyError:
+    raise SystemExit( 'export $' + edvar + ' before using this command' )
+
+# find location of the suite definition directory
+global suitedir
+
 dbg = dbgetter( options.central )
 try:
     suite, suiterc = dbg.get_suite(reg)
@@ -158,7 +188,7 @@ if 'TMPDIR' in os.environ:
 elif 'SCRATCH' in os.environ:
     tmpdir = os.environ['SCRATCH']
 else:
-    raise SystemExit( "ERROR: export $TMPDIR or $SCRATCH before 'cylc inline'" )
+    raise SystemExit( "ERROR: export $TMPDIR or $SCRATCH before 'cylc edit --inline'" )
 
 # create $TMPDIR if necessary
 try:
@@ -168,65 +198,81 @@ except Exception,x:
     print >> sys.stderr, 'ERROR, illegal tmpdir?', tmpdir
     sys.exit(1)
 
-if options.geditor:
-    edvar = 'GEDITOR'
+# read the suite.rc file
+if os.path.isfile( suiterc ):
+    h = open( suiterc, 'rb' )
+    lines = h.readlines()
+    h.close()
+
+    if options.process:
+        if lines[0].startswith( '#!jinja2' ):
+            # This suite.rc file requires processing with jinja2.
+            if not jinja2_loaded:
+                print >> sys.stderr, 'WARNING: This suite requires processing with the Jinja2 template engine'
+                print >> sys.stderr, 'WARNING: but the Jinja2 modules are not installed in your PYTHONPATH.'
+                print >> sys.stderr, 'WARNING: Continuing without template processing.'
+            else:
+                template = Template(''.join(lines))
+                # convert unicode to plain string (needed here?)
+                suiterc = str( template.render() )
+                # split back into lines
+                xlines = suiterc.split('\n')
+                lines = []
+                lines.append("# !WARNING!\n" )
+                lines.append("# !WARNING! This is a PROCESSED TEMPORARY COPY of the original suite.rc file.\n" )
+                lines.append("# !WARNING!\n\n" )
+                # restore newlines to each line
+                for line in xlines:
+                    lines.append(line + '\n')
+    if options.inline:
+        # inline any include files
+        lines = include_files( suitedir, lines, options.mark, options.single, options.label )
+
+    if not options.nojoin:
+        # join any continuation lines
+        lines = continuation_lines( lines )
+
 else:
-    edvar = 'EDITOR'
+    parser.error("File not found: " + suiterc )
 
-try:
-    editor = os.environ[edvar]
-except KeyError:
-    raise SystemExit( 'export $' + edvar + ' before using this command' )
-
-if not os.path.isfile( suiterc ):
-    parser.error("Suite " + suite + " config file not found: " + suiterc )
-
-h = open( suiterc, 'rb' )
-lines = h.readlines()
-h.close()
-
-# inline any include files
-lines = include_files( suitedir, lines, options.mark, options.single, options.label )
-
-if not options.nojoin:
-    # join any continuation lines
-    lines = continuation_lines( lines )
-
-inlined = tempfile.mktemp( suffix = ".rc", prefix = suite + '.', dir = tmpdir )
-h = open( inlined, 'wb' )
+# write to a temporary file
+viewfile = tempfile.mktemp( suffix = ".rc", prefix = suite + '.', dir = tmpdir )
+h = open( viewfile, 'wb' )
 h.writelines( lines )
 h.close()
 
 # set the file to be read only
-os.chmod( inlined, 0444 )
+os.chmod( viewfile, 0444 )
 
 # capture the temp file's mod time in case the user edits it
 # and overrides the readonly mode.
-modtime1 = os.stat( inlined ).st_mtime
- 
+modtime1 = os.stat( viewfile ).st_mtime
+
 # in case $EDITOR has options, e.g. 'emacs -nw':
 command_list = re.split( ' ', editor )
-command_list.append( inlined )
+command_list.append( viewfile )
 command = ' '.join( command_list )
 try:
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES
     retcode = subprocess.call( command_list )
     if retcode != 0:
         # the command returned non-zero exist status
-        print >> sys.stderr, command, ' failed:', retcode
+        print >> sys.stderr, command, 'failed:', retcode
         sys.exit(1)
 except OSError:
     # the command was not invoked
     print >> sys.stderr, 'ERROR: unable to execute:', command
     sys.exit(1)
  
-# did the user edit the file
-modtime2 = os.stat( inlined ).st_mtime
+# !!!VIEWING FINISHED!!!
+
+# Did the user edit the file
+modtime2 = os.stat( viewfile ).st_mtime
 
 if modtime2 > modtime1:
     print
-    print >> sys.stderr, 'WARNING: YOU HAVE EDITED THE TEMPORARY READ-ONLY SUITE.RC COPY, IF'
-    print >> sys.stderr, 'YOU WANT TO RETAIN THE CHANGES, EXTRACT THEM FROM THE FILE HERE:'
-    print >> sys.stderr, inlined
-    print >> sys.stderr, 'In future, to *edit* a suite use \'cylc prep edit\', not \'cylc prep inline\'.'
+    print >> sys.stderr, 'WARNING: YOU HAVE EDITED A TEMPORARY READ-ONLY SUITE COPY:'
+    print >> sys.stderr, viewfile
+    print >> sys.stderr, 'In future use \'cylc [prep] edit\' to edit a suite.'
     print
+# DONE

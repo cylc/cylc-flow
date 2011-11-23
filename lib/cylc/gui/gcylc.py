@@ -922,6 +922,10 @@ The cylc forecast suite metascheduler.
             menu.append( edit_item )
             edit_item.connect( 'activate', self.edit_suite_popup, reg )
     
+            view_item = gtk.MenuItem( '_View' )
+            menu.append( view_item )
+            view_item.connect( 'activate', self.view_suite_popup, reg )
+ 
             graph_item = gtk.MenuItem( '_Graph' )
             menu.append( graph_item )
             graph_item.connect( 'activate', self.graph_suite_popup, reg, suite_dir )
@@ -1535,21 +1539,21 @@ The cylc forecast suite metascheduler.
     def view_inlined_toggled( self, w, rb, cbs ):
         cbs.set_sensitive( rb.get_active() )
 
-    def edit_suite_popup( self, w, reg ):
+    def view_suite_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Edit '" + reg + "'")
+        window.set_title( "View '" + reg + "'")
 
         vbox = gtk.VBox()
         box = gtk.HBox()
 
-        edit_rb = gtk.RadioButton( None, "Edit" )
-        box.pack_start (edit_rb, True)
-        edit_inlined_rb = gtk.RadioButton( edit_rb, "Edit Inlined" )
-        box.pack_start (edit_inlined_rb, True)
-        view_inlined_rb = gtk.RadioButton( edit_rb, "View Inlined" )
+        view_rb = gtk.RadioButton( None, "Raw" )
+        box.pack_start (view_rb, True)
+        view_inlined_rb = gtk.RadioButton( view_rb, "Inlined" )
         box.pack_start (view_inlined_rb, True)
-        edit_rb.set_active(True)
+        view_processed_rb = gtk.RadioButton( view_rb, "Processed" )
+        box.pack_start (view_processed_rb, True)
+        view_rb.set_active(True)
         vbox.pack_start( box )
 
         hbox = gtk.HBox()
@@ -1569,9 +1573,41 @@ The cylc forecast suite metascheduler.
 
         cancel_button = gtk.Button( "_Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
+        ok_button = gtk.Button( "_View" )
+        ok_button.connect("clicked", self.view_suite, window, reg, view_rb,
+                view_inlined_rb, view_processed_rb, mark_cb, label_cb, nojoin_cb, single_cb )
+
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", self.command_help, 'prep', 'view' )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( ok_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def edit_suite_popup( self, w, reg ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Edit '" + reg + "'")
+
+        vbox = gtk.VBox()
+        box = gtk.HBox()
+
+        edit_rb = gtk.RadioButton( None, "Raw" )
+        box.pack_start (edit_rb, True)
+        edit_inlined_rb = gtk.RadioButton( edit_rb, "Inlined" )
+        box.pack_start (edit_inlined_rb, True)
+        edit_rb.set_active(True)
+        vbox.pack_start( box )
+
+        cancel_button = gtk.Button( "_Close" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
         ok_button = gtk.Button( "_Edit" )
-        ok_button.connect("clicked", self.edit_suite, window, reg, edit_rb,
-                edit_inlined_rb, view_inlined_rb, mark_cb, label_cb, nojoin_cb, single_cb )
+        ok_button.connect("clicked", self.edit_suite, window, reg, edit_rb, edit_inlined_rb )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", self.command_help, 'prep', 'edit' )
@@ -1585,11 +1621,11 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def edit_suite( self, w, window, reg, edit_rb, edit_inlined_rb,
-            view_inlined_rb, markcb, lblcb, nojcb, sngcb ):
+    def view_suite( self, w, window, reg, view_rb, view_inlined_rb,
+            view_processed_rb, markcb, lblcb, nojcb, sngcb ):
         window.destroy()
         if view_inlined_rb.get_active():
-            extra = ''
+            extra = ' -i'
             if markcb.get_active():
                 extra += ' -m'
             if nojcb.get_active():
@@ -1598,19 +1634,26 @@ The cylc forecast suite metascheduler.
                 extra += ' -l'
             if sngcb.get_active():
                 extra += ' -s'
-            command = "cylc inline " + self.dbopt + " --notify-completion -g " + extra + ' ' + reg
-            foo = gcapture_tmpfile( command, self.tmpdir )
-            self.gcapture_windows.append(foo)
-            foo.run()
+        elif view_processed_rb.get_active():
+            extra = ' -p'
         else:
-            if edit_inlined_rb.get_active():
-                extra = '-i '
-            else:
-                extra = ''
-            command = "cylc edit " + self.dbopt + " --notify-completion -g " + extra + ' ' + reg
-            foo = gcapture_tmpfile( command, self.tmpdir )
-            self.gcapture_windows.append(foo)
-            foo.run()
+            extra = ''
+
+        command = "cylc view " + self.dbopt + " --notify-completion -g " + extra + ' ' + reg
+        foo = gcapture_tmpfile( command, self.tmpdir )
+        self.gcapture_windows.append(foo)
+        foo.run()
+        return False
+
+    def edit_suite( self, w, window, reg, edit_rb, edit_inlined_rb ):
+        window.destroy()
+        extra = ''
+        if edit_inlined_rb.get_active():
+            extra = '-i '
+        command = "cylc edit " + self.dbopt + " --notify-completion -g " + extra + ' ' + reg
+        foo = gcapture_tmpfile( command, self.tmpdir )
+        self.gcapture_windows.append(foo)
+        foo.run()
         return False
 
     def validate_suite( self, w, name ):

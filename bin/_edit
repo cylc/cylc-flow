@@ -147,6 +147,12 @@ parser = OptionParser( """1/ cylc [prep] edit SUITE
        2/ cylc [prep] edit -i,--inline SUITE
        3/ cylc [prep] edit --cleanup SUITE
 
+This command facilitates editing of suite definitions (suite.rc files),
+with optional reversible inlining of include-files. Note that suites 
+requiring processing with a template engine such as Jinja2 can only 
+be edited in unprocessed form, but the processed suite definition can be 
+viewed using 'cylc [prep] view'.
+
 1/ Change to the suite definition directory and load the suite.rc file
 in your $EDITOR. This is a convenience so that you can edit the suite
 without having to remember the suite definition location.

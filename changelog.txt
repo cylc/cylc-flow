@@ -332,3 +332,8 @@ PENDING
 + a new "scripting" suite.rc item for remote tasks (e.g. to source the
 remote task owner's login scripts, which is not done by ssh).
 
++ Added support for the Jinja2 template engine, and an example suite.
+
++ Replaced the 'inline' command with 'view', which can show a temporary
+Jinja2-processed suite in addition to inlining include-files.
+

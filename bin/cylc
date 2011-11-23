@@ -227,7 +227,7 @@ database_commands['refresh'   ] = [ 'refresh' ]
 preparation_commands = OrderedDict()
 preparation_commands['gcylc'   ] = information_commands['gcylc']
 preparation_commands['edit'    ] = [ 'edit'    ]
-preparation_commands['inline'  ] = [ 'inline'    ]
+preparation_commands['view'    ] = [ 'view'    ]
 preparation_commands['validate'] = [ 'validate'    ]
 preparation_commands['list'    ] = ['list', 'ls' ]
 preparation_commands['search'  ] = [ 'search', 'grep' ]
@@ -338,7 +338,7 @@ comsum[ 'export'     ] = 'Export private registrations to the central database'
 comsum[ 'refresh'    ] = 'Report invalid registrations and update suite titles'
 # preparation
 comsum[ 'edit'       ] = 'Edit a suite.rc file in $EDITOR, optionally inlined'
-comsum[ 'inline'     ] = 'View suite.rc files in $EDITOR, include-files inlined'
+comsum[ 'view'       ] = 'View a temporary suite.rc file, inlined or processed'
 comsum[ 'validate'   ] = 'Parse and validate a suite config (suite.rc) file'
 comsum[ 'search'     ] = 'An intelligent search tool for cylc suites'
 comsum[ 'graph'      ] = 'A dependency graph viewer that updates as you edit'
