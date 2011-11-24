@@ -44,7 +44,7 @@ from graphnode import graphnode, GraphNodeError
 from cylc.print_tree import print_tree
 
 try:
-    from jinja2 import Environment, FileSystemLoader
+    from jinja2 import Environment, FileSystemLoader, TemplateError
 except ImportError:
     jinja2_loaded = False
 else:
@@ -165,7 +165,11 @@ class config( CylcConfigObj ):
             if self.verbose:
                 print "Processing the suite with Jinja2"
             env = Environment( loader=FileSystemLoader(self.dir) )
-            template = env.get_template('suite.rc')
+            try:
+                template = env.get_template('suite.rc')
+            except TemplateError, x:
+                raise SuiteConfigError, "Jinja2 template error: " + str(x)
+
             # convert unicode to plain string (configobj doesn't like?)
             suiterc = str( template.render() )
             suiterc = suiterc.split('\n') # pass a list of lines to configobj

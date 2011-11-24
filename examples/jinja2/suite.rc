@@ -1,7 +1,7 @@
 #!jinja2
 {% set HOST = "SuperComputer" %}
-{% set CITIES = ['NewYork', 'Philadelphia', 'Newark', 'Houston', 'SantaFe', 'Chicago'] %}
-{% set CITYJOBS = ['one', 'two', 'three', 'four'] %}
+{% set CITIES = 'NewYork', 'Philadelphia', 'Newark', 'Houston', 'SantaFe', 'Chicago' %}
+{% set CITYJOBS = 'one', 'two', 'three', 'four' %}
 {% set WALL_CLOCK_LIMIT_MINS = 20 %}
 
 {% set CLEANUP = True %}
