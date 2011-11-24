@@ -241,16 +241,16 @@ class xupdater(threading.Thread):
         self.graphw.cylc_add_node( 'runtime family', True )
         self.graphw.cylc_add_node( 'trigger family', True )
 
-        waiting = self.graphw.get_node( 'waiting', True )
-        runahead = self.graphw.get_node( 'runahead', True )
-        submitted = self.graphw.get_node( 'submitted', True )
-        running = self.graphw.get_node( 'running', True )
-        succeeded = self.graphw.get_node( 'succeeded', True )
-        failed = self.graphw.get_node( 'failed', True )
-        held = self.graphw.get_node( 'held', True )
-        base = self.graphw.get_node( 'base', True )
-        family = self.graphw.get_node( 'runtime family', True )
-        grfamily = self.graphw.get_node( 'trigger family', True )
+        waiting = self.graphw.get_node( 'waiting' )
+        runahead = self.graphw.get_node( 'runahead' )
+        submitted = self.graphw.get_node( 'submitted' )
+        running = self.graphw.get_node( 'running' )
+        succeeded = self.graphw.get_node( 'succeeded' )
+        failed = self.graphw.get_node( 'failed' )
+        held = self.graphw.get_node( 'held' )
+        base = self.graphw.get_node( 'base' )
+        family = self.graphw.get_node( 'runtime family' )
+        grfamily = self.graphw.get_node( 'trigger family' )
 
 
         for node in [ waiting, runahead, submitted, running, succeeded, failed, held, base, family, grfamily ]:
