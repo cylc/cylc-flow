@@ -18,7 +18,6 @@
 
 import os, re, sys
 import datetime
-import tempfile
 from shutil import copy
 import subprocess
 from optparse import OptionParser
@@ -309,10 +308,8 @@ if os.path.isfile( suiterc ):
 else:
     parser.error("File not found: " + suiterc )
 
-# write the inlined suite.rc to a temporary file
-#editfile = tempfile.mktemp( suffix = ".rc", prefix = suite + '.', dir = tmpdir )
-editfile = suiterc
-h = open( editfile, 'wb' )
+# overwrite the (now backed up) original with the inlined file:
+h = open( suiterc, 'wb' )
 h.writelines( lines )
 h.close()
 
@@ -324,7 +321,7 @@ for file in backups:
 
 # in case $EDITOR has options, e.g. 'emacs -nw':
 command_list = re.split( ' ', editor )
-command_list.append( editfile )
+command_list.append( suiterc )
 command = ' '.join( command_list )
 try:
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES
@@ -341,14 +338,14 @@ except OSError:
 # !!!EDITING FINISHED!!!
 
 # read in the edited inlined file
-h = open( editfile, 'rb' )
+h = open( suiterc, 'rb' )
 lines = h.readlines()
 h.close()
 
 # split it back into separate files
 split_file( lines, suiterc )
 
-print '(edited:', editfile, ')'
+print '(edited:', suiterc, ')'
 print 'POST-EDIT FILES WRITTEN:'
 for file in newfiles:
     f = re.sub( suitedir + '/', '', file )
