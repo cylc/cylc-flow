@@ -332,3 +332,10 @@ PENDING
 + a new "scripting" suite.rc item for remote tasks (e.g. to source the
 remote task owner's login scripts, which is not done by ssh).
 
++ fixed recently introduced bugs: 
+   - a background thread hung if the 'cylc graph' window was killed via
+     the window manager.
+   - a critical background thread died in the graph suite control GUI if
+     the graph key was toggled on.
+
+
