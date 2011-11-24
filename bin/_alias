@@ -65,3 +65,7 @@ except RegistrationError, x:
     print >> sys.stderr, x
     db.unlock()
     sys.exit(1)
+except Exception, x:
+    print >> sys.stderr, 'ERROR:', x
+    db.unlock()
+    sys.exit(1)

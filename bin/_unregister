@@ -88,6 +88,11 @@ except RegistrationError, x:
     if not options.dryrun:
         db.unlock()
     sys.exit(1)
+except Exception, x:
+    print >> sys.stderr, 'ERROR:', x
+    if not options.dryrun:
+        db.unlock()
+    sys.exit(1)
 
 # TO DO: should this be inside the db lock in the case of
 # central copied registrations (probably not).

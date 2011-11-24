@@ -182,3 +182,9 @@ except RegistrationError, x:
     if c_import or c_export:
         sourcedb.unlock()
     sys.exit(1)
+except Exception, x:
+    print >> sys.stderr, 'ERROR:', x
+    targetdb.unlock()
+    if c_import or c_export:
+        sourcedb.unlock()
+    sys.exit(1)
