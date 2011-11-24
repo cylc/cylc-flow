@@ -337,3 +337,9 @@ remote task owner's login scripts, which is not done by ssh).
 + Replaced the 'inline' command with 'view', which can show a temporary
 Jinja2-processed suite in addition to inlining include-files.
 
++ fixed recently introduced bugs: 
+   - a background thread hung if the 'cylc graph' window was killed via
+     the window manager.
+   - a critical background thread died in the graph suite control GUI if
+     the graph key was toggled on.
+
