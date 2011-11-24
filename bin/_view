@@ -66,9 +66,13 @@ def include_files( suitedir, inf, mark=False, single=False, label=False, level=N
             level += '!'
 
     for line in inf:
-        m = re.match( '\s*%include\s+([\w/\-\.]+)\s*$', line )
+        m = re.match( '\s*%include\s+(.*)\s*$', line )
         if m:
             match = m.groups()[0]
+            # include statement found
+            # strip off possible quotes: %include "foo.inc"
+            match = match.replace('"','')
+            match = match.replace("'",'')
             inc = os.path.join( suitedir, match )
             if inc not in done:
                 if single:

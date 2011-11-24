@@ -60,9 +60,13 @@ def include_files( inf, level=None ):
     else:
         level += ' > '
     for line in inf:
-        m = re.match( '\s*%include\s+([\w/\-\.]+)\s*$', line )
+        m = re.match( '\s*%include\s+(.*)\s*$', line )
         if m:
             match = m.groups()[0]
+            # include statement found
+            # strip off possible quotes: %include "foo.inc"
+            match = match.replace('"','')
+            match = match.replace("'",'')
             inc = os.path.join( suitedir, match )
             if inc not in included:
                 # new include file detected
@@ -81,7 +85,7 @@ def include_files( inf, level=None ):
                     outf.extend( include_files( inc, level ))
                     outf.append('#---- END INLINED INCLUDE FILE ' + match  + ' (DO NOT DELETE THIS LINE!)\n')
                 else:
-                    raise SystemExit( "File not found: " + inc )
+                    raise SystemExit( "ERROR, Include-file not found: " + inc )
             else:
                 outf.append(line)
         else:
