@@ -226,7 +226,7 @@ window.widget.connect( 'clicked', on_url_clicked, window )
 window.get_graph()
 #except config.SuiteConfigError, x:
 #    raise SystemExit(x)
-#window.connect( 'destroy', gtk.main_quit)
+window.connect( 'destroy', gtk.main_quit)
 
 #if options.updatelive:
 # checking periodically for file changed
