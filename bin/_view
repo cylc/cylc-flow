@@ -60,7 +60,7 @@ def include_files( suitedir, inf, mark=False, single=False, label=False, level=N
         level = ''
         outf.append("# !WARNING!\n" )
         outf.append("# !WARNING! This is an INLINED TEMPORARY COPY of the original suite.rc file.\n" )
-        outf.append("# !WARNING!\n\n" )
+        outf.append("# !WARNING!\n" )
     else:
         if mark:
             level += '!'
@@ -225,13 +225,17 @@ if os.path.isfile( suiterc ):
                 lines = []
                 lines.append("# !WARNING!\n" )
                 lines.append("# !WARNING! This is a PROCESSED TEMPORARY COPY of the original suite.rc file.\n" )
-                lines.append("# !WARNING!\n\n" )
+                lines.append("# !WARNING!\n" )
                 # restore newlines to each line
                 for line in xlines:
                     lines.append(line + '\n')
     if options.inline:
         # inline any include files
         lines = include_files( suitedir, lines, options.mark, options.single, options.label )
+    else:
+        lines = [ "# !WARNING!\n",
+                  "# !WARNING! This is a TEMPORARY COPY of the original suite.rc file.\n",
+                  "# !WARNING!\n" ] + lines
 
     if not options.nojoin:
         # join any continuation lines
