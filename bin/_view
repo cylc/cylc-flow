@@ -51,6 +51,9 @@ def continuation_lines( inf ):
     return outf
 
 def include_files( suitedir, inf, mark=False, single=False, label=False, level=None ):
+    global done
+    outf = []
+
     if level == None:
         level = ''
         # suite.rc itself
@@ -62,8 +65,6 @@ def include_files( suitedir, inf, mark=False, single=False, label=False, level=N
         if mark:
             level += '!'
 
-    global done
-    outf = []
     for line in inf:
         m = re.match( '\s*%include\s+([\w/\-\.]+)\s*$', line )
         if m:
