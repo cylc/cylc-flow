@@ -338,4 +338,7 @@ remote task owner's login scripts, which is not done by ssh).
    - a critical background thread died in the graph suite control GUI if
      the graph key was toggled on.
 
++ unlock the suite database after any error other than "already locked".
+
++ allow quotes around include-file filenames.
 

@@ -138,9 +138,13 @@ class CylcConfigObj( ConfigObj ):
     def include_files( self, inf ):
         outf = []
         for line in inf:
-            m = re.match( '\s*%include\s+([\w/\.\-]+)\s*$', line )
+            m = re.match( '\s*%include\s+(.*)\s*$', line )
             if m:
+                # include statement found
                 match = m.groups()[0]
+                # strip off possible quotes: %include "foo.inc"
+                match = match.replace('"','')
+                match = match.replace("'",'')
                 inc = os.path.join( self.suite_dir, match )
                 if os.path.isfile(inc):
                     #print "Inlining", inc
@@ -150,7 +154,7 @@ class CylcConfigObj( ConfigObj ):
                     # recursive inclusion
                     outf.extend( self.include_files( inc ))
                 else:
-                    raise SystemExit( "File not found: " + inc )
+                    raise ConfigObjError, "ERROR, Include-file not found: " + inc
             else:
                 # no match
                 outf.append( line )
