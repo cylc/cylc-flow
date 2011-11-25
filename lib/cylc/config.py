@@ -44,7 +44,7 @@ from graphnode import graphnode, GraphNodeError
 from cylc.print_tree import print_tree
 
 try:
-    from jinja2 import Environment, FileSystemLoader, TemplateError
+    from jinja2 import Template, TemplateError
 except ImportError:
     jinja2_loaded = False
 else:
@@ -56,6 +56,46 @@ except:
     graphing_disabled = True
 else:
     graphing_disabled = False
+
+def include_files( inf, dir ):
+    outf = []
+    for line in inf:
+        m = re.match( '\s*%include\s+(.*)\s*$', line )
+        if m:
+            # include statement found
+            match = m.groups()[0]
+            # strip off possible quotes: %include "foo.inc"
+            match = match.replace('"','')
+            match = match.replace("'",'')
+            inc = os.path.join( dir, match )
+            if os.path.isfile(inc):
+                #print "Inlining", inc
+                h = open(inc, 'rb')
+                inc = h.readlines()
+                h.close()
+                # recursive inclusion
+                outf.extend( include_files( inc, dir ))
+            else:
+                raise ConfigObjError, "ERROR, Include-file not found: " + inc
+        else:
+            # no match
+            outf.append( line )
+    return outf
+
+def continuation_lines( inf ):
+    outf = []
+    cline = ''
+    for line in inf:
+        # detect continuation line endings
+        m = re.match( '(.*)\\\$', line )
+        if m:
+            # add line to cline instead of appending to outf.
+            cline += m.groups()[0]
+        else:
+            outf.append( cline + line )
+            # reset cline 
+            cline = ''
+    return outf
 
 class SuiteConfigError( Exception ):
     """
@@ -152,11 +192,16 @@ class config( CylcConfigObj ):
 
         if self.verbose:
             print "LOADING suite.rc"
-        # check first line
         f = open( self.file )
-        fline = f.readline()
+        flines = f.readlines()
         f.close()
-        if fline.startswith( '#!jinja2' ):
+        # handle cylc include-files
+        flines = include_files( flines, self.dir )
+        # handle cylc continuation lines
+        flines = continuation_lines( flines )
+
+        # check first line of file for template engine directive
+        if re.match( '^#!jinja2\s*', flines[0] ):
             # This suite.rc file requires processing with jinja2.
             if not jinja2_loaded:
                 print >> sys.stderr, 'ERROR: This suite requires processing with the Jinja2 template engine'
@@ -164,9 +209,10 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, 'Aborting (Jinja2 required).'
             if self.verbose:
                 print "Processing the suite with Jinja2"
-            env = Environment( loader=FileSystemLoader(self.dir) )
+            #env = Environment( loader=FileSystemLoader(self.dir) )
             try:
-                template = env.get_template('suite.rc')
+                #template = env.get_template('suite.rc')
+                template = Template( ''.join(flines) )
             except TemplateError, x:
                 raise SuiteConfigError, "Jinja2 template error: " + str(x)
 

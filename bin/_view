@@ -27,7 +27,7 @@ from cylc.registration import dbgetter, RegistrationError
 from cylc.mkdir_p import mkdir_p
 
 try:
-    from jinja2 import Template
+    from jinja2 import Template, TemplateError
 except ImportError:
     jinja2_loaded = False
 else:
@@ -217,7 +217,12 @@ if os.path.isfile( suiterc ):
                 print >> sys.stderr, 'WARNING: but the Jinja2 modules are not installed in your PYTHONPATH.'
                 print >> sys.stderr, 'WARNING: Continuing without template processing.'
             else:
-                template = Template(''.join(lines))
+                try:
+                    template = Template(''.join(lines))
+                except TemplateError, x:
+                    print >> sys.stderr, "Jinja2 template error: " + str(x)
+                    sys.exit(1)
+
                 # convert unicode to plain string (needed here?)
                 suiterc = str( template.render() )
                 # split back into lines

@@ -41,8 +41,8 @@ syn match jinja2InString '{%.\{-}[^"']%}' contained
 syn match jinja2variableInString '{{.\{-}[^"']}}' contained
 syn match jinja2commentInString '{#.\{-}[^"']#}' contained
 
-syn region cylcString start=+"+ end=+"+ skip=+\\"+ 
-syn region cylcString start=+'+ end=+'+ skip=+\\'+ 
+syn region cylcString start=+"+ end=+"+ skip=+\\"+ contains=jinja2InString,jinja2commentInString,jinja2variableInString,cylcCommentInString keepend
+syn region cylcString start=+'+ end=+'+ skip=+\\'+ contains=jinja2InString,jinja2commentInString,jinja2variableInString,cylcCommentInString keepend
 syn region cylcString start=+"""+ end=+"""+ contains=jinja2InString,jinja2commentInString,jinja2variableInString,cylcCommentInString keepend
 syn region cylcString start=+'''+ end=+'''+ contains=jinja2InString,jinja2commentInString,jinja2variableInString,cylcCommentInString keepend
 
