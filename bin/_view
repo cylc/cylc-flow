@@ -198,18 +198,10 @@ except Exception,x:
     print >> sys.stderr, 'ERROR, illegal tmpdir?', tmpdir
     sys.exit(1)
 
-# Add a warning to file
-tmp = " !WARNING! This is a READ-ONLY COPY of " + suiterc 
-bot = re.sub( '.', '-', tmp )
-
-warning = [
-'#' + tmp + '\n', 
-'#' + bot + '\n' ] 
-
 # read the suite.rc file
 if os.path.isfile( suiterc ):
     h = open( suiterc, 'rb' )
-    lines = warning + h.readlines()
+    lines = h.readlines()
     h.close()
 
     if options.inline or options.process:
@@ -243,10 +235,17 @@ if os.path.isfile( suiterc ):
 else:
     parser.error("File not found: " + suiterc )
 
+# Add a warning to file
+tmp = " WARNING: This is a READ-ONLY COPY of " + suiterc 
+bot = re.sub( '.', '-', tmp )
+warning = [
+'#' + tmp + '\n', 
+'#' + bot + '\n' ] 
+
 # write to a temporary file
 viewfile = tempfile.mktemp( suffix = ".rc", prefix = suite + '.', dir = tmpdir )
 h = open( viewfile, 'wb' )
-h.writelines( lines )
+h.writelines( warning + lines )
 h.close()
 
 # set the file to be read only
