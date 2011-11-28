@@ -87,10 +87,6 @@ class SuiteNotFoundError( RegistrationError ):
     def __init__( self, suite ):
         self.msg = "ERROR, suite not found: " + suite
 
-class SuiteTitleNotFoundError( RegistrationError ):
-    def __init__( self, suite ):
-        self.msg = "ERROR, suite title not found by simple parsing: " + suite
-
 class SuiteOrGroupNotFoundError( RegistrationError ):
     def __init__( self, sog ):
         self.msg = "ERROR, suite or group not found: " + sog
@@ -262,7 +258,15 @@ class regdb(object):
 
         if dir.startswith( '->' ):
             # (alias: dir points to target suite reg)
-            title = self.get_suite_title( dir[2:] )
+            # parse the suite for the title
+            try:
+                title = self.get_suite_title( dir[2:] )
+            # parse the suite for the title
+            except Exception, x:
+                print >> sys.stderr, 'WARNING: a suite parsing error occured:\n  ', x
+                print >> sys.stderr, "Registering with temporary title 'SUITE PARSE ERROR'."
+                print >> sys.stderr, "Do 'cylc validate " + suite + "' for more information.\n"
+                title = "SUITE PARSE ERROR"
             # use the lowest level alias
             target = self.unalias( dir[2:] )
             dir = '->' + target
@@ -274,7 +278,14 @@ class regdb(object):
             # Make registered path absolute # see NOTE:ABSPATH above
             if not re.search( '^/', dir ):
                 dir = os.path.join( os.environ['PWD'], dir )
-            title = self.get_suite_title( suite, path=dir )
+            # parse the suite for the title
+            try:
+                title = self.get_suite_title( suite, path=dir )
+            except Exception, x:
+                print >> sys.stderr, 'WARNING: a suite parsing error occured:\n  ', x
+                print >> sys.stderr, "Registering with temporary title 'SUITE PARSE ERROR'."
+                print >> sys.stderr, "Do 'cylc validate " + suite + "' for more information.\n"
+                title = "SUITE PARSE ERROR"
 
         #if self.verbose:
         print 'REGISTER', suite + ':', dir
@@ -382,11 +393,7 @@ class regdb(object):
         else:
             suite = self.unalias(suite)
             suiterc = self.getrc( suite )
-        try:
-            title = config( suite, suiterc ).get_title()
-        except SuiteConfigError:
-            title = "SUITE PARSING ERROR"
-        return title
+        return config( suite, suiterc ).get_title()
 
     def refresh_suite_title( self, suite ):
         dir, title = self.items[suite]

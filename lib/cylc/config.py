@@ -216,8 +216,12 @@ class config( CylcConfigObj ):
             except TemplateError, x:
                 raise SuiteConfigError, "Jinja2 template error: " + str(x)
 
-            # convert unicode to plain string (configobj doesn't like?)
-            suiterc = str( template.render() )
+            try:
+                # (converting unicode to plain string; configobj doesn't like?)
+                suiterc = str( template.render() )
+            except Exception, x:
+                raise SuiteConfigError, "ERROR: Jinja2 template rendering failed: " + str(x)
+
             suiterc = suiterc.split('\n') # pass a list of lines to configobj
         else:
             # This is a plain suite.rc file.
