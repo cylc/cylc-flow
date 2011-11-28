@@ -6,6 +6,8 @@
 
 {% set CLEANUP = True %}
 
+{% include foo.rc %}
+
 [scheduling]
     [[ dependencies ]]
 {% if CLEANUP %}
