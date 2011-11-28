@@ -221,7 +221,8 @@ class config( CylcConfigObj ):
             suiterc = suiterc.split('\n') # pass a list of lines to configobj
         else:
             # This is a plain suite.rc file.
-            suiterc = self.file # pass the filename to configobj
+            suiterc = flines
+
         try:
             CylcConfigObj.__init__( self, suiterc, configspec=self.spec )
         except ConfigObjError, x:
