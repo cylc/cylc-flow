@@ -229,8 +229,11 @@ if os.path.isfile( suiterc ):
                 # split back into lines
                 xlines = rendered.split('\n')
                 lines = []
-                # restore newlines to each line
                 for line in xlines:
+                    # remove blank lines left by Jinja2
+                    if re.match( '^\s*$', line ):
+                        continue
+                    # restore newlines to each line
                     lines.append(line + '\n')
 else:
     parser.error("File not found: " + suiterc )
