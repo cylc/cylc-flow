@@ -27,7 +27,7 @@ from cylc.registration import dbgetter, RegistrationError
 from cylc.mkdir_p import mkdir_p
 
 try:
-    from jinja2 import Template, TemplateError
+    from jinja2 import Environment, FileSystemLoader, TemplateError
 except ImportError:
     jinja2_loaded = False
 else:
@@ -207,9 +207,6 @@ if os.path.isfile( suiterc ):
     if options.inline or options.process:
         # inline any include files
         lines = include_files( suitedir, lines, options.mark, options.single, options.label )
-    if not options.nojoin:
-        # join any continuation lines
-        lines = continuation_lines( lines )
     if options.process:
         if lines[0].startswith( '#!jinja2' ):
             # This suite.rc file requires processing with jinja2.
@@ -218,8 +215,9 @@ if os.path.isfile( suiterc ):
                 print >> sys.stderr, 'WARNING: but the Jinja2 modules are not installed in your PYTHONPATH.'
                 print >> sys.stderr, 'WARNING: Continuing without template processing.'
             else:
+                env = Environment( loader=FileSystemLoader(suitedir) )
                 try:
-                    template = Template(''.join(lines))
+                    template = env.from_string( ''.join(lines) )
                 except TemplateError, x:
                     print >> sys.stderr, "Jinja2 template error: " + str(x)
                     sys.exit(1)
@@ -235,6 +233,9 @@ if os.path.isfile( suiterc ):
                         continue
                     # restore newlines to each line
                     lines.append(line + '\n')
+    if not options.nojoin:
+        # join any continuation lines
+        lines = continuation_lines( lines )
 else:
     parser.error("File not found: " + suiterc )
 

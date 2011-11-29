@@ -44,7 +44,7 @@ from graphnode import graphnode, GraphNodeError
 from cylc.print_tree import print_tree
 
 try:
-    from jinja2 import Template, TemplateError
+    from jinja2 import Environment, FileSystemLoader, TemplateError
 except ImportError:
     jinja2_loaded = False
 else:
@@ -197,8 +197,6 @@ class config( CylcConfigObj ):
         f.close()
         # handle cylc include-files
         flines = include_files( flines, self.dir )
-        # handle cylc continuation lines
-        flines = continuation_lines( flines )
 
         # check first line of file for template engine directive
         if re.match( '^#!jinja2\s*', flines[0] ):
@@ -209,10 +207,9 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, 'Aborting (Jinja2 required).'
             if self.verbose:
                 print "Processing the suite with Jinja2"
-            #env = Environment( loader=FileSystemLoader(self.dir) )
+            env = Environment( loader=FileSystemLoader(self.dir) )
             try:
-                #template = env.get_template('suite.rc')
-                template = Template( ''.join(flines) )
+                template = env.from_string( ''.join(flines) )
             except TemplateError, x:
                 raise SuiteConfigError, "Jinja2 template error: " + str(x)
 
@@ -226,6 +223,9 @@ class config( CylcConfigObj ):
         else:
             # This is a plain suite.rc file.
             suiterc = flines
+
+        # handle cylc continuation lines
+        suiterc = continuation_lines( suiterc )
 
         try:
             CylcConfigObj.__init__( self, suiterc, configspec=self.spec )
