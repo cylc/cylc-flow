@@ -931,11 +931,27 @@ The cylc forecast suite metascheduler.
     
             edit_item = gtk.MenuItem( '_Edit' )
             prepmenu.append( edit_item )
-            edit_item.connect( 'activate', self.edit_suite_popup, reg )
+            edit_item.connect( 'activate', self.edit_suite, reg, False )
     
+            editi_item = gtk.MenuItem( 'E_dit Inlined' )
+            prepmenu.append( editi_item )
+            editi_item.connect( 'activate', self.edit_suite, reg, True )
+
+            prepmenu.append( gtk.SeparatorMenuItem() )
+ 
             view_item = gtk.MenuItem( '_View' )
             prepmenu.append( view_item )
-            view_item.connect( 'activate', self.view_suite_popup, reg )
+            view_item.connect( 'activate', self.view_suite, reg, 'raw' )
+ 
+            viewi_item = gtk.MenuItem( 'V_iew Inlined' )
+            prepmenu.append( viewi_item )
+            viewi_item.connect( 'activate', self.view_suite, reg, 'inlined' )
+ 
+            viewp_item = gtk.MenuItem( 'Vi_ew Processed' )
+            prepmenu.append( viewp_item )
+            viewp_item.connect( 'activate', self.view_suite, reg, 'processed' )
+ 
+            prepmenu.append( gtk.SeparatorMenuItem() )
  
             graph_item = gtk.MenuItem( '_Graph' )
             prepmenu.append( graph_item )
@@ -1607,55 +1623,12 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def edit_suite_popup( self, w, reg ):
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "Edit '" + reg + "'")
-
-        vbox = gtk.VBox()
-        box = gtk.HBox()
-
-        edit_rb = gtk.RadioButton( None, "Raw" )
-        box.pack_start (edit_rb, True)
-        edit_inlined_rb = gtk.RadioButton( edit_rb, "Inlined" )
-        box.pack_start (edit_inlined_rb, True)
-        edit_rb.set_active(True)
-        vbox.pack_start( box )
-
-        cancel_button = gtk.Button( "_Close" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-        ok_button = gtk.Button( "_Edit" )
-        ok_button.connect("clicked", self.edit_suite, window, reg, edit_rb, edit_inlined_rb )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'prep', 'edit' )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( ok_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def view_suite( self, w, window, reg, view_rb, view_inlined_rb,
-            view_processed_rb, markcb, lblcb, nojcb, sngcb ):
-        window.destroy()
-        if view_inlined_rb.get_active():
+    def view_suite( self, w, reg, method ):
+        extra = ''
+        if method == 'inlined':
             extra = ' -i'
-            if markcb.get_active():
-                extra += ' -m'
-            if nojcb.get_active():
-                extra += ' -n'
-            if lblcb.get_active():
-                extra += ' -l'
-            if sngcb.get_active():
-                extra += ' -s'
-        elif view_processed_rb.get_active():
+        elif method == 'processed':
             extra = ' -p'
-        else:
-            extra = ''
 
         command = "cylc view " + self.dbopt + " --notify-completion -g " + extra + ' ' + reg
         foo = gcapture_tmpfile( command, self.tmpdir )
@@ -1663,10 +1636,9 @@ The cylc forecast suite metascheduler.
         foo.run()
         return False
 
-    def edit_suite( self, w, window, reg, edit_rb, edit_inlined_rb ):
-        window.destroy()
+    def edit_suite( self, w, reg, inlined ):
         extra = ''
-        if edit_inlined_rb.get_active():
+        if inlined:
             extra = '-i '
         command = "cylc edit " + self.dbopt + " --notify-completion -g " + extra + ' ' + reg
         foo = gcapture_tmpfile( command, self.tmpdir )
