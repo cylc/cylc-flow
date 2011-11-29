@@ -7,6 +7,14 @@ can be migrated to the github issue tracker.
 _______
 GENERAL
 
+* Replace cumbersome checks for dict key validity throughout the code.
+  This:
+    if key not in foo:
+        foo[key] = 0
+    res = foo[key]
+  is equivalent to this:
+    res = foo.get(key,0)
+
 * Suite validation problem: missing '=' causes crash due to configobj
   error.
 
