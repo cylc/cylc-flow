@@ -210,7 +210,6 @@ and associated methods for their control widgets.
         method = ''
         if coldstart_rb.get_active():
             method = 'coldstart'
-            pass
         elif warmstart_rb.get_active():
             method = 'warmstart'
             options += ' -w'
@@ -223,7 +222,16 @@ and associated methods for their control widgets.
             if no_reset_cb.get_active():
                 options += ' --no-reset'
 
-        command += ' ' + options + ' '
+        ctime = ''
+        if method != 'restart':
+            # start time
+            ctime = entry_ctime.get_text()
+            if ctime != '':
+                try:
+                    ct(ctime)
+                except CycleTimeError,x:
+                    warning_dialog( str(x) ).warn()
+                    return
 
         ste = stoptime_entry.get_text()
         if ste:
@@ -232,33 +240,26 @@ and associated methods for their control widgets.
             except CycleTimeError,x:
                 warning_dialog( str(x) ).warn()
                 return
-            command += ' --until=' + stoptime_entry.get_text()
-
-        ctime = entry_ctime.get_text()
-        if method != 'restart':
-            if ctime != '':
-                try:
-                    ct(ctime)
-                except CycleTimeError,x:
-                    warning_dialog( str(x) ).warn()
-                    return
-
+            options += ' --until=' + ste
+ 
         hetxt = holdtime_entry.get_text()
         if hold_cb.get_active():
-            command += ' --hold'
+            options += ' --hold'
         elif hetxt != '':
-            command += ' --hold-after=' + hetxt
+            options += ' --hold-after=' + hetxt
 
         for group in optgroups:
-            command += group.get_options()
+            options += group.get_options()
         window.destroy()
 
-        command += ' ' + self.suite + ' ' + ctime
-        if restart_rb.get_active():
+        command += ' ' + options + ' ' + self.suite + ' ' + ctime
+        if method == 'restart':
             if statedump_entry.get_text():
                 command += ' ' + statedump_entry.get_text()
 
+        # DEBUGGING:
         #info_dialog( "I'm about to run this command: \n" + command ).inform()
+        #return
 
         try:
             subprocess.Popen( [command], shell=True )
