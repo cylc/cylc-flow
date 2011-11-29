@@ -931,27 +931,33 @@ The cylc forecast suite metascheduler.
     
             edit_item = gtk.MenuItem( '_Edit' )
             prepmenu.append( edit_item )
-            edit_item.connect( 'activate', self.edit_suite, reg, False )
-    
-            editi_item = gtk.MenuItem( 'E_dit Inlined' )
-            prepmenu.append( editi_item )
-            editi_item.connect( 'activate', self.edit_suite, reg, True )
+            editmenu = gtk.Menu()
+            edit_item.set_submenu(editmenu)
 
-            prepmenu.append( gtk.SeparatorMenuItem() )
+            raw_item = gtk.MenuItem( '_Raw' )
+            editmenu.append( raw_item )
+            raw_item.connect( 'activate', self.edit_suite, reg, False )
+    
+            inl_item = gtk.MenuItem( '_Inlined' )
+            editmenu.append( inl_item )
+            inl_item.connect( 'activate', self.edit_suite, reg, True )
  
             view_item = gtk.MenuItem( '_View' )
             prepmenu.append( view_item )
-            view_item.connect( 'activate', self.view_suite, reg, 'raw' )
+            viewmenu = gtk.Menu()
+            view_item.set_submenu(viewmenu)
+
+            rw_item = gtk.MenuItem( '_Raw' )
+            viewmenu.append( rw_item )
+            rw_item.connect( 'activate', self.view_suite, reg, 'raw' )
  
             viewi_item = gtk.MenuItem( 'V_iew Inlined' )
-            prepmenu.append( viewi_item )
+            viewmenu.append( viewi_item )
             viewi_item.connect( 'activate', self.view_suite, reg, 'inlined' )
  
             viewp_item = gtk.MenuItem( 'Vi_ew Processed' )
-            prepmenu.append( viewp_item )
+            viewmenu.append( viewp_item )
             viewp_item.connect( 'activate', self.view_suite, reg, 'processed' )
- 
-            prepmenu.append( gtk.SeparatorMenuItem() )
  
             graph_item = gtk.MenuItem( '_Graph' )
             prepmenu.append( graph_item )
@@ -1569,59 +1575,6 @@ The cylc forecast suite metascheduler.
         foo = gcapture_tmpfile( command, self.tmpdir )
         self.gcapture_windows.append(foo)
         foo.run()
-
-    def view_inlined_toggled( self, w, rb, cbs ):
-        cbs.set_sensitive( rb.get_active() )
-
-    def view_suite_popup( self, w, reg ):
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "View '" + reg + "'")
-
-        vbox = gtk.VBox()
-        box = gtk.HBox()
-
-        view_rb = gtk.RadioButton( None, "Raw" )
-        box.pack_start (view_rb, True)
-        view_inlined_rb = gtk.RadioButton( view_rb, "Inlined" )
-        box.pack_start (view_inlined_rb, True)
-        view_processed_rb = gtk.RadioButton( view_rb, "Processed" )
-        box.pack_start (view_processed_rb, True)
-        view_rb.set_active(True)
-        vbox.pack_start( box )
-
-        hbox = gtk.HBox()
-        mark_cb = gtk.CheckButton( "Marked" )
-        label_cb = gtk.CheckButton( "Labeled" )
-        nojoin_cb = gtk.CheckButton( "Unjoined" )
-        single_cb = gtk.CheckButton( "Singled" )
-        
-        hbox.pack_start (mark_cb, True)
-        hbox.pack_start (label_cb, True)
-        hbox.pack_start (nojoin_cb, True)
-        hbox.pack_start (single_cb, True)
-        vbox.pack_start( hbox )
-        hbox.set_sensitive(False)
-
-        view_inlined_rb.connect( "toggled", self.view_inlined_toggled, view_inlined_rb, hbox )
-
-        cancel_button = gtk.Button( "_Close" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-        ok_button = gtk.Button( "_View" )
-        ok_button.connect("clicked", self.view_suite, window, reg, view_rb,
-                view_inlined_rb, view_processed_rb, mark_cb, label_cb, nojoin_cb, single_cb )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'prep', 'view' )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( ok_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
 
     def view_suite( self, w, reg, method ):
         extra = ''
