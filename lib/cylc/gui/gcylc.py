@@ -866,40 +866,26 @@ The cylc forecast suite metascheduler.
 
         else:
             # MENU OPTIONS FOR SUITES
-            infomenu_item = gtk.MenuItem( 'Information' )
+            infomenu_item = gtk.MenuItem( '_Information' )
             infomenu = gtk.Menu()
             infomenu_item.set_submenu(infomenu)
  
             if not self.cdb:
-                ctrlmenu_item = gtk.MenuItem( 'Control' )
+                ctrlmenu_item = gtk.MenuItem( '_Control' )
                 ctrlmenu = gtk.Menu()
                 ctrlmenu_item.set_submenu(ctrlmenu)
  
-                con_item = gtk.MenuItem( '_Dot Suite Control GUI')
+                con_item = gtk.MenuItem( '_Dot Control GUI')
                 ctrlmenu.append( con_item )
                 con_item.connect( 'activate', self.launch_controller, reg, state )
 
-                cong_item = gtk.MenuItem( '_Graph Suite Control GUI')
+                cong_item = gtk.MenuItem( '_Graph Control GUI')
                 ctrlmenu.append( cong_item )
                 cong_item.connect( 'activate', self.launch_controller, reg, state, True )
 
-                subm_item = gtk.MenuItem( '_Submit A Single Task')
+                subm_item = gtk.MenuItem( '_Submit a Task')
                 ctrlmenu.append( subm_item )
                 subm_item.connect( 'activate', self.submit_task_popup, reg )
-
-                out_item = gtk.MenuItem( 'Suite _Stdout')
-                infomenu.append( out_item )
-                out_item.connect( 'activate', self.view_output, reg, state )
-
-                out_item = gtk.MenuItem( 'Suite _Log')
-                infomenu.append( out_item )
-                out_item.connect( 'activate', self.view_log, reg )
-
-                if state != '-':
-                    # suite is running
-                    dump_item = gtk.MenuItem( 'D_ump Suite State' )
-                    infomenu.append( dump_item )
-                    dump_item.connect( 'activate', self.dump_suite, reg )
 
             search_item = gtk.MenuItem( '_Description' )
             infomenu.append( search_item )
@@ -924,8 +910,23 @@ The cylc forecast suite metascheduler.
                 jobs_item = gtk.MenuItem( '_Job Script')
                 infomenu.append( jobs_item )
                 jobs_item.connect( 'activate', self.jobscript_popup, reg )
-    
-            prepmenu_item = gtk.MenuItem( 'Preparation' )
+ 
+                out_item = gtk.MenuItem( 'Suite _Stdout')
+                infomenu.append( out_item )
+                out_item.connect( 'activate', self.view_output, reg, state )
+
+                out_item = gtk.MenuItem( 'Suite _Log')
+                infomenu.append( out_item )
+                out_item.connect( 'activate', self.view_log, reg )
+
+                if state != '-':
+                    # suite is running
+                    dump_item = gtk.MenuItem( 'D_ump Suite State' )
+                    infomenu.append( dump_item )
+                    dump_item.connect( 'activate', self.dump_suite, reg )
+
+   
+            prepmenu_item = gtk.MenuItem( '_Preparation' )
             prepmenu = gtk.Menu()
             prepmenu_item.set_submenu(prepmenu)
     
@@ -951,11 +952,11 @@ The cylc forecast suite metascheduler.
             viewmenu.append( rw_item )
             rw_item.connect( 'activate', self.view_suite, reg, 'raw' )
  
-            viewi_item = gtk.MenuItem( 'V_iew Inlined' )
+            viewi_item = gtk.MenuItem( '_Inlined' )
             viewmenu.append( viewi_item )
             viewi_item.connect( 'activate', self.view_suite, reg, 'inlined' )
  
-            viewp_item = gtk.MenuItem( 'Vi_ew Processed' )
+            viewp_item = gtk.MenuItem( '_Processed' )
             viewmenu.append( viewp_item )
             viewp_item.connect( 'activate', self.view_suite, reg, 'processed' )
  
@@ -971,12 +972,12 @@ The cylc forecast suite metascheduler.
             prepmenu.append( val_item )
             val_item.connect( 'activate', self.validate_suite, reg )
     
-            dbmenu_item = gtk.MenuItem( 'Database' )
+            dbmenu_item = gtk.MenuItem( '_Database' )
             dbmenu = gtk.Menu()
             dbmenu_item.set_submenu(dbmenu)
     
             if not self.cdb:
-                copy_item = gtk.MenuItem( 'Co_py' )
+                copy_item = gtk.MenuItem( '_Copy' )
                 dbmenu.append( copy_item )
                 copy_item.connect( 'activate', self.copy_popup, reg )
 
@@ -985,7 +986,7 @@ The cylc forecast suite metascheduler.
                 alias_item.connect( 'activate', self.alias_popup, reg )
     
             if self.cdb:
-                imp_item = gtk.MenuItem( 'I_mport' )
+                imp_item = gtk.MenuItem( '_Import' )
                 dbmenu.append( imp_item )
                 imp_item.connect( 'activate', self.import_popup, reg )
             else:
@@ -993,7 +994,7 @@ The cylc forecast suite metascheduler.
                 dbmenu.append( exp_item )
                 exp_item.connect( 'activate', self.export_popup, reg )
     
-            compare_item = gtk.MenuItem( 'Co_mpare' )
+            compare_item = gtk.MenuItem( 'C_ompare' )
             dbmenu.append( compare_item )
             compare_item.connect( 'activate', self.compare_popup, reg )
  
