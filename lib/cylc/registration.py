@@ -263,9 +263,9 @@ class regdb(object):
                 title = self.get_suite_title( dir[2:] )
             # parse the suite for the title
             except Exception, x:
-                print >> sys.stderr, 'WARNING: a suite parsing error occured:\n  ', x
-                print >> sys.stderr, "Registering with temporary title 'SUITE PARSE ERROR'."
-                print >> sys.stderr, "Do 'cylc validate " + suite + "' for more information.\n"
+                print >> sys.stderr, 'WARNING: an error occurred parsing the suite definition:\n  ', x
+                print >> sys.stderr, "Registering the suite with temporary title 'SUITE PARSE ERROR'."
+                print >> sys.stderr, "You can update the title later with 'cylc db refresh'.\n"
                 title = "SUITE PARSE ERROR"
             # use the lowest level alias
             target = self.unalias( dir[2:] )
@@ -282,9 +282,9 @@ class regdb(object):
             try:
                 title = self.get_suite_title( suite, path=dir )
             except Exception, x:
-                print >> sys.stderr, 'WARNING: a suite parsing error occured:\n  ', x
-                print >> sys.stderr, "Registering with temporary title 'SUITE PARSE ERROR'."
-                print >> sys.stderr, "Do 'cylc validate " + suite + "' for more information.\n"
+                print >> sys.stderr, 'WARNING: an error occurred parsing the suite definition:\n  ', x
+                print >> sys.stderr, "Registering the suite with temporary title 'SUITE PARSE ERROR'."
+                print >> sys.stderr, "You can update the title later with 'cylc db refresh'.\n"
                 title = "SUITE PARSE ERROR"
 
         #if self.verbose:
