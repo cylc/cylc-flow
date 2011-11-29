@@ -14,6 +14,13 @@ GENERAL
     res = foo[key]
   is equivalent to this:
     res = foo.get(key,0)
+  Likewise, this:
+    if key in foo:
+        foo[key].append(bar)
+    else:
+        foo[key] = [bar]
+  is equivalent to:
+    foo.setdefault(key,[]).append(bar)
 
 * Suite validation problem: missing '=' causes crash due to configobj
   error.
