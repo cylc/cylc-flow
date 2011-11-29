@@ -21,6 +21,8 @@ GENERAL
         foo[key] = [bar]
   is equivalent to:
     foo.setdefault(key,[]).append(bar)
+  The defaultdict can be used similarly (i.e. without checking for 
+  existence of an item first) but only since Python 2.5.
 
 * Suite validation problem: missing '=' causes crash due to configobj
   error.
