@@ -433,7 +433,7 @@ class MainApp(object):
         self.regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'Suite Definition', cr, text=3, foreground=4, background=5 )
+        tvc = gtk.TreeViewColumn( 'Location', cr, text=3, foreground=4, background=5 )
         tvc.set_resizable(True)
         #vc.set_sort_column_id(3)
         self.regd_treeview.append_column( tvc )
@@ -1013,7 +1013,8 @@ The cylc forecast suite metascheduler.
                     del_item.set_sensitive( False )
 
             menu.append( prepmenu_item )
-            menu.append( ctrlmenu_item )
+            if not self.cdb:
+                menu.append( ctrlmenu_item )
             menu.append( infomenu_item )
             menu.append( dbmenu_item )
 
