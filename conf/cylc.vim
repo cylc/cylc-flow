@@ -1,14 +1,22 @@
 " Simple syntax highlighting for cylc suite definition files.
 " Author: Hilary Oliver, 2011
+"______________________________________________________________________
+" 1/ Put this file in $HOME/.vim/syntax/ directory.
 
-" Put this file in $HOME/.vim/syntax/ directory.
-
-" And put the following in .vimrc for file type recognition:
+" 2/ Put the following in $HOME/.vimrc for file type recognition:
 
 "augroup filetype
-"  au! BufRead,BufnewFile suite.rc   set filetype=cylc
+"  au! BufRead,BufnewFile *suite.rc   set filetype=cylc
 "augroup END
 
+" (the wildcard in '*suite.rc' handles temporary files generated
+"  by the 'cylc view' command, e.g. /tmp/foo.bar.QYrZ0q.suite.rc)
+
+" 3/ If you want to open files with syntax folds initially open, then
+"    also add the following line to your $HOME/.vimrc file:
+
+" set foldlevelstart=99
+"----------------------------------------------------------------------
 
 " syncing from start of file is best, but may be slow for large files:
 syn sync fromstart

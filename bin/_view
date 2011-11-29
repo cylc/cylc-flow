@@ -247,7 +247,7 @@ warning = [
 '#' + bot + '\n' ] 
 
 # write to a temporary file
-viewfile = tempfile.mktemp( suffix = ".rc", prefix = suite + '.', dir = tmpdir )
+viewfile = tempfile.mktemp( suffix = ".suite.rc", prefix = suite + '.', dir = tmpdir )
 h = open( viewfile, 'wb' )
 h.writelines( warning + lines )
 h.close()
