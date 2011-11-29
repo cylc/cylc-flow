@@ -47,14 +47,14 @@ def include_files( inf, level=None ):
     if level == None:
         # suite.rc itself
         level = ''
-        outf.append("\n# !WARNING! This suite.rc file has had any include-files inlined by 'cylc edit -i'.\n" )
+        outf.append("# !WARNING! This suite.rc file has had any include-files inlined by 'cylc edit -i'.\n" )
         outf.append("# !WARNING! The original files are backed up prior to inlining. Include-files will\n" )
         outf.append("# !WARNING! be split out when the edit session concludes. IF YOU ARE EDITING THIS\n" )
         outf.append("# !WARNING!  FILE MANUALLY (as opposed to using 'cylc edit') then EITHER:\n" )
         outf.append("# !WARNING!   (a) you have a concurrent inlined session; exit now and return to it.\n" )
         outf.append("# !WARNING! OR\n" )
         outf.append("# !WARNING!   (b) a previous inlined session may have crashed; exit now and use the\n" )
-        outf.append("# !WARNING! 'cylc edit' command to recover the session.\n\n" )
+        outf.append("# !WARNING! 'cylc edit' command to recover the session.\n" )
     else:
         level += ' > '
     for line in inf:
