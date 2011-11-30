@@ -342,6 +342,133 @@ scheduling, as described in the previous section, emerges naturally at
 run time.
 
 %\pagebreak
+\section{Cylc Screenshots}
+
+%The following screenshots provide a glimpse of what the cylc user
+%interface looks like.
+
+\begin{myitemize}
+    \item Figure~\ref{fig-command-help} - the cylc command line interface.
+    \item Figure~\ref{fig-db} - viewing a private suite database in gcylc.
+    \item Figure~\ref{fig-cdb} - viewing the central suite database in gcylc.
+    \item Figure~\ref{fig-cylc-vim} - a cylc suite definition file (suite.rc) in the vim editor.
+    \item Figure~\ref{fig-simple-graph-2} - the suite definition of Figure~\ref{fig-cylc-vim} graphed by cylc.
+    \item Figure~\ref{fig-gcylc-treeview} - suite control GUI, treeview interface.
+    \item Figure~\ref{fig-gcylc-graph} - suite control GUI, graph-based interface.
+    \item Figure~\ref{fig-ecox-1} - a large operational suite graphed by cylc.
+    \item Figure~\ref{fig-ecox-2} - another view of the large operational suite of Figure~\ref{fig-ecox-1}.
+\end{myitemize}
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.8\textwidth]{screenshots/commandhelp.png}
+    \end{center}
+\caption[The cylc command line interface]{\scriptsize The cylc command line interface}
+\label{fig-command-help}
+\end{figure} 
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=1.0\textwidth]{screenshots/db.png}
+    \end{center}
+\caption[gcylc showing a private suite database]{\scriptsize
+gcylc showing a private suite database, with one suite running 
+on port 7766.}
+\label{fig-db}
+\end{figure} 
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=1.0\textwidth]{screenshots/cdb.png}
+    \end{center}
+\caption[gcylc showing the central suite database]{\scriptsize
+gcylc showing the central suite database.}
+\label{fig-cdb}
+\end{figure} 
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[height=0.35\textheight]{screenshots/simple-suiterc.png}]
+    \end{center}
+    \caption[A simple cylc suite definition edited in {\em vim}]{\scriptsize
+    A simple cylc suite definition edited in {\em vim}}
+    \label{fig-cylc-vim} 
+\end{figure} 
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[height=0.35\textheight]{screenshots/simple-18-cold.png}
+    \end{center}
+    \caption[The suite definition of Figure~\ref{fig-cylc-vim} graphed
+    by cylc.]{\scriptsize The suite definition of Figure~\ref{fig-cylc-vim}
+    graphed by cylc.}
+\label{fig-simple-graph-2}
+\end{figure} 
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.8\textwidth]{screenshots/control-trad.png}
+    \end{center}
+\caption[The suite control GUI, treeview interface.]{\scriptsize The suite
+control GUI, treeview interface.}
+\label{fig-gcylc-treeview}
+\end{figure} 
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.8\textwidth]{screenshots/control-graph.png}
+    \end{center}
+\caption[The suite control GUI, graph interface.]{\scriptsize The suite control GUI, graph interface.}
+\label{fig-gcylc-graph}
+\end{figure} 
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=\textwidth]{screenshots/ecox-1.png}
+    \end{center}
+\caption[A large operational suite graphed by cylc.]{\scriptsize A large
+operational suite graphed by cylc.}
+\label{fig-ecox-1}
+\end{figure} 
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.8\textwidth]{screenshots/ecox-2.png}
+    \end{center}
+    \caption[The large suite of Figure~\ref{fig-ecox-1} running]
+    {\scriptsize The large suite of Figure~\ref{fig-ecox-1} running.}
+\label{fig-ecox-2}
+\end{figure} 
+
+
+% dump floats
+\clearpage
+
+%\pagebreak
+
+\section{On The Meaning Of {\em Cycle Time} In Cylc}
+
+%You may be used to the idea that a forecasting suite has a ``current
+%cycle time'', which is the analysis time or nominal start time
+%associated with the main forecast model(s) in the suite, and that
+%the whole suite advances to the next forecast cycle when all tasks in
+%the current cycle have finished (or even when a particular wall clock
+%time is reached, in real time operation). This is not how cylc works.
+
+Cylc suites advance by means of individual tasks with private cycle
+times independently spawning successors at the next valid cycle time for
+the task, not by incrementing a suite-wide forecast cycle. Each task
+will be submitted when its own prerequisites are satisfied, regardless
+of other tasks with other cycle times running, or not, at the time.
+It may still be convenient at times, however, to refer to the ``current
+cycle'', the ``previous cycle'', or the ``next cycle'' and so
+forth, with reference to a particular task, or in the sense of
+all tasks that ``belong to'' a particular forecast cycle.  But keep in
+mind that the members of these groups may not be present simultaneously
+in the running suite - i.e.\ different tasks may pass through the
+``current cycle'' (etc.) at different times as the suite evolves,
+particularly in delayed (catch up) operation.
+
 \section{Installation} 
 \label{Installation}
 
@@ -436,8 +563,8 @@ use \lstinline=cylc db print= on the command line:
 
 \begin{lstlisting}
 % cylc db print --central --tree -x 'Auto|Quick'
-<admin>
- `-cylc-x:y:z         
+<AdminUserName>
+ `-cylc-x-y-z         
    |-AutoCleanup      
    | |-FamilyFailHook  family failure hook script example
    | `-FamilyFailTask  family failure cleanup task example
@@ -450,8 +577,10 @@ use \lstinline=cylc db print= on the command line:
      |-c          Quick Start Example C
      `-z          Quick Start Example Z
 \end{lstlisting}
-where \lstinline=<admin>= should be replaced with the username of the
-cylc installation account on your system. Type
+where \lstinline=<AdminUserName>= should be replaced with the username of the
+cylc installation account on your system (the suite owner's username is always
+the first registration path component for suites in the central
+database); replace this as appropriate for your local cylc installation. Type
 \lstinline=cylc db print --help= to see what the command options
 mean.
 
@@ -624,348 +753,9 @@ central database is currently associated with a particular cylc
 installation - it is held in \lstinline=$CYLC_DIR/CDB=.}
 and running the new \lstinline=cylc admin create-cdb= to
 load the new example suites. Finally, change the newly registered
-central suite group name to something sensible with 
+central suite group to something sensible using  
 \lstinline=cylc db reregister= - it will have an ungainly string of
 numbers attached to ensure uniqueness. 
-
-%\pagebreak
-\section{Cylc Screenshots}
-
-%The following screenshots provide a glimpse of what the cylc user
-%interface looks like.
-
-\begin{myitemize}
-    \item Figure~\ref{fig-command-help} - the cylc command line interface.
-    \item Figure~\ref{fig-db} - viewing a private suite database in gcylc.
-    \item Figure~\ref{fig-cdb} - viewing the central suite database in gcylc.
-    \item Figure~\ref{fig-cylc-vim} - a cylc suite definition file (suite.rc) in the vim editor.
-    \item Figure~\ref{fig-simple-graph-2} - the suite definition of Figure~\ref{fig-cylc-vim} graphed by cylc.
-    \item Figure~\ref{fig-gcylc-treeview} - suite control GUI, treeview interface.
-    \item Figure~\ref{fig-gcylc-graph} - suite control GUI, graph-based interface.
-    \item Figure~\ref{fig-ecox-1} - a large operational suite graphed by cylc.
-    \item Figure~\ref{fig-ecox-2} - another view of the large operational suite of Figure~\ref{fig-ecox-1}.
-\end{myitemize}
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=0.8\textwidth]{screenshots/commandhelp.png}
-    \end{center}
-\caption[The cylc command line interface]{\scriptsize The cylc command line interface}
-\label{fig-command-help}
-\end{figure} 
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=1.0\textwidth]{screenshots/db.png}
-    \end{center}
-\caption[gcylc showing a private suite database]{\scriptsize
-gcylc showing a private suite database, with one suite running 
-on port 7766.}
-\label{fig-db}
-\end{figure} 
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=1.0\textwidth]{screenshots/cdb.png}
-    \end{center}
-\caption[gcylc showing the central suite database]{\scriptsize
-gcylc showing the central suite database.}
-\label{fig-cdb}
-\end{figure} 
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[height=0.35\textheight]{screenshots/simple-suiterc.png}]
-    \end{center}
-    \caption[A simple cylc suite definition edited in {\em vim}]{\scriptsize
-    A simple cylc suite definition edited in {\em vim}}
-    \label{fig-cylc-vim} 
-\end{figure} 
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[height=0.35\textheight]{screenshots/simple-18-cold.png}
-    \end{center}
-    \caption[The suite definition of Figure~\ref{fig-cylc-vim} graphed
-    by cylc.]{\scriptsize The suite definition of Figure~\ref{fig-cylc-vim}
-    graphed by cylc.}
-\label{fig-simple-graph-2}
-\end{figure} 
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=0.8\textwidth]{screenshots/control-trad.png}
-    \end{center}
-\caption[The suite control GUI, treeview interface.]{\scriptsize The suite
-control GUI, treeview interface.}
-\label{fig-gcylc-treeview}
-\end{figure} 
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=0.8\textwidth]{screenshots/control-graph.png}
-    \end{center}
-\caption[The suite control GUI, graph interface.]{\scriptsize The suite control GUI, graph interface.}
-\label{fig-gcylc-graph}
-\end{figure} 
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=\textwidth]{screenshots/ecox-1.png}
-    \end{center}
-\caption[A large operational suite graphed by cylc.]{\scriptsize A large
-operational suite graphed by cylc.}
-\label{fig-ecox-1}
-\end{figure} 
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=0.8\textwidth]{screenshots/ecox-2.png}
-    \end{center}
-    \caption[The large suite of Figure~\ref{fig-ecox-1} running]
-    {\scriptsize The large suite of Figure~\ref{fig-ecox-1} running.}
-\label{fig-ecox-2}
-\end{figure} 
-
-
-% dump floats
-\clearpage
-
-%\pagebreak
-
-\section{On The Meaning Of {\em Cycle Time} In Cylc}
-
-%You may be used to the idea that a forecasting suite has a ``current
-%cycle time'', which is the analysis time or nominal start time
-%associated with the main forecast model(s) in the suite, and that
-%the whole suite advances to the next forecast cycle when all tasks in
-%the current cycle have finished (or even when a particular wall clock
-%time is reached, in real time operation). This is not how cylc works.
-
-Cylc suites advance by means of individual tasks independently spawning
-successors at the next valid cycle time for the task, not by
-incrementing a suite-wide forecast cycle. In fact cylc has no concept of
-suite-wide cycle time; instead, each task has its own private cycle time
-and can run when its prerequisites are satisfied regardless of other
-tasks with different cycle times running at the same time - this
-underlies cylc's uniquely efficient and flexible scheduling abilities.
-However, it may sometimes still be convenient to refer to the ``current
-cycle'', the ``previous cycle'', or the ``next cycle'' and so forth,
-with reference to a particular task, or in the sense of all tasks that
-``belong to'' a particular forecast cycle.  Just keep in mind that the
-members of such groups may not all exist simultaneously in the running
-suite - tasks may pass through the ``current cycle'' (etc.) at different
-times as the suite evolves, particularly in delayed (catch up)
-operation.
-
-
-\section{Cylc's Example Suites}
-
-Cylc has been designed from the ground up to make prototyping and testing
-new suites very easy. Simply drawing (in text) a dependency graph in a
-new suite definition creates a valid suite that you can run (the tasks
-will be {\em dummy tasks} that default to emitting an identifying
-message, sleeping for a few seconds, and then exiting; but you can then
-arrange for particular tasks to do more complex things by configuring
-task runtime properties appropriately).
-
-Cylc has quite a number of example suites intended to illustrate most
-facets of suite construction. These are held centrally under
-\lstinline=$CYLC_DIR/examples= and are exported to the central suite
-database, accessible to all users, when cylc is installed. They all run
-``out the box" and can be copied and modified by users to test almost
-anything.  Some of them just configure a suite dependency graph, in
-which case cylc will run dummy tasks according to the graph; some also
-configure task runtime properties (e.g.\ command scripting and
-environment variables) within the suite definition; and some have real
-task implementations that generate and consume real files and which will
-fail if they are not executed in the right order.  All of the example
-suites use their registration names, portably via suite and task
-identity variable supplied by cylc (this is in fact the default
-situation) in all suite and task I/O paths, so you can run multiple
-copies of the same example suite at once, under different names, without
-changing anything in the suite definition.
-
-\subsection{Using The Example Suites}
-
-Use \lstinline=gcylc= or \lstinline=cylc db print --central <admin>= to
-see the example suites that are currently available. Note that here, 
-and throughout the User Guide, any reference to an example suite in
-the central database will use \lstinline=<admin>= as the username of the
-account under which cylc is installed (the suite owner's username is
-always the first component of a suite name in the central database);
-replace this as appropriate for your local cylc installation. Now 
-use \lstinline=cylc import= to copy an example suite (or some subset of 
-them, or all of them at once) to your private database so that you can
-modify it and run it:
-\begin{lstlisting}
-% cylc db print --central --tree <admin>.*\.QuickStart
-# or just this:
-% cylc db print --central --tree QuickStart
-<admin>         
- `-cylc-x:y:z   
-   `-QuickStart 
-     |-a   Quick Start Example A | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/a
-     |-b   Quick Start Example B | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/b
-     |-c   Quick Start Example C | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/c
-     `-z   Quick Start Example Z | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/z
-% cylc db import <admin>.cylc-x:y:z.QuickStart.z eg.z $TMPDIR
-COPY /home/<admin>/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/z 
-  TO /tmp/oliver/eg/z
-REGISTER eg.z: /tmp/oliver/eg/z
-
-% cylc db print eg
-eg.z | Quick Start Example Z | /tmp/oliver/eg/z
-
-% cylc prep edit eg.z
-\end{lstlisting}
-
-\lstset{language=suiterc}
-\lstinputlisting{../examples/QuickStart/z/suite.rc}
-\lstset{language=transcript}
-(This suite is explained in the {\em Quick Start Guide},
-Section~\ref{QuickStartGuide}).
-
-
-\subsection{Choosing The Initial Cycle Time}
-
-When running any suite in live mode (or at least suites that depend on
-clock-triggered tasks) do not give an initial cycle time in the future
-unless you want nothing to happen until that time. However, you can also
-run any suite in {\em simulation mode} (Section~\ref{SimulationMode}) in
-which case a future start time is fine. In simulation mode each task is
-replaced by the default dummy task (above) and the suite runs quickly on
-an accelerated clock. As far as cylc is concerned this is almost
-identical to real operation, so simulation mode can be used to test
-recovery strategies for certain kinds of failure, for instance. In
-simulation mode, by configuring how the accelerated clock is
-initialized, you can watch how any suite catches up and transitions from
-delayed to real time operation.
-
-%\pagebreak
-\section{Suite Registration}
-\label{SuiteRegistration}
-
-Before you can do anything to a suite with cylc commands you must
-register it in a {\em suite database}. Cylc commands target 
-particular suites via their registered names so that you don't
-need to remember and continually re-type the actual location of the
-suite definition directory on disk. Suite names are hierarchical like
-directory paths but delimited by `.' (foo.bar.baz), allowing suites to
-be grouped and organised into trees (c.f.\ directory trees). 
-Task groups are virtual and do not need to be explicitly created before
-use or removed if they contain no tasks. 
-
-\subsection{Private Suite Databases}
-
-Each cylc user has a private suite database for working with his own
-suites. By right-clicking on a suite in your private database 
-(or using cylc commands) you can:
-\begin{myenumerate}
-    \item start a suite control GUI to run the suite (or connect to a running suite),
-    \item submit a single task to run, just as it would be submitted by its suite
-    \item view the suite stdout and stderr streams,
-    \item view the suite log (which records all events and messages from tasks),
-    \item retrieve the suite description,
-    \item list tasks in the suite,
-    \item view the suite namespace hierarchy,
-    \item edit the suite definition in your editor,
-    \item plot the suite dependency graph,
-    \item search the suite definition and bin scripts,
-    \item validate the suite definition,
-    \item copy the suite or group,
-    \item alias the suite name to another name,
-    \item compare (difference) the suite with another suite,
-    \item export the suite or group to the central database,
-    \item unreregister the suite or group,
-    \item reregister the suite or group.
-\end{myenumerate}
-
-Note that the suite title shown in gcylc is parsed from the suite.rc
-file at the time of initial registration; if you change the title (by
-editing the suite.rc file) use \lstinline=cylc db refresh= or gcylc 
-View $\rightarrow$ Refresh to update the database.
-
-\subsection{The Central Suite Database}
-
-The central suite database facilitates sharing of suites among cylc
-users. It works similarly to a private suite database except that
-central suite registration names always begin with the suite owner's
-username.  Users can export suites to the central database to make them
-available to others.
-
-Suites in the central database can be inspected by various means, but
-you can't run them without {\em importing} them to your private database.
-
-By right-clicking on a suite in the central database, or using the cylc
-command line, you can:
-\begin{myenumerate}
-    \item retrieve the suite description,
-    \item list tasks in the suite,
-    \item view the suite namespace hierarchy,
-    \item view the suite definition in your editor,
-    \item plot the suite dependency graph,
-    \item search the suite definition and bin scripts,
-    \item validate the suite definition,
-    \item compare (difference) the suite with another suite,
-    \item import the suite or group to your private database,
-    \item unreregister or delete the suite or group (if you own it),
-    \item reregister the suite or group (if you own it).
-\end{myenumerate}
-
-\subsubsection{The Central Database Is Local To The Cylc Host}
-
-The central suite database is not currently accessible on the
-network, it is local to the cylc host and accessed through the 
-filesystem. Consequently it has to be world, or at least group,
-writeable, which is not very secure.
-
-%Also it briefly locks users out during operations that change the
-%        minimal
-%registration data (i.e.\ the mappings between suite names and locations,
-%not when copying suite definitions to the central location, which is
-%potentially time consuming). 
-
-{\em We intend to develop a client/server interface to the central suite
-database so that users can easily share suites across the network}. The 
-required server functionality is similar to that of the cylc lockserver
-(and to cylc itself) so this will not be difficult. In the meantime,
-``importing'' a suite manually from another user on another host is
-simply a matter of copying the suite definition directory over and
-registering the new copy in your private database.
-
-\subsection{Database Operations}
-
-On the command line, the  `database' (or `db') command category contains
-commands to implement the aforementioned operations.
-
-\lstset{language=usage}
-\lstinputlisting{command-usage/database.txt}
-\lstset{language=transcript}
-Groups of suites (at any level in the registration hierarchy) can be deleted, 
-copied, imported, and exported; as well as individual suites.  To do this, 
-just use suite group names as source and/or target for operations, as
-appropriate.  For instance, if a group \lstinline=foo.bar= contains the 
-suites \lstinline=foo.bar.baz= and \lstinline=foo.bar.waz=, you can copy
-a single suite like this:
-\begin{lstlisting}
-% cylc copy foo.bar.baz boo $TMPDIR
-\end{lstlisting}
-(resulting in a new suite \lstinline=boo=); or the group like this:
-\begin{lstlisting}
-% cylc copy foo.bar boo $TMPDIR
-\end{lstlisting}
-(resulting in new suites \lstinline=boo.baz= and \lstinline=boo.waz=); or the group like this:
-\begin{lstlisting}
-% cylc copy foo boo $TMPDIR
-\end{lstlisting}
-(resulting in new suites \lstinline=boo.bar.baz= and \lstinline=boo.bar.waz=).
-When suites are copied, the suite definition directories are copied into
-a directory tree, under the target directory, that reflects the
-registration name hierarchy. \lstinline=cylc copy --help= has some explicit examples.
-
-The same functionality is also available by right-clicking on suites
-or groups in the gcylc GUI, as shown in Figure~\ref{fig-db}.
 
 %\pagebreak
 \section{Quick Start Guide} 
@@ -974,18 +764,18 @@ or groups in the gcylc GUI, as shown in Figure~\ref{fig-db}.
 This section works through some basic cylc functionality using the
 ``QuickStart'' example suites, which should have been registered in the
 central suite database, under the cylc admin username (replace 
-\lstinline=<admin>= below with the correct username for your system)
-during cylc installation, 
+\lstinline=<AdminUserName>= below with the correct username for your
+system) during cylc installation, 
 
 \begin{lstlisting}
 % cylc db print --central --tree QuickStart
-<admin>         
- `-cylc-x:y:z   
+<AdminUserName>         
+ `-cylc-x-y-z   
    `-QuickStart 
-     |-a        Quick Start Example A | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/a
-     |-b        Quick Start Example B | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/b
-     |-c        Quick Start Example C | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/c
-     `-z        Quick Start Example Z | ~/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/z
+     |-a        Quick Start Example A | ~/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/a
+     |-b        Quick Start Example B | ~/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/b
+     |-c        Quick Start Example C | ~/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/c
+     `-z        Quick Start Example Z | ~/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/z
 \end{lstlisting}
 
 \subsection{Configure Your Environment}
@@ -1021,14 +811,14 @@ as the TARGET suite name, and \lstinline=$TMPDIR= (or some other
 directory of your choice) as a destination for the suite definition
 directories in the group.  Equivalently, on the command line:
 \begin{lstlisting}
-% cylc db import <admin>.cylc-x:y:z.QuickStart Quickstart $TMPDIR
-COPY /home/<admin>/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/a 
+% cylc db import <AdminUserName>.cylc-x-y-z.QuickStart Quickstart $TMPDIR
+COPY /home/<AdminUserName>/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/a 
   TO /tmp/oliver/QuickStart/a
 REGISTER QuickStart.a: /tmp/oliver/QuickStart/a
-COPY /home/<admin>/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/b 
+COPY /home/<AdminUserName>/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/b 
   TO /tmp/oliver/QuickStart/b
 REGISTER QuickStart.b: /tmp/oliver/QuickStart/b
-COPY /home/<admin>/cylc/CDB/<admin>/cylc-x:y:z/QuickStart/c 
+COPY /home/<AdminUserName>/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/c 
   TO /tmp/oliver/QuickStart/c
 REGISTER QuickStart.c: /tmp/oliver/QuickStart/c
 \end{lstlisting}
@@ -1617,6 +1407,260 @@ Suite foo.bar validates OK.
 For more information on suite validation see
 Section~\ref{Validation}.
 
+
+\subsection{Other Example Suites}
+
+Cylc has been designed from the ground up to make prototyping and testing
+new suites very easy. Simply drawing (in text) a dependency graph in a
+new suite definition creates a valid suite that you can run: the tasks
+will be {\em dummy tasks} that default to emitting an identifying
+message, sleeping for a few seconds, and then exiting; but you can then
+arrange for particular tasks to do more complex things by configuring
+their runtime properties appropriately.
+
+Cylc has example suites intended to illustrate most facets of suite
+construction. These are held centrally under
+\lstinline=$CYLC_DIR/examples= and are exported to the central suite
+database, accessible to all users, when cylc is installed. They all run
+``out the box" and can be copied and modified by users to test almost
+anything.  Some of them just configure a suite dependency graph, in
+which case cylc will run dummy tasks according to the graph; some also
+configure task runtime properties (e.g.\ command scripting and
+environment variables) within the suite definition; and some have real
+task implementations that generate and consume real files and which will
+fail if they are not executed in the right order.  All of the example
+suites are portable in the sense that all suite and task I/O directory
+paths incorporate the suite registration path (this is the default
+situation for any suite in fact), so you can run multiple copies of 
+the same suite at once without any interference between them. 
+
+Use \lstinline=gcylc= or \lstinline=cylc db print --central <AdminUserName>= to
+see the example suites that are currently available. Now 
+use \lstinline=cylc import= to copy an example suite (or some subset of 
+them, or all of them at once) to your private database so that you can
+modify it and run it:
+\begin{lstlisting}
+% cylc db print --central --tree <AdminUserName>.*\.QuickStart
+# or just this:
+% cylc db print --central --tree QuickStart
+<AdminUserName>         
+ `-cylc-x-y-z   
+   `-QuickStart 
+     |-a   Quick Start Example A | ~/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/a
+     |-b   Quick Start Example B | ~/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/b
+     |-c   Quick Start Example C | ~/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/c
+     `-z   Quick Start Example Z | ~/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/z
+% cylc db import <AdminUserName>.cylc-x-y-z.QuickStart.z eg.z $TMPDIR
+COPY /home/<AdminUserName>/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/z 
+  TO /tmp/oliver/eg/z
+REGISTER eg.z: /tmp/oliver/eg/z
+
+% cylc db print eg
+eg.z | Quick Start Example Z | /tmp/oliver/eg/z
+
+% cylc prep edit eg.z
+\end{lstlisting}
+
+\lstset{language=suiterc}
+\lstinputlisting{../examples/QuickStart/z/suite.rc}
+\lstset{language=transcript}
+(This suite is explained in the {\em Quick Start Guide},
+Section~\ref{QuickStartGuide}).
+
+
+\subsubsection{Choosing The Initial Cycle Time}
+
+When running any suite in live mode (or suites that depend on
+clock-triggered tasks at least) do not give an initial cycle time in the
+future unless you want nothing to happen until that time. However, you
+can also run any suite in {\em simulation mode}
+(Section~\ref{SimulationMode}) in
+which case a future start time is fine. In simulation mode each task is
+replaced by the default dummy task (above) and the suite runs quickly on
+an accelerated clock. As far as cylc is concerned this is almost
+identical to real operation, so simulation mode can be used to test
+recovery strategies for certain kinds of failure, for instance. In
+simulation mode, by configuring how the accelerated clock is
+initialized, you can watch how any suite catches up and transitions from
+delayed to real time operation.
+
+%\pagebreak
+
+\section{Suite Registration}
+\label{SuiteRegistration}
+
+Cylc commands target particular suites via {\em registration paths} in a
+{\em suite database}, so that you don't need to remember and continually
+refer to the actual location of the suite definition on disk. A suite
+registration path is a hierarchical name akin to a directory path but
+delimited by the `.' character; this allows suites to be organised in
+nested tree-like structures:
+\begin{lstlisting}
+% cylc db print -tp nwp
+nwp          
+ |-oper      
+ | |-region1  Local Model Region1       /oper/nwp/suite_defs/LocalModel/nested/Region1
+ | `-region2  Local Model Region2       /oper/nwp/suite_defs/LocalModel/nested/Region2
+ `-test      
+   `-region1  Local Model TEST Region1  /home/oliverh/nwp_suites/Regional/TESTING/Region1
+\end{lstlisting}
+
+Note that {\em registration paths are entirely virtual}: groups do not
+need to be explicitly created before use, and they automatically
+disappear if all tasks are removed from them.  From the listing above,
+for example, to move the suite \lstinline=nwp.oper.region2= into the
+\lstinline=nwp.test= group:
+\begin{lstlisting}
+% cylc db rereg nwp.oper.region2 nwp.test.region2
+REREGISTER nwp.oper.region2 to nwp.test.region2
+% cylc db print -tpx nwp
+nwp          
+ |-oper      
+ | `-region1  Local Model Region1
+ `-test      
+   |-region1  Local Model TEST Region1
+   `-region2  Local Model Region2
+\end{lstlisting}
+And to move \lstinline=nwp.test.region2= into a new group \lstinline=nwp.para=:
+\begin{lstlisting}
+% cylc db rereg nwp.test.region2 nwp.para.region2
+REREGISTER nwp.test.region2 to nwp.para.region2
+% cylc db print -tpx nwp
+nwp          
+ |-oper      
+ | `-region1  Local Model Region1
+ |-test      
+ | `-region1  Local Model TEST Region1
+ `-para
+   `-region2  Local Model Region2
+\end{lstlisting}
+
+Currently you cannot explicitly indicate a group path on the command
+line by appending a dot character. Rather, in database operations such
+as copy, reregister, or unregister, the identity of the source item
+(group or suite) is inferred from the content of the database; and if
+the source item is a group, so must the target be a group (or it will
+be, in the case of an item that will be created by the operation). This
+means that you cannot copy a single suite into a group that does not 
+exist yet unless you specify the entire target registration path. 
+
+\lstinline=cylc db register --help= shows a number of other examples.
+
+\subsection{Private Suite Database}
+
+Each cylc user has a private suite database for working with his/her own
+suites. By right-clicking on a suite in your private database 
+(or using cylc commands) you can:
+\begin{myenumerate}
+    \item start a suite control GUI to run the suite (or connect to a running suite),
+    \item submit a single task to run, just as it would be submitted by its suite
+    \item view the suite stdout and stderr streams,
+    \item view the suite log (which records all events and messages from tasks),
+    \item retrieve the suite description,
+    \item list tasks in the suite,
+    \item view the suite namespace hierarchy,
+    \item edit the suite definition in your editor,
+    \item plot the suite dependency graph,
+    \item search the suite definition and bin scripts,
+    \item validate the suite definition,
+    \item copy the suite or group,
+    \item alias the suite name to another name,
+    \item compare (difference) the suite with another suite,
+    \item export the suite or group to the central database,
+    \item unreregister the suite or group,
+    \item reregister the suite or group.
+\end{myenumerate}
+
+Note that the suite title shown in gcylc is parsed from the suite.rc
+file at the time of initial registration; if you change the title (by
+editing the suite.rc file) use \lstinline=cylc db refresh= or gcylc 
+View $\rightarrow$ Refresh to update the database.
+
+\subsubsection{Private Database Location}
+
+Your private suite database, currently, will be \lstinline=$HOME/.cylc/LDB/db=.
+
+\subsection{Central Suite Database}
+
+The central suite database facilitates sharing of suites among cylc
+users. It works similarly to a private suite database except that
+central suite registration names always begin with the suite owner's
+username.  Users can export suites to the central database to make them
+available to others.
+
+Suites in the central database can be inspected by various means, but
+you can't run them without {\em importing} them to your private database.
+
+By right-clicking on a suite in the central database, or using the cylc
+command line, you can:
+\begin{myenumerate}
+    \item retrieve the suite description,
+    \item list tasks in the suite,
+    \item view the suite namespace hierarchy,
+    \item view the suite definition in your editor,
+    \item plot the suite dependency graph,
+    \item search the suite definition and bin scripts,
+    \item validate the suite definition,
+    \item compare (difference) the suite with another suite,
+    \item import the suite or group to your private database,
+    \item unreregister or delete the suite or group (if you own it),
+    \item reregister the suite or group (if you own it).
+\end{myenumerate}
+
+\subsubsection{Central Database Location}
+
+The central suite database is currently located here:
+\lstinline=$CYLC_DIR/CDB/db=, and is accessed through the filesystem 
+on the cylc host machine. Consequently it has to be world, or at least
+group, writeable, which is not very secure.
+
+%Also it briefly locks users out during operations that change the
+%        minimal
+%registration data (i.e.\ the mappings between suite names and locations,
+%not when copying suite definitions to the central location, which is
+%potentially time consuming). 
+
+{\em We intend to develop a client/server interface to the central suite
+database so that users can easily share suites across the network}. In
+the meantime, ``importing'' a suite manually from another user on
+another host is simply a matter of copying the suite definition
+directory over, registering the local copy in your private database, 
+and then exporting it to the local central database.
+
+\subsection{Database Operations}
+
+On the command line, the  `database' (or `db') command category contains
+commands to implement the aforementioned operations.
+
+\lstset{language=usage}
+\lstinputlisting{command-usage/database.txt}
+\lstset{language=transcript}
+Groups of suites (at any level in the registration hierarchy) can be deleted, 
+copied, imported, and exported; as well as individual suites.  To do this, 
+just use suite group names as source and/or target for operations, as
+appropriate.  For instance, if a group \lstinline=foo.bar= contains the 
+suites \lstinline=foo.bar.baz= and \lstinline=foo.bar.waz=, you can copy
+a single suite like this:
+\begin{lstlisting}
+% cylc copy foo.bar.baz boo $TMPDIR
+\end{lstlisting}
+(resulting in a new suite \lstinline=boo=); or the group like this:
+\begin{lstlisting}
+% cylc copy foo.bar boo $TMPDIR
+\end{lstlisting}
+(resulting in new suites \lstinline=boo.baz= and \lstinline=boo.waz=); or the group like this:
+\begin{lstlisting}
+% cylc copy foo boo $TMPDIR
+\end{lstlisting}
+(resulting in new suites \lstinline=boo.bar.baz= and \lstinline=boo.bar.waz=).
+When suites are copied, the suite definition directories are copied into
+a directory tree, under the target directory, that reflects the
+registration name hierarchy. \lstinline=cylc copy --help= has some explicit examples.
+
+The same functionality is also available by right-clicking on suites
+or groups in the gcylc GUI, as shown in Figure~\ref{fig-db}.
+
+%\pagebreak
 \section{Suite Definition} 
 \label{SuiteDefinition}
 
@@ -1645,36 +1689,37 @@ A cylc {\em suite definition directory} contains:
                 used by, suite tasks.
             \item Automatically added to \lstinline=$PATH= in task
                 execution environments.
-            \item {\em Optional} - tasks can call external
-                commands, scripts, or programs; or they can be scripted 
+            \item {\em Optional.} Alternatively, tasks can call external
+                commands, scripts, or programs; or they can be scripted
                 entirely within the suite.rc file.
         \end{myitemize}
     \item {\bf A \lstinline=python/= sub-directory}.
         \begin{myitemize}
-            \item For user-defined job-submission methods (see
+            \item For user-defined job-submission methods, if needed (see
                 Section~\ref{TaskJobSubmission}).
-            \item {\em Optional} - new job submission methods, if
-                needed, can be installed into the cylc source tree, or
-                in any directory added to \lstinline=PYTHONPATH= in 
-                your environment.
+            \item {\em Optional.} Alternatively, new job submission
+                methods can be installed into the cylc source tree, or
+                in any directory in your \lstinline=$PYTHONPATH=.
         \end{myitemize}
     \item {\bf Any other sub-directories and files} - documentation,
         control files, etc.
         \begin{myitemize}
-            \item The entire directory tree is copied if you copy the
-                suite with cylc or gcylc.
-            \item Run time task access via 
-                \lstinline=$CYLC_SUITE_DEF_PATH= 
-                (see Section~\ref{TaskExecutionEnvironment}).
+            \item {\em Optional.} Ignored by cylc, but the entire suite
+                definition directory tree is copied when you copy a
+                suite using cylc commands.
             \item Holding everything in one place makes proper suite
                 revision control possible.
+            \item Portable access to files here, for running tasks, is
+                provided through  
+                \lstinline=$CYLC_SUITE_DEF_PATH= 
+                (see Section~\ref{TaskExecutionEnvironment}).
         \end{myitemize}
 \end{myitemize}
 An imaginary example:
 \lstset{language=transcript}
 \begin{lstlisting}
 /path/to/my/suite   # suite definition directory
-    suite.rc           # THE SUITE CONFIGURATION FILE
+    suite.rc           # THE SUITE DEFINITION FILE
     bin/               # scripts and executables used by tasks
         foo.sh
         bar.sh
@@ -1788,7 +1833,8 @@ configuration items grouped under several top level section headings:
     \item {\bf [scheduling] } - {\em determines when tasks are ready to run}
         \begin{myitemize}
             \item tasks with special behaviour, e.g. clock-triggered tasks
-            \item the dependency graph, defines relationships between tasks
+            \item the dependency graph, which defines the relationships
+                between tasks
         \end{myitemize}
     \item {\bf [runtime] } - {\em determines how, where, and what to
         execute when tasks are ready}
@@ -1799,7 +1845,8 @@ configuration items grouped under several top level section headings:
             \item a nested family hierarchy with common properties
                 inherited by related tasks
         \end{myitemize}
-    \item {\bf [visualization] } - suite graphing and the graph-based control GUI.
+    \item {\bf [visualization] } - configures suite graphing and the
+        graph suite control GUI.
 \end{myitemize}
 
 
@@ -1825,10 +1872,10 @@ NestingError('Cannot compute the section depth at line 19.',)
 _validate foo.bar failed:  1
 \end{lstlisting}
 
-If the suite.rc file contains include-files use \lstinline=cylc inline=
-(or the gcylc right-click `Edit' inline option) to view an inlined copy
-with correct line numbers (you can also edit suites in a temporarily
-inlined state using \lstinline=cylc edit --inline=).
+If the suite.rc file contains include-files you can use 
+\lstinline=cylc view= to view an inlined copy with correct line numbers
+(you can also edit suites in a temporarily inlined state with 
+\lstinline=cylc edit --inline=).
 
 Validation does not check the validity of chosen job submission methods;
 this is to allow users to extend cylc with their own job submission 
@@ -2997,7 +3044,7 @@ Figure~\ref{fig-namespaces} illustrates successive expansion of nested task
 families in the {\em namespaces} example suite, which has the following
 namespace hierarchy:
 \begin{lstlisting}
-% cylc list --tree cylc-x:y:z.namespaces
+% cylc list --tree cylc-x-y-z.namespaces
 root              
  |-GEN            
  | |-OPS          
@@ -3827,54 +3874,57 @@ Quick Start Guide} (Section~\ref{QuickStartGuide}); and all of the
 examples suites installed into the central suite database.
 
 \begin{myitemize}
-    \item The difference between cold-, warm-, raw-, and re-starting, a suite
-        (see \lstinline=cylc run help=)
+    \item The difference between cold-, warm-, raw-, and re-starting, a suite:
+        see \lstinline=cylc run help=.
 
-    \item Intervening in suites, e.g.\ stopping, removing, inserting tasks; 
-        (see \lstinline=cylc control help=)
+    \item Intervening in suites, e.g.\ stopping, removing, inserting tasks: 
+        see \lstinline=cylc control help=.
 
-    \item Interrogating suites and tasks 
-        (\lstinline=cylc info help=, \lstinline=cylc show help=,
-        and \lstinline=cylc discovery help=)
+    \item Interrogating suites and tasks: 
+        see \lstinline=cylc info help=, \lstinline=cylc show help=,
+        and \lstinline=cylc discovery help=.
 
-    \item Understanding cylc suite evolution, particularly in catch up
-        operation (the {\em Quick Start Guide} will also help here,
-        along with the cylc example suites, and running your real suites
-        in simulation mode)
+    \item Understanding suite evolution, particularly in catch up
+        operation: the {\em Quick Start Guide} helps here, along with
+        playing with example suites.
 
-    \item suite security - use of secure passphrases (this is
+    \item Suite security, use of secure passphrases: this is
         trivial to configure, see documentation of the {\em use secure
         passphrase} configuration item in the {\em Suite.rc Reference},
-        Appendix~\ref{SuiteRCReference})
+        Appendix~\ref{SuiteRCReference}.
 
-    \item automatic state dump backups, named pre-intervention state dumps
-        (mentioned in the {\em Quick Start Guide}; watch the suite log
-        after intervening in a suite)
+    \item Automatic state dump backups, named pre-intervention state dumps:
+        these are used to resetart a suite from a previous state of operation.
+        They are mentioned in the {\em Quick Start Guide}. Watch the
+        suite log after intervening in a suite, to get the filenames.
 
-    \item centralized alerting and timeouts
-        (see documentation of {\em task event hooks} in the {\em
-        Suite.rc Reference}, Appendix~\ref{SuiteRCReference})
+    \item Centralized alerting and timeouts: see documentation of {\em
+        task event hooks} in the {\em Suite.rc Reference},
+        Appendix~\ref{SuiteRCReference}.
 
-    \item Recursive purge - this is a powerful suite
-        intervention but you need to understand how it works before
-        using it. See \lstinline=cylc purge help= for details.
+    \item Recursive purge: this is a powerful intervention but you need
+        to understand how it works before using it. See 
+        \lstinline=cylc purge help= for details.
 
-    \item Handling spin-up processes via temporary tasks
-        and adding prerequisites on-the-fly - see 
-        \lstinline=cylc depend --help=, and note that when you insert a
-        task into a running suite (a) the initial cycle time can be in
-        the past; and (b) you can give a final cycle time after which the
-        task will be eliminated from the suite. 
+    \item Handling spin-up processes via temporary tasks and adding
+        prerequisites on-the-fly: see \lstinline=cylc depend --help=,
+        and note that when you insert a task into a running suite (a)
+        the initial cycle time can be in the past; and (b) you can give
+        a final cycle time after which the task will be eliminated from
+        the suite. 
     % \item How to recover from certain kinds of task failure.
     %\item instant simulation mode clones of a running suite
     %\item fuzzy prerequisites - triggering of the {\em most recent available},
     %    within limits, instance of an upstream task
-    \item Sub-suites - running another suite inside a task:
+    \item Sub-suites: to run another suite inside a task, just invoke the 
+        subsuite, with appropriate start and end cycles (probably a
+        single cycle), in the host task's command scripting:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        command scripting = "cylc run SUITE $CYLC_TASK_CYCLE_TIME --until=$CYLC_TASK_CYCLE_TIME"
+        command scripting = \
+        "cylc run SUITE $CYLC_TASK_CYCLE_TIME --until=$CYLC_TASK_CYCLE_TIME"
 \end{lstlisting}
 \end{myitemize}
 \lstset{language=transcript}
