@@ -32,6 +32,15 @@ def check_name( suite ):
     # based paths in PATH variables
     if re.search( '[^\w.-]', suite ):
         raise IllegalNameError( suite ) 
+    # For the moment at least, we don't allow referencing groups
+    # explicitly by appending a '.' to a group name. Instead, for
+    # operations like copy or unregister, whether or not the target
+    # item is a group or suite is inferred from the database content.
+    # This means that to copy a single suite into a group we have to use
+    # the full target suite reg path unless the target group already
+    # exists.
+    if re.search( '\.$', suite ):
+        raise IllegalNameError( suite ) 
 
 # NOTE:ABSPATH (see below)
 #   dir = os.path.abspath( dir )
@@ -349,6 +358,13 @@ class regdb(object):
 
     def reregister( self, srce, targ ):
         check_name( targ )
+        for key in self.items:
+            if key == targ:
+                raise SuiteTakenError, targ
+            elif key.startswith(targ + delimiter ):
+                raise IsAGroupError, targ
+            elif targ.startswith(key + delimiter ):
+                raise NotAGroupError, key
         found = False
         for key in self.items.keys():
             if key.startswith(srce):
