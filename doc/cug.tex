@@ -580,9 +580,11 @@ use \lstinline=cylc db print= on the command line:
 where \lstinline=<AdminUserName>= should be replaced with the username of the
 cylc installation account on your system (the suite owner's username is always
 the first registration path component for suites in the central
-database); replace this as appropriate for your local cylc installation. Type
-\lstinline=cylc db print --help= to see what the command options
-mean.
+database); replace this as appropriate for your local cylc installation. 
+Note that the dots in the cylc release version number are replaced, in central 
+database suite registration paths, with hyphens (because `.' is the registration
+path delimiter). Type \lstinline=cylc db print --help= to see what the
+command options mean.
 
 \subsection{Automated Database Test} 
 \label{RTADT}
@@ -612,14 +614,14 @@ If you do not have root access to your host machine and cannot easily
 get Pyro, Graphviz, and Pygraphviz installed at system level, here's
 how to install everything under your home directory. 
 
-Cylc is already designed to be installed into a normal user account -
-just unpack the cylc release tarball into \lstinline=$CYLC_DIR=.  Now,
-if you try to use cylc commands now you will get a warning that Pyro is
+First, cylc is already designed to be installed into a normal user account -
+just unpack the release tarball into \lstinline=$CYLC_DIR=.  If you
+invoke cylc commands at this stage you will get a warning that Pyro is
 not installed.
 
-Create a new sub-directory in the cylc source tree,
+Next, create a new sub-directory in the cylc source tree,
 \lstinline=$CYLC_DIR/external=, and download the Pyro,
-Graphviz, and Pygraphviz source distributions to it (from the URLs given
+Graphviz, and Pygraphviz source distributions to it (the URLs are given
 at the beginning of Section~\ref{Requirements}).
 
 \subsubsection{Pyro}
@@ -663,7 +665,24 @@ since updating PYTHONPATH.
 Now create the suite database and upload the example suites as described
 in Section~\ref{CreatingTheCentralSuiteDatabase}.  At this point you 
 should have access to all cylc functionality except for suite graphing
-and the graph based suite control GUI. 
+and the graph based suite control GUI.  For example (change your admin 
+username and cylc version number appropriately, after inspecting the 
+content of the new central database):
+\begin{lstlisting}
+% cylc info list -tp --central <AdminUserName>.cylc-x-y-z-1322609804.admin.test
+root     
+ |-A     model A - weather forecast
+ |-B     model B - sea state forecast
+ |-C     model C - river flow forecast
+ |-ColdA cold start model A
+ |-ColdB model B
+ |-ColdC model C
+ |-D     combined post processing for models B and C
+ |-E     post processing for model B
+ |-F     post processing for model F
+ |-X     retrieve real time data for model A
+ `-prep  clean out the suite workspace for a new run
+\end{lstlisting}
 
 \subsubsection{Graphviz}
 
