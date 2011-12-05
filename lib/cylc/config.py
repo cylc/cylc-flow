@@ -199,7 +199,8 @@ class config( CylcConfigObj ):
         flines = include_files( flines, self.dir )
 
         # check first line of file for template engine directive
-        if re.match( '^#!jinja2\s*', flines[0] ):
+        # (check for new empty suite.rc files - zero lines - first)
+        if flines and re.match( '^#!jinja2\s*', flines[0] ):
             # This suite.rc file requires processing with jinja2.
             if not jinja2_loaded:
                 print >> sys.stderr, 'ERROR: This suite requires processing with the Jinja2 template engine'
