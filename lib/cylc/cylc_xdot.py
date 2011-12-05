@@ -23,7 +23,7 @@ import gtk
 import time
 import gobject
 import config
-import os
+import os, sys
 from cycle_time import ct
 
 class MyDotWindow( xdot.DotWindow ):
@@ -125,21 +125,34 @@ class MyDotWindow( xdot.DotWindow ):
                     self.rc_last_mtimes[rc] = os.stat(rc).st_mtime
                 except OSError:
                     # this happens occasionally when the file is being edited ... 
-                    print "Failed to get rc file mod time, trying again in 1 second"
+                    print >> sys.stderr, "Failed to get rc file mod time, trying again in 1 second"
                     time.sleep(1)
                 else:
                     #self.rc_mtimes[rc] = self.rc_last_mtimes[rc]
                     break
 
         self.show_all()
-        self.load_config()
+        while True:
+            if self.load_config():
+                break
+            else:
+                time.sleep(1)
 
     def load_config( self, reload=False ):
         if reload:
             print 'Reloading the suite.rc file.'
-            self.suiterc = config.config( self.suite, self.file, collapsed=self.suiterc.closed_families )
+            try:
+                self.suiterc = config.config( self.suite, self.file, collapsed=self.suiterc.closed_families )
+            except:
+                print >> sys.stderr, "Failed to reload suite.rc file (parsing error?)."
+                return False
         else:
-            self.suiterc = config.config( self.suite, self.file )
+            try:
+                self.suiterc = config.config( self.suite, self.file )
+            except:
+                print >> sys.stderr, "Failed to load suite.rc file (parsing error?)."
+                return False
+        return True
 
     def group_all( self, w ):
         self.get_graph( group_all=True )
@@ -201,9 +214,12 @@ class MyDotWindow( xdot.DotWindow ):
                         print 'FILE CHANGED:', rc
                         self.rc_last_mtimes[rc] = rct
                     break
-
         if reparse:
-            self.load_config(reload=True)
+            while True:
+                if self.load_config(reload=True):
+                    break
+                else:
+                    time.sleep(1)
             self.get_graph()
         return True
 
