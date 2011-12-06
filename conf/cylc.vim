@@ -72,8 +72,8 @@ hi cylcSectionC ctermfg=DarkRed guifg=#550044 term=bold cterm=bold gui=bold
 hi cylcSectionB ctermfg=DarkRed guifg=#9900aa term=bold cterm=bold gui=bold
 hi cylcSectionA ctermfg=DarkRed guifg=#ff00ee term=bold cterm=bold gui=bold
 
-hi jinja2         ctermfg=DarkGreen guifg=#a3b732 term=bold cterm=bold gui=bold
-hi jinja2comment  ctermfg=DarkGreen guifg=#809032 term=bold cterm=bold gui=bold 
+hi jinja2         ctermfg=DarkGreen guifg=#83a712 term=bold cterm=bold gui=bold
+hi jinja2comment  ctermfg=DarkGreen guifg=#c09032 term=bold cterm=bold gui=bold 
 hi jinja2variable ctermfg=DarkGreen guifg=#b0a672 term=bold cterm=bold gui=bold
 
 hi Comment ctermfg=LightBlue guifg=#ff4422 term=bold cterm=bold gui=bold 
