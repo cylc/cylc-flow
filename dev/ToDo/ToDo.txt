@@ -7,6 +7,12 @@ can be migrated to the github issue tracker.
 _______
 GENERAL
 
+* check [[[environmen]]] variable names for illegal characters such as
+  spaces - this would catch some section nesting mistakes made by beginers, e.g.:
+
+  [[[environment]]]
+  command scripting = "echo hello"  # should be before environment
+
 * Replace cumbersome checks for dict key validity throughout the code.
   This:
     if key not in foo:
