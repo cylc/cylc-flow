@@ -488,14 +488,14 @@ particularly in delayed (catch up) operation.
         compatible with 2.x and consequently still has significantly
         less library and third party support.  As of mid 2011, Python
         2.7 is still the standard for new Linux distributions.}\newline
-        {\em http://python.org}
+        \url{http://python.org}
     \item {\bf Pyro} 3.9.1 or greater (latest version tested
         3.15.) but not Pyro 4.x as yet\footnote{Pyro 3.9 or earlier is
         not compatible with the new-style Python classes used by cylc.
         As of April 2011, Pyro 4, which is compatible with Python 3, is
         in development but it is still not recommended for production
         use.} \newline
-        {\em http://irmen.home.xs4all.nl/pyro3}
+        \url{http://irmen.home.xs4all.nl/pyro3}
 \end{myitemize}
 
 Beware of not-so-new Linux distributions that may provide Pyro 3.9 or
@@ -506,15 +506,15 @@ earlier, which is not compatible with cylc - upgrade if necessary.
 \begin{myitemize}
     \item {\bf PyGTK}, a Python wrapper for the GTK+ GUI toolkit.
         PyGTK is included in most Linux Distributions. \newline
-        {\em http://www.pygtk.org}
+        \url{http://www.pygtk.org}
     \item {\bf graphviz} - a graph layout engine (latest version tested:
         2.28.0). \newline
-        {\em http://www.graphviz.org}
+        \url{http://www.graphviz.org}
     \item {\bf Pygraphviz}, a python interface to graphviz (latest version
         tested: 1.1).  \newline
-        {\em http://networkx.lanl.gov/pygraphviz}
+        \url{http://networkx.lanl.gov/pygraphviz}
     \item {\bf Jinja2}, a template engine for Python (version tested: 2.6). \newline
-        {\em http://jinja.pocoo.org/docs}
+        \url{http://jinja.pocoo.org/docs}
 
 \end{myitemize}
 
@@ -539,10 +539,10 @@ Cylc has absorbed the following software in somewhat modified form
 (no need to install separately): 
 \begin{myitemize}
     \item xdot, a graph viewer
-        (http://code.google.com/p/jrfonseca/wiki/XDot,
+        (\url{http://code.google.com/p/jrfonseca/wiki/XDot},
         LGPL license)
     \item ConfigObj and Validate 
-        (http://www.voidspace.org.uk/python, %configobj.html,
+        (\url{http://www.voidspace.org.uk/python}, %configobj.html,
         BSD license)
 \end{myitemize}
 
@@ -1807,17 +1807,25 @@ An imaginary example:
     ...
 \end{lstlisting}
 
-\subsection{Suite.rc Overview}
+\subsection{Suite.rc File Overview}
 \label{SuiteRCFile}
 
-Cylc suite.rc files are parsed directly into a nested data structure
-that mirrors the file section nesting. This makes it very easy to
-add new configuration items to cylc. The underlying file structure
-is based on ConfigObj
-(http://www.voidspace.org.uk/python/configobj.html), slightly modified
-for cylc.
+Cylc suites are defined entirely by a single extended-INI-format file
+called {\em suite.rc} that resides in the suite definition directory.
+Optionally, suite.rc files may be split up into multiple include-files.
 
-\subsubsection{Syntax}
+%NOT RELEVANT TO USERS:
+%Cylc suite.rc files are parsed directly into a nested data structure
+%that mirrors the file section nesting. This makes it very easy to
+%add new configuration items to cylc. 
+
+\subsubsection{Raw Syntax}
+
+The suite.rc file format is derived from the Python ConfigObj config 
+file format 
+(homepage: \url{http://www.voidspace.org.uk/python/configobj.html}), 
+slightly modified by cylc to allow include-files, line continuation and
+duplicate directive and environment environment variable definitions.
 
 \begin{myitemize}
     \item {\bf All entries} are of the form \lstinline@item = value@ 
@@ -1880,7 +1888,28 @@ a list item with continuation = a, b, c, \
 # ...
 \end{lstlisting}
 
-\paragraph{Syntax Highlighting In Vim}
+\label{SyntaxJinja2}
+\subsubsection{Jinja2 Syntax}
+
+In addition to the raw syntax described above, suite.rc files can now
+contain embedded expressions for pre-processing by the Jinja2  template
+engine, to allow programmatic generation of the final raw suite
+definition seen by cylc.\footnote{Future cylc releases may provide a
+plug-in interface to allow use of other template engines in addition to
+Jinja2.}
+
+The need for Jinja2 processing can be declared with a bang-hash
+interpreter comment at the very top of the suite.rc file:
+\begin{lstlisting}
+#!Jinja2
+# This is a SUITE.RC with embedded Jinja2 expressions
+# ...
+\end{lstlisting}
+Jinja2 syntax is well documented at \url{http://jinja.pocoo.org/docs}.
+See {\em Using The Jinja2 Template Engine} (Section~\ref{The Jinja2
+Template Engine}) for some example suites. 
+
+\subsubsection{Syntax Highlighting In Vim}
 \label{SyntaxHighlighting}
 
 \lstset{language=transcript}
@@ -1982,10 +2011,10 @@ relationships
 between tasks in a suite - the information that allows cylc to determine
 when tasks are ready to run. The most important component of this is the
 suite dependency graph. Cylc graph notation makes clear textual graph
-representations that are more concise than the real thing because
-sections of the graph that repeat at different hours of
-the day only have to be defined once. Here's an example showing a 
-simple task tree with dependencies that vary at certain hours:
+representations that are very concise because sections of the graph that
+repeat at different hours of the day only have to be defined once.
+Here's an example showing a simple task tree with dependencies that vary
+at certain hours:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -2011,8 +2040,8 @@ properties are explicitly defined, and you'll need to trigger task A
 manually to get the suite started because A[T] depends on A[T-6] and at
 start-up there is no previous cycle to satisfy that dependence - how to
 handle this properly is described in 
-{\em Satisfying Intercycle Dependencies At Start-Up}
-(Section~\ref{SatisfyingIntercycleDependenceAtStartUp}) and in the
+{\em Handling Intercycle Dependencies At Start-Up}
+(Section~\ref{HandlingIntercycleDependenceAtStartUp}) and in the
 {\em Quick Start Guide} (Section~\ref{QuickStartGuide}).
 
 \begin{figure}
@@ -2181,6 +2210,32 @@ and comments to make the graph structure as clear as possible.
                B => C # comment ...
                B => D"""
 \end{lstlisting}
+
+\paragraph{Handling Long Graph Lines}
+
+Long chains of dependencies can be split into pairs:
+\begin{lstlisting}
+# SUITE.RC
+    graph = "A => B => C"
+# is equivalent to this:
+    graph = """A => B 
+               B => C"""
+# BUT THIS IS AN ERROR:
+    graph = """A => B => # WRONG!
+               C"""      # WRONG!
+\end{lstlisting}
+If you have very long task names, or long conditional trigger
+expressions (below) then you can use the suite.rc line continuation
+marker:
+\begin{lstlisting}
+# SUITE.RC
+    graph = "A => B \
+    => C"  # OK
+\end{lstlisting}
+(note that line continuation characters, as in other uses of them, 
+must be the final character on the line, so you cannot put a trailing
+comment on the same line).
+
 \lstset{language=transcript}
 
 \subsubsection{Graph Types (VALIDITY)}
@@ -2634,8 +2689,8 @@ individual family members, rather than off the family as a whole, but
 extensive use of this would probably defeat the purpose of using a
 family in the first place.}
 
-\subsubsection{Satisfying Intercycle Dependence At Start-Up}
-\label{SatisfyingIntercycleDependenceAtStartUp}
+\subsubsection{Handling Intercycle Dependence At Start-Up}
+\label{HandlingIntercycleDependenceAtStartUp}
 
 In suites with intercycle dependence some kind of bootsrapping
 process is required to get the suite going initially. In the example 
@@ -3930,7 +3985,7 @@ source tree:
 \end{myitemize}
 Note that the form of the import statement at the top of the new 
 user-defined Python module differs depending on whether or not 
-the file is installed in the Python source tree (see the comment
+the file is installed in the cylc source tree (see the comment
 at the top of the example file above).
 
 
@@ -4220,8 +4275,7 @@ suite are stored in the suite
 definition directory instead of having the suite reference external
 build directories (etc.), you can turn the directory into a revision
 control repository and be virtually assured of the ability to exactly
-reproduce earlier versions as required, regardless of suite
-complexity.
+reproduce earlier versions, regardless of suite complexity.
 
 \subsection{Orderly Product Generation?}
 \label{OrderlyProductGeneration}
@@ -4267,14 +4321,14 @@ In real time operation clock-triggered tasks constrain the
 behaviour of the whole suite, or at least of all tasks 
 downstream of them in the dependency graph.
 
-In delayed operation (due to an actual delay in an operational suite or
-because you're running an historical case study) clock-triggered tasks
-will not constrain the suite at all, and cylc's multi-cycling abilities
-come to the fore, because their trigger times have already passed. 
-But if a clock-triggered task happens to catch up to the wall clock, it
-will automatically wait again. In this way a cylc suite naturally
-and seamlessly transitions between delayed and real time operation 
-as required.
+In delayed operation (whether due to an actual delay in an operational
+suite or because you're running an historical trial) clock-triggered
+tasks will not constrain the suite at all, and cylc's cycle interleaving 
+abilities come to the fore, because their trigger times have already
+passed.  But if a clock-triggered task happens to catch up to the wall
+clock, it will automatically wait again. In this way a cylc suite
+naturally and seamlessly transitions between delayed and real time
+operation as required.
 
 \pagebreak
 

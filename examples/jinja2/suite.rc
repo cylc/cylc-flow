@@ -1,4 +1,4 @@
-#!jinja2
+#!Jinja2
 {% set HOST = "SuperComputer" %}
 {% set CITIES = 'NewYork', 'Philadelphia', 'Newark', 'Houston', 'SantaFe', 'Chicago' %}
 {% set CITYJOBS = 'one', 'two', 'three', 'four' %}

@@ -353,4 +353,7 @@ ending up on the command line even if greyed out for a restart.
 + graph command now handles suite parsing errors gracefully - if you save
 an invalide file whilst graphing, the graph command will just try again
 until the error is corrected, rather than abort.
+ 
++ documented how to handle line continuation in graph strings.
+
 
