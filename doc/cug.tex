@@ -792,21 +792,20 @@ underlying graphviz libraries - in that case, reinstall graphviz.
 \subsubsection{Jinja2}
 
 You can download and install Jinja2 manually from the project web site 
-(above) but the easiest way to do it is the \lstinline=easy_install=
-command, which downloads and installs Jinja2 in one step. Here's how to
-install Jinja2 into your new private python site packages directory:
+(above), or just use the \lstinline=easy_install= command which will 
+do it all in one step. Here's how to easy\_install Jinja2 into your new
+private python site packages directory:
 
 \begin{lstlisting}
 % LOCALPACKAGES=$CYLC_DIR/external/installed/lib64/python2.6/site-packages
 % export PYTHONPATH=$LOCALPACKAGES:$PYTHONPATH
-% easy_install --prefix=$$LOCALPACKAGES Jinja2
+% easy_install --prefix=$LOCALPACKAGES Jinja2
 \end{lstlisting}
-Adapt the site-packages path according to your actual path, as above;
-The Python search path must be set first because
-\lstinline=easy_install= aborts if your chosen installation directory
-isn't in it. 
+Adapt the site-packages path according to your actual path, as above.
+The Python search path must be set first or \lstinline=easy_install=
+will abort. 
 
-subsubsection{What Next?}
+\subsubsection{What Next?}
 
 You should now have access to all cylc functionality.  Create 
 the central suite database and upload the example suites, if 
@@ -814,15 +813,17 @@ you have not done so already
 (Section~\ref{CreatingTheCentralSuiteDatabase}), then test 
 your cylc installation by running the automated suite database test
 (Section~\ref{RTADT}) and the automated scheduler test
-(Section~\ref{RTAST}), and go on to the {\em Quick Start Guide}
+(Section~\ref{RTAST}), then go on to the {\em Quick Start Guide}
 (Section~\ref{QuickStartGuide}).
 
 \subsection{Upgrading To A New Cylc Version}
 
 Upgrading is just a matter of unpacking the new cylc release,
-copying the old central database into the new installation,\footnote{The
-central database is currently associated with a particular cylc
-installation - it is held in \lstinline=$CYLC_DIR/CDB=.}
+copying the old central database into the new installation 
+(\lstinline=$CYLC_DIR/CDB/=),\footnote{The
+central database is currently associated with the cylc
+installation; in future we will separate the two to make it easier 
+to use multiple versions of cylc concurrently.}
 and running the new \lstinline=cylc admin create-cdb= to
 load the new example suites. Finally, change the newly registered
 central suite group to something sensible using  
