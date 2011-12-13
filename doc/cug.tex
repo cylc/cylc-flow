@@ -351,7 +351,8 @@ run time.
     \item Figure~\ref{fig-command-help} - the cylc command line interface.
     \item Figure~\ref{fig-db} - viewing a private suite database in gcylc.
     \item Figure~\ref{fig-cdb} - viewing the central suite database in gcylc.
-    \item Figure~\ref{fig-cylc-vim} - a cylc suite definition file (suite.rc) in the vim editor.
+    \item Figure~\ref{fig-cylc-vim} - a cylc suite definition in the vim editor.
+    \item Figure~\ref{fig-cylc-vim2} - a cylc suite definition with embedded Jinja2 expressions, in vim.
     \item Figure~\ref{fig-simple-graph-2} - the suite definition of Figure~\ref{fig-cylc-vim} graphed by cylc.
     \item Figure~\ref{fig-gcylc-treeview} - suite control GUI, treeview interface.
     \item Figure~\ref{fig-gcylc-graph} - suite control GUI, graph-based interface.
@@ -388,12 +389,23 @@ gcylc showing the central suite database.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[height=0.35\textheight]{screenshots/simple-suiterc.png}]
+        \includegraphics[height=0.35\textheight]{screenshots/suiterc-simple.png}]
     \end{center}
     \caption[A simple cylc suite definition edited in {\em vim}]{\scriptsize
     A simple cylc suite definition edited in {\em vim}}
     \label{fig-cylc-vim} 
 \end{figure} 
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[height=0.35\textheight]{screenshots/suiterc-jinja2.png}]
+    \end{center}
+    \caption[A cylc suite definition with embedded Jinja2 expressions {\em vim}]{\scriptsize
+    A cylc suite definition with embedded Jinja2 expressions {\em vim}}
+    \label{fig-cylc-vim2} 
+\end{figure} 
+
+
 
 \begin{figure}
     \begin{center}
@@ -446,93 +458,68 @@ operational suite graphed by cylc.}
 
 %\pagebreak
 
-\section{The Meaning Of {\em Cycle Time}}
-
-From using other schedulers you may be accustomed to the idea that a
-forecasting suite has a ``current cycle time'', which is typically the
-analysis time or nominal start time of the main forecast model(s) in the
-suite, and that the whole suite advances to the next forecast cycle when
-all tasks in the current cycle have finished (or even when a particular
-wall clock time is reached, in real time operation). As is explained in 
-the Introduction, this is not how cylc works.
-
-Cylc suites advance by means of individual tasks with private cycle
-times independently spawning successors at the next valid cycle time for
-the task, not by incrementing a suite-wide forecast cycle. Each task
-will be submitted when its own prerequisites are satisfied, regardless
-of other tasks with other cycle times running, or not, at the time.
-It may still be convenient at times, however, to refer to the ``current
-cycle'', the ``previous cycle'', or the ``next cycle'' and so
-forth, with reference to a particular task, or in the sense of
-all tasks that ``belong to'' a particular forecast cycle.  But keep in
-mind that the members of these groups may not be present simultaneously
-in the running suite - i.e.\ different tasks may pass through the
-``current cycle'' (etc.) at different times as the suite evolves,
-particularly in delayed (catch up) operation.
-
-\section{Installation} 
-\label{Installation}
-
-\subsection{Requirements} 
+\section{Required Software Packages} 
 \label{Requirements}
 
-\subsubsection{Compulsory}
-
 \begin{myitemize}
-    \item {\bf Linux} or {\bf Unix}\footnote{The cylc codebase
-        assumes Unix-style file paths in places, but it could easily
-        made more portable if necessary.} 
-    \item {\bf Python} Version 2.4 or greater (latest tested: 2.7.2) but not
-        Python 3.x as yet.\footnote{Python 2.4 was released in November
-        2004. Python 3 is the future of Python, but it is not backward
-        compatible with 2.x and consequently still has significantly
-        less library and third party support.  As of mid 2011, Python
-        2.7 is still the standard for new Linux distributions.}\newline
-        \url{http://python.org}
-    \item {\bf Pyro} 3.9.1 or greater (latest version tested
-        3.15.) but not Pyro 4.x as yet\footnote{Pyro 3.9 or earlier is
-        not compatible with the new-style Python classes used by cylc.
-        As of April 2011, Pyro 4, which is compatible with Python 3, is
-        in development but it is still not recommended for production
-        use.} \newline
-        \url{http://irmen.home.xs4all.nl/pyro3}
+    \item {\bf A Linux or Unix OS.} Cylc assumes Unix-style file paths
+        in places, and a few command scripts are written in the Bash shell.
+        In principle it could be made more portable without much effort.
+        Cylc has run successfully on Mac OSX.
+    \item {\bf The Python Language, version 2.4$+$,  latest tested 2.7.2}. 
+        Not Python 3.x yet; as of mid 2011 version 2.7 is the
+        standard for new Linux distributions.
+        \newline \url{http://python.org}
+    \item {\bf Pyro (Python Remote Objects), version 3.9.1$+$, latest
+        tested 3.15}.  Not Pyro 4.x yet; as of mid 2011 version 3.x
+        is still recommended for production use.  Pyro is used by cylc
+        for network communication between server processes (cylc suites)
+        and client programs (running tasks, control GUIs and commands).
+        \newline \url{http://irmen.home.xs4all.nl/pyro3}
+    \item {\bf Cylc}, current version THIS IS NOT A VERSIONED RELEASE. 
+        \newline \url{http://hjoliver.github.com/cylc}
 \end{myitemize}
 
-Beware of not-so-new Linux distributions that may provide Pyro 3.9 or
-earlier, which is not compatible with cylc - upgrade if necessary. 
-
-\subsubsection{Optional But Recommended}
+The following packages are technically optional as you can construct
+and control cylc suites without dependency graphing, the cylc GUIs, and
+template processing:
 
 \begin{myitemize}
-    \item {\bf PyGTK}, a Python wrapper for the GTK+ GUI toolkit.
-        PyGTK is included in most Linux Distributions. \newline
-        \url{http://www.pygtk.org}
-    \item {\bf graphviz} - a graph layout engine (latest version tested:
-        2.28.0). \newline
-        \url{http://www.graphviz.org}
-    \item {\bf Pygraphviz}, a python interface to graphviz (latest version
-        tested: 1.1).  \newline
-        \url{http://networkx.lanl.gov/pygraphviz}
-    \item {\bf Jinja2}, a template processor for Python (version tested:
-        2.6). \newline \url{http://jinja.pocoo.org/docs}
-
+    \item {\bf PyGTK}, a Python wrapper for the GTK+ GUI toolkit,
+        required for the gcylc GUI (but you can prepare and control
+        cylc suites entirely from the command line if you like).
+        PyGTK is included in most Linux Distributions.  
+        \newline \url{http://www.pygtk.org}
+    \item {\bf Graphviz} (latest tested 2.28.0) and {\bf Pygraphviz}
+        (latest tested 1.1), a graph layout engine and a Python
+        interface to it. These are required for suite dependency
+        graphing and the graph suite control GUI (but you can also run
+        cylc without them).
+        \newline \url{http://www.graphviz.org}
+        \newline \url{http://networkx.lanl.gov/pygraphviz}
+    \item {\bf Jinja2}, a template processor for Python (latest tested:
+        2.6). Jinja2 expressions allow use of variables, mathematical
+        expressions, loop control and conditional expressions in suite 
+        definitions, to generate the final suite seen by cylc. 
+        \newline \url{http://jinja.pocoo.org/docs}
 \end{myitemize}
 
-PyGTK is required for the gcylc GUI, but you can control and monitor
-cylc suites entirely from the command line if you like. 
+\subsection{Known Compatibility Issues}
 
-Graphviz and pygraphviz are required for dependency graphing and the
-graph-based suite control GUI, but you can also run cylc without them.
+Cylc should run out of the box on reasonably recent Linux distributions.
 
-The Jinja2 template engine adds powerful structural logic to cylc suites
-- you can use variables, mathematical expressions, loop control
-structures and conditional expressions to generate the final suite
-definition. 
+Beware of old Linux distributions that come packaged with Pyro 3.9 or
+earlier, which is not compatible with the new-style Python classes used
+in cylc.  It has been reported that Ubuntu 10.04 (Lucid Lynx), released
+in September 2009, suffers from this problem.
 
-\subsubsection{Other Software Used Internally}
+Note also that for distributed suites the Pyro versions installed on 
+each machine must be mutually compatible. Using identical versions 
+obviously guarantees compatibility, but this may not be necessary.
 
-Cylc has absorbed the following software in somewhat modified form 
-(no need to install separately): 
+\subsection{Other Software Used Internally By Cylc}
+
+Cylc has absorbed the following in modified form (no need to install these separately): 
 \begin{myitemize}
     \item xdot, a graph viewer
         (\url{http://code.google.com/p/jrfonseca/wiki/XDot},
@@ -542,23 +529,28 @@ Cylc has absorbed the following software in somewhat modified form
         BSD license)
 \end{myitemize}
 
-\subsection{Install Procedure}
+\section{Installation} 
+\label{Installation}
 
-First install each of Pyro, graphviz, Pygraphviz, and Jinja2, on your
-system, following the instructions provided with each package. If you 
-do not have root access on your intended cylc host machine and cannot 
-get a sysadmin to do this at system level, see
-Section~\ref{LocalInstall} for local installation instructions. 
+\subsection{Install The External Packages}
 
-Finally, cylc typically installs into a normal user account; just unpack
-the release tarball in your desired location - henceforth called
-\lstinline=$CYLC_DIR=.
+First install Pyro, graphviz, Pygraphviz, and Jinja2 on your system,
+following the instructions provided with each package. If you do not
+have root access on your intended cylc host machine and cannot get a
+sysadmin to do this at system level, see Section~\ref{LocalInstall} for
+local (user-specific) installation instructions. 
+
+\subsection{Install The Cylc Release}
+
+Cylc typically installs into a normal user account; just unpack
+the release tarball in the desired location - which will be referred to
+below as  \lstinline=$CYLC_DIR=.
 
 \subsection{Configure Your Environment}
 \label{ConfiguringYourEnvironmentForCylc}
 
-The file \lstinline=$CYLC_DIR/cylc.profile= documents the minimal user 
-environment configuration required for interactive cylc usage:
+The file \lstinline=$CYLC_DIR/cylc.profile= documents the environment
+configuration required for interactive cylc usage:
 
 \lstset{language=bash}
 \lstinputlisting{../cylc.profile}
@@ -771,19 +763,20 @@ Pygraphviz modules into the same place as the Pyro modules, e.g.:
 If not, add the correct Pyraphviz installation path to your PYTHONPATH.
 
 The easiest way to check that pygraphviz has been installed properly is
-to start an interactive Python session (type {\em python} after sourcing
-the cylc environment to configure your PYTHONPATH) then type {\em import
-pygraphviz} at the python interpreter prompt. If this results in the
-error message {\em ImportError: No module named pygraphviz} then either
-you have not installed pygraphviz properly, {\em or} you have not
-configured your PYTHONPATH to point to the installed pygraphviz modules,
-{\em or} you have not sourced the cylc environment since updating
-PYTHONPATH.  Finally, if you have installed pygraphviz and configured
-your PYTHONPATH but graphviz itself has not been installed properly (or
-if the graphviz libraries have been deleted since you installed
-pygraphviz) then the initial pygraphiz import will be successful but a
-lower level import will fail when the pygraphviz modules cannot load the
-underlying graphviz libraries - in that case, reinstall graphviz.
+to start an interactive Python session (type \lstinline=python= after
+sourcing the cylc environment to configure your PYTHONPATH) then type
+\lstinline=import pygraphviz= at the interpreter prompt. If this
+results in an error message {\em ImportError: No module named
+pygraphviz} then either you have not installed pygraphviz properly, {\em
+or} you have not configured your PYTHONPATH to point to the installed
+pygraphviz modules, {\em or} you have not sourced the cylc environment
+since updating PYTHONPATH.  Finally, if you have installed pygraphviz
+and configured your PYTHONPATH but graphviz itself has not been
+installed properly (or if the graphviz libraries have been deleted since
+you installed pygraphviz) then the initial pygraphiz import will be
+successful but a lower level import will fail when the pygraphviz
+modules cannot load the underlying graphviz libraries - in that case,
+reinstall graphviz.
 
 \subsubsection{Jinja2}
 
@@ -824,7 +817,31 @@ and running the new \lstinline=cylc admin create-cdb= to
 load the new example suites. Finally, change the newly registered
 central suite group to something sensible using  
 \lstinline=cylc db reregister= - it will have an ungainly string of
-numbers attached to ensure uniqueness. 
+digits attached to ensure uniqueness. 
+
+\section{On The Meaning Of {\em Cycle Time} In Cylc}
+
+From using other schedulers you may be accustomed to the idea that a
+forecasting suite has a ``current cycle time'', which is typically the
+analysis time or nominal start time of the main forecast model(s) in the
+suite, and that the whole suite advances to the next forecast cycle when
+all tasks in the current cycle have finished (or even when a particular
+wall clock time is reached, in real time operation). As is explained in 
+the Introduction, this is not how cylc works.
+
+Cylc suites advance by means of individual tasks with private cycle
+times independently spawning successors at the next valid cycle time for
+the task, not by incrementing a suite-wide forecast cycle. Each task
+will be submitted when its own prerequisites are satisfied, regardless
+of other tasks with other cycle times running, or not, at the time.
+It may still be convenient at times, however, to refer to the ``current
+cycle'', the ``previous cycle'', or the ``next cycle'' and so
+forth, with reference to a particular task, or in the sense of
+all tasks that ``belong to'' a particular forecast cycle.  But keep in
+mind that the members of these groups may not be present simultaneously
+in the running suite - i.e.\ different tasks may pass through the
+``current cycle'' (etc.) at different times as the suite evolves,
+particularly in delayed (catch up) operation.
 
 %\pagebreak
 \section{Quick Start Guide} 
@@ -1811,16 +1828,17 @@ A typical example:
 \subsection{Suite.rc File Overview}
 \label{SuiteRCFile}
 
-Suite.rc file content conforms to the ConfigObj extended INI format
+Suite.rc files conform to the ConfigObj extended INI format
 (\url{http://www.voidspace.org.uk/python/configobj.html}) 
 with several modifications to allow continuation lines and include-files,
 and to make it legal to redefine environment variables and scheduler 
-directives that have already been defined earlier in the file.
+directives (duplicate config item definitions are normally flagged as an
+error).
 
-Additionally, embedded template processor expressions may be
-preprocessed out to programatically generate the final suite definition
+Additionally, embedded template processor expressions may be used in the 
+file, to programatically generate the final suite definition
 seen by cylc.  Currently the Jinja2 template engine is supported
-\url{http://jinja.pocoo.org/docs}. In the future cylc may provide a
+(\url{http://jinja.pocoo.org/docs}). In the future cylc may provide a
 plug-in interface to allow use of other template engines too.
 
 The need for Jinja2 processing can be declared with a bang-hash
@@ -1830,7 +1848,7 @@ interpreter comment at the very top of the suite.rc file:
 # This is a SUITE.RC with embedded Jinja2 expressions
 # ...
 \end{lstlisting}
-See {\em Programatic Suite Generation With Jinja2}
+See {\em Jinja2: Suite Generation Templates}
 (Section~\ref{ProgSuiteGenJinja2}) for some examples. 
 
 \subsubsection{Syntax}
@@ -3253,21 +3271,21 @@ right-clicking on tasks in the graph-based suite control GUI.} \label{fig-namesp
 %% `-prod   No description provided
 %%\end{lstlisting}
 
-\subsection{Programatic Suite Generation With Jinja2}
+\subsection{Jinja2: Suite Generation Templates}
 \label{ProgSuiteGenJinja2}
 
 The Jinja2 template processor adds powerful structural logic to cylc
-suites. You can use variables, mathematical expressions, loop control
-structures and conditional expressions to generate the final suite
-definition seen by cylc. Potential uses include automatic generation
+suites. You can use embedded variables, mathematical expressions, loop
+control structures and conditional expressions to generate the final
+suite definition. Potential uses include automatic generation
 of repeated groups of similar tasks and dependencies, and inclusion or
 exclusion of entire suite sections according to the value of a single
 flag. 
 
-Jinja2 is well documented at \url{http://jinja.pocoo.org/docs}, so we
-just provide an example suite here that uses it. How the suite works
-should be reasonably self-evident to anyone familiar with standard
-programming techniques. 
+Jinja2 is well documented at \url{http://jinja.pocoo.org/docs}, so here
+we just provide an example suite that uses it. The meaning of the 
+inline Jinja2 code should be reasonably self-evident to anyone familiar
+with standard programming techniques. 
 
 Important points to note:
 
@@ -3281,17 +3299,28 @@ Important points to note:
         inside suite.rc strings.
 \end{myitemize}
 
-The following suite definition (The \lstinline=Jinja2= example in the 
-central suite database) includes or excludes special clean up tasks
+The following suite definition (the \lstinline=Jinja2= example in the 
+central suite database) includes or excludes special cleanup tasks
 according to the value of a logical flag, and it automatically
 generates all dependencies, and the correct family relationships, for a
 group of tasks that is repeated for each city in the suite. To add a new
 city and associated tasks and dependencies simply add the new city
-name to list at the top of the file.
+name to list at the top of the file. The suite is graphed, with 
+the New York City task family expanded, in Figure~\ref{fig-jinja2-ny}.
 
 \lstset{language=suiterc}
 \lstinputlisting{../examples/jinja2/suite.rc}
 \lstset{language=transcript}
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=16cm]{images/jinja2-suite-graph.png} 
+    \end{center}
+    \caption[Jinja2 example suite graph.]{\scriptsize
+    The dependency graph for the Jinja2 examples suite, with the 
+    New York City task family expanded.}
+    \label{fig-jinja2-ny} 
+\end{figure} 
 
 
 \section{Task Implementation}
@@ -4750,15 +4779,6 @@ Solution: upgrade Pyro - see {\em Requirements}, Section~\ref{Requirements}.
 %not it has caught up (and signal this to its proxy object in cylc) by
 %comparing its cycle time (and offset) to the wall clock time.  
 
-
-%\section{Known Bugs At Version THIS IS NOT A VERSIONED RELEASE}
-%
-% FIXED?:
-%\begin{myitemize}
-%    \item Sometimes the gcylc database view does not update when a suite
-%        or group has been unregistered by another process. Workaround:
-%        restart gcylc.
-%\end{myitemize}
 
 \section{Acknowledgements}
 
