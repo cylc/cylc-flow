@@ -539,8 +539,6 @@ graph = """
    X | X:fail => Z           # Z triggers if X finishes or fails
    (A | B & C ) | D => foo   # general conditional triggers
    # comment
-   # A python expression to generate dependencies automatically:
-   Python:list( "m" + str(i) + '=>' + "p" + str(i) for i in range(1,7))
    """
   \end{lstlisting}
 \item {\em default:} (none)
@@ -582,7 +580,6 @@ task execution environment supplied by cylc
 (Section~\ref{TaskExecutionEnvironment}) - then to rename a task you
 can just change its name in the suite.rc file.
 
-
 A namespace represents a family if other namespaces inherit from it; it
 represents a task if it is a leaf on the inheritance tree (i.e.\ no
 other namespaces inherit from it).
@@ -592,7 +589,6 @@ other namespaces inherit from it).
     \begin{myitemize}
         \item \lstinline=[[foo]]=
         \item \lstinline=[[foo, bar, baz]]=
-        \item \lstinline=[['Python:list( "m" + str(i) for i in range(0,25))']]=
     \end{myitemize}
 \end{myitemize}
 

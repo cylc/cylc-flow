@@ -2095,10 +2095,6 @@ Multiline graph strings may contain:
     \item {\bf suicide triggers:} \lstinline@foo => !bar@
     \item {\bf explicit output triggers:} \lstinline@foo:out1 => bar@
     \item {\bf conditional triggers:} \lstinline@ (A | B) & C => D@ 
-\lstset{language=Python}
-    \item {\bf trigger-generators:} 
-        \lstinline@Python:list( "m"+str(i)+"=> p"+str(i) for i in range(1,7))@
-\lstset{language=transcript}
 \end{myitemize}
 
 \subsubsection{Interpreting Graph Strings}

@@ -298,22 +298,13 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
         if self.verbose:
-            print "PARSING runtime generator expressions"
-        self.members = {}
-        # Parse task config generators. If the runtime section is a list
-        # of task names or a list-generating Python expression, then the
-        # subsequent config applies to each member. We copy the config
-        # section for each member and substitute '$(TASK)' for the
-        # actual task name in all items.
+            print "PARSING runtime lists"
+        # If a runtime section heading is a list of names then the
+        # subsequent config applies to each member. Copy the config
+        # for each member and replace any occurrence of '$(TASK)' with
+        # the actual task name.
         for item in self['runtime']:
-            m = re.match( '^Python:(.*)$', item )
-            if m:
-                # python list-generating expression
-                try:
-                    task_names = eval( m.groups()[0] )
-                except:
-                    raise SuiteConfigError, 'Python error: ' + item
-            elif re.search( ',', item ):
+            if re.search( ',', item ):
                 # list of task names
                 task_names = re.split(', *', item )
             else:
@@ -332,6 +323,7 @@ class config( CylcConfigObj ):
             # delete the original multi-task section
             del self['runtime'][item]
 
+        self.members = {}
         if self.verbose:
             print "PARSING runtime hierarchies"
 
@@ -1193,22 +1185,8 @@ class config( CylcConfigObj ):
                 # strip leading or trailing spaces
                 line = re.sub( '^\s*', '', line )
                 line = re.sub( '\s*$', '', line )
-
-                items = []
-                m = re.match( '^Python:(.*)$', line )
-                if m:
-                    # python list-generating expression
-                    # treat each member as a separate graph line
-                    try:
-                        items = eval(m.groups()[0])
-                    except:
-                        raise SuiteConfigError, 'Python error: ' + line
-                else:
-                    items = [line]
- 
-                for item in items:
-                    # generate pygraphviz graph nodes and edges, and task definitions
-                    self.process_graph_line( item, section )
+                # generate pygraphviz graph nodes and edges, and task definitions
+                self.process_graph_line( line, section )
 
         # sort hours list for each task
         for name in self.taskdefs:

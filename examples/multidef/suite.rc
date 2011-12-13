@@ -41,11 +41,12 @@ sleep 5
 [visualization]
     collapsed families = ObsProc
 
-# NOTE: $(TASK) is replaced by the actual task name in all config items
-# at the time of task definition, whereas all tasks are provided with
-# $CYLC_TASK_NAME (and $CYLC_TASK_ID and $CYLC_TASK_CYCLE_TIME) at run
-# time.  So you can use $(TASK) or $CYLC_TASK_NAME in the command or
-# environment items (but $(TASK) is required in 'JOB_DIR = ...' above
-# because we are generating an environment variable name on the right
-# side, at task definition time).  Inspect a task job script to see all
-# this: cylc submit --dry-run.
+# NOTE: $(TASK) is replaced by the actual task name in all config items,
+# inside cylc, at task definition time. Running tasks, on the other
+# hand, are provided with the $CYLC_TASK_NAME (and $CYLC_TASK_ID and
+# $CYLC_TASK_CYCLE_TIME) environment variables. So you can use $(TASK)
+# or $CYLC_TASK_NAME in the command or environment config items, but
+# $(TASK) is required in 'JOB_DIR = ...' above because we are generating
+# an environment variable name on the right side at task definition
+# time. Generate a task job script to see the effect of all this.
+
