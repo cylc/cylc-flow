@@ -72,12 +72,12 @@ hi cylcSectionC ctermfg=DarkRed guifg=#550044 term=bold cterm=bold gui=bold
 hi cylcSectionB ctermfg=DarkRed guifg=#9900aa term=bold cterm=bold gui=bold
 hi cylcSectionA ctermfg=DarkRed guifg=#ff00ee term=bold cterm=bold gui=bold
 
-hi jinja2         ctermfg=DarkGreen guifg=#83a712 term=bold cterm=bold gui=bold
-hi jinja2comment  ctermfg=DarkGreen guifg=#c09032 term=bold cterm=bold gui=bold 
-hi jinja2variable ctermfg=DarkGreen guifg=#b0a672 term=bold cterm=bold gui=bold
+hi jinja2         ctermfg=DarkGrey guifg=#666 term=bold cterm=bold gui=bold
+hi jinja2comment  ctermfg=DarkGrey guifg=#776 term=bold cterm=bold gui=bold 
+hi jinja2variable ctermfg=DarkGrey guifg=#677 term=bold cterm=bold gui=bold
 
 hi Comment ctermfg=LightBlue guifg=#ff4422 term=bold cterm=bold gui=bold 
 hi cylcCommentInString ctermfg=LightBlue guifg=#ff8844 term=bold cterm=bold gui=bold 
-hi String ctermfg=DarkGreen guifg=#12c428
-hi Special term=Underline cterm=Underline gui=Underline ctermfg=DarkGrey guifg=#4444aa
-hi Statement ctermbg=Yellow guibg=#bcff84 guifg=#222222
+hi String ctermfg=DarkGreen guifg=#18a329
+hi Special term=Underline cterm=Underline gui=Underline ctermfg=Blue guifg=#0082d3
+hi Statement ctermbg=Yellow ctermfg=Blue guibg=#aff guifg=#00a
