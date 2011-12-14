@@ -3319,7 +3319,7 @@ Figure~\ref{fig-jinja2-ensemble}, shows how an ensemble of similar tasks
 generated using Jinja2:
 \lstset{language=suiterc}
 \begin{lstlisting}
-% cylc view --stdout --central cylc-4-0-0.jinja2.ensemble
+% cylc view --stdout --central <AdminUserName>.cylc-4-0-0.jinja2.ensemble
 #!jinja2
 {% set N_MEMBERS = 5 %}
 [scheduling]
@@ -3332,7 +3332,7 @@ generated using Jinja2:
 Here is the generated suite definition, after Jinja2 processing:
 \lstset{language=suiterc}
 \begin{lstlisting}
-% cylc view --stdout --processed --central cylc-4-0-0.jinja2.ensemble
+% cylc view --stdout --processed --central <AdminUserName>.cylc-4-0-0.jinja2.ensemble
 #!jinja2
 [scheduling]
     [[dependencies]]
