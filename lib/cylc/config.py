@@ -298,7 +298,7 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
         if self.verbose:
-            print "PARSING runtime lists"
+            print "PARSING runtime name lists"
         # If a runtime section heading is a list of names then the
         # subsequent config applies to each member. Copy the config
         # for each member and replace any occurrence of '$(TASK)' with
@@ -316,7 +316,6 @@ class config( CylcConfigObj ):
                 tconfig = OrderedDict()
                 # replicate the actual task config
                 self.replicate( name, tconfig, self['runtime'][item] )
-                self.interpolate( name, tconfig, '\$\(NAMESPACE\)' )
                 # record it under the task name
                 self['runtime'][name] = tconfig
 
@@ -325,12 +324,13 @@ class config( CylcConfigObj ):
 
         self.members = {}
         if self.verbose:
-            print "PARSING runtime hierarchies"
+            print "PARSING the runtime namespace hierarchy"
 
         # RUNTIME INHERITANCE
         for label in self['runtime']:
             hierarchy = []
             name = label
+            self.interpolate( item, self['runtime'][name], '\$\(NAMESPACE\)' )
             while True:
                 hierarchy.append( name )
                 inherit = self['runtime'][name]['inherit']

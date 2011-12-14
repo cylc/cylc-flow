@@ -1,9 +1,6 @@
 title = "explicit task generator example suite"
 
-description = """A list of similar tasks defined all at once, in which
-the task names are listed explicitly. See also the 'expression' task
-generator example in which the task names are generated automatically by
-a Python expression (a "list comprehension")."""
+description = "Wherein a list of similar tasks are defined at once."
 
 [scheduling]
     initial cycle time = 2011010106
@@ -49,4 +46,3 @@ sleep 5
 # $(TASK) is required in 'JOB_DIR = ...' above because we are generating
 # an environment variable name on the right side at task definition
 # time. Generate a task job script to see the effect of all this.
-

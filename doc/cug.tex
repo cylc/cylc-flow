@@ -1840,30 +1840,21 @@ file, to programatically generate the final suite definition
 seen by cylc.  Currently the Jinja2 template engine is supported
 (\url{http://jinja.pocoo.org/docs}). In the future cylc may provide a
 plug-in interface to allow use of other template engines too.
-
-The need for Jinja2 processing can be declared with a bang-hash
-interpreter comment at the very top of the suite.rc file:
-\begin{lstlisting}
-#!Jinja2
-# This is a SUITE.RC with embedded Jinja2 expressions
-# ...
-\end{lstlisting}
-See {\em Jinja2: Suite Generation Templates}
+See {\em Jinja2 Suite Templates}
 (Section~\ref{ProgSuiteGenJinja2}) for some examples. 
 
 \subsubsection{Syntax}
 
 \begin{myitemize}
-    \item {\bf All entries} are of the form \lstinline@item = value@ 
-        (some values require post-validation parsing).
-    \item {\bf Comments} follow a hash character (\#) to the end of the line.
-    \item {\bf List Values} are comma separated.
-    \item {\bf Strings} must be quoted if they contain commas 
-        (which indicate list values).
-    \item {\bf Multiline Strings} must be triple-quoted.
+    \item {\bf Entries} are of the form \lstinline@item = value@, and
+        item names may contain spaces.
+    \item {\bf Comments} \# follow a hash character.
+    \item {\bf List Values} are comma, separated.
+    \item {\bf Strings} must be quoted ``if, they, contain, commas''
+    \item {\bf Multiline Strings} must be ``````triple-quoted''''''.
     \item {\bf Boolean Values} are written as True or False (capitalized).
     \item {\bf White Space} is ignored; indentation can be used for clarity.
-    \item {\bf Continuation Lines} follow a trailing backslash.
+    \item {\bf Continuation Lines} follow a trailing backslash.\textbackslash
     \item {\bf [Section Headings]} are enclosed in square brackets.
     \item {\bf [[Subsection Nesting]]} is indicated by the number of
         square brackets.\footnote{Sections are closed by the next
@@ -1988,25 +1979,6 @@ Validation does not check the validity of chosen job submission methods;
 this is to allow users to extend cylc with their own job submission 
 methods, which are by definition unknown to the suiterc.spec file.
 
-\subsubsection{String Interpolation}
-
-Configuration items beginning with an underscore are ignored by cylc, but may be
-used with the string interpolation mechanism provided by the ConfigObj file format. 
-An example:
-\lstset{language=suiterc}
-\begin{lstlisting}
-# SUITE.RC
-_greeting = HELLO
-[runtime]
-    [[root]]
-        command scripting = "echo %(_greeting)s from $CYLC_TASK_ID; sleep 10; echo BYE"
-\end{lstlisting}
-\lstset{language=transcript}
-Then, assuming this suite is registered as \lstinline=foo=,
-\begin{lstlisting}
-% cylc get-config foo runtime root 'command scripting'
-['echo HELLO from $CYLC_TASK_ID; sleep 10; echo BYE']
-\end{lstlisting}
 
 \subsection{Scheduling - Dependency Graphs}
 \label{DependencyGraphs}
@@ -2908,15 +2880,47 @@ explicitly configuring the root namespace.
 
 Groups of similar tasks or families that differ only in a few
 configuration details can be defined in single namespace sections
-by putting a list of names, or a Python expression that generates a list
-of names, in the section heading. Potential applications include groups
-of similar obs processing tasks, and forecasting ensembles.
+by putting a list of names in the section heading. Potential
+applications include groups of similar obs processing tasks, and
+forecasting ensembles.
 
-Any occurrence of \lstinline=$(TASK)=, in any configuration items in 
-the namespace, will be replaced with the actual name of the task or
-family prior to run time. 
+As the suite.rc file is parsed, any occurrence of
+\lstinline=$(NAMESPACE)= in any runtime configuration item
+is immediately replaced with the actual name of the namespace; and after 
+inheritance processing any occurrence of \lstinline=$(TASK)= is
+replaced with the actual name of the task.
 
-{\em The two annotated {\em multidef} example suites use this feature.}
+The following example illustrates this:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[runtime]
+    [[foo]]
+    command scripting = "echo hello from $(TASK) via $(NAMESPACE)"
+    [[bar, baz]]
+        inherit = foo
+\end{lstlisting}
+
+\lstset{language=bash}
+\begin{lstlisting}
+% cylc get-config test runtime foo 'command scripting'
+['echo Hello from foo via root']
+% cylc get-config test runtime bar 'command scripting'
+['echo Hello from bar via root']
+% cylc get-config test runtime baz 'command scripting'
+['echo Hello from baz via root']
+\end{lstlisting}
+
+Note that in the namespace scripting and environment sections, which are
+evaluated in task job scripts at run time, \lstinline=$(TASK)= is
+functionally equivalent to \lstinline=$CYLC_TASK_NAME=.  But in other
+runtime config items such as description that are not ``evaluated'' in
+the task runtime environment, \lstinline=$(TASK)= must be used to
+specialize from a list of names (in the namespace section heading) to a
+particular task name.
+
+{\em The {\em multidef} example suite illustrates use of these internal
+variables.}
 
 \subsubsection{Task Execution Environment}
 \label{TaskExecutionEnvironment}
@@ -3267,14 +3271,15 @@ right-clicking on tasks in the graph-based suite control GUI.} \label{fig-namesp
 %% `-prod   No description provided
 %%\end{lstlisting}
 
-\subsection{Jinja2: Suite Generation Templates}
+\subsection{Jinja2 Suite Templates}
 \label{ProgSuiteGenJinja2}
 
-The Jinja2 template processor adds powerful structural logic to cylc
-suites. You can use embedded variables, mathematical expressions, loop
-control structures and conditional expressions to generate the final
-suite definition. Potential uses include automatic generation
-of repeated groups of similar tasks and dependencies, and inclusion or
+Embedded Jinja2 template processor expressions add general variables,
+mathematical expressions, loop control structures and conditional
+expressions, to cylc suite definitions. Suite.rc files containing Jinja2
+expressions are automatically preprocessed to generate the final suite
+definition seen by cylc. Potential uses include automatic generation of
+repeated groups of similar tasks and dependencies, and inclusion or
 exclusion of entire suite sections according to the value of a single
 flag. 
 
@@ -3283,41 +3288,79 @@ we just provide an example suite that uses it. The meaning of the
 inline Jinja2 code should be reasonably self-evident to anyone familiar
 with standard programming techniques. 
 
-Important points to note:
-
-\begin{myitemize}
-    \item {\bf the first line of the suite.rc must be:}
-        \begin{lstlisting}
+The need for Jinja2 processing must be declared with a bang-hash
+comment in the first line of the suite.rc file:
+\begin{lstlisting}
 #!Jinja2
-        \end{lstlisting}
-    \item the template engine processes the file first, so 
-        Jinja2 expressions can appear anywhere, even  
-        inside suite.rc strings.
-\end{myitemize}
+# ...
+\end{lstlisting}
 
-The following suite definition (the \lstinline=Jinja2= example in the 
-central suite database) includes or excludes special cleanup tasks
-according to the value of a logical flag, and it automatically
-generates all dependencies, and the correct family relationships, for a
-group of tasks that is repeated for each city in the suite. To add a new
-city and associated tasks and dependencies simply add the new city
-name to list at the top of the file. The suite is graphed, with 
-the New York City task family expanded, in Figure~\ref{fig-jinja2-ny}.
+Template processing is the first thing done on parsing a suite
+definition, so Jinja2 expressions can appear anywhere in the file, even
+inside strings and namespace headings for example.
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=10cm]{images/jinja2-ensemble-graph.png} 
+    \end{center}
+    \caption[The Jinja2 ensemble example suite graph.]{\scriptsize
+    The Jinja2 ensemble example suite graph.}
+    \label{fig-jinja2-ensemble} 
+\end{figure} 
+
+The \lstinline=jinja2.ensemble= example, graphed in
+Figure~\ref{fig-jinja2-ensemble}, shows how an ensemble of similar task
+can be generated using Jinja2:
+\lstset{language=suiterc}
+\begin{lstlisting}
+% cylc view --stdout --central cylc-4-0-0.jinja2.ensemble
+#!jinja2
+{% set N_MEMBERS = 5 %}
+[scheduling]
+    [[dependencies]]
+        graph = """{# generate ensemble dependencies #}
+            {% for I in range( 0, N_MEMBERS ) %}
+               foo => mem_\left\{  I }} => post_\left\{  I }} => bar
+            {% endfor %}"""
+\end{lstlisting}
+Here is the generated suite definition, after Jinja2 processing:
+\lstset{language=suiterc}
+\begin{lstlisting}
+% cylc view --stdout --processed --central cylc-4-0-0.jinja2.ensemble
+#!jinja2
+[scheduling]
+    [[dependencies]]
+        graph = """
+          foo => mem_0 => post_0 => bar
+          foo => mem_1 => post_1 => bar
+          foo => mem_2 => post_2 => bar
+          foo => mem_3 => post_3 => bar
+          foo => mem_4 => post_4 => bar
+                """ 
+\end{lstlisting}
+
+And finally, the \lstinline=jinja2.cities= example uses variables,
+includes or excludes special cleanup tasks according to the value of a
+logical flag, and it automatically generates all dependencies and family
+relationships for a group of tasks that is repeated for each city in the
+suite. To add a new city and associated tasks and dependencies simply
+add the city name to list at the top of the file. The suite is graphed,
+with the New York City task family expanded, in
+Figure~\ref{fig-jinja2-cities}.
 
 \lstset{language=suiterc}
-\lstinputlisting{../examples/jinja2/suite.rc}
+\lstinputlisting{../examples/jinja2/cities/suite.rc}
 \lstset{language=transcript}
 
 \begin{figure}
     \begin{center}
         \includegraphics[width=16cm]{images/jinja2-suite-graph.png} 
     \end{center}
-    \caption[Jinja2 example suite graph.]{\scriptsize
-    The dependency graph for the Jinja2 examples suite, with the 
+    \caption[Jinja2 cities example suite graph.]{\scriptsize
+    The Jinja2 cities example suite graph, with the 
     New York City task family expanded.}
-    \label{fig-jinja2-ny} 
+    \label{fig-jinja2-cities} 
 \end{figure} 
-
 
 \section{Task Implementation}
 \label{TaskImplementation}
