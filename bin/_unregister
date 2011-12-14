@@ -50,8 +50,8 @@ parser.add_option( "--dry-run",
         action="store_true", default=False, dest="dryrun" )
 
 parser.add_option( "--filter",
-        help="A filtering regular expression. This must be explicitly "
-        "indicated for unregistering, for safety reasons. ",
+        help="A regular expression to select multiple suites. "
+        "This must be explicit for unregister, for safety. ",
         action="store_true", default=False, dest="regfilter" )
 
 parser.add_option( "-v","--verbose",

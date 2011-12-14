@@ -333,8 +333,9 @@ class regdb(object):
 
     def unregister( self, exp, regfilter=False ):
         if not regfilter:
-            # Plain suite or group given; must match from beginning.
-            exp = '^' + exp + r'\b'
+            # suite (regexp ends in '$') or group (regexp ends in '.')
+            # must match from beginning.
+            exp = '^' + exp + '(\.|$)'
         dirs = []
         for key in self.items.keys():
             if re.search( exp, key ):
