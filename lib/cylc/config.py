@@ -255,7 +255,7 @@ class config( CylcConfigObj ):
             raise SuiteConfigError, "ERROR: suite.rc validation failed"
         
         extras = []
-        for sections, name in get_extra_values(self):
+        ##for sections, name in get_extra_values(self):
             # !!! TO DO: THE FOLLOWING FROM CONFIGOBJ DOC SECTION 15.1 FAILS 
             ### this code gets the extra values themselves
             ##the_section = self
@@ -270,13 +270,6 @@ class config( CylcConfigObj ):
           
             ##section_string = ', '.join(sections) or "top level"
             ##print 'Extra entry in section: %s. Entry %r is a %s' % (section_string, name, section_or_value)
-
-            # Ignore any entries beginning with "_" so that they can be used for string interpolation
-            if not name.startswith( '_' ):
-                extra = ' '
-                for sec in sections:
-                    extra += sec + ' -> '
-                extras.append( extra + name )
 
         if len(extras) != 0:
             for extra in extras:
