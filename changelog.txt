@@ -360,3 +360,6 @@ until the error is corrected, rather than abort.
 This has been made redundant by the more powerful and general Jinja2
 template processor.
 
++ A new --stdout option for 'cylc view' prints suite definitions to
+stdout.
+

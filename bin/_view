@@ -121,7 +121,7 @@ parser.add_option( "--inline", "-i",
         help="Inline any include-files.",
         action="store_true", default=False, dest="inline" )
 
-parser.add_option( "--process", "-p",
+parser.add_option( "--processed", "-p",
         help="View the suite after template engine processing. "
         "This necessarily implies '-i' as well.",
         action="store_true", default=False, dest="process" )
@@ -154,6 +154,10 @@ parser.add_option( "--gui", "-g",
         help="Use GUI editor $GEDITOR instead of $EDITOR. This option is "
         "automatically used when an editing session is spawned by gcylc.",
         action="store_true", default=False, dest="geditor" )
+
+parser.add_option( "--stdout", "-o", 
+        help="Print the suite definition to stdout instead of editing it.",
+        action="store_true", default=False, dest="stdout" )
 
 ( options, args ) = parser.parse_args()
 
@@ -245,11 +249,17 @@ bot = re.sub( '.', '-', tmp )
 warning = [
 '#' + tmp + '\n', 
 '#' + bot + '\n' ] 
+newlines = warning + lines
+
+if options.stdout:
+    for line in lines:
+        print line,
+    sys.exit(0)
 
 # write to a temporary file
 viewfile = tempfile.mktemp( suffix = ".suite.rc", prefix = suite + '.', dir = tmpdir )
 h = open( viewfile, 'wb' )
-h.writelines( warning + lines )
+h.writelines( newlines )
 h.close()
 
 # set the file to be read only
