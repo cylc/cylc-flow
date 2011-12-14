@@ -212,7 +212,7 @@ if os.path.isfile( suiterc ):
         # inline any include files
         lines = include_files( suitedir, lines, options.mark, options.single, options.label )
     if options.process:
-        if lines[0].startswith( '#!jinja2' ):
+        if re.match( '#![Jj]inja2', lines[0] ):
             # This suite.rc file requires processing with jinja2.
             if not jinja2_loaded:
                 print >> sys.stderr, 'WARNING: This suite requires processing with the Jinja2 template engine'
