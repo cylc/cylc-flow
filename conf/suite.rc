@@ -56,6 +56,7 @@ description = "No description provided" # DEFAULT
     [[root]]
         inherit = None # (other namespaces inherit first from root)
         description = "No description provided"  # DEFAULT
+        initial scripting = None
         pre-command scripting = None
         command scripting = "echo DUMMY $CYLC_TASK_ID; sleep 10; echo BYE"  # DEFAULT
         post-command scripting = None

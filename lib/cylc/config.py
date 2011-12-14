@@ -1242,6 +1242,8 @@ class config( CylcConfigObj ):
             taskd.commands   = taskconfig['command scripting']
             taskd.precommand = taskconfig['pre-command scripting'] 
             taskd.postcommand = taskconfig['post-command scripting'] 
+        # initial scripting could be required to access cylc, even in sim mode.
+        taskd.initial_scripting = taskconfig['initial scripting'] 
 
         taskd.job_submission_shell = taskconfig['job submission']['shell']
 
@@ -1286,8 +1288,6 @@ class config( CylcConfigObj ):
                 # (if present) with literal '$HOME' for interpretation
                 # on the remote host.
                 taskd.job_submit_share_directory  = re.sub( os.environ['HOME'] + '/', '$HOME', taskd.job_submit_share_directory )
-
-            taskd.remote_scripting = taskconfig['remote']['scripting']
 
         taskd.manual_messaging = taskconfig['manual completion']
 

@@ -3,10 +3,6 @@ title = "A complex task family example"
 description = """
 A suite containing families with extra-family dependencies."""
 
-# Also tests ConfigObj string interpolation
-# (with cylc ignoring items that begin with '_')
-_greeting = HELLO
-
 [scheduling]
     initial cycle time = 2011010112
     final cycle time = 2011010312
@@ -30,7 +26,7 @@ y1 | H => I
 [runtime]
     [[root]]
         # Use string interpolation here:
-        command scripting = "echo %(_greeting)s from $CYLC_TASK_ID; sleep 10; echo BYE"
+        command scripting = "echo Hello from $CYLC_TASK_ID; sleep 10; echo BYE"
     [[FAMx,FAMy]]
     [[x1,x2]]
         inherit = FAMx

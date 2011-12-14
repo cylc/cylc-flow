@@ -329,8 +329,10 @@ script (it referred to an example suite that has since been renamed).
 ________________________________________________________________________
 PENDING
 
-+ A new "scripting" suite.rc item for remote tasks (e.g. to source the
-remote task owner's login scripts, which is not done by ssh).
++ A new "initial scripting" suite.rc item, for scripting inserted into
+the very top of task job scripts. This can be used for environment setup
+prior to configuring cylc access, e.g. for getting remote tasks to
+source your login scripts (ssh remote command invocation doesn't do this).
 
 + Added support for the Jinja2 template engine, with documentation and
 example suites. This allows powerful programmatic generation of suite
@@ -360,8 +362,9 @@ immediately.
 + Documented how to handle line continuation in graph strings.
 
 + Removed the ability to parse "Python:" expressions in the suite.rc
-file.  This has been made redundant by the more powerful and general
-Jinja2 template processor (above).
+file, and to ignore items starting with underscores for use in configobj
+string interpolation.  These have been made redundant by the more
+powerful and general Jinja2 template processor (above).
 
 + A new --stdout option for 'cylc view' prints suite definitions to
 stdout.
