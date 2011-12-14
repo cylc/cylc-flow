@@ -3274,30 +3274,36 @@ right-clicking on tasks in the graph-based suite control GUI.} \label{fig-namesp
 \subsection{Jinja2 Suite Templates}
 \label{ProgSuiteGenJinja2}
 
-Embedded Jinja2 template processor expressions add general variables,
-mathematical expressions, loop control structures and conditional
-expressions, to cylc suite definitions. Suite.rc files containing Jinja2
-expressions are automatically preprocessed to generate the final suite
-definition seen by cylc. Potential uses include automatic generation of
-repeated groups of similar tasks and dependencies, and inclusion or
-exclusion of entire suite sections according to the value of a single
-flag. 
-
-Jinja2 is well documented at \url{http://jinja.pocoo.org/docs}, so here
-we just provide an example suite that uses it. The meaning of the 
-inline Jinja2 code should be reasonably self-evident to anyone familiar
-with standard programming techniques. 
+Support for the Jinja2 template processor adds general variables,
+mathematical expressions, loop control structures, and conditional
+expressions to suite.rc files - which are automatically preprocessed to
+generate the final suite definition seen by cylc.
 
 The need for Jinja2 processing must be declared with a bang-hash
-comment in the first line of the suite.rc file:
+comment as the first line of the suite.rc file:
 \begin{lstlisting}
 #!Jinja2
 # ...
 \end{lstlisting}
 
+Potential uses for this include automatic generation of repeated groups
+of similar tasks and dependencies, and inclusion or exclusion of entire
+suite sections according to the value of a single flag.  Consider a
+large complicated operational suite and several related parallel test
+suites with slightly different task content and structure (the parallel
+suites, for instance, might take certain large input files from the
+operation or the archive rather than downloading them again) - these can
+now be maintained as a single master suite definition that reconfigures
+itself according to the value of a flag variable indicating the intended use.
+
 Template processing is the first thing done on parsing a suite
-definition, so Jinja2 expressions can appear anywhere in the file, even
-inside strings and namespace headings for example.
+definition so Jinja2 expressions can appear anywhere in the file (inside
+strings and namespace headings, for example).
+
+Jinja2 is well documented at \url{http://jinja.pocoo.org/docs}, so here
+we just provide an example suite that uses it. The meaning of the 
+embedded Jinja2 code should be reasonably self-evident to anyone familiar
+with standard programming techniques. 
 
 \begin{figure}
     \begin{center}
@@ -3309,8 +3315,8 @@ inside strings and namespace headings for example.
 \end{figure} 
 
 The \lstinline=jinja2.ensemble= example, graphed in
-Figure~\ref{fig-jinja2-ensemble}, shows how an ensemble of similar task
-can be generated using Jinja2:
+Figure~\ref{fig-jinja2-ensemble}, shows how an ensemble of similar tasks
+generated using Jinja2:
 \lstset{language=suiterc}
 \begin{lstlisting}
 % cylc view --stdout --central cylc-4-0-0.jinja2.ensemble
