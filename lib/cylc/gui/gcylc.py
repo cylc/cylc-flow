@@ -887,35 +887,39 @@ The cylc forecast suite metascheduler.
                 ctrlmenu.append( subm_item )
                 subm_item.connect( 'activate', self.submit_task_popup, reg )
 
-            search_item = gtk.MenuItem( '_Description' )
-            infomenu.append( search_item )
-            search_item.connect( 'activate', self.describe_suite, reg )
+            descr_item = gtk.MenuItem( '_Description' )
+            infomenu.append( descr_item )
+            descr_item.connect( 'activate', self.describe_suite, reg )
 
-            listitem = gtk.MenuItem( '_Task List' )
+            listitem = gtk.MenuItem( '_List' )
             infomenu.append( listitem )
             listmenu = gtk.Menu()
             listitem.set_submenu(listmenu)
  
-            flat_item = gtk.MenuItem( '_Flat' )
+            flat_item = gtk.MenuItem( '_Tasks' )
             listmenu.append( flat_item )
             flat_item.connect( 'activate', self.list_suite, reg )
 
-            tree_item = gtk.MenuItem( '_Tree' )
+            tree_item = gtk.MenuItem( '_Namespaces' )
             listmenu.append( tree_item )
             # use "-tp" for unicode box-drawing characters (seems to be
             # OK in pygtk textview).
             tree_item.connect( 'activate', self.list_suite, reg, '-tp' )
 
+            igraph_item = gtk.MenuItem( '_Graph' )
+            infomenu.append( igraph_item )
+            igraph_item.connect( 'activate', self.graph_suite_popup, reg, suite_dir )
+
             if not self.cdb:
-                jobs_item = gtk.MenuItem( '_Job Script')
+                jobs_item = gtk.MenuItem( 'Generate A _Job Script')
                 infomenu.append( jobs_item )
                 jobs_item.connect( 'activate', self.jobscript_popup, reg )
  
-                out_item = gtk.MenuItem( 'Suite _Stdout')
+                out_item = gtk.MenuItem( 'View Suite _Stdout')
                 infomenu.append( out_item )
                 out_item.connect( 'activate', self.view_output, reg, state )
 
-                out_item = gtk.MenuItem( 'Suite _Log')
+                out_item = gtk.MenuItem( '_View Suite Log')
                 infomenu.append( out_item )
                 out_item.connect( 'activate', self.view_log, reg )
 
@@ -930,6 +934,10 @@ The cylc forecast suite metascheduler.
             prepmenu = gtk.Menu()
             prepmenu_item.set_submenu(prepmenu)
     
+            pdescr_item = gtk.MenuItem( '_Description' )
+            prepmenu.append( pdescr_item )
+            pdescr_item.connect( 'activate', self.describe_suite, reg )
+
             edit_item = gtk.MenuItem( '_Edit' )
             prepmenu.append( edit_item )
             editmenu = gtk.Menu()
@@ -959,6 +967,21 @@ The cylc forecast suite metascheduler.
             viewp_item = gtk.MenuItem( '_Processed' )
             viewmenu.append( viewp_item )
             viewp_item.connect( 'activate', self.view_suite, reg, 'processed' )
+
+            plistitem = gtk.MenuItem( '_List' )
+            prepmenu.append( plistitem )
+            plistmenu = gtk.Menu()
+            plistitem.set_submenu(plistmenu)
+ 
+            pflat_item = gtk.MenuItem( '_Tasks' )
+            plistmenu.append( pflat_item )
+            pflat_item.connect( 'activate', self.list_suite, reg )
+
+            ptree_item = gtk.MenuItem( '_Namespaces' )
+            plistmenu.append( ptree_item )
+            # use "-tp" for unicode box-drawing characters (seems to be
+            # OK in pygtk textview).
+            ptree_item.connect( 'activate', self.list_suite, reg, '-tp' )
  
             graph_item = gtk.MenuItem( '_Graph' )
             prepmenu.append( graph_item )
