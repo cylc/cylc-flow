@@ -1560,16 +1560,8 @@ When running any suite in live mode (or suites that depend on
 clock-triggered tasks at least) do not give an initial cycle time in the
 future unless you want nothing to happen until that time. However, you
 can also run any suite in {\em simulation mode}
-(Section~\ref{SimulationMode}) in
-which case a future start time is fine. In simulation mode each task is
-replaced by the default dummy task (above) and the suite runs quickly on
-an accelerated clock. As far as cylc is concerned this is almost
-identical to real operation, so simulation mode can be used to test
-recovery strategies for certain kinds of failure, for instance. In
-simulation mode, by configuring how the accelerated clock is
-initialized, you can watch how any suite catches up and transitions from
-delayed to real time operation.
-
+in which case a future start time is
+fine (see Appendix~\ref{SimulationMode}). 
 %\pagebreak
 
 \section{Suite Registration}
@@ -4539,34 +4531,47 @@ changes, on the most recently clicked-on task.
 \section{Simulation Mode} 
 \label{SimulationMode}
 
-If you start a suite in simulation mode (a command line option for the cold-,
-warm-, raw-, and re-start commands, and a checkbutton in the gcylc suite
-start panel) then cylc will run on an accelerated clock and submit dummy
-programs instead of the real tasks. These masquerade as the real tasks
-by reporting the correct outputs complete after a short interval,
-reporting success, and then exiting. This is essentially
-indistinguishable, to cylc, from real operation. Simulation mode was, and
-remains, an important aid to cylc development because it allows
-testing of every aspect of scheduling without having to run real
-tasks in real time. Prior to cylc-3 it was also a useful aid to suite
-development - a simulation run would quickly identify any mismatch between
-the user-defined prerequisites and outputs across the suite, so you
-could get the scheduling right without running the real tasks. Post
-cylc-3.0 this is less important because task prerequisites and outputs
-are implicitly defined by the dependency graph and, short of a bug in
-cylc, the suite will run according to the graph.
+In simulation mode (an option for the startup commands) each task is
+replaced by a dummy task that just prints a message and then exits after
+a few seconds, and the suite runs quickly on an accelerated clock. As
+far as cylc is concerned this is essentially identical to real
+operation. Simulation mode can be used to get the scheduling of a
+complex suite right without having to run real tasks, and to test
+recovery strategies for certain kinds of failure. 
+
+By configuring how the accelerated clock is initialized, you can watch
+how a suite catches up and transitions from delayed to real time
+operation.
+
+Remote task hosting and job submission configuration is ignored in
+simulation mode, so you can simulate any suite, even outside of its
+normal operating environment.
+
+Note that you can achieve a ``more realistic'' simulation mode, complete
+with remote job submission etc., by simply commenting out task command
+scripting, so that it defaults to dummy command scripting, and running
+the suite in real mode. 
+
+Simulation mode was, and remains, an important aid to cylc development
+because it allows testing of every aspect of scheduling without having
+to run real tasks in real time. Prior to cylc-3 it was also a critical
+aid to suite development - a simulation run would quickly identify any
+mismatch between the user-defined prerequisites and outputs across the
+suite, so you could get the scheduling right without running the real
+tasks. Post cylc-3.0 this is less important because task prerequisites
+and outputs are implicitly defined by the suite.rc dependency graph and,
+short of a bug in cylc, the suite will run according to the graph.
 
 \subsection{Clock Rate and Offset}
 
-Simulation mode suites run on an accelerated clock so that you can test
-things very quickly. You can set the clock rate and offset with respect
+You can set the simulation mode clock rate and offset with respect
 to the initial cycle time with options to the \lstinline=cylc run=
-command. An offset of 10 hours, say, means that the simulation mode clock
-starts at 10 hours prior to the suite's initial cycle time.  You can
-thus simulate the behaviour of the suite as it catches up from a delay
-and transitions to real time operation.  By default, the clock runs at a
-rate of 10 seconds real time to 1 hour suite time, and with an initial
-offset of 10 hours. 
+command. An offset of 10 hours, say, means that the clock starts at 10
+hours prior to the suite's initial cycle time.  You can thus simulate
+the behaviour of the suite as it catches up from a delay and transitions
+to real time operation.  By default, the clock runs at a rate of 10
+seconds real time to 1 hour suite time, and with an initial offset of 10
+hours. 
 
 \subsection{Switching A Suite Between Simulation And Live Modes?}
 
@@ -4725,13 +4730,15 @@ by the user because they are implied by the graph.
 Version 4.0 has the following major improvements over cylc-3.x, along with
 many refinements: 
 \begin{myitemize}
-    \item suite registration has been generalized from GROUP:NAME to a 
+    \item Suite registration has been generalized from GROUP:NAME to a 
         hierarchy of arbitrary depth, e.g foo.bar.baz, allowing suites
         to be organized in a tree-like structure.
-    \item the suite.rc file has undergone some major housekeeping and, 
-        in particular, now defines a {\em namespace hierarchy} of task
-        families and tasks, to allow common run time properties to be
+    \item The suite.rc file has been extensively reorganized. In
+        particular it now defines a {\em namespace hierarchy} of
+        families and tasks to allow common runtime properties to be
         grouped naturally among related tasks.
+    \item The Jinja2 template engine is now supported, adding general
+        programmability to cylc suite definitions.
 \end{myitemize}
 
 \section{Pyro} 
