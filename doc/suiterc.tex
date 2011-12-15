@@ -624,14 +624,14 @@ A description of this namespace, retrievable from running tasks via
 
 \paragraph[initial scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ initial scripting}
 
-Any scripting defined here is inserted at the very top of the task job
-script. This may be useful for remote tasks in particular - e.g.\ if
-there is a need to source the task owner's login scripts, because ssh
-(by which means cylc submits remote tasks) does not do this. It
-is written to the top of the task job script, prior to configuring
-access to cylc itself, because it may be employed to define
-variables needed by cylc - e.g.\ if Pyro has been installed locally on
-the remote host rather than at system level.
+Scripting defined here is put at the top of the task job script, before the 
+task execution environment is configured, and before configuring task access
+to cylc. This can be used when there is a need for remotely hosted tasks
+to source login scripts - when Pyro has been installed locally rather
+than at system level, for example - because ssh does not do this for
+you. Use of initial scripting is not restricted to remote tasks, but 
+pre-command or command scripting, which has access to the task execution
+environment, should normally be used in preference to this item.
 
 \begin{myitemize}
 \item {\em type:} string
