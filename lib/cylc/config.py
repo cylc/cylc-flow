@@ -1246,8 +1246,8 @@ class config( CylcConfigObj ):
         taskd.job_submit_share_directory = taskconfig['job submission']['share directory']
         taskd.job_submit_work_directory = taskconfig['job submission']['work directory']
 
-        # Remotely hosted tasks
-        if taskconfig['remote']['host'] or taskconfig['remote']['owner']:
+        if not self.simulation_mode and (taskconfig['remote']['host'] or taskconfig['remote']['owner']):
+            # Remote task hosting config, ignored in sim mode.
             taskd.remote_host = taskconfig['remote']['host']
             if not taskconfig['remote']['cylc directory']:
                 raise SuiteConfigError, name + ": remote tasks must specify the remote cylc directory"
@@ -1284,8 +1284,7 @@ class config( CylcConfigObj ):
 
         taskd.manual_messaging = taskconfig['manual completion']
 
-        if not self.simulation_mode or \
-                self['cylc']['simulation mode']['event hooks']['enable']:
+        if not self.simulation_mode or self['cylc']['simulation mode']['event hooks']['enable']:
             taskd.hook_script = taskconfig['event hooks']['script']
             taskd.hook_events = taskconfig['event hooks']['events']
             for event in taskd.hook_events:
