@@ -375,7 +375,6 @@ affected hyphenated names as '-' is now legal in suite names but is not
 a regular expression "word character", and name matching was done up to 
 a word boundary).
 
-+ Simulation mode now ignores all remote task hosting config. Any suite
-should be able to run, even outside of its normal environment, in
-simulation mode without modification.
++ Simulation mode now works out of the box for all suites, including
+those with remotely hosted tasks and tasks with internal outputs. 
 

@@ -539,7 +539,8 @@ class config( CylcConfigObj ):
                 continue
 
     def set_trigger( self, task_name, output_name=None, offset=None, asyncid_pattern=None ):
-        if output_name:
+        if output_name and not self.simulation_mode:
+            # (ignore internal outputs in sim mode - dummy tasks don't know about them).
             try:
                 trigger = self['runtime'][task_name]['outputs'][output_name]
             except KeyError:
@@ -1221,16 +1222,15 @@ class config( CylcConfigObj ):
             raise SuiteConfigError, "Task not found: " + name
         taskd.description = taskconfig['description']
 
-        for lbl in taskconfig['outputs']:
-            # replace $(CYLC_TASK_CYCLE_TIME) with $(TAG) in explicit outputs
-            taskd.outputs.append( re.sub( 'CYLC_TASK_CYCLE_TIME', 'TAG', taskconfig['outputs'][lbl] ))
-
-        taskd.owner = taskconfig['remote']['owner']
-
         if self.simulation_mode:
             taskd.job_submit_method = self['cylc']['simulation mode']['job submission']['method']
             taskd.commands = self['cylc']['simulation mode']['command scripting']
         else:
+            for lbl in taskconfig['outputs']:
+                # register internal outputs, replacing $(CYLC_TASK_CYCLE_TIME) with $(TAG)
+                # (ignored in sim mode - dummy tasks don't know about internal outputs).
+                taskd.outputs.append( re.sub( 'CYLC_TASK_CYCLE_TIME', 'TAG', taskconfig['outputs'][lbl] ))
+            taskd.owner = taskconfig['remote']['owner']
             taskd.job_submit_method = taskconfig['job submission']['method']
             taskd.commands   = taskconfig['command scripting']
             taskd.precommand = taskconfig['pre-command scripting'] 
