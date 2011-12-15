@@ -621,6 +621,25 @@ A description of this namespace, retrievable from running tasks via
 \item {\em root default:} ``No description provided''
 \end{myitemize}
 
+
+\subparagraph[initial scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ initial scripting}
+
+Any scripting defined here is inserted at the very top of the task job
+script, before configuring access to cylc etc. This may be useful for 
+remote tasks in particular, if there is a need to source the task
+owner's login scripts - because ssh (by which means cylc submits remote
+tasks) does not do this. If defined, this scripting is written to the
+top of the task job script because it may be define variables needed by
+cylc itself - if Pyro has been installed locally instead of at system
+level, for example.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} (none)
+\item {\em example:} \lstinline@scripting = ". $HOME/.profile"@
+\end{myitemize}
+
+
 \paragraph[command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ command scripting}
 
 The scripting to execute when the associated task is ready to run. The
@@ -831,22 +850,6 @@ item for tasks that define a remote host).
 \begin{myitemize}
 \item {\em type:} string (a valid directory path on the remote host)
 \item {\em default:} (none)
-\end{myitemize}
-
-\subparagraph[scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ scripting}
-
-A scripting section for remote
-tasks. This intended use for this environment configuration for remote
-jobs, typically sourcing the task owner's login scripts - because ssh
-(by which means cylc submits remote tasks) does not do this.
-If defined, it is written to the top of the task job script because
-it may be define variables needed by cylc itself - if Pyro has been
-installed locally by a user instead of at system level, for example.
-
-\begin{myitemize}
-\item {\em type:} string
-\item {\em default:} (none)
-\item {\em example:} \lstinline@scripting = ". $HOME/.profile"@
 \end{myitemize}
 
 \subparagraph[suite definition directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$  suite definition directory}
