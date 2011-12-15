@@ -2,7 +2,7 @@ title = "Custom Task Wrapper Example"
 
 description = """This suite runs a single task that internally submits a
 'model executable' before detaching and exiting immediately - so we have
-to handle task completion messaging manually - see the User Guide 8.4.3."""
+to handle task completion messaging manually - see the Cylc User Guide."""
 
 [scheduling]
     initial cycle time = 2011010106

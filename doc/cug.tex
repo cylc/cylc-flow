@@ -1833,9 +1833,13 @@ seen by cylc.  Currently the Jinja2 template engine is supported
 (\url{http://jinja.pocoo.org/docs}). In the future cylc may provide a
 plug-in interface to allow use of other template engines too.
 See {\em Jinja2 Suite Templates}
-(Section~\ref{ProgSuiteGenJinja2}) for some examples. 
+(Section~\ref{Jinja2}) for some examples. 
 
 \subsubsection{Syntax}
+
+The following list shows legal raw suite.rc syntax. Suites using the
+Jinja2 template processor (Section~\ref{Jinja2}) can of course use
+Jinja2 syntax as well (it must generate raw syntax on processing).
 
 \begin{myitemize}
     \item {\bf Entries} are of the form \lstinline@item = value@, and
@@ -1859,16 +1863,9 @@ See {\em Jinja2 Suite Templates}
         that could be included in multiple tasks, to assist in factoring
         out common task configuration. However, namespace inheritance
         now provides a better way to do this in most cases.}
-    \item {\bf Include-files} can be used, and may be multiply-included
-        and nested. Inclusion boundaries are arbitrary (they can span
-        sections).  Include-file paths should be specified portably
-        relative to the suite definition directory, e.g.:
-\lstset{language=suiterc}
-\begin{lstlisting}
-# include the file $CYLC_SUITE_DEF_PATH/inc/foo.rc:
-%include inc/foo.rc
-\end{lstlisting}
-    \end{myitemize}
+    \item {\bf Include-files} can be used: \lstinline=%include inc/foo.rc=.
+\end{myitemize}
+        
 
 The following pseudo-listing illustrates suite.rc syntax:
 \lstset{language=suiterc}
@@ -1897,6 +1894,39 @@ a list item with continuation = a, b, c, \
 # ...
 \end{lstlisting}
 
+\subsubsection{Include-Files}
+
+Cylc has native support for suite.rc include-files, which may help to
+organize large suites. Inclusion boundaries are completely arbitrary -
+you can think of include-files as chunks of the suite.rc file simply
+cut-and-pasted into another file.  Include-files may be included
+multiple times in the same file, and even nested.  Include-file paths
+can be specified portably relative to the suite definition directory,
+e.g.:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+# include the file $CYLC_SUITE_DEF_PATH/inc/foo.rc:
+%include inc/foo.rc
+\end{lstlisting}
+
+\paragraph{Editing Temporarily Inlined Suites}
+
+With cylc's native file inclusion mechanism you get optional inlined
+editing: 
+\begin{lstlisting}
+% cylc edit --inline SUITE
+\end{lstlisting}
+The suite will be split back into its constituent include-files when you
+exit the edit session. See \lstinline=cylc prep edit --help= for more
+information.
+
+\paragraph{Include-Files via Jinja2}
+
+Jinja2 (Section~\ref{Jinja2}) provides template inclusion functionality
+although this is more akin to Python module import than simple text
+inclusion, and the implications of this for suite design have not yet
+been explored.
 
 \subsubsection{Syntax Highlighting In Vim}
 \label{SyntaxHighlighting}
@@ -3264,7 +3294,7 @@ right-clicking on tasks in the graph-based suite control GUI.} \label{fig-namesp
 %%\end{lstlisting}
 
 \subsection{Jinja2 Suite Templates}
-\label{ProgSuiteGenJinja2}
+\label{Jinja2}
 
 Support for the Jinja2 template processor adds general variables,
 mathematical expressions, loop control structures, and conditional
@@ -3369,22 +3399,21 @@ scripts, or executables invoked by cylc to carry out task processing.
 \subsection{Most Tasks Require No Modification For Cylc}
 
 Any existing command, script, or executable can function as a cylc task
-(or rather, perform the external processing that
-the task represents) if the following conditions are met:
+(or rather, perform the external processing that the task represents),
+with the following conditions excepions:
 \begin{myitemize}
-    \item The task must not have internal/early outputs that others
-        trigger off - otherwise the external task processing must be
-        modified to report when those outputs are completed.
-    \item The external process invoked by cylc must not detach and exit
-        after spawning secondary processes to complete the job  -
-        otherwise the secondary processes must be modified to
-        report final success or failure to the suite.
-    \item Any external processing must return zero exit status on 
-        success, and non-zero on failure (this is normal practice
-        anyway) to allow cylc's automatic error trapping to work.
+    \item Tasks with internal (pre-completion) outputs that other tasks
+        need to trigger off must be modified to report to the suite when
+        those outputs have been completed.
+    \item Tasks that spawn secondary internal processes which they then
+        detach from and exit early must be modified so that the secondary
+        processes report final success or failure to the suite.
+    \item Tasks that do not return non-zero exit status on error must be 
+        made to do so, to allow cylc's automatic error trapping to work.
+        This is normal best-practice scripting anyway. 
 \end{myitemize}
 
-If these requirements are not met, see {\em Some Tasks Require
+If these requirements are not met, see {\em Tasks Requiring
 Modification For Cylc}, Section~\ref{TaskModsForCylc}. 
 
 The following suite runs a couple of external scripts that are not
@@ -3418,28 +3447,11 @@ because the task {\em command scripting} string can contain as many
 lines of code as you like (or even a list of such strings, for retry 
 on failure).
 
-\subsection{Return Non-zero Exit Status On Error}
 
-The requirement to abort with non-zero exit status on error
-(which should be normal scripting practice in any case) 
-allows the task job script to trap errors and send a 
-\lstinline=cylc task failed= message to alert the suite. You can 
-use \lstinline=set -e= to avoid writing explicit error checks for every
-operation:
+\subsection{Voluntary Messaging Modifications}
+\label{VoluntaryMessagingModifications}
 
-\lstset{language=bash}
-\begin{lstlisting}
-#!/bin/bash
-set -e  # abort on error
-mkdir /illegal/dir  # this error will abort the script with non-zero exit status
-\end{lstlisting}
-
-\subsection{Some Tasks Require Modification For Cylc}
-\label{TaskModsForCylc}
-
-\subsubsection{Voluntary Messaging}
-
-You can, if you like, modify task scripts to send any explanatory or
+You can, if you like, modify task scripts to send explanatory or
 progress messages to the suite as the task runs.  For example, a task
 can send a priority critical message before aborting on error:
 \lstset{language=bash}
@@ -3488,8 +3500,40 @@ cylc task message "Hello from task foo"
 
 This may be useful - any message received from a task is logged by cylc
 - but it is not a requirement.  If error messages are not reported, for
-instance, task failure will still be registered, and task stdout and
-stderr logs can still be examined for evidence of what went wrong.
+instance, detected task failures will still be registered, and task
+stdout and stderr logs can still be examined for evidence of what went
+wrong.
+
+
+\subsection{Tasks Requiring Modification For Cylc}
+\label{TaskModsForCylc}
+
+There are two main categories of tasks that require some modification to
+work with cylc: those with internal (pre-completion) outputs that other
+tasks need to trigger off, and those that spawn detaching internal
+processes prior to exiting before the spawned processing is finished.
+Additionally, any task that fails to indicate a fatal error by return
+non-zero exit status must be corrected.
+
+\subsubsection{Returning Non-zero Exit Status On Error}
+
+The requirement to abort with non-zero exit status on error
+(which should be normal scripting practice in any case) 
+allows the task job script to trap errors and send a 
+\lstinline=cylc task failed= message to alert the suite. You can 
+use \lstinline=set -e= to avoid writing explicit error checks for every
+operation:
+
+\lstset{language=bash}
+\begin{lstlisting}
+#!/bin/bash
+set -e  # abort on error
+mkdir /illegal/dir  # this error will abort the script with non-zero exit status
+\end{lstlisting}
+
+See Section~\ref{VoluntaryMessagingModifications}, {\em Voluntary
+Messaging Modifications}, for more examples of error detection and
+cylc messaging.
 
 \subsubsection{Reporting Internal Outputs Completed}
 \label{RIOC}
@@ -3521,20 +3565,32 @@ This must match one of the task's registered outputs:
 otherwise it will just be logged as a progress report or similar. {\em Note
 the required round brackets in the suite.rc cycle time variable.}
 
-\subsubsection{Tasks With Initiating Processes That Detach And Exit Early}
+\subsubsection{Reconnecting Detaching Processes}
+\label{ReconnectingDetachingTasks}
+
+You may be able to convert a detaching task to a non-detaching
+task very easily. If the detaching process is just a background shell
+process, for instance, run it in the foreground instead; for 
+loadleveler the \lstinline=-s= option prevents \lstinline=llsubmit= from
+returning until the job has completed; for Sun Grid Engine, 
+\lstinline=qsub -sync yes= has the same effect. Section~\ref{CommandTemplate} 
+shows how to override the command template used by cylc in order to
+customize job submission command options like this.
+
+\subsubsection{Tasks That Detach And Exit Early}
 \label{DetachingTasks}
 
-Tasks with initiating scripts or processes that spawn jobs internally
-(e.g.\ to a batch queue scheduler or to another host) and then
-detach and exit without seeing the resulting processing through 
-must arrange for the spawned processing to send its own ``cylc
-task succeeded'' or ``cylc task failed'' messages on completion -
-because the cylc-generated job script (Section~\ref{JobScripts}) that
-otherwise does automatic completion cannot know when the task is really
-finished. 
+Tasks with processes that spawn jobs internally (e.g.\ to a batch queue
+scheduler or to another host) and then detach and exit without seeing
+the resulting processing through must arrange for the spawned processing
+to send its own ``cylc task succeeded'' or ``cylc task failed'' messages
+on completion, because the cylc-generated job script
+(Section~\ref{JobScripts}) that otherwise arranges for automatic
+completion messaging cannot know when the task is really finished. 
 
-For tasks in this category you must disable automatic completion
-messaging:
+First check that you can't easily ``reconnect'' the detaching internal
+processes, as described above in Section~\ref{ReconnectingDetachingTasks}.
+If not, then start by disabling cylc's automatic completion messaging:
 \lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
@@ -3545,7 +3601,7 @@ messaging:
         manual completion = False  # task-specific setting
 \end{lstlisting}
 
-Reporting success or failure is just a matter of calling the cylc
+Now, reporting success or failure is just a matter of calling the cylc
 messaging commands:
 \lstset{language=bash}
 \begin{lstlisting}
@@ -3631,6 +3687,8 @@ expressions above) to do the job.
        
 %\pagebreak
 
+
+
 \section{Task Job Submission}
 \label{TaskJobSubmission}
 
@@ -3644,13 +3702,13 @@ submission methods.
 \label{JobScripts}
 
 When a task is ready to run cylc generates a temporary {\em task job
-script} to configure the execution environment and call the task's
-command scripting. The job script is the final result of suite.rc task 
-configuration, in particular of the runtime namespace inheritance 
-hierarchy for the task.  The script is submitted to run by means of the
-{\em job submission method} specified for the task.  Different tasks can
-have different job submission methods. Like other namespace properties,
-you can set a default for the suite and override it on a per task basis:
+script} to configure the task's execution environment and call its
+command scripting. The job script is the embodiment of all suite.rc
+runtime settings for the task.  It is submitted to run by the {\em job
+submission method} configured for the task. Different tasks can have
+different job submission methods. Like other runtime properties,
+you can set a suite default job submission method and override it for
+specific tasks or families:
 \lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
@@ -3770,26 +3828,24 @@ You can also generate a job script and print it directly to stdout, with
 \subsection{Built-in Job Submission Methods}
 \label{AvailableMethods}
 
-Cylc has a number of built in job submission methods. If these do 
-not suite your needs you can extend cylc with your own user-defined 
-methods (below, Section~\ref{DefiningNewJobSubmissionMethods}).
+Cylc has a number of built-in job submission methods. If these do 
+not suite your needs Section~\ref{DefiningNewJobSubmissionMethods} 
+shows how to extend cylc with new user-defined job submission methods.
 
-\begin{myitemize}
-    \item {\bf background} - run tasks directly in a background shell.
+\subsubsection{background}
 
-    \item {\bf at} - submit tasks to the rudimentary Unix 
-         \lstinline=at= scheduler (\lstinline=atd= must be running).
+This job submission method runs tasks directly in a background shell.
 
-\end{myitemize}
+\subsubsection{at}
 
-Tasks in a real forecasting system would normally be submitted to an
-industrial strength batch queue scheduler. Current built-in methods are:
+This job submission method submits tasks to the rudimentary Unix
+\lstinline=at= scheduler. The \lstinline=atd= daemon must be running.
 
-\begin{myitemize} 
-    
-    \item {\bf loadleveler} - submits task job scripts to loadleveler
-        using the \lstinline=llsubmit= command. 
-        Loadleveler directives provided in the suite.rc file: 
+\subsubsection{loadleveler}
+
+This job submission method submits tasks to loadleveler using the
+\lstinline=llsubmit= command.  Loadleveler directives can be provided in
+the suite.rc file: 
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -3800,7 +3856,7 @@ industrial strength batch queue scheduler. Current built-in methods are:
             foo = bar
             baz = waz
 \end{lstlisting}
-        are written to the top of the task job script like this: 
+These are written to the top of the task job script like this: 
 \lstset{language=bash}
 \begin{lstlisting}
 #!/bin/bash
@@ -3810,9 +3866,11 @@ industrial strength batch queue scheduler. Current built-in methods are:
 # @ queue
 \end{lstlisting}
 
-    \item {\bf pbs} - submits task job scripts to PBS (or Torque)
-        using the \lstinline=qsub= command. 
-        PBS directives provided in the suite.rc file: 
+\subsubsection{pbs}
+
+This job submission method submits tasks to PBS (or Torque) using the
+\lstinline=qsub= command.  PBS directives can be provided in the
+suite.rc file: 
 \lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
@@ -3822,7 +3880,7 @@ industrial strength batch queue scheduler. Current built-in methods are:
             -q = foo
             -l = 'nodes=1,walltime=00:01:00'
 \end{lstlisting}
-        are written to the top of the task job script like this: 
+These are written to the top of the task job script like this: 
 \lstset{language=bash}
 \begin{lstlisting}
 #!/bin/bash
@@ -3831,9 +3889,11 @@ industrial strength batch queue scheduler. Current built-in methods are:
 #PBS -l nodes=1,walltime=00:01:00
 \end{lstlisting}
 
-    \item {\bf sge} - submits task job scripts to Sun Grid Engine
-        using the \lstinline=qsub= command. 
-        SGE directives provided in the suite.rc file: 
+\subsubsection{sge}
+
+This job submission method submits tasks to Sun Grid Engine using the
+\lstinline=qsub= command.  SGE directives can be provided in the
+suite.rc file: 
 \lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
@@ -3844,7 +3904,7 @@ industrial strength batch queue scheduler. Current built-in methods are:
             -q = foo
             -l = 'h_data=1024M,h_rt=24:00:00'
 \end{lstlisting}
-are written to the top of the task job script like this: 
+These are written to the top of the task job script like this: 
 \lstset{language=bash}
 \begin{lstlisting}
 #!/bin/bash
@@ -3853,22 +3913,24 @@ are written to the top of the task job script like this:
 #$ -q foo
 #$ -l h_data=1024M,h_rt=24:00:00
 \end{lstlisting}
-\end{myitemize}
 
-Note that {\em multiple entries for the same PBS or SGE option must be
-comma-separated on the same line}, in the suite.rc file. This is because
-repeating the option on another line will override the previous entry,
-not add to it. And, the right-hand side must be quoted to hide the
-comma from the suite.rc parser (commas are allowed only for list
-values; directives are treated as singular).
+\subsubsection{Default Directives Provided}
 
-Note also that {\em to get a naked option flag such as \lstinline=-cwd= 
-in SGE you must give a quoted blank space as the directive value.}
+For loadleveler, pbs, and sge job submission, default directives
+are provided to set the job name and stdout and stderr file paths.
 
-Finally, {\em default directives are provided to set the job name and
-stdout and stderr file paths}. These can be overridden if you wish
-(but stdout/stderr directory paths should be set via the
-appropriate suite.rc item rather than using the directives here).
+\subsubsection{PBS and SGE Cylc Quirks}
+
+As shown in the example above, multiple entries for the same PBS or SGE
+directive option must be comma-separated on the same line, in the
+suite.rc file.  Otherwise, repeating the option on another line will
+override the previous entry, not add to it.  Also, the right-hand side
+must be quoted to hide the comma from the suite.rc parser (commas indicate
+list values, whereas directives are treated as singular).
+
+As also shown in the example above, to get a naked option flag such as
+\lstinline=-cwd= in SGE you must give a quoted blank space as the
+directive value in the suite.rc file.
 
 \subsection{Whither Task stdout And stderr?}
 \label{WhitherStdoutAndStderr}
@@ -3900,6 +3962,29 @@ that submit internal jobs and direct their output to other files).
 For less internally complex tasks, however, these will be complete task
 job logs. {\em They can be viewed updating in real time in the suite
 control GUIs}. 
+
+
+\subsection{Overriding the Job Submission Command}
+\label{CommandTemplate}
+
+\lstset{language=suiterc}
+To change the form of the actual command used to submit a job you do not
+need to define a new job submission method; just override the
+\lstinline=command template= in the relevant job submission sections of
+your suite.rc file:
+\begin{lstlisting}
+# SUITE.RC
+[runtime]
+    [[root]]
+        [[[job submission]]]
+            method = loadleveler
+            # Use '-s' to stop llsubmit returning until all job steps have completed:
+            command template = llsubmit -s %s 
+\end{lstlisting}
+As explained in the suite.rc reference (Appendix~\ref{SuiteRCReference}), 
+the template's first \%s will be substituted by the job file path and,
+where applicable a second and third \%s will be substituted by the paths
+to the job stdout and stderr files.
 
 \subsection{Defining New Job Submission Methods}
 \label{DefiningNewJobSubmissionMethods}
@@ -3999,11 +4084,6 @@ PBS qsub job submission.
             command_template = self.COMMAND_TEMPLATE
         self.command = command_template % ( self.jobfile_path )
 \end{lstlisting}
-
-Note that to change the form of the command used to submit a  job you do
-not need to create a new job submission method; just override the
-COMMAND\_TEMPLATE in the relevant job submission section of your
-suite.rc file.
 
 \subsubsection{An Example}
 

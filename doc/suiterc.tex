@@ -735,7 +735,7 @@ Cylc has a number of built in job submission methods:
 This allows you to override the actual command used by the chosen job
 submission method. The template's first \%s will be substituted by the
 job file path.  Where applicable the second and third \%s will be
-substituted by the paths to the stdout and stderr files.
+substituted by the paths to the job stdout and stderr files.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -1079,16 +1079,16 @@ corresponding real outputs have been completed.
 Replace \_\_OUTPUT\_\_ with any number of labelled output messages. 
 \begin{myitemize}
     \item {\em type:} string (a message containing
-        \lstinline=$(CYCLE_TIME)= with an optional offset as shown
-        below. Note the round parentheses on \lstinline=$(CYCLE_TIME)= -
+        \lstinline=$(CYLC_TASK_CYCLE_TIME)= with an optional offset as shown
+        below. Note the round parentheses on \lstinline=$(CYLC_TASK_CYCLE_TIME)= -
         this is not a shell variable, although without an
         offset it does correspond to \lstinline=$CYLC_TASK_CYCLE_TIME= 
         in the task execution environment.
 \item {\em default:} (none)
 \item{ \em examples:}
  \begin{lstlisting}
- foo = "sea state products ready for $(CYCLE_TIME)"
- bar = "nwp restart files ready for $(CYCLE_TIME+6)"
+ foo = "sea state products ready for $(CYLC_TASK_CYCLE_TIME)"
+ bar = "nwp restart files ready for $(CYLC_TASK_CYCLE_TIME+6)"
  \end{lstlisting}
  where the item name must match the output label associated with
  this task in the suite dependency graph, e.g.:
