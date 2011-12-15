@@ -196,4 +196,4 @@ cylc unregister --delete -f $SUITE_REG >> $OUT 2>&1
 echo done
 
 echo
-echo ">> DONE"
+echo ">> DONE. Suite control tests passed."

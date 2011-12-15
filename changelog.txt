@@ -378,3 +378,5 @@ a word boundary).
 + Simulation mode now works out of the box for all suites, including
 those with remotely hosted tasks and tasks with internal outputs. 
 
++ Added trigger time offset and valid cycles to retrieved task state info.
+

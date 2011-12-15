@@ -133,3 +133,6 @@ echo
 echo "> TEST16: print LDB group $GRP (should be empty)"
 echo cylc db pr $GRP
 cylc db pr $GRP
+
+echo
+echo "> All database tests passed."

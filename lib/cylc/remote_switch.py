@@ -282,7 +282,8 @@ class remote_switch( Pyro.core.ObjBase ):
                 extra_info = {}
                 # extra info for clocktriggered tasks
                 try:
-                    extra_info[ 'delayed start time reached' ] = task.start_time_reached() 
+                    extra_info[ 'Delayed start time reached' ] = task.start_time_reached() 
+                    extra_info[ 'Triggers at' ] = 'T+' + str(task.real_time_delay) + ' hours'
                 except AttributeError:
                     # not a clocktriggered task
                     pass
@@ -292,6 +293,13 @@ class remote_switch( Pyro.core.ObjBase ):
                 except:
                     # not a catchup_clocktriggered task
                     pass
+                # extra info for cycling tasks
+                try:
+                    extra_info[ 'Valid cycles' ] = task.valid_hours
+                except AttributeError:
+                    # not a cycling task
+                    pass
+
                 dump[ in_ids_back[ id ] ] = [ task.prerequisites.dump(), task.outputs.dump(), extra_info ]
         if not found:
             self._warning( '(no tasks found to dump)' )
