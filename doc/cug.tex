@@ -4531,36 +4531,36 @@ changes, on the most recently clicked-on task.
 \section{Simulation Mode} 
 \label{SimulationMode}
 
-In simulation mode (an option for the startup commands) each task is
-replaced by a dummy task that just prints a message and then exits after
-a few seconds, and the suite runs quickly on an accelerated clock. As
-far as cylc is concerned this is essentially identical to real
-operation. Simulation mode can be used to get the scheduling of a
-complex suite right without having to run real tasks, and to test
-recovery strategies for certain kinds of failure. 
+If you run a suite in simulation mode its tasks will be replaced by dummy
+tasks that just print a message and then exit after a few seconds, and
+the suite will run quickly on an accelerated clock. As far as cylc is
+concerned this is essentially identical to real operation. Simulation
+mode can be used to get the scheduling of a complex suite right without
+having to run real tasks, and to test recovery strategies for simulated
+task failure scenarios. 
 
-By configuring how the accelerated clock is initialized, you can watch
-how a suite catches up and transitions from delayed to real time
-operation.
+By configuring how the accelerated clock is initialized you can watch
+suites catch up and transition from delayed to real time operation.
 
 Remote task hosting and job submission configuration is ignored in
-simulation mode, so you can simulate any suite, even outside of its
+simulation mode so you can simulate any suite, even outside of its
 normal operating environment.
 
-Note that you can achieve a ``more realistic'' simulation mode, complete
-with remote job submission etc., by simply commenting out task command
-scripting, so that it defaults to dummy command scripting, and running
-the suite in real mode. 
+A more realistic but less portable simulation mode, with full remote job
+submission etc., can be achieved by simply commenting out task
+command scripting so that it defaults to dummy command scripting, and
+running the suite in live mode (note however that this won't work for
+tasks with internal outputs unless you provide your own dummy command 
+scripting that reports the internal outputs finished). 
 
-Simulation mode was, and remains, an important aid to cylc development
-because it allows testing of every aspect of scheduling without having
-to run real tasks in real time. Prior to cylc-3 it was also a critical
-aid to suite development - a simulation run would quickly identify any
-mismatch between the user-defined prerequisites and outputs across the
-suite, so you could get the scheduling right without running the real
-tasks. Post cylc-3.0 this is less important because task prerequisites
-and outputs are implicitly defined by the suite.rc dependency graph and,
-short of a bug in cylc, the suite will run according to the graph.
+Simulation mode was, an remains, an important aid to cylc development
+because it allows testing of all aspects of scheduling without having to
+run real tasks in real time. Prior to cylc-3 it was also a critical aid
+to suite construction, quickly identifying any mismatch between the
+user-defined task prerequisites and outputs across a suite.
+Post cylc-3.0 this is less important because task prerequisites
+and outputs are now implicitly defined by the suite dependency graph
+and, short of a bug in cylc, the suite will run according to the graph.
 
 \subsection{Clock Rate and Offset}
 
@@ -4576,26 +4576,28 @@ hours.
 \subsection{Switching A Suite Between Simulation And Live Modes?}
 
 The scheduler mode (simulation or live) is recorded in the suite state
-dump file. {\em Cylc will not let you restart a simulation mode suite in
-live, or a live mode suite in simulation mode} - any attempt to do the 
-former must certainly be a mistake, and doing the latter, while
-feasible, would corrupt your live suite state dump and turn it over to
-simulation mode. Note, however, that if you really want to run the
-current state of a live suite forward in simulation mode,
-all you need to do is this:
+dump file. Cylc will not let you {\em restart} a simulation mode suite in
+live mode, or vice versa - any attempt to do the former would certainly
+be a mistake (because the simulation mode dummy tasks do not generate
+any of the real outputs depended on by downstream live tasks), and the
+latter, while feasible, would corrupt the live state dump and turn it
+over to simulation mode. The easiest way to test a live suite in
+simulation mode, if you don't want to obliterate the current state dump
+by doing a cold or warm start (as opposed to a restart from the previous
+state) is to take a quick copy of the suite and run the copy in simulation
+mode. However, if you really want to run a live suite forward in
+simulation mode without copying it, do this:
 \begin{myenumerate}
-    \item back up the live state dump (or take note of the filename
-        of the relevant automatic dump when you do the final suite
-        shutdown intervention).
-    \item edit the mode line in the state dump file, and restart the
-        suite in simulation mode.
-    \item later, restart the live suite from the pre simulation mode
-        state dump backup 
+    \item Backup the live state dump file.
+    \item Edit the mode line in the state dump file and restart in simulation mode.
+    \item Later, restart the live suite from the restored live state dump backup.
 \end{myenumerate}
 
-{\em Cylc can also create an instant dummy mode clone of the current
-state of any running or stopped suite, but this ``practice mode'' has
-been disabled in the current release pending testing.}
+{\em Finally, it should be noted that cylc previously had the ability to
+create an instant safe simulation mode clone of the current state of any
+suite, running or stopped, but this ``practice mode'' has been disabled
+since the upgrade to cylc-3, pending testing; it could easily be
+restored if needed.}
 
 %\subsubsection{Practice Mode}
 %
