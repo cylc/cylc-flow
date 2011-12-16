@@ -2933,11 +2933,38 @@ The following example illustrates this:
 ['echo Hello from baz via root']
 \end{lstlisting}
 
+As another example, consider a suite containing an ensemble of closely
+related forecast tasks in which each task invokes the same external
+script but with a unique argument that reflects the task name (which 
+presumably results in the right initial conditions being used,
+or similar):
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[runtime]
+    [[ensemble]]
+        command scripting = "run-model.sh ic-$(TASK)"
+    [[m1, m2, m3]]
+        # ensemble member tasks
+        inherit = ensemble
+\end{lstlisting}
+This defines a unique command line for each ensemble member task:
+\lstset{language=bash}
+\begin{lstlisting}
+% cylc get-config test runtime m2 'command scripting'
+['run-model.sh ic-m2']
+\end{lstlisting}
+For a large ensemble of say 100 members, Jinja2 template processing 
+(Section~\ref{Jinja2}) could be used to automatically generate the list
+of member names and associated dependencies.
+
 Note that in the namespace scripting and environment sections, which are
 evaluated in task job scripts at run time, \lstinline=$(TASK)= is
 functionally equivalent to \lstinline=$CYLC_TASK_NAME=.  But in other
-runtime config items such as description that are not ``evaluated'' in
-the task runtime environment, \lstinline=$(TASK)= must be used to
+runtime config items that are not ``evaluated'' in
+the task runtime environment, such as \lstinline=description=,
+the non environment variable form \lstinline=$(TASK)= must be used to
 specialize from a list of names (in the namespace section heading) to a
 particular task name.
 
