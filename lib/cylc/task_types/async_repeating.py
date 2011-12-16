@@ -27,7 +27,7 @@ class async_repeating( nopid, task ):
     arbitrary but must uniquely identify any associated data sets).
     When matched, the prerequisite is satisfied, the matching ID is 
     passed to the external task as $ASYNCID (so that it can process
-    the pass data) and substituted for $(ASYNCID) in its own output
+    the pass data) and substituted for <ASYNCID> in its own output
     messages in order that the ID can be passed on to downstream 
     tasks in the same way. The task type has no previous instance
     dependence: it spawns when it first enters the running state,
@@ -71,7 +71,7 @@ class async_repeating( nopid, task ):
 
                 # propagate the match group into my outputs
                 for output in self.outputs.not_completed:
-                    m = re.match( '^(.*)\$\(ASYNCID\)(.*)', output )
+                    m = re.match( '^(.*)<ASYNCID>(.*)', output )
                     if m:
                         (left, right) = m.groups()
                         newout = left + mg + right
@@ -90,7 +90,7 @@ class async_repeating( nopid, task ):
             if not hasattr( reqs, 'is_loose' ):
                 continue
             for pre in reqs.labels.keys(): 
-                m = re.match( '^(.*)\$\(ASYNCID\)(.*)', pre )
+                m = re.match( '^(.*)<ASYNCID>(.*)', pre )
                 if m:
                     (left, right) = m.groups()
                     newpre = left + mg + right
@@ -102,7 +102,7 @@ class async_repeating( nopid, task ):
 
         # ... in outputs:
         for output in self.outputs.completed.keys():
-            m = re.match( '^(.*)\$\(ASYNCID\)(.*)', output )
+            m = re.match( '^(.*)<ASYNCID>(.*)', output )
             if m:
                 (left, right) = m.groups()
                 newout = left + mg + right
@@ -110,7 +110,7 @@ class async_repeating( nopid, task ):
                 self.outputs.completed[ newout ] = self.id
 
         for output in self.outputs.not_completed.keys():
-            m = re.match( '^(.*)\$\(ASYNCID\)(.*)', output )
+            m = re.match( '^(.*)<ASYNCID>(.*)', output )
             if m:
                 (left, right) = m.groups()
                 newout = left + mg + right

@@ -1,4 +1,10 @@
 #!Jinja2
+
+title = "Jinja2 city suite example."
+description = """
+Illustrates use of variables and math expressions, and programmatic
+generation of groups of related dependencies and runtime properties."""
+
 {% set HOST = "SuperComputer" %}
 {% set CITIES = 'NewYork', 'Philadelphia', 'Newark', 'Houston', 'SantaFe', 'Chicago' %}
 {% set CITYJOBS = 'one', 'two', 'three', 'four' %}

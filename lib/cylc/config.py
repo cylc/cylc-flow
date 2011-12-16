@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # TO DO: document use foo[T-6]:out1, not foo:out1 with
-# $(CYLC_TASK_CYCLE_TIME-6) in the output message.
+# <CYLC_TASK_CYCLE_TIME-6> in the output message.
 
 # TO DO: document that cylc hour sections must be unique, but can
 # overlap: [[[0]]] and [[[0,12]]]; but if the same dependency is 
@@ -255,7 +255,7 @@ class config( CylcConfigObj ):
             raise SuiteConfigError, "ERROR: suite.rc validation failed"
         
         extras = []
-        ##for sections, name in get_extra_values(self):
+        for sections, name in get_extra_values(self):
             # !!! TO DO: THE FOLLOWING FROM CONFIGOBJ DOC SECTION 15.1 FAILS 
             ### this code gets the extra values themselves
             ##the_section = self
@@ -294,7 +294,7 @@ class config( CylcConfigObj ):
             print "PARSING runtime name lists"
         # If a runtime section heading is a list of names then the
         # subsequent config applies to each member. Copy the config
-        # for each member and replace any occurrence of '$(TASK)' with
+        # for each member and replace any occurrence of '<TASK>' with
         # the actual task name.
         for item in self['runtime']:
             if re.search( ',', item ):
@@ -323,7 +323,7 @@ class config( CylcConfigObj ):
         for label in self['runtime']:
             hierarchy = []
             name = label
-            self.interpolate( item, self['runtime'][name], '\$\(NAMESPACE\)' )
+            self.interpolate( item, self['runtime'][name], '<NAMESPACE>' )
             while True:
                 hierarchy.append( name )
                 inherit = self['runtime'][name]['inherit']
@@ -351,7 +351,7 @@ class config( CylcConfigObj ):
             self['runtime'][label] = taskconf
 
         for item in self['runtime']:
-            self.interpolate( item, self['runtime'][item], '\$\(TASK\)' )
+            self.interpolate( item, self['runtime'][item], '<TASK>' )
 
         collapsed_rc = self['visualization']['collapsed families']
         if len( collapsed ) > 0:
@@ -517,7 +517,7 @@ class config( CylcConfigObj ):
                 target[item] = source[item]
 
     def interpolate( self, name, source, pattern ):
-        # replace '$(TASK)' with 'name' in all items.
+        # replace '<TASK>' with 'name' in all items.
         for item in source:
             if isinstance( source[item], str ):
                 # single source item
@@ -545,37 +545,37 @@ class config( CylcConfigObj ):
                 trigger = self['runtime'][task_name]['outputs'][output_name]
             except KeyError:
                 if output_name == 'fail':
-                    trigger = task_name + '%$(TAG) failed'
+                    trigger = task_name + '%<TAG> failed'
                 else:
                     raise SuiteConfigError, "ERROR: Task '" + task_name + "' does not define output '" + output_name  + "'"
             else:
-                # replace $(CYLC_TASK_CYCLE_TIME) with $(TAG) in explicit outputs
+                # replace <CYLC_TASK_CYCLE_TIME> with <TAG> in explicit outputs
                 trigger = re.sub( 'CYLC_TASK_CYCLE_TIME', 'TAG', trigger )
         else:
-            trigger = task_name + '%$(TAG) succeeded'
+            trigger = task_name + '%<TAG> succeeded'
 
         # now adjust for cycle time or tag offset
         if offset:
             trigger = re.sub( 'TAG', 'TAG - ' + str(offset), trigger )
             # extract multiple offsets:
-            m = re.match( '(.*)\$\(TAG\s*(.*)\)(.*)', trigger )
+            m = re.match( '(.*)<TAG\s*(.*)>(.*)', trigger )
             if m:
                 pre, combo, post = m.groups()
                 combo = eval( combo )
                 if combo == 0:
-                    trigger = pre + '$(TAG)' + post
+                    trigger = pre + '<TAG>' + post
                 elif combo > 0:
-                    trigger = pre + '$(TAG + ' + str(combo) + ')' + post
+                    trigger = pre + '<TAG + ' + str(combo) + '>' + post
                 else:
                     # '-' appears in combo
-                    trigger = pre + '$(TAG ' + str(combo) + ')' + post
+                    trigger = pre + '<TAG ' + str(combo) + '>' + post
 
-        # for oneoff async tasks, replace '$(TAG)' with '1' (NECESS?)
+        # for oneoff async tasks, replace '<TAG>' with '1' (NECESS?)
         if task_name in self.async_oneoff_tasks:
-            trigger = re.sub( '\$\(TAG\)', '1', trigger )
+            trigger = re.sub( '<TAG>', '1', trigger )
 
         if asyncid_pattern:
-            trigger = re.sub( '\$\(ASYNCID\)', '(' + asyncid_pattern + ')', trigger )
+            trigger = re.sub( '<ASYNCID>', '(' + asyncid_pattern + ')', trigger )
  
         return trigger
 
@@ -1227,7 +1227,7 @@ class config( CylcConfigObj ):
             taskd.commands = self['cylc']['simulation mode']['command scripting']
         else:
             for lbl in taskconfig['outputs']:
-                # register internal outputs, replacing $(CYLC_TASK_CYCLE_TIME) with $(TAG)
+                # register internal outputs, replacing <CYLC_TASK_CYCLE_TIME> with <TAG>
                 # (ignored in sim mode - dummy tasks don't know about internal outputs).
                 taskd.outputs.append( re.sub( 'CYLC_TASK_CYCLE_TIME', 'TAG', taskconfig['outputs'][lbl] ))
             taskd.owner = taskconfig['remote']['owner']

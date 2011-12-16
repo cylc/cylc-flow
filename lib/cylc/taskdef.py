@@ -274,7 +274,7 @@ class taskdef(object):
         tclass.namespace_hierarchy = self.namespace_hierarchy
 
         def tclass_format_prerequisites( sself, preq ):
-            m = re.search( '\$\(TAG\s*\-\s*(\d+)\)', preq )
+            m = re.search( '<TAG\s*\-\s*(\d+)>', preq )
             if m:
                 offset = m.groups()[0]
                 if self.type != 'async_repeating' and self.type != 'async_daemon' and self.type != 'async_oneoff':
@@ -282,14 +282,14 @@ class taskdef(object):
                     foo = ct( sself.c_time )
                     foo.decrement( hours=offset )
                     ctime = foo.get()
-                    preq = re.sub( '\$\(TAG\s*\-\s*\d+\)', ctime, preq )
+                    preq = re.sub( '<TAG\s*\-\s*\d+>', ctime, preq )
                 else:
                     # arithmetic decrement
                     foo = sself.tag - offset
-                    preq = re.sub( '\$\(TAG\s*\-\s*\d+\)', foo, preq )
+                    preq = re.sub( '<TAG\s*\-\s*\d+>', foo, preq )
 
-            elif re.search( '\$\(TAG\)', preq ):
-                preq = re.sub( '\$\(TAG\)', sself.tag, preq )
+            elif re.search( '<TAG>', preq ):
+                preq = re.sub( '<TAG>', sself.tag, preq )
 
             return preq
         tclass.format_prerequisites = tclass_format_prerequisites 
@@ -415,7 +415,7 @@ class taskdef(object):
             # outputs
             sself.outputs = outputs( sself.id )
             for output in self.outputs:
-                m = re.search( '\$\(TAG\s*([+-])\s*(\d+)\)', output )
+                m = re.search( '<TAG\s*([+-])\s*(\d+)>', output )
                 if m:
                     sign, offset = m.groups()
                     if sign == '-':
@@ -425,9 +425,9 @@ class taskdef(object):
                         foo = ct( sself.c_time )
                         foo.increment( hours=offset )
                         ctime = foo.get()
-                    out = re.sub( '\$\(TAG.*\)', ctime, output )
-                elif re.search( '\$\(TAG\)', output ):
-                    out = re.sub( '\$\(TAG\)', sself.tag, output )
+                    out = re.sub( '<TAG.*>', ctime, output )
+                elif re.search( '<TAG>', output ):
+                    out = re.sub( '<TAG>', sself.tag, output )
                 else:
                     out = output
                 sself.outputs.add( out )

@@ -1,5 +1,10 @@
 #!jinja2
 
+title = Jinja2 simple ensemble example
+description = """
+Illustrates programmatic generation of dependencies for related tasks.
+The same can be done for runtime settings."""
+
 {% set N_MEMBERS = 5 %}
 [scheduling]
     [[dependencies]]

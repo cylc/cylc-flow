@@ -191,11 +191,12 @@ from running multiple distinct {\bf copies} of a suite simultaneously}.
 
 \subsubsection[{[[}environment{]]} ]{[cylc] $\rightarrow$ [[environment]]}
 
-Variables defined here are exported to the environment in which cylc
-itself runs, for possible use by processes spawned directly by cylc 
-(e.g.\ event hook scripts). {\em Note that these variables are only 
-available to executing tasks if you happen to choose a local direct job
-submission method - use task runtime environments for this purpose}.
+Variables defined here are exported into the environment in which cylc
+itself runs, for possible use by processes spawned directly by cylc,
+e.g.\ event hook scripts and task job submission commands. {\em Note that
+these variables are only available to executing tasks if you happen to
+choose a local direct job submission method - use task runtime
+environments for this purpose}.
 
 \paragraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}
 
@@ -502,8 +503,8 @@ below for graph string syntax, and Section~\ref{DependencyGraphs}.
  
 \paragraph[{[[[}\_\_VALIDITY\_\_{]]]}]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_VALIDITY\_\_]]]}
 
-Replace VALIDITY with a comma-separated list of integer hours, $0\leq
-H \leq 23$,  defining the valid
+Replace VALIDITY with a comma-separated list of integer hours, 
+$0\leq H \leq 23$,  defining the valid
 cycle times for the subsequent graph of cycling tasks, or multiple such
 subsections as required for different dependencies at different hours; 
 or with `ASYNCID:{\em pattern}', where {\em pattern} is a regular
@@ -592,7 +593,7 @@ other namespaces inherit from it).
 \end{myitemize}
 
 If multiple names are listed, the subsequent namespace configuration
-items apply to each member, but any instance of \lstinline=$(TASK)= 
+items apply to each member, but any instance of \lstinline=<TASK>= 
 in any value will be replaced by cylc with the actual namespace name.
 This can be used to define many tasks that are almost identical.
 
@@ -1036,7 +1037,7 @@ preserved, so values can refer to previously defined variables.
    \begin{myitemize}
        \item \lstinline@FOO = $HOME/bar/baz@
        \item \lstinline@BAR = ${FOO}$GLOBALVAR@
-       \item \lstinline@BAZ = $(echo "hello world")@
+       \item \lstinline@BAZ = $( echo "hello world" )@
        \item \lstinline@WAZ = ${FOO%.jpg}.png@
        \item \lstinline@NEXT_CYCLE = $( cylc cycletime -a 6 )@
        \item \lstinline@PREV_CYCLE = `cylc cycletime -s 6`@
@@ -1079,16 +1080,16 @@ corresponding real outputs have been completed.
 Replace \_\_OUTPUT\_\_ with any number of labelled output messages. 
 \begin{myitemize}
     \item {\em type:} string (a message containing
-        \lstinline=$(CYLC_TASK_CYCLE_TIME)= with an optional offset as shown
-        below. Note the round parentheses on \lstinline=$(CYLC_TASK_CYCLE_TIME)= -
-        this is not a shell variable, although without an
-        offset it does correspond to \lstinline=$CYLC_TASK_CYCLE_TIME= 
-        in the task execution environment.
+        \lstinline=<CYLC_TASK_CYCLE_TIME>= with an optional offset as shown
+        below. Note that you cannot use the corresponding shell variable
+        \lstinline=$CYLC_TASK_CYCLE_TIME= here. The string substitution
+        (replacing this special variable with the actual task cycle time) is
+        done inside cylc, not in the task execution environment.
 \item {\em default:} (none)
 \item{ \em examples:}
  \begin{lstlisting}
- foo = "sea state products ready for $(CYLC_TASK_CYCLE_TIME)"
- bar = "nwp restart files ready for $(CYLC_TASK_CYCLE_TIME+6)"
+ foo = "sea state products ready for <CYLC_TASK_CYCLE_TIME>"
+ bar = "nwp restart files ready for <CYLC_TASK_CYCLE_TIME+6>"
  \end{lstlisting}
  where the item name must match the output label associated with
  this task in the suite dependency graph, e.g.:
@@ -1258,6 +1259,34 @@ Where to put the run time graph file, \lstinline=runtime-graph.dot=.
 % HIDDEN     default True
 % HIDDEN \subsubsection[live graph movie]{[development] $\rightarrow$ live graph movie}
 % HIDDEN     default False
+
+
+
+\subsection{Special Variables}
+
+A small number of special variables are used as placeholders in cylc suite definitions:
+
+\begin{myitemize}
+    \item \lstinline=<CYLC_TASK_CYCLE_TIME>= and
+        \lstinline=<CYLC_TASK_CYCLE_TIME+/-offset>= \newline
+        These are replaced with the actual cycle time of the task (with
+        optional computed offset) in the message strings registered for
+        explicit internal (pre-completion) task outputs. They correspond to 
+        \lstinline=$CYLC_TASK_CYCLE_TIME= in the task execution environment.
+
+    \item \lstinline=<TASK>= and \lstinline=<NAMESPACE>= \newline
+        These placeholder variables are replaced with actual task or
+        namespace names in runtime settings. The difference between 
+        the two is explained in Section~\ref{MultiTaskDef}, 
+        {\em Defining Multiple Namespaces At Once}.
+
+    \item \lstinline=<ASYNCID>=\newline
+        This placeholder variable is replaced with the actual ``asynchronous
+        ID'' (e.g. satellite pass ID) for repeating asynchronous tasks.
+\end{myitemize}
+
+To use real (programming language) variables in suite definitions, use the 
+Jinja2 template processor (Section~\ref{Jinja2}).
 
 
 \subsection{Default Suite Configuration}

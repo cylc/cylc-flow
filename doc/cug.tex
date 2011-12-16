@@ -946,8 +946,10 @@ suite definition directory, you can do this:
 % cd $( cylc db get-dir QuickStart.a )
 \end{lstlisting}
 Suites that use include-files can optionally be edited in a temporarily
-inlined state - the inlined file will be split back into its constituent
-include-files when you save it and exit the editor. 
+inlined state - the inlined file gets split back into its constituent
+include-files when you save it and exit the editor. While editing, the
+inlined file becomes the official suite definition so that changes take
+effect whenever you save the file.
 
 Anyhow, you should now see the following suite.rc file in your editor: 
 \lstset{language=suiterc}
@@ -1912,14 +1914,15 @@ e.g.:
 
 \paragraph{Editing Temporarily Inlined Suites}
 
-With cylc's native file inclusion mechanism you get optional inlined
+Cylc's native file inclusion mechanism supports optional inlined
 editing: 
 \begin{lstlisting}
 % cylc edit --inline SUITE
 \end{lstlisting}
 The suite will be split back into its constituent include-files when you
-exit the edit session. See \lstinline=cylc prep edit --help= for more
-information.
+exit the edit session. While editing, the inlined file becomes the
+official suite definition so that changes take effect whenever you save
+the file.  See \lstinline=cylc prep edit --help= for more information.
 
 \paragraph{Include-Files via Jinja2}
 
@@ -2433,10 +2436,10 @@ title = a suite of repeating asynchronous tasks
 [runtime]
     [[watcher]]
         [[[outputs]]]
-            a = "New dataset $(ASYNCID) ready for processing"
+            a = "New dataset <ASYNCID> ready for processing"
     [[foo,bar]]
         [[[outputs]]]
-            a = "Products generated from dataset $(ASYNCID)"
+            a = "Products generated from dataset <ASYNCID>"
 \end{lstlisting}
 \lstset{language=transcript}
 \end{minipage}
@@ -2495,7 +2498,7 @@ To trigger off a task finishing (success or failure):
 [runtime]
     [[A]]
         [[[outputs]]]
-            out1 = "NWP products uploaded for $(CYLC_TASK_CYCLE_TIME)"
+            out1 = "NWP products uploaded for <CYLC_TASK_CYCLE_TIME>"
 \end{lstlisting}
 Task A must emit this message when the actual output has been completed - 
 see {\em Reporting Internal Outputs Completed}, Section~\ref{RIOC}.
@@ -2822,13 +2825,13 @@ not this is worth the effort depends on your needs.
 [runtime]
     [[A]]
         [[[outputs]]]
-            r6  = restart files completed for $(CYLC_TASK_CYCLE_TIME+6)
-            r12 = restart files completed for $(CYLC_TASK_CYCLE_TIME+12)
-            r18 = restart files completed for $(CYLC_TASK_CYCLE_TIME+18)
+            r6  = restart files completed for <CYLC_TASK_CYCLE_TIME+6>
+            r12 = restart files completed for <CYLC_TASK_CYCLE_TIME+12>
+            r18 = restart files completed for <CYLC_TASK_CYCLE_TIME+18>
 \end{lstlisting}
 
 
-\subsection{Runtime - Namespaces}
+\subsection{Runtime - Task Execution}
 \label{NIORP}
 
 The \lstinline=[runtime]= section of a suite.rc file configures what to
@@ -2907,9 +2910,9 @@ applications include groups of similar obs processing tasks, and
 forecasting ensembles.
 
 As the suite.rc file is parsed, any occurrence of
-\lstinline=$(NAMESPACE)= in any runtime configuration item
+\lstinline=<NAMESPACE>= in any runtime configuration item
 is immediately replaced with the actual name of the namespace; and after 
-inheritance processing any occurrence of \lstinline=$(TASK)= is
+inheritance processing any occurrence of \lstinline=<TASK>= is
 replaced with the actual name of the task.
 
 The following example illustrates this:
@@ -2918,7 +2921,7 @@ The following example illustrates this:
 # SUITE.RC
 [runtime]
     [[foo]]
-    command scripting = "echo hello from $(TASK) via $(NAMESPACE)"
+    command scripting = "echo hello from <TASK> via <NAMESPACE>"
     [[bar, baz]]
         inherit = foo
 \end{lstlisting}
@@ -2944,7 +2947,7 @@ or similar):
 # SUITE.RC
 [runtime]
     [[ensemble]]
-        command scripting = "run-model.sh ic-$(TASK)"
+        command scripting = "run-model.sh ic-<TASK>"
     [[m1, m2, m3]]
         # ensemble member tasks
         inherit = ensemble
@@ -2960,11 +2963,11 @@ For a large ensemble of say 100 members, Jinja2 template processing
 of member names and associated dependencies.
 
 Note that in the namespace scripting and environment sections, which are
-evaluated in task job scripts at run time, \lstinline=$(TASK)= is
+evaluated in task job scripts at run time, \lstinline=<TASK>= is
 functionally equivalent to \lstinline=$CYLC_TASK_NAME=.  But in other
 runtime config items that are not ``evaluated'' in
 the task runtime environment, such as \lstinline=description=,
-the non environment variable form \lstinline=$(TASK)= must be used to
+the non environment variable form \lstinline=<TASK>= must be used to
 specialize from a list of names (in the namespace section heading) to a
 particular task name.
 
@@ -3417,6 +3420,33 @@ Figure~\ref{fig-jinja2-cities}.
     \label{fig-jinja2-cities} 
 \end{figure} 
 
+
+\subsection{Special Suite.rc Variables}
+
+A small number of special variables are used as placeholders in cylc suite definitions:
+
+\begin{myitemize}
+    \item \lstinline=<CYLC_TASK_CYCLE_TIME>= and
+        \lstinline=<CYLC_TASK_CYCLE_TIME+/-offset>= \newline
+        These are replaced with the actual cycle time of the task (with
+        optional computed offset) in the message strings registered for
+        explicit internal (pre-completion) task outputs. They correspond to 
+        \lstinline=$CYLC_TASK_CYCLE_TIME= in the task execution environment.
+
+    \item \lstinline=<TASK>= and \lstinline=<NAMESPACE>= \newline
+        These placeholder variables are replaced with actual task or
+        namespace names in runtime settings. The difference between 
+        the two is explained in Section~\ref{MultiTaskDef}, 
+        {\em Defining Multiple Namespaces At Once}.
+
+    \item \lstinline=<ASYNCID>=\newline
+        This placeholder variable is replaced with the actual ``asynchronous
+        ID'' (e.g. satellite pass ID) for repeating asynchronous tasks.
+\end{myitemize}
+
+To use real (programming language) variables in suite definitions, use the 
+Jinja2 template processor (Section~\ref{Jinja2}).
+
 \section{Task Implementation}
 \label{TaskImplementation}
 
@@ -3587,10 +3617,16 @@ This must match one of the task's registered outputs:
 [runtime]
     [[foo]]
         [[[outputs]]]
-            output1 = "foo products uploaded for $(CYLC_TASK_CYCLE_TIME)"
+            output1 = "foo products uploaded for <CYLC_TASK_CYCLE_TIME>"
 \end{lstlisting}
-otherwise it will just be logged as a progress report or similar. {\em Note
-the required round brackets in the suite.rc cycle time variable.}
+otherwise it will just be logged as a progress report or similar. Note
+the angle brackets around the cycle time variable in the output message
+as registered in the suite.rc file. {\em Do not write this as 
+\lstinline=$CYLC_TASK_CYCLE_TIME= in the suite.rc file.} It is just a 
+special tag that cylc replaces with the actual cycle time of the
+task; it is not an environment variable, although in this particular
+case it has the same value that is exported to
+\lstinline=$CYLC_TASK_CYCLE_TIME= in the task execution environment. 
 
 \subsubsection{Reconnecting Detaching Processes}
 \label{ReconnectingDetachingTasks}

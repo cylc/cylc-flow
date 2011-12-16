@@ -2,7 +2,9 @@ title = "demo suite: repeating asynchronous tasks"
 
 description = """A tree of asynchronous tasks triggered by a random
 satellite pass or similar, plus some cycling tasks. Asynchronous
-processing runs in parallel if the data comes in quickly."""
+processing runs in parallel if the data comes in quickly. WARNING:
+the watcher task runs indefinitely so you need to stop the suite 
+with '--now' and kill the external watcher script manually."""
 
 [scheduling]
     initial cycle time = 2011010100
@@ -23,16 +25,16 @@ processing runs in parallel if the data comes in quickly."""
         description = "watch for incoming satellite data"
         command scripting = watcher.sh
         [[[outputs]]]
-            a = "$(ASYNCID) ready for processing"
+            a = "<ASYNCID> ready for processing"
 
     [[upload]]
         description = "upload new satellite data"
         command scripting = upload.sh
        [[[outputs]]]
-            a = "$(ASYNCID) uploaded"
+            a = "<ASYNCID> uploaded"
 
     [[archive]]
         description = "archive new satellite data"
         command scripting = archive.sh
         [[[outputs]]]
-            a = "$(ASYNCID) archived"
+            a = "<ASYNCID> archived"

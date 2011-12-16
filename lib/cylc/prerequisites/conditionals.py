@@ -20,8 +20,8 @@
 
 import re, sys
 
-# label1 => "foo ready for $TAG"
-# label2 => "bar%$TAG succeeded"
+# label1 => "foo ready for <TAG>
+# label2 => "bar%<TAG> succeeded"
 # expr   => "( [label1] or [label2] )"
 
 class conditional_prerequisites(object):
