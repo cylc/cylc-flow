@@ -327,7 +327,7 @@ if the user gives an illegal $TMPDIR or suite copy target directory.
 script (it referred to an example suite that has since been renamed).
 
 ________________________________________________________________________
-PENDING
+4.1.0
 
 + A new "initial scripting" suite.rc item, for scripting inserted into
 the very top of task job scripts. This can be used for environment setup
@@ -352,12 +352,11 @@ Jinja2-processed suite in addition to inlining include-files.
 + Allow quotes around include-file filenames.
 
 + Bug fix: GUI suite restart: if an initial cycle was defined it was
-ending up on the command line even if greyed out for a restart.
+passed through to the command line even if greyed out for a restart.
 
 + The graph command now handles suite parsing errors gracefully - if you
-inadvertantly save an invalid suite.rc file while graphing, the graph
-window will retry until the error is corrected, rather than aborting
-immediately.
+save an invalid suite.rc file while graphing, the graph window will
+retry until the error is corrected, rather than aborting immediately.
 
 + Documented how to handle line continuation in graph strings.
 
@@ -375,8 +374,18 @@ affected hyphenated names as '-' is now legal in suite names but is not
 a regular expression "word character", and name matching was done up to 
 a word boundary).
 
-+ Simulation mode now works out of the box for all suites, including
-those with remotely hosted tasks and tasks with internal outputs. 
++ Simulation mode now works for tasks with internal outputs, and for
+remotely hosted tasks without having to comment out some remote config.
 
 + Added trigger time offset and valid cycles to retrieved task state info.
+
++ Changed suite.rc special placeholder variables to avoid confusion with
+environment variables:
+   $(CYLC_TASK_CYCLE_TIME) => <CYLC_TASK_CYCLE_TIME>
+   $(TASK) => <TASK>
+   $(NAMESPACE) => <NAMESPACE>
+   $(ASYNCID) => <ASYNCID>
+See the updated User Guide, Section 8.7 "Special Placeholder Variables".
+
++ Many minor improvements to the User Guide.
 

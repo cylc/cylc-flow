@@ -599,11 +599,11 @@ use \lstinline=cylc db print= on the command line:
 \end{lstlisting}
 where \lstinline=<AdminUserName>= should be replaced with the username of the
 cylc installation account on your system (the suite owner's username is always
-the first registration path component for suites in the central
+the first registration name component for suites in the central
 database); replace this as appropriate for your local cylc installation. 
 Note that the dots in the cylc release version number are replaced, in central 
-database suite registration paths, with hyphens (because `.' is the registration
-path delimiter). Type \lstinline=cylc db print --help= to see what the
+database suite registration names, with hyphens (because `.' is the registration
+name delimiter). Type \lstinline=cylc db print --help= to see what the
 command options mean.
 
 \subsection{Automated Database Test} 
@@ -1518,7 +1518,7 @@ environment variables) within the suite definition; and some have real
 task implementations that generate and consume real files and which will
 fail if they are not executed in the right order.  All of the example
 suites are portable in the sense that all suite and task I/O directory
-paths incorporate the suite registration path (this is the default
+paths incorporate the suite registration name (this is the default
 situation for any suite in fact), so you can run multiple copies of 
 the same suite at once without any interference between them. 
 
@@ -1569,10 +1569,10 @@ fine (see Appendix~\ref{SimulationMode}).
 \section{Suite Registration}
 \label{SuiteRegistration}
 
-Cylc commands target particular suites via {\em registration paths} in a
-{\em suite database}, so that you don't need to remember and continually
+Cylc commands target particular suites via names registered in a {\em
+suite database}, so that you don't need to remember and continually
 refer to the actual location of the suite definition on disk. A suite
-registration path is a hierarchical name akin to a directory path but
+registration name is a hierarchical name akin to a directory path but
 delimited by the `.' character; this allows suites to be organised in
 nested tree-like structures:
 \begin{lstlisting}
@@ -1585,7 +1585,7 @@ nwp
    `-region1  Local Model TEST Region1  /home/oliverh/nwp_suites/Regional/TESTING/Region1
 \end{lstlisting}
 
-Note that {\em registration paths are entirely virtual}: groups do not
+Note that registration groups are entirely virtual, they do not
 need to be explicitly created before use, and they automatically
 disappear if all tasks are removed from them.  From the listing above,
 for example, to move the suite \lstinline=nwp.oper.region2= into the
@@ -1615,14 +1615,14 @@ nwp
    `-region2  Local Model Region2
 \end{lstlisting}
 
-Currently you cannot explicitly indicate a group path on the command
+Currently you cannot explicitly indicate a group name on the command
 line by appending a dot character. Rather, in database operations such
 as copy, reregister, or unregister, the identity of the source item
 (group or suite) is inferred from the content of the database; and if
 the source item is a group, so must the target be a group (or it will
 be, in the case of an item that will be created by the operation). This
 means that you cannot copy a single suite into a group that does not 
-exist yet unless you specify the entire target registration path. 
+exist yet unless you specify the entire target registration name. 
 
 \lstinline=cylc db register --help= shows a number of other examples.
 
@@ -3077,8 +3077,8 @@ $CYLC_SUITE_PORT       # 7766 (e.g.)
 $CYLC_SUITE_OWNER      # oliverh (e.g.)
 \end{lstlisting}
 The variable \lstinline=$CYLC_SUITE_REG_PATH= is just 
-\lstinline=$CYLC_SUITE_REG_NAME= (the name under which the suite
-definition is registered in your suite database) translated into a
+\lstinline=$CYLC_SUITE_REG_NAME= (the hierarchical name under which the
+suite definition is registered in your suite database) translated into a
 directory path. This can be used when configuring suite logging
 directories and the like to put suite output in a directory tree that
 reflects the suite registration hierarchy (as opposed to the namespace
@@ -3421,7 +3421,7 @@ Figure~\ref{fig-jinja2-cities}.
 \end{figure} 
 
 
-\subsection{Special Suite.rc Variables}
+\subsection{Special Placeholder Variables}
 
 A small number of special variables are used as placeholders in cylc suite definitions:
 
@@ -3435,18 +3435,18 @@ A small number of special variables are used as placeholders in cylc suite defin
         execution environment.
 
     \item \lstinline=<TASK>= and \lstinline=<NAMESPACE>= \newline
-        These placeholder variables are replaced with actual task or
-        namespace names in runtime settings. The difference between 
-        the two is explained in Section~\ref{MultiTaskDef}, 
-        {\em Defining Multiple Namespaces At Once}.
+        These are replaced with actual task or namespace names in
+        runtime settings. The difference between the two is explained in
+        Section~\ref{MultiTaskDef}, {\em Defining Multiple Namespaces At
+        Once}.
 
     \item \lstinline=<ASYNCID>=\newline
-        This placeholder variable is replaced with the actual ``asynchronous
-        ID'' (e.g. satellite pass ID) for repeating asynchronous tasks.
+        This is replaced with the actual ``asynchronous ID'' (e.g.
+        satellite pass ID) for repeating asynchronous tasks.
 \end{myitemize}
 
-To use real (programming language) variables in suite definitions, use the 
-Jinja2 template processor (Section~\ref{Jinja2}).
+To use proper variables (c.f.\ programming languages) in suite
+definitions, see the Jinja2 template processor (Section~\ref{Jinja2}).
 
 \section{Task Implementation}
 \label{TaskImplementation}
