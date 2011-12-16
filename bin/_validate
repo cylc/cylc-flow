@@ -68,7 +68,7 @@ if options.verbose:
     print "Parsing Suite Definition"
 try:
     config = config( suite, suiterc, verbose=options.verbose )
-except SuiteConfigError,x:
+except Exception,x:
     raise SystemExit(x)
 
 # Now instantiate each task
@@ -86,19 +86,19 @@ for tn in config.get_full_task_name_list():
     try:
         # tasks used in the suite dependency graph
         task_proxy = config.get_task_proxy( tn, ctime, 'waiting', stopctime=None, startup=True )
-    except SuiteConfigError or DefinitionError,x:
-        result[tn] = False, x
-        valid = False
     except KeyError, x:
         # task not used (not in graph - already warned above)
         try:
             # tasks defined but not used in the suite graph
             task_proxy = config.get_task_proxy_raw( tn, ctime, 'waiting', stopctime=None, startup=True, test=True, strict=False )
-        except SuiteConfigError or DefinitionError, x:
+        except Exception, x:
             result[tn] = False, x
             valid = False
         else:
             result[tn] = True, 'OK'
+    except Exception, x:
+        result[tn] = False, x
+        valid = False
     else:
         result[tn] = True, 'OK'
 
@@ -108,4 +108,5 @@ if options.verbose:
 if valid:
     print "Suite " + suite + " validates OK."
 else:
-    raise SystemExit( "ERROR: Suite validation failed (errors detected)" )
+    print x
+    raise SystemExit( "Suite validation failed" )

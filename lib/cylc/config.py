@@ -270,6 +270,10 @@ class config( CylcConfigObj ):
           
             ##section_string = ', '.join(sections) or "top level"
             ##print 'Extra entry in section: %s. Entry %r is a %s' % (section_string, name, section_or_value)
+            extra = ' '
+            for sec in sections:
+                extra += sec + ' -> '
+            extras.append( extra + name )
 
         if len(extras) != 0:
             for extra in extras:
