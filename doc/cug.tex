@@ -3427,11 +3427,12 @@ A small number of special variables are used as placeholders in cylc suite defin
 
 \begin{myitemize}
     \item \lstinline=<CYLC_TASK_CYCLE_TIME>= and
-        \lstinline=<CYLC_TASK_CYCLE_TIME+/-offset>= \newline
+        \lstinline=<CYLC_TASK_CYCLE_TIME+offset>= \newline
         These are replaced with the actual cycle time of the task (with
-        optional computed offset) in the message strings registered for
-        explicit internal (pre-completion) task outputs. They correspond to 
-        \lstinline=$CYLC_TASK_CYCLE_TIME= in the task execution environment.
+        optional computed positive offset) in the message strings
+        registered for explicit internal (pre-completion) task outputs.
+        They correspond to \lstinline=$CYLC_TASK_CYCLE_TIME= in the task
+        execution environment.
 
     \item \lstinline=<TASK>= and \lstinline=<NAMESPACE>= \newline
         These placeholder variables are replaced with actual task or
