@@ -3160,8 +3160,9 @@ be declared globally (in the root namespace) or per family, or per
 individual task. Use the global settings if all or most of your tasks
 need to run on the same remote host.
 
-The remote cylc directory is required to give remote tasks access 
-to cylc commands; the remote suite directory gives them access to suite
+The remote cylc directory can be used to give remote tasks access 
+to cylc commands (if cylc is not in the default \lstinline=$PATH=).
+The remote suite directory gives them access to suite
 files via \lstinline=$CYLC_SUITE_DEF_PATH= on the remote platform, and
 to the suite bin directory via \lstinline=$PATH=. If a remote suite
 definition directory is not given it will be assumed that the local

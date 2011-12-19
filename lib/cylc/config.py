@@ -1253,9 +1253,6 @@ class config( CylcConfigObj ):
         if not self.simulation_mode and (taskconfig['remote']['host'] or taskconfig['remote']['owner']):
             # Remote task hosting config, ignored in sim mode.
             taskd.remote_host = taskconfig['remote']['host']
-            if not taskconfig['remote']['cylc directory']:
-                raise SuiteConfigError, name + ": remote tasks must specify the remote cylc directory"
-
             taskd.remote_shell_template = taskconfig['remote']['remote shell template']
             taskd.remote_cylc_directory = taskconfig['remote']['cylc directory']
             taskd.remote_suite_directory = taskconfig['remote']['suite definition directory']

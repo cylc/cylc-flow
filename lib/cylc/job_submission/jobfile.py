@@ -134,8 +134,9 @@ class jobfile(object):
         #    NEXT_CYCLE=$( cylc util cycletime --add=6 )
         if not BUFFER:
             BUFFER = self.FILE
-        BUFFER.write( "\n\n# ACCESS TO CYLC:" )
-        BUFFER.write( "\nPATH=$CYLC_DIR/bin:$PATH" )
+        if self.remote_cylc_dir:
+            BUFFER.write( "\n\n# ACCESS TO CYLC:" )
+            BUFFER.write( "\nPATH=$CYLC_DIR/bin:$PATH" )
         BUFFER.write( "\n# Access to the suite bin dir:" )
         BUFFER.write( "\nPATH=$CYLC_SUITE_DEF_PATH/bin:$PATH" )
         BUFFER.write( "\nexport PATH" )
