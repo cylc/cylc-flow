@@ -29,7 +29,7 @@ class jobfile(object):
             final_directive, manual_messaging, initial_scripting,
             precommand_scripting, command_scripting,
             postcommand_scripting, remote_cylc_dir, remote_suite_dir,
-            shell, share_dir, work_dir, simulation_mode,
+            shell, share_dir, work_dir, log_root, simulation_mode,
             job_submission_method ):
 
         self.task_id = task_id
@@ -46,6 +46,7 @@ class jobfile(object):
         self.shell = shell
         self.share_dir = share_dir
         self.work_dir = work_dir
+        self.log_root = log_root
         self.simulation_mode = simulation_mode
         self.job_submission_method = job_submission_method
         self.remote_cylc_dir = remote_cylc_dir
@@ -126,6 +127,7 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
         BUFFER.write( "\nexport CYLC_TASK_NAME=" + self.task_name )
         BUFFER.write( "\nexport CYLC_TASK_CYCLE_TIME=" + self.cycle_time )
+        BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
         BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.namespace_hierarchy) + '"')
 
     def write_cylc_access( self, BUFFER=None ):

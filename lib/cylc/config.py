@@ -1262,8 +1262,10 @@ class config( CylcConfigObj ):
                 # the local one is still used for the task job script). 
                 taskd.remote_log_directory  = taskconfig['remote']['log directory']
             else:
-                # TO DO: SHOULD THIS BE REPLACED BY '$HOME' NOT ''?
-                taskd.remote_log_directory  = re.sub( os.environ['HOME'] + '/', '', taskd.job_submit_log_directory )
+                # Use local log directory path, but replace home dir
+                # (if present) with literal '$HOME' for interpretation
+                # on the remote host.
+                taskd.remote_log_directory  = re.sub( os.environ['HOME'], '$HOME', taskd.job_submit_log_directory )
 
             if taskconfig['remote']['work directory']:
                 # Replace local work directory.
@@ -1272,7 +1274,7 @@ class config( CylcConfigObj ):
                 # Use local work directory path, but replace home dir
                 # (if present) with literal '$HOME' for interpretation
                 # on the remote host.
-                taskd.job_submit_work_directory  = re.sub( os.environ['HOME'] + '/', '$HOME', taskd.job_submit_work_directory )
+                taskd.job_submit_work_directory  = re.sub( os.environ['HOME'], '$HOME', taskd.job_submit_work_directory )
 
             if taskconfig['remote']['share directory']:
                 # Replace local share directory.
@@ -1281,7 +1283,7 @@ class config( CylcConfigObj ):
                 # Use local share directory path, but replace home dir
                 # (if present) with literal '$HOME' for interpretation
                 # on the remote host.
-                taskd.job_submit_share_directory  = re.sub( os.environ['HOME'] + '/', '$HOME', taskd.job_submit_share_directory )
+                taskd.job_submit_share_directory  = re.sub( os.environ['HOME'], '$HOME', taskd.job_submit_share_directory )
 
         taskd.manual_messaging = taskconfig['manual completion']
 

@@ -16,6 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 from job_submit import job_submit
 
 class pbs( job_submit ):
@@ -32,8 +33,8 @@ PBS qsub job submission.
 
         defaults = {}
         defaults[ '-N' ] = self.task_id
-        defaults[ '-o' ] = self.stdout_file
-        defaults[ '-e' ] = self.stderr_file
+        defaults[ '-o' ] = re.sub( '\$HOME/', '', self.stdout_file )
+        defaults[ '-e' ] = re.sub( '\$HOME/', '', self.stderr_file )
 
         # In case the user wants to override the above defaults:
         for d in self.directives:

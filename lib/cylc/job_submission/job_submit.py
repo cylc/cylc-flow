@@ -181,8 +181,8 @@ class job_submit(object):
                 self.task_command, self.post_command,
                 self.remote_cylc_dir, self.remote_suite_dir, 
                 self.job_submission_shell, self.share_dir,
-                self.work_dir, self.__class__.simulation_mode,
-                self.__class__.__name__ )
+                self.work_dir, self.jobfile_path,
+                self.__class__.simulation_mode, self.__class__.__name__ )
         # write the job file
         jf.write( self.local_jobfile_path )
         # make it executable

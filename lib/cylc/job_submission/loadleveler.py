@@ -16,6 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 from job_submit import job_submit
 
 class loadleveler( job_submit ):
@@ -32,8 +33,8 @@ Loadleveler job submission.
 
         defaults = {}
         defaults[ 'job_name' ] = self.task_id
-        defaults[ 'output'   ] = self.stdout_file
-        defaults[ 'error'    ] = self.stderr_file
+        defaults[ 'output'   ] = re.sub( '\$HOME/', '', self.stdout_file )
+        defaults[ 'error'    ] = re.sub( '\$HOME/', '', self.stderr_file )
 
         # NOTE ON SHELL DIRECTIVE: on AIX at NIWA '#@ shell = /bin/bash'
         # results in the job executing in a non-login shell (.profile
