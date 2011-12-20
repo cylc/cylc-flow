@@ -88,7 +88,7 @@ class jobfile(object):
         self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'')
 
     def write_directives( self ):
-        if len( self.directives.keys() ) == 0:
+        if len( self.directives.keys() ) == 0 or not self.directive_prefix:
             return
         self.FILE.write( "\n\n# DIRECTIVES:" )
         for d in self.directives:

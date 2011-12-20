@@ -139,12 +139,12 @@ class job_submit(object):
  
     def set_directives( self ):
         # OVERRIDE IN DERIVED CLASSES IF NECESSARY
-        # self.directives['name'] = value
+        # to use directives (ignored by default)
 
-        # Prefix, e.g. '#QSUB ' (qsub), or '#@ ' (loadleveler)
-        self.directive_prefix = "# DIRECTIVE_PREFIX "
-        # Final directive, WITH PREFIX, e.g. '#@ queue' for loadleveler
-        self.final_directive = " # FINAL_DIRECTIVE"
+        # Prefix, e.g. '#QSUB' (qsub), or '# @' (loadleveler)
+        self.directive_prefix = None
+        # Final directive, WITH PREFIX, e.g. '# @ queue' for loadleveler
+        self.final_directive = "# FINAL_DIRECTIVE"
         # Connector, e.g. ' = ' for loadleveler, ' ' for qsub
         self.directive_connector = " DIRECTIVE_CONNECTOR "
 
