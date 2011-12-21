@@ -138,8 +138,8 @@ class job_submit(object):
         self.set_environment()
  
     def set_directives( self ):
-        # OVERRIDE IN DERIVED CLASSES IF NECESSARY
-        # to use directives (ignored by default)
+        # OVERRIDE IN DERIVED JOB SUBMISSION CLASSES THAT USE DIRECTIVES
+        # (directives will be ignored if the prefix below is not overridden)
 
         # Prefix, e.g. '#QSUB' (qsub), or '# @' (loadleveler)
         self.directive_prefix = None
@@ -149,19 +149,17 @@ class job_submit(object):
         self.directive_connector = " DIRECTIVE_CONNECTOR "
 
     def set_scripting( self ):
-        # OVERRIDE IN DERIVED CLASSES IF NECESSARY
-        # to modify pre- and post-command scripting
+        # Derived class can use this to modify pre- and post-command scripting
         return
 
     def set_environment( self ):
-        # OVERRIDE IN DERIVED CLASSES IF NECESSARY
-        # to modify global or task-specific environment
+        # Derived classes can use this to modify task execution environment
         return
 
     def construct_jobfile_submission_command( self ):
-        # DERIVED CLASSES MUST OVERRIDE.
-        # Construct self.command, a command to submit the job file to
-        # run by the derived job submission method.
+        # DERIVED CLASSES MUST OVERRIDE THIS METHOD to construct
+        # self.command, the command to submit the job script to
+        # run by the derived class job submission method.
         raise SystemExit( 'ERROR: no job submission command defined!' )
 
     def submit( self, dry_run ):

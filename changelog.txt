@@ -389,3 +389,22 @@ See the updated User Guide, Section 8.7 "Special Placeholder Variables".
 
 + Many minor improvements to the User Guide.
 
+________________________________________________________________________
+4.1.1-pending
+
++ Added a new environment variable $CYLC_TASK_LOG_ROOT, which is the
+path and filename prefix of the task stdout and stderr logs. This can
+be to put other task-related output, such as stats files, in the same
+place as the existing log files.
+
++ Fixed a bug affecting home directory path replacement in the share and
+work directory paths for remote tasks that do not explicity override the
+default share and work paths.
+
++ Ignore any defined directives if the chosen job submission method does
+not actually use them. Previously they were written to the job file anyway,
+which was of no consequence (they are shell comments), but was unnecessary.
+
++ Defining the 'cylc directory' for remote tasks is now optional, for sites 
+that install cylc in the default $PATH.
+

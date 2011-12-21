@@ -33,6 +33,10 @@ Loadleveler job submission.
 
         defaults = {}
         defaults[ 'job_name' ] = self.task_id
+        # Replace literal '$HOME' in stdout and stderr file paths with '' 
+        # because environment variables are not interpreted in directives.
+        # (For remote tasks the local home directory path is replaced
+        # with '$HOME' in config.py).
         defaults[ 'output'   ] = re.sub( '\$HOME/', '', self.stdout_file )
         defaults[ 'error'    ] = re.sub( '\$HOME/', '', self.stderr_file )
 
