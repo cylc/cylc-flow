@@ -408,3 +408,7 @@ which was of no consequence (they are shell comments), but was unnecessary.
 + Defining the 'cylc directory' for remote tasks is now optional, for sites 
 that install cylc in the default $PATH.
 
++ Fixed bug affecting runahead-limited tasks at restart (they were being
+set to a normal 'held' state prior to shutdown, and thus started running
+immediately on restarting the suite).
+
