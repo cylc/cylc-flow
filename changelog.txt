@@ -412,3 +412,6 @@ that install cylc in the default $PATH.
 set to a normal 'held' state prior to shutdown, and thus started running
 immediately on restarting the suite).
 
++ Fixed a bug that prevented changing the runahead limit while a suite
+is running.
+
