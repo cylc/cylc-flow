@@ -138,6 +138,6 @@ else:
             print >> sys.stderr, excptn[tn]
             if terror[tn]:
                 print >> sys.stderr, "This may indicate inconsistent use of tasks in [scheduling]->[[special tasks]]"
-                print >> sys.stderr, "e.g. cycling 'cold-start' tasks cannot be used in asynchronous graph sections."
+                print >> sys.stderr, "e.g. synchronous 'cold-start' tasks cannot be used in asynchronous graph sections."
     print >> sys.stderr, "Suite validation failed."
     sys.exit(1)
