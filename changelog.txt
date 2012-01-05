@@ -414,3 +414,5 @@ released on restarting the suiteing the suiteing the suite.
 
 + Access to the cylc internet homepage from the gcylc Help menu.
 
++ New 'cylc browse' command for quick access to cylc documentation.
+

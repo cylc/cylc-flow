@@ -166,6 +166,7 @@ information_commands['list'     ] = ['list', 'ls' ]
 information_commands['dump'     ] = ['dump'       ]
 information_commands['show'     ] = ['show'       ]
 information_commands['log'      ] = ['log'        ]
+information_commands['browse'   ] = ['browse'        ]
 information_commands['monitor'  ] = ['monitor'  ]
 information_commands['nudge'    ] = ['nudge' ]
 information_commands['get-config'] = ['get-config' ]
@@ -223,6 +224,7 @@ database_commands['get-directory' ] = [ 'get-directory' ]
 database_commands['export'    ] = [ 'export' ]
 database_commands['import'    ] = [ 'import' ]
 database_commands['refresh'   ] = [ 'refresh' ]
+database_commands['browse'   ] = [ 'browse' ]
 
 preparation_commands = OrderedDict()
 preparation_commands['gcylc'   ] = information_commands['gcylc']
@@ -348,6 +350,7 @@ comsum[ 'list'       ] = 'Print a suite\'s task list or full runtime hierarchy'
 comsum[ 'dump'       ] = 'Print the state of each task in a running suite'
 comsum[ 'show'       ] = 'Print task-specific information (prerequisites...)'
 comsum[ 'log'        ] = 'Print or view suite logs, with filtering'
+comsum[ 'browse'     ] = 'Browse various forms of cylc documentation.'
 comsum[ 'monitor'    ] = 'An in-terminal suite monitor (see also gcylc)'
 comsum[ 'get-config' ] = 'Retrieve any configuration data from a suite.'
 # control

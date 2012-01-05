@@ -17,12 +17,9 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, re, sys
-import datetime
 import tempfile
-from shutil import copy
 import subprocess
 from optparse import OptionParser
-from collections import deque
 from cylc.registration import dbgetter, RegistrationError
 from cylc.mkdir_p import mkdir_p
 

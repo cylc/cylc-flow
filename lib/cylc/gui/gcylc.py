@@ -379,21 +379,25 @@ class MainApp(object):
         help_menu.append( guide_item )
         guide_item.connect( 'activate', helpwindow.main )
 
-        chelp_menu = gtk.MenuItem( 'Command Help' )
+        chelp_menu = gtk.MenuItem( '_Command Help' )
         help_menu.append( chelp_menu )
         self.construct_command_menu( chelp_menu )
 
         cug_pdf_item = gtk.MenuItem( 'User Guide (_PDF)' )
         help_menu.append( cug_pdf_item )
-        cug_pdf_item.connect( 'activate', self.launch_cug, True )
+        cug_pdf_item.connect( 'activate', self.browse )
   
         cug_html_item = gtk.MenuItem( 'User Guide (_HTML)' )
         help_menu.append( cug_html_item )
-        cug_html_item.connect( 'activate', self.launch_cug, False )
+        cug_html_item.connect( 'activate', self.browse, '--html' )
 
-        cug_www_item = gtk.MenuItem( 'Home Page (_www)' )
+        cug_www_item = gtk.MenuItem( '_Home Page (www)' )
         help_menu.append( cug_www_item )
-        cug_www_item.connect( 'activate', self.launch_www )
+        cug_www_item.connect( 'activate', self.browse, '--www' )
+ 
+        cug_clog_item = gtk.MenuItem( 'Change _Log' )
+        help_menu.append( cug_clog_item )
+        cug_clog_item.connect( 'activate', self.browse, '-g --log' )
  
         about_item = gtk.MenuItem( '_About' )
         help_menu.append( about_item )
@@ -1146,56 +1150,12 @@ The cylc forecast suite metascheduler.
         foo.run()
         w.destroy()
 
-    def launch_www( self, b ):
-        fail = []
- 
-        try:
-            appl = os.environ['HTML_READER']
-        except KeyError:
-            fail.append( "$HTML_READER is not defined" )
-
-        command = appl + " http://hjoliver.github.com/cylc"
+    def browse( self, b, option='' ):
+        command = 'cylc browse ' + option
         foo = gcapture_tmpfile( command, self.tmpdir, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
- 
-    def launch_cug( self, b, pdf ):
-        fail = []
-        cdir = None
-        try:
-            cdir = os.environ['CYLC_DIR']
-        except KeyError:
-            fail.append( "$CYLC_DIR is not defined" )
- 
-        if pdf:
-            try:
-                appl = os.environ['PDF_READER']
-            except KeyError:
-                fail.append( "$PDF_READER is not defined" )
-        else:
-            try:
-                appl = os.environ['HTML_READER']
-            except KeyError:
-                fail.append( "$HTML_READER is not defined" )
 
-        if cdir:
-            if pdf:
-                file = os.path.join( cdir, 'doc', 'CylcUserGuide.pdf' )
-            else:
-                file = os.path.join( cdir, 'doc', 'cug-html.html' )
-
-            if not os.path.isfile( file ):
-                fail.append( "File not found: " + file )
-
-        if len(fail) > 0:
-            warning_dialog( '\n'.join( fail ) ).warn()
-            return
-
-        command = appl + " " + file 
-        foo = gcapture_tmpfile( command, self.tmpdir, 400 )
-        self.gcapture_windows.append(foo)
-        foo.run()
- 
     def ownerless( self, creg ):
         # remove owner from a central suite registration
         return delimiter.join( creg.split(delimiter)[1:] )
