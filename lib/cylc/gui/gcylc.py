@@ -383,14 +383,18 @@ class MainApp(object):
         help_menu.append( chelp_menu )
         self.construct_command_menu( chelp_menu )
 
-        cug_pdf_item = gtk.MenuItem( 'Cylc User Guide (_PDF)' )
+        cug_pdf_item = gtk.MenuItem( 'User Guide (_PDF)' )
         help_menu.append( cug_pdf_item )
         cug_pdf_item.connect( 'activate', self.launch_cug, True )
   
-        cug_html_item = gtk.MenuItem( 'Cylc User Guide (_HTML)' )
+        cug_html_item = gtk.MenuItem( 'User Guide (_HTML)' )
         help_menu.append( cug_html_item )
         cug_html_item.connect( 'activate', self.launch_cug, False )
 
+        cug_www_item = gtk.MenuItem( 'Home Page (_www)' )
+        help_menu.append( cug_www_item )
+        cug_www_item.connect( 'activate', self.launch_www )
+ 
         about_item = gtk.MenuItem( '_About' )
         help_menu.append( about_item )
         about_item.connect( 'activate', self.about )
@@ -1142,6 +1146,19 @@ The cylc forecast suite metascheduler.
         foo.run()
         w.destroy()
 
+    def launch_www( self, b ):
+        fail = []
+ 
+        try:
+            appl = os.environ['HTML_READER']
+        except KeyError:
+            fail.append( "$HTML_READER is not defined" )
+
+        command = appl + " http://hjoliver.github.com/cylc"
+        foo = gcapture_tmpfile( command, self.tmpdir, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+ 
     def launch_cug( self, b, pdf ):
         fail = []
         cdir = None

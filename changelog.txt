@@ -412,4 +412,5 @@ released on restarting the suiteing the suiteing the suite.
 
 + Updated the gcylc GUI Quick Guide help window.
 
++ Access to the cylc internet homepage from the gcylc Help menu.
 
