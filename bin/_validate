@@ -90,6 +90,7 @@ result = {} # validated?
 terror = {} # IsTypeError?
 labels = {} # T/F, message (OK|ERROR)
 excptn = {} # exception message
+error = False
 for tn in config.get_full_task_name_list():
     result[tn] = True
     labels[tn] = True, 'OK'
@@ -106,12 +107,14 @@ for tn in config.get_full_task_name_list():
         except Exception, x:
             if options.debug:
                 raise
+            error = True
             result[tn] = False
             labels[tn] = False, 'ERROR'
             excptn[tn] = x
     except TypeError, x:
         if options.debug:
             raise
+        error = True
         result[tn] = False
         labels[tn] = False, 'ERROR' 
         excptn[tn] = x
@@ -119,6 +122,7 @@ for tn in config.get_full_task_name_list():
     except Exception, x:
         if options.debug:
             raise
+        error = True
         result[tn] = False
         labels[tn] = False, 'ERROR'
         excptn[tn] = x
@@ -129,7 +133,7 @@ for tn in config.get_full_task_name_list():
 if options.verbose:
     config.print_inheritance_tree( labels=labels, pretty=options.pretty )
 
-if False in result:
+if not error:
     print "Suite " + suite + " validates OK."
 else:
     for tn in result:
