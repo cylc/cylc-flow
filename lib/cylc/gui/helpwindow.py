@@ -145,9 +145,14 @@ for your own use.
 
 %h2 Menu Bar
 
-%h3 File > New
-Register another suite. This opens a file chooser dialog configured to
-filter for cylc suite definition (suite.rc) files.
+%h3 File > Register Existing Suite
+Register an existing suite. This opens a file chooser dialog configured
+to filter for cylc suite definition (suite.rc) files.
+
+%h3 File > Create New Suite
+Create a new suite, initially with an empty suite.rc file. This opens a
+directory chooser dialog in which you can choose or create the new suite
+definition directory.
 
 %h3 File > Exit
 Quits the gcylc application, but not any external programs you have launched
@@ -166,17 +171,19 @@ Collapse the registration database treeview.
 %h3 View > Refresh
 Check the database for invalid registrations (e.g. due to manual
 deletion of a suite definition directory) and update any suite
-titles that have changed. Note that changes to the database itself
-are automatically detected and updated by the GUI. Suite titles though,
-while held in the database, are originally parsed from suite config
-files. 
+titles that have changed. Changes to the database (e.g. suites 
+registered or unregistered) are automatically detected by the GUI, but
+titles are normally only parsed from suite.rc files at registration
+time - use refresh if you change a suite's title.
+
+%h3 View > Reload
+Reload the suite database from scratch.
 
 %h3 Database > Private
 Switch to your private suite registration database.
 
 %h3 Database > Central
 Switch to the central suite registration database.
-
 
 %h2 Right Click Menu Options
 
@@ -197,10 +204,10 @@ If you start a suite from the command line, what happens to cylc stdout
 and stderr is of course entirely up to you (you may want to use
 command line redirection and/or the posix nohup command).
 
-%h3 Control (treeview) or Control (graph)
+%h3 Control -> Dot or Graph Control GUI
 
-Launch a suite control GUI, with either the text treeview interface,
-or the newer dependency graph based interface, to start a suite running,
+Launch a suite control GUI, with either the "dot" (LED) text treeview
+interface, or the dependency graph interface, to start a suite running,
 or to connect to a suite that is already running. 
 
 If you start the suite from within the control GUI, or if you connect to
@@ -210,67 +217,88 @@ $HOME/.cylc/GROUP:NAME.(out|err). If you start a suite from the
 command line, where cylc stdout and stderr goes is up to you (use 
 output redirection and/or the posix nohup command, for instance).
 
-%h3 Submit A Task
+%h3 Control -> Submit A Task
 
 Submit a single task from the suite, exactly as it would be submitted by
 the suite.
 
-%h3 View Cylc Output
-This opens a new view of the suite stdout and stderr files
-$HOME/.cylc/GROUP:NAME.(out|err) used when suites are started from
-within gcylc (if you start a suite from the command line, where its
-stdout and stderr end up is entirely up to you). This is available from
-running tasks, and finished tasks while they remain in the suite (so
-long as you don't stop and restart the suite).
+%h3 Preparation|Info -> Description
 
-%h3 View Cylc Log
-This opens a searchable and filterable view of the log file that records,
-timestamped, all important events as the suite runs.
-
-%h3 Dump Suite State
-(Running suites only) Print the current state of each task in the suite.
-
-%h3 Describe
 Print the suite description as parsed from the suite.rc file.
 
-%h3 List Tasks
-Print the suite's task list, parsed from the suite.rc file.
+%h3 Preparation|Info -> Edit
 
-%h3 Edit
-Edit the suite config (suite.rc) file
+Edit the suite.rc file, optionally inlined. See 'cylc edit --help'.
 
-%h3 Graph
-Plot the suite.rc dependency graph, or the most recent run time graph
-(if the suite has run at least once before). The suite.rc graph will
-update in real time as you edit the suite.
+%h3 Preparation -> View
 
-%h3 Search
-Search in the suite config file and bin directory.
+View a read-only copy of the suite.rc file, optionally inlined or 
+pre-processed by Jinja2. See 'cylc view --help'.
 
-%h3 Validate
-Parse the suite config file, validating it against the suite config
-spec, then attempt to instantiate all suite task proxies, and report any
-errors.
+%h3 Preparation|Info -> List
 
-%h3 Copy
+Print the suite's task list, or namespace hierarchy (tasks and families)
+in tree form.
+
+%h3 Preparation|Info -> Graph
+
+Plot the suite dependency graph. The graph viewer updates in real time
+as you edit the suite definition. See 'cylc graph --help'.
+
+%h3 Preparation -> Search
+
+Search for strings or regular expressions in the suite.rc file and,
+optionally, in the suite bin directory. See 'cylc grep --help'.
+
+%h3 Preparation -> Validate
+
+Parse the suite.rc file and validate it against the suite.rc spec, 
+then attempt to instantiate all suite task proxies, and report any
+errors. See 'cylc validate --help'.
+
+%h3 Information -> View Suite Log
+This opens a searchable and filterable view of the suite log file that
+records, timestamped, all important events as the suite runs.
+
+%h3 Information -> View Suite Output
+This opens a new view of the suite stdout and stderr files
+$HOME/.cylc/GROUP:NAME.(out|err) used when suites are started from
+within gcylc (if you start a suite from the command line, however, what
+happens to its stdout and stderr end up is entirely up to you). The 
+suite remembers task output locations while the corresponding task
+proxies still exist in the suite (this information is not stored in 
+suite state dump files, however, so it will be lost for finished tasks
+still in the suite, if you stop and restart the suite).
+
+%h3 Information -> Dump Suite State (Running suites only)
+Print the current state of each task in the suite. 
+See 'cylc info dump --help'.
+
+%h3 Database -> Copy
 Copy an existing suite (or group of suites) and register it (or them)
-for use.
+for use. See 'cylc db copy --help'.
 
-%h3 Export
+%h3 Database -> Alias
+Create an alias (generally a short nickname) for an existing registered
+suite. Referring to a suite via its alias is entirely equivalent to using
+the full registered name.  See 'cylc db alias --help'.
+
+%h3 Database -> Export
 Export a suite (or group of suites) to the central database to make it
-(or them) available to others.
+(or them) available to others.  See 'cylc db export --help'.
 
-%h3 Import
+%h3 Database -> Import
 Import a suite (or group of suites) from the central database, to modify
-and use yourself.
+and use yourself. See 'cylc db import --help'.
 
-%h3 Reregister
-Reregister an existing suite under a different GROUP:NAME, or reregister
-a group of suites under a different GROUP:
+%h3 Database -> Reregister
+Reregister an existing suite (or group of suites) under a different
+name. See 'cylc db register --help'.
 
-%h3 Unregister
+%h3 Database -> Unregister
 Delete the registration of a suite (or group of suites) and optionally 
-delete its (or their) suite definition directory(s).""")
+delete its (or their) suite definition directory(s).  
+See 'cylc db unregister --help'.""")
     help.show()
 
 def filter( b ):

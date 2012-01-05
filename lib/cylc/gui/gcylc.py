@@ -324,11 +324,11 @@ class MainApp(object):
         self.reg_new_item.connect( 'activate', self.newreg_popup )
         file_menu.append( self.reg_new_item )
 
-        self.reg_new_item2 = gtk.MenuItem( '_Register A New Suite' )
+        self.reg_new_item2 = gtk.MenuItem( '_Create New Suite' )
         self.reg_new_item2.connect( 'activate', self.newreg2_popup )
         file_menu.append( self.reg_new_item2 )
 
-        exit_item = gtk.MenuItem( 'E_xit gcylc' )
+        exit_item = gtk.MenuItem( 'E_xit' )
         exit_item.connect( 'activate', self.delete_all_event, None )
         file_menu.append( exit_item )
 
@@ -348,7 +348,7 @@ class MainApp(object):
         view_menu.append( collapse_item )
         collapse_item.connect( 'activate', self.collapse_all, self.regd_treeview )
 
-        refresh_item = gtk.MenuItem( '_Refresh Titles' )
+        refresh_item = gtk.MenuItem( '_Refresh' )
         view_menu.append( refresh_item )
         refresh_item.connect( 'activate', self.refresh )
 
