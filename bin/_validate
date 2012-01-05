@@ -25,15 +25,15 @@ from cylc.taskdef import DefinitionError
 
 parser = OptionParser( """cylc [prep] validate [options] SUITE
 
-(a) Parse and validate a suite config (suite.rc) file to check that
-all entries conform to the $CYLC_DIR/conf/suiterc.spec specification.
-(b) Attempt to instantiate a proxy object for each task in the suite.
+Parse and validate a suite config (suite.rc) file to check that all
+entries conform to the $CYLC_DIR/conf/suiterc.spec specification, and
+then attempt to instantiate a proxy object for each task in the suite.
 
-IF THE SUITE.RC FILE USES INCLUDE-FILES: line numbers reported with 
+IF THE SUITE.RC FILE USES INCLUDE-FILES: line numbers reported with
 validation errors will be wrong because the parser sees an inlined
-version of the file. You can use 'cylc prep inline SUITE' to trace errors to
-the correct source line, although the extra information reported by the
-validator should be sufficient to make this unnecessary.
+version of the file. You can use 'cylc prep inline SUITE' to trace
+errors to the correct source line, although the extra information
+reported by the validator should be sufficient to make this unnecessary.
 
 Arguments:
    SUITE    - Suite database registration.""")
@@ -42,14 +42,18 @@ parser.add_option( "-c", "--central",
         help="target the central database.",
         action="store_true", default=False, dest="central" )
 
-parser.add_option( "-p","--pretty",
-        help="Use unicode box drawing characters when printing "
-        "the suite runtime inheritance hierarchy.",
-        action="store_true", default=False, dest="pretty" )
-
 parser.add_option( "-v","--verbose",
         help="Print extra information from the validation process.",
         action="store_true", default=False, dest="verbose" )
+
+parser.add_option( "-d","--debug",
+        help="Print full exception traceback and abort on error.",
+        action="store_true", default=False, dest="debug" )
+
+parser.add_option( "-p","--pretty",
+        help="(with -v,--verbose) Use unicode box drawing characters "
+        "when printing the suite runtime inheritance hierarchy.",
+        action="store_true", default=False, dest="pretty" )
 
 (options, args) = parser.parse_args()
 
@@ -62,6 +66,8 @@ dbg = dbgetter( options.central )
 try:
     suite, suiterc = dbg.get_suite(reg)
 except RegistrationError, x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 
 if options.verbose:
@@ -69,20 +75,26 @@ if options.verbose:
 try:
     config = config( suite, suiterc, verbose=options.verbose )
 except Exception,x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 
 # Now instantiate each task
-# TO DO: TEST THE FOLLOWING WITH VARIOUS ERRORS AND CLEAN UP
-# THE RESULTING OUTPUT:
 job_submit.cylc_env = {}
 ctime = '2999010112'
 
 if options.verbose:
     print 'Instantiating Task Proxies:'
 
-valid = True
-result = {}
+result = {} # validated?
+terror = {} # IsTypeError?
+labels = {} # T/F, message (OK|ERROR)
+excptn = {} # exception message
 for tn in config.get_full_task_name_list():
+    result[tn] = True
+    labels[tn] = True, 'OK'
+    excptn[tn] = None
+    terror[tn] = False
     try:
         # tasks used in the suite dependency graph
         task_proxy = config.get_task_proxy( tn, ctime, 'waiting', stopctime=None, startup=True )
@@ -92,21 +104,40 @@ for tn in config.get_full_task_name_list():
             # tasks defined but not used in the suite graph
             task_proxy = config.get_task_proxy_raw( tn, ctime, 'waiting', stopctime=None, startup=True, test=True, strict=False )
         except Exception, x:
-            result[tn] = False, x
-            valid = False
-        else:
-            result[tn] = True, 'OK'
+            if options.debug:
+                raise
+            result[tn] = False
+            labels[tn] = False, 'ERROR'
+            excptn[tn] = x
+    except TypeError, x:
+        if options.debug:
+            raise
+        result[tn] = False
+        labels[tn] = False, 'ERROR' 
+        excptn[tn] = x
+        terror[tn] = True
     except Exception, x:
-        result[tn] = False, x
-        valid = False
+        if options.debug:
+            raise
+        result[tn] = False
+        labels[tn] = False, 'ERROR'
+        excptn[tn] = x
     else:
-        result[tn] = True, 'OK'
+        # OK
+        pass
 
 if options.verbose:
-    config.print_inheritance_tree( labels=result, pretty=options.pretty )
+    config.print_inheritance_tree( labels=labels, pretty=options.pretty )
 
-if valid:
+if False in result:
     print "Suite " + suite + " validates OK."
 else:
-    print x
-    raise SystemExit( "Suite validation failed" )
+    for tn in result:
+        if not result[tn]:
+            print >> sys.stderr, 'ERROR,', tn + ':'
+            print >> sys.stderr, excptn[tn]
+            if terror[tn]:
+                print >> sys.stderr, "This may indicate inconsistent use of tasks in [scheduling]->[[special tasks]]"
+                print >> sys.stderr, "e.g. cycling 'cold-start' tasks cannot be used in asynchronous graph sections."
+    print >> sys.stderr, "Suite validation failed."
+    sys.exit(1)
