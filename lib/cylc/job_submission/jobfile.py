@@ -29,7 +29,7 @@ class jobfile(object):
             final_directive, manual_messaging, initial_scripting,
             precommand_scripting, command_scripting,
             postcommand_scripting, remote_cylc_dir, remote_suite_dir,
-            shell, share_dir, work_dir, simulation_mode,
+            shell, share_dir, work_dir, log_root, simulation_mode,
             job_submission_method ):
 
         self.task_id = task_id
@@ -46,6 +46,7 @@ class jobfile(object):
         self.shell = shell
         self.share_dir = share_dir
         self.work_dir = work_dir
+        self.log_root = log_root
         self.simulation_mode = simulation_mode
         self.job_submission_method = job_submission_method
         self.remote_cylc_dir = remote_cylc_dir
@@ -87,7 +88,7 @@ class jobfile(object):
         self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'')
 
     def write_directives( self ):
-        if len( self.directives.keys() ) == 0:
+        if len( self.directives.keys() ) == 0 or not self.directive_prefix:
             return
         self.FILE.write( "\n\n# DIRECTIVES:" )
         for d in self.directives:
@@ -126,6 +127,7 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
         BUFFER.write( "\nexport CYLC_TASK_NAME=" + self.task_name )
         BUFFER.write( "\nexport CYLC_TASK_CYCLE_TIME=" + self.cycle_time )
+        BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
         BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.namespace_hierarchy) + '"')
 
     def write_cylc_access( self, BUFFER=None ):
@@ -134,8 +136,9 @@ class jobfile(object):
         #    NEXT_CYCLE=$( cylc util cycletime --add=6 )
         if not BUFFER:
             BUFFER = self.FILE
-        BUFFER.write( "\n\n# ACCESS TO CYLC:" )
-        BUFFER.write( "\nPATH=$CYLC_DIR/bin:$PATH" )
+        if self.remote_cylc_dir:
+            BUFFER.write( "\n\n# ACCESS TO CYLC:" )
+            BUFFER.write( "\nPATH=$CYLC_DIR/bin:$PATH" )
         BUFFER.write( "\n# Access to the suite bin dir:" )
         BUFFER.write( "\nPATH=$CYLC_SUITE_DEF_PATH/bin:$PATH" )
         BUFFER.write( "\nexport PATH" )

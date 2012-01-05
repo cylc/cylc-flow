@@ -392,21 +392,25 @@ See the updated User Guide, Section 8.7 "Special Placeholder Variables".
 ________________________________________________________________________
 4.1.1-PENDING
 
-+ Configuring "cylc directory" is now optional for remote tasks, as cylc
-may be installed in the default PATH.
++ Fixed a bug affecting home directory replacement in the share and work
+directory paths for remote tasks that do not explicity override the
+default share and work paths.
 
-+ A new variable CYLC_TASK_LOG_ROOT records the task stdout/stderr filename
-prefix (everything prior to .out and .err) to allow use of the same for 
-related files (e.g. stats files).
++ Defining the 'cylc directory' is now optional for remote tasks, for
+sites that install cylc in the default $PATH.
+
++ A new variable CYLC_TASK_LOG_ROOT records the task stdout/stderr file
+path prefix (everything prior to .out and .err) to allow use of the same
+for related files (e.g. stats files).
 
 + Directives (e.g. for qsub or llsubmit) are now ignored unless the
-chosen job submission method actually uses them. Previously they would 
-be written to the task job script regardless of the job submission method 
-(which was harmless - they are shell comments - but unnecessary).
+chosen job submission method actually uses them. Previously they would
+be written to the task job script regardless of the job submission
+method (which was harmless - they are shell comments - but unnecessary).
 
 + Fixed two bugs affecting the runahead limit:
-1/ runahead-held tasks were recorded in the final suite state dump,
-just prior to shutdown, as normal "held" tasks and so were erroneously
+1/ runahead-held tasks were recorded in the final suite state dump, just
+prior to shutdown, as normal "held" tasks and so were erroneously
 released on restarting the suiteing the suiteing the suite.
 2/ ability to change the runahead limit at run time was broken.
 

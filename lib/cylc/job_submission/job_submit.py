@@ -138,30 +138,28 @@ class job_submit(object):
         self.set_environment()
  
     def set_directives( self ):
-        # OVERRIDE IN DERIVED CLASSES IF NECESSARY
-        # self.directives['name'] = value
+        # OVERRIDE IN DERIVED JOB SUBMISSION CLASSES THAT USE DIRECTIVES
+        # (directives will be ignored if the prefix below is not overridden)
 
-        # Prefix, e.g. '#QSUB ' (qsub), or '#@ ' (loadleveler)
-        self.directive_prefix = "# DIRECTIVE_PREFIX "
-        # Final directive, WITH PREFIX, e.g. '#@ queue' for loadleveler
-        self.final_directive = " # FINAL_DIRECTIVE"
+        # Prefix, e.g. '#QSUB' (qsub), or '# @' (loadleveler)
+        self.directive_prefix = None
+        # Final directive, WITH PREFIX, e.g. '# @ queue' for loadleveler
+        self.final_directive = "# FINAL_DIRECTIVE"
         # Connector, e.g. ' = ' for loadleveler, ' ' for qsub
         self.directive_connector = " DIRECTIVE_CONNECTOR "
 
     def set_scripting( self ):
-        # OVERRIDE IN DERIVED CLASSES IF NECESSARY
-        # to modify pre- and post-command scripting
+        # Derived class can use this to modify pre- and post-command scripting
         return
 
     def set_environment( self ):
-        # OVERRIDE IN DERIVED CLASSES IF NECESSARY
-        # to modify global or task-specific environment
+        # Derived classes can use this to modify task execution environment
         return
 
     def construct_jobfile_submission_command( self ):
-        # DERIVED CLASSES MUST OVERRIDE.
-        # Construct self.command, a command to submit the job file to
-        # run by the derived job submission method.
+        # DERIVED CLASSES MUST OVERRIDE THIS METHOD to construct
+        # self.command, the command to submit the job script to
+        # run by the derived class job submission method.
         raise SystemExit( 'ERROR: no job submission command defined!' )
 
     def submit( self, dry_run ):
@@ -181,8 +179,8 @@ class job_submit(object):
                 self.task_command, self.post_command,
                 self.remote_cylc_dir, self.remote_suite_dir, 
                 self.job_submission_shell, self.share_dir,
-                self.work_dir, self.__class__.simulation_mode,
-                self.__class__.__name__ )
+                self.work_dir, self.jobfile_path,
+                self.__class__.simulation_mode, self.__class__.__name__ )
         # write the job file
         jf.write( self.local_jobfile_path )
         # make it executable

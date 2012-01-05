@@ -644,9 +644,9 @@ class scheduler(object):
             self.hold_time = ctime
         else:
             self.hold_suite_now = True
-            self.log.warning( "Holding all tasks now")
+            self.log.warning( "Holding all waiting tasks now")
             for itask in self.cycling_tasks + self.asynchronous_tasks:
-                if itask.state.is_waiting() or itask.state.is_runahead():
+                if itask.state.is_waiting():
                     itask.state.set_status('held')
 
     def release_suite( self ):
