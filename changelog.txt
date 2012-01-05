@@ -420,3 +420,7 @@ released on restarting the suiteing the suiteing the suite.
 
 + New 'cylc browse' command for quick access to cylc documentation.
 
++ A bug fix and improved functionality for the validate command.
+Error messages during task proxy instantiation were not being printed
+properly when multiple errors occured. We now also single out TypeError
+and print a message about the likely cause of the problem.
