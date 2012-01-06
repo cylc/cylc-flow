@@ -3380,7 +3380,7 @@ generated using Jinja2:
     [[dependencies]]
         graph = """{# generate ensemble dependencies #}
             {% for I in range( 0, N_MEMBERS ) %}
-               foo => mem_\left\{  I }} => post_\left\{  I }} => bar
+               foo => mem_{{  I }} => post_{{  I }} => bar
             {% endfor %}"""
 \end{lstlisting}
 Here is the generated suite definition, after Jinja2 processing:
