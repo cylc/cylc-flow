@@ -390,7 +390,7 @@ See the updated User Guide, Section 8.7 "Special Placeholder Variables".
 + Many minor improvements to the User Guide.
 
 ________________________________________________________________________
-4.1.1-PENDING
+4.1.1
 
 + Fixed a bug affecting home directory replacement in the share and work
 directory paths for remote tasks that do not explicity override the
@@ -420,7 +420,7 @@ released on restarting the suiteing the suiteing the suite.
 
 + New 'cylc browse' command for quick access to cylc documentation.
 
-+ A bug fix and improved functionality for the validate command.
-Error messages during task proxy instantiation were not being printed
-properly when multiple errors occured. We now also single out TypeError
-and print a message about the likely cause of the problem.
++ Validate command: 1/ bug fix: error messages during task proxy
+instantiation were not being printed properly when multiple errors
+occured. 2/ detect erroneous use of synchronous special tasks in
+asynchronous graphs.
