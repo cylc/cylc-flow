@@ -23,7 +23,7 @@ from optparse import OptionParser
 
 parser = OptionParser( """cylc [info] browse [options]
 
-Browse various forms of cylc documentation:
+Browse cylc documentation:
  1/ The User Guide in PDF format (default)
  2/ The User Guide in HTML format
  3/ The change log (plain text format)
