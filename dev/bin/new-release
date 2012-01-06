@@ -67,6 +67,7 @@ perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" bin/cylc
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/cug-pdf.tex
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/cug-html.tex
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/cug.tex
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/command-usage/help.txt
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" README
 
 echo "MAKING DOCUMENTATION (USER GUIDE)"

@@ -3,13 +3,15 @@
 
 \lstset{language=bash}
 
-This appendix documents all legal entries in a suite.rc file. Most
-suites will only need to explicitly configure a few of these items -
-many of them have sensible default values, some may only be needed for
-critical operational suites (e.g.\ secure passphrases), and some are
-primarily used for cylc development. In general your suite.rc files
-shouldn't be a lot more complicated than those of the cylc example
-suites.
+This appendix documents the legal content of raw cylc suite.rc files.
+Most suites will only need to explicitly configure a few of these items
+- many have sensible default values, some may only be needed for
+critical operational suites (e.g.\ secure passphrases and lock server
+settings), and some are primarily used for cylc development.
+
+In addition to the raw syntax, Jinja2 expressions can also be embedded
+to programmatically generate the final suite definition seen by cylc.
+Use of Jinja2 is documented in Section~\ref{Jinja2}.
 
 See also {\em Suite Definition - Suite.rc Overview}
 (Section~\ref{SuiteRCFile}) for a descriptive overview of suite.rc
