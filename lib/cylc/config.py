@@ -822,6 +822,20 @@ class config( CylcConfigObj ):
             nstr = nstr.strip()
             lnames = re.split( ' +', nstr )
 
+            if section == 'once':
+                # Consistency check: synchronous special tasks are
+                # not allowed in asynchronous graph sections.
+                spec = self['scheduling']['special tasks']
+                bad = []
+                for name in lnames + rights:
+                    if name in spec['start-up'] or name in spec['cold-start'] or \
+                            name in spec['sequential'] or name in spec['one-off']:
+                                bad.append(name)
+                if len(bad) > 0:
+                    print >> sys.stderr, 'ERROR: synchronous special tasks cannot be used in an asynchronous graph section:'
+                    print >> sys.stderr, '      ', ', '.join(bad)
+                    raise SuiteConfigError, 'ERROR: inconsistent use of special task types.'
+
             for rt in rights:
                 # foo => '!bar' means task bar should suicide if foo succeeds.
                 suicide = False
