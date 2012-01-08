@@ -289,10 +289,10 @@ class xupdater(threading.Thread):
         self.graphw.cylc_add_edge( waiting, submitted, False, style='invis')
         self.graphw.cylc_add_edge( submitted, running, False, style='invis')
         self.graphw.cylc_add_edge( running, runahead, False, style='invis')
-        self.graphw.cylc_add_edge( runahead, queued, False, style='invis')
 
         self.graphw.cylc_add_edge( succeeded, failed, False, style='invis')
         self.graphw.cylc_add_edge( failed, held, False, style='invis')
+        self.graphw.cylc_add_edge( held, queued, False, style='invis')
 
         self.graphw.cylc_add_edge( base, grfamily, False, style='invis')
         self.graphw.cylc_add_edge( grfamily, family, False, style='invis')
