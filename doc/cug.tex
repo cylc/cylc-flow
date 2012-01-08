@@ -786,9 +786,10 @@ do it all in one step. Here's how to easy\_install Jinja2 into your new
 private python site packages directory:
 
 \begin{lstlisting}
+% LOCALPREFIX=$CYLC_DIR/external/installed
 % LOCALPACKAGES=$CYLC_DIR/external/installed/lib64/python2.6/site-packages
 % export PYTHONPATH=$LOCALPACKAGES:$PYTHONPATH
-% easy_install --prefix=$LOCALPACKAGES Jinja2
+% easy_install --prefix=$LOCALPREFIX Jinja2
 \end{lstlisting}
 Adapt the site-packages path according to your actual path, as above.
 The Python search path must be set first or \lstinline=easy_install=
