@@ -61,7 +61,7 @@ class pid(object):
         if self.has_spawned():
             # already spawned
             return False
-        if self.state.is_waiting() or self.state.is_limited() or \
+        if self.state.is_waiting() or self.state.is_queued() or \
                 self.state.is_submitted():
             return False
         if self.state.is_succeeded():

@@ -129,7 +129,7 @@ class pool(object):
                             n_release -= 1
                             self.submit(task)
                         else:
-                            task.state.set_status('limited')
+                            task.state.set_status('queued')
                     else:
                         self.submit(task)
 
@@ -737,7 +737,7 @@ class scheduler(object):
             self.hold_suite_now = True
             self.log.warning( "Holding all waiting tasks now")
             for itask in self.pool.get_tasks():
-                if itask.state.is_limited() or itask.state.is_waiting():
+                if itask.state.is_queued() or itask.state.is_waiting():
                     itask.state.set_status('held')
 
     def release_suite( self ):

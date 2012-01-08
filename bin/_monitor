@@ -56,10 +56,10 @@ try:
 except RegistrationError, x:
     raise SystemExit(x)
 
-header = 'waiting runahead limited submitted running succeeded held failed'
-header = '                                                                '
+header = 'waiting runahead queued submitted running succeeded held failed'
+header = '                                                               '
 ctrl_end = "\033[0m"
-key = "\033[1;37;43mheld\033[0m \033[1;36mwaiting \033[1;37;44mrunahead\033[0m \033[1;38;44mlimited\033[0m\033[1;32m submitted \033[1;37;42mrunning\033[0m succeeded \033[1;37;41mfailed" + ctrl_end 
+key = "\033[1;37;43mheld\033[0m \033[1;36mwaiting \033[1;37;44mrunahead\033[0m \033[1;38;44mqueued\033[0m\033[1;32m submitted \033[1;37;42mrunning\033[0m succeeded \033[1;37;41mfailed" + ctrl_end 
 
 alerted = False
 alerted2 = False
@@ -202,7 +202,7 @@ try:
                     ctrl_start = "\033[1;37;43m"
                 elif state == "runahead":
                     ctrl_start = "\033[1;37;44m"
-                elif state == "limited":
+                elif state == "queued":
                     ctrl_start = "\033[1;38;44m"
                 else:
                     # succeeded

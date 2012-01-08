@@ -205,7 +205,7 @@ class task( Pyro.core.ObjBase ):
 
     def ready_to_run( self ):
         ready = False
-        if self.state.is_limited() or \
+        if self.state.is_queued() or \
             self.state.is_waiting() and self.prerequisites.all_satisfied(): 
                 ready = True
         return ready
