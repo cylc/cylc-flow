@@ -242,7 +242,7 @@ Arguments:
                 # we've reached the stop time already: delete the new task 
                 itask.log( 'WARNING', "HOLDING at configured stop time " + self.stop_time )
                 itask.state.set_status('held')
-            self.insert( itask )
+            self.pool.add( itask )
 
 if __name__ == '__main__':
     try:

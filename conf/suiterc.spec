@@ -63,6 +63,13 @@ description = string( default="No description provided" )
     initial cycle time = integer( default=None )
     final cycle time = integer( default=None )
     runahead limit = integer( min=0, default=25 )
+    [[queues]]
+        [[[default]]]
+            # for all non queue-assigned tasks
+            limit = integer( default=None)
+        [[[__many__]]]
+            limit = integer( default=None )
+            members = force_list( default=list())
     [[special tasks]]
         clock-triggered = force_list( default=list())
         start-up = force_list( default=list())

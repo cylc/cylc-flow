@@ -204,10 +204,10 @@ class task( Pyro.core.ObjBase ):
         self.__class__.instance_count -= 1
 
     def ready_to_run( self ):
-        # ready if 'waiting' AND all prequisites satisfied
         ready = False
-        if self.state.is_waiting() and self.prerequisites.all_satisfied(): 
-            ready = True
+        if self.state.is_limited() or \
+            self.state.is_waiting() and self.prerequisites.all_satisfied(): 
+                ready = True
         return ready
 
     def get_resolved_dependencies( self ):
@@ -216,15 +216,6 @@ class task( Pyro.core.ObjBase ):
         for label in satby.keys():
             dep.append( satby[ label ] )
         return dep
-
-    def run_if_ready( self ):
-        if self.ready_to_run():
-            print
-            print self.id, ' READY TO RUN'
-            self.run_external_task()
-            return True
-        else:
-            return False
 
     def call_warning_hook( self, message ):
         self.log( 'WARNING', 'calling task warning hook' )

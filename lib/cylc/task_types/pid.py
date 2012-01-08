@@ -61,7 +61,8 @@ class pid(object):
         if self.has_spawned():
             # already spawned
             return False
-        if self.state.is_waiting() or self.state.is_submitted():
+        if self.state.is_waiting() or self.state.is_limited() or \
+                self.state.is_submitted():
             return False
         if self.state.is_succeeded():
             # always spawn a succeeded task

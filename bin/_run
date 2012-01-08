@@ -146,7 +146,7 @@ Arguments:
                 itask.prepare_for_death()
                 del itask
             else:
-                self.insert( itask )
+                self.pool.add( itask )
 
     def load_tasks_warm( self ):
         if self.start_time:
@@ -187,7 +187,7 @@ Arguments:
                 itask.prepare_for_death()
                 del itask
             else:
-                self.insert( itask )
+                self.pool.add( itask )
 
     def load_tasks_raw( self ):
         if self.start_time:
@@ -225,7 +225,7 @@ Arguments:
                 itask.prepare_for_death()
                 del itask
                 continue
-            self.insert( itask )
+            self.pool.add( itask )
 
 if __name__ == '__main__':
     try:

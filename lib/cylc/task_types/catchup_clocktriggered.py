@@ -64,7 +64,8 @@ class catchup_clocktriggered( clocktriggered ):
         # ready IF waiting AND all prerequisites satisfied AND if my
         # delayed start time is up.
         ready = False
-        if self.state.is_waiting() and self.prerequisites.all_satisfied():
+        if self.state.is_limited() or \
+                self.state.is_waiting() and self.prerequisites.all_satisfied():
 
             if not self.catchup_status_determined:
                 try:

@@ -56,10 +56,10 @@ try:
 except RegistrationError, x:
     raise SystemExit(x)
 
-header = 'waiting runahead submitted running succeeded held failed'
-header = '                                                        '
+header = 'waiting runahead limited submitted running succeeded held failed'
+header = '                                                                '
 ctrl_end = "\033[0m"
-key = "\033[1;37;43mheld\033[0m \033[1;36mwaiting \033[1;37;44mrunahead\033[0m\033[1;32m submitted \033[1;37;42mrunning\033[0m succeeded \033[1;37;41mfailed" + ctrl_end 
+key = "\033[1;37;43mheld\033[0m \033[1;36mwaiting \033[1;37;44mrunahead\033[0m \033[1;38;44mlimited\033[0m\033[1;32m submitted \033[1;37;42mrunning\033[0m succeeded \033[1;37;41mfailed" + ctrl_end 
 
 alerted = False
 alerted2 = False
@@ -202,6 +202,8 @@ try:
                     ctrl_start = "\033[1;37;43m"
                 elif state == "runahead":
                     ctrl_start = "\033[1;37;44m"
+                elif state == "limited":
+                    ctrl_start = "\033[1;38;44m"
                 else:
                     # succeeded
                     ctrl_start = ""
@@ -226,7 +228,7 @@ try:
 
             # last time state summary was updated by cylc (only happens
             # when task processing is invoked).
-            blit.append( 'suite state summary last updated at: ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
+            blit.append( 'suite state summary last updated at:         ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
             if simulation_mode:
                 foo = 'SIMULATION:'
@@ -237,22 +239,15 @@ try:
                 blit.append( baz )
 
             if stopping:
-                #            'waiting submitted running done failed'
-                foo = '_________________________________________S_T_O_P_P_I_N_G'
+                foo = '_________________________________________________S_T_O_P_P_I_N_G'
             elif paused:
-                #            'waiting submitted running done failed'
-                foo = '_____________________________________________P_A_U_S_E_D'
+                foo = '_____________________________________________________P_A_U_S_E_D'
             elif will_pause_at:
-                #            'waiting submitted running done failed'
-                #                                    YYYYMMDDHH                                
-                foo = '__________________________P_A_U_S_I_N_G__A_T__' + will_pause_at
+                foo = '__________________________________P_A_U_S_I_N_G__A_T__' + will_pause_at
             elif will_stop_at:
-                #            'waiting submitted running done failed'
-                #                                    YYYYMMDDHH                                
-                foo = '________________________S_T_O_P_P_I_N_G__A_T__' + will_stop_at
+                foo = '________________________________S_T_O_P_P_I_N_G__A_T__' + will_stop_at
             else:
-                #            'waiting submitted running done failed'
-                foo = '___________________________________________R_U_N_N_I_N_G'
+                foo = '___________________________________________________R_U_N_N_I_N_G'
          
             #blit.append( '\033[1;33;44m' + foo + ctrl_end )
             blit.append( '\033[1;31m' + foo + ctrl_end )

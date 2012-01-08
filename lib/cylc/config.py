@@ -376,6 +376,7 @@ class config( CylcConfigObj ):
         self.define_inheritance_tree( self.family_tree, self.family_hierarchy )
         self.prune_inheritance_tree( self.family_tree, self.task_runtimes )
 
+        self.process_queues()
         self.__check_tasks()
 
         # Default visualization start and stop cycles (defined here
@@ -398,6 +399,19 @@ class config( CylcConfigObj ):
             self['visualization']['initial cycle time'] = 2999010100
             self['visualization']['final cycle time'] = 2999010123
   
+    def process_queues( self ):
+        # TO DO: user input consistency checking (e.g. duplicate queue
+        # assignments and non-existent task names)
+        queues = self['scheduling']['queues']
+        # add all tasks to the default queue
+        queues['default']['members'] = self.task_runtimes.keys()
+        for queue in queues:
+            if queue == 'default':
+                continue
+            # remove assigned tasks from the default queue
+            for member in queues[queue]['members']:
+                queues['default']['members'].remove( member )
+
     def define_inheritance_tree( self, tree, hierarchy ):
         # combine inheritance hierarchies into a tree structure.
         for rt in hierarchy:
