@@ -18,13 +18,13 @@
 
 import os, re
 from optparse import OptionParser
-from cylc.registration import dbgetter, RegistrationError, delimiter
+from cylc.registration import dbgetter, RegistrationError, RegPath
 from cylc.print_tree import print_tree
 
 def get_padding( reglist ):
     maxlen = 0
     for reg in reglist:
-        items = reg[0].split( delimiter )
+        items = reg[0].split( RegPath.delimiter )
         for i in range(0,len(items)):
             tmp = 2*i + 1 + len(items[i])
             if i == 0:
@@ -125,7 +125,7 @@ try:
             dir = re.sub( '^' + os.environ['HOME'], '~', dir )
             if options.align:
                 title = title + spacer_title[ len(title): ]
-            regpath = suite.split( delimiter ) 
+            regpath = suite.split( RegPath.delimiter ) 
             sub = tree
             for key in regpath[:-1]:
                 if key not in sub:
