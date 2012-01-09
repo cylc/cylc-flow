@@ -2566,19 +2566,35 @@ off A, what exactly should cylc do when A finishes?}
 \end{lstlisting}
 
 Forecasting suites typically have quite simple requirements for
-conditional triggers, but should you need it you can use any valid
-parenthesised conditional expression, e.g.:
+conditional triggers, but any valid conditional expression can be used,
+as shown in Figure~\ref{fig-conditional} 
+(conditional triggers are plotted with open arrow heads).
+\begin{figure}
+\begin{minipage}[b]{0.5\textwidth}
+\lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
-    graph = """
-        # D triggers if A or (both B and C) succeed:
-        A | B & C => D
-        # Z triggers if both (W or X) and Y succeed.
-        (W | X) & Y => Z
-            """ 
+        graph = """
+# D triggers if A or (B and C) succeed
+A | B & C => D
+# just to align the two graph sections
+D => W
+# Z triggers if (W or X) and Y succeed
+(W|X) & Y => Z
+                """
 \end{lstlisting}
-
-Condititional triggers are plotted with open arrow heads.
+\lstset{language=transcript}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.5\textwidth}
+    \begin{center}
+        \includegraphics[width=0.5\textwidth]{screenshots/conditional-triggers.png} 
+    \end{center}
+\end{minipage}
+\caption[Conditional Triggers] {\scriptsize
+Conditional triggers are plotted with open arrow heads.}
+\label{fig-conditional} 
+\end{figure}
 
 \paragraph{Suicide Triggers}
 \label{SuicideTriggers}
