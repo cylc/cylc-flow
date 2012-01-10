@@ -23,7 +23,8 @@ import subprocess
 from cylc.registration import dbgetter, RegistrationError
 from cylc.config import config, SuiteConfigError
 from cylc.mkdir_p import mkdir_p
- 
+from cylc.version import compat
+
 parser = OptionParser( """cylc [info] log [options] SUITE 
 Print, or view in $EDITOR, local suite log files, with optional
 filtering. This command is a convenience: you don't need to
@@ -67,6 +68,8 @@ try:
     suite, suiterc = dbg.get_suite(reg)
 except RegistrationError, x:
     raise SystemExit(x)
+
+compat( suite, suiterc ).execute( sys.argv )
 
 try:
     filename = os.path.join( config( suite, suiterc )['cylc']['logging']['directory'], 'log' )
