@@ -98,7 +98,7 @@ class job_submit(object):
         if not self.__class__.simulation_mode and \
             ( remote_host and remote_host != "localhost" and remote_host != socket.gethostname() ) or \
             ( task_owner and task_owner != self.suite_owner ):
-            # REMOTE
+            # REMOTE TASKS
             self.local = False
             if task_owner:
                 self.task_owner = task_owner
@@ -112,8 +112,7 @@ class job_submit(object):
 
             self.remote_jobfile_path = os.path.join( remote_log_dir, tag )
 
-            # Remote log files for access by gcylc if using a common
-            # filesystem between remote task and suite host.
+            # Remote log files
             self.stdout_file = self.remote_jobfile_path + ".out"
             self.stderr_file = self.remote_jobfile_path + ".err"
  
@@ -123,19 +122,24 @@ class job_submit(object):
             # Record paths of remote log files for access by gcylc
             if True:
                 # by ssh URL
-                # To Do: exception handling for the ssh subprocess
                 url_prefix = self.task_owner + '@' + self.remote_host
                 self.logfiles.add_path( url_prefix + ':' + self.stdout_file)
                 self.logfiles.add_path( url_prefix + ':' + self.stderr_file)
             else:
-                # common filesystem: must not use '$HOME' as these
-                # filenames are interpreted by gcylc as suite owner.
-                # To Do: elucidate use of $HOME, ~user, etc.
+                # CURRENTLY DISABLED: 
+                # If the remote and suite hosts see a common filesystem, or
+                # if the remote task is really just a local task with a
+                # different owner, we could just use local filesystem access. 
+                # But to use this: (a) special namespace config would be
+                # required to indicate we have a common filesystem, and
+                # (b) we'd need to consider how the log directory can be
+                # specified (for example use of '$HOME' as for remote
+                # task use would not work here as log file access is by
+                # gcylc under the suite owner account. 
                 self.logfiles.add_path( self.stdout_file )
                 self.logfiles.add_path( self.stderr_file )
-
         else:
-            # LOCAL
+            # LOCAL TASKS
             self.local = True
             self.task_owner = self.suite_owner
             # Used in command construction:

@@ -56,14 +56,25 @@ class tailer(threading.Thread):
             # because p.stdout.readline() blocks indefinitely waiting
             # for more output.
             loc, file = self.logfile.split(':')
-            p = subprocess.Popen( ['ssh', loc, 'cat', file ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT )
-            if not self.freeze:
-                out, err = p.communicate()
+            try:
+                p = subprocess.Popen( ['ssh', '-oBatchMode=yes', loc, 'cat', file ], \
+                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT )
+            except OSError, x:
+                # Probably: ssh command not found
+                out = str(x)
+                out += "\nERROR: failed to invoke ssh to cat the remote log file."
+            else:
+                # Success, or else problems reported by ssh (e.g. host
+                # not found or passwordless access  not configured) go
+                # to stdout/stderr.
+                out, junk = p.communicate()
+
                 out += """
 !!! gcylc WARNING: REMOTE TASK OUTPUT IS NOT LIVE, OPEN THE VIEWER AGAIN TO UPDATE !!!
 """
-                gobject.idle_add( self.update_gui, out )
+            gobject.idle_add( self.update_gui, out )
             if self.proc != None:
+                # See comment below
                 self.proc.poll()
         else:
             # Live feed (pythonic 'tail -f') for local job submission.
