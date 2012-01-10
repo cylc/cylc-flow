@@ -25,6 +25,7 @@ import time, os, re
 import threading
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.config import config, SuiteConfigError
+from cylc.version import cylc_version
 from cylc import cylc_pyro_client
 from cylc.port_scan import scan, SuiteIdentificationError
 from cylc.registration import delimiter, dbgetter, localdb, centraldb, RegistrationError
@@ -493,7 +494,6 @@ class MainApp(object):
             if gtk.gtk_version[1] >= 12:
                 # set_program_name() was added in PyGTK 2.12
                 about.set_program_name( "cylc" )
-        cylc_version = 'THIS IS NOT A VERSIONED RELEASE'
         about.set_version( cylc_version )
         about.set_copyright( "(c) Hilary Oliver, NIWA, 2008-2011" )
         about.set_comments( 

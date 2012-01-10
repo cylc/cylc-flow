@@ -44,6 +44,7 @@ from config import config, SuiteConfigError
 from cylc.registration import delimiter_re, localdb, RegistrationError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
+from version import compat
 
 from CylcError import TaskNotFoundError, TaskStateError
 
@@ -160,6 +161,8 @@ class scheduler(object):
             self.suite = db.unalias(suite)
         except RegistrationError,x:
             raise SystemExit(x)
+
+        compat( self.suite, self.suiterc ).execute( sys.argv )
 
         # MODE OF OPERATION (REAL, SIMULATION, practice)
         #DISABLED if self.options.simulation_mode and self.options.practice_mode:

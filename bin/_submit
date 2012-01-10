@@ -35,6 +35,7 @@ from cylc import accelerated_clock
 from cylc.hostname import hostname
 from cylc.port_scan import SuiteIdentificationError
 from cylc.registration import delimiter_re
+from cylc.version import compat
 
 usage = """cylc [task] submit|single [options] SUITE TASK
 
@@ -89,8 +90,11 @@ try:
     suite, suiterc = dbg.get_suite(reg)
 except RegistrationError,x:
     raise SystemExit(x)
-suite_dir = os.path.dirname(suiterc)
 
+compat( suite, suiterc ).execute( sys.argv )
+
+suite_dir = os.path.dirname(suiterc)
+# For user-defined job submission methods:
 sys.path.append( os.path.join( suite_dir, 'python' ))
 
 # check task ---------------------------------------------------------

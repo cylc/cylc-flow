@@ -63,13 +63,11 @@ rm -rf .git
 # - remove dev material
 
 echo "SETTING VERSION TAG IN MAIN COMMAND AND USER GUIDE"
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" lib/cylc/gui/gcylc.py
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" lib/cylc/gui/SuiteControl.py
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" bin/cylc
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/cug-pdf.tex
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/cug-html.tex
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/cug.tex
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" README
+perl -pi -e "s/VERSION-TEMPLATE/$VSN/" lib/cylc/version.py
+perl -pi -e "s/VERSION-TEMPLATE/$VSN/" doc/cug-pdf.tex
+perl -pi -e "s/VERSION-TEMPLATE/$VSN/" doc/cug-html.tex
+perl -pi -e "s/VERSION-TEMPLATE/$VSN/" doc/cug.tex
+perl -pi -e "s/VERSION-TEMPLATE/$VSN/" README
 
 echo "MAKING DOCUMENTATION (USER GUIDE)"
 echo

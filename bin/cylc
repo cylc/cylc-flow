@@ -22,6 +22,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 
 from OrderedDict import OrderedDict
 from cylc.execute import execute
+from cylc.version import cylc_version
 
 # check Pyro is installed
 try:
@@ -143,9 +144,6 @@ def pretty_print( incom, choose_dict, indent=True, numbered=False, sort=False ):
                 digit = str(count)
             print digit + '/', 
         print label[item], '.'*(longest-len(label[item])) + '...', incom[item]
-
-# auto-replace with version tag at build/install:
-cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 
 # categories[ categorey ] = [ aliases ] 
 categories = OrderedDict()

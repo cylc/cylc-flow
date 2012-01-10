@@ -15,7 +15,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 This is an installation of the cylc forecast suite metascheduler.
-Release version: THIS IS NOT A VERSIONED RELEASE
+Release version: VERSION-TEMPLATE
 
 To access cylc:
   % export PATH=/path/to/cylc/bin:$PATH

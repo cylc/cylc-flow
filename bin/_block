@@ -21,6 +21,7 @@ from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
 from cylc.registration import dbgetter, RegistrationError
+from cylc.version import compat
 
 parser = PromptOptionParser("""cylc [control] block [options] SUITE 
 
@@ -34,9 +35,11 @@ useful aid when running multiple suites at once.""")
 reg = parser.get_suite_name()
 dbg = dbgetter()
 try:
-    suite, junk = dbg.get_suite(reg)
+    suite, suiterc = dbg.get_suite(reg)
 except RegistrationError, x:
     raise SystemExit(x)
+
+compat( suite, suite, suiterc ).execute( sys.argv )
 
 try:
     proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )

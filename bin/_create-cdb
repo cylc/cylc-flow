@@ -55,7 +55,7 @@ if [[ $CYLC_ADMIN_OVERRIDE ]]; then
     TOP=cylc-$( echo $CYLC_VERSION | tr '.' '-' )
 else
     CYLC_VERSION=$( cylc -v )
-    if [[ $CYLC_VERSION == "THIS IS NOT A VERSIONED RELEASE" ]]; then
+    if [[ $CYLC_VERSION == "VERSION-TEMPLATE" ]]; then
         # we are in a cylc git repository - get most recent tag
         CYLC_VERSION=$( git tag | tail -1 )X
     fi

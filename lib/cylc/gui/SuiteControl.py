@@ -30,6 +30,7 @@ from cylc.port_scan import SuiteIdentificationError
 from cylc import cylc_pyro_client
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.taskid import id, TaskIDError
+from cylc.version import cylc_version
 from option_group import controlled_option_group
 from cylc.config import config
 from color_rotator import rotator
@@ -287,7 +288,6 @@ and associated methods for their control widgets.
             if gtk.gtk_version[1] >= 12:
                 # set_program_name() was added in PyGTK 2.12
                 about.set_program_name( "cylc" )
-        cylc_version = 'THIS IS NOT A VERSIONED RELEASE'
         about.set_version( cylc_version )
         about.set_copyright( "(c) Hilary Oliver, NIWA, 2008-2011" )
         about.set_comments( 

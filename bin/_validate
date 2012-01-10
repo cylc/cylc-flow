@@ -22,6 +22,7 @@ from optparse import OptionParser
 from cylc.registration import dbgetter, RegistrationError
 from cylc.config import config, SuiteConfigError
 from cylc.taskdef import DefinitionError
+from cylc.version import compat
 
 parser = OptionParser( """cylc [prep] validate [options] SUITE
 
@@ -69,6 +70,8 @@ except RegistrationError, x:
     if options.debug:
         raise
     raise SystemExit(x)
+
+compat( suite, suiterc ).execute( sys.argv )
 
 if options.verbose:
     print "Parsing Suite Definition"

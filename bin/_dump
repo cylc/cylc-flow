@@ -21,6 +21,7 @@ from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import NoPromptOptionParser_u
 from cylc.port_scan import SuiteIdentificationError
 from cylc.registration import dbgetter, RegistrationError
+from cylc.version import compat
 
 parser = NoPromptOptionParser_u( """cylc [info] dump [options] SUITE 
 
@@ -53,9 +54,11 @@ parser.add_option( "-s", "--sort", help="Task states only; "
 reg = parser.get_suite_name()
 dbg = dbgetter()
 try:
-    suite, junk = dbg.get_suite(reg)
+    suite, suiterc = dbg.get_suite(reg)
 except RegistrationError, x:
     raise SystemExit(x)
+
+compat( suite, suiterc ).execute( sys.argv )
 
 # default: display all information
 display_tasks = True

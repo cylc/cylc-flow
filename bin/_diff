@@ -20,6 +20,7 @@ import os, sys
 from optparse import OptionParser
 from cylc.config import config, SuiteConfigError
 from cylc.registration import dbgetter, RegistrationError
+from cylc.version import compat
 
 n_oone = 0
 n_otwo = 0
@@ -131,6 +132,19 @@ try:
     suite2, suite2rc = dbg.get_suite(reg2)
 except RegistrationError, x:
     raise SystemExit(x)
+
+compat1 = compat( suite1, suite1rc )
+compat2 = compat( suite2, suite2rc )
+ver1 = compat1.get_version()
+ver2 = compat2.get_version()
+
+if ver1 != ver2:
+    print >> sys.stderr, 'Suite cylc version spec:'
+    print >> sys.stderr, ' ', suite1 + ':', ver1
+    print >> sys.stderr, ' ', suite2 + ':', ver2
+    raise SystemExit('ERROR: suites cannot be compared at different cylc versions' )
+
+compat1.execute( sys.argv )
 
 try:
     print "Parsing", suite1

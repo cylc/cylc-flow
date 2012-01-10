@@ -16,7 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import os, sys
 import gtk
 from optparse import OptionParser
@@ -24,6 +23,7 @@ from optparse import OptionParser
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 
 from cylc.hostname import hostname
+from cylc.version import compat
 
 # check Pyro is installed
 try:
@@ -119,6 +119,8 @@ try:
     suite, suiterc = dbg.get_suite(reg)
 except RegistrationError, x:
     raise SystemExit(x)
+
+compat( suite, suiterc ).execute( sys.argv )
 
 suite_dir = os.path.dirname(suiterc)
 

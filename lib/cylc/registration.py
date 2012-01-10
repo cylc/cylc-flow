@@ -19,6 +19,7 @@
 import pickle
 import datetime, time
 import os, sys, re
+from version import compat
 from conf.CylcGlobals import central_regdb_dir, local_regdb_dir
 from config import config, SuiteConfigError
 
@@ -257,6 +258,7 @@ class regdb(object):
 
     def register( self, suite, dir ):
         check_name( suite )
+
         for key in self.items.keys():
             if key == suite:
                 raise SuiteTakenError, suite
@@ -295,6 +297,11 @@ class regdb(object):
                 print >> sys.stderr, "Registering the suite with temporary title 'SUITE PARSE ERROR'."
                 print >> sys.stderr, "You can update the title later with 'cylc db refresh'.\n"
                 title = "SUITE PARSE ERROR"
+
+        # TO DO, suite version in database:
+        version = self.get_suite_version( suite, dir )
+        if version:
+            print 'VERSION:', version
 
         #if self.verbose:
         print 'REGISTER', suite + ':', dir
@@ -411,6 +418,15 @@ class regdb(object):
             suite = self.unalias(suite)
             suiterc = self.getrc( suite )
         return config( suite, suiterc ).get_title()
+
+    def get_suite_version( self, suite, path=None ):
+        if path:
+            suiterc = os.path.join( path, 'suite.rc' )
+            suite = "unnamed"
+        else:
+            suite = self.unalias(suite)
+            suiterc = self.getrc( suite )
+        return compat( suite, suiterc, None ).get_version()
 
     def refresh_suite_title( self, suite ):
         dir, title = self.items[suite]
