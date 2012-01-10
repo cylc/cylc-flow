@@ -88,15 +88,6 @@ class job_submit(object):
         # The directory is created in config.py
         self.logfiles.add_path( self.local_jobfile_path )
 
-        # Local stdout and stderr log file paths:
-        self.stdout_file = self.local_jobfile_path + ".out"
-        self.stderr_file = self.local_jobfile_path + ".err"
-        # Record paths of local log files for access by gcylc
-        # (only works for remote tasks if there is a shared file system or
-        # the output files are returned by, for instance, a hook script)
-        self.logfiles.add_path( self.stdout_file)
-        self.logfiles.add_path( self.stderr_file)
-        
         self.suite_owner = os.environ['USER']
         self.remote_shell_template = remote_shell_template
         self.remote_cylc_dir = remote_cylc_dir
@@ -107,7 +98,7 @@ class job_submit(object):
         if not self.__class__.simulation_mode and \
             ( remote_host and remote_host != "localhost" and remote_host != socket.gethostname() ) or \
             ( task_owner and task_owner != self.suite_owner ):
-            # REMOTE
+            # REMOTE TASKS
             self.local = False
             if task_owner:
                 self.task_owner = task_owner
@@ -119,18 +110,48 @@ class job_submit(object):
             else:
                 self.remote_host = socket.gethostname()
 
-            # Remote job script and stdout and stderr logs:
             self.remote_jobfile_path = os.path.join( remote_log_dir, tag )
+
+            # Remote log files
             self.stdout_file = self.remote_jobfile_path + ".out"
             self.stderr_file = self.remote_jobfile_path + ".err"
+ 
             # Used in command construction:
             self.jobfile_path = self.remote_jobfile_path
+
+            # Record paths of remote log files for access by gcylc
+            if True:
+                # by ssh URL
+                url_prefix = self.task_owner + '@' + self.remote_host
+                self.logfiles.add_path( url_prefix + ':' + self.stdout_file)
+                self.logfiles.add_path( url_prefix + ':' + self.stderr_file)
+            else:
+                # CURRENTLY DISABLED: 
+                # If the remote and suite hosts see a common filesystem, or
+                # if the remote task is really just a local task with a
+                # different owner, we could just use local filesystem access. 
+                # But to use this: (a) special namespace config would be
+                # required to indicate we have a common filesystem, and
+                # (b) we'd need to consider how the log directory can be
+                # specified (for example use of '$HOME' as for remote
+                # task use would not work here as log file access is by
+                # gcylc under the suite owner account. 
+                self.logfiles.add_path( self.stdout_file )
+                self.logfiles.add_path( self.stderr_file )
         else:
-            # LOCAL
+            # LOCAL TASKS
             self.local = True
             self.task_owner = self.suite_owner
             # Used in command construction:
             self.jobfile_path = self.local_jobfile_path
+
+            # Local stdout and stderr log file paths:
+            self.stdout_file = self.local_jobfile_path + ".out"
+            self.stderr_file = self.local_jobfile_path + ".err"
+
+            # Record paths of local log files for access by gcylc
+            self.logfiles.add_path( self.stdout_file)
+            self.logfiles.add_path( self.stderr_file)
 
         # Overrideable methods
         self.set_directives()
