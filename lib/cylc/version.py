@@ -29,7 +29,7 @@ cylc_version = "VERSION-TEMPLATE"
 #
 #| from cylc.version import compat
 #| # and after defining suite and suite.rc:
-#| compat( suite, suiterc, sys.argv ).execute()
+#| compat( suite, suiterc ).execute( sys.argv )
 # 
 # This will result in the command being executed using a different
 # version of cylc than the version invoked, if the first line of the

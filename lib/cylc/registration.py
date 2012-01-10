@@ -298,10 +298,11 @@ class regdb(object):
                 print >> sys.stderr, "You can update the title later with 'cylc db refresh'.\n"
                 title = "SUITE PARSE ERROR"
 
-        # TO DO, suite version in database:
-        version = self.get_suite_version( suite, dir )
-        if version:
-            print 'VERSION:', version
+        # TO DO: put suite version in database?
+        # The following works, disabling until used:
+        #version = self.get_suite_version( suite, dir )
+        #if version:
+        #    print 'VERSION:', version
 
         #if self.verbose:
         print 'REGISTER', suite + ':', dir
@@ -426,7 +427,7 @@ class regdb(object):
         else:
             suite = self.unalias(suite)
             suiterc = self.getrc( suite )
-        return compat( suite, suiterc, None ).get_version()
+        return compat( suite, suiterc ).get_version()
 
     def refresh_suite_title( self, suite ):
         dir, title = self.items[suite]
