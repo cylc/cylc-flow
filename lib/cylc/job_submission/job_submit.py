@@ -121,9 +121,18 @@ class job_submit(object):
             self.jobfile_path = self.remote_jobfile_path
 
             # Record paths of remote log files for access by gcylc
-            url_prefix = self.task_owner + '@' + self.remote_host
-            self.logfiles.add_path( url_prefix + ':' + self.stdout_file)
-            self.logfiles.add_path( url_prefix + ':' + self.stderr_file)
+            if True:
+                # by ssh URL
+                # To Do: exception handling for the ssh subprocess
+                url_prefix = self.task_owner + '@' + self.remote_host
+                self.logfiles.add_path( url_prefix + ':' + self.stdout_file)
+                self.logfiles.add_path( url_prefix + ':' + self.stderr_file)
+            else:
+                # common filesystem: must not use '$HOME' as these
+                # filenames are interpreted by gcylc as suite owner.
+                # To Do: elucidate use of $HOME, ~user, etc.
+                self.logfiles.add_path( self.stdout_file )
+                self.logfiles.add_path( self.stderr_file )
 
         else:
             # LOCAL
