@@ -217,8 +217,10 @@ if os.path.isfile( suiterc ):
                 print >> sys.stderr, 'WARNING: Continuing without template processing.'
             else:
                 env = Environment( loader=FileSystemLoader(suitedir) )
+                # load file lines into a template, excluding '#!jinja2' so
+                # that '#!cylc-x.y.z' rises to the top.
                 try:
-                    template = env.from_string( ''.join(lines) )
+                    template = env.from_string( ''.join(lines[1:]) )
                 except TemplateError, x:
                     print >> sys.stderr, "Jinja2 template error: " + str(x)
                     sys.exit(1)

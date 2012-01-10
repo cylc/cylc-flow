@@ -209,8 +209,10 @@ class config( CylcConfigObj ):
             if self.verbose:
                 print "Processing the suite with Jinja2"
             env = Environment( loader=FileSystemLoader(self.dir) )
+             # load file lines into a template, excluding '#!jinja2' so
+             # that '#!cylc-x.y.z' rises to the top.
             try:
-                template = env.from_string( ''.join(flines) )
+                template = env.from_string( ''.join(flines[1:]) )
             except TemplateError, x:
                 raise SuiteConfigError, "Jinja2 template error: " + str(x)
 

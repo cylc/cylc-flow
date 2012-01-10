@@ -54,22 +54,33 @@ class compat( object ):
         except OSError, x:
             raise SystemExit(x)
         # read first line of the suite.rc file
-        banghash = f.readline()
+        line0 = f.readline()
+        line1 = f.readline()
         f.close()
 
         # location of the invoked cylc
         self.cylc_dir = os.environ['CYLC_DIR']
 
-        # check for "#! cylc-x.y.z" or "#!/path/to/cylc-x.y.z" (not being
+        # check for "#!cylc-x.y.z" or "#!/path/to/cylc-x.y.z" (not being
         # strict about the form of x.y.z because of unofficial releases):
-        m = re.match( '^#!\s*(.*cylc-.*)$', banghash )
+        m = re.match( '^#!([\w/.-:]*cylc-.*)$', line0 )
         if m:
-            self.required_cylc = m.groups()[0] # e.g. cylc-4.1.1 or /path/to/cylc-4.1.1
+            # first line specifies cylc version
+            z = m
+        elif re.match( '^#![jJ]inja2\s*', line0 ):
+            # First line specified Jinja2
+            # Try second line for cylc version.
+            z = re.match( '^#!([\w/.-:]*cylc-.*)$', line1 )
+        else:
+            z = None
+        if z:
+            self.required_cylc = z.groups()[0] # e.g. cylc-4.1.1 or /path/to/cylc-4.1.1
             self.required_version = re.sub( '^.*-', '', self.required_cylc )  # e.g. 4.1.1
             if self.required_version != cylc_version:
                 self.compatible = False
-                self.messages.append( 'Current version: cylc-' + cylc_version + ' (' + self.cylc_dir + ')' )
-                self.messages.append( 'Suite requires:  ' + self.required_cylc + ' (' + banghash.rstrip() + ')' )
+                self.messages.append( 'Cylc cross-version suite compatibility:' )
+                self.messages.append( '  Invoked version: cylc-' + cylc_version )
+                self.messages.append( '  Suite requires:  ' + self.required_cylc )
             else:
                 self.compatible = True
         else:
@@ -97,9 +108,9 @@ class compat( object ):
         else:
             # assume parallel installations at the same location
             self.new_cylc_dir = os.path.join( os.path.dirname( self.cylc_dir ), self.required_cylc )
-            self.messages.append( 'Computing path by assuming parallel cylc installations' )
+            self.messages.append( 'Assuming installation parallel to ' + self.cylc_dir )
 
-        self.messages.append( 'Re-issuing command from ' + self.new_cylc_dir )
+        self.messages.append( '=> Re-issuing command from ' + self.new_cylc_dir )
 
         # full path to new cylc command
         new_cylc = os.path.join( self.new_cylc_dir, 'bin', 'cylc')
