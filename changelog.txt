@@ -424,3 +424,14 @@ released on restarting the suiteing the suiteing the suite.
 instantiation were not being printed properly when multiple errors
 occured. 2/ detect erroneous use of synchronous special tasks in
 asynchronous graphs.
+
+________________________________________________________________________
+4.2.0-rc1 (4.2.0 PENDING)
+
++ Cross-version suite compatibility. Put "#!cylc-x.y.z" as the first 
+line of your suite.rc file, and cylc-x.y.z will be used to access the 
+suite regardless of which cylc version is initially invoked.
+
++ Remote task stdout and stderr logs can now be accessed by gcylc.
+
+
