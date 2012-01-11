@@ -261,6 +261,12 @@ for dct in [
         all_commands[com] = dct[com]
  
 general_usage = """
+Cylc is a (meta)scheduler for complex cycling meteorological forecasting
+systems and related data processing. This is the cylc command line
+interface. The cylc graphical user interface is gcylc.
+
+Release version: cylc-"""+cylc_version+""" 
+
 USAGE:
   cylc -v,--version                               # cylc version
   cylc help,--help,-h,?                           # this help page
@@ -285,8 +291,7 @@ catsum['control'     ]   = "running, monitoring, and controlling suites."
 catsum['task'        ]   = "running single tasks, and task messaging commands."
 catsum['utility'     ]   = "cycle time arithmetic, filename templating, etc."
 
-usage = """cylc release version: """ + cylc_version + """
-""" + general_usage + """
+usage = general_usage + """
 
 Commands and categories can be abbreviated. Use of categories is
 optional, but they can disambiguate highly abbreviated commands:
