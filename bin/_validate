@@ -22,7 +22,7 @@ from optparse import OptionParser
 from cylc.registration import dbgetter, RegistrationError
 from cylc.config import config, SuiteConfigError
 from cylc.taskdef import DefinitionError
-from cylc.version import compat
+from cylc.version import compat, cylc_version
 
 parser = OptionParser( """cylc [prep] validate [options] SUITE
 
@@ -137,7 +137,7 @@ if options.verbose:
     config.print_inheritance_tree( labels=labels, pretty=options.pretty )
 
 if not error:
-    print "Suite " + suite + " validates OK."
+    print "Suite " + suite + " is valid for cylc-" + cylc_version
 else:
     for tn in result:
         if not result[tn]:
