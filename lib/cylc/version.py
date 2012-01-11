@@ -75,7 +75,7 @@ class compat( object ):
             z = None
         if z:
             self.required_cylc = z.groups()[0] # e.g. cylc-4.1.1 or /path/to/cylc-4.1.1
-            self.required_version = re.sub( '^.*-', '', self.required_cylc )  # e.g. 4.1.1
+            self.required_version = re.sub( '^.*cylc-', '', self.required_cylc )  # e.g. 4.1.1
             if self.required_version != cylc_version:
                 self.compatible = False
                 self.messages.append( 'Cylc cross-version suite compatibility:' )
@@ -108,7 +108,7 @@ class compat( object ):
         else:
             # assume parallel installations at the same location
             self.new_cylc_dir = os.path.join( os.path.dirname( self.cylc_dir ), self.required_cylc )
-            self.messages.append( 'Path not given: assuming parallel cylc installations' )
+            self.messages.append( 'Path not given, assuming parallel cylc installations' )
 
         self.messages.append( '=> Re-issuing command using ' + self.new_cylc_dir )
 
