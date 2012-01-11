@@ -110,7 +110,7 @@ class compat( object ):
             self.new_cylc_dir = os.path.join( os.path.dirname( self.cylc_dir ), self.required_cylc )
             self.messages.append( 'Path not given: assuming parallel cylc installations' )
 
-        self.messages.append( '=> Re-issuing command from ' + self.new_cylc_dir )
+        self.messages.append( '=> Re-issuing command using ' + self.new_cylc_dir )
 
         # full path to new cylc command
         new_cylc = os.path.join( self.new_cylc_dir, 'bin', 'cylc')
