@@ -36,7 +36,7 @@ cylc_version = "VERSION-TEMPLATE"
 # suite.rc file is either '#!cylc-x.y.z' or '#!/path/to/cylc-x.y.z'
 # and the specified version is not the same as the invoked version.
 #
-# If the bang-hash line at the top of the suite.rc does not specify
+# If the hash-bang line at the top of the suite.rc does not specify
 # the full path to the required cylc installation, it will be computed
 # by assuming parallel cylc installations: If the invoked command is in
 # /foo/bar/baz/cylc-4.2.1/bin/cylc and you specify '#!cylc-4.3.2' then
