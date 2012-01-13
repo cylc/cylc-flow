@@ -1434,14 +1434,15 @@ The cylc forecast suite metascheduler.
         hbox.pack_start(pattern_entry, True) 
         vbox.pack_start( hbox )
 
-        nobin_cb = gtk.CheckButton( "Don't search bin/ directory" )
-        vbox.pack_start (nobin_cb, True)
+        yesbin_cb = gtk.CheckButton( "search suite bin/ directory" )
+        yesbin_cb.set_active(True)
+        vbox.pack_start (yesbin_cb, True)
 
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Search" )
-        ok_button.connect("clicked", self.search_suite, reg, nobin_cb, pattern_entry )
+        ok_button.connect("clicked", self.search_suite, reg, yesbin_cb, pattern_entry )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", self.command_help, 'prep', 'search' )
@@ -1531,13 +1532,13 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def search_suite( self, w, reg, nobin_cb, pattern_entry ):
+    def search_suite( self, w, reg, yesbin_cb, pattern_entry ):
         pattern = pattern_entry.get_text()
         options = ''
-        if nobin_cb.get_active():
+        if not yesbin_cb.get_active():
             options += ' -x '
         command = "cylc search " + self.dbopt + " --notify-completion " + options + ' ' + pattern + ' ' + reg 
-        foo = gcapture_tmpfile( command, self.tmpdir, height=500 )
+        foo = gcapture_tmpfile( command, self.tmpdir, width=600, height=500 )
         self.gcapture_windows.append(foo)
         foo.run()
 
