@@ -73,8 +73,14 @@ fi
 
 cd doc
 
+cylc -v > cylc-version.txt
+
 pdflatex cug-pdf.tex
-$PDF_ONLY && exit 0
+if $PDF_ONLY; then
+    rm cylc-version.txt # gets regenerated every time
+    exit 0
+fi
+
 pdflatex cug-pdf.tex
 pdflatex cug-pdf.tex
 
@@ -83,3 +89,4 @@ rm *.aux
 htlatex cug-html.tex "cug-html.cfg,xhtml,3,next"
 htlatex cug-html.tex "cug-html.cfg,xhtml,3,next"
 
+rm cylc-version.txt # gets regenerated every time

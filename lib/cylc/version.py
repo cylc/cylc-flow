@@ -22,6 +22,17 @@ import os, sys, re
 # auto-replaced with version tag by new-release script:
 cylc_version = "VERSION-TEMPLATE"
 
+if cylc_version == "VERSION-" + "TEMPLATE": # (to avoid the replacement)
+    # this is a cylc repository, find the qualified most recent version tag 
+    os.chdir( os.environ['CYLC_DIR'] )
+    try:
+        p = subprocess.Popen( ['git', 'describe' ], stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+    except OSError,x:
+        print sys.stderr, 'WARNING: failed to get repository pseudo version tag:'
+    else:
+        out, err = p.communicate()
+        cylc_version = out.rstrip()
+
 #_______________________________________________________________________
 #-----------------CYLC-VERSION-COMPATIBILITY-MECHANISM------------------
 # Any command that parses information from a suite.rc file, or runs a

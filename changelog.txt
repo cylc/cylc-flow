@@ -434,4 +434,5 @@ suite regardless of which cylc version is initially invoked.
 
 + Remote task stdout and stderr logs can now be accessed by gcylc.
 
++ Runtime namespace inheritance hierarchy graphing.
 

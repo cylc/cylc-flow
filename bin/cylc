@@ -22,6 +22,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 
 from OrderedDict import OrderedDict
 from cylc.execute import execute
+import subprocess
 from cylc.version import cylc_version
 
 # check Pyro is installed
@@ -259,7 +260,7 @@ for dct in [
         license_commands ]:
     for com in dct.keys():
         all_commands[com] = dct[com]
- 
+
 general_usage = """
 Cylc is a (meta)scheduler for complex cycling meteorological forecasting
 systems and related data processing. This is the cylc command line
