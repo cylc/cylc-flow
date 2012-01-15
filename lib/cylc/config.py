@@ -400,6 +400,13 @@ class config( CylcConfigObj ):
             self['visualization']['initial cycle time'] = 2999010100
             self['visualization']['final cycle time'] = 2999010123
   
+    def get_inheritance( self ):
+        inherit = {}
+        for ns in self['runtime']:
+            #if 'inherit' in self['runtime'][ns]:
+            inherit[ns] = self['runtime'][ns]['inherit']
+        return inherit
+
     def define_inheritance_tree( self, tree, hierarchy ):
         # combine inheritance hierarchies into a tree structure.
         for rt in hierarchy:
