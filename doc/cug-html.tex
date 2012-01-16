@@ -165,8 +165,9 @@ basicstyle=\color{basic}\ttfamily,
 
 \begin{document}
 
+ % cylc-version.txt is generated each time by doc/process
 \title{The Cylc User Guide \\
-\input{cylc-version.txt} \\ % generated each time by doc/process
+\protect \input{cylc-version.txt} \\
 GNU GPL v3.0 Software License \\
 Copyright Hilary Oliver, NIWA, 2008-2011}
 
@@ -176,9 +177,8 @@ Copyright Hilary Oliver, NIWA, 2008-2011}
 
 \maketitle
 
-%%\pagebreak
+%\pagebreak
 %\input{abstract.tex}
-%
 %\pagebreak
 
 \tableofcontents
