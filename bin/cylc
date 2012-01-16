@@ -311,7 +311,7 @@ tasks (GetData%2011080806) or 'a:INT' for asynchronous tasks (foo%a:1).
 Here's how to drill down to usage help for a particular command:
   % cylc help           # list all available categories (this page)
   % cylc help prep      # list commands in category 'preparation'
-  % cylc help prep edit # lp for 'cylc [prep] edit'
+  % cylc help prep edit # command usage help for 'cylc [prep] edit'
 
 Command CATEGORIES:"""
 

@@ -201,10 +201,20 @@ directly by cylc, not by running tasks. And similarly the {command
 lines} issued by cylc to invoke event hook scripts or to submit task 
 job scripts could, in principle, make use of environment variables
 defined here. 
-{\em Note that cylc local variables are not available to executing tasks
-unless you happen to choose a local direct job submission method -
-always use task runtime environments to pass variables into the task
-execution environment}.
+\paragraph{Warnings}
+
+\begin{myitemize}
+    \item Cylc local variables are not available to
+        executing tasks unless you happen to choose a local direct job
+        submission method.  {\em Always use task runtime environments to
+        pass variables into the task execution environment
+        (\ref{AppendixTaskExecutionEnvironment}).}
+    \item Unlike task execution environment variables, which are written
+        to job scripts and interpreted by the shell at run time, 
+        cylc local environment variables are written directly 
+        to the environment by Python as literal strings {\em  so 
+        shell variable expansion expressions cannot be used here.}
+\end{myitemize}
 
 \paragraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}
 
@@ -213,18 +223,17 @@ assignment expressions.
 Values may refer to other local environment variables (order of
 definition is preserved) and are not evaluated or manipulated by 
 cylc, so any variable assignment expression that is legal in the 
-shell in which cylc is running can be used.
+shell in which cylc is running can be used (but see the warning 
+above on variable expansions, which will not be evaluated).
+White space around the `$=$' is allowed (as far as cylc's suite.rc 
+parser is concerned these are normal configuration items).
 
 \begin{myitemize}
     \item {\em type:} string
-    \item {\em legal values:} depends on the shell in which you run
-        cylc. White space around the `$=$' is allowed. 
     \item {\em default:} (none)
     \item {\em examples:} 
         \begin{myitemize}
             \item \lstinline@FOO = $HOME/foo@
-            \item \lstinline@BAR = ${USER%_oper}@
-            \item \lstinline@BAZ= "${USER#*_oper}" # <-- QUOTED to escape the suite.rc comment character@
         \end{myitemize}
 \end{myitemize}
 
@@ -849,9 +858,10 @@ The remote host for this task or family.
 
 \subparagraph[owner]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ owner}
 
-The task owner (i.e.\ the username under which to access the remote host
-via passwordless ssh). May be defined by local environment variables 
-(i.e.\ [cylc] $\rightarrow$ [[environment]]). 
+The task owner username. This is (only) used in the passwordless ssh
+command line  invoked by cylc to submit the remote task (consequently it
+may be defined using local environment variables 
+(i.e.\ the shell in which cylc runs, and [cylc] $\rightarrow$ [[environment]]). 
 
 \begin{myitemize}
 \item {\em type:} string (a valid username on the remote host)
@@ -901,9 +911,7 @@ specified, the local log path will be used (see~\ref{LocalLog}) with the
 suite owner's home directory path, if present, replaced by
 \lstinline='$HOME'= for interpretation on the remote host.  The stdout
 and stderr log file names are the same as for local tasks, and are
-recorded for access via gcylc. You could use an event hook script to
-automatically retrieve remote log files on task completion to make them
-available as for local task logs.
+recorded for access via gcylc. 
 
 \begin{myitemize}
 \item {\em type:} string (a valid directory path on the remote host)
@@ -1033,7 +1041,8 @@ use cylc utility commands because access to cylc is also configured
 earlier in the script.  See also {\em Task Execution Environment},
 Section~\ref{TaskExecutionEnvironment}.
 
-\subparagraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}
+\subparagraph[\_\_VARIABLE\_\_ ]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment]]] $\rightarrow$ \_\_VARIABLE\_\_}
+\label{AppendixTaskExecutionEnvironment}
 
 Replace \_\_VARIABLE\_\_ with any number of environment variable
 assignment expressions.
@@ -1041,13 +1050,15 @@ Order of definition is preserved so values can refer to previously
 defined variables. Values are passed through to the task job script
 without evaluation or manipulation by cylc, so any variable assignment
 expression that is legal in the job submission shell can be used. 
+White space around the `$=$' is allowed (as far as cylc's suite.rc 
+parser is concerned these are just normal configuration items).
 
 \begin{myitemize}
 \item {\em type:} string
 \item {\em default:} (none)
-\item {\em legal values:} depends on the task job submission shell
-    (Section~\ref{JobSubShell}). White space around the `$=$' is allowed. 
- \item {\em examples}, for the bash shell: 
+\item {\em legal values:} depends to some extent on the task job
+    submission shell (Section~\ref{JobSubShell}). 
+\item {\em examples}, for the bash shell: 
    \begin{myitemize}
        \item \lstinline@FOO = $HOME/bar/baz@
        \item \lstinline@BAR = ${FOO}$GLOBALVAR@
@@ -1068,7 +1079,7 @@ the correct format for the method. Specifying directives individually
 like this allows use of default directives that can be individually
 overridden at lower levels of the runtime namespace hierarchy.
 
-\subparagraph[\_\_DIRECTIVE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_DIRECTIVE\_\_}
+\subparagraph[\_\_DIRECTIVE\_\_ ]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[directives]]] $\rightarrow$ \_\_DIRECTIVE\_\_}
 
 Replace \_\_DIRECTIVE\_\_ with each directive assignment, e.g. 
 \lstinline@class = parallel@
@@ -1089,7 +1100,7 @@ The task implementation must report the specified output messages
 by calling \lstinline=cylc task message= when the
 corresponding real outputs have been completed.
 
-\subparagraph[\_\_OUTPUT\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_OUTPUT\_\_}
+\subparagraph[\_\_OUTPUT\_\_ ]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[outputs]]] $\rightarrow$ \_\_OUTPUT\_\_}
 
 Replace \_\_OUTPUT\_\_ with any number of labelled output messages. 
 \begin{myitemize}
