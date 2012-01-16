@@ -126,18 +126,30 @@ suite_dir = os.path.dirname(suiterc)
 
 # get suite logging directory
 try:
-    logging_dir = os.path.join( config( suite, suiterc )['cylc']['logging']['directory'] )
+    conf = config( suite, suiterc )
 except SuiteConfigError,x:
     raise SystemExit(x)
+
+logging_dir = os.path.join( conf['cylc']['logging']['directory'] )
 
 # scan for suite port
 try:
     port = port_scan.get_port( suite )
 except:
     port = None
-    print >> sys.stderr, "Suite " + suite + " is not running"
+    #print "Suite " + suite + " is not running"
 else:
     print "Suite " + suite + " is running on port " + str(port)
+
+# Export the suite's "cylc local environment" here - gcylc spawns
+# external processes via the shell so the suite owner could want 
+# variables to affect these processes. Example: the ssh process to 
+# retrieve remote task output: 
+#   ssh owner@foobar 'cat $HOME/path/to/log/file'
+# owner is defined as "nwp_$SYS" and $SYS is computed from $HOME.
+senv = conf['cylc']['environment']
+for var in senv:
+    os.environ[var] = os.path.expandvars(senv[var])
 
 if options.depgraph:
     from cylc.gui.SuiteControlGraph import StandaloneControlGraphApp

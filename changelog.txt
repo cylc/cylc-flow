@@ -436,3 +436,8 @@ suite regardless of which cylc version is initially invoked.
 
 + Runtime namespace inheritance hierarchy graphing.
 
+4.2.0-rc2 (4.2.0 PENDING)
+
++ gcylc now spawns ssh commands to retrieve remote task output via the
+shell, so that task owner name can be defined by environment variable.
+

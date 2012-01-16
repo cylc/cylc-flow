@@ -44,21 +44,19 @@ class tailer(threading.Thread):
         #gobject.idle_add( self.clear )
         #print "Starting tailer thread"
 
-        #twat#if not os.path.exists( self.logfile ):
-        #twat#    #gobject.idle_add( self.warn, "File not found: " + self.logfile )
-        #twat#    print "File not found: " + self.logfile
-        #twat#    #print "Disconnecting from tailer thread"
-        #twat#    return
-
         if re.match( '^.+@.+:', self.logfile ):
-            # Handle remote task output statically. I can't get a live
+            # Handle remote task output statically - can't get a live
             # feed using 'ssh owner@host tail -f file' in a subprocess
-            # because p.stdout.readline() blocks indefinitely waiting
-            # for more output.
+            # because p.stdout.readline() blocks waiting for more output.
+            #   Use shell=True in case the task owner is defined by
+            # environment variable (e.g. owner=nwp_$SYS, where 
+            # SYS=${HOME##*_} for usernames like nwp_oper, nwp_test)
+            #   But quote the remote command so that '$HOME' in it is 
+            # interpreted on the remote machine.
             loc, file = self.logfile.split(':')
+            command = ["ssh -oBatchMode=yes " + loc + " 'cat " + file + "'"]
             try:
-                p = subprocess.Popen( ['ssh', '-oBatchMode=yes', loc, 'cat', file ], \
-                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT )
+                p = subprocess.Popen( command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True )
             except OSError, x:
                 # Probably: ssh command not found
                 out = str(x)
@@ -67,7 +65,8 @@ class tailer(threading.Thread):
                 # Success, or else problems reported by ssh (e.g. host
                 # not found or passwordless access  not configured) go
                 # to stdout/stderr.
-                out, junk = p.communicate()
+                out = ' '.join(command) + '\n'
+                out += p.communicate()[0]
 
                 out += """
 !!! gcylc WARNING: REMOTE TASK OUTPUT IS NOT LIVE, OPEN THE VIEWER AGAIN TO UPDATE !!!
@@ -78,6 +77,11 @@ class tailer(threading.Thread):
                 self.proc.poll()
         else:
             # Live feed (pythonic 'tail -f') for local job submission.
+            #if not os.path.exists( self.logfile ):
+            #    #gobject.idle_add( self.warn, "File not found: " + self.logfile )
+            #    print "File not found: " + self.logfile
+            #    #print "Disconnecting from tailer thread"
+            #    return
             gen = tail.tail( open( self.logfile ))
             while not self.quit:
                 if not self.freeze:

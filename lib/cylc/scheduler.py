@@ -362,15 +362,14 @@ class scheduler(object):
                 job_submit.failout_id = self.failout_task_id
 
         # SCHEDULER ENVIRONMENT
-        # Access to the suite bin directory for alert scripts executed
-        # by the scheduler. 
+        # Suite bin directory for alert scripts executed by the scheduler. 
         os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 
         # User defined local variables that may be required by alert scripts
         senv = self.config['cylc']['environment']
         for var in senv:
             os.environ[var] = os.path.expandvars(senv[var])
 
-        # suite identity for alert scripts (which are executed by the scheduler).
+        # Suite identity for alert scripts (which are executed by the scheduler).
         # Also put cylcenv variables in the scheduler environment
         for var in cylcenv:
             os.environ[var] = cylcenv[var]
