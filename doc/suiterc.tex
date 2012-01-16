@@ -974,15 +974,21 @@ where EVENT is one of the following strings:
     \item `submission\_failed' - the task failed in job submission
     \item `warning' - the task reported a warning message
     \item `failed' - the task failed
-    \item `timeout' - the task timed out
+    \item `submission\_timeout' - task job submission timed out
+    \item `execution\_timeout' - task execution timed out
 \end{myitemize}
 MESSAGE, if provided, describes what has happened, and TASKID identifies
-the offending  task (e.g.\ \lstinline=TASK%CYCLE= for cycling tasks).
+the task (\lstinline=NAME%CYCLE= for cycling tasks).
+
+To configure timeout handling, list `submission\_timeout' and/or
+`execution\_timeout' in the events to handle, and then specify 
+corresponding timeout values in minutes using the timeout config items
+below.
 
 {\em Note that event hook scripts are called by cylc itself, not by the 
-running tasks} so if you wish to pass in additional information via the
-environment, use [cylc] $\rightarrow$ [[environment]] not the
-runtime namespace environments.
+running tasks} so if you wish to pass in additional information to hook 
+scripts via the environment use [cylc] $\rightarrow$ [[environment]],
+not task runtime environments.
 
 \subparagraph[events]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ events }
 
@@ -1004,8 +1010,8 @@ The script to call when one of the nominated events occurs.
 \subparagraph[submission timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ submission timeout}
 
 If a task has not started the specified number of minutes after it was
-submitted, the hook script will be called by cylc with `timeout' as 
-the EVENT argument:
+submitted, the hook script will be called by cylc with
+{\em submission\_timeout} as the EVENT argument:
 \begin{myitemize}
     \item {\em type:} float (minutes)
     \item {\em default:} (none)
@@ -1014,8 +1020,8 @@ the EVENT argument:
 \subparagraph[execution timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ execution timeout}
 
 If a task has not finished the specified number of minutes after it
-started running, the hook script will be called by cylc with `timeout'
-as the EVENT argument:
+started running, the hook script will be called by cylc with {\em
+execution\_timeout} as the EVENT argument:
 \begin{myitemize}
     \item {\em type:} float (minutes)
     \item {\em default:} (none)

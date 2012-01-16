@@ -357,33 +357,46 @@ class task( Pyro.core.ObjBase ):
         else:
             self.set_submit_failed()
 
-    def check_timeout( self ):
-        if 'timeout' not in self.__class__.hook_events or not self.__class__.hook_script:
-            # not handling timeouts, or no handler specified.
+    def check_submission_timeout( self ):
+        if not self.__class__.hook_script:
+            # no event handler specified.
             return
-        if not self.execution_timeout and not self.submission_timeout:
-            # no timeouts defined
+        if 'submission_timeout' not in self.__class__.hook_events:
+            # not handling timeouts
+            return
+        if not self.submission_timeout:
+            # no timeout values specified
             return
         if not self.state.is_submitted() and not self.state.is_running():
             # nothing to time out yet
             return
         current_time = task.clock.get_datetime()
-        if self.submission_timeout != None \
-                and self.submission_timer_start != None \
-                and not self.state.is_running():
-                # check for job submission timeout
+        if self.submission_timer_start != None and not self.state.is_running():
             timeout = self.submission_timer_start + datetime.timedelta( minutes=self.submission_timeout )
             if current_time > timeout:
                 msg = 'submitted ' + str( self.submission_timeout ) + ' minutes ago, but has not started'
                 self.log( 'WARNING', msg )
-                command = ' '.join( [ self.__class__.hook_script, 'submission', self.__class__.suite, self.id, "'" + msg + "' &" ] )
+                self.log( 'WARNING', 'Calling task submission timeout hook script.' )
+                command = ' '.join( [ self.__class__.hook_script, 'submission_timeout', self.__class__.suite, self.id, "'" + msg + "' &" ] )
                 subprocess.call( command, shell=True )
                 self.submission_timer_start = None
 
-        if self.execution_timeout != None \
-                and self.execution_timer_start != None \
-                and self.state.is_running():
-                    # check for job execution timeout
+    def check_execution_timeout( self ):
+        if not self.__class__.hook_script:
+            # no event handler specified.
+            return
+        if 'execution_timeout' not in self.__class__.hook_events:
+            # not handling timeouts
+            return
+        if not self.execution_timeout:
+            # no timeout values specified
+            return
+        if not self.state.is_submitted() and not self.state.is_running():
+            # nothing to time out yet
+            return
+        current_time = task.clock.get_datetime()
+        if self.execution_timer_start != None and self.state.is_running():
+            # check for job execution timeout
             timeout = self.execution_timer_start + datetime.timedelta( minutes=self.execution_timeout )
             if current_time > timeout:
                 if self.reset_timer:
@@ -391,7 +404,8 @@ class task( Pyro.core.ObjBase ):
                 else:
                     msg = 'started ' + str( self.execution_timeout ) + ' minutes ago, but has not succeeded'
                 self.log( 'WARNING', msg )
-                command = ' '.join( [ self.__class__.hook_script, 'execution', self.__class__.suite, self.id, "'" + msg + "' &" ] )
+                self.log( 'WARNING', 'Calling task execution timeout hook script.' )
+                command = ' '.join( [ self.__class__.hook_script, 'execution_timeout', self.__class__.suite, self.id, "'" + msg + "' &" ] )
                 subprocess.call( command, shell=True )
                 self.execution_timer_start = None
 

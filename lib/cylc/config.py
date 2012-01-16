@@ -1314,20 +1314,21 @@ class config( CylcConfigObj ):
             taskd.hook_script = taskconfig['event hooks']['script']
             taskd.hook_events = taskconfig['event hooks']['events']
             for event in taskd.hook_events:
-                if event not in ['submitted', 'started', 'succeeded', 'warning', 'failed', 'submission_failed', 'timeout' ]:
+                if event not in ['submitted', 'started', 'succeeded', 'warning', 'failed', 'submission_failed', \
+                        'submission_timeout', 'execution_timeout' ]:
                     raise SuiteConfigError, name + ": illegal event hook: " + event
             taskd.submission_timeout = taskconfig['event hooks']['submission timeout']
             taskd.execution_timeout  = taskconfig['event hooks']['execution timeout']
             taskd.reset_timer = taskconfig['event hooks']['reset timer']
 
         if len(taskd.hook_events) > 0 and not taskd.hook_script:
-            print >> sys.stderr, 'WARNING:', taskd.name, 'defines hook events but no hook script'
-        if taskd.execution_timeout or taskd.submission_timeout or taskd.reset_timer:
-            if 'timeout' not in taskd.hook_events:
-                print >> sys.stderr, 'WARNING:', taskd.name, 'configures timeouts but does not handle timeout events'
-            if not taskd.hook_script:
-                print >> sys.stderr, 'WARNING:', taskd.name, 'configures timeouts but no hook script'
-        
+            print >> sys.stderr, 'WARNING:', taskd.name, 'lists hook events to handle, but no hook script'
+
+        if 'submission_timeout' in taskd.hook_events and not taskd.submission_timeout:
+            print >> sys.stderr, 'WARNING:', taskd.name, 'job submission timeout disabled (no timeout given)'
+        if 'execution_timeout' in taskd.hook_events and not taskd.execution_timeout:
+            print >> sys.stderr, 'WARNING:', taskd.name, 'job execution timeout disabled (no timeout given)'
+         
         taskd.logfiles    = taskconfig[ 'extra log files' ]
         taskd.environment = taskconfig[ 'environment' ]
         taskd.directives  = taskconfig[ 'directives' ]

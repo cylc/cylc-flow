@@ -1356,7 +1356,8 @@ class scheduler(object):
 
     def check_timeouts( self ):
         for itask in self.cycling_tasks + self.asynchronous_tasks:
-            itask.check_timeout()
+            itask.check_submission_timeout()
+            itask.check_execution_timeout()
 
     def waiting_clocktriggered_task_ready( self ):
         # This method actually returns True if ANY task is ready to run,
