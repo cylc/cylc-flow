@@ -18,7 +18,7 @@
 
 import os, re, sys
 from optparse import OptionParser
-from cylc.registration import delimiter, dbgetter, \
+from cylc.registration import RegPath, dbgetter, \
     RegistrationError, DatabaseLockedError
 from cylc.config import config, SuiteConfigError
 
@@ -58,11 +58,12 @@ else:
 if options.central:
     # only allow users to refresh their own suites
     owner = os.environ['USER']
-    if not pattern:
-        pattern = owner + delimiter
+    if not pattern or pattern == owner:
+        pattern = owner + RegPath.delimiter_re
     else:
-        if not pattern.startswith( owner + delimiter ):
-            pattern = owner + delimiter + pattern
+        pattern = re.sub( '^' + owner + '\.', '', pattern) # remove 'owner.'
+        pattern = re.sub( '^' + owner + '\.', '', pattern) # remove 'owner\.'
+        pattern = owner + RegPath.delimiter_re + pattern # prepend 'owner\.'
 
 invalid = []    # no suite.rc file
 readerror = []  # can't read title (suite.rc parse error)

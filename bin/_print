@@ -24,7 +24,8 @@ from cylc.print_tree import print_tree
 def get_padding( reglist ):
     maxlen = 0
     for reg in reglist:
-        items = reg[0].split( RegPath.delimiter )
+        regpath = reg[0]
+        items = RegPath(regpath).get_list()
         for i in range(0,len(items)):
             tmp = 2*i + 1 + len(items[i])
             if i == 0:
@@ -125,7 +126,7 @@ try:
             dir = re.sub( '^' + os.environ['HOME'], '~', dir )
             if options.align:
                 title = title + spacer_title[ len(title): ]
-            regpath = suite.split( RegPath.delimiter ) 
+            regpath = RegPath(suite).get_list()
             sub = tree
             for key in regpath[:-1]:
                 if key not in sub:

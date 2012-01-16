@@ -27,7 +27,7 @@ from cylc.cycle_time import ct, CycleTimeError
 from cylc.config import config, SuiteConfigError
 from cylc import cylc_pyro_client
 from cylc.port_scan import scan, SuiteIdentificationError
-from cylc.registration import delimiter, dbgetter, localdb, centraldb, RegistrationError
+from cylc.registration import dbgetter, localdb, centraldb, RegPath, RegistrationError
 from warning_dialog import warning_dialog, info_dialog, question_dialog
 import helpwindow
 from gcapture import gcapture, gcapture_tmpfile
@@ -85,7 +85,7 @@ class db_updater(threading.Thread):
             else:
                 state = '-'
             nest2 = self.newtree
-            regpath = suite.split(delimiter)
+            regpath = suite.split(RegPath.delimiter)
             for key in regpath[:-1]:
                 if key not in nest2:
                     nest2[key] = {}
@@ -834,12 +834,12 @@ The cylc forecast suite metascheduler.
                 par = model.iter_parent( iter )
                 if par:
                     val, = model.get(par, 0)
-                    reg = get_reg( val, par ) + delimiter + reg
+                    reg = get_reg( val, par ) + RegPath.delimiter + reg
             return reg
 
         reg = get_reg( item, iter )
         if self.cdb:
-            owner = reg.split(delimiter)[0]
+            owner = reg.split(RegPath.delimiter)[0]
 
         if group_clicked:
             group = reg
@@ -1158,7 +1158,7 @@ The cylc forecast suite metascheduler.
 
     def ownerless( self, creg ):
         # remove owner from a central suite registration
-        return delimiter.join( creg.split(delimiter)[1:] )
+        return RegPath.delimiter.join( creg.split(RegPath.delimiter)[1:] )
  
     def import_popup( self, w, reg ):
         window = gtk.Window()

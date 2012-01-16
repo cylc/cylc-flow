@@ -23,6 +23,10 @@ from conf.CylcGlobals import central_regdb_dir, local_regdb_dir
 from config import config, SuiteConfigError
 
 class RegPath(object):
+    # This class contains common code for checking suite registration
+    # name correctness, and manipulating said names. It is currently
+    # used piecemeal to do checking and conversions in-place. Eventually
+    # we should just pass around RegPath objects instead of strings.
     delimiter = '.'
     delimiter_re = '\.'
 
@@ -32,7 +36,8 @@ class RegPath(object):
         if re.search( '[^\w.-]', rpath ):
             raise IllegalRegPathError( rpath ) 
         # If the path ends in delimiter it must be a group, otherwise it
-        # may refer to a suite or a group.
+        # may refer to a suite or a group. NOTE: this information is not
+        # currently used.
         if re.match( '.*' + self.__class__.delimiter_re + '$', rpath ):
             self.is_definitely_a_group = True
             rpath = rpath.strip(self.__class__.delimiter_re)
@@ -42,6 +47,12 @@ class RegPath(object):
 
     def get( self ):
         return self.rpath
+
+    def get_list( self ):
+        return self.rpath.split(self.__class__.delimiter)
+
+    def get_fpath( self ):
+        return re.sub( self.__class__.delimiter_re, '/', self.rpath )
 
     def basename( self ):
         # return baz from foo.bar.baz
