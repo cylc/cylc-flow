@@ -63,7 +63,7 @@ perl -pi -e "s/VERSION-TEMPLATE/$VSN/" README
 
 echo "LATEX PROCESSING"
 
-doc/process -c
+doc/process
 
 echo "DELETING DOCUMENTATION SOURCE"
 # copy and restore generated documents from doc.
