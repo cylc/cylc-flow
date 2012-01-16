@@ -33,8 +33,7 @@ if cylc_version == "VERSION-" + "TEMPLATE": # (to avoid the replacement)
     else:
         out, err = p.communicate()
         cylc_version = out.rstrip()
-    finally:
-        os.chdir(cwd)
+    os.chdir(cwd)
 
 #_______________________________________________________________________
 #-----------------CYLC-VERSION-COMPATIBILITY-MECHANISM------------------
