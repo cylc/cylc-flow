@@ -441,3 +441,5 @@ suite regardless of which cylc version is initially invoked.
 + gcylc now spawns ssh commands to retrieve remote task output via the
 shell, so that task owner name can be defined by environment variable.
 
++ restored the 'warning' event hook, accidentally omitted some time ago.
+

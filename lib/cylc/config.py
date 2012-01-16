@@ -1314,7 +1314,7 @@ class config( CylcConfigObj ):
             taskd.hook_script = taskconfig['event hooks']['script']
             taskd.hook_events = taskconfig['event hooks']['events']
             for event in taskd.hook_events:
-                if event not in ['submitted', 'started', 'succeeded', 'failed', 'submission_failed', 'timeout' ]:
+                if event not in ['submitted', 'started', 'succeeded', 'warning', 'failed', 'submission_failed', 'timeout' ]:
                     raise SuiteConfigError, name + ": illegal event hook: " + event
             taskd.submission_timeout = taskconfig['event hooks']['submission timeout']
             taskd.execution_timeout  = taskconfig['event hooks']['execution timeout']
