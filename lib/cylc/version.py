@@ -24,6 +24,7 @@ cylc_version = "VERSION-TEMPLATE"
 
 if cylc_version == "VERSION-" + "TEMPLATE": # (to avoid the replacement)
     # this is a cylc repository, find the qualified most recent version tag 
+    cwd = os.getcwd()
     os.chdir( os.environ['CYLC_DIR'] )
     try:
         p = subprocess.Popen( ['git', 'describe' ], stdout=subprocess.PIPE, stderr=subprocess.PIPE )
@@ -32,6 +33,8 @@ if cylc_version == "VERSION-" + "TEMPLATE": # (to avoid the replacement)
     else:
         out, err = p.communicate()
         cylc_version = out.rstrip()
+    finally:
+        os.chdir(cwd)
 
 #_______________________________________________________________________
 #-----------------CYLC-VERSION-COMPATIBILITY-MECHANISM------------------
