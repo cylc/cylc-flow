@@ -17,8 +17,8 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gobject
-import threading
-import os, re
+import threading, subprocess
+import os, re, time
 from cylc import tail
 
 class tailer(threading.Thread):
@@ -44,33 +44,65 @@ class tailer(threading.Thread):
         #gobject.idle_add( self.clear )
         #print "Starting tailer thread"
 
-        if not os.path.exists( self.logfile ):
-            #gobject.idle_add( self.warn, "File not found: " + self.logfile )
-            print "File not found: " + self.logfile
-            #print "Disconnecting from tailer thread"
-            return
+        if re.match( '^.+@.+:', self.logfile ):
+            # Handle remote task output statically - can't get a live
+            # feed using 'ssh owner@host tail -f file' in a subprocess
+            # because p.stdout.readline() blocks waiting for more output.
+            #   Use shell=True in case the task owner is defined by
+            # environment variable (e.g. owner=nwp_$SYS, where 
+            # SYS=${HOME##*_} for usernames like nwp_oper, nwp_test)
+            #   But quote the remote command so that '$HOME' in it is 
+            # interpreted on the remote machine.
+            loc, file = self.logfile.split(':')
+            command = ["ssh -oBatchMode=yes " + loc + " 'cat " + file + "'"]
+            try:
+                p = subprocess.Popen( command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True )
+            except OSError, x:
+                # Probably: ssh command not found
+                out = str(x)
+                out += "\nERROR: failed to invoke ssh to cat the remote log file."
+            else:
+                # Success, or else problems reported by ssh (e.g. host
+                # not found or passwordless access  not configured) go
+                # to stdout/stderr.
+                out = ' '.join(command) + '\n'
+                out += p.communicate()[0]
 
-        gen = tail.tail( open( self.logfile ))
-        while not self.quit:
-            if not self.freeze:
-                line = gen.next()
-                if line:
-                    gobject.idle_add( self.update_gui, line )
+                out += """
+!!! gcylc WARNING: REMOTE TASK OUTPUT IS NOT LIVE, OPEN THE VIEWER AGAIN TO UPDATE !!!
+"""
+            gobject.idle_add( self.update_gui, out )
             if self.proc != None:
-                # poll the subprocess; this reaps its exit code and thus
-                # prevents the pid of the finished process staying in
-                # the OS process table (a "defunct process") until the
-                # parent process exits.
+                # See comment below
                 self.proc.poll()
-            # The following doesn't work, not sure why, perhaps because
-            # the top level subprocess finishes before the next one
-            # (shows terminated too soon). 
-            #    if self.proc.poll() != None:
-            #        (poll() returns None if process hasn't finished yet.)
-            #        #print 'process terminated'
-            #        gobject.idle_add( self.update_gui, '(PROCESS COMPLETED)\n' )
-            #        break
-        #print "Disconnecting from tailer thread"
+        else:
+            # Live feed (pythonic 'tail -f') for local job submission.
+            #if not os.path.exists( self.logfile ):
+            #    #gobject.idle_add( self.warn, "File not found: " + self.logfile )
+            #    print "File not found: " + self.logfile
+            #    #print "Disconnecting from tailer thread"
+            #    return
+            gen = tail.tail( open( self.logfile ))
+            while not self.quit:
+                if not self.freeze:
+                    line = gen.next()
+                    if line:
+                        gobject.idle_add( self.update_gui, line )
+                if self.proc != None:
+                    # poll the subprocess; this reaps its exit code and thus
+                    # prevents the pid of the finished process staying in
+                    # the OS process table (a "defunct process") until the
+                    # parent process exits.
+                    self.proc.poll()
+                # The following doesn't work, not sure why, perhaps because
+                # the top level subprocess finishes before the next one
+                # (shows terminated too soon). 
+                #    if self.proc.poll() != None:
+                #        (poll() returns None if process hasn't finished yet.)
+                #        #print 'process terminated'
+                #        gobject.idle_add( self.update_gui, '(PROCESS COMPLETED)\n' )
+                #        break
+            #print "Disconnecting from tailer thread"
  
     def update_gui( self, line ):
         if self.critical_re and re.search( self.critical_re, line ):

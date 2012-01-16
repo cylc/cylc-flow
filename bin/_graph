@@ -23,8 +23,11 @@ import gtk
 import gtk.gdk
 import gobject
 from optparse import OptionParser
-#from cylc import config
+from cylc.config import config, SuiteConfigError
 from cylc.registration import dbgetter, RegistrationError
+from cylc.version import compat
+from cylc.graphing import CGraphPlain
+from xdot import DotWindow
 
 # DEVELOPER NOTE: family grouping controls via the viewer toolbar and
 # right-click menu have been rather hastily stuck on to the original
@@ -128,9 +131,14 @@ Arguments:
 #    action="store_true", default=False, dest="updatelive" )
 
 parser.add_option( "-w", "--warmstart", 
-    help="Plot the mid-stream warm start graph (technically this is "
-    "termed a 'raw start' in cylc).",
+    help="Plot the mid-stream warm start (raw start) "
+    "dependency graph (the default is cold start).",
     action="store_true", default=False, dest="rawstart" )
+
+parser.add_option( "-n", "--namespaces", 
+    help="Plot the suite namespace inheritance hierarchy "
+    "(task run time properties).",
+    action="store_true", default=False, dest="namespaces" )
 
 parser.add_option( "-f", "--file", 
     help="View a specific dot-language graphfile.",
@@ -151,16 +159,11 @@ parser.add_option( "-o", "--output",
 
 ( options, args ) = parser.parse_args()
 
-view_file = False
-
 if options.filename:
     if len(args) != 0:
         parser.error( 'file graphing arguments: \'-f FILE\' or \'--file=FILE\'' )
         sys.exit(1)
-    view_file = True
     file = options.filename
-
-if view_file:
     try:
         from xdot import DotWindow
     except:
@@ -192,43 +195,79 @@ try:
 except RegistrationError, x:
     raise SystemExit(x)
 
-start_ctime = None
-stop = None
+compat( suite, suiterc ).execute( sys.argv )
 
-if len(args) > 1:
-    # got START
+if options.namespaces:
     try:
-        start_ctime = ct(args[1]).get()
-    except CycleTimeError,x:
+        config = config( suite, suiterc )
+    except SuiteConfigError,x:
         raise SystemExit(x)
 
-    if len(args) == 3:
-        # got STOP
+    # SUITE NAMESPACE INHERITANCE HIERARCHY GRAPH
+    title = suite + ' runtime namespace inheritance graph'
+    graph = CGraphPlain( title )
+    inherit = config.get_inheritance()
+    for ns in inherit:
+        if inherit[ns]:
+            attr = {}
+            attr['color'] = 'royalblue'
+            graph.add_edge( inherit[ns], ns, **attr )
+            nl = graph.get_node( inherit[ns] )
+            nr = graph.get_node( ns )
+            for n in nl, nr:
+                n.attr['shape'] = 'box'
+                n.attr['style'] = 'filled'
+                n.attr['fillcolor'] = 'powderblue'
+                n.attr['color'] = 'royalblue'
+    window = DotWindow()
+    try:
+        window.set_dotcode( graph.string() )
+    except OSError, x:
+        print >> sys.stderr, x
+        sys.exit(1)
+    window.connect( 'destroy', gtk.main_quit)
+    gtk.main()
+    sys.exit(0)
+else:
+    # SUITE DEPENDENCY GRAPH
+
+    start_ctime = None
+    stop = None
+
+    if len(args) > 1:
+        # got START
         try:
-            stop_ctime = ct(args[2])
+            start_ctime = ct(args[1]).get()
         except CycleTimeError,x:
             raise SystemExit(x)
-        stop_delta = stop_ctime.subtract( ct(start_ctime) )
-        # timedelta: days, seconds, microseconds; ignoring microseconds
-        stop = stop_delta.days * 24 + stop_delta.seconds / 3600
-    else:
-        stop = 0
 
-raw = False
-if options.rawstart:
-    raw = True
+        if len(args) == 3:
+            # got STOP
+            try:
+                stop_ctime = ct(args[2])
+            except CycleTimeError,x:
+                raise SystemExit(x)
+            stop_delta = stop_ctime.subtract( ct(start_ctime) )
+            # timedelta: days, seconds, microseconds; ignoring microseconds
+            stop = stop_delta.days * 24 + stop_delta.seconds / 3600
+        else:
+            stop = 0
 
-window = MyDotWindow( suite, suiterc, watchers, start_ctime, stop, raw, options.outputfile )
+    raw = False
+    if options.rawstart:
+        raw = True
 
-window.widget.connect( 'clicked', on_url_clicked, window )
+    window = MyDotWindow( suite, suiterc, watchers, start_ctime, stop, raw, options.outputfile )
+    window.widget.connect( 'clicked', on_url_clicked, window )
 
-#try:
-window.get_graph()
-#except config.SuiteConfigError, x:
-#    raise SystemExit(x)
-window.connect( 'destroy', gtk.main_quit)
+    #try:
+    window.get_graph()
+    #except config.SuiteConfigError, x:
+    #    raise SystemExit(x)
+    window.connect( 'destroy', gtk.main_quit)
 
-#if options.updatelive:
-# checking periodically for file changed
-gobject.timeout_add(1000, window.update)
-gtk.main()
+    #if options.updatelive:
+    # checking periodically for file changed
+    gobject.timeout_add(1000, window.update)
+    gtk.main()
+    sys.exit(0)

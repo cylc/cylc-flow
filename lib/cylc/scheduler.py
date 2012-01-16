@@ -44,6 +44,7 @@ from config import config, SuiteConfigError
 from cylc.registration import RegPath, localdb, RegistrationError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
+from version import compat
 
 from CylcError import TaskNotFoundError, TaskStateError
 
@@ -160,6 +161,8 @@ class scheduler(object):
             self.suite = db.unalias(suite)
         except RegistrationError,x:
             raise SystemExit(x)
+
+        compat( self.suite, self.suiterc ).execute( sys.argv )
 
         # MODE OF OPERATION (REAL, SIMULATION, practice)
         #DISABLED if self.options.simulation_mode and self.options.practice_mode:
@@ -359,15 +362,14 @@ class scheduler(object):
                 job_submit.failout_id = self.failout_task_id
 
         # SCHEDULER ENVIRONMENT
-        # Access to the suite bin directory for alert scripts executed
-        # by the scheduler. 
+        # Suite bin directory for alert scripts executed by the scheduler. 
         os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 
         # User defined local variables that may be required by alert scripts
         senv = self.config['cylc']['environment']
         for var in senv:
             os.environ[var] = os.path.expandvars(senv[var])
 
-        # suite identity for alert scripts (which are executed by the scheduler).
+        # Suite identity for alert scripts (which are executed by the scheduler).
         # Also put cylcenv variables in the scheduler environment
         for var in cylcenv:
             os.environ[var] = cylcenv[var]

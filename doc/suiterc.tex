@@ -819,7 +819,7 @@ environment variable \lstinline=$CYLC_SUITE_SHARE_PATH=.
 
 \paragraph[{[[[}remote{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]]}
 
-Remote hosting configuration, for tasks that need to run on platforms
+Remote hosting configuration for tasks that need to run on platforms
 other than the suite host. If a remote host is specified cylc
 will attempt to execute the task on that host by passwordless ssh.
 Relevant task scripts and executables, cylc itself, and possibly all or
@@ -838,7 +838,9 @@ The remote host for this task or family.
 
 \subparagraph[owner]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ owner}
 
-User name under which to access the remote host, via passwordless ssh. 
+The task owner (i.e.\ the username under which to access the remote host
+via passwordless ssh). May be defined by local environment variables 
+(i.e.\ [cylc] $\rightarrow$ [[environment]]). 
 
 \begin{myitemize}
 \item {\em type:} string (a valid username on the remote host)

@@ -22,6 +22,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 
 from OrderedDict import OrderedDict
 from cylc.execute import execute
+import subprocess
+from cylc.version import cylc_version
 
 # check Pyro is installed
 try:
@@ -144,9 +146,6 @@ def pretty_print( incom, choose_dict, indent=True, numbered=False, sort=False ):
             print digit + '/', 
         print label[item], '.'*(longest-len(label[item])) + '...', incom[item]
 
-# auto-replace with version tag at build/install:
-cylc_version = "THIS IS NOT A VERSIONED RELEASE"
-
 # categories[ categorey ] = [ aliases ] 
 categories = OrderedDict()
 categories['all'         ] = ['all' ]
@@ -261,18 +260,24 @@ for dct in [
         license_commands ]:
     for com in dct.keys():
         all_commands[com] = dct[com]
- 
+
 general_usage = """
+Cylc is a (meta)scheduler for complex cycling meteorological forecasting
+systems and related data processing. This is the cylc command line
+interface. The graphical interface is gcylc.
+
+Release version: cylc-"""+cylc_version+""" 
+
 USAGE:
-  cylc -v,--version                               # cylc version
-  cylc help,--help,-h,?                           # this help page
-  cylc help CATEGORY                              # help by category
-  cylc CATEGORY help                              # (ditto)
-  cylc help [CATEGORY] COMMAND                    # command help
-  cylc [CATEGORY] COMMAND help,--help             # (ditto)
+  % cylc -v,--version                   # cylc version
+  % cylc help,--help,-h,?               # this help page
+  % cylc help CATEGORY                  # help by category
+  % cylc CATEGORY help                  # (ditto)
+  % cylc help [CATEGORY] COMMAND        # command help
+  % cylc [CATEGORY] COMMAND help,--help # (ditto)
 Command syntax:
-  cylc [CATEGORY] COMMAND [options] SUITE [arguments]
-  cylc [CATEGORY] COMMAND [options] SUITE TASK [arguments]"""
+  % cylc [CATEGORY] COMMAND [options] SUITE [arguments]
+  % cylc [CATEGORY] COMMAND [options] SUITE TASK [arguments]"""
 
 # topic summaries
 catsum = OrderedDict()
@@ -287,30 +292,26 @@ catsum['control'     ]   = "running, monitoring, and controlling suites."
 catsum['task'        ]   = "running single tasks, and task messaging commands."
 catsum['utility'     ]   = "cycle time arithmetic, filename templating, etc."
 
-usage = """cylc release version: """ + cylc_version + """
-""" + general_usage + """
+usage = general_usage + """
 
-Commands and categories can be abbreviated. Use of categories is
-optional, but they can disambiguate highly abbreviated commands:
-  $ cylc control trigger SUITE TASK  # trigger TASK in SUITE
-  $ cylc trigger SUITE TASK          # ditto
-  $ cylc con trig SUITE TASK         # ditto
-  $ cylc c t SUITE TASK              # ditto
+Commands and categories can be abbreviated; categories can disambiguate
+highly abbreviated commands but their use is optional:
+  % cylc control trigger SUITE TASK     # trigger TASK in SUITE
+  % cylc trigger SUITE TASK             # ditto
+  % cylc con trig SUITE TASK            # ditto
+  % cylc c t SUITE TASK                 # ditto
+(these commands target a particular TASK in a particular SUITE).
 
-SUITE - cylc commands target suites via names registered in a suite
-database so that you don't need to continually re-type the actual
-location of the suite definition directory on disk. Suite names are
-hierarchical like directory paths but delimited by '.' (foo.bar.baz),
-allowing suites to be grouped and organised into tree-like structures.
+Suites are referred to by registered names that allow hierarchical
+grouping, e.g. nwp.test.LAM1, nwp.test.LAM2, nwp.oper.global.
 
-TASK - is a unique identitifier of a task in a suite: NAME%TAG, where
-for cycling tasks TAG is a cycle time (YYYYMMDDHH) and for asynchronous
-tasks it is an integer (preceded by 'a:' on the command line: foo%a:1).
+Tasks are identified by NAME%TAG where TAG is a cycle time for cycling
+tasks (GetData%2011080806) or 'a:INT' for asynchronous tasks (foo%a:1).
 
 Here's how to drill down to usage help for a particular command:
-  $ cylc help ............... list all available categories (this page)
-  $ cylc help prep .......... list commands in category 'preparation'
-  $ cylc help prep edit ..... command usage help for 'cylc [prep] edit'
+  % cylc help           # list all available categories (this page)
+  % cylc help prep      # list commands in category 'preparation'
+  % cylc help prep edit # lp for 'cylc [prep] edit'
 
 Command CATEGORIES:"""
 
@@ -343,10 +344,10 @@ comsum[ 'edit'       ] = 'Edit a suite.rc file in $EDITOR, optionally inlined'
 comsum[ 'view'       ] = 'View a temporary suite.rc file, inlined or processed'
 comsum[ 'validate'   ] = 'Parse and validate a suite config (suite.rc) file'
 comsum[ 'search'     ] = 'An intelligent search tool for cylc suites'
-comsum[ 'graph'      ] = 'A dependency graph viewer that updates as you edit'
+comsum[ 'graph'      ] = 'Plot suite dependency graphs or runtime namespace hierarchies'
 comsum[ 'diff'       ] = 'Compare two suite definitions and print differences'
 # information
-comsum[ 'list'       ] = 'Print a suite\'s task list or full runtime hierarchy'
+comsum[ 'list'       ] = 'Print a suite\'s task list or runtime namespace hierarchy'
 comsum[ 'dump'       ] = 'Print the state of each task in a running suite'
 comsum[ 'show'       ] = 'Print task-specific information (prerequisites...)'
 comsum[ 'log'        ] = 'Print or view suite logs, with filtering'

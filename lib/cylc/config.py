@@ -209,8 +209,10 @@ class config( CylcConfigObj ):
             if self.verbose:
                 print "Processing the suite with Jinja2"
             env = Environment( loader=FileSystemLoader(self.dir) )
+             # load file lines into a template, excluding '#!jinja2' so
+             # that '#!cylc-x.y.z' rises to the top.
             try:
-                template = env.from_string( ''.join(flines) )
+                template = env.from_string( ''.join(flines[1:]) )
             except TemplateError, x:
                 raise SuiteConfigError, "Jinja2 template error: " + str(x)
 
@@ -398,6 +400,13 @@ class config( CylcConfigObj ):
             self['visualization']['initial cycle time'] = 2999010100
             self['visualization']['final cycle time'] = 2999010123
   
+    def get_inheritance( self ):
+        inherit = {}
+        for ns in self['runtime']:
+            #if 'inherit' in self['runtime'][ns]:
+            inherit[ns] = self['runtime'][ns]['inherit']
+        return inherit
+
     def define_inheritance_tree( self, tree, hierarchy ):
         # combine inheritance hierarchies into a tree structure.
         for rt in hierarchy:

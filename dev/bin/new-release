@@ -57,22 +57,10 @@ cd $REPO
 export PATH=bin:$PATH
 rm -rf .git
 
-# - replace the cylc version tag throughout
-# - make documentation
-# - remove doc source
-# - remove dev material
+echo "SETTING VERSION TAG"
+perl -pi -e "s/VERSION-TEMPLATE/$VSN/" lib/cylc/version.py
+perl -pi -e "s/VERSION-TEMPLATE/$VSN/" README
 
-echo "SETTING VERSION TAG IN MAIN COMMAND AND USER GUIDE"
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" lib/cylc/gui/gcylc.py
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" lib/cylc/gui/SuiteControl.py
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" bin/cylc
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/cug-pdf.tex
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/cug-html.tex
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" doc/cug.tex
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$VSN/" README
-
-echo "MAKING DOCUMENTATION (USER GUIDE)"
-echo
 echo "LATEX PROCESSING"
 
 doc/process -c

@@ -20,6 +20,7 @@ import os, sys
 from optparse import OptionParser
 from cylc.registration import dbgetter, RegistrationError
 from cylc.config import config, SuiteConfigError
+from cylc.version import compat
 
 parser = OptionParser( usage = """cylc [info] get-config SUITE [HIERARCHY]
 
@@ -77,6 +78,8 @@ try:
     suite, suiterc = dbg.get_suite(reg)
 except RegistrationError, x:
     raise SystemExit(x)
+
+compat( suite, suiterc ).execute( sys.argv )
 
 try:
     config = config( suite, suiterc )

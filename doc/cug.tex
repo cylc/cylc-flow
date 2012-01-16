@@ -476,7 +476,7 @@ operational suite graphed by cylc.}
         for network communication between server processes (cylc suites)
         and client programs (running tasks, control GUIs and commands).
         \newline \url{http://irmen.home.xs4all.nl/pyro3}
-    \item {\bf Cylc}, current version THIS IS NOT A VERSIONED RELEASE. 
+    \item {\bf Cylc}, this version: \input{cylc-version.txt}. % generated each time by doc/process
         \newline \url{http://hjoliver.github.com/cylc}
 \end{myitemize}
 
@@ -716,7 +716,7 @@ follows:
 % cd $CYLC_DIR/external
 % tar xzf graphviz-2.28.0.tar.gz
 % cd graphviz-2.28.0
-% ./configure --prefix=$CYLC_DIR/external/installed
+% ./configure --prefix=$CYLC_DIR/external/installed --with-qt=no
 % make
 % make install
 \end{lstlisting}
@@ -727,9 +727,8 @@ access to the graphviz executables in this bin directory, although you
 will probably not need to use them. The graphviz lib and include
 locations are required when installing Pygraphviz (next).
 
-{\em Note that graphviz may fail to build on a system that does not 
-have QT installed}. Lack of QT is not important for our purposes and 
-you can disable it with \lstinline@./configure --with-qt=no@.
+Note that the graphviz build may fail on systems that do not have QT
+installed, hence the \lstinline@./configure --with-qt=no@ option above.
 
 \subsubsection{Pygraphviz}
 Install Pygraphviz under \lstinline=$CYLC_DIR/external/installed= as
@@ -780,10 +779,16 @@ reinstall graphviz.
 
 \subsubsection{Jinja2}
 
-You can download and install Jinja2 manually from the project web site 
-(above), or just use the \lstinline=easy_install= command which will 
-do it all in one step. Here's how to easy\_install Jinja2 into your new
-private python site packages directory:
+You can download Jinja2 from the project web site and install it with 
+\lstinline=python setup.py install --prefix=/path/to/install/location=,
+or use the \lstinline=easy_install= command to do it all in one step.
+Either way Jinja2 installation requires the final installed package
+location to be present in the \lstinline=PYTHONPATH= variable, so you
+have to arrange for this first. You made also need to create the
+installed package directory yourself first (if so, the install will 
+abort and print the name of the missing directory in the error message).
+Here's how to easy\_install Jinja2 into your new private python site
+packages directory:
 
 \begin{lstlisting}
 % LOCALPREFIX=$CYLC_DIR/external/installed
@@ -792,10 +797,8 @@ private python site packages directory:
 % easy_install --prefix=$LOCALPREFIX Jinja2
 \end{lstlisting}
 Adapt the site-packages path according to your actual path, as above.
-The Python search path must be set first or \lstinline=easy_install=
-will abort. 
 
-\subsubsection{What Next?}
+\subsection{What Next?}
 
 You should now have access to all cylc functionality.  Create 
 the central suite database and upload the example suites, if 
@@ -806,19 +809,89 @@ your cylc installation by running the automated suite database test
 (Section~\ref{RTAST}), then go on to the {\em Quick Start Guide}
 (Section~\ref{QuickStartGuide}).
 
-\subsection{Upgrading To A New Cylc Version}
+\subsection{Upgrading To New Cylc Versions}
 
 Upgrading is just a matter of unpacking the new cylc release,
 copying the old central database into the new installation 
 (\lstinline=$CYLC_DIR/CDB/=),\footnote{The
 central database is currently associated with the cylc
-installation; in future we will separate the two to make it easier 
-to use multiple versions of cylc concurrently.}
+installation; in future we will separate the two.}
 and running the new \lstinline=cylc admin create-cdb= to
 load the new example suites. Finally, change the newly registered
 central suite group to something sensible using  
 \lstinline=cylc db reregister= - it will have an ungainly string of
 digits attached to ensure uniqueness. 
+
+\subsection{Cross-Version Suite Compatibility}
+\label{compat}
+
+It may not be convenient for users to upgrade all of their suites at
+once when a new cylc release is installed. As of cylc-4.2.0 any installed
+version of cylc can act as a tranparent front end to any other installed
+version. This allows construction of new-version suites while older
+existing ones are still in use, without having to reconfigure your
+environment or explicitly invoke different cylc versions for different
+suites.
+
+The required cylc version must be specified on the {\em first line} of a
+non-Jinja2 suite definition:
+\lstset{language=suiterc}
+\begin{lstlisting}
+#!cylc-4.2.0
+# suite definition follows ...
+\end{lstlisting}
+And on the {\em second line} for Jinja2 suites:
+\begin{lstlisting}
+#!Jinja2
+#!cylc-4.2.0
+# suite definition follows ...
+\end{lstlisting}
+If cylc releases are installed in parallel under the same top level
+directory then the location of the required cylc installation is
+automatically computed from that of the invoked one. Otherwise,
+for unrelated install locations, the full path can be specified:
+\begin{lstlisting}
+#!/path/to/cylc-4.2.0
+# suite definition follows ...
+\end{lstlisting}
+This results in the right cylc version being used for any
+suite-referencing command, e.g.:
+\lstset{language=transcript}
+\begin{lstlisting}
+% cylc validate foo
+--------------------------------------------------------
+Cylc cross-version suite compatibility:
+  Invoked version: cylc-4.2.0 (/home/oliverh/cylc-4.2.0)
+  Suite requires:  cylc-4.2.1
+Path not given, assuming parallel cylc installations
+=> Re-issuing command using /home/oliverh/cylc-4.2.1
+--------------------------------------------------------
+Suite foo is valid for cylc-4.2.1
+\end{lstlisting}
+Note that non suite-referencing commands necessarily execute exactly as
+invoked. This includes all command line help so it is advisable, although 
+not strictly necessary, to keep your login environment configured for
+the latest cylc version.
+
+If the required cylc version is not installed the command will abort 
+and you will have to upgrade the suite definition for compatibility
+with an installed version: use \lstinline=cylc validate= and the {\em
+Suite.rc Reference} (Appendix~\ref{SuiteRCReference}) to identify
+problems, and consult the cylc change log to see what changed between
+versions.
+
+\subsubsection{Version Compatibility Limitations}
+
+The top level command interface, \lstinline=$CYLC_DIR/bin/cylc=,
+determines the legality of requested sub-commands prior to version
+compatibility checking (which is in fact done by the
+sub-command\footnote{This is because the top level command interface
+just passes options and arguments, which vary according to the
+sub-command, on to the sub-command; it does not understand them
+itself and so it cannot determine which one, if any, is the 
+suite reference.}) so the correct cylc version must be explicitly
+invoked if the sub-command has undergone a name change between the
+versions concerned. 
 
 \section{On The Meaning Of {\em Cycle Time} In Cylc}
 
@@ -1490,7 +1563,7 @@ root
  | `-bar2          ... OK
  |-foo             ... OK
  `-prepobs         ... OK
-Suite foo.bar validates OK.
+Suite foo.bar is valid for cylc-4.2.0
 \end{lstlisting}
 
 For more information on suite validation see
@@ -2566,19 +2639,35 @@ off A, what exactly should cylc do when A finishes?}
 \end{lstlisting}
 
 Forecasting suites typically have quite simple requirements for
-conditional triggers, but should you need it you can use any valid
-parenthesised conditional expression, e.g.:
+conditional triggers, but any valid conditional expression can be used,
+as shown in Figure~\ref{fig-conditional} 
+(conditional triggers are plotted with open arrow heads).
+\begin{figure}
+\begin{minipage}[b]{0.5\textwidth}
+\lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
-    graph = """
-        # D triggers if A or (both B and C) succeed:
-        A | B & C => D
-        # Z triggers if both (W or X) and Y succeed.
-        (W | X) & Y => Z
-            """ 
+        graph = """
+# D triggers if A or (B and C) succeed
+A | B & C => D
+# just to align the two graph sections
+D => W
+# Z triggers if (W or X) and Y succeed
+(W|X) & Y => Z
+                """
 \end{lstlisting}
-
-Condititional triggers are plotted with open arrow heads.
+\lstset{language=transcript}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.5\textwidth}
+    \begin{center}
+        \includegraphics[width=0.5\textwidth]{screenshots/conditional-triggers.png} 
+    \end{center}
+\end{minipage}
+\caption[Conditional Triggers] {\scriptsize
+Conditional triggers are plotted with open arrow heads.}
+\label{fig-conditional} 
+\end{figure}
 
 \paragraph{Suicide Triggers}
 \label{SuicideTriggers}
@@ -3334,7 +3423,7 @@ mathematical expressions, loop control structures, and conditional
 expressions to suite.rc files - which are automatically preprocessed to
 generate the final suite definition seen by cylc.
 
-The need for Jinja2 processing must be declared with a bang-hash
+The need for Jinja2 processing must be declared with a hash-bang
 comment as the first line of the suite.rc file:
 \begin{lstlisting}
 #!Jinja2
