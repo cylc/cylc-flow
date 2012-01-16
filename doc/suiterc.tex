@@ -194,19 +194,25 @@ from running multiple distinct {\bf copies} of a suite simultaneously}.
 \subsubsection[{[[}environment{]]} ]{[cylc] $\rightarrow$ [[environment]]}
 
 Variables defined here are exported into the environment in which cylc
-itself runs, for possible use by processes spawned directly by cylc,
-e.g.\ event hook scripts and task job submission commands. {\em Note that
-these variables are only available to executing tasks if you happen to
-choose a local direct job submission method - use task runtime
-environments for this purpose}.
+itself runs. They are then available to {\em local processes spawned
+directly by cylc}. Any variables read by task event hook scripts must be
+defined here, for instance, because event hook scripts are executed
+directly by cylc, not by running tasks. And similarly the {command
+lines} issued by cylc to invoke event hook scripts or to submit task 
+job scripts could, in principle, make use of environment variables
+defined here. 
+{\em Note that cylc local variables are not available to executing tasks
+unless you happen to choose a local direct job submission method -
+always use task runtime environments to pass variables into the task
+execution environment}.
 
 \paragraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}
 
 Replace \_\_VARIABLE\_\_ with an environment variable assignment and
 repeat for as many local environment variables as you need. 
-Values may contain local environment variables. General shell variable
-expansion expressions will not be expanded (these are legal in 
-task runtime environments, however).
+Values may refer to other local environment variables (order of
+definition is preserved) and shell variable expansion
+expressions can be used.
 
 \begin{myitemize}
     \item {\em type:} string (may contain local environment variables).
@@ -214,6 +220,8 @@ task runtime environments, however).
     \item {\em examples:} 
         \begin{myitemize}
             \item \lstinline@FOO = $HOME/foo@
+            \item \lstinline@BAR = ${USER%_oper}@
+            \item \lstinline@BAZ= "${USER#*_oper}" # <-- QUOTED to escape the suite.rc comment character@
         \end{myitemize}
 \end{myitemize}
 
@@ -849,8 +857,8 @@ via passwordless ssh). May be defined by local environment variables
 
 \subparagraph[cylc directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ cylc directory}
 
-The path to the cylc installation on the remote host (this is a required
-item for tasks that define a remote host).
+The path to the remote cylc installation, required if cylc
+is not in the default search path on the remote host.
 
 \begin{myitemize}
 \item {\em type:} string (a valid directory path on the remote host)
@@ -1015,11 +1023,11 @@ finish in the alotted time regardless of incoming messages.
 
 \paragraph[{[[[}environment{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment]]]}
 
-The user defined execution environment. Variables defined here can refer 
-to cylc suite and task identity variables, which are exported earlier in 
-the task job script, and variable assignment expressions can use cylc
-utility commands because access to cylc is also configured earlier in
-the script.  See also {\em Task Execution Environment},
+The user defined task execution environment. Variables defined here can
+refer to cylc suite and task identity variables, which are exported
+earlier in the task job script, and variable assignment expressions can
+use cylc utility commands because access to cylc is also configured
+earlier in the script.  See also {\em Task Execution Environment},
 Section~\ref{TaskExecutionEnvironment}.
 
 \subparagraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}

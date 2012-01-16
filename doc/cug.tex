@@ -3251,15 +3251,14 @@ be declared globally (in the root namespace) or per family, or per
 individual task. Use the global settings if all or most of your tasks
 need to run on the same remote host.
 
-The remote cylc directory can be used to give remote tasks access 
-to cylc commands (if cylc is not in the default \lstinline=$PATH=).
-The remote suite directory gives them access to suite
-files via \lstinline=$CYLC_SUITE_DEF_PATH= on the remote platform, and
-to the suite bin directory via \lstinline=$PATH=. If a remote suite
-definition directory is not given it will be assumed that the local
-path should be used - but the local user's home directory (if present)
-will be substituted in the file path for the literal \lstinline=$HOME=
-in case the user's home directory path is different on the remote host.
+The remote cylc directory must be used to give remote tasks access 
+to cylc commands if cylc is not in the default \lstinline=$PATH=) 
+on the remote host. Similarly the remote suite directory gives task
+access to suite files via \lstinline=$CYLC_SUITE_DEF_PATH= on the remote
+host and to the suite bin directory via \lstinline=$PATH=. If a remote
+suite definition directory is not given the local path will be used 
+with the local user's home directory, if present, substituted for the
+literal \lstinline=$HOME= for evaluation on the remote host.
 
 Note that you can easily run the cylc example suites on a remote
 host. For the example suites with task implementations that work
