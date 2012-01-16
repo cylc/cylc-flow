@@ -208,14 +208,17 @@ execution environment}.
 
 \paragraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}
 
-Replace \_\_VARIABLE\_\_ with an environment variable assignment and
-repeat for as many local environment variables as you need. 
+Replace \_\_VARIABLE\_\_ with any number of environment variable
+assignment expressions.
 Values may refer to other local environment variables (order of
-definition is preserved) and shell variable expansion
-expressions can be used.
+definition is preserved) and are not evaluated or manipulated by 
+cylc, so any variable assignment expression that is legal in the 
+shell in which cylc is running can be used.
 
 \begin{myitemize}
-    \item {\em type:} string (may contain local environment variables).
+    \item {\em type:} string
+    \item {\em legal values:} depends on the shell in which you run
+        cylc. White space around the `$=$' is allowed. 
     \item {\em default:} (none)
     \item {\em examples:} 
         \begin{myitemize}
@@ -1032,20 +1035,19 @@ Section~\ref{TaskExecutionEnvironment}.
 
 \subparagraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}
 
-Replace \_\_VARIABLE\_\_ with an environment variable assignment
-expression, which must be valid in the job submission shell, and repeat
-for as many environment variables as you need. Order of definition is
-preserved, so values can refer to previously defined variables.
+Replace \_\_VARIABLE\_\_ with any number of environment variable
+assignment expressions.
+Order of definition is preserved so values can refer to previously
+defined variables. Values are passed through to the task job script
+without evaluation or manipulation by cylc, so any variable assignment
+expression that is legal in the job submission shell can be used. 
 
 \begin{myitemize}
-\item {\em type:} string (any environment variable assignment
- expression valid in the job submission shell)
-
+\item {\em type:} string
 \item {\em default:} (none)
-\item {\em legal values:}  (Section~\ref{JobSubShell}). White space
-    around the `$=$' is allowed (the \lstinline=suite.rc= file is not a
-    shell script). 
- \item {\em examples} for the bash shell: 
+\item {\em legal values:} depends on the task job submission shell
+    (Section~\ref{JobSubShell}). White space around the `$=$' is allowed. 
+ \item {\em examples}, for the bash shell: 
    \begin{myitemize}
        \item \lstinline@FOO = $HOME/bar/baz@
        \item \lstinline@BAR = ${FOO}$GLOBALVAR@
