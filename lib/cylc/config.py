@@ -329,7 +329,7 @@ class config( CylcConfigObj ):
         for label in self['runtime']:
             hierarchy = []
             name = label
-            self.interpolate( item, self['runtime'][name], '<NAMESPACE>' )
+            self.interpolate( name, self['runtime'][name], '<NAMESPACE>' )
             while True:
                 hierarchy.append( name )
                 inherit = self['runtime'][name]['inherit']
@@ -530,7 +530,7 @@ class config( CylcConfigObj ):
                 target[item] = source[item]
 
     def interpolate( self, name, source, pattern ):
-        # replace '<TASK>' with 'name' in all items.
+        # replace pattern with name in all items in the source tree
         for item in source:
             if isinstance( source[item], str ):
                 # single source item
