@@ -16,9 +16,8 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 class sequential(object):
-    # not "ready to spawn" unless 'succeeded'.
+    # Force sequential behaviour by spawning only after task succeeded.
     def ready_to_spawn( self ):
         if self.state.is_succeeded() and not self.state.has_spawned():
             return True

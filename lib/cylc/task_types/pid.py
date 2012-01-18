@@ -19,12 +19,14 @@
 import re
 
 class pid(object):
-    # PREVIOUS INSTANCE DEPENDENCE FOR FORECAST MODELS
-
-    is_tied = True  # used in manager
-
-    # Forecast models depend on a previous instance via their restart
-    # files. This class overrides free.ready_to_spawn() appropriately.
+    # PREVIOUS INSTANCE DEPENDENCE FOR WARM CYCLING FORECAST MODELS
+    # which depend on a previous instance via restart files. These
+    # don't spawn immediately on submission, they must wait until the
+    # final restart output is completed, otherwise the spawned task
+    # could trigger off the restart outputs of an earlier previous
+    # instance (this should only happen if the suite operator forces
+    # spawning ahead to skip some cycles after a problem of some kind).
+    is_pid = True
 
     def set_next_restart_completed( self ):
         if self.reject_if_failed( 'set_next_restart_completed' ):
@@ -43,8 +45,6 @@ class pid(object):
     def set_all_restarts_completed( self ):
         if self.reject_if_failed( 'set_all_restarts_completed' ):
             return
-        # convenience for external tasks that don't report restart
-        # outputs one at a time.
         self.log( 'WARNING', 'setting ALL restart outputs completed' )
         for message in self.outputs.completed:
             if re.search( 'restart files ready for', message ):
@@ -52,26 +52,30 @@ class pid(object):
                     self.incoming( 'NORMAL', message )
  
     def ready_to_spawn( self ):
-        # Never spawn a waiting task of this type because the
-        # successor's restart prerequisites could get satisfied by the
-        # later restart outputs of an earlier previous instance, and
-        # thereby start too soon (we want this to happen ONLY if the
-        # previous task fails and is subsequently made to spawn and 
-        # die by the suite operator).
         if self.has_spawned():
-            # already spawned
             return False
-        if self.state.is_waiting() or self.state.is_submitted():
+
+        if self.state.is_waiting():
+            # Never spawn a waiting task type - the successor's restart
+            # prerequisites could get satisfied by the later restart
+            # outputs of an earlier previous instance, and thereby start
+            # too soon (we want this to happen ONLY if the previous task
+            # fails and is subsequently made to spawn and die by the
+            # suite operator).
             return False
+
         if self.state.is_succeeded():
-            # always spawn a succeeded task
+            # Always spawn succeeded tasks (probably unnecessary, they
+            # will have spawned already).
             return True
+
         ready = False
         if self.state.is_running() or self.state.is_failed(): 
-            # Failed tasks are running before they fail, so will already
-            # have spawned, or not, according to whether they fail
-            # before or after completing their restart outputs.
-            # Ready only if all restart outputs are completed
+            # Failed tasks were necessarily running before failure, so
+            # they will have spawned already, or not, according to
+            # whether they failed before or after completing their
+            # restart outputs.  So, like running tasks, ready only if
+            # all restart outputs have been completed.
             ready = True
             for message in self.outputs.completed:
                 if re.search( 'restart', message ) and \

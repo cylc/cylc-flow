@@ -1050,7 +1050,7 @@ class scheduler(object):
                 # (because an unsatisfied task cannot have spawned).
                 continue
 
-            if hasattr( itask, 'is_tied' ):
+            if hasattr( itask, 'is_pid' ):
                 # Is there a later succeeded instance of the same task?
                 # It must be SUCCEEDED in case the current task fails and
                 # cannot be fixed => the task's manually inserted

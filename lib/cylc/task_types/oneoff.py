@@ -16,10 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# always claim to have spawned already
-
 class oneoff(object):
-
+    # A oneoff task always claims to have spawned already, thus
+    # a successor will never be spawned. 
     is_oneoff = True
 
     def ready_to_spawn( self ):
