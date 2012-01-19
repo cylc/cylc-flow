@@ -455,4 +455,8 @@ has been replaced by:
    cylc [hook] email-task   (for task events)
    cylc [hook] email-suite  (for suite events)
 
++ Cycling tasks now spawn successors when they enter the submitted 
+state, rather than the running state. This is better for external 
+queue delays (tasks get queued sooner) but otherwise makes no
+difference.
 
