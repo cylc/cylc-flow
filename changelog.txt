@@ -447,3 +447,12 @@ shell, so that task owner name can be defined by environment variable.
     'submission_timeout' and/or 'execution_timeout' should now be 
     specified instead of just 'timeout'.
 
++ Added suite event handling, with one event: shutdown.
+WARNING, this required changing the name of the existing ready-made
+event handler:
+   cylc [util] email-alert
+has been replaced by:
+   cylc [hook] email-task   (for task events)
+   cylc [hook] email-suite  (for suite events)
+
+

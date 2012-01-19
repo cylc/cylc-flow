@@ -38,6 +38,7 @@ from OrderedDict import OrderedDict
 from job_submission.job_submit import job_submit
 from locking.lockserver import lockserver
 from locking.suite_lock import suite_lock
+import subprocess
 from suite_id import identifier
 from mkdir_p import mkdir_p
 from config import config, SuiteConfigError
@@ -321,7 +322,7 @@ class scheduler(object):
         # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
         self.exclusive_suite_lock = not self.config['cylc']['lockserver']['simultaneous instances']
 
-        # set suite in task class (for passing to hook scripts)
+        # set suite in task class (for passing to task even hook scripts)
         task.task.suite = self.suite
 
         # Running in UTC time? (else just use the system clock)
@@ -600,9 +601,15 @@ class scheduler(object):
             process = True
         return process
 
-    def shutdown( self ):
+    def shutdown( self, message='' ):
         # called by main command
-        print "\nSTOPPING"
+        print "\nSUITE SHUTTING DOWN"
+        events = self.config['cylc']['event hooks']['events']
+        script = self.config['cylc']['event hooks']['script']
+        if script and 'shutdown' in events:
+            self.log.warning( 'calling suite shutdown hook script' )
+            command = ' '.join( [script, 'shutdown', self.suite, "'" + message + "' &"] )
+            subprocess.call( command, shell=True )
 
         if self.use_lockserver:
             # do this last

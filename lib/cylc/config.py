@@ -370,6 +370,22 @@ class config( CylcConfigObj ):
                 print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
                 self.closed_families.remove( cfam )
 
+        if self.verbose:
+            print "CHECKING suite event hooks"
+        if not self.simulation_mode or self['cylc']['simulation mode']['event hooks']['enable']:
+            # configure suite event hooks
+            script = self['cylc']['event hooks']['script']
+            events = self['cylc']['event hooks']['events']
+            for event in events:
+                if event not in ['shutdown']:
+                    raise SuiteConfigError, "ERROR, illegal suite hook event: " + event
+        if len(events) == 0 and script:
+            # this is not a fatal error
+            print >> sys.stderr, "WARNING: suite event handler specified without events to handle."
+        if len(events) > 0 and not script:
+            # but this is
+            raise SuiteConfigError, "ERROR, no handler specified for these suite events: " + ','.join(events)
+
         self.process_directories()
         self.load()
 
@@ -1311,18 +1327,23 @@ class config( CylcConfigObj ):
         taskd.manual_messaging = taskconfig['manual completion']
 
         if not self.simulation_mode or self['cylc']['simulation mode']['event hooks']['enable']:
+            # configure task event hooks
             taskd.hook_script = taskconfig['event hooks']['script']
             taskd.hook_events = taskconfig['event hooks']['events']
             for event in taskd.hook_events:
                 if event not in ['submitted', 'started', 'succeeded', 'warning', 'failed', 'submission_failed', \
                         'submission_timeout', 'execution_timeout' ]:
-                    raise SuiteConfigError, name + ": illegal event hook: " + event
+                    raise SuiteConfigError, name + ": illegal task event: " + event
             taskd.submission_timeout = taskconfig['event hooks']['submission timeout']
             taskd.execution_timeout  = taskconfig['event hooks']['execution timeout']
             taskd.reset_timer = taskconfig['event hooks']['reset timer']
 
+        if len(taskd.hook_events) == 0 and taskd.hook_script:
+            # this is not a fatal error
+            print >> sys.stderr, "WARNING: task event handler specified without events to handle."
         if len(taskd.hook_events) > 0 and not taskd.hook_script:
-            print >> sys.stderr, 'WARNING:', taskd.name, 'lists hook events to handle, but no hook script'
+            # but this is
+            raise SuiteConfigError, "ERROR, no handler specified for these task events: " + ','.join(taskd.hook_events)
 
         if 'submission_timeout' in taskd.hook_events and not taskd.submission_timeout:
             print >> sys.stderr, 'WARNING:', taskd.name, 'job submission timeout disabled (no timeout given)'

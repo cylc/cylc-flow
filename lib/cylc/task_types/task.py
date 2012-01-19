@@ -227,7 +227,7 @@ class task( Pyro.core.ObjBase ):
             return False
 
     def call_warning_hook( self, message ):
-        self.log( 'WARNING', 'calling task warning hook' )
+        self.log( 'WARNING', 'calling task warning hook script' )
         command = ' '.join( [self.__class__.hook_script, 'warning', self.__class__.suite, self.id, "'" + message + "' &"] )
         subprocess.call( command, shell=True )
 
@@ -237,7 +237,7 @@ class task( Pyro.core.ObjBase ):
         self.submitted_time = task.clock.get_datetime()
         self.submission_timer_start = self.submitted_time
         if 'submitted' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'NORMAL', 'calling task submitted hook script' )
+            self.log( 'WARNING', 'calling task submitted hook script' )
             command = ' '.join( [self.__class__.hook_script, 'submitted', self.__class__.suite, self.id, "'(task submitted)' &"] )
             subprocess.call( command, shell=True )
 
@@ -246,7 +246,7 @@ class task( Pyro.core.ObjBase ):
         self.started_time = task.clock.get_datetime()
         self.execution_timer_start = self.started_time
         if 'started' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'NORMAL', 'calling task started hook script' )
+            self.log( 'WARNING', 'calling task started hook script' )
             command = ' '.join( [self.__class__.hook_script, 'started', self.__class__.suite, self.id, "'(task running)' &"] )
             subprocess.call( command, shell=True )
 
@@ -261,7 +261,7 @@ class task( Pyro.core.ObjBase ):
         print '\n' + self.id + " SUCCEEDED"
         self.state.set_status( 'succeeded' )
         if 'succeeded' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'NORMAL', 'calling task succeeded hook script' )
+            self.log( 'WARNING', 'calling task succeeded hook script' )
             command = ' '.join( [self.__class__.hook_script, 'succeeded', self.__class__.suite, self.id, "'(task succeeded)' &"] )
             subprocess.call( command, shell=True )
 
