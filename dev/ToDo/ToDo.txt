@@ -3,15 +3,19 @@ Since moving cylc to github, I'm using this page to keep track of
 half-formed ideas and issues that require further investigation 
 before concluding there is a problem ... at which point the issue
 can be migrated to the github issue tracker.
-
 _______
 GENERAL
 
-* check [[[environmen]]] variable names for illegal characters such as
-  spaces - this would catch some section nesting mistakes made by beginers, e.g.:
+* (from Matt Shin) event handlers should read the "MESSAGE" from stdin
+rather than as a command line argument. This would allow multi-line 
+messages such as remote error tracebacks to be sent to the handler.
+
+* check [[[environment]]] variable names for illegal characters such as
+  spaces - this would catch some section nesting mistakes made by
+  beginners, e.g.:
 
   [[[environment]]]
-  command scripting = "echo hello"  # should be before environment
+    command scripting = "echo hello"  # ERROR - should be before environment
 
 * Replace cumbersome checks for dict key validity throughout the code.
   This:
@@ -111,13 +115,8 @@ GENERAL
 * stop-at-cycle-time won't shutdown if there are any tasks stuck in
   'waiting', even if they are all passed the stop cycle (still true?).
 
-* temporary job file location should be configurable, other than via
-  $TMPDIR?
-
 * update cylc xdot code from latest version available? (see recently
   deleted 'external' directory)
-
-* log a warning for remote change to runahead limit.
 
 * config(suite) writes to stdout/stderr (gcylc parent terminal) - see
   gcylc:view_log() for a non-validating suite.
@@ -133,7 +132,7 @@ GENERAL
 * clean up prerequisites classes - put all in one module? (same with
   outputs + requisites?)
 
-* SystemExit() in config.py, cylcconfigobj, (...?) BAD FOR GUI!
+* Any SystemExit() left in config.py, cylcconfigobj, (...?) BAD FOR GUI!
 
 * gcylc: setting running suite group green fails if multiple suites are
   running. Need to parse each group member and check if any are running.
@@ -144,7 +143,7 @@ GENERAL
   finished tasks ahead of the generic cleanup cut off.
 
 * locking code could be simplified or cleaned up a bit now that
-  the lockserver is user-specific?
+  the lockserver is user-specific? (has this been done?)
 
 * currently all task reset commands go through the 'remote' object,
   which all suites have, but we could get a proxy for the task proxy directly,
@@ -164,12 +163,11 @@ GENERAL
 
 * what happens if we restart after suite.rc task content changed?
 
-* Check that the user-defined task names do not clash with
-  parent class or attribute names.
+* Check that user-defined task names do not clash with parent class
+  or attribute names.
 
-* --port= does not prevent port scan for lockserver?
-  check for non-essential port scanning, esp. in gui.
-  (see GUI note below)
+* --port= does not prevent port scan for lockserver?  check for
+  non-essential port scanning, esp. in gui. (see GUI note below)
 
 * ?can deletion and insertion while a suite is HELD result in 
     "INSERTING A TASK
@@ -208,7 +206,8 @@ GENERAL
   name.
 
 * consider some kind of internal queuing system as a more flexible
-  alternative to the simple max runahead limit?
+  alternative to the simple max runahead limit? (done, currently in
+  queues branch)
 
 * check all open( file, mode ) statements for mode 'rb' etc. 
 
@@ -226,9 +225,6 @@ GENERAL
   state of "finished" for example, if this does not result in setting
   prerequisites and outputs satisfied and completed, respectively.
   Consolidate this task state resetting code into methods in task.py?
-
-* note that prerequisites are no longer derived from requisites. Change
-  documentation in the latter class (and elsewhere?) to reflect this.
 
 * use new cylc_mode class everywhere mode test is required.
 
@@ -306,9 +302,6 @@ GUI
 * don't parse suite.rc if the suite is already running?
 
 * currently scans for port on every command - should store found port.
-
-* access to task stdout and stderr for remote tasks? In fact, more
-  generally, current we assume the viewer is running locally.
 
 ====================================
 GRAPH STABILITY:

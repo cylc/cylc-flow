@@ -66,6 +66,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def set_runahead( self, hours=None ):
         # change the suite maximum runahead limit
+        self._warning( "setting runahead limit to " + hours )
         self.pool.runahead_limit = int(hours)
         self.process_tasks = True
         return result( True, "Action succeeded" )
