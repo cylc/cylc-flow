@@ -23,16 +23,25 @@ import os, sys, re
 cylc_version = "VERSION-TEMPLATE"
 
 if cylc_version == "VERSION-" + "TEMPLATE": # (to avoid the replacement)
-    # this is a cylc repository, find the qualified most recent version tag 
+    # This must be a cylc repository, or a copy of the repository
+    # source: use git to get a qualified most recent version tag.
     cwd = os.getcwd()
     os.chdir( os.environ['CYLC_DIR'] )
     try:
         p = subprocess.Popen( ['git', 'describe' ], stdout=subprocess.PIPE, stderr=subprocess.PIPE )
     except OSError,x:
+        # git not found, 
         print sys.stderr, 'WARNING: failed to get repository pseudo version tag:'
     else:
-        out, err = p.communicate()
-        cylc_version = out.rstrip()
+        retcode = p.wait()
+        if retcode != 0:
+            # 'git describe' failed - this must be a copy of the
+            # repository source but not a proper clone or a release.
+            cylc_version = "(DEV)"
+        else:
+            # got a pseudo version number
+            out, err = p.communicate()
+            cylc_version = out.rstrip()
     os.chdir(cwd)
 
 #_______________________________________________________________________
