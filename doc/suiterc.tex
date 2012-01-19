@@ -155,6 +155,55 @@ are logged by cylc.
     \item {\em default:} $10$
 \end{myitemize}
 
+\subsubsection[{[[}event hooks{]]}]{[cylc] $\rightarrow$ [[event hooks]]}
+\label{SuiteEventHandling}
+
+Cylc can call a nominated ``event handler'' script when certain suite
+events occur. This is intended to facilitate centralized alerting and
+automated handling of critical events. Event handlers can do anything
+you like, such as send emails or SMS, call pagers, or intervene in the
+operation of their parent suite with cylc commands. The command
+\lstinline=cylc [hook] email-suite= is a ready made suite event handler.
+
+A single script can be nominated to handle a list of chosen events, and
+the event name is passed to the handler to allow it to distinguish
+between them.
+
+Custom suite event handlers can be located in the suite bin directory.
+They are passed the following arguments by cylc:
+
+\begin{lstlisting}
+<hook-script> EVENT SUITE MESSAGE
+\end{lstlisting}
+Currently there is only one suite EVENT defined:
+\begin{myitemize}
+    \item `shutdown' - the suite stopped, normally or not. 
+\end{myitemize}
+MESSAGE, if provided, describes what has happened.
+
+{\em Note that event handlers are called by cylc itself} so if you wish
+to pass them additional information via the environment you must use
+[cylc] $\rightarrow$ [[environment]], not task runtime environments.
+
+See also Section~\ref{TaskEventHandling} for task event hooks.
+
+\paragraph[events]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ events }
+
+The list of events to handle, as documented for EVENT just above.
+\begin{myitemize}
+    \item {\em type:} list of strings
+    \item {\em default:} (none)
+\end{myitemize}
+
+\paragraph[script]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ script}
+
+The handler script to call when one of the nominated events occurs.
+
+\begin{myitemize}
+    \item {\em type:} string
+    \item {\em default:} (none)
+\end{myitemize}
+
 \subsubsection[{[[}lockserver{]]}]{[cylc] $\rightarrow$ [[lockserver]]}
 
 The cylc lockserver brokers suite and task locks on the network (these
@@ -194,22 +243,42 @@ from running multiple distinct {\bf copies} of a suite simultaneously}.
 \subsubsection[{[[}environment{]]} ]{[cylc] $\rightarrow$ [[environment]]}
 
 Variables defined here are exported into the environment in which cylc
-itself runs, for possible use by processes spawned directly by cylc,
-e.g.\ event hook scripts and task job submission commands. {\em Note that
-these variables are only available to executing tasks if you happen to
-choose a local direct job submission method - use task runtime
-environments for this purpose}.
+itself runs. They are then available to {\em local processes spawned
+directly by cylc}. Any variables read by task event handlers must be
+defined here, for instance, because event handlers are executed
+directly by cylc, not by running tasks. And similarly the {command
+lines} issued by cylc to invoke event handlers or to submit task 
+job scripts could, in principle, make use of environment variables
+defined here. 
+\paragraph{Warnings}
+
+\begin{myitemize}
+    \item Cylc local variables are not available to
+        executing tasks unless you happen to choose a local direct job
+        submission method.  {\em Always use task runtime environments to
+        pass variables into the task execution environment
+        (\ref{AppendixTaskExecutionEnvironment}).}
+    \item Unlike task execution environment variables, which are written
+        to job scripts and interpreted by the shell at run time, 
+        cylc local environment variables are written directly 
+        to the environment by Python as literal strings {\em  so 
+        shell variable expansion expressions cannot be used here.}
+\end{myitemize}
 
 \paragraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}
 
-Replace \_\_VARIABLE\_\_ with an environment variable assignment and
-repeat for as many local environment variables as you need. 
-Values may contain local environment variables. General shell variable
-expansion expressions will not be expanded (these are legal in 
-task runtime environments, however).
+Replace \_\_VARIABLE\_\_ with any number of environment variable
+assignment expressions.
+Values may refer to other local environment variables (order of
+definition is preserved) and are not evaluated or manipulated by 
+cylc, so any variable assignment expression that is legal in the 
+shell in which cylc is running can be used (but see the warning 
+above on variable expansions, which will not be evaluated).
+White space around the `$=$' is allowed (as far as cylc's suite.rc 
+parser is concerned these are normal configuration items).
 
 \begin{myitemize}
-    \item {\em type:} string (may contain local environment variables).
+    \item {\em type:} string
     \item {\em default:} (none)
     \item {\em examples:} 
         \begin{myitemize}
@@ -273,8 +342,8 @@ Configure event hooks for simulation mode.
 
 \subparagraph[enable]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ enable } 
 
-Currently event hooks are disabled by default in simulation mode. They
-can be enabled in order to test automated alerts, for example, without
+Event hooks are disabled by default in simulation mode. They can be
+enabled in order to test automated alerts, for example, without
 running the real suite tasks, but be aware that timeouts will be 
 relative to the accelerated simulation mode clock which by default runs
 very quickly.
@@ -819,7 +888,7 @@ environment variable \lstinline=$CYLC_SUITE_SHARE_PATH=.
 
 \paragraph[{[[[}remote{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]]}
 
-Remote hosting configuration, for tasks that need to run on platforms
+Remote hosting configuration for tasks that need to run on platforms
 other than the suite host. If a remote host is specified cylc
 will attempt to execute the task on that host by passwordless ssh.
 Relevant task scripts and executables, cylc itself, and possibly all or
@@ -838,7 +907,10 @@ The remote host for this task or family.
 
 \subparagraph[owner]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ owner}
 
-User name under which to access the remote host, via passwordless ssh. 
+The task owner username. This is (only) used in the passwordless ssh
+command line  invoked by cylc to submit the remote task (consequently it
+may be defined using local environment variables 
+(i.e.\ the shell in which cylc runs, and [cylc] $\rightarrow$ [[environment]]). 
 
 \begin{myitemize}
 \item {\em type:} string (a valid username on the remote host)
@@ -847,8 +919,8 @@ User name under which to access the remote host, via passwordless ssh.
 
 \subparagraph[cylc directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ cylc directory}
 
-The path to the cylc installation on the remote host (this is a required
-item for tasks that define a remote host).
+The path to the remote cylc installation, required if cylc
+is not in the default search path on the remote host.
 
 \begin{myitemize}
 \item {\em type:} string (a valid directory path on the remote host)
@@ -888,9 +960,7 @@ specified, the local log path will be used (see~\ref{LocalLog}) with the
 suite owner's home directory path, if present, replaced by
 \lstinline='$HOME'= for interpretation on the remote host.  The stdout
 and stderr log file names are the same as for local tasks, and are
-recorded for access via gcylc. You could use an event hook script to
-automatically retrieve remote log files on task completion to make them
-available as for local task logs.
+recorded for access via gcylc. 
 
 \begin{myitemize}
 \item {\em type:} string (a valid directory path on the remote host)
@@ -924,23 +994,23 @@ with the suite owner's home directory path, if present, replaced by
 
 
 \paragraph[{[[[}event hooks{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]]}
+\label{TaskEventHandling}
 
-Cylc can call a nominated script when certain events, such as task
-failure or timeout, occur.  This is intended to facilitate centralized
-alerting and automated handling of critical events. Event hook scripts
-can do anything you like, such as send emails or SMS, call pagers, or
-intervene in the operation of their parent suite with cylc
-commands. The utility command \lstinline=cylc [util] email-alert= 
-is a ready made event hook script.
+Cylc can call a nominated ``event handler'' script when certain task
+events, such as task failure or timeout, occur.  This is intended to
+facilitate centralized alerting and automated handling of critical
+events. Event handlers can do anything you like, such as send emails or
+SMS, call pagers, or intervene in the operation of their parent suite
+with cylc commands. The command \lstinline=cylc [hook] email-task= 
+is a ready made task event handler.
 
 Currently a single script can be nominated to handle a list of chosen
-events, and the event name is passed on the command line to allow the 
-script to distinguish between events (we originally allowed distinct
-hook scripts for each event, but this required rather verbose
-configuration for little gain).
+events, and the event name is passed to the handler to allow it to
+distinguish between them (cylc once allowed distinct handlers for each
+event but this required verbose configuration for little gain).
 
-Event hook scripts can be located in the suite bin directory.  They are
-passed the following arguments by cylc:
+Custom task event handlers can be located in the suite bin directory.
+They are passed the following arguments by cylc:
 
 \begin{lstlisting}
 <hook-script> EVENT SUITE TASKID MESSAGE
@@ -951,20 +1021,29 @@ where EVENT is one of the following strings:
     \item `started' - the task started running 
     \item `succeeded' - the task succeeded
     \item `submission\_failed' - the task failed in job submission
+    \item `warning' - the task reported a warning message
     \item `failed' - the task failed
-    \item `timeout' - the task timed out
+    \item `submission\_timeout' - task job submission timed out
+    \item `execution\_timeout' - task execution timed out
 \end{myitemize}
 MESSAGE, if provided, describes what has happened, and TASKID identifies
-the offending  task (e.g.\ \lstinline=TASK%CYCLE= for cycling tasks).
+the task (\lstinline=NAME%CYCLE= for cycling tasks).
 
-{\em Note that event hook scripts are called by cylc itself, not by the 
-running tasks} so if you wish to pass in additional information via the
-environment, use [cylc] $\rightarrow$ [[environment]] not the
-runtime namespace environments.
+To configure timeout handling, list `submission\_timeout' and/or
+`execution\_timeout' in the events to handle, and then specify 
+corresponding timeout values in minutes using the timeout config items
+below.
+
+{\em Note that event handlers are called by cylc itself, not by the 
+running tasks} so if you wish to pass them additional information via
+the environment you must use [cylc] $\rightarrow$ [[environment]],
+not task runtime environments.
+
+See also Section~\ref{SuiteEventHandling} for suite event hooks.
 
 \subparagraph[events]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ events }
 
-The list of events to handle, as listed for EVENT just above.
+The list of events to handle, as documented for EVENT just above.
 \begin{myitemize}
     \item {\em type:} list of strings
     \item {\em default:} (none)
@@ -972,7 +1051,7 @@ The list of events to handle, as listed for EVENT just above.
 
 \subparagraph[script]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ script}
 
-The script to call when one of the nominated events occurs.
+The handler script to call when one of the nominated events occurs.
 
 \begin{myitemize}
     \item {\em type:} string
@@ -982,8 +1061,8 @@ The script to call when one of the nominated events occurs.
 \subparagraph[submission timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ submission timeout}
 
 If a task has not started the specified number of minutes after it was
-submitted, the hook script will be called by cylc with `timeout' as 
-the EVENT argument:
+submitted, the event handler will be called by cylc with 
+{\em submission\_timeout} as the EVENT argument:
 \begin{myitemize}
     \item {\em type:} float (minutes)
     \item {\em default:} (none)
@@ -992,8 +1071,8 @@ the EVENT argument:
 \subparagraph[execution timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ execution timeout}
 
 If a task has not finished the specified number of minutes after it
-started running, the hook script will be called by cylc with `timeout'
-as the EVENT argument:
+started running, the event handler will be called by cylc with {\em
+execution\_timeout} as the EVENT argument:
 \begin{myitemize}
     \item {\em type:} float (minutes)
     \item {\em default:} (none)
@@ -1003,7 +1082,7 @@ as the EVENT argument:
 
 If you set an execution timeout the timer can be reset to zero every
 time a message is received from the running task (which indicates the 
-task is still alive) .  Otherwise, the task will timeout if it does not
+task is still alive).  Otherwise, the task will timeout if it does not
 finish in the alotted time regardless of incoming messages.
 
 \begin{myitemize}
@@ -1013,29 +1092,31 @@ finish in the alotted time regardless of incoming messages.
 
 \paragraph[{[[[}environment{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment]]]}
 
-The user defined execution environment. Variables defined here can refer 
-to cylc suite and task identity variables, which are exported earlier in 
-the task job script, and variable assignment expressions can use cylc
-utility commands because access to cylc is also configured earlier in
-the script.  See also {\em Task Execution Environment},
+The user defined task execution environment. Variables defined here can
+refer to cylc suite and task identity variables, which are exported
+earlier in the task job script, and variable assignment expressions can
+use cylc utility commands because access to cylc is also configured
+earlier in the script.  See also {\em Task Execution Environment},
 Section~\ref{TaskExecutionEnvironment}.
 
-\subparagraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}
+\subparagraph[\_\_VARIABLE\_\_ ]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment]]] $\rightarrow$ \_\_VARIABLE\_\_}
+\label{AppendixTaskExecutionEnvironment}
 
-Replace \_\_VARIABLE\_\_ with an environment variable assignment
-expression, which must be valid in the job submission shell, and repeat
-for as many environment variables as you need. Order of definition is
-preserved, so values can refer to previously defined variables.
+Replace \_\_VARIABLE\_\_ with any number of environment variable
+assignment expressions.
+Order of definition is preserved so values can refer to previously
+defined variables. Values are passed through to the task job script
+without evaluation or manipulation by cylc, so any variable assignment
+expression that is legal in the job submission shell can be used. 
+White space around the `$=$' is allowed (as far as cylc's suite.rc 
+parser is concerned these are just normal configuration items).
 
 \begin{myitemize}
-\item {\em type:} string (any environment variable assignment
- expression valid in the job submission shell)
-
+\item {\em type:} string
 \item {\em default:} (none)
-\item {\em legal values:}  (Section~\ref{JobSubShell}). White space
-    around the `$=$' is allowed (the \lstinline=suite.rc= file is not a
-    shell script). 
- \item {\em examples} for the bash shell: 
+\item {\em legal values:} depends to some extent on the task job
+    submission shell (Section~\ref{JobSubShell}). 
+\item {\em examples}, for the bash shell: 
    \begin{myitemize}
        \item \lstinline@FOO = $HOME/bar/baz@
        \item \lstinline@BAR = ${FOO}$GLOBALVAR@
@@ -1056,7 +1137,7 @@ the correct format for the method. Specifying directives individually
 like this allows use of default directives that can be individually
 overridden at lower levels of the runtime namespace hierarchy.
 
-\subparagraph[\_\_DIRECTIVE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_DIRECTIVE\_\_}
+\subparagraph[\_\_DIRECTIVE\_\_ ]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[directives]]] $\rightarrow$ \_\_DIRECTIVE\_\_}
 
 Replace \_\_DIRECTIVE\_\_ with each directive assignment, e.g. 
 \lstinline@class = parallel@
@@ -1077,7 +1158,7 @@ The task implementation must report the specified output messages
 by calling \lstinline=cylc task message= when the
 corresponding real outputs have been completed.
 
-\subparagraph[\_\_OUTPUT\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_OUTPUT\_\_}
+\subparagraph[\_\_OUTPUT\_\_ ]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[outputs]]] $\rightarrow$ \_\_OUTPUT\_\_}
 
 Replace \_\_OUTPUT\_\_ with any number of labelled output messages. 
 \begin{myitemize}

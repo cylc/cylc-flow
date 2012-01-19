@@ -1,0 +1,11 @@
+title = User Guide conditional triggering example
+[scheduling]
+    [[dependencies]]
+        graph = """
+# D triggers if A or (B and C) succeed
+A | B & C => D
+# just to align the two graph sections
+D => W
+# Z triggers if (W or X) and Y succeed
+(W|X) & Y => Z
+                """

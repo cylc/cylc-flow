@@ -16,14 +16,17 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
+import os, sys, gtk, gobject
+import subprocess
 from optparse import OptionParser
 from cylc.config import config, SuiteConfigError
 from cylc.registration import dbgetter, RegistrationError
+from cylc.version import compat
 
 parser = OptionParser( """cylc [info|prep] list|ls [OPTIONS] SUITE [FILTER]
 
-Parse a suite and print its task list or inheritance hierarchy.
+Print a suite's task list; or print or graph its runtime namespace
+inheritance hierarchy.
 
 Arguments:
    SUITE    - Target suite
@@ -36,6 +39,10 @@ parser.add_option( "-c", "--central",
 parser.add_option( "-t","--tree",
         help="Print the full runtime inheritance hierarchy.",
         action="store_true", default=False, dest="tree" )
+
+parser.add_option( "-g","--graph",
+        help="Graph the full runtime inheritance hierarchy.",
+        action="store_true", default=False, dest="gui" )
 
 parser.add_option( "-p","--pretty",
         help="Use unicode box drawing characters when printing "
@@ -57,6 +64,19 @@ try:
     suite, suiterc = dbg.get_suite(reg)
 except RegistrationError, x:
     raise SystemExit(x)
+
+compat( suite, suiterc ).execute( sys.argv )
+
+if options.gui:
+    command = [ 'cylc', 'graph', '--namespaces', suite ]
+    try:
+        # THIS BLOCKS UNTIL THE COMMAND COMPLETES
+        retcode = subprocess.call( command )
+    except OSError, x:
+        print >> sys.stderr, 'ERROR: Unable to invoke', new_cylc
+        raise SystemExit( str(x) )
+    else:
+        sys.exit(retcode)
 
 try:
     config = config( suite, suiterc )

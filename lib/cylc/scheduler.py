@@ -36,12 +36,14 @@ from OrderedDict import OrderedDict
 from job_submission.job_submit import job_submit
 from locking.lockserver import lockserver
 from locking.suite_lock import suite_lock
+import subprocess
 from suite_id import identifier
 from mkdir_p import mkdir_p
 from config import config, SuiteConfigError
 from cylc.registration import delimiter_re, localdb, RegistrationError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
+from version import compat
 
 from CylcError import TaskNotFoundError, TaskStateError
 
@@ -258,6 +260,8 @@ class scheduler(object):
         except RegistrationError,x:
             raise SystemExit(x)
 
+        compat( self.suite, self.suiterc ).execute( sys.argv )
+
         # MODE OF OPERATION (REAL, SIMULATION, practice)
         #DISABLED if self.options.simulation_mode and self.options.practice_mode:
         #DISABLED     parser.error( "Choose ONE of simulation or practice mode")
@@ -415,7 +419,7 @@ class scheduler(object):
         # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
         self.exclusive_suite_lock = not self.config['cylc']['lockserver']['simultaneous instances']
 
-        # set suite in task class (for passing to hook scripts)
+        # set suite in task class (for passing to task even hook scripts)
         task.task.suite = self.suite
 
         # Running in UTC time? (else just use the system clock)
@@ -456,15 +460,14 @@ class scheduler(object):
                 job_submit.failout_id = self.failout_task_id
 
         # SCHEDULER ENVIRONMENT
-        # Access to the suite bin directory for alert scripts executed
-        # by the scheduler. 
+        # Suite bin directory for alert scripts executed by the scheduler. 
         os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 
         # User defined local variables that may be required by alert scripts
         senv = self.config['cylc']['environment']
         for var in senv:
             os.environ[var] = os.path.expandvars(senv[var])
 
-        # suite identity for alert scripts (which are executed by the scheduler).
+        # Suite identity for alert scripts (which are executed by the scheduler).
         # Also put cylcenv variables in the scheduler environment
         for var in cylcenv:
             os.environ[var] = cylcenv[var]
@@ -689,9 +692,15 @@ class scheduler(object):
             process = True
         return process
 
-    def shutdown( self ):
+    def shutdown( self, message='' ):
         # called by main command
-        print "\nSTOPPING"
+        print "\nSUITE SHUTTING DOWN"
+        events = self.config['cylc']['event hooks']['events']
+        script = self.config['cylc']['event hooks']['script']
+        if script and 'shutdown' in events:
+            self.log.warning( 'calling suite shutdown hook script' )
+            command = ' '.join( [script, 'shutdown', self.suite, "'" + message + "' &"] )
+            subprocess.call( command, shell=True )
 
         if self.use_lockserver:
             # do this last
@@ -1142,7 +1151,7 @@ class scheduler(object):
                 # (because an unsatisfied task cannot have spawned).
                 continue
 
-            if hasattr( itask, 'is_tied' ):
+            if hasattr( itask, 'is_pid' ):
                 # Is there a later succeeded instance of the same task?
                 # It must be SUCCEEDED in case the current task fails and
                 # cannot be fixed => the task's manually inserted
@@ -1454,7 +1463,8 @@ class scheduler(object):
 
     def check_timeouts( self ):
         for itask in self.pool.get_tasks():
-            itask.check_timeout()
+            itask.check_submission_timeout()
+            itask.check_execution_timeout()
 
     def waiting_clocktriggered_task_ready( self ):
         # This method actually returns True if ANY task is ready to run,

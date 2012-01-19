@@ -31,6 +31,7 @@ from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,Connect
 from time import sleep
 from cylc.CylcOptionParsers import NoPromptOptionParser_u
 from cylc.registration import dbgetter, RegistrationError
+from cylc.version import compat
 
 compress = True
 
@@ -52,12 +53,14 @@ parser.add_option( "-a", "--align",
 reg = parser.get_suite_name()
 dbg = dbgetter()
 try:
-    suite, junk = dbg.get_suite(reg)
+    suite, suiterc = dbg.get_suite(reg)
 except RegistrationError, x:
     raise SystemExit(x)
 
+compat( suite, suiterc ).execute( sys.argv )
 header = 'waiting runahead queued submitted running succeeded held failed'
 header = '                                                               '
+
 ctrl_end = "\033[0m"
 key = "\033[1;37;43mheld\033[0m \033[1;36mwaiting \033[1;37;44mrunahead\033[0m \033[1;38;44mqueued\033[0m\033[1;32m submitted \033[1;37;42mrunning\033[0m succeeded \033[1;37;41mfailed" + ctrl_end 
 

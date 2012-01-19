@@ -25,6 +25,7 @@ import time, os, re
 import threading
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.config import config, SuiteConfigError
+from cylc.version import cylc_version
 from cylc import cylc_pyro_client
 from cylc.port_scan import scan, SuiteIdentificationError
 from cylc.registration import delimiter, dbgetter, localdb, centraldb, RegistrationError
@@ -493,7 +494,6 @@ class MainApp(object):
             if gtk.gtk_version[1] >= 12:
                 # set_program_name() was added in PyGTK 2.12
                 about.set_program_name( "cylc" )
-        cylc_version = 'THIS IS NOT A VERSIONED RELEASE'
         about.set_version( cylc_version )
         about.set_copyright( "(c) Hilary Oliver, NIWA, 2008-2011" )
         about.set_comments( 
@@ -904,15 +904,19 @@ The cylc forecast suite metascheduler.
             listmenu = gtk.Menu()
             listitem.set_submenu(listmenu)
  
-            flat_item = gtk.MenuItem( '_Tasks' )
+            flat_item = gtk.MenuItem( 'Print _Tasks' )
             listmenu.append( flat_item )
             flat_item.connect( 'activate', self.list_suite, reg )
 
-            tree_item = gtk.MenuItem( '_Namespaces' )
+            tree_item = gtk.MenuItem( 'Print _Namespaces' )
             listmenu.append( tree_item )
             # use "-tp" for unicode box-drawing characters (seems to be
             # OK in pygtk textview).
             tree_item.connect( 'activate', self.list_suite, reg, '-tp' )
+
+            gtree_item = gtk.MenuItem( '_Graph Namespaces' )
+            listmenu.append( gtree_item )
+            gtree_item.connect( 'activate', self.nsgraph_suite, reg )
 
             igraph_item = gtk.MenuItem( '_Graph' )
             infomenu.append( igraph_item )
@@ -981,16 +985,20 @@ The cylc forecast suite metascheduler.
             plistmenu = gtk.Menu()
             plistitem.set_submenu(plistmenu)
  
-            pflat_item = gtk.MenuItem( '_Tasks' )
+            pflat_item = gtk.MenuItem( 'Print _Tasks' )
             plistmenu.append( pflat_item )
             pflat_item.connect( 'activate', self.list_suite, reg )
 
-            ptree_item = gtk.MenuItem( '_Namespaces' )
+            ptree_item = gtk.MenuItem( 'Print _Namespaces' )
             plistmenu.append( ptree_item )
             # use "-tp" for unicode box-drawing characters (seems to be
             # OK in pygtk textview).
             ptree_item.connect( 'activate', self.list_suite, reg, '-tp' )
  
+            gtree_item = gtk.MenuItem( '_Graph Namespaces' )
+            plistmenu.append( gtree_item )
+            gtree_item.connect( 'activate', self.nsgraph_suite, reg )
+
             graph_item = gtk.MenuItem( '_Graph' )
             prepmenu.append( graph_item )
             graph_item.connect( 'activate', self.graph_suite_popup, reg, suite_dir )
@@ -1434,14 +1442,15 @@ The cylc forecast suite metascheduler.
         hbox.pack_start(pattern_entry, True) 
         vbox.pack_start( hbox )
 
-        nobin_cb = gtk.CheckButton( "Don't search bin/ directory" )
-        vbox.pack_start (nobin_cb, True)
+        yesbin_cb = gtk.CheckButton( "search suite bin/ directory" )
+        yesbin_cb.set_active(True)
+        vbox.pack_start (yesbin_cb, True)
 
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Search" )
-        ok_button.connect("clicked", self.search_suite, reg, nobin_cb, pattern_entry )
+        ok_button.connect("clicked", self.search_suite, reg, yesbin_cb, pattern_entry )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", self.command_help, 'prep', 'search' )
@@ -1531,13 +1540,13 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def search_suite( self, w, reg, nobin_cb, pattern_entry ):
+    def search_suite( self, w, reg, yesbin_cb, pattern_entry ):
         pattern = pattern_entry.get_text()
         options = ''
-        if nobin_cb.get_active():
+        if not yesbin_cb.get_active():
             options += ' -x '
         command = "cylc search " + self.dbopt + " --notify-completion " + options + ' ' + pattern + ' ' + reg 
-        foo = gcapture_tmpfile( command, self.tmpdir, height=500 )
+        foo = gcapture_tmpfile( command, self.tmpdir, width=600, height=500 )
         self.gcapture_windows.append(foo)
         foo.run()
 
@@ -1703,6 +1712,12 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
     def list_suite( self, w, name, opt='' ):
         command = "cylc list " + self.dbopt + " " + opt + " --notify-completion " + name
         foo = gcapture_tmpfile( command, self.tmpdir, 600, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
+    def nsgraph_suite( self, w, name ):
+        command = "cylc graph --namespaces " + self.dbopt + " --notify-completion " + name
+        foo = gcapture_tmpfile( command, self.tmpdir )
         self.gcapture_windows.append(foo)
         foo.run()
 

@@ -21,6 +21,9 @@ description = "No description provided" # DEFAULT
     [[state dumps]]
         directory = '$HOME/cylc-run/$CYLC_SUITE_REG_NAME/state' # DEFAULT
         number of backups = 10  # DEFAULT
+    [[event hooks]]
+        script = None
+        events = (none)
     [[lockserver]]
         enable = False # DEFAULT
         simultaneous instances = False # DEFAULT

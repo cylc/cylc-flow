@@ -22,6 +22,7 @@ from cylc.CylcOptionParsers import NoPromptOptionParser_u
 from cylc.port_scan import SuiteIdentificationError
 from cylc.taskid import id, InvalidTaskIDError, InvalidCycleTimeError
 from cylc.registration import dbgetter, RegistrationError
+from cylc.version import compat
 
 parser = NoPromptOptionParser_u( """cylc [info] show [options] SUITE [NAME[%TAG]]
 
@@ -37,9 +38,11 @@ time is up yet.""",
 reg = parser.get_suite_name()
 dbg = dbgetter()
 try:
-    suite, junk = dbg.get_suite(reg)
+    suite, suiterc = dbg.get_suite(reg)
 except RegistrationError, x:
     raise SystemExit(x)
+
+compat( suite, suiterc ).execute( sys.argv )
 
 prnt_suite = False
 prnt_name = False

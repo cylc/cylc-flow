@@ -209,8 +209,10 @@ class config( CylcConfigObj ):
             if self.verbose:
                 print "Processing the suite with Jinja2"
             env = Environment( loader=FileSystemLoader(self.dir) )
+             # load file lines into a template, excluding '#!jinja2' so
+             # that '#!cylc-x.y.z' rises to the top.
             try:
-                template = env.from_string( ''.join(flines) )
+                template = env.from_string( ''.join(flines[1:]) )
             except TemplateError, x:
                 raise SuiteConfigError, "Jinja2 template error: " + str(x)
 
@@ -327,7 +329,7 @@ class config( CylcConfigObj ):
         for label in self['runtime']:
             hierarchy = []
             name = label
-            self.interpolate( item, self['runtime'][name], '<NAMESPACE>' )
+            self.interpolate( name, self['runtime'][name], '<NAMESPACE>' )
             while True:
                 hierarchy.append( name )
                 inherit = self['runtime'][name]['inherit']
@@ -367,6 +369,22 @@ class config( CylcConfigObj ):
             if cfam not in self.members:
                 print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
                 self.closed_families.remove( cfam )
+
+        if self.verbose:
+            print "CHECKING suite event hooks"
+        if not self.simulation_mode or self['cylc']['simulation mode']['event hooks']['enable']:
+            # configure suite event hooks
+            script = self['cylc']['event hooks']['script']
+            events = self['cylc']['event hooks']['events']
+            for event in events:
+                if event not in ['shutdown']:
+                    raise SuiteConfigError, "ERROR, illegal suite hook event: " + event
+        if len(events) == 0 and script:
+            # this is not a fatal error
+            print >> sys.stderr, "WARNING: suite event handler specified without events to handle."
+        if len(events) > 0 and not script:
+            # but this is
+            raise SuiteConfigError, "ERROR, no handler specified for these suite events: " + ','.join(events)
 
         self.process_directories()
         self.load()
@@ -411,6 +429,13 @@ class config( CylcConfigObj ):
             # remove assigned tasks from the default queue
             for member in queues[queue]['members']:
                 queues['default']['members'].remove( member )
+
+    def get_inheritance( self ):
+        inherit = {}
+        for ns in self['runtime']:
+            #if 'inherit' in self['runtime'][ns]:
+            inherit[ns] = self['runtime'][ns]['inherit']
+        return inherit
 
     def define_inheritance_tree( self, tree, hierarchy ):
         # combine inheritance hierarchies into a tree structure.
@@ -535,7 +560,7 @@ class config( CylcConfigObj ):
                 target[item] = source[item]
 
     def interpolate( self, name, source, pattern ):
-        # replace '<TASK>' with 'name' in all items.
+        # replace pattern with name in all items in the source tree
         for item in source:
             if isinstance( source[item], str ):
                 # single source item
@@ -1316,23 +1341,29 @@ class config( CylcConfigObj ):
         taskd.manual_messaging = taskconfig['manual completion']
 
         if not self.simulation_mode or self['cylc']['simulation mode']['event hooks']['enable']:
+            # configure task event hooks
             taskd.hook_script = taskconfig['event hooks']['script']
             taskd.hook_events = taskconfig['event hooks']['events']
             for event in taskd.hook_events:
-                if event not in ['submitted', 'started', 'succeeded', 'failed', 'submission_failed', 'timeout' ]:
-                    raise SuiteConfigError, name + ": illegal event hook: " + event
+                if event not in ['submitted', 'started', 'succeeded', 'warning', 'failed', 'submission_failed', \
+                        'submission_timeout', 'execution_timeout' ]:
+                    raise SuiteConfigError, name + ": illegal task event: " + event
             taskd.submission_timeout = taskconfig['event hooks']['submission timeout']
             taskd.execution_timeout  = taskconfig['event hooks']['execution timeout']
             taskd.reset_timer = taskconfig['event hooks']['reset timer']
 
+        if len(taskd.hook_events) == 0 and taskd.hook_script:
+            # this is not a fatal error
+            print >> sys.stderr, "WARNING: task event handler specified without events to handle."
         if len(taskd.hook_events) > 0 and not taskd.hook_script:
-            print >> sys.stderr, 'WARNING:', taskd.name, 'defines hook events but no hook script'
-        if taskd.execution_timeout or taskd.submission_timeout or taskd.reset_timer:
-            if 'timeout' not in taskd.hook_events:
-                print >> sys.stderr, 'WARNING:', taskd.name, 'configures timeouts but does not handle timeout events'
-            if not taskd.hook_script:
-                print >> sys.stderr, 'WARNING:', taskd.name, 'configures timeouts but no hook script'
-        
+            # but this is
+            raise SuiteConfigError, "ERROR, no handler specified for these task events: " + ','.join(taskd.hook_events)
+
+        if 'submission_timeout' in taskd.hook_events and not taskd.submission_timeout:
+            print >> sys.stderr, 'WARNING:', taskd.name, 'job submission timeout disabled (no timeout given)'
+        if 'execution_timeout' in taskd.hook_events and not taskd.execution_timeout:
+            print >> sys.stderr, 'WARNING:', taskd.name, 'job execution timeout disabled (no timeout given)'
+         
         taskd.logfiles    = taskconfig[ 'extra log files' ]
         taskd.environment = taskconfig[ 'environment' ]
         taskd.directives  = taskconfig[ 'directives' ]

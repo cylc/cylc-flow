@@ -424,3 +424,39 @@ released on restarting the suiteing the suiteing the suite.
 instantiation were not being printed properly when multiple errors
 occured. 2/ detect erroneous use of synchronous special tasks in
 asynchronous graphs.
+
+________________________________________________________________________
+4.2.0-rc1 (4.2.0 PENDING)
+
++ Cross-version suite compatibility. Put "#!cylc-x.y.z" as the first 
+line of your suite.rc file, and cylc-x.y.z will be used to access the 
+suite regardless of which cylc version is initially invoked.
+
++ Remote task stdout and stderr logs can now be accessed by gcylc.
+
++ Runtime namespace inheritance hierarchy graphing.
+
+4.2.0-rc2 (4.2.0 PENDING)
+
++ gcylc now spawns ssh commands to retrieve remote task output via the
+shell, so that task owner name can be defined by environment variable.
+
++ Task event handling:
+  - restored the 'warning' event hook.
+  - made timeout handling consistent with the other events:
+    'submission_timeout' and/or 'execution_timeout' should now be 
+    specified instead of just 'timeout'.
+
++ Added suite event handling, with one event: shutdown.
+WARNING, this required changing the name of the existing ready-made
+event handler:
+   cylc [util] email-alert
+has been replaced by:
+   cylc [hook] email-task   (for task events)
+   cylc [hook] email-suite  (for suite events)
+
++ Cycling tasks now spawn successors when they enter the submitted 
+state, rather than the running state. This is better for external 
+queue delays (tasks get queued sooner) but otherwise makes no
+difference.
+

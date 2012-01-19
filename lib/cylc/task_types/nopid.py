@@ -16,35 +16,27 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-import re
-
 class nopid(object):
     # NO PREVIOUS INSTANCE DEPENDENCE, FOR NON FORECAST MODELS
 
     def ready_to_spawn( self ):
         # Tasks with no previous instance dependence can in principle
-        # spawn as soon as they are created, but this results in
-        # waiting tasks out to the maximum runahead, which clutters up
-        # monitor views and carries some task processing overhead.
-        # Abdicating instead when they start running prevents excess
-        # waiting tasks without preventing instances from running in
-        # parallel if the opportunity arises. BUT this does mean that a
-        # failed or lame task's successor won't exist until the suite
-        # operator gets the offender to spawn and die.
-
-        # Note that tasks with no previous instance dependence and  NO
-        # PREREQUISITES will all "go off at once" out to the runahead
-        # limit (unless they are clock-triggered tasks whose time isn't
-        # up yet). These can be constrained with the sequential
-        # attribute if that is preferred. 
+        # spawn as soon as they are created, but this would result in
+        # waiting tasks spawning out to the runahead limit. Spawning on
+        # submission prevents this without preventing successive
+        # instances of a task from running in parallel if the
+        # opportunity arises. Tasks with no previous instance dependence
+        # and no prerequisites will all go off at once out to the
+        # runahead limit (unless they are clock-triggered tasks whose
+        # time isn't up yet). These can be constrained with the
+        # sequential attribute if necessary.
  
         if self.has_spawned():
-            # already spawned
             return False
 
-        if self.state.is_running() or self.state.is_succeeded():
-            # see documentation above
+        if self.state.is_submitted() or \
+                self.state.is_running() or self.state.is_succeeded():
+            # (the final two state tests are probably not necessary)
             return True
         else:
             return False

@@ -218,7 +218,7 @@ class task( Pyro.core.ObjBase ):
         return dep
 
     def call_warning_hook( self, message ):
-        self.log( 'WARNING', 'calling task warning hook' )
+        self.log( 'WARNING', 'calling task warning hook script' )
         command = ' '.join( [self.__class__.hook_script, 'warning', self.__class__.suite, self.id, "'" + message + "' &"] )
         subprocess.call( command, shell=True )
 
@@ -228,7 +228,7 @@ class task( Pyro.core.ObjBase ):
         self.submitted_time = task.clock.get_datetime()
         self.submission_timer_start = self.submitted_time
         if 'submitted' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'NORMAL', 'calling task submitted hook script' )
+            self.log( 'WARNING', 'calling task submitted hook script' )
             command = ' '.join( [self.__class__.hook_script, 'submitted', self.__class__.suite, self.id, "'(task submitted)' &"] )
             subprocess.call( command, shell=True )
 
@@ -237,7 +237,7 @@ class task( Pyro.core.ObjBase ):
         self.started_time = task.clock.get_datetime()
         self.execution_timer_start = self.started_time
         if 'started' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'NORMAL', 'calling task started hook script' )
+            self.log( 'WARNING', 'calling task started hook script' )
             command = ' '.join( [self.__class__.hook_script, 'started', self.__class__.suite, self.id, "'(task running)' &"] )
             subprocess.call( command, shell=True )
 
@@ -252,7 +252,7 @@ class task( Pyro.core.ObjBase ):
         print '\n' + self.id + " SUCCEEDED"
         self.state.set_status( 'succeeded' )
         if 'succeeded' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'NORMAL', 'calling task succeeded hook script' )
+            self.log( 'WARNING', 'calling task succeeded hook script' )
             command = ' '.join( [self.__class__.hook_script, 'succeeded', self.__class__.suite, self.id, "'(task succeeded)' &"] )
             subprocess.call( command, shell=True )
 
@@ -348,33 +348,46 @@ class task( Pyro.core.ObjBase ):
         else:
             self.set_submit_failed()
 
-    def check_timeout( self ):
-        if 'timeout' not in self.__class__.hook_events or not self.__class__.hook_script:
-            # not handling timeouts, or no handler specified.
+    def check_submission_timeout( self ):
+        if not self.__class__.hook_script:
+            # no event handler specified.
             return
-        if not self.execution_timeout and not self.submission_timeout:
-            # no timeouts defined
+        if 'submission_timeout' not in self.__class__.hook_events:
+            # not handling timeouts
+            return
+        if not self.submission_timeout:
+            # no timeout values specified
             return
         if not self.state.is_submitted() and not self.state.is_running():
             # nothing to time out yet
             return
         current_time = task.clock.get_datetime()
-        if self.submission_timeout != None \
-                and self.submission_timer_start != None \
-                and not self.state.is_running():
-                # check for job submission timeout
+        if self.submission_timer_start != None and not self.state.is_running():
             timeout = self.submission_timer_start + datetime.timedelta( minutes=self.submission_timeout )
             if current_time > timeout:
                 msg = 'submitted ' + str( self.submission_timeout ) + ' minutes ago, but has not started'
                 self.log( 'WARNING', msg )
-                command = ' '.join( [ self.__class__.hook_script, 'submission', self.__class__.suite, self.id, "'" + msg + "' &" ] )
+                self.log( 'WARNING', 'Calling task submission timeout hook script.' )
+                command = ' '.join( [ self.__class__.hook_script, 'submission_timeout', self.__class__.suite, self.id, "'" + msg + "' &" ] )
                 subprocess.call( command, shell=True )
                 self.submission_timer_start = None
 
-        if self.execution_timeout != None \
-                and self.execution_timer_start != None \
-                and self.state.is_running():
-                    # check for job execution timeout
+    def check_execution_timeout( self ):
+        if not self.__class__.hook_script:
+            # no event handler specified.
+            return
+        if 'execution_timeout' not in self.__class__.hook_events:
+            # not handling timeouts
+            return
+        if not self.execution_timeout:
+            # no timeout values specified
+            return
+        if not self.state.is_submitted() and not self.state.is_running():
+            # nothing to time out yet
+            return
+        current_time = task.clock.get_datetime()
+        if self.execution_timer_start != None and self.state.is_running():
+            # check for job execution timeout
             timeout = self.execution_timer_start + datetime.timedelta( minutes=self.execution_timeout )
             if current_time > timeout:
                 if self.reset_timer:
@@ -382,7 +395,8 @@ class task( Pyro.core.ObjBase ):
                 else:
                     msg = 'started ' + str( self.execution_timeout ) + ' minutes ago, but has not succeeded'
                 self.log( 'WARNING', msg )
-                command = ' '.join( [ self.__class__.hook_script, 'execution', self.__class__.suite, self.id, "'" + msg + "' &" ] )
+                self.log( 'WARNING', 'Calling task execution timeout hook script.' )
+                command = ' '.join( [ self.__class__.hook_script, 'execution_timeout', self.__class__.suite, self.id, "'" + msg + "' &" ] )
                 subprocess.call( command, shell=True )
                 self.execution_timer_start = None
 

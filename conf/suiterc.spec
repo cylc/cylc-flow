@@ -58,6 +58,9 @@ description = string( default="No description provided" )
             enable = boolean( default=False )
         [[[job submission]]]
             method = string( default=background )
+    [[event hooks]]
+        script = string( default=None )
+        events = force_list( default=list() )
 #_____________________________________________________________SCHEDULING
 [scheduling]
     initial cycle time = integer( default=None )

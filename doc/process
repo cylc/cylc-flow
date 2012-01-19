@@ -5,9 +5,9 @@ set -e
 # Generate PDF and HTML User Guides from the LaTeX source.
 
 usage() {
-	echo "USAGE: [-c] [-p] $0"
-    echo ' -c, (re)generate command help listings'
+	echo "USAGE: [-p] [-h] $0"
     echo ' -p, generate PDF output only'
+    echo ' -h, generate HTML output only'
     echo "Run this script from \$CYLC_DIR"
 }
 
@@ -16,14 +16,14 @@ if [[ ! -f bin/cylc ]]; then
     exit 1
 fi
 
-FORCE_COMMANDS=false
 PDF_ONLY=false
+HTML_ONLY=false
 if [[ $# > 0 ]]; then 
     for arg in $@; do
-        if [[ $arg = -c ]]; then
-            FORCE_COMMANDS=true
-        elif [[ $arg = -p ]]; then
+        if [[ $arg = -p ]]; then
             PDF_ONLY=true
+        elif [[ $arg = -h ]]; then
+            HTML_ONLY=true
         else
             usage
             exit 1
@@ -31,8 +31,8 @@ if [[ $# > 0 ]]; then
     done
 fi
 
-# GENERATE COMMAND REFERENCE CHAPTER CONTENTS -----------------------
-if $FORCE_COMMANDS; then
+if true; then
+    echo "Command help reference:"
     rm -rf doc/command-usage; mkdir -p doc/command-usage
     rm -f doc/commands.tex
 
@@ -71,10 +71,21 @@ fi
 
 #-----------------------------------------------------------------------
 
+export CYLC_DIR=$PWD
+bin/cylc -v > doc/cylc-version.txt
 cd doc
 
+if $PDF_ONLY; then
+    pdflatex cug-pdf.tex
+    rm cylc-version.txt # gets regenerated every time
+    exit 0
+elif $HTML_ONLY; then
+    htlatex cug-html.tex "cug-html.cfg,xhtml,3,next"
+    rm cylc-version.txt
+    exit 0
+fi
+
 pdflatex cug-pdf.tex
-$PDF_ONLY && exit 0
 pdflatex cug-pdf.tex
 pdflatex cug-pdf.tex
 
@@ -83,3 +94,4 @@ rm *.aux
 htlatex cug-html.tex "cug-html.cfg,xhtml,3,next"
 htlatex cug-html.tex "cug-html.cfg,xhtml,3,next"
 
+rm cylc-version.txt # gets regenerated every time
