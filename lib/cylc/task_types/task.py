@@ -641,3 +641,6 @@ class task( Pyro.core.ObjBase ):
 
     def is_daemon( self ):
         return False
+
+    def is_clock_triggered( self ):
+        return False
