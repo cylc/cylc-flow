@@ -372,6 +372,8 @@ class config( CylcConfigObj ):
 
         if self.verbose:
             print "CHECKING suite event hooks"
+        script = None
+        events = []
         if not self.simulation_mode or self['cylc']['simulation mode']['event hooks']['enable']:
             # configure suite event hooks
             script = self['cylc']['event hooks']['script']
