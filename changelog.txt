@@ -460,3 +460,6 @@ state, rather than the running state. This is better for external
 queue delays (tasks get queued sooner) but otherwise makes no
 difference.
 
++ Documented how multiple cycling graph sections combine to make the
+complete graph. 
+
