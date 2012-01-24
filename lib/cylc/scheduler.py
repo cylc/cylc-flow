@@ -1276,12 +1276,31 @@ class scheduler(object):
         for itask in spent:
             self.pool.remove( itask, 'general' )
 
+    def trigger_task( self, task_id ):
+        # Set a task to the 'ready' state (all prerequisites satisfied)
+        # and tell clock-triggered tasks to trigger regardless of their
+        # designated trigger time.
+        found = False
+        for itask in self.pool.get_tasks():
+            # Find the task to trigger.
+            if itask.id == task_id:
+                found = True
+                break
+        if not found:
+            raise TaskNotFoundError, "Task not present in suite: " + task_id
+        # dump state
+        self.log.warning( 'pre-trigger state dump: ' + self.dump_state( new_file = True ))
+        itask.log( 'WARNING', "triggering now" )
+        itask.reset_state_ready()
+        if itask.is_clock_triggered():
+            itask.set_trigger_now(True)
+
     def reset_task_state( self, task_id, state ):
         if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'held' ]:
             raise TaskStateError, 'Illegal reset state: ' + state
-        # find the task to reset
         found = False
         for itask in self.pool.get_tasks():
+            # Find the task to reset.
             if itask.id == task_id:
                 found = True
                 break

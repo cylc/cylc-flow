@@ -547,10 +547,16 @@ def userguide( w, graph=False ):
     update_tb( tb, "\n o View State: ", [bold])
     update_tb( tb, "View the state of a task's prerequisites and outputs.")
     update_tb( tb, "\n o Trigger: ", [bold])
-    update_tb( tb, "Reset the task to the 'ready' state (all prerequisites "
-            "satisfied), thereby causing it to trigger immediately (NOTE: "
+    update_tb( tb, "Set a task's prerequisites satisfied "
+            "and, for clock-triggered tasks, ignore the trigger time. "
+            "This will cause the task to trigger immediately (NOTE: "
             "if the suite is held (paused) the task will trigger when "
             "the hold is released)." )
+    update_tb( tb, "\n o Reset to 'ready': ", [bold])
+    update_tb( tb, "Set a task's prerequisites satisfied."
+            "This is equivalent to 'Trigger' for non clock-triggered "
+            "tasks (NOTE: if the suite is held (paused) the task will "
+            "trigger when the hold is released)." )
     update_tb( tb, "\n o Reset to 'waiting': ", [bold])
     update_tb( tb, "Set all of a task's prerequisites unsatisfied." )
     update_tb( tb, "\n o Reset to 'succeeded': ", [bold])

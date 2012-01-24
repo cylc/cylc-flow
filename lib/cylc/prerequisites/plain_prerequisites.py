@@ -30,6 +30,7 @@ class plain_prerequisites(object):
         self.satisfied = {}    # satisfied[ label ] = True/False
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
         self.auto_label = 0
+        self.owner_id = owner_id
 
     def add( self, message, label = None ):
         # Add a new prerequisite message in an UNSATISFIED state.
@@ -40,7 +41,7 @@ class plain_prerequisites(object):
             label = str( self.auto_label )
 
         if message in self.labels:
-            raise SystemExit( "Duplicate prerequisite: " + message )
+            raise SystemExit( self.owner_id + ": Duplicate prerequisite: '" + message + "'")
         self.messages[ label ] = message
         self.labels[ message ] = label
         self.satisfied[label] = False

@@ -2084,16 +2084,16 @@ methods, which are by definition unknown to the suiterc.spec file.
  
 \lstset{language=suiterc}
 The \lstinline=[scheduling]= section of a suite.rc file defines the
-relationships
-between tasks in a suite - the information that allows cylc to determine
-when tasks are ready to run. The most important component of this is the
-suite dependency graph. Cylc graph notation makes clear textual graph
-representations that are very concise because sections of the graph that
-repeat at different hours of the day only have to be defined once.
-Here's an example showing a simple task tree with dependencies that vary
-at certain hours:
+relationships between tasks in a suite - the information that allows
+cylc to determine when tasks are ready to run. The most important
+component of this is the suite dependency graph. Cylc graph notation
+makes clear textual graph representations that are very concise because
+sections of the graph that repeat at different hours of the day only
+have to be defined once.  Here's an example showing a simple task tree
+with dependencies that vary depending on cycle time:
 \lstset{language=suiterc}
 \begin{lstlisting}
+# SUITE.RC
 [scheduling]
     [[dependencies]]
         [[[0,6,12,18]]] # validity (hours of the day)
@@ -2101,7 +2101,7 @@ at certain hours:
 A => B & C   # B and C trigger off A
 A[T-6] => A  # Model A restart trigger
                     """
-        [[[6,18]]] # hours
+        [[[6,18]]]
             graph = "C => X"
 \end{lstlisting}
 \lstset{language=transcript}
@@ -2305,9 +2305,8 @@ marker:
     graph = "A => B \
     => C"  # OK
 \end{lstlisting}
-(note that line continuation characters, as in other uses of them, 
-must be the final character on the line, so you cannot put a trailing
-comment on the same line).
+Note that a line continuation marker must be the final character on
+the line; they cannot be followed by trailing spaces or comments.
 
 \lstset{language=transcript}
 
@@ -2317,9 +2316,9 @@ A suite definition can contain multiple graph strings that are combined
 to generate the final graph. There are different graph VALIDITY section
 headings (the heading of the suite.rc section that encloses the graph
 string) for cycling, one-off asynchronous, and repeating asynchronous
-tasks. Additionally, there may be multiple graph strings (under different
-VALIDITY sections) for cycling tasks, for tasks with different
-dependencies at different cycle times.
+tasks. Additionally, there may be multiple graph strings under different
+VALIDITY sections for cycling tasks with different dependencies at
+different cycle times.
 
 {\em The small suite definitions used in the following subsections can
 be found in the central database registered under the {\em validity}
@@ -2328,11 +2327,11 @@ group name.}
 \paragraph{One-off Asynchronous Tasks}
 
 Figure~\ref{fig-test1} shows a small suite of one-off asynchronous
-tasks; these have no associated cycle time and don't spawn
-successors (once they're all finished the suite just exits).  The
-integer $1$ attached to each graph node is just an arbitrary label, akin
-to the task cycle time in cycling tasks; it increments when a repeating
-asynchronous task (below) spawns.
+tasks; these have no associated cycle time and don't spawn successors
+(once they're all finished the suite just exits).  The integer $1$
+attached to each graph node is just an arbitrary label, akin to the task
+cycle time in cycling tasks; it increments when a repeating asynchronous
+task (below) spawns.
 \begin{figure}
 \begin{minipage}[b]{0.5\textwidth}
 \lstset{language=suiterc}
@@ -2385,12 +2384,54 @@ title = some one-off asynchronous tasks
 \label{fig-test2}
 \end{figure}
 
-\paragraph{Combined Graphs}
+\subparagraph{How Multiple Graph Strings Combine}
+\label{HowMultipleGraphStringsCombine}
+
+For a cycling graph with multiple validity sections for different
+hours of the day, the different sections {\em add} to generate the
+complete graph. Different graph sections can overlap (i.e.\ the same hours
+may appear in multiple section headings) and the same tasks may appear
+in multiple sections, but individual dependencies must be unique across
+the entire graph. Thus the following graph is valid:
+\begin{lstlisting}
+# SUITE.RC
+[scheduling]
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph = "A => B => C"
+        [[[6,18]]]
+            # OK (X triggers off C only at 6 and 18 hours)
+            graph = "C => X"
+\end{lstlisting}
+But this is an error:
+\begin{lstlisting}
+# SUITE.RC
+[scheduling]
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph = "A => B => C"
+        [[[6,18]]]
+            # ERROR (B => C is already defined at 6 and 18 hours)
+            graph = "B => C => X" # ERROR
+\end{lstlisting}
+
+Currently this is one of the few remaining errors not caught by suite
+validation. Instead the suite will abort on start-up with a ``duplicate
+prerequisite'' error:
+\lstset{language=transcript}
+\begin{lstlisting}
+cylc run foo 2012080806
+# (some startup stdout...)
+C%2012080806: Duplicate prerequisite: 'B%2012080806 succeeded'
+_run foo 2012080806  failed:  1
+\end{lstlisting}
+
+\paragraph{Combined Asynchronous And Synchronous Graphs}
 
 Cycling tasks can be made to wait on one-off asynchronous tasks, as
 shown in Figure~\ref{fig-test4}. Alternatively, they can be made to wait 
-on one-off {\em synchronous} start-up tasks, which have an associated cycle
-time event though they are non-cycling tasks - see Figure~\ref{fig-test5}.
+on one-off synchronous start-up tasks, which have an associated cycle
+time even though they are non-cycling - see Figure~\ref{fig-test5}.
 
 \subparagraph{Synchronous Start-up vs One-off Asynchronous Tasks}
 
@@ -2407,6 +2448,7 @@ same suite, as shown above. It seems likely that, if used in this way,
 they will be intended as start-up tasks - so currently {\em one-off
 asynchronous tasks only run in a cold-start}.
 
+\lstset{language=suiterc}
 \begin{figure}
 \begin{minipage}[b]{0.5\textwidth}
 \lstset{language=suiterc}

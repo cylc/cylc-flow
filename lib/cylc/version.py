@@ -137,10 +137,10 @@ class compat( object ):
         # full path to new cylc command
         new_cylc = os.path.join( self.new_cylc_dir, 'bin', 'cylc')
         # construct the command to re-invoke
-        command_path = sysargv[0]     # /path/to/this/cylc/bin/_validate
-        command_name = os.path.basename( command_path ) # _validate
-        # strip off initial '_' if there is one (may not be, e.g. gcylc SUITE) 
-        command_name = re.sub( '^_', '', command_name )       # validate
+        command_path = sysargv[0]     # /path/to/this/cylc/bin/cylc-validate
+        command_name = os.path.basename( command_path ) # cylc-validate
+        # strip off initial 'cylc-' if it exists (may not be, e.g. gcylc SUITE) 
+        command_name = re.sub( '^cylc-', '', command_name ) # validate
 
         command = [new_cylc, command_name] + sysargv[1:] 
 

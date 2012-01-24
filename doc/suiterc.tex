@@ -465,22 +465,22 @@ process that has to be completed before the suite is started.
 
 \paragraph[sequential]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ sequential}
 
-By default, a task spawns a successor as soon as it starts running, so
-that successive instances of the same task can run in parallel if the
+By default, a task spawns a successor as soon as it is submitted to run
+so that successive instances of the same task can run in parallel if the
 opportunity arises (i.e.\ if their prerequisites happen to be satisfied
 before their predecessor has finished). {\em Sequential tasks}, however,
 will not spawn a successor until they have finished successfully. This
 should be used for (a) {\em tasks that cannot run in parallel with their
 own previous instances} because they would somehow interfere with each
-other (use cycle time in all I/O paths to avoid this); and (b) {\em Warm
+other (use cycle time in all I/O paths to avoid this); and (b) {\em warm
 cycled forecast models that write out restart files for multiple cycles
 ahead} (exception: see ``explicit restart outputs''
-below).\footnote{This is because you don't want Model(T) waiting around
-to trigger off Model(T-12) if Model(T-6) has not finished yet. If Model
-is forced to be sequential this can't happen because Model(T) won't
-exist in the suite until Model(T-6) has finished. But if Model(T-6)
-fails, it can be spawned-and-removed from the suite so that Model(T) can
-{\em then} trigger off Model(T-12), which is the correct behaviour.} 
+below).\footnote{This is because you don't want Model[T] waiting around
+to trigger off Model[T-12] if Model[T-6] has not finished yet. If Model
+is forced to be sequential this can't happen because Model[T] won't
+exist in the suite until Model[T-6] has finished. But if Model[T-6]
+fails, it can be spawned-and-removed from the suite so that Model[T] can
+{\em then} trigger off Model[T-12], which is the correct behaviour.} 
 
 \begin{myitemize}
     \item {\em type:} list of task names
@@ -590,6 +590,14 @@ repeating asynchronous tasks.
         \end{myitemize}
     \item {\em default:} (none)
 \end{myitemize}
+For a cycling graph with multiple validity sections for different
+hours of the day, the different sections {\em add} to generate the
+complete graph. Different graph sections can overlap (i.e.\ the same hours
+may appear in multiple section headings) and the same tasks may appear
+in multiple sections, but the individual dependencies must be unique
+across the entire graph. Duplicate dependencies will cause a run time 
+error at start-up, as documented in {\em How Multiple Graph Strings Combine} 
+(Section~\ref{HowMultipleGraphStringsCombine}).
 
 \subparagraph[graph]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_VALIDITY\_\_]]] $\rightarrow$ graph }
 \label{GraphDescrip}

@@ -141,6 +141,7 @@ class task( Pyro.core.ObjBase ):
         class_vars = {}
         self.state = task_state.task_state( state )
         self.launcher = None
+        self.trigger_now = False
 
         # Count instances of each top level object derived from task.
         # Top level derived classes must define:

@@ -66,6 +66,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def set_runahead( self, hours=None ):
         # change the suite maximum runahead limit
+        self._warning( "setting runahead limit to " + hours )
         self.pool.runahead_limit = int(hours)
         self.process_tasks = True
         return result( True, "Action succeeded" )
@@ -79,9 +80,26 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return result( True )
 
+    def trigger_task( self, task_id ):
+        if self._suite_is_blocked():
+            return result( false, "suite blocked" )
+        try:
+            self.pool.trigger_task( task_id )
+        except TaskNotFoundError, x:
+            self._warning( 'Refused remote trigger: task not found' )
+            return result( False, x.__str__() )
+        except Exception, x:
+            # do not let a remote request bring the suite down for any reason
+            self._warning( 'Remote reset failed: ' + x.__str__() )
+            return result( False, "Action failed: "  + x.__str__() )
+        else:
+            # report success
+            self.process_tasks = True
+            return result( True )
+
     def reset_task_state( self, task_id, state ):
         if self._suite_is_blocked():
-            return result( False, "Suite Blocked" )
+            return result( false, "suite blocked" )
         if task_id == self.failout_id:
             self._reset_failout()
         try:

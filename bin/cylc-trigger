@@ -27,9 +27,11 @@ from cylc.version import compat
 
 parser = PromptOptionParser( """cylc [control] trigger [options] SUITE TASK
 
-Force a task to trigger immediately (unless the suite is paused, 
+Get a task to trigger immediately (unless the suite is paused, 
 in which case it will trigger when normal operation is resumed).
-This is just a special case of the 'reset' command.""",
+This is effected by setting the task to the 'ready' state (all
+prerequisites satisfied) and, for clock-triggered tasks, ignoring
+the designated trigger time.""",
 [ 'TASK                 The target task.'] )
 
 (options, args) = parser.parse_args()
@@ -63,7 +65,7 @@ except SuiteIdentificationError, x:
 if not parser.prompt( 'Trigger task ' + task_id + ' in'):
     sys.exit(0)
 
-result = proxy.reset_task_state( task_id, 'ready' )
+result = proxy.trigger_task( task_id )
 
 if result.success:
     print result.reason
