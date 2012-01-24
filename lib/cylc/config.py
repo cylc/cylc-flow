@@ -753,6 +753,8 @@ class config( CylcConfigObj ):
         #  An 'or' on the right side is an error:
         #  'A = > B | C'     <--- NOT ALLOWED!
 
+        orig_line = line
+
         # [list of valid hours], or ["once"], or ["ASYNCID:pattern"]
         ttype = None
         validity = []
@@ -768,11 +770,13 @@ class config( CylcConfigObj ):
             for hr in hours:
                 hour = int( hr )
                 if hour < 0 or hour > 23:
-                    raise DefinitionError( 'ERROR: Hour ' + str(hour) + ' must be between 0 and 23' )
+                    print >> sys.stderr, "Bad cycling graph validity section:", section
+                    raise SuiteConfigError( 'ERROR: Hour ' + str(hour) + ' must be between 0 and 23' )
                 if hour not in validity: 
                     validity.append( hour )
             validity.sort( key=int )
         else:
+            print >> sys.stderr, "Bad graph validity section:", section
             raise SuiteConfigError( 'ERROR: Illegal graph validity type: ' + section )
 
         # REPLACE FAMILY NAMES WITH THE TRUE MEMBER DEPENDENCIES
@@ -815,6 +819,17 @@ class config( CylcConfigObj ):
         #     tasks = tokens[0::2]                       # [a, b, c] 
         #     arrow = tokens[1::2]                       # [=>, =x]
 
+        # Check for missing task names, e.g. '=> a => => b =>; this
+        # results in empty or blank strings in the list of task names.
+        arrowerr = False
+        for task in tasks:
+            if re.match( '^\s*$', task ):
+                arrowerr = True
+                break
+        if arrowerr:
+            print >> sys.stderr, orig_line
+            raise SuiteConfigError, "ERROR: missing task name in graph line?"
+
         # get list of pairs
         for i in [0] + range( 1, len(tasks)-1 ):
             lexpression = tasks[i]
@@ -822,6 +837,7 @@ class config( CylcConfigObj ):
                 # single node: no rhs group
                 rgroup = None
                 if re.search( '\|', lexpression ):
+                    print >> sys.stderr, orig_line
                     raise SuiteConfigError, "ERROR: Lone node groups cannot contain OR conditionals: " + lexpression
             else:
                 rgroup = tasks[i+1]
@@ -829,10 +845,12 @@ class config( CylcConfigObj ):
             if rgroup:
                 # '|' (OR) is not allowed on the right side
                 if re.search( '\|', rgroup ):
+                    print >> sys.stderr, orig_line
                     raise SuiteConfigError, "ERROR: OR '|' is not legal on the right side of dependencies: " + rgroup
 
                 # (T+/-N) offsets not allowed on the right side (as yet)
                 if re.search( '\[\s*T\s*[+-]\s*\d+\s*\]', rgroup ):
+                    print >> sys.stderr, orig_line
                     raise SuiteConfigError, "ERROR: time offsets are not legal on the right side of dependencies: " + rgroup
 
                 # now split on '&' (AND) and generate corresponding pairs
@@ -867,6 +885,7 @@ class config( CylcConfigObj ):
                             name in spec['sequential'] or name in spec['one-off']:
                                 bad.append(name)
                 if len(bad) > 0:
+                    print >> sys.stderr, orig_line
                     print >> sys.stderr, 'ERROR: synchronous special tasks cannot be used in an asynchronous graph section:'
                     print >> sys.stderr, '      ', ', '.join(bad)
                     raise SuiteConfigError, 'ERROR: inconsistent use of special task types.'
@@ -887,6 +906,7 @@ class config( CylcConfigObj ):
                         try:
                             name = graphnode( n ).name
                         except GraphNodeError, x:
+                            print >> sys.stderr, orig_line
                             raise SuiteConfigError, str(x)
                         if ttype == 'async_oneoff':
                             if name not in self.async_oneoff_tasks:
@@ -900,7 +920,7 @@ class config( CylcConfigObj ):
                 if ttype == 'async_repeating':
                     m = re.match( '^ASYNCID:(.*)$', section )
                     asyncid_pattern = m.groups()[0]
-                self.generate_taskdefs( lnames, r, ttype, section, asyncid_pattern )
+                self.generate_taskdefs( orig_line, lnames, r, ttype, section, asyncid_pattern )
                 self.generate_triggers( lexpression, lnames, r, section, asyncid_pattern, suicide )
 
     def generate_nodes_and_edges( self, lexpression, lnames, right, ttype, validity, suicide=False ):
@@ -927,7 +947,7 @@ class config( CylcConfigObj ):
                     if e not in self.edges[val]:
                         self.edges[val].append( e )
 
-    def generate_taskdefs( self, lnames, right, ttype, section, asyncid_pattern ):
+    def generate_taskdefs( self, line, lnames, right, ttype, section, asyncid_pattern ):
         for node in lnames + [right]:
             if not node:
                 # if right is None, lefts are lone nodes
@@ -936,6 +956,7 @@ class config( CylcConfigObj ):
             try:
                 name = graphnode( node ).name
             except GraphNodeError, x:
+                print >> sys.stderr, line
                 raise SuiteConfigError, str(x)
 
             if name not in self['runtime']:
@@ -949,7 +970,11 @@ class config( CylcConfigObj ):
                 self.members['root'].append(name)
  
             if name not in self.taskdefs:
-                self.taskdefs[ name ] = self.get_taskdef( name )
+                try:
+                    self.taskdefs[ name ] = self.get_taskdef( name )
+                except taskdef.DefinitionError, x:
+                    print >> sys.stderr, line
+                    raise SuiteConfigError, str(x)
 
             # TO DO: setting type should be consolidated to get_taskdef()
             if name in self.async_oneoff_tasks:
@@ -1006,7 +1031,7 @@ class config( CylcConfigObj ):
                     lnode.name in self.async_oneoff_tasks:
                 self.taskdefs[right].add_startup_conditional_trigger( ctrig, expr, section, suicide )
             elif lnode.name in self.async_repeating_tasks:
-                # TO DO!!!!
+                # !!! TO DO!!!!
                 raise SuiteConfigError, 'ERROR: repeating async task conditionals not done yet'
             else:
                 # TO DO: ALSO CONSIDER SUICIDE FOR STARTUP AND ASYNC
@@ -1204,7 +1229,7 @@ class config( CylcConfigObj ):
 
     def load( self ):
         if self.verbose:
-            print 'PARSING SUITE GRAPH'
+            print 'PARSING suite dependency graph'
         # parse the suite dependencies section
         for item in self['scheduling']['dependencies']:
             if item == 'graph':
@@ -1240,10 +1265,8 @@ class config( CylcConfigObj ):
             self.taskdefs[name].hours.sort( key=int ) 
 
     def get_taskdef( self, name, strict=False ):
-        try:
-            taskd = taskdef.taskdef( name )
-        except taskdef.DefinitionError, x:
-            raise SuiteConfigError, str(x)
+        # (DefinitionError caught above)
+        taskd = taskdef.taskdef( name )
 
         # SET ONE OFF TASK INDICATOR
         #   cold start and startup tasks are automatically one off
@@ -1382,9 +1405,13 @@ class config( CylcConfigObj ):
         # This allows us to 'cylc submit' single tasks that are defined
         # in suite.rc but not in the suite graph.  Because the graph
         # defines valid cycle times, however, we must use
-        # [tasks][[name]]hours or, if the hours entry is not defined,
+        # [runtime][[name]]hours or, if the hours entry is not defined,
         # assume that the requested ctime is valid for the task.
-        td = self.get_taskdef( name, strict=True )
+        try:
+            td = self.get_taskdef( name, strict=True )
+        except taskdef.DefinitionError, x:
+            raise SuiteConfigError, str(x)
+
         chour = int(ctime[8:10])
         hours = self['runtime'][name]['hours']
         if len(hours) == 0:
