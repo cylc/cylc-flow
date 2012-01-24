@@ -777,25 +777,33 @@ class config( CylcConfigObj ):
         for fam in self.members:
             # fam:fail - replace with conditional expressing this:
             # "one or more members failed AND (all members either
-            # succeeded or failed)":
+            # succeeded or failed)", i.e.:
             # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail )
-            if re.search( r'\b' + fam + ':fail' + r'\b', line ):
+            m = re.search( r'\b' + fam + '(\[.*?]){0,1}:fail', line )
+            if m:
+                foffset = m.groups()[0]
+                if not foffset:
+                    foffset = ''
                 if fam not in self.families_used_in_graph:
                     self.families_used_in_graph.append(fam)
                 mem0 = self.members[fam][0]
-                cond1 = mem0 + ':fail'
-                cond2 = '( ' + mem0 + ' | ' + mem0 + ':fail )' 
+                cond1 = mem0 + foffset + ':fail'
+                cond2 = '( ' + mem0 + foffset + ' | ' + mem0 + foffset + ':fail )' 
                 for mem in self.members[fam][1:]:
-                    cond1 += ' | ' + mem + ':fail'
-                    cond2 += ' & ( ' + mem + ' | ' + mem + ':fail )'
+                    cond1 += ' | ' + mem + foffset + ':fail'
+                    cond2 += ' & ( ' + mem + foffset + ' | ' + mem + foffset + ':fail )'
                 cond = '( ' + cond1 + ') & ' + cond2 
-                line = re.sub( r'\b' + fam + ':fail' + r'\b', cond, line )
-            # fam - replace with members
-            if re.search( r'\b' + fam + r'\b', line ):
+                line = re.sub( r'\b' + re.escape( fam + foffset + ':fail'), cond, line )
+            # replace fam or fam[T-N] with members or members[T-N]
+            m = re.search( r'\b' + fam + '(\[.*?]){0,1}', line )
+            if m:
+                foffset = m.groups()[0]
+                if not foffset:
+                    foffset = ''
                 if fam not in self.families_used_in_graph:
                     self.families_used_in_graph.append(fam)
-                mems = ' & '.join( self.members[fam] )
-                line = re.sub( r'\b' + fam + r'\b', mems, line )
+                mems = ' & '.join( [ i + foffset for i in self.members[fam] ] )
+                line = re.sub( r'\b' + re.escape(fam + foffset), mems, line )
 
         # Split line on dependency arrows.
         tasks = re.split( '\s*=>\s*', line )
