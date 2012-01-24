@@ -1434,7 +1434,7 @@ class config( CylcConfigObj ):
             td.hours = [ chour ]
         else:
             td.hours = [ int(i) for i in hours ]
-        tdclass = td.get_task_class()( ctime, 'waiting', startup, stopctime )
+        tdclass = td.get_task_class()( ctime, 'waiting', stopctime, startup )
         return tdclass
 
     def get_task_class( self, name ):
