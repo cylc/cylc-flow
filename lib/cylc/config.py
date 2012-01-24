@@ -177,6 +177,7 @@ class config( CylcConfigObj ):
         self.async_oneoff_tasks = []
         self.async_repeating_edges = []
         self.async_repeating_tasks = []
+        self.cycling_tasks = []
 
         self.family_hierarchy = {}
         self.families_used_in_graph = []
@@ -724,7 +725,9 @@ class config( CylcConfigObj ):
     def get_asynchronous_task_name_list( self ):
         names = []
         for tn in self.taskdefs:
-            if self.taskdefs[tn].type == 'async_repeating' or self.taskdefs[tn].type == 'async_daemon' or self.taskdefs[tn].type == 'async_oneoff':
+            if self.taskdefs[tn].type == 'async_repeating' or \
+                    self.taskdefs[tn].type == 'async_daemon' or \
+                    self.taskdefs[tn].type == 'async_oneoff':
                 names.append(tn)
         names.sort(key=str.lower)
         return names
@@ -987,9 +990,10 @@ class config( CylcConfigObj ):
                     self.taskdefs[name].type = 'async_daemon'
                 else:
                     self.taskdefs[name].type = 'async_repeating'
-
             elif ttype == 'cycling':
                 self.taskdefs[ name ].set_valid_hours( section )
+                if name not in self.cycling_tasks:
+                    self.cycling_tasks.append[name]
 
     def generate_triggers( self, lexpression, lnames, right, section, asyncid_pattern, suicide ):
         if not right:
@@ -1015,8 +1019,10 @@ class config( CylcConfigObj ):
             for label in ctrig:
                 trigger = ctrig[label]
                 # using last lnode ...
-                if lnode.name in self['scheduling']['special tasks']['start-up'] or \
-                        lnode.name in self.async_oneoff_tasks:
+                if right in self.cycling_tasks and \
+                        (lnode.name in self['scheduling']['special tasks']['start-up'] or \
+                         lnode.name in self.async_oneoff_tasks ):
+                    # cycling tasks only depend on these tasks at startup
                     self.taskdefs[right].add_startup_trigger( trigger, section, suicide )
                 elif lnode.name in self.async_repeating_tasks:
                     # TO DO: SUICIDE FOR REPEATING ASYNC
