@@ -795,7 +795,7 @@ class config( CylcConfigObj ):
                     cond1 += ' | ' + mem + foffset + ':fail'
                     cond2 += ' & ( ' + mem + foffset + ' | ' + mem + foffset + ':fail )'
                 cond = '( ' + cond1 + ') & ' + cond2 
-                line = re.sub( r'\b' + re.escape( fam + foffset + ':fail'), cond, line )
+                line = re.sub( r'\b' + re.escape( fam + foffset + ':fail') + r'\b', cond, line )
             # replace fam or fam[T-N] with members or members[T-N]
             m = re.search( r'\b' + fam + '(\[.*?]){0,1}', line )
             if m:
@@ -805,7 +805,7 @@ class config( CylcConfigObj ):
                 if fam not in self.families_used_in_graph:
                     self.families_used_in_graph.append(fam)
                 mems = ' & '.join( [ i + foffset for i in self.members[fam] ] )
-                line = re.sub( r'\b' + re.escape(fam + foffset), mems, line )
+                line = re.sub( r'\b' + re.escape(fam + foffset) + r'\b', mems, line )
 
         # Split line on dependency arrows.
         tasks = re.split( '\s*=>\s*', line )
