@@ -1502,7 +1502,7 @@ The cylc forecast suite metascheduler.
  
     def view_log( self, w ):
         logdir = os.path.join( self.suiterc['cylc']['logging']['directory'] )
-        foo = cylc_logviewer( 'log', logdir, self.suiterc.get_full_task_name_list() )
+        foo = cylc_logviewer( 'log', logdir, self.suiterc.get_task_name_list() )
         self.quitters.append(foo)
 
     def launch_cug( self, b, pdf ):
