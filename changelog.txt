@@ -484,3 +484,4 @@ that indentation amount allows you to put higher level items such as
 + Documented how to omit tasks at runtime, completely or for later
 insertion.
 
++ Internal queues implemented.
