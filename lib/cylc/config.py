@@ -1390,7 +1390,10 @@ class config( CylcConfigObj ):
             print >> sys.stderr, 'WARNING:', taskd.name, 'job execution timeout disabled (no timeout given)'
          
         taskd.logfiles    = taskconfig[ 'extra log files' ]
+
         taskd.environment = taskconfig[ 'environment' ]
+        self.check_environment( taskd.name, taskd.environment )
+
         taskd.directives  = taskconfig[ 'directives' ]
 
         foo = deepcopy(self.family_hierarchy[ name ])
@@ -1399,6 +1402,18 @@ class config( CylcConfigObj ):
 
         return taskd
 
+    def check_environment( self, name, env ):
+        bad = []
+        for varname in env:
+            if not re.match( '^[a-zA-Z_][\w]*$', varname ):
+                bad.append(varname)
+
+        if len(bad) != 0:
+            #print >> sys.stderr, "Illegal environment variable name(s) in namespace", name
+            for item in bad:
+                print >> sys.stderr, " ", item
+            raise SuiteConfigError("ERROR: illegal environment variable name(s) detected in namespace " + name )
+    
     def get_task_proxy( self, name, ctime, state, stopctime, startup ):
         # get a proxy for a task in the dependency graph.
         return self.taskdefs[name].get_task_class()( ctime, state, stopctime, startup )

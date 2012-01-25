@@ -10,13 +10,6 @@ GENERAL
 rather than as a command line argument. This would allow multi-line 
 messages such as remote error tracebacks to be sent to the handler.
 
-* check [[[environment]]] variable names for illegal characters such as
-  spaces - this would catch some section nesting mistakes made by
-  beginners, e.g.:
-
-  [[[environment]]]
-    command scripting = "echo hello"  # ERROR - should be before environment
-
 * Replace cumbersome checks for dict key validity throughout the code.
   This:
     if key not in foo:

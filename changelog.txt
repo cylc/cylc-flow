@@ -476,3 +476,7 @@ normal trigger time is up.
 + Improved graph string validation: dangling arrows are now caught;
 the bad graph line is printed just before the error message.
 
++ Illegal namespace environment variable names are now detected; this
+catches some beginner suite.rc section nesting errors such as thinking 
+that indentation amount allows you to put higher level items such as 
+'command scripting' below an environment section.
