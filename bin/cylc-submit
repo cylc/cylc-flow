@@ -199,12 +199,7 @@ else:
 try:
     task_proxy = config.get_task_proxy( task_name, tag, 'waiting', stopctime=None, startup=True )
 except KeyError, x:
-    try:
-        task_proxy = config.get_task_proxy_raw( task_name, tag, 'waiting', stopctime=None, startup=True, test=False, strict=False )
-    except SuiteConfigError,x:
-        print >> sys.stderr, 'ERROR:', task_name, 'is not defined by graph or [tasks] section'
-        print >> sys.stderr, x
-        sys.exit(1)
+    raise SystemExit, "ERROR: there is no task " + task_name + " in the suite graph."
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------
 if not options.dry_run:

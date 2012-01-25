@@ -27,9 +27,6 @@ messages such as remote error tracebacks to be sent to the handler.
   The defaultdict can be used similarly (i.e. without checking for 
   existence of an item first) but only since Python 2.5.
 
-* Suite validation problem: missing '=' causes crash due to configobj
-  error.
-
 * In simulation mode, task message stdout is not in dummy clock time.
   To correct this would require getting the current dummy time from the
   suite.
@@ -75,25 +72,13 @@ messages such as remote error tracebacks to be sent to the handler.
 
 * Rationalize suite shutdown criteria in main loop.
 
-* exclude failed tasks in the cleanup algorithms.
-  Failed mean prereqs were satisfied so we don't need to keep 
-  upstream tasks around. This may depend on the next item:
-* cleanup algorithm and failed tasks: test with userguide suite in dummy
-  mode, failing C and F. In case of F, why do none of A,B,C get
-  removed?  (THESE ARE NOW FIXED?)
-
 * exclude inserted spinup/temporary tasks from runahead check?
   (or manually alter the check - this should be fine because the
   catching up spinup task will be all alone out behind the 
   caught-up operational tasks - so the suite won't get cluttered
   with finished tasks as a result of the long runahead limit).
 
-* errors caught by validate should also be caught cleanly if the user
-  tries to start the suite. E.g. misspell a task in 'tasks to exclude at
-  startup'.  And/or should a full validation be done automatically prior
-  to starting a suite? 
-
-* GUI: check for suite block before popping up entry dialogs?
+* GUI: check for suite blocking before popping up entry dialogs?
 
 * Practice mode (currently disabled):
     * message command (command line usage only) lock and practice mode?
@@ -114,13 +99,8 @@ messages such as remote error tracebacks to be sent to the handler.
 * config(suite) writes to stdout/stderr (gcylc parent terminal) - see
   gcylc:view_log() for a non-validating suite.
 
-* allow $CYLC_DIR/conf overrides by user in .cylc?
-
 * clean up src/gui/textload.py and use of it: it was quickly hacked out
   of the tailing logviewer and should be treated separately and more simply.
-
-* tasks that are not in the dep graph can now be run with 'submit';
-  should we allow insertion too? (still relevant in cylc-4 or not?)
 
 * clean up prerequisites classes - put all in one module? (same with
   outputs + requisites?)
@@ -139,9 +119,9 @@ messages such as remote error tracebacks to be sent to the handler.
   the lockserver is user-specific? (has this been done?)
 
 * currently all task reset commands go through the 'remote' object,
-  which all suites have, but we could get a proxy for the task proxy directly,
-  in which case we'd could catch Pyro.NamingError to detect if no such
-  task exists in the suite. 
+  which all suites have, but we could get a proxy for the task proxy
+  directly, in which case we'd could catch Pyro.NamingError to detect if
+  no such task exists in the suite. 
 
 * Pyro config:
   + PYRO_MAXCONNECTIONS , default 200: max number

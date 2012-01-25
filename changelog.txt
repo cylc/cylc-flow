@@ -480,3 +480,7 @@ the bad graph line is printed just before the error message.
 catches some beginner suite.rc section nesting errors such as thinking 
 that indentation amount allows you to put higher level items such as 
 'command scripting' below an environment section.
+
++ Documented how to omit tasks at runtime, completely or for later
+insertion.
+

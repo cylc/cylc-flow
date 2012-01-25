@@ -143,7 +143,8 @@ class remote_switch( Pyro.core.ObjBase ):
         if not self._task_type_exists( ins_name ):
             # TASK INSERTION GROUPS TEMPORARILY DISABLED
             #and ins_name not in self.config[ 'task insertion groups' ]:
-            return result( False, "No such task type or group: " + ins_name )
+            #return result( False, "No such task or group: " + ins_name )
+            return result( False, "there is no task " + ins_name + " in the suite graph." )
         ins = ins_id
         # insert a new task or task group into the suite
         if ins == self.failout_id:
@@ -329,7 +330,7 @@ class remote_switch( Pyro.core.ObjBase ):
             return result( False, "Suite is blocked" )
 
         if not self._task_type_exists( task_id ):
-            return result( False, "No such task type: " + self._name_from_id( task_id ))
+            return result( False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph." )
 
         self._warning( "REMOTE: purge " + task_id + ' to ' + stop )
         self.pool.purge( task_id, stop )
@@ -341,7 +342,7 @@ class remote_switch( Pyro.core.ObjBase ):
             return result(False, "Suite is blocked")
 
         if not self._task_type_exists( task_id ):
-            return result(False, "No such task type: " + self._name_from_id( task_id ))
+            return result(False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph." )
 
         self._warning( "REMOTE: die: " + task_id )
         self.pool.kill( [ task_id ] )
@@ -362,7 +363,7 @@ class remote_switch( Pyro.core.ObjBase ):
             return result(False, "Suite is blocked")
 
         if not self._task_type_exists( task_id ):
-            return result(False, "No such task type: " + self._name_from_id( task_id ))
+            return result(False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph." )
 
         self._warning( "REMOTE: spawn and die: " + task_id )
         self.pool.spawn_and_die( [ task_id ] )
@@ -411,7 +412,7 @@ class remote_switch( Pyro.core.ObjBase ):
         if '%' in name_or_id:
             name, tag = name.split('%' )
         
-        if name in self.config.get_full_task_name_list():
+        if name in self.config.get_task_name_list():
             return True
         else:
             return False
@@ -450,7 +451,7 @@ class remote_switch( Pyro.core.ObjBase ):
             return result( False, "Suite is blocked" )
 
         if not self._task_type_exists( task_id ):
-            return result(  False, "No such task type: " + self._name_from_id( task_id ) )
+            return result(  False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph."  )
 
         self._warning( "REMOTE: hold task: " + task_id )
         found = False
@@ -477,7 +478,7 @@ class remote_switch( Pyro.core.ObjBase ):
             return result( False, "Suite is blocked" )
 
         if not self._task_type_exists( task_id ):
-            return result( False, "No such task type: " + self._name_from_id( task_id ) )
+            return result( False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph."  )
 
         self._warning( "REMOTE: release task: " + task_id )
         found = False

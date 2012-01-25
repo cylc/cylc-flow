@@ -192,7 +192,7 @@ class config( CylcConfigObj ):
         self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc.spec')
 
         if self.verbose:
-            print "LOADING suite.rc"
+            print "Loading suite.rc"
         f = open( self.file )
         flines = f.readlines()
         f.close()
@@ -237,7 +237,7 @@ class config( CylcConfigObj ):
             raise SuiteConfigError, x
 
         if self.verbose:
-            print "VALIDATING against the suite.rc specification."
+            print "Validating against the suite.rc spec"
         # validate and convert to correct types
         val = Validator()
         test = self.validate( val, preserve_errors=True )
@@ -284,7 +284,7 @@ class config( CylcConfigObj ):
             raise SuiteConfigError, "ERROR: Illegal suite.rc entry(s) found"
 
         if self.verbose:
-            print "PARSING clock-triggered tasks"
+            print "Parsing clock-triggered tasks"
         self.clock_offsets = {}
         for item in self['scheduling']['special tasks']['clock-triggered']:
             m = re.match( '(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)', item )
@@ -298,7 +298,7 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
         if self.verbose:
-            print "PARSING runtime name lists"
+            print "Parsing runtime name lists"
         # If a runtime section heading is a list of names then the
         # subsequent config applies to each member. Copy the config
         # for each member and replace any occurrence of '<TASK>' with
@@ -324,7 +324,7 @@ class config( CylcConfigObj ):
 
         self.members = {}
         if self.verbose:
-            print "PARSING the runtime namespace hierarchy"
+            print "Parsing the runtime namespace hierarchy"
 
         # RUNTIME INHERITANCE
         for label in self['runtime']:
@@ -372,7 +372,7 @@ class config( CylcConfigObj ):
                 self.closed_families.remove( cfam )
 
         if self.verbose:
-            print "CHECKING suite event hooks"
+            print "Checking suite event hooks"
         script = None
         events = []
         if not self.simulation_mode or self['cylc']['simulation mode']['event hooks']['enable']:
@@ -625,10 +625,8 @@ class config( CylcConfigObj ):
             for name in self['runtime']:
                 if name not in self.taskdefs:
                     if name not in self.members:
-                        print >> sys.stderr, 'WARNING, "' + name + '": runtime defined, but the task is not used in the graph.'
-                    else:
-                        # (family names often aren't used in the graph)
-                        pass
+                        # family names often aren't used in the graph
+                        print >> sys.stderr, 'WARNING: task "' + name + '" is DISABLED (it is not used in the graph).'
  
         #for name in self['runtime']:
         #    if name not in self.taskdefs:
@@ -642,7 +640,7 @@ class config( CylcConfigObj ):
                 if re.search( '[^0-9a-zA-Z_]', name ):
                     raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
                 if name not in self.taskdefs and name not in self['runtime']:
-                    raise SuiteConfigError, 'ERROR: special task "' + name + '" is not defined by [runtime] or graph.' 
+                    raise SuiteConfigError, 'ERROR: special task "' + name + '" is not defined.' 
 
         # TASK INSERTION GROUPS TEMPORARILY DISABLED PENDING USE OF
         # RUNTIME GROUPS FOR INSERTION ETC.
@@ -655,23 +653,6 @@ class config( CylcConfigObj ):
         ##            # and it won't cause catastrophic failure of the
         ##            # insert command.
         ##            print >> sys.stderr, 'WARNING: task "' + name + '" of insertion group "' + group + '" is not defined.'
-
-        # check graphed hours are consistent with [tasks]->[[NAME]]->hours (if defined)
-        for name in self.taskdefs:
-            # task 'name' is in graph
-            if name in self['runtime']:
-                # [tasks][name] section exists
-                section_hours = [int(i) for i in self['runtime'][name]['hours'] ]
-                if len( section_hours ) == 0:
-                    # no hours defined in the task section
-                    break
-                graph_hours = self.taskdefs[name].hours
-                bad_hours = []
-                for hour in graph_hours:
-                    if hour not in section_hours:
-                        bad_hours.append(str(hour))
-                if len(bad_hours) > 0:
-                    raise SuiteConfigError, 'ERROR: [tasks]->[[' + name + ']]->hours disallows the graphed hour(s) ' + ','.join(bad_hours)
 
         # TO DO: check that any multiple appearance of same task  in
         # 'special tasks' is valid. E.g. a task can be both
@@ -713,8 +694,7 @@ class config( CylcConfigObj ):
         return self['scheduling']['special tasks']['start-up'] + self.async_oneoff_tasks + self.async_repeating_tasks
 
     def get_task_name_list( self ):
-        # return list of task names used in the dependency diagram,
-        # not the full list of defined tasks (self['runtime'].keys())
+        # return a list of all tasks used in the dependency graph
         tasknames = self.taskdefs.keys()
         tasknames.sort(key=str.lower)  # case-insensitive sort
         return tasknames
@@ -728,12 +708,6 @@ class config( CylcConfigObj ):
                 names.append(tn)
         names.sort(key=str.lower)
         return names
-
-    def get_full_task_name_list( self ):
-        # return full list of *task* (runtime hierarchy leaves) names 
-        tasknames = self.task_runtimes.keys()
-        tasknames.sort(key=str.lower)  # case-insensitive sort
-        return tasknames
 
     def process_graph_line( self, line, section ):
         # Extract dependent pairs from the suite.rc textual dependency
@@ -886,9 +860,9 @@ class config( CylcConfigObj ):
                                 bad.append(name)
                 if len(bad) > 0:
                     print >> sys.stderr, orig_line
-                    print >> sys.stderr, 'ERROR: synchronous special tasks cannot be used in an asynchronous graph section:'
-                    print >> sys.stderr, '      ', ', '.join(bad)
-                    raise SuiteConfigError, 'ERROR: inconsistent use of special task types.'
+                    print >> sys.stderr, 'ERROR, synchronous special tasks cannot be used in an asynchronous graph:'
+                    print >> sys.stderr, ' ', ', '.join(bad)
+                    raise SuiteConfigError, 'ERROR: inconsistent use of special tasks.'
 
             for rt in rights:
                 # foo => '!bar' means task bar should suicide if foo succeeds.
@@ -961,7 +935,7 @@ class config( CylcConfigObj ):
 
             if name not in self['runtime']:
                 if self.verbose:
-                    print >> sys.stderr, 'WARNING, "' + name + '": is defined only by graph; it inherits the root runtime.'
+                    print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph, so it inherits the root runtime.'
                 # inherit the root runtime
                 self['runtime'][name] = self['runtime']['root'].odict()
                 if 'root' not in self.members:
@@ -1233,7 +1207,7 @@ class config( CylcConfigObj ):
 
     def load( self ):
         if self.verbose:
-            print 'PARSING suite dependency graph'
+            print 'Parsing the dependency graph'
         # parse the suite dependencies section
         for item in self['scheduling']['dependencies']:
             if item == 'graph':
@@ -1268,7 +1242,7 @@ class config( CylcConfigObj ):
         for name in self.taskdefs:
             self.taskdefs[name].hours.sort( key=int ) 
 
-    def get_taskdef( self, name, strict=False ):
+    def get_taskdef( self, name ):
         # (DefinitionError caught above)
         taskd = taskdef.taskdef( name )
 
@@ -1405,56 +1379,13 @@ class config( CylcConfigObj ):
         for varname in env:
             if not re.match( '^[a-zA-Z_][\w]*$', varname ):
                 bad.append(varname)
-
         if len(bad) != 0:
-            #print >> sys.stderr, "Illegal environment variable name(s) in namespace", name
             for item in bad:
                 print >> sys.stderr, " ", item
             raise SuiteConfigError("ERROR: illegal environment variable name(s) detected in namespace " + name )
     
     def get_task_proxy( self, name, ctime, state, stopctime, startup ):
-        # get a proxy for a task in the dependency graph.
         return self.taskdefs[name].get_task_class()( ctime, state, stopctime, startup )
-
-    def get_task_proxy_raw( self, name, ctime, state, stopctime,
-            startup, test=False, strict=True ):
-        # GET A PROXY FOR A TASK THAT IS NOT GRAPHED - i.e. call this
-        # only if get_task_proxy() raises a KeyError.
-
-        # This allows us to 'cylc submit' single tasks that are defined
-        # in suite.rc but not in the suite graph.  Because the graph
-        # defines valid cycle times, however, we must use
-        # [runtime][[name]]hours or, if the hours entry is not defined,
-        # assume that the requested ctime is valid for the task.
-        try:
-            td = self.get_taskdef( name, strict=True )
-        except taskdef.DefinitionError, x:
-            raise SuiteConfigError, str(x)
-
-        chour = int(ctime[8:10])
-        hours = self['runtime'][name]['hours']
-        if len(hours) == 0:
-            # no hours defined; instantiation will fail unless we assume
-            # the test hour is valid.
-            if strict:
-                # you cannot insert into a running suite a task that has
-                # no hours defined (what would the cycle time of its
-                # next instance be?).
-                raise SuiteConfigError, name + " has no hours defined in graph or [tasks]"
-            if test:
-                # used by the 'cylc validate' command
-                # THIS IS NOW PROBABLY A RUNTIME GROUP, NOT A TASK.
-                #print >> sys.stderr, "WARNING: no hours in graph or runtime; task can only be used with 'cylc submit'."
-                pass
-            else:
-                # if 'submit'ed alone:
-                print >> sys.stderr, "WARNING: " + name + ": no hours in graph or runtime; task can only be used with 'cylc submit'."
-                print >> sys.stderr, "WARNING: " + name + ": no hours defined - task will be submitted with the exact cycle time " + ctime
-            td.hours = [ chour ]
-        else:
-            td.hours = [ int(i) for i in hours ]
-        tdclass = td.get_task_class()( ctime, 'waiting', stopctime, startup )
-        return tdclass
 
     def get_task_class( self, name ):
         return self.taskdefs[name].get_task_class()
