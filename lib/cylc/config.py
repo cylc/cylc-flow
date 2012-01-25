@@ -993,7 +993,7 @@ class config( CylcConfigObj ):
             elif ttype == 'cycling':
                 self.taskdefs[ name ].set_valid_hours( section )
                 if name not in self.cycling_tasks:
-                    self.cycling_tasks.append[name]
+                    self.cycling_tasks.append(name)
 
     def generate_triggers( self, lexpression, lnames, right, section, asyncid_pattern, suicide ):
         if not right:
