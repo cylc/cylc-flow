@@ -620,10 +620,15 @@ class config( CylcConfigObj ):
         #       contains tasks that will be used, defined by the graph.
         # Tasks (a) may be defined but not used (e.g. commented out of the graph)
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
-        for name in self.taskdefs:
-            if name not in self['runtime']:
-                print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph: it inherits the root runtime.'
-                self['runtime'][name] = self['runtime']['root'].odict()
+
+        if self.verbose:
+            for name in self['runtime']:
+                if name not in self.taskdefs:
+                    if name not in self.members:
+                        print >> sys.stderr, 'WARNING, "' + name + '": runtime defined, but the task is not used in the graph.'
+                    else:
+                        # (family names often aren't used in the graph)
+                        pass
  
         #for name in self['runtime']:
         #    if name not in self.taskdefs:
@@ -955,7 +960,8 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, str(x)
 
             if name not in self['runtime']:
-                # a task defined by graph only
+                if self.verbose:
+                    print >> sys.stderr, 'WARNING, "' + name + '": is defined only by graph; it inherits the root runtime.'
                 # inherit the root runtime
                 self['runtime'][name] = self['runtime']['root'].odict()
                 if 'root' not in self.members:
