@@ -637,7 +637,7 @@ class config( CylcConfigObj ):
                 if re.search( '[^0-9a-zA-Z_]', name ):
                     raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
                 if name not in self.taskdefs and name not in self['runtime']:
-                    print >> sys.stderr, 'WARNING: ' + type + ' task "' + name + '" is not defined in [tasks] or used in the graph.'
+                    raise SuiteConfigError, 'ERROR: special task "' + name + '" is not defined by [runtime] or graph.' 
 
         # TASK INSERTION GROUPS TEMPORARILY DISABLED PENDING USE OF
         # RUNTIME GROUPS FOR INSERTION ETC.
@@ -650,14 +650,6 @@ class config( CylcConfigObj ):
         ##            # and it won't cause catastrophic failure of the
         ##            # insert command.
         ##            print >> sys.stderr, 'WARNING: task "' + name + '" of insertion group "' + group + '" is not defined.'
-
-        # check 'tasks to exclude|include at startup' contains valid tasks
-        for name in self['scheduling']['special tasks']['include at start-up']:
-                if name not in self['runtime'] and name not in self.taskdefs:
-                    raise SuiteConfigError, "ERROR: " + name + ' in "scheduling -> special tasks -> include at start-up" is not defined'
-        for name in self['scheduling']['special tasks']['exclude at start-up']:
-                if name not in self['runtime'] and name not in self.taskdefs:
-                    raise SuiteConfigError, "ERROR: " + name + ' in "scheduling -> special tasks -> exclude at start-up" is not defined'
 
         # check graphed hours are consistent with [tasks]->[[NAME]]->hours (if defined)
         for name in self.taskdefs:
