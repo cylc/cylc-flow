@@ -425,13 +425,26 @@ class config( CylcConfigObj ):
         # assignments and non-existent task names)
         queues = self['scheduling']['queues']
         # add all tasks to the default queue
-        queues['default']['members'] = self.task_runtimes.keys()
+        queues['default']['members'] = self.get_task_name_list()
+        #print 'INITIAL default', queues['default']['members']
         for queue in queues:
             if queue == 'default':
                 continue
             # remove assigned tasks from the default queue
-            for member in queues[queue]['members']:
-                queues['default']['members'].remove( member )
+            qmembers = []
+            for qmember in queues[queue]['members']:
+                if qmember in self.members:
+                    # qmember is a family: replace with family members
+                    for fmem in self.members[qmember]:
+                        qmembers.append( fmem )
+                        queues['default']['members'].remove( fmem )
+                else:
+                    # qmember is a task
+                    qmembers.append(qmember)
+                    queues['default']['members'].remove( qmember )
+            queues[queue]['members'] = qmembers
+        #for queue in queues:
+        #    print queue, queues[queue]['members']
 
     def get_inheritance( self ):
         inherit = {}
