@@ -65,8 +65,11 @@ def print_tree( tree, padding, unicode=False, prefix='', labels=None ):
             print_tree( tree[item], padding, unicode, pprefix, labels )
         else:
             if labels:
-                tf, reason = labels[item]
-                print line, '...', reason
+                if item in labels:
+                    tf, reason = labels[item]
+                    print line, '...', reason
+                else:
+                    print line
             else:
                 print line + tree[item]
 

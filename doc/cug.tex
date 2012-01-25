@@ -2963,7 +2963,7 @@ not this is worth the effort depends on your needs.
 \end{lstlisting}
 
 
-\subsection{Runtime - Task Execution}
+\subsection{Runtime Properties - Task Execution}
 \label{NIORP}
 
 The \lstinline=[runtime]= section of a suite.rc file configures what to
@@ -3090,17 +3090,16 @@ This defines a unique command line for each ensemble member task:
 % cylc get-config test runtime m2 'command scripting'
 ['run-model.sh ic-m2']
 \end{lstlisting}
-For a large ensemble of say 100 members, Jinja2 template processing 
-(Section~\ref{Jinja2}) could be used to automatically generate the list
-of member names and associated dependencies.
+For large ensembles Jinja2 template processing can be used to
+automatically generate the member names and associated dependencies
+(see Section~\ref{Jinja2}).
 
 Note that in the namespace scripting and environment sections, which are
 evaluated in task job scripts at run time, \lstinline=<TASK>= is
 functionally equivalent to \lstinline=$CYLC_TASK_NAME=.  But in other
-runtime config items that are not ``evaluated'' in
-the task runtime environment, such as \lstinline=description=,
-the non environment variable form \lstinline=<TASK>= must be used to
-specialize from a list of names (in the namespace section heading) to a
+runtime config items that are never actually interpretred by the shell
+(e.g.\ \lstinline=description=) \lstinline=<TASK>= must be used to
+specialize from the list of names in the namespace section heading to a
 particular task name.
 
 {\em The {\em multidef} example suite illustrates use of these internal
@@ -3580,6 +3579,33 @@ A small number of special variables are used as placeholders in cylc suite defin
 
 To use proper variables (c.f.\ programming languages) in suite
 definitions, see the Jinja2 template processor (Section~\ref{Jinja2}).
+
+\subsection{Omitting Defined Tasks At Runtime}
+
+It is sometimes convenient to omit certain tasks from the suite at
+runtime without actually deleting their definitions entirely from the
+suite definition.
+
+Defining [runtime] properties for tasks that do not appear in the suite
+graph results in (verbose-mode) validation warnings that the tasks are
+disabled - they cannot be used, either for insertion into the running 
+suite with \lstinline=cylc insert= or outside of the suite with 
+\lstinline=cylc submit=, because if ommitted from the graph
+cylc does not know their valid cycle times (or even if they are cycling
+tasks) or their dependencies (for insertion).  Nevertheless, it is 
+legal to leave these orphaned runtime sections in the suite definition
+because it allows you to temporarily remove tasks from the suite by 
+simply commenting them out of the graph.
+
+To omit a task from the suite at runtime but still leave it fully
+defined and available for insertion or lone submission, use one or 
+both of the [scheduling][[special task]] lists, ``tasks to include at
+start-up'' and ``tasks to exclude at start-up'' (documented in 
+Sections~\ref{IASU} and~\ref{EASU}). In this case the graph still 
+defines the validity of and dependencies involving the omitted tasks,
+but they are not actually instantiated in the suite at start-up. 
+Other tasks that depend on the omitted ones will have to wait on
+their insertion at a later time or otherwise be triggered manually.
 
 \section{Task Implementation}
 \label{TaskImplementation}
