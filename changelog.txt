@@ -467,3 +467,12 @@ complete graph.
 correctly, e.g. "foo[T-6] => bar" where foo is a task family defined
 by the runtime namespace hierarchy.
 
++ Asynchronous (non-cycling) suites can now be stopped and restarted
+mid-run.
+
++ Clock-triggered tasks can now be triggered manually before their
+normal trigger time is up.
+
++ Improved graph string validation: dangling arrows are now caught;
+the bad graph line is printed just before the error message.
+
