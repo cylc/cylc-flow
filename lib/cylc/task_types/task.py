@@ -151,7 +151,6 @@ class task( Pyro.core.ObjBase ):
         self.__class__.instance_count += 1
         self.__class__.upward_instance_count += 1
 
-
         Pyro.core.ObjBase.__init__(self)
 
         # set state_changed True if any task's state changes 

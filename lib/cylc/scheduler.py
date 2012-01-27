@@ -107,6 +107,7 @@ class pool(object):
         tasks = []
         for queue in self.queues:
             tasks += self.queues[queue]
+        #tasks.sort() # sorting any use here?
         return tasks
 
     def process( self ):
