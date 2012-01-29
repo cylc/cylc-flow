@@ -73,7 +73,8 @@ class compat( object ):
 
         try:
             f = open( suiterc, 'r' )
-        except OSError, x:
+        except IOError, x:
+            print >> sys.stderr, "ERROR: unable to open the suite.rc file."
             raise SystemExit(x)
         # read first line of the suite.rc file
         line0 = f.readline()
