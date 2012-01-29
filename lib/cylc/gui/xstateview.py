@@ -74,8 +74,6 @@ class xupdater(threading.Thread):
         self.host = host
         self.port = port
 
-        self.state_summary = {}
-        self.global_summary = {}
         self.god = None
         self.mode = "mode:\nwaiting..."
         self.dt = "state last updated at:\nwaiting..."
@@ -126,10 +124,26 @@ class xupdater(threading.Thread):
     def update(self):
         #print "Updating"
         try:
-            [glbl, states] = self.god.get_state_summary()
+            [glbl, states_full] = self.god.get_state_summary()
         except:
             gobject.idle_add( self.connection_lost )
             return False
+
+        # The graph layout is not stable even when (py)graphviz is  
+        # presented with the same graph (may be a node ordering issue
+        # due to use of dicts?). For this reason we only plot node name 
+        # and color (state) and only replot when node content or states 
+        # change.  The full state summary contains task timing
+        # information that changes continually, so we have to disregard
+        # this when checking for changes. So: just extract the critical
+        # info here:
+        states = {}
+        for id in states_full:
+            if id not in states:
+                states[id] = {}
+            states[id]['name' ] = states_full[id]['name' ]
+            states[id]['label'] = states_full[id]['label']
+            states[id]['state'] = states_full[id]['state']
 
         # always update global info
         self.global_summary = glbl
@@ -173,6 +187,7 @@ class xupdater(threading.Thread):
             return False
         elif not compare_dict_of_dict( states, self.state_summary ):
             # state changed
+            print 'STATE CHANGED'
             self.state_summary = states
             return True
         else:
@@ -202,7 +217,6 @@ class xupdater(threading.Thread):
  
     def run(self):
         glbl = None
-        states = {}
         while not self.quit:
             if self.update():
                 self.update_graph()

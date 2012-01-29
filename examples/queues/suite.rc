@@ -10,10 +10,16 @@ active tasks at once. Run via the graph control GUI for a clear view.
             limit = 2
         [[[foo]]]
             limit = 3
-            members = n, o, p, q, r, s, t, u, v, w, x, y, z
+            members = n, o, p, fam2, u, v, w, x, y, z
     [[dependencies]]
         graph = """
-            a => b & c => d & e & f & g => h & i & j & k & l & m
-            n => o & p => q & r & s & t => u & v & w & x & y & z
+            a => b & c => fam1 => h & i & j & k & l & m
+            n => o & p => fam2 => u & v & w & x & y & z
                 """
 
+[runtime]
+    [[fam1,fam2]]
+    [[d,e,f,g]]
+        inherit = fam1
+    [[q,r,s,t]]
+        inherit = fam2

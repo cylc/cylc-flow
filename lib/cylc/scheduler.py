@@ -107,6 +107,7 @@ class pool(object):
         tasks = []
         for queue in self.queues:
             tasks += self.queues[queue]
+        #tasks.sort() # sorting any use here?
         return tasks
 
     def process( self ):
@@ -744,14 +745,16 @@ class scheduler(object):
             self.hold_time = ctime
         else:
             self.hold_suite_now = True
-            self.log.warning( "Holding all waiting tasks now")
+            self.log.warning( "Holding all waiting or queued tasks now")
             for itask in self.pool.get_tasks():
                 if itask.state.is_queued() or itask.state.is_waiting():
+                    # (not runahead: we don't want these converted to
+                    # held or they'll be released immediately on restart)
                     itask.state.set_status('held')
 
     def release_suite( self ):
         if self.hold_suite_now:
-            self.log.warning( "RELEASE: new tasks will run when ready")
+            self.log.warning( "RELEASE: new tasks will be queued when ready")
             self.hold_suite_now = False
             self.hold_time = None
         for itask in self.pool.get_tasks():
@@ -901,8 +904,12 @@ class scheduler(object):
                     foo = ct( itask.c_time )
                     foo.decrement( hours=self.runahead_limit )
                     if int( foo.get() ) < int( ouct ):
-                        itask.log( 'DEBUG', "RELEASING (runahead limit)" )
-                        itask.state.set_status('waiting')
+                        if self.hold_suite_now:
+                            itask.log( 'DEBUG', "Releasing runahead (to held)" )
+                            itask.state.set_status('held')
+                        else:
+                            itask.log( 'DEBUG', "Releasing runahead (to waiting)" )
+                            itask.state.set_status('waiting')
 
     def check_hold_spawned_task( self, old_task, new_task ):
         if self.hold_suite_now:

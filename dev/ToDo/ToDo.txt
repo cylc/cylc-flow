@@ -178,10 +178,6 @@ messages such as remote error tracebacks to be sent to the handler.
   because the automatic restart messages will not have the right task
   name.
 
-* consider some kind of internal queuing system as a more flexible
-  alternative to the simple max runahead limit? (done, currently in
-  queues branch)
-
 * check all open( file, mode ) statements for mode 'rb' etc. 
 
 * wherever I've used this:

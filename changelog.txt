@@ -484,3 +484,11 @@ that indentation amount allows you to put higher level items such as
 + Documented how to omit tasks at runtime, completely or for later
 insertion.
 
++ Internal queues implemented - the number of active (submitted or
+running) tasks at any one time can be limited, across the whole suite or
+by groups of tasks. 
+
++ Graph GUI layout stability has been improved by redisplaying the graph
+only if displayed state information changes (task ID and state color).
+The layout may still jump when a task changes color even if nothing else
+has changed.

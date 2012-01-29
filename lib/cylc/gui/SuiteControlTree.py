@@ -52,7 +52,7 @@ Text treeview base GUI suite control interface.
         ### TO DO: For suites that are already running, or for dynamically
         ### updating the viewed task list, we can retrieve the task list
         ### (etc.) from the suite's remote state summary object.
-        self.task_list = self.suiterc.get_full_task_name_list()
+        self.task_list = self.suiterc.get_task_name_list()
 
         main_panes = gtk.VPaned()
         main_panes.set_position(200)
