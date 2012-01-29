@@ -55,12 +55,13 @@ class pid(object):
         if self.has_spawned():
             return False
 
-        if self.state.is_waiting():
-            # Never spawn a waiting task type - the successor's restart
-            # prerequisites could get satisfied by the later restart
-            # outputs of an earlier previous instance, and thereby start
-            # too soon (we want this to happen ONLY if the previous task
-            # fails and is subsequently made to spawn and die by the
+        if self.state.is_waiting() or self.state.is_queued() or \
+                self.state.is_submitted():
+            # Never spawn a task of this type if it hasn't started
+            # running yet - the successor's restart prerequisites
+            # could get satisfied by the restart outputs of an earlier
+            # previous instance (we want this to happen ONLY if the
+            # task fails and is then made to spawn and die by the
             # suite operator).
             return False
 

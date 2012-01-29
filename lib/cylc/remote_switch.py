@@ -460,7 +460,7 @@ class remote_switch( Pyro.core.ObjBase ):
             if itask.id == task_id:
                 found = True
                 print itask.state.state['status']
-                if itask.state.is_waiting():
+                if itask.state.is_waiting() or itask.state.is_queued():
                     was_waiting = True
                     itask.state.set_status( 'held' )
                 break
@@ -469,7 +469,7 @@ class remote_switch( Pyro.core.ObjBase ):
                 self.process_tasks = True # to update monitor
                 return result( True, "OK" )
             else:
-                return result( False, "Task not in the 'waiting' state" )
+                return result( False, "Task was not waiting or queued" )
         else:
             return result( False, "Task not found" )
 

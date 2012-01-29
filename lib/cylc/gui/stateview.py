@@ -65,6 +65,8 @@ def get_col( state ):
         return '#bb0'
     elif state == 'runahead':
         return '#216'
+    elif state == 'queued':
+        return '#9f219a'
     else:
         return '#000'
 
@@ -117,6 +119,7 @@ class updater(threading.Thread):
 
         self.waiting_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-waiting-glow.xpm" )
         self.runahead_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-runahead-glow.xpm" )
+        self.queued_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-queued-glow.xpm" )
         self.submitted_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-submitted-glow.xpm" )
         self.running_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-running-glow.xpm" )
         self.failed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-failed-glow.xpm" )
@@ -433,6 +436,8 @@ class updater(threading.Thread):
                         state_list.append( self.stopped_led )
                     elif state == 'runahead':
                         state_list.append( self.runahead_led )
+                    elif state == 'queued':
+                        state_list.append( self.queued_led )
                 else:
                     state_list.append( self.empty_led )
 

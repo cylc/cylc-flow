@@ -51,10 +51,10 @@ class clocktriggered(object):
         return reached
 
     def ready_to_run( self ):
-        # ready IF waiting AND all prerequisites satisfied AND if my
-        # delayed start time is up.
+        # not ready unless delayed start time is up too.
         ready = False
-        if self.state.is_waiting() and self.prerequisites.all_satisfied():
+        if self.state.is_queued() or \
+                self.state.is_waiting() and self.prerequisites.all_satisfied():
             if self.start_time_reached():
                 ready = True
             else:

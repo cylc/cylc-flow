@@ -328,9 +328,9 @@ The cylc forecast suite metascheduler.
             view = False
             reasons.append( task_id + ' has no associated log files' )
 
-        if states[ task_id ][ 'state' ] == 'waiting':
+        if states[ task_id ][ 'state' ] == 'waiting' or states[ task_id ][ 'state' ] == 'queued':
             view = False
-            reasons.append( task_id + ' has not started yet' )
+            reasons.append( task_id + ' has not started running yet' )
 
         if not view:
             warning_dialog( '\n'.join( reasons ) ).warn()
