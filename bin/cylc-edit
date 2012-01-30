@@ -47,14 +47,12 @@ def include_files( inf, level=None ):
     if level == None:
         # suite.rc itself
         level = ''
-        outf.append("# !WARNING! This suite.rc file has had any include-files inlined by 'cylc edit -i'.\n" )
-        outf.append("# !WARNING! The original files are backed up prior to inlining. Include-files will\n" )
-        outf.append("# !WARNING! be split out when the edit session concludes. IF YOU ARE EDITING THIS\n" )
-        outf.append("# !WARNING!  FILE MANUALLY (as opposed to using 'cylc edit') then EITHER:\n" )
-        outf.append("# !WARNING!   (a) you have a concurrent inlined session; exit now and return to it.\n" )
-        outf.append("# !WARNING! OR\n" )
-        outf.append("# !WARNING!   (b) a previous inlined session may have crashed; exit now and use the\n" )
-        outf.append("# !WARNING! 'cylc edit' command to recover the session.\n" )
+        outf.append("""# !WARNING! CYLC EDIT INLINED (DO NOT MODIFY THIS LINE).
+# !WARNING! This is an inlined suite.rc file; include-files are split
+# !WARNING! out again on exiting the edit session.  If you are editing
+# !WARNING! this file manually then a previous inlined session may have
+# !WARNING! crashed; exit now and use 'cylc edit -i' to recover (this 
+# !WARNING! will split the file up again on exiting).\n""")
     else:
         level += ' > '
     for line in inf:
@@ -75,13 +73,13 @@ def include_files( inf, level=None ):
                 modtimes[inc] = os.stat( inc ).st_mtime
                 if os.path.isfile(inc):
                     #print " + inlining", inc
-                    outf.append('#++++ START INLINED INCLUDE FILE ' + match  + ' (DO NOT DELETE THIS LINE!)\n')
+                    outf.append('#++++ START INLINED INCLUDE FILE ' + match  + ' (DO NOT MODIFY THIS LINE!)\n')
                     h = open(inc, 'rb')
                     inc = h.readlines()
                     h.close()
                     # recursive inclusion
                     outf.extend( include_files( inc, level ))
-                    outf.append('#---- END INLINED INCLUDE FILE ' + match  + ' (DO NOT DELETE THIS LINE!)\n')
+                    outf.append('#---- END INLINED INCLUDE FILE ' + match  + ' (DO NOT MODIFY THIS LINE!)\n')
                 else:
                     raise SystemExit( "ERROR, Include-file not found: " + inc )
             else:
@@ -102,11 +100,12 @@ def split_file( lines, file, level=None ):
     else:
         level += ' > '
         # check mod time on the target file
-        mtime = os.stat( file ).st_mtime
-        if mtime != modtimes[file]:
-            # oops - original file has changed on disk since we started editing
-            f = re.sub( suitedir + '/', '', file )
-            file = file + '.EDIT.NEW.' + datetime.datetime.now().isoformat()
+        if not recovery:
+            mtime = os.stat( file ).st_mtime
+            if mtime != modtimes[file]:
+                # oops - original file has changed on disk since we started editing
+                f = re.sub( suitedir + '/', '', file )
+                file = file + '.EDIT.NEW.' + datetime.datetime.now().isoformat()
         newfiles.append(file)
 
     inclines = []
@@ -124,7 +123,7 @@ def split_file( lines, file, level=None ):
                 fnew.write( '%include ' + inc_filename + '\n')
             else:
                 fnew.write(line)
-        else:
+        elif match_on:
             # match on, go to end of the 'on' include-file
             m = re.match('^#\-\-\-\- END INLINED INCLUDE FILE ' + inc_filename, line )
             if m:
@@ -135,11 +134,21 @@ def split_file( lines, file, level=None ):
                 inclines = []
             else:
                 inclines.append(line)
+    if match_on:
+        for line in inclines:
+            fnew.write( line )
+        print >> sys.stderr 
+        print >> sys.stderr, "ERROR: end-of-file reached while matching include-file", inc_filename + "."
+        print >> sys.stderr, """This probably means you have corrupted the inlined file by
+modifying one of the include-file boundary markers. Fix the backed-
+up inlined suite.rc file, copy it to 'suite.rc' and invoke another
+inlined edit session split the file up again."""
+        print >> sys.stderr 
 
-def backup(src):
+def backup(src, tag='' ):
     if not os.path.exists(src):
         raise SystemExit( "File not found: " + src )
-    bkp = src + '.EDIT.' + datetime.datetime.now().isoformat()
+    bkp = src + tag + '.EDIT.' + datetime.datetime.now().isoformat()
     global backups
     copy( src, bkp )
     backups[ src ] = bkp
@@ -168,15 +177,16 @@ prevent conflicting changes being made to the same file).
 
 3/ Remove backup files left by previous INLINED edit sessions.
 
-INLINED EDITING SAFETY: The suite.rc file and any include-files used 
-by it are automatically backed up prior to an inlined editing session.
-If the editor dies mid-session just invoke 'cylc edit -i' again to
-recover from the last saved inlined file. On exiting the editor, if any
-of the original include-files are found to have changed during editing
-(due to external intervention) you will be warned and the affected files
+INLINED EDITING SAFETY: The suite.rc file and its include-files are
+automatically backed up prior to an inlined editing session. If the
+editor dies mid-session just invoke 'cylc edit -i' again to recover from
+the last saved inlined file. On exiting the editor, if any of the
+original include-files are found to have changed due to external
+intervention during editing you will be warned and the affected files
 will be written to new backups instead of overwriting the originals.
-FOR IMPORTANT SUITES YOU SHOULD USE REVISION CONTROL IN ANY CASE,
-regardless of inlined editing.
+Finally, the inlined suite.rc file is also backed up on exiting 
+the editor, to allow recovery in case of accidental corruption of the
+inlined include-file boundary marker lines.
 
 The edit process is spawned in the foreground as follows:
   $(G)EDITOR suite.rc
@@ -305,8 +315,14 @@ if os.path.isfile( suiterc ):
     h = open( suiterc, 'rb' )
     lines0 = h.readlines()
     h.close()
-    # inline any include files
-    lines = include_files( lines0 )
+    if lines0[0].startswith( '# !WARNING! CYLC EDIT INLINED' ):
+        print 'WARNING: RECOVERING A PREVIOUSLY INLINED FILE'
+        recovery = True
+        lines = lines0
+    else:
+        recovery = False
+        # inline any include files
+        lines = include_files( lines0 )
 else:
     parser.error("File not found: " + suiterc )
 
@@ -337,7 +353,12 @@ except OSError:
     print >> sys.stderr, 'ERROR: unable to execute:', command
     sys.exit(1)
  
-# !!!EDITING FINISHED!!!
+print 'EDITING DONE'
+
+# Now back up the inlined file in case of absolute disaster, so as the
+# user or his editor corrupting the inlined-include-file marker lines.
+inlined_suiterc_backup = 'suite.rc.INLINED.EDIT.' + datetime.datetime.now().isoformat()
+copy( suiterc, inlined_suiterc_backup )
 
 # read in the edited inlined file
 h = open( suiterc, 'rb' )
@@ -347,8 +368,9 @@ h.close()
 # split it back into separate files
 split_file( lines, suiterc )
 
-print '(edited:', suiterc, ')'
-print 'POST-EDIT FILES WRITTEN:'
+print ' + edited:', suiterc
+print ' + backup:', inlined_suiterc_backup
+print 'INCLUDE-FILES WRITTEN:'
 for file in newfiles:
     f = re.sub( suitedir + '/', '', file )
     if re.search( '\.EDIT\.NEW\.', f ):
