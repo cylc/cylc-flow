@@ -53,7 +53,14 @@ cd $TMP
 git clone $CYLC_DIR
 mv $(basename $CYLC_DIR) $REPO
 cd $REPO
-# doc/process -c needs access to this cylc
+
+# CHECK EXAMPLE SUITES VALIDATE
+cylc admin check-examples
+# RUN TESTS
+cylc admin test-db
+cylc admin test-suite
+
+# doc/process needs access to this cylc
 export PATH=bin:$PATH
 rm -rf .git
 
