@@ -450,7 +450,10 @@ class config( CylcConfigObj ):
         inherit = {}
         for ns in self['runtime']:
             #if 'inherit' in self['runtime'][ns]:
-            inherit[ns] = self['runtime'][ns]['inherit']
+            parent = self['runtime'][ns]['inherit']
+            if ns != "root" and not parent:
+                parent = "root"
+            inherit[ns] = parent
         return inherit
 
     def define_inheritance_tree( self, tree, hierarchy ):
