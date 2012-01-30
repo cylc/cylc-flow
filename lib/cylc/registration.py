@@ -22,6 +22,7 @@ import os, sys, re
 from version import compat
 from conf.CylcGlobals import central_regdb_dir, local_regdb_dir
 from config import config, SuiteConfigError
+from version import compat
 
 delimiter = '.'
 delimiter_re = '\.'
@@ -418,6 +419,10 @@ class regdb(object):
         else:
             suite = self.unalias(suite)
             suiterc = self.getrc( suite )
+        comp = compat( suite, suiterc )
+        if not comp.is_compatible():
+            self.unlock()
+            comp.execute( sys.argv )
         return config( suite, suiterc ).get_title()
 
     def get_suite_version( self, suite, path=None ):

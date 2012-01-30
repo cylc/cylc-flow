@@ -117,6 +117,9 @@ class compat( object ):
         else:
             return "version not specified"
 
+    def is_compatible( self ):
+        return self.compatible
+
     def execute( self, sysargv ):
         if self.compatible:
             # carry on as normal
