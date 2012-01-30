@@ -386,34 +386,65 @@ can override it on the command line or in the gcylc suite start panel.
 
 \subsubsection[runahead limit]{[scheduling] $\rightarrow$ runahead limit}
 
-A cycling task spawns a successor either when it starts running or, for
-sequential tasks, when it finishes. If the successor's cycle time is
-ahead of the oldest non-failed task by more than the runahead limit it 
-will be put into special ``runahead held'' state until other tasks
-catch up sufficiently. This prevents quick-running unconstrained tasks
-in historical trials (i.e.\ sustained catch up operation) from running
-off into the future and potentially swamping the system. In real time
-operation the runahead limit is of little consequence because the suite
-will be constrained by its clock-triggered tasks (the limit must be long
-enough to cover the range of tasks present in the suite, however; a task
-that only runs once per day, for instance, needs to spawn 24 hours
-ahead).  Failed tasks, which are not automatically removed from a suite,
-are ignored when computing the runahead limit (but tasks that can't run
-because they depend on a failed task are not ignored). 
+The suite runahead limit prevents the fastest tasks in a suite from
+getting too far ahead of the slowest ones, as documented in
+Section~\ref{RunaheadLimit}. Tasks exceeding the limit will be put into
+a special runahead held state until slower tasks have caught up
+sufficiently. The limit must be long enough to cover the minimum cycle
+time range of tasks present in the suite: a task that only runs once per
+day, for instance, needs to spawn 24 hours ahead.  Failed tasks, which
+are not automatically removed from a suite, are ignored when computing
+the runahead limit. 
 \begin{myitemize}
     \item {\em type:} integer ($\geq 0$, hours)
     \item {\em default:} $24$
 \end{myitemize}
 
+\subsubsection[{[[}queues{]]}]{[scheduling] $\rightarrow$ [[queues]]}
+
+Configuration of internal queues, by which the number of simultaneously
+active tasks (submitted or running) can be limited, per queue. By
+default a single queue called {\em default} is defined, with all tasks 
+assigned to it and no limit. To use a single queue for the whole suite 
+just set the limit on the {\em default} queue as required.
+See also Section~\ref{InternalQueues}.
+
+\paragraph[{[[[}\_\_QUEUE\_\_{]]]}]{[scheduling] $\rightarrow$ [[queues]] $\rightarrow$ [[[\_\_QUEUE\_\_]]]}
+
+Section heading for configuration of a single queue. Replace
+\_\_QUEUE\_\_ with a queue name, and repeat the section as required.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} ``default''
+\end{myitemize}
+
+\paragraph[limit]{[scheduling] $\rightarrow$ [[queues]] $\rightarrow$ [[[\_\_QUEUE\_\_]]] $\rightarrow$ limit}
+
+The maximum number of active tasks allowed at any one time, for this queue.
+\begin{myitemize}
+\item {\em type:} integer
+\item {\em default:} 0 (i.e.\ no limit)
+\end{myitemize}
+
+\paragraph[members]{[scheduling] $\rightarrow$ [[queues]] $\rightarrow$ [[[\_\_QUEUE\_\_]]] $\rightarrow$ members}
+
+A list of member tasks, or task family names, to assign to this queue
+(assigned tasks will automatically be removed from the default queue).
+\begin{myitemize}
+\item {\em type:} list of strings
+\item {\em default:} none for user-defined queues; all tasks for the ``default'' queue
+\end{myitemize}
+
 \subsubsection[{[[}special tasks{]]}]{[scheduling] $\rightarrow$ [[special tasks]]}
 
 This section identifies any tasks with special behaviour. By default
-(i.e.\ non ``special'' behaviour) tasks submit as soon as their
-prerequisites are satisfied, and they spawn a successor at the next
-valid cycle time for the task as soon as they enter the running
-state\footnote{Spawning any
-earlier than this brings no advantage in terms of functional
-parallelism.}
+(i.e.\ non ``special'' behaviour) tasks submit (or queue) as soon as
+their prerequisites are satisfied, and they spawn a successor at the
+next valid cycle time for the task as soon as they enter the submitted 
+state\footnote{Spawning any earlier than this brings no advantage in
+terms of functional parallelism and would cause uncontrolled
+proliferation of waiting tasks.}
 
 \paragraph[clock-triggered]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ clock-triggered}
 
@@ -576,7 +607,7 @@ below for graph string syntax, and Section~\ref{DependencyGraphs}.
  
 \paragraph[{[[[}\_\_VALIDITY\_\_{]]]}]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_VALIDITY\_\_]]]}
 
-Replace VALIDITY with a comma-separated list of integer hours, 
+Replace \_\_VALIDITY\_\_ with a comma-separated list of integer hours, 
 $0\leq H \leq 23$,  defining the valid
 cycle times for the subsequent graph of cycling tasks, or multiple such
 subsections as required for different dependencies at different hours; 
@@ -949,7 +980,8 @@ interpretation on the remote host.
 
 \begin{myitemize}
 \item {\em type:} string (a valid directory path on the remote host)
-\item {\em default:} (local suite definition path with \lstinline=$HOME= replaced)
+\item {\em default:} (local suite definition path with \lstinline=$HOME=
+    replaced)
 \end{myitemize}
  
 \subparagraph[remote shell template]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ remote shell template }

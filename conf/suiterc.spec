@@ -69,9 +69,9 @@ description = string( default="No description provided" )
     [[queues]]
         [[[default]]]
             # for all non queue-assigned tasks
-            limit = integer( default=None)
+            limit = integer( default=0)
         [[[__many__]]]
-            limit = integer( default=None )
+            limit = integer( default=0 )
             members = force_list( default=list())
     [[special tasks]]
         clock-triggered = force_list( default=list())
