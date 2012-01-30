@@ -20,9 +20,9 @@ import os, re, sys
 from shutil import copytree
 from optparse import OptionParser
 from cylc.mkdir_p import mkdir_p
-from cylc.registration import RegPath, localdb, \
-        centraldb, IllegalRegPathError, RegistrationError, \
-        SuiteTakenError, DatabaseLockedError
+from cylc.registration import localdb, centraldb, \
+        RegistrationError, SuiteTakenError, DatabaseLockedError
+from cylc.regpath import RegPath, IllegalRegPathError 
 
 parser = OptionParser( usage = """cylc [db] copy|cp [OPTIONS] SOURCE TARGET TOPDIR
 

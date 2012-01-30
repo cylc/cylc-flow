@@ -28,7 +28,8 @@ from cylc.config import config, SuiteConfigError
 from cylc.version import cylc_version
 from cylc import cylc_pyro_client
 from cylc.port_scan import scan, SuiteIdentificationError
-from cylc.registration import dbgetter, localdb, centraldb, RegPath, RegistrationError
+from cylc.registration import dbgetter, localdb, centraldb, RegistrationError
+from cylc.regpath import RegPath
 from warning_dialog import warning_dialog, info_dialog, question_dialog
 import helpwindow
 from gcapture import gcapture, gcapture_tmpfile
@@ -86,12 +87,12 @@ class db_updater(threading.Thread):
             else:
                 state = '-'
             nest2 = self.newtree
-            regpath = suite.split(RegPath.delimiter)
-            for key in regpath[:-1]:
+            regp = suite.split(RegPath.delimiter)
+            for key in regp[:-1]:
                 if key not in nest2:
                     nest2[key] = {}
                 nest2 = nest2[key]
-            nest2[regpath[-1]] = [ state, descr, suite_dir ]
+            nest2[regp[-1]] = [ state, descr, suite_dir ]
 
     def build_treestore( self, data, piter=None ):
         items = data.keys()

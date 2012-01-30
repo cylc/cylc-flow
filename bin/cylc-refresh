@@ -18,9 +18,9 @@
 
 import os, re, sys
 from optparse import OptionParser
-from cylc.registration import RegPath, dbgetter, \
-    RegistrationError, DatabaseLockedError
+from cylc.registration import dbgetter, RegistrationError, DatabaseLockedError
 from cylc.config import config, SuiteConfigError
+from cylc.regpath import RegPath
 
 parser = OptionParser( usage = """cylc [db] refresh [options] SUITE
 

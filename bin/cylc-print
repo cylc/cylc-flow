@@ -18,8 +18,9 @@
 
 import os, re
 from optparse import OptionParser
-from cylc.registration import dbgetter, RegistrationError, RegPath
+from cylc.registration import dbgetter, RegistrationError
 from cylc.print_tree import print_tree
+from cylc.regpath import RegPath
 
 def get_padding( reglist ):
     maxlen = 0

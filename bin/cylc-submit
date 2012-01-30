@@ -24,7 +24,7 @@ from cylc.mkdir_p import mkdir_p
 from cylc.execute import execute
 from cylc.job_submission.job_submit import job_submit
 from cylc.config import config, SuiteConfigError
-from cylc.registration import RegPath, dbgetter, RegistrationError
+from cylc.registration import dbgetter, RegistrationError
 from cylc import pimp_my_logger
 from cylc.taskid import id, TaskIDError
 from cylc.locking.suite_lock import suite_lock
@@ -35,6 +35,7 @@ from cylc import accelerated_clock
 from cylc.hostname import hostname
 from cylc.port_scan import SuiteIdentificationError
 from cylc.version import compat
+from cylc.regpath import RegPath
 
 usage = """cylc [task] submit|single [options] SUITE TASK
 

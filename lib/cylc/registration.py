@@ -21,52 +21,8 @@ import datetime, time
 import os, sys, re
 from version import compat
 from conf.CylcGlobals import central_regdb_dir, local_regdb_dir
-from config import config, SuiteConfigError
-from version import compat
-
-class RegPath(object):
-    # This class contains common code for checking suite registration
-    # name correctness, and manipulating said names. It is currently
-    # used piecemeal to do checking and conversions in-place. Eventually
-    # we should just pass around RegPath objects instead of strings.
-    delimiter = '.'
-    delimiter_re = '\.'
-
-    def __init__( self, rpath ):
-        # Suite registration paths may contain [a-zA-Z0-9_.-]. They may
-        # not contain colons, which would interfere with PATH variables.
-        if re.search( '[^\w.-]', rpath ):
-            raise IllegalRegPathError( rpath ) 
-        # If the path ends in delimiter it must be a group, otherwise it
-        # may refer to a suite or a group. NOTE: this information is not
-        # currently used.
-        if re.match( '.*' + self.__class__.delimiter_re + '$', rpath ):
-            self.is_definitely_a_group = True
-            rpath = rpath.strip(self.__class__.delimiter_re)
-        else:
-            self.is_definitely_a_group = False
-        self.rpath = rpath
-
-    def get( self ):
-        return self.rpath
-
-    def get_list( self ):
-        return self.rpath.split(self.__class__.delimiter)
-
-    def get_fpath( self ):
-        return re.sub( self.__class__.delimiter_re, '/', self.rpath )
-
-    def basename( self ):
-        # return baz from foo.bar.baz
-        return self.rpath.split(self.__class__.delimiter)[-1]
-
-    def groupname( self ):
-        # return foo.bar from foo.bar.baz
-        return self.__class__.delimiter.join( self.rpath.split(self.__class__.delimiter)[0:-1])
-
-    def append( self, rpath2 ):
-        # join on another rpath
-        return RegPath( self.rpath + self.__class__.delimiter + rpath2.rpath )
+import config
+from regpath import RegPath
 
 # NOTE:ABSPATH (see below)
 #   dir = os.path.abspath( dir )
@@ -101,12 +57,6 @@ class SuiteOrGroupNotFoundError( RegistrationError ):
 class SuiteTakenError( RegistrationError ):
     def __init__( self, suite, owner=None ):
         self.msg = "ERROR: " + suite + " is already a registered suite."
-        if owner:
-            self.msg += ' (' + owner + ')'
-
-class IllegalRegPathError( RegistrationError ):
-    def __init__( self, suite, owner=None ):
-        self.msg = "ERROR, illegal name: " + suite
         if owner:
             self.msg += ' (' + owner + ')'
 
@@ -425,7 +375,7 @@ class regdb(object):
         if not comp.is_compatible():
             self.unlock()
             comp.execute( sys.argv )
-        return config( suite, suiterc ).get_title()
+        return config.config( suite, suiterc ).get_title()
 
     def get_suite_version( self, suite, path=None ):
         if path:
@@ -512,12 +462,4 @@ class centraldb( regdb ):
         if treglist[0] != self.user:
             raise OwnerError, 'ERROR: You cannot change your own username'
         regdb.reregister( self, srce, targ )
-
-
-if __name__ == '__main__':
-    foo = RegPath( 'foo.bar.baz' )
-    bar = RegPath( 'one.two' )
-    print foo.basename()
-    print foo.groupname()
-    print foo.append( bar ).rpath
 

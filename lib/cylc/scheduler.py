@@ -40,11 +40,11 @@ import subprocess
 from suite_id import identifier
 from mkdir_p import mkdir_p
 from config import config, SuiteConfigError
-from cylc.registration import RegPath, localdb, RegistrationError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
 from version import compat
-
+from registration import localdb, RegistrationError
+from regpath import RegPath
 from CylcError import TaskNotFoundError, TaskStateError
 
 try:
