@@ -20,8 +20,9 @@ import os, re, sys
 from shutil import copytree
 from optparse import OptionParser
 from cylc.mkdir_p import mkdir_p
-from cylc.registration import delimiter, delimiter_re, localdb, check_name, \
-        centraldb, RegistrationError, SuiteTakenError, DatabaseLockedError
+from cylc.registration import RegPath, localdb, \
+        centraldb, IllegalRegPathError, RegistrationError, \
+        SuiteTakenError, DatabaseLockedError
 
 parser = OptionParser( usage = """cylc [db] copy|cp [OPTIONS] SOURCE TARGET TOPDIR
 
@@ -100,16 +101,12 @@ elif '--export' in sys.argv:
 if len(args) != 3:
     parser.error('Wrong number of arguments')
 
-# strip registration delimiter off the end, in case the user left it on
-# to indicate a group (which is not necessary, but may seem sensible).
-arg_from = args[0].rstrip(delimiter)
-arg_to = args[1].rstrip(delimiter)
-arg_dir = args[2]
-
 try:
-    check_name(arg_to)
-except RegistrationError, x:
+    arg_from = RegPath(args[0]).get()
+    arg_to = RegPath(args[1]).get()
+except IllegalRegPathError, x:
     raise SystemExit(x)
+arg_dir = args[2]
 
 if c_import:
     sourcedb = centraldb( verbose=options.verbose )
@@ -140,7 +137,7 @@ try:
 
         treg = re.sub( r'\b' + arg_from + r'\b', arg_to, freg ) 
 
-        tdir = '/'.join( treg.split(delimiter) )
+        tdir = RegPath(treg).get_fpath()
         tdir = os.path.join( arg_dir, tdir )
 
         if os.path.exists( tdir ):

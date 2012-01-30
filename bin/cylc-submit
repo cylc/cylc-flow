@@ -24,7 +24,7 @@ from cylc.mkdir_p import mkdir_p
 from cylc.execute import execute
 from cylc.job_submission.job_submit import job_submit
 from cylc.config import config, SuiteConfigError
-from cylc.registration import dbgetter, RegistrationError
+from cylc.registration import RegPath, dbgetter, RegistrationError
 from cylc import pimp_my_logger
 from cylc.taskid import id, TaskIDError
 from cylc.locking.suite_lock import suite_lock
@@ -34,7 +34,6 @@ from cylc.task_types import clocktriggered
 from cylc import accelerated_clock
 from cylc.hostname import hostname
 from cylc.port_scan import SuiteIdentificationError
-from cylc.registration import delimiter_re
 from cylc.version import compat
 
 usage = """cylc [task] submit|single [options] SUITE TASK
@@ -159,7 +158,7 @@ cylcenv[ 'CYLC_SUITE_HOST' ] = hostname
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
 cylcenv[ 'CYLC_SUITE_DEF_PATH' ] =  re.sub( os.environ['HOME'], '$HOME', suite_dir )
 cylcenv[ 'CYLC_SUITE_REG_NAME' ] = suite
-cylcenv[ 'CYLC_SUITE_REG_PATH' ] = re.sub( delimiter_re, '/', suite )
+cylcenv[ 'CYLC_SUITE_REG_PATH' ] = RegPath( suite ).get_fpath()
 cylcenv[ 'CYLC_SUITE_OWNER' ] = owner
 cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 if use_lockserver:

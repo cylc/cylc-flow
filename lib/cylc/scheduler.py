@@ -40,7 +40,7 @@ import subprocess
 from suite_id import identifier
 from mkdir_p import mkdir_p
 from config import config, SuiteConfigError
-from cylc.registration import delimiter_re, localdb, RegistrationError
+from cylc.registration import RegPath, localdb, RegistrationError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
 from version import compat
@@ -433,7 +433,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
         cylcenv[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
         cylcenv[ 'CYLC_SUITE_REG_NAME' ] = self.suite
-        cylcenv[ 'CYLC_SUITE_REG_PATH' ] = re.sub( delimiter_re, '/', self.suite )
+        cylcenv[ 'CYLC_SUITE_REG_PATH' ] = RegPath( self.suite ).get_fpath()
         cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', self.suite_dir )
         cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner
         cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )

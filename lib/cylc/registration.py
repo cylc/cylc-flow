@@ -24,25 +24,49 @@ from conf.CylcGlobals import central_regdb_dir, local_regdb_dir
 from config import config, SuiteConfigError
 from version import compat
 
-delimiter = '.'
-delimiter_re = '\.'
+class RegPath(object):
+    # This class contains common code for checking suite registration
+    # name correctness, and manipulating said names. It is currently
+    # used piecemeal to do checking and conversions in-place. Eventually
+    # we should just pass around RegPath objects instead of strings.
+    delimiter = '.'
+    delimiter_re = '\.'
 
-def check_name( suite ):
-    # Suite names may contain word characters [a-zA-Z0-9_], and dots
-    # (the registration hierarchy delimiter), and hyphens. They may
-    # not contain colons because this would prevent use of reg name
-    # based paths in PATH variables
-    if re.search( '[^\w.-]', suite ):
-        raise IllegalNameError( suite ) 
-    # For the moment at least, we don't allow referencing groups
-    # explicitly by appending a '.' to a group name. Instead, for
-    # operations like copy or unregister, whether or not the target
-    # item is a group or suite is inferred from the database content.
-    # This means that to copy a single suite into a group we have to use
-    # the full target suite reg path unless the target group already
-    # exists.
-    if re.search( '\.$', suite ):
-        raise IllegalNameError( suite ) 
+    def __init__( self, rpath ):
+        # Suite registration paths may contain [a-zA-Z0-9_.-]. They may
+        # not contain colons, which would interfere with PATH variables.
+        if re.search( '[^\w.-]', rpath ):
+            raise IllegalRegPathError( rpath ) 
+        # If the path ends in delimiter it must be a group, otherwise it
+        # may refer to a suite or a group. NOTE: this information is not
+        # currently used.
+        if re.match( '.*' + self.__class__.delimiter_re + '$', rpath ):
+            self.is_definitely_a_group = True
+            rpath = rpath.strip(self.__class__.delimiter_re)
+        else:
+            self.is_definitely_a_group = False
+        self.rpath = rpath
+
+    def get( self ):
+        return self.rpath
+
+    def get_list( self ):
+        return self.rpath.split(self.__class__.delimiter)
+
+    def get_fpath( self ):
+        return re.sub( self.__class__.delimiter_re, '/', self.rpath )
+
+    def basename( self ):
+        # return baz from foo.bar.baz
+        return self.rpath.split(self.__class__.delimiter)[-1]
+
+    def groupname( self ):
+        # return foo.bar from foo.bar.baz
+        return self.__class__.delimiter.join( self.rpath.split(self.__class__.delimiter)[0:-1])
+
+    def append( self, rpath2 ):
+        # join on another rpath
+        return RegPath( self.rpath + self.__class__.delimiter + rpath2.rpath )
 
 # NOTE:ABSPATH (see below)
 #   dir = os.path.abspath( dir )
@@ -52,34 +76,6 @@ def check_name( suite ):
 # UM, which then core dumps. Manual use of $PWD to absolutize a relative
 # path, on GPFS, results in a shorter string ... so I use this for now.
 
-        ## cheap suite title extraction WAS USED IN refresh()
-        #try:
-        #    dir, title = self.items[suite]
-        #except KeyError:
-        #    raise SuiteNotFoundError, suite
-        #file = os.path.join( dir, 'suite.rc' )
-        #if not os.path.isfile( file ):
-        #    raise RegistrationError, 'File not found: ' + file
-        #
-        #found = False
-        #for line in open( file, 'rb' ):
-        #    m = re.match( '^\s*title\s*=\s*(.*)$', line )
-        #    if m:
-        #        title = m.groups()[0]
-        #        # strip trailing space
-        #        title = title.rstrip()
-        #        # NOTE: ANY TRAILING COMMENT WILL BE INCLUDED IN THE TITLE
-        #        #     (but this doesn't really matter for our purposes)
-        #        # (stripping isn't trivial in general - what about strings?)
-        #        found = True
-        #        break
-        #
-        #if not found:
-        #    print >> sys.stderr, "WARNING: title not found by simple search, for " + suite
-        #    # This means the title is defined in a suite.rc include-file, or
-        #    # is not defined. In the latter case, a full parse will result
-        #    # in the default title being used (from conf/suiterc.spec). 
- 
 class RegistrationError( Exception ):
     """
     Attributes:
@@ -108,7 +104,7 @@ class SuiteTakenError( RegistrationError ):
         if owner:
             self.msg += ' (' + owner + ')'
 
-class IllegalNameError( RegistrationError ):
+class IllegalRegPathError( RegistrationError ):
     def __init__( self, suite, owner=None ):
         self.msg = "ERROR, illegal name: " + suite
         if owner:
@@ -258,14 +254,16 @@ class regdb(object):
                 print "   (database unchanged)"
 
     def register( self, suite, dir ):
-        check_name( suite )
-
-        for key in self.items.keys():
+        suite = RegPath(suite).get()
+        for key in self.items:
             if key == suite:
+                # there is already a suite of the same name
                 raise SuiteTakenError, suite
-            elif key.startswith(suite + delimiter ):
+            elif key.startswith(suite + RegPath.delimiter ):
+                # there is already a group of the same name
                 raise IsAGroupError, suite
-            elif suite.startswith(key + delimiter ):
+            elif suite.startswith(key + RegPath.delimiter ):
+                # suite starts with, to some level, an existing suite name
                 raise NotAGroupError, key
 
         if dir.startswith( '->' ):
@@ -367,13 +365,17 @@ class regdb(object):
         return dirs
 
     def reregister( self, srce, targ ):
-        check_name( targ )
+        srce = RegPath(srce).get()
+        targ = RegPath(targ).get()
         for key in self.items:
             if key == targ:
+                # There is already a suite of the same name as targ.
                 raise SuiteTakenError, targ
-            elif key.startswith(targ + delimiter ):
-                raise IsAGroupError, targ
-            elif targ.startswith(key + delimiter ):
+            elif key.startswith(targ + RegPath.delimiter):
+                # There is already a group of the same name as targ.
+                self.reregister( self, srce, join_name( [targ, base_name(srce)])) 
+            elif targ.startswith(key + RegPath.delimiter ):
+                # targ starts with, to some level, an existing suite name
                 raise NotAGroupError, key
         found = False
         for key in self.items.keys():
@@ -500,14 +502,22 @@ class centraldb( regdb ):
             user = owner
         else:
             user = self.user
-        regdb.register( self, user + delimiter + suite, dir )
+        regdb.register( self, user + RegPath.delimiter + suite, dir )
 
     def reregister( self, srce, targ ):
-        sreglist = srce.split(delimiter)
-        treglist = targ.split(delimiter)
+        sreglist = srce.split(RegPath.delimiter)
+        treglist = targ.split(RegPath.delimiter)
         if sreglist[0] != self.user:
             raise OwnerError, 'ERROR: You are not the owner of ' + srce
         if treglist[0] != self.user:
             raise OwnerError, 'ERROR: You cannot change your own username'
         regdb.reregister( self, srce, targ )
+
+
+if __name__ == '__main__':
+    foo = RegPath( 'foo.bar.baz' )
+    bar = RegPath( 'one.two' )
+    print foo.basename()
+    print foo.groupname()
+    print foo.append( bar ).rpath
 

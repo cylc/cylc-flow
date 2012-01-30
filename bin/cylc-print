@@ -18,13 +18,14 @@
 
 import os, re
 from optparse import OptionParser
-from cylc.registration import dbgetter, RegistrationError, delimiter
+from cylc.registration import dbgetter, RegistrationError, RegPath
 from cylc.print_tree import print_tree
 
 def get_padding( reglist ):
     maxlen = 0
     for reg in reglist:
-        items = reg[0].split( delimiter )
+        regpath = reg[0]
+        items = RegPath(regpath).get_list()
         for i in range(0,len(items)):
             tmp = 2*i + 1 + len(items[i])
             if i == 0:
@@ -40,9 +41,9 @@ Print private or central suite registrations.
 FILTERING: 
   (a) The filter patterns are Regular Expressions, not shell globs, so
 the general wildcard is '.*' (match zero or more of anything), NOT '*'.
-  (b) For our purposes there is an implicit wildcard at the end of each
-pattern ('foo' is the same as 'foo.*'); use the string end marker to
-stop this ('foo$' matches only literal 'foo').""" )
+  (b) For printing purposes there is an implicit wildcard at the end of
+each pattern ('foo' is the same as 'foo.*'); use the string end marker
+to stop this ('foo$' matches only literal 'foo').""" )
 
 parser.add_option( "-c","--central",
         help="Target the the central database.",
@@ -125,7 +126,7 @@ try:
             dir = re.sub( '^' + os.environ['HOME'], '~', dir )
             if options.align:
                 title = title + spacer_title[ len(title): ]
-            regpath = suite.split( delimiter ) 
+            regpath = RegPath(suite).get_list()
             sub = tree
             for key in regpath[:-1]:
                 if key not in sub:
