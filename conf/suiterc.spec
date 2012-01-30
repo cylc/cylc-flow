@@ -1,5 +1,5 @@
 #C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
-#C: Copyright (C) 2008-2011 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
