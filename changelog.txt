@@ -492,3 +492,7 @@ only if displayed state information (suite task content and task
 state/color) changes.  The layout may still jump when a task changes
 state/color even if nothing else has changed.
 
++ PBS job names are now truncated to 15 characters max (this is a
+requirement for pre version 11 PBS).
+
+

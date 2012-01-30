@@ -43,6 +43,11 @@ PBS qsub job submission.
         # In case the user wants to override the above defaults:
         for d in self.directives:
             defaults[ d ] = self.directives[ d ]
+        # PBS requires jobs names <= 15 characters
+        # This restriction has been removed at PBS version 11
+        # but truncating to 15 chars should not cause any harm.
+        if len( defaults[ '-N' ] ) > 15:
+        	defaults[ '-N' ] = defaults[ '-N' ][:15]
         self.directives = defaults
 
     def construct_jobfile_submission_command( self ):
