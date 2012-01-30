@@ -42,6 +42,7 @@ from configobj import get_extra_values, flatten_errors, Section
 from cylcconfigobj import CylcConfigObj, ConfigObjError
 from graphnode import graphnode, GraphNodeError
 from cylc.print_tree import print_tree
+import registration
 
 try:
     from jinja2 import Environment, FileSystemLoader, TemplateError
@@ -541,7 +542,7 @@ class config( CylcConfigObj ):
         # (allow use of suite identity variables):
         os.environ['CYLC_SUITE_REG_NAME'] = self.suite
         # registration.delimiter_re ('\.') removed to avoid circular import!
-        os.environ['CYLC_SUITE_REG_PATH'] = re.sub( '\.', '/', self.suite )
+        os.environ['CYLC_SUITE_REG_PATH'] = registration.RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
         self['cylc']['logging']['directory'] = \
                 os.path.expandvars( os.path.expanduser( self['cylc']['logging']['directory']))
