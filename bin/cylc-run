@@ -146,7 +146,7 @@ Arguments:
                 itask.prepare_for_death()
                 del itask
             else:
-                self.insert( itask )
+                self.pool.add( itask )
 
     def load_tasks_warm( self ):
         if self.start_time:
@@ -187,7 +187,7 @@ Arguments:
                 itask.prepare_for_death()
                 del itask
             else:
-                self.insert( itask )
+                self.pool.add( itask )
 
     def load_tasks_raw( self ):
         if self.start_time:
@@ -225,7 +225,7 @@ Arguments:
                 itask.prepare_for_death()
                 del itask
                 continue
-            self.insert( itask )
+            self.pool.add( itask )
 
 if __name__ == '__main__':
     try:
@@ -246,8 +246,8 @@ if __name__ == '__main__':
         #   for how to display the resulting stats.
     except Exception, x:
         print >> sys.stderr, "ERROR CAUGHT, will clean up before exit"
-        # this assumes no exceptions in shutdown()
-        server.shutdown()
+        # this assumes no exceptions in shutdown():
+        server.shutdown( 'ERROR: ' + str(x) )
 
         if debug:
             raise
@@ -257,11 +257,9 @@ if __name__ == '__main__':
             print >> sys.stderr, "(use --debug to see exception traceback)"
             sys.exit(1)
     except:
-        # catch 'sys.exit(1)' and 'raise SystemExit("foo")'
-        # TO DO: check these can actually be caught
+        # ?catch 'sys.exit(1)' and 'raise SystemExit("foo")'?
         print >> sys.stderr, "ERROR CAUGHT; will clean up before exit"
-        server.shutdown()
+        server.shutdown('!cylc error - please report!')
         raise
     else:
-        # success!
-        server.shutdown()
+        server.shutdown('Run completed normally')

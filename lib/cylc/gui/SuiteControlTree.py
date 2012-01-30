@@ -52,7 +52,7 @@ Text treeview base GUI suite control interface.
         ### TO DO: For suites that are already running, or for dynamically
         ### updating the viewed task list, we can retrieve the task list
         ### (etc.) from the suite's remote state summary object.
-        self.task_list = self.suiterc.get_full_task_name_list()
+        self.task_list = self.suiterc.get_task_name_list()
 
         main_panes = gtk.VPaned()
         main_panes.set_position(200)
@@ -235,15 +235,17 @@ Text treeview base GUI suite control interface.
         self.tfilterbox = gtk.HBox()
 
         # allow filtering out of 'succeeded' and 'waiting'
-        all_states = [ 'waiting', 'submitted', 'running', 'succeeded', 'failed', 'held' ]
+        all_states = [ 'waiting', 'submitted', 'running', 'succeeded', 'failed', 'held', 'runahead', 'queued' ]
         labels = {}
         labels[ 'waiting'   ] = '_waiting'
         labels[ 'submitted' ] = 's_ubmitted'
         labels[ 'running'   ] = '_running'
-        labels[ 'succeeded'  ] = 'su_cceeded'
+        labels[ 'succeeded' ] = 'su_cceeded'
         labels[ 'failed'    ] = 'f_ailed'
-        labels[ 'held'   ] = '_held'
- 
+        labels[ 'held'      ] = '_held'
+        labels[ 'runahead'  ] = '_runahead'
+        labels[ 'queued'   ] = '_queued'
+  
         # initially filter out 'succeeded' and 'waiting' tasks
         self.tfilter_states = [ 'waiting', 'succeeded' ]
 

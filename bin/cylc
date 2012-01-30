@@ -89,6 +89,7 @@ def match_command( abbrev ):
         discovery_commands, 
         control_commands, 
         utility_commands,
+        hook_commands,
         task_commands ]:
         for com in dct.keys():
             for alias in dct[com]:
@@ -156,6 +157,7 @@ categories['discovery'   ] = ['discovery' ]
 categories['control'     ] = ['control' ]
 categories['utility'     ] = ['utility' ]
 categories['task'        ] = ['task' ]
+categories['hook'        ] = ['hook' ]
 categories['admin'       ] = ['admin' ]
 categories['license'     ] = ['license', 'GPL' ]
  
@@ -200,7 +202,11 @@ utility_commands['checkvars'    ] = ['checkvars']
 utility_commands['template'     ] = ['template'] 
 utility_commands['housekeeping' ] = ['housekeeping'] 
 utility_commands['scp-transfer' ] = ['scp-transfer'] 
-utility_commands['email-alert'  ] = ['email-alert'] 
+
+hook_commands = OrderedDict()
+hook_commands['email-suite' ] = ['email-suite'] 
+hook_commands['email-task'  ] = ['email-task' ] 
+
 admin_commands = OrderedDict()
 admin_commands['create-cdb'  ] = [ 'create-cdb']
 admin_commands['test-db'     ] = [ 'test-db']
@@ -290,6 +296,7 @@ catsum['preparation' ]   = "suite editing, graphing, validation etc."
 catsum['discovery'   ]   = "what suites are running at the moment?"
 catsum['control'     ]   = "running, monitoring, and controlling suites."
 catsum['task'        ]   = "running single tasks, and task messaging commands."
+catsum['hook'        ]   = "suite and task event hook scripts."
 catsum['utility'     ]   = "cycle time arithmetic, filename templating, etc."
 
 usage = general_usage + """
@@ -311,7 +318,7 @@ tasks (GetData%2011080806) or 'a:INT' for asynchronous tasks (foo%a:1).
 Here's how to drill down to usage help for a particular command:
   % cylc help           # list all available categories (this page)
   % cylc help prep      # list commands in category 'preparation'
-  % cylc help prep edit # lp for 'cylc [prep] edit'
+  % cylc help prep edit # command usage help for 'cylc [prep] edit'
 
 Command CATEGORIES:"""
 
@@ -381,7 +388,7 @@ comsum[ 'scan'       ] = 'Scan a host for running suites and lockservers'
 comsum[ 'submit'     ] = 'Run a single task just as its parent suite would'
 comsum[ 'started'    ] = 'Acquire a task lock and report started'
 comsum[ 'message'    ] = 'Report progress and completion of outputs'
-comsum[ 'succeeded'   ] = 'Release task lock and report succeeded'
+comsum[ 'succeeded'  ] = 'Release task lock and report succeeded'
 comsum[ 'failed'     ] = 'Release task lock and report failure'
 
 # utility
@@ -391,7 +398,10 @@ comsum[ 'template'     ] = 'Powerful cycle time offset filename templating'
 comsum[ 'jobscript'    ] = 'Generate a task job script and print it to stdout'
 comsum[ 'housekeeping' ] = 'Parallel archiving and cleanup on cycle time offsets'
 comsum[ 'scp-transfer' ] = 'Scp-based file transfer for cylc suites'
-comsum[ 'email-alert'  ] = 'Send alerts by email when tasks fail (for example)'
+
+# hook
+comsum[ 'email-task'  ] = 'A task event hook script that sends email alerts'
+comsum[ 'email-suite' ] = 'A suite event hook script that sends email alerts'
 
 def typo( str ):
     corrected = str
@@ -587,6 +597,6 @@ if command in [ 'task-started', 'task-succeeded', 'task-failed', 'task-message' 
     command = re.sub( '^task-', '', command )
 
 try:
-    execute( [ '_' + command ] + args, notify=notify )
+    execute( [ 'cylc-' + command ] + args, notify=notify )
 except KeyboardInterrupt:
     pass

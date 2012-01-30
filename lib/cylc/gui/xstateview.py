@@ -74,8 +74,6 @@ class xupdater(threading.Thread):
         self.host = host
         self.port = port
 
-        self.state_summary = {}
-        self.global_summary = {}
         self.god = None
         self.mode = "mode:\nwaiting..."
         self.dt = "state last updated at:\nwaiting..."
@@ -126,10 +124,26 @@ class xupdater(threading.Thread):
     def update(self):
         #print "Updating"
         try:
-            [glbl, states] = self.god.get_state_summary()
+            [glbl, states_full] = self.god.get_state_summary()
         except:
             gobject.idle_add( self.connection_lost )
             return False
+
+        # The graph layout is not stable even when (py)graphviz is  
+        # presented with the same graph (may be a node ordering issue
+        # due to use of dicts?). For this reason we only plot node name 
+        # and color (state) and only replot when node content or states 
+        # change.  The full state summary contains task timing
+        # information that changes continually, so we have to disregard
+        # this when checking for changes. So: just extract the critical
+        # info here:
+        states = {}
+        for id in states_full:
+            if id not in states:
+                states[id] = {}
+            states[id]['name' ] = states_full[id]['name' ]
+            states[id]['label'] = states_full[id]['label']
+            states[id]['state'] = states_full[id]['state']
 
         # always update global info
         self.global_summary = glbl
@@ -173,6 +187,7 @@ class xupdater(threading.Thread):
             return False
         elif not compare_dict_of_dict( states, self.state_summary ):
             # state changed
+            print 'STATE CHANGED'
             self.state_summary = states
             return True
         else:
@@ -202,7 +217,6 @@ class xupdater(threading.Thread):
  
     def run(self):
         glbl = None
-        states = {}
         while not self.quit:
             if self.update():
                 self.update_graph()
@@ -232,6 +246,7 @@ class xupdater(threading.Thread):
     def add_graph_key(self):
         self.graphw.cylc_add_node( 'waiting', True )
         self.graphw.cylc_add_node( 'runahead', True )
+        self.graphw.cylc_add_node( 'queued', True )
         self.graphw.cylc_add_node( 'submitted', True )
         self.graphw.cylc_add_node( 'running', True )
         self.graphw.cylc_add_node( 'succeeded', True )
@@ -243,6 +258,7 @@ class xupdater(threading.Thread):
 
         waiting = self.graphw.get_node( 'waiting' )
         runahead = self.graphw.get_node( 'runahead' )
+        queued = self.graphw.get_node( 'queued' )
         submitted = self.graphw.get_node( 'submitted' )
         running = self.graphw.get_node( 'running' )
         succeeded = self.graphw.get_node( 'succeeded' )
@@ -253,7 +269,7 @@ class xupdater(threading.Thread):
         grfamily = self.graphw.get_node( 'trigger family' )
 
 
-        for node in [ waiting, runahead, submitted, running, succeeded, failed, held, base, family, grfamily ]:
+        for node in [ waiting, runahead, queued, submitted, running, succeeded, failed, held, base, family, grfamily ]:
             node.attr['style'] = 'filled'
             node.attr['shape'] = 'ellipse'
             node.attr['URL'] = 'KEY'
@@ -265,6 +281,8 @@ class xupdater(threading.Thread):
         waiting.attr['color'] = 'cadetblue4'
         runahead.attr['fillcolor'] = 'cadetblue'
         runahead.attr['color'] = 'cadetblue4'
+        queued.attr['fillcolor'] = 'purple'
+        queued.attr['color'] = 'purple'
         submitted.attr['fillcolor'] = 'orange'
         submitted.attr['color'] = 'darkorange3'
         running.attr['fillcolor'] = 'green'
@@ -288,6 +306,7 @@ class xupdater(threading.Thread):
 
         self.graphw.cylc_add_edge( succeeded, failed, False, style='invis')
         self.graphw.cylc_add_edge( failed, held, False, style='invis')
+        self.graphw.cylc_add_edge( held, queued, False, style='invis')
 
         self.graphw.cylc_add_edge( base, grfamily, False, style='invis')
         self.graphw.cylc_add_edge( grfamily, family, False, style='invis')
@@ -316,6 +335,9 @@ class xupdater(threading.Thread):
         elif self.state_summary[id]['state'] == 'runahead':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'cadetblue'
+        elif self.state_summary[id]['state'] == 'queued':
+            node.attr['style'] = 'filled'
+            node.attr['fillcolor'] = 'purple'
 
         if shape:
             node.attr['shape'] = shape

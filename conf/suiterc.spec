@@ -58,11 +58,21 @@ description = string( default="No description provided" )
             enable = boolean( default=False )
         [[[job submission]]]
             method = string( default=background )
+    [[event hooks]]
+        script = string( default=None )
+        events = force_list( default=list() )
 #_____________________________________________________________SCHEDULING
 [scheduling]
     initial cycle time = integer( default=None )
     final cycle time = integer( default=None )
     runahead limit = integer( min=0, default=25 )
+    [[queues]]
+        [[[default]]]
+            # for all non queue-assigned tasks
+            limit = integer( default=0)
+        [[[__many__]]]
+            limit = integer( default=0 )
+            members = force_list( default=list())
     [[special tasks]]
         clock-triggered = force_list( default=list())
         start-up = force_list( default=list())
@@ -87,7 +97,6 @@ description = string( default="No description provided" )
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
         manual completion = boolean( default=False )
-        hours = force_list( default=list())
         extra log files = force_list( default=list())
         [[[job submission]]]
             method = string( default=background )
@@ -126,7 +135,6 @@ description = string( default="No description provided" )
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
         manual completion = boolean( default=None )
-        hours = force_list( default=list())
         extra log files = force_list( default=list())
         [[[job submission]]]
             method = string( default=None )

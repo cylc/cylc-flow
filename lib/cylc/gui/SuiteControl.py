@@ -328,9 +328,9 @@ The cylc forecast suite metascheduler.
             view = False
             reasons.append( task_id + ' has no associated log files' )
 
-        if states[ task_id ][ 'state' ] == 'waiting':
+        if states[ task_id ][ 'state' ] == 'waiting' or states[ task_id ][ 'state' ] == 'queued':
             view = False
-            reasons.append( task_id + ' has not started yet' )
+            reasons.append( task_id + ' has not started running yet' )
 
         if not view:
             warning_dialog( '\n'.join( reasons ) ).warn()
@@ -368,7 +368,13 @@ The cylc forecast suite metascheduler.
 
         items.append( gtk.SeparatorMenuItem() )
 
-        reset_ready_item = gtk.MenuItem( 'Trigger' )
+        trigger_now_item = gtk.MenuItem( 'Trigger' )
+        items.append( trigger_now_item )
+        trigger_now_item.connect( 'activate', self.trigger_task_now, task_id )
+        if self.readonly:
+            trigger_now_item.set_sensitive(False)
+
+        reset_ready_item = gtk.MenuItem( 'Reset to "ready"' )
         items.append( reset_ready_item )
         reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
         if self.readonly:
@@ -717,6 +723,32 @@ The cylc forecast suite metascheduler.
         else:
             result = proxy.release_task( task_id )
 
+        if result.success:
+            info_dialog( result.reason ).inform()
+        else:
+            warning_dialog( result.reason ).warn()
+
+    def trigger_task_now( self, b, task_id ):
+        msg = "trigger " + task_id + " now?"
+        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+
+        prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
+        response = prompt.run()
+
+        while response == gtk.RESPONSE_HELP:
+            self.command_help( "control", "trigger" )
+            response = prompt.run()
+
+        prompt.destroy()
+        if response != gtk.RESPONSE_OK:
+            return
+        try:
+            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+        except SuiteIdentificationError, x:
+            # the suite was probably shut down by another process
+            warning_dialog( x.__str__() ).warn()
+            return
+        result = proxy.trigger_task( task_id )
         if result.success:
             info_dialog( result.reason ).inform()
         else:
@@ -1470,7 +1502,7 @@ The cylc forecast suite metascheduler.
  
     def view_log( self, w ):
         logdir = os.path.join( self.suiterc['cylc']['logging']['directory'] )
-        foo = cylc_logviewer( 'log', logdir, self.suiterc.get_full_task_name_list() )
+        foo = cylc_logviewer( 'log', logdir, self.suiterc.get_task_name_list() )
         self.quitters.append(foo)
 
     def launch_cug( self, b, pdf ):

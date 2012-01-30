@@ -242,7 +242,7 @@ Arguments:
                 # we've reached the stop time already: delete the new task 
                 itask.log( 'WARNING', "HOLDING at configured stop time " + self.stop_time )
                 itask.state.set_status('held')
-            self.insert( itask )
+            self.pool.add( itask )
 
 if __name__ == '__main__':
     try:
@@ -263,7 +263,9 @@ if __name__ == '__main__':
         #   for how to display the resulting stats.
     except Exception, x:
         print "ERROR CAUGHT, will clean up before exit"
-        server.shutdown()
+        # this assumes no exceptions in shutdown():
+        server.shutdown( 'ERROR: ' + str(x) )
+
         if debug:
             raise
         else:
@@ -272,11 +274,9 @@ if __name__ == '__main__':
             print >> sys.stderr, "(use --debug to see exception traceback)"
             sys.exit(1)
     except:
-        # catch 'sys.exit(1)' and 'raise SystemExit("foo")'
-        # TO DO: check these can actually be caught
+        # ?catch 'sys.exit(1)' and 'raise SystemExit("foo")'?
         print >> sys.stderr, "ERROR CAUGHT; will clean up before exit"
-        server.shutdown()
+        server.shutdown('!cylc error - please report!')
         raise
     else:
-        # success!
-        server.shutdown()
+        server.shutdown('Run completed normally')

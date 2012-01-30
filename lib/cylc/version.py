@@ -23,15 +23,26 @@ import os, sys, re
 cylc_version = "VERSION-TEMPLATE"
 
 if cylc_version == "VERSION-" + "TEMPLATE": # (to avoid the replacement)
-    # this is a cylc repository, find the qualified most recent version tag 
+    # This must be a cylc repository, or a copy of the repository
+    # source: use git to get a qualified most recent version tag.
+    cwd = os.getcwd()
     os.chdir( os.environ['CYLC_DIR'] )
     try:
         p = subprocess.Popen( ['git', 'describe' ], stdout=subprocess.PIPE, stderr=subprocess.PIPE )
     except OSError,x:
+        # git not found, 
         print sys.stderr, 'WARNING: failed to get repository pseudo version tag:'
     else:
-        out, err = p.communicate()
-        cylc_version = out.rstrip()
+        retcode = p.wait()
+        if retcode != 0:
+            # 'git describe' failed - this must be a copy of the
+            # repository source but not a proper clone or a release.
+            cylc_version = "(DEV)"
+        else:
+            # got a pseudo version number
+            out, err = p.communicate()
+            cylc_version = out.rstrip()
+    os.chdir(cwd)
 
 #_______________________________________________________________________
 #-----------------CYLC-VERSION-COMPATIBILITY-MECHANISM------------------
@@ -62,7 +73,8 @@ class compat( object ):
 
         try:
             f = open( suiterc, 'r' )
-        except OSError, x:
+        except IOError, x:
+            print >> sys.stderr, "ERROR: unable to open the suite.rc file."
             raise SystemExit(x)
         # read first line of the suite.rc file
         line0 = f.readline()
@@ -105,6 +117,9 @@ class compat( object ):
         else:
             return "version not specified"
 
+    def is_compatible( self ):
+        return self.compatible
+
     def execute( self, sysargv ):
         if self.compatible:
             # carry on as normal
@@ -126,10 +141,10 @@ class compat( object ):
         # full path to new cylc command
         new_cylc = os.path.join( self.new_cylc_dir, 'bin', 'cylc')
         # construct the command to re-invoke
-        command_path = sysargv[0]     # /path/to/this/cylc/bin/_validate
-        command_name = os.path.basename( command_path ) # _validate
-        # strip off initial '_' if there is one (may not be, e.g. gcylc SUITE) 
-        command_name = re.sub( '^_', '', command_name )       # validate
+        command_path = sysargv[0]     # /path/to/this/cylc/bin/cylc-validate
+        command_name = os.path.basename( command_path ) # cylc-validate
+        # strip off initial 'cylc-' if it exists (may not be, e.g. gcylc SUITE) 
+        command_name = re.sub( '^cylc-', '', command_name ) # validate
 
         command = [new_cylc, command_name] + sysargv[1:] 
 

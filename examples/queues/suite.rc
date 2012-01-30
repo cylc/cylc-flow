@@ -1,0 +1,24 @@
+title = demonstrates internal queueing
+description = """
+Two trees of tasks: the first uses the default queue set to a limit of
+two active tasks at once; the second uses another queue limited to three
+active tasks at once. Run via the graph control GUI for a clear view.
+              """
+[scheduling]
+    [[queues]]
+        [[[default]]]
+            limit = 2
+        [[[foo]]]
+            limit = 3
+            members = n, o, p, fam2, u, v, w, x, y, z
+    [[dependencies]]
+        graph = """
+            a => b & c => fam1 => h & i & j & k & l & m
+            n => o & p => fam2 => u & v & w & x & y & z
+                """
+[runtime]
+    [[fam1,fam2]]
+    [[d,e,f,g]]
+        inherit = fam1
+    [[q,r,s,t]]
+        inherit = fam2
