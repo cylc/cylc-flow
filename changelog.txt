@@ -426,17 +426,16 @@ occured. 2/ detect erroneous use of synchronous special tasks in
 asynchronous graphs.
 
 ________________________________________________________________________
-4.2.0-rc1 (4.2.0 PENDING)
+4.2.0
 
 + Cross-version suite compatibility. Put "#!cylc-x.y.z" as the first 
 line of your suite.rc file, and cylc-x.y.z will be used to access the 
 suite regardless of which cylc version is initially invoked.
 
-+ Remote task stdout and stderr logs can now be accessed by gcylc.
++ Remote task stdout and stderr logs can now be accessed by gcylc, 
+by the same passwordless-ssh based method used to submit remote tasks.
 
 + Runtime namespace inheritance hierarchy graphing.
-
-4.2.0-rc2 (4.2.0 PENDING)
 
 + gcylc now spawns ssh commands to retrieve remote task output via the
 shell, so that task owner name can be defined by environment variable.
@@ -457,7 +456,7 @@ has been replaced by:
 
 + Cycling tasks now spawn successors when they enter the submitted 
 state, rather than the running state. This is better for external 
-queue delays (tasks get queued sooner) but otherwise makes no
+queueing systems (jobs get queued sooner) but otherwise makes no
 difference.
 
 + Documented how multiple cycling graph sections combine to make the
@@ -484,11 +483,12 @@ that indentation amount allows you to put higher level items such as
 + Documented how to omit tasks at runtime, completely or for later
 insertion.
 
-+ Internal queues implemented - the number of active (submitted or
++ Internal queues implemented and documented - the number of active (submitted or
 running) tasks at any one time can be limited, across the whole suite or
 by groups of tasks. 
 
 + Graph GUI layout stability has been improved by redisplaying the graph
-only if displayed state information changes (task ID and state color).
-The layout may still jump when a task changes color even if nothing else
-has changed.
+only if displayed state information (suite task content and task
+state/color) changes.  The layout may still jump when a task changes
+state/color even if nothing else has changed.
+
