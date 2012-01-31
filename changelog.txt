@@ -498,3 +498,11 @@ running) at any one time can be limited, in one or more queues.
 + New User Guide chapter "Running Suites" which so far documents 
 task states and internal queues.
 
+________________________________________________________________________
+4.2.1 PENDING
+
++ Fixed an error in the housekeeping utility program, affecting
+operations with no reference "destination" defined.
+
+
+

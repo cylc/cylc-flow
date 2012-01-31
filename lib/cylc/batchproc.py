@@ -62,8 +62,6 @@ class batchproc:
         n_succeeded = 0
         for item in self.items:
             # SPAWN BATCH MEMBER PROCESSES IN PARALLEL
-            #print 'spawning', item 
-            #print item.execute()
             proc.append( subprocess.Popen( item.execute(), shell=self.shell, \
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE ))
         for p in proc:

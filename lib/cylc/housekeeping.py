@@ -313,4 +313,9 @@ class hkitem:
         if self.cheap:
             comlist.append( '-c' )
 
-        return comlist + [ self.path, self.destn ]
+        comlist.append( self.path )
+
+        if self.destn:
+            comlist.append( self.destn )
+
+        return comlist
