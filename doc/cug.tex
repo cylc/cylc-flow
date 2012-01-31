@@ -1258,10 +1258,10 @@ previous run.
 \subsubsection{Triggering Tasks Manually}
 
 Right-click on the waiting Model task and choose Trigger, or use
-\lstinline=cylc trigger=, to force the task to trigger, and thereby get
+\lstinline=cylc trigger=, to force the task to trigger and thereby get
 the suite up and running. In a real suite this would not be sufficient:
 the real forecast model that Model represents would fail for lack of the
-real restart files that it requires as input.  Well see how to handle
+real restart files that it requires as input.  We'll see how to handle
 this properly shortly.
 
 \subsubsection{Suite Shut-Down And Restart}
@@ -4432,8 +4432,8 @@ the real tasks) move through a series of defined states:
                 outputs could be needed to satisfy the prerequisites of
                 waiting tasks, and then it will be removed from the
                 suite.
-            \item {\bf failed}- a {\em failed} task has finished but
-                reported failure. Failed tasks are not automatically
+            \item {\bf failed} - a {\em failed} task has aborted after
+                reporting failure. Failed tasks are not automatically
                 removed from the suite, they must be handled by the
                 suite operator (e.g.\ by retriggering after fixing the
                 problem).
@@ -4481,7 +4481,7 @@ Finally, you may see references to the following pseudo states:
 Cylc suites are self-limiting to the extent that tasks are only
 submitted to run if they are actually ready to run. But even so some
 suites may generate too much activity at once, particularly in
-delayed/catch-up/historical operation when suites are not constrained by
+delayed/catch-up/historical operation when they are not constrained by
 the clock-triggered tasks that normally have to wait on real time data.
 There are two issues to be aware of here: overburdening an external
 batch queueing system, or the task host hardware, by submitting too many
@@ -4503,7 +4503,8 @@ prerequisites and no clock-trigger will tend to run off into the future
 define one). Similarly, in delayed or historical operation a
 clock-triggered task with no dependence on other tasks will run off
 ahead because the clock trigger provides no constraint until the task
-catches up to the wall clock. There is no advantage in letting a few
+catches up to the wall clock (or rather its cycle time catches up to 
+the wall clock). There is no advantage in letting a few
 fast data retrieval tasks, say, get way ahead of the slower tasks
 that actually use the data, and in large suites this could eventually
 swamp cylc because a large number of ``succeeded'' tasks would have to

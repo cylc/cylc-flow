@@ -496,7 +496,8 @@ class MainApp(object):
                 # set_program_name() was added in PyGTK 2.12
                 about.set_program_name( "cylc" )
         about.set_version( cylc_version )
-        about.set_copyright( "(c) Hilary Oliver, NIWA, 2008-2011" )
+        about.set_copyright( "Copyright (C) 2008-2012 Hilary Oliver, NIWA" )
+#
         about.set_comments( 
 """
 The cylc forecast suite metascheduler.

@@ -500,13 +500,13 @@ class scheduler(object):
 
         print ""
         print "THIS IS THE CYLC FORECAST SUITE METASCHEDULER"
-        print "Copyright (C) 2008-2012 Hilary Oliver, NIWA"
+        print " Copyright (C) 2008-2012 Hilary Oliver, NIWA"
         print ""
-        print "This program comes with ABSOLUTELY NO WARRANTY;"
-        print "for details type: `cylc license warranty'."
-        print "This is free software, and you are welcome to "
-        print "redistribute it under certain conditions;"
-        print "for details type: `cylc license conditions'."
+        print "This program comes with ABSOLUTELY NO WARRANTY; for details type:"
+        print " `cylc license warranty'."
+        print "This is free software, and you are welcome to redistribute it under"
+        print "certain conditions; for details type:"
+        print " `cylc license conditions'."
         print 
 
         items = self.banner.keys()
