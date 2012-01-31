@@ -187,7 +187,7 @@ class xupdater(threading.Thread):
             return False
         elif not compare_dict_of_dict( states, self.state_summary ):
             # state changed
-            print 'STATE CHANGED'
+            #print 'STATE CHANGED'
             self.state_summary = states
             return True
         else:
