@@ -446,7 +446,8 @@ shell, so that task owner name can be defined by environment variable.
     'submission_timeout' and/or 'execution_timeout' should now be 
     specified instead of just 'timeout'.
 
-+ Added suite event handling, with one event: shutdown.
++ Added suite event handling, with one event: shutdown (have your suite
+send an email before it shuts itself after completing the final cycle).
 WARNING, this required changing the name of the existing ready-made
 event handler:
    cylc [util] email-alert
@@ -483,10 +484,6 @@ that indentation amount allows you to put higher level items such as
 + Documented how to omit tasks at runtime, completely or for later
 insertion.
 
-+ Internal queues implemented and documented - the number of active (submitted or
-running) tasks at any one time can be limited, across the whole suite or
-by groups of tasks. 
-
 + Graph GUI layout stability has been improved by redisplaying the graph
 only if displayed state information (suite task content and task
 state/color) changes.  The layout may still jump when a task changes
@@ -495,4 +492,9 @@ state/color even if nothing else has changed.
 + PBS job names are now truncated to 15 characters max (this is a
 requirement for pre version 11 PBS).
 
++ Internal queues - the number of active tasks (i.e. those submitted or
+running) at any one time can be limited, in one or more queues.
+
++ New User Guide chapter "Running Suites" which so far documents 
+task states and internal queues.
 
