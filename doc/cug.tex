@@ -4355,7 +4355,7 @@ use it in a suite definition:
             -l = 'nodes=1,walltime=00:01:00'
             -cwd = ' '
 \end{lstlisting}
-And generate a job script to see the resulting directives:
+and generate a job script to see the resulting directives:
 \lstset{language=bash}
 \begin{lstlisting}
 $ cylc db reg test $HOME/test
@@ -4394,99 +4394,124 @@ at the top of the example file above).
 
 \section{Running Suites}
 
+This section is still incomplete - please see also the Quick Start
+Guide (Section~\ref{QuickStartGuide}), command documentation 
+(Section~\ref{CommandReference}), and play with the example suites.
+
 \subsection{Task States}
 
-As a suite runs its task proxies move through a series of defined
-states, which are shown in suite monitor and control applications:
+As a suite runs its tasks (or rather the task proxies that represent 
+the real tasks) move through a series of defined states:
 
 \begin{myitemize}
-    \item {\bf waiting} - a waiting task is present in the suite but its
-        prerequisites are not yet satisfied and, for clock-triggered
-        tasks, its trigger time has not come up yet.
+    \item {\bf waiting} - a {\em waiting} task's prerequisites have
+        not yet been satisfied (clock-triggered tasks may also be 
+        waiting on their trigger time).
 
-    \item {\bf ready} - a task is ready to run if its prerequisites are
-        satisfied and, for clock-triggered tasks, its trigger time has
-        come up. This is really a virtual state - such tasks are
-        immediately queued or submitted, unless held.
+    \item {\bf queued} - a {\em queued} task is ready to run but
+        has been temporarily prevented from doing so by the internal
+        cylc queue to which it is assigned (see {\em Internal Queues},
+        Section~\ref{InternalQueues}). Note this does mean the
+        task is sitting in an external batch scheduler queue (that, 
+        depending on the chosen job submission method, would be 
+        the {\em submitted} state).
 
-    \item {\bf held} - a task that is held will not be submitted even if
-        it is ready to run, until it is released from the hold. Held
-        tasks still get their prerequisites satisfied as other tasks
-        run. Tasks that are already running cannot be held.
+    \item {\bf submitted} - a {\em submitted} task has been submitted 
+        by its defined job submission method but has not yet started
+        executing (it may be waiting in an external batch scheduler
+        queue, depending on job submission method).
 
-    \item {\bf runahead} - this is a special {\em held} state for tasks 
-        that have got ``too far ahead'' and exceeded the suite runahead
-        limit. Runahead-limited tasks are released automatically 
-        when the rest of the suite catches up sufficiently (see {\em
-        The Suite Runahead Limit}, Section~\ref{RunaheadLimit}).
+    \item {\bf running} - a {\em running} task has started executing
+        (reported via a messaging call near the top of the task job
+        script) but has not yet finished.
 
-    \item {\bf queued} - a task that is queued is ready to run but is
-        temporarily prevented from running by the internal queue to
-        which it is assigned (see {\em Internal Queues},
-        Section~\ref{InternalQueues}).
+    \item two finished states:
+        \begin{myitemize}
+            \item {\bf succeeded} - a {\em succeeded } task has finished
+                successfully. It will remain in the suite so long as its
+                outputs could be needed to satisfy the prerequisites of
+                waiting tasks, and then it will be removed from the
+                suite.
+            \item {\bf failed}- a {\em failed} task has finished but
+                reported failure. Failed tasks are not automatically
+                removed from the suite, they must be handled by the
+                suite operator (e.g.\ by retriggering after fixing the
+                problem).
+    \end{myitemize}
+\end{myitemize}
 
-    \item {\bf submitted} - a task that is ready to run and not currently
-        limited by an internal queue will immediately be submitted to
-        run via the job submission method defined for it. It will then stay
-        in the submitted state until it actually starts executing (which
-        may be some time if, for example, it is submitted to an external
-        batch queueing system).
+In addition, there are two held (paused) task states:
 
-    \item {\bf running} - a task enters the running state by reporting
-        to cylc that it has actually started executing (via a messaging
-        call near the top of the task job script). The running state
-        lasts until the task notifies cylc of completion of execution,
-        successful or not.
+\begin{myitemize}
+    \item {\bf held} - a {\em held} task will not be submitted,
+        even if it is ready to run, until it is released.
+        Tasks that are already running cannot be held. The suite
+        operator can deliberately hold tasks, and cylc itself puts
+        tasks on hold under certain circumstances. For example, if the 
+        suite has been told to ``shut down after currently running 
+        tasks have finished'' waiting tasks will be put on hold 
+        while currently running tasks are finishing.
 
-    \item {\bf succeeded} - a task that has reported successful
-        completion of execution remains present in the suite, in the
-        succeeded state, so long as its outputs may be required to
-        satisfy the prerequisites of other waiting tasks, and then it is 
-        automatically removed from the suite.
+    \item {\bf runahead} - a task in the {\em runahead} state has
+        exceeded the suite runahead limit, i.e.\ it has got ``too far
+        ahead'' of the slowest tasks and will be held back until 
+        they have caught up sufficiently. This state is automatically
+        managed by cylc. See {\em
+        The Suite Runahead Limit}, Section~\ref{RunaheadLimit}.
 
-    \item {\bf failed}- a task that has stopped executing after
-        reporting failure remains present in the suite the failed state
-        indefinitely until dealt with by the suite operator
-        (e.g.\ by retriggering it after fixing the problem that caused
-        the failure).
+\end{myitemize}
 
+Finally, you may see references to the following pseudo states:
+
+\begin{myitemize}
+    \item {\bf ready} - to set a task to {\em ready} means to set all
+        of its prerequisites satisfied - i.e.\ ready to run (except 
+         clock-triggered tasks, which also wait on a trigger time).
+
+    \item {\bf base} (Graph Control GUI only) - graph nodes displayed in
+        the off-white base color are displayed in order to show the
+        proper graph structure but the corresponding task proxies are
+        not actually present in the suite at the moment, because
+        they have not been spawned yet, or they have been removed
+        by cylc as spent tasks, or removed by the suite operator. 
 \end{myitemize}
 
 \subsection{Limiting Suite Activity}
 
-Cylc suites are naturally self-limiting to the extent that tasks are
-only submitted to run if their prerequisites are satisfied - i.e.\ if
-they are actually ready to run). But even so some suites may cause 
-trouble by generating too much activity at once, particularly if you  
-are running in delayed/catch-up/historical operation and are therefore
-not limited by clock-triggered tasks that normally wait on real time
-data. There are two kinds of problems to be aware of here: overburdening 
-an external batch queueing system, or the task host hardware, by submitting 
-too many tasks at once - this is prevented by cylc's {\em internal queues};
-and overburdening cylc itself by letting loosely constrained tasks run
-off far into the future (which would require cylc to keep vast numbers of
-``succeeded'' tasks in the suite until other tasks, which may depend on
-them, have caught up) - this is prevented by the suite runahead
-limit.
-
+Cylc suites are self-limiting to the extent that tasks are only
+submitted to run if they are actually ready to run. But even so some
+suites may generate too much activity at once, particularly in
+delayed/catch-up/historical operation when suites are not constrained by
+the clock-triggered tasks that normally have to wait on real time data.
+There are two issues to be aware of here: overburdening an external
+batch queueing system, or the task host hardware, by submitting too many
+tasks at once
+- this can be prevented by cylc's {\em internal queues}; and
+overburdening cylc itself by letting unconstrained or loosely
+constrained tasks run off far into the future (which would require cylc
+to keep vast numbers of ``succeeded'' tasks around until other tasks,
+which may depend on them, have caught up) - this can be prevented by the
+suite runahead limit.
 
 \subsubsection{The Suite Runahead Limit}
 \label{RunaheadLimit}
 
-In a cylc suite each task can cycle ahead independently except as
-constrained by dependence on other individual tasks, and any tasks that
-are not so constrained will tend to race off ahead.  This may eventually
-swamp cylc because a large number of ``succeeded'' tasks will have to be
-maintained in the suite until the slower tasks, which may depend on
-them, catch up. Typically this applies only to historical operation
-where clock-triggered tasks that normally wait on real time data become
-unconstrained because the real time data is available in advance and the
-wall clock has long passed the clock-triggered tasks' designated trigger
-times (determined by comparing task cycle time, plus some offset, to the
-wall clock). 
+In a cylc suite each task cycles independently constrained only by
+dependence on other tasks or by clock triggers. A cycling task with no
+prerequisites and no clock-trigger will tend to run off into the future
+(it is unlikely that you will need such a task but it is possible to
+define one). Similarly, in delayed or historical operation a
+clock-triggered task with no dependence on other tasks will run off
+ahead because the clock trigger provides no constraint until the task
+catches up to the wall clock. There is no advantage in letting a few
+fast data retrieval tasks, say, get way ahead of the slower tasks
+that actually use the data, and in large suites this could eventually
+swamp cylc because a large number of ``succeeded'' tasks would have to
+be maintained until the slower tasks, which might depend on them, have
+caught up. 
 
 To control this sort of behaviour cylc has a configurable {\em suite
-runahead limit} that prevents the fastest tasks from getting too far
+runahead limit} that prevents the fastest tasks getting too far
 ahead of the slowest tasks:
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -4537,8 +4562,9 @@ Queue configuration is done under the [scheduling] section of the
 suite.rc file, not as part of the runtime namespace hierarchy, because
 like dependencies queues constrain {\em when} a task runs rather than
 {\em what} runs after it is submitted. When runtime family relationships
-and queues do coincide you can assign task families en masse to queues
-using task family names, as illustrated in the example suite listing below.
+and queues do coincide you can assign task family members en masse to
+queues by using the family name, as shown in the example suite listing
+below.
 
 By default every task is assigned to a {\em default} queue, which by
 default has a zero limit (interpreted by cylc as no limit). To use a
@@ -4574,12 +4600,7 @@ family name.
 
 \subsection{Other Topics In Brief}
 
-The following topics have yet to be fleshed out.  For
-more help on any topic, see cylc command line help (which is is included
-verbatim in Section~\ref{CommandReference}); the suite.rc reference
-(Section~\ref{SuiteRCReference}); gcylc help menus; the {\em
-Quick Start Guide} (Section~\ref{QuickStartGuide}); and the 
-examples suites installed into the central suite database.
+The following topics have yet to be documented in detail.
 
 \begin{myitemize}
     \item The difference between cold-, warm-, raw-, and re-starting, a suite:
@@ -4592,7 +4613,7 @@ examples suites installed into the central suite database.
         see \lstinline=cylc info help=, \lstinline=cylc show help=,
         and \lstinline=cylc discovery help=.
 
-    \item Understanding suite evolution, particularly in catch up
+    \item Understanding suite evolution, particularly in delayed/catchup
         operation: the {\em Quick Start Guide} helps here, along with
         playing with example suites.
 
