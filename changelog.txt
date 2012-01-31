@@ -504,5 +504,7 @@ ________________________________________________________________________
 + Fixed an error in the housekeeping utility program, affecting
 operations with no reference "destination" defined.
 
-
++ Fixed a bug affecting retriggering of continually failing tasks.
+If a failed task was retriggered manually and failed again, the
+failure message was logged but the task state remained 'running'.
 

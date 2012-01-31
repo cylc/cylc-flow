@@ -457,7 +457,31 @@ class task( Pyro.core.ObjBase ):
             self.log( 'WARNING', "UNEXPECTED MESSAGE (task should not be running)" )
             self.log( 'WARNING', '-> ' + message )
 
-        if self.outputs.exists( message ):
+        if message == self.id + ' failed':
+            # process task failure messages
+            self.succeeded_time = task.clock.get_datetime()
+            state_changed = True
+            self.set_failed( message )
+            try:
+                # is there another task lined up for a retry?
+                self.external_task = self.external_tasks.popleft()
+            except IndexError:
+                # no, can't retry.
+                if not self.outputs.exists( message ):
+                    # (might have failed already and been retriggered)
+                    self.outputs.add( message )
+                    self.outputs.set_completed( message )
+            else:
+                # yes, retry.
+                if self.launcher and not self.launcher.simulation_mode:
+                    # ('family' tasks have no launcher)
+                    self.log( 'CRITICAL',  'Retrying with next command' )
+                    self.launcher.task = self.external_task
+                    self.state.set_status( 'waiting' )
+                    self.prerequisites.set_all_satisfied()
+                    self.outputs.set_all_incomplete()
+
+        elif self.outputs.exists( message ):
             # registered output messages
 
             if not self.outputs.is_completed( message ):
@@ -478,27 +502,6 @@ class task( Pyro.core.ObjBase ):
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already completed):" )
                 self.log( 'WARNING', "-> " + message )
 
-        elif message == self.id + ' failed':
-            # process task failure messages
-            self.succeeded_time = task.clock.get_datetime()
-            state_changed = True
-            self.set_failed( message )
-            try:
-                # is there another task lined up for a retry?
-                self.external_task = self.external_tasks.popleft()
-            except IndexError:
-                # no, can't retry.
-                self.outputs.add( message )
-                self.outputs.set_completed( message )
-            else:
-                # yes, retry.
-                if self.launcher and not self.launcher.simulation_mode:
-                    # ('family' tasks have no launcher)
-                    self.log( 'CRITICAL',  'Retrying with next command' )
-                    self.launcher.task = self.external_task
-                    self.state.set_status( 'waiting' )
-                    self.prerequisites.set_all_satisfied()
-                    self.outputs.set_all_incomplete()
         else:
             # log other (non-failed) unregistered messages with a '*' prefix
             message = '*' + message
