@@ -511,3 +511,6 @@ failure message was logged but the task state remained 'running'.
 + Bug fix for family graph triggers with cycle time offset (this was
 recently made to work properly, and then broken again shortly later).
 
++ Exception handling and sensible error messages in case of suite state
+dump corruption.
+

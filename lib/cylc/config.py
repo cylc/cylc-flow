@@ -1420,7 +1420,11 @@ class config( CylcConfigObj ):
             raise SuiteConfigError("ERROR: illegal environment variable name(s) detected in namespace " + name )
     
     def get_task_proxy( self, name, ctime, state, stopctime, startup ):
-        return self.taskdefs[name].get_task_class()( ctime, state, stopctime, startup )
+        try:
+            tdef = self.taskdefs[name]
+        except KeyError:
+            raise SuiteConfigError("ERROR: No such task name " + name )
+        return tdef.get_task_class()( ctime, state, stopctime, startup )
 
     def get_task_class( self, name ):
         return self.taskdefs[name].get_task_class()

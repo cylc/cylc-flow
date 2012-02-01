@@ -33,7 +33,7 @@ Restart a cylc suite from a previous state. Tasks in the 'submitted',
 start up unless you specify '--no-reset'. Any 'held' tasks will be
 released unless you specify the '--no-release' option. A final cycle
 time that was set prior to shutdown will be ignored on restart unless
-you specify '--keep-finalcycle'
+you specify '--keep-stopcycle'
 
 By default the suite will restart from the suite state dump file, which is
 updated whenever a task changes state and thus records the most recent
@@ -58,9 +58,9 @@ Arguments:
         self.parser.add_option( "--no-release", 
             help="Do not release held tasks on restarting.",
             action="store_true", default=False, dest="no_release" )
-        self.parser.add_option( "--keep-finalcycle", 
+        self.parser.add_option( "--keep-stopcycle", 
             help="Do not ignore a previously set final cycle time on restarting",
-            action="store_true", default=False, dest="keep_finalcycle" )
+            action="store_true", default=False, dest="keep_stopcycle" )
  
         self.start_time = None  # used in scheduler.py:initialize_graph()
         scheduler.__init__( self, is_restart=True )
@@ -88,9 +88,9 @@ Arguments:
         debug = self.options.debug
 
         if self.restart_from:
-            self.banner['RESTART'] = 'From ' + self.restart_from
+            self.banner['RESTART'] = self.restart_from
         else:
-            self.banner['RESTART' ] = 'From previous state'
+            self.banner['RESTART' ] = 'state'
 
     def load_tasks( self ):
         # FIND THE INITIAL STATE DUMP FILE
@@ -134,9 +134,22 @@ Arguments:
         # The time format is defined by the clock.reset()
         # task <state> format is defined by task_state.dump()
 
-        FILE = open( self.initial_state_dump, 'r' )
+        try:
+            FILE = open( self.initial_state_dump, 'r' )
+        except IOError,x:
+            print >> sys.stderr, x
+            raise SystemExit( "ERROR, cannot open suite state dump: " + self.initial_state_dump )
         lines = FILE.readlines()
         FILE.close()
+
+        nlines = len(lines)
+        if nlines == 0:
+            raise SystemExit( "ERROR, empty suite state dump: " + self.initial_state_dump )
+        elif nlines < 3:
+            print >> sys.stderr, "!!! The suite state dump contains only", nlines, "lines:"
+            for l in lines:
+                print ' ', l.rstrip()
+            raise SystemExit( "ERROR, incomplete suite state dump: " + self.initial_state_dump )
 
         # RESET THE TIME TO THE LATEST DUMPED TIME
         # The state dump file first line is:
@@ -148,27 +161,42 @@ Arguments:
         [ time_type, time_string ] = line1.split(' : ')
         if time_type == 'simulation time':
             if not self.simulation_mode:
-                raise SystemExit("ERROR: You can't RESTART in live mode from a simulation mode state dump")
+                raise SystemExit("ERROR: cannot RESTART in live mode from a simulation mode state dump")
             [ time, rate ] = time_string.split( ',' )
             self.clock.reset( time, rate )
-        else:
+        elif time_type == 'suite time':
             if self.simulation_mode:
-                raise SystemExit("ERROR: You can't RESTART in simulation mode from a live mode state dump")
- 
+                raise SystemExit("ERROR: cannot RESTART in simulation mode from a live mode state dump")
+        else:
+            print >> sys.stderr, "!!! Illegal state dump line 1 (time):"
+            print >> sys.stderr, ' ', line1
+            raise SystemExit("ERROR: corrupted state dump")
+
         line2 = lines[1]
         line2 = line2.rstrip()
-        [ junk, oldstoptime ] = line2.split(' : ')
+        try:
+            label, oldstoptime = line2.split(' : ')
+        except ValueError, x: 
+            print >> sys.stderr, '!!! Illegal state dump line 2 (stop time):'
+            print >> sys.stderr, ' ', line2
+            raise SystemExit("ERROR: corrupted state dump")
+        if oldstoptime == '(none)':
+            pass
+        else:
+            try:
+                ct( oldstoptime )
+            except:
+                raise SystemExit("ERROR, Illegal stop cycle in state dump line 2: " + oldstoptime)
 
-        if oldstoptime != '(none)':
             # the suite had a prescribed stop time when it shut down
             if self.stop_time:
                 # a stop time was given on the restart command line
                 if self.stop_time != oldstoptime:
                     # OK, override the old stop time with the new
-                    if self.options.keep_finalcycle:
-                        print >> sys.stderr, "ERROR: new stop time incompatible with --keep_finalcycle"
+                    if self.options.keep_stopcycle:
+                        print >> sys.stderr, "ERROR: new stop time incompatible with --keep-stopcycle"
                         sys.exit(1)
-            elif self.options.keep_finalcycle:
+            elif self.options.keep_stopcycle:
                     # reinstate the former stop time
                     self.stop_time = oldstoptime
         
@@ -191,8 +219,13 @@ Arguments:
                 continue
 
             # instance variables
-            ( id, state ) = line.split(' : ')
-            ( name, tag ) = id.split('%')
+            try:
+                ( id, state ) = line.split(' : ')
+                ( name, tag ) = id.split('%')
+            except:
+                print >> sys.stderr, "!!! Illegal line in suite state dump:"
+                print >> sys.stderr, " ", line
+                raise SystemExit( "ERROR: corrupted state dump" )
             tasknames[name] = True
             taskstates[id] = (name, tag, state )
 
@@ -205,7 +238,12 @@ Arguments:
                 continue
 
             # startup=True only for cold start
-            itask = self.config.get_task_proxy( name, tag, state, stopctime=None, startup=False )
+            try:
+                itask = self.config.get_task_proxy( name, tag, state, stopctime=None, startup=False )
+            except Exception, x:
+                print >> sys.stderr, x
+                print >> sys.stderr, "!!! Unable to instantiate task", name, "from state dump."
+                raise SystemExit( "ERROR: corrupted state dump" )
 
             if itask.state.is_succeeded():  
                 # must have satisfied prerequisites and completed outputs

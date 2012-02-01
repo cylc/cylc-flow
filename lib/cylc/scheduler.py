@@ -317,8 +317,8 @@ class scheduler(object):
         #DISABLED     self.logging_dir += '-practice'
         #DISABLED     self.state_dump_dir   += '-practice'
 
-        self.banner[ 'Logging to' ] = self.logging_dir
-        self.banner[ 'State dump' ] = self.state_dump_dir
+        self.banner[ 'Logging directory' ] = self.logging_dir
+        self.banner[ 'State directory' ] = self.state_dump_dir
         # state dump file
         self.state_dump_filename = os.path.join( self.state_dump_dir, 'state' )
 
@@ -361,7 +361,7 @@ class scheduler(object):
                     except CycleTimeError, x:
                         raise SystemExit(x)
 
-        if not self.start_time:
+        if not self.start_time and not self.is_restart:
             print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
 
         if self.stop_time:
