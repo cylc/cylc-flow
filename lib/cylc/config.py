@@ -1423,7 +1423,7 @@ class config( CylcConfigObj ):
         try:
             tdef = self.taskdefs[name]
         except KeyError:
-            raise SuiteConfigError("ERROR: No such task name " + name )
+            raise SuiteConfigError("ERROR, No such task name: " + name )
         return tdef.get_task_class()( ctime, state, stopctime, startup )
 
     def get_task_class( self, name ):

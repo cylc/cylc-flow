@@ -42,7 +42,7 @@ from mkdir_p import mkdir_p
 from config import config, SuiteConfigError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
-from version import compat
+from version import compat, cylc_version
 from registration import localdb, RegistrationError
 from regpath import RegPath
 from CylcError import TaskNotFoundError, TaskStateError
@@ -158,7 +158,7 @@ class scheduler(object):
         self.host= hostname
 
         # STARTUP BANNER
-        self.banner = {}
+        self.banner = OrderedDict()
 
         # DEPENDENCY BROKER
         self.broker = broker()
@@ -263,11 +263,14 @@ class scheduler(object):
 
         compat( self.suite, self.suiterc ).execute( sys.argv )
 
+        self.banner[ 'SUITE NAME' ] = self.suite
+        self.banner[ 'SUITE DEFN' ] = self.suiterc
+
         # MODE OF OPERATION (REAL, SIMULATION, practice)
         #DISABLED if self.options.simulation_mode and self.options.practice_mode:
         #DISABLED     parser.error( "Choose ONE of simulation or practice mode")
         if self.options.simulation_mode:
-            self.banner['Mode of operation'] = 'SIMULATION'
+            self.banner['MODE'] = 'SIMULATION'
             self.simulation_mode = True
             #DISABLED self.practice = False
         #DISABLED elif self.options.practice_mode:
@@ -317,8 +320,8 @@ class scheduler(object):
         #DISABLED     self.logging_dir += '-practice'
         #DISABLED     self.state_dump_dir   += '-practice'
 
-        self.banner[ 'Logging directory' ] = self.logging_dir
-        self.banner[ 'State directory' ] = self.state_dump_dir
+        self.banner[ 'LOG DIR' ] = self.logging_dir
+        self.banner[ 'STATE DIR' ] = self.state_dump_dir
         # state dump file
         self.state_dump_filename = os.path.join( self.state_dump_dir, 'state' )
 
@@ -404,7 +407,7 @@ class scheduler(object):
             print >> sys.stderr, 'SECURITY ERROR (secure passphrase problem)'
             raise SystemExit( str(x) )
         self.port = self.pyro.get_port()
-        self.banner[ 'Listening on port' ] = self.port
+        self.banner[ 'PORT' ] = self.port
 
         # REMOTELY ACCESSIBLE SUITE IDENTIFIER
         suite_id = identifier( self.suite, self.owner )
@@ -490,24 +493,33 @@ class scheduler(object):
 
 
     def print_banner( self ):
-        #Nice, but doesn't print well in gui windows with non-monospace fonts:
-        #print "_______________________________________________"
-        #print "_ Cylc Self Organising Adaptive Metascheduler _"
-        #print "_\    (c) Hilary Oliver, NIWA, 2008-2011     /_"
-        #print "__\        cylc is pronounced 'silk'        /__"
-        #print "___\________________C_Y_L_C________________/___"
-        #print
+        msg = []
+        msg.append( "_" )
+        msg.append( "This is the cylc suite engine, version " + cylc_version )
+        msg.append( "-" )
+        msg.append( "Copyright (C) 2008-2012 Hilary Oliver, NIWA" )
+        msg.append( "-" )
+        msg.append( "This program comes with ABSOLUTELY NO WARRANTY; for details type:" )
+        msg.append( " `cylc license warranty'." )
+        msg.append( "This is free software, and you are welcome to redistribute it under" )
+        msg.append( "certain conditions; for details type:" )
+        msg.append( " `cylc license conditions'." )
+        msg.append( "-" )
 
-        print ""
-        print "THIS IS THE CYLC FORECAST SUITE METASCHEDULER"
-        print " Copyright (C) 2008-2012 Hilary Oliver, NIWA"
-        print ""
-        print "This program comes with ABSOLUTELY NO WARRANTY; for details type:"
-        print " `cylc license warranty'."
-        print "This is free software, and you are welcome to redistribute it under"
-        print "certain conditions; for details type:"
-        print " `cylc license conditions'."
-        print 
+        lenm = 0
+        for m in msg:
+            if len(m) > lenm:
+                lenm = len(m)
+        uline = '_' * lenm
+        vline = '-' * lenm
+
+        for m in msg:
+            if m == '_':
+                print uline
+            elif m == '-':
+                print vline
+            else:
+                print m
 
         items = self.banner.keys()
 
