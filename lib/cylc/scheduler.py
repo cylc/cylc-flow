@@ -495,7 +495,8 @@ class scheduler(object):
     def print_banner( self ):
         msg = []
         msg.append( "_" )
-        msg.append( "This is the cylc suite engine, version " + cylc_version )
+        msg.append( "The cylc metascheduler suite engine, version cylc-" + cylc_version )
+        msg.append( "Project home page: http://hjoliver.github.com/cylc" )
         msg.append( "-" )
         msg.append( "Copyright (C) 2008-2012 Hilary Oliver, NIWA" )
         msg.append( "-" )
