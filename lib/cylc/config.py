@@ -813,7 +813,7 @@ class config( CylcConfigObj ):
                 if fam not in self.families_used_in_graph:
                     self.families_used_in_graph.append(fam)
                 mems = ' & '.join( [ i + foffset for i in self.members[fam] ] )
-                line = re.sub( r'\b' + re.escape(fam + foffset) + r'\b', mems, line )
+                line = re.sub( r'\b' + re.escape(fam + foffset), mems, line )
 
         # Split line on dependency arrows.
         tasks = re.split( '\s*=>\s*', line )
