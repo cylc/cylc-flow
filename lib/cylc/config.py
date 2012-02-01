@@ -783,17 +783,15 @@ class config( CylcConfigObj ):
             print >> sys.stderr, "Bad graph validity section:", section
             raise SuiteConfigError( 'ERROR: Illegal graph validity type: ' + section )
 
-        # REPLACE FAMILY NAMES WITH THE TRUE MEMBER DEPENDENCIES
+        # REPLACE FAMILY NAMES WITH MEMBER DEPENDENCIES
         for fam in self.members:
-            # fam:fail - replace with conditional expressing this:
-            # "one or more members failed AND (all members either
-            # succeeded or failed)", i.e.:
+            # replace fam:fail with a conditional expressing "one or more members
+            # failed AND (all members either succeeded or failed)", i.e.:
             # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail )
-            m = re.search( r'\b' + fam + '(\[.*?]){0,1}:fail', line )
-            if m:
-                foffset = m.groups()[0]
-                if not foffset:
-                    foffset = ''
+            m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}:fail", line )
+            m.sort() # put empty offset '' first ...
+            m.reverse() # ... then last
+            for foffset in m:
                 if fam not in self.families_used_in_graph:
                     self.families_used_in_graph.append(fam)
                 mem0 = self.members[fam][0]
@@ -803,17 +801,17 @@ class config( CylcConfigObj ):
                     cond1 += ' | ' + mem + foffset + ':fail'
                     cond2 += ' & ( ' + mem + foffset + ' | ' + mem + foffset + ':fail )'
                 cond = '( ' + cond1 + ') & ' + cond2 
-                line = re.sub( r'\b' + re.escape( fam + foffset + ':fail') + r'\b', cond, line )
+                line = re.sub( r"\b" + fam + r"\b" + re.escape(foffset) + r":fail\b", cond, line )
+
             # replace fam or fam[T-N] with members or members[T-N]
-            m = re.search( r'\b' + fam + '(\[.*?]){0,1}', line )
-            if m:
-                foffset = m.groups()[0]
-                if not foffset:
-                    foffset = ''
+            m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}", line )
+            m.sort() # put empty offset '' first ...
+            m.reverse() # ... then last
+            for foffset in m:
                 if fam not in self.families_used_in_graph:
                     self.families_used_in_graph.append(fam)
                 mems = ' & '.join( [ i + foffset for i in self.members[fam] ] )
-                line = re.sub( r'\b' + re.escape(fam + foffset), mems, line )
+                line = re.sub( r"\b" + fam + r"\b" + re.escape( foffset), mems, line )
 
         # Split line on dependency arrows.
         tasks = re.split( '\s*=>\s*', line )
