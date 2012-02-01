@@ -785,9 +785,15 @@ class config( CylcConfigObj ):
 
         # REPLACE FAMILY NAMES WITH MEMBER DEPENDENCIES
         for fam in self.members:
-            # replace fam:fail with a conditional expressing "one or more members
-            # failed AND (all members either succeeded or failed)", i.e.:
+            # Note, in the regular expressions below, the word boundary
+            # marker before the time offset pattern is required to close
+            # the match in the no-offset case (offset and no-offset
+            # cases are being matched by the same regular expression).
+
+            # 1/ replace "fam:fail" with "(one or more members failed)
+            # AND (all members either succeeded or failed)", i.e. this:
             # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail )
+            # Now with optional cycle time offset as well.
             m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}:fail", line )
             m.sort() # put empty offset '' first ...
             m.reverse() # ... then last
@@ -803,7 +809,8 @@ class config( CylcConfigObj ):
                 cond = '( ' + cond1 + ') & ' + cond2 
                 line = re.sub( r"\b" + fam + r"\b" + re.escape(foffset) + r":fail\b", cond, line )
 
-            # replace fam or fam[T-N] with members or members[T-N]
+            # 2/ replace "fam" with "mem1 & mem2" etc.
+            # With optional cycle time offset as well. 
             m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}", line )
             m.sort() # put empty offset '' first ...
             m.reverse() # ... then last
