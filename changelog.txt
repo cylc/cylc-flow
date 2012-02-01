@@ -508,3 +508,6 @@ operations with no reference "destination" defined.
 If a failed task was retriggered manually and failed again, the
 failure message was logged but the task state remained 'running'.
 
++ Bug fix for family graph triggers with cycle time offset (this was
+recently made to work properly, and then broken again shortly later).
+
