@@ -70,8 +70,6 @@ messages such as remote error tracebacks to be sent to the handler.
 * Consider replacing finished tasks with a data structure that remembers
   what happened. More efficient for very large suites?
 
-* Rationalize suite shutdown criteria in main loop.
-
 * exclude inserted spinup/temporary tasks from runahead check?
   (or manually alter the check - this should be fine because the
   catching up spinup task will be all alone out behind the 
@@ -264,13 +262,20 @@ messages such as remote error tracebacks to be sent to the handler.
 
 GUI
 
-* dynamic reloading of the LED panel if the number of tasks in the
-  running suite change (currently we have to start with *all* tasks
-  including unused ones listed.
-
-* don't parse suite.rc if the suite is already running?
-
 * currently scans for port on every command - should store found port.
+
+* catch invalid regex (e.g. unbalanced paren) in user-entered filters.
+
+* Cylc internals can easily handle different task commands, environment,
+outputs etc., at different times, BUT this would complicate the suite.rc 
+spec considerably for very rare use cases.  (EXAMPLE
+different n_restart_outputs for a model that does a short
+forecast at 0,12 and long forecast at 6,18). To change this,
+use more 'if HOUR in ...' conditionals in taskdef.py, as for
+prerequisites via the dependency graph cycle-time lists, and some
+interface to this in config.py (which however should be designed
+not to further complicate suite.rc files for general use).
+
 
 ====================================
 GRAPH STABILITY:
@@ -285,20 +290,9 @@ that I'm sorting edges and nodes prior to adding them to the graph.
 Thus the random(?) reordering seems to be a feature of the internals
 of pygraphviz? (maybe it stores nodes in dicts in the underlying C
 library...?)
-
 CONSIDER ADDING LAYOUT ONCE to base graph, and thereafter only when new 
 tasks are added to the graph? 
 
-====================================
-TEMPORARY FILES (as used mainly in the job submit classes):
-
-tempfile.NamedTemporaryFile( delete=False ) creates a file and opens
-it, but delete=False is post python 2.6 and we still currently run 2.4
-on some platforms!  (auto-delete on close() will remove file before
-the 'at' command runs it!)
-
-tempfile.mktemp() is deprecated in favour of mkstemp() but the latter
-was also introduced at python 2.6.
 ====================================
 FUZZY PREREQUISITES
 

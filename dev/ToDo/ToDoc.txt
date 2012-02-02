@@ -4,39 +4,7 @@ TO BE DOCUMENTED:
   Suite.rc Reference appendix.
 
 * note 'cylc submit SUITE foo%T' results in T being adjusted to the next
-  nearest valid cycle time for the task IF valid hours are defined for 
-  the task by either graph or '[tasks][foo]hours'. If the latter is
-  defined for a graphed task, it will be used to check the legality of 
-  the graph, but only the graph hours will be used for the task (they
-  may be a subset of the legal hours).  Ungraphed tasks can be:
-   - inserted IFF [tasks][foo]hours is defined.
-   - submitted: [task][foo]hours is used to adjust as above if defined,
-                else the raw input T is used.
-
-* catch invalid regex (e.g. unbalanced paren) in custom filters.
-
-* ${CYLC_SUITE_NAME} or $CYLC_SUITE_NAME can be used in suite.rc
-  job submission log directory.
-
-* Cylc internals can easily handle different task commands, environment,
-outputs etc., at different times, BUT this would complicate the suite.rc 
-spec considerably for very rare use cases.  (EXAMPLE
-different n_restart_outputs for a model that does a short
-forecast at 0,12 and long forecast at 6,18). To change this,
-use more 'if HOUR in ...' conditionals in taskdef.py, as for
-prerequisites via the dependency graph cycle-time lists, and some
-interface to this in config.py (which however should be designed
-not to further complicate suite.rc files for general use).
-
-* duplicate keywords (e.g. dependency graph labels) in suite.rc
-  result in a configobj.DuplicateError.
-
-* suite behaviour if held up by one or more very slow tasks:
-    - if not caught up: newest tasks wait finished but unspawned.
-    - if caught up: newest tasks in waiting state.
-
-* extra task log file names (suite.rc) can contain env variables?
- (any other items in this category?)
+  nearest valid cycle time for the task, as defined by the graph. 
 
 * cold start prerequisites are ignored if the initial cycle time is not 
   a valid hour for the task (intentional: consider 00Z RCF task in nzlam).
@@ -53,10 +21,11 @@ not to further complicate suite.rc files for general use).
   what to do in the unlikely event that a lock is in place when a
   transaction is attempted. Also, should trap Ctrl-C => unlock.
 
-* if a suite is restarted on a new port the gui still reconnects.
+* if a suite is restarted on a new port the gui still reconnects to the
+  correct suite.
 
 * inlined suite.rc: avoid comments ending in line continuation marker
-  (2D textual dependency graph in comments at start of e.g. suite.rc)
+  (Feb 2012 - still valid?)
 
 * task insertion danger: if you insert task A(T+N) ahead of A(T),
   the suite will shut down if A(T) catches up with A(T+N): 'task has 
@@ -65,24 +34,13 @@ not to further complicate suite.rc files for general use).
 * can't restart early in a coldstart: restart will not be recognized as
   a coldstart.
 
-* how to re-run partial suite over existing data:
-    - exclude some tasks
-    - insert a new task to generate the outputs representing
-      the existing data, and/OR
-    - dummy out the tasks that generated the existing data.
-
 * deleting a task may allow the suite to move on to the point that the
   deleted task, if reinserted, will not get its prerequisites satisfied
   automatically.
 
-* when a suite releases its lock all of that its task locks are also
-  released (e.g. when a suite is stopped --now with tasks still running).
+* when a suite releases its lock all of its task locks are also released
+  (e.g. when a suite is stopped --now with tasks still running).
 
 * Why the need for different spawning behaviour of sequential tasks?
-  Because if we just dependend on previous instance finishing that
-  would require all sequential tasks to be bootstrapped in a cold start.
-
-
-
-
-
+  Because relying on self-dependence, foo[T-6] => foo[T], would require
+  all sequential tasks to be bootstrapped in a cold start.

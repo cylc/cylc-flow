@@ -17,10 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-import tempfile
 import StringIO
-from cylc import cycle_time
-from OrderedDict import OrderedDict
 
 class jobfile(object):
 
