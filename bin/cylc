@@ -268,11 +268,11 @@ for dct in [
         all_commands[com] = dct[com]
 
 general_usage = """
-Cylc is a (meta)scheduler for complex cycling meteorological forecasting
-systems and related data processing. This is the cylc command line
-interface. The graphical interface is gcylc.
+Cylc is a metascheduler or suite engine for complex cycling
+meteorological forecasting systems and related data processing. 
+This is the cylc command line interface; the cylc GUI is gcylc.
 
-Release version: cylc-"""+cylc_version+""" 
+Version: cylc-"""+cylc_version+""" 
 
 USAGE:
   % cylc -v,--version                   # cylc version
