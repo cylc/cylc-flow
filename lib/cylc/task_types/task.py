@@ -273,21 +273,31 @@ class task( Pyro.core.ObjBase ):
             command = ' '.join( [self.__class__.hook_script, 'submission_failed', self.__class__.suite, self.id, "'" + reason + "' &"] )
             subprocess.call( command, shell=True )
 
+    def unfail( self ):
+        # if a task is manually reset remove any previous failed message 
+        # or on later success it will be seen as an incomplete output.
+        failed_msg = self.id + " failed"
+        if self.outputs.exists(failed_msg):
+            self.outputs.remove(failed_msg)
+
     def reset_state_ready( self ):
         self.state.set_status( 'waiting' )
         self.prerequisites.set_all_satisfied()
+        self.unfail()
         self.outputs.set_all_incomplete()
 
     def reset_state_waiting( self ):
         # waiting and all prerequisites UNsatisified.
         self.state.set_status( 'waiting' )
         self.prerequisites.set_all_unsatisfied()
+        self.unfail()
         self.outputs.set_all_incomplete()
 
     def reset_state_succeeded( self ):
         # all prerequisites satisified and all outputs complete
         self.state.set_status( 'succeeded' )
         self.prerequisites.set_all_satisfied()
+        self.unfail()
         self.outputs.set_all_completed()
 
     def reset_state_failed( self ):
@@ -463,14 +473,16 @@ class task( Pyro.core.ObjBase ):
             state_changed = True
             self.set_failed( message )
             try:
-                # is there another task lined up for a retry?
+                # Is there a retry lined up for this task?
                 self.external_task = self.external_tasks.popleft()
             except IndexError:
-                # no, can't retry.
-                if not self.outputs.exists( message ):
-                    # (might have failed already and been retriggered)
-                    self.outputs.add( message )
-                    self.outputs.set_completed( message )
+                # Nope, can't retry, we are failed as.
+                # Add the failed method as a task output so that other
+                # tasks can trigger off the failure event (failure
+                # outputs are not added in advance as under normal 
+                # circumstances they will not be completed outputs).
+                self.outputs.add( message )
+                self.outputs.set_completed( message )
             else:
                 # yes, retry.
                 if self.launcher and not self.launcher.simulation_mode:
