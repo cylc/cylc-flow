@@ -362,7 +362,7 @@ run time.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{screenshots/commandhelp.png}
+        \includegraphics{screenshots/commandhelp.png}
     \end{center}
 \caption[The cylc command line interface]{\scriptsize The cylc command line interface}
 \label{fig-command-help}
@@ -466,7 +466,8 @@ operational suite graphed by cylc.}
         in places, and a few command scripts are written in the Bash shell.
         In principle it could be made more portable without much effort.
         Cylc has run successfully on Mac OSX.
-    \item {\bf The Python Language, version 2.4$+$,  latest tested 2.7.2}. 
+    \item {\bf The Python Language, v 2.4$+$, preferably 2.5$+$,
+        latest tested 2.7.2}. 
         Not Python 3.x yet; as of mid 2011 version 2.7 is the
         standard for new Linux distributions.
         \newline \url{http://python.org}
@@ -498,24 +499,53 @@ template processing:
         \newline \url{http://www.graphviz.org}
         \newline \url{http://networkx.lanl.gov/pygraphviz}
     \item {\bf Jinja2}, a template processor for Python (latest tested:
-        2.6). Jinja2 expressions allow use of variables, mathematical
-        expressions, loop control and conditional expressions in suite 
-        definitions, to generate the final suite seen by cylc. 
+        2.6). Jinja2 adds variables, conditional and mathematical
+        expressions, loop control structures, etc., to cylc suite 
+        definition files. 
         \newline \url{http://jinja.pocoo.org/docs}
 \end{myitemize}
 
-\subsection{Known Compatibility Issues}
+\subsection{Known Version Compatibility Issues}
 
 Cylc should run out of the box on reasonably recent Linux distributions.
+
+For distributed suites the Pyro versions installed on all suite or task
+hosts must be mutually compatible. Using identical Pyro versions
+guarantees compatibility but is generally not necessary.
+
+Recent versions of Pyro require Python 2.5 or greater, due to use of the 
+`with' statement introduced in 2.5.
 
 Beware of old Linux distributions that come packaged with Pyro 3.9 or
 earlier, which is not compatible with the new-style Python classes used
 in cylc.  It has been reported that Ubuntu 10.04 (Lucid Lynx), released
-in September 2009, suffers from this problem.
+in September 2009, suffers from this problem.  Attempting to run
+\lstinline=cylc admin test-suite= with Pyro 3.9 or earlier results
+in the following Python traceback:
 
-Note also that for distributed suites the Pyro versions installed on 
-each machine must be mutually compatible. Using identical versions 
-obviously guarantees compatibility, but this may not be necessary.
+\lstset{language=Python}
+\begin{lstlisting}
+Traceback (most recent call last):
+ File "/home/oliverh/cylc/bin/_run", line 232, in <module>
+ server = start()
+ File "/home/oliverh/cylc/bin/_run", line 92, in __init__
+ scheduler.__init__( self )
+ File "/home/oliverh/cylc/lib/cylc/scheduler.py", line 141, in
+__init__
+ self.load_tasks()
+ File "/home/oliverh/cylc/bin/_run", line 141, in load_tasks_cold
+ itask = self.config.get_task_proxy( name, tag, 'waiting',
+stopctime=None, startup=True )
+ File "/home/oliverh/cylc/lib/cylc/config.py", line 1252, in
+get_task_proxy
+ return self.taskdefs[name].get_task_class()( ctime, state,
+stopctime, startup )
+ File "/home/oliverh/cylc/lib/cylc/taskdef.py", line 453, in
+tclass_init
+ print '-', sself.__class__.__name__, sself.__class__.__bases_
+AttributeError: type object 'A' has no attribute '_taskdef__bases_'
+_run --debug testsuite.1322742021 2010010106 failed: 1
+\end{lstlisting}
 
 \subsection{Other Software Used Internally By Cylc}
 
@@ -5263,39 +5293,6 @@ all running suites by killing the nameserver. Consequently cylc now
 uses Pyro simply as a lightweight object oriented wrapper for
 direct network socket communication between client programs and their
 target suites - all suites are thus entirely isolated from one another. 
-
-\section{Troubleshooting}
-
-\subsection{pre-3.9.1 Pyro Incompatibility}
-
-Attempting to run \lstinline=cylc admin test-suite= on a system using 
-Pyro 3.9 or earlier will result in the following Python traceback:
-
-\lstset{language=Python}
-\begin{lstlisting}
-Traceback (most recent call last):
- File "/home/oliverh/cylc/bin/_run", line 232, in <module>
- server = start()
- File "/home/oliverh/cylc/bin/_run", line 92, in __init__
- scheduler.__init__( self )
- File "/home/oliverh/cylc/lib/cylc/scheduler.py", line 141, in
-__init__
- self.load_tasks()
- File "/home/oliverh/cylc/bin/_run", line 141, in load_tasks_cold
- itask = self.config.get_task_proxy( name, tag, 'waiting',
-stopctime=None, startup=True )
- File "/home/oliverh/cylc/lib/cylc/config.py", line 1252, in
-get_task_proxy
- return self.taskdefs[name].get_task_class()( ctime, state,
-stopctime, startup )
- File "/home/oliverh/cylc/lib/cylc/taskdef.py", line 453, in
-tclass_init
- print '-', sself.__class__.__name__, sself.__class__.__bases_
-AttributeError: type object 'A' has no attribute '_taskdef__bases_'
-_run --debug testsuite.1322742021 2010010106 failed: 1
-\end{lstlisting}
-
-Solution: upgrade Pyro - see {\em Requirements}, Section~\ref{Requirements}.
 
 
 %\section{Known Limitations}
