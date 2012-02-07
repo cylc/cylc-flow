@@ -1,0 +1,28 @@
+title = "manually configured start trigger demo"
+description = """
+Cylc does not yet support automatic start triggers "A:start => B" (i.e.
+B triggers when A starts running). There are two workarounds:
+(1) have A and B trigger at the same time (not quite the same - B could
+start before A if both are delayed in external queues)
+(2) have B trigger off an initial internal output of A (this is the same) 
+              """
+[scheduling]
+    initial cycle time = 2010080806
+    final cycle time = 2010080812
+    [[dependencies]]
+        [[[0,12]]]
+            # 1/ A and B trigger at the same time
+          # graph = "foo => A & B"
+            # 2/ B triggers when A starts running
+          graph = "foo => A:startx => B"
+[runtime]
+    [[A]]
+        command scripting = """
+echo HELLO
+cylc message "$CYLC_TASK_NAME starting for $CYLC_TASK_CYCLE_TIME"
+sleep 10  # (run executable or whatever here ...)
+echo BYE
+                            """
+        [[[outputs]]]
+            startx = "<TASK> starting for <CYLC_TASK_CYCLE_TIME>"
+
