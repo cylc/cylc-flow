@@ -3586,6 +3586,7 @@ Figure~\ref{fig-jinja2-cities}.
 
 
 \subsection{Special Placeholder Variables}
+\label{SPHV}
 
 A small number of special variables are used as placeholders in cylc suite definitions:
 
@@ -3680,7 +3681,7 @@ treatment is required at all:
     [[baz]]
         description = a task that runs baz.sh and retries on failure
         command scripting = """echo attempt No.1
-                               baz.sh""",
+                               baz.sh""", \
                             """echo attempt No.2  # only invoked if try No.1 fails
                                baz.sh --retry"""
 \end{lstlisting}
@@ -3784,42 +3785,33 @@ cylc messaging.
 \subsubsection{Reporting Internal Outputs Completed}
 \label{RIOC}
 
-Tasks with internal outputs that allow downstream processing to
-trigger before they are finished must report when those internal outputs
-have been completed:
-\lstset{language=bash}
-\begin{lstlisting}
-#!/bin/bash
-# (task foo implementation)
-# ...
-# report an output completed:
-cylc task message "foo products uploaded for $CYLC_TASK_CYCLE_TIME"
-\end{lstlisting}
-This must match one of the task's registered outputs:
+If a task has {\em internal outputs} that others can trigger off before
+it finishes, then it must report completion of those outputs with
+messages sent back to the suite at appropriate times.  Output messages
+must be unique within the suite or else downstream tasks will trigger
+off whichever task happens to send the message first; they must exactly
+match the corresponding outputs registered for the task because cylc
+distinguishes between registered outputs that others can trigger off and
+general messages that are just logged; and for cycling tasks they must
+contain the cycle time in order to distinguish between the outputs of
+successive instances of the same task. 
+
+The ``outputs'' example is a self-contained suite that illustrates use
+of internal outputs:
 \lstset{language=suiterc}
-\begin{lstlisting}
-# SUITE.RC
-[scheduling]
-    [[dependencies]]
-        [[[6,18]]]
-            graph = foo:output1 => bar
-[runtime]
-    [[foo]]
-        [[[outputs]]]
-            output1 = "foo products uploaded for <CYLC_TASK_CYCLE_TIME>"
-\end{lstlisting}
-otherwise it will just be logged as a progress report or similar. Note
-the angle brackets around the cycle time variable in the output message
-as registered in the suite.rc file. {\em Do not write this as 
-\lstinline=$CYLC_TASK_CYCLE_TIME= in the suite.rc file.} It is just a 
-special tag that cylc replaces with the actual cycle time of the
-task; it is not an environment variable, although in this particular
-case it has the same value that is exported to
-\lstinline=$CYLC_TASK_CYCLE_TIME= in the task execution environment. 
+\lstinputlisting{../examples/outputs/suite.rc}
+Note that cycle time and task name in the output message registration
+are expressed by special placeholder variables in angle brackets (see
+Section~\ref{SPHV}) not by the corresponding environment variables in
+the task runtime environment. This is because registered output messages
+are held by task proxies, inside cylc, for comparison with incoming task
+messages; they are never interpreted by the shell and consequently may
+not contain environment variables. The actual messaging calls made by 
+running tasks, on the other hand, can make use of variables in the task
+runtime environment.
 
 \subsubsection{Reconnecting Detaching Processes}
-\label{ReconnectingDetachingTasks}
-
+\label{ReconnectingDetachingTasks} 
 You may be able to convert a detaching task to a non-detaching
 task very easily. If the detaching process is just a background shell
 process, for instance, run it in the foreground instead; for 
