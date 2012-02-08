@@ -6,6 +6,9 @@ can be migrated to the github issue tracker.
 _______
 GENERAL
 
+* remote tasks using initial scripting to set PATH to cylc - could the
+default use of CYLC_DIR cause problems for this?
+
 * (from Matt Shin) event handlers should read the "MESSAGE" from stdin
 rather than as a command line argument. This would allow multi-line 
 messages such as remote error tracebacks to be sent to the handler.
