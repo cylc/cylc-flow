@@ -2797,12 +2797,16 @@ Automated failure recovery via suicide triggers.}
 
 \paragraph{Family Triggers}
 
-Family names defined by the namespace inheritance hierarchy 
-(see Section~\ref{NIORP}) can be used in the suite graph as shorthand
-for the effective dependencies on member tasks. Member dependencies are
-substituted in such a way that downstream tasks will not trigger until
-all family members have either succeeded or failed. For example the
-graph in this suite:
+Family names defined by the namespace inheritance hierarchy
+(Section~\ref{NIORP}) can be used in the suite graph as shorthand
+for dependencies among the member tasks. Current semantics are:
+\begin{myitemize}
+    \item {\em family succeeded} means {\em all members
+        succeeded}
+    \item {\em family failed} means {\em all members finished 
+        but one or more of them failed}
+\end{myitemize}
+For example, this:
 \begin{lstlisting}
 # SUITE.RC
 [scheduling]
@@ -2819,8 +2823,12 @@ is equivalent to this:
 [scheduling]
     [[dependencies]]
         graph = "foo => a & b => bar"
+[runtime]
+    [[fam]]
+    [[a,b]]
+        inherit = fam
 \end{lstlisting}
-And the graph in this suite:
+And this:
 \begin{lstlisting}
 # SUITE.RC
 [scheduling]
@@ -2837,15 +2845,26 @@ is equivalent to this:
 [scheduling]
     [[dependencies]]
         graph = "( a:fail|b:fail ) & ( a|a:fail ) & ( b|b:fail ) => bar"
+[runtime]
+    [[fam]]
+    [[a,b]]
+        inherit = fam
 \end{lstlisting}
 
-{\em Task family triggers should be used sparingly} as a convenient
+If current family trigger semantics (i.e.\ what a family trigger means
+in terms of member dependencies) does not fit your requirements you will
+have to use task members explicitly in the graph. In the future cylc may
+support alternate family trigger semantics; for instance {\em family
+succeeded} could mean {\em at least one member succeeded} and {\em
+family failed} could mean {\em all members failed}.
+
+Task family triggers should be used sparingly as a convenient
 simplification for groups of tasks that would naturally trigger at the
 same time anyway (e.g.\ forecast ensembles and multiple tasks for
-processing different types of observations that are all made available
-at the same time) and whose outputs would all be put to use at a similar
-time too. Otherwise family triggers will unnecessarily
-constrain cylc's ability to achieve maximum functional parallelism,
+processing different observations at the same time) and whose outputs
+would all be put to use at a similar time too. Otherwise family triggers
+will unnecessarily constrain cylc's ability to achieve maximum
+functional parallelism,
 because all family members have to finish before downstream processing
 can continue.\footnote{Actually downstream tasks can also trigger off
 individual family members, rather than off the family as a whole, but
@@ -3616,12 +3635,11 @@ definitions, see the Jinja2 template processor (Section~\ref{Jinja2}).
 \subsection{Omitting Tasks At Runtime}
 
 It is sometimes convenient to omit certain tasks from the suite at
-runtime without actually deleting their definitions entirely from the
-suite.
+runtime without actually deleting their definitions from the suite.
 
 Defining [runtime] properties for tasks that do not appear in the suite
 graph results in verbose-mode validation warnings that the tasks are
-disabled.  They cannot be used because the suite graph is what defines
+disabled. They cannot be used because the suite graph is what defines
 their dependencies and valid cycle times.  Nevertheless, it is legal to
 leave these orphaned runtime sections in the suite definition because it
 allows you to temporarily remove tasks from the suite by simply
@@ -3636,6 +3654,11 @@ validity of the tasks and their dependencies, but they are not actually
 inserted into the suite at start-up. Other tasks that depend on the
 omitted ones, if any, will have to wait on their insertion at a later
 time or otherwise be triggered manually.
+
+Finally, with Jinja2 (Section~\ref{Jinja2}) you can radically alter 
+suite structure by including or excluding tasks from the [scheduling]
+and [runtime] sections according to the value of a single logical flag
+defined at the top of the suite.  
 
 \section{Task Implementation}
 \label{TaskImplementation}
@@ -4487,12 +4510,12 @@ Finally, you may see references to the following pseudo states:
         of its prerequisites satisfied - i.e.\ ready to run (except 
          clock-triggered tasks, which also wait on a trigger time).
 
-    \item {\bf base} (Graph Control GUI only) - graph nodes displayed in
-        the off-white base color are displayed in order to show the
-        proper graph structure but the corresponding task proxies are
-        not actually present in the suite at the moment, because
-        they have not been spawned yet, or they have been removed
-        by cylc as spent tasks, or removed by the suite operator. 
+    \item {\bf base} (Graph Control GUI only) - off-white base color
+        graph nodes are displayed in order to show the proper graph
+        structure but the corresponding task proxies are
+        not actually present in the suite, because they have not been
+        spawned yet, or they have been removed by cylc as spent tasks,
+        or removed by the suite operator. 
 \end{myitemize}
 
 \subsection{Limiting Suite Activity}
@@ -4786,7 +4809,7 @@ See \lstinline=cylc util template help= for more information.
 Dependencies between tasks usually, though not always, take the form of
 files generated by one task that are used by other tasks. It is possible
 to manage these files across a suite without hard wiring I/O locations 
-and therefore comprising suite flexibility and portability.
+and therefore compromising suite flexibility and portability.
 
 \begin{myitemize}
 
