@@ -1395,9 +1395,9 @@ The cylc forecast suite metascheduler.
         help_menu.append( cug_html_item )
         cug_html_item.connect( 'activate', self.launch_cug, False )
 
-        self.todo_item = gtk.MenuItem( '_To Do' )
-        help_menu.append( self.todo_item )
-        self.todo_item.connect( 'activate', helpwindow.todo )
+        #self.todo_item = gtk.MenuItem( '_To Do' )
+        #help_menu.append( self.todo_item )
+        #self.todo_item.connect( 'activate', helpwindow.todo )
   
         about_item = gtk.MenuItem( '_About' )
         help_menu.append( about_item )
