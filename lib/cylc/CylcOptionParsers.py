@@ -18,14 +18,13 @@
 
 # Custom derived option parsers, with standard options, for cylc commands.
 
-# TO DO: CLEAN UP OR REDESIGN THESE CLASSES.
+# TO DO: THESE CLASSES NEED CLEANING UP AND UNIFIED USE IN THE COMMANDS.
 
 import os
 import re
 from optparse import OptionParser
 from hostname import hostname
 
-#class NoPromptOptionParser( OptionParser ):
 class NoPromptOptionParser_u( OptionParser ):
 
     def __init__( self, usage, extra_args=None ):

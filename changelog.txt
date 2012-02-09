@@ -499,7 +499,7 @@ running) at any one time can be limited, in one or more queues.
 task states and internal queues.
 
 ________________________________________________________________________
-4.2.1 PENDING
+4.2.1
 
 + Fixed an error in the housekeeping utility program, affecting
 operations with no reference destination defined.
@@ -514,3 +514,6 @@ sometime after 3.5.1).
 + Exception handling and sensible error messages in case of suite state
 dump corruption.
 
++ Restored remote host access to the ping, dump, show, and monitor
+commands.  The '--host' and '--owner' command line arguments hard been
+rendered ineffective by registration name validation assuming localhost.

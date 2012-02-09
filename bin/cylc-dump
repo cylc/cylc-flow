@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
+from cylc.hostname import hostname
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import NoPromptOptionParser_u
 from cylc.port_scan import SuiteIdentificationError
@@ -51,14 +52,18 @@ parser.add_option( "-s", "--sort", help="Task states only; "
 
 ( options, args ) = parser.parse_args()
 
-reg = parser.get_suite_name()
-dbg = dbgetter()
-try:
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    raise SystemExit(x)
-
-compat( suite, suiterc ).execute( sys.argv )
+if options.owner != os.environ['USER'] or options.host != hostname:
+    # can't check remote suite reg validity
+    suite = args[0]
+else:
+    # check local suite reg validity
+    reg = parser.get_suite_name()
+    dbg = dbgetter()
+    try:
+        suite, suiterc = dbg.get_suite(reg)
+    except RegistrationError, x:
+        raise SystemExit(x)
+    compat( suite, suiterc ).execute( sys.argv )
 
 # default: display all information
 display_tasks = True
