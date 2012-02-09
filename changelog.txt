@@ -502,18 +502,14 @@ ________________________________________________________________________
 4.2.1 PENDING
 
 + Fixed an error in the housekeeping utility program, affecting
-operations with no reference "destination" defined.
+operations with no reference destination defined.
 
-+ Fixed a bug affecting tasks that fail repeatedly on retriggering.
-If a failed task was retriggered manually then failed again the
-failure message was logged but the task state remained 'running'.
-
-+ Fixed a bug affecting failed tasks that succeed after retriggering.
-The "task failed" message must be removed on resetting the task state so
-that after subsequent successful finish it is not erroneously identified
-as a non-completed output, thus causing cylc to fail the task again.
-
-(These two previous bugs must have been introduced since 3.5.1)
++ Fixed a serious bug affecting manual re-triggering of failed tasks: if
+such a task failed again the failure would be logged but the task
+state would remain 'running'; and if it succeeded the the previous
+failure message would be erroneously identified as an "incomplete
+output" resulting in cylc setting the task failed again (introduced
+sometime after 3.5.1).
 
 + Exception handling and sensible error messages in case of suite state
 dump corruption.
