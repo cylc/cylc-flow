@@ -562,10 +562,14 @@ class config( CylcConfigObj ):
     def inherit( self, target, source ):
         for item in source:
             if isinstance( source[item], Section ):
+                # recurse into nested section
                 self.inherit( target[item], source[item] )
+            elif source[item] != None and source[item] != []:
+                # override if source is not None or an empty list
+                # (don't use 'if source[item]:' because of boolean values)
+                target[item] = deepcopy(source[item])  # deepcopy for list values
             else:
-                if source[item]:
-                    target[item] = deepcopy(source[item])  # deepcopy for list values
+                pass
 
     def replicate( self, name, target, source ):
         # recursively replicate a generator task config section

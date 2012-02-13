@@ -532,3 +532,7 @@ ________________________________________________________________________
 suite database if the suite.rc file was unreadable (broken since
 cross-version compatibility introduced in 4.2.0).
 
++ Bug fix: runtime inheritance of boolean config items. Booleans were 
+not being inherited due to being inadvertantly caught in a Python 
+construct designed to avoid undefined values and empty lists.
+
