@@ -604,16 +604,22 @@ class config( CylcConfigObj ):
         if output_name and not self.simulation_mode:
             # (ignore internal outputs in sim mode - dummy tasks don't know about them).
             try:
+                # check for internal outputs
                 trigger = self['runtime'][task_name]['outputs'][output_name]
             except KeyError:
                 if output_name == 'fail':
+                    # task:fail
                     trigger = task_name + '%<TAG> failed'
+                elif output_name == 'start':
+                    # task:start
+                    trigger = task_name + '%<TAG> started'
                 else:
                     raise SuiteConfigError, "ERROR: Task '" + task_name + "' does not define output '" + output_name  + "'"
             else:
                 # replace <CYLC_TASK_CYCLE_TIME> with <TAG> in explicit outputs
                 trigger = re.sub( 'CYLC_TASK_CYCLE_TIME', 'TAG', trigger )
         else:
+            # default: task succeeded
             trigger = task_name + '%<TAG> succeeded'
 
         # now adjust for cycle time or tag offset
@@ -783,6 +789,17 @@ class config( CylcConfigObj ):
             print >> sys.stderr, "Bad graph validity section:", section
             raise SuiteConfigError( 'ERROR: Illegal graph validity type: ' + section )
 
+        ## SYNONYMS FOR TRIGGER-TYPES, e.g. 'fail' = 'failure' = 'failed'
+        ## we can replace synonyms here with the standard type designator:
+        # line = re.sub( r':succe(ss|ed|eded){0,1}\b', '', line )
+        # line = re.sub( r':fail(ed|ure){0,1}\b', ':fail', line )
+        # line = re.sub( r':start(ed){0,1}\b', ':start', line )
+        # Replace "foo:finish" with "( foo | foo:fail )"
+        # line = re.sub(  r'\b(\w+(\[.*?]){0,1}):(complete(d){0,1}|finish(ed){0,1})\b', r'( \1 | \1:fail )', line )
+
+        # Replace "foo:finish" with "( foo | foo:fail )"
+        line = re.sub(  r'\b(\w+(\[.*?]){0,1}):finish\b', r'( \1 | \1:fail )', line )
+
         # REPLACE FAMILY NAMES WITH MEMBER DEPENDENCIES
         for fam in self.members:
             # Note, in the regular expressions below, the word boundary
@@ -790,10 +807,11 @@ class config( CylcConfigObj ):
             # the match in the no-offset case (offset and no-offset
             # cases are being matched by the same regular expression).
 
-            # 1/ replace "fam:fail" with "(one or more members failed)
-            # AND (all members either succeeded or failed)", i.e. this:
-            # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail )
-            # Now with optional cycle time offset as well.
+            # The replacements below all handle optional [T-n] cycle offsets.
+
+            # 1/ Replace "fam:fail" with "(one or more members failed)
+            # AND (all members either succeeded or failed)", i.e.:
+            # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail ).
             m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}:fail", line )
             m.sort() # put empty offset '' first ...
             m.reverse() # ... then last
@@ -809,8 +827,19 @@ class config( CylcConfigObj ):
                 cond = '( ' + cond1 + ') & ' + cond2 
                 line = re.sub( r"\b" + fam + r"\b" + re.escape(foffset) + r":fail\b", cond, line )
 
-            # 2/ replace "fam" with "mem1 & mem2" etc.
-            # With optional cycle time offset as well. 
+            # 2/ Replace "fam:start" with "mem1:start | mem2:start" etc.
+            # i.e. one or more members started.
+            m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}:start", line )
+            m.sort() # put empty offset '' first ...
+            m.reverse() # ... then last
+            for foffset in m:
+                if fam not in self.families_used_in_graph:
+                    self.families_used_in_graph.append(fam)
+                mems = ' | '.join( [ i + foffset + ':start' for i in self.members[fam] ] )
+                line = re.sub( r"\b" + fam + r"\b" + re.escape( foffset) + ':start', mems, line )
+
+            # 3/ Replace "fam" with "mem1 & mem2" etc.
+            # i.e. all members succeeded (or all members trigger off)
             m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}", line )
             m.sort() # put empty offset '' first ...
             m.reverse() # ... then last
@@ -842,6 +871,7 @@ class config( CylcConfigObj ):
         # get list of pairs
         for i in [0] + range( 1, len(tasks)-1 ):
             lexpression = tasks[i]
+
             if len(tasks) == 1:
                 # single node: no rhs group
                 rgroup = None

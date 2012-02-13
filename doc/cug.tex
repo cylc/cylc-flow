@@ -2193,10 +2193,11 @@ Multiline graph strings may contain:
     \item {\bf task names}
     \item {\bf internal comments:} following the \# character
     \item {\bf cycle time offsets:} \lstinline=A[T-6]=
-    \item {\bf success triggers:} \lstinline@foo => bar@
-    \item {\bf failure triggers:} \lstinline@foo:fail => bar@
+    \item {\bf start triggers:} \lstinline@foo:start => bar@
+    \item {\bf success triggers:} \lstinline@foo:succeed => bar@ OR \lstinline@foo => bar@
+    \item {\bf fail triggers:} \lstinline@foo:fail => bar@
     \item {\bf suicide triggers:} \lstinline@foo => !bar@
-    \item {\bf explicit output triggers:} \lstinline@foo:out1 => bar@
+    \item {\bf internal output triggers:} \lstinline@foo:upload1 => bar@
     \item {\bf conditional triggers:} \lstinline@ (A | B) & C => D@ 
 \end{myitemize}
 
@@ -2207,7 +2208,9 @@ side (which may be a single task or family, or several that are
 conditionally related) defines a trigger for the task or family on the
 right. For instance the ``word graph'' {\em C triggers off B which
 triggers off A} can be deconstructed into pairs {\em C triggers off B}
-and {\em B triggers off A}.
+and {\em B triggers off A}.  In this section we use only the default 
+trigger type, which is to trigger off the upstream task succeeding; see
+Section~\ref{TriggerTypes} for other available triggers.
 
 In the case of cycling tasks, the triggers defined by a graph string are 
 valid for cycle times matching the list of hours specified for the
@@ -2602,60 +2605,104 @@ title = a suite of repeating asynchronous tasks
 \end{figure}
 
 \subsubsection{Trigger Types}
+\label{TriggerTypes}
 
 \lstset{language=suiterc}
 
+Trigger type, indicated by {\em:type} after the upstream task (or family)
+name, determines what kind of event results in the downstream task (or
+family) triggering.
+
 \paragraph{Success Triggers}
 
-To trigger off a task finishing successfully:
+The default, with no trigger type specified, is to trigger off the
+upstream task succeeding:
 \begin{lstlisting}
 # SUITE.RC
 # B triggers if A SUCCEEDS:
-    graph = A => B
+    graph = "A => B"
+\end{lstlisting}
+For consistency and completeness, however, the success trigger can be explicit:
+\begin{lstlisting}
+# SUITE.RC
+# B triggers if A SUCCEEDS:
+    graph = "A => B"
+# or:
+    graph = "A:succeed => B"
 \end{lstlisting}
 
 \paragraph{Failure Triggers}
 
-To trigger off a task that fails:
+To trigger off the upstream task reporting failure:
 \begin{lstlisting}
 # SUITE.RC
 # B triggers if A FAILS:
-    graph = A:fail => B
+    graph = "A:fail => B"
 \end{lstlisting}
+Section~\ref{SuicideTriggers} ({\em Suicide Triggers}) shows
+one way of handling task B here if A does not fail.
 
-See {\em Suicide Triggers} (Section~\ref{SuicideTriggers}) for
-how to handle task B if A does not fail.
+\paragraph{Start Triggers}
 
-To trigger off a task finishing (success or failure):
+To trigger off the upstream task starting to execute:
+\begin{lstlisting}
+# SUITE.RC
+# B triggers if A STARTS EXECUTING:
+    graph = "A:start => B"
+\end{lstlisting}
+This can be used to trigger tasks that monitor other tasks once they 
+(the target tasks) start executing. Consider a long-running forecast model,
+for instance, that generates a sequence of output files as it runs. A
+postprocessing task could be launched with a start trigger on the model
+(\lstinline@model:start => post@) to process the model output as it
+becomes available. Note, however, that there are several alternative
+ways of handling this scenario: both tasks could be triggered at the
+same time (\lstinline@foo => model & post@), but depending on
+external queue delays this could result in the monitoring task starting
+to execute first; or a different postprocessing task could be
+triggered off an internal output for each data file 
+(\lstinline@model:out1 => post1@ etc.; see
+Section~\ref{InternalTriggers}), but this may not be practical if the
+number of output files is large or if it is difficult to add cylc
+messaging calls to the model.
+
+\paragraph{Finished Triggers}
+
+To trigger off the upstream task succeeding or failing, i.e.\ finishing 
+one way or the other:
 \begin{lstlisting}
 # SUITE.RC
 # B triggers if A either SUCCEEDS or FAILS:
-    graph = A | A:fail => B
+    graph = "A | A:fail => B"
+# or
+    graph = "A:finish => B"
 \end{lstlisting}
 
 \paragraph{Internal Triggers}
+\label{InternalTriggers}
 
-{\em Only required if you need to trigger before the upstream task finishes.}
+{\em These are only required to trigger off events that occur before a task finishes.}
 \begin{lstlisting}
 # SUITE.RC
 [scheduling]
     [[dependencies]]
         [[[6,18]]]
-            # B triggers off specific OUTPUT "out1" of task A:
-            graph = A:out1 => B
+            # B triggers off internal output "upload1" of task A:
+            graph = "A:upload1 => B"
 [runtime]
     [[A]]
         [[[outputs]]]
-            out1 = "NWP products uploaded for <CYLC_TASK_CYCLE_TIME>"
+            upload1 = "NWP products uploaded for <CYLC_TASK_CYCLE_TIME>"
 \end{lstlisting}
 Task A must emit this message when the actual output has been completed - 
-see {\em Reporting Internal Outputs Completed}, Section~\ref{RIOC}.
+see {\em Reporting Internal Outputs Completed} (Section~\ref{RIOC}).
 
 \paragraph{Intercycle Triggers}
 \label{IntercycleTriggers}
 
-Typically most tasks in a suite will trigger off other cotemporal tasks (same cycle
-time) but some may depend on tasks with earlier cycle times. This
+Typically most tasks in a suite will trigger off other cotemporal (i.e.\
+the same cycle time) tasks, but some may depend on tasks
+with earlier cycle times. This
 notably applies to warm-cycled forecast models, which depend
 on their own previous instances (see below); but other kinds of
 intercycle dependence are possible too.\footnote{In NWP forecast
@@ -2670,12 +2717,24 @@ kind of relationship in cylc:
         # B triggers off A in the previous cycle
         graph = "A[T-6] => B"
 \end{lstlisting}
-This notation can be used with explicit outputs too:
+Intercycle and trigger type (and internal output) notation can be combined:
 \begin{lstlisting}
 # SUITE.RC
     # B triggers if A in the previous cycle fails:
     graph = "A[T-6]:fail => B"
 \end{lstlisting}
+
+\subparagraph{Bootstrapping Intercycle Triggers}
+
+Tasks with intercycle triggers require an associated {\em cold-start}
+task to bootstrap them into operation when the suite is cold-started,
+because they depend on a previous cycle that does not exist at start
+time. Otherwise the first such task will require manual triggering (and
+that will only suffice if the real task does not have real
+previous-cycle dependence in the first cycle).
+Section~\ref{HandlingIntercycleDependenceAtStartUp}, {\em Handling
+Intercycle Dependence At Start-Up}, explains how to use cold-start tasks
+in cylc.
  
 \paragraph{Conditional Triggers}
 
@@ -2702,7 +2761,7 @@ provide a concise alternative to defining multiple triggers separately:
                B => D"""
 \end{lstlisting}
 
-OR operators (\lstinline=|=), for truly conditional triggers,
+OR operators (\lstinline=|=) which provide true conditional triggers,
 can only appear on the left,\footnote{An OR
 operator on the right doesn't make much sense: if ``B or C'' triggers
 off A, what exactly should cylc do when A finishes?}
@@ -2712,9 +2771,9 @@ off A, what exactly should cylc do when A finishes?}
     graph = "A | B => C"
 \end{lstlisting}
 
-Forecasting suites typically have quite simple requirements for
-conditional triggers, but any valid conditional expression can be used,
-as shown in Figure~\ref{fig-conditional} 
+Forecasting suites typically have simple requirements conditional
+triggering requirements, but any valid conditional expression can be
+used, as shown in Figure~\ref{fig-conditional} 
 (conditional triggers are plotted with open arrow heads).
 \begin{figure}
 \begin{minipage}[b]{0.5\textwidth}
@@ -2801,10 +2860,10 @@ Family names defined by the namespace inheritance hierarchy
 (Section~\ref{NIORP}) can be used in the suite graph as shorthand
 for dependencies among the member tasks. Current semantics are:
 \begin{myitemize}
-    \item {\em family succeeded} means {\em all members
-        succeeded}
-    \item {\em family failed} means {\em all members finished 
-        but one or more of them failed}
+    \item {\em family started} means {\em one or more members started} 
+    \item {\em family succeeded} means {\em all members succeeded}
+    \item {\em family failed} means {\em all members finished but one or
+        more of them failed}
 \end{myitemize}
 For example, this:
 \begin{lstlisting}
@@ -2852,7 +2911,7 @@ is equivalent to this:
 \end{lstlisting}
 
 If current family trigger semantics (i.e.\ what a family trigger means
-in terms of member dependencies) does not fit your requirements you will
+in terms of member behaviour) does not fit your requirements you will
 have to use task members explicitly in the graph. In the future cylc may
 support alternate family trigger semantics; for instance {\em family
 succeeded} could mean {\em at least one member succeeded} and {\em

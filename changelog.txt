@@ -517,3 +517,12 @@ dump corruption.
 + Restored remote host access to the ping, dump, show, and monitor
 commands.  The '--host' and '--owner' command line arguments hard been
 rendered ineffective by registration name validation assuming localhost.
+
+________________________________________________________________________
+4.2.2 PENDING
+
++ Implemented task started triggers (Issue #27):
+     graph = "A:start => B"
+  Means B triggers when A starts executing. This could previously be 
+  achieved, more verbosely, by triggering off internal outputs.
+

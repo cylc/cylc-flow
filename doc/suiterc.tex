@@ -639,19 +639,23 @@ error at start-up, as documented in {\em How Multiple Graph Strings Combine}
 
 The dependency graph for the specified validity section (described just
 above) goes here. Syntax examples follow; see also
-Section~\ref{DependencyGraphs}. 
+Sections~\ref{DependencyGraphs} ({\em Dependency Graphs})
+and~\ref{TriggerTypes} ({\em Trigger Types}). 
 
 \begin{myitemize}
 \item {\em type:} string 
-\item {\em example:}
+\item {\em examples:}
   \begin{lstlisting}
 graph = """
    foo => bar => baz & waz   # baz and waz both trigger off bar
    baz:out1 => faz           # faz triggers off an internal output of baz
-   ColdFoo | foo(T-6) => foo # cold-start or restart for foo
+   ColdFoo | foo[T-6] => foo # cold-start or restart for foo
+   X:start => Y              # Y triggers if X starts executing
    X:fail => Y               # Y triggers if X fails
+   foo[T-6]:fail => bar      # bar triggers if foo[T-6] fails
    X => !Y                   # Y suicides if X succeeds
-   X | X:fail => Z           # Z triggers if X finishes or fails
+   X | X:fail => Z           # Z triggers if X succeeds or fails
+   X:finish => Z             # Z triggers if X succeeds or fails
    (A | B & C ) | D => foo   # general conditional triggers
    # comment
    """
