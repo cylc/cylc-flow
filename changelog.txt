@@ -526,3 +526,5 @@ ________________________________________________________________________
   Means B triggers when A starts executing. This could previously be 
   achieved, more verbosely, by triggering off internal outputs.
 
++ Removed reversed command line argument handling in register command.
+
