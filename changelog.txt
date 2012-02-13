@@ -528,3 +528,7 @@ ________________________________________________________________________
 
 + Removed reversed command line argument handling in register command.
 
++ Bug fix: the registered command was aborting without unlocking the 
+suite database if the suite.rc file was unreadable (broken since
+cross-version compatibility introduced in 4.2.0).
+

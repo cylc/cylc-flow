@@ -75,7 +75,9 @@ class compat( object ):
             f = open( suiterc, 'r' )
         except IOError, x:
             print >> sys.stderr, "ERROR: unable to open the suite.rc file."
-            raise SystemExit(x)
+            # Don't just exit here - causes problems with db commands
+            # like register that need to unlock the db after errors.
+            raise 
         # read first line of the suite.rc file
         line0 = f.readline()
         line1 = f.readline()
@@ -164,5 +166,6 @@ class compat( object ):
             sys.exit(retcode)
         except OSError, x:
             print >> sys.stderr, 'ERROR: Unable to invoke', new_cylc
-            raise SystemExit( str(x) )
-
+            # Don't just exit here - causes problems with db commands
+            # like register that need to unlock the db after errors.
+            raise 
