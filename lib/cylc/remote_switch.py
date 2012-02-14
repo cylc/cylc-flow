@@ -80,6 +80,23 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return result( True )
 
+    def ping_task( self, task_id ):
+        # is this task running at the moment
+        found = False
+        running = False
+        for itask in self.pool.get_tasks():
+            if itask.id == task_id:
+                found = True
+                if itask.state.is_running():
+                    running = True
+                break
+        if not found:
+            return result( False, "Task not found: " + task_id )
+        elif not running:
+            return result( False, task_id + " is not running" )
+        else:
+            return result( True, task_id + " is running" )
+
     def trigger_task( self, task_id ):
         if self._suite_is_blocked():
             return result( false, "suite blocked" )

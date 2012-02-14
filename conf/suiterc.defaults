@@ -89,7 +89,7 @@ description = "No description provided" # DEFAULT
             events = (none)
             submission timeout = None
             execution timeout = None
-            reset time = False  # DEFAULT
+            reset timer = False  # DEFAULT
         [[[environment]]]
             # (SUITE AND TASK IDENTITY VARIABLES ARE PROVIDED)
         [[[directives]]]

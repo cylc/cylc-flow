@@ -20,15 +20,22 @@ from cylc.CylcOptionParsers import NoPromptOptionParser_u
 from cylc.port_scan import get_port, SuiteIdentificationError
 from cylc.conf.CylcGlobals import pyro_base_port, pyro_port_range
 from cylc.registration import dbgetter, RegistrationError
-import os
+from cylc.taskid import id, TaskIDError
+from cylc import cylc_pyro_client
 from cylc.hostname import hostname
+import os, sys
 
-parser = NoPromptOptionParser_u( """cylc [discover] ping [options] SUITE
+parser = NoPromptOptionParser_u( """cylc [discover] ping [options] SUITE [TASK]
     
-Check that SUITE is running. 
+Check that a SUITE is running, or that a TASK in SUITE is running. The
+command exits with error status if the result is negative.
 
-Arguments:
-SUITE             Target suite.""" )
+Note that for tasks the ping result indicates the state of the task
+proxy inside the running cylc server instance. This should mirror the
+state of the corresponding real task, but task implementation errors and
+the like may affect this (e.g. a task that finished but failed to tell
+its suite that it had done so would still appear to be running).""", \
+['TASK                 Task NAME%TAG (TAG is cycle time or "a:INT")'] )
 
 parser.add_option( "--print-ports",
         help="Print cylc's configured port range.",
@@ -41,7 +48,7 @@ if options.print_ports:
     print pyro_base_port, '<= port <=', pyro_base_port + pyro_port_range
     sys.exit(0)
 
-if len( args ) != 1:
+if len( args ) == 0 or len( args ) > 2:
     parser.error( "Wrong number of arguments" ) 
 
 if options.owner != os.environ['USER'] or options.host != hostname:
@@ -54,9 +61,37 @@ else:
     try:
         suite, junk = dbg.get_suite(reg)
     except RegistrationError, x:
+        # suite not found
         raise SystemExit(x)
 
 try:
     port = get_port( suite, owner=options.owner, host=options.host )
 except SuiteIdentificationError, x:
+    # suite not running
     raise SystemExit( x )
+
+if len(args) != 2:
+    # done
+    sys.exit(0)
+
+task_id = args[1]
+try:
+    tid = id( task_id )
+except TaskIDError,x:
+    raise SystemExit(x)
+else:
+    task_id = tid.id
+
+try:
+    proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )
+except SuiteIdentificationError, x:
+    raise SystemExit(x)
+
+result = proxy.ping_task( task_id )
+
+if result.success:
+    print result.reason
+else:
+    print 'ERROR:', result.reason
+    sys.exit(1)
+
