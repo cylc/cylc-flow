@@ -443,6 +443,8 @@ class scheduler(object):
         if self.use_lockserver:
             cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port )
         cylcenv[ 'CYLC_UTC' ] = str(utc)
+        cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( self.start_time )
+        cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( self.stop_time )
 
         # CLOCK (accelerated time in simulation mode)
         rate = self.config['cylc']['simulation mode']['clock rate']

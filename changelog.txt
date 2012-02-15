@@ -536,3 +536,7 @@ cross-version compatibility introduced in 4.2.0).
 not being inherited due to being inadvertantly caught in a Python 
 construct designed to avoid undefined values and empty lists.
 
++ Added initial and final cycle times to task execution environments:
+  $CYLC_SUITE_INITIAL_CYCLE_TIME
+  $CYLC_SUITE_FINAL_CYCLE_TIME
+
