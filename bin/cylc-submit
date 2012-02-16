@@ -165,6 +165,12 @@ cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 if use_lockserver:
     cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( lockserver_port )
 cylcenv[ 'CYLC_UTC' ] = str(utc)
+ict = config['scheduling']['initial cycle time']
+fct = config['scheduling']['final cycle time'  ]
+if ict:
+    cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( ict )
+if fct:
+    cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( fct )
 
 # SCHEDULER ENVIRONMENT
 # Access to the suite bin directory for alert scripts executed

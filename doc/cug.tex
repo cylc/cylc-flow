@@ -3243,8 +3243,8 @@ cylc utility commands:
 
 \paragraph{User Environment Variables}
 
-The user-defined environment is the sum of a task's inherited
-\lstinline=[[[environment]]]= sections.
+A task's user-defined environment results from its inherited
+\lstinline=[[[environment]]]= sections:
 \begin{lstlisting}
 # SUITE.RC
 [runtime]
@@ -3345,6 +3345,18 @@ work/running directory before executing the task command scripting.
 The shared directory is intended as a shared data directory for multiple
 tasks (however, the directory path can be different for different 
 families of tasks or individual tasks if you like).
+
+\paragraph{Other Cylc-Defined Environment Variables}
+
+Initial and final cycle times, if supplied via the suite.rc file or the
+command line, are passed to task execution environments as:
+\begin{lstlisting}
+$CYLC_SUITE_INITIAL_CYCLE_TIME 
+$CYLC_SUITE_FINAL_CYCLE_TIME 
+\end{lstlisting}
+These can be used, for example, for a cleanup task to determine whether
+or not it is running for the final time.
+
 
 \lstset{language=transcript}
 
