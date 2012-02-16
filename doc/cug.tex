@@ -3171,11 +3171,11 @@ The following example illustrates this:
 \lstset{language=bash}
 \begin{lstlisting}
 % cylc get-config test runtime foo 'command scripting'
-['echo Hello from foo via root']
+['echo Hello from foo via foo']
 % cylc get-config test runtime bar 'command scripting'
-['echo Hello from bar via root']
+['echo Hello from bar via foo']
 % cylc get-config test runtime baz 'command scripting'
-['echo Hello from baz via root']
+['echo Hello from baz via foo']
 \end{lstlisting}
 
 As another example, consider a suite containing an ensemble of closely
