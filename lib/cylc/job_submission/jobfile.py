@@ -57,30 +57,41 @@ class jobfile(object):
         self.cycle_time = tag
 
     def write( self, path ):
+        # Write each job script section in turn. In simulation mode,
+        # omitting anything that's not required for local submission of
+        # dummy tasks (e.g. initial scripting or user-defined
+        # environment may cause trouble by referencing undefined variables 
+        # or sourcing scripts that are only available in the script's
+        # normal setting).
         self.FILE = open( path, 'wb' )
         self.write_header()
-        self.write_directives()
+        if not self.simulation_mode:
+            self.write_directives()
         self.write_task_job_script_starting()
-        self.write_initial_scripting()
+        if not self.simulation_mode:
+            self.write_initial_scripting()
         self.write_environment_1()
         self.write_cylc_access()
         self.write_err_trap()
         self.write_task_started()
-        self.write_work_directory_create()
-        self.write_environment_2()
-        self.write_manual_environment()
-        self.write_pre_scripting()
+        if not self.simulation_mode:
+            self.write_work_directory_create()
+            self.write_environment_2()
+            self.write_manual_environment()
+            self.write_pre_scripting()
         self.write_command_scripting()
-        self.write_post_scripting()
-        self.write_work_directory_remove()
+        if not self.simulation_mode:
+            self.write_post_scripting()
+            self.write_work_directory_remove()
         self.write_task_succeeded()
         self.write_eof()
         self.FILE.close()
-        return
 
     def write_header( self ):
         self.FILE.write( '#!' + self.shell )
         self.FILE.write( '\n\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++' )
+        if self.simulation_mode:
+            self.FILE.write( '\n# SIMULATION MODE: some sections omitted.' )
         self.FILE.write( '\n# Task: ' + self.task_id )
         self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'')
 
@@ -99,10 +110,11 @@ class jobfile(object):
     def write_initial_scripting( self, BUFFER=None ):
         # This can be used for remote environment set up,
         # e.g. ". $HOME/.profile", as ssh does not source .profile.
+        if not self.initial_scripting:
+            # ignore initial scripting in simulation mode
+            return
         if not BUFFER:
             BUFFER = self.FILE
-        if not self.initial_scripting:
-            return
         BUFFER.write( "\n\n# INITIAL SCRIPTING:\n" )
         BUFFER.write( self.initial_scripting )
 
@@ -179,6 +191,7 @@ mkdir -p $CYLC_TASK_WORK_PATH
 cd $CYLC_TASK_WORK_PATH""" % data )
 
     def write_environment_2( self ):
+
         if len( self.task_env.keys()) > 0:
             self.FILE.write( "\n\n# ENVIRONMENT:" )
             for var in self.task_env:
@@ -210,8 +223,7 @@ cd $CYLC_TASK_WORK_PATH""" % data )
             self.FILE.write( '\nexport CYLC_SUITE_ENVIRONMENT="' + str + '"' )
 
     def write_pre_scripting( self ):
-        if self.simulation_mode or not self.precommand_scripting:
-            # ignore extra scripting in simulation mode
+        if not self.precommand_scripting:
             return
         self.FILE.write( "\n\n# PRE-COMMAND SCRIPTING:" )
         self.FILE.write( "\n" + self.precommand_scripting )
@@ -221,8 +233,7 @@ cd $CYLC_TASK_WORK_PATH""" % data )
         self.FILE.write( "\n" + self.command_scripting )
 
     def write_post_scripting( self ):
-        if self.simulation_mode or not self.postcommand_scripting:
-            # ignore extra scripting in simulation mode
+        if not self.postcommand_scripting:
             return
         self.FILE.write( "\n\n# POST COMMAND SCRIPTING:" )
         self.FILE.write( "\n" + self.postcommand_scripting )
@@ -241,7 +252,7 @@ rmdir $CYLC_TASK_WORK_PATH 2>/dev/null || true""" )
         if self.manual_messaging:
             if self.simulation_mode:
                 self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE:')
-                self.FILE.write( '\n# (this task handles its own completion messaging in real mode)"')
+                self.FILE.write( '\n# (this task handles its own completion messaging in live mode)"')
                 self.FILE.write( '\ncylc task succeeded' )
                 self.FILE.write( '\n\necho "JOB SCRIPT EXITING (TASK SUCCEEDED)"')
             else:

@@ -540,3 +540,9 @@ construct designed to avoid undefined values and empty lists.
   $CYLC_SUITE_INITIAL_CYCLE_TIME
   $CYLC_SUITE_FINAL_CYCLE_TIME
 
++ Simulation mode should now work on any suite without any modification 
+of the suite.rc file. Previously initial scripting and user-environment,
+for example, could break sim mode runs by referencing scripts or
+variables that are missing or undefined outside of the suite's normal 
+operating setting.
+
