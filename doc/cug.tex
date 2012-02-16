@@ -809,14 +809,16 @@ reinstall graphviz.
 
 \subsubsection{Jinja2}
 
-You can download Jinja2 from the project web site and install it with 
-\lstinline=python setup.py install --prefix=/path/to/install/location=,
+You can download Jinja2 from the project web site and install it with: 
+\begin{lstlisting}
+python setup.py install --prefix=/path/to/install/location
+\end{lstlisting}
 or use the \lstinline=easy_install= command to do it all in one step.
-Either way Jinja2 installation requires the final installed package
-location to be present in the \lstinline=PYTHONPATH= variable, so you
-have to arrange for this first. You made also need to create the
-installed package directory yourself first (if so, the install will 
-abort and print the name of the missing directory in the error message).
+Either way the final installed package location must be present in the
+\lstinline=PYTHONPATH= variable, and you may have to arrange for this
+first. You may also need to create the installed package directory 
+if it doesn't exist already (if so the install will abort and print the
+name of the missing directory in the error message).
 Here's how to easy\_install Jinja2 into your new private python site
 packages directory:
 
