@@ -19,10 +19,6 @@
 # TO DO: document use foo[T-6]:out1, not foo:out1 with
 # <CYLC_TASK_CYCLE_TIME-6> in the output message.
 
-# TO DO: document that cylc hour sections must be unique, but can
-# overlap: [[[0]]] and [[[0,12]]]; but if the same dependency is 
-# defined twice it will result in a "duplicate prerequisite" error.
-
 # TO DO: check that mid-level families used in the graph are replaced
 # by *task* members, not *family* members.
 
