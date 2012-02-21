@@ -526,6 +526,11 @@ ________________________________________________________________________
   Means B triggers when A starts executing. This could previously be 
   achieved, more verbosely, by triggering off internal outputs.
 
++ Implemented task finished trigger shorthand:
+     graph = "A:finish => B"
+  is equivalent to:
+     graph = "A | A:fail => B"
+
 + Removed reversed command line argument handling in register command.
 
 + Bug fix: the registered command was aborting without unlocking the 
