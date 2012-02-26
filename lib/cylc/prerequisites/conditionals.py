@@ -16,8 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# conditional prerequisites
-
 import re, sys
 
 # label1 => "foo ready for <TAG>
@@ -46,6 +44,8 @@ class conditional_prerequisites(object):
             label = str( self.auto_label )
 
         if message in self.labels:
+            # DUPLICATE PREREQUISITE - IMPOSSIBLE IN CURRENT USE OF THIS CLASS?
+            # (TO DO: if impossible, remove related code from this file)
             #raise SystemExit( "Duplicate prerequisite: " + message )
             print >> sys.stderr, "WARNING, " + self.owner_id + ": duplicate prerequisite: " + message
             self.excess_labels.append(label)
@@ -65,7 +65,7 @@ class conditional_prerequisites(object):
     def set_condition( self, expr ):
         # 'foo | bar & baz'
         # 'foo:fail | foo'
-        # 'foo(T-6):out1 | baz'
+        # 'foo[T-6]:out1 | baz'
 
         # make into a python expression
         self.raw_conditional_expression = expr
@@ -73,6 +73,7 @@ class conditional_prerequisites(object):
             # match label start and end on on word boundary
             expr = re.sub( r'\b' + label + r'\b', 'self.satisfied[\'' + label + '\']', expr )
         for label in self.excess_labels:
+            # treat duplicate triggers as always satisfied
             expr = re.sub( r'\b' + label + r'\b', 'True', expr )
             self.raw_conditional_expression = re.sub( r'\b' + label + r'\b', 'True', self.raw_conditional_expression )
 

@@ -2426,10 +2426,11 @@ title = some cycling tasks
 
 For a cycling graph with multiple validity sections for different
 hours of the day, the different sections {\em add} to generate the
-complete graph. Different graph sections can overlap (i.e.\ the same hours
-may appear in multiple section headings) and the same tasks may appear
-in multiple sections, but individual dependencies must be unique across
-the entire graph. Thus the following graph is valid:
+complete graph. Different graph sections can overlap (i.e.\ the same
+hours may appear in multiple section headings) and the same tasks may
+appear in multiple sections, but individual dependencies should be
+unique across the entire graph. For example, the following graph defines
+a duplicate prerequisite for task C:
 \begin{lstlisting}
 # SUITE.RC
 [scheduling]
@@ -2437,30 +2438,20 @@ the entire graph. Thus the following graph is valid:
         [[[0,6,12,18]]]
             graph = "A => B => C"
         [[[6,18]]]
-            # OK (X triggers off C only at 6 and 18 hours)
+            graph = "B => C => X"
+            # duplicate prerequisite: B => C already defined at 6, 18
+\end{lstlisting}
+This does not affect scheduling, but for the sake of clarity and brevity
+the graph should be written like this:
+\begin{lstlisting}
+# SUITE.RC
+[scheduling]
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph = "A => B => C"
+        [[[6,18]]]
+            # X triggers off C only at 6 and 18 hours
             graph = "C => X"
-\end{lstlisting}
-But this is an error:
-\begin{lstlisting}
-# SUITE.RC
-[scheduling]
-    [[dependencies]]
-        [[[0,6,12,18]]]
-            graph = "A => B => C"
-        [[[6,18]]]
-            # ERROR (B => C is already defined at 6 and 18 hours)
-            graph = "B => C => X" # ERROR
-\end{lstlisting}
-
-Currently this is one of the few remaining errors not caught by suite
-validation. Instead the suite will abort on start-up with a ``duplicate
-prerequisite'' error:
-\lstset{language=transcript}
-\begin{lstlisting}
-cylc run foo 2012080806
-# (some startup stdout...)
-C%2012080806: Duplicate prerequisite: 'B%2012080806 succeeded'
-_run foo 2012080806  failed:  1
 \end{lstlisting}
 
 \paragraph{Combined Asynchronous And Synchronous Graphs}

@@ -601,22 +601,27 @@ class config( CylcConfigObj ):
                 continue
 
     def set_trigger( self, task_name, output_name=None, offset=None, asyncid_pattern=None ):
-        if output_name and not self.simulation_mode:
-            # (ignore internal outputs in sim mode - dummy tasks don't know about them).
+        if output_name:
             try:
                 # check for internal outputs
                 trigger = self['runtime'][task_name]['outputs'][output_name]
             except KeyError:
+                # There is matching output defined under the task runtime section 
                 if output_name == 'fail':
-                    # task:fail
+                    # OK, task:fail
                     trigger = task_name + '%<TAG> failed'
                 elif output_name == 'start':
-                    # task:start
+                    # OK, task:start
                     trigger = task_name + '%<TAG> started'
                 else:
+                    # ERROR
                     raise SuiteConfigError, "ERROR: Task '" + task_name + "' does not define output '" + output_name  + "'"
             else:
-                # replace <CYLC_TASK_CYCLE_TIME> with <TAG> in explicit outputs
+                # There is a matching output defined under the task runtime section
+                if self.simulation_mode:
+                    # Ignore internal outputs: dummy tasks will not report them finished.
+                    return None
+                # Replace <CYLC_TASK_CYCLE_TIME> with <TAG> in the internal output message
                 trigger = re.sub( 'CYLC_TASK_CYCLE_TIME', 'TAG', trigger )
         else:
             # default: task succeeded
@@ -1043,6 +1048,8 @@ class config( CylcConfigObj ):
                 self.taskdefs[lnode.name].intercycle = True
 
             trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset, asyncid_pattern )
+            if not trigger:
+                continue
             # use fully qualified name for the expression label
             # (task name is not unique, e.g.: "F | F:fail => G")
             label = re.sub( '[-\[\]:]', '_', left )

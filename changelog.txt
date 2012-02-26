@@ -551,3 +551,10 @@ for example, could break sim mode runs by referencing scripts or
 variables that are missing or undefined outside of the suite's normal 
 operating setting.
 
++ Duplicate prerequisites are no longer treated as an error, they're 
+just unnecessary. This also fixes a recently introduced bug in the 
+handling of internal outputs in simulation mode (e.g. foo:fail in 
+sim mode was treated as foo:succeeded, which resulted in duplicate
+prerequisite warnings in "foo | foo:fail => bar").
+
+

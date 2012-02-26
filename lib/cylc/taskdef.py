@@ -23,6 +23,12 @@
 # TO DO : ONEOFF FOLLOWON TASKS: still needed but can now be identified
 # automatically from the dependency graph?
 
+# NOTE on conditional and non-conditional triggers: all plain triggers
+# (for a single task) are held in a single prerequisite object; but one
+# such object is held for each conditional trigger. This has
+# implications for global detection of duplicated prerequisites
+# (detection is currently disabled).
+
 import sys, re
 from OrderedDict import OrderedDict
 

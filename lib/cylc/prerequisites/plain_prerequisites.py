@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
+import re, sys
 
 # PREREQUISITES: A collection of messages representing the prerequisite
 # conditions for a task, each of which can be "satisfied" or not.  An
@@ -41,7 +41,13 @@ class plain_prerequisites(object):
             label = str( self.auto_label )
 
         if message in self.labels:
-            raise SystemExit( self.owner_id + ": Duplicate prerequisite: '" + message + "'")
+            # IGNORE A DUPLICATE PREREQUISITE (the same trigger must
+            # occur in multiple non-conditional graph string sections).
+            # Warnings disabled pending a global check across all
+            # prerequisites held by a task.
+            ##print >> sys.stderr, "WARNING, " + self.owner_id + ": duplicate prerequisite: " + message
+            return
+
         self.messages[ label ] = message
         self.labels[ message ] = label
         self.satisfied[label] = False
