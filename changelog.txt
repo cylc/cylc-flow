@@ -557,4 +557,8 @@ handling of internal outputs in simulation mode (e.g. foo:fail in
 sim mode was treated as foo:succeeded, which resulted in duplicate
 prerequisite warnings in "foo | foo:fail => bar").
 
++ Bug fix for local tasks that follow remote tasks.  Remote task
+override of $CYLC_DIR and $CYLC_SUITE_DEF_PATH was being done via a
+common data structure instead of a local task-specific copy, thereby
+also affecting subsequent local tasks.
 

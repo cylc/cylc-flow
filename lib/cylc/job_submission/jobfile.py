@@ -18,6 +18,7 @@
 
 import re
 import StringIO
+from copy import deepcopy
 
 class jobfile(object):
 
@@ -30,7 +31,7 @@ class jobfile(object):
             job_submission_method ):
 
         self.task_id = task_id
-        self.cylc_env = cylc_env
+        self.cylc_env = deepcopy(cylc_env)  # deep copy as may be modified below
         self.task_env = task_env
         self.directive_prefix = directive_prefix
         self.directive_connector = directive_connector
