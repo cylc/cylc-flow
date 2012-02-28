@@ -562,3 +562,7 @@ override of $CYLC_DIR and $CYLC_SUITE_DEF_PATH was being done via a
 common data structure instead of a local task-specific copy, thereby
 also affecting subsequent local tasks.
 
++ Bug fix: restored the ability to scan, and display port number in
+the gcylc db viewer, running secure suites (i.e. suites using a secure
+passphrase to police access).
+

@@ -191,16 +191,17 @@ def check_port( suite, port, owner=os.environ['USER'], host=hostname, timeout=No
             raise OtherSuiteFoundError, "ERROR: Found " + suiteid( name, xowner, host, port ) + ' NOT ' + suiteid( suite, owner, host, port )
 
 def scan( host, verbose=True, mine=False, silent=False ):
+    import pdb
     # scan all cylc Pyro ports for cylc suites
     me = os.environ['USER']
 
     # load my passphrases in case any secure suites are encountered in the scan.
     reg = localdb()
     reg.load_from_file()
-    #reg_suites = reg.get_list(name_only=True)
     reg_suites = reg.get_list()
     my_passphrases = {}
-    for rg in reg_suites:
+    for item in reg_suites:
+        rg = item[0]
         try:
             # in case one is using a secure passphrase
             pp = passphrase( rg ).get()
