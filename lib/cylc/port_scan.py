@@ -191,7 +191,6 @@ def check_port( suite, port, owner=os.environ['USER'], host=hostname, timeout=No
             raise OtherSuiteFoundError, "ERROR: Found " + suiteid( name, xowner, host, port ) + ' NOT ' + suiteid( suite, owner, host, port )
 
 def scan( host, verbose=True, mine=False, silent=False ):
-    import pdb
     # scan all cylc Pyro ports for cylc suites
     me = os.environ['USER']
 
@@ -216,12 +215,18 @@ def scan( host, verbose=True, mine=False, silent=False ):
         try:
             name, owner, security = port_interrogator( host, port, my_passphrases ).interrogate()
         except Pyro.errors.ConnectionDeniedError:
-            print "Connection Denied at " + portid( host, port )
+            # secure suite
+            if not silent:
+                print "Connection Denied at " + portid( host, port )
         except Pyro.errors.ProtocolError:
-            #print "No Suite Found at " + portid( host, port )
+            # no suite
+            #if not silent:
+            #    print "No Suite Found at " + portid( host, port )
             pass
         except Pyro.errors.NamingError:
-            print "Non-cylc pyro server found at " + portid( host, port )
+            # other Pyro server
+            if not silent:
+                print "Non-cylc Pyro server found at " + portid( host, port )
         else:
             if verbose:
                 if security == 'secure':
