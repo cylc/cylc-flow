@@ -21,12 +21,27 @@ from cylc import cylc_mode
 from optparse import OptionParser
 from cylc.task_message import message
 from cylc.locking.task_lock import task_lock
+from cylc.port_scan import SuiteIdentificationError
 
 usage = """cylc [task] succeeded [options]
 
-This is part of the cylc external task interface.
+This command is part of the cylc task messaging interface, by which
+means running tasks communicate with their parent suite; it is used to
+report successful task completion (and releases the task lock to the
+lockserver, if the lockserver is used).
 
-Release my lock to the lockserver, and report that I have succeeded."""
+NOTE that this command is automatically called at the end of the job
+scripts of non-detaching tasks; but it must be called manually in the
+external implementation of detaching tasks ('manual completion = True').
+
+Suite and task identity are determined from the task execution
+environment supplied by the suite or by 'cylc [task] submit'. In the
+latter case no communication occurs, but a message is printed to stdout.
+
+See also:
+    cylc [task] message
+    cylc [task] started
+    cylc [task] failed"""
 
 parser = OptionParser( usage )
 
@@ -35,16 +50,28 @@ parser = OptionParser( usage )
 if len( args ) != 0:
     parser.error( "Wrong number of arguments" )
 
+# release task lock if using the lockserver
 if not cylc_mode.mode().is_raw():
     try:
         if not task_lock().release():
-            msg = "FAILED TO RELEASE TASK LOCK"
-            message( msg, 'WARNING' ).send()
-            # this implies a bug in the lockserver, maybe? but is not a
+            # This implies a bug in the lockserver? but it is not a
             # task failure condition (the task completed successfully).
-    except:
-        # failed to connect to lockserver
-        msg = "FAILED TO CONNECT TO A LOCKSERVER"
-        message( msg, 'WARNING' ).send()
+            msg = "Failed to release task lock"
+            try:
+                message( msg, 'WARNING' ).send()
+            except SuiteIdentificationError, x:
+                print >> sys.stderr, x
+    except Exception, z:
+        msg = "Failed to connect to the lockserver"
+        try:
+            message( msg, 'WARNING' ).send()
+        except SuiteIdentificationError, x:
+            print >> sys.stderr, x
+            raise SystemExit(z)
  
-message().send_succeeded()
+# send succeeded message
+try:
+    message().send_succeeded()
+except SuiteIdentificationError, x:
+    raise SystemExit(x)
+

@@ -20,13 +20,27 @@ import sys
 from cylc import cylc_mode
 from optparse import OptionParser
 from cylc.task_message import message
+from cylc.port_scan import SuiteIdentificationError
 from cylc.locking.task_lock import task_lock
 
 usage = """cylc [task] started [options]
 
-This is part of the cylc external task interface.
+This command is part of the cylc task messaging interface, by which
+means running tasks communicate with their parent suite; it is used to
+report commencement of task execution (and acquires a task lock from the
+lockserver, if the lockserver is used). 
 
-Acquire a lock from the lockserver, and report that I have started."""
+NOTE that this command is automatically called at the start of task job
+scripts; it does not need to be used in external task implementation.
+
+Suite and task identity are determined from the task execution
+environment supplied by the suite or by 'cylc [task] submit'. In the
+latter case no communication occurs, but a message is printed to stdout.
+
+See also:
+    cylc [task] message
+    cylc [task] succeeded
+    cylc [task] failed"""
 
 parser = OptionParser( usage )
 
@@ -35,18 +49,25 @@ parser = OptionParser( usage )
 if len( args ) != 0:
     parser.error( "Wrong number of arguments" )
 
-message().send_started()
+# send start message
+try:
+    message().send_started()
+except SuiteIdentificationError, x:
+    raise SystemExit(x)
 
+# acquire a task lock if using the lockserver
 if not cylc_mode.mode().is_raw():
     try:
         if not task_lock().acquire():
-            # If using the lockserver, failing to acquire a lock is an error
-            msg = "FAILED TO ACQUIRE A TASK LOCK" 
-            message( msg ).send_failed()
-            sys.exit(1)
-    except:
-        # failed to connect to lockserver
-        msg = "FAILED TO CONNECT TO A LOCKSERVER" 
-        message( msg ).send_failed()
-        raise
-        sys.exit(1)
+            msg = "Failed to acquire a task lock" 
+            try:
+                message( msg, 'CRITICAL' ).send_failed()
+            except SuiteIdentificationError, x:
+                raise SystemExit(x)
+    except Exception, z:
+        msg = "Failed to connect to the lockserver" 
+        try:
+            message( msg, 'CRITICAL' ).send_failed()
+        except SuiteIdentificationError, x:
+            print >> sys.stderr, x
+        raise SystemExit(z)
