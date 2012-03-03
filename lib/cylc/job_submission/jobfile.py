@@ -173,7 +173,7 @@ class jobfile(object):
         self.FILE.write( """
 
 # SEND TASK STARTED MESSAGE:
-cylc task started || exit 1""" )
+cylc task started""" )
 
     def write_work_directory_create( self ):
         data = { "share_dir": self.share_dir,  "work_dir": self.work_dir }

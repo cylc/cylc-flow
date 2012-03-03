@@ -17,9 +17,9 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from cylc.port_scan import SuiteIdentificationError
 from optparse import OptionParser
 from cylc.task_message import message
+from Pyro.errors import NamingError
 
 usage = """cylc [task] message [options]
 
@@ -78,5 +78,8 @@ else:
     msg = ' '.join( args )
     try:
         message( msg, priority=options.priority ).send()
-    except SuiteIdentificationError, x:
+    except NamingError, x:
+        print >> sys.stderr, 'ERROR: Failed to connect to task proxy.'
+        raise SystemExit(x)
+    except Exception, x:
         raise SystemExit(x)

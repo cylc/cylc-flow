@@ -20,8 +20,8 @@ import sys
 from cylc import cylc_mode
 from optparse import OptionParser
 from cylc.task_message import message
-from cylc.port_scan import SuiteIdentificationError
 from cylc.locking.task_lock import task_lock
+from Pyro.errors import NamingError
 
 usage = """cylc [task] started [options]
 
@@ -52,22 +52,19 @@ if len( args ) != 0:
 # send start message
 try:
     message().send_started()
-except SuiteIdentificationError, x:
+except NamingError, x:
+    print >> sys.stderr, 'ERROR: Failed to connect to task proxy.'
+    raise SystemExit(x)
+except Exception, x:
     raise SystemExit(x)
 
 # acquire a task lock if using the lockserver
 if not cylc_mode.mode().is_raw():
     try:
         if not task_lock().acquire():
-            msg = "Failed to acquire a task lock" 
-            try:
-                message( msg, 'CRITICAL' ).send_failed()
-            except SuiteIdentificationError, x:
-                raise SystemExit(x)
+            # (don"t send task failed message - handled by trapping)
+            raise SystemExit( "Failed to acquire a task lock" )
     except Exception, z:
-        msg = "Failed to connect to the lockserver" 
-        try:
-            message( msg, 'CRITICAL' ).send_failed()
-        except SuiteIdentificationError, x:
-            print >> sys.stderr, x
-        raise SystemExit(z)
+        # (don"t send task failed message - handled by trapping)
+        print >> sys.stderr, z
+        raise SystemExit( "Failed to connect to the lockserver" )
