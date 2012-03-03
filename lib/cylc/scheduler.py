@@ -733,7 +733,11 @@ class scheduler(object):
             if self.lock_acquired:
                 print "Releasing suite lock"
                 lock = suite_lock( suitename, self.suite_dir, self.host, self.lockserver_port, 'scheduler' )
-                if not lock.release_suite_access():
+                try:
+                    if not lock.release_suite_access():
+                        print >> sys.stderr, 'WARNING failed to release suite lock!'
+                except port_scan.SuiteIdentificationError, x:
+                    print >> sys.stderr, x
                     print >> sys.stderr, 'WARNING failed to release suite lock!'
 
         if self.pyro:
