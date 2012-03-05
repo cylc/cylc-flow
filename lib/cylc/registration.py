@@ -323,7 +323,7 @@ class regdb(object):
                 raise SuiteTakenError, targ
             elif key.startswith(targ + RegPath.delimiter):
                 # There is already a group of the same name as targ.
-                self.reregister( self, srce, join_name( [targ, base_name(srce)])) 
+                raise IsAGroupError, targ
             elif targ.startswith(key + RegPath.delimiter ):
                 # targ starts with, to some level, an existing suite name
                 raise NotAGroupError, key
