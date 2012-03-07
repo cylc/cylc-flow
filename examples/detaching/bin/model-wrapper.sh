@@ -17,7 +17,7 @@ cp $NATIVESCRIPTS/* $TDIR
 
 # Insert task-specific execution environment in $TDIR/model.sh:
 SRCH='echo "model.sh: executing pseudo-executable"'
-perl -pi -e "s@^${SRCH}@${CYLC_SUITE_REG_NAME_ENVIRONMENT}\n${SRCH}@" $TDIR/model.sh
+perl -pi -e "s@^${SRCH}@${CYLC_SUITE_ENVIRONMENT}\n${SRCH}@" $TDIR/model.sh
 
 # Task completion message scripting. Use single quotes here - we don't
 # want the $? variable to evaluate in this shell!
