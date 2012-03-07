@@ -297,9 +297,7 @@ class config( CylcConfigObj ):
         if self.verbose:
             print "Parsing runtime name lists"
         # If a runtime section heading is a list of names then the
-        # subsequent config applies to each member. Copy the config
-        # for each member and replace any occurrence of '<TASK>' with
-        # the actual task name.
+        # subsequent config applies to each member. 
         for item in self['runtime']:
             if re.search( ',', item ):
                 # list of task names
@@ -354,9 +352,6 @@ class config( CylcConfigObj ):
                 self.inherit( taskconf, self['runtime'][item] )
             self['runtime'][label] = taskconf
 
-        for item in self['runtime']:
-            self.interpolate( item, self['runtime'][item], '<TASK>' )
-
         collapsed_rc = self['visualization']['collapsed families']
         if len( collapsed ) > 0:
             # this overrides the rc file item
@@ -388,6 +383,12 @@ class config( CylcConfigObj ):
 
         self.process_directories()
         self.load()
+
+        # Interpolate <TASK> here after loading the graph so that we
+        # catch dummy tasks that are defined only by the graph
+        # (otherwise they would inherit root with <TASK>=root).
+        for item in self['runtime']:
+            self.interpolate( item, self['runtime'][item], '<TASK>' )
 
         self.family_tree = {}
         self.task_runtimes = {}
@@ -1013,7 +1014,7 @@ class config( CylcConfigObj ):
                     self.members['root'] = []
                 self.family_hierarchy[name] = [name, 'root']
                 self.members['root'].append(name)
- 
+
             if name not in self.taskdefs:
                 try:
                     self.taskdefs[ name ] = self.get_taskdef( name )
