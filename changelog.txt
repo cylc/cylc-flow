@@ -566,3 +566,7 @@ also affecting subsequent local tasks.
 gcylc, your own running secure suites (i.e. suites using a secure
 passphrase to police access).
 
++ Bug fix interpolation of <TASK> in dummy tasks (which are defined only
+by their presence in the graph, no namespace section). In these tasks,
+<TASK> was being replaced by "root" because they were inheriting the
+root namespace after the name interpolation was done.
