@@ -384,12 +384,6 @@ class config( CylcConfigObj ):
         self.process_directories()
         self.load()
 
-        # Interpolate <TASK> here after loading the graph so that we
-        # catch dummy tasks that are defined only by the graph
-        # (otherwise they would inherit root with <TASK>=root).
-        for item in self['runtime']:
-            self.interpolate( item, self['runtime'][item], '<TASK>' )
-
         self.family_tree = {}
         self.task_runtimes = {}
         self.define_inheritance_tree( self.family_tree, self.family_hierarchy )
@@ -1006,7 +1000,7 @@ class config( CylcConfigObj ):
 
             if name not in self['runtime']:
                 if self.verbose:
-                    print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph, so it inherits the root runtime.'
+                    print >> sys.stderr, 'WARNING: "' + name + '" is defined only by graph, so it inherits the root runtime.'
                 # inherit the root runtime
                 self['runtime'][name] = self['runtime']['root'].odict()
                 if 'root' not in self.members:
@@ -1347,6 +1341,12 @@ class config( CylcConfigObj ):
             taskconfig = self['runtime'][name]
         except KeyError:
             raise SuiteConfigError, "Task not found: " + name
+
+        # Interpolate <TASK> here (doing it earlier like <NAMESPACE>
+        # fails to catch dummy tasks that are defined only by graph
+        # (otherwise they would inherit root with <TASK>=root).
+        self.interpolate( name, taskconfig, '<TASK>' )
+
         taskd.description = taskconfig['description']
 
         if self.simulation_mode:
