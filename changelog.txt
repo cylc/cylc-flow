@@ -570,3 +570,7 @@ passphrase to police access).
 by their presence in the graph, no namespace section). In these tasks,
 <TASK> was being replaced by "root" because they were inheriting the
 root namespace after the name interpolation was done.
+
++ Validate now catches invalid conditional trigger expressions, such 
+as unbalanced parentheses, in the graph string.
+
