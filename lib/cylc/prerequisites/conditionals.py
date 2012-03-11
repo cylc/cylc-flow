@@ -22,6 +22,12 @@ import re, sys
 # label2 => "bar%<TAG> succeeded"
 # expr   => "( [label1] or [label2] )"
 
+class TriggerExpressionError( Exception ):
+    def __init__( self, msg ):
+        self.msg = msg
+    def __str__( self ):
+        return repr(self.msg)
+
 class conditional_prerequisites(object):
     def __init__( self, owner_id ):
         self.owner_id = owner_id
@@ -80,7 +86,13 @@ class conditional_prerequisites(object):
         self.conditional_expression = expr
 
     def all_satisfied( self ):
-        res = eval( self.conditional_expression )
+        try:
+            res = eval( self.conditional_expression )
+        except Exception, x:
+            print >> sys.stderr, x
+            if str(x).find("unexpected EOF") != -1:
+                print >> sys.stderr, "Unmatched parentheses in graph string?"
+            raise TriggerExpressionError, '"' + self.raw_conditional_expression + '"'
         return res
             
     def satisfy_me( self, outputs ):

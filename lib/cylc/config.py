@@ -37,7 +37,8 @@ from validate import Validator
 from configobj import get_extra_values, flatten_errors, Section
 from cylcconfigobj import CylcConfigObj, ConfigObjError
 from graphnode import graphnode, GraphNodeError
-from cylc.print_tree import print_tree
+from print_tree import print_tree
+from prerequisites.conditionals import TriggerExpressionError
 from regpath import RegPath
 
 try:
@@ -411,7 +412,7 @@ class config( CylcConfigObj ):
         else:
             self['visualization']['initial cycle time'] = 2999010100
             self['visualization']['final cycle time'] = 2999010123
-  
+
     def process_queues( self ):
         # TO DO: user input consistency checking (e.g. duplicate queue
         # assignments and non-existent task names)
@@ -663,10 +664,43 @@ class config( CylcConfigObj ):
                     if name not in self.members:
                         # family names often aren't used in the graph
                         print >> sys.stderr, 'WARNING: task "' + name + '" is DISABLED (it is not used in the graph).'
+                    else:
+                        print 'INFO: family "' + name + '" is not used directly in the graph.'
  
-        #for name in self['runtime']:
-        #    if name not in self.taskdefs:
-        #        print >> sys.stderr, 'WARNING: runtime "' + name + '" is not used in the graph.'
+        # Instantiate tasks and force evaluation of conditional trigger expressions.
+        if self.verbose:
+            print "Checking conditional trigger expressions"
+        for name in self.taskdefs:
+            type = self.taskdefs[name].type
+            if type != 'async_repeating' and type != 'async_daemon' and type != 'async_oneoff':
+                tag = '2999010101'
+            else:
+                tag = '1'
+            # instantiate task
+            try:
+                # startup True here or oneoff async tasks will be ignored:
+                itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True )
+            except TypeError, x:
+                # This should not happen as we now explicitly catch use
+                # of synchronous special tasks in an asynchronous graph.
+                # But in principle a clash of multiply inherited base
+                # classes due to choice of "special task" modifiers
+                # could cause a TypeError.
+                print >> sys.stderr, x
+                raise SuiteConfigError, '(inconsistent use of special tasks?)' 
+            except Exception, x:
+                print >> sys.stderr, x
+                raise SuiteConfigError, 'ERROR, failed to instantiate task ' + name
+
+            # force trigger evaluation
+            try:
+                itask.prerequisites.all_satisfied()
+            except TriggerExpressionError, x:
+                print >> sys.stderr, x
+                raise SuiteConfigError, "ERROR, " + name + ": invalid trigger expression."
+            except Exception, x:
+                print >> sys.stderr, x
+                raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
 
         # warn if listed special tasks are not defined
         for type in self['scheduling']['special tasks']:
@@ -1000,7 +1034,7 @@ class config( CylcConfigObj ):
 
             if name not in self['runtime']:
                 if self.verbose:
-                    print >> sys.stderr, 'WARNING: "' + name + '" is defined only by graph, so it inherits the root runtime.'
+                    print >> sys.stderr, 'WARNING: "' + name + '" is defined only by graph; it inherits root.'
                 # inherit the root runtime
                 self['runtime'][name] = self['runtime']['root'].odict()
                 if 'root' not in self.members:
