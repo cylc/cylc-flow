@@ -396,7 +396,7 @@ class config( CylcConfigObj ):
         self.prune_inheritance_tree( self.family_tree, self.task_runtimes )
 
         self.process_queues()
-        self.__check_tasks()
+        self.check_tasks()
 
         # Default visualization start and stop cycles (defined here
         # rather than in the spec file so we can set a sensible stop
@@ -659,7 +659,7 @@ class config( CylcConfigObj ):
  
         return trigger
 
-    def __check_tasks( self ):
+    def check_tasks( self ):
         # Call after all tasks are defined.
         # Note: 
         #   (a) self['runtime'][name] 
@@ -674,10 +674,12 @@ class config( CylcConfigObj ):
                 if name not in self.taskdefs:
                     if name not in self.members:
                         # family names often aren't used in the graph
-                        print >> sys.stderr, 'WARNING: task "' + name + '" is DISABLED (it is not used in the graph).'
+                        print >> sys.stderr, 'WARNING: task "' + name + '" is disabled - it is not used in the graph.'
                     else:
                         print 'INFO: family "' + name + '" is not used directly in the graph.'
- 
+
+        self.check_for_case_errors()
+
         # Instantiate tasks and force evaluation of conditional trigger expressions.
         if self.verbose:
             print "Checking conditional trigger expressions"
@@ -746,6 +748,40 @@ class config( CylcConfigObj ):
         # 'sequential' and 'clock-triggered' at the time, but not both
         # 'model' and 'sequential' at the same time.
 
+    def check_for_case_errors( self ):
+        # check for case errors in task names
+        # To Do: this could probably be done more efficiently!
+        all_names_dict = {}
+        for name in self.taskdefs.keys() + self['runtime'].keys():
+            # remove legitimate duplicates (names in graph and runtime)
+            if name not in all_names_dict:
+                all_names_dict[name] = True
+        all_names = all_names_dict.keys()
+        knob = {}
+        duplicates = []
+        for name in [ foo.lower() for foo in all_names ]:
+            if name not in knob:
+                knob[name] = True
+            else:
+                duplicates.append(name)
+        duplist = {}
+        for dup in duplicates:
+            for name in all_names:
+                if name.lower() == dup:
+                    if dup not in duplist:
+                        duplist[dup] = [name]
+                    else:
+                        duplist[dup].append(name)
+        if self.verbose:
+            if len( duplist.keys() ) > 0:
+                print >> sys.stderr, 'WARNING: THE FOLLOWING TASK NAMES DIFFER ONLY BY CASE:'
+            for name in duplist:
+                # this is probably, but not necessarily, an error.
+                print >> sys.stderr, ' ', 
+                for n in duplist[name]:
+                    print >> sys.stderr, n,
+                print >> sys.stderr, ''
+ 
     def create_directories( self, task=None ):
         # Create suite log, state, and local job log directories.
         dirs = [ self['cylc']['logging']['directory'], self['cylc']['state dumps']['directory'] ]
@@ -1051,7 +1087,7 @@ class config( CylcConfigObj ):
 
             if name not in self['runtime']:
                 if self.verbose:
-                    print >> sys.stderr, 'WARNING: "' + name + '" is defined only by graph; it inherits root.'
+                    print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph - it will inherit root.'
                 # inherit the root runtime
                 self['runtime'][name] = self['runtime']['root'].odict()
                 if 'root' not in self.members:
