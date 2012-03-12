@@ -701,7 +701,7 @@ class config( CylcConfigObj ):
                     itask.prerequisites.eval_all()
                 except TriggerExpressionError, x:
                     print >> sys.stderr, x
-                    raise SuiteConfigError, "ERROR, " + itask.id + ": invalid trigger expression."
+                    raise SuiteConfigError, "ERROR, " + name + ": invalid trigger expression."
                 except Exception, x:
                     print >> sys.stderr, x
                     raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'

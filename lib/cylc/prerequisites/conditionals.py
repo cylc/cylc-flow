@@ -89,9 +89,9 @@ class conditional_prerequisites(object):
         try:
             res = eval( self.conditional_expression )
         except Exception, x:
-            print >> sys.stderr, x
+            print >> sys.stderr, 'ERROR:', x
             if str(x).find("unexpected EOF") != -1:
-                print >> sys.stderr, "Unmatched parentheses in graph string?"
+                print >> sys.stderr, "(?could be unmatched parentheses in the graph string?)"
             raise TriggerExpressionError, '"' + self.raw_conditional_expression + '"'
         return res
             
