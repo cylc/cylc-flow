@@ -673,34 +673,40 @@ class config( CylcConfigObj ):
         for name in self.taskdefs:
             type = self.taskdefs[name].type
             if type != 'async_repeating' and type != 'async_daemon' and type != 'async_oneoff':
-                tag = '2999010101'
+                tag = '2999010100'
+                n_check = len( self.taskdefs[name].hours )
             else:
                 tag = '1'
-            # instantiate task
-            try:
-                # startup True here or oneoff async tasks will be ignored:
-                itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True )
-            except TypeError, x:
-                # This should not happen as we now explicitly catch use
-                # of synchronous special tasks in an asynchronous graph.
-                # But in principle a clash of multiply inherited base
-                # classes due to choice of "special task" modifiers
-                # could cause a TypeError.
-                print >> sys.stderr, x
-                raise SuiteConfigError, '(inconsistent use of special tasks?)' 
-            except Exception, x:
-                print >> sys.stderr, x
-                raise SuiteConfigError, 'ERROR, failed to instantiate task ' + name
-
-            # force trigger evaluation
-            try:
-                itask.prerequisites.all_satisfied()
-            except TriggerExpressionError, x:
-                print >> sys.stderr, x
-                raise SuiteConfigError, "ERROR, " + name + ": invalid trigger expression."
-            except Exception, x:
-                print >> sys.stderr, x
-                raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
+                n_check = 1
+            for i in range( 0, n_check ):
+                # loop over each valid hour for each task (because the
+                # task may have different triggers in each hour).
+                try:
+                    # instantiate a task
+                    # startup True here or oneoff async tasks will be ignored:
+                    itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True )
+                except TypeError, x:
+                    # This should not happen as we now explicitly catch use
+                    # of synchronous special tasks in an asynchronous graph.
+                    # But in principle a clash of multiply inherited base
+                    # classes due to choice of "special task" modifiers
+                    # could cause a TypeError.
+                    print >> sys.stderr, x
+                    raise SuiteConfigError, '(inconsistent use of special tasks?)' 
+                except Exception, x:
+                    print >> sys.stderr, x
+                    raise SuiteConfigError, 'ERROR, failed to instantiate task ' + name
+                # force trigger evaluation
+                try:
+                    itask.prerequisites.eval_all()
+                except TriggerExpressionError, x:
+                    print >> sys.stderr, x
+                    raise SuiteConfigError, "ERROR, " + itask.id + ": invalid trigger expression."
+                except Exception, x:
+                    print >> sys.stderr, x
+                    raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
+                tag = itask.next_tag()
+            #print "OK:", itask.id
 
         # warn if listed special tasks are not defined
         for type in self['scheduling']['special tasks']:

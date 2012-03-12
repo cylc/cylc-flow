@@ -33,6 +33,12 @@ class prerequisites(object):
             satisfied.append( reqs.get_satisfied() )
         return satisfied
 
+    def eval_all( self ):
+        # used to test validity of conditional prerequisite expression. 
+        # (all_satisfied() is not sufficient as it breaks out early).
+        for reqs in self.container:
+            reqs.all_satisfied()
+ 
     def all_satisfied( self ):
         result = True
         for reqs in self.container:
