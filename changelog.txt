@@ -582,3 +582,5 @@ defined by the graph so the task ID on the command line is assumed valid.
 + Added CommsTest simple Pyro client/server programs to demonstrate how
 network communication is handled in cylc.
 
++ Validation now detects possible task name case errors (myFoo vs MyFoo).
+
