@@ -536,7 +536,13 @@ class config( CylcConfigObj ):
 
     def process_directories(self):
         # Environment variable interpolation in directory paths.
-        # (allow use of suite identity variables):
+        # Allow use of suite, BUT NOT TASK, identity variables.
+        for item in self['runtime']:
+            logd = self['runtime'][item]['job submission']['log directory']
+            if logd.find( '$CYLC_TASK_' ) != -1:
+                print >> sys.stderr, 'runtime -> job submission -> log directory =', logd
+                raise SuiteConfigError, 'ERROR: job submission log directories cannot be task-specific'
+
         os.environ['CYLC_SUITE_REG_NAME'] = self.suite
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
