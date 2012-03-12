@@ -579,3 +579,6 @@ config but no current presence in the suite graph. Task type (cycling or
 asynchronous) and validity (valid hours of the day for the task) are not
 defined by the graph so the task ID on the command line is assumed valid.
 
++ Added CommsTest simple Pyro client/server programs to demonstrate how
+network communication is handled in cylc.
+
