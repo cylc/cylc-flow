@@ -30,7 +30,7 @@
 import taskdef
 from copy import deepcopy
 from OrderedDict import OrderedDict
-from cycle_time import ct
+from cycle_time import ct, CycleTimeError
 import re, os, sys, logging
 from mkdir_p import mkdir_p
 from validate import Validator
@@ -105,6 +105,9 @@ class SuiteConfigError( Exception ):
         self.msg = msg
     def __str__( self ):
         return repr(self.msg)
+
+class TaskNotDefinedError( SuiteConfigError ):
+    pass
 
 class edge( object):
     def __init__( self, l, r, sasl=False, suicide=False, conditional=False ):
@@ -1503,8 +1506,27 @@ class config( CylcConfigObj ):
         try:
             tdef = self.taskdefs[name]
         except KeyError:
-            raise SuiteConfigError("ERROR, No such task name: " + name )
+            raise TaskNotDefinedError("ERROR, No such task name: " + name )
         return tdef.get_task_class()( ctime, state, stopctime, startup )
+
+    def get_task_proxy_raw( self, name, tag, state, stoptag, startup ):
+        # Used by 'cylc submit' to submit tasks defined by runtime
+        # config but not currently present in the graph (so we must
+        # assume that the given tag is valid for the task).
+        try:
+            truntime = self['runtime'][name]
+        except KeyError:
+            raise TaskNotDefinedError("ERROR, task not defined: " + name )
+        tdef = self.get_taskdef( name )
+        try:
+            foo = ct(tag)
+        except CycleTimeError, x:
+            # must be async
+            tdef.type = 'async_oneoff'
+        else:
+            # assume input cycle is valid
+            tdef.hours = [ int( foo.hour ) ]
+        return tdef.get_task_class()( tag, state, stoptag, startup )
 
     def get_task_class( self, name ):
         return self.taskdefs[name].get_task_class()

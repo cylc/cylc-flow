@@ -574,3 +574,8 @@ root namespace after the name interpolation was done.
 + Validate now catches invalid conditional trigger expressions, such 
 as unbalanced parentheses, in the graph string.
 
++ Restored the ability to submit single tasks that have defined runtime
+config but no current presence in the suite graph. Task type (cycling or 
+asynchronous) and validity (valid hours of the day for the task) are not
+defined by the graph so the task ID on the command line is assumed valid.
+

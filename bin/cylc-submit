@@ -23,7 +23,7 @@ from OrderedDict import OrderedDict
 from cylc.mkdir_p import mkdir_p
 from cylc.execute import execute
 from cylc.job_submission.job_submit import job_submit
-from cylc.config import config, SuiteConfigError
+from cylc.config import config, SuiteConfigError, TaskNotDefinedError
 from cylc.registration import dbgetter, RegistrationError
 from cylc import pimp_my_logger
 from cylc.taskid import id, TaskIDError
@@ -197,15 +197,23 @@ pimp_my_logger.pimp_it( log, logging_dir, \
 
 job_submit.cylc_env = cylcenv
 
-# intantiate the task--------------------------------------------------
+# instantiate the task--------------------------------------------------
 if task_name in config.get_asynchronous_task_name_list():
     tag = '1'  # asynchronous tasks always start with tag = 1
 else:
     tag = ctime
 try:
+    # try to get a graphed task of the given name
     task_proxy = config.get_task_proxy( task_name, tag, 'waiting', stopctime=None, startup=True )
-except KeyError, x:
-    raise SystemExit, "ERROR: there is no task " + task_name + " in the suite graph."
+except TaskNotDefinedError, x:
+    print >> sys.stderr, 'WARNING: "' + task_name + \
+            '" type and validity are not constrained by the graph.'
+    print >> sys.stderr, "Continuing under the assumption that the given task ID is valid."
+    try:
+        # try to get an ungraphed task of the given name
+        task_proxy = config.get_task_proxy_raw( task_name, tag, 'waiting', stoptag=None, startup=True )
+    except TaskNotDefinedError, y:
+        raise SystemExit('ERROR: task "' + task_name + '" runtime is not defined either, aborting.')
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------
 if not options.dry_run:
