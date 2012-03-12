@@ -302,7 +302,9 @@ class config( CylcConfigObj ):
         for item in self['runtime']:
             if re.search( ',', item ):
                 # list of task names
-                task_names = re.split(', *', item )
+                # remove trailing commas and spaces
+                tmp = item.rstrip(', ')
+                task_names = re.split(', *', tmp )
             else:
                 # a single task name 
                 continue
