@@ -66,7 +66,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def set_runahead( self, hours=None ):
         # change the suite maximum runahead limit
-        self._warning( "setting runahead limit to " + hours )
+        self.log.info( "setting runahead limit to " + hours )
         self.pool.runahead_limit = int(hours)
         self.process_tasks = True
         return result( True, "Action succeeded" )
@@ -75,7 +75,7 @@ class remote_switch( Pyro.core.ObjBase ):
         if self._suite_is_blocked():
             return result( False, "Suite Blocked" )
         # cause the task processing loop to be invoked
-        self._warning( "servicing remote nudge request" )
+        self.log.info( "servicing suite nudge request" )
         # just set the "process tasks" indicator
         self.process_tasks = True
         return result( True )
@@ -103,7 +103,7 @@ class remote_switch( Pyro.core.ObjBase ):
         try:
             self.pool.trigger_task( task_id )
         except TaskNotFoundError, x:
-            self._warning( 'Refused remote trigger: task not found' )
+            self._warning( 'Refused remote trigger, task not found: ' + task_id )
             return result( False, x.__str__() )
         except Exception, x:
             # do not let a remote request bring the suite down for any reason
@@ -279,16 +279,16 @@ class remote_switch( Pyro.core.ObjBase ):
         return result( True, "The suite will shut down immediately" )
 
     def get_suite_info( self ):
-        self._warning( "servicing remote suite info request" )
+        self.log.info( "servicing suite info request" )
         owner = os.environ['USER']
         return [ self.config['title'], self.suite_dir, owner ]
 
     def get_task_list( self ):
-        self._warning( "servicing remote task list request" )
+        self.log.info( "servicing task list request" )
         return self.config.get_task_name_list()
  
     def get_task_info( self, task_names ):
-        self._warning( "servicing remote task info request" )
+        self.log.info( "servicing task info request" )
         info = {}
         for name in task_names:
             if self._task_type_exists( name ):
@@ -298,7 +298,7 @@ class remote_switch( Pyro.core.ObjBase ):
         return info
 
     def get_task_requisites( self, in_ids ):
-        self._warning( "servicing remote task requisite request")
+        self.log.info( "servicing task state info request")
         in_ids_real = {}
         in_ids_back = {}
         for in_id in in_ids:
@@ -338,7 +338,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
                 dump[ in_ids_back[ id ] ] = [ task.prerequisites.dump(), task.outputs.dump(), extra_info ]
         if not found:
-            self._warning( '(no tasks found to dump)' )
+            self._warning( 'task state info request: tasks not found' )
         else:
             return dump
     
@@ -349,7 +349,7 @@ class remote_switch( Pyro.core.ObjBase ):
         if not self._task_type_exists( task_id ):
             return result( False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph." )
 
-        self._warning( "REMOTE: purge " + task_id + ' to ' + stop )
+        self.log.info( "servicing purge request: " + task_id + ' to ' + stop )
         self.pool.purge( task_id, stop )
         self.process_tasks = True
         return result( True, "OK" )
@@ -361,7 +361,7 @@ class remote_switch( Pyro.core.ObjBase ):
         if not self._task_type_exists( task_id ):
             return result(False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph." )
 
-        self._warning( "REMOTE: die: " + task_id )
+        self.log.info( "servicing task removal request: " + task_id )
         self.pool.kill( [ task_id ] )
         self.process_tasks = True
         return result(True, "OK")
@@ -370,7 +370,7 @@ class remote_switch( Pyro.core.ObjBase ):
         if self._suite_is_blocked():
             return result(False, "Suite is blocked")
 
-        self._warning( "REMOTE: kill tasks with tag: " + tag )
+        self.log.info( "servicing task removal request: " + tag )
         self.pool.kill_cycle( tag )
         self.process_tasks = True
         return result(True, "OK")
@@ -382,7 +382,7 @@ class remote_switch( Pyro.core.ObjBase ):
         if not self._task_type_exists( task_id ):
             return result(False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph." )
 
-        self._warning( "REMOTE: spawn and die: " + task_id )
+        self.log.info( "servicing task spawn and die request: " + task_id )
         self.pool.spawn_and_die( [ task_id ] )
         self.process_tasks = True
         return result(True, "OK")
@@ -390,7 +390,7 @@ class remote_switch( Pyro.core.ObjBase ):
     def spawn_and_die_cycle( self, tag ):
         if self._suite_is_blocked():
             return result(False, "Suite is blocked")
-        self._warning( "REMOTE: spawn and die tasks with tag: " + tag )
+        self.log.info( "servicing task spawn and die request: " + tag )
         self.pool.spawn_and_die_cycle( tag )
         self.process_tasks = True
         return result(True, "OK")
@@ -401,7 +401,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         # change the verbosity of all the logs:
         #   debug, info, warning, error, critical
-        self._warning( "REMOTE: set verbosity " + level )
+        self.log.info( "servicing suite verbosity change request " + level )
         
         if level == 'debug':
             new_level = logging.DEBUG
@@ -470,7 +470,7 @@ class remote_switch( Pyro.core.ObjBase ):
         if not self._task_type_exists( task_id ):
             return result(  False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph."  )
 
-        self._warning( "REMOTE: hold task: " + task_id )
+        self.log.info( "servicing task hold request: " + task_id )
         found = False
         was_waiting = False
         for itask in self.pool.get_tasks():
@@ -497,7 +497,7 @@ class remote_switch( Pyro.core.ObjBase ):
         if not self._task_type_exists( task_id ):
             return result( False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph."  )
 
-        self._warning( "REMOTE: release task: " + task_id )
+        self.log.info( "servicing task release request: " + task_id )
         found = False
         for itask in self.pool.get_tasks():
             if itask.id == task_id:
