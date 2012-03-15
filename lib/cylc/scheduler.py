@@ -1354,10 +1354,6 @@ class scheduler(object):
         elif state == 'held':
             itask.reset_state_held()
 
-        if state != 'failed':
-            # remove the tasks's "failed" output
-            itask.outputs.remove( task_id + ' failed', fail_silently=True )
-
     def add_prerequisite( self, task_id, message ):
         # find the task to reset
         found = False

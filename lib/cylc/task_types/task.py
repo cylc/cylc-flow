@@ -305,6 +305,8 @@ class task( Pyro.core.ObjBase ):
         self.state.set_status( 'failed' )
         self.prerequisites.set_all_satisfied()
         self.outputs.set_all_incomplete()
+        # set a new failed output just as if a failure message came in
+        self.outputs.add( self.id + ' failed', completed=True )
 
     def reset_state_held( self ):
         itask.state.set_status( 'held' )

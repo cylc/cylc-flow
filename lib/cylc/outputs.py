@@ -85,14 +85,18 @@ class outputs( object ):
             del self.not_completed[message]
             self.completed[ message ] = self.owner_id
 
-    def add( self, message ):
-        # Add a new not-completed output message
-        if message in self.completed:
+    def add( self, message, completed=False ):
+        # Add a new output message
+        if message in self.completed or message in self.not_completed:
             # duplicate output messages are an error.
-            print >> sys.stderr, 'ERROR: already registered: ' + message
+            print >> sys.stderr, 'ERROR: output already registered: ' + message
+            # TO DO: raise an exception here
             sys.exit(1)
-        self.not_completed[message] = self.owner_id
-
+        if not completed:
+            self.not_completed[message] = self.owner_id
+        else:
+            self.completed[message] = self.owner_id
+ 
     def remove( self, message, fail_silently=False ):
         if message in self.completed:
             del self.completed[ message ]
