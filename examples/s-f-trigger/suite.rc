@@ -1,0 +1,28 @@
+title = "start and finish trigger demo"
+description = """
+A:start  => B: means B triggers after A starts running.
+A:finish => B: means B triggers after A finishes, by success or failure.
+              """
+[scheduling]
+    initial cycle time = 2012010800
+    final cycle time = 2012010818
+    [[dependencies]]
+        [[[0,12]]]
+           graph = """
+foo:finish => A:start => B
+# A triggers when foo finishes (success or failure)
+# B triggers when A starts running
+                   """
+[runtime]
+    [[foo]]
+        description = "A task that alternately succeeds (0 hours) and fails (12 hours)"
+        command scripting = """
+echo "HELLO"
+sleep 10
+if [[ $( cylc cycletime --hour ) == 00 ]]; then
+    cylc task message "Succeeding now"
+    echo "BYE"
+else
+    cylc task message -p CRITICAL "Failing now!"
+    exit 1
+fi"""

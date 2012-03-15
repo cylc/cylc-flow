@@ -519,12 +519,12 @@ commands.  The '--host' and '--owner' command line arguments hard been
 rendered ineffective by registration name validation assuming localhost.
 
 ________________________________________________________________________
-4.2.2 PENDING
+4.2.2
 
 + Implemented task started triggers (Issue #27):
      graph = "A:start => B"
-  Means B triggers when A starts executing. This could previously be 
-  achieved, more verbosely, by triggering off internal outputs.
+This means B triggers when A starts executing; it could previously
+be achieved more verbosely with special internal task outputs.
 
 + Implemented task finished trigger shorthand:
      graph = "A:finish => B"
