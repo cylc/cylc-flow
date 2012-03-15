@@ -1,6 +1,4 @@
-title = "explicit task generator example suite"
-
-description = "Wherein a list of similar tasks are defined at once."
+title = "Configuring multiple tasks at once"
 
 [scheduling]
     initial cycle time = 2011010106
