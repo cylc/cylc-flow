@@ -528,28 +528,32 @@ ________________________________________________________________________
 
 + Implemented task finished trigger shorthand:
      graph = "A:finish => B"
-  is equivalent to:
+is equivalent to:
      graph = "A | A:fail => B"
 
-+ Removed reversed command line argument handling in register command.
++ Disallowed non-standard argument order in the register command.
 
-+ Bug fix: the registered command was aborting without unlocking the 
++ Bug fix: the register command was aborting without unlocking the 
 suite database if the suite.rc file was unreadable (broken since
 cross-version compatibility introduced in 4.2.0).
 
-+ Bug fix: runtime inheritance of boolean config items. Booleans were 
-not being inherited due to being inadvertantly caught in a Python 
-construct designed to avoid undefined values and empty lists.
++ Bug fix for runtime inheritance of boolean config items (currently 
+there are only two such items). Booleans were not being inherited due to
+being inadvertantly caught by a Python construct designed to avoid
+undefined values and empty lists.
 
 + Added initial and final cycle times to task execution environments:
   $CYLC_SUITE_INITIAL_CYCLE_TIME
   $CYLC_SUITE_FINAL_CYCLE_TIME
+This allows task implementations to know whether or not they are running
+in the first or final cycles.
 
 + Simulation mode should now work on any suite without any modification 
 of the suite.rc file. Previously initial scripting and user-environment,
 for example, could break sim mode runs by referencing scripts or
 variables that are missing or undefined outside of the suite's normal 
-operating setting.
+operating setting (these config items, along with any others that are
+not needed in simulation mode, are now omitted from the job script).
 
 + Duplicate prerequisites are no longer treated as an error, they're 
 just unnecessary. This also fixes a recently introduced bug in the 
@@ -575,9 +579,10 @@ root namespace after the name interpolation was done.
 as unbalanced parentheses, in the graph string.
 
 + Restored the ability to submit single tasks that have defined runtime
-config but no current presence in the suite graph. Task type (cycling or 
-asynchronous) and validity (valid hours of the day for the task) are not
-defined by the graph so the task ID on the command line is assumed valid.
+config but no current presence in the suite graph. Task type (cycling or
+asynchronous) and validity (valid hours of the day for the task) are
+normally defined by the graph; in the absence of that information we
+just assume that the cycle time given on the command line is valid.
 
 + Added CommsTest simple Pyro client/server programs to demonstrate how
 network communication is handled in cylc.
@@ -586,4 +591,7 @@ network communication is handled in cylc.
 
 + Register a task failure output when a task is manually reset to the
 failed state, to allow downstream tasks to trigger off the failure.
+
++ Tasks now spawn on failure as well as success, if they haven't done so
+already.
 

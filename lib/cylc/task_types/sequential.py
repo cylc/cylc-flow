@@ -17,9 +17,9 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class sequential(object):
-    # Force sequential behaviour by spawning only after task succeeded.
+    # Force sequential behaviour by spawning only after task finished.
     def ready_to_spawn( self ):
-        if self.state.is_succeeded() and not self.state.has_spawned():
-            return True
-        else:
+        if self.has_spawned():
             return False
+        if self.state.is_succeeded() or self.state.is_failed():
+            return True

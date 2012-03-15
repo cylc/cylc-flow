@@ -34,9 +34,11 @@ class nopid(object):
         if self.has_spawned():
             return False
 
-        if self.state.is_submitted() or \
-                self.state.is_running() or self.state.is_succeeded():
-            # (the final two state tests are probably not necessary)
+        if self.state.is_submitted() or self.state.is_running() or \
+                self.state.is_succeeded() or self.state.is_failed():
+            # The tests for running or succeeded are probably not
+            # necessary, but the test for failed will result in a
+            # non-spawned task spawning when manually set to failed.
             return True
         else:
             return False
