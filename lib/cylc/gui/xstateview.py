@@ -439,7 +439,7 @@ class xupdater(threading.Thread):
                 #else:
                 if id not in self.graph_warned or \
                         not self.graph_warned[id]:
-                    print >> sys.stderr, 'WARNING: SUITE TASK NOT GRAPHED: ' + id
+                    print >> sys.stderr, 'WARNING: ' + id + ' is outside of the main graph.'
                     self.graph_warned[id] = True
 
                 state = self.state_summary[id]['state']

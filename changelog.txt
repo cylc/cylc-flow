@@ -519,17 +519,18 @@ commands.  The '--host' and '--owner' command line arguments hard been
 rendered ineffective by registration name validation assuming localhost.
 
 ________________________________________________________________________
-4.2.2 PENDING
+4.2.2
 
-+ Implemented task started triggers (Issue #27):
++ Implemented start triggers (Issue #27):
      graph = "A:start => B"
-  Means B triggers when A starts executing. This could previously be 
-  achieved, more verbosely, by triggering off internal outputs.
+B triggers when A starts executing; previously this required use of 
+special internal task outputs.
 
-+ Implemented task finished trigger shorthand:
++ Implemented finish trigger shorthand:
      graph = "A:finish => B"
 is equivalent to:
      graph = "A | A:fail => B"
+B triggers once A is finished, whether by success or failure.
 
 + Disallowed non-standard argument order in the register command.
 
@@ -537,61 +538,63 @@ is equivalent to:
 suite database if the suite.rc file was unreadable (broken since
 cross-version compatibility introduced in 4.2.0).
 
-+ Bug fix for runtime inheritance of boolean config items (currently 
-there are only two such items). Booleans were not being inherited due to
-being inadvertantly caught by a Python construct designed to avoid
++ Bug fix: runtime inheritance of boolean config items was broken - 
+"False" values were inadvertantly caught in by a test designed to avoid
 undefined values and empty lists.
 
-+ Added initial and final cycle times to task execution environments:
++ New standard task execution environment variables:
   $CYLC_SUITE_INITIAL_CYCLE_TIME
   $CYLC_SUITE_FINAL_CYCLE_TIME
-This allows task implementations to know whether or not they are running
-in the first or final cycles.
+This allows tasks to determine if they are in the first or final cycle.
 
-+ Simulation mode should now work on any suite without any modification 
-of the suite.rc file. Previously initial scripting and user-environment,
-for example, could break sim mode runs by referencing scripts or
-variables that are missing or undefined outside of the suite's normal 
-operating setting (these config items, along with any others that are
-not needed in simulation mode, are now omitted from the job script).
++ Simulation mode now works for any suite without any modification of
+the suite.rc file. Previously some config items such as initial
+scripting and user environment could break simulation mode by
+referencing scripts or variables that are missing or undefined outside
+of the suite's normal operating setting (these, along with any other
+config items that are not needed in simulation mode are now omitted
+from simulation mode job scripts).
 
-+ Duplicate prerequisites are no longer treated as an error, they're 
-just unnecessary. This also fixes a recently introduced bug in the 
-handling of internal outputs in simulation mode (e.g. foo:fail in 
-sim mode was treated as foo:succeeded, which resulted in duplicate
-prerequisite warnings in "foo | foo:fail => bar").
++ Duplicate prerequisites are no longer treated as an error. This change
+also fixes a recently introduced simulation mode bug: internal outputs
+are ignored in simulation mode (because the dummy tasks do not report
+internal outputs) so foo:fail, in simulation mode, was treated as
+foo:succeeded, resulting in "duplicate prerequisite" errors from
+expressions like "foo | foo:fail => bar".
 
-+ Bug fix for local tasks that follow remote tasks.  Remote task
-override of $CYLC_DIR and $CYLC_SUITE_DEF_PATH was being done via a
-common data structure instead of a local task-specific copy, thereby
-also affecting subsequent local tasks.
++ Bug fix: Override of $CYLC_DIR and $CYLC_SUITE_DEF_PATH for remotely
+hosted tasks used a common data structure instead of a task-specific
+one, which resulted in subsequent local tasks getting the overridden
+values too.
 
 + Bug fix: restored the ability to scan, and display port number in
-gcylc, your own running secure suites (i.e. suites using a secure
-passphrase to police access).
+gcylc, your own running secure suites (i.e. suites using secure
+passphrases).
 
-+ Bug fix interpolation of <TASK> in dummy tasks (which are defined only
-by their presence in the graph, no namespace section). In these tasks,
-<TASK> was being replaced by "root" because they were inheriting the
-root namespace after the name interpolation was done.
++ Bug fix: in dummy tasks (i.e. tasks with no runtime config, which are
+defined only by their presence in the graph) '<TASK>'  was being
+replaced by "root" because dummy tasks were inheriting the root
+namespace after the interpolation of <TASK> in non-dummy namespaces.
 
-+ Validate now catches invalid conditional trigger expressions, such 
++ Validation now detects invalid conditional trigger expressions, such 
 as unbalanced parentheses, in the graph string.
 
 + Restored the ability to submit single tasks that have defined runtime
-config but no current presence in the suite graph. Task type (cycling or
-asynchronous) and validity (valid hours of the day for the task) are
-normally defined by the graph; in the absence of that information we
-just assume that the cycle time given on the command line is valid.
+config but do not currently appear in the suite graph. Task type
+(cycling or asynchronous) and validity (valid hours of the day for the
+task) are normally defined by the graph. In the absence of that
+information we just assume that the cycle time given on the command line
+is valid for the task.
 
 + Added CommsTest simple Pyro client/server programs to demonstrate how
 network communication is handled in cylc.
 
 + Validation now detects possible task name case errors (myFoo vs MyFoo).
 
-+ Register a task failure output when a task is manually reset to the
-failed state, to allow downstream tasks to trigger off the failure.
++ A "task failed" output is now recorded when a task is manually reset
+to the failed state, to allow downstream tasks to trigger off the failure.
 
 + Tasks now spawn on failure as well as success, if they haven't done so
-already.
+already. So, for instance, if a waiting task is forced to the failed
+state, it will spawn a successor.
 
