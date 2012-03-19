@@ -137,7 +137,8 @@ parser.add_option( "-w", "--warmstart",
 
 parser.add_option( "-n", "--namespaces", 
     help="Plot the suite namespace inheritance hierarchy "
-    "(task run time properties).",
+    "(task run time properties). Currently the '-o' option"
+    "does not work for namespace graphs. ",
     action="store_true", default=False, dest="namespaces" )
 
 parser.add_option( "-f", "--file", 
@@ -150,6 +151,8 @@ parser.add_option( "-c", "--central",
 
 parser.add_option( "-o", "--output", 
     help="Write an image file with format determined by file extension. "
+    "This currently works for suite dependency graphs but not "
+    "namespace hierarchy graphs."
     "The image will be rewritten automatically, for the configured "
     "(suite.rc) graph as you edit the suite. Available formats may "
     "include png, svg, jpg, gif, ps, ..., depending on your graphviz "

@@ -6,6 +6,13 @@ can be migrated to the github issue tracker.
 _______
 GENERAL
 
+* "cylc graph -o OUTFILE" does not work for namespace graphs. 
+
+* can validation be made to detect circular dependencies. E.g. 
+if foo is a member of FAM, then "FAM => foo" means foo will not run
+because it depends on itself.  This could be detected as a
+"self-prerequisite", but "FAM => bar => foo" would be trickier.
+
 * remote tasks using initial scripting to set PATH to cylc - could the
 default use of CYLC_DIR cause problems for this?
 
