@@ -598,3 +598,7 @@ to the failed state, to allow downstream tasks to trigger off the failure.
 already. So, for instance, if a waiting task is forced to the failed
 state, it will spawn a successor.
 
+________________________________________________________________________
+4.2.3 PENDING
+
++ Bug fix: allow setting no runahead limit.

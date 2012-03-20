@@ -55,10 +55,18 @@ try:
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 
-if not parser.prompt( 'Change suite runahead limit to ' + runahead ):
-    sys.exit(0)
+if runahead:
+    if not parser.prompt( 'Change suite runahead limit to ' + runahead ):
+        sys.exit(0)
+else:
+    if not parser.prompt( 'Change suite runahead limit to NO LIMIT' ):
+        sys.exit(0)
 
-result = proxy.set_runahead( runahead )
+if runahead:
+    result = proxy.set_runahead( hours=runahead )
+else:
+    # no limit!
+    result = proxy.set_runahead( hours=None )
 
 if result.success:
     print result.reason
