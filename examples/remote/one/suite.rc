@@ -1,0 +1,16 @@
+title = a minimal self-contained remote task suite
+description = """This runs one task on a remote host.
+To use it, install cylc and Pyro on the remote host,
+and adjust the remote config section below accordingly"""
+
+[scheduling]
+    [[dependencies]]
+        graph = "foo => bar"
+[runtime]
+    [[root]]
+        command scripting = "echo HELLO from <TASK> on $(hostname)"
+        [[[remote]]]
+            cylc directory = ~ecoconnect_admin/cylc-4.2.1
+            host = wrh-1.hpcf.niwa.co.nz
+
+
