@@ -1124,6 +1124,7 @@ class config( CylcConfigObj ):
             # lefts are lone nodes; no more triggers to define.
             return
         ctrig = {}
+        cname = {}
         for left in lnames:
             lnode = graphnode(left)  # (GraphNodeError checked above)
             if lnode.intercycle:
@@ -1137,6 +1138,7 @@ class config( CylcConfigObj ):
             label = re.sub( '[-\[\]:]', '_', left )
 
             ctrig[label] = trigger
+            cname[label] = lnode.name
 
         if not re.search( '\|', lexpression ):
             # For single triggers or '&'-only ones, which will be the
@@ -1144,30 +1146,37 @@ class config( CylcConfigObj ):
             # (they may be less efficient due to python eval at run time).
             for label in ctrig:
                 trigger = ctrig[label]
-                # using last lnode ...
                 if right in self.cycling_tasks and \
-                        (lnode.name in self['scheduling']['special tasks']['start-up'] or \
-                         lnode.name in self.async_oneoff_tasks ):
-                    # cycling tasks only depend on these tasks at startup
-                    self.taskdefs[right].add_startup_trigger( trigger, section, suicide )
-                elif lnode.name in self.async_repeating_tasks:
+                    (cname[label] in self['scheduling']['special tasks']['start-up'] or \
+                         cname[label] in self.async_oneoff_tasks ):
+                        # cycling tasks only depend on these tasks at startup
+                        self.taskdefs[right].add_startup_trigger( trigger, section, suicide )
+                elif cname[label] in self.async_repeating_tasks:
                     # TO DO: SUICIDE FOR REPEATING ASYNC
                     self.taskdefs[right].loose_prerequisites.append(trigger)
                 else:
                     self.taskdefs[right].add_trigger( trigger, section, suicide )
         else:
-            # replace some chars for later use in regular  expressions.
+            countx = 0
+            for label in ctrig:
+                if right in self.cycling_tasks:
+                    if (cname[label] in self['scheduling']['special tasks']['start-up'] or \
+                         cname[label] in self.async_oneoff_tasks ):
+                        countx += 1
+            if countx > 0:
+                if countx != len( cname.keys() ):
+                    print >> sys.stderr, 'ERROR:', lexpression
+                    raise SuiteConfigError, '(start-up or async) and (cycling) tasks in the same conditional'
+ 
+            # replace some chars for later use in regular expressions.
             expr = re.sub( '[-\[\]:]', '_', lexpression )
-            # using last lnode ...
-            if lnode.name in self['scheduling']['special tasks']['start-up'] or \
-                    lnode.name in self.async_oneoff_tasks:
+            if right in self.cycling_tasks and countx == len( cname.keys() ):
                 self.taskdefs[right].add_startup_conditional_trigger( ctrig, expr, section, suicide )
-            elif lnode.name in self.async_repeating_tasks:
-                # !!! TO DO!!!!
-                raise SuiteConfigError, 'ERROR: repeating async task conditionals not done yet'
             else:
-                # TO DO: ALSO CONSIDER SUICIDE FOR STARTUP AND ASYNC
                 self.taskdefs[right].add_conditional_trigger( ctrig, expr, section, suicide )
+
+            # !!! TO DO !!!! repeating async task conditionals
+            # TO DO: ALSO CONSIDER SUICIDE FOR STARTUP AND ASYNC
 
     def get_graph( self, start_ctime, stop, colored=True, raw=False,
             group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,

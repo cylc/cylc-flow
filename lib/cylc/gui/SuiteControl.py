@@ -613,10 +613,10 @@ The cylc forecast suite metascheduler.
 
         window = gtk.Window()
         #window.set_border_width( 10 )
-        window.set_title( task_id + ": Prerequisites and Outputs" )
+        window.set_title( task_id + " State" )
         #window.modify_bg( gtk.STATE_NORMAL, 
         #       gtk.gdk.color_parse( self.log_colors.get_color()))
-        window.set_size_request(400, 300)
+        window.set_size_request(600, 400)
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
@@ -639,7 +639,6 @@ The cylc forecast suite metascheduler.
         red = tb.create_tag( None, foreground = "red" )
         bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
         
-        #self.update_tb( tb, 'Task ' + task_id + ' in ' +  self.suite + '\n\n', [bold])
         self.update_tb( tb, 'TASK ', [bold] )
         self.update_tb( tb, task_id, [bold, blue])
         self.update_tb( tb, ' in SUITE ', [bold] )
@@ -682,6 +681,10 @@ The cylc forecast suite metascheduler.
             self.update_tb( tb, '\nOther\n', [bold] )
             for item in extra_info:
                 self.update_tb( tb, ' - ' + item + ': ' + str( extra_info[ item ] ) + '\n' )
+
+        self.update_tb( tb, '\nNOTE: ', [bold] )
+        self.update_tb( tb, ''' for tasks that have triggered already, prerequisites are 
+shown here in the state they were in at the time of triggering.''' )
 
         #window.connect("delete_event", lv.quit_w_e)
         window.show_all()

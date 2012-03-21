@@ -1091,9 +1091,11 @@ Finally, when the suite is {\em cold-started} (started from scratch) it
 is made to wait on a special {\em synchronous start-up task} called
 Prep. Start-up tasks are one-off (non-spawning) tasks that are only used
 at suite start-up, and any dependence on them only applies at suite
-start-up. Start-up tasks are {\em synchronous} because they have a 
-defined cycle time even though they are not cycling tasks. Cylc also has
-{\em asynchronous one-off tasks}, which have no cycle time:
+start-up. Hey cannot be used in conditional trigger expressions with 
+normal cycling tasks, because the trigger becomes undefined in
+subsequent cycles. Start-up tasks are {\em synchronous} because they
+have a defined cycle time even though they are not cycling tasks. Cylc
+also has {\em asynchronous one-off tasks}, which have no cycle time:
 \lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
@@ -1352,23 +1354,24 @@ ColdModel[T].
 \label{fig-QuickStartB-graph18}
 \end{figure}
 
-A cold-start task is a one-off task used to satisfy the previous-cycle
-dependence of a cotemporal task whose previous-cycle trigger is not
-available. The obvious use for this is to cold-start warm-cycled
-forecast models at suite start-up, when there is no previous cycle.
-Unlike start-up tasks though, cold-start dependencies are not restricted
-to suite start-up because it is sometimes useful to be able to 
-insert a cold-start task into a running suite, to get a model restarted
-after it had to skip one or more cycles due to problems, without having
-to restart the whole suite.
+Cold-start tasks are one-off tasks used in the first cycle to satisfy
+another task's intercycle-cycle dependence at suite start-up (when there
+is no previous cycle to do it). For instance, a series of cold-start
+tasks may be used to cold-start a warm-cycled model. Unlike {\em
+start-up} tasks though, cold-start dependence is preserved in subsequent
+cycles, so they must generally appear in OR'd conditional triggers in
+order to avoid stalling the suite after the first cycle (as in this example). 
+This means cold-start tasks can be inserted into a running suite, if
+necessary, to cold-start their associated tasks in case of problems that 
+prevent continued normal warm cycling. 
 
-A model cold-start task in a real suite may submit a real ``cold
-start forecast'' to generate the previous-cycle input files required by
-its associated model, or it may just stand in for some external
-spinup process, or similar, that has to be completed before the suite
-is started (in the latter case the cold-start task would be a dummy task 
-that just reports successful completion in order to satisfy the initial
-previous-cycle dependence of the model).
+A cold-start task in a real suite may submit a real ``cold start
+forecast'', or similar, to generate the previous-cycle input files
+required by the associated model, or it may just stand in for some
+external spinup process, or similar, that has to be completed before the
+suite is started (in the latter case the cold-start task would be a
+dummy task that just reports successful completion in order to satisfy
+the initial previous-cycle dependence of the model).
 
 Run {\em QuickStart.b} to confirm that that no manual triggering is
 required to get the suite started now.

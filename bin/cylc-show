@@ -89,7 +89,10 @@ if prnt_suite:
 
 if prnt_name or prnt_id:
     info = proxy.get_task_info( [ name ] )
-    print 'Task ' + name + ' in suite ' + suite + ':' 
+    idx = name
+    if prnt_id:
+        idx = id
+    print 'TASK ' + idx + ' in suite ' + suite + ':' 
     for name in info.keys():
         print ' + ', info[name]
 
@@ -104,7 +107,7 @@ if prnt_id:
     for id in result.keys():
         [ pre, out, extra_info ] = result[ id ]
 
-        print id + ' prerequisites (- => not satisfied):'
+        print 'PREREQUISITES (- => not satisfied):'
         if len( pre ) == 0:
             print '  (None)'
         for item in pre:
@@ -115,7 +118,7 @@ if prnt_id:
                 descr = '  - '
             print descr + msg
 
-        print id + ' outputs (- => not completed):'
+        print 'OUTPUTS (- => not completed):'
         if len( out ) == 0:
             print '  (None)'
         for item in out:
@@ -130,3 +133,6 @@ if prnt_id:
             print 'Other:'
             for item in extra_info:
                 print '  o ', item, '...', extra_info[ item ]
+        print """
+NOTE: for tasks that have triggered already, prerequisites are 
+shown here in the state they were in at the time of triggering."""

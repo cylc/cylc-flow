@@ -602,3 +602,11 @@ ________________________________________________________________________
 4.2.3 PENDING
 
 + Bug fix: allow setting no runahead limit.
+
++ Bug fix: multiple start-up tasks on the left of a dependency arrow are
+now handled correctly. Previously, only one was handled as a start-up
+task (in that dependence on it should disappear after the first cycle).
++ Also: validation now prevents use of start-up tasks and normal cycling
+tasks in the same conditional trigger expression, because the meaning of
+such a trigger is undefined beyond the first cycle. 
+
