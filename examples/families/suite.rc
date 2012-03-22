@@ -36,9 +36,6 @@ y1 | H => I
 [visualization]
     collapsed families = FAMx, FAMy
     use node color for edges = False
-    [[node groups]]
-        FAMx = FAMx, x1, x2
-        FAMy = FAMy, y1, y2
     [[node attributes]]
         FAMx = 'color=red', 'shape=ellipse'
         FAMy = 'color=blue', 'shape=ellipse'

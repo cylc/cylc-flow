@@ -610,3 +610,7 @@ task (in that dependence on it should disappear after the first cycle).
 tasks in the same conditional trigger expression, because the meaning of
 such a trigger is undefined beyond the first cycle. 
 
++ Suite visualization: node groups are now automatically defined for
+all task families so that styling can be applied to family and member
+nodes at once using the family name.
+

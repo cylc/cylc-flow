@@ -1323,13 +1323,14 @@ internal \lstinline@=@ character.
 
 \subsubsection[{[[}node groups{]]}]{[visualization] $\rightarrow$ [[node groups]]}
 
-Define named groups of graph nodes (tasks and families) that can have
-attributes assigned to them en masse in the 
-[visualization] $\rightarrow$ [[node attributes]] section.
+Define named groups of graph nodes (tasks and families) which can styled
+en masse, by name, in [visualization] $\rightarrow$ [[node attributes]].
+Node groups are automatically defined for all task families, including
+root, so you can style family and member nodes at once by family name.
 
 \paragraph[\_\_GROUP\_\_]{[visualization] $\rightarrow$ [[node groups]] $\rightarrow$ \_\_GROUP\_\_}
 
-Replace \_\_GROUP\_\_ with each named group of task or family names.
+Replace \_\_GROUP\_\_ with each named group of tasks or families.
 
 \begin{myitemize}
     \item {\em type:} comma separated list of task or family names
@@ -1343,13 +1344,15 @@ Replace \_\_GROUP\_\_ with each named group of task or family names.
 
 \subsubsection[{[[}node attributes{]]}]{[visualization] $\rightarrow$ [[node attributes]]}
 
-Here you can assign graph node attributes to specific tasks, or named
-groups defined in [visualization] $\rightarrow$ [[node groups]].
+Here you can assign graph node attributes to specific nodes, or to all
+members of named groups defined in [visualization] $\rightarrow$ [[node
+groups]] (task families are automatically node groups). Group styling 
+can be overridden for individual nodes or subgroups.
 
 \paragraph[\_\_NAME\_\_]{[visualization] $\rightarrow$ [[node attributes]] $\rightarrow$ \_\_NAME\_\_}
 
-Replace \_\_NAME\_\_ with any task, family, or group that you want to
-assign attributes to.
+Replace \_\_NAME\_\_ with each node or node group for style attribute
+assignment.
 
 \begin{myitemize}
     \item {\em type:} list of quoted \lstinline@'attribute=value'@ pairs

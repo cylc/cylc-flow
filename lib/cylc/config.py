@@ -418,6 +418,22 @@ class config( CylcConfigObj ):
             self['visualization']['initial cycle time'] = 2999010100
             self['visualization']['final cycle time'] = 2999010123
 
+        # Define family node groups automatically so that family and
+        # member nodes can be styled together using the family name.
+        # Users can override this for individual nodes or sub-groups.
+        ng = self['visualization']['node groups']
+        for fam in self.members:
+            if fam not in ng:
+                ng[fam] = [fam] + self.members[fam]
+        # (Note that we're retaining 'default node attributes' even
+        # though this could now be achieved by styling the root family,
+        # because putting default attributes for root in suiterc.spec
+        # results in root appearing last in the ordered dict of node
+        # names, so it overrides the styling for lesser groups and
+        # nodes, whereas the reverse is needed - fixing this would
+        # require reordering task_attr in lib/cylc/graphing.py).
+
+
     def process_queues( self ):
         # TO DO: user input consistency checking (e.g. duplicate queue
         # assignments and non-existent task names)

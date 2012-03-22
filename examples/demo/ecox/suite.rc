@@ -235,7 +235,6 @@ description = "EcoConnect Operation, circa August 2011"
                 topnet_cold, ricom_cold, nzwave_cold
         g_ncep = ncep_get, ncep_run, ncep_upload_thotter, ncep_xml, ncep_products, ncep_housekeeping
         g_var = VAR_ConfigureLS, VAR_AnalysePF, VAR_monitoring
-        g_ops = OPS, OPS_ATOVS, OPS_AircraftSonde, OPS_IASI, OPS_GPSRO, OPS_Satwind, OPS_SurfaceScatt, OPS_AIRS
  	    g_cycle = cycle_check, cycle_check_transfer, jobsubmission_housekeeping
 
     [[node attributes]] 
@@ -250,7 +249,7 @@ description = "EcoConnect Operation, circa August 2011"
         g_nzwave = "shape=rect", "style=filled", "fillcolor=darkolivegreen3"
         g_gwave = "shape=rect", "style=filled", "fillcolor=lightblue3"
         g_nwp = "shape=rect", "style=filled", "fillcolor=lightgoldenrod2"
-        g_ops = "style=filled", "fillcolor=steelblue"
+        OPS = "style=filled", "fillcolor=steelblue"
         g_var = "shape=rect", "style=filled", "fillcolor=DarkSeaGreen"
         g_ncep = "shape=rect", "style=filled", "fillcolor=Brown3"
         UM_nzlam = "shape=septagon", "fillcolor=goldenrod1"

@@ -105,12 +105,11 @@ description = "No description provided" # DEFAULT
     default node attributes = 'style=unfilled', 'color=black', 'shape=box'  # DEFAULT
     default edge attributes = 'color=black'  # DEFAULT
     [[node groups]]
-        # (none)
+        # DEFAULT via config.py: all families are defined as node groups
     [[node attributes]]
         # (none)
     [[run time graph]]
         enable = False  # DEFAULT
         cutoff = 24  # DEFAULT
         directory = '$CYLC_SUITE_DEF_PATH/graphing'  # DEFAULT
-
 
