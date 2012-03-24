@@ -53,7 +53,7 @@ the same task, NAME%CYCLE, is not currently running in the suite).
 
 Arguments:
    SUITE           Registered name of the target suite.
-   TASK            Identity of the task to run (NAME%YYYYMMDDHH).""" 
+   TASK            Identity of the task to run (NAME%CYCLE).""" 
 
 def commandline_parser():
     parser = OptionParser( usage )

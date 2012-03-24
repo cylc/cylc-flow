@@ -84,23 +84,3 @@ class pid(object):
                     ready = False
                     break
         return ready
-
-    def my_successor_still_needs_me( self, tasks ):
-        # TO DO: THIS IS NO LONGER (OR NEVER WAS?) USED?
-        my_ct = self.c_time
-        nx_ct = self.next_c_time()
-        my_name = self.name
-        for task in tasks:
-            if task.name != my_name:
-                continue
-            if task.c_time != nx_ct:
-                continue
-            # found my successor
-            if task.state.is_succeeded():
-                return False
-            else:
-                return True
-
-        # TO DO: consider, and observe, if this can ever happen: 
-        print "WARNING: FAILED TO FIND THE SUCCESSOR OF A SPAWNED TASK!"
-        return False

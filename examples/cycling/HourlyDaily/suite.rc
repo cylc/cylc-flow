@@ -1,0 +1,24 @@
+[scheduling]
+    initial cycle time = 2010080800
+    final cycle time = 2010081218
+    cycling = HoursOfTheDay
+    [[special tasks]]
+        cold-start = cfoo
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph = """
+                cfoo | foo[T-6] => foo => bar
+                    """
+        [[[Daily(0000,2,1)]]]
+            # every second day, starting after 1 days.
+            graph = """
+                foo => baz
+                    """
+[visualization]
+    initial cycle time = 2010080800
+    final cycle time = 2010081200
+    [[node attributes]]
+        root = "style=filled", "fillcolor=yellow"
+        bar = "style=filled", "fillcolor=green"
+        baz = "style=filled", "fillcolor=orange"
+

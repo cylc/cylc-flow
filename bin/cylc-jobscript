@@ -36,8 +36,8 @@ usage() {
     echo ""
     echo "Arguments:"
     echo "  SUITE       - Target suite."
-    echo "  TASK        - Task NAME or NAME%YYYYMMDDHH (if you omit"
-    echo "                the cycle time 2999010100 will be used)."
+    echo "  TASK        - Task NAME or NAME[%CYCLE] (if you omit"
+    echo "                cycle time a default value will be used)."
 }
 
 if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then

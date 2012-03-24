@@ -33,7 +33,7 @@ until it is released. Holding a waiting TASK in a SUITE prevents it
 from running or spawning successors, until it is released.  
 
 See also 'cylc [control] hold'.""",
-["""TASK                 Task to release (NAME%YYYYMMDDHH)"""])
+["""TASK                 Task to release (NAME%CYCLE)"""])
 
 (options, args) = parser.parse_args()
 

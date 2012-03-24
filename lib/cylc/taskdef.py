@@ -40,7 +40,8 @@ from prerequisites.conditionals import conditional_prerequisites
 from task_output_logs import logfiles
 from collections import deque
 from outputs import outputs
-from cycle_time import ct
+from cycle_time import ct, at
+from cycling import container
 
 class Error( Exception ):
     """base class for exceptions in this module."""
@@ -73,6 +74,7 @@ class taskdef(object):
         self.manual_messaging = False
         self.modifiers = []
         self.asyncid_pattern = None
+        self.cycling = False
 
         self.remote_host = None
         self.owner = None
@@ -88,7 +90,8 @@ class taskdef(object):
         self.reset_timer = None
 
         self.intercycle = False
-        self.hours = []
+        #self.hours = []
+        self.cyclers = []
         self.logfiles = []
         self.description = ['Task description has not been completed' ]
 
@@ -170,28 +173,11 @@ class taskdef(object):
                 self.startup_cond_triggers[ validity ] = []
             self.startup_cond_triggers[ validity ].append( [ triggers, exp ] )
 
-    def set_valid_hours( self, section ):
-        if re.match( '^[\s,\d]+$', section ):
-            # Cycling task.
-            hours = re.split( '\s*,\s*', section )
-            for hr in hours:
-                hour = int( hr )
-                if hour < 0 or hour > 23:
-                    raise DefinitionError( 'ERROR: Hour ' + str(hour) + ' must be between 0 and 23' )
-                if hour not in self.hours: 
-                    self.hours.append( hour )
-            self.hours.sort( key=int )
-        else:
-            raise DefinitionError( 'ERROR: Illegal graph valid hours: ' + section )
-
-    def check_consistency( self ):
-        # TO DO: this is not currently used.
-        if len( self.hours ) == 0:
-            raise DefinitionError( 'ERROR: no hours specified' )
-
-        if 'clocktriggered' in self.modifiers:
-            if self.clocktriggered_offset == None:
-                raise DefinitionError( 'ERROR: clock-triggered tasks must specify a time offset' )
+    def add_to_valid_cycles( self, cyclr ):
+            if len( self.cyclers ) == 0:
+                self.cyclers = [cyclr]
+            else:
+                self.cyclers.append( cyclr )
 
     def time_trans( self, strng, hours=False ):
         # Time unit translation.
@@ -272,14 +258,13 @@ class taskdef(object):
         tclass.job_submit_work_directory = self.job_submit_work_directory
         tclass.manual_messaging = self.manual_messaging
 
-        tclass.valid_hours = self.hours
-
         tclass.intercycle = self.intercycle
         tclass.follow_on = self.follow_on_task
 
         tclass.namespace_hierarchy = self.namespace_hierarchy
 
         def tclass_format_prerequisites( sself, preq ):
+            raise SystemExit("TWAAAAAAAAAAAAA")
             m = re.search( '<TAG\s*\-\s*(\d+)>', preq )
             if m:
                 offset = m.groups()[0]
@@ -300,21 +285,22 @@ class taskdef(object):
             return preq
         tclass.format_prerequisites = tclass_format_prerequisites 
 
-        def tclass_add_prerequisites( sself, startup ):
+        def tclass_add_prerequisites( sself, startup, cycler, tag  ):
             # plain triggers
             pp = plain_prerequisites( sself.id ) 
             if startup:
                 triggers = dict( self.triggers.items() + self.startup_triggers.items() )
             else:
                 triggers = self.triggers
-            for val in triggers:
-                for trig in triggers[ val ]:
-                    if val != "once" and not re.match( '^ASYNCID:', val ):
-                        hours = re.split( ',\s*', val )
-                        ihours = [ int(i) for i in hours ]
-                        if int( sself.c_hour ) not in ihours:
-                            continue
-                    pp.add( sself.format_prerequisites( trig ))
+            for cyc in triggers:
+                for trig in triggers[ cyc ]:
+                    if trig.cycling and not cyc.valid( ct(sself.tag) ):
+                        # this trigger is not valid for current cycle
+                        continue
+                    # NOTE that if we need to check validity of async
+                    # tags, async tasks can appear in cycling sections
+                    # in which case cyc.valid( at(sself.tag)) will fail.
+                    pp.add( trig.get(tag, cycler))
             sself.prerequisites.add_requisites( pp )
 
             # plain suicide triggers
@@ -342,15 +328,12 @@ class taskdef(object):
             for val in ctriggers.keys():
                 for ctrig in ctriggers[ val ]:
                     triggers, exp =  ctrig
-                    if val != "once" and not re.match( '^ASYNCID:', val ):
-                        hours = re.split( ',\s*', val )
-                        ihours = [ int(i) for i in hours ]
-                        if int( sself.c_hour ) not in ihours:
-                            continue
+                    ### TO DO: validity check ???? NOT NEEDED ???? (see above)
                     cp = conditional_prerequisites( sself.id )
                     for label in triggers:
                         trig = triggers[label]
-                        cp.add( sself.format_prerequisites( trig ), label )
+                        ##cp.add( sself.format_prerequisites( trig ), label )
+                        cp.add( trig.get( tag, cycler ), label )
                     cp.set_condition( exp )
                     sself.prerequisites.add_requisites( cp )
 
@@ -377,7 +360,7 @@ class taskdef(object):
             if len( self.loose_prerequisites ) > 0:
                 lp = loose_prerequisites(sself.id)
                 for pre in self.loose_prerequisites:
-                    lp.add( pre )
+                    lp.add( pre.get( tag, cycler ) )
                 sself.prerequisites.add_requisites( lp )
 
             if len( self.asynchronous_triggers ) > 0:
@@ -389,14 +372,18 @@ class taskdef(object):
         tclass.add_prerequisites = tclass_add_prerequisites
 
         # class init function
-        def tclass_init( sself, start_c_time, initial_state, stop_c_time=None, startup=False ):
-            sself.tag = sself.adjust_tag( start_c_time )
-            if self.type != 'async_repeating' and self.type != 'async_daemon' and self.type != 'async_oneoff':
-                sself.c_time = sself.tag
-                sself.c_hour = sself.c_time[8:10]
-                sself.orig_c_hour = start_c_time[8:10]
+        def tclass_init( sself, start_tag, initial_state, stop_c_time=None, startup=False ):
+
+            sself.cycon = container.cycon( self.cyclers )
+            if self.cycling:
+                sself.tag = sself.cycon.initial_adjust_up( start_tag )
+            else:
+                sself.tag = start_tag
+
+            sself.c_time = sself.tag
  
             sself.id = sself.name + '%' + sself.tag
+
             sself.external_tasks = deque()
             sself.asyncid_pattern = self.asyncid_pattern
 
@@ -412,7 +399,7 @@ class taskdef(object):
             # prerequisites
             sself.prerequisites = prerequisites()
             sself.suicide_prerequisites = prerequisites()
-            sself.add_prerequisites( startup )
+            sself.add_prerequisites( startup, sself.cycon, sself.tag )
 
             sself.logfiles = logfiles()
             for lfile in self.logfiles:
@@ -421,13 +408,14 @@ class taskdef(object):
             # outputs
             sself.outputs = outputs( sself.id )
             for output in self.outputs:
+                print '>>>>OUTPUT:', output
                 m = re.search( '<TAG\s*([+-])\s*(\d+)>', output )
                 if m:
                     sign, offset = m.groups()
                     if sign == '-':
                        raise DefinitionError, "ERROR, " + sself.id + ": Output offsets must be positive: " + output
                     else:
-                        # TO DO: GENERALIZE FOR ASYNC TASKS
+                        # TO DO: ?offset for async tasks?
                         foo = ct( sself.c_time )
                         foo.increment( hours=offset )
                         ctime = foo.get()

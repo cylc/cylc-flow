@@ -75,61 +75,15 @@ class cycling( task ):
         self.stop_c_time = stop_c_time
         task.__init__( self, state )
 
-    def adjust_tag( self, tag ):
-        return self.nearest_c_time( tag )
-
-    def nearest_c_time( self, rt ):
-        # return the next time >= rt for which this task is valid
-        rh = int( rt[8:10])
-        incr = None
-        first_vh = self.valid_hours[ 0 ]
-        extra_vh = 24 + first_vh 
-        foo = deepcopy( self.valid_hours )
-        foo.append( extra_vh )
-
-        for vh in foo:
-            if rh <= vh:
-                incr = vh - rh
-                break
-        nearest_rt = ct(rt)
-        nearest_rt.increment( hours=incr )
-        return nearest_rt.get()
-
     def ready_to_spawn( self ):
         # return True or False
         self.log( 'CRITICAL', 'ready_to_spawn(): OVERRIDE ME')
         sys.exit(1)
 
-    def next_c_time( self, rt = None):
-        # return the next cycle time, or the next cycle time
-        # after rt, that is valid for this task.
-        #--
-
-        if not rt:
-            # set proper default argument here (python does not allow
-            # self.foo as a default argument)
-            rt = self.c_time
-
-        n_times = len( self.valid_hours )
-        if n_times == 1:
-            incr = 24
-        else:
-            i_now = self.valid_hours.index( int( rt[8:10]) )
-            # list indices start at zero
-            if i_now < n_times - 1 :
-                incr = self.valid_hours[ i_now + 1 ] - self.valid_hours[ i_now ]
-            else:
-                incr = self.valid_hours[ 0 ] + 24 - self.valid_hours[ i_now ]
-
-        foo = ct( rt )
-        foo.increment( hours=incr )
-        return foo.get()
-
-    def next_tag( self ):
-        return self.next_c_time()
-
-    def get_valid_hours( self ):
-        return self.valid_hours
+    def next_tag( self, ctime=None ):
+        if not ctime:
+            ctime = self.tag
+        return self.cycon.next( ctime )
 
     def get_state_summary( self ):
         summary = task.get_state_summary( self )

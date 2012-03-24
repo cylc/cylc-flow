@@ -236,6 +236,11 @@ class scheduler(object):
         self.load_tasks()
         self.initial_oldest_ctime = self.get_oldest_c_time()
 
+        # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
+        #self.suite_state = state_summary( self.config, self.simulation_mode, self.start_time, self.gcylc )
+        self.suite_state = state_summary( self.config, self.simulation_mode, self.initial_oldest_ctime, self.gcylc )
+        self.pyro.connect( self.suite_state, 'state_summary')
+
         global graphing_disabled
         if not self.config['visualization']['run time graph']['enable']:
             graphing_disabled = True
@@ -412,10 +417,6 @@ class scheduler(object):
         # REMOTELY ACCESSIBLE SUITE IDENTIFIER
         suite_id = identifier( self.suite, self.owner )
         self.pyro.connect( suite_id, 'cylcid', qualified = False )
-
-        # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
-        self.suite_state = state_summary( self.config, self.simulation_mode, self.start_time, self.gcylc )
-        self.pyro.connect( self.suite_state, 'state_summary')
 
         # USE QUICK TASK ELIMINATION?
         self.use_quick = self.config['development']['use quick task elimination'] 

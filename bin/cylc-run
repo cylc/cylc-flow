@@ -128,7 +128,7 @@ Arguments:
             self.clock.set( self.start_time )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
-    
+
         for name in task_list:
             if name in self.asynchronous_task_list:
                 tag = '1' # asynchronous tasks start with tag = 1

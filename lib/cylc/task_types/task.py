@@ -647,11 +647,6 @@ class task( Pyro.core.ObjBase ):
         # Cycling tasks override this to compute their next valid cycle time.
         return str( int( self.tag ) + 1 )
 
-    def my_successor_still_needs_me( self, tasks ):
-        # TO DO: THIS IS NO LONGER (OR NEVER WAS?) USED?
-        # overridden in pid
-        return False
-
     def is_cycling( self ):
         return False
 
