@@ -57,7 +57,7 @@ class HoursOfTheDay( cylc.cycling.base.cycler ):
         ic = ct(icin)
         ic.increment(hours=1)
         # TO DO: STREAMLINE THIS SHIT:
-        return self.initial_adjust_up(ic.get(Y2H=True)).get(Y2H=True)
+        return self.initial_adjust_up(ic.get()).get()
 
     def valid( self, ctime ):
         # is ctime in this cycler's sequence

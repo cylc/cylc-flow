@@ -6,6 +6,9 @@ can be migrated to the github issue tracker.
 _______
 GENERAL
 
+* bad graph syntax crashes cylc graph (e.g. "color:blue" for
+  "color=blue").
+
 * "cylc graph -o OUTFILE" does not work for namespace graphs. 
 
 * can validation be made to detect circular dependencies. E.g. 

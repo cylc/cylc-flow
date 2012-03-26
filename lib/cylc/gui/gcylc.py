@@ -1508,7 +1508,7 @@ The cylc forecast suite metascheduler.
  
         label = gtk.Label("[START]: " )
         start_entry = gtk.Entry()
-        start_entry.set_max_length(10)
+        start_entry.set_max_length(14)
         start_entry.set_text( str(defstartc) )
         ic_hbox = gtk.HBox()
         ic_hbox.pack_start( label )
@@ -1517,7 +1517,7 @@ The cylc forecast suite metascheduler.
 
         label = gtk.Label("[STOP]:" )
         stop_entry = gtk.Entry()
-        stop_entry.set_max_length(10)
+        stop_entry.set_max_length(14)
         stop_entry.set_text( str(defstopc) )
         fc_hbox = gtk.HBox()
         fc_hbox.pack_start( label )

@@ -1,20 +1,24 @@
 [scheduling]
-    initial cycle time = 2010080800
-    final cycle time = 2010081500
+    initial cycle time = 29990909
+    final cycle time   = 29990913
+
     cycling = Daily
     [[special tasks]]
         cold-start = cfoo
     [[dependencies]]
-        [[[000000]]]
+        [[[00]]]
             graph = """
-                cfoo | foo[T-1] => foo => bar
+cfoo | foo[T-1] => foo => bar
                     """
-        [[[0000,2,2]]]
-            # every second day, starting after 2 days.
+        [[[00,2,29990911]]]
             graph = """
-                foo => baz
+foo => BAZ
                     """
 [visualization]
-    initial cycle time = 2010080800
-    final cycle time = 2010081500
+    initial cycle time = 29990910
+    final cycle time   = 29990913
+    [[node attributes]]
+        foo = "color=blue"
+        bar = "color=red"
+        BAZ = "style=filled", "color=skyblue"
 

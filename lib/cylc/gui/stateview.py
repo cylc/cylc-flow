@@ -131,7 +131,7 @@ class updater(threading.Thread):
         self.led_digits_one = []
         self.led_digits_two = []
         self.led_digits_blank = gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-blank.xpm" )
-        for i in range(10):
+        for i in range(14):
             self.led_digits_one.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-" + str(i) + ".xpm" ))
             self.led_digits_two.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/two/digit-" + str(i) + ".xpm" ))
 
@@ -246,11 +246,11 @@ class updater(threading.Thread):
         # Digitize cycle time for the LED panel display.
         # For asynchronous tasks blank-pad the task tag.
         led_ctime = []
-        if len(ct) < 10:
-            zct = string.rjust( ct, 10, ' ' )
+        if len(ct) < 14:
+            zct = string.rjust( ct, 14, ' ' )
         else:
             zct = ct
-        for i in range( 10 ):
+        for i in range( 14 ):
             digit = zct[i:i+1]
             if digit == ' ':
                 led_ctime.append( self.led_digits_blank )  

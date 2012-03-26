@@ -19,6 +19,8 @@
 from cylc.cycle_time import ct
 import cylc.cycling.base
 
+# TO DO: update as for the Daily class
+
 class Anniversary( cylc.cycling.base.cycler ):
     @classmethod
     def offset( cls, icin, n ):
@@ -28,22 +30,21 @@ class Anniversary( cylc.cycling.base.cycler ):
         prv = str(int(YYYY)-int(n)) + icin[4:]
         return prv
  
-    def __init__( self, MMDDHHmmss='0101010101', stride=1, delay=0 ):
-        # TO DO: check validity of MMDDHHmmss and delay
+    def __init__( self, MMDDHHmmss='0101000000', step=1, self.reference=None ):
+        # TO DO: check validity of MMDDHHmmss and reference
         self.MMDDHHmmss = MMDDHHmmss
-        self.delay = delay
-        # stride in integer number of years
+        # step in integer number of years
         try:
-            # is stride (a string) a valid int?
-            self.stride = int(stride)
+            self.step = int(step)
         except ValueError:
-            raise SystemExit( "ERROR: stride " + stride + " is not a valid integer." )
+            raise SystemExit( "ERROR: step " + step + " is not a valid integer." )
+        self.reference = reference
 
     def next( self, icin ):
-        # add stride years (same MMDDHHmmss as year length varies)
+        # add step years (same MMDDHHmmss as year length varies)
         # TO DO: HANDLE years < 1000
         YYYY = icin[0:4]
-        nxt = str(int(YYYY)+self.stride) + icin[4:]
+        nxt = str(int(YYYY)+self.step) + icin[4:]
         return nxt
 
     def initial_adjust_up( self, icin ):

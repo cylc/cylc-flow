@@ -27,31 +27,78 @@ class Daily( cylc.cycling.base.cycler ):
         foo.decrement( days=n )
         return foo.get()
  
-    def __init__( self, HHmmss='010101', stride=1, delay=0 ):
-        # TO DO: check validity of HHmmss and delay
-        self.HHmmss = HHmmss
-        self.delay = delay
-        # stride in integer number of days
+    def __init__( self, HHmmss='000000', step=1, reference=None ):
+        # Check HH[mm[ss]]
         try:
-            # is stride (a string) a valid int?
-            self.stride = int(stride)
-        except ValueError:
-            raise SystemExit( "ERROR: stride " + stride + " is not a valid integer." )
+            ct( '29990101' + HHmmss )
+        except CycleTimeError:
+            raise SystemExit( "ERROR, invalid HH[mm[ss]]: " + HHmmss )
+        tmp = '000000'
+        self.HHmmss = HHmmss + tmp[len(HHmmss):]
 
-    def next( self, icin ):
-        # add stride days
-        foo = ct(icin)
-        foo.increment( days=self.stride )
-        return foo.get()
+        # TO DO: check reference
+        self.reference = reference
+
+        # Check step
+        try:
+            self.step = int( step )
+        except ValueError:
+            raise SystemExit( "ERROR: step must be a positive integer: " + step )
+        if self.step <= 0:
+            raise SystemExit( "ERROR: step must be a positive integer: " + step )
+
+        # TO DO: what about half days etc.?
+
+        # Set minimum runahead limit in hours
+        self.minimum_runahead_limit = step * 24
 
     def initial_adjust_up( self, icin ):
-        # next or equal valid: equal as any year is valid
+        # ADJUST UP TO THE NEXT VALID CYCLE (or not, if already valid).
+        # Only used at suite start-up to find the first valid cycle at
+        # or after the suite initial cycle time; in subsequent cycles
+        # next() ensures we remain on valid cycles.
+
         foo = ct( icin )
-        foo.increment( days=self.delay )
+        # first get HHmmss right
+        if foo.HHmmss == self.HHmmss:
+            # initial time is already valid
+            pass
+        else:
+            # adjust up: must be suite start-up
+            if foo.HHmmss < self.HHmmss:
+                # round up
+                foo.parse( foo.strvalue[0:8] + self.HHmmss )
+            else:
+                # round down and increment by a day
+                foo.parse( foo.strvalue[0:8] + self.HHmmss )
+                foo.increment( days=1 )
+
+        # then adjust up relative to the reference cycle and step
+        if self.reference:
+            diff = foo.subtract( ct(self.reference) )
+            rem = diff.days % self.step
+            if rem > 0:
+                n = self.step - rem
+                foo.increment( days=n )
+            
         return foo
 
+    def next( self, icin ):
+        # add step days
+        foo = ct(icin)
+        foo.increment( days=self.step )
+        return foo.get()
+
     def valid( self, ctime ):
-        # Any valid cycle time is a valid day
-        # TO DO: Or strictly valid (check HHmmss)?
-        return True
+        foo = ctime.get()
+        res = True
+        if foo[8:14] != self.HHmmss:
+            res = False
+        elif self.reference:
+            diff = ctime.subtract( ct(self.reference) )
+            rem = diff.days % self.step
+            if rem != 0:
+                res = False
+        return res
+ 
 

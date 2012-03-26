@@ -49,8 +49,8 @@ class ct( object ):
     # template:
     YYYYMMDDHHmmss = '00010101000000'
 
-    def __init__( self, ct ):
-        self.parse( ct )
+    def __init__( self, ctin ):
+        self.parse( ctin )
 
     def parse( self, strx ):
         n = len(strx)
@@ -67,6 +67,7 @@ class ct( object ):
         self.hour    = self.strvalue[ 8:10]
         self.minute  = self.strvalue[10:12]
         self.seconds = self.strvalue[12:14]
+        self.HHmmss  = self.strvalue[8:14 ]
         
         # convert to datetime as a validity check
         try:
@@ -77,7 +78,7 @@ class ct( object ):
             # returns sensible messages: "minute must be in 0..59"
             raise InvalidCycleTimeError( x.__str__() + ': ' + self.get_formatted() )
 
-    def get( self, Y2H=True ):
+    def get( self, Y2H=False ):
         if Y2H:
             # YYYYMMDDHH
             return self.strvalue_Y2H

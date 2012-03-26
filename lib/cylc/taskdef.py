@@ -264,7 +264,8 @@ class taskdef(object):
         tclass.namespace_hierarchy = self.namespace_hierarchy
 
         def tclass_format_prerequisites( sself, preq ):
-            raise SystemExit("TWAAAAAAAAAAAAA")
+            # TO DO: 
+            raise SystemExit("THIS METHOD IS NOT REQUIRED FOR THE NEW CYCLER CODE")
             m = re.search( '<TAG\s*\-\s*(\d+)>', preq )
             if m:
                 offset = m.groups()[0]
@@ -295,7 +296,9 @@ class taskdef(object):
             for cyc in triggers:
                 for trig in triggers[ cyc ]:
                     if trig.cycling and not cyc.valid( ct(sself.tag) ):
-                        # this trigger is not valid for current cycle
+                        # This trigger is not valid for current cycle. 
+                        # TO DO: TEMPORARY DEBUG OUTPUT:
+                        print 'WARNING: THIS TRIGGER NOT VALID FOR', sself.tag
                         continue
                     # NOTE that if we need to check validity of async
                     # tags, async tasks can appear in cycling sections
@@ -375,7 +378,10 @@ class taskdef(object):
         def tclass_init( sself, start_tag, initial_state, stop_c_time=None, startup=False ):
 
             sself.cycon = container.cycon( self.cyclers )
-            if self.cycling:
+            if self.cycling: # and startup:
+                # adjust only needed at start-up but it does not hurt to
+                # do it every time as after the first adjust we're already
+                # on-cycle.
                 sself.tag = sself.cycon.initial_adjust_up( start_tag )
             else:
                 sself.tag = start_tag
@@ -445,7 +451,7 @@ class taskdef(object):
                 super( sself.__class__, sself ).__init__( initial_state, stop_c_time ) 
             else:
                 # TO DO: TEMPORARY HACK FOR ASYNC
-                sself.stop_c_time = '9999123123'
+                sself.stop_c_time = '99991231230000'
                 super( sself.__class__, sself ).__init__( initial_state ) 
 
         tclass.__init__ = tclass_init

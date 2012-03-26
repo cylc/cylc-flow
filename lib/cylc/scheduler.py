@@ -835,7 +835,7 @@ class scheduler(object):
 
     def get_oldest_async_tag( self ):
         # return the tag of the oldest non-daemon task
-        oldest = 9999999999
+        oldest = 99999999999999
         for itask in self.pool.get_tasks():
             if itask.is_cycling():
                 continue
@@ -849,7 +849,7 @@ class scheduler(object):
 
     def get_oldest_c_time( self ):
         # return the cycle time of the oldest task
-        oldest = '9999122823'
+        oldest = '99991228230000'
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
@@ -1021,7 +1021,7 @@ class scheduler(object):
 
     def earliest_unspawned( self ):
         all_spawned = True
-        earliest_unspawned = '9999887766'
+        earliest_unspawned = '99998877665544'
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
@@ -1037,7 +1037,7 @@ class scheduler(object):
     def earliest_unsatisfied( self ):
         # find the earliest unsatisfied task
         all_satisfied = True
-        earliest_unsatisfied = '9999887766'
+        earliest_unsatisfied = '99998877665544'
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
@@ -1054,7 +1054,7 @@ class scheduler(object):
         # find the earliest unsucceeded task
         # EXCLUDING FAILED TASKS
         all_succeeded = True
-        earliest_unsucceeded = '9999887766'
+        earliest_unsucceeded = '99998877665544'
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue

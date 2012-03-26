@@ -9,7 +9,7 @@
             graph = """
                 cfoo | foo[T-6] => foo => bar
                     """
-        [[[Daily(0000,2,1)]]]
+        [[[Daily(000000,2,1)]]]
             # every second day, starting after 1 days.
             graph = """
                 foo => baz

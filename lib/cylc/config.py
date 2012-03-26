@@ -1237,15 +1237,15 @@ class config( CylcConfigObj ):
             gr_edges.append( (nl, nr, False, e.suicide, e.conditional) )
 	
         cyc = cycon( self.edges.keys() ) 
-        initial_ctime = cyc.initial_adjust_up( start_ctime )#.get(Y2H=True)
+        global_initial_ctime = cyc.initial_adjust_up( start_ctime )
         for cyclr in self.edges.keys():
-            ctime = cyclr.initial_adjust_up( start_ctime ).get(Y2H=True)
+            ctime = cyclr.initial_adjust_up( start_ctime ).get()
             started = False
             while int(ctime) <= int(stop):
                 for e in self.edges[cyclr]:
                     suicide = e.suicide
                     conditional = e.conditional
-                    if int(ctime) > int(initial_ctime):
+                    if int(ctime) > int(global_initial_ctime):
                         started = True
                     right = e.get_right(ctime, started, raw, startup_exclude_list, [])
                     left  = e.get_left( cyclr, ctime, started, raw, startup_exclude_list, [])
@@ -1273,9 +1273,7 @@ class config( CylcConfigObj ):
                         lctime = None
                     nl, nr = self.close_families( left, right )
                     gr_edges.append( ( nl, nr, False, e.suicide, e.conditional ) )
-                #print '(a)', ctime
                 ctime = cyclr.next( ctime ) 
-                #print '(b)', ctime
                 started = True
             
         # sort and then add edges in the hope that edges added in the
