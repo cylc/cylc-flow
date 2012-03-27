@@ -24,7 +24,7 @@ class async( cylc.cycling.base.cycler ):
     def offset( cls, tag, n ):
         return str(int(tag)-int(n))
  
-    def __init__( self, args ):
+    def __init__( self, *args ):
         pass
 
     def next( self, tag ):
