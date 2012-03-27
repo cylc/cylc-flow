@@ -20,7 +20,7 @@ import datetime
 import re
 
 """ 
-CYCLE TIME: YYYYMMDDHH(mm)
+CYCLE TIME: YYYY[MM[DD[HH[mm[ss]]]]]
 """
 
 class CycleTimeError( Exception ):
@@ -59,7 +59,7 @@ class ct( object ):
         else:
             raise InvalidCycleTimeError, 'ERROR: Illegal cycle time (YYYY[MM[DD[HH[mm[ss]]]]]): ' + strx
 
-        self.strvalue_Y2H = self.strvalue[0:10]
+        #self.strvalue_Y2H = self.strvalue[0:10]
 
         self.year    = self.strvalue[ 0:4 ]
         self.month   = self.strvalue[ 4:6 ]
@@ -78,13 +78,8 @@ class ct( object ):
             # returns sensible messages: "minute must be in 0..59"
             raise InvalidCycleTimeError( x.__str__() + ': ' + self.get_formatted() )
 
-    def get( self, Y2H=False ):
-        if Y2H:
-            # YYYYMMDDHH
-            return self.strvalue_Y2H
-        else:
-            # YYYYMMDDHHmmss
-            return self.strvalue
+    def get( self ):
+        return self.strvalue
 
     def get_formatted( self ):
         # YYYY/MM/DD HH:mm:ss
@@ -127,14 +122,4 @@ class ct( object ):
         # subtract this ct from me, return hours
         delta = self.subtract(ct)
         return int( delta.days * 24 + delta.seconds / 3600 + delta.microseconds / ( 3600 * 1000000 ))
-
-
-if __name__ == "__main__":
-    foo = ct( '20110526184359' )
-    print foo.get(), foo.get_formatted()
-    try:
-        bar = ct('2011053918' )
-    except CycleTimeError, x:
-        print x 
-
 

@@ -112,9 +112,11 @@ class TaskNotDefinedError( SuiteConfigError ):
     pass
 
 class edge( object):
-    def __init__( self, l, r, sasl=False, suicide=False, conditional=False ):
+    def __init__( self, l, r, cyclr, sasl=False, suicide=False, conditional=False ):
+        """contains qualified node names, e.g. 'foo[T-6]:out1'"""
         self.left = l
         self.right = r
+        self.cyclr = cyclr
         self.sasl = sasl
         self.suicide = suicide
         self.conditional = conditional
@@ -135,7 +137,7 @@ class edge( object):
 
         return self.right + '%' + str(tag)  # str for int tags (async)
 
-    def get_left( self, cyc, tag, not_first_cycle, raw, startup_only, exclude ):
+    def get_left( self, tag, not_first_cycle, raw, startup_only, exclude ):
         # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
         if self.left in exclude:
             return None
@@ -156,7 +158,7 @@ class edge( object):
         m = re.search( '(\w+)\s*\[\s*T\s*([+-])(\d+)\s*\]', left )
         if m: 
             left, sign, offset = m.groups()
-            tag = cyc.__class__.offset( tag, offset )
+            tag = self.cyclr.__class__.offset( tag, offset )
         if self.sasl:
             tag = 1
 
@@ -167,7 +169,8 @@ class config( CylcConfigObj ):
     def __init__( self, suite, suiterc, simulation_mode=False, verbose=False, collapsed=[] ):
         self.simulation_mode = simulation_mode
         self.verbose = verbose
-        self.edges = {} # edges[ cycler ] = [ [A,B], [C,D], ... ]
+        self.edges = []
+        self.cyclers = []
         self.taskdefs = {}
 
         self.async_oneoff_edges = []
@@ -888,6 +891,7 @@ class config( CylcConfigObj ):
 
         mod = __import__( 'cylc.cycling.' + modname, globals(), locals(), [modname] )
         cyclr = getattr( mod, modname )(*args)
+        self.cyclers.append(cyclr)
 
         ## SYNONYMS FOR TRIGGER-TYPES, e.g. 'fail' = 'failure' = 'failed'
         ## we can replace synonyms here with the standard type designator:
@@ -1071,7 +1075,7 @@ class config( CylcConfigObj ):
         for left in lnames:
             if left in self.async_oneoff_tasks + self.async_repeating_tasks:
                 sasl = True
-            e = edge( left, right, sasl, suicide, conditional )
+            e = edge( left, right, cyclr, sasl, suicide, conditional )
             if ttype == 'async_oneoff':
                 if e not in self.async_oneoff_edges:
                     self.async_oneoff_edges.append( e )
@@ -1080,10 +1084,7 @@ class config( CylcConfigObj ):
                     self.async_repeating_edges.append( e )
             else:
                 # cycling
-                if cyclr not in self.edges:
-                    self.edges[cyclr] = []
-                if e not in self.edges[cyclr]:
-                    self.edges[cyclr].append( e )
+                self.edges.append(e)
 
     def generate_taskdefs( self, line, lnames, right, ttype, section, cyclr, asyncid_pattern ):
         for node in lnames + [right]:
@@ -1232,49 +1233,49 @@ class config( CylcConfigObj ):
 
         for e in self.async_oneoff_edges + self.async_repeating_edges:
             right = e.get_right(1, False, False, [], [])
-            left  = e.get_left( None, 1, False, False, [], [])
+            left  = e.get_left( 1, False, False, [], [])
             nl, nr = self.close_families( left, right )
             gr_edges.append( (nl, nr, False, e.suicide, e.conditional) )
 	
-        cyc = cycon( self.edges.keys() ) 
+        cyc = cycon( self.cyclers ) 
         global_initial_ctime = cyc.initial_adjust_up( start_ctime )
-        for cyclr in self.edges.keys():
-            ctime = cyclr.initial_adjust_up( start_ctime ).get()
-            started = False
+
+        for e in self.edges:
+            ctime = e.cyclr.initial_adjust_up( start_ctime ).get()
             while int(ctime) <= int(stop):
-                for e in self.edges[cyclr]:
-                    suicide = e.suicide
-                    conditional = e.conditional
-                    if int(ctime) > int(global_initial_ctime):
-                        started = True
-                    right = e.get_right(ctime, started, raw, startup_exclude_list, [])
-                    left  = e.get_left( cyclr, ctime, started, raw, startup_exclude_list, [])
+                suicide = e.suicide
+                conditional = e.conditional
+                if int(ctime) == int(global_initial_ctime):
+                    initial_cycle = False
+                else:
+                    initial_cycle = True
+                right = e.get_right(ctime, initial_cycle, raw, startup_exclude_list, [])
+                left  = e.get_left( ctime, initial_cycle, raw, startup_exclude_list, [])
 
-                    if left == None and right == None:
-                        # nothing to add to the graph
+                if left == None and right == None:
+                    # nothing to add to the graph
+                    continue
+
+                if left != None and not e.sasl:
+                    lname, lctime = re.split( '%', left )
+                    sct = ct(start_ctime)
+                    diffhrs = sct.subtract_hrs( ct(lctime) )
+                    if diffhrs > 0:
+                        # check that left is not earlier than start time
+                        # TO DO: does this invalidate right too?
                         continue
+                else:
+                    lname = None
+                    lctime = None
 
-                    if left != None and not e.sasl:
-                        lname, lctime = re.split( '%', left )
-                        sct = ct(start_ctime)
-                        diffhrs = sct.subtract_hrs( ct(lctime) )
-                        if diffhrs > 0:
-                            # check that left is not earlier than start time
-                            # TO DO: does this invalidate right too?
-                            continue
-                    else:
-                        lname = None
-                        lctime = None
-
-                    if right != None:
-                        rname, rctime = re.split( '%', right )
-                    else:
-                        rname = None
-                        lctime = None
-                    nl, nr = self.close_families( left, right )
-                    gr_edges.append( ( nl, nr, False, e.suicide, e.conditional ) )
-                ctime = cyclr.next( ctime ) 
-                started = True
+                if right != None:
+                    rname, rctime = re.split( '%', right )
+                else:
+                    rname = None
+                    lctime = None
+                nl, nr = self.close_families( left, right )
+                gr_edges.append( ( nl, nr, False, e.suicide, e.conditional ) )
+                ctime = e.cyclr.next( ctime ) 
             
         # sort and then add edges in the hope that edges added in the
         # same order each time will result in the graph layout not
