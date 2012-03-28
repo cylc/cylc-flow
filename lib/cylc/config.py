@@ -1270,15 +1270,6 @@ class config( CylcConfigObj ):
                         # check that left is not earlier than start time
                         # TO DO: does this invalidate right too?
                         continue
-                else:
-                    lname = None
-                    lctime = None
-
-                if right != None:
-                    rname, rctime = re.split( '%', right )
-                else:
-                    rname = None
-                    lctime = None
 
                 nl, nr = self.close_families( left, right )
                 gr_edges.append( ( nl, nr, False, e.suicide, e.conditional ) )
