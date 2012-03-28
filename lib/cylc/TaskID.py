@@ -43,6 +43,11 @@ class AsyncTag( object ):
         self.tag = tag
     def getstr( self, formatted=False ):
         return self.tag
+    def get( self, formatted=False ):
+        # TO DO: get rid of this as we replace old ct() with new
+        # CycleTime()
+        return self.tag
+
 
 class CycleTime( object ):
     """YYYY[MM[DD[HH[mm[ss]]]]]"""
@@ -136,7 +141,7 @@ class TaskID(object):
         if len(args) == 1:
             id = args[0]
         elif len(args) == 2:
-            id = args[0] + '%' + args[1]
+            id = args[0] + '%' + str(args[1])
         else:
             raise InvalidTaskIDError, '"' + ','.join(args) + '"'
         try:

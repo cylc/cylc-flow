@@ -1,8 +1,6 @@
 
 Cylc generalized cycling branch.
 
-Squash-merged from a private feature branch, March 24.
-
 CURRENT STATUS:
 
 Working (including graphing, except see To Do below) with several
@@ -24,3 +22,7 @@ TO DO:
  + Cycle times are still passed around as strings and temporarily
  converted temporarily to cycle time objects whenever time manipulation
  is required - we should move entirely to objects.
+
+TO DO: USE 'a:INT' INTERNALLY FOR ASYNC TAGS TO MAKE CHECKING FOR TAG
+VALIDITY EASIER.
+

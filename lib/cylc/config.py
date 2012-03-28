@@ -42,7 +42,7 @@ from prerequisites.conditionals import TriggerExpressionError
 from regpath import RegPath
 from cylc.cycling.container import cycon
 from trigger import triggerx
-from TaskID import TaskID
+from TaskID import TaskID, AsyncTag
 
 try:
     from jinja2 import Environment, FileSystemLoader, TemplateError
@@ -136,7 +136,12 @@ class edge( object):
         # strip off special outputs
         self.right = re.sub( ':\w+', '', self.right )
 
-        return TaskID( self.right, tag.get() )
+        # TO DO: SORT OUT USE OF ASYNC TAGS!!!!
+        foo = tag.get()
+        if len(foo) < 6:
+            foo = 'a:' + foo
+
+        return TaskID( self.right, foo )
 
     def get_left( self, tag, not_first_cycle, raw, startup_only, exclude ):
         # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
@@ -158,7 +163,7 @@ class edge( object):
 
         if self.sasl:
             # left node is asynchronous, so override the cycler
-            tag = 1
+            tag = '1'
         else:
             m = re.search( '(\w+)\s*\[\s*T\s*([+-])(\d+)\s*\]', left )
             if m: 
@@ -166,6 +171,10 @@ class edge( object):
                 tag = self.cyclr.__class__.offset( tag.get(), offset )
             else:
                 tag = tag.get()
+
+        # TO DO: SORT OUT USE OF ASYNC TAGS!!!!
+        if len(tag) < 6:
+            tag = 'a:' + tag
 
         return TaskID( left, tag )
 
@@ -1243,8 +1252,8 @@ class config( CylcConfigObj ):
         gr_edges = []
 
         for e in self.async_oneoff_edges + self.async_repeating_edges:
-            right = e.get_right(1, False, False, [], [])
-            left  = e.get_left( 1, False, False, [], [])
+            right = e.get_right(AsyncTag(1), False, False, [], [])
+            left  = e.get_left( AsyncTag(1), False, False, [], [])
             nl, nr = self.close_families( left, right )
             gr_edges.append( (nl, nr, False, e.suicide, e.conditional) )
 	
