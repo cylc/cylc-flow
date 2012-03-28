@@ -160,9 +160,14 @@ class TaskID(object):
 
     def getstr( self, formatted=False ):
         if formatted:
-            return self.name.getstr() + '(' + self.tag.getstr(formatted) + ')'
+            # STILL USING % AS IT IS ASSUMED IN
+            # lib/cylc/cylc_xdot.py:get_graph()
+            return self.name.getstr() + '%' + self.tag.getstr(formatted)
         else:
             return self.name.getstr() + '%' + self.tag.getstr()
+
+    def split( self ):
+        return ( self.name, self.tag )
 
 if __name__ == "__main__":
     # UNIT TEST

@@ -27,7 +27,7 @@ class Daily( cylc.cycling.base.cycler ):
         foo.decrement( days=n )
         return foo.get()
  
-    def __init__( self, HHmmss='000000', step=1, reference=None ):
+    def __init__( self, HHmmss='000000', step=1, anchor=None ):
         # Check HH[mm[ss]]
         try:
             ct( '29990101' + HHmmss )
@@ -36,8 +36,8 @@ class Daily( cylc.cycling.base.cycler ):
         tmp = '000000'
         self.HHmmss = HHmmss + tmp[len(HHmmss):]
 
-        # TO DO: check reference
-        self.reference = reference
+        # TO DO: check anchor
+        self.anchor = anchor
 
         # Check step
         try:
@@ -73,9 +73,9 @@ class Daily( cylc.cycling.base.cycler ):
                 foo.parse( foo.strvalue[0:8] + self.HHmmss )
                 foo.increment( days=1 )
 
-        # then adjust up relative to the reference cycle and step
-        if self.reference:
-            diff = foo.subtract( ct(self.reference) )
+        # then adjust up relative to the anchor cycle and step
+        if self.anchor:
+            diff = foo.subtract( ct(self.anchor) )
             rem = diff.days % self.step
             if rem > 0:
                 n = self.step - rem
@@ -84,18 +84,16 @@ class Daily( cylc.cycling.base.cycler ):
         return foo
 
     def next( self, icin ):
-        # add step days
-        foo = ct(icin)
-        foo.increment( days=self.step )
-        return foo.get()
+        icin.increment( days=self.step )
+        return icin
 
     def valid( self, ctime ):
         foo = ctime.get()
         res = True
         if foo[8:14] != self.HHmmss:
             res = False
-        elif self.reference:
-            diff = ctime.subtract( ct(self.reference) )
+        elif self.anchor:
+            diff = ctime.subtract( ct(self.anchor) )
             rem = diff.days % self.step
             if rem != 0:
                 res = False

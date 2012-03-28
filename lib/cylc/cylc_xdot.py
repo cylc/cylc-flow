@@ -192,7 +192,7 @@ class MyDotWindow( xdot.DotWindow ):
             try:
                 graph.draw( self.outfile, prog='dot' )
             except IOError, x:
-                print x
+                print >> sys.stderr, x
                 self.disable_output_image = True
 
     def update(self):
