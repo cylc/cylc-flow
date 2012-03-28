@@ -5,13 +5,13 @@
     [[special tasks]]
         cold-start = cfoo
     [[dependencies]]
-        [[[0505050000]]]
+        [[[050505]]]
             # every 5th May at 05:00:00 hours
             graph = """
                 cfoo | foo[T-1] => foo => bar
                     """
-        [[[0505050000,2,2]]]
-            # every second year, starting after 2 years.
+        [[[050505,2,2010]]]
+            # every second year, anchored on 2010
             graph = """
                 foo => baz
                     """
