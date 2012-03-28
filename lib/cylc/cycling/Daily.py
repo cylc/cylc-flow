@@ -20,6 +20,7 @@ from cylc.cycle_time import ct
 import cylc.cycling.base
 
 class Daily( cylc.cycling.base.cycler ):
+
     @classmethod
     def offset( cls, icin, n ):
         # decrement n days 
@@ -81,16 +82,19 @@ class Daily( cylc.cycling.base.cycler ):
                 n = self.step - rem
                 foo.increment( days=n )
             
-        return foo
+        return foo.get()
 
     def next( self, icin ):
-        icin.increment( days=self.step )
-        return icin
+        foo = ct(icin)
+        foo.increment( days=self.step )
+        return foo.get()
 
     def valid( self, ctime ):
         foo = ctime.get()
         res = True
-        if foo[8:14] != self.HHmmss:
+        print "TO DO: FULL HHmmss in Daily.py"
+        ###if foo[8:14] != self.HHmmss:
+        if foo[8:10] != self.HHmmss[0:2]:
             res = False
         elif self.anchor:
             diff = ctime.subtract( ct(self.anchor) )
@@ -99,4 +103,3 @@ class Daily( cylc.cycling.base.cycler ):
                 res = False
         return res
  
-

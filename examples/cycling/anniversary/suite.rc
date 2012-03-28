@@ -1,6 +1,6 @@
 [scheduling]
-    initial cycle time = 2010
-    final cycle time = 2015
+    initial cycle time = 2010080800
+    final cycle time = 2015080800
     cycling = Anniversary
     [[special tasks]]
         cold-start = cfoo

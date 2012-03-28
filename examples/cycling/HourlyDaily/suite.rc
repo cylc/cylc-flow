@@ -1,22 +1,26 @@
+#!Jinja2
+
+{% set START = 2010080800 %}
+{% set STOP  = 2010081200 %}
+
 [scheduling]
-    initial cycle time = 2010080800
-    final cycle time = 2010081218
+    initial cycle time = {{ START }}
+    final cycle time   = {{ STOP }}
     cycling = HoursOfTheDay
     [[special tasks]]
         cold-start = cfoo
     [[dependencies]]
-        [[[0,6,12,18]]]
+        [[[0,12]]]
             graph = """
-                cfoo | foo[T-6] => foo => bar
+                cfoo | foo[T-12] => foo => bar
                     """
-        [[[Daily(000000,2,1)]]]
-            # every second day, starting after 1 days.
+        [[[Daily(00,2,20100809)]]]
             graph = """
                 foo => baz
                     """
 [visualization]
-    initial cycle time = 2010080800
-    final cycle time = 2010081200
+    initial cycle time = {{ START }}
+    final cycle time   = {{ STOP }}
     [[node attributes]]
         root = "style=filled", "fillcolor=yellow"
         bar = "style=filled", "fillcolor=green"

@@ -1,6 +1,6 @@
 [scheduling]
-    initial cycle time = 20120909
-    final cycle time   = 20120913
+    initial cycle time = 2012090900
+    final cycle time   = 2012091300
 
     cycling = Daily
     [[special tasks]]
@@ -17,8 +17,8 @@ waz2 => foo
 foo => BAZ
                     """
 [visualization]
-    initial cycle time = 20120910
-    final cycle time   = 20120913
+    initial cycle time = 2012091000
+    final cycle time   = 2012091300
     [[node attributes]]
         foo = "color=blue"
         bar = "color=red"

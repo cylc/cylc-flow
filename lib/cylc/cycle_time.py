@@ -68,6 +68,7 @@ class ct( object ):
         self.minute  = self.strvalue[10:12]
         self.seconds = self.strvalue[12:14]
         self.HHmmss  = self.strvalue[8:14 ]
+        self.MMDDHHmmss  = self.strvalue[4:14 ]
         
         # convert to datetime as a validity check
         try:
@@ -79,7 +80,10 @@ class ct( object ):
             raise InvalidCycleTimeError( x.__str__() + ': ' + self.get_formatted() )
 
     def get( self ):
-        return self.strvalue
+        #### TO DO: INTEGER CTIME COMPARISONS REQUIRE USE OF SAME NUMBER
+        #### OF DIGITS EVERYWHERE
+        #return self.strvalue
+        return self.strvalue[0:10] # just YYYYMMDDHH for now
 
     def get_formatted( self ):
         # YYYY/MM/DD HH:mm:ss

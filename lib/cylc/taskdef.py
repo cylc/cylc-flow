@@ -299,6 +299,7 @@ class taskdef(object):
                         # This trigger is not valid for current cycle. 
                         # TO DO: TEMPORARY DEBUG OUTPUT:
                         print 'WARNING: THIS TRIGGER NOT VALID FOR', sself.tag
+                        print '  ', trig.get(sself.tag, cyc)
                         continue
                     # NOTE that if we need to check validity of async
                     # tags, async tasks can appear in cycling sections

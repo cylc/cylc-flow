@@ -73,7 +73,8 @@ class CycleTime( object ):
         self.minute  = self.strvalue[10:12]
         self.seconds = self.strvalue[12:14]
         self.HHmmss  = self.strvalue[8:14 ]
-        
+        self.MMDDHHmmss  = self.strvalue[4:14 ]
+ 
         # convert to datetime as a validity check
         try:
             self.dtvalue = datetime.datetime( int(self.year), int(self.month),
@@ -89,7 +90,10 @@ class CycleTime( object ):
             return self.year + '/' + self.month + '/' + self.day + '|' + \
                     self.hour + ':' + self.minute + ':' + self.seconds
         else:
-            return self.strvalue
+            #### TO DO: INTEGER CTIME COMPARISONS REQUIRE USE OF SAME NUMBER
+            #### OF DIGITS EVERYWHERE
+            #return self.strvalue
+            return self.strvalue[0:10] # just YYYYMMDDHH for now
 
     def get_datetime( self ):
         return self.dtvalue

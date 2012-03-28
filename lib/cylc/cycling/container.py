@@ -28,7 +28,7 @@ class cycon( object ):
     def initial_adjust_up( self, ctime ):
         adjusted = []
         for cyc in self.cyclers:
-            adjusted.append( cyc.initial_adjust_up(ctime).get() )
+            adjusted.append( cyc.initial_adjust_up(ctime) )
         adjusted.sort()
         return adjusted[0]
 

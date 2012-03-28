@@ -39,7 +39,10 @@ class HoursOfTheDay( cylc.cycling.base.cycler ):
             self.valid_hours.sort()
 
     def initial_adjust_up( self, icin ):
-        # adjust up to the next valid hour
+        # ADJUST UP TO THE NEXT VALID CYCLE (or not, if already valid).
+        # Used at suite start-up to find the first valid cycle at
+        # or after the suite initial cycle time; in subsequent cycles
+        # next() ensures we remain on valid cycles.
         adjusted = ct( icin )
         rh = int(adjusted.hour)
         incr = None
@@ -50,14 +53,15 @@ class HoursOfTheDay( cylc.cycling.base.cycler ):
         if incr == None:
             incr = 24 - rh + self.valid_hours[0]
         adjusted.increment( hours=incr )
-        return adjusted
+        return adjusted.get()
 
     def next( self, icin ):
-        # add one hour
-        ic = ct(icin)
-        ic.increment(hours=1)
+        foo = ct(icin)
+        # cheat: add one hour and then call initial_adjust_up()
+        foo.increment(hours=1)
         # TO DO: STREAMLINE THIS SHIT:
-        return self.initial_adjust_up(ic.get()).get()
+        bar = self.initial_adjust_up(foo.get())
+        return bar
 
     def valid( self, ctime ):
         # is ctime in this cycler's sequence

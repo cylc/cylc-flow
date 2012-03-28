@@ -31,7 +31,7 @@ class async( cylc.cycling.base.cycler ):
         return str( int(tag) + 1 )
 
     def initial_adjust_up( self, tag ):
-        return at(tag)
+        return tag
 
     def valid( self, tag ):
         return True

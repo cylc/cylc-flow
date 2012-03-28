@@ -3,11 +3,10 @@ Cylc generalized cycling branch.
 
 CURRENT STATUS:
 
-Working (including graphing, except see To Do below) with several
-cycling classes:
-     +HoursOfTheDay (= original NWP mechanism)
-     +Daily (increment by whole days, with stride and start delay)
-     +Anniversary (increment by whole years, with stride and start delay)
+Working (except see To Do below) with several cycling classes:
+  +HoursOfTheDay (= original NWP mechanism)
+  +Daily (increment by whole days, with stride and start delay)
+  +Anniversary (increment by whole years, with stride and start delay)
 
 Suite defines a default cycling class, which can be overridden 
 for particular graph sections.
@@ -15,14 +14,16 @@ for particular graph sections.
 The meaning of a cycle time offset foo[T-n] is defined by the cycling
 class in use for a graph section. 
 
-Example suites under examples/cycling/
+Three example suites under examples/cycling/
 
 TO DO:
  + Check and complete any unusual cases - suicide triggers etc.
  + Cycle times are still passed around as strings and temporarily
  converted temporarily to cycle time objects whenever time manipulation
- is required - we should move entirely to objects.
-
-TO DO: USE 'a:INT' INTERNALLY FOR ASYNC TAGS TO MAKE CHECKING FOR TAG
+ is required - we should move entirely to objects USING THE NEW
+ taskid.py CLASSES.
+ + USE 'a:INT' INTERNALLY FOR ASYNC TAGS TO MAKE CHECKING FOR TAG
 VALIDITY EASIER.
+ + To complete the extension to YYYYMMDDHHmmss (i.e. with mmss) check
+ for any hardwired assumptions about ctime string length.
 
