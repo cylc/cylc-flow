@@ -783,7 +783,15 @@ class scheduler(object):
             self.hold_time = None
         for itask in self.pool.get_tasks():
             if itask.state.is_held():
-                itask.state.set_status('waiting')
+                if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+                    # this task has passed the suite stop time
+                    itask.log( 'WARNING', "Not releasing (beyond suite stop cycle) " + self.stop_time )
+                elif itask.stop_c_time and int( itask.c_time ) > int( itask.stop_c_time ):
+                    # this task has passed its own stop time
+                    itask.log( 'WARNING', "Not releasing (beyond task stop cycle) " + itask.stop_c_time )
+                else:
+                    # release this task
+                    itask.state.set_status('waiting')
  
         # TO DO: write a separate method for cancelling a stop time:
         #if self.stop_time:

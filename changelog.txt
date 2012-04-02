@@ -614,3 +614,5 @@ such a trigger is undefined beyond the first cycle.
 all task families so that styling can be applied to family and member
 nodes at once using the family name.
 
++ Bug fix: "release suite" was releasing tasks to run even if they were 
+held due to having passed the suite stop time (if set).
