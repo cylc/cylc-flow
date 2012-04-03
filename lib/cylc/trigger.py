@@ -20,7 +20,8 @@ class triggerx(object):
     def set_cycling( self ):
         self.cycling = True
     def set_special( self, msg ):
-        self.msg = msg
+        # Replace <CYLC_TASK_CYCLE_TIME> with <TAG> in the internal output message
+        self.msg = re.sub( 'CYLC_TASK_CYCLE_TIME', 'TAG', msg )
     def set_type( self, type ):
         self.type = type
     def set_offset( self, offset ):
@@ -38,5 +39,7 @@ class triggerx(object):
                 if self.offset:
                     ctime = cycler.offset( ctime, self.offset )
                 preq = self.name + '%' + ctime + ' ' + self.type
+        # From old tclass_format_prerequisites
+        preq = re.sub( '<TAG>', ctime, preq )
         return preq
 
