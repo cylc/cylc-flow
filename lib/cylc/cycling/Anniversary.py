@@ -28,11 +28,11 @@ def pad_year( iY ):
 
 class Anniversary( cycler ):
 
-    """For a cycle time sequence that increment by one or more years to
+    """For a cycle time sequence that increments by one or more years to
     the same anniversary date (e.g. every second year at 5 May 00 UTC)
     with an anchor year to pin the sequence down (so that the same
     sequence results regardless of the initial cycle time).
-    See cycler.py for additional documentation."""
+    See lib/cylc/cycling/base.py for additional documentation."""
 
     @classmethod
     def offset( cls, T, n ):
@@ -64,33 +64,29 @@ class Anniversary( cycler ):
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""
         try:
+            # is T a legal cycle time 
             ct(T)
         except CycleTimeError, x:
             raise CyclerError, str(x)
 
-        T_YYYY = T[0:4]
-        T_MMDDHHmmss = T[4:]
         # first get the anniversary date MMDDHHmmss right
-        if T_MMDDHHmmss == self.MMDDHHmmss:
-            # the anniversary date is already valid
-            CT = ct(T)
-        else:
+        if T[4:] != self.MMDDHHmmss:
             # adjust up to next valid
-            if T_MMDDHHmmss < self.MMDDHHmmss:
+            if T[4:] < self.MMDDHHmmss:
                 # round up
-                CT = ct( T_YYYY + self.MMDDHHmmss )
+                T = T[0:4] + self.MMDDHHmmss
             else:
                 # round down and increment the year
-                CT = ct( pad_year(int(T_YYYY)+1) + self.MMDDHHmmss )
+                T = pad_year(int(T[0:4])+1) + self.MMDDHHmmss
 
         # now adjust up relative to the anchor cycle and step
-        diff = int(self.anchorYYYY) - int(CT.strvalue[0:4])
+        diff = int(self.anchorYYYY) - int(T[0:4])
         rem = diff % self.step
         if rem > 0:
             n = self.step - rem
-            CT = ct( pad_year(int(CT.year)+n) + self.MMDDHHmmss )
+            T = pad_year(int(T[0:4])+n) + self.MMDDHHmmss
             
-        return CT.get()
+        return T
 
     def next( self, T ):
         """Add step years to get to the next anniversary after T."""
