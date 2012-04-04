@@ -2,6 +2,7 @@
     initial cycle time = 2010
     final cycle time = 2015
     cycling = Anniversary
+    runahead limit = 20000 # temporary, until cycler class compute the minimum
     [[special tasks]]
         cold-start = cfoo
     [[dependencies]]
