@@ -16,84 +16,122 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.cycle_time import ct
-import cylc.cycling.base
+from cylc.cycle_time import ct, CycleTimeError
+from cylc.cycling.base import cycler, CyclerError
 
-class Anniversary( cylc.cycling.base.cycler ):
+def pad_year( iY ):
+    # return string YYYY from an integer year value
+    tmp = '0000' # template, to handle years < 1000
+    s_iY = str( iY )
+    n = len( s_iY )
+    return tmp[n:] + s_iY[0:n]
+
+class Anniversary( cycler ):
+
+    """For a cycle time sequence that increment by one or more years to
+    the same anniversary date (e.g. every second year at 5 May 00 UTC)
+    with an anchor year to pin the sequence down (so that the same
+    sequence results regardless of the initial cycle time).
+    See cycler.py for additional documentation."""
 
     @classmethod
-    def offset( cls, icin, n ):
-        # decrement n years (same MMDDHHmmss as year length varies)
-        YYYY = icin[0:4]
-        # TO DO: HANDLE years < 1000
-        prv = str(int(YYYY)-int(n)) + icin[4:]
-        return prv
+    def offset( cls, T, n ):
+        """Decrement T by n years to the same MMDDHHmmss."""
+        YYYY = T[0:4]
+        MMDDHHmmss = T[4:]
+        return str(int(YYYY)-int(n)) + MMDDHHmmss
  
-    def __init__( self, MMDDHHmmss='0101000000', step=1, anchor=None ):
-        # TO DO: check validity of MMDDHHmmss and anchor
-        self.MMDDHHmmss = MMDDHHmmss
+    def __init__( self, T=None, step=1 ):
+        """Store anniversary date, step, and anchor."""
+        # check input validity
+        try:
+            T = ct( T ).get() # allows input of just YYYY
+        except CycleTimeError, x:
+            raise CyclerError, str(x)
+        else:
+            # anchor year
+            self.anchorYYYY = T[0:4]
+            # aniversary date
+            self.MMDDHHmmss = T[4:]
+ 
         # step in integer number of years
         try:
+            # check validity
             self.step = int(step)
         except ValueError:
-            raise SystemExit( "ERROR: step " + step + " is not a valid integer." )
-        self.anchor = anchor
+            raise CyclerError, "ERROR: step " + step + " is not a valid integer"
 
-    def initial_adjust_up( self, icin ):
-        # ADJUST UP TO THE NEXT VALID CYCLE (or not, if already valid).
-        # Only used at suite start-up to find the first valid cycle at
-        # or after the suite initial cycle time; in subsequent cycles
-        # next() ensures we remain on valid cycles.
+    def initial_adjust_up( self, T ):
+        """Adjust T up to the next valid cycle time if not already valid."""
+        try:
+            ct(T)
+        except CycleTimeError, x:
+            raise CyclerError, str(x)
 
-        foo = ct( icin )
-        # first get MMDDHHmmss right
-        if foo.MMDDHHmmss == self.MMDDHHmmss:
-            # initial time is already valid
-            pass
+        T_YYYY = T[0:4]
+        T_MMDDHHmmss = T[4:]
+        # first get the anniversary date MMDDHHmmss right
+        if T_MMDDHHmmss == self.MMDDHHmmss:
+            # the anniversary date is already valid
+            CT = ct(T)
         else:
-            # adjust up: must be suite start-up
-            if foo.MMDDHHmmss < self.MMDDHHmmss:
+            # adjust up to next valid
+            if T_MMDDHHmmss < self.MMDDHHmmss:
                 # round up
-                foo.parse( foo.strvalue[0:4] + self.MMDDHHmmss )
+                CT = ct( T_YYYY + self.MMDDHHmmss )
             else:
-                # round down and increment year
-                # TO DO: HANDLE NON-FOUR-DIGIT-YEARS PROPERLY
-                YYYY = str( int( foo.strvalue[0:4] ) + 1 )
-                foo.parse( YYYY + self.MMDDHHmmss )
+                # round down and increment the year
+                CT = ct( pad_year(int(T_YYYY)+1) + self.MMDDHHmmss )
 
-        # then adjust up relative to the anchor cycle and step
-        if self.anchor:
-            aYYYY = self.anchor[0:4] # TO DO: input error checking!
-            YYYY = foo.strvalue[0:4]
-            diff = int(aYYYY) - int(YYYY)
-            rem = diff % self.step
-            if rem > 0:
-                n = self.step - rem
-                YYYY = str( int( foo.strvalue[0:4] ) + n )
-                foo.parse( YYYY + self.MMDDHHmmss )
+        # now adjust up relative to the anchor cycle and step
+        diff = int(self.anchorYYYY) - int(CT.strvalue[0:4])
+        rem = diff % self.step
+        if rem > 0:
+            n = self.step - rem
+            CT = ct( pad_year(int(CT.year)+n) + self.MMDDHHmmss )
             
-        return foo.get()
+        return CT.get()
 
-    def next( self, icin ):
-        # add step years (same MMDDHHmmss as year length varies)
-        # TO DO: HANDLE years < 1000
-        YYYY = icin[0:4]
-        nxt = str(int(YYYY)+self.step) + icin[4:]
-        return nxt
+    def next( self, T ):
+        """Add step years to get to the next anniversary after T."""
+        return pad_year( int(T[0:4])+self.step) + T[4:]
 
-    def valid( self, ctime ):
-        foo = ctime.get()
-        res = True
-        print "TO DO: FULL MMDDHHmmss in Anniversary.py"
-        ###if foo[4:14] != self.MMDDHHmmss:
-        print '>>>>>>>>>', foo[4:10], self.MMDDHHmmss[0:6]
-        if foo[4:10] != self.MMDDHHmmss[0:6]:
-            res = False
-        elif self.anchor:
-            aYYYY = self.anchor[0:4] # TO DO: input error checking!
-            diff = int(aYYYY) - int(ctime.strvalue[0:4])
+    def valid( self, CT ):
+        result = True
+        T = CT.get()
+        if T[4:10] != self.MMDDHHmmss[0:6]:
+            # wrong anniversary date
+            result = False
+        else:
+            # right anniversary date, check the year is valid 
+            diff = int(self.anchorYYYY) - int(T[0:4])
             rem = diff % self.step
             if rem != 0:
-                res = False
-        return res
+                result = False
+        return result
  
+
+if __name__ == "__main__":
+    # UNIT TEST
+
+    inputs = [ \
+            ('2010',), \
+            ('2010080806',), \
+            ('2010080806', 2), \
+            ('2010080806x', 2), \
+            ('2010080806', 'x')] 
+
+    for i in inputs:
+        print i
+        try:
+            foo = Anniversary( *i )
+            print ' + next(1999):', foo.next('1999' )
+            print ' + adjust_up(2010080512):', foo.initial_adjust_up( '2010080512' )
+            print ' + adjust_up(2010090512):', foo.initial_adjust_up( '2010090512' )
+            print ' + valid(2012080806):', foo.valid( ct('2012080806') )
+            print ' + valid(201108006):', foo.valid( ct('2011080806') )
+        except Exception, x:
+            print ' !', x
+
+
+
