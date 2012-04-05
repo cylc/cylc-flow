@@ -18,7 +18,7 @@
 
 import sys, re
 from cylc.cycle_time import ct, CycleTimeError
-from cylc.taskid import id, TaskIDError
+from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
@@ -70,11 +70,11 @@ target = args[1]
 stoptag = args[2]
 
 try:
-    tid = id( target )
+    tid = TaskID( target )
 except TaskIDError, x:
     raise SystemExit(x)
 else:
-    id, name, start = tid.id, tid.name, tid.tag
+    task_id, name, start = tid.id, tid.name, tid.tag
  
 if re.match( '^a:', stoptag ):
     stop = stoptag[2:]
@@ -98,7 +98,7 @@ try:
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 
-if not parser.prompt( 'Purge from ' + id + ' to ' + stop + ' in'):
+if not parser.prompt( 'Purge from ' + task_id + ' to ' + stop + ' in'):
     sys.exit(0)
 
 result = proxy.purge( target, stop )

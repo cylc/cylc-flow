@@ -19,7 +19,7 @@
 import sys, os
 import Pyro.core
 import logging
-from taskid import id, TaskIDError
+from TaskID import TaskID, TaskIDError
 from CylcError import TaskNotFoundError, TaskStateError
 from job_submission.job_submit import job_submit
 from datetime import datetime
@@ -245,7 +245,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         elif method == 'stop after task':
             try:
-                tid = id( arg )
+                tid = TaskID( arg )
             except TaskIDError,x:
                 return result( False, "Invalid stop task ID: " + arg )
             else:
@@ -317,8 +317,8 @@ class remote_switch( Pyro.core.ObjBase ):
         found = False
         for task in self.pool.get_tasks():
             # loop through the suite task list
-            id = task.id
-            if id in in_ids_back:
+            task_id = task.id
+            if task_id in in_ids_back:
                 found = True
                 extra_info = {}
                 # extra info for clocktriggered tasks
@@ -446,11 +446,11 @@ class remote_switch( Pyro.core.ObjBase ):
         else:
             return False
 
-    def _name_from_id( self, id ):
-        if '%' in id:
-            name, tag = id.split('%')
+    def _name_from_id( self, task_id ):
+        if '%' in task_id:
+            name, tag = task_id.split('%')
         else:
-            name = id
+            name = task_id
         return name
 
     def _warning( self, msg ):

@@ -18,7 +18,7 @@
 
 import sys, re
 from cylc.cycle_time import ct, CycleTimeError
-from cylc.taskid import id, TaskIDError
+from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
@@ -60,7 +60,7 @@ kill_task = False
 
 try:
     # is target a task ID
-    tid = id(target)
+    tid = TaskID(target)
 except TaskIDError:
     # no
     kill_tag = True
