@@ -75,7 +75,7 @@ except TaskIDError:
 else:
     # yes
     kill_task = True
-    target = tid.id
+    target = tid.getstr()
 
 try:
     proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )

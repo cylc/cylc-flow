@@ -29,7 +29,7 @@ from warning_dialog import warning_dialog, info_dialog
 from cylc.port_scan import SuiteIdentificationError
 from cylc import cylc_pyro_client
 from cylc.cycle_time import ct, CycleTimeError
-from cylc.TaskID import id, TaskIDError
+from cylc.TaskID import TaskID, TaskIDError
 from cylc.version import cylc_version
 from option_group import controlled_option_group
 from cylc.config import config
@@ -168,12 +168,12 @@ and associated methods for their control widgets.
                 warning_dialog( "ERROR: No stop task ID entered" ).warn()
                 return
             try:
-                tid = id( stoptask_id )
+                tid = TaskID( stoptask_id )
             except TaskIDError,x:
                 warning_dialog( "ERROR: Bad task ID (TASK%YYYYMMDDHH): " + stoptask_id ).warn()
                 return
             else:
-                stoptask_id = tid.id
+                stoptask_id = tid.getstr()
         else:
             # SHOULD NOT BE REACHED
             warning_dialog( "ERROR: Bug in GUI?" ).warn()
@@ -1214,12 +1214,12 @@ shown here in the state they were in at the time of triggering.''' )
             return
         else:
             try:
-                tid = id( torg )
+                tid = TaskID( torg )
             except TaskIDError,x:
                 warning_dialog( str(x) ).warn()
                 return
             else:
-                torg= tid.id
+                torg= tid.getstr()
 
         stoptag = entry_stoptag.get_text()
         if stoptag != '':

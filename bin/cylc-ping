@@ -80,7 +80,7 @@ try:
 except TaskIDError,x:
     raise SystemExit(x)
 else:
-    task_id = tid.id
+    task_id = tid.getstr()
 
 try:
     proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )

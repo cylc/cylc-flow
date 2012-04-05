@@ -67,8 +67,7 @@ try:
 except TaskIDError, x:
     raise SystemExit(x)
 else:
-    name = tid.name
-    tag = tid.tag  # (may have 'a:' removed)
+    name, tag = tid.split() # (tag will have 'a:' removed)
 
 # check if stoptag is cycling or asynchronous
 if stoptag:

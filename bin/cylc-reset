@@ -79,7 +79,7 @@ try:
 except TaskIDError,x:
     raise SystemExit(x)
 else:
-    task_id = tid.id
+    task_id = tid.getstr()
 
 reg = parser.get_suite_name()
 dbg = dbgetter()

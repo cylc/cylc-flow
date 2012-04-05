@@ -66,8 +66,8 @@ if len(args) == 2:
     else:
         # task ID
         prnt_id = True
-        task_id = tid.id
-        name = tid.name
+        task_id = tid.getstr()
+        name, junk = tid.split()
 else:
     prnt_suite = True
  

@@ -103,8 +103,7 @@ try:
 except TaskIDError, x:
     raise SystemExit(x)
 else:
-    task_name = tid.name
-    ctime = tid.tag
+    task_name, ctime = tid.split()
 
 owner = os.environ['USER']
 

@@ -58,7 +58,7 @@ if len(args) == 2:
     except TaskIDError, x:
         raise SystemExit(x)
     else:
-        task = tid.id
+        task = tid.getstr()
 
     if not parser.prompt( 'Release task ' + task + ' in'):
         sys.exit(0)

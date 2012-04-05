@@ -32,7 +32,6 @@ class result:
 
 class remote_switch( Pyro.core.ObjBase ):
     "class to take remote suite control requests" 
-    # the task manager can take action on these when convenient.
 
     def __init__( self, config, clock, suite_dir, pool, failout_id = None ):
         self.log = logging.getLogger( "main" )
@@ -249,7 +248,7 @@ class remote_switch( Pyro.core.ObjBase ):
             except TaskIDError,x:
                 return result( False, "Invalid stop task ID: " + arg )
             else:
-                arg = tid.id
+                arg = tid.getstr()
             self.pool.set_stop_task( arg )
 
         # process, to update state summary
@@ -341,7 +340,7 @@ class remote_switch( Pyro.core.ObjBase ):
                     # not a cycling task
                     pass
 
-                dump[ in_ids_back[ id ] ] = [ task.prerequisites.dump(), task.outputs.dump(), extra_info ]
+                dump[ in_ids_back[ task_id ] ] = [ task.prerequisites.dump(), task.outputs.dump(), extra_info ]
         if not found:
             self._warning( 'task state info request: tasks not found' )
         else:
