@@ -18,7 +18,7 @@
 
 import sys
 from cylc import cylc_pyro_client
-from cylc.taskid import id, TaskIDError
+from cylc.TaskID import TaskID, TaskIDError
 from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
 from cylc.CylcError import CylcError
@@ -42,7 +42,7 @@ if len(args) != 2:
 task_id = args[1]
 
 try:
-    tid = id( task_id )
+    tid = TaskID( task_id )
 except TaskIDError,x:
     raise SystemExit(x)
 else:
