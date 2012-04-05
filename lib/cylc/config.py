@@ -665,21 +665,6 @@ class config( CylcConfigObj ):
         if offset:
             trig.set_offset(offset)
              
-        print "????????????????????? TO DO: MULTIPLE OFFSETS???????????????"
-        ##    trigger = re.sub( 'TAG', 'TAG - ' + str(offset), trigger )
-        ##    # extract multiple offsets:
-        ##    m = re.match( '(.*)<TAG\s*(.*)>(.*)', trigger )
-        ##    if m:
-        ##        pre, combo, post = m.groups()
-        ##        combo = eval( combo )
-        ##        if combo == 0:
-        ##            trigger = pre + '<TAG>' + post
-        ##        elif combo > 0:
-        ##            trigger = pre + '<TAG + ' + str(combo) + '>' + post
-        ##        else:
-        ##            # '-' appears in combo
-        ##            trigger = pre + '<TAG ' + str(combo) + '>' + post
-
         if task_name in self.async_oneoff_tasks:
             trig.set_async_oneoff()
         elif task_name in self.async_repeating_tasks:
