@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from cylc.taskid import id, TaskIDError
+from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
@@ -75,7 +75,7 @@ else:
 task_id = args[1]
 
 try:
-    tid = id( task_id )
+    tid = TaskID( task_id )
 except TaskIDError,x:
     raise SystemExit(x)
 else:

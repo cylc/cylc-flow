@@ -18,7 +18,7 @@
 
 import os, sys, re
 from cylc.cycle_time import ct, CycleTimeError
-from cylc.taskid import id, TaskIDError
+from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
@@ -63,7 +63,7 @@ except ValueError:
 
 # check TASK is a valid task ID
 try:
-    tid = id( name + '%' + tag )
+    tid = TaskID( name + '%' + tag )
 except TaskIDError, x:
     raise SystemExit(x)
 else:

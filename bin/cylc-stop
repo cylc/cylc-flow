@@ -18,7 +18,7 @@
 
 import sys, re
 from cylc.cycle_time import ct, CycleTimeError
-from cylc.taskid import id, TaskIDError
+from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
@@ -73,7 +73,7 @@ if shutdown_at:
     # STOP argument detected
     try:
         # is it a task ID?
-        tid = id( shutdown_arg )
+        tid = TaskID( shutdown_arg )
     except TaskIDError:
         # not a task ID
         try:
