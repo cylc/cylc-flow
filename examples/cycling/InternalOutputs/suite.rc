@@ -1,0 +1,25 @@
+
+# temporary example illustrating explicit internal outputs
+
+[scheduling]
+    initial cycle time = 2010
+    final cycle time = 2011
+    runahead limit = 17000 # > 2 years
+    cycling = Anniversary
+    [[special tasks]]
+        cold-start = cfoo
+    [[dependencies]]
+        [[[2010,1]]]
+            graph = """cfoo | foo[T-1]:x => foo => bar"""
+
+[runtime]
+    [[foo]]
+        command scripting = """
+sleep 5
+# fails for leap years:
+cylc task message "stuff ready for $(cylc cycletime --add=8760)"
+# TO DO: extend the cycle time utility
+sleep 5
+                            """
+        [[[outputs]]]
+            x = "stuff ready for <CYLC_TASK_CYCLE_TIME + 1>"

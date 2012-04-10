@@ -109,8 +109,8 @@ class taskdef(object):
         self.startup_cond_triggers = OrderedDict()
         self.suicide_startup_cond_triggers = OrderedDict()
 
-        self.outputs = []     # list of special outputs; change to OrderedDict()
-                              # if need to vary per cycle.
+        self.outputs = [] # list of explicit internal outputs; change to
+                          # OrderedDict() if need to vary per cycle.
 
         self.loose_prerequisites = [] # asynchronous tasks
 
@@ -280,7 +280,6 @@ class taskdef(object):
                     # NOTE that if we need to check validity of async
                     # tags, async tasks can appear in cycling sections
                     # in which case cyc.valid( at(sself.tag)) will fail.
-                    print '>>>>>>>>>>>>>>>>>>>', trig.get(tag, cycler)
                     pp.add( trig.get(tag, cycler))
             sself.prerequisites.add_requisites( pp )
 
@@ -385,23 +384,10 @@ class taskdef(object):
 
             # outputs
             sself.outputs = outputs( sself.id )
-            for output in self.outputs:
-                m = re.search( '<TAG\s*([+-])\s*(\d+)>', output )
-                if m:
-                    sign, offset = m.groups()
-                    if sign == '-':
-                       raise DefinitionError, "ERROR, " + sself.id + ": Output offsets must be positive: " + output
-                    else:
-                        # TO DO: ?offset for async tasks?
-                        foo = ct( sself.c_time )
-                        foo.increment( hours=offset )
-                        ctime = foo.get()
-                    out = re.sub( '<TAG.*>', ctime, output )
-                elif re.search( '<TAG>', output ):
-                    out = re.sub( '<TAG>', sself.tag, output )
-                else:
-                    out = output
-                sself.outputs.add( out )
+            for outp in self.outputs:
+                msg = outp.get( sself.tag ) 
+                if not sself.outputs.exists( msg ):
+                    sself.outputs.add( msg )
             sself.outputs.register()
 
             sself.env_vars = OrderedDict()

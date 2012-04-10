@@ -63,12 +63,12 @@ where output x of foo may also have an offset:
         preq = self.msg
         m = re.search( '<TAG\s*\+\s*(\d+)>', preq )
         if m:
-            self.intrinsic_offset = m.groups()[0]
+            self.intrinsic_offset = int( m.groups()[0] )
     def set_type( self, type ):
         # started, succeeded, failed
         self.type = type
     def set_offset( self, offset ):
-        self.evaluation_offset = offset
+        self.evaluation_offset = int( offset )
     def get( self, ctime, cycler ):
         if self.async_oneoff:
             # oneoff async
@@ -82,7 +82,7 @@ where output x of foo may also have an offset:
                 # explicit internal output ...
                 preq = self.msg
                 if self.intrinsic_offset:
-                    ctime = cycler.offset( ctime, self.intrinsic_offset,True )
+                    ctime = cycler.offset( ctime, - self.intrinsic_offset )
                 if self.evaluation_offset:
                     ctime = cycler.offset( ctime, self.evaluation_offset )
                 preq = re.sub( '<TAG.*?>', ctime, preq )

@@ -1143,13 +1143,11 @@ class config( CylcConfigObj ):
 
             if not self.simulation_mode:
                 # register any explicit internal outputs
-                # (in sim mode dummy tasks don't know about these)
                 taskconfig = self['runtime'][name]
                 for lbl in taskconfig['outputs']:
                     msg = taskconfig['outputs'][lbl]
-                    # COMING SOON:self.taskdefs[ name ].outputs.append( outputx(msg, cyclr) )
-                    if msg not in self.taskdefs[ name ].outputs:
-                        self.taskdefs[ name ].outputs.append( msg )
+                    outp = outputx(msg,cyclr)
+                    self.taskdefs[ name ].outputs.append( outp )
 
     def generate_triggers( self, lexpression, lnames, right, cycler, asyncid_pattern, suicide ):
         if not right:
