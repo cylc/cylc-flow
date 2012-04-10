@@ -90,7 +90,6 @@ class taskdef(object):
         self.reset_timer = None
 
         self.intercycle = False
-        #self.hours = []
         self.cyclers = []
         self.logfiles = []
         self.description = ['Task description has not been completed' ]
@@ -107,7 +106,6 @@ class taskdef(object):
         self.suicide_startup_triggers = OrderedDict()
         self.suicide_triggers = OrderedDict()       
         self.suicide_cond_triggers = OrderedDict()
-        self.asynchronous_triggers = []
         self.startup_cond_triggers = OrderedDict()
         self.suicide_startup_cond_triggers = OrderedDict()
 
@@ -126,52 +124,53 @@ class taskdef(object):
 
         self.namespace_hierarchy = []
 
-    def add_trigger( self, msg, validity, suicide=False ):
-        if suicide:
-            if validity not in self.suicide_triggers:
-                self.suicide_triggers[ validity ] = []
-            self.suicide_triggers[ validity ].append( msg )
+    def add_trigger( self, trigger, cycler ):
+        if trigger.startup:
+            if trigger.suicide:
+                if cycler not in self.suicide_startup_triggers:
+                    self.suicide_startup_triggers[ cycler ] = []
+                self.suicide_startup_triggers[ cycler ].append( trigger )
+            else:
+                if cycler not in self.startup_triggers:
+                    self.startup_triggers[ cycler ] = []
+                self.startup_triggers[ cycler ].append( trigger )
+        elif trigger.async_repeating:
+            # TO DO: SUICIDE FOR ASYNC REPEATING TASKS
+            self.loose_prerequisites.append(trigger)
         else:
-            if validity not in self.triggers:
-                self.triggers[ validity ] = []
-            self.triggers[ validity ].append( msg )
+            if trigger.suicide:
+                if cycler not in self.suicide_triggers:
+                    self.suicide_triggers[ cycler ] = []
+                self.suicide_triggers[ cycler ].append( trigger )
+            else:
+                if cycler not in self.triggers:
+                    self.triggers[ cycler ] = []
+                self.triggers[ cycler ].append( trigger )
 
-    def add_asynchronous_trigger( self, msg ):
-        self.asynchronous_triggers.append( msg )
-
-    def add_startup_trigger( self, msg, validity, suicide=False ):
-        if suicide:
-            if validity not in self.suicide_startup_triggers:
-                self.suicide_startup_triggers[ validity ] = []
-            self.suicide_startup_triggers[ validity ].append( msg )
+    def add_conditional_trigger( self, triggers, exp, cycler ):
+        # triggers[label] = trigger; exp relates the labels
+        suicide = triggers[ triggers.keys()[0] ].suicide
+        startup = triggers[ triggers.keys()[0] ].startup
+        if startup:
+            if suicide:
+                if cycler not in self.suicide_startup_cond_triggers:
+                    self.suicide_startup_cond_triggers[ cycler ] = []
+                self.suicide_startup_cond_triggers[ cycler ].append( [triggers,exp] )
+            else:
+                if cycler not in self.startup_cond_triggers:
+                    self.startup_cond_triggers[ cycler ] = []
+                self.startup_cond_triggers[ cycler ].append( [triggers,exp] )
         else:
-            if validity not in self.startup_triggers:
-                self.startup_triggers[ validity ] = []
-            self.startup_triggers[ validity ].append( msg )
+            if suicide:
+                if cycler not in self.suicide_cond_triggers:
+                    self.suicide_cond_triggers[ cycler ] = []
+                self.suicide_cond_triggers[ cycler ].append( [triggers,exp] )
+            else:
+                if cycler not in self.cond_triggers:
+                    self.cond_triggers[ cycler ] = []
+                self.cond_triggers[ cycler ].append( [triggers,exp] )
 
-    def add_conditional_trigger( self, triggers, exp, validity, suicide=False ):
-        # triggers[label] = trigger
-        # expression relates the labels
-        if suicide:
-            if validity not in self.suicide_cond_triggers:
-                self.suicide_cond_triggers[ validity ] = []
-            self.suicide_cond_triggers[ validity ].append( [ triggers, exp ] )
-        else:
-            if validity not in self.cond_triggers:
-                self.cond_triggers[ validity ] = []
-            self.cond_triggers[ validity ].append( [ triggers, exp ] )
-
-    def add_startup_conditional_trigger( self, triggers, exp, validity, suicide=False ):
-        # triggers[label] = trigger
-        # expression relates the labels
-        if suicide:
-            if validity not in self.suicide_startup_cond_triggers:
-                self.suicide_startup_cond_triggers[ validity ] = []
-            self.suicide_startup_cond_triggers[ validity ].append( [ triggers, exp ] )
-        else:
-            if validity not in self.startup_cond_triggers:
-                self.startup_cond_triggers[ validity ] = []
-            self.startup_cond_triggers[ validity ].append( [ triggers, exp ] )
+        # TO DO: SUICIDE FOR ASYNC REPEATING TASKS
 
     def add_to_valid_cycles( self, cyclr ):
             if len( self.cyclers ) == 0:
@@ -367,12 +366,6 @@ class taskdef(object):
                     lp.add( pre.get( tag, cycler ) )
                 sself.prerequisites.add_requisites( lp )
 
-            if len( self.asynchronous_triggers ) > 0:
-                pp = plain_prerequisites( sself.id ) 
-                for trigger in self.asynchronous_triggers:
-                    pp.add( sself.format_prerequisites( trigger ))
-                sself.prerequisites.add_requisites( pp )
-
         tclass.add_prerequisites = tclass_add_prerequisites
 
         # class init function
@@ -415,7 +408,6 @@ class taskdef(object):
             # outputs
             sself.outputs = outputs( sself.id )
             for output in self.outputs:
-                print '>>>>OUTPUT:', output
                 m = re.search( '<TAG\s*([+-])\s*(\d+)>', output )
                 if m:
                     sign, offset = m.groups()

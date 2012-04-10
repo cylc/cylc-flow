@@ -12,6 +12,12 @@ class triggerx(object):
         self.async_oneoff = False
         self.async_repeating = False
         self.asyncid_pattern = None
+        self.startup = False
+        self.suicide = False
+    def set_suicide( self, suicide ):
+        self.suicide = suicide
+    def set_startup( self ):
+        self.startup = True
     def set_async_oneoff( self ):
         self.async_oneoff = True
     def set_async_repeating( self, pattern ):
@@ -23,6 +29,7 @@ class triggerx(object):
         # Replace <CYLC_TASK_CYCLE_TIME> with <TAG> in the internal output message
         self.msg = re.sub( 'CYLC_TASK_CYCLE_TIME', 'TAG', msg )
     def set_type( self, type ):
+        # started, succeeded, failed
         self.type = type
     def set_offset( self, offset ):
         self.offset = offset
