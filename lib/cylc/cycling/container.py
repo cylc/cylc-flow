@@ -39,6 +39,6 @@ class cycon( object ):
         adjusted.sort()
         return adjusted[0]
 
-    def offset( self, ctime, n ):
-        return self.cyclers[0].__class__.offset(ctime, n)
+    def offset( self, ctime, n, reverse=False ):
+        return self.cyclers[0].__class__.offset(ctime, n, reverse)
 

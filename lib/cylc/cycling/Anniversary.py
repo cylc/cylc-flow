@@ -35,11 +35,14 @@ class Anniversary( cycler ):
     See lib/cylc/cycling/base.py for additional documentation."""
 
     @classmethod
-    def offset( cls, T, n ):
+    def offset( cls, T, n, reverse ):
         """Decrement T by n years to the same MMDDHHmmss."""
         YYYY = T[0:4]
         MMDDHHmmss = T[4:]
-        return str(int(YYYY)-int(n)) + MMDDHHmmss
+        if reverse:
+            return str(int(YYYY)+int(n)) + MMDDHHmmss
+        else:
+            return str(int(YYYY)-int(n)) + MMDDHHmmss
  
     def __init__( self, T=None, step=1 ):
         """Store anniversary date, step, and anchor."""

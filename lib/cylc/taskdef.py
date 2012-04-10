@@ -262,29 +262,6 @@ class taskdef(object):
 
         tclass.namespace_hierarchy = self.namespace_hierarchy
 
-        def tclass_format_prerequisites( sself, preq ):
-            # TO DO: 
-            raise SystemExit("THIS METHOD IS NOT REQUIRED FOR THE NEW CYCLER CODE")
-            m = re.search( '<TAG\s*\-\s*(\d+)>', preq )
-            if m:
-                offset = m.groups()[0]
-                if self.type != 'async_repeating' and self.type != 'async_daemon' and self.type != 'async_oneoff':
-                    # cycle time decrement
-                    foo = ct( sself.c_time )
-                    foo.decrement( hours=offset )
-                    ctime = foo.get()
-                    preq = re.sub( '<TAG\s*\-\s*\d+>', ctime, preq )
-                else:
-                    # arithmetic decrement
-                    foo = sself.tag - offset
-                    preq = re.sub( '<TAG\s*\-\s*\d+>', foo, preq )
-
-            elif re.search( '<TAG>', preq ):
-                preq = re.sub( '<TAG>', sself.tag, preq )
-
-            return preq
-        tclass.format_prerequisites = tclass_format_prerequisites 
-
         def tclass_add_prerequisites( sself, startup, cycler, tag  ):
             # plain triggers
             pp = plain_prerequisites( sself.id ) 
@@ -303,6 +280,7 @@ class taskdef(object):
                     # NOTE that if we need to check validity of async
                     # tags, async tasks can appear in cycling sections
                     # in which case cyc.valid( at(sself.tag)) will fail.
+                    print '>>>>>>>>>>>>>>>>>>>', trig.get(tag, cycler)
                     pp.add( trig.get(tag, cycler))
             sself.prerequisites.add_requisites( pp )
 

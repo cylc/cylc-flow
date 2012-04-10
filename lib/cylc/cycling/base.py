@@ -37,7 +37,7 @@ class cycler( object ):
     extracting the string form from the object only when necessary."""
 
     @classmethod
-    def offset( cls, T, n ):
+    def offset( cls, T, n, reverse ):
         """Decrement the cycle time T by the integer n, where the units
         of n (e.g. days or years) are defined by the derived class. This
         is a class method because a time offset T-n does not depend on

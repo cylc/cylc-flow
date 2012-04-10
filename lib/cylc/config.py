@@ -42,6 +42,7 @@ from prerequisites.conditionals import TriggerExpressionError
 from regpath import RegPath
 from cylc.cycling.container import cycon
 from trigger import triggerx
+from output import outputx
 from TaskID import TaskID, AsyncTag
 
 try:
@@ -1140,6 +1141,16 @@ class config( CylcConfigObj ):
                     self.cycling_tasks.append(name)
             self.taskdefs[ name ].add_to_valid_cycles( cyclr )
 
+            if not self.simulation_mode:
+                # register any explicit internal outputs
+                # (in sim mode dummy tasks don't know about these)
+                taskconfig = self['runtime'][name]
+                for lbl in taskconfig['outputs']:
+                    msg = taskconfig['outputs'][lbl]
+                    # COMING SOON:self.taskdefs[ name ].outputs.append( outputx(msg, cyclr) )
+                    if msg not in self.taskdefs[ name ].outputs:
+                        self.taskdefs[ name ].outputs.append( msg )
+
     def generate_triggers( self, lexpression, lnames, right, cycler, asyncid_pattern, suicide ):
         if not right:
             # lefts are lone nodes; no more triggers to define.
@@ -1439,10 +1450,6 @@ class config( CylcConfigObj ):
             taskd.job_submit_method = self['cylc']['simulation mode']['job submission']['method']
             taskd.commands = self['cylc']['simulation mode']['command scripting']
         else:
-            for lbl in taskconfig['outputs']:
-                # register internal outputs, replacing <CYLC_TASK_CYCLE_TIME> with <TAG>
-                # (ignored in sim mode - dummy tasks don't know about internal outputs).
-                taskd.outputs.append( re.sub( 'CYLC_TASK_CYCLE_TIME', 'TAG', taskconfig['outputs'][lbl] ))
             taskd.owner = taskconfig['remote']['owner']
             taskd.job_submit_method = taskconfig['job submission']['method']
             taskd.commands   = taskconfig['command scripting']
