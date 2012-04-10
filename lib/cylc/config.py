@@ -193,6 +193,7 @@ class config( CylcConfigObj ):
         self.async_repeating_edges = []
         self.async_repeating_tasks = []
         self.cycling_tasks = []
+        self.tasks_by_cycler = {}
 
         self.family_hierarchy = {}
         self.families_used_in_graph = []
@@ -703,47 +704,44 @@ class config( CylcConfigObj ):
 
         self.check_for_case_errors()
 
-        print >> sys.stderr, 'TO DO: UPDATE CONDITIONAL TRIGGER VALIDATION FOR CYCLERS'
-###        # Instantiate tasks and force evaluation of conditional trigger expressions.
-###        if self.verbose:
-###            print "Checking conditional trigger expressions"
-###        for name in self.taskdefs:
-###            type = self.taskdefs[name].type
-###            if type != 'async_repeating' and type != 'async_daemon' and type != 'async_oneoff':
-###                tag = '2999010100'
-###                n_check = len( self.taskdefs[name].hours )
-###            else:
-###                tag = '1'
-###                n_check = 1
-###            for i in range( 0, n_check ):
-###                # loop over each valid hour for each task (because the
-###                # task may have different triggers in each hour).
-###                try:
-###                    # instantiate a task
-###                    # startup True here or oneoff async tasks will be ignored:
-###                    itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True )
-###                except TypeError, x:
-###                    # This should not happen as we now explicitly catch use
-###                    # of synchronous special tasks in an asynchronous graph.
-###                    # But in principle a clash of multiply inherited base
-###                    # classes due to choice of "special task" modifiers
-###                    # could cause a TypeError.
-###                    print >> sys.stderr, x
-###                    raise SuiteConfigError, '(inconsistent use of special tasks?)' 
-###                except Exception, x:
-###                    print >> sys.stderr, x
-###                    raise SuiteConfigError, 'ERROR, failed to instantiate task ' + name
-###                # force trigger evaluation
-###                try:
-###                    itask.prerequisites.eval_all()
-###                except TriggerExpressionError, x:
-###                    print >> sys.stderr, x
-###                    raise SuiteConfigError, "ERROR, " + name + ": invalid trigger expression."
-###                except Exception, x:
-###                    print >> sys.stderr, x
-###                    raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
-###                tag = itask.next_tag()
-###            #print "OK:", itask.id
+        # Instantiate tasks and force evaluation of conditional trigger expressions.
+        if self.verbose:
+            print "Checking conditional trigger expressions"
+        for cyclr in self.tasks_by_cycler:
+            # for each graph section
+            for name in self.tasks_by_cycler[cyclr]:
+                # instantiate one of each task appearing in this section
+                type = self.taskdefs[name].type
+                if type != 'async_repeating' and type != 'async_daemon' and type != 'async_oneoff':
+                    tag = cyclr.initial_adjust_up( '2999010100' )
+                else:
+                    tag = cyclr.initial_adjust_up( '1' )
+                try:
+                    # instantiate a task
+                    # startup True here or oneoff async tasks will be ignored:
+                    itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True )
+                except TypeError, x:
+                    # This should not happen as we now explicitly catch use
+                    # of synchronous special tasks in an asynchronous graph.
+                    # But in principle a clash of multiply inherited base
+                    # classes due to choice of "special task" modifiers
+                    # could cause a TypeError.
+                    print >> sys.stderr, x
+                    raise SuiteConfigError, '(inconsistent use of special tasks?)' 
+                except Exception, x:
+                    print >> sys.stderr, x
+                    raise SuiteConfigError, 'ERROR, failed to instantiate task ' + name
+                # force trigger evaluation now
+                try:
+                    itask.prerequisites.eval_all()
+                except TriggerExpressionError, x:
+                    print >> sys.stderr, x
+                    raise SuiteConfigError, "ERROR, " + name + ": invalid trigger expression."
+                except Exception, x:
+                    print >> sys.stderr, x
+                    raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
+                tag = itask.next_tag()
+            #print "OK:", itask.id
 
         # warn if listed special tasks are not defined
         for type in self['scheduling']['special tasks']:
@@ -1149,6 +1147,12 @@ class config( CylcConfigObj ):
                     outp = outputx(msg,cyclr)
                     self.taskdefs[ name ].outputs.append( outp )
 
+            # collate which tasks appear in each section
+            if cyclr not in self.tasks_by_cycler:
+                self.tasks_by_cycler[cyclr] = []
+            if name not in self.tasks_by_cycler[cyclr]:
+                self.tasks_by_cycler[cyclr].append(name)
+
     def generate_triggers( self, lexpression, lnames, right, cycler, asyncid_pattern, suicide ):
         if not right:
             # lefts are lone nodes; no more triggers to define.
@@ -1399,10 +1403,6 @@ class config( CylcConfigObj ):
                 line = re.sub( '\s*$', '', line )
                 # generate pygraphviz graph nodes and edges, and task definitions
                 self.process_graph_line( line, section )
-
-        ## sort hours list for each task
-        #for name in self.taskdefs:
-        #    self.taskdefs[name].hours.sort( key=int ) 
 
     def get_taskdef( self, name ):
         # (DefinitionError caught above)
