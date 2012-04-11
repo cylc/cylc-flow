@@ -1,7 +1,10 @@
-title = family failure cleanup task example
+title = family failure cleanup task example number 1
 
-description = """An example suite in which a special task is
-used to automatically clean up a failed task family."""
+description = """
+Illustrates use of a special task to clean up failed tasks.
+Here the cleanup task runs whether or not the family fails,
+but it only cleans up if necessary.
+See also family failure cleanup task example number 2."""
 
 [scheduling]
     runahead limit = 6
@@ -11,23 +14,20 @@ used to automatically clean up a failed task family."""
         sequential = A  # (just to slow the suite down)
     [[dependencies]]
         [[[0,6,12,18]]]
-            graph =  """A => fammo
-                    fammo | fammo:fail => B
-                    fammo | fammo:fail => fammo_cleanup"""
+            graph =  """A => fam
+                    fam:finish => B
+                    fam:finish => fam_cleanup"""
 [runtime]
-    [[fammo]]
-
-    [[fammo_cleanup]]
-        command scripting = fammo_cleanup.sh
+    [[fam]]
 
     [[m_foo]]
-        inherit = fammo
+        inherit = fam
         command scripting = sleep 8 
 
     [[m_bar]]
-        inherit = fammo
-        # This task fails at 6,18 and succeeds at 0,12
+        inherit = fam
         command scripting = """
+# Fail at 6,18, succeed at 0,12:
 HH=${CYLC_TASK_CYCLE_TIME#????????} 
 if (( HH == 6 || HH == 18 )); then
     COMMAND=/bin/false
@@ -38,5 +38,10 @@ sleep 5
 $COMMAND"""
 
     [[m_baz]]
-        inherit = fammo
+        inherit = fam
         command scripting = sleep 10
+
+    [[fam_cleanup]]
+        description = "this is a family failed task cleanup task"
+        command scripting = fam_cleanup.sh
+

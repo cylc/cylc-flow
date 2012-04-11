@@ -1,7 +1,7 @@
-title = family failure hook script example
+title = "family failure task event hook example"
 
-description = """An example suite in which a task failure hook script is
-used to automatically clean up a failed task family."""
+description = """
+Illustrates use of a task event hook script to clean up failed tasks."""
 
 [scheduling]
     initial cycle time = 2011010106
@@ -12,20 +12,20 @@ used to automatically clean up a failed task family."""
 
     [[dependencies]]
         [[[0,6,12,18]]]
-            graph =  """A => fammo
-                    fammo | fammo:fail => B"""
+            graph =  """A => fam
+                    fam:finish => B"""
 [runtime]
-    [[fammo]]
+    [[fam]]
         [[[event hooks]]]
             script = failhook.sh
             events = failed
     [[m_foo]]
-        inherit = fammo
+        inherit = fam
         command scripting = sleep 8 
     [[m_bar]]
-        inherit = fammo
+        inherit = fam
         # This family member always fails
         command scripting = "sleep 5; /bin/false"
     [[m_baz]]
-        inherit = fammo
+        inherit = fam
         command scripting = sleep 10
