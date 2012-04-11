@@ -123,7 +123,8 @@ class edge( object):
         self.suicide = suicide
         self.conditional = conditional
 
-    def get_right( self, tag, not_first_cycle, raw, startup_only, exclude ):
+    def get_right( self, intag, not_first_cycle, raw, startup_only, exclude ):
+        tag = str(intag)
         # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
         if self.right in exclude:
             return None
@@ -138,13 +139,13 @@ class edge( object):
         self.right = re.sub( ':\w+', '', self.right )
 
         # TO DO: SORT OUT USE OF ASYNC TAGS!!!!
-        foo = tag.get()
-        if len(foo) < 6:
-            foo = 'a:' + foo
+        if len(str(tag)) < 6:
+            tag = 'a:' + tag
 
-        return TaskID( self.right, foo )
+        return TaskID( self.right, tag )
 
-    def get_left( self, tag, not_first_cycle, raw, startup_only, exclude ):
+    def get_left( self, intag, not_first_cycle, raw, startup_only, exclude ):
+        tag = str(intag)
         # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
         if self.left in exclude:
             return None
@@ -169,9 +170,9 @@ class edge( object):
             m = re.search( '(\w+)\s*\[\s*T\s*([+-])(\d+)\s*\]', left )
             if m: 
                 left, sign, offset = m.groups()
-                tag = self.cyclr.__class__.offset( tag.get(), offset )
+                tag = self.cyclr.__class__.offset( tag, offset )
             else:
-                tag = tag.get()
+                tag = tag
 
         # TO DO: SORT OUT USE OF ASYNC TAGS!!!!
         if len(tag) < 6:
@@ -649,10 +650,10 @@ class config( CylcConfigObj ):
                 # There is no matching output defined under the task runtime section 
                 if output_name == 'fail':
                     # OK, task:fail
-                    trig.set_type('fail' )
+                    trig.set_type('failed' )
                 elif output_name == 'start':
                     # OK, task:start
-                    trig.set_type('start')
+                    trig.set_type('started')
                 else:
                     # ERROR
                     raise SuiteConfigError, "ERROR: Task '" + task_name + "' does not define output '" + output_name  + "'"
@@ -717,6 +718,7 @@ class config( CylcConfigObj ):
                 else:
                     tag = cyclr.initial_adjust_up( '1' )
                 try:
+                    print name, tag
                     # instantiate a task
                     # startup True here or oneoff async tasks will be ignored:
                     itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True )
@@ -1254,8 +1256,8 @@ class config( CylcConfigObj ):
         gr_edges = []
 
         for e in self.async_oneoff_edges + self.async_repeating_edges:
-            right = e.get_right(AsyncTag(1), False, False, [], [])
-            left  = e.get_left( AsyncTag(1), False, False, [], [])
+            right = e.get_right(1, False, False, [], [])
+            left  = e.get_left( 1, False, False, [], [])
             nl, nr = self.close_families( left, right )
             gr_edges.append( (nl, nr, False, e.suicide, e.conditional) )
 	
@@ -1274,8 +1276,8 @@ class config( CylcConfigObj ):
                 else:
                     initial_cycle = True
 
-                r_id = e.get_right(ct(ctime), initial_cycle, raw, startup_exclude_list, [])
-                l_id = e.get_left( ct(ctime), initial_cycle, raw, startup_exclude_list, [])
+                r_id = e.get_right(ctime, initial_cycle, raw, startup_exclude_list, [])
+                l_id = e.get_left( ctime, initial_cycle, raw, startup_exclude_list, [])
 
                 action = True
 

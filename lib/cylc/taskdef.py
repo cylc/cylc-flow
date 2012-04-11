@@ -125,27 +125,9 @@ class taskdef(object):
         self.namespace_hierarchy = []
 
     def add_trigger( self, trigger, cycler ):
-        if trigger.startup:
-            if trigger.suicide:
-                if cycler not in self.suicide_startup_triggers:
-                    self.suicide_startup_triggers[ cycler ] = []
-                self.suicide_startup_triggers[ cycler ].append( trigger )
-            else:
-                if cycler not in self.startup_triggers:
-                    self.startup_triggers[ cycler ] = []
-                self.startup_triggers[ cycler ].append( trigger )
-        elif trigger.async_repeating:
-            # TO DO: SUICIDE FOR ASYNC REPEATING TASKS
-            self.loose_prerequisites.append(trigger)
-        else:
-            if trigger.suicide:
-                if cycler not in self.suicide_triggers:
-                    self.suicide_triggers[ cycler ] = []
-                self.suicide_triggers[ cycler ].append( trigger )
-            else:
-                if cycler not in self.triggers:
-                    self.triggers[ cycler ] = []
-                self.triggers[ cycler ].append( trigger )
+        if cycler not in self.triggers:
+            self.triggers[ cycler ] = []
+        self.triggers[cycler].append(trigger)
 
     def add_conditional_trigger( self, triggers, exp, cycler ):
         # triggers[label] = trigger; exp relates the labels
@@ -263,14 +245,13 @@ class taskdef(object):
         tclass.namespace_hierarchy = self.namespace_hierarchy
 
         def tclass_add_prerequisites( sself, startup, cycler, tag  ):
-            # plain triggers
             pp = plain_prerequisites( sself.id ) 
-            if startup:
-                triggers = dict( self.triggers.items() + self.startup_triggers.items() )
-            else:
-                triggers = self.triggers
-            for cyc in triggers:
-                for trig in triggers[ cyc ]:
+            sp = plain_prerequisites( sself.id ) 
+
+            for cyc in self.triggers:
+                for trig in self.triggers[ cyc ]:
+                    if trig.startup and not startup:
+                            continue
                     if trig.cycling and not cyc.valid( ct(sself.tag) ):
                         # This trigger is not valid for current cycle. 
                         # TO DO: TEMPORARY DEBUG OUTPUT:
@@ -280,24 +261,13 @@ class taskdef(object):
                     # NOTE that if we need to check validity of async
                     # tags, async tasks can appear in cycling sections
                     # in which case cyc.valid( at(sself.tag)) will fail.
-                    pp.add( trig.get(tag, cycler))
-            sself.prerequisites.add_requisites( pp )
+                    if trig.suicide:
+                        sp.add( trig.get( tag, cycler ))
+                    else:
+                        pp.add( trig.get( tag, cycler ))
 
-            # plain suicide triggers
-            if startup:
-                triggers = dict( self.suicide_triggers.items() + self.suicide_startup_triggers.items() )
-            else:
-                triggers = self.suicide_triggers
-            pp = plain_prerequisites( sself.id ) 
-            for val in triggers:
-                for trig in triggers[ val ]:
-                    if val != "once" and not re.match( '^ASYNCID:', val ):
-                        hours = re.split( ',\s*', val )
-                        ihours = [ int(i) for i in hours ]
-                        if int( sself.c_hour ) not in ihours:
-                            continue
-                    pp.add( sself.format_prerequisites( trig ))
-            sself.suicide_prerequisites.add_requisites( pp )
+            sself.suicide_prerequisites.add_requisites( sp )
+            sself.prerequisites.add_requisites( pp )
 
             # conditional triggers
             if startup:
