@@ -43,7 +43,7 @@ own cycle time.
             sign, offset = m.groups()
             if sign == '-':
                 raise OutputXError, "ERROR, " + sself.id + ": Output offsets must be positive: " + msg0
-        self.offset = int(offset)
+            self.offset = int(offset)
 
     def get( self, ctime ):
         if self.offset:

@@ -17,9 +17,8 @@ class in use for a graph section.
 Three example suites under examples/cycling/
 
 TO DO:
- + Check and complete any unusual cases - suicide triggers etc.
  + Cycle times are still passed around as strings and temporarily
- converted temporarily to cycle time objects whenever time manipulation
+ converted to cycle time objects whenever time manipulation
  is required - we should move entirely to objects USING THE NEW
  taskid.py CLASSES.
  + USE 'a:INT' INTERNALLY FOR ASYNC TAGS TO MAKE CHECKING FOR TAG

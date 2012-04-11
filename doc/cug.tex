@@ -2541,32 +2541,35 @@ synchronous and cycling tasks in the same suite.}
 
 \paragraph{Repeating Asynchronous Tasks}
 
-Repeating asynchronous tasks can be used to process satellite data that 
-arrives asynchronously - i.e.\ at irregular time intervals. Each new dataset 
-must have a unique ``asynchronous ID'' - if it doesn't already have such an 
-ID you could use some string representation of the data arrival time. 
-The graph VALIDITY section heading must contain ``ASYNCID:'' followed by 
-a regular expression designed to match the actual IDs.  Addtionally,
-one task in the suite must be designated the ``daemon'' - it waits
-indefinitely on incoming data and reports each new dataset and its ID
-back to the suite by means of a special output message. When the task 
-proxy receives that message it dynamically registers a new output
-(containing the asynchronous ID) that downstream tasks can then trigger
-off. The downstream tasks likewise have prerequisites containing the
-ID pattern (because they trigger off the aforementioned outputs) and
-when these get satisfied the actual ID is substituted into their own 
-registered outputs. Additionally, each asynchronous task proxy passes
-the ID to its task execution environment as
+Repeating asynchronous tasks can be used, for example, to process
+satellite data that arrives at irregular time intervals. Each new
+dataset must have a unique ``asynchronous ID''. If it doesn't naturally
+have such an ID a string representation of the data arrival time could
+be used.  The graph VALIDITY section heading must contain ``ASYNCID:''
+followed by a regular expression that matches the actual IDs.
+Additionally, one task in the suite must be a designated ``daemon'' 
+that waits indefinitely on incoming data and reports each new dataset
+(and its ID) back to the suite by means of a special output message.
+When the daemon task proxy receives a matching message it dynamically
+registers a new output (containing the ID) that downstream tasks can
+then trigger off. The downstream tasks likewise have prerequisites
+containing the ID pattern (because they trigger off the aforementioned
+outputs) and when these get satisfied during dependency negotation the
+actual ID is substituted into their own registered outputs.
+Finally, each asynchronous repeating task proxy passes the ID to its
+task execution environment as
 \lstinline=$ASYNCID= to allow identification of the correct dataset by 
 task scripts.
-In this way the whole tree of tasks becomes dedicated to processing the
-new dataset, but if the data arrives quickly successive datasets can
-be processed in parallel. As Figure~\ref{fig-test3} shows, a repeating
-asynchronous suite currently plots just like a one-off asynchronous
-suite.  But at run time the daemon task stays put, while
-the others continually spawn successors to wait for new datasets to
-come in. The {\em asynchronous.repeating} example suite demonstrates how 
-to do this in a real suite.
+In this way a tree of tasks becomes dedicated to processing each 
+new dataset, and multiple datasets can be processed in parallel if
+they become available in quick succession. As Figure~\ref{fig-test3}
+shows, a repeating asynchronous suite currently plots just like a
+one-off asynchronous suite. But at run time the daemon task stays put,
+while the others continually spawn successors to wait for new datasets
+to come in. The {\em asynchronous.repeating} example suite demonstrates
+how to do this in a real suite. {\em Note that other trigger types
+(success, failure, start, suicide, and conditional) cannot currently be 
+used in a repeating asynchronous graph section.}
 \begin{figure}
 \begin{minipage}[b]{0.5\textwidth}
 \lstset{language=suiterc}
@@ -2942,11 +2945,11 @@ initial previous-cycle dependence of another cotemporal task. In effect,
 the cold-start task masquerades as the previous-cycle trigger of its
 associated cycling task. 
 
-A cold-start task may invoke real processing, probably to generate the
-files that are normally produced by the associated cycling task; or it
-could be a dummy task that represents some external spinup process,
-presumably resulting in the same files, that has to be completed before
-the suite is started. In the latter case the cold-start task can 
+A cold-start task may invoke real processing to generate the files that
+would normally be produced by the associated cycling task; or it
+could be a dummy task that represents some external spinup process that
+presumably generates in the same files but which has to be completed
+before the suite is started. In the latter case the cold-start task can 
 just report itself successfully completed after checking that the 
 required files are present.
 

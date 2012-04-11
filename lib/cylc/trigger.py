@@ -38,7 +38,7 @@ where output x of foo may also have an offset:
         self.msg = None
         self.intrinsic_offset = None
         self.evaluation_offset = None
-        self.type = 'succeeded'
+        self.type = None
         self.cycling = False
         self.async_oneoff = False
         self.async_repeating = False
@@ -65,7 +65,8 @@ where output x of foo may also have an offset:
         if m:
             self.intrinsic_offset = int( m.groups()[0] )
     def set_type( self, type ):
-        # started, succeeded, failed
+        if type not in [ 'started', 'succeeded', 'failed' ]:
+            raise SystemExit( 'Illegal trigger type:' + type )
         self.type = type
     def set_offset( self, offset ):
         self.evaluation_offset = int( offset )

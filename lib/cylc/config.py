@@ -656,7 +656,7 @@ class config( CylcConfigObj ):
                     trig.set_type('started')
                 else:
                     # ERROR
-                    raise SuiteConfigError, "ERROR: Task '" + task_name + "' does not define output '" + output_name  + "'"
+                    raise SuiteConfigError, "ERROR: '" + task_name + "' does not define output '" + output_name  + "'"
             else:
                 # There is a matching output defined under the task runtime section
                 if self.simulation_mode:
@@ -664,7 +664,7 @@ class config( CylcConfigObj ):
                     return None
         else:
             # default: task succeeded
-            pass
+            trig.set_type( 'succeeded' )
 
         if offset:
             trig.set_offset(offset)
@@ -673,6 +673,10 @@ class config( CylcConfigObj ):
             trig.set_async_oneoff()
         elif task_name in self.async_repeating_tasks:
             trig.set_async_repeating( asyncid_pattern)
+            if trig.suicide:
+                raise SuiteConfigError, "ERROR, '" + task_name + "': suicide triggers not implemented for repeating async tasks"
+            if trig.type:
+                raise SuiteConfigError, "ERROR, '" + task_name + "': '" + trig.type + "' triggers not implemented for repeating async tasks"
         elif task_name in self.cycling_tasks:
             trig.set_cycling()
  
@@ -716,9 +720,8 @@ class config( CylcConfigObj ):
                 if type != 'async_repeating' and type != 'async_daemon' and type != 'async_oneoff':
                     tag = cyclr.initial_adjust_up( '2999010100' )
                 else:
-                    tag = cyclr.initial_adjust_up( '1' )
+                    tag = '1'
                 try:
-                    print name, tag
                     # instantiate a task
                     # startup True here or oneoff async tasks will be ignored:
                     itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True )
@@ -1181,8 +1184,11 @@ class config( CylcConfigObj ):
                 self.taskdefs[right].add_trigger( trigger, cycler )  
                 continue
 
-            # CONDITIONAL TRIGGERS:
-            # use fully qualified name for the expression label
+            # CONDITIONAL TRIGGERS
+            if trigger.async_repeating:
+                # (extend taskdef.py:tclass_add_prerequisites to allow this)
+                raise SuiteConfigError, 'ERROR, ' + left + ': repeating async tasks are not allowed in conditional triggers.'
+            # Use fully qualified name for the expression label
             # (task name is not unique, e.g.: "F | F:fail => G")
             label = re.sub( '[-\[\]:]', '_', left )
             ctrig[label] = trigger
@@ -1190,8 +1196,7 @@ class config( CylcConfigObj ):
 
         if not conditional:
             return
-
-        # conditional expression must contain all start-up (or async)
+        # Conditional expression must contain all start-up (or async)
         # tasks, or none - cannot mix with cycling tasks in the same
         # expression. Count number of start-up or async_oneoff tasks:
         countx = 0
@@ -1204,12 +1209,9 @@ class config( CylcConfigObj ):
             print >> sys.stderr, 'ERROR:', lexpression
             raise SuiteConfigError, '(start-up or async) and (cycling) tasks in same conditional'
  
-        # replace some chars for later use in regular expressions.
+        # Replace some chars for later use in regular expressions.
         expr = re.sub( '[-\[\]:]', '_', lexpression )
         self.taskdefs[right].add_conditional_trigger( ctrig, expr, cycler )
-
-        # TO DO: repeating async task conditionals
-        # TO DO: ALSO CONSIDER SUICIDE FOR STARTUP AND ASYNC
 
     def get_graph( self, start_ctime, stop, colored=True, raw=False,
             group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,

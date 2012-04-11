@@ -223,6 +223,7 @@ class taskdef(object):
             # 1) non-conditional triggers
             pp = plain_prerequisites( sself.id ) 
             sp = plain_prerequisites( sself.id ) 
+            lp = loose_prerequisites( sself.id )
             for cyc in self.triggers:
                 for trig in self.triggers[ cyc ]:
                     if trig.startup and not startup:
@@ -235,12 +236,16 @@ class taskdef(object):
                     # NOTE that if we need to check validity of async
                     # tags, async tasks can appear in cycling sections
                     # in which case cyc.valid( at(sself.tag)) will fail.
-                    if trig.suicide:
-                        sp.add( trig.get( tag, cycler ))
+                    if trig.async_repeating:
+                        lp.add( trig.get( tag, cycler ))
                     else:
-                        pp.add( trig.get( tag, cycler ))
-            sself.suicide_prerequisites.add_requisites( sp )
+                        if trig.suicide:
+                            sp.add( trig.get( tag, cycler ))
+                        else:
+                            pp.add( trig.get( tag, cycler ))
             sself.prerequisites.add_requisites( pp )
+            sself.prerequisites.add_requisites( lp )
+            sself.suicide_prerequisites.add_requisites( sp )
 
             # 2) conditional triggers
             for cyc in self.cond_triggers.keys():
@@ -265,12 +270,6 @@ class taskdef(object):
                         sself.suicide_prerequisites.add_requisites( cp )
                     else:
                         sself.prerequisites.add_requisites( cp )
-
-            if len( self.loose_prerequisites ) > 0:
-                lp = loose_prerequisites(sself.id)
-                for pre in self.loose_prerequisites:
-                    lp.add( pre.get( tag, cycler ) )
-                sself.prerequisites.add_requisites( lp )
 
         tclass.add_prerequisites = tclass_add_prerequisites
 
