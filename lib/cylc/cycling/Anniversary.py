@@ -19,19 +19,12 @@
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.cycling.base import cycler, CyclerError
 
-def pad_year( iY ):
-    # return string YYYY from an integer year value
-    tmp = '0000' # template, to handle years < 1000
-    s_iY = str( iY )
-    n = len( s_iY )
-    return tmp[n:] + s_iY[0:n]
-
 class Anniversary( cycler ):
 
     """For a cycle time sequence that increments by one or more years to
     the same anniversary date (e.g. every second year at 5 May 00 UTC)
-    with an anchor year to pin the sequence down (so that the same
-    sequence results regardless of the initial cycle time).
+    with an anchor year so that the same sequence results regardless of
+    initial cycle time.
     See lib/cylc/cycling/base.py for additional documentation."""
 
     @classmethod
@@ -60,6 +53,9 @@ class Anniversary( cycler ):
             self.step = int(step)
         except ValueError:
             raise CyclerError, "ERROR: step " + step + " is not a valid integer"
+        if self.step <= 0:
+            raise SystemExit( "ERROR: step must be a positive integer: " + step )
+
 
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""
@@ -77,22 +73,23 @@ class Anniversary( cycler ):
                 T = T[0:4] + self.MMDDHHmmss
             else:
                 # round down and increment the year
-                T = pad_year(int(T[0:4])+1) + self.MMDDHHmmss
+                T = self.pad_year(int(T[0:4])+1) + self.MMDDHHmmss
 
         # now adjust up relative to the anchor cycle and step
         diff = int(self.anchorYYYY) - int(T[0:4])
         rem = diff % self.step
         if rem > 0:
             n = self.step - rem
-            T = pad_year(int(T[0:4])+n) + self.MMDDHHmmss
-            
+            T = self.pad_year(int(T[0:4])+n) + self.MMDDHHmmss
+
         return T
 
     def next( self, T ):
         """Add step years to get to the next anniversary after T."""
-        return pad_year( int(T[0:4])+self.step) + T[4:]
+        return self.pad_year( int(T[0:4])+self.step) + T[4:]
 
     def valid( self, CT ):
+        """Is CT a member of my cycle time sequence?"""
         result = True
         T = CT.get()
         if T[4:10] != self.MMDDHHmmss[0:6]:
@@ -105,7 +102,13 @@ class Anniversary( cycler ):
             if rem != 0:
                 result = False
         return result
- 
+
+    def pad_year( self, iY ):
+        # return string YYYY from an integer year value
+        tmp = '0000' # template, to handle years < 1000
+        s_iY = str( iY )
+        n = len( s_iY )
+        return tmp[n:] + s_iY[0:n]
 
 if __name__ == "__main__":
     # UNIT TEST
@@ -122,12 +125,10 @@ if __name__ == "__main__":
         try:
             foo = Anniversary( *i )
             print ' + next(1999):', foo.next('1999' )
-            print ' + adjust_up(2010080512):', foo.initial_adjust_up( '2010080512' )
-            print ' + adjust_up(2010090512):', foo.initial_adjust_up( '2010090512' )
+            print ' + initial_adjust_up(2010080512):', foo.initial_adjust_up( '2010080512' )
+            print ' + initial_adjust_up(2010090512):', foo.initial_adjust_up( '2010090512' )
             print ' + valid(2012080806):', foo.valid( ct('2012080806') )
             print ' + valid(201108006):', foo.valid( ct('2011080806') )
         except Exception, x:
             print ' !', x
-
-
 

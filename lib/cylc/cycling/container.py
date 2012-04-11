@@ -17,7 +17,8 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class cycon( object ):
-    # cycler container
+    """A container to hold multiple cyclers"""
+
     def __init__( self, cycs=[] ):
         self.cyclers = []
         self.add( cycs )
@@ -25,20 +26,21 @@ class cycon( object ):
     def add( self, cycs ):
         self.cyclers += cycs
 
-    def initial_adjust_up( self, ctime ):
+    def initial_adjust_up( self, T ):
         adjusted = []
         for cyc in self.cyclers:
-            adjusted.append( cyc.initial_adjust_up(ctime) )
+            adj = cyc.initial_adjust_up(T) 
+            adjusted.append(adj)
         adjusted.sort()
         return adjusted[0]
 
-    def next( self, ctime ):
+    def next( self, T ):
         adjusted = []
         for cyc in self.cyclers:
-            adjusted.append( cyc.next(ctime) )
+            adjusted.append( cyc.next(T) )
         adjusted.sort()
         return adjusted[0]
 
-    def offset( self, ctime, n ):
-        return self.cyclers[0].__class__.offset(ctime, n)
+    def offset( self, T, n ):
+        return self.cyclers[0].__class__.offset(T, n)
 

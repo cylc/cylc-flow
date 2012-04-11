@@ -16,88 +16,87 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.cycle_time import ct
-import cylc.cycling.base
+from cylc.cycle_time import ct, CycleTimeError
+from cylc.cycling.base import cycler, CyclerError
 
-class Daily( cylc.cycling.base.cycler ):
+class Daily( cycler ):
+
+    """For a cycle time sequence that increments by one or more days,
+    with an anchor day so that the same sequence resultes regardless of
+    initial cycle time.
+    See lib/cylc/cycling/base.py for additional documentation."""
 
     @classmethod
-    def offset( cls, icin, n ):
+    def offset( cls, T, n ):
         # decrement n days 
-        foo = ct(icin)
-        foo.decrement( days=n )
+        foo = ct(T)
+        foo.decrement(days=int(n))
         return foo.get()
  
-    def __init__( self, HHmmss='000000', step=1, anchor=None ):
-        # Check HH[mm[ss]]
+    def __init__( self, T=None, step=1 ):
+        """Store HH, step, and anchor."""
+        # check input validity
         try:
-            ct( '29990101' + HHmmss )
-        except CycleTimeError:
-            raise SystemExit( "ERROR, invalid HH[mm[ss]]: " + HHmmss )
-        tmp = '000000'
-        self.HHmmss = HHmmss + tmp[len(HHmmss):]
-
-        # TO DO: check anchor
-        self.anchor = anchor
-
-        # Check step
+            T = ct( T ).get()
+        except CycleTimeError, x:
+            raise CyclerError, str(x)
+        else:
+            # anchor day
+            self.anchorYYYYMMDD = T[0:8]
+            self.HH = T[8:]
+ 
+        # step in integer number of days
         try:
-            self.step = int( step )
+            # check validity
+            self.step = int(step)
         except ValueError:
-            raise SystemExit( "ERROR: step must be a positive integer: " + step )
+            raise CyclerError, "ERROR: step " + step + " is not a valid integer"
         if self.step <= 0:
             raise SystemExit( "ERROR: step must be a positive integer: " + step )
 
-        # TO DO: what about half days etc.?
+    def initial_adjust_up( self, T ):
+        """Adjust T up to the next valid cycle time if not already valid."""
 
-        # Set minimum runahead limit in hours
-        self.minimum_runahead_limit = step * 24
-
-    def initial_adjust_up( self, icin ):
-        # ADJUST UP TO THE NEXT VALID CYCLE (or not, if already valid).
-        # Only used at suite start-up to find the first valid cycle at
-        # or after the suite initial cycle time; in subsequent cycles
-        # next() ensures we remain on valid cycles.
-
-        foo = ct( icin )
-        # first get HHmmss right
-        if foo.HHmmss == self.HHmmss:
+        foo = ct( T )
+        # first get HH right
+        if foo.hour == self.HH:
             # initial time is already valid
             pass
         else:
             # adjust up: must be suite start-up
-            if foo.HHmmss < self.HHmmss:
+            if int(foo.hour) < int(self.HH):
                 # round up
-                foo.parse( foo.strvalue[0:8] + self.HHmmss )
+                foo.parse( foo.strvalue[0:8] + self.HH )
             else:
                 # round down and increment by a day
-                foo.parse( foo.strvalue[0:8] + self.HHmmss )
+                foo.parse( foo.strvalue[0:8] + self.HH )
                 foo.increment( days=1 )
 
-        # then adjust up relative to the anchor cycle and step
-        if self.anchor:
-            diff = foo.subtract( ct(self.anchor) )
-            rem = diff.days % self.step
-            if rem > 0:
-                n = self.step - rem
-                foo.increment( days=n )
+        # now adjust up relative to the anchor cycle and step
+        diff = foo.subtract( ct(self.anchorYYYYMMDD) )
+        rem = diff.days % self.step
+        if rem > 0:
+            n = self.step - rem
+            foo.increment( days=n )
             
         return foo.get()
 
-    def next( self, icin ):
-        foo = ct(icin)
+    def next( self, T ):
+        """Add step days to T."""
+        foo = ct(T)
         foo.increment( days=self.step )
         return foo.get()
 
-    def valid( self, ctime ):
-        foo = ctime.get()
+    def valid( self, CT ):
+        """Is CT a member of my cycle time sequence?"""
+        foo = CT.get()
         res = True
-        print "TO DO: FULL HHmmss in Daily.py"
-        ###if foo[8:14] != self.HHmmss:
-        if foo[8:10] != self.HHmmss[0:2]:
+        if foo[8:10] != self.HH:
+            # wrong HH
             res = False
-        elif self.anchor:
-            diff = ctime.subtract( ct(self.anchor) )
+        else:
+            # right HH, check the day is valid
+            diff = CT.subtract( ct(self.anchorYYYYMMDD) )
             rem = diff.days % self.step
             if rem != 0:
                 res = False

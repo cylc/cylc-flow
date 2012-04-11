@@ -17,9 +17,10 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.cycle_time import at
-import cylc.cycling.base
+from cylc.cycling.base import cycler
 
-class async( cylc.cycling.base.cycler ):
+class async( cycler ):
+    is_async = True
     @classmethod
     def offset( cls, tag, n ):
         return str(int(tag)-int(n))

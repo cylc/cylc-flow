@@ -17,33 +17,39 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.cycle_time import ct
-import cylc.cycling.base
+from cylc.cycling.base import cycler, CyclerError
 
-class HoursOfTheDay( cylc.cycling.base.cycler ):
+class HoursOfTheDay( cycler ):
+
+    """This implements cylc's original "hours of the day" NWP-style
+    cycling: a task has a list of "valid hours", with 0 <= HH <= 23.
+    Incrementing jumps to the next hour in the list, across day
+    boundaries when necessary. Irregular lists are allowed: [0,3,6,23].
+    See lib/cylc/cycling/base.py for additional documentation."""
 
     @classmethod
-    def offset( cls, icin, n ):
+    def offset( cls, T, n ):
         # decrement n hours
-        foo = ct(icin)
-        foo.decrement( hours=n )
+        foo = ct(T)
+        foo.decrement(hours=int(n))
         return foo.get()
 
     def __init__( self, *args ):
-        # TO DO: check arg validity (int and 0<arg<23)
+        """Parse and store incoming list of hours of the day."""
         if len(args) == 0:
+            # no args, assume all hours
             self.valid_hours = range(0,23)
         else:
             self.valid_hours = []
             for arg in args:
+                if int(arg) < 0 or int(arg) > 23:
+                    raise CyclerError, 'ERROR, HoursOfTheDay (0 << hour << 23) illegal hour: ' + str(arg)
                 self.valid_hours.append( int(arg) )
             self.valid_hours.sort()
 
-    def initial_adjust_up( self, icin ):
-        # ADJUST UP TO THE NEXT VALID CYCLE (or not, if already valid).
-        # Used at suite start-up to find the first valid cycle at
-        # or after the suite initial cycle time; in subsequent cycles
-        # next() ensures we remain on valid cycles.
-        adjusted = ct( icin )
+    def initial_adjust_up( self, T ):
+        """Adjust T up to the next valid cycle time if not already valid."""
+        adjusted = ct( T )
         rh = int(adjusted.hour)
         incr = None
         for vh in self.valid_hours:
@@ -55,19 +61,37 @@ class HoursOfTheDay( cylc.cycling.base.cycler ):
         adjusted.increment( hours=incr )
         return adjusted.get()
 
-    def next( self, icin ):
-        foo = ct(icin)
+    def next( self, T ):
+        """Jump to the next valid hour in the list."""
+        foo = ct(T)
         # cheat: add one hour and then call initial_adjust_up()
         foo.increment(hours=1)
-        # TO DO: STREAMLINE THIS SHIT:
         bar = self.initial_adjust_up(foo.get())
         return bar
 
-    def valid( self, ctime ):
-        # is ctime in this cycler's sequence
-        # TO DO: int():
-        if int(ctime.hour) in self.valid_hours:
+    def valid( self, CT ):
+        """Return True if CT.hour is in my list of valid hours."""
+        if int(CT.hour) in self.valid_hours:
             return True
         else:
             return False
+
+if __name__ == "__main__":
+    # UNIT TEST
+
+    inputs = [ \
+            ('0','12'), \
+            ('0','6','12','18'), \
+            ('0', 'x')] 
+
+    for i in inputs:
+        print i
+        try:
+            foo = HoursOfTheDay( *i )
+            print ' + next(2010080800):', foo.next('2010080800' )
+            print ' + initial_adjust_up(2010080823):', foo.initial_adjust_up( '2010080823' )
+            print ' + valid(2012080900):', foo.valid( ct('2012080900') )
+            print ' + valid(201108019):', foo.valid( ct('2011080819') )
+        except Exception, x:
+            print ' !', x
 
