@@ -176,7 +176,12 @@ class TaskID(object):
             return self.name.getstr() + '%' + self.tag.getstr()
 
     def split( self ):
+        # return name and tag
         return ( self.name, self.tag )
+
+    def splitstr( self ):
+        # return name and tag as strings
+        return ( self.name.getstr(), self.tag.getstr() )
 
 if __name__ == "__main__":
     # UNIT TEST

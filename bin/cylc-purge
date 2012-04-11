@@ -74,7 +74,7 @@ try:
 except TaskIDError, x:
     raise SystemExit(x)
 else:
-    task_id, name, start = tid.getstr(), tid.split()
+    task_id, (name, start) = tid.getstr(), tid.splitstr()
  
 if re.match( '^a:', stoptag ):
     stop = stoptag[2:]
