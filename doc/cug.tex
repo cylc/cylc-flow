@@ -4270,13 +4270,12 @@ As also shown in the example above, to get a naked option flag such as
 \lstinline=-cwd= in SGE you must give a quoted blank space as the
 directive value in the suite.rc file.
 
-\subsection{Whither Task stdout And stderr?}
+\subsection{Task stdout And stderr Log Locations}
 \label{WhitherStdoutAndStderr}
 
-When a task is ready to run cylc generates task-specific stdout and
-stderr filenames containing the task name, cycle time, and a string
-of digits (seconds since epoch) to ensure uniqueness - rerunning the
-task won't overwrite any old output:
+When a task is ready to run cylc generates a filename root containing
+the task name, cycle time, and a unique string of digits (seconds since
+epoch; so that rerunning the task won't overwrite old output):
 \lstset{language=bash}
 \begin{lstlisting}
 # task job script:
@@ -4296,11 +4295,12 @@ script that is submitted to loadleveler.
 
 Cylc obviously has no control over the stdout and stderr output from
 tasks that do their own internal output management (e.g.\ tasks 
-that submit internal jobs and direct their output to other files). 
-For less internally complex tasks, however, these will be complete task
-job logs. {\em They can be viewed updating in real time in the suite
-control GUIs}. 
+that submit internal jobs and direct the associated output to other
+files). For less internally complex tasks, however, the files referred
+to here will be complete task job logs.
 
+Cylc's suite control GUIs can display the task job logs (updating in 
+real time for local tasks). 
 
 \subsection{Overriding the Job Submission Command}
 \label{CommandTemplate}
