@@ -7,7 +7,6 @@ if necessary. See also family failure cleanup task example number 2, and
 the AutoRecover examples for recovery tasks that only run if needed."""
 
 [scheduling]
-    runahead limit = 6
     initial cycle time = 2011010106
     final cycle time = 2011010200
     [[special tasks]]

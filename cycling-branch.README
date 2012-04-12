@@ -1,8 +1,6 @@
 
 Cylc generalized cycling branch.
 
-CURRENT STATUS:
-
 Working (except see To Do below) with several cycling classes:
   +HoursOfTheDay (= original NWP mechanism)
   +Daily (increment by whole days, with stride and start delay)
@@ -11,10 +9,8 @@ Working (except see To Do below) with several cycling classes:
 Suite defines a default cycling class, which can be overridden 
 for particular graph sections.
 
-The meaning of a cycle time offset foo[T-n] is defined by the cycling
-class in use for a graph section. 
-
-Three example suites under examples/cycling/
+The units of a cycle time offset n (in foo[T-n]) are defined by the
+cycling class in use for a graph section. 
 
 TO DO:
  + Cycle times are still passed around as strings and temporarily
@@ -24,5 +20,13 @@ TO DO:
  + USE 'a:INT' INTERNALLY FOR ASYNC TAGS TO MAKE CHECKING FOR TAG
 VALIDITY EASIER.
  + To complete the extension to YYYYMMDDHHmmss (i.e. with mmss) check
- for any hardwired assumptions about ctime string length.
+ for any hardwired assumptions about ctime string length (e.g. in suite 
+ log filtering - command and GUI).
+
+A MINIMUM RUNAHEAD limit is now computed automatically by each cycler in
+a suite.  Note however that for 6-hrly tasks, for example, with no
+intercycle dependence, a limit of just 1 hour does NOT stall the suite
+(with intercycle dependence it does). => NEED TO clearly explain when
+the runahead limit can stall a suite (and automatically compute a true
+minimum below which the suite will stall?)
 

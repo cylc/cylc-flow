@@ -6,7 +6,6 @@ Illustrates use of a task event hook script to clean up failed tasks."""
 [scheduling]
     initial cycle time = 2011010106
     final cycle time = 2011010200
-    runahead limit = 6
     [[special tasks]]
         sequential = A  # (just to slow the suite down)
 

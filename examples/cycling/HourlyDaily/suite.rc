@@ -4,6 +4,7 @@
 {% set STOP  = 2010081200 %}
 
 [scheduling]
+    runahead limit = 24
     initial cycle time = {{ START }}
     final cycle time   = {{ STOP }}
     cycling = HoursOfTheDay

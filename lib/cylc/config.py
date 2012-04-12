@@ -405,6 +405,29 @@ class config( CylcConfigObj ):
         self.process_directories()
         self.load()
 
+        # Compute maximum runahead limit
+        # 1/ take the largest of the minimum limits from each graph section
+        mrls = []
+        for cyc in self.cyclers:
+            mrls.append(cyc.minimum_runahead_limit)
+        mrl = max(mrls)
+        if self.verbose:
+            print "Largest minimum runahead limit from cycling modules:", mrl, "hours"
+        # 2/ or if there is a configured maximum runahead limit, use it.
+        rl = self['scheduling']['runahead limit']
+        if rl:
+            if self.verbose:
+                print "Configured maximum runahead limit: ", rl, "hours"
+            if rl < mrl:
+                print >> sys.stderr, 'WARNING: runahead limit (' + str(rl) + ') is too low (<' + str(mrl) + '), suite may stall'
+            crl = rl
+        else:
+            crl = mrl
+            if self.verbose:
+                print "Maximum runahead limit defaulting to:", crl, "hours"
+
+        self['scheduling']['runahead limit'] = crl
+
         self.family_tree = {}
         self.task_runtimes = {}
         self.define_inheritance_tree( self.family_tree, self.family_hierarchy )

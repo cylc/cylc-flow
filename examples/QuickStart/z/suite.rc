@@ -2,7 +2,6 @@ title = "Quick Start Example Z"
 description = "(Example A without the visualization config)"
 
 [scheduling]
-    runahead limit = 12
     initial cycle time = 2011010106
     final cycle time = 2011010200
     [[special tasks]]

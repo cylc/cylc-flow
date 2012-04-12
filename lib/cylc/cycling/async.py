@@ -26,6 +26,8 @@ class async( cycler ):
         return str(int(tag)-int(n))
  
     def __init__( self, *args ):
+        # asynchronous task do not have a runahead limit
+        self.minimum_runahead_limit = 0
         pass
 
     def next( self, tag ):
