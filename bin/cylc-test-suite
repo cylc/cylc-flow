@@ -22,7 +22,7 @@ usage() {
     echo "USAGE: cylc [admin] test-suite [--help]"
     echo ""
     echo "Run an automated test of core cylc functionality using a new copy of"
-    echo "'$CYLC_DIR/examples/admin/test'. This should be used to check that new"
+    echo "'$CYLC_DIR/examples/admin'. This should be used to check that new"
     echo "developments in the cylc codebase have not introduced serious bugs."
     echo "The test runs a suite registered as 'test'; to watch its progress"
     echo "use 'cylc view'. Aside from timing differences results should be the"
@@ -63,7 +63,7 @@ mkdir -p $TMPDIR
 # seconds since epoch
 SSE=$( date +%s )
 
-SUITE_DEF=$CYLC_DIR/examples/admin/test
+SUITE_DEF=$CYLC_DIR/examples/admin
 SUITE_REG=testsuite.$SSE
 SUITE_DIR=$TMPDIR/$SUITE_REG
 

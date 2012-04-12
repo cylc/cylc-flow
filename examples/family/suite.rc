@@ -1,7 +1,6 @@
 title = "A complex task family example"
 
-description = """
-A suite containing families with extra-family dependencies."""
+description = "Task families with family and extra-family dependencies."
 
 [scheduling]
     initial cycle time = 2011010112
@@ -11,22 +10,19 @@ A suite containing families with extra-family dependencies."""
     [[dependencies]]
         [[[12]]]
             graph = """
-# main graph:
+# full family triggers:
 A => FAMx => B => FAMy => C
-# internal:
+# internal dependence among family members:
 x1 => x2 
 # member of one family to member of another:
 x2 => y2
-# extra-family:
+# extra-family dependence:
 y1 => D => y2
 E => x1 => F
 x1 | x2 => G
-y1 | H => I
-                    """
+y1 | H => I"""
+
 [runtime]
-    [[root]]
-        # Use string interpolation here:
-        command scripting = "echo Hello from $CYLC_TASK_ID; sleep 10; echo BYE"
     [[FAMx,FAMy]]
     [[x1,x2]]
         inherit = FAMx
@@ -39,3 +35,4 @@ y1 | H => I
     [[node attributes]]
         FAMx = 'color=red', 'shape=ellipse'
         FAMy = 'color=blue', 'shape=ellipse'
+

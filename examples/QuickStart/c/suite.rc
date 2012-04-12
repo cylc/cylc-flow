@@ -65,13 +65,10 @@ description  = "(Quick Start b plus real tasks)"
 
 [visualization]
     default node attributes = "shape=ellipse"
-    [[node groups]]
-        post = PostA, PostB
-        models = ColdModel, Model
     [[node attributes]]
-        post  = "style=unfilled", "color=blue", "shape=rectangle"
+        Post  = "style=unfilled", "color=blue", "shape=rectangle"
         PostB = "style=filled", "fillcolor=seagreen2"
-        models  = "style=filled", "fillcolor=red"
+        Models  = "style=filled", "fillcolor=red"
         ColdModel = "fillcolor=lightblue"
         GetData = "style=filled", "fillcolor=yellow", "shape=septagon"
         Prep = "shape=box", "style=bold", "color=red3" 

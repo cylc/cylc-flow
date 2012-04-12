@@ -1,10 +1,10 @@
 title = family failure cleanup task example number 1
 
 description = """
-Illustrates use of a special task to clean up failed tasks.
-Here the cleanup task runs whether or not the family fails,
-but it only cleans up if necessary.
-See also family failure cleanup task example number 2."""
+Illustrates use of a special task to clean up failed tasks. Here the
+cleanup task runs whether or not the family fails, but it only cleans up
+if necessary. See also family failure cleanup task example number 2, and
+the AutoRecover examples for recovery tasks that only run if needed."""
 
 [scheduling]
     runahead limit = 6
@@ -29,6 +29,7 @@ See also family failure cleanup task example number 2."""
         command scripting = """
 # Fail at 6,18, succeed at 0,12:
 HH=${CYLC_TASK_CYCLE_TIME#????????} 
+# (TO DO: HH extraction will fail if we go to YYYYMMDDHHmmss)
 if (( HH == 6 || HH == 18 )); then
     COMMAND=/bin/false
 else

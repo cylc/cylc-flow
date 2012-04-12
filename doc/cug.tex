@@ -2143,11 +2143,7 @@ A[T-6] => A  # Model A restart trigger
 \end{lstlisting}
 \lstset{language=transcript}
 Figure~\ref{fig-dep-eg-1} shows the complete suite.rc listing alongside
-the suite graph, plotted with,
-\begin{lstlisting}
-% cylc graph SDepG 2011052200 2011052206
-# (or use right-click Graph in gcylc)
-\end{lstlisting}
+the suite graph.
 This is actually a complete, valid, runnable suite (it will use default 
 runtime properties such as dummy command scripting, because no runtime 
 properties are explicitly defined, and you'll need to trigger task A
@@ -2185,7 +2181,7 @@ A[T-6] => A  # Model A restart trigger
         \includegraphics[width=\textwidth]{screenshots/dep-eg-1.png}
     \end{center}
 \end{minipage}
-\caption[Example Suite SDepG]{\scriptsize Example Suite SDepG}
+\caption[Example Suite]{\scriptsize Example Suite}
 \label{fig-dep-eg-1}
 \end{figure}
 
@@ -2359,10 +2355,6 @@ string) for cycling, one-off asynchronous, and repeating asynchronous
 tasks. Additionally, there may be multiple graph strings under different
 VALIDITY sections for cycling tasks with different dependencies at
 different cycle times.
-
-{\em The small suite definitions used in the following subsections can
-be found in the central database registered under the {\em validity}
-group name.} 
 
 \paragraph{One-off Asynchronous Tasks}
 
@@ -3148,13 +3140,19 @@ Groups of similar tasks or families that differ only in a few
 configuration details can be defined in single namespace sections
 by putting a list of names in the section heading. Potential
 applications include groups of similar obs processing tasks, and
-forecasting ensembles.
+forecasting ensembles. Note that if the list of tasks are also 
+members of the same family then any common runtime configuration could
+equally go under the inherited family namespace.
 
-As the suite.rc file is parsed, any occurrence of
-\lstinline=<NAMESPACE>= in any runtime configuration item
-is immediately replaced with the actual name of the namespace; and after 
-inheritance processing any occurrence of \lstinline=<TASK>= is
-replaced with the actual name of the task.
+As the suite.rc file is parsed any occurrence of the special variable
+\lstinline=<NAMESPACE>= in a runtime configuration item will be replaced
+immediately with the name of the namespace in which the special variable
+appears.  Then, after inheritance processing, in each task any
+occurrence of \lstinline=<TASK>= will be replaced with the name of the
+task. If both special variables are used in a family namespace
+definition, then in inheriting member tasks \lstinline=<NAMESPACE>= will
+evaluate to the family name while \lstinline=<TASK>= will evaluate to
+the task name.
 
 The following example illustrates this:
 \lstset{language=suiterc}
@@ -3176,6 +3174,10 @@ The following example illustrates this:
 % cylc get-config test runtime baz 'command scripting'
 ['echo Hello from baz via foo']
 \end{lstlisting}
+
+Of course particular tasks can also be singled out at runtime, in common
+command scripting or invoked task scripts, by testing the
+\lstinline=$CYLC_TASK_NAME= variable.
 
 As another example, consider a suite containing an ensemble of closely
 related forecast tasks in which each task invokes the same external
@@ -3205,14 +3207,11 @@ automatically generate the member names and associated dependencies
 
 Note that in the namespace scripting and environment sections, which are
 evaluated in task job scripts at run time, \lstinline=<TASK>= is
-functionally equivalent to \lstinline=$CYLC_TASK_NAME=.  But in other
-runtime config items that are never actually interpretred by the shell
+functionally equivalent to \lstinline=$CYLC_TASK_NAME=, but in 
+runtime config items that are never interpreted by the shell
 (e.g.\ \lstinline=description=) \lstinline=<TASK>= must be used to
-specialize from the list of names in the namespace section heading to a
-particular task name.
-
-{\em The {\em multidef} example suite illustrates use of these internal
-variables.}
+specialize from the list of names in the namespace section heading to 
+the individual task name.
 
 \subsubsection{Task Execution Environment}
 \label{TaskExecutionEnvironment}

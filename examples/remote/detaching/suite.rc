@@ -32,7 +32,9 @@ llsubmit $DETACHED
 cylc task message "detached now, BYE from $(hostname)"
 """
         [[[remote]]]
-            cylc directory = ~ecoconnect_admin/cylc-4.2.1
+            # the remote host name:
             host = wrh-1.hpcf.niwa.co.nz
+            # needed if cylc is not in PATH on the remote host
+            cylc directory = ~ecoconnect_admin/cylc-4.2.1
 
 
