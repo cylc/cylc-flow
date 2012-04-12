@@ -21,6 +21,7 @@ modified unless you know what you're doing."""
         enable = False
 
 [scheduling]
+    runahead limit = 24
     [[special tasks]]
     start-up         = prep
     sequential       = A, B, C

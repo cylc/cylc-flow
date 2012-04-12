@@ -29,4 +29,7 @@ intercycle dependence, a limit of just 1 hour does NOT stall the suite
 (with intercycle dependence it does). => NEED TO clearly explain when
 the runahead limit can stall a suite (and automatically compute a true
 minimum below which the suite will stall?)
+BUT NOW I'm computing runahead limiting based only on old waiting 
+(rather than unfailed) task, which frees up model-type suites - maybe no 
+stallng now?
 
