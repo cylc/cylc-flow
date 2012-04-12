@@ -23,6 +23,8 @@ class IllegalRegPathError( Exception ):
         self.msg = "ERROR, illegal suite name: " + suite
         if owner:
             self.msg += ' (' + owner + ')'
+    def __str__( self ):
+        return repr(self.msg)
 
 class RegPath(object):
     # This class contains common code for checking suite registration
