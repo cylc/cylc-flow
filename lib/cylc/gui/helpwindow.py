@@ -563,6 +563,8 @@ def userguide( w, graph=False ):
     update_tb( tb, "Set all of a task's outputs completed." )
     update_tb( tb, "\n o Reset to 'failed': ", [bold])
     update_tb( tb, "Put the task in the 'failed' state." )
+    update_tb( tb, "\n o Force Spawn: ", [bold])
+    update_tb( tb, "Force the task to spawn a successor if it hasn't done so already." )
 
     update_tb( tb, "\n o Hold: ", [bold])
     update_tb( tb, "Put a task in the 'held' state; "

@@ -1335,7 +1335,7 @@ class scheduler(object):
             itask.set_trigger_now(True)
 
     def reset_task_state( self, task_id, state ):
-        if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'held' ]:
+        if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'held', 'spawn' ]:
             raise TaskStateError, 'Illegal reset state: ' + state
         found = False
         for itask in self.pool.get_tasks():
@@ -1361,6 +1361,8 @@ class scheduler(object):
             itask.reset_state_failed()
         elif state == 'held':
             itask.reset_state_held()
+        elif state == 'spawn':
+            self.force_spawn(itask)
 
     def add_prerequisite( self, task_id, message ):
         # find the task to reset

@@ -17,28 +17,33 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class nopid(object):
-    # NO PREVIOUS INSTANCE DEPENDENCE, FOR NON FORECAST MODELS
+    """For tasks with no previous instance dependence. These can in 
+   principle spawn as soon as they are created, but that would result in
+   waiting tasks spawning into the far future. Consequently we spawn on
+   job submission; this prevents uncontrolled spawning but still allows
+   successive instances to run in parallel if the opportunity arises. 
+   
+   Tasks that in principle have no previous instance dependence but
+   which in practice cannot run in parallel with a previous instance
+   (e.g. due to interference between temporary files) can be constrained
+   with the sequential attribute if necessary (otherwise, imposing
+   artificial dependence on the previous instance via prerequisites
+   requires an associated cold-start task to get the suite started).
+
+   A task can only fail after first being submitted, therefore a failed
+   task should spawn if it hasn't already.
+   
+   Manually forcing a waiting task to the failed state will therefore
+   result in it spawning (this is not the case for sequential tasks)."""
 
     def ready_to_spawn( self ):
-        # Tasks with no previous instance dependence can in principle
-        # spawn as soon as they are created, but this would result in
-        # waiting tasks spawning out to the runahead limit. Spawning on
-        # submission prevents this without preventing successive
-        # instances of a task from running in parallel if the
-        # opportunity arises. Tasks with no previous instance dependence
-        # and no prerequisites will all go off at once out to the
-        # runahead limit (unless they are clock-triggered tasks whose
-        # time isn't up yet). These can be constrained with the
-        # sequential attribute if necessary.
  
         if self.has_spawned():
             return False
 
         if self.state.is_submitted() or self.state.is_running() or \
                 self.state.is_succeeded() or self.state.is_failed():
-            # The tests for running or succeeded are probably not
-            # necessary, but the test for failed will result in a
-            # non-spawned task spawning when manually set to failed.
             return True
         else:
             return False
+

@@ -399,6 +399,12 @@ The cylc forecast suite metascheduler.
         if self.readonly:
             reset_failed_item.set_sensitive(False)
 
+        spawn_item = gtk.MenuItem( 'Force spawn' )
+        items.append( spawn_item )
+        spawn_item.connect( 'activate', self.reset_task_state, task_id, 'spawn' )
+        if self.readonly:
+            spawn_item.set_sensitive(False)
+
         items.append( gtk.SeparatorMenuItem() )
 
         stoptask_item = gtk.MenuItem( 'Hold' )
