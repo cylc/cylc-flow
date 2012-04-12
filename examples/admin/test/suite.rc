@@ -7,25 +7,30 @@ title = "Cylc Admin Test Suite"
 #        C[T-6]-> C -> F 
 #       
 
-description = """This is a version of the suite that illustrates the
-Cylc User Guide introductory section. It is used copy by the admin 
-'test-suite' command and should be modified with extreme caution."""
+description = """This is an implementation of the example suite that
+illustrates the Cylc User Guide introductory section. It is copied 
+on the fly then used by 'cylc admin test-suite' and should not be
+modified unless you know what you're doing."""
 
-# LOCKSERVER OFF: we're only testing scheduling functionality here.
+# suite does not currently use Jinja2 - that's an optional extra.
+
 [cylc]
     [[lockserver]]
+        # LOCKSERVER OFF (the default, but just to be sure).
+        # (we're only testing scheduling functionality here).
         enable = False
 
 [scheduling]
     [[special tasks]]
-    start-up          = prep
+    start-up         = prep
     sequential       = A, B, C
-    cold-start        = ColdA, ColdB, ColdC
+    cold-start       = ColdA, ColdB, ColdC
     clock-triggered  = X(1)
 
     [[dependencies]]
         [[[0,6,12,18]]]
-            graph =  """X => A => B => E
+            graph = """
+                    X => A => B => E
                     A => C => F
                     B & C => D
     
@@ -34,95 +39,57 @@ Cylc User Guide introductory section. It is used copy by the admin
                     ColdC | C[T-6] => C
 
                     prep => X & ColdA & ColdB & ColdC"""
-
 [runtime]
     [[root]]
+        command scripting = <TASK>.sh
         [[[environment]]]
             TASK_EXE_SECONDS = 10
-            WORKSPACE = /tmp/$USER/$CYLC_SUITE_REG_NAME/common
-            RUNNING   = $WORKSPACE/running
+            WORKSPACE  = /tmp/$USER/$CYLC_SUITE_REG_NAME/common
+            RUNNING    = $WORKSPACE/running
+            INPUT_DIR  = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
+
+    [[Model]]
+        description = "Model task <TASK>"
+        [[[environment]]]
+            RUNNING_DIR = $RUNNING/<TASK>
+
+    [[Cold]]
+        inherit = Model
+        description = "Model cold start task <TASK>"
+      [[[environment]]]
+            # Needs the corresponding model running dir
+            RUNNING_DIR = "$RUNNING/${CYLC_TASK_NAME#Cold}"
+
+    [[Post]]
+        description = "Post processing task <TASK>"
 
     [[prep]]
-        description = "clean out the suite workspace for a new run"
+        description = "Clean out the suite workspace for a new run"
         command scripting = clean-workspace.sh $WORKSPACE
-    [[X]]
-        description = "retrieve real time data for model A"
-        command scripting = X.sh
-        [[[environment]]]
-            OUTPUT_DIR = $WORKSPACE
-    [[A]]
-        description = "model A - weather forecast"
-        command scripting = A.sh
-        [[[environment]]]
-            INPUT_DIR = $WORKSPACE
-            OUTPUT_DIR = $WORKSPACE
-            RUNNING_DIR = $RUNNING/A
-    [[B]]
-        description = "model B - sea state forecast"
-        command scripting = B.sh
-        [[[environment]]]
-            INPUT_DIR = $WORKSPACE
-            OUTPUT_DIR = $WORKSPACE
-            RUNNING_DIR = $RUNNING/B
-    [[C]]
-        description = "model C - river flow forecast"
-        command scripting = C.sh
-        [[[environment]]]
-            INPUT_DIR = $WORKSPACE
-            OUTPUT_DIR = $WORKSPACE
-            RUNNING_DIR = $RUNNING/C
-    [[D]]
-        description = "combined post processing for models B and C"
-        command scripting = D.sh
-        [[[environment]]]
-            INPUT_DIR = $WORKSPACE
-            OUTPUT_DIR = $WORKSPACE
-    [[E]]
-        description = "post processing for model B"
-        command scripting = E.sh
-        [[[environment]]]
-            INPUT_DIR = $WORKSPACE
-            OUTPUT_DIR = $WORKSPACE
-    [[F]]
-        description = "post processing for model F"
-        command scripting = F.sh
-        [[[environment]]]
-            INPUT_DIR = $WORKSPACE
-            OUTPUT_DIR = $WORKSPACE
 
-    [[ColdA]]
-        description = "cold start model A"
-        command scripting = ColdA.sh
-        [[[environment]]]
-            RUNNING_DIR = $RUNNING/A
- 
-    [[ColdB]]
-        description = "model B"
-        command scripting = ColdB.sh
-        [[[environment]]]
-            RUNNING_DIR = $RUNNING/B
- 
-    [[ColdC]]
-        description = "model C"
-        command scripting = ColdC.sh
-        [[[environment]]]
-            RUNNING_DIR = $RUNNING/C
+    [[X]]
+        description = "Retrieve real time data for model A"
+
+    [[A,B,C]]
+        inherit = Model
+
+    [[D,E,F]]
+        inherit = Post
+
+    [[ColdA,ColdB,ColdC]]
+        inherit = Cold
  
 [visualization]
     default node attributes = "style=filled"
-    [[node groups]]
-        models = A, B, C
-        cold   = ColdA, ColdB, ColdC
-        post   = D, E, F
-        data   = X
     [[node attributes]]
-        models = "shape=septagon"
-        post   = "style=unfilled", "shape=rectangle"
-        cold   = "shape=egg", "fillcolor=slateblue"
-        data   = "shape=box", "fillcolor=lawngreen"
+        Model = "shape=septagon"
+        Post   = "style=unfilled", "shape=rectangle"
+        Cold   = "shape=egg", "fillcolor=slateblue"
+        X   = "shape=box", "fillcolor=lawngreen"
         A      = "fillcolor=red"
-        C      = "fillcolor=orange"
         B      = "fillcolor=magenta3"
+        C      = "fillcolor=orange"
         D      = "style=bold", "color=green4"
         E      = "style=bold", "color=blue"
         F      = "style=bold", "color=red"
