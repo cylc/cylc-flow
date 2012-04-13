@@ -187,10 +187,11 @@ class message(object):
 
     def send_failed( self ):
         self.priority = 'CRITICAL'
-        reason = ''
         if self.msg:
-            reason = ' (' + self.msg + ')'
-        self.send( self.task_id + ' failed' + reason )
+            # send reason for failure first so it does not contaminate
+            # the special task failed message.
+            self.send()
+        self.send( self.task_id + ' failed' )
 
     def shortcut_next_restart( self ):
         self.print_msg( 'next restart file completed' )
