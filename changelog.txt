@@ -629,3 +629,7 @@ of a failed sequential task that cannot be re-run successfully, to force
 it to carry on into the next cycle (see previous bullet point for why 
 this should not be done automatically).
 
++ Optional non-Pyro ssh-based remote task messaging, may be useful at 
+sites in which one or more remote task hosts have the Pyro network ports
+closed.
+

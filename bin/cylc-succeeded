@@ -62,8 +62,6 @@ if not cylc_mode.mode().is_raw():
 # send succeeded message
 try:
     message().send_succeeded()
-except NamingError, x:
-    print >> sys.stderr, 'ERROR: Failed to connect to task proxy.'
-    raise SystemExit(x)
 except Exception, x:
+    print >> sys.stderr, 'ERROR: task messaging failure.'
     raise SystemExit(x)

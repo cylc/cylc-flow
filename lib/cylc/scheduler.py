@@ -431,7 +431,8 @@ class scheduler(object):
 
         # CYLC EXECUTION ENVIRONMENT
         cylcenv = OrderedDict()
-        cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
+        cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]        # this is overridden in remote tasks ...
+        cylcenv[ 'CYLC_DIR_LOCAL' ] = os.environ[ 'CYLC_DIR' ]  # ... but this is not
         cylcenv[ 'CYLC_MODE' ] = 'scheduler'
         cylcenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
         cylcenv[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
