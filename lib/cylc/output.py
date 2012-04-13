@@ -36,17 +36,16 @@ own cycle time.
         self.offset = None
         self.cyclr = cyclr
         # Replace CYLC_TASK_CYCLE_TIME with TAG 
-        msg0 = msg
-        self.msg = re.sub( 'CYLC_TASK_CYCLE_TIME', 'TAG', msg )
-        m = re.search( '<TAG\s*([+-])\s*(\d+)>', self.msg )
+        self.msg = msg
+        m = re.search( '\[\s*T\s*([+-])\s*(\d+)\s*\]', self.msg )
         if m:
             sign, offset = m.groups()
-            if sign == '-':
-                raise OutputXError, "ERROR, " + sself.id + ": Output offsets must be positive: " + msg0
+            if sign != '+':
+                raise OutputXError, "ERROR, task output offsets must be positive: " + self.msg
             self.offset = int(offset)
 
     def get( self, ctime ):
         if self.offset:
             ctime = self.cyclr.offset( ctime, - self.offset )
-        return re.sub( '<TAG.*?>', ctime, self.msg )
+        return re.sub( '\[\s*T.*?\]', ctime, self.msg )
 

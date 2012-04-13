@@ -39,7 +39,8 @@ class cycler( object ):
     @classmethod
     def offset( cls, T, n ):
         """Decrement the cycle time T by the integer n (which may be
-        negative, implying an increment), where the units of n (e.g.
+        negative, implying an increment - this can be used in offset
+        internal task output messages), where the units of n (e.g.
         days or years) are defined by the derived class. This is a class
         method because a time offset T-n does not depend on the details
         of the sequence, other than the units."""

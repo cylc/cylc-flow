@@ -18,6 +18,12 @@
 
 import re
 
+class TriggerXError( Exception ):
+    def __init__( self, msg ):
+        self.msg = msg
+    def __str__( self ):
+        return repr( self.msg )
+
 class triggerx(object):
     """
 Class to hold and process task triggers during suite configuration.
@@ -58,12 +64,13 @@ where output x of foo may also have an offset:
         self.cycling = True
     def set_special( self, msg ):
         # explicit internal output message ...
-        # Replace CYLC_TASK_CYCLE_TIME with TAG in explicit internal output message
-        self.msg = re.sub( 'CYLC_TASK_CYCLE_TIME', 'TAG', msg )
-        preq = self.msg
-        m = re.search( '<TAG\s*\+\s*(\d+)>', preq )
+        self.msg = msg
+        m = re.search( '\[\s*T\s*([+-])\s*(\d+)\s*\]', msg )
         if m:
-            self.intrinsic_offset = int( m.groups()[0] )
+            sign, offset = m.groups()
+            if sign != '+':
+                raise TriggerXError, "ERROR, task output offsets must be positive: " + self.msg
+            self.intrinsic_offset = int(offset)
     def set_type( self, type ):
         if type not in [ 'started', 'succeeded', 'failed' ]:
             raise SystemExit( 'Illegal trigger type:' + type )
@@ -86,7 +93,7 @@ where output x of foo may also have an offset:
                     ctime = cycler.offset( ctime, - self.intrinsic_offset )
                 if self.evaluation_offset:
                     ctime = cycler.offset( ctime, self.evaluation_offset )
-                preq = re.sub( '<TAG.*?>', ctime, preq )
+                preq = re.sub( '\[\s*T\s*.*?\]', ctime, preq )
             else:
                 # implicit output
                 if self.evaluation_offset:

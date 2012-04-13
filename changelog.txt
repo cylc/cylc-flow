@@ -633,3 +633,7 @@ this should not be done automatically).
 sites in which one or more remote task hosts have the Pyro network ports
 closed.
 
++ Time offset syntax in explicit internal output messages has been changed
+from <CYLC_TASK_CYCLE_TIME+n> to [T+n]. The new syntax is the same as
+for cycle time offsets in the suite graph.
+
