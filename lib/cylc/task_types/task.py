@@ -472,8 +472,6 @@ class task( Pyro.core.ObjBase ):
         if message == self.id + ' failed':
             # process task failure messages
             self.succeeded_time = task.clock.get_datetime()
-            state_changed = True
-            self.set_failed( message )
             try:
                 # Is there a retry lined up for this task?
                 self.external_task = self.external_tasks.popleft()
@@ -485,6 +483,9 @@ class task( Pyro.core.ObjBase ):
                 # circumstances they will not be completed outputs).
                 self.outputs.add( message )
                 self.outputs.set_completed( message )
+                # this also calls the task failure hook script:
+                self.set_failed( message )
+                state_changed = True
             else:
                 # yes, retry.
                 if self.launcher and not self.launcher.simulation_mode:
@@ -494,6 +495,7 @@ class task( Pyro.core.ObjBase ):
                     self.state.set_status( 'waiting' )
                     self.prerequisites.set_all_satisfied()
                     self.outputs.set_all_incomplete()
+                    state_changed = True
 
         elif self.outputs.exists( message ):
             # registered output messages

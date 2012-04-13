@@ -633,3 +633,7 @@ this should not be done automatically).
 sites in which one or more remote task hosts have the Pyro network ports
 closed.
 
++ If a task has a list of "command scripting" items to retry on failure, 
+a task failure hook script is now only called for a final definitive
+failure.
+
