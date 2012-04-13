@@ -1003,7 +1003,7 @@ as the TARGET suite name, and \lstinline=$TMPDIR= (or some other
 directory of your choice) as a destination for the suite definition
 directories in the group.  Equivalently, on the command line:
 \begin{lstlisting}
-% cylc db import <AdminUserName>.cylc-x-y-z.QuickStart Quickstart $TMPDIR
+% cylc db import <AdminUserName>.cylc-x-y-z.QuickStart QuickStart $TMPDIR
 COPY /home/<AdminUserName>/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/a 
   TO /tmp/oliver/QuickStart/a
 REGISTER QuickStart.a: /tmp/oliver/QuickStart/a
@@ -1035,7 +1035,7 @@ QuickStart
 Cylc suites are defined by {\em suite.rc files}, discussed at length in
 {\em Suite Definition} (Section~\ref{SuiteDefinition}) and the {\em
 Suite.rc Reference} (Appendix~\ref{SuiteRCReference}).  To view the
-Quickstart.a suite definition right-click on the suite
+QuickStart.a suite definition right-click on the suite
 name and choose `Edit'; or use the edit command:
 \begin{lstlisting}
 % cylc edit QuickStart.a

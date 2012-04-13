@@ -31,7 +31,6 @@ import datetime
 import cylc_pyro_client
 from port_scan import NoSuiteFoundError, OtherSuiteFoundError, ConnectionDeniedError
 import Pyro.errors
-from conf.CylcGlobals import ssh_messaging
 
 class message(object):
     def __init__( self, msg=None, priority='NORMAL' ):
@@ -98,6 +97,12 @@ class message(object):
             if os.environ['CYLC_UTC'] == 'True':
                 self.utc = True
 
+        self.ssh_messaging = False
+        if 'CYLC_SSH_MESSAGING' in os.environ.keys():
+            if os.environ['CYLC_SSH_MESSAGING'] == 'True':
+                self.ssh_messaging = True
+
+
     def now( self ):
         if self.utc:
             return datetime.datetime.utcnow()
@@ -125,15 +130,15 @@ class message(object):
         if not msg:
             # nothing to send
             return
-        self.print_msg( msg )
         if self.mode != 'scheduler':
             # no suite to communicate with
+            self.print_msg( msg )
             return
-        if ssh_messaging:
-            print "Invoking local messaging on the suite host by ssh"
-            self.send_by_ssh()
+        if self.ssh_messaging:
+            print "Invoking messaging on the suite host by ssh"
+            self.send_ssh()
         else:
-            print "Invoking Pyro network messaging to the suite host"
+            self.print_msg( msg )
             self.send_pyro( msg )
 
     def send_pyro( self, msg ):
@@ -156,7 +161,7 @@ class message(object):
             # (ports not opened for cylc suites?)
             raise SystemExit(x)
 
-    def send_by_ssh( self ):
+    def send_ssh( self ):
         cylc_command = os.path.basename( sys.argv[0] )  # 'cylc-failed'
         cylc_command_list = cylc_command.split('-') + sys.argv[1:]    # 'cylc failed (reason)'
         sshcommand = 'ssh -oBatchMode=yes ' + self.owner + '@' + self.host + ' '
@@ -187,10 +192,11 @@ class message(object):
 
     def send_failed( self ):
         self.priority = 'CRITICAL'
-        reason = ''
         if self.msg:
-            reason = ' (' + self.msg + ')'
-        self.send( self.task_id + ' failed' + reason )
+            # send reason for failure first so it does not contaminate
+            # the special task failed message.
+            self.send()
+        self.send( self.task_id + ' failed' )
 
     def shortcut_next_restart( self ):
         self.print_msg( 'next restart file completed' )

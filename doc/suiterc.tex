@@ -944,13 +944,13 @@ environment variable \lstinline=$CYLC_SUITE_SHARE_PATH=.
 
 \paragraph[{[[[}remote{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]]}
 
-Remote hosting configuration for tasks that need to run on platforms
-other than the suite host. If a remote host is specified cylc
-will attempt to execute the task on that host by passwordless ssh.
-Relevant task scripts and executables, cylc itself, and possibly all or
-part of the suite definition directory, must be installed on the remote
-host. Passwordless ssh must be configured between the local suite owner
-and remote task owner accounts.
+Remote hosting configuration for tasks that run on hosts other than the
+suite host. If a remote host is specified cylc will attempt to execute
+the task on that host by passwordless ssh. Cylc must be installed on 
+remote task hosts, but of the external software dependencies only Pyro 
+is required there (and actually not even that - see ``ssh messaging''
+below). Passwordless ssh must be configured between the local suite
+owner on the suite host, and the task owner on the remote task host.
 
 \subparagraph[host]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ host}
 
@@ -1053,6 +1053,29 @@ with the suite owner's home directory path, if present, replaced by
 \item {\em default:} (local task share path with \lstinline=$HOME= replaced)
 \end{myitemize}
 
+\subparagraph[ssh messaging]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ ssh messaging}
+
+If your network configuration or firewall blocks the TCP/IP sockets
+required for remote tasks to communicate with their parent suite
+you can tell cylc to use passwordless ssh (from remote host to suite
+host) instead, to invoke local messaging commands on the suite host.
+
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em default:} False
+\end{myitemize}
+
+This item affects the behaviour of the cylc messaging commands by means
+of the task execution environment, so no special cylc configuration is
+required on the remote host itself. Eventually it may be moved to a site
+and host configuration file (yet to be implemented) because it is host-
+rather than task-specific. For the moment though you can still set it
+just once in a namespace inherited by all tasks on the affected host.
+
+Note that you can use a remote section with this item in it even for
+tasks that are local as far as cylc is concerned, but which end up
+running on the affected remote host due to the action of the local batch
+queueing system or resource manager.
 
 \paragraph[{[[[}event hooks{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]]}
 \label{TaskEventHandling}

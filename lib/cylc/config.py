@@ -1492,8 +1492,19 @@ class config( CylcConfigObj ):
             taskd.commands   = taskconfig['command scripting']
             taskd.precommand = taskconfig['pre-command scripting'] 
             taskd.postcommand = taskconfig['post-command scripting'] 
-        # initial scripting could be required to access cylc, even in sim mode.
+
+        # initial scripting (could be required to access cylc even in sim mode).
         taskd.initial_scripting = taskconfig['initial scripting'] 
+        # the ssh messaging variable must go in initial scripting so
+        # that it affects the task started call as well as later
+        # messages:
+        tmp = taskconfig['remote']['ssh messaging']
+        if tmp != None:
+            tmp = "\nexport CYLC_SSH_MESSAGING=" + str(tmp) + "\n"
+            if taskd.initial_scripting != None: 
+                taskd.initial_scripting += tmp
+            else:
+                taskd.initial_scripting = tmp
 
         taskd.job_submission_shell = taskconfig['job submission']['shell']
 
