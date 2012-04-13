@@ -130,15 +130,15 @@ class message(object):
         if not msg:
             # nothing to send
             return
-        self.print_msg( msg )
         if self.mode != 'scheduler':
             # no suite to communicate with
+            self.print_msg( msg )
             return
         if self.ssh_messaging:
-            print "Invoking local messaging on the suite host by ssh"
+            print "Invoking messaging on the suite host by ssh"
             self.send_ssh()
         else:
-            print "Invoking Pyro network messaging to the suite host"
+            self.print_msg( msg )
             self.send_pyro( msg )
 
     def send_pyro( self, msg ):
