@@ -45,15 +45,6 @@ central_regdb_dir = os.path.join( os.environ['CYLC_DIR'], 'CDB' )
   # Local registrations, user-specific
 local_regdb_dir = os.path.join( os.environ['HOME'], '.cylc', 'LDB' )
 
-# NON-PYRO SSH-BASED TASK MESSAGING from THIS REMOTE TASK HOST ########
-# Instead of communicating with the suite via by TCP/IP network socket,
-# invoke the same messaging command on the suite host via passwordless
-# ssh. !!!! THIS MUST NOT BE SET TO TRUE ON THE SUITE HOST !!! or an
-# infinite loop results as messages reinvoke repeatedly via ssh.
-# TO DO: automatically set False on the suite host, by comparing the
-# suite and local hostnames.
-ssh_messaging = False
-
 # CONSITENCY CHECKS ###################################################
 if central_regdb_dir == local_regdb_dir:
     print >> sys.stderr, "ERROR: local and central suite registration database directories" 
