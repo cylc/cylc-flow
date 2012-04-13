@@ -16,10 +16,24 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
+import calendar
+
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.cycling.base import cycler, CyclerError
 
-class Anniversary( cycler ):
+# add the years arithmetic routines to start with here, where they get used
+# to keep the original design of the code as little as possible changed.
+
+def add_years(start_date, years):
+    year = start_date.year + years
+    return start_date.replace(year)
+
+def sub_years(start_date, years):
+    year = start_date.year - years
+    return start_date.replace(year) 
+
+class Yearly( cycler ):
 
     """For a cycle time sequence that increments by one or more years to
     the same anniversary date (e.g. every second year at 5 May 00 UTC)
@@ -125,7 +139,7 @@ if __name__ == "__main__":
     for i in inputs:
         print i
         try:
-            foo = Anniversary( *i )
+            foo = Yearly( *i )
             print ' + next(1999):', foo.next('1999' )
             print ' + initial_adjust_up(2010080512):', foo.initial_adjust_up( '2010080512' )
             print ' + initial_adjust_up(2010090512):', foo.initial_adjust_up( '2010090512' )

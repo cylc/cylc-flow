@@ -16,29 +16,66 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
+import calendar
+
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.cycling.base import cycler, CyclerError
 
-class Anniversary( cycler ):
+# add the months arithmetic routines to start with here, where they get used
+# to keep the original design of the code as little as possible changed.
 
-    """For a cycle time sequence that increments by one or more years to
-    the same anniversary date (e.g. every second year at 5 May 00 UTC)
-    with an anchor year so that the same sequence results regardless of
+def add_months(start_date, months):
+    year = start_date.year + (months / 12)
+    month = start_date.month + (months % 12)
+    day = start_date.day
+
+    if month > 12:
+        month = month % 12
+        year = year + 1
+
+    days_next = calendar.monthrange(year, month)[1]
+    if day > days_next:
+        day = days_next
+
+    return start_date.replace(year, month, day)
+
+def sub_months(start_date, months):
+    year = start_date.year
+    month = start_date.month
+    day = start_date.day
+
+    month = month - months 
+    if month <= 0:
+        month = (11 + month) % 12 + 1
+        year = year - 1
+
+    days_next = calendar.monthrange(year, month)[1]
+    if day > days_next:
+        day = days_next
+
+    return start_date.replace(year, month, day)
+
+class Monthly( cycler ):
+
+    """For a cycle time sequence that increments by one or more months to
+    the same day in month (e.g. every second month at 5th  00 UTC)
+    with an anchor date so that the same sequence results regardless of
     initial cycle time.
     See lib/cylc/cycling/base.py for additional documentation."""
 
     @classmethod
     def offset( cls, T, n ):
-        """Decrement T by n years to the same MMDDHHmmss."""
+        """Decrement T by n months to the same DDHHmmss."""
         YYYY = T[0:4]
         MMDDHHmmss = T[4:]
         return str(int(YYYY)-int(n)) + MMDDHHmmss
  
     def __init__( self, T=None, step=1 ):
-        """Store anniversary date, step, and anchor."""
+        """Store date, step, and anchor."""
         # check input validity
         try:
-            T = ct( T ).get() # allows input of just YYYY
+            T = ct( T ).get() # allows input of just YYYYMM
         except CycleTimeError, x:
             raise CyclerError, str(x)
         else:
@@ -47,7 +84,7 @@ class Anniversary( cycler ):
             # aniversary date
             self.MMDDHHmmss = T[4:]
  
-        # step in integer number of years
+        # step in integer number of months
         try:
             # check validity
             self.step = int(step)
@@ -125,7 +162,7 @@ if __name__ == "__main__":
     for i in inputs:
         print i
         try:
-            foo = Anniversary( *i )
+            foo = Monthly( *i )
             print ' + next(1999):', foo.next('1999' )
             print ' + initial_adjust_up(2010080512):', foo.initial_adjust_up( '2010080512' )
             print ' + initial_adjust_up(2010090512):', foo.initial_adjust_up( '2010090512' )
