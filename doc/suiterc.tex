@@ -1072,6 +1072,11 @@ and host configuration file (yet to be implemented) because it is host-
 rather than task-specific. For the moment though you can still set it
 just once in a namespace inherited by all tasks on the affected host.
 
+Note that you can use a remote section with this item in it even for
+tasks that are local as far as cylc is concerned, but which end up
+running on the affected remote host due to the action of the local batch
+queueing system or resource manager.
+
 \paragraph[{[[[}event hooks{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]]}
 \label{TaskEventHandling}
 
