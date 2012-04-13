@@ -26,8 +26,12 @@
 #  (b) called by a task that was run manually on the command line
 
 import os, sys
+import subprocess
 import datetime
 import cylc_pyro_client
+from port_scan import NoSuiteFoundError, OtherSuiteFoundError, ConnectionDeniedError
+import Pyro.errors
+from conf.CylcGlobals import ssh_messaging
 
 class message(object):
     def __init__( self, msg=None, priority='NORMAL' ):
@@ -104,7 +108,7 @@ class message(object):
         # this raises an exception on failure to connect:
         return cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( self.task_id )
 
-    def print_msg_sp( self, msg ):
+    def print_msg( self, msg ):
         now = self.now().strftime( "%Y/%m/%d %H:%M:%S" ) 
         prefix = 'cylc (' + self.mode + ' - ' + now + '): '
         if self.priority == 'NORMAL':
@@ -112,51 +116,94 @@ class message(object):
         else:
             print >> sys.stderr, prefix + self.priority + ' ' + msg
 
-    def print_msg( self ):
-        if self.msg:
-            now = self.now().strftime( "%Y/%m/%d %H:%M:%S" )
-            prefix = 'cylc (' + self.mode + ' - ' + now + '): '
-            if self.priority == 'NORMAL':
-                print prefix + self.msg
-            else:
-                print >> sys.stderr, prefix + self.priority + ' ' + self.msg
+    def send( self, msgin=None ):
+        msg = None
+        if msgin:
+            msg = msgin
+        elif self.msg:
+            msg = self.msg
+        if not msg:
+            # nothing to send
+            return
+        self.print_msg( msg )
+        if self.mode != 'scheduler':
+            # no suite to communicate with
+            return
+        if ssh_messaging:
+            print "Invoking local messaging on the suite host by ssh"
+            self.send_by_ssh()
+        else:
+            print "Invoking Pyro network messaging to the suite host"
+            self.send_pyro( msg )
 
-    def send_sp( self, msg ):
-        self.print_msg_sp( msg )
-        if self.mode == 'scheduler':
+    def send_pyro( self, msg ):
+        try:
             self.get_proxy().incoming( self.priority, msg )
+        except Pyro.errors.NamingError, x:
+            # suite found but task not in it
+            raise SystemExit(x)
+        except Pyro.errors.URIError, x:
+            # unknown host (ssh messaging will be no use either!)
+            raise SystemExit(x)
+        except NoSuiteFoundError, x:
+            # no suite found at this port
+            raise SystemExit(x)
+        except OtherSuiteFoundError, x:
+            # other suite found at this port
+            raise SystemExit(x)
+        except ConnectionDeniedError, x:
+            # possible network config problems
+            # (ports not opened for cylc suites?)
+            raise SystemExit(x)
 
-    def send( self ):
-        if self.msg:
-            self.print_msg()
-            if self.mode == 'scheduler':
-                self.get_proxy().incoming( self.priority, self.msg )
+    def send_by_ssh( self ):
+        cylc_command = os.path.basename( sys.argv[0] )  # 'cylc-failed'
+        cylc_command_list = cylc_command.split('-') + sys.argv[1:]    # 'cylc failed (reason)'
+        sshcommand = 'ssh -oBatchMode=yes ' + self.owner + '@' + self.host + ' '
+        commandenv = 'PATH=' + os.environ['CYLC_DIR_LOCAL'] + '/bin:$PATH '
+        for var in ['CYLC_MODE', 'CYLC_TASK_ID', 'CYLC_SUITE_REG_NAME', 'CYLC_SUITE_OWNER', 
+                'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC']:
+            commandenv += var + '=' + os.environ[var] + ' '
+        command_list = sshcommand.split() + commandenv.split() + cylc_command_list
+        #print ' '.join(command_list)
+
+        command = sshcommand + cylc_command + ' '.join( sys.argv[1:])
+        try:
+            # THIS BLOCKS UNTIL THE COMMAND COMPLETES
+            retcode = subprocess.call( command_list )
+            if retcode != 0:
+                # the command returned non-zero exist status
+                raise SystemExit( command + ' failed: ' + str( retcode ))
+        except OSError:
+            raise
+            # the command was not invoked
+            raise SystemExit( 'ERROR: unable to execute: ' + command )
 
     def send_succeeded( self ):
-        self.send_sp( self.task_id + ' succeeded' )
+        self.send( self.task_id + ' succeeded' )
 
     def send_started( self ):
-        self.send_sp( self.task_id + ' started' )
+        self.send( self.task_id + ' started' )
 
     def send_failed( self ):
         self.priority = 'CRITICAL'
-        # send reason for failure
-        self.send()
-        # send failed
-        self.send_sp( self.task_id + ' failed' )
+        reason = ''
+        if self.msg:
+            reason = ' (' + self.msg + ')'
+        self.send( self.task_id + ' failed' + reason )
 
     def shortcut_next_restart( self ):
-        self.print_msg_sp( 'next restart file completed' )
+        self.print_msg( 'next restart file completed' )
         if self.mode == 'scheduler':
             self.get_proxy().set_next_restart_completed()
 
     def shortcut_all_restarts( self ):
-        self.print_msg_sp( 'all restart files completed' )
+        self.print_msg( 'all restart files completed' )
         if self.mode == 'scheduler':
             self.get_proxy().set_all_restarts_completed()
 
     def shortcut_all_outputs( self ):
-        self.print_msg_sp( 'all outputs completed' )
+        self.print_msg( 'all outputs completed' )
         if self.mode == 'scheduler':
             self.get_proxy().set_all_internal_outputs_completed()
 

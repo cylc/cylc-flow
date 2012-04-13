@@ -432,7 +432,8 @@ class scheduler(object):
 
         # CYLC EXECUTION ENVIRONMENT
         cylcenv = OrderedDict()
-        cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
+        cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]        # this is overridden in remote tasks ...
+        cylcenv[ 'CYLC_DIR_LOCAL' ] = os.environ[ 'CYLC_DIR' ]  # ... but this is not
         cylcenv[ 'CYLC_MODE' ] = 'scheduler'
         cylcenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
         cylcenv[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
@@ -784,7 +785,15 @@ class scheduler(object):
             self.hold_time = None
         for itask in self.pool.get_tasks():
             if itask.state.is_held():
-                itask.state.set_status('waiting')
+                if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+                    # this task has passed the suite stop time
+                    itask.log( 'WARNING', "Not releasing (beyond suite stop cycle) " + self.stop_time )
+                elif itask.stop_c_time and int( itask.c_time ) > int( itask.stop_c_time ):
+                    # this task has passed its own stop time
+                    itask.log( 'WARNING', "Not releasing (beyond task stop cycle) " + itask.stop_c_time )
+                else:
+                    # release this task
+                    itask.state.set_status('waiting')
  
         # TO DO: write a separate method for cancelling a stop time:
         #if self.stop_time:
@@ -1342,7 +1351,7 @@ class scheduler(object):
             itask.set_trigger_now(True)
 
     def reset_task_state( self, task_id, state ):
-        if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'held' ]:
+        if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'held', 'spawn' ]:
             raise TaskStateError, 'Illegal reset state: ' + state
         found = False
         for itask in self.pool.get_tasks():
@@ -1368,6 +1377,8 @@ class scheduler(object):
             itask.reset_state_failed()
         elif state == 'held':
             itask.reset_state_held()
+        elif state == 'spawn':
+            self.force_spawn(itask)
 
     def add_prerequisite( self, task_id, message ):
         # find the task to reset

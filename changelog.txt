@@ -614,3 +614,22 @@ such a trigger is undefined beyond the first cycle.
 all task families so that styling can be applied to family and member
 nodes at once using the family name.
 
++ Bug fix: "release suite" was releasing tasks to run even if they were 
+held due to having passed the suite stop time (if set).
+
++ Sequential tasks now do not spawn on failure, only success, reversing
+a change in 4.2.2 (otherwise restarting a suite with a failed sequential
+task would result in the failed task and its newly spawned successor
+running in parallel, which is what sequential tasks are designed to
+avoid). 
+
++ A new '--spawn' option for the "reset" command forces a task to spawn
+a successor if it has not done so already. This may be useful in the case 
+of a failed sequential task that cannot be re-run successfully, to force 
+it to carry on into the next cycle (see previous bullet point for why 
+this should not be done automatically).
+
++ Optional non-Pyro ssh-based remote task messaging, may be useful at 
+sites in which one or more remote task hosts have the Pyro network ports
+closed.
+

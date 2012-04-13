@@ -85,8 +85,7 @@ if options.print_location:
 
 filter = None
 if options.taskfilter:
-    # TO DO: THIS MUST BE %\d{14} IF WE GO TO YYYYMMDDHHmmss:
-    filter = re.compile( '\\[' + options.taskfilter + '%\d{10}\\]' )
+    filter = re.compile( '\\[' + options.taskfilter + '%\d+\\]' )
 elif options.regexfilter:
     filter = re.compile( options.regexfilter )
 

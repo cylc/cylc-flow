@@ -31,11 +31,19 @@ Force a task's state to:
  1/ 'ready' .... (default)   ...... all prerequisites satisfied (default) 
  2/ 'waiting' .. (--waiting) ...... prerequisites not satisfied yet
  3/ 'succeeded'  (--succeeded) .... all outputs completed
- 4/ 'failed' ... (--failed) ....... use to test failure recovery
+ 4/ 'failed' ... (--failed) 
+ Or:
+ 5/ force it to spawn if it hasn't done so already (--spawn)
  
 Resetting a task to 'ready' will cause it to trigger immediately unless
 the suite is held, in which case the task will trigger when normal
-operation is resumed.""",
+operation is resumed.
+
+Forcing a task to spawn a successor may be necessary in the case of a 
+failed "sequential task" that cannot be re-run successfully after fixing
+the problem, because sequential tasks do not spawn until they succeed. 
+Alternatively, you could force the failed task to the succeeded state, 
+or insert a new instance into the suite at the next cycle time.""",
 [ 'TASK                 The target task.'] )
 
 parser.add_option( "--ready", 
@@ -54,14 +62,18 @@ parser.add_option( "--failed",
         help="Force task to 'failed' state.", 
         action="store_true", default=False, dest="failed" )
 
+parser.add_option( "--spawn", 
+        help="Force a task to spawn its successor if it hasn't already.", 
+        action="store_true", default=False, dest="spawn" )
+
 (options, args) = parser.parse_args()
 
 if len(args) != 2:
     parser.error( "Suite name and task ID required." )
 
-count = [ options.waiting, options.succeeded, options.failed, options.ready ].count( True )
+count = [ options.waiting, options.succeeded, options.failed, options.ready, options.spawn ].count( True )
 if count != 0 and count != 1:
-    parser.error( "Specify none or one of --ready, --waiting, --succeeded, or --failed" )
+    parser.error( "Specify none or one of --ready, --waiting, --succeeded, --failed, or --spawn" )
 
 if options.waiting:
     state = 'waiting'
@@ -69,6 +81,8 @@ elif options.succeeded:
     state = 'succeeded'
 elif options.failed:
     state = 'failed'
+elif options.spawn:
+    state = 'spawn'
 else:
     state = 'ready'
 

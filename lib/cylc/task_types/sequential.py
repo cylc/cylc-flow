@@ -17,9 +17,30 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class sequential(object):
-    # Force sequential behaviour by spawning only after task finished.
+    """Force sequential behaviour in tasks that in principle do not
+    depend on their own previous instance, but which in practice cannot
+    run in parallel with previous instances (e.g. because of
+    interference in use of temporary files) by spawning a successor
+    only after the task succeeds. The alternative, to impose artificial
+    previous instance dependence via prerequisites, requires an
+    associated cold-start task to get the suite started. 
+
+    Sequential tasks should only spawn on success, not failure;
+    otherwise on restarting a suite with a failed sequential task in
+    it, the failed task will be resubmitted and (other prerequisites
+    allowing) so will its newly spawned successor, resulting in two
+    instances running in parallel, which is exactly what we don't want
+    sequential tasks to do.
+    
+    Manually forcing a waiting sequential task to the failed state will
+    not result in it spawning, so if a sequential task fails and cannot
+    be successfully re-run, you can either force it to the succeeded 
+    state, force it to spawn, or insert a new instance in the next
+    cycle."""
+
     def ready_to_spawn( self ):
         if self.has_spawned():
             return False
-        if self.state.is_succeeded() or self.state.is_failed():
+        if self.state.is_succeeded():
             return True
+

@@ -16,9 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os, sys, re
 import pickle
 import datetime, time
-import os, sys, re
 from version import compat
 from conf.CylcGlobals import central_regdb_dir, local_regdb_dir
 import config

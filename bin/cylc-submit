@@ -150,6 +150,7 @@ dclock = accelerated_clock.clock( None, None, utc, False )
 # CYLC EXECUTION ENVIRONMENT
 cylcenv = OrderedDict()
 cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
+cylcenv[ 'CYLC_DIR_LOCAL' ] = os.environ[ 'CYLC_DIR' ]
 if options.sched:
     cylcenv[ 'CYLC_MODE' ] = 'scheduler'
 else:

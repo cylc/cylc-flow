@@ -19,13 +19,14 @@
 import re
 
 class pid(object):
-    # PREVIOUS INSTANCE DEPENDENCE FOR WARM CYCLING FORECAST MODELS
-    # which depend on a previous instance via restart files. These
-    # don't spawn immediately on submission, they must wait until the
-    # final restart output is completed, otherwise the spawned task
-    # could trigger off the restart outputs of an earlier previous
-    # instance (this should only happen if the suite operator forces
-    # spawning ahead to skip some cycles after a problem of some kind).
+    """Previous instance dependence for warm-cycling forecast models
+    or similar, which depend on a previous instance via restart files.
+    These don't spawn immediately on submission, they must wait until
+    the final restart output is completed, otherwise the spawned task
+    could trigger off the restart outputs of an earlier previous
+    instance (which should only happen if the suite operator forces
+    spawning ahead to skip some cycles after a problem)."""
+
     is_pid = True
 
     def set_next_restart_completed( self ):
@@ -84,3 +85,4 @@ class pid(object):
                     ready = False
                     break
         return ready
+

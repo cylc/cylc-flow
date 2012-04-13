@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
-import Pyro.core, Pyro.errors
+import Pyro.core
 from optparse import OptionParser
 from hostname import hostname
 from time import sleep
@@ -38,9 +38,9 @@ class client( object ):
             # assume this means the suite requires no passphrase
             pass
         except SecurityError,x:
-            print "WARNING: There is a problem with the secure passphrase for suite " + suite + ":"
-            print x
-            print "Continuing, but access will be denied if the suite requires a passphrase."
+            print >> sys.stderr, "WARNING: There is a problem with the secure passphrase for suite " + suite + ":"
+            print >> sys.stderr, x
+            print >> sys.stderr, "Continuing, but access will be denied if the suite requires a passphrase."
 
     def get_proxy( self, target ):
         # callers need to check for port_scan.SuiteIdentificationError:
