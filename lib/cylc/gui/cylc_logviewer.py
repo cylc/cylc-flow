@@ -97,7 +97,7 @@ class cylc_logviewer( logviewer ):
         if task == 'all':
             filter = None
         else:
-            filter = '\\[' + task + '%\d{10}\\]'
+            filter = '\\[' + task + '%\d+\\]'
 
         self.task_filter = filter
         self.update_view()
