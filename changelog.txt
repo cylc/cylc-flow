@@ -637,3 +637,7 @@ closed.
 from <CYLC_TASK_CYCLE_TIME+n> to [T+n]. The new syntax is the same as
 for cycle time offsets in the suite graph.
 
++ If a task has a list of "command scripting" items to retry on failure, 
+a task failure hook script is now only called for a final definitive
+failure.
+

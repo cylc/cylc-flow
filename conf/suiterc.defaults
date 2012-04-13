@@ -85,6 +85,7 @@ description = "No description provided" # DEFAULT
             share directory = (local directory with '$HOME' replaced) # DEFAULT 
             work directory = (local directory with '$HOME' replaced) # DEFAULT
             remote shell template = 'ssh -oBatchMode=yes %s' # DEFAULT
+            ssh messaging = False # DEFAULT
         [[[event hooks]]]
             script = None
             events = (none)
