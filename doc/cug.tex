@@ -471,9 +471,8 @@ operational suite graphed by cylc.}
         Not Python 3.x yet; as of mid 2011 version 2.7 is the
         standard for new Linux distributions.
         \newline \url{http://python.org}
-    \item {\bf Pyro (Python Remote Objects), version 3.9.1$+$, latest
-        tested 3.15}.  Not Pyro 4.x yet; as of mid 2011 version 3.x
-        is still recommended for production use.  Pyro is used by cylc
+    \item {\bf Pyro (Python Remote Objects), version 3.10$+$, latest
+        tested 3.16}; not Pyro 4.x as yet. Pyro is used by cylc
         for network communication between server processes (cylc suites)
         and client programs (running tasks, control GUIs and commands).
         \newline \url{http://irmen.home.xs4all.nl/pyro3}
@@ -514,12 +513,16 @@ hosts must be mutually compatible. Using identical Pyro versions
 guarantees compatibility but is generally not necessary.
 
 Recent versions of Pyro require Python 2.5 or greater, due to use of the 
-`with' statement introduced in 2.5.
+\lstinline=with= statement introduced in 2.5.
 
-Beware of old Linux distributions that come packaged with Pyro 3.9 or
-earlier, which is not compatible with the new-style Python classes used
-in cylc.  It has been reported that Ubuntu 10.04 (Lucid Lynx), released
-in September 2009, suffers from this problem.  Attempting to run
+\paragraph{Pyro 3.9 and Earlier}
+
+Beware of Linux distributions that come packaged with old Pyro versions.
+Pyro 3.9 and earlier is not compatible with the new-style Python classes
+used in cylc. It has been reported that Ubuntu 10.04 (Lucid Lynx),
+released in September 2009, suffers from this problem. And surprisingly 
+so does Ubuntu 11.10 (Oneiric Ocelot), released in October 2011 - and
+therefore, presumably, all earlier Ubuntu releases.  Attempting to run
 \lstinline=cylc admin test-suite= with Pyro 3.9 or earlier results
 in the following Python traceback:
 
@@ -547,6 +550,34 @@ AttributeError: type object 'A' has no attribute '_taskdef__bases_'
 _run --debug testsuite.1322742021 2010010106 failed: 1
 \end{lstlisting}
 
+\paragraph{Apple Mac OSX}
+
+It has been reported that cylc runs fine on OSX 10.6 SnowLeopard, but on 
+OSX 10.7 Lion there is an issue with constructing proper FQDNs (Fully
+Qualified Domain Names) that requires a change to the DNS service.
+Here's how to solve the problem:
+
+\begin{myitemize}
+    \item Edit \lstinline=/System/Library/LaunchDaemons/com.apple.mDNSResponder.plist= \newline
+        by adding \lstinline=<string>-AlwaysAppendSearchDomains</string>= after line 16:
+\begin{lstlisting}
+<key>ProgramArguments</key>
+  <array>
+    <string>/usr/sbin/mDNSResponder</string>
+    <string>-launchd</string>
+        <string>-AlwaysAppendSearchDomains</string>
+  </array>
+\end{lstlisting}
+    \item Now unload and reload the mDNSResponder service:
+\begin{lstlisting}
+% sudo launchctl unload -w
+/System/Library/LaunchDaemons/com.apple.mDNSResponder.plist
+% sudo launchctl load -w
+/System/Library/LaunchDaemons/com.apple.mDNSResponder.plist
+\end{lstlisting}
+\end{myitemize}
+
+
 \subsection{Other Software Used Internally By Cylc}
 
 Cylc has absorbed the following in modified form (no need to install these separately): 
@@ -558,6 +589,7 @@ Cylc has absorbed the following in modified form (no need to install these separ
         (\url{http://www.voidspace.org.uk/python}, %configobj.html,
         BSD license)
 \end{myitemize}
+
 
 \section{Installation} 
 \label{Installation}
@@ -859,7 +891,7 @@ digits attached to ensure uniqueness.
 
 It may not be convenient for users to upgrade all of their suites at
 once when a new cylc release is installed. As of cylc-4.2.0 any installed
-version of cylc can act as a tranparent front end to any other installed
+version of cylc can act as a transparent front end to any other installed
 version. This allows construction of new-version suites while older
 existing ones are still in use, without having to reconfigure your
 environment or explicitly invoke different cylc versions for different
