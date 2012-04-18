@@ -53,7 +53,7 @@ def sub_months(current_date, months):
     month = start_date.month
     day = start_date.day
 
-    month = month - months 
+    month = month - months
     if month <= 0:
         month = (11 + month) % 12 + 1
         year = year - 1
@@ -76,7 +76,7 @@ class Monthly( cycler ):
     def offset( cls, T, n ):
         """Decrement T by n months to the same DDHHmmss."""
         current_date = ct(T)
-        new_date = sub_months(current_date, n)
+        new_date = sub_months(current_date, int(n))
         return new_date.get()
  
     def __init__( self, T=None, step=1 ):
@@ -118,10 +118,9 @@ class Monthly( cycler ):
         if T[6:] != self.DDHHmmss:
             # adjust up to next valid
             T = T[0:6] + self.DDHHmmss
-            # LK: Here the adjustment for steps is missing! 
+            # LK: Here the adjustment for steps is missing - todo! 
             diff = int(self.anchorDate[6:8]) - int(T[6:8])
             rem = diff % self.step
-            print 'LK a: ', str(rem)
             new_date = add_months( ct( T ), 1 )
             T = new_date.get()
 
@@ -142,7 +141,7 @@ class Monthly( cycler ):
             # wrong anniversary date
             result = False
         else:
-            # right anniversary date, check if the month is valid 
+            # LK: Right anniversary date, check, if the month is valid - todo!
             diff = int(self.anchorDate[6:8]) - int(T[6:8])
             rem = diff % self.step
             if rem != 0:
