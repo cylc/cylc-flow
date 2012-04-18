@@ -50,7 +50,13 @@ class ct( object ):
     YYYYMMDDHHmmss = '00010101000000'
 
     def __init__( self, ctin ):
-        self.parse( ctin )
+        if isinstance( ctin, datetime.datetime ):
+            self.parse( self._init_by_datetime( ctin ) )
+        else: 
+            self.parse( ctin )
+
+    def _init_by_datetime( self, dtvalue ):
+        return dtvalue.strftime( "%Y%m%d%H%M%S" )
 
     def parse( self, strx ):
         n = len(strx)
@@ -67,8 +73,9 @@ class ct( object ):
         self.hour    = self.strvalue[ 8:10]
         self.minute  = self.strvalue[10:12]
         self.seconds = self.strvalue[12:14]
-        self.HHmmss  = self.strvalue[8:14 ]
-        self.MMDDHHmmss  = self.strvalue[4:14 ]
+        self.HHmmss  = self.strvalue[ 8:14 ]
+        self.DDHHmmss  = self.strvalue[ 6:14 ]
+        self.MMDDHHmmss  = self.strvalue[ 4:14 ]
         
         # convert to datetime as a validity check
         try:
