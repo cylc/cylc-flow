@@ -35,18 +35,18 @@ the actual directory paths in which the suite definitions are stored!).
 Consider the following three suites:
 
 % cylc db print '^foo'     # printed in flat form
-foo.bag     | "Test Suite Zero" | /tmp/oliverh/zero
-foo.bar.waz | "Test Suite Two"  | /tmp/oliverh/two
-foo.bar.baz | "Test Suite One"  | /tmp/oliverh/one
+foo.bag     | "Test Suite Zero" | /home/bob/zero
+foo.bar.waz | "Test Suite Two"  | /home/bob/two
+foo.bar.baz | "Test Suite One"  | /home/bob/one
 
 % cylc db print -t '^foo'  # printed in tree from
 foo      
- |-bag    "Test Suite Zero" | /tmp/oliverh/zero
+ |-bag    "Test Suite Zero" | /home/bob/zero
  `-bar   
-   |-baz  "Test Suite One"  | /tmp/oliverh/one
-   `-waz  "Test Suite Two"  | /tmp/oliverh/two
+   |-baz  "Test Suite One"  | /home/bob/one
+   `-waz  "Test Suite Two"  | /home/bob/two
 
-These suites are stored in a flat directory structure under $TMPDIR, but
+These suites are stored in a flat directory structure under /home/bob, but
 they are organised in the suite database as a group 'foo' that contains
 the suite 'foo.bag' and a group 'foo.bar', which in turn contains the
 suites 'foo.bar.baz' and 'foo.bar.waz'.
@@ -60,22 +60,22 @@ and then register the copied directories manually with 'cylc register'.
 
 EXAMPLES (using the three suites above):
 
-% cylc db copy foo.bar.baz red $TMPDIR       # suite to suite
+% cylc db copy foo.bar.baz red /home/bob       # suite to suite
   Copying suite definition for red
 % cylc db print '^red'
-  red | "Test Suite One" | /tmp/oliverh/red
+  red | "Test Suite One" | /home/bob/red
 
-% cylc copy foo.bar.baz blue.green $TMPDIR   # suite to group
+% cylc copy foo.bar.baz blue.green /home/bob   # suite to group
   Copying suite definition for blue.green
 % cylc db pr '^blue'
-  blue.green | "Test Suite One" | /tmp/oliverh/blue/green
+  blue.green | "Test Suite One" | /home/bob/blue/green
 
-% cylc copy foo.bar orange $TMPDIR           # group to group
+% cylc copy foo.bar orange /home/bob           # group to group
   Copying suite definition for orange.waz
   Copying suite definition for orange.baz
 % cylc db pr '^orange'
-  orange.waz | "Test Suite Two" | /tmp/oliverh/orange/waz
-  orange.baz | "Test Suite One" | /tmp/oliverh/orange/baz
+  orange.waz | "Test Suite Two" | /home/bob/orange/waz
+  orange.baz | "Test Suite One" | /home/bob/orange/baz
 
 Arguments:
     SOURCE - Source suite or group

@@ -87,7 +87,7 @@ elif 'SCRATCH' in os.environ:
 else:
     raise SystemExit( 'ERROR: export $TMPDIR or $SCRATCH before running gcylc' )
 
-# create $TMPDIR if necessary
+# create tmpdir if necessary
 try:
     mkdir_p( tmpdir )
 except Exception,x:

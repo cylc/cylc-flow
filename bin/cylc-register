@@ -36,26 +36,26 @@ period '.' is the registration hierarchy delimiter. Colon cannot be used
 because of the potential for trouble with PATH variables if the suite
 name is used in certain directory paths.
 
-EXAMPLES, for suite definition directories $TMPDIR/(one,two,three,four):
+EXAMPLES, for suite definition dirs /home/bob/(one,two,three,four):
 
-% cylc db reg bob         $TMPDIR/one
-% cylc db reg foo.bag     $TMPDIR/two
-% cylc db reg foo.bar.baz $TMPDIR/three
-% cylc db reg foo.bar.waz $TMPDIR/four
+% cylc db reg bob         /home/bob/one
+% cylc db reg foo.bag     /home/bob/two
+% cylc db reg foo.bar.baz /home/bob/three
+% cylc db reg foo.bar.waz /home/bob/four
 
 % cylc db pr '^foo'             # print in flat form
-  bob         | "Test Suite One"   | /tmp/oliverh/one
-  foo.bag     | "Test Suite Two"   | /tmp/oliverh/two
-  foo.bar.baz | "Test Suite Four"  | /tmp/oliverh/three
-  foo.bar.waz | "Test Suite Three" | /tmp/oliverh/four
+  bob         | "Test Suite One"   | /home/bob/one
+  foo.bag     | "Test Suite Two"   | /home/bob/two
+  foo.bar.baz | "Test Suite Four"  | /home/bob/three
+  foo.bar.waz | "Test Suite Three" | /home/bob/four
 
 % cylc db pr -t '^foo'          # print in tree form
-  bob        "Test Suite One"   | /tmp/oliverh/one
+  bob        "Test Suite One"   | /home/bob/one
   foo      
-   |-bag     "Test Suite Two"   | /tmp/oliverh/two
+   |-bag     "Test Suite Two"   | /home/bob/two
    `-bar   
-     |-baz   "Test Suite Three" | /tmp/oliverh/three
-     `-waz   "Test Suite Four"  | /tmp/oliverh/four
+     |-baz   "Test Suite Three" | /home/bob/three
+     `-waz   "Test Suite Four"  | /home/bob/four
 
 Arguments:
      SUITE  -  The new hierarchical suite registration name.
