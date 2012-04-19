@@ -1031,11 +1031,11 @@ In gcylc, find the Quick Start suites (use View $\rightarrow$ Filter to
 filter for ``QuickStart'' if you like), right click on the {\em
 QuickStart} group and choose `Import' to copy the whole group to your
 private database. In the dialog box that pops up, enter `QuickStart' 
-as the TARGET suite name, and \lstinline=$TMPDIR= (or some other
+as the TARGET suite name, and \lstinline=$HOME/suites= (or some other
 directory of your choice) as a destination for the suite definition
 directories in the group.  Equivalently, on the command line:
 \begin{lstlisting}
-% cylc db import <AdminUserName>.cylc-x-y-z.QuickStart QuickStart $TMPDIR
+% cylc db import <AdminUserName>.cylc-x-y-z.QuickStart QuickStart $HOME/suites
 COPY /home/<AdminUserName>/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/a 
   TO /tmp/oliver/QuickStart/a
 REGISTER QuickStart.a: /tmp/oliver/QuickStart/a
@@ -1681,7 +1681,7 @@ modify it and run it:
      |-b   Quick Start Example B | ~/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/b
      |-c   Quick Start Example C | ~/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/c
      `-z   Quick Start Example Z | ~/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/z
-% cylc db import <AdminUserName>.cylc-x-y-z.QuickStart.z eg.z $TMPDIR
+% cylc db import <AdminUserName>.cylc-x-y-z.QuickStart.z eg.z $HOME/suites
 COPY /home/<AdminUserName>/cylc/CDB/<AdminUserName>/cylc-x-y-z/QuickStart/z 
   TO /tmp/oliver/eg/z
 REGISTER eg.z: /tmp/oliver/eg/z
@@ -1865,15 +1865,15 @@ appropriate.  For instance, if a group \lstinline=foo.bar= contains the
 suites \lstinline=foo.bar.baz= and \lstinline=foo.bar.waz=, you can copy
 a single suite like this:
 \begin{lstlisting}
-% cylc copy foo.bar.baz boo $TMPDIR
+% cylc copy foo.bar.baz boo $HOME/suites
 \end{lstlisting}
 (resulting in a new suite \lstinline=boo=); or the group like this:
 \begin{lstlisting}
-% cylc copy foo.bar boo $TMPDIR
+% cylc copy foo.bar boo $HOME/suites
 \end{lstlisting}
 (resulting in new suites \lstinline=boo.baz= and \lstinline=boo.waz=); or the group like this:
 \begin{lstlisting}
-% cylc copy foo boo $TMPDIR
+% cylc copy foo boo $HOME/suites
 \end{lstlisting}
 (resulting in new suites \lstinline=boo.bar.baz= and \lstinline=boo.bar.waz=).
 When suites are copied, the suite definition directories are copied into

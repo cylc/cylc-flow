@@ -641,3 +641,5 @@ for cycle time offsets in the suite graph.
 a task failure hook script is now only called for a final definitive
 failure.
 
++ Temporary files now stored under $CYLC_TMPDIR instead of $TMPDIR.
+

@@ -79,15 +79,14 @@ parser.add_option( "-g", "--graph",
 if len(args) != 0 and len(args) != 1:
     parser.error( "Wrong number of arguments" )
 
-# this is required for extensive use of the capture command in gcylc:
-if 'TMPDIR' in os.environ:
-    tmpdir = os.environ['TMPDIR']
-elif 'SCRATCH' in os.environ:
-    tmpdir = os.environ['SCRATCH']
-else:
-    raise SystemExit( 'ERROR: export $TMPDIR or $SCRATCH before running gcylc' )
+# tmpdir required for extensive use of the capture command in gcylc:
+try:
+    tmpdir = os.environ['CYLC_TMPDIR']
+except KeyError:
+    print >> sys.stderr, "ERROR, undefined environment variable: $CYLC_TMPDIR"
+    raise SystemExit
 
-# create $TMPDIR if necessary
+# create tmpdir if necessary
 try:
     mkdir_p( tmpdir )
 except Exception,x:
