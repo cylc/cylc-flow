@@ -74,7 +74,7 @@ class Monthly( cycler ):
     def offset( cls, T, n ):
         """Decrement T by n months to the same DDHHmmss."""
         current_date = ct( T )
-        return sub_months( current_date, n ).get()
+        return sub_months( current_date, int(n) ).get()
  
     def __init__( self, T=None, step=1 ):
         """Store date, step, and anchor."""
