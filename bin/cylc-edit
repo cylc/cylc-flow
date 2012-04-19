@@ -355,7 +355,7 @@ print 'EDITING DONE'
 
 # Now back up the inlined file in case of absolute disaster, so as the
 # user or his editor corrupting the inlined-include-file marker lines.
-inlined_suiterc_backup = 'suite.rc.INLINED.EDIT.' + datetime.datetime.now().isoformat()
+inlined_suiterc_backup = suitedir + '/suite.rc.INLINED.EDIT.' + datetime.datetime.now().isoformat()
 copy( suiterc, inlined_suiterc_backup )
 
 # read in the edited inlined file
