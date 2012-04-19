@@ -25,13 +25,21 @@ from cylc.cycling.base import cycler, CyclerError
 # add the years arithmetic routines to start with here, where they get used
 # to keep the original design of the code as little as possible changed.
 
-def add_years(start_date, years):
-    year = start_date.year + years
-    return start_date.replace(year)
+def add_years(current_date, years):
 
-def sub_years(start_date, years):
+    start_date = current_date.get_datetime()
+
+    year = start_date.year + years
+
+    return ct (start_date.replace(year) )
+
+def sub_years(current_date, years):
+
+    start_date = current_date.get_datetime()
+
     year = start_date.year - years
-    return start_date.replace(year) 
+
+    return ct (start_date.replace(year) )
 
 class Yearly( cycler ):
 
@@ -44,9 +52,8 @@ class Yearly( cycler ):
     @classmethod
     def offset( cls, T, n ):
         """Decrement T by n years to the same MMDDHHmmss."""
-        YYYY = T[0:4]
-        MMDDHHmmss = T[4:]
-        return str(int(YYYY)-int(n)) + MMDDHHmmss
+        current_date = ct( T )
+        return sub_years( current_date, int(n) ).get()
  
     def __init__( self, T=None, step=1 ):
         """Store anniversary date, step, and anchor."""
@@ -57,7 +64,7 @@ class Yearly( cycler ):
             raise CyclerError, str(x)
         else:
             # anchor year
-            self.anchorYYYY = T[0:4]
+            self.anchorDate= T
             # aniversary date
             self.MMDDHHmmss = T[4:]
  
@@ -70,61 +77,54 @@ class Yearly( cycler ):
         if self.step <= 0:
             raise SystemExit( "ERROR: step must be a positive integer: " + step )
 
-        # default minimum runahead limit in hours
-        self.minimum_runahead_limit = 24 * 366 * self.step
+        # default minimum runahead limit in hours (default 10 years)
+        self.minimum_runahead_limit = 24 * 366 * self.step * 10
 
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""
         try:
             # is T a legal cycle time 
-            ct(T)
+            adjusted_date = ct(T)
         except CycleTimeError, x:
             raise CyclerError, str(x)
 
-        # first get the anniversary date MMDDHHmmss right
-        if T[4:] != self.MMDDHHmmss:
-            # adjust up to next valid
-            if T[4:] < self.MMDDHHmmss:
-                # round up
-                T = T[0:4] + self.MMDDHHmmss
-            else:
-                # round down and increment the year
-                T = self.pad_year(int(T[0:4])+1) + self.MMDDHHmmss
-
-        # now adjust up relative to the anchor cycle and step
-        diff = int(self.anchorYYYY) - int(T[0:4])
+        # adjust up to next valid year
+        ta = int(self.anchorDate[0:4])
+        tc = int(adjusted_date.year)
+        diff = abs( ta - tc )
         rem = diff % self.step
-        if rem > 0:
-            n = self.step - rem
-            T = self.pad_year(int(T[0:4])+n) + self.MMDDHHmmss
+        adjusted_date  = add_years( ct( T ), rem )
 
-        return T
+        # get the anniversary date MMDDHHmmss right
+        if T[4:] != self.MMDDHHmmss:
+            if T[4:] > self.MMDDHHmmss:
+                adjusted_date = add_years( ct ( T ), 1 )
+
+        return (adjusted_date.get())[0:4] + self.MMDDHHmmss  
 
     def next( self, T ):
         """Add step years to get to the next anniversary after T."""
-        return self.pad_year( int(T[0:4])+self.step) + T[4:]
+        current_date = ct(T)
+        return  add_years(current_date, self.step).get()
 
-    def valid( self, CT ):
-        """Is CT a member of my cycle time sequence?"""
+    def valid( self, current_date ):
+        """Is current_date a member of my cycle time sequence?"""
         result = True
-        T = CT.get()
-        if T[4:10] != self.MMDDHHmmss[0:6]:
+        T = current_date.get()
+
+        if T[4:] != self.MMDDHHmmss:
             # wrong anniversary date
             result = False
         else:
             # right anniversary date, check the year is valid 
-            diff = int(self.anchorYYYY) - int(T[0:4])
+            ta = int(self.anchorDate[0:4])
+            tc = int(T[0:4])
+            diff = abs( ta - tc )
             rem = diff % self.step
             if rem != 0:
                 result = False
-        return result
 
-    def pad_year( self, iY ):
-        # return string YYYY from an integer year value
-        tmp = '0000' # template, to handle years < 1000
-        s_iY = str( iY )
-        n = len( s_iY )
-        return tmp[n:] + s_iY[0:n]
+        return result
 
 if __name__ == "__main__":
     # UNIT TEST
@@ -133,6 +133,7 @@ if __name__ == "__main__":
             ('2010',), \
             ('2010080806',), \
             ('2010080806', 2), \
+            ('2010080806', 3), \
             ('2010080806x', 2), \
             ('2010080806', 'x')] 
 
@@ -144,7 +145,7 @@ if __name__ == "__main__":
             print ' + initial_adjust_up(2010080512):', foo.initial_adjust_up( '2010080512' )
             print ' + initial_adjust_up(2010090512):', foo.initial_adjust_up( '2010090512' )
             print ' + valid(2012080806):', foo.valid( ct('2012080806') )
-            print ' + valid(201108006):', foo.valid( ct('2011080806') )
+            print ' + valid(2011080806):', foo.valid( ct('2011080806') )
         except Exception, x:
             print ' !', x
 
