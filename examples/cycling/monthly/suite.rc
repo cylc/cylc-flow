@@ -1,0 +1,21 @@
+[scheduling]
+    initial cycle time = 201001
+    final cycle time = 201512
+    cycling = Monthly
+    [[special tasks]]
+        cold-start = cfoo
+    [[dependencies]]
+        [[[2010050505,1]]]
+            # every 5 May at 05 UTC (sequence anchored on Januray, 2010)
+            graph = """
+                cfoo | foo[T-1] => foo => bar
+                    """
+        [[[2010050505,2]]]
+            # every second month, same anniversary date and anchor.
+            graph = """
+                foo => baz
+                    """
+[visualization]
+    initial cycle time = 2010
+    final cycle time = 2015
+
