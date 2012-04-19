@@ -27,7 +27,6 @@ from cylc.cycling.base import cycler, CyclerError
 
 def add_months(current_date, months):
 
-    # convert to datetime
     start_date = current_date.get_datetime()
 
     year = start_date.year + (months / 12)
@@ -46,7 +45,6 @@ def add_months(current_date, months):
 
 def sub_months(current_date, months):
 
-    # convert to datetime
     start_date = current_date.get_datetime()
 
     year = start_date.year
@@ -75,9 +73,8 @@ class Monthly( cycler ):
     @classmethod
     def offset( cls, T, n ):
         """Decrement T by n months to the same DDHHmmss."""
-        current_date = ct(T)
-        new_date = sub_months(current_date, n)
-        return new_date.get()
+        current_date = ct( T )
+        return sub_months( current_date, n ).get()
  
     def __init__( self, T=None, step=1 ):
         """Store date, step, and anchor."""
@@ -90,7 +87,7 @@ class Monthly( cycler ):
         else:
             # anchor date
             self.anchorDate = T  
-            # day of month
+            # day of month and time
             self.DDHHmmss = T[6:]
  
         # step in integer number of months
@@ -101,37 +98,40 @@ class Monthly( cycler ):
             raise CyclerError, "ERROR: step " + step + " is not a valid integer"
         if self.step <= 0:
             raise SystemExit( "ERROR: step must be a positive integer: " + step )
+        if self.step > 11:
+            raise SystemExit( "ERROR: step must be a positive integer smaller than 12: " + step )
 
-        # default minimum runahead limit in hours
-        self.minimum_runahead_limit = 24 * 31 * self.step
+        # default minimum runahead limit in hours equals at least <step> years
+        self.minimum_runahead_limit = 24 * 366 * self.step
 
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""
 
         try:
             # is T a legal cycle time 
-            T = ct( T ).get()
+            ct( T )
         except CycleTimeError, x:
             raise CyclerError, str(x)
 
+        # adjust up to next valid
+        ta = 12 * int(self.anchorDate[0:4]) + int(self.anchorDate[4:6]) - 1
+        tc = 12 * int(T[0:4]) + int(T[4:6]) - 1
+        diff = abs( ta - tc )
+        rem = diff % self.step
+        adjusted_date  = add_months( ct( T ), rem ).get()
+
         # get monthly date DDHHmmss right
         if T[6:] != self.DDHHmmss:
-            # adjust up to next valid
-            T = T[0:6] + self.DDHHmmss
-            # LK: Here the adjustment for steps is missing! 
-            diff = int(self.anchorDate[6:8]) - int(T[6:8])
-            rem = diff % self.step
-            print 'LK a: ', str(rem)
-            new_date = add_months( ct( T ), 1 )
-            T = new_date.get()
+            DDHHmmss = self.DDHHmmss
+        else:
+            DDHHmmss = T[6:]
 
-        return T
+        return adjusted_date[0:6] + DDHHmmss  
 
     def next( self, T ):
         """Add step years to get to the next anniversary after T."""
         current_date = ct(T)
-        new_date = add_months(current_date, self.step)
-        return new_date.get()
+        return  add_months(current_date, self.step).get()
 
     def valid( self, current_date ):
         """Is current_date a member of my cycle time sequence?"""
@@ -143,10 +143,13 @@ class Monthly( cycler ):
             result = False
         else:
             # right anniversary date, check if the month is valid 
-            diff = int(self.anchorDate[6:8]) - int(T[6:8])
+            ta = 12 * int(self.anchorDate[0:4]) + int(self.anchorDate[4:6]) - 1
+            tc = 12 * int(T[0:4]) + int(T[4:6]) - 1
+            diff = abs( ta - tc )
             rem = diff % self.step
             if rem != 0:
                 result = False
+
         return result
 
 if __name__ == "__main__":
