@@ -98,8 +98,6 @@ class Monthly( cycler ):
             raise CyclerError, "ERROR: step " + step + " is not a valid integer"
         if self.step <= 0:
             raise SystemExit( "ERROR: step must be a positive integer: " + step )
-        if self.step > 11:
-            raise SystemExit( "ERROR: step must be a positive integer smaller than 12: " + step )
 
         # default minimum runahead limit in hours equals at least <step> years
         self.minimum_runahead_limit = 24 * 366 * self.step
