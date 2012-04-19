@@ -1519,6 +1519,11 @@ shown here in the state they were in at the time of triggering.''' )
         cdir = None
 
         try:
+            tmpdir = os.environ['TMPDIR']
+        except KeyError:
+            fail.append( "$TMPDIR is not defined" )
+ 
+        try:
             cdir = os.environ['CYLC_DIR']
         except KeyError:
             fail.append( "$CYLC_DIR is not defined" )
@@ -1548,7 +1553,7 @@ shown here in the state they were in at the time of triggering.''' )
             return
 
         command = appl + " " + file 
-        foo = gcapture_tmpfile( command, self.tmpdir )
+        foo = gcapture_tmpfile( command, tmpdir )
         foo.run()
  
     def command_help( self, w, cat='', com='' ):

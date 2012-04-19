@@ -184,13 +184,14 @@ except RegistrationError, x:
 
 suitedir = os.path.dirname(suiterc)
 
-try:
-    tmpdir = os.environ['CYLC_TMPDIR']
-except KeyError:
-    print >> sys.stderr, "ERROR, undefined environment variable: $CYLC_TMPDIR"
-    raise SystemExit
+if 'TMPDIR' in os.environ:
+    tmpdir = os.environ['TMPDIR']
+elif 'SCRATCH' in os.environ:
+    tmpdir = os.environ['SCRATCH']
+else:
+    raise SystemExit( "ERROR: export $TMPDIR or $SCRATCH before 'cylc edit --inline'" )
 
-# create tmpdir if necessary
+# create $TMPDIR if necessary
 try:
     mkdir_p( tmpdir )
 except Exception,x:

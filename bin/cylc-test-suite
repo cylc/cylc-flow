@@ -55,18 +55,17 @@ if [[ $# != 0 ]]; then
     fi
 fi
 
-if [[ -z $CYLC_TMPDIR ]]; then
-    echo "ERROR, undefined environment variable: \$CYLC_TMPDIR" >&2
-    exit 1
+if [[ -z $TMPDIR ]]; then
+    echo "ERROR: export TMPDIR before running this script."
 fi
-mkdir -p $CYLC_TMPDIR
+mkdir -p $TMPDIR
 
 # seconds since epoch
 SSE=$( date +%s )
 
 SUITE_DEF=$CYLC_DIR/examples/admin
 SUITE_REG=testsuite.$SSE
-SUITE_DIR=$CYLC_TMPDIR/$SUITE_REG
+SUITE_DIR=$TMPDIR/$SUITE_REG
 
 echo -n ">> COPYING $SUITE_DEF and REGISTERING it as $SUITE_REG ... "
 cp -r $SUITE_DEF $SUITE_DIR

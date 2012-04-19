@@ -4,9 +4,7 @@ echo "run-model.sh: submitting model.sh to 'at now'"
 SCRIPT=model.sh  # location of the model job to submit
 OUT=$1; ERR=$2   # stdout and stderr log paths
 # submit the job and detach
-cylc util checkvars CYLC_TMPDIR
-
-RES=$CYLC_TMPDIR/atnow$$.txt
+RES=$TMPDIR/atnow$$.txt
 ( at now <<EOF
 $SCRIPT 1> $OUT 2> $ERR
 EOF
