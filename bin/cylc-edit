@@ -289,15 +289,13 @@ if not options.inline:
     sys.exit(0)
 
 # INLINED EDITING
+try:
+    tmpdir = os.environ['CYLC_TMPDIR']
+except KeyError:
+    print >> sys.stderr, "ERROR, undefined environment variable: $CYLC_TMPDIR"
+    raise SystemExit
 
-if 'TMPDIR' in os.environ:
-    tmpdir = os.environ['TMPDIR']
-elif 'SCRATCH' in os.environ:
-    tmpdir = os.environ['SCRATCH']
-else:
-    raise SystemExit( "ERROR: export $TMPDIR or $SCRATCH before 'cylc edit --inline'" )
-
-# create $TMPDIR if necessary
+# create tmpdir if necessary
 try:
     mkdir_p( tmpdir )
 except Exception,x:

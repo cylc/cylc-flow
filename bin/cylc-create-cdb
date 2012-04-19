@@ -42,8 +42,12 @@ if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then
 fi
 
 if [[ -z $CYLC_DIR ]]; then
-    echo "\$CYLC_DIR is not defined. Run this script via the cylc main"
-    echo "command interface: 'cylc admin create-cdb'"
+    echo "ERROR: \$CYLC_DIR is not defined. Run this script via" >&2
+    echo "the main command interface: 'cylc admin create-cdb'" >&2
+    exit 1
+fi
+if [[ -z $CYLC_TMPDIR ]]; then
+    echo "ERROR: \$CYLC_TMPDIR is not defined" >&2
     exit 1
 fi
 
@@ -84,7 +88,7 @@ cylc unregister $TOP
 
 echo " + Importing copies of examples to your private database"
 # We don't want the admin user accidentally modifying the originals.
-cylc import ${USER}.$TOP $TOP $TMPDIR
+cylc import ${USER}.$TOP $TOP $CYLC_TMPDIR
 
 # Determine CDB directory location
 # The following no longer works (see comment in lib/cylc/__init__.py)
