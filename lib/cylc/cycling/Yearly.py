@@ -52,8 +52,7 @@ class Yearly( cycler ):
     @classmethod
     def offset( cls, T, n ):
         """Decrement T by n years to the same MMDDHHmmss."""
-        current_date = ct( T )
-        return sub_years( current_date, int(n) ).get()
+        return sub_years( ct( T ), int(n) ).get()
  
     def __init__( self, T=None, step=1 ):
         """Store anniversary date, step, and anchor."""
@@ -84,28 +83,26 @@ class Yearly( cycler ):
         """Adjust T up to the next valid cycle time if not already valid."""
         try:
             # is T a legal cycle time 
-            adjusted_date = ct(T)
+            ct(T)
         except CycleTimeError, x:
             raise CyclerError, str(x)
 
+        if T[4:] < self.MMDDHHmmss:
+            T = T[0:4] + self.MMDDHHmmss
+        else:
+            T = add_years( ct( T ), 1 ).get()[0:4] + self.MMDDHHmmss
+
         # adjust up to next valid year
-        ta = int(self.anchorDate[0:4])
-        tc = int(adjusted_date.year)
-        diff = abs( ta - tc )
+        diff = int(self.anchorDate[0:4]) - int(T[0:4])
         rem = diff % self.step
-        adjusted_date  = add_years( ct( T ), rem )
+        if rem > 0:
+            T = add_years( ct( T ), self.step - rem ).get()[0:4] + self.MMDDHHmmss
 
-        # get the anniversary date MMDDHHmmss right
-        if T[4:] != self.MMDDHHmmss:
-            if T[4:] > self.MMDDHHmmss:
-                adjusted_date = add_years( ct ( T ), 1 )
-
-        return (adjusted_date.get())[0:4] + self.MMDDHHmmss  
+        return T
 
     def next( self, T ):
         """Add step years to get to the next anniversary after T."""
-        current_date = ct(T)
-        return  add_years(current_date, self.step).get()
+        return  add_years( ct( T ), self.step).get()
 
     def valid( self, current_date ):
         """Is current_date a member of my cycle time sequence?"""
@@ -117,9 +114,7 @@ class Yearly( cycler ):
             result = False
         else:
             # right anniversary date, check the year is valid 
-            ta = int(self.anchorDate[0:4])
-            tc = int(T[0:4])
-            diff = abs( ta - tc )
+            diff = int(self.anchorDate[0:4]) - int(T[0:4])
             rem = diff % self.step
             if rem != 0:
                 result = False
@@ -144,6 +139,8 @@ if __name__ == "__main__":
             print ' + next(1999):', foo.next('1999' )
             print ' + initial_adjust_up(2010080512):', foo.initial_adjust_up( '2010080512' )
             print ' + initial_adjust_up(2010090512):', foo.initial_adjust_up( '2010090512' )
+            print ' + initial_adjust_up(2008040512):', foo.initial_adjust_up( '2008040512' )
+            print ' + initial_adjust_up(2008090512):', foo.initial_adjust_up( '2008090512' )
             print ' + valid(2012080806):', foo.valid( ct('2012080806') )
             print ' + valid(2011080806):', foo.valid( ct('2011080806') )
         except Exception, x:

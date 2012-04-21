@@ -73,8 +73,7 @@ class Monthly( cycler ):
     @classmethod
     def offset( cls, T, n ):
         """Decrement T by n months to the same DDHHmmss."""
-        current_date = ct( T )
-        return sub_months( current_date, int(n) ).get()
+        return sub_months( ct( T ), int(n) ).get()
  
     def __init__( self, T=None, step=1 ):
         """Store date, step, and anchor."""
@@ -111,25 +110,21 @@ class Monthly( cycler ):
         except CycleTimeError, x:
             raise CyclerError, str(x)
 
-        # adjust up to next valid
         ta = 12 * int(self.anchorDate[0:4]) + int(self.anchorDate[4:6]) - 1
         tc = 12 * int(T[0:4]) + int(T[4:6]) - 1
-        diff = abs( ta - tc )
+        diff = tc - ta
         rem = diff % self.step
-        adjusted_date  = add_months( ct( T ), rem ).get()
 
-        # get monthly date DDHHmmss right
-        if T[6:] != self.DDHHmmss:
-            DDHHmmss = self.DDHHmmss
-        else:
-            DDHHmmss = T[6:]
+        nT = add_months( ct( self.anchorDate ), diff - rem - self.step ).get()
+        
+        while nT < T: 
+            nT = add_months( ct( nT ), self.step ).get()
 
-        return adjusted_date[0:6] + DDHHmmss  
+        return nT
 
     def next( self, T ):
-        """Add step years to get to the next anniversary after T."""
-        current_date = ct(T)
-        return  add_months(current_date, self.step).get()
+        """Add step months to get to the next anniversary after T."""
+        return  add_months( ct( T ), self.step).get()
 
     def valid( self, current_date ):
         """Is current_date a member of my cycle time sequence?"""
@@ -154,22 +149,37 @@ if __name__ == "__main__":
     # UNIT TEST
 
     inputs = [ \
-            ('197801',), \
-            ('1978080806',), \
+#            ('197801',), \
+#            ('1978080806',), \
+#            ('1978080806', 2), \
+#            ('2010040806', 3), \
+#            ('2010040806', 5), \
+#            ('1978080806x', 2), \
+            ('1978080806', 1), \
             ('1978080806', 2), \
-            ('2078080806', 3), \
-            ('1978080806x', 2), \
+            ('1978080806', 3), \
+            ('1978080806', 4), \
+            ('1978080806', 5), \
+            ('1978080806', 7), \
             ('1978080806', 'x')] 
+
+
 
     for i in inputs:
         try:
             foo = Monthly( *i )
-            print ' + next(197801):' + foo.next('197801')
-            print ' + initial_adjust_up(2010080512):', foo.initial_adjust_up( '2010080512' )
-            print ' + initial_adjust_up(2010090512):', foo.initial_adjust_up( '2010090512' )
-            print ' + initial_adjust_up(2078120512):', foo.initial_adjust_up( '2078120512' )
+            print '------------------------------------------------------------------------------------------'
+            print ' + anchor: ' + foo.anchorDate + ' anchor part: ' + foo.DDHHmmss + ' step: ' + str(foo.step)
+            for d in range(-12, 24, foo.step):
+                print add_months( ct( foo.anchorDate ), d ).get()
+            print ' + next(197801, YYYYDD only): ' + foo.next('197801')
+            print ' + initial_adjust_up(1979080512):', foo.initial_adjust_up( '1979080512' )
+            print ' + initial_adjust_up(1978090512):', foo.initial_adjust_up( '1978090512' )
+            print ' + initial_adjust_up(1978040912):', foo.initial_adjust_up( '1978040912' )
+            print ' + initial_adjust_up(1978120912):', foo.initial_adjust_up( '1978120912' )
             print ' + valid(3012080806):', foo.valid( ct('3012080806') )
-            print ' + valid(201108006):', foo.valid( ct('201108006') )
+            print ' + valid(2011080806):', foo.valid( ct('2011080806') )
         except Exception, x:
+            print '------------------------------------------------------------------------------------------'
             print ' ! ... ', x
 
