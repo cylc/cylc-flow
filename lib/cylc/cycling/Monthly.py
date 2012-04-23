@@ -109,13 +109,13 @@ class Monthly( cycler ):
             ct( T )
         except CycleTimeError, x:
             raise CyclerError, str(x)
-
+        
         ta = 12 * int(self.anchorDate[0:4]) + int(self.anchorDate[4:6]) - 1
         tc = 12 * int(T[0:4]) + int(T[4:6]) - 1
         diff = tc - ta
         rem = diff % self.step
 
-        nT = add_months( ct( self.anchorDate ), diff - rem - self.step ).get()
+        nT = add_months( ct( self.anchorDate ), diff - rem ).get()
         
         while nT < T: 
             nT = add_months( ct( nT ), self.step ).get()
@@ -149,18 +149,14 @@ if __name__ == "__main__":
     # UNIT TEST
 
     inputs = [ \
-#            ('197801',), \
-#            ('1978080806',), \
-#            ('1978080806', 2), \
-#            ('2010040806', 3), \
-#            ('2010040806', 5), \
-#            ('1978080806x', 2), \
+            ('197801',), \
             ('1978080806', 1), \
             ('1978080806', 2), \
             ('1978080806', 3), \
             ('1978080806', 4), \
             ('1978080806', 5), \
             ('1978080806', 7), \
+            ('1978080806x', 2), \
             ('1978080806', 'x')] 
 
 
@@ -170,12 +166,14 @@ if __name__ == "__main__":
             foo = Monthly( *i )
             print '------------------------------------------------------------------------------------------'
             print ' + anchor: ' + foo.anchorDate + ' anchor part: ' + foo.DDHHmmss + ' step: ' + str(foo.step)
-            for d in range(-12, 24, foo.step):
-                print add_months( ct( foo.anchorDate ), d ).get()
+            print ' + table of trigger events:'
+            for d in range(-10*foo.step, 10*foo.step, foo.step):
+                print ' + ', add_months( ct( foo.anchorDate ), d ).get()
             print ' + next(197801, YYYYDD only): ' + foo.next('197801')
             print ' + initial_adjust_up(1979080512):', foo.initial_adjust_up( '1979080512' )
             print ' + initial_adjust_up(1978090512):', foo.initial_adjust_up( '1978090512' )
             print ' + initial_adjust_up(1978040912):', foo.initial_adjust_up( '1978040912' )
+            print ' + initial_adjust_up(1977040512):', foo.initial_adjust_up( '1977040512' )
             print ' + initial_adjust_up(1978120912):', foo.initial_adjust_up( '1978120912' )
             print ' + valid(3012080806):', foo.valid( ct('3012080806') )
             print ' + valid(2011080806):', foo.valid( ct('2011080806') )
