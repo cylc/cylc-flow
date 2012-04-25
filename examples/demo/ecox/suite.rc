@@ -17,7 +17,7 @@ description = "EcoConnect Operation, circa August 2011"
         clock offset = 0
 
 [scheduling]
-    runahead limit = 48
+    #runahead limit = 48
     initial cycle time = 2011010106
     final cycle time = 2011010206
 

@@ -43,7 +43,7 @@ command, and you can choose to restart from one of these (just
 cut-and-paste the filename from the log to the command line).
 
 NOTE: daemonize important suites with the POSIX nohup command:
-    nohup cylc [con] restart SUITE YYYYMMDDHH > suite.out 2> suite.err &
+    nohup cylc [con] restart SUITE > suite.out 2> suite.err &
 
 Arguments:
    SUITE                Target suite.

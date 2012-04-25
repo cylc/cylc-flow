@@ -9,7 +9,6 @@ description  = "(Quick Start b plus real tasks)"
 # private running directory for its restart files).
  
 [scheduling]
-    runahead limit = 12
     initial cycle time = 2011010106
     final cycle time = 2011010200
     [[special tasks]]
@@ -65,13 +64,10 @@ description  = "(Quick Start b plus real tasks)"
 
 [visualization]
     default node attributes = "shape=ellipse"
-    [[node groups]]
-        post = PostA, PostB
-        models = ColdModel, Model
     [[node attributes]]
-        post  = "style=unfilled", "color=blue", "shape=rectangle"
+        Post  = "style=unfilled", "color=blue", "shape=rectangle"
         PostB = "style=filled", "fillcolor=seagreen2"
-        models  = "style=filled", "fillcolor=red"
+        Models  = "style=filled", "fillcolor=red"
         ColdModel = "fillcolor=lightblue"
         GetData = "style=filled", "fillcolor=yellow", "shape=septagon"
         Prep = "shape=box", "style=bold", "color=red3" 

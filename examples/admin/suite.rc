@@ -1,0 +1,96 @@
+title = "Cylc Admin Test Suite"
+
+#        B[T-6]-> B -> E   
+#                / \   
+#  X & A[T-6]-> A   -> D 
+#                \ /    
+#        C[T-6]-> C -> F 
+#       
+
+description = """This is an implementation of the example suite that
+illustrates the Cylc User Guide introductory section. It is copied 
+on the fly then used by 'cylc admin test-suite' and should not be
+modified unless you know what you're doing."""
+
+# suite does not currently use Jinja2 - that's an optional extra.
+
+[cylc]
+    [[lockserver]]
+        # LOCKSERVER OFF (the default, but just to be sure).
+        # (we're only testing scheduling functionality here).
+        enable = False
+
+[scheduling]
+    runahead limit = 24
+    [[special tasks]]
+    start-up         = prep
+    sequential       = A, B, C
+    cold-start       = ColdA, ColdB, ColdC
+    clock-triggered  = X(1)
+
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph = """
+                    X => A => B => E
+                    A => C => F
+                    B & C => D
+    
+                    ColdA | A[T-6] | A[T-12] | A[T-18] => A
+                    ColdB | B[T-6] => B
+                    ColdC | C[T-6] => C
+
+                    prep => X & ColdA & ColdB & ColdC"""
+[runtime]
+    [[root]]
+        command scripting = <TASK>.sh
+        [[[environment]]]
+            TASK_EXE_SECONDS = 10
+            WORKSPACE  = /tmp/$USER/$CYLC_SUITE_REG_NAME/common
+            RUNNING    = $WORKSPACE/running
+            INPUT_DIR  = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
+
+    [[Model]]
+        description = "Model task <TASK>"
+        [[[environment]]]
+            RUNNING_DIR = $RUNNING/<TASK>
+
+    [[Cold]]
+        inherit = Model
+        description = "Model cold start task <TASK>"
+      [[[environment]]]
+            # Needs the corresponding model running dir
+            RUNNING_DIR = "$RUNNING/${CYLC_TASK_NAME#Cold}"
+
+    [[Post]]
+        description = "Post processing task <TASK>"
+
+    [[prep]]
+        description = "Clean out the suite workspace for a new run"
+        command scripting = clean-workspace.sh $WORKSPACE
+
+    [[X]]
+        description = "Retrieve real time data for model A"
+
+    [[A,B,C]]
+        inherit = Model
+
+    [[D,E,F]]
+        inherit = Post
+
+    [[ColdA,ColdB,ColdC]]
+        inherit = Cold
+ 
+[visualization]
+    default node attributes = "style=filled"
+    [[node attributes]]
+        Model = "shape=septagon"
+        Post   = "style=unfilled", "shape=rectangle"
+        Cold   = "shape=egg", "fillcolor=slateblue"
+        X   = "shape=box", "fillcolor=lawngreen"
+        A      = "fillcolor=red"
+        B      = "fillcolor=magenta3"
+        C      = "fillcolor=orange"
+        D      = "style=bold", "color=green4"
+        E      = "style=bold", "color=blue"
+        F      = "style=bold", "color=red"

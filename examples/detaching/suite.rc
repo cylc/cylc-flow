@@ -1,4 +1,4 @@
-title = "Custom Task Wrapper Example"
+title = "Cylc User Guide Custom Task Wrapper Example"
 
 description = """This suite runs a single task that internally submits a
 'model executable' before detaching and exiting immediately - so we have
@@ -23,3 +23,4 @@ to handle task completion messaging manually - see the Cylc User Guide."""
             # output path prefix for detached model stdout and stderr:
             PREFIX = $HOME/detach
             FOO = "$HOME bar $PREFIX"
+

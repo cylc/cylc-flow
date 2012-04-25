@@ -53,7 +53,7 @@ class graphnode( object ):
             self.special_output = True
             node, self.output = m.groups()
 
-        # parse and strip intercyle: foo[T-6] -> foo
+        # parse and strip intercyle: foo[T-6] or foo[T-nd] --> foo
         m = re.match( '([\w]+)\s*\[\s*T\s*([+-])\s*(\d+)\s*\]', node )
         if m:
             self.intercycle = True

@@ -20,7 +20,7 @@ import datetime
 import re
 
 """ 
-CYCLE TIME: YYYYMMDDHH(mm)
+CYCLE TIME: YYYY[MM[DD[HH[mm[ss]]]]]
 """
 
 class CycleTimeError( Exception ):
@@ -36,25 +36,36 @@ class CycleTimeError( Exception ):
 class InvalidCycleTimeError( CycleTimeError ):
     pass
 
+class at( object ):
+    """asynchronous tag: integer"""
+    def __init__( self, tag ):
+        self.value = tag
+
+    def get( self ):
+        return str(self.value)
+
 class ct( object ):
+    """YYYY[MM[DD[HH[mm[ss]]]]]"""
+    # template:
+    YYYYMMDDHHmmss = '00010101000000'
 
-    def __init__( self, str ):
-        self.parse( str )
+    def __init__( self, ctin ):
+        if isinstance( ctin, datetime.datetime ):
+            self.parse( self._init_by_datetime( ctin ) )
+        else: 
+            self.parse( ctin )
 
-    def parse( self, str ):
-        if len( str ) == 10:
-            # YYYYMMDDHH - append minutes and seconds
-            self.strvalue = str + '0000'
-        elif len( str ) == 12:
-            # YYYYMMDDHHmm - append seconds
-            self.strvalue = str + '00'
-        elif len( str ) == 14:
-            # YYYYMMDDHHmmss
-            self.strvalue = str
+    def _init_by_datetime( self, dtvalue ):
+        return dtvalue.strftime( "%Y%m%d%H%M%S" )
+
+    def parse( self, strx ):
+        n = len(strx)
+        if n == 4 or n == 6 or n == 8 or n == 10 or n == 12 or n == 14:
+            self.strvalue = strx + ct.YYYYMMDDHHmmss[n:]
         else:
-            raise InvalidCycleTimeError, 'ERROR: Cycle Times must be YYYYMMDDHH[mm[ss]] not: ' + str
+            raise InvalidCycleTimeError, 'ERROR: Illegal cycle time (YYYY[MM[DD[HH[mm[ss]]]]]): ' + strx
 
-        self.strvalue_Y2H = self.strvalue[0:10]
+        #self.strvalue_Y2H = self.strvalue[0:10]
 
         self.year    = self.strvalue[ 0:4 ]
         self.month   = self.strvalue[ 4:6 ]
@@ -62,8 +73,11 @@ class ct( object ):
         self.hour    = self.strvalue[ 8:10]
         self.minute  = self.strvalue[10:12]
         self.seconds = self.strvalue[12:14]
+        self.HHmmss  = self.strvalue[ 8:14 ]
+        self.DDHHmmss  = self.strvalue[ 6:14 ]
+        self.MMDDHHmmss  = self.strvalue[ 4:14 ]
         
-        # convert to datetime as a validity check!
+        # convert to datetime as a validity check
         try:
             self.dtvalue = datetime.datetime( int(self.year), int(self.month),
                 int(self.day), int(self.hour), int(self.minute),
@@ -72,13 +86,11 @@ class ct( object ):
             # returns sensible messages: "minute must be in 0..59"
             raise InvalidCycleTimeError( x.__str__() + ': ' + self.get_formatted() )
 
-    def get( self, Y2H=True ):
-        if Y2H:
-            # YYYYMMDDHH
-            return self.strvalue_Y2H
-        else:
-            # YYYYMMDDHHmmss
-            return self.strvalue
+    def get( self ):
+        #### TO DO: INTEGER CTIME COMPARISONS REQUIRE USE OF SAME NUMBER
+        #### OF DIGITS EVERYWHERE
+        #return self.strvalue
+        return self.strvalue[0:10] # just YYYYMMDDHH for now
 
     def get_formatted( self ):
         # YYYY/MM/DD HH:mm:ss
@@ -121,14 +133,4 @@ class ct( object ):
         # subtract this ct from me, return hours
         delta = self.subtract(ct)
         return int( delta.days * 24 + delta.seconds / 3600 + delta.microseconds / ( 3600 * 1000000 ))
-
-
-if __name__ == "__main__":
-    foo = ct( '20110526184359' )
-    print foo.get(), foo.get_formatted()
-    try:
-        bar = ct('2011053918' )
-    except CycleTimeError, x:
-        print x 
-
 

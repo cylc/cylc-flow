@@ -40,7 +40,8 @@ description = "No description provided" # DEFAULT
 [scheduling]
     initial cycle time = None
     final cycle time = None
-    runahead limit = 25 # DEFAULT
+    runahead limit = (largest minimum runahead limit of each cycler)
+                      # DEFAULT via config.py
     [[queues]]
         [[[default]]]
             limit = 0 (no limit) # DEFAULT 

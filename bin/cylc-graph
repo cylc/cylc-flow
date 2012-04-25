@@ -235,7 +235,7 @@ else:
     # SUITE DEPENDENCY GRAPH
 
     start_ctime = None
-    stop = None
+    stop_ctime = None
 
     if len(args) > 1:
         # got START
@@ -247,20 +247,20 @@ else:
         if len(args) == 3:
             # got STOP
             try:
-                stop_ctime = ct(args[2])
+                stop_ctime = ct(args[2]).get()
             except CycleTimeError,x:
                 raise SystemExit(x)
-            stop_delta = stop_ctime.subtract( ct(start_ctime) )
+            #stop_delta = stop_ctime.subtract( ct(start_ctime) )
             # timedelta: days, seconds, microseconds; ignoring microseconds
-            stop = stop_delta.days * 24 + stop_delta.seconds / 3600
+            #stop = stop_delta.days * 24 + stop_delta.seconds / 3600
         else:
-            stop = 0
+            stop_ctime = start_ctime 
 
     raw = False
     if options.rawstart:
         raw = True
 
-    window = MyDotWindow( suite, suiterc, watchers, start_ctime, stop, raw, options.outputfile )
+    window = MyDotWindow( suite, suiterc, watchers, start_ctime, stop_ctime, raw, options.outputfile )
     window.widget.connect( 'clicked', on_url_clicked, window )
 
     #try:

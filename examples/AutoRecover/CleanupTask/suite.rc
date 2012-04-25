@@ -1,0 +1,47 @@
+title = family failure cleanup task example number 1
+
+description = """
+Illustrates use of a special task to clean up failed tasks. Here the
+cleanup task runs whether or not the family fails, but it only cleans up
+if necessary. See also family failure cleanup task example number 2, and
+the AutoRecover examples for recovery tasks that only run if needed."""
+
+[scheduling]
+    initial cycle time = 2011010106
+    final cycle time = 2011010200
+    [[special tasks]]
+        sequential = A  # (just to slow the suite down)
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph =  """A => fam
+                    fam:finish => B
+                    fam:finish => fam_cleanup"""
+[runtime]
+    [[fam]]
+
+    [[m_foo]]
+        inherit = fam
+        command scripting = sleep 8 
+
+    [[m_bar]]
+        inherit = fam
+        command scripting = """
+# Fail at 6,18, succeed at 0,12:
+HH=${CYLC_TASK_CYCLE_TIME#????????} 
+# (TO DO: HH extraction will fail if we go to YYYYMMDDHHmmss)
+if (( HH == 6 || HH == 18 )); then
+    COMMAND=/bin/false
+else
+    COMMAND=/bin/true
+fi
+sleep 5
+$COMMAND"""
+
+    [[m_baz]]
+        inherit = fam
+        command scripting = sleep 10
+
+    [[fam_cleanup]]
+        description = "this is a family failed task cleanup task"
+        command scripting = fam_cleanup.sh
+

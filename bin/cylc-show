@@ -21,7 +21,7 @@ from cylc.hostname import hostname
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import NoPromptOptionParser_u
 from cylc.port_scan import SuiteIdentificationError
-from cylc.taskid import id, InvalidTaskIDError, InvalidCycleTimeError
+from cylc.TaskID import TaskID, InvalidTaskIDError, InvalidCycleTimeError
 from cylc.registration import dbgetter, RegistrationError
 from cylc.version import compat
 
@@ -56,7 +56,7 @@ prnt_id = False
 if len(args) == 2:
     target = args[1]
     try:
-        tid = id( target )
+        tid = TaskID( target )
     except InvalidTaskIDError:
         # must be a task name
         prnt_name = True
@@ -66,8 +66,8 @@ if len(args) == 2:
     else:
         # task ID
         prnt_id = True
-        id = tid.id
-        name = tid.name
+        task_id = tid.getstr()
+        name, junk = tid.splitstr()
 else:
     prnt_suite = True
  
@@ -91,21 +91,21 @@ if prnt_name or prnt_id:
     info = proxy.get_task_info( [ name ] )
     idx = name
     if prnt_id:
-        idx = id
+        idx = task_id
     print 'TASK ' + idx + ' in suite ' + suite + ':' 
     for name in info.keys():
         print ' + ', info[name]
 
 if prnt_id:
     # PREREQUISITES AND OUTPUTS
-    result = proxy.get_task_requisites( [ id ] )
+    result = proxy.get_task_requisites( [ task_id ] )
 
     if not result or id not in result:
-        print "Task " + id + " not found in " + suite
+        print "Task " + task_id + " not found in " + suite
         sys.exit(1)
 
-    for id in result.keys():
-        [ pre, out, extra_info ] = result[ id ]
+    for task_id in result.keys():
+        [ pre, out, extra_info ] = result[ task_id ]
 
         print 'PREREQUISITES (- => not satisfied):'
         if len( pre ) == 0:

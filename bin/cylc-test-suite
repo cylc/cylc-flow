@@ -16,13 +16,13 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set -e; trap "echo 'TEST FAILED (see test-suite.out)'" ERR
+set -e; trap "echo 'TEST FAILED (see test.out and test-suite.out)'" ERR
 
 usage() {
     echo "USAGE: cylc [admin] test-suite [--help]"
     echo ""
     echo "Run an automated test of core cylc functionality using a new copy of"
-    echo "'$CYLC_DIR/examples/admin/test'. This should be used to check that new"
+    echo "'$CYLC_DIR/examples/admin'. This should be used to check that new"
     echo "developments in the cylc codebase have not introduced serious bugs."
     echo "The test runs a suite registered as 'test'; to watch its progress"
     echo "use 'cylc view'. Aside from timing differences results should be the"
@@ -64,7 +64,7 @@ mkdir -p $CYLC_TMPDIR
 # seconds since epoch
 SSE=$( date +%s )
 
-SUITE_DEF=$CYLC_DIR/examples/admin/test
+SUITE_DEF=$CYLC_DIR/examples/admin
 SUITE_REG=testsuite.$SSE
 SUITE_DIR=$CYLC_TMPDIR/$SUITE_REG
 

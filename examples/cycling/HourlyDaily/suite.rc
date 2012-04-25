@@ -1,0 +1,29 @@
+#!Jinja2
+
+{% set START = 2010080800 %}
+{% set STOP  = 2010081200 %}
+
+[scheduling]
+    runahead limit = 24
+    initial cycle time = {{ START }}
+    final cycle time   = {{ STOP }}
+    cycling = HoursOfTheDay
+    [[special tasks]]
+        cold-start = cfoo
+    [[dependencies]]
+        [[[0,12]]]
+            graph = """
+                cfoo | foo[T-12] => foo => bar
+                    """
+        [[[Daily(20100809,2)]]]
+            graph = """
+                foo => baz
+                    """
+[visualization]
+    initial cycle time = {{ START }}
+    final cycle time   = {{ STOP }}
+    [[node attributes]]
+        root = "style=filled", "fillcolor=yellow"
+        bar = "style=filled", "fillcolor=green"
+        baz = "style=filled", "fillcolor=red"
+

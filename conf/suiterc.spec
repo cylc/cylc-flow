@@ -65,7 +65,8 @@ description = string( default="No description provided" )
 [scheduling]
     initial cycle time = integer( default=None )
     final cycle time = integer( default=None )
-    runahead limit = integer( min=0, default=25 )
+    cycling = string( default="HoursOfTheDay" ) 
+    runahead limit = integer( min=0, default=None )
     [[queues]]
         [[[default]]]
             # for all non queue-assigned tasks

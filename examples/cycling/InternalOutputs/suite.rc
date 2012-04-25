@@ -1,0 +1,33 @@
+
+title = "Illustrates use of internal outputs and cycle time offsets."
+
+# In internal task outputs, as in the graph, cycle time offsets are
+# interpreted by the cycling module in use.
+
+description = """
+A suite containing a task with intercycle dependence expressed in terms
+of an internal task output: foo[T] depends on foo[T-1]:x, where the
+output message is explicited target at the next cycle."""
+
+[scheduling]
+    initial cycle time = 2010
+    final cycle time = 2011
+    cycling = Anniversary
+    [[special tasks]]
+        cold-start = cfoo
+    [[dependencies]]
+        [[[2010,1]]]
+            graph = """cfoo | foo[T-1]:x => foo => bar"""
+
+[runtime]
+    [[foo]]
+        command scripting = """
+sleep 5
+# fails for leap years:
+cylc task message "foo stuff ready for $(cylc cycletime --add=8760)"
+# TO DO: extend the cycle time utility
+sleep 5
+                            """
+        [[[outputs]]]
+            x = "foo stuff ready for [T+1]"
+

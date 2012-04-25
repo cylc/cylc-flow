@@ -2175,11 +2175,7 @@ A[T-6] => A  # Model A restart trigger
 \end{lstlisting}
 \lstset{language=transcript}
 Figure~\ref{fig-dep-eg-1} shows the complete suite.rc listing alongside
-the suite graph, plotted with,
-\begin{lstlisting}
-% cylc graph SDepG 2011052200 2011052206
-# (or use right-click Graph in gcylc)
-\end{lstlisting}
+the suite graph.
 This is actually a complete, valid, runnable suite (it will use default 
 runtime properties such as dummy command scripting, because no runtime 
 properties are explicitly defined, and you'll need to trigger task A
@@ -2217,7 +2213,7 @@ A[T-6] => A  # Model A restart trigger
         \includegraphics[width=\textwidth]{screenshots/dep-eg-1.png}
     \end{center}
 \end{minipage}
-\caption[Example Suite SDepG]{\scriptsize Example Suite SDepG}
+\caption[Example Suite]{\scriptsize Example Suite}
 \label{fig-dep-eg-1}
 \end{figure}
 
@@ -2391,10 +2387,6 @@ string) for cycling, one-off asynchronous, and repeating asynchronous
 tasks. Additionally, there may be multiple graph strings under different
 VALIDITY sections for cycling tasks with different dependencies at
 different cycle times.
-
-{\em The small suite definitions used in the following subsections can
-be found in the central database registered under the {\em validity}
-group name.} 
 
 \paragraph{One-off Asynchronous Tasks}
 
@@ -2573,32 +2565,35 @@ synchronous and cycling tasks in the same suite.}
 
 \paragraph{Repeating Asynchronous Tasks}
 
-Repeating asynchronous tasks can be used to process satellite data that 
-arrives asynchronously - i.e.\ at irregular time intervals. Each new dataset 
-must have a unique ``asynchronous ID'' - if it doesn't already have such an 
-ID you could use some string representation of the data arrival time. 
-The graph VALIDITY section heading must contain ``ASYNCID:'' followed by 
-a regular expression designed to match the actual IDs.  Addtionally,
-one task in the suite must be designated the ``daemon'' - it waits
-indefinitely on incoming data and reports each new dataset and its ID
-back to the suite by means of a special output message. When the task 
-proxy receives that message it dynamically registers a new output
-(containing the asynchronous ID) that downstream tasks can then trigger
-off. The downstream tasks likewise have prerequisites containing the
-ID pattern (because they trigger off the aforementioned outputs) and
-when these get satisfied the actual ID is substituted into their own 
-registered outputs. Additionally, each asynchronous task proxy passes
-the ID to its task execution environment as
+Repeating asynchronous tasks can be used, for example, to process
+satellite data that arrives at irregular time intervals. Each new
+dataset must have a unique ``asynchronous ID''. If it doesn't naturally
+have such an ID a string representation of the data arrival time could
+be used.  The graph VALIDITY section heading must contain ``ASYNCID:''
+followed by a regular expression that matches the actual IDs.
+Additionally, one task in the suite must be a designated ``daemon'' 
+that waits indefinitely on incoming data and reports each new dataset
+(and its ID) back to the suite by means of a special output message.
+When the daemon task proxy receives a matching message it dynamically
+registers a new output (containing the ID) that downstream tasks can
+then trigger off. The downstream tasks likewise have prerequisites
+containing the ID pattern (because they trigger off the aforementioned
+outputs) and when these get satisfied during dependency negotation the
+actual ID is substituted into their own registered outputs.
+Finally, each asynchronous repeating task proxy passes the ID to its
+task execution environment as
 \lstinline=$ASYNCID= to allow identification of the correct dataset by 
 task scripts.
-In this way the whole tree of tasks becomes dedicated to processing the
-new dataset, but if the data arrives quickly successive datasets can
-be processed in parallel. As Figure~\ref{fig-test3} shows, a repeating
-asynchronous suite currently plots just like a one-off asynchronous
-suite.  But at run time the daemon task stays put, while
-the others continually spawn successors to wait for new datasets to
-come in. The {\em asynchronous.repeating} example suite demonstrates how 
-to do this in a real suite.
+In this way a tree of tasks becomes dedicated to processing each 
+new dataset, and multiple datasets can be processed in parallel if
+they become available in quick succession. As Figure~\ref{fig-test3}
+shows, a repeating asynchronous suite currently plots just like a
+one-off asynchronous suite. But at run time the daemon task stays put,
+while the others continually spawn successors to wait for new datasets
+to come in. The {\em asynchronous.repeating} example suite demonstrates
+how to do this in a real suite. {\em Note that other trigger types
+(success, failure, start, suicide, and conditional) cannot currently be 
+used in a repeating asynchronous graph section.}
 \begin{figure}
 \begin{minipage}[b]{0.5\textwidth}
 \lstset{language=suiterc}
@@ -2720,7 +2715,7 @@ one way or the other:
 [runtime]
     [[A]]
         [[[outputs]]]
-            upload1 = "NWP products uploaded for <CYLC_TASK_CYCLE_TIME>"
+            upload1 = "NWP products uploaded for [T]"
 \end{lstlisting}
 Task A must emit this message when the actual output has been completed - 
 see {\em Reporting Internal Outputs Completed} (Section~\ref{RIOC}).
@@ -2974,11 +2969,11 @@ initial previous-cycle dependence of another cotemporal task. In effect,
 the cold-start task masquerades as the previous-cycle trigger of its
 associated cycling task. 
 
-A cold-start task may invoke real processing, probably to generate the
-files that are normally produced by the associated cycling task; or it
-could be a dummy task that represents some external spinup process,
-presumably resulting in the same files, that has to be completed before
-the suite is started. In the latter case the cold-start task can 
+A cold-start task may invoke real processing to generate the files that
+would normally be produced by the associated cycling task; or it
+could be a dummy task that represents some external spinup process that
+presumably generates in the same files but which has to be completed
+before the suite is started. In the latter case the cold-start task can 
 just report itself successfully completed after checking that the 
 required files are present.
 
@@ -3095,9 +3090,9 @@ not this is worth the effort depends on your needs.
 [runtime]
     [[A]]
         [[[outputs]]]
-            r6  = restart files completed for <CYLC_TASK_CYCLE_TIME+6>
-            r12 = restart files completed for <CYLC_TASK_CYCLE_TIME+12>
-            r18 = restart files completed for <CYLC_TASK_CYCLE_TIME+18>
+            r6  = restart files completed for [T+6]
+            r12 = restart files completed for [T+12]
+            r18 = restart files completed for [T+18]
 \end{lstlisting}
 
 
@@ -3177,13 +3172,19 @@ Groups of similar tasks or families that differ only in a few
 configuration details can be defined in single namespace sections
 by putting a list of names in the section heading. Potential
 applications include groups of similar obs processing tasks, and
-forecasting ensembles.
+forecasting ensembles. Note that if the list of tasks are also 
+members of the same family then any common runtime configuration could
+equally go under the inherited family namespace.
 
-As the suite.rc file is parsed, any occurrence of
-\lstinline=<NAMESPACE>= in any runtime configuration item
-is immediately replaced with the actual name of the namespace; and after 
-inheritance processing any occurrence of \lstinline=<TASK>= is
-replaced with the actual name of the task.
+As the suite.rc file is parsed any occurrence of the special variable
+\lstinline=<NAMESPACE>= in a runtime configuration item will be replaced
+immediately with the name of the namespace in which the special variable
+appears.  Then, after inheritance processing, in each task any
+occurrence of \lstinline=<TASK>= will be replaced with the name of the
+task. If both special variables are used in a family namespace
+definition, then in inheriting member tasks \lstinline=<NAMESPACE>= will
+evaluate to the family name while \lstinline=<TASK>= will evaluate to
+the task name.
 
 The following example illustrates this:
 \lstset{language=suiterc}
@@ -3205,6 +3206,10 @@ The following example illustrates this:
 % cylc get-config test runtime baz 'command scripting'
 ['echo Hello from baz via foo']
 \end{lstlisting}
+
+Of course particular tasks can also be singled out at runtime, in common
+command scripting or invoked task scripts, by testing the
+\lstinline=$CYLC_TASK_NAME= variable.
 
 As another example, consider a suite containing an ensemble of closely
 related forecast tasks in which each task invokes the same external
@@ -3234,14 +3239,11 @@ automatically generate the member names and associated dependencies
 
 Note that in the namespace scripting and environment sections, which are
 evaluated in task job scripts at run time, \lstinline=<TASK>= is
-functionally equivalent to \lstinline=$CYLC_TASK_NAME=.  But in other
-runtime config items that are never actually interpretred by the shell
+functionally equivalent to \lstinline=$CYLC_TASK_NAME=, but in 
+runtime config items that are never interpreted by the shell
 (e.g.\ \lstinline=description=) \lstinline=<TASK>= must be used to
-specialize from the list of names in the namespace section heading to a
-particular task name.
-
-{\em The {\em multidef} example suite illustrates use of these internal
-variables.}
+specialize from the list of names in the namespace section heading to 
+the individual task name.
 
 \subsubsection{Task Execution Environment}
 \label{TaskExecutionEnvironment}
@@ -3709,13 +3711,15 @@ Figure~\ref{fig-jinja2-cities}.
 A small number of special variables are used as placeholders in cylc suite definitions:
 
 \begin{myitemize}
-    \item \lstinline=<CYLC_TASK_CYCLE_TIME>= and
-        \lstinline=<CYLC_TASK_CYCLE_TIME+offset>= \newline
-        These are replaced with the actual cycle time of the task (with
-        optional computed positive offset) in the message strings
-        registered for explicit internal (pre-completion) task outputs.
-        They correspond to \lstinline=$CYLC_TASK_CYCLE_TIME= in the task
-        execution environment.
+    \item \lstinline=[T]= and \lstinline=[T+n]= \newline
+        Where \lstinline=n= is an integer cycle time offset, the units
+        of which (e.g. hours, days, months, or years) is determined by
+        the cycling module in use. This is replaced, in internal task
+        message strings under the runtime outputs config section, by the
+        actual offset cycle time of the task. The syntax is the same as 
+        for cycle time offsets in the suite graph; and they also allow
+        cylc to avoid erroneously matching literal capital T's in the
+        output message. 
 
     \item \lstinline=<TASK>= and \lstinline=<NAMESPACE>= \newline
         These are replaced with actual task or namespace names in
@@ -4299,13 +4303,12 @@ As also shown in the example above, to get a naked option flag such as
 \lstinline=-cwd= in SGE you must give a quoted blank space as the
 directive value in the suite.rc file.
 
-\subsection{Whither Task stdout And stderr?}
+\subsection{Task stdout And stderr Log Locations}
 \label{WhitherStdoutAndStderr}
 
-When a task is ready to run cylc generates task-specific stdout and
-stderr filenames containing the task name, cycle time, and a string
-of digits (seconds since epoch) to ensure uniqueness - rerunning the
-task won't overwrite any old output:
+When a task is ready to run cylc generates a filename root containing
+the task name, cycle time, and a unique string of digits (seconds since
+epoch; so that rerunning the task won't overwrite old output):
 \lstset{language=bash}
 \begin{lstlisting}
 # task job script:
@@ -4325,11 +4328,12 @@ script that is submitted to loadleveler.
 
 Cylc obviously has no control over the stdout and stderr output from
 tasks that do their own internal output management (e.g.\ tasks 
-that submit internal jobs and direct their output to other files). 
-For less internally complex tasks, however, these will be complete task
-job logs. {\em They can be viewed updating in real time in the suite
-control GUIs}. 
+that submit internal jobs and direct the associated output to other
+files). For less internally complex tasks, however, the files referred
+to here will be complete task job logs.
 
+Cylc's suite control GUIs can display the task job logs (updating in 
+real time for local tasks). 
 
 \subsection{Overriding the Job Submission Command}
 \label{CommandTemplate}

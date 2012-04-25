@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from cylc.taskid import id, TaskIDError
+from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
@@ -33,7 +33,7 @@ until it is released. Holding a waiting TASK in a SUITE prevents it
 from running or spawning successors, until it is released.  
 
 See also 'cylc [control] hold'.""",
-["""TASK                 Task to release (NAME%YYYYMMDDHH)"""])
+["""TASK                 Task to release (NAME%CYCLE)"""])
 
 (options, args) = parser.parse_args()
 
@@ -54,11 +54,11 @@ if len(args) == 2:
     task_only = True
     task = args[1]
     try:
-        tid = id( task )
+        tid = TaskID( task )
     except TaskIDError, x:
         raise SystemExit(x)
     else:
-        task = tid.id
+        task = tid.getstr()
 
     if not parser.prompt( 'Release task ' + task + ' in'):
         sys.exit(0)

@@ -447,20 +447,20 @@ Dependency graph based GUI suite control interface.
 
         # TO DO: error checking on date range given
         box = gtk.HBox()
-        label = gtk.Label( 'Start (YYYYMMDDHH)' )
+        label = gtk.Label( 'Start (YYYY[MM[DD[HH[mm[ss]]]]])' )
         box.pack_start( label, True )
         start_entry = gtk.Entry()
-        start_entry.set_max_length(10)
+        start_entry.set_max_length(14)
         if self.x.oldest_ctime:
             start_entry.set_text(self.x.oldest_ctime)
         box.pack_start (start_entry, True)
         vbox.pack_start( box )
 
         box = gtk.HBox()
-        label = gtk.Label( 'Stop (YYYYMMDDHH)' )
+        label = gtk.Label( 'Stop (YYYY[MM[DD[HH[mm[ss]]]]])' )
         box.pack_start( label, True )
         stop_entry = gtk.Entry()
-        stop_entry.set_max_length(10)
+        stop_entry.set_max_length(14)
         if self.x.newest_ctime:
             stop_entry.set_text(self.x.newest_ctime)
         box.pack_start (stop_entry, True)

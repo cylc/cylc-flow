@@ -54,7 +54,6 @@ class xupdater(threading.Thread):
         super(xupdater, self).__init__()
 
         self.quit = False
-        self.start_ctime = None
         self.stop_ctime = None
         self.xdot = xdot
         self.first_update = True
@@ -348,31 +347,23 @@ class xupdater(threading.Thread):
         self.oldest_ctime = self.global_summary['oldest cycle time']
         self.newest_ctime = self.global_summary['newest cycle time']
 
-        if self.start_ctime:
-            oldest = self.start_ctime
-            newest = self.stop_ctime
-        else:
-            oldest = self.oldest_ctime
-            newest = self.newest_ctime
+        oldest = self.oldest_ctime
+        newest = self.newest_ctime
 
         start_time = self.global_summary['start time']
 
+        rawx = None
         if start_time == None or oldest > start_time:
-            raw = True
+            rawx = True
         else:
             # (show cold start tasks) - TO DO: actual raw start
-            raw = False
+            rawx = False
 
         extra_node_ids = {}
 
-        nct = ct(newest)
-        oct = ct(oldest)
-        diffhrs = nct.subtract_hrs( oct ) + 1
-
-        #if diffhrs < 25:
-        #    diffhrs = 25
-        self.graphw = self.suiterc.get_graph( oldest, diffhrs,
-                colored=False, raw=raw, group_nodes=self.group,
+        # TO DO: mv ct().get() out of this call (for error checking):
+        self.graphw = self.suiterc.get_graph( ct(oldest).get(), ct(newest).get(),
+                colored=False, raw=rawx, group_nodes=self.group,
                 ungroup_nodes=self.ungroup,
                 ungroup_recursive=self.ungroup_recursive, 
                 group_all=self.group_all, ungroup_all=self.ungroup_all) 

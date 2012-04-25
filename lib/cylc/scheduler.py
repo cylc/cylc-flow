@@ -236,6 +236,11 @@ class scheduler(object):
         self.load_tasks()
         self.initial_oldest_ctime = self.get_oldest_c_time()
 
+        # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
+        #self.suite_state = state_summary( self.config, self.simulation_mode, self.start_time, self.gcylc )
+        self.suite_state = state_summary( self.config, self.simulation_mode, self.initial_oldest_ctime, self.gcylc )
+        self.pyro.connect( self.suite_state, 'state_summary')
+
         global graphing_disabled
         if not self.config['visualization']['run time graph']['enable']:
             graphing_disabled = True
@@ -412,10 +417,6 @@ class scheduler(object):
         # REMOTELY ACCESSIBLE SUITE IDENTIFIER
         suite_id = identifier( self.suite, self.owner )
         self.pyro.connect( suite_id, 'cylcid', qualified = False )
-
-        # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
-        self.suite_state = state_summary( self.config, self.simulation_mode, self.start_time, self.gcylc )
-        self.pyro.connect( self.suite_state, 'state_summary')
 
         # USE QUICK TASK ELIMINATION?
         self.use_quick = self.config['development']['use quick task elimination'] 
@@ -826,6 +827,19 @@ class scheduler(object):
     def will_pause_at( self ):
         return self.hold_time
 
+    def get_oldest_waiting_c_time( self ):
+        # return the cycle time of the oldest waiting task
+        oldest = '99991228235959'
+        for itask in self.pool.get_tasks():
+            if not itask.state.is_waiting():
+                continue
+            #if itask.is_daemon():
+            #    # avoid daemon tasks
+            #    continue
+            if int( itask.c_time ) < int( oldest ):
+                oldest = itask.c_time
+        return oldest
+
     def get_oldest_unfailed_c_time( self ):
         # return the cycle time of the oldest task
         oldest = '99991228235959'
@@ -843,7 +857,7 @@ class scheduler(object):
 
     def get_oldest_async_tag( self ):
         # return the tag of the oldest non-daemon task
-        oldest = 9999999999
+        oldest = 99999999999999
         for itask in self.pool.get_tasks():
             if itask.is_cycling():
                 continue
@@ -857,7 +871,7 @@ class scheduler(object):
 
     def get_oldest_c_time( self ):
         # return the cycle time of the oldest task
-        oldest = '9999122823'
+        oldest = '99991228230000'
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
@@ -928,7 +942,8 @@ class scheduler(object):
 
     def release_runahead( self ):
         if self.runahead_limit:
-            ouct = self.get_oldest_unfailed_c_time() 
+            #ouct = self.get_oldest_unfailed_c_time() 
+            ouct = self.get_oldest_waiting_c_time() 
             for itask in self.pool.get_tasks():
                 if not itask.is_cycling():
                     # TO DO: this test is not needed?
@@ -961,7 +976,7 @@ class scheduler(object):
             new_task.log( 'WARNING', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
             new_task.state.set_status('held')
         elif self.runahead_limit:
-            ouct = self.get_oldest_unfailed_c_time() 
+            ouct = self.get_oldest_waiting_c_time() 
             foo = ct( new_task.c_time )
             foo.decrement( hours=self.runahead_limit )
             if int( foo.get() ) >= int( ouct ):
@@ -1029,7 +1044,7 @@ class scheduler(object):
 
     def earliest_unspawned( self ):
         all_spawned = True
-        earliest_unspawned = '9999887766'
+        earliest_unspawned = '99998877665544'
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
@@ -1045,7 +1060,7 @@ class scheduler(object):
     def earliest_unsatisfied( self ):
         # find the earliest unsatisfied task
         all_satisfied = True
-        earliest_unsatisfied = '9999887766'
+        earliest_unsatisfied = '99998877665544'
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
@@ -1062,7 +1077,7 @@ class scheduler(object):
         # find the earliest unsucceeded task
         # EXCLUDING FAILED TASKS
         all_succeeded = True
-        earliest_unsucceeded = '9999887766'
+        earliest_unsucceeded = '99998877665544'
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue

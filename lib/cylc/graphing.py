@@ -82,21 +82,31 @@ class CGraphPlain( pygraphviz.AGraph ):
             node.attr['URL'] = n
 
     def cylc_add_edge( self, l, r, autoURL, **attr ):
-        # l and r are cylc task IDs 
-        pygraphviz.AGraph.add_edge( self, l, r, **attr )
+        if l == None and r == None:
+            pass
+        elif l == None:
+            self.cylc_add_node( r, autoURL )
+        elif r == None:
+            self.cylc_add_node( l, autoURL )
+        elif l == r:
+            # pygraphviz 1.1 adds a node instead of a self-edge
+            # which results in a KeyError in get_edge() below.
+            self.cylc_add_node( l, autoURL )
+        else:
+            pygraphviz.AGraph.add_edge( self, l, r, **attr )
 
-        nl = self.get_node( l )
-        nr = self.get_node( r )
+            nl = self.get_node( l )
+            nr = self.get_node( r )
 
-        llabel = re.sub( ddmmhh, tformat, l )
-        rlabel = re.sub( ddmmhh, tformat, r )
+            llabel = re.sub( ddmmhh, tformat, l )
+            rlabel = re.sub( ddmmhh, tformat, r )
 
-        nl.attr[ 'label' ] = llabel
-        nr.attr[ 'label' ] = rlabel
+            nl.attr[ 'label' ] = llabel
+            nr.attr[ 'label' ] = rlabel
 
-        if autoURL:
-            nl.attr[ 'URL' ] = 'base:' + l
-            nr.attr[ 'URL' ] = 'base:' + r
+            if autoURL:
+                nl.attr[ 'URL' ] = 'base:' + l
+                nr.attr[ 'URL' ] = 'base:' + r
 
 class CGraph( CGraphPlain ):
     """Directed Acyclic Graph class for cylc dependency graphs.
@@ -152,40 +162,45 @@ class CGraph( CGraphPlain ):
             node.attr[ attr ] = value
 
     def cylc_add_edge( self, l, r, autoURL, **attr ):
-        # l and r are cylc task IDs 
-        if l == r:
+        if l == None and r == None:
+            pass
+        elif l == None:
+            self.cylc_add_node( r, autoURL )
+        elif r == None:
+            self.cylc_add_node( l, autoURL )
+        elif l == r:
             # pygraphviz 1.1 adds a node instead of a self-edge
             # which results in a KeyError in get_edge() below.
-            self.cylc_add_node( l, autoURL, **attr )
-            return
+            self.cylc_add_node( l, autoURL )
+        else:
+            pygraphviz.AGraph.add_edge( self, l, r, **attr )
 
-        pygraphviz.AGraph.add_edge( self, l, r, **attr )
+            nl = self.get_node( l )
+            nr = self.get_node( r )
 
-        nl = self.get_node( l )
-        nr = self.get_node( r )
-
-        llabel = re.sub( ddmmhh, tformat, l )
-        rlabel = re.sub( ddmmhh, tformat, r )
+            llabel = re.sub( ddmmhh, tformat, l )
+            rlabel = re.sub( ddmmhh, tformat, r )
  
-        nl.attr[ 'label' ] = llabel
-        nr.attr[ 'label' ] = rlabel
+            nl.attr[ 'label' ] = llabel
+            nr.attr[ 'label' ] = rlabel
 
-        if autoURL:
-            nl.attr['URL'] = l
-            nr.attr['URL'] = r
+            if autoURL:
+                nl.attr['URL'] = l
+                nr.attr['URL'] = r
 
-        for item in self.node_attr_by_taskname( l ):
-            attr, value = re.split( '\s*=\s*', item )
-            nl.attr[ attr ] = value
+            for item in self.node_attr_by_taskname( l ):
+                attr, value = re.split( '\s*=\s*', item )
+                nl.attr[ attr ] = value
 
-        for item in self.node_attr_by_taskname( r ):
-            attr, value = re.split( '\s*=\s*', item )
-            nr.attr[ attr ] = value
+            for item in self.node_attr_by_taskname( r ):
+                attr, value = re.split( '\s*=\s*', item )
+                nr.attr[ attr ] = value
+    
+            # TO DO: ERROR CHECK PRESENCE OF NODE COLOR ATTRIBUTES
+            if self.vizconfig['use node color for edges']:
+                edge = self.get_edge( l, r )
+                if nl.attr['style'] == 'filled':
+                    edge.attr['color'] = nl.attr['fillcolor']
+                else:
+                    edge.attr['color'] = nl.attr['color']
 
-        # TO DO: ERROR CHECK PRESENCE OF NODE COLOR ATTRIBUTES
-        if self.vizconfig['use node color for edges']:
-            edge = self.get_edge( l, r )
-            if nl.attr['style'] == 'filled':
-                edge.attr['color'] = nl.attr['fillcolor']
-            else:
-                edge.attr['color'] = nl.attr['color']

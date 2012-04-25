@@ -25,7 +25,6 @@ from color_rotator import rotator
 class helpwindow_base( object ):
     def __init__( self, title, height=400 ):
         self.window = gtk.Window()
-        #window.set_border_width( 10 )
         self.window.set_title( title )
 
         self.window.set_size_request(600, int(height))
@@ -374,7 +373,6 @@ def update_tb( tb, line, tags = None ):
 
 def userguide( w, graph=False ):
     window = gtk.Window()
-    #window.set_border_width( 10 )
     #if readonly:
     #    window.set_title( "Cylc View Quick Guide" )
     #else:

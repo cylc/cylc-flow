@@ -167,15 +167,13 @@ class MyDotWindow( xdot.DotWindow ):
 
         if self.ctime != None and self.stop_after != None:
             one = self.ctime
-            stop = self.stop_after
+            two = self.stop_after
         else:
             one = str( self.suiterc['visualization']['initial cycle time'])
             two = str(self.suiterc['visualization']['final cycle time'])
-            stop_delta = ct(two).subtract( ct(one) )
-            # timedelta: days, seconds, microseconds; ignoring microseconds
-            stop = stop_delta.days * 24 + stop_delta.seconds / 3600
 
-        graph = self.suiterc.get_graph( one, stop, 
+        # TO DO: move ct().get() out of this call (for error checking): 
+        graph = self.suiterc.get_graph( ct(one).get(), ct(two).get(), 
                 colored=True, raw=self.raw, 
                 group_nodes=group_nodes, ungroup_nodes=ungroup_nodes, 
                 ungroup_recursive=ungroup_recursive, 
@@ -194,7 +192,7 @@ class MyDotWindow( xdot.DotWindow ):
             try:
                 graph.draw( self.outfile, prog='dot' )
             except IOError, x:
-                print x
+                print >> sys.stderr, x
                 self.disable_output_image = True
 
     def update(self):

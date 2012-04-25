@@ -19,7 +19,7 @@
 import sys, os
 import Pyro.core
 import logging
-from taskid import id, TaskIDError
+from TaskID import TaskID, TaskIDError
 from CylcError import TaskNotFoundError, TaskStateError
 from job_submission.job_submit import job_submit
 from datetime import datetime
@@ -32,7 +32,6 @@ class result:
 
 class remote_switch( Pyro.core.ObjBase ):
     "class to take remote suite control requests" 
-    # the task manager can take action on these when convenient.
 
     def __init__( self, config, clock, suite_dir, pool, failout_id = None ):
         self.log = logging.getLogger( "main" )
@@ -245,11 +244,11 @@ class remote_switch( Pyro.core.ObjBase ):
 
         elif method == 'stop after task':
             try:
-                tid = id( arg )
+                tid = TaskID( arg )
             except TaskIDError,x:
                 return result( False, "Invalid stop task ID: " + arg )
             else:
-                arg = tid.id
+                arg = tid.getstr()
             self.pool.set_stop_task( arg )
 
         # process, to update state summary
@@ -317,8 +316,8 @@ class remote_switch( Pyro.core.ObjBase ):
         found = False
         for task in self.pool.get_tasks():
             # loop through the suite task list
-            id = task.id
-            if id in in_ids_back:
+            task_id = task.id
+            if task_id in in_ids_back:
                 found = True
                 extra_info = {}
                 # extra info for clocktriggered tasks
@@ -341,7 +340,7 @@ class remote_switch( Pyro.core.ObjBase ):
                     # not a cycling task
                     pass
 
-                dump[ in_ids_back[ id ] ] = [ task.prerequisites.dump(), task.outputs.dump(), extra_info ]
+                dump[ in_ids_back[ task_id ] ] = [ task.prerequisites.dump(), task.outputs.dump(), extra_info ]
         if not found:
             self._warning( 'task state info request: tasks not found' )
         else:
@@ -446,11 +445,11 @@ class remote_switch( Pyro.core.ObjBase ):
         else:
             return False
 
-    def _name_from_id( self, id ):
-        if '%' in id:
-            name, tag = id.split('%')
+    def _name_from_id( self, task_id ):
+        if '%' in task_id:
+            name, tag = task_id.split('%')
         else:
-            name = id
+            name = task_id
         return name
 
     def _warning( self, msg ):

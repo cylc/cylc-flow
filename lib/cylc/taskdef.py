@@ -40,7 +40,8 @@ from prerequisites.conditionals import conditional_prerequisites
 from task_output_logs import logfiles
 from collections import deque
 from outputs import outputs
-from cycle_time import ct
+from cycle_time import ct, at
+from cycling import container
 
 class Error( Exception ):
     """base class for exceptions in this module."""
@@ -73,6 +74,7 @@ class taskdef(object):
         self.manual_messaging = False
         self.modifiers = []
         self.asyncid_pattern = None
+        self.cycling = False
 
         self.remote_host = None
         self.owner = None
@@ -88,7 +90,7 @@ class taskdef(object):
         self.reset_timer = None
 
         self.intercycle = False
-        self.hours = []
+        self.cyclers = []
         self.logfiles = []
         self.description = ['Task description has not been completed' ]
 
@@ -100,16 +102,9 @@ class taskdef(object):
         self.triggers = OrderedDict()         
         # cond[6,18] = [ '(A & B)|C', 'C | D | E', ... ]
         self.cond_triggers = OrderedDict()             
-        self.startup_triggers = OrderedDict()
-        self.suicide_startup_triggers = OrderedDict()
-        self.suicide_triggers = OrderedDict()       
-        self.suicide_cond_triggers = OrderedDict()
-        self.asynchronous_triggers = []
-        self.startup_cond_triggers = OrderedDict()
-        self.suicide_startup_cond_triggers = OrderedDict()
 
-        self.outputs = []     # list of special outputs; change to OrderedDict()
-                              # if need to vary per cycle.
+        self.outputs = [] # list of explicit internal outputs; change to
+                          # OrderedDict() if need to vary per cycle.
 
         self.loose_prerequisites = [] # asynchronous tasks
 
@@ -123,75 +118,21 @@ class taskdef(object):
 
         self.namespace_hierarchy = []
 
-    def add_trigger( self, msg, validity, suicide=False ):
-        if suicide:
-            if validity not in self.suicide_triggers:
-                self.suicide_triggers[ validity ] = []
-            self.suicide_triggers[ validity ].append( msg )
-        else:
-            if validity not in self.triggers:
-                self.triggers[ validity ] = []
-            self.triggers[ validity ].append( msg )
+    def add_trigger( self, trigger, cycler ):
+        if cycler not in self.triggers:
+            self.triggers[ cycler ] = []
+        self.triggers[cycler].append(trigger)
 
-    def add_asynchronous_trigger( self, msg ):
-        self.asynchronous_triggers.append( msg )
+    def add_conditional_trigger( self, triggers, exp, cycler ):
+        if cycler not in self.cond_triggers:
+            self.cond_triggers[ cycler ] = []
+        self.cond_triggers[ cycler ].append( [triggers,exp] )
 
-    def add_startup_trigger( self, msg, validity, suicide=False ):
-        if suicide:
-            if validity not in self.suicide_startup_triggers:
-                self.suicide_startup_triggers[ validity ] = []
-            self.suicide_startup_triggers[ validity ].append( msg )
-        else:
-            if validity not in self.startup_triggers:
-                self.startup_triggers[ validity ] = []
-            self.startup_triggers[ validity ].append( msg )
-
-    def add_conditional_trigger( self, triggers, exp, validity, suicide=False ):
-        # triggers[label] = trigger
-        # expression relates the labels
-        if suicide:
-            if validity not in self.suicide_cond_triggers:
-                self.suicide_cond_triggers[ validity ] = []
-            self.suicide_cond_triggers[ validity ].append( [ triggers, exp ] )
-        else:
-            if validity not in self.cond_triggers:
-                self.cond_triggers[ validity ] = []
-            self.cond_triggers[ validity ].append( [ triggers, exp ] )
-
-    def add_startup_conditional_trigger( self, triggers, exp, validity, suicide=False ):
-        # triggers[label] = trigger
-        # expression relates the labels
-        if suicide:
-            if validity not in self.suicide_startup_cond_triggers:
-                self.suicide_startup_cond_triggers[ validity ] = []
-            self.suicide_startup_cond_triggers[ validity ].append( [ triggers, exp ] )
-        else:
-            if validity not in self.startup_cond_triggers:
-                self.startup_cond_triggers[ validity ] = []
-            self.startup_cond_triggers[ validity ].append( [ triggers, exp ] )
-
-    def set_valid_hours( self, section ):
-        if re.match( '^[\s,\d]+$', section ):
-            # Cycling task.
-            hours = re.split( '\s*,\s*', section )
-            for hr in hours:
-                hour = int( hr )
-                if hour < 0 or hour > 23:
-                    raise DefinitionError( 'ERROR: Hour ' + str(hour) + ' must be between 0 and 23' )
-                if hour not in self.hours: 
-                    self.hours.append( hour )
-            self.hours.sort( key=int )
-        else:
-            raise DefinitionError( 'ERROR: Illegal graph valid hours: ' + section )
-
-    def check_consistency( self ):
-        # TO DO: this is not currently used.
-        if len( self.hours ) == 0:
-            raise DefinitionError( 'ERROR: no hours specified' )
-
-        if 'clocktriggered' in self.modifiers:
-            if self.clocktriggered_offset == None:
-                raise DefinitionError( 'ERROR: clock-triggered tasks must specify a time offset' )
+    def add_to_valid_cycles( self, cyclr ):
+            if len( self.cyclers ) == 0:
+                self.cyclers = [cyclr]
+            else:
+                self.cyclers.append( cyclr )
 
     def time_trans( self, strng, hours=False ):
         # Time unit translation.
@@ -272,131 +213,82 @@ class taskdef(object):
         tclass.job_submit_work_directory = self.job_submit_work_directory
         tclass.manual_messaging = self.manual_messaging
 
-        tclass.valid_hours = self.hours
-
         tclass.intercycle = self.intercycle
         tclass.follow_on = self.follow_on_task
 
         tclass.namespace_hierarchy = self.namespace_hierarchy
 
-        def tclass_format_prerequisites( sself, preq ):
-            m = re.search( '<TAG\s*\-\s*(\d+)>', preq )
-            if m:
-                offset = m.groups()[0]
-                if self.type != 'async_repeating' and self.type != 'async_daemon' and self.type != 'async_oneoff':
-                    # cycle time decrement
-                    foo = ct( sself.c_time )
-                    foo.decrement( hours=offset )
-                    ctime = foo.get()
-                    preq = re.sub( '<TAG\s*\-\s*\d+>', ctime, preq )
-                else:
-                    # arithmetic decrement
-                    foo = sself.tag - offset
-                    preq = re.sub( '<TAG\s*\-\s*\d+>', foo, preq )
+        def tclass_add_prerequisites( sself, startup, cycler, tag  ):
 
-            elif re.search( '<TAG>', preq ):
-                preq = re.sub( '<TAG>', sself.tag, preq )
-
-            return preq
-        tclass.format_prerequisites = tclass_format_prerequisites 
-
-        def tclass_add_prerequisites( sself, startup ):
-            # plain triggers
+            # 1) non-conditional triggers
             pp = plain_prerequisites( sself.id ) 
-            if startup:
-                triggers = dict( self.triggers.items() + self.startup_triggers.items() )
-            else:
-                triggers = self.triggers
-            for val in triggers:
-                for trig in triggers[ val ]:
-                    if val != "once" and not re.match( '^ASYNCID:', val ):
-                        hours = re.split( ',\s*', val )
-                        ihours = [ int(i) for i in hours ]
-                        if int( sself.c_hour ) not in ihours:
+            sp = plain_prerequisites( sself.id ) 
+            lp = loose_prerequisites( sself.id )
+            for cyc in self.triggers:
+                for trig in self.triggers[ cyc ]:
+                    if trig.startup and not startup:
                             continue
-                    pp.add( sself.format_prerequisites( trig ))
+                    if trig.cycling and not cyc.valid( ct(sself.tag) ):
+                        # This trigger is not valid for current cycle. 
+                        print  >> sys.stderr, 'THIS TRIGGER NOT VALID FOR', sself.tag
+                        print >> sys.stderr, '  ', trig.get(sself.tag, cyc)
+                        continue
+                    # NOTE that if we need to check validity of async
+                    # tags, async tasks can appear in cycling sections
+                    # in which case cyc.valid( at(sself.tag)) will fail.
+                    if trig.async_repeating:
+                        lp.add( trig.get( tag, cycler ))
+                    else:
+                        if trig.suicide:
+                            sp.add( trig.get( tag, cycler ))
+                        else:
+                            pp.add( trig.get( tag, cycler ))
             sself.prerequisites.add_requisites( pp )
+            sself.prerequisites.add_requisites( lp )
+            sself.suicide_prerequisites.add_requisites( sp )
 
-            # plain suicide triggers
-            if startup:
-                triggers = dict( self.suicide_triggers.items() + self.suicide_startup_triggers.items() )
-            else:
-                triggers = self.suicide_triggers
-            pp = plain_prerequisites( sself.id ) 
-            for val in triggers:
-                for trig in triggers[ val ]:
-                    if val != "once" and not re.match( '^ASYNCID:', val ):
-                        hours = re.split( ',\s*', val )
-                        ihours = [ int(i) for i in hours ]
-                        if int( sself.c_hour ) not in ihours:
-                            continue
-                    pp.add( sself.format_prerequisites( trig ))
-            sself.suicide_prerequisites.add_requisites( pp )
-
-            # conditional triggers
-            if startup:
-                ctriggers = dict( self.cond_triggers.items() + self.startup_cond_triggers.items() )
-            else:
-                ctriggers = self.cond_triggers
-
-            for val in ctriggers.keys():
-                for ctrig in ctriggers[ val ]:
-                    triggers, exp =  ctrig
-                    if val != "once" and not re.match( '^ASYNCID:', val ):
-                        hours = re.split( ',\s*', val )
-                        ihours = [ int(i) for i in hours ]
-                        if int( sself.c_hour ) not in ihours:
-                            continue
+            # 2) conditional triggers
+            for cyc in self.cond_triggers.keys():
+                for ctrig, exp in self.cond_triggers[ cyc ]:
+                    foo = ctrig.keys()[0]
+                    if ctrig[foo].startup and not startup:
+                        continue
+                    if ctrig[foo].cycling and not cyc.valid( ct(sself.tag)):
+                        # This trigger is not valid for current cycle. 
+                        print  >> sys.stderr, 'THIS TRIGGER NOT VALID FOR', sself.tag
+                        print >> sys.stderr, '  ', trig.get(sself.tag, cyc)
+                        continue
+                    # NOTE that if we need to check validity of async
+                    # tags, async tasks can appear in cycling sections
+                    # in which case cyc.valid( at(sself.tag)) will fail.
                     cp = conditional_prerequisites( sself.id )
-                    for label in triggers:
-                        trig = triggers[label]
-                        cp.add( sself.format_prerequisites( trig ), label )
+                    for label in ctrig:
+                        trig = ctrig[label]
+                        cp.add( trig.get( tag, cycler ), label )
                     cp.set_condition( exp )
-                    sself.prerequisites.add_requisites( cp )
-
-            # conditional suicide triggers
-            if startup:
-                ctriggers = dict( self.suicide_cond_triggers.items() + self.suicide_startup_cond_triggers.items() )
-            else:
-                ctriggers = self.suicide_cond_triggers
-            for val in ctriggers:
-                for ctrig in ctriggers[ val ]:
-                    triggers, exp =  ctrig
-                    if val != "once" and not re.match( '^ASYNCID:', val ):
-                        hours = re.split( ',\s*', val )
-                        ihours = [ int(i) for i in hours ]
-                        if int( sself.c_hour ) not in ihours:
-                            continue
-                    cp = conditional_prerequisites( sself.id )
-                    for label in triggers:
-                        trig = triggers[label]
-                        cp.add( sself.format_prerequisites( trig ), label )
-                    cp.set_condition( exp )
-                    sself.suicide_prerequisites.add_requisites( cp )
-
-            if len( self.loose_prerequisites ) > 0:
-                lp = loose_prerequisites(sself.id)
-                for pre in self.loose_prerequisites:
-                    lp.add( pre )
-                sself.prerequisites.add_requisites( lp )
-
-            if len( self.asynchronous_triggers ) > 0:
-                pp = plain_prerequisites( sself.id ) 
-                for trigger in self.asynchronous_triggers:
-                    pp.add( sself.format_prerequisites( trigger ))
-                sself.prerequisites.add_requisites( pp )
+                    if ctrig[foo].suicide:
+                        sself.suicide_prerequisites.add_requisites( cp )
+                    else:
+                        sself.prerequisites.add_requisites( cp )
 
         tclass.add_prerequisites = tclass_add_prerequisites
 
         # class init function
-        def tclass_init( sself, start_c_time, initial_state, stop_c_time=None, startup=False ):
-            sself.tag = sself.adjust_tag( start_c_time )
-            if self.type != 'async_repeating' and self.type != 'async_daemon' and self.type != 'async_oneoff':
-                sself.c_time = sself.tag
-                sself.c_hour = sself.c_time[8:10]
-                sself.orig_c_hour = start_c_time[8:10]
+        def tclass_init( sself, start_tag, initial_state, stop_c_time=None, startup=False ):
+
+            sself.cycon = container.cycon( self.cyclers )
+            if self.cycling: # and startup:
+                # adjust only needed at start-up but it does not hurt to
+                # do it every time as after the first adjust we're already
+                # on-cycle.
+                sself.tag = sself.cycon.initial_adjust_up( start_tag )
+            else:
+                sself.tag = start_tag
+
+            sself.c_time = sself.tag
  
             sself.id = sself.name + '%' + sself.tag
+
             sself.external_tasks = deque()
             sself.asyncid_pattern = self.asyncid_pattern
 
@@ -412,7 +304,7 @@ class taskdef(object):
             # prerequisites
             sself.prerequisites = prerequisites()
             sself.suicide_prerequisites = prerequisites()
-            sself.add_prerequisites( startup )
+            sself.add_prerequisites( startup, sself.cycon, sself.tag )
 
             sself.logfiles = logfiles()
             for lfile in self.logfiles:
@@ -420,23 +312,10 @@ class taskdef(object):
 
             # outputs
             sself.outputs = outputs( sself.id )
-            for output in self.outputs:
-                m = re.search( '<TAG\s*([+-])\s*(\d+)>', output )
-                if m:
-                    sign, offset = m.groups()
-                    if sign == '-':
-                       raise DefinitionError, "ERROR, " + sself.id + ": Output offsets must be positive: " + output
-                    else:
-                        # TO DO: GENERALIZE FOR ASYNC TASKS
-                        foo = ct( sself.c_time )
-                        foo.increment( hours=offset )
-                        ctime = foo.get()
-                    out = re.sub( '<TAG.*>', ctime, output )
-                elif re.search( '<TAG>', output ):
-                    out = re.sub( '<TAG>', sself.tag, output )
-                else:
-                    out = output
-                sself.outputs.add( out )
+            for outp in self.outputs:
+                msg = outp.get( sself.tag ) 
+                if not sself.outputs.exists( msg ):
+                    sself.outputs.add( msg )
             sself.outputs.register()
 
             sself.env_vars = OrderedDict()
@@ -457,7 +336,7 @@ class taskdef(object):
                 super( sself.__class__, sself ).__init__( initial_state, stop_c_time ) 
             else:
                 # TO DO: TEMPORARY HACK FOR ASYNC
-                sself.stop_c_time = '9999123123'
+                sself.stop_c_time = '99991231230000'
                 super( sself.__class__, sself ).__init__( initial_state ) 
 
         tclass.__init__ = tclass_init

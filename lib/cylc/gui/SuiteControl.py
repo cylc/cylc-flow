@@ -29,7 +29,7 @@ from warning_dialog import warning_dialog, info_dialog
 from cylc.port_scan import SuiteIdentificationError
 from cylc import cylc_pyro_client
 from cylc.cycle_time import ct, CycleTimeError
-from cylc.taskid import id, TaskIDError
+from cylc.TaskID import TaskID, TaskIDError
 from cylc.version import cylc_version
 from option_group import controlled_option_group
 from cylc.config import config
@@ -168,12 +168,12 @@ and associated methods for their control widgets.
                 warning_dialog( "ERROR: No stop task ID entered" ).warn()
                 return
             try:
-                tid = id( stoptask_id )
+                tid = TaskID( stoptask_id )
             except TaskIDError,x:
                 warning_dialog( "ERROR: Bad task ID (TASK%YYYYMMDDHH): " + stoptask_id ).warn()
                 return
             else:
-                stoptask_id = tid.id
+                stoptask_id = tid.getstr()
         else:
             # SHOULD NOT BE REACHED
             warning_dialog( "ERROR: Bug in GUI?" ).warn()
@@ -618,7 +618,6 @@ The cylc forecast suite metascheduler.
                 return
 
         window = gtk.Window()
-        #window.set_border_width( 10 )
         window.set_title( task_id + " State" )
         #window.modify_bg( gtk.STATE_NORMAL, 
         #       gtk.gdk.color_parse( self.log_colors.get_color()))
@@ -896,7 +895,7 @@ shown here in the state they were in at the time of triggering.''' )
         label = gtk.Label( "STOP (cycle or 'a:INT')" )
         st_box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
-        stoptime_entry.set_max_length(10)
+        stoptime_entry.set_max_length(14)
         stoptime_entry.set_sensitive(False)
         label.set_sensitive(False)
         st_box.pack_start (stoptime_entry, True)
@@ -1014,7 +1013,7 @@ shown here in the state they were in at the time of triggering.''' )
         label = gtk.Label( 'START (cycle)' )
         ic_box.pack_start( label, True )
         ctime_entry = gtk.Entry()
-        ctime_entry.set_max_length(10)
+        ctime_entry.set_max_length(14)
         if self.suiterc['scheduling']['initial cycle time']:
             ctime_entry.set_text( str(self.suiterc['scheduling']['initial cycle time']) )
         ic_box.pack_start (ctime_entry, True)
@@ -1024,7 +1023,7 @@ shown here in the state they were in at the time of triggering.''' )
         label = gtk.Label( 'STOP (cycle, optional)' )
         fc_box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
-        stoptime_entry.set_max_length(10)
+        stoptime_entry.set_max_length(14)
         if self.suiterc['scheduling']['final cycle time']:
             stoptime_entry.set_text( str(self.suiterc['scheduling']['final cycle time']) )
         fc_box.pack_start (stoptime_entry, True)
@@ -1060,7 +1059,7 @@ shown here in the state they were in at the time of triggering.''' )
         label = gtk.Label( 'Hold after (cycle)' )
         hold_box.pack_start( label, True )
         holdtime_entry = gtk.Entry()
-        holdtime_entry.set_max_length(10)
+        holdtime_entry.set_max_length(14)
         hold_box.pack_start (holdtime_entry, True)
 
         vbox.pack_start( hold_cb )
@@ -1113,7 +1112,7 @@ shown here in the state they were in at the time of triggering.''' )
         label = gtk.Label( 'stop cycle (inclusive)' )
 
         entry = gtk.Entry()
-        entry.set_max_length(10)
+        entry.set_max_length(14)
         entry.connect( "activate", self.purge_cycle_entry, window, task_id )
 
         hbox = gtk.HBox()
@@ -1156,7 +1155,7 @@ shown here in the state they were in at the time of triggering.''' )
         label = gtk.Label( 'Cycle Time' )
         hbox.pack_start( label, True )
         entry_ctime = gtk.Entry()
-        entry_ctime.set_max_length(10)
+        entry_ctime.set_max_length(14)
         hbox.pack_start (entry_ctime, True)
         vbox.pack_start(hbox)
 
@@ -1194,7 +1193,7 @@ shown here in the state they were in at the time of triggering.''' )
         label = gtk.Label( 'STOP (optional final tag, temporary tasks)' )
         hbox.pack_start( label, True )
         entry_stoptag = gtk.Entry()
-        entry_stoptag.set_max_length(10)
+        entry_stoptag.set_max_length(14)
         hbox.pack_start (entry_stoptag, True)
         vbox.pack_start(hbox)
  
@@ -1221,12 +1220,12 @@ shown here in the state they were in at the time of triggering.''' )
             return
         else:
             try:
-                tid = id( torg )
+                tid = TaskID( torg )
             except TaskIDError,x:
                 warning_dialog( str(x) ).warn()
                 return
             else:
-                torg= tid.id
+                torg= tid.getstr()
 
         stoptag = entry_stoptag.get_text()
         if stoptag != '':
