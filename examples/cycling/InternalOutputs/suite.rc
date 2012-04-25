@@ -12,7 +12,7 @@ output message is explicited target at the next cycle."""
 [scheduling]
     initial cycle time = 2010
     final cycle time = 2011
-    cycling = Anniversary
+    cycling = Yearly
     [[special tasks]]
         cold-start = cfoo
     [[dependencies]]

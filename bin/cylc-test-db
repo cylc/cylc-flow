@@ -56,7 +56,7 @@ rm -rf $MY_TMPDIR/$REG5
 echo
 echo "> TEST1: register a cylc example suite as $REG1"
 DEFDIR=$MY_TMPDIR/test-db.$SSE
-cp -r $CYLC_DIR/examples/admin/test $DEFDIR
+cp -r $CYLC_DIR/examples/admin $DEFDIR
 echo cylc db reg $REG1 $DEFDIR
 cylc db reg $REG1 $DEFDIR
 
