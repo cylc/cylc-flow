@@ -16,9 +16,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import atexit
 import os, sys
 import gtk
 from optparse import OptionParser
+import shutil
+from tempfile import mkdtemp
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 
@@ -83,8 +86,8 @@ if len(args) != 0 and len(args) != 1:
 try:
     tmpdir = os.environ['CYLC_TMPDIR']
 except KeyError:
-    print >> sys.stderr, "ERROR, undefined environment variable: $CYLC_TMPDIR"
-    raise SystemExit
+    tmpdir = mkdtemp(prefix="gcylc-")
+    atexit.register(lambda: shutil.rmtree(tmpdir))
 
 # create tmpdir if necessary
 try:
