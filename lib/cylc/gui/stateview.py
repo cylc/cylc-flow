@@ -248,14 +248,14 @@ class updater(threading.Thread):
 
         # TO DO: if we ever have cycling modules for which minutes and
         # seconds are important, take the whole of ctin here:
-        ct = ctin[:10]
-        lct = len(ct)
+        ncol = 10 # columns in the digital cycletime row
+        ct = ctin[:ncol]
         led_ctime = []
-        if len(ct) < lct:
-            zct = string.rjust( ct, lct, ' ' )
+        if len(ct) < ncol: # currently can't happen due to ctin[:ncol]
+            zct = string.rjust( ct, ncol, ' ' ) # pad the string
         else:
             zct = ct
-        for i in range( lct ):
+        for i in range( ncol ):
             digit = zct[i:i+1]
             if digit == ' ':
                 led_ctime.append( self.led_digits_blank )  

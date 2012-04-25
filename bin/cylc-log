@@ -22,7 +22,6 @@ import tempfile
 import subprocess
 from cylc.registration import dbgetter, RegistrationError
 from cylc.config import config, SuiteConfigError
-from cylc.mkdir_p import mkdir_p
 from cylc.version import compat
 
 parser = OptionParser( """cylc [info] log [options] SUITE 
@@ -117,21 +116,7 @@ try:
 except KeyError:
     raise SystemExit( 'export $EDITOR before using this command' )
 
-try:
-    tmpdir = os.environ['CYLC_TMPDIR']
-except KeyError:
-    print >> sys.stderr, "ERROR, undefined environment variable: $CYLC_TMPDIR"
-    raise SystemExit
-
-# create tmpdir if necessary
-try:
-    mkdir_p( tmpdir )
-except Exception,x:
-    print >> sys.stderr, x
-    print >> sys.stderr, 'ERROR, illegal tmpdir?', tmpdir
-    sys.exit(1)
-
-tmpfile = tempfile.mktemp( suffix = ".tmp", prefix = suite+'-log', dir = tmpdir )
+tmpfile = tempfile.mktemp( suffix = ".tmp", prefix = suite+'-log', dir = cylc_tmpdir )
 tmp = open( tmpfile, 'wb' )
 tmp.writelines( filtered )
 tmp.close()

@@ -15,7 +15,7 @@
 
 (setq cylc-font-lock-keywords
       '(("\\[\\[\\[[[:alnum:], ]+\\]\\]\\]" . font-lock-constant-face)
-	("\\[\\[[[:alnum:], ]+\\]\\]" . font-lock-warning-face)
+	("\\[\\[[[:alnum:], _]*\\]\\]" . font-lock-warning-face)
 	("\\[[[:alnum:], ]+\\]" . font-lock-builtin-face)
         ("\\<\\(title\\|description\\)\\>" . font-lock-type-face)
 	("\\<\\(cold-start\\|start-up\\)\\>" . font-lock-function-name-face)

@@ -6,12 +6,13 @@ set -e
 
 # Check inputs:
 # location of pristine native job scripts:
-cylc util checkvars -d NATIVESCRIPTS CYLC_TMPDIR
+cylc util checkvars -d NATIVESCRIPTS
 # path prefix for model stdout and stderr:
 cylc util checkvars PREFIX
 
+MY_TMPDIR=${CYLC_TMPDIR:-${TMPDIR:-/tmp}}
 # Get a temporary copy of the native job scripts:
-TDIR=$CYLC_TMPDIR/detach$$
+TDIR=$MY_TMPDIR/detach$$
 mkdir -p $TDIR
 cp $NATIVESCRIPTS/* $TDIR
 

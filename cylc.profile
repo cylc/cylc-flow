@@ -20,11 +20,15 @@ export PDF_READER=evince
 export HTML_READER=firefox
 # (The HTML guide is opened via file path, not http URL).
 #_______________________________________________________________________
-# Some cylc commands require a writeable temporary directory.
-export CYLC_TMPDIR=$TMPDIR/cylc
-mkdir -p $CYLC_TMPDIR
-# (Use of plain TMPDIR reportedly causes problems with cylc under the
-# KDE desktop. If so, set CYLC_TMPDIR to another location.
+# Some cylc commands require a writeable temporary directory. This is 
+# now determined automatically by Python's tempfile.mkdtemp() which is 
+# likely to use $TMPDIR if it is defined. You can override this if
+# necessary by setting the environment variable CYLC_TMPDIR:
+  #==># export CYLC_TMPDIR=$TMPDIR/cylc
+  #==># mkdir -p $CYLC_TMPDIR
+# (Use of plain TMPDIR reportedly causes problems under KDE desktop)
+# In the default (non-CYLC_TMPDIR) case the directory will be cleaned up 
+# when the relevant cylc command exits.
 #_______________________________________________________________________
 # For a local user install of one or more of Pyro, Graphviz, Pygraphviz,
 # and Jinja2 (if you can't easily get them installed at system level on 

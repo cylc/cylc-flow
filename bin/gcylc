@@ -16,15 +16,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import atexit
 import os, sys
 import gtk
 from optparse import OptionParser
-import shutil
-from tempfile import mkdtemp
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
-
+from cylc.conf.CylcGlobals import cylc_tmpdir
 from cylc.hostname import hostname
 from cylc.version import compat
 
@@ -35,7 +32,6 @@ except Exception, x:
     raise SystemExit('ERROR: Pyro is not installed (or not accessible)')
 
 from cylc import port_scan
-from cylc.mkdir_p import mkdir_p
 from cylc.passphrase import passphrase
 from cylc.gui.gcylc import MainApp
 from cylc.config import config, SuiteConfigError
@@ -82,21 +78,6 @@ parser.add_option( "-g", "--graph",
 if len(args) != 0 and len(args) != 1:
     parser.error( "Wrong number of arguments" )
 
-# tmpdir required for extensive use of the capture command in gcylc:
-try:
-    tmpdir = os.environ['CYLC_TMPDIR']
-except KeyError:
-    tmpdir = mkdtemp(prefix="gcylc-")
-    atexit.register(lambda: shutil.rmtree(tmpdir))
-
-# create tmpdir if necessary
-try:
-    mkdir_p( tmpdir )
-except Exception,x:
-    print >> sys.stderr, x
-    print >> sys.stderr, 'ERROR, illegal tmpdir?', tmpdir
-    sys.exit(1)
-
 imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
 
 #host = options.host
@@ -109,7 +90,7 @@ if len( args ) == 1:
         sys.exit(0)
 
 if len( args ) == 0:
-    app = MainApp( host, tmpdir, imagedir )
+    app = MainApp( host, cylc_tmpdir, imagedir )
     gtk.main()
     sys.exit(0)
 
@@ -155,8 +136,8 @@ for var in senv:
 
 if options.depgraph:
     from cylc.gui.SuiteControlGraph import StandaloneControlGraphApp
-    app = StandaloneControlGraphApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, tmpdir )
+    app = StandaloneControlGraphApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir )
 else:
     from cylc.gui.SuiteControlTree import StandaloneControlTreeApp
-    app = StandaloneControlTreeApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, tmpdir )
+    app = StandaloneControlTreeApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir )
 gtk.main()

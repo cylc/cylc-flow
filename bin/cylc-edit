@@ -23,7 +23,6 @@ import subprocess
 from optparse import OptionParser
 from collections import deque
 from cylc.registration import dbgetter, RegistrationError
-from cylc.mkdir_p import mkdir_p
 
 included = []
 modtimes = {}
@@ -287,21 +286,6 @@ if not options.inline:
  
     # !!!EDITING FINISHED!!!
     sys.exit(0)
-
-# INLINED EDITING
-try:
-    tmpdir = os.environ['CYLC_TMPDIR']
-except KeyError:
-    print >> sys.stderr, "ERROR, undefined environment variable: $CYLC_TMPDIR"
-    raise SystemExit
-
-# create tmpdir if necessary
-try:
-    mkdir_p( tmpdir )
-except Exception,x:
-    print >> sys.stderr, x
-    print >> sys.stderr, 'ERROR, illegal tmpdir?', tmpdir
-    sys.exit(1)
 
 # read the suite.rc file
 if os.path.isfile( suiterc ):
