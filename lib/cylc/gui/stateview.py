@@ -131,7 +131,7 @@ class updater(threading.Thread):
         self.led_digits_one = []
         self.led_digits_two = []
         self.led_digits_blank = gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-blank.xpm" )
-        for i in range(14):
+        for i in range(10):
             self.led_digits_one.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-" + str(i) + ".xpm" ))
             self.led_digits_two.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/two/digit-" + str(i) + ".xpm" ))
 
@@ -242,15 +242,20 @@ class updater(threading.Thread):
         value = model.get_value( iter, column )
         return value == key
 
-    def digitize( self, ct ):
+    def digitize( self, ctin ):
         # Digitize cycle time for the LED panel display.
         # For asynchronous tasks blank-pad the task tag.
+
+        # TO DO: if we ever have cycling modules for which minutes and
+        # seconds are important, take the whole of ctin here:
+        ct = ctin[:10]
+        lct = len(ct)
         led_ctime = []
-        if len(ct) < 14:
-            zct = string.rjust( ct, 14, ' ' )
+        if len(ct) < lct:
+            zct = string.rjust( ct, lct, ' ' )
         else:
             zct = ct
-        for i in range( 14 ):
+        for i in range( lct ):
             digit = zct[i:i+1]
             if digit == ' ':
                 led_ctime.append( self.led_digits_blank )  
