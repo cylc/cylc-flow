@@ -170,6 +170,7 @@ if __name__ == "__main__":
             print ' + initial_adjust_up(1978040912):', foo.initial_adjust_up( '1978040912' )
             print ' + initial_adjust_up(1977040512):', foo.initial_adjust_up( '1977040512' )
             print ' + initial_adjust_up(1978120912):', foo.initial_adjust_up( '1978120912' )
+            print ' + initial_adjust_up(' + str(i[0]) + '):', foo.initial_adjust_up( str(i[0]) ), '<should not change'
             print ' + valid(3012080806):', foo.valid( ct('3012080806') )
             print ' + valid(2011080806):', foo.valid( ct('2011080806') )
         except Exception, x:

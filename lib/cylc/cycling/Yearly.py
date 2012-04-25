@@ -83,12 +83,18 @@ class Yearly( cycler ):
         except CycleTimeError, x:
             raise CyclerError, str(x)
 
+        # first get the anniversary date MMDDHHmmss right
         if T[4:] < self.MMDDHHmmss:
+            # just round up
             T = T[0:4] + self.MMDDHHmmss
-        else:
+        elif T[4:] > self.MMDDHHmmss:
+            # increment the year and round up
             T = add_years( ct( T ), 1 ).get()[0:4] + self.MMDDHHmmss
+        else:
+            # equal: no need to adjust
+            pass
 
-        # adjust up to next valid year
+        # now adjust year up if necessary, according to anchor step
         diff = int(self.anchorDate[0:4]) - int(T[0:4])
         rem = diff % self.step
         if rem > 0:
@@ -134,9 +140,9 @@ if __name__ == "__main__":
             foo = Yearly( *i )
             print ' + next(1999):', foo.next('1999' )
             print ' + initial_adjust_up(2010080512):', foo.initial_adjust_up( '2010080512' )
-            print ' + initial_adjust_up(2010090512):', foo.initial_adjust_up( '2010090512' )
+            print ' + initial_adjust_up(2010090912):', foo.initial_adjust_up( '2010090912' )
             print ' + initial_adjust_up(2008040512):', foo.initial_adjust_up( '2008040512' )
-            print ' + initial_adjust_up(2008090512):', foo.initial_adjust_up( '2008090512' )
+            print ' + initial_adjust_up(' + str(i[0]) + '):', foo.initial_adjust_up( str(i[0]) ), '<should not change'
             print ' + valid(2012080806):', foo.valid( ct('2012080806') )
             print ' + valid(2011080806):', foo.valid( ct('2011080806') )
         except Exception, x:

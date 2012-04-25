@@ -6,6 +6,10 @@ can be migrated to the github issue tracker.
 _______
 GENERAL
 
+cycling modules: for clarity, instead of initial_adjust_up adjusting
+only if necessary, have it always adjust up, but only call it if T is
+not valid (i.e. not on-sequence for the cycler).
+
  + Cycle times are still passed around as strings and temporarily
  converted to cycle time objects whenever time manipulation
  is required - we should move entirely to objects USING THE NEW

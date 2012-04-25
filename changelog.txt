@@ -661,5 +661,8 @@ combination with generalized cycling, above). YYYYMMDDHH has been
 replaced with YYYY[MM[DD[HH[mm[ss]]]]] (brackets indicate optional
 digits).
 
-+ suiter.c syntax highlighting for emacs added.
++ suite.rc syntax highlighting for emacs added.
+
++ Extended the cycletime utility command to handle daily, monthly, and 
+yearly cycle time offsets.
 
