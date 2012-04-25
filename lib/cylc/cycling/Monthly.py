@@ -25,42 +25,37 @@ from cylc.cycling.base import cycler, CyclerError
 # add the months arithmetic routines to start with here, where they get used
 # to keep the original design of the code as little as possible changed.
 
-def add_months(current_date, months):
+def sub_months(current_date, N):
+    """Subtract N months from current_date;
+    works for positive or negative N."""
 
     start_date = current_date.get_datetime()
 
-    year = start_date.year + (months / 12)
-    month = start_date.month + (months % 12)
-    day = start_date.day
+    s_year = start_date.year
+    s_month = start_date.month
+    s_day = start_date.day
 
-    if month > 12:
-        month = month % 12
-        year = year + 1
+    dyear = N / 12
+    year = s_year - dyear
 
-    days_next = calendar.monthrange(year, month)[1]
-    if day > days_next:
-        day = days_next
-
-    return  ct( start_date.replace(year, month, day) )
-
-def sub_months(current_date, months):
-
-    start_date = current_date.get_datetime()
-
-    year = start_date.year
-    month = start_date.month
-    day = start_date.day
-
-    month = month - months 
-    if month <= 0:
-        month = (11 + month) % 12 + 1
+    dmonth = N % 12
+    if dmonth >= s_month:
         year = year - 1
+        month = 12 - (dmonth - s_month)
+    else:
+        month = s_month - dmonth
 
+    day = s_day
     days_next = calendar.monthrange(year, month)[1]
     if day > days_next:
         day = days_next
 
     return ct( start_date.replace(year, month, day) )
+
+def add_months(current_date, N):
+    """Add N months to current_date;
+    works for positive or negative N."""
+    return sub_months( current_date, -N )
 
 class Monthly( cycler ):
 

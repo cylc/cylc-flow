@@ -25,21 +25,17 @@ from cylc.cycling.base import cycler, CyclerError
 # add the years arithmetic routines to start with here, where they get used
 # to keep the original design of the code as little as possible changed.
 
-def add_years(current_date, years):
-
+def sub_years(current_date, N):
+    """Subtract N years from current_date; 
+    works for positive or negative N."""
     start_date = current_date.get_datetime()
-
-    year = start_date.year + years
-
+    year = start_date.year - N
     return ct (start_date.replace(year) )
 
-def sub_years(current_date, years):
-
-    start_date = current_date.get_datetime()
-
-    year = start_date.year - years
-
-    return ct (start_date.replace(year) )
+def add_years(current_date, N):
+    """Add N years to current_date; 
+    works for positive or negative N."""
+    return sub_years( current_date, -N )
 
 class Yearly( cycler ):
 
