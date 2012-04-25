@@ -658,4 +658,5 @@ combination with generalized cycling, above). YYYYMMDDHH has been
 replaced with YYYY[MM[DD[HH[mm[ss]]]]] (brackets indicate optional
 digits).
 
++ suiter.c syntax highlighting for emacs added.
 
