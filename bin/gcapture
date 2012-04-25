@@ -62,16 +62,14 @@ if options.other and not options.filep:
 
 command = ' '.join(args)
 
-if 'TMPDIR' in os.environ:
-    tmpdir = os.environ['TMPDIR']
-elif 'SCRATCH' in os.environ:
-    tmpdir = os.environ['SCRATCH']
-else:
-    x = 'You must export $TMPDIR or $SCRATCH before running this command' 
+try:
+    tmpdir = os.environ['CYLC_TMPDIR']
+except KeyError:
+    x = "ERROR, undefined environment variable: $CYLC_TMPDIR"
     warning_dialog( x ).warn()
     sys.exit(1)
 
-# create $TMPDIR if necessary
+# create tmpdir if necessary
 try:
     mkdir_p( tmpdir )
 except Exception,x:

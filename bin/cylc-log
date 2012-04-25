@@ -117,14 +117,13 @@ try:
 except KeyError:
     raise SystemExit( 'export $EDITOR before using this command' )
 
-if 'TMPDIR' in os.environ:
-    tmpdir = os.environ['TMPDIR']
-elif 'SCRATCH' in os.environ:
-    tmpdir = os.environ['SCRATCH']
-else:
-    raise SystemExit( "ERROR: export $TMPDIR or $SCRATCH before 'cylc log'" )
+try:
+    tmpdir = os.environ['CYLC_TMPDIR']
+except KeyError:
+    print >> sys.stderr, "ERROR, undefined environment variable: $CYLC_TMPDIR"
+    raise SystemExit
 
-# create $TMPDIR if necessary
+# create tmpdir if necessary
 try:
     mkdir_p( tmpdir )
 except Exception,x:
