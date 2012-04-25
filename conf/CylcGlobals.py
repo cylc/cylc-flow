@@ -25,10 +25,6 @@ from cylc.mkdir_p import mkdir_p
 """
 MODULE FOR GLOBAL CONFIGURATION DATA
 
-ssh-base task messaging may be required from some remote task hosts but
-not others, in which case the content of this file may vary by host
-machine.
-
 Much of the information here should ultimately end up in a sensible 
 site and host configuration file or similar.
 """
