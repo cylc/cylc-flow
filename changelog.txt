@@ -643,3 +643,19 @@ failure.
 
 + Temporary files now stored under $CYLC_TMPDIR instead of $TMPDIR.
 
++ GENERALIZED CYCLING: cylc's original cycling mechanism (which was
+hardwired for hours-of-the-day NWP cycling) has been replaced with a
+mechanism that allows cycling extension modules to generate any sequence
+of cycle times. The original graph cycling headings, e.g.:
+   [[[0,12]]]
+is now shorthand for
+   [[[HoursOfTheDay(0,12]]]
+New cycling modules and corresponding example suites have been added for
+stepped Daily, Monthly, and Yearly cycling.
+
++ More flexible specification of cycle time on the command line (in
+combination with generalized cycling, above). YYYYMMDDHH has been
+replaced with YYYY[MM[DD[HH[mm[ss]]]]] (brackets indicate optional
+digits).
+
+
