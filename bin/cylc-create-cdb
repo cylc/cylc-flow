@@ -46,10 +46,9 @@ if [[ -z $CYLC_DIR ]]; then
     echo "the main command interface: 'cylc admin create-cdb'" >&2
     exit 1
 fi
-if [[ -z $CYLC_TMPDIR ]]; then
-    echo "ERROR: \$CYLC_TMPDIR is not defined" >&2
-    exit 1
-fi
+
+MY_TMPDIR=${CYLC_TMPDIR:-${TMPDIR:-/tmp}}
+mkdir -p $MY_TMPDIR
 
 override=false
 if [[ $CYLC_ADMIN_OVERRIDE ]]; then
@@ -88,7 +87,7 @@ cylc unregister $TOP
 
 echo " + Importing copies of examples to your private database"
 # We don't want the admin user accidentally modifying the originals.
-cylc import ${USER}.$TOP $TOP $CYLC_TMPDIR
+cylc import ${USER}.$TOP $TOP $MY_TMPDIR
 
 # Determine CDB directory location
 # The following no longer works (see comment in lib/cylc/__init__.py)

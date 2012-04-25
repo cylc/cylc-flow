@@ -21,7 +21,7 @@ import tempfile
 import subprocess
 from optparse import OptionParser
 from cylc.registration import dbgetter, RegistrationError
-from cylc.mkdir_p import mkdir_p
+from cylc.conf.CylcGlobals import cylc_tmpdir
 
 try:
     from jinja2 import Environment, FileSystemLoader, TemplateError
@@ -184,20 +184,6 @@ except RegistrationError, x:
 
 suitedir = os.path.dirname(suiterc)
 
-try:
-    tmpdir = os.environ['CYLC_TMPDIR']
-except KeyError:
-    print >> sys.stderr, "ERROR, undefined environment variable: $CYLC_TMPDIR"
-    raise SystemExit
-
-# create tmpdir if necessary
-try:
-    mkdir_p( tmpdir )
-except Exception,x:
-    print >> sys.stderr, x
-    print >> sys.stderr, 'ERROR, illegal tmpdir?', tmpdir
-    sys.exit(1)
-
 # read the suite.rc file
 if os.path.isfile( suiterc ):
     h = open( suiterc, 'rb' )
@@ -255,7 +241,7 @@ if options.stdout:
     sys.exit(0)
 
 # write to a temporary file
-viewfile = tempfile.mktemp( suffix = ".suite.rc", prefix = suite + '.', dir = tmpdir )
+viewfile = tempfile.mktemp( suffix = ".suite.rc", prefix = suite + '.', dir = cylc_tmpdir )
 h = open( viewfile, 'wb' )
 h.writelines( newlines )
 h.close()

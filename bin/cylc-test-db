@@ -36,11 +36,8 @@ if [[ $# != 0 ]]; then
     fi
 fi
 
-if [[ -z $CYLC_TMPDIR ]]; then
-    echo "ERROR, undefined environment variable: \$CYLC_TMPDIR" >&2
-    exit 1
-fi
-mkdir -p $CYLC_TMPDIR
+MY_TMPDIR=${MY_TMPDIR:-${TMPDIR:-/tmp}}
+mkdir -p $MY_TMPDIR
 
 # seconds since epoch
 SSE=$( date +%s )
@@ -53,12 +50,12 @@ REG4=${GRP}.waaaz123
 REG5=${GRP}.impppt123
 
 # clean up old suite def dirs from any aborted previous run
-rm -rf $CYLC_TMPDIR/$REG4
-rm -rf $CYLC_TMPDIR/$REG5
+rm -rf $MY_TMPDIR/$REG4
+rm -rf $MY_TMPDIR/$REG5
 
 echo
 echo "> TEST1: register a cylc example suite as $REG1"
-DEFDIR=$CYLC_TMPDIR/test-db.$SSE
+DEFDIR=$MY_TMPDIR/test-db.$SSE
 cp -r $CYLC_DIR/examples/admin/test $DEFDIR
 echo cylc db reg $REG1 $DEFDIR
 cylc db reg $REG1 $DEFDIR
@@ -75,8 +72,8 @@ cylc db register $REG3 $(cylc db get $REG2)
 
 echo
 echo "> TEST4: copy the suite to $REG4"
-echo cylc db copy $REG2 $REG4 $CYLC_TMPDIR/$REG4
-cylc db copy $REG2 $REG4 $CYLC_TMPDIR/$REG4
+echo cylc db copy $REG2 $REG4 $MY_TMPDIR/$REG4
+cylc db copy $REG2 $REG4 $MY_TMPDIR/$REG4
 
 echo
 echo "> TEST5: print LDB reg group $GRP"
@@ -102,8 +99,8 @@ cylc db pr --central ${USER}.${GRP}
 
 echo
 echo "> TEST9: import central $REG4 as $REG5"
-echo cylc db imp ${USER}.$REG4 $REG5 $CYLC_TMPDIR/$REG5
-cylc db imp ${USER}.$REG4 $REG5 $CYLC_TMPDIR/$REG5
+echo cylc db imp ${USER}.$REG4 $REG5 $MY_TMPDIR/$REG5
+cylc db imp ${USER}.$REG4 $REG5 $MY_TMPDIR/$REG5
 
 echo
 echo "> TEST10: delete $REG2 from CDB"

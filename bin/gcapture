@@ -20,6 +20,7 @@ import gtk
 import gobject
 import os, sys
 from optparse import OptionParser
+from cylc.conf.CylcGlobals import cylc_tmpdir
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 
@@ -62,20 +63,6 @@ if options.other and not options.filep:
 
 command = ' '.join(args)
 
-try:
-    tmpdir = os.environ['CYLC_TMPDIR']
-except KeyError:
-    x = "ERROR, undefined environment variable: $CYLC_TMPDIR"
-    warning_dialog( x ).warn()
-    sys.exit(1)
-
-# create tmpdir if necessary
-try:
-    mkdir_p( tmpdir )
-except Exception,x:
-    print >> sys.stderr, x
-    print >> sys.stderr, 'ERROR, illegal tmpdir?', tmpdir
-    sys.exit(1)
 
 if options.other:
     ignore_command = True
@@ -94,5 +81,5 @@ if options.filep:
         raise SystemExit(x)
     gcapture( command, stdout, width=int(options.width), height=int(options.height), standalone=True, ignore_command=ignore_command ).run()
 else:
-    gcapture_tmpfile( command, tmpdir, width=int(options.width), height=int(options.height), standalone=True ).run()
+    gcapture_tmpfile( command, cylc_tmpdir, width=int(options.width), height=int(options.height), standalone=True ).run()
 gtk.main()

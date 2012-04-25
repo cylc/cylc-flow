@@ -641,7 +641,10 @@ for cycle time offsets in the suite graph.
 a task failure hook script is now only called for a final definitive
 failure.
 
-+ Temporary files now stored under $CYLC_TMPDIR instead of $TMPDIR.
++ The temporary directory required by some cylc commands is now chosen 
+automatically, by default, using Python's tempfile.mkdtemp(), but users
+can optionally override by setting CYLC_TMPDIR. In the default case
+the temporary directory is also cleaned up automatically after use.
 
 + GENERALIZED CYCLING: cylc's original cycling mechanism (which was
 hardwired for hours-of-the-day NWP cycling) has been replaced with a
