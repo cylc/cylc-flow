@@ -25,10 +25,6 @@ from cylc.mkdir_p import mkdir_p
 """
 MODULE FOR GLOBAL CONFIGURATION DATA
 
-ssh-base task messaging may be required from some remote task hosts but
-not others, in which case the content of this file may vary by host
-machine.
-
 Much of the information here should ultimately end up in a sensible 
 site and host configuration file or similar.
 """
@@ -61,14 +57,16 @@ if central_regdb_dir == local_regdb_dir:
 try:
     cylc_tmpdir = os.environ['CYLC_TMPDIR']
 except KeyError:
+    # use tempfile.mkdtemp() to create a new temp directory
     cylc_tmpdir = mkdtemp(prefix="cylc-")
     atexit.register(lambda: shutil.rmtree(cylc_tmpdir))
-# create cylc_tmpdir if necessary
-try:
-    mkdir_p( cylc_tmpdir )
-except Exception,x:
-    print >> sys.stderr, x
-    print >> sys.stderr, 'ERROR, conf/CylcGlobals.py: illegal temp dir?', cylc_tmpdir
-    sys.exit(1)
+else:
+    # if CYLC_TMPDIR was set, create the dir if necessary
+    try:
+        mkdir_p( cylc_tmpdir )
+    except Exception,x:
+        print >> sys.stderr, x
+        print >> sys.stderr, 'ERROR, conf/CylcGlobals.py: illegal temp dir?', cylc_tmpdir
+        sys.exit(1)
 #print "Cylc Temp Dir is:", cylc_tmpdir
 

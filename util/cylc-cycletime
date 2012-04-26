@@ -18,6 +18,8 @@
 
 import os, sys, re
 from cylc.cycle_time import ct, CycleTimeError
+from cylc.cycling.Monthly import Monthly
+from cylc.cycling.Yearly import Yearly
 from optparse import OptionParser
 
 parser = OptionParser( usage = """cylc [util] cycletime [options] [CYCLE]
@@ -26,28 +28,44 @@ Perform arithmetic operations on cycle times and print the results to
 sdtout. Examples:
 
    # offset from explicit cycle time:
-   $ cylc cycletime -s 6 2010082318
-  2010082312
+   $ cylc [util] cycletime --offset-hours=6 2010082318
+  2010082400
 
    # offset from $CYLC_TASK_CYCLE_TIME:
    $ export CYLC_TASK_CYCLE_TIME=2010082318
-   $ cylc cycletime -s 6 
+   $ cylc cycletime --offset-hours=-6 
   2010082312
 
 Arguments:
-   CYCLE        (YYYYMMDDHH) defaults to $CYLC_TASK_CYCLE_TIME.""" )
+   CYCLE        YYYY[MM[DD[HH[mm[ss]]]]] OR defaults to $CYLC_TASK_CYCLE_TIME.""" )
 
 parser.add_option( "-s", "--subtract", metavar="HOURS",
-        help="Subtract HOURS from CYCLE", 
+        help="(DEPRECATED) Subtract HOURS from CYCLE", 
         action="store", dest="subtract" )
 
 parser.add_option( "-a", "--add", metavar="HOURS",
-        help="Add HOURS to CYCLE", 
+        help="(DEPRECATED) Add HOURS to CYCLE", 
         action="store", dest="add" )
 
 parser.add_option( "-o", "--offset", metavar="HOURS",
-        help="Apply an offset of +/-HOURS to CYCLE", 
+        help="(DEPRECATED) Apply an offset of +/-HOURS to CYCLE", 
         action="store", dest="offset" )
+
+parser.add_option( "--offset-hours", metavar="HOURS",
+        help="Add N hours to CYCLE (may be negative)", 
+        action="store", dest="offsethours" )
+
+parser.add_option( "--offset-days", metavar="DAYS",
+        help="Add N days to CYCLE (N may be negative)", 
+        action="store", dest="offsetdays" )
+
+parser.add_option( "--offset-months", metavar="MONTHS",
+        help="Add N months to CYCLE (N may be negative)", 
+        action="store", dest="offsetmonths" )
+
+parser.add_option( "--offset-years", metavar="YEARS",
+        help="Add N years to CYCLE (N may be negative)", 
+        action="store", dest="offsetyears" )
 
 parser.add_option( "--year", help="Print only YYYY of result",
         action="store_true", default=False, dest="print_year" )
@@ -84,35 +102,69 @@ else:
     parser.error( "Wrong number of arguments!" )
 
 n_chosen = 0
-subtract = False
-add = False
-offset = False
 
-hours_str = int( cycle.hour ) 
+#hours = int( cycle.hour ) 
+
+offset_hours  = False
+offset_days   = False
+offset_months = False
+offset_years  = False
 
 if options.subtract:
-    subtract = True
+    offset_hours = True
     n_chosen += 1 
     try:
-        hours_str = int( options.subtract )
+        hours = - int( options.subtract )
     except ValueError:
-        parser.error( 'ERROR: you can only subtract integer hours' )
+        parser.error( 'ERROR: offset must be integer' )
 
 if options.add:
-    add = True
+    offset_hours = True
     n_chosen += 1
     try:
-        hours_str = int( options.add )
+        hours = int( options.add )
     except ValueError:
-        parser.error( 'ERROR: you can only add integer hours' )
+        parser.error( 'ERROR: offset must be integer' )
 
 if options.offset:
-    offset = True
+    offset_hours = True
     n_chosen += 1
     try:
-        hours_str = int( options.offset )
+        hours = int( options.offset )
     except ValueError:
-        parser.error( 'ERROR: you can only offset integer hours' )
+        parser.error( 'ERROR: offset must be integer' )
+
+if options.offsethours:
+    offset_hours = True
+    n_chosen += 1
+    try:
+        hours = int( options.offsethours )
+    except ValueError:
+        parser.error( 'ERROR: offset must be integer' )
+
+if options.offsetdays:
+    offset_days = True
+    n_chosen += 1
+    try:
+        days = int( options.offsetdays )
+    except ValueError:
+        parser.error( 'ERROR: offset must be integer' )
+
+if options.offsetmonths:
+    offset_months = True
+    n_chosen += 1
+    try:
+        months = int( options.offsetmonths )
+    except ValueError:
+        parser.error( 'ERROR: offset must be integer' )
+
+if options.offsetyears:
+    offset_years = True
+    n_chosen += 1
+    try:
+        years = int( options.offsetyears )
+    except ValueError:
+        parser.error( 'ERROR: offset must be integer' )
 
 if n_chosen > 1:
     parser.error( "Choose ZERO or ONE of subtract, add, or offset" )
@@ -142,22 +194,17 @@ if options.print_hour:
 if n_chosen != 0 and n_chosen != 1:
     parser.error( "Choose NONE or ONE of print_(year|month|day|hour)" )
 
-try:
-    hours = int( hours_str )
-except ValueError:
-    parser.error( "HOURS must be integer" )
-
-if offset:
-    if hours < 0:
-        subtract = True
-        hours = - hours
-    else:
-        add = True
-
-if add:
+if offset_hours:
     cycle.increment( hours=hours )
-elif subtract:
-    cycle.decrement( hours=hours )
+
+if offset_days:
+    cycle.increment( days=days )
+
+if offset_months:
+    cycle = ct( Monthly.offset( cycle.get(), -months ) )
+
+if offset_years:
+    cycle = ct( Yearly.offset( cycle.get(), -years ) )
 
 if print_year:
     print cycle.year
