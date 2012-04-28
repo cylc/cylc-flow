@@ -109,6 +109,7 @@ echo "BYE from $CYLC_TASK_ID on $(hostname)"'''
     final cycle time = 2999010123 # DEFAULT (via config.py, not suiterc.spec)
     collapsed families = (none)
     use node color for edges = True  # DEFAULT
+    use node color for labels = False  # DEFAULT
     default node attributes = 'style=unfilled', 'color=black', 'shape=box'  # DEFAULT
     default edge attributes = 'color=black'  # DEFAULT
     [[node groups]]

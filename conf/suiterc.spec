@@ -176,6 +176,7 @@ description = string( default="No description provided" )
     final cycle time = integer( default=None )
     collapsed families = force_list( default=list() )
     use node color for edges = boolean( default=True )
+    use node color for labels = boolean( default=False )
     default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=box'))
     default edge attributes = force_list( default=list('color=black'))
     [[node groups]]
