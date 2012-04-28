@@ -10,5 +10,6 @@ fi
 echo Cleaning $PWD/doc
 cd doc
 rm -f *.4tc *.aux *.4ct *.dvi *.idv *.lg *.lof *.tmp *.toc *.xref *.out *.log *.css
-rm *.html
-rm *.pdf
+rm -f *.html
+rm -f *.pdf
+rm -rf single
