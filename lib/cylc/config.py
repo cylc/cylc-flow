@@ -724,10 +724,8 @@ class config( CylcConfigObj ):
             for name in self['runtime']:
                 if name not in self.taskdefs:
                     if name not in self.members:
-                        # family names often aren't used in the graph
-                        print >> sys.stderr, 'WARNING: task "' + name + '" is disabled - it is not used in the graph.'
-                    else:
-                        print 'INFO: family "' + name + '" is not used directly in the graph.'
+                        # any family triggers have have been replaced with members by now.
+                        print >> sys.stderr, 'WARNING: task "' + name + '" is not used in the graph.'
 
         self.check_for_case_errors()
 
