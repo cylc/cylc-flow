@@ -666,3 +666,6 @@ digits).
 + Extended the cycletime utility command to handle daily, monthly, and 
 yearly cycle time offsets.
 
++ Default command scripting now identifies itself as such and prints
+out the hostname.
+

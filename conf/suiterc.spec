@@ -94,7 +94,9 @@ description = string( default="No description provided" )
         inherit = string( default=None )
         description = string( default="No description provided" )
         initial scripting = string( default=None )
-        command scripting = force_list( default=list( "echo DUMMY $CYLC_TASK_ID; sleep 10; echo BYE",))
+        # ! unfortunately the configobj spec does not take multiline strings!
+        # "#SPECDEFAULT" is detected in config.py to supply default scripting
+        command scripting = force_list( default=list( '#SPECDEFAULT', ))
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
         manual completion = boolean( default=False )
