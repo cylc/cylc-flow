@@ -94,7 +94,9 @@ description = string( default="No description provided" )
         inherit = string( default=None )
         description = string( default="No description provided" )
         initial scripting = string( default=None )
-        command scripting = force_list( default=list( "echo DUMMY $CYLC_TASK_ID; sleep 10; echo BYE",))
+        # ! unfortunately the configobj spec does not take multiline strings!
+        # "#SPECDEFAULT" is detected in config.py to supply default scripting
+        command scripting = force_list( default=list( '#SPECDEFAULT', ))
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
         manual completion = boolean( default=False )
@@ -174,6 +176,7 @@ description = string( default="No description provided" )
     final cycle time = integer( default=None )
     collapsed families = force_list( default=list() )
     use node color for edges = boolean( default=True )
+    use node color for labels = boolean( default=False )
     default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=box'))
     default edge attributes = force_list( default=list('color=black'))
     [[node groups]]

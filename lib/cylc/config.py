@@ -724,10 +724,8 @@ class config( CylcConfigObj ):
             for name in self['runtime']:
                 if name not in self.taskdefs:
                     if name not in self.members:
-                        # family names often aren't used in the graph
-                        print >> sys.stderr, 'WARNING: task "' + name + '" is disabled - it is not used in the graph.'
-                    else:
-                        print 'INFO: family "' + name + '" is not used directly in the graph.'
+                        # any family triggers have have been replaced with members by now.
+                        print >> sys.stderr, 'WARNING: task "' + name + '" is not used in the graph.'
 
         self.check_for_case_errors()
 
@@ -1492,7 +1490,13 @@ class config( CylcConfigObj ):
             taskd.commands   = taskconfig['command scripting']
             taskd.precommand = taskconfig['pre-command scripting'] 
             taskd.postcommand = taskconfig['post-command scripting'] 
-
+            # supply default command scripting here as configobj spec
+            # does not take multiline strings
+            if taskd.commands[0] == '#SPECDEFAULT':
+                taskd.commands = ['''echo "HELLO from $CYLC_TASK_ID on $(hostname)"
+echo "Default command scripting: sleeping for 10 sec..."
+sleep 10
+echo "BYE from $CYLC_TASK_ID on $(hostname)"''']
         # initial scripting (could be required to access cylc even in sim mode).
         taskd.initial_scripting = taskconfig['initial scripting'] 
         # the ssh messaging variable must go in initial scripting so
