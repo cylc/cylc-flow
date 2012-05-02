@@ -220,6 +220,13 @@ class taskdef(object):
 
         def tclass_add_prerequisites( sself, startup, cycler, tag  ):
 
+            # NOTE: Task objects hold all triggers defined for the task
+            # in all cycling graph sections in this data structure:
+            #     self.triggers[cycler] = [list of triggers for this cycler]
+            # The list of triggers associated with cyclerX will only be
+            # used by a particular task if the task's cycle time is a
+            # valid member of cyclerX's sequence of cycle times. 
+
             # 1) non-conditional triggers
             pp = plain_prerequisites( sself.id ) 
             sp = plain_prerequisites( sself.id ) 
@@ -229,9 +236,11 @@ class taskdef(object):
                     if trig.startup and not startup:
                             continue
                     if trig.cycling and not cyc.valid( ct(sself.tag) ):
-                        # This trigger is not valid for current cycle. 
-                        print  >> sys.stderr, 'THIS TRIGGER NOT VALID FOR', sself.tag
-                        print >> sys.stderr, '  ', trig.get(sself.tag, cyc)
+                        # This trigger is not used in current cycle. 
+                        # (see NOTE just above)
+                        ##DEBUGGING:
+                        ##print >> sys.stderr, sself.name + ': this trigger not used for', sself.tag + ':'
+                        ##print >> sys.stderr, ' ', trig.get(sself.tag, cyc)
                         continue
                     # NOTE that if we need to check validity of async
                     # tags, async tasks can appear in cycling sections
@@ -255,8 +264,10 @@ class taskdef(object):
                         continue
                     if ctrig[foo].cycling and not cyc.valid( ct(sself.tag)):
                         # This trigger is not valid for current cycle. 
-                        print  >> sys.stderr, 'THIS TRIGGER NOT VALID FOR', sself.tag
-                        print >> sys.stderr, '  ', trig.get(sself.tag, cyc)
+                        # (see NOTE just above)
+                        ##DEBUGGING:
+                        ##print >> sys.stderr, sself.name + ': this trigger not used for', sself.tag + ':'
+                        ##print >> sys.stderr, ' ', trig.get(sself.tag, cyc)
                         continue
                     # NOTE that if we need to check validity of async
                     # tags, async tasks can appear in cycling sections

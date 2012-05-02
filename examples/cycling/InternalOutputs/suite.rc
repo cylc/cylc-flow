@@ -23,8 +23,7 @@ output message is explicited target at the next cycle."""
     [[foo]]
         command scripting = """
 sleep 5
-# fails for leap years:
-cylc task message "foo stuff ready for $(cylc cycletime --add=8760)"
+cylc task message "foo stuff ready for $(cylc cycletime --offset-year=1)"
 # TO DO: extend the cycle time utility
 sleep 5
                             """
