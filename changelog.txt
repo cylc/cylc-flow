@@ -669,3 +669,13 @@ yearly cycle time offsets.
 + Default command scripting now identifies itself as such and prints
 out the hostname.
 
++ New graphing option: use node outline color for node labels.
+
++ The cylc scan command now reports results in simple space-delimited
+format "suite owner host port", for better parsing.
+
++ The cylc ping command changes:
+  1/ "host not found" errors are handled properly,
+  2/ a successful ping just exits with success status (no output) ...
+  3/ ... unless verbose mode is chosen, the it prints as scan above.
+

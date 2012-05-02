@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+import os, sys
 from hostname import hostname
 from registration import localdb
 from passphrase import passphrase
@@ -101,12 +101,14 @@ class port_interrogator(object):
 def portid( host, port ):
     return host + ":" + str(port)
 
-def suiteid( name, owner, host, port=None ):
-    if port != None:
-        res = "[" + name + "] " + owner + "@" + portid( host,port)
-    else:
-        res = "[" + name + "] " + owner + "@" + host
-    return res
+# old complex output format for scan command etc.: '[suite] owner@host:port'
+# new simple output format is: 'suite owner host port' - better for parsing.
+##def suiteid( name, owner, host, port=None ):
+##    if port != None:
+##        res = "[" + name + "] " + owner + "@" + portid( host,port)
+##    else:
+##        res = "[" + name + "] " + owner + "@" + host
+##    return res
 
 def cylcid_uri( host, port ):
     return 'PYROLOC://' + host + ':' + str(port) + '/cylcid' 
@@ -123,7 +125,11 @@ def get_port( suite, owner=os.environ['USER'], host=hostname, pphrase=None, time
 
     for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
         uri = cylcid_uri( host, port )
-        proxy = Pyro.core.getProxyForURI(uri)
+        try:
+            proxy = Pyro.core.getProxyForURI(uri)
+        except Pyro.errors.URIError, x:
+            # No such host?
+            raise SuiteNotFoundError, x
         proxy._setTimeout(timeout)
         # note: we'll get a TimeoutError if the connection times out
 
@@ -145,14 +151,14 @@ def get_port( suite, owner=os.environ['USER'], host=hostname, pphrase=None, time
         else:
             if name == suite and xowner == owner:
                 if not silent:
-                    print suiteid( suite, owner, host, port )
+                    print suite, owner, host, port
                 # RESULT
                 return port
             else:
                 # ID'd some other suite.
-                #print 'OTHER SUITE:', suiteid( name, xowner, host, port )
+                #print 'OTHER SUITE:', name, xowner, host, port
                 pass
-    raise SuiteNotFoundError, "Suite not running: " + suiteid( suite, owner, host )
+    raise SuiteNotFoundError, "Suite not running: " + suite + ' ' + owner + ' ' + host
 
 def check_port( suite, port, owner=os.environ['USER'], host=hostname, timeout=None, silent=False ):
     # is a particular suite running at host:port?
@@ -182,13 +188,15 @@ def check_port( suite, port, owner=os.environ['USER'], host=hostname, timeout=No
         raise OtherServerFoundError, "ERROR: non-cylc pyro server found at " + portid( host, port )
     else:
         if name == suite and xowner == owner:
-            if not silent:
-                print suiteid( suite, owner, host, port )
             # RESULT
+            if not silent:
+                print suite, owner, host, port
             return True
         else:
             # ID'd some other suite.
-            raise OtherSuiteFoundError, "ERROR: Found " + suiteid( name, xowner, host, port ) + ' NOT ' + suiteid( suite, owner, host, port )
+            print >> sys.stderr, 'Found ' + name + ' ' + xowner + ' ' + host + ' ' + port
+            print >> sys.stderr, ' NOT ' + suite + ' ' + owner + ' ' + host + ' ' + port
+            raise OtherSuiteFoundError, "ERROR: Found another suite"
 
 def scan( host, verbose=True, mine=False, silent=False ):
     # scan all cylc Pyro ports for cylc suites
@@ -229,12 +237,8 @@ def scan( host, verbose=True, mine=False, silent=False ):
                 print "Non-cylc Pyro server found at " + portid( host, port )
         else:
             if verbose:
-                if security == 'secure':
-                    if not silent:
-                        print suiteid( name, owner, host, port ), security
-                else:
-                    if not silent:
-                        print suiteid( name, owner, host, port )
+                if not silent:
+                    print name, owner, host, port
             # found a cylc suite or lock server
             if mine:
                 if owner == me:
