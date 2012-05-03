@@ -20,6 +20,13 @@ import os, sys
 import gtk
 from optparse import OptionParser
 
+# Make current working directory be $HOME. Otherwise (1) if the user
+# attempts to start gcylc from a CWD that has been removed, Pyro will
+# not be importable below; and (2) if the CWD gets removed later while
+# gcylc is running, subprocesses spawned by gcylc will fail when they
+# attempt to determine their CWD.
+os.chdir(os.environ['HOME'])
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 from cylc.conf.CylcGlobals import cylc_tmpdir
 from cylc.hostname import hostname

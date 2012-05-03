@@ -17,13 +17,24 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, re, sys
+import subprocess
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 
-from OrderedDict import OrderedDict
-from cylc.execute import execute
-import subprocess
+try:
+    os.getcwd()
+except OSError,x:
+    # The current working directory has been deleted (or filesystem
+    # problems of some kind...). This results in Pyro not being found,
+    # immediately below. We cannot just chdir to $HOME as gcylc does
+    # because that would break relative directory path command arguments
+    # (cylc reg SUITE PATH).
+    print >> sys.stderr, x
+    raise SystemExit( 'ERROR: your current working directory does not exist!')
+
 from cylc.version import cylc_version
+from cylc.execute import execute
+from OrderedDict import OrderedDict
 
 # check Pyro is installed
 try:
