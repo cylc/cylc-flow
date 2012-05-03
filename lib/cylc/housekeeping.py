@@ -294,7 +294,7 @@ class hkitem:
             dest = re.sub( 'YYYYMM', self.matched_ctime[0:6], dest )
             dest = re.sub( 'MMDD', self.matched_ctime[4:8], dest )
             dest = re.sub( 'YYYY', self.matched_ctime[0:4], dest )
-            dest = re.sub( 'MM', self.matched_ctime[8:10], dest )
+            dest = re.sub( 'MM', self.matched_ctime[4:6], dest )
             dest = re.sub( 'DD', self.matched_ctime[6:8], dest )
             dest = re.sub( 'HH', self.matched_ctime[8:10], dest )
             if self.debug and dest != self.destn:
