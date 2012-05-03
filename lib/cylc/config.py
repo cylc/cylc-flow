@@ -1493,10 +1493,12 @@ class config( CylcConfigObj ):
             # supply default command scripting here as configobj spec
             # does not take multiline strings
             if taskd.commands[0] == '#SPECDEFAULT':
-                taskd.commands = ['''echo "HELLO from $CYLC_TASK_ID on $(hostname)"
-echo "Default command scripting: sleeping for 10 sec..."
+                taskd.commands = ['''echo "DEFAULT COMMAND SCRIPTING BEGINS>"
+echo "   HELLO from $CYLC_TASK_ID on $(hostname)"
+echo "   sleeping for 10 seconds now..."
 sleep 10
-echo "BYE from $CYLC_TASK_ID on $(hostname)"''']
+echo "   BYE from $CYLC_TASK_ID on $(hostname)"
+echo "<DEFAULT COMMAND SCRIPTING ENDS"''']
         # initial scripting (could be required to access cylc even in sim mode).
         taskd.initial_scripting = taskconfig['initial scripting'] 
         # the ssh messaging variable must go in initial scripting so
