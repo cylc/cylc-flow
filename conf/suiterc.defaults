@@ -66,12 +66,7 @@ description = "No description provided" # DEFAULT
         description = "No description provided"  # DEFAULT
         initial scripting = None
         pre-command scripting = None
-        command scripting = ''' # DEFAULT (via config.py, not suiterc.spec)
-echo "HELLO from $CYLC_TASK_ID on $(hostname)"
-echo "Default command scripting: sleeping for 10 sec..."
-sleep 10
-echo "BYE from $CYLC_TASK_ID on $(hostname)"'''
-
+        command scripting = "echo Default runtime command scripting: sleep 10...; sleep 10" # DEFAULT
         post-command scripting = None
         manual completion = False  # DEFAULT
         [[[job submission]]]

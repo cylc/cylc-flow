@@ -79,6 +79,7 @@ class jobfile(object):
             self.write_work_directory_create()
             self.write_environment_2()
             self.write_manual_environment()
+            self.write_identity_scripting()
             self.write_pre_scripting()
         self.write_command_scripting()
         if not self.simulation_mode:
@@ -222,6 +223,17 @@ cd $CYLC_TASK_WORK_PATH""" % data )
             self.FILE.write( '\n\n# SUITE AND TASK IDENTITY FOR CUSTOM TASK WRAPPERS:')
             self.FILE.write( '\n# (contains embedded newlines so usage may require "QUOTES")' )
             self.FILE.write( '\nexport CYLC_SUITE_ENVIRONMENT="' + str + '"' )
+
+    def write_identity_scripting( self ):
+        self.FILE.write( "\n\n# TASK IDENTITY SCRIPTING:" )
+        self.FILE.write( '''
+echo "Cylc Task Identity Info:"
+echo "  TASK IDENT: $CYLC_TASK_ID"
+echo "  RUNNING ON: $(hostname)"
+echo "  SUITE NAME: $CYLC_SUITE_REG_NAME"
+echo "  SUITE HOST: $CYLC_SUITE_HOST"
+echo "  SUITE PORT: $CYLC_SUITE_PORT"
+echo "  SUITE OWNR: $CYLC_SUITE_OWNER"''')
 
     def write_pre_scripting( self ):
         if not self.precommand_scripting:

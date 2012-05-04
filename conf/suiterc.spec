@@ -94,9 +94,7 @@ description = string( default="No description provided" )
         inherit = string( default=None )
         description = string( default="No description provided" )
         initial scripting = string( default=None )
-        # ! unfortunately the configobj spec does not take multiline strings!
-        # "#SPECDEFAULT" is detected in config.py to supply default scripting
-        command scripting = force_list( default=list( '#SPECDEFAULT', ))
+        command scripting = force_list( default=list( 'echo "Default runtime command scripting: sleep 10..."; sleep 10', ))
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
         manual completion = boolean( default=False )
