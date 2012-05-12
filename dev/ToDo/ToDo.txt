@@ -6,7 +6,9 @@ can be migrated to the github issue tracker.
 _______
 GENERAL
 
-cycling modules: for clarity, instead of initial_adjust_up adjusting
+ + cylc command tab completion?  see /etc/bash_completion.d/git.sh !
+
+ + cycling modules: for clarity, instead of initial_adjust_up adjusting
 only if necessary, have it always adjust up, but only call it if T is
 not valid (i.e. not on-sequence for the cycler).
 
@@ -20,15 +22,14 @@ VALIDITY EASIER.
  for any hardwired assumptions about ctime string length (e.g. in suite 
  log filtering - command and GUI).
 
-A MINIMUM RUNAHEAD limit is now computed automatically by each cycler in
-a suite.  Note however that for 6-hrly tasks, for example, with no
-intercycle dependence, a limit of just 1 hour does NOT stall the suite
-(with intercycle dependence it does). => NEED TO clearly explain when
-the runahead limit can stall a suite (and automatically compute a true
-minimum below which the suite will stall?)
-BUT NOW I'm computing runahead limiting based only on old waiting 
-(rather than unfailed) task, which frees up model-type suites - maybe no 
-stallng now?
+A MINIMUM RUNAHEAD limit SHOULD now be computed automatically by each
+cycler in a suite.  Note however that for 6-hrly tasks, for example,
+with no intercycle dependence, a limit of just 1 hour does NOT stall the
+suite (with intercycle dependence it does). => NEED TO clearly explain
+when the runahead limit can stall a suite (and automatically compute a
+true minimum below which the suite will stall?) BUT NOW I'm computing
+runahead limiting based only on old waiting (rather than unfailed) task,
+which frees up model-type suites - maybe no stallng now?
 
 * bad graph syntax crashes cylc graph (e.g. "color:blue" for
   "color=blue").
@@ -42,8 +43,6 @@ stallng now?
     GtkWarning: could not open display"
 traced to "import graphing" in config.py, loaded by registration.py.
 => refactor the source so that this is only needed by GUI commands.
-
-* "cylc graph -o OUTFILE" does not work for namespace graphs. 
 
 * can validation be made to detect circular dependencies. E.g. 
 if foo is a member of FAM, then "FAM => foo" means foo will not run

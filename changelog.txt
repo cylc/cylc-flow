@@ -679,3 +679,6 @@ format "suite owner host port", for better parsing.
   2/ a successful ping just exits with success status (no output) ...
   3/ ... unless verbose mode is chosen, the it prints as scan above.
 
++ Fixed a bug in the "cylc util housekeeping" script - it was not
+correctly interpolating month MM in the archive destination path.
+
