@@ -24,6 +24,7 @@ from cylc import cylc_pyro_client
 import gtk
 import pygtk
 from cylc.cycle_time import ct
+from cylc.mkdir_p import mkdir_p
 ####pygtk.require('2.0')
 
 def compare_dict_of_dict( one, two ):
@@ -100,7 +101,16 @@ class xupdater(threading.Thread):
         self.ungroup_all = False
 
         self.graph_frame_count = 0
-
+        self.live_graph_movie = False
+        if self.suiterc["development"]["live graph movie"]:
+            self.live_graph_movie = True
+            self.live_graph_dir = suiterc["visualization"]["run time graph"]["directory"]
+            try:
+                mkdir_p( self.live_graph_dir )
+            except Exception, x:
+                print >> sys.stderr, x
+                raise SuiteConfigError, 'ERROR, illegal dir? ' + self.live_graph_dir 
+ 
     def reconnect( self ):
         try:
             self.god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'state_summary' )
@@ -517,9 +527,11 @@ class xupdater(threading.Thread):
 
         self.action_required = False
 
-        if self.suiterc["development"]["live graph movie"]:
+        if self.live_graph_movie:
             self.graph_frame_count += 1
-            self.graphw.write( os.path.join( self.suiterc["visualization"]["run time graph directory"], 'live' + '-' + str( self.graph_frame_count ) + '.dot' ))
+            arg = os.path.join( self.live_graph_dir, 'live' + '-' + \
+                    str( self.graph_frame_count ) + '.dot' )
+            self.graphw.write( arg )
 
     #def follow_up( self, id, topctime ):
     #    name, ctime = id.split('%')
