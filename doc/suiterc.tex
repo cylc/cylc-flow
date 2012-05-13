@@ -1354,6 +1354,18 @@ internal \lstinline@=@ character.
     \item {\em default:} \lstinline@'color=black'@
 \end{myitemize}
 
+\subsubsection[enable live graph movie]{[visualization] $\rightarrow$ enable live graph movie}
+
+If True, the graph-based suite control GUI will write out a dot-language
+graph file on every change; these can be post-processed into a movie
+showing how the suite evolves. The frames will be written to the run
+time graph directory (see below).
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} \lstinline@False@
+\end{myitemize}
+
 \subsubsection[{[[}node groups{]]}]{[visualization] $\rightarrow$ [[node groups]]}
 
 Define named groups of graph nodes (tasks and families) which can styled
@@ -1437,10 +1449,6 @@ Where to put the run time graph file, \lstinline=runtime-graph.dot=.
 % HIDDEN \subsection{[development]}
 % HIDDEN \subsubsection[use quick task elimination]{[development] $\rightarrow$ use quick task elimination }
 % HIDDEN     default True
-% HIDDEN \subsubsection[live graph movie]{[development] $\rightarrow$ live graph movie}
-% HIDDEN     default False
-
-
 
 \subsection{Special Placeholder Variables}
 

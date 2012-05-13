@@ -25,6 +25,179 @@ import gobject
 import config
 import os, sys
 from cycle_time import ct
+from graphing import CGraphPlain
+
+class MyDotWindow2( xdot.DotWindow ):
+    """Override xdot to get rid of some buttons and parse graph from suite.rc"""
+
+    ui = '''
+    <ui>
+        <toolbar name="ToolBar">
+            <toolitem action="ZoomIn"/>
+            <toolitem action="ZoomOut"/>
+            <toolitem action="ZoomFit"/>
+            <toolitem action="Zoom100"/>
+            <separator expand="true"/> 
+            <toolitem action="Help"/>
+        </toolbar>
+    </ui>
+    '''
+    def __init__(self, suite, suiterc, watch, outfile=None ):
+        self.outfile = outfile
+        self.disable_output_image = False
+        self.suite = suite
+        self.file = suiterc
+        self.watch = []
+
+        gtk.Window.__init__(self)
+
+        self.graph = xdot.Graph()
+
+        window = self
+
+        window.set_title('Suite Runtime Namespace Graph Viewer')
+        window.set_default_size(512, 512)
+        vbox = gtk.VBox()
+        window.add(vbox)
+
+        self.widget = xdot.DotWidget()
+
+        # Create a UIManager instance
+        uimanager = self.uimanager = gtk.UIManager()
+
+        # Add the accelerator group to the toplevel window
+        accelgroup = uimanager.get_accel_group()
+        window.add_accel_group(accelgroup)
+
+        # Create an ActionGroup
+        actiongroup = gtk.ActionGroup('Actions')
+        self.actiongroup = actiongroup
+
+        # create new stock icons for group and ungroup actions
+        imagedir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
+        factory = gtk.IconFactory()
+        for i in [ 'group', 'ungroup' ]:
+            pixbuf = gtk.gdk.pixbuf_new_from_file( imagedir + '/' + i + '.png' )
+            iconset = gtk.IconSet(pixbuf)
+            factory.add( i, iconset )
+        factory.add_default()
+
+        # Create actions
+        actiongroup.add_actions((
+            ('ZoomIn', gtk.STOCK_ZOOM_IN, None, None, 'Zoom In', self.widget.on_zoom_in),
+            ('ZoomOut', gtk.STOCK_ZOOM_OUT, None, None, 'Zoom Out', self.widget.on_zoom_out),
+            ('ZoomFit', gtk.STOCK_ZOOM_FIT, None, None, 'Zoom Fit', self.widget.on_zoom_fit),
+            ('Zoom100', gtk.STOCK_ZOOM_100, None, None, 'Zoom 100', self.widget.on_zoom_100),
+            ('Help', gtk.STOCK_HELP, None, None, 'Help', helpwindow.graph_viewer ),
+        ))
+
+        # Add the actiongroup to the uimanager
+        uimanager.insert_action_group(actiongroup, 0)
+
+        # Add a UI descrption
+        uimanager.add_ui_from_string(self.ui)
+
+        # Create a Toolbar
+
+        toolbar = uimanager.get_widget('/ToolBar')
+        vbox.pack_start(toolbar, False)
+        vbox.pack_start(self.widget)
+
+        #eb = gtk.EventBox()
+        #eb.add( gtk.Label( "right-click on nodes to control family grouping" ) )
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
+        #vbox.pack_start( eb, False )
+
+        self.set_focus(self.widget)
+
+        # find all suite.rc include-files
+        self.rc_mtimes = {}
+        self.rc_last_mtimes = {}
+        for rc in watch:
+            while True:
+                try:
+                    self.rc_last_mtimes[rc] = os.stat(rc).st_mtime
+                except OSError:
+                    # this happens occasionally when the file is being edited ... 
+                    print >> sys.stderr, "Failed to get rc file mod time, trying again in 1 second"
+                    time.sleep(1)
+                else:
+                    #self.rc_mtimes[rc] = self.rc_last_mtimes[rc]
+                    break
+
+        self.show_all()
+        while True:
+            if self.load_config():
+                break
+            else:
+                time.sleep(1)
+
+    def load_config( self, reload=False ):
+        if reload:
+            print 'Reloading the suite.rc file.'
+            try:
+                self.suiterc = config.config( self.suite, self.file, collapsed=self.suiterc.closed_families )
+            except:
+                print >> sys.stderr, "Failed to reload suite.rc file (parsing error?)."
+                return False
+        else:
+            try:
+                self.suiterc = config.config( self.suite, self.file )
+            except:
+                print >> sys.stderr, "Failed to load suite.rc file (parsing error?)."
+                return False
+        self.inherit = self.suiterc.get_inheritance()
+        return True
+
+    def get_graph( self ):
+        title = self.suite + ' runtime namespace inheritance graph'
+        graph = CGraphPlain( title )
+        for ns in self.inherit:
+            if self.inherit[ns]:
+                attr = {}
+                attr['color'] = 'royalblue'
+                graph.add_edge( self.inherit[ns], ns, **attr )
+                nl = graph.get_node( self.inherit[ns] )
+                nr = graph.get_node( ns )
+                for n in nl, nr:
+                    n.attr['shape'] = 'box'
+                    n.attr['style'] = 'filled'
+                    n.attr['fillcolor'] = 'powderblue'
+                    n.attr['color'] = 'royalblue'
+ 
+        self.set_dotcode( graph.string() )
+        if self.outfile and not self.disable_output_image:
+            try:
+                graph.draw( self.outfile, prog='dot' )
+            except IOError, x:
+                print >> sys.stderr, x
+                self.disable_output_image = True
+
+    def update(self):
+        # if any suite config file has changed, reparse the graph
+        reparse = False
+        for rc in self.rc_last_mtimes:
+            while True:
+                try:
+                    rct= os.stat(rc).st_mtime
+                except OSError:
+                    # this happens occasionally when the file is being edited ... 
+                    print "Failed to get rc file mod time, trying again in 1 second"
+                    time.sleep(1)
+                else:
+                    if rct != self.rc_last_mtimes[rc]:
+                        reparse = True
+                        print 'FILE CHANGED:', rc
+                        self.rc_last_mtimes[rc] = rct
+                    break
+        if reparse:
+            while True:
+                if self.load_config(reload=True):
+                    break
+                else:
+                    time.sleep(1)
+            self.get_graph()
+        return True
 
 class MyDotWindow( xdot.DotWindow ):
     """Override xdot to get rid of some buttons and parse graph from suite.rc"""

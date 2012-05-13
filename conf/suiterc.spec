@@ -177,6 +177,7 @@ description = string( default="No description provided" )
     use node color for labels = boolean( default=False )
     default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=box'))
     default edge attributes = force_list( default=list('color=black'))
+    enable live graph movie = boolean( default=False )
     [[node groups]]
         __many__ = force_list( default=list())
     [[node attributes]]
@@ -188,5 +189,4 @@ description = string( default="No description provided" )
 #____________________________________________________________DEVELOPMENT
 [development]
     use quick task elimination = boolean( default=True )
-    live graph movie = boolean( default=False )
 
