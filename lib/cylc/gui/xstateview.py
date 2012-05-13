@@ -102,7 +102,7 @@ class xupdater(threading.Thread):
 
         self.graph_frame_count = 0
         self.live_graph_movie = False
-        if self.suiterc["development"]["live graph movie"]:
+        if self.suiterc["visualization"]["enable live graph movie"]:
             self.live_graph_movie = True
             self.live_graph_dir = suiterc["visualization"]["run time graph"]["directory"]
             try:
