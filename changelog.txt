@@ -599,23 +599,24 @@ already. So, for instance, if a waiting task is forced to the failed
 state, it will spawn a successor.
 
 ________________________________________________________________________
-4.2.3 PENDING
+4.5.0 PENDING
 
-+ Bug fix: allow setting no runahead limit.
++ Bug fix: disabling the runahead limit now works (but is not advisable!)
 
 + Bug fix: multiple start-up tasks on the left of a dependency arrow are
 now handled correctly. Previously, only one was handled as a start-up
 task (in that dependence on it should disappear after the first cycle).
-+ Also: validation now prevents use of start-up tasks and normal cycling
-tasks in the same conditional trigger expression, because the meaning of
-such a trigger is undefined beyond the first cycle. 
+
++ Validation now fails use of start-up tasks and normal cycling tasks in
+the same conditional trigger expression, because the meaning of such a
+trigger is undefined beyond the first cycle. 
 
 + Suite visualization: node groups are now automatically defined for
 all task families so that styling can be applied to family and member
 nodes at once using the family name.
 
-+ Bug fix: "release suite" was releasing tasks to run even if they were 
-held due to having passed the suite stop time (if set).
++ Bug fix: "release suite" now does not release tasks to run if they are
+held due to passing the suite stop time already.
 
 + Sequential tasks now do not spawn on failure, only success, reversing
 a change in 4.2.2 (otherwise restarting a suite with a failed sequential
@@ -629,9 +630,10 @@ of a failed sequential task that cannot be re-run successfully, to force
 it to carry on into the next cycle (see previous bullet point for why 
 this should not be done automatically).
 
-+ Optional non-Pyro ssh-based remote task messaging, may be useful at 
-sites in which one or more remote task hosts have the Pyro network ports
-closed.
++ Optional new task-to-suite communication mechansim: use of ssh to
+re-invoke messaging commands on the suite host. This may be useful at
+sites in which one or more remote task hosts do not allow access to
+network ports for cylc's normal Pyro TCP/IP communication mechanisim.
 
 + Time offset syntax in explicit internal output messages has been changed
 from <CYLC_TASK_CYCLE_TIME+n> to [T+n]. The new syntax is the same as
@@ -646,28 +648,22 @@ automatically, by default, using Python's tempfile.mkdtemp(), but users
 can optionally override by setting CYLC_TMPDIR. In the default case
 the temporary directory is also cleaned up automatically after use.
 
-+ GENERALIZED CYCLING: cylc's original cycling mechanism (which was
-hardwired for hours-of-the-day NWP cycling) has been replaced with a
-mechanism that allows cycling extension modules to generate any sequence
-of cycle times. The original graph cycling headings, e.g.:
-   [[[0,12]]]
-is now shorthand for
-   [[[HoursOfTheDay(0,12]]]
-New cycling modules and corresponding example suites have been added for
-stepped Daily, Monthly, and Yearly cycling.
++ GENERALIZED CYCLING: cylc's original NWP-style hours-of-the-day
+cycling mechanism, e.g. [[0,6,12,18]], has replaced with an extensible
+mechanism that currently supports hours-of-the-day, and stepped daily,
+monthly, and yearly cycling - extend. 
+
++ Extended the cycletime utility command to handle daily, monthly, and 
+yearly cycle time offsets.
 
 + More flexible specification of cycle time on the command line (in
 combination with generalized cycling, above). YYYYMMDDHH has been
 replaced with YYYY[MM[DD[HH[mm[ss]]]]] (brackets indicate optional
 digits).
 
-+ suite.rc syntax highlighting for emacs added.
++ suite.rc syntax highlighting for the emacs editor.
 
-+ Extended the cycletime utility command to handle daily, monthly, and 
-yearly cycle time offsets.
-
-+ Default command scripting now identifies itself as such and prints
-out the hostname.
++ The task job scripting now prints out suite, task, and host ID info.
 
 + New graphing option: use node outline color for node labels.
 
