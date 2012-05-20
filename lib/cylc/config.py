@@ -242,12 +242,13 @@ class config( CylcConfigObj ):
             xlines = rendered.split('\n') # pass a list of lines to configobj
             suiterc = []
             for line in xlines:
-                # remove blank lines left by Jinja2
-                # this matters if there are line continuation markers involved
+                # Jinja2 leaves blank lines where source lines contain
+                # only Jinja2 code; this matters if line continuation
+                # markers are involved, so we remove blank lines here.
                 if re.match( '^\s*$', line ):
                     continue
-                # restore newlines to each line
-                suiterc.append(line + '\n')
+                # restoring newlines is not necessary here:
+                suiterc.append(line)
         else:
             # This is a plain suite.rc file.
             suiterc = flines
