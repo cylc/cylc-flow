@@ -235,11 +235,19 @@ class config( CylcConfigObj ):
 
             try:
                 # (converting unicode to plain string; configobj doesn't like?)
-                suiterc = str( template.render() )
+                rendered = str( template.render() )
             except Exception, x:
                 raise SuiteConfigError, "ERROR: Jinja2 template rendering failed: " + str(x)
 
-            suiterc = suiterc.split('\n') # pass a list of lines to configobj
+            xlines = rendered.split('\n') # pass a list of lines to configobj
+            suiterc = []
+            for line in xlines:
+                # remove blank lines left by Jinja2
+                # this matters if there are line continuation markers involved
+                if re.match( '^\s*$', line ):
+                    continue
+                # restore newlines to each line
+                suiterc.append(line + '\n')
         else:
             # This is a plain suite.rc file.
             suiterc = flines
