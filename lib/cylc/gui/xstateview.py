@@ -49,7 +49,7 @@ def compare_dict_of_dict( one, two ):
 
 class xupdater(threading.Thread):
 
-    def __init__(self, suite, suiterc, owner, host, port, 
+    def __init__(self, suite, owner, host, port, 
             label_mode, label_status, label_time, label_block, xdot ):
 
         super(xupdater, self).__init__()
@@ -85,10 +85,10 @@ class xupdater(threading.Thread):
         self.label_block = label_block
 
         self.reconnect()
+        # TO DO: handle failure to get a remote proxy in reconnect()
 
-        self.suiterc = suiterc
-        self.family_nodes = suiterc.members.keys()
-        self.graphed_family_nodes = suiterc.families_used_in_graph
+        self.family_nodes = self.remote.get_family_nodes()
+        self.graphed_family_nodes = self.remote.get_graphed_family_nodes()
 
         self.graph_warned = {}
 
@@ -101,10 +101,8 @@ class xupdater(threading.Thread):
         self.ungroup_all = False
 
         self.graph_frame_count = 0
-        self.live_graph_movie = False
-        if self.suiterc["visualization"]["enable live graph movie"]:
-            self.live_graph_movie = True
-            self.live_graph_dir = suiterc["visualization"]["run time graph"]["directory"]
+        self.live_graph_movie, self.live_graph_dir = self.remote.do_live_graph_movie()
+        if self.live_graph_movie:
             try:
                 mkdir_p( self.live_graph_dir )
             except Exception, x:
@@ -113,7 +111,8 @@ class xupdater(threading.Thread):
  
     def reconnect( self ):
         try:
-            self.god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'state_summary' )
+            self.god    = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'state_summary' )
+            self.remote = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
         except:
             return False
         else:
@@ -372,7 +371,8 @@ class xupdater(threading.Thread):
         extra_node_ids = {}
 
         # TO DO: mv ct().get() out of this call (for error checking):
-        self.graphw = self.suiterc.get_graph( ct(oldest).get(), ct(newest).get(),
+        # TO DO: remote connection exception handling?
+        self.graphw = self.remote.get_graph( ct(oldest).get(), ct(newest).get(),
                 colored=False, raw=rawx, group_nodes=self.group,
                 ungroup_nodes=self.ungroup,
                 ungroup_recursive=self.ungroup_recursive, 

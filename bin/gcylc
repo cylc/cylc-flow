@@ -70,10 +70,15 @@ NOTE: daemonize important suites with the POSIX nohup command:
 Arguments:
     SUITE      Target suite.""")
 
-#parser.add_option( "--host",
-#        help="cylc suite host (defaults to localhost).",
-#        metavar="HOST", action="store", default=hostname,
-#        dest="host" )
+parser.add_option( "--host",
+        help="Cylc suite host (defaults to localhost).",
+        metavar="HOST", action="store", default=hostname,
+        dest="host" )
+
+parser.add_option( "-o", "--owner",
+        help="Owner of the target suite (defaults to $USER).",
+        metavar="HOST", action="store", default=os.environ["USER"],
+        dest="owner" )
 
 parser.add_option( "-g", "--graph",
         help="With SUITE - invoked the new dependency graph based suite "
@@ -87,9 +92,8 @@ if len(args) != 0 and len(args) != 1:
 
 imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
 
-#host = options.host
-host = hostname
-owner = os.environ["USER"]
+host = options.host
+owner = options.owner
 
 if len( args ) == 1:
     if args[0] == 'help':
@@ -102,25 +106,30 @@ if len( args ) == 0:
     sys.exit(0)
 
 reg = args[0]
-
-# get suite definition directory
 dbg = dbgetter()
 try:
+    # unalias your own suite names
     suite, suiterc = dbg.get_suite(reg)
 except RegistrationError, x:
-    raise SystemExit(x)
-
-compat( suite, suiterc ).execute( sys.argv )
-
-suite_dir = os.path.dirname(suiterc)
-
-# get suite logging directory
-try:
-    conf = config( suite, suiterc )
-except SuiteConfigError,x:
-    raise SystemExit(x)
-
-logging_dir = os.path.join( conf['cylc']['logging']['directory'] )
+    # may be a remote suite (if not we fail to get a Pyro proxy below)
+    suite = reg
+else:
+    # pseudo backward compatibility for your own suites
+    compat( suite, suiterc ).execute( sys.argv )
+    # get suite logging directory
+    try:
+        conf = config( suite, suiterc )
+    except SuiteConfigError,x:
+        raise SystemExit(x)
+    # Export the suite's "cylc local environment" here - gcylc spawns
+    # external processes via the shell so the suite owner could want 
+    # variables to affect these processes. Example: the ssh process to 
+    # retrieve remote task output: 
+    #   ssh owner@foobar 'cat $HOME/path/to/log/file'
+    # owner is defined as "nwp_$SYS" and $SYS is computed from $HOME.
+    senv = conf['cylc']['environment']
+    for var in senv:
+        os.environ[var] = os.path.expandvars(senv[var])
 
 # scan for suite port
 try:
@@ -131,20 +140,11 @@ except:
 else:
     print "Suite " + suite + " is running on port " + str(port)
 
-# Export the suite's "cylc local environment" here - gcylc spawns
-# external processes via the shell so the suite owner could want 
-# variables to affect these processes. Example: the ssh process to 
-# retrieve remote task output: 
-#   ssh owner@foobar 'cat $HOME/path/to/log/file'
-# owner is defined as "nwp_$SYS" and $SYS is computed from $HOME.
-senv = conf['cylc']['environment']
-for var in senv:
-    os.environ[var] = os.path.expandvars(senv[var])
 
 if options.depgraph:
     from cylc.gui.SuiteControlGraph import StandaloneControlGraphApp
-    app = StandaloneControlGraphApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir )
+    app = StandaloneControlGraphApp( suite, owner, host, port, imagedir, cylc_tmpdir )
 else:
     from cylc.gui.SuiteControlTree import StandaloneControlTreeApp
-    app = StandaloneControlTreeApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir )
+    app = StandaloneControlTreeApp( suite, owner, host, port, imagedir, cylc_tmpdir )
 gtk.main()

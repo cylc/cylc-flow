@@ -28,11 +28,9 @@ class ControlTree(ControlAppBase):
     """
 Text treeview base GUI suite control interface.
     """
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir,
-            imagedir, tmpdir, readonly=False ):
+    def __init__(self, suite, owner, host, port, imagedir, tmpdir, readonly=False ):
 
-        ControlAppBase.__init__(self, suite, owner, host, port,
-                suite_dir, logging_dir, imagedir, readonly=False )
+        ControlAppBase.__init__(self, suite, owner, host, port, imagedir, readonly=False )
 
         self.userguide_item.connect( 'activate', helpwindow.userguide, False )
 
@@ -52,7 +50,7 @@ Text treeview base GUI suite control interface.
         ### TO DO: For suites that are already running, or for dynamically
         ### updating the viewed task list, we can retrieve the task list
         ### (etc.) from the suite's remote state summary object.
-        self.task_list = self.suiterc.get_task_name_list()
+        self.task_list = self.task_name_list  # TO DO: redundant!
 
         main_panes = gtk.VPaned()
         main_panes.set_position(200)
@@ -379,9 +377,9 @@ Text treeview base GUI suite control interface.
         autoex_item.connect( 'activate', self.toggle_autoexpand )
 
 class StandaloneControlTreeApp( ControlTree ):
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
+    def __init__(self, suite, owner, host, port, imagedir, readonly=False ):
         gobject.threads_init()
-        ControlTree.__init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly )
+        ControlTree.__init__(self, suite, owner, host, port, imagedir, readonly )
  
     def quit_gcapture( self ):
         for gwindow in self.gcapture_windows:

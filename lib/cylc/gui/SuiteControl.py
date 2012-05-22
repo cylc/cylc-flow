@@ -32,7 +32,6 @@ from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
 from cylc.version import cylc_version
 from option_group import controlled_option_group
-from cylc.config import config
 from color_rotator import rotator
 from cylc_logviewer import cylc_logviewer
 from textload import textload
@@ -46,22 +45,25 @@ Derived classes must provide:
   self.get_control_widgets()
 and associated methods for their control widgets.
     """
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
+    def __init__(self, suite, owner, host, port, imagedir, readonly=False ):
         self.readonly = readonly
-        self.logdir = logging_dir
-        self.suite_dir = suite_dir
         self.suite = suite
         self.host = host
         self.port = port
         self.owner = owner
         self.imagedir = imagedir
 
-        self.suiterc = config( self.suite, os.path.join( self.suite_dir, 'suite.rc' ) )
+        try:
+            print self.suite, self.owner, self.host, self.port
+            god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            self.sim_only = god.get_sim_mode_only()
+            self.initial_cycle_time, self.final_cycle_time = god.get_cycle_range()
+            self.logging_dir = god.get_logging_directory()
+            self.task_name_list = god.get_task_list()
+        except SuiteIdentificationError, x:
+            warning_dialog( x.__str__() ).warn()
+            # ABORT HERE!!!!???
 
-        self.sim_only=False
-        if self.suiterc['cylc']['simulation mode only']:
-            self.sim_only=True
- 
         self.connection_lost = False # (not used)
         self.quitters = []
 
@@ -506,8 +508,7 @@ The cylc forecast suite metascheduler.
                 limit = ent
         window.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.suite, self.owner,
-                self.host, self.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
             return
@@ -585,8 +586,7 @@ The cylc forecast suite metascheduler.
 
         window.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.suite, self.owner,
-                self.host, self.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
             return
@@ -1014,8 +1014,8 @@ shown here in the state they were in at the time of triggering.''' )
         ic_box.pack_start( label, True )
         ctime_entry = gtk.Entry()
         ctime_entry.set_max_length(14)
-        if self.suiterc['scheduling']['initial cycle time']:
-            ctime_entry.set_text( str(self.suiterc['scheduling']['initial cycle time']) )
+        if self.initial_cycle_time != None:
+            ctime_entry.set_text( str(self.initial_cycle_time))
         ic_box.pack_start (ctime_entry, True)
         vbox.pack_start( ic_box )
 
@@ -1024,8 +1024,8 @@ shown here in the state they were in at the time of triggering.''' )
         fc_box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(14)
-        if self.suiterc['scheduling']['final cycle time']:
-            stoptime_entry.set_text( str(self.suiterc['scheduling']['final cycle time']) )
+        if self.final_cycle_time != None:
+            stoptime_entry.set_text( str(self.final_cycle_time))
         fc_box.pack_start (stoptime_entry, True)
         vbox.pack_start( fc_box )
 
@@ -1510,8 +1510,7 @@ shown here in the state they were in at the time of triggering.''' )
         return cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( object )
  
     def view_log( self, w ):
-        logdir = os.path.join( self.suiterc['cylc']['logging']['directory'] )
-        foo = cylc_logviewer( 'log', logdir, self.suiterc.get_task_name_list() )
+        foo = cylc_logviewer( 'log', self.logging_dir, self.task_name_list)
         self.quitters.append(foo)
 
     def launch_cug( self, b, pdf ):

@@ -1,0 +1,4 @@
+Converting the graph control GUI to get the graph structure from the
+suite instead of from the config file: need to get the raw graph
+structure and load the PyGraphviz CGraph in the GUI code because it is
+not serializable?

@@ -31,18 +31,16 @@ class ControlGraph(ControlAppBase):
     """
 Dependency graph based GUI suite control interface.
     """
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir,
-            imagedir, tmpdir, readonly=False ):
+    def __init__(self, suite, owner, host, port, imagedir, tmpdir, readonly=False ):
 
-        ControlAppBase.__init__(self, suite, owner, host, port,
-                suite_dir, logging_dir, imagedir, readonly=False )
+        ControlAppBase.__init__(self, suite, owner, host, port, imagedir, readonly=False )
 
         self.userguide_item.connect( 'activate', helpwindow.userguide, True )
 
         self.tmpdir = tmpdir
         self.gcapture_windows = []
 
-        self.x = xupdater( self.suite, self.suiterc, self.owner, self.host, self.port,
+        self.x = xupdater( self.suite, self.owner, self.host, self.port,
                 self.label_mode, self.label_status, self.label_time, self.label_block, self.xdot )
         self.x.start()
 
@@ -512,9 +510,9 @@ class StandaloneControlGraphApp( ControlGraph ):
     # 1/ call gobject.threads_init() on startup
     # 2/ call gtk.main_quit() on exit
 
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
+    def __init__(self, suite, owner, host, port, imagedir, readonly=False ):
         gobject.threads_init()
-        ControlGraph.__init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly )
+        ControlGraph.__init__(self, suite, owner, host, port, imagedir, readonly )
  
     def quit_gcapture( self ):
         for gwindow in self.gcapture_windows:
