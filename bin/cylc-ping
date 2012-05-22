@@ -48,21 +48,18 @@ if options.print_ports:
     print pyro_base_port, '<= port <=', pyro_base_port + pyro_port_range
     sys.exit(0)
 
-if len( args ) == 0 or len( args ) > 2:
-    parser.error( "Wrong number of arguments" ) 
-
-if options.owner != os.environ['USER'] or options.host != hostname:
-    # can't check remote suite reg validity
-    suite = args[0]
+reg = args[0]
+dbg = dbgetter()
+try:
+    # unalias your own suite names
+    suite, suiterc = dbg.get_suite(reg)
+except RegistrationError, x:
+    # may be a remote suite (if not we fail to get a Pyro proxy below)
+    suite = reg
 else:
-    # check local suite reg validity
-    reg = args[0]
-    dbg = dbgetter()
-    try:
-        suite, junk = dbg.get_suite(reg)
-    except RegistrationError, x:
-        # suite not found
-        raise SystemExit(x)
+    # pseudo backward compatibility for your own suites
+    compat( suite, suiterc ).execute( sys.argv )
+
 try:
     port = get_port( suite, owner=options.owner, host=options.host, \
             silent = not options.verbose )
@@ -82,7 +79,7 @@ else:
     task_id = tid.getstr()
 
 try:
-    proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite, owner=options.owner, host=options.host ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 

@@ -51,18 +51,18 @@ parser.add_option( "-a", "--align",
 
 ( options, args ) = parser.parse_args()
 
-if options.owner != os.environ['USER'] or options.host != hostname:
-    # can't check remote suite reg validity
-    suite = args[0]
+reg = parser.get_suite_name()
+dbg = dbgetter()
+try:
+    # unalias your own suite names
+    suite, suiterc = dbg.get_suite(reg)
+except RegistrationError, x:
+    # may be a remote suite (if not we fail to get a Pyro proxy below)
+    suite = reg
 else:
-    # check local suite reg validity
-    reg = parser.get_suite_name()
-    dbg = dbgetter()
-    try:
-        suite, suiterc = dbg.get_suite(reg)
-    except RegistrationError, x:
-        raise SystemExit(x)
+    # pseudo backward compatibility for your own suites
     compat( suite, suiterc ).execute( sys.argv )
+
 
 header = 'waiting runahead queued submitted running succeeded held failed'
 header = '                                                               '

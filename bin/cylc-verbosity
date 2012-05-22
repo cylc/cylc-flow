@@ -45,14 +45,17 @@ if verbosity not in vchoices:
 reg = parser.get_suite_name()
 dbg = dbgetter()
 try:
+    # unalias your own suite names
     suite, suiterc = dbg.get_suite(reg)
 except RegistrationError, x:
-    raise SystemExit(x)
-
-compat( suite, suiterc ).execute( sys.argv )
+    # may be a remote suite (if not we fail to get a Pyro proxy below)
+    suite = reg
+else:
+    # pseudo backward compatibility for your own suites
+    compat( suite, suiterc ).execute( sys.argv )
 
 try:
-    proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite, owner=options.owner, host=options.host ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 

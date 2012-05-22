@@ -16,9 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Custom derived option parsers, with standard options, for cylc commands.
-
-# TO DO: THESE CLASSES NEED CLEANING UP AND UNIFIED USE IN THE COMMANDS.
+# Custom derived option parsers with standard options for cylc commands.
 
 import os, re
 from optparse import OptionParser
