@@ -29,14 +29,14 @@ from cylc.port_scan import SuiteIdentificationError
 import os, re, sys
 from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
 from time import sleep
-from cylc.CylcOptionParsers import NoPromptOptionParser_u
+from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.registration import dbgetter, RegistrationError
 from cylc.version import compat
 from cylc.hostname import hostname
 
 compress = True
 
-parser = NoPromptOptionParser_u( """cylc [info] monitor [options] SUITE 
+parser = NoPromptOptionParser( """cylc [info] monitor [options] SUITE 
 
 A terminal-based suite monitor that updates the current state of all
 tasks in real time. It is effective even for quite large suites if

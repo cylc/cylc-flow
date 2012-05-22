@@ -19,12 +19,12 @@
 import os, sys
 from cylc.hostname import hostname
 from cylc import cylc_pyro_client
-from cylc.CylcOptionParsers import NoPromptOptionParser_u
+from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
 from cylc.registration import dbgetter, RegistrationError
 from cylc.version import compat
 
-parser = NoPromptOptionParser_u( """cylc [info] dump [options] SUITE 
+parser = NoPromptOptionParser( """cylc [info] dump [options] SUITE 
 
 Print current suite state information (e.g. the state of each task). For
 small suites 'watch cylc [info] dump SUITE' is an effective non-GUI real

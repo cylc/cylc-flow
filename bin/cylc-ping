@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.CylcOptionParsers import NoPromptOptionParser_u
+from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.port_scan import get_port, SuiteIdentificationError
 from cylc.conf.CylcGlobals import pyro_base_port, pyro_port_range
 from cylc.registration import dbgetter, RegistrationError
@@ -25,7 +25,7 @@ from cylc import cylc_pyro_client
 from cylc.hostname import hostname
 import os, sys
 
-parser = NoPromptOptionParser_u( """cylc [discover] ping [options] SUITE [TASKID]
+parser = NoPromptOptionParser( """cylc [discover] ping [options] SUITE [TASKID]
     
 If SUITE (or TASKID in SUITE) is running just exit with success status,
 else print an error message and exit with error status. i.e. without

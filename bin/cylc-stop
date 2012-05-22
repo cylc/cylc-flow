@@ -64,7 +64,7 @@ except RegistrationError, x:
 compat( suite, suiterc ).execute( sys.argv )
 
 try:
-    proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite, owner=options.owner, host=options.host ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 
