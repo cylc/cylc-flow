@@ -1,6 +1,15 @@
-The graph control GUI now gets the graph structure from the suite, via
+1/ The graph control GUI now gets the graph structure from the suite, via
 Pyro, instead of from a local config file parsed when the GUI starts up. 
 Will this be a performance hit (either for the GUI or the suite) in
 large suites?  If so, we could optionally allow the old method with 
 the proviso that it would not work for remote controlled suites.
+
+2/ To start a suite with the graph GUI, as opposed to connecting to a remote
+suite, we still need to parse the config file to get, for example, configured
+initial and final cycle times. 
+
+3/ gcylc --host=FOO still starts up if FOO is an unknown host.
+
+4/ run suite from GUI after shutting down a remote suite, will attempt 
+to run it locally.
 

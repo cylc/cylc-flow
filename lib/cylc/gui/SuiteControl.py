@@ -61,6 +61,11 @@ and associated methods for their control widgets.
             self.logging_dir = god.get_logging_directory()
             self.task_name_list = god.get_task_list()
         except SuiteIdentificationError, x:
+	    self.initial_cycle_time = None
+	    self.final_cycle_time = None
+            self.logging_dir = None
+            self.task_name_list = None
+	    self.sim_only = False
             warning_dialog( x.__str__() ).warn()
             # ABORT HERE!!!!???
 
@@ -314,7 +319,7 @@ The cylc forecast suite metascheduler.
         return False
 
     def view_task_descr( self, w, task_id ):
-        command = "cylc show " + self.suite + " " + task_id
+        command = "cylc show --host=" + self.host + " " + self.suite + " " + task_id
         foo = gcapture_tmpfile( command, self.tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1528,7 +1533,7 @@ shown here in the state they were in at the time of triggering.''' )
         self.quitters.append(foo)
 
     def view_suite_info( self, w ):
-        command = "cylc show " + self.suite 
+        command = "cylc show --host=" + self.host + " " + self.suite 
         foo = gcapture_tmpfile( command, self.tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()

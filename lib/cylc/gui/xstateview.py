@@ -88,9 +88,6 @@ class xupdater(threading.Thread):
         self.reconnect()
         # TO DO: handle failure to get a remote proxy in reconnect()
 
-        self.family_nodes = self.remote.get_family_nodes()
-        self.graphed_family_nodes = self.remote.get_graphed_family_nodes()
-
         self.graph_warned = {}
 
         self.collapse = []
@@ -102,14 +99,7 @@ class xupdater(threading.Thread):
         self.ungroup_all = False
 
         self.graph_frame_count = 0
-        self.live_graph_movie, self.live_graph_dir = self.remote.do_live_graph_movie()
-        if self.live_graph_movie:
-            try:
-                mkdir_p( self.live_graph_dir )
-            except Exception, x:
-                print >> sys.stderr, x
-                raise SuiteConfigError, 'ERROR, illegal dir? ' + self.live_graph_dir 
- 
+
     def reconnect( self ):
         try:
             self.god    = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'state_summary' )
@@ -117,6 +107,17 @@ class xupdater(threading.Thread):
         except:
             return False
         else:
+	    self.family_nodes = self.remote.get_family_nodes()
+            self.graphed_family_nodes = self.remote.get_graphed_family_nodes()
+
+	    self.live_graph_movie, self.live_graph_dir = self.remote.do_live_graph_movie()
+            if self.live_graph_movie:
+                try:
+                    mkdir_p( self.live_graph_dir )
+                except Exception, x:
+                    print >> sys.stderr, x
+                    raise SuiteConfigError, 'ERROR, illegal dir? ' + self.live_graph_dir 
+
             self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
             self.status = "status:\nconnected"
             self.label_status.set_text( self.status )
