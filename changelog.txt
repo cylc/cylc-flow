@@ -685,3 +685,7 @@ ended in a line continuation marker. 'cylc view -p' was removing blanks
 lines, purely (it was thought) for display purposes, which made such
 non-validating suites appear to be correct. All blank lines are now
 removed following Jinja2 processing, to prevent this problem occuring. 
+
++ Fixed a bug in the "cylc show" command for retrieving live task info.
+
+
