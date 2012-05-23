@@ -19,6 +19,7 @@
 import gtk
 #import pygtk
 #pygtk.require('2.0')
+import gobject
 import pango
 import os, re
 import Pyro.errors
@@ -26,6 +27,9 @@ import subprocess
 import helpwindow
 from combo_logviewer import combo_logviewer
 from warning_dialog import warning_dialog, info_dialog
+from cylc.gui.SuiteControlGraph import ControlGraph
+from cylc.gui.SuiteControlLED import ControlLED
+from cylc.gui.SuiteControlTree import ControlTree
 from cylc.port_scan import SuiteIdentificationError
 from cylc import cylc_pyro_client
 from cylc.cycle_time import ct, CycleTimeError
@@ -39,14 +43,15 @@ from textload import textload
 from datetime import datetime
 from gcapture import gcapture_tmpfile
 
-class ControlAppBase(object):
+
+class InitData(object):
     """
-Base class for suite control GUI functionality.
-Derived classes must provide:
-  self.get_control_widgets()
-and associated methods for their control widgets.
+Class to hold initialisation data.
     """
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
+
+    def __init__( self, suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir,
+        readonly=False ):
+        
         self.readonly = readonly
         self.logdir = logging_dir
         self.suite_dir = suite_dir
@@ -55,8 +60,98 @@ and associated methods for their control widgets.
         self.port = port
         self.owner = owner
         self.imagedir = imagedir
+        self.cylc_tmpdir = cylc_tmpdir
 
-        self.suiterc = config( self.suite, os.path.join( self.suite_dir, 'suite.rc' ) )
+
+class InfoBar(gtk.HBox):
+    """
+Class to create an information bar.
+    """
+
+    def __init__( self, suite ):
+        super(InfoBar, self).__init__()
+
+        self.label_status = gtk.Label( "status..." )
+        self.label_mode = gtk.Label( "mode..." )
+        self.label_time = gtk.Label( "time..." )
+        self.label_block = gtk.Label( "block..." )
+        self.label_suitename = gtk.Label( suite )
+
+        eb = gtk.EventBox()
+        eb.add( self.label_suitename )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) )
+        self.pack_start( eb, True )
+
+        eb = gtk.EventBox()
+        eb.add( self.label_mode )
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
+        self.pack_start( eb, True )
+
+        eb = gtk.EventBox()
+        eb.add( self.label_status )
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
+        self.pack_start( eb, True )
+
+        eb = gtk.EventBox()
+        eb.add( self.label_time )
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) ) 
+        self.pack_start( eb, True )
+
+        eb = gtk.EventBox()
+        eb.add( self.label_block )
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) ) 
+        self.pack_start( eb, True )
+
+    def set_block( self, block ):
+        self.label_block.set_text(block)
+        if block == 'access:\nblocked':
+            self.label_block.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
+        else:
+            self.label_block.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
+
+    def set_mode(self, mode):
+        self.label_mode.set_text(mode)
+
+    def set_status(self, status):
+        self.label_status.set_text( status )
+        if re.search( 'STOPPED', status ):
+            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
+        elif re.search( 'STOP', status ):  # stopping
+            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff8c2a' ))
+        elif re.search( 'HELD', status ):
+            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ffde00' ))
+        else:
+            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
+
+    def set_time(self, time):
+        self.label_time.set_text( time )
+
+
+class ControlApp(object):
+    """
+Base class for suite control GUI functionality.
+Derived classes must provide:
+  self.get_control_widgets()
+and associated methods for their control widgets.
+    """
+
+    DEFAULT_VIEW = "graph"
+    VIEWS = {"graph": ControlGraph,
+             "led": ControlLED,
+             "tree": ControlTree}
+    VIEW_ICON_PATHS = {"graph": "/icons/tab-graph.xpm",
+                       "led": "/icons/tab-led.xpm",
+                       "tree": "/icons/tab-tree.xpm"}
+                       
+
+    def __init__( self, suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir,
+        readonly=False ):
+        gobject.threads_init()
+        
+        self.cfg = InitData( suite, owner, host, port, suite_dir, logging_dir, imagedir,
+                             cylc_tmpdir, readonly )
+        
+        self.suiterc = config( self.cfg.suite, os.path.join( self.cfg.suite_dir, 'suite.rc' ) )
 
         self.sim_only=False
         if self.suiterc['cylc']['simulation mode only']:
@@ -64,19 +159,20 @@ and associated methods for their control widgets.
  
         self.connection_lost = False # (not used)
         self.quitters = []
+        self.gcapture_windows = []
 
         self.log_colors = rotator()
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        if self.readonly:
-            self.window.set_title("gcylc <" + self.suite + "> (READONLY)" )
+        if self.cfg.readonly:
+            self.window.set_title("gcylc <" + self.cfg.suite + "> (READONLY)" )
         else:
-            self.window.set_title("gcylc <" + self.suite + ">" )
+            self.window.set_title("gcylc <" + self.cfg.suite + ">" )
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(800, 500)
         self.window.connect("delete_event", self.delete_event)
 
-        self.create_main_menu()
+        self.generate_main_menu()
 
         bigbox = gtk.VBox()
         bigbox.pack_start( self.menu_bar, False )
@@ -85,14 +181,100 @@ and associated methods for their control widgets.
         hbox.pack_start( self.create_info_bar(), True )
         bigbox.pack_start( hbox, False )
 
-        bigbox.pack_start( self.get_control_widgets(), True )
+        self.notebook = gtk.Notebook()
+        self.notebook.set_tab_pos(gtk.POS_LEFT)
+        self.setup_views()
+        bigbox.pack_start( self.notebook, True )
 
         self.window.add( bigbox )
         self.window.show_all()
 
+    def _sort_views( self, v1, v2 ):
+        return ( v2 == self.DEFAULT_VIEW ) - ( v1 == self.DEFAULT_VIEW )
+
+    def setup_views( self ):
+        print "Setup views"
+        self.view_tab_containers = {}
+        keylist = self.VIEWS.keys()
+        keylist.sort()
+        keylist.sort( self._sort_views )
+        for view_name in keylist:
+            self.view_tab_containers.update( {view_name: gtk.HBox()} )
+            label_hbox = gtk.HBox()
+            im_path = self.cfg.imagedir + self.VIEW_ICON_PATHS[view_name]
+            label_image = gtk.image_new_from_file( im_path )
+            label_image.show()
+            label_hbox.pack_start(label_image, expand=False, fill=False)
+            label_hbox.label = view_name
+            tooltip = gtk.Tooltips()
+            tooltip.enable()
+            tooltip.set_tip(label_hbox, view_name)
+            self.notebook.append_page( self.view_tab_containers[view_name],
+                                       label_hbox )
+            print "Append page", view_name
+        self.notebook.set_current_page( 0 )
+        print self.notebook.get_n_pages()
+        self.current_view = None
+        self.create_view()
+        for signal in ['switch-page', 'focus-tab', 'select-page',
+                       'change-current-page']:
+            self.notebook.connect_after(signal, self.switch_view)
+
+    def switch_view( self, *args ):
+        n = self.notebook.get_current_page()
+        new_page = self.notebook.get_nth_page(n)
+        new_viewname = self.notebook.get_tab_label(new_page).label
+        if self.current_view is None or self.current_view.name == new_viewname:
+            return False
+        self.remove_view( self.current_view.name )
+        self.create_view( new_viewname )
+        return False
+
+    def create_view( self, viewname=None ):
+        if viewname is None:
+            viewname = self.DEFAULT_VIEW
+        self.current_view = self.VIEWS[viewname]( self.cfg,
+                                                  self.suiterc,
+                                                  self.info_bar,
+                                                  self.right_click_menu )
+        self.current_view.name = viewname
+        for child in self.view_tab_containers[viewname].get_children():
+            self.view_tab_containers[viewname].remove(child)
+        self.view_tab_containers[viewname].pack_start(
+                      self.current_view.get_control_widgets(),
+                      expand=True, fill=True )
+        self.generate_main_menu()
+        self.current_view.personalise_view_menu( self.view_menu )
+        self.window.show_all()
+
+    def remove_view( self, viewname ):
+        self.current_view.stop()
+        self.current_view = None
+        for child in self.view_tab_containers[viewname].get_children():
+            child.destroy()
+
+    def quit_gcapture( self ):
+        for gwindow in self.gcapture_windows:
+            if not gwindow.quit_already:
+                gwindow.quit( None, None )
+
+    def delete_event(self, widget, event, data=None):
+        self.quit_gcapture()
+        for q in self.quitters:
+            q.quit()
+        if self.current_view is not None:
+            self.current_view.stop()
+        gtk.main_quit()
+
+    def click_exit( self, foo ):
+        self.quit_gcapture()
+        if self.current_view is not None:
+            self.current_view.stop()
+        gtk.main_quit()
+
     def pause_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
             result = god.hold()
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
@@ -104,7 +286,7 @@ and associated methods for their control widgets.
 
     def resume_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
             return
@@ -182,7 +364,7 @@ and associated methods for their control widgets.
         window.destroy()
 
         try:
-            god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
             if stop:
                 result = god.shutdown()
             elif stopat:
@@ -253,7 +435,7 @@ and associated methods for their control widgets.
             options += group.get_options()
         window.destroy()
 
-        command += ' ' + options + ' ' + self.suite + ' ' + ctime
+        command += ' ' + options + ' ' + self.cfg.suite + ' ' + ctime
         if method == 'restart':
             if statedump_entry.get_text():
                 command += ' ' + statedump_entry.get_text()
@@ -265,19 +447,19 @@ and associated methods for their control widgets.
         try:
             subprocess.Popen( [command], shell=True )
         except OSError, e:
-            warning_dialog( 'Error: failed to start ' + self.suite ).warn()
+            warning_dialog( 'Error: failed to start ' + self.cfg.suite ).warn()
             success = False
 
     def unblock_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
             god.unblock()
         except SuiteIdentificationError, x:
             warning_dialog( 'ERROR: ' + str(x) ).warn()
 
     def block_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
             god.block()
         except SuiteIdentificationError, x:
             warning_dialog( 'ERROR: ' + str(x) ).warn()
@@ -299,11 +481,6 @@ The cylc forecast suite metascheduler.
         about.set_logo( gtk.gdk.pixbuf_new_from_file( self.imagedir + "/logo.png" ))
         about.run()
         about.destroy()
-
-    def delete_event(self, widget, event, data=None):
-        for q in self.quitters:
-            q.quit()
-        return False
 
     def click_exit( self, foo ):
         for q in self.quitters:
@@ -346,6 +523,30 @@ The cylc forecast suite metascheduler.
         self.gcapture_windows.append(foo)
         foo.run()
 
+    def right_click_menu( self, event, task_id ):
+        menu = gtk.Menu()
+        menu_root = gtk.MenuItem( task_id )
+        menu_root.set_submenu( menu )
+
+        title_item = gtk.MenuItem( 'Task: ' + task_id )
+        title_item.set_sensitive(False)
+        menu.append( title_item )
+        menu.append( gtk.SeparatorMenuItem() )
+
+        menu_items = self.get_right_click_menu_items( task_id )
+        for item in menu_items:
+            menu.append( item )
+
+        menu.show_all()
+        menu.popup( None, None, None, event.button, event.time )
+
+        # TO DO: popup menus are not automatically destroyed and can be
+        # reused if saved; however, we need to reconstruct or at least
+        # alter ours dynamically => should destroy after each use to
+        # prevent a memory leak? But I'm not sure how to do this as yet.)
+
+        return True
+
     def get_right_click_menu_items( self, task_id ):
         name, ctime = task_id.split('%')
 
@@ -357,7 +558,7 @@ The cylc forecast suite metascheduler.
 
         js2_item = gtk.MenuItem( 'View New Job Script' )
         items.append( js2_item )
-        js2_item.connect( 'activate', self.jobscript, self.suite, task_id )
+        js2_item.connect( 'activate', self.jobscript, self.cfg.suite, task_id )
 
         info_item = gtk.MenuItem( 'View Task Output' )
         items.append( info_item )
@@ -372,37 +573,37 @@ The cylc forecast suite metascheduler.
         trigger_now_item = gtk.MenuItem( 'Trigger' )
         items.append( trigger_now_item )
         trigger_now_item.connect( 'activate', self.trigger_task_now, task_id )
-        if self.readonly:
+        if self.cfg.readonly:
             trigger_now_item.set_sensitive(False)
 
         reset_ready_item = gtk.MenuItem( 'Reset to "ready"' )
         items.append( reset_ready_item )
         reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
-        if self.readonly:
+        if self.cfg.readonly:
             reset_ready_item.set_sensitive(False)
 
         reset_waiting_item = gtk.MenuItem( 'Reset to "waiting"' )
         items.append( reset_waiting_item )
         reset_waiting_item.connect( 'activate', self.reset_task_state, task_id, 'waiting' )
-        if self.readonly:
+        if self.cfg.readonly:
             reset_waiting_item.set_sensitive(False)
 
         reset_succeeded_item = gtk.MenuItem( 'Reset to "succeeded"' )
         items.append( reset_succeeded_item )
         reset_succeeded_item.connect( 'activate', self.reset_task_state, task_id, 'succeeded' )
-        if self.readonly:
+        if self.cfg.readonly:
             reset_succeeded_item.set_sensitive(False)
 
         reset_failed_item = gtk.MenuItem( 'Reset to "failed"' )
         items.append( reset_failed_item )
         reset_failed_item.connect( 'activate', self.reset_task_state, task_id, 'failed' )
-        if self.readonly:
+        if self.cfg.readonly:
             reset_failed_item.set_sensitive(False)
 
         spawn_item = gtk.MenuItem( 'Force spawn' )
         items.append( spawn_item )
         spawn_item.connect( 'activate', self.reset_task_state, task_id, 'spawn' )
-        if self.readonly:
+        if self.cfg.readonly:
             spawn_item.set_sensitive(False)
 
         items.append( gtk.SeparatorMenuItem() )
@@ -410,13 +611,13 @@ The cylc forecast suite metascheduler.
         stoptask_item = gtk.MenuItem( 'Hold' )
         items.append( stoptask_item )
         stoptask_item.connect( 'activate', self.hold_task, task_id, True )
-        if self.readonly:
+        if self.cfg.readonly:
             stoptask_item.set_sensitive(False)
 
         unstoptask_item = gtk.MenuItem( 'Release' )
         items.append( unstoptask_item )
         unstoptask_item.connect( 'activate', self.hold_task, task_id, False )
-        if self.readonly:
+        if self.cfg.readonly:
             unstoptask_item.set_sensitive(False)
 
         items.append( gtk.SeparatorMenuItem() )
@@ -424,19 +625,19 @@ The cylc forecast suite metascheduler.
         kill_item = gtk.MenuItem( 'Remove after spawning' )
         items.append( kill_item )
         kill_item.connect( 'activate', self.kill_task, task_id )
-        if self.readonly:
+        if self.cfg.readonly:
             kill_item.set_sensitive(False)
 
         kill_nospawn_item = gtk.MenuItem( 'Remove without spawning' )
         items.append( kill_nospawn_item )
         kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
-        if self.readonly:
+        if self.cfg.readonly:
             kill_nospawn_item.set_sensitive(False)
 
         purge_item = gtk.MenuItem( 'Remove Tree (Recursive Purge)' )
         items.append( purge_item )
         purge_item.connect( 'activate', self.popup_purge, task_id )
-        if self.readonly:
+        if self.cfg.readonly:
             purge_item.set_sensitive(False)
 
         items.append( gtk.SeparatorMenuItem() )
@@ -444,7 +645,7 @@ The cylc forecast suite metascheduler.
         addprereq_item = gtk.MenuItem( 'Add A Prerequisite' )
         items.append( addprereq_item )
         addprereq_item.connect( 'activate', self.add_prerequisite_popup, task_id )
-        if self.readonly:
+        if self.cfg.readonly:
             addprereq_item.set_sensitive(False)
 
         return items
@@ -462,7 +663,7 @@ The cylc forecast suite metascheduler.
 
         vbox = gtk.VBox()
 
-        label = gtk.Label( 'SUITE: ' + self.suite )
+        label = gtk.Label( 'SUITE: ' + self.cfg.suite )
         vbox.pack_start( label, True )
  
         entry = gtk.Entry()
@@ -506,8 +707,8 @@ The cylc forecast suite metascheduler.
                 limit = ent
         window.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.suite, self.owner,
-                self.host, self.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner,
+                self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
             return
@@ -530,7 +731,7 @@ The cylc forecast suite metascheduler.
 
         vbox = gtk.VBox()
 
-        label = gtk.Label( 'SUITE: ' + self.suite )
+        label = gtk.Label( 'SUITE: ' + self.cfg.suite )
         vbox.pack_start( label, True )
 
         label = gtk.Label( 'TASK: ' + task_id )
@@ -585,8 +786,8 @@ The cylc forecast suite metascheduler.
 
         window.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.suite, self.owner,
-                self.host, self.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner,
+                self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
             return
@@ -613,7 +814,7 @@ The cylc forecast suite metascheduler.
             # (else no tasks were found at all -suite shutting down)
             if task_id not in result:
                 warning_dialog( 
-                    "Task proxy " + task_id + " not found in " + self.suite + \
+                    "Task proxy " + task_id + " not found in " + self.cfg.suite + \
                  ".\nTasks are removed once they are no longer needed.").warn()
                 return
 
@@ -647,7 +848,7 @@ The cylc forecast suite metascheduler.
         self.update_tb( tb, 'TASK ', [bold] )
         self.update_tb( tb, task_id, [bold, blue])
         self.update_tb( tb, ' in SUITE ', [bold] )
-        self.update_tb( tb, self.suite + '\n\n', [bold, blue])
+        self.update_tb( tb, self.cfg.suite + '\n\n', [bold, blue])
 
         [ pre, out, extra_info ] = result[ task_id ]
 
@@ -722,7 +923,7 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__() ).warn()
@@ -752,7 +953,7 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__() ).warn()
@@ -778,7 +979,7 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__() ).warn()
@@ -805,7 +1006,7 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog(str(x)).warn()
             return
@@ -830,7 +1031,7 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog(str(x)).warn()
             return
@@ -844,7 +1045,7 @@ shown here in the state they were in at the time of triggering.''' )
         stop = e.get_text()
         w.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog(str(x)).warn()
             return
@@ -858,7 +1059,7 @@ shown here in the state they were in at the time of triggering.''' )
         stop = e.get_text()
         w.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog(str(x)).warn()
             return
@@ -877,7 +1078,7 @@ shown here in the state they were in at the time of triggering.''' )
 
         vbox = gtk.VBox()
 
-        flabel = gtk.Label( "SUITE: " + self.suite )
+        flabel = gtk.Label( "SUITE: " + self.cfg.suite )
         vbox.pack_start (flabel, True)
 
         flabel = gtk.Label( "Stop the suite when?" )
@@ -993,7 +1194,7 @@ shown here in the state they were in at the time of triggering.''' )
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title( "Start Suite '" + self.suite + "'")
+        window.set_title( "Start Suite '" + self.cfg.suite + "'")
 
         vbox = gtk.VBox()
 
@@ -1179,7 +1380,7 @@ shown here in the state they were in at the time of triggering.''' )
 
         vbox = gtk.VBox()
 
-        label = gtk.Label( 'SUITE: ' + self.suite )
+        label = gtk.Label( 'SUITE: ' + self.cfg.suite )
         vbox.pack_start( label, True )
  
         hbox = gtk.HBox()
@@ -1240,7 +1441,7 @@ shown here in the state they were in at the time of triggering.''' )
         else:
             stop = stoptag
         try:
-            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
             return
@@ -1252,7 +1453,7 @@ shown here in the state they were in at the time of triggering.''' )
 
     def nudge_suite( self, w ):
         try:
-            proxy = cylc_pyro_client.client( self.suite ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( str(x) ).warn()
             return False
@@ -1310,7 +1511,13 @@ shown here in the state they were in at the time of triggering.''' )
         window.show_all()
 
 
-    def create_main_menu( self ):
+    def generate_main_menu( self ):
+        if hasattr(self, "menu_bar"):
+            for child in self.menu_bar.get_children():
+                self.menu_bar.remove(child)
+        else:
+            self.menu_bar = gtk.MenuBar()
+        
         file_menu = gtk.Menu()
 
         file_menu_root = gtk.MenuItem( '_File' )
@@ -1339,49 +1546,49 @@ shown here in the state they were in at the time of triggering.''' )
         start_item = gtk.MenuItem( '_Run Suite ... ' )
         start_menu.append( start_item )
         start_item.connect( 'activate', self.startsuite_popup )
-        if self.readonly:
+        if self.cfg.readonly:
             start_item.set_sensitive(False)
 
         stop_item = gtk.MenuItem( '_Stop Suite ... ' )
         start_menu.append( stop_item )
         stop_item.connect( 'activate', self.stopsuite_popup )
-        if self.readonly:
+        if self.cfg.readonly:
             stop_item.set_sensitive(False)
 
         pause_item = gtk.MenuItem( '_Hold Suite (pause)' )
         start_menu.append( pause_item )
         pause_item.connect( 'activate', self.pause_suite )
-        if self.readonly:
+        if self.cfg.readonly:
             pause_item.set_sensitive(False)
 
         resume_item = gtk.MenuItem( '_Release Suite (unpause)' )
         start_menu.append( resume_item )
         resume_item.connect( 'activate', self.resume_suite )
-        if self.readonly:
+        if self.cfg.readonly:
             resume_item.set_sensitive(False)
 
         insert_item = gtk.MenuItem( '_Insert Task(s) ...' )
         start_menu.append( insert_item )
         insert_item.connect( 'activate', self.insert_task_popup )
-        if self.readonly:
+        if self.cfg.readonly:
             insert_item.set_sensitive(False)
 
         block_item = gtk.MenuItem( '_Block Access' )
         start_menu.append( block_item )
         block_item.connect( 'activate', self.block_suite )
-        if self.readonly:
+        if self.cfg.readonly:
             block_item.set_sensitive(False)
 
         unblock_item = gtk.MenuItem( 'U_nblock Access' )
         start_menu.append( unblock_item )
         unblock_item.connect( 'activate', self.unblock_suite )
-        if self.readonly:
+        if self.cfg.readonly:
             unblock_item.set_sensitive(False)
 
         runahead_item = gtk.MenuItem( '_Change Runahead Limit ...' )
         start_menu.append( runahead_item )
         runahead_item.connect( 'activate', self.change_runahead_popup )
-        if self.readonly:
+        if self.cfg.readonly:
             runahead_item.set_sensitive(False)
 
         help_menu = gtk.Menu()
@@ -1410,8 +1617,7 @@ shown here in the state they were in at the time of triggering.''' )
         about_item = gtk.MenuItem( '_About' )
         help_menu.append( about_item )
         about_item.connect( 'activate', self.about )
-      
-        self.menu_bar = gtk.MenuBar()
+
         self.menu_bar.append( file_menu_root )
         self.menu_bar.append( view_menu_root )
         self.menu_bar.append( start_menu_root )
@@ -1453,40 +1659,8 @@ shown here in the state they were in at the time of triggering.''' )
                 bar_item.connect( 'activate', self.command_help, category, command )
 
     def create_info_bar( self ):
-        self.label_status = gtk.Label( "status..." )
-        self.label_mode = gtk.Label( "mode..." )
-        self.label_time = gtk.Label( "time..." )
-        self.label_block = gtk.Label( "block..." )
-        self.label_suitename = gtk.Label( self.suite )
-
-        hbox = gtk.HBox()
-
-        eb = gtk.EventBox()
-        eb.add( self.label_suitename )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) )
-        hbox.pack_start( eb, True )
-
-        eb = gtk.EventBox()
-        eb.add( self.label_mode )
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
-        hbox.pack_start( eb, True )
-
-        eb = gtk.EventBox()
-        eb.add( self.label_status )
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
-        hbox.pack_start( eb, True )
-
-        eb = gtk.EventBox()
-        eb.add( self.label_time )
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) ) 
-        hbox.pack_start( eb, True )
-
-        eb = gtk.EventBox()
-        eb.add( self.label_block )
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) ) 
-        hbox.pack_start( eb, True )
-
-        return hbox
+        self.info_bar = InfoBar( self.cfg.suite )
+        return self.info_bar
 
     #def check_connection( self ):
     #    # called on a timeout in the gtk main loop, tell the log viewer
@@ -1494,7 +1668,7 @@ shown here in the state they were in at the time of triggering.''' )
     #    # which probably means the cylc suite was shutdown and
     #    # restarted.
     #    try:
-    #        cylc_pyro_client.ping( self.host, self.port )
+    #        cylc_pyro_client.ping( self.cfg.host, self.cfg.port )
     #    except Pyro.errors.ProtocolError:
     #        print "NO CONNECTION"
     #        self.connection_lost = True
@@ -1507,7 +1681,7 @@ shown here in the state they were in at the time of triggering.''' )
     #    return True
 
     def get_pyro( self, object ):
-        return cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( object )
+        return cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( object )
  
     def view_log( self, w ):
         logdir = os.path.join( self.suiterc['cylc']['logging']['directory'] )
@@ -1556,5 +1730,3 @@ shown here in the state they were in at the time of triggering.''' )
         foo = gcapture_tmpfile( command, self.tmpdir, 700, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
-
-

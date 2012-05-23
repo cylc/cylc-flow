@@ -16,7 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from SuiteControl import ControlAppBase
 import gtk
 import os, re
 import gobject
@@ -27,30 +26,26 @@ from cylc.cycle_time import ct
 from cylc.cylc_xdot import xdot_widgets
 from gcapture import gcapture_tmpfile
 
-class ControlGraph(ControlAppBase):
+class ControlGraph(object):
     """
-Dependency graph based GUI suite control interface.
+Dependency graph GUI suite control interface.
     """
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir,
-            imagedir, tmpdir, readonly=False ):
+    def __init__(self, cfg, suiterc, info_bar, right_click_menu ):
 
-        ControlAppBase.__init__(self, suite, owner, host, port,
-                suite_dir, logging_dir, imagedir, readonly=False )
+        self.cfg = cfg
+        self.suiterc = suiterc
+        self.info_bar = info_bar
+        self.right_click_menu = right_click_menu
 
-        self.userguide_item.connect( 'activate', helpwindow.userguide, True )
-
-        self.tmpdir = tmpdir
         self.gcapture_windows = []
 
-        self.x = xupdater( self.suite, self.suiterc, self.owner, self.host, self.port,
-                self.label_mode, self.label_status, self.label_time, self.label_block, self.xdot )
-        self.x.start()
-
-    def get_control_widgets(self ):
+    def get_control_widgets( self ):
         self.xdot = xdot_widgets()
         self.xdot.widget.connect( 'clicked', self.on_url_clicked )
         self.xdot.graph_disconnect_button.connect( 'toggled', self.toggle_graph_disconnect )
         self.xdot.graph_update_button.connect( 'clicked', self.graph_update )
+        self.x = xupdater( self.cfg, self.suiterc, self.info_bar, self.xdot )
+        self.x.start()
         return self.xdot.get()
 
     def toggle_graph_disconnect( self, w ):
@@ -97,13 +92,8 @@ Dependency graph based GUI suite control interface.
         #print 'LIVE TASK'
         self.right_click_menu( event, url, type='live task' )
 
-    def delete_event(self, widget, event, data=None):
+    def stop(self):
         self.x.quit = True
-        return ControlAppBase.delete_event(self, widget, event, data )
-
-    def click_exit( self, foo ):
-        self.x.quit = True
-        return ControlAppBase.click_exit(self, foo )
 
     def right_click_menu( self, event, task_id, type='live task' ):
         name, ctime = task_id.split('%')
@@ -220,35 +210,34 @@ Dependency graph based GUI suite control interface.
             col.set_sort_order(gtk.SORT_ASCENDING)
         self.ttreestore.set_sort_column_id(n, col.get_sort_order()) 
 
-    def create_main_menu( self ):
-        ControlAppBase.create_main_menu(self)
-
+    def personalise_view_menu( self, view_menu ):
+        
         graph_range_item = gtk.MenuItem( 'Time Range Focus ...' )
-        self.view_menu.append( graph_range_item )
+        view_menu.append( graph_range_item )
         graph_range_item.connect( 'activate', self.graph_timezoom_popup )
 
         crop_item = gtk.MenuItem( 'Toggle _Crop Base Graph' )
-        self.view_menu.append( crop_item )
+        view_menu.append( crop_item )
         crop_item.connect( 'activate', self.toggle_crop )
 
         filter_item = gtk.MenuItem( 'Task _Filtering ...' )
-        self.view_menu.append( filter_item )
+        view_menu.append( filter_item )
         filter_item.connect( 'activate', self.filter_popup )
 
         expand_item = gtk.MenuItem( '_Expand All Subtrees' )
-        self.view_menu.append( expand_item )
+        view_menu.append( expand_item )
         expand_item.connect( 'activate', self.expand_all_subtrees )
 
         group_item = gtk.MenuItem( '_Group All Families' )
-        self.view_menu.append( group_item )
+        view_menu.append( group_item )
         group_item.connect( 'activate', self.group_all_families, True )
 
         ungroup_item = gtk.MenuItem( '_UnGroup All Families' )
-        self.view_menu.append( ungroup_item )
+        view_menu.append( ungroup_item )
         ungroup_item.connect( 'activate', self.group_all_families, False )
 
         key_item = gtk.MenuItem( 'Toggle Graph _Key' )
-        self.view_menu.append( key_item )
+        view_menu.append( key_item )
         key_item.connect( 'activate', self.toggle_key )
 
     def group_all_families( self, w, group ):
@@ -506,27 +495,3 @@ Dependency graph based GUI suite control interface.
         self.x.stop_ctime = bar.get()
         self.x.best_fit = True
         self.x.action_required = True
-
-class StandaloneControlGraphApp( ControlGraph ):
-    # For a ControlApp not launched by the gcylc main app: 
-    # 1/ call gobject.threads_init() on startup
-    # 2/ call gtk.main_quit() on exit
-
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
-        gobject.threads_init()
-        ControlGraph.__init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly )
- 
-    def quit_gcapture( self ):
-        for gwindow in self.gcapture_windows:
-            if not gwindow.quit_already:
-                gwindow.quit( None, None )
-
-    def delete_event(self, widget, event, data=None):
-        self.quit_gcapture()
-        ControlGraph.delete_event( self, widget, event, data )
-        gtk.main_quit()
-
-    def click_exit( self, foo ):
-        self.quit_gcapture()
-        ControlGraph.click_exit( self, foo )
-        gtk.main_quit()

@@ -35,6 +35,7 @@ except Exception, x:
 from cylc import port_scan
 from cylc.passphrase import passphrase
 from cylc.gui.gcylc import MainApp
+from cylc.gui.SuiteControl import ControlApp
 from cylc.config import config, SuiteConfigError
 from cylc.registration import dbgetter, RegistrationError
 
@@ -87,6 +88,7 @@ if len(args) != 0 and len(args) != 1:
     parser.error( "Wrong number of arguments" )
 
 imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
+print imagedir
 
 #host = options.host
 host = hostname
@@ -142,10 +144,5 @@ senv = conf['cylc']['environment']
 for var in senv:
     os.environ[var] = os.path.expandvars(senv[var])
 
-if options.depgraph:
-    from cylc.gui.SuiteControlGraph import StandaloneControlGraphApp
-    app = StandaloneControlGraphApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir )
-else:
-    from cylc.gui.SuiteControlTree import StandaloneControlTreeApp
-    app = StandaloneControlTreeApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir )
+app = ControlApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir )
 gtk.main()
