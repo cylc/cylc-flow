@@ -320,10 +320,10 @@ class remote_switch( Pyro.core.ObjBase ):
         return ( self.config['visualization']['enable live graph movie'],
                  self.config['visualization']['run time graph']['directory'] ) 
 
-    def get_graph( self, cto, ctn, colored, raw, group_nodes,
-                ungroup_nodes, ungroup_recursive, group_all, ungroup_all ):
-        return self.config.get_graph( cto, ctn, colored, raw,
-                group_nodes, ungroup_nodes, ungroup_recursive, group_all, ungroup_all)
+    def get_graph_raw( self, cto, ctn, raw, group_nodes, ungroup_nodes,
+            ungroup_recursive, group_all, ungroup_all ):
+        return self.config.get_graph_raw( cto, ctn, raw, group_nodes,
+                ungroup_nodes, ungroup_recursive, group_all, ungroup_all)
 
     def get_task_requisites( self, in_ids ):
         self.log.info( "servicing task state info request")

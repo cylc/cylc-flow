@@ -21,6 +21,7 @@ import gobject
 import time
 import threading
 from cylc import cylc_pyro_client
+from cylc import graphing
 import gtk
 import pygtk
 from cylc.cycle_time import ct
@@ -372,11 +373,35 @@ class xupdater(threading.Thread):
 
         # TO DO: mv ct().get() out of this call (for error checking):
         # TO DO: remote connection exception handling?
-        self.graphw = self.remote.get_graph( ct(oldest).get(), ct(newest).get(),
-                colored=False, raw=rawx, group_nodes=self.group,
-                ungroup_nodes=self.ungroup,
+        gr_edges = self.remote.get_graph_raw( ct(oldest).get(), ct(newest).get(),
+                raw=rawx, group_nodes=self.group, ungroup_nodes=self.ungroup,
                 ungroup_recursive=self.ungroup_recursive, 
                 group_all=self.group_all, ungroup_all=self.ungroup_all) 
+
+        # Get a graph object
+        self.graphw = graphing.CGraphPlain( self.suite )
+
+        # sort and then add edges in the hope that edges added in the
+        # same order each time will result in the graph layout not
+        # jumping around (does this help? -if not discard)
+        gr_edges.sort()
+        for e in gr_edges:
+            l, r, dashed, suicide, conditional = e
+            style=None
+            arrowhead='normal'
+            if dashed:
+                style='dashed'
+            if suicide:
+                style='dashed'
+                arrowhead='dot'
+            if conditional:
+                arrowhead='onormal'
+            self.graphw.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead )
+
+        for n in self.graphw.nodes():
+            n.attr['style'] = 'filled'
+            n.attr['fillcolor'] = 'cornsilk'
+
         self.group = []
         self.ungroup = []
         self.group_all = False

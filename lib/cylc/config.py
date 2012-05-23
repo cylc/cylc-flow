@@ -1242,11 +1242,11 @@ class config( CylcConfigObj ):
         expr = re.sub( '[-\[\]:]', '_', lexpression )
         self.taskdefs[right].add_conditional_trigger( ctrig, expr, cycler )
 
-    def get_graph( self, start_ctime, stop, colored=True, raw=False,
+    def get_graph_raw( self, start_ctime, stop, raw=False,
             group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
             group_all=False, ungroup_all=False ):
         """Convert the abstract graph edges held in self.edges (etc.) to
-        actual graphviz edges for a concrete range of cycle times."""
+        actual edges for a concrete range of cycle times."""
 
         if group_all:
             # Group all family nodes
@@ -1274,15 +1274,6 @@ class config( CylcConfigObj ):
                         if fam in self.members[node]:
                             self.closed_families.remove(fam)
 
-        # Get a graph object
-        if colored:
-            graph = graphing.CGraph( self.suite, self['visualization'] )
-        else:
-            graph = graphing.CGraphPlain( self.suite )
-
-        startup_exclude_list = self.get_coldstart_task_list() + \
-                self.get_startup_task_list()
-
         # Now define the concrete graph edges (pairs of nodes) for plotting.
         gr_edges = []
 
@@ -1306,6 +1297,9 @@ class config( CylcConfigObj ):
             actual_first_ctime = adjusted[0]
         else:
             actual_first_ctime = start_ctime
+
+        startup_exclude_list = self.get_coldstart_task_list() + \
+                self.get_startup_task_list()
 
         for e in self.edges:
             # Get initial cycle time for this cycler
@@ -1344,7 +1338,30 @@ class config( CylcConfigObj ):
 
                 # increment the cycle time
                 ctime = e.cyclr.next( ctime )
-            
+
+        return gr_edges
+ 
+    def get_graph( self, start_ctime, stop, colored=True, raw=False,
+            group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
+            group_all=False, ungroup_all=False ):
+
+        # TO DO: this method could be put in the graphing module? It is
+        # currently duplicated in xstateview.py.
+
+        # get_graph_raw is factored out here because the graph control
+        # GUI has to retrieve the raw graph, because the PyGraphviz 
+        # graph object does not seem to be serializable (pickle error)
+        # for Pyro.
+        gr_edges = self.get_graph_raw( start_ctime, stop, raw,
+                group_nodes, ungroup_nodes, ungroup_recursive,
+                group_all, ungroup_all )
+
+        # Get a graph object
+        if colored:
+            graph = graphing.CGraph( self.suite, self['visualization'] )
+        else:
+            graph = graphing.CGraphPlain( self.suite )
+
         # sort and then add edges in the hope that edges added in the
         # same order each time will result in the graph layout not
         # jumping around (does this help? -if not discard)

@@ -1,4 +1,6 @@
-Converting the graph control GUI to get the graph structure from the
-suite instead of from the config file: need to get the raw graph
-structure and load the PyGraphviz CGraph in the GUI code because it is
-not serializable?
+The graph control GUI now gets the graph structure from the suite, via
+Pyro, instead of from a local config file parsed when the GUI starts up. 
+Will this be a performance hit (either for the GUI or the suite) in
+large suites?  If so, we could optionally allow the old method with 
+the proviso that it would not work for remote controlled suites.
+
