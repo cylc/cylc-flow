@@ -64,7 +64,11 @@ Arguments:
         self.add_option( "--debug",
                 help="Turn on exception tracebacks.",
                 action="store_true", default=False, dest="debug" )
-    
+
+        self.add_option( "--passphrase",
+                help="Suite passphrase file location",
+                action="store", dest="pfile" )
+
     def parse_args( self ):
         (options, args) = OptionParser.parse_args( self )
 
@@ -80,7 +84,6 @@ Arguments:
 
     def get_suite_name( self ):
        return self.suite_name
-
 
 class PromptOptionParser( NoPromptOptionParser ):
 

@@ -359,7 +359,7 @@ class regdb(object):
         else:
             target = alias
         return target
-         
+
     def get_invalid( self ):
         invalid = []
         for reg in self.items:

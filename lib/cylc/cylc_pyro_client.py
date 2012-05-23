@@ -25,15 +25,19 @@ from passphrase import passphrase, PassphraseNotFoundError, SecurityError
 from port_scan import get_port, check_port
 
 class client( object ):
-    def __init__( self, suite, owner=os.environ['USER'], host=hostname, port=None ):
+    def __init__( self, suite, owner=os.environ['USER'], host=hostname, pfile=None, port=None ):
         self.suite = suite
         self.owner = owner
         self.host = host
         self.port = port
-        try:
-            self.passphrase = passphrase( suite ).get()
-        except SecurityError,x:
-            raise SystemExit, "ERROR: secure passphrase problem for suite " + suite
+        if pfile:
+           self.passphrase = passphrase( suite, pfile ).get()
+        else:
+            try:
+                self.passphrase = passphrase( suite ).get()
+            except SecurityError,x:
+                print >> sys.stderr, x
+                raise SystemExit, "ERROR: secure passphrase problem for suite " + suite
 
     def get_proxy( self, target ):
         # callers need to check for port_scan.SuiteIdentificationError:

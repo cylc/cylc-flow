@@ -407,7 +407,7 @@ class scheduler(object):
         #DISABLED else:
         suitename = self.suite
         try:
-            self.pyro = pyro_server( suitename, use_passphrase=self.config['cylc']['use secure passphrase'] )
+            self.pyro = pyro_server( suitename, use_passphrase=True )
         except SecurityError, x:
             print >> sys.stderr, 'SECURITY ERROR (secure passphrase problem)'
             raise SystemExit( str(x) )

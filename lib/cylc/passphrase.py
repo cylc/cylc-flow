@@ -41,28 +41,28 @@ def get_filename( suite, dir=None, create=False ):
     # Finally, for commands and GUI users can specify the passphrase location
     # manually on the command line, which results in exporting
     # $CYLC_SUITE_DEF_DIRECTORY as if in a task execution environment.
+    print suite, dir, create
 
     preferred = None 
     location = None
     if dir:
-        preferred = os.path.join( dir, 'passphrase' )
+        if not dir.endswith('passphrase'):
+            preferred = os.path.join( dir, 'passphrase' )
+        else:
+            preferred = dir
     else:
         try:
-            preferred = os.path.join( os.environ['CYLC_SUITE_DEF_DIRECTORY'], 'passphrase' )
+            preferred = os.path.join( os.environ['CYLC_SUITE_DEF_PATH'], 'passphrase' )
         except KeyError:
             pass
 
     if preferred:
-        # does the file exist in the preferred location?
-        if os.path.is_file( preferred ):
+        if os.path.isfile( preferred ) or create:
             location = preferred
-        else:
-            # Otherwise here:
-            other = os.path.join( os.environ['HOME'], '.cylc', suite, 'passphrase' )
-            if os.path.is_file( other ):
-                location = other
+    if not location:
+        location = os.path.join( os.environ['HOME'], '.cylc', suite, 'passphrase' )
 
-    if not location and create:
+    if not os.path.isfile( location ) and create:
         char_set = string.ascii_uppercase + string.ascii_lowercase + string.digits
         pphrase = ''.join(random.sample(char_set,20))
         mkdir_p( os.path.dirname( location ))
@@ -103,9 +103,9 @@ class InvalidPassphraseError( SecurityError ):
     pass
 
 class passphrase(object):
-    def __init__( self, suite ):
+    def __init__( self, suite, pfile=None ):
 
-        file = get_filename( suite )
+        file = get_filename( suite, pfile )
 
         if not os.path.isfile( file ):
             raise PassphraseNotFoundError, 'File not found: ' + file

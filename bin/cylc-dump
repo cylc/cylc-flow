@@ -74,7 +74,7 @@ if options.tasks_only:
     display_global = False
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner, host=options.host ).get_proxy( 'state_summary' )
+    proxy = cylc_pyro_client.client( suite, owner=options.owner, host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 
@@ -110,7 +110,7 @@ if display_tasks:
     #print 'TASK INFORMATION'
     task_ids = states.keys()
     #task_ids.sort()
- 
+
     for id in task_ids:
         name  = states[ id ][ 'name' ]
         label = states[ id ][ 'label' ]
@@ -126,14 +126,13 @@ if display_tasks:
         else:
             line = name + ', ' + label + ', '
 
-        line += state + ', ' + spawned 
+        line += state + ', ' + spawned
 
         if 'asyncid' in states[id]:
-            line += ', ' + states[id]['asyncid'] 
+            line += ', ' + states[id]['asyncid']
 
         lines.append( line )
 
     lines.sort()
     for line in lines:
         print line
-     
