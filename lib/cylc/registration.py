@@ -23,10 +23,7 @@ from version import compat
 from conf.CylcGlobals import central_regdb_dir, local_regdb_dir
 import config
 from regpath import RegPath
-import random
-import string
 import passphrase
-from mkdir_p import mkdir_p
 
 # NOTE:ABSPATH (see below)
 #   dir = os.path.abspath( dir )
@@ -265,15 +262,8 @@ class regdb(object):
         title = title.split('\n')[0]
         self.items[suite] = dir, title
 
-        # generate a random passphrase.
-        char_set = string.ascii_uppercase + string.ascii_lowercase + string.digits
-        pphrase = ''.join(random.sample(char_set,20))
-        pfile = passphrase.get_filename( suite )
-        mkdir_p( os.path.dirname( pfile ))
-        f = open(pfile, 'w')
-        f.write(pphrase)
-        os.chmod( pfile, 0600 )
-        f.close()
+        # find or generate a random passphrase if necessary
+        passphrase.get_filename( suite, dir, create=True )
 
     def get( self, reg ):
         suite = self.unalias(reg)

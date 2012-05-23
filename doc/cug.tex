@@ -4744,6 +4744,19 @@ limited to 2 and 3 tasks respectively:
 Note assignment of runtime task family members to queues using the
 family name.
 
+\subsection[Suite Security]{Suite Security and Secure Passphrases}
+
+Cylc now restricts access to running suites to host accounts holding a special
+passphrase with secure permissions (as for ssh keys).  Remote task host
+accounts, and any accounts used to remotely control a suite via cylc commands
+or GUI, must all use the same passphrase.  The passphrase itself is never
+transferred across the network (a secure MD5 checksum is). This should 
+guarantee suite security so long as your user accounts aren't breached. 
+
+A random passphrase is generated automatically when you register the suite; it
+must then be distributed to any remote task or remote control hosts that will
+need to connect to the running suite.
+
 \subsection{Other Topics In Brief}
 
 The following topics have yet to be documented in detail.
@@ -4762,10 +4775,6 @@ The following topics have yet to be documented in detail.
     \item Understanding suite evolution, particularly in delayed/catchup
         operation: the {\em Quick Start Guide} helps here, along with
         playing with example suites.
-
-    \item Suite security (encrypted passphrases): see documentation of the {\em
-use secure passphrase} configuration item in the {\em Suite.rc Reference},
-        Appendix~\ref{SuiteRCReference}.
 
     \item Automatic state dump backups, named pre-intervention state dumps:
         these are used to resetart a suite from a previous state of operation.

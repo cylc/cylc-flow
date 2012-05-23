@@ -70,22 +70,6 @@ created by copying real suites out of their normal operating environment.
     \item {\em default:} False
 \end{myitemize}
 
-\subsubsection[use secure passphrase]{ [cylc] $\rightarrow$ use secure passphrase}
-
-Cylc now restricts access to running suites to host accounts holding a special
-passphrase (the same one used by the suite owner at startup) with secure
-permissions (as for ssh keys) in the file
-\lstinline=$HOME/.cylc/$CYLC_SUITE_REG_NAME/passphrase=.  Remote task host
-accounts, and any accounts used to remotely control a suite via cylc commands
-or GUI, must all use the same passphrase.  The passphrase itself is never
-transferred across the network (a secure MD5 checksum is). This should 
-guarantee suite security so long as your user accounts aren't breached. 
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} False
-\end{myitemize}
-
 \subsubsection[{[[}logging{]]} ]{[cylc] $\rightarrow$ [[logging]]}
 
 This section configures cylc's logging functionality, which records

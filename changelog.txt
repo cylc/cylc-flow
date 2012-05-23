@@ -688,4 +688,10 @@ removed following Jinja2 processing, to prevent this problem occuring.
 
 + Fixed a bug in the "cylc show" command for retrieving live task info.
 
++ Complete remote control of suites has been enabled, along with compulsory 
+  use of secure passphrases. The "use secure passphrase" suite configuration
+  item is now gone.  A random passphrase is generated automatically in the 
+  suite definition directory when a suite is registered.  This must be 
+  distributed to any remote task hosts, or any remote control hosts from 
+  which you need to connect to the suite.
 

@@ -38,7 +38,6 @@ description = string( default="No description provided" )
 [cylc]
     UTC mode = boolean( default=False )
     simulation mode only = boolean( default=False )
-    use secure passphrase = boolean( default=True )
     [[logging]]
         directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite' )
         roll over at start-up = boolean( default=True )

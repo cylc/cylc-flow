@@ -18,14 +18,72 @@
 
 import os, re
 from stat import *
+import random
+import string
+from mkdir_p import mkdir_p
 
-def get_filename( suite ):
-    return os.path.join( os.environ['HOME'], '.cylc', suite, 'passphrase' )
+def get_filename( suite, dir=None, create=False ):
+
+    # dir can be passed in as the known suite def location, or via manual spec
+    # on the command line.
+
+    # The preferred passphrase file location is the suite definition
+    # directory, because suite deployment systems such as Rose can
+    # automatically install suites to remote task hosts.
+
+    # Remote tasks can determine this location from their execution environments.
+
+    # Note that we can only use the the registration database to determine the
+    # suite definition directory location when $USER and $HOST are equal to the
+    # suite owner and suite host. Otherwise finding the same registration name
+    # could be a coincidence rather than indicating a shared filesystem.
+
+    # Finally, for commands and GUI users can specify the passphrase location
+    # manually on the command line, which results in exporting
+    # $CYLC_SUITE_DEF_DIRECTORY as if in a task execution environment.
+
+    preferred = None 
+    location = None
+    if dir:
+        preferred = os.path.join( dir, 'passphrase' )
+    else:
+        try:
+            preferred = os.path.join( os.environ['CYLC_SUITE_DEF_DIRECTORY'], 'passphrase' )
+        except KeyError:
+            pass
+
+    if preferred:
+        # does the file exist in the preferred location?
+        if os.path.is_file( preferred ):
+            location = preferred
+        else:
+            # Otherwise here:
+            other = os.path.join( os.environ['HOME'], '.cylc', suite, 'passphrase' )
+            if os.path.is_file( other ):
+                location = other
+
+    if not location and create:
+        char_set = string.ascii_uppercase + string.ascii_lowercase + string.digits
+        pphrase = ''.join(random.sample(char_set,20))
+        mkdir_p( os.path.dirname( location ))
+        f = open(location, 'w')
+        f.write(pphrase)
+        f.close()
+        print "A new random passphrase file has been generated for your suite:"
+        print  location, """
+It must be distributed to any local or remote task hosting user accounts, and to
+any user account from which you intend to use cylc commands or GUIs to connect
+to the running suite.  It may be held in either of the following locations...
+"""
+        # set passphrase file permissions to owner-only
+        os.chmod( location, 0600 )
+
+    return location
 
 class SecurityError( Exception ):
     """
     Attributes:
-        message - what the problem is. 
+        message - what the problem is.
     """
     def __init__( self, msg ):
         self.msg = msg
@@ -47,7 +105,7 @@ class InvalidPassphraseError( SecurityError ):
 class passphrase(object):
     def __init__( self, suite ):
 
-        file = get_filename( suite ) 
+        file = get_filename( suite )
 
         if not os.path.isfile( file ):
             raise PassphraseNotFoundError, 'File not found: ' + file
