@@ -39,7 +39,6 @@ except Exception, x:
     raise SystemExit('ERROR: Pyro is not installed (or not accessible)')
 
 from cylc import port_scan
-from cylc.passphrase import passphrase
 from cylc.gui.gcylc import MainApp
 from cylc.config import config, SuiteConfigError
 from cylc.registration import dbgetter, RegistrationError

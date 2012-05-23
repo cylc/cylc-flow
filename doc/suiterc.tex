@@ -3,15 +3,13 @@
 
 \lstset{language=bash}
 
-This appendix documents the legal content of raw cylc suite.rc files.
-Most suites will only need to explicitly configure a few of these items
-- many have sensible default values, some may only be needed for
-critical operational suites (e.g.\ secure passphrases and lock server
-settings), and some are primarily used for cylc development.
+This appendix documents legal content of raw cylc suite.rc files.
+Many items have sensible default values, and most suites may only need to
+explicitly configure a few of them.
 
-In addition to the raw syntax, Jinja2 expressions can also be embedded
-to programmatically generate the final suite definition seen by cylc.
-Use of Jinja2 is documented in Section~\ref{Jinja2}.
+In addition to the configuration items described below, Jinja2 expressions can
+also be embedded to programmatically generate the final suite definition seen
+by cylc.  Use of Jinja2 is documented in Section~\ref{Jinja2}.
 
 See also {\em Suite Definition - Suite.rc Overview}
 (Section~\ref{SuiteRCFile}) for a descriptive overview of suite.rc
@@ -74,17 +72,14 @@ created by copying real suites out of their normal operating environment.
 
 \subsubsection[use secure passphrase]{ [cylc] $\rightarrow$ use secure passphrase}
 
-Critical operational suites can be made to ignore commands unless the
-originating user account has a special passphrase (the same one used 
-by the suite owner at startup) with secure permissions (as for ssh keys)
-in the file \lstinline=$HOME/.cylc/security/$CYLC_SUITE_REG_NAME=
-(remotely hosted tasks also need the passphrase in their host accounts). 
-The passphrase itself is never transferred across the network (a secure
-MD5 checksum is). Note that cylc's normal owner-only suite access is
-implemented by means of a simple username comparison, which could in
-principle be subverted by a malicious user copying and modifying the 
-cylc code base. Secure passphrases, on the other hand, should guarantee
-suite security so long as your user accounts aren't breached. 
+Cylc now restricts access to running suites to host accounts holding a special
+passphrase (the same one used by the suite owner at startup) with secure
+permissions (as for ssh keys) in the file
+\lstinline=$HOME/.cylc/$CYLC_SUITE_REG_NAME/passphrase=.  Remote task host
+accounts, and any accounts used to remotely control a suite via cylc commands
+or GUI, must all use the same passphrase.  The passphrase itself is never
+transferred across the network (a secure MD5 checksum is). This should 
+guarantee suite security so long as your user accounts aren't breached. 
 
 \begin{myitemize}
     \item {\em type:} boolean

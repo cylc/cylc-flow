@@ -19,6 +19,9 @@
 import os, re
 from stat import *
 
+def get_filename( suite ):
+    return os.path.join( os.environ['HOME'], '.cylc', suite, 'passphrase' )
+
 class SecurityError( Exception ):
     """
     Attributes:
@@ -41,10 +44,10 @@ class InsecurePassphraseError( SecurityError ):
 class InvalidPassphraseError( SecurityError ):
     pass
 
-class passphrase:
+class passphrase(object):
     def __init__( self, suite ):
 
-        file = os.path.join( os.environ['HOME'], '.cylc', 'security', suite )
+        file = get_filename( suite ) 
 
         if not os.path.isfile( file ):
             raise PassphraseNotFoundError, 'File not found: ' + file
@@ -68,6 +71,6 @@ class passphrase:
         line0 = lines[0]
         # chomp trailing whitespace and newline
         self.passphrase = re.sub( '\s*\n', '', line0 )
-        
+
     def get( self ):
         return self.passphrase

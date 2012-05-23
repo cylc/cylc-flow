@@ -30,17 +30,10 @@ class client( object ):
         self.owner = owner
         self.host = host
         self.port = port
-
-        self.passphrase = None
         try:
             self.passphrase = passphrase( suite ).get()
-        except PassphraseNotFoundError:
-            # assume this means the suite requires no passphrase
-            pass
         except SecurityError,x:
-            print >> sys.stderr, "WARNING: There is a problem with the secure passphrase for suite " + suite + ":"
-            print >> sys.stderr, x
-            print >> sys.stderr, "Continuing, but access will be denied if the suite requires a passphrase."
+            raise SystemExit, "ERROR: secure passphrase problem for suite " + suite
 
     def get_proxy( self, target ):
         # callers need to check for port_scan.SuiteIdentificationError:
