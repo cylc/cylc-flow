@@ -23,26 +23,35 @@ import string
 from mkdir_p import mkdir_p
 
 def get_filename( suite, dir=None, create=False ):
+    """
+Passphrase location, order of preference:
 
-    # dir can be passed in as the known suite def location, or via manual spec
-    # on the command line.
+1/ The dir argument (this is used for initial passphrase creation by the
+register command, and if the user specifies the location on the command
+line.
 
-    # The preferred passphrase file location is the suite definition
-    # directory, because suite deployment systems such as Rose can
-    # automatically install suites to remote task hosts.
+2/ The suite definition directory, because suites may be automatically
+installed (e.g. by Rose) to remote task hosts, and remote tasks know
+this location from their execution environment. Local user command
+invocations can use the suite registration database to find the suite
+definition directory.  HOWEVER, remote user command invocations cannot
+do this even if the local and remote hosts share a common filesystem,
+because we cannot be sure if finding the expected suite registration
+implies a common filesystem or a different remote suite that happens to
+be registered under the same name. User accounts used for remote control
+must therefore install the passphrase in the secondary standard location
+(below) or use the command line option to explicitly reveal the
+location.
 
-    # Remote tasks can determine this location from their execution environments.
+3/ $HOME/.cylc/SUITE/; this is a more sensible location for enabling
+remote suite control from accounts that do not actually need the suite
+definition directory to be installed.
 
-    # Note that we can only use the the registration database to determine the
-    # suite definition directory location when $USER and $HOST are equal to the
-    # suite owner and suite host. Otherwise finding the same registration name
-    # could be a coincidence rather than indicating a shared filesystem.
-
-    # Finally, for commands and GUI users can specify the passphrase location
-    # manually on the command line, which results in exporting
-    # $CYLC_SUITE_DEF_DIRECTORY as if in a task execution environment.
-    print suite, dir, create
-
+So... if locations 1 and/or 2 are known, they will be checked first. If
+not known, or if a passphrase is not found there, the secondary location
+will be checked.
+    """
+# TO DO: IMPLEMENT THE ABOVE LOCATION LOGIC BELOW!
     preferred = None 
     location = None
     if dir:
@@ -69,11 +78,20 @@ def get_filename( suite, dir=None, create=False ):
         f = open(location, 'w')
         f.write(pphrase)
         f.close()
-        print "A new random passphrase file has been generated for your suite:"
-        print  location, """
-It must be distributed to any local or remote task hosting user accounts, and to
-any user account from which you intend to use cylc commands or GUIs to connect
-to the running suite.  It may be held in either of the following locations...
+        print """
+________________________________________________________________________
+A new random passphrase has been generated for this suite:\n   """, location, """
+It must be distributed to any other user accounts (local or remote)
+that host this suite's tasks, and similarly to any user accounts from
+which cylc commands will be used to connect to the running suite. 
+
+Cylc's remote task messaging commands will look for the passphrase at 
+$CYLC_SUITE_DEF_PATH/passphrase; if not found there (e.g. if the suite
+definition is not installed on a remote task host) they will look in
+$HOME/.cylc/SUITE/passphrase. You may also use the latter location 
+for remote suite control (in which case the suite definition directory
+will not be known) or you can specify the location on the commandline.
+------------------------------------------------------------------------
 """
         # set passphrase file permissions to owner-only
         os.chmod( location, 0600 )

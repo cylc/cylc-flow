@@ -409,7 +409,7 @@ class scheduler(object):
         try:
             self.pyro = pyro_server( suitename, use_passphrase=True )
         except SecurityError, x:
-            print >> sys.stderr, 'SECURITY ERROR (secure passphrase problem)'
+            print >> sys.stderr, 'ERROR: secure passphrase problem'
             raise SystemExit( str(x) )
         self.port = self.pyro.get_port()
         self.banner[ 'PORT' ] = self.port
