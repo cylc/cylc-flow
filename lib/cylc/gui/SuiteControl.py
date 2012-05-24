@@ -71,16 +71,28 @@ Class to create an information bar.
     def __init__( self, suite ):
         super(InfoBar, self).__init__()
 
-        self.label_status = gtk.Label( "status..." )
-        self.label_mode = gtk.Label( "mode..." )
-        self.label_time = gtk.Label( "time..." )
-        self.label_block = gtk.Label( "block..." )
-        self.label_suitename = gtk.Label( suite )
+        self._status = "status..."
+        self.label_status = gtk.Label()
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip( self.label_status, "status" )
 
-        eb = gtk.EventBox()
-        eb.add( self.label_suitename )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) )
-        self.pack_start( eb, True )
+        self._mode = "mode..."
+        self.label_mode = gtk.Label()
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip( self.label_mode, "mode" )
+
+        self._time = "time..."
+        self.label_time = gtk.Label()
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip( self.label_time, "last update time" )
+
+        self._block = "access..."
+        self.label_block = gtk.image_new_from_stock( gtk.STOCK_DIALOG_QUESTION,
+                                                     gtk.ICON_SIZE_SMALL_TOOLBAR )
+
 
         eb = gtk.EventBox()
         eb.add( self.label_mode )
@@ -100,20 +112,38 @@ Class to create an information bar.
         eb = gtk.EventBox()
         eb.add( self.label_block )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) ) 
-        self.pack_start( eb, True )
+        self.pack_end( eb, False )
 
     def set_block( self, block ):
-        self.label_block.set_text(block)
-        if block == 'access:\nblocked':
-            self.label_block.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
-        else:
-            self.label_block.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
+        if block == self._block:
+            return False
+        self._block = block
+        if "unblocked" in block:
+            self.label_block.set_from_stock( gtk.STOCK_DIALOG_AUTHENTICATION,
+                                             gtk.ICON_SIZE_SMALL_TOOLBAR )
+        elif "blocked" in block:
+            self.label_block.set_from_stock( gtk.STOCK_DIALOG_ERROR,
+                                             gtk.ICON_SIZE_SMALL_TOOLBAR )
+        elif "waiting" in block:
+            self.label_block.set_from_stock( gtk.STOCK_DIALOG_QUESTION,
+                                             gtk.ICON_SIZE_SMALL_TOOLBAR )
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(self.label_block, self._block)
 
     def set_mode(self, mode):
-        self.label_mode.set_text(mode)
+        text = mode.replace( "mode:", "" ).strip()
+        if text == self._mode:
+            return False
+        self._mode = text
+        self.label_mode.set_text( self._mode )
 
     def set_status(self, status):
-        self.label_status.set_text( status )
+        text = status.replace( "status:", "" ).strip()
+        if text == self._status:
+            return False
+        self._status = text
+        self.label_status.set_text( self._status )
         if re.search( 'STOPPED', status ):
             self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
         elif re.search( 'STOP', status ):  # stopping
@@ -124,7 +154,11 @@ Class to create an information bar.
             self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
 
     def set_time(self, time):
-        self.label_time.set_text( time )
+        text = time.replace("state last updated at:", "").strip() 
+        if text == self._time:
+            return False
+        self._time = text
+        self.label_time.set_text( self._time )
 
 
 class ControlApp(object):
@@ -156,7 +190,9 @@ and associated methods for their control widgets.
         self.sim_only=False
         if self.suiterc['cylc']['simulation mode only']:
             self.sim_only=True
- 
+
+        self.view_layout_horizontal = False
+
         self.connection_lost = False # (not used)
         self.quitters = []
         self.gcapture_windows = []
@@ -176,15 +212,18 @@ and associated methods for their control widgets.
 
         bigbox = gtk.VBox()
         bigbox.pack_start( self.menu_bar, False )
-        hbox = gtk.HBox()
 
-        hbox.pack_start( self.create_info_bar(), True )
-        bigbox.pack_start( hbox, False )
+        self.generate_tool_bar()
+        bigbox.pack_start( self.tool_bar, False )
+        self.create_info_bar()
 
-        self.notebook = gtk.Notebook()
-        self.notebook.set_tab_pos(gtk.POS_LEFT)
+        self.views_parent = gtk.VBox()
+        bigbox.pack_start( self.views_parent, True )
         self.setup_views()
-        bigbox.pack_start( self.notebook, True )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( self.info_bar, True )
+        bigbox.pack_start( hbox, False )
 
         self.window.add( bigbox )
         self.window.show_all()
@@ -193,64 +232,136 @@ and associated methods for their control widgets.
         return ( v2 == self.DEFAULT_VIEW ) - ( v1 == self.DEFAULT_VIEW )
 
     def setup_views( self ):
-        print "Setup views"
-        self.view_tab_containers = {}
-        keylist = self.VIEWS.keys()
-        keylist.sort()
-        keylist.sort( self._sort_views )
-        for view_name in keylist:
-            self.view_tab_containers.update( {view_name: gtk.HBox()} )
-            label_hbox = gtk.HBox()
-            im_path = self.cfg.imagedir + self.VIEW_ICON_PATHS[view_name]
-            label_image = gtk.image_new_from_file( im_path )
-            label_image.show()
-            label_hbox.pack_start(label_image, expand=False, fill=False)
-            label_hbox.label = view_name
-            tooltip = gtk.Tooltips()
-            tooltip.enable()
-            tooltip.set_tip(label_hbox, view_name)
-            self.notebook.append_page( self.view_tab_containers[view_name],
-                                       label_hbox )
-            print "Append page", view_name
-        self.notebook.set_current_page( 0 )
-        print self.notebook.get_n_pages()
-        self.current_view = None
+        num_views = 2
+        self.view_containers = []
+        self.current_views = []
+        self.current_view_menuitems = []
+        self.current_view_toolitems = []
+        for i in range(num_views):
+            self.view_containers.append(gtk.HBox())
+            self.current_views.append(None)
+            self.current_view_menuitems.append([])
+            self.current_view_toolitems.append([])
+        self.views_parent.pack_start( self.view_containers[0],
+                                      expand=True, fill=True )
         self.create_view()
-        for signal in ['switch-page', 'focus-tab', 'select-page',
-                       'change-current-page']:
-            self.notebook.connect_after(signal, self.switch_view)
 
-    def switch_view( self, *args ):
-        n = self.notebook.get_current_page()
-        new_page = self.notebook.get_nth_page(n)
-        new_viewname = self.notebook.get_tab_label(new_page).label
-        if self.current_view is None or self.current_view.name == new_viewname:
-            return False
-        self.remove_view( self.current_view.name )
-        self.create_view( new_viewname )
+    def change_view_layout( self, horizontal=False ):
+        self.view_layout_horizontal = horizontal
+        old_pane = self.view_containers[0].get_parent()
+        old_pane.remove( self.view_containers[0] )
+        old_pane.remove( self.view_containers[1] )
+        top_parent = old_pane.get_parent()
+        top_parent.remove( old_pane )
+        if self.view_layout_horizonal:
+           new_pane = gtk.HPaned()
+        else:
+           new_pane = gtk.VPaned()
+        new_pane.pack1( self.view_containers[0] )
+        new_pane.pack2( self.view_containers[1] )
+        top_parent.pack_start( new_pane, expand=True, fill=True )
+
+    def _cb_change_view0( self, item ):
+        if isinstance( item, gtk.ToolItem ):
+            item.set_sensitive(False)
+            for alt_item in self.tool_view_buttons:
+                if alt_item != item:
+                    alt_item.set_sensitive(True)
+        elif isinstance( item, gtk.RadioMenuItem ):
+            if not item.get_active():
+                return False
+        self.switch_view( item._viewname )
         return False
 
-    def create_view( self, viewname=None ):
+    def _cb_change_view1( self, widget ):
+        if isinstance( widget, gtk.ComboBox ):
+            viewname = widget.get_model().get_value(widget.get_active_iter(), 1)
+        elif isinstance( widget, gtk.RadioMenuItem ):
+            if not widget.get_active():
+                return False
+            viewname = widget._viewname
+        self.switch_view( viewname, view_num=1 )
+        return False
+
+    def switch_view( self, new_viewname, view_num=0 ):
+        if new_viewname not in self.VIEWS:
+            self.remove_view( view_num )
+            return False
+        old_position = -1
+        if self.current_views[view_num] is not None:
+            if self.current_views[view_num].name == new_viewname:
+                return False
+            if view_num == 1:
+                old_position = self.views_parent.get_children()[0].get_position()
+            self.remove_view( view_num )
+        self.create_view( new_viewname, view_num, pane_position=old_position )
+        return False
+
+    def create_view( self, viewname=None, view_num=0, pane_position=-1 ):
         if viewname is None:
             viewname = self.DEFAULT_VIEW
-        self.current_view = self.VIEWS[viewname]( self.cfg,
-                                                  self.suiterc,
-                                                  self.info_bar,
-                                                  self.right_click_menu )
-        self.current_view.name = viewname
-        for child in self.view_tab_containers[viewname].get_children():
-            self.view_tab_containers[viewname].remove(child)
-        self.view_tab_containers[viewname].pack_start(
-                      self.current_view.get_control_widgets(),
-                      expand=True, fill=True )
-        self.generate_main_menu()
-        self.current_view.personalise_view_menu( self.view_menu )
+        container = self.view_containers[view_num]
+        self.current_views[view_num] = self.VIEWS[viewname]( 
+                                                   self.cfg,
+                                                   self.suiterc,
+                                                   self.info_bar,
+                                                   self.right_click_menu )
+        view = self.current_views[view_num]
+        view.name = viewname
+        if view_num == 1:
+            viewbox0 = self.view_containers[0]
+            zero_parent = viewbox0.get_parent()
+            zero_parent.remove( viewbox0 )
+            if self.view_layout_horizontal:
+                pane = gtk.HPaned()
+                extent = zero_parent.get_allocation().width
+            else:
+                pane = gtk.VPaned()
+                extent = zero_parent.get_allocation().height
+            pane.pack1( viewbox0, resize=True, shrink=True )
+            pane.pack2( container, resize=True, shrink=True )
+            if pane_position == -1:
+                pane_position =  extent / 2
+            pane.set_position( pane_position )
+            zero_parent.pack_start(pane, expand=True, fill=True)          
+        container.pack_start( view.get_control_widgets(),
+                              expand=True, fill=True )
+
+        for view_menuitems in self.current_view_menuitems:
+            for item in view_menuitems:
+                self.view_menu.remove( item )
+        new_menuitems = view.get_menuitems()
+        if new_menuitems:
+            new_menuitems.insert( 0, gtk.SeparatorMenuItem() )
+        self.current_view_menuitems[view_num] = new_menuitems
+        for menuitems in self.current_view_menuitems:
+            for item in menuitems:
+                self.view_menu.append( item )
+
+        for view_toolitems in self.current_view_toolitems:
+            for item in view_toolitems:
+                self.tool_bar.remove( item )
+        new_toolitems = view.get_toolitems()
+        if new_toolitems:
+            new_toolitems.insert( 0, gtk.SeparatorToolItem() ) 
+        self.current_view_toolitems[view_num] = new_toolitems
+        for toolitems in self.current_view_toolitems:
+            for item in toolitems:
+                self.tool_bar.insert( item, -1 )
         self.window.show_all()
 
-    def remove_view( self, viewname ):
-        self.current_view.stop()
-        self.current_view = None
-        for child in self.view_tab_containers[viewname].get_children():
+    def remove_view( self, view_num ):
+        self.current_views[view_num].stop()
+        self.current_views[view_num] = None
+        if view_num == 1:
+            parent = self.view_containers[0].get_parent()
+            parent.remove( self.view_containers[0] )
+            parent.remove( self.view_containers[1] )
+            top_parent = parent.get_parent()
+            top_parent.remove( parent )
+            top_parent.pack_start( self.view_containers[0],
+                                   expand=True, fill=True )
+        for child in self.view_containers[view_num].get_children():
             child.destroy()
 
     def quit_gcapture( self ):
@@ -262,8 +373,9 @@ and associated methods for their control widgets.
         self.quit_gcapture()
         for q in self.quitters:
             q.quit()
-        if self.current_view is not None:
-            self.current_view.stop()
+        for view in self.current_views:
+            if view is not None:
+                view.stop()
         gtk.main_quit()
 
     def click_exit( self, foo ):
@@ -295,6 +407,18 @@ and associated methods for their control widgets.
             info_dialog( result.reason ).inform()
         else:
             warning_dialog( result.reason ).warn()
+
+    def stopsuite_default( self, *args ):
+        try:
+            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            result = god.shutdown()
+        except SuiteIdentificationError, x:
+            warning_dialog( x.__str__() ).warn()
+        else:
+            if result.success:
+                info_dialog( result.reason ).inform()
+            else:
+                warning_dialog( result.reason ).warn()
 
     def stopsuite( self, bt, window,
             stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
@@ -1539,6 +1663,55 @@ shown here in the state they were in at the time of triggering.''' )
         self.view_menu.append( nudge_item )
         nudge_item.connect( 'activate', self.nudge_suite  )
 
+        self.view_menu.append( gtk.SeparatorMenuItem() )
+
+        graph_view_item = gtk.RadioMenuItem( label="View _Graph" )
+        self.view_menu.append( graph_view_item )
+        graph_view_item._viewname = "graph"
+        graph_view_item.set_active( True )
+        graph_view_item.connect( 'toggled', self._cb_change_view0 )
+
+        led_view_item = gtk.RadioMenuItem( group=graph_view_item, label="View _LED" )
+        self.view_menu.append( led_view_item )
+        led_view_item._viewname = "led"
+        led_view_item.connect( 'toggled', self._cb_change_view0 )
+
+        tree_view_item = gtk.RadioMenuItem( group=graph_view_item, label="View _Tree" )
+        self.view_menu.append( tree_view_item )
+        tree_view_item._viewname = "tree"
+        tree_view_item.connect( 'toggled', self._cb_change_view0 )
+
+        self.view_menu.append( gtk.SeparatorMenuItem() )
+        
+        second_view_menu = gtk.Menu()
+        second_view_menu_root = gtk.MenuItem( '_Secondary ...' )
+        self.view_menu.append( second_view_menu_root )
+        second_view_menu_root.set_submenu( second_view_menu )
+
+        second_no_view_item = gtk.RadioMenuItem( label="None" )
+        second_no_view_item.set_active( True )
+        second_view_menu.append( second_no_view_item )
+        second_no_view_item._viewname = "None"
+        second_no_view_item.connect( 'toggled', self._cb_change_view1 )
+
+        second_graph_view_item = gtk.RadioMenuItem( group=second_no_view_item,
+                                                    label="View _Graph" )
+        second_view_menu.append( second_graph_view_item )
+        second_graph_view_item._viewname = "graph"
+        second_graph_view_item.connect( 'toggled', self._cb_change_view1 )
+
+        second_led_view_item = gtk.RadioMenuItem( group=second_no_view_item,
+                                                  label="View _LED" )
+        second_view_menu.append( second_led_view_item )
+        second_led_view_item._viewname = "led"
+        second_led_view_item.connect( 'toggled', self._cb_change_view1 )
+
+        second_tree_view_item = gtk.RadioMenuItem( group=second_no_view_item,
+                                                   label="View _Tree" )
+        second_view_menu.append( second_tree_view_item )
+        second_tree_view_item._viewname = "tree"
+        second_tree_view_item.connect( 'toggled', self._cb_change_view1 )
+        
         start_menu = gtk.Menu()
         start_menu_root = gtk.MenuItem( '_Control' )
         start_menu_root.set_submenu( start_menu )
@@ -1658,9 +1831,79 @@ shown here in the state they were in at the time of triggering.''' )
                 com_menu.append( bar_item )
                 bar_item.connect( 'activate', self.command_help, category, command )
 
+    def generate_tool_bar( self ):
+        if hasattr(self, "tool_bar"):
+            for child in self.tool_bar.get_children():
+                self.tool_bar.remove( child )
+        else:
+            self.tool_bar = gtk.Toolbar()
+        views = self.VIEWS.keys()
+        views.sort()
+        views.sort( self._sort_views )
+
+        items = [( "Run suite", gtk.STOCK_MEDIA_PLAY, True, self.startsuite_popup ),
+                 ( "Stop suite", gtk.STOCK_MEDIA_STOP, True, self.pause_suite )]
+        view2_combo_box = gtk.ComboBox()
+        pixlist = gtk.ListStore( gtk.gdk.Pixbuf, str, bool, bool )
+        view_items = []
+        for v in views:
+             image = gtk.image_new_from_file( self.cfg.imagedir + self.VIEW_ICON_PATHS[v] )
+             pixbuf = gtk.gdk.pixbuf_new_from_file( self.cfg.imagedir + self.VIEW_ICON_PATHS[v] )
+             view_items.append( ( v, image) )
+             pixlist.append( ( pixbuf, v, True, False ) )
+        pixlist.insert( 0, ( pixbuf, "None", False, True ) )
+        view2_combo_box.set_model( pixlist )
+        cell_pix = gtk.CellRendererPixbuf()
+        cell_text = gtk.CellRendererText()
+        view2_combo_box.pack_start( cell_pix )
+        view2_combo_box.pack_start( cell_text )
+        view2_combo_box.add_attribute( cell_pix, "pixbuf", 0 )
+        view2_combo_box.add_attribute( cell_text, "text", 1 )
+        view2_combo_box.add_attribute( cell_pix, "visible", 2 )
+        view2_combo_box.add_attribute( cell_text, "visible", 3 )
+        view2_combo_box.set_active(0)
+        view2_combo_box.connect( "changed", self._cb_change_view1 )
+        view2_toolitem = gtk.ToolItem()
+        view2_toolitem.add( view2_combo_box )
+        self.tool_bar.insert( view2_toolitem, 0 )
+        self.tool_bar.insert( gtk.SeparatorToolItem(), 0 )
+        self.tool_view_buttons = []
+        for viewname, image in reversed(view_items):
+            toolbutton = gtk.ToolButton( icon_widget=image )
+            tooltip = gtk.Tooltips()
+            tooltip.enable()
+            tooltip.set_tip( toolbutton, viewname )
+            toolbutton._viewname = viewname
+            toolbutton.connect( "clicked", self._cb_change_view0 )
+            self.tool_view_buttons.append( toolbutton )
+            self.tool_bar.insert( toolbutton, 0 )
+        sep = gtk.SeparatorToolItem()
+        self.tool_bar.insert( sep, 0 )
+
+        stop_icon = gtk.image_new_from_stock( gtk.STOCK_MEDIA_STOP,
+                                              gtk.ICON_SIZE_SMALL_TOOLBAR )
+        stop_toolbutton = gtk.ToolButton( icon_widget=stop_icon )
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip( stop_toolbutton, "Stop Suite" )
+        if self.cfg.readonly:
+            stop_toolbutton.set_sensitive( False )
+        stop_toolbutton.connect( "clicked", self.stopsuite_default )
+        self.tool_bar.insert(stop_toolbutton, 0)
+
+        run_icon = gtk.image_new_from_stock( gtk.STOCK_MEDIA_PLAY,
+                                             gtk.ICON_SIZE_SMALL_TOOLBAR )
+        run_toolbutton = gtk.ToolButton( icon_widget=run_icon )
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip( run_toolbutton, "Run Suite" )
+        if self.cfg.readonly:
+            run_toolbutton.set_sensitive( False )
+        run_toolbutton.connect( "clicked", self.startsuite_popup )
+        self.tool_bar.insert(run_toolbutton, 0)
+
     def create_info_bar( self ):
         self.info_bar = InfoBar( self.cfg.suite )
-        return self.info_bar
 
     #def check_connection( self ):
     #    # called on a timeout in the gtk main loop, tell the log viewer

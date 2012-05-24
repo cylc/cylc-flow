@@ -172,33 +172,10 @@ Text Treeview GUI suite control interface.
                 b.set_active(True)
             b.connect('toggled', self.check_tfilter_buttons)
 
-        hbox = gtk.HBox()
-        eb = gtk.EventBox()
-        eb.add( gtk.Label( "BELOW: right-click on tasks to control or interrogate" ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
-        hbox.pack_start( eb, True )
-
-        bbox = gtk.HButtonBox()
-        expand_button = gtk.Button( "E_xpand" )
-        expand_button.connect( 'clicked', lambda x: self.ttreeview.expand_all() )
-        collapse_button = gtk.Button( "_Collapse" )
-        collapse_button.connect( 'clicked', lambda x: self.ttreeview.collapse_all() )
-     
-        bbox.add( expand_button )
-        bbox.add( collapse_button )
-        bbox.set_layout( gtk.BUTTONBOX_START )
-
-        self.filter_entry = gtk.Entry()
-        self.filter_entry.set_text( '(task name filter)' )
-        self.filter_entry.connect( "activate", self.check_filter_entry )
-
         ahbox = gtk.HBox()
-        ahbox.pack_start( bbox, True )
-        ahbox.pack_start( self.filter_entry, True )
         ahbox.pack_start( self.tfilterbox, True)
 
         vbox = gtk.VBox()
-        vbox.pack_start( hbox, False )
         vbox.pack_start( sw, True )
         vbox.pack_end( ahbox, False )
 
@@ -257,7 +234,36 @@ Text Treeview GUI suite control interface.
         self.quitters.remove( lv )
         w.destroy()
 
-    def personalise_view_menu( self, view_menu ):
+    def get_menuitems( self ):
+        items = []
         autoex_item = gtk.MenuItem( 'Toggle _Auto-Expand Tree' )
-        view_menu.append( autoex_item )
+        items.append( autoex_item )
         autoex_item.connect( 'activate', self.toggle_autoexpand )
+        return items
+
+    def get_toolitems( self ):
+        items = []
+
+        expand_button = gtk.Button( label="E_xpand" )
+        expand_button.connect( 'clicked', lambda x: self.ttreeview.expand_all() )
+        expand_button.show()
+        expand_item = gtk.ToolItem()
+        expand_item.add( expand_button )
+        items.append( expand_item )
+
+        collapse_button = gtk.Button( label="_Collapse" )
+        collapse_button.connect( 'clicked', lambda x: self.ttreeview.collapse_all() )
+        collapse_item = gtk.ToolItem()
+        collapse_item.add( collapse_button )
+        items.append( collapse_item )
+     
+        self.filter_entry = gtk.Entry()
+        self.filter_entry.connect( "activate", self.check_filter_entry )
+        filter_toolitem = gtk.ToolItem()
+        filter_toolitem.add(self.filter_entry)
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(filter_toolitem, "task name filter")
+        items.append(filter_toolitem)
+        
+        return items

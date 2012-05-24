@@ -210,36 +210,66 @@ Dependency graph GUI suite control interface.
             col.set_sort_order(gtk.SORT_ASCENDING)
         self.ttreestore.set_sort_column_id(n, col.get_sort_order()) 
 
-    def personalise_view_menu( self, view_menu ):
-        
+    def get_menuitems( self ):
+        items = []
         graph_range_item = gtk.MenuItem( 'Time Range Focus ...' )
-        view_menu.append( graph_range_item )
+        items.append( graph_range_item )
         graph_range_item.connect( 'activate', self.graph_timezoom_popup )
 
         crop_item = gtk.MenuItem( 'Toggle _Crop Base Graph' )
-        view_menu.append( crop_item )
+        items.append( crop_item )
         crop_item.connect( 'activate', self.toggle_crop )
 
         filter_item = gtk.MenuItem( 'Task _Filtering ...' )
-        view_menu.append( filter_item )
+        items.append( filter_item )
         filter_item.connect( 'activate', self.filter_popup )
 
         expand_item = gtk.MenuItem( '_Expand All Subtrees' )
-        view_menu.append( expand_item )
+        items.append( expand_item )
         expand_item.connect( 'activate', self.expand_all_subtrees )
 
         group_item = gtk.MenuItem( '_Group All Families' )
-        view_menu.append( group_item )
+        items.append( group_item )
         group_item.connect( 'activate', self.group_all_families, True )
 
         ungroup_item = gtk.MenuItem( '_UnGroup All Families' )
-        view_menu.append( ungroup_item )
+        items.append( ungroup_item )
         ungroup_item.connect( 'activate', self.group_all_families, False )
 
         key_item = gtk.MenuItem( 'Toggle Graph _Key' )
-        view_menu.append( key_item )
+        items.append( key_item )
         key_item.connect( 'activate', self.toggle_key )
+        
+        return items
 
+    def get_toolitems( self ):
+        items = []
+        for child in self.xdot.vbox.get_children():
+            if isinstance(child, gtk.HButtonBox):
+                self.xdot.vbox.remove(child)
+
+        zoomin_button = gtk.ToolButton( gtk.STOCK_ZOOM_IN )
+        zoomin_button.connect( 'clicked', self.xdot.widget.on_zoom_in )
+        zoomin_button.set_label( None )
+        items.append( zoomin_button )
+
+        zoomout_button = gtk.ToolButton( gtk.STOCK_ZOOM_OUT )
+        zoomout_button.connect( 'clicked', self.xdot.widget.on_zoom_out )
+        zoomout_button.set_label( None )
+        items.append( zoomout_button )
+        
+        zoomfit_button = gtk.ToolButton( gtk.STOCK_ZOOM_FIT )
+        zoomfit_button.connect('clicked', self.xdot.widget.on_zoom_fit)
+        zoomfit_button.set_label( None )
+        items.append( zoomfit_button )
+
+        zoom100_button = gtk.ToolButton( gtk.STOCK_ZOOM_100 )
+        zoom100_button.connect('clicked', self.xdot.widget.on_zoom_100)
+        zoom100_button.set_label( None )
+        items.append( zoom100_button )
+
+        return items
+            
     def group_all_families( self, w, group ):
         if group:
             self.x.group_all = True

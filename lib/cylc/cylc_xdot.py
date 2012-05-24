@@ -278,8 +278,8 @@ class MyDotWindow( xdot.DotWindow ):
 
         # Create a Toolbar
 
-        toolbar = uimanager.get_widget('/ToolBar')
-        vbox.pack_start(toolbar, False)
+        self.toolbar = uimanager.get_widget('/ToolBar')
+        vbox.pack_start(self.toolbar, False)
         vbox.pack_start(self.widget)
 
         eb = gtk.EventBox()
@@ -434,10 +434,10 @@ class xdot_widgets(object):
         bbox.set_layout(gtk.BUTTONBOX_SPREAD)
 
         self.vbox.pack_start(self.widget)
-        eb = gtk.EventBox()
-        eb.add( gtk.Label( "ABOVE: right-click on tasks to control or interrogate" ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
-        self.vbox.pack_start(eb, False)
+       # eb = gtk.EventBox()
+       # eb.add( gtk.Label( "ABOVE: right-click on tasks to control or interrogate" ) )
+       # eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
+       # self.vbox.pack_start(eb, False)
         self.vbox.pack_start(bbox, False)
 
     def get( self ):

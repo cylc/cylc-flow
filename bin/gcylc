@@ -18,6 +18,8 @@
 
 import os, sys
 import gtk
+import warnings
+warnings.filterwarnings('ignore', 'use the new', Warning)
 from optparse import OptionParser
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
@@ -88,7 +90,6 @@ if len(args) != 0 and len(args) != 1:
     parser.error( "Wrong number of arguments" )
 
 imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
-print imagedir
 
 #host = options.host
 host = hostname
@@ -144,5 +145,10 @@ senv = conf['cylc']['environment']
 for var in senv:
     os.environ[var] = os.path.expandvars(senv[var])
 
+gtk.settings_get_default().set_long_property("gtk-toolbar-icon-size", gtk.ICON_SIZE_SMALL_TOOLBAR, "main")
+gtk.settings_get_default().set_long_property("gtk-button-images",
+                                             True, "main")
+gtk.settings_get_default().set_long_property("gtk-menu-images",
+                                             True, "main")
 app = ControlApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir )
 gtk.main()
