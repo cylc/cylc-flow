@@ -19,6 +19,8 @@
 import os, sys
 from optparse import OptionParser
 from cylc.registration import localdb, RegistrationError, DatabaseLockedError
+from cylc.passphrase import passphrase
+from cylc.hostname import hostname
 
 parser = OptionParser( usage = """cylc [db] register [options] SUITE PATH
 
@@ -51,9 +53,9 @@ EXAMPLES, for suite definition dirs /home/bob/(one,two,three,four):
 
 % cylc db pr -t '^foo'          # print in tree form
   bob        "Test Suite One"   | /home/bob/one
-  foo      
+  foo
    |-bag     "Test Suite Two"   | /home/bob/two
-   `-bar   
+   `-bar
      |-baz   "Test Suite Three" | /home/bob/three
      `-waz   "Test Suite Four"  | /home/bob/four
 
@@ -96,3 +98,7 @@ except Exception, x:
     print >> sys.stderr, 'ERROR:', x
     db.unlock()
     sys.exit(1)
+
+# create a new passphrase for the suite if necessary
+passphrase( suite, os.environ['USER'], hostname ).generate(rdir)
+

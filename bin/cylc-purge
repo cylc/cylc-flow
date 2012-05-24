@@ -24,6 +24,7 @@ from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
 from cylc.registration import dbgetter, RegistrationError
 from cylc.version import compat
+from cylc.passphrase import SecurityError
 
 # NOTE: it is not clear that this command does the right thing for
 # asynchronous tasks - testing needed if purge is required for such.
@@ -97,8 +98,11 @@ else:
     compat( suite, suiterc ).execute( sys.argv )
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner, host=options.host ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
+	 host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
+    raise SystemExit(x)
+except SecurityError, x:
     raise SystemExit(x)
 
 if not parser.prompt( 'Purge from ' + task_id + ' to ' + stop + ' in'):

@@ -23,6 +23,7 @@ from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
 from cylc.registration import dbgetter, RegistrationError
 from cylc.version import compat
+from cylc.passphrase import SecurityError
 
 parser = NoPromptOptionParser( """cylc [info] dump [options] SUITE 
 
@@ -74,8 +75,11 @@ if options.tasks_only:
     display_global = False
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner, host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
+    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
+	host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
 except SuiteIdentificationError, x:
+    raise SystemExit(x)
+except SecurityError, x:
     raise SystemExit(x)
 
 # get state summary, task names, cycle times

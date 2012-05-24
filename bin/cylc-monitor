@@ -32,7 +32,7 @@ from time import sleep
 from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.registration import dbgetter, RegistrationError
 from cylc.version import compat
-from cylc.hostname import hostname
+from cylc.passphrase import SecurityError
 
 compress = True
 
@@ -78,8 +78,10 @@ try:
     while True:
         # connect to remote state summary object
         try: 
-            proxy = cylc_pyro_client.client( suite, owner=options.owner, host=options.host ).get_proxy( 'state_summary' )
-
+            proxy = cylc_pyro_client.client( suite, owner=options.owner, \
+		host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
+	except SecurityError, x:
+	    raise SystemExit(x)
         except SuiteIdentificationError, x:
             if not alerted:
                 print "\n\033[1;37;41mfailed to connect" + ctrl_end 

@@ -20,10 +20,11 @@ import os, sys
 import socket
 import Pyro
 from passphrase import passphrase
+from hostname import hostname
 from conf.CylcGlobals import pyro_base_port, pyro_port_range
 
 class pyro_server( object ):
-    def __init__( self, suite, user=os.environ['USER'], use_passphrase=False ):
+    def __init__( self, suite, user=os.environ['USER'] ):
 
         self.suite = suite
         self.owner = user
@@ -41,13 +42,12 @@ class pyro_server( object ):
 
         Pyro.core.initServer()
         self.daemon = Pyro.core.Daemon()
-        if use_passphrase:
-            self.daemon.setAllowedIdentifications( [passphrase(suite).get()] )
+        self.daemon.setAllowedIdentifications( [passphrase(suite,user,hostname).get()] )
 
     def shutdown( self ):
         print "Pyro daemon shutdown"
         self.daemon.shutdown(True)
-        # If a suite shuts down via 'stop --now' or # Ctrl-C, etc., 
+        # If a suite shuts down via 'stop --now' or # Ctrl-C, etc.,
         # any existing client end connections will hang for a long time
         # unless we do the following (or cylc clients set a timeout,
         # presumably) which daemon.shutdown() does not do (why not?):

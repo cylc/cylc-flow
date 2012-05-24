@@ -23,6 +23,7 @@ from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
 from cylc.registration import dbgetter, RegistrationError
 from cylc.version import compat
+from cylc.passphrase import SecurityError
 
 parser = PromptOptionParser( """cylc [control] depend [options] SUITE TASK DEP
 
@@ -75,8 +76,11 @@ else:
     task_id = tid.getstr()
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner, host=options.host ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
+	host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
+    raise SystemExit(x)
+except SecurityError, x:
     raise SystemExit(x)
 
 if not parser.prompt( 'Add prerequisite to task ' + task_id + ' in'):
@@ -89,3 +93,4 @@ if result.success:
 else:
     print 'ERROR:', result.reason
     sys.exit(1)
+

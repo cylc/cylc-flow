@@ -24,6 +24,7 @@ from cylc.port_scan import SuiteIdentificationError
 from cylc.TaskID import TaskID, InvalidTaskIDError, InvalidCycleTimeError
 from cylc.registration import dbgetter, RegistrationError
 from cylc.version import compat
+from cylc.passphrase import SecurityError
 
 parser = NoPromptOptionParser( """cylc [info] show [options] SUITE [NAME[%TAG]]
 
@@ -73,8 +74,11 @@ else:
 owner=options.owner 
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner, host=options.host ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite, owner, \
+	host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
+    raise SystemExit(x)
+except SecurityError, x:
     raise SystemExit(x)
 
 title, defdir, username = proxy.get_suite_info()

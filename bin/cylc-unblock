@@ -22,13 +22,14 @@ from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
 from cylc.registration import dbgetter, RegistrationError
 from cylc.version import compat
+from cylc.passphrase import SecurityError
 
 parser = PromptOptionParser( """cylc [control] unblock [options] SUITE 
 
-A blocked suite refuses to comply with intervention commands until
-deliberately unblocked. This is a crude security measure to guard
-against accidental intervention in your own suites. It may be a 
-useful aid when running multiple suites at once.""")
+Unblock a blocked suite, which will refuse to comply with intervention
+commands until deliberately unblocked. This is a crude safety device to guard
+against accidental intervention in your own suites (if you are running multiple
+suites at once a simple typo on the command line could target the wrong suite).""")
 
 (options, args) = parser.parse_args()
 
@@ -45,8 +46,11 @@ else:
     compat( suite, suiterc ).execute( sys.argv )
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner, host=options.host ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
+	host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
+    raise SystemExit(x)
+except SecurityError, x:
     raise SystemExit(x)
 
 if not parser.prompt( 'Unblock' ):

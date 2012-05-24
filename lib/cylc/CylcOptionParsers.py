@@ -65,7 +65,7 @@ Arguments:
                 help="Turn on exception tracebacks.",
                 action="store_true", default=False, dest="debug" )
 
-        self.add_option( "--passphrase",
+        self.add_option( "-p", "--passphrase-dir",
                 help="Suite passphrase file location",
                 action="store", dest="pfile" )
 

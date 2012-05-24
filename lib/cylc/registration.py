@@ -23,7 +23,6 @@ from version import compat
 from conf.CylcGlobals import central_regdb_dir, local_regdb_dir
 import config
 from regpath import RegPath
-import passphrase
 
 # NOTE:ABSPATH (see below)
 #   dir = os.path.abspath( dir )
@@ -261,9 +260,6 @@ class regdb(object):
         # if title contains newlines we just use the first line here
         title = title.split('\n')[0]
         self.items[suite] = dir, title
-
-        # find or generate a random passphrase if necessary
-        passphrase.get_filename( suite, dir, create=True )
 
     def get( self, reg ):
         suite = self.unalias(reg)
