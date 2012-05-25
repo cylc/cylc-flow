@@ -202,9 +202,9 @@ class scheduler(object):
                 "(SIMULATION MODE) get the specified task to report failure and then abort.",
                 metavar="NAME%YYYYMMDDHH", action="store", dest="failout_task_id" )
 
-        self.parser.add_option( "--debug", help=\
-                "Turn on 'debug' logging and full exception tracebacks.",
-                action="store_true", dest="debug" )
+        #self.parser.add_option( "--debug", help=\
+                #        "Turn on 'debug' logging and full exception tracebacks.",
+                #action="store_true", dest="debug" )
 
         self.parser.add_option( "--timing", help=\
                 "Turn on main task processing loop timing, which may be useful "

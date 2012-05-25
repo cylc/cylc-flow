@@ -16,10 +16,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from optparse import OptionParser
+import os, re, sys
+import subprocess
+from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.scheduler import scheduler
+from cylc.hostname import hostname
 
 global debug
 debug = True
@@ -72,16 +74,13 @@ designated cold start tasks are excluded from the suite.
 
 NOTE: daemonize important suites with the POSIX nohup command:
   $ nohup cylc [con] run SUITE [START] > suite.out 2> suite.err &
-
-Arguments:
-   SUITE                Target suite.
-   START                Initial cycle time. This is optional if defined in the 
+"""
+        self.parser = NoPromptOptionParser( usage,
+                [ """START                Initial cycle time. This is optional if defined in the 
                         suite.rc file, in which case the command line
                         takes priority (and a suite.rc final cycle time
                         will be ignored), and is not required if the
-                        suite contains no cycling tasks.""" 
-
-        self.parser = OptionParser( usage )
+                        suite contains no cycling tasks.""" ])
 
         self.parser.add_option( "-w", "--warm", help="Warm start the suite",
         action="store_true", default=False, dest="warm" )
@@ -228,6 +227,77 @@ Arguments:
             self.pool.add( itask )
 
 if __name__ == '__main__':
+    owner = None
+    host = None
+    remote = False
+    argstr = ' '.join(sys.argv[1:])
+    m = re.search( '(-o\s+|--owner=)(\w+)\s+', argstr )
+    if m:
+        owner = m.groups()[1]
+        if owner != os.environ['USER']:
+            remote = True
+            argstr = re.sub( '(-o\s+|--owner=)(\w+)\s+', '', argstr )
+    n = re.search( '(--host=)(\w+)', argstr )
+    if n:
+        host = n.groups()[1]
+        if host != hostname:
+            remote = True
+            argstr = re.sub( '--host=\w+\s+', '', argstr )
+    if remote:
+        print "_________________________________________________"
+        print "Remote suite invocation by passwordless ssh. The "
+        print "invocation process will direct stdout and stderr "
+        print "to foo.out on the remote account and then detach."
+        print "-------------------------------------------------"
+        scanopts = []
+        if owner: 
+            sshopts = owner  + '@'
+        if host:
+            sshopts += host
+            scanopts = [ '--host=' + host ]
+        else:
+            sshopts += 'localhost'
+        args = re.split('\s+', argstr)
+        command = ['ssh', sshopts, 'source', '.profile;', 'cylc', 'run' ] + args + [ '> foo.out 2>&1 &' ]
+        try:
+            # THIS BLOCKS UNTIL THE COMMAND COMPLETES
+            retcode = subprocess.call( command )
+        except OSError, x:
+            print >> sys.stderr, 'ERROR: Unable to invoke', ' '.join(command)
+            raise 
+        else:
+            if retcode != 0:
+                print >> sys.stderr, 'ERROR: remote command failed'
+                sys.exit(retcode)
+
+        print "Done. Checking running suites on " + sshopts + ":"
+        print "1/ local scan of remote account:"
+        command = ['cylc', 'scan' ] + scanopts
+        try:
+            # THIS BLOCKS UNTIL THE COMMAND COMPLETES
+            retcode = subprocess.call( command )
+        except OSError, x:
+            print >> sys.stderr, 'ERROR: Unable to invoke', ' '.join(command)
+            raise 
+        else:
+            if retcode != 0:
+                print >> sys.stderr, 'ERROR: remote command failed'
+                sys.exit(retcode)
+ 
+        print "2/ remote scan of remote account:"
+        command = ['ssh', sshopts, 'source', '.profile;', 'cylc', 'scan' ]
+        try:
+            # THIS BLOCKS UNTIL THE COMMAND COMPLETES
+            retcode = subprocess.call( command )
+        except OSError, x:
+            print >> sys.stderr, 'ERROR: Unable to invoke', ' '.join(command)
+            raise 
+        else:
+            if retcode != 0:
+                print >> sys.stderr, 'ERROR: remote command failed'
+                sys.exit(retcode)
+        sys.exit(0)
+
     try:
         server = start()
     except Exception, x:
