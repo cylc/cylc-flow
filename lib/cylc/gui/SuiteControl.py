@@ -1953,8 +1953,12 @@ shown here in the state they were in at the time of triggering.''' )
         self.tool_bar.insert(self.run_pause_toolbutton, 0)
 
     def _alter_status_tool_bar( self, new_status ):
+        if "connected" in new_status:
+            self.run_pause_toolbutton.set_sensitive( False )
+            self.stop_toolbutton.set_sensitive( False )
+            return False
         self.stop_toolbutton.set_sensitive( "STOPPED" not in new_status )
-        if "running" in new_status or new_status.endswith( "STOP" ):
+        if "running" in new_status or re.search("STOP\s", new_status):
             icon = gtk.STOCK_MEDIA_PAUSE
             tip_text = "Hold Suite (pause)"
             click_func = self.pause_suite
