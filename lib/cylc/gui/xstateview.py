@@ -254,6 +254,7 @@ class xupdater(threading.Thread):
 
     def add_graph_key(self):
         self.graphw.cylc_add_node( 'waiting', True )
+        self.graphw.cylc_add_node( 'retry_delayed', True )
         self.graphw.cylc_add_node( 'runahead', True )
         self.graphw.cylc_add_node( 'queued', True )
         self.graphw.cylc_add_node( 'submitted', True )
@@ -266,6 +267,7 @@ class xupdater(threading.Thread):
         self.graphw.cylc_add_node( 'trigger family', True )
 
         waiting = self.graphw.get_node( 'waiting' )
+        retry_delayed = self.graphw.get_node( 'retry_delayed' )
         runahead = self.graphw.get_node( 'runahead' )
         queued = self.graphw.get_node( 'queued' )
         submitted = self.graphw.get_node( 'submitted' )
@@ -278,7 +280,7 @@ class xupdater(threading.Thread):
         grfamily = self.graphw.get_node( 'trigger family' )
 
 
-        for node in [ waiting, runahead, queued, submitted, running, succeeded, failed, held, base, family, grfamily ]:
+        for node in [ waiting, retry_delayed, runahead, queued, submitted, running, succeeded, failed, held, base, family, grfamily ]:
             node.attr['style'] = 'filled'
             node.attr['shape'] = 'ellipse'
             node.attr['URL'] = 'KEY'
@@ -288,6 +290,10 @@ class xupdater(threading.Thread):
 
         waiting.attr['fillcolor'] = 'cadetblue2'
         waiting.attr['color'] = 'cadetblue4'
+
+        retry_delayed.attr['fillcolor'] = 'pink'
+        retry_delayed.attr['color'] = 'red'
+
         runahead.attr['fillcolor'] = 'cadetblue'
         runahead.attr['color'] = 'cadetblue4'
         queued.attr['fillcolor'] = 'purple'
@@ -317,6 +323,7 @@ class xupdater(threading.Thread):
         self.graphw.cylc_add_edge( failed, held, False, style='invis')
         self.graphw.cylc_add_edge( held, queued, False, style='invis')
 
+        self.graphw.cylc_add_edge( retry_delayed, base, False, style='invis')
         self.graphw.cylc_add_edge( base, grfamily, False, style='invis')
         self.graphw.cylc_add_edge( grfamily, family, False, style='invis')
 
@@ -332,6 +339,9 @@ class xupdater(threading.Thread):
         elif self.state_summary[id]['state'] == 'waiting':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'cadetblue2'
+        elif self.state_summary[id]['state'] == 'retry_delayed':
+            node.attr['style'] = 'filled'
+            node.attr['fillcolor'] = 'pink'
         elif self.state_summary[id]['state'] == 'succeeded':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'grey'

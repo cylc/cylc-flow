@@ -485,7 +485,7 @@ class task( Pyro.core.ObjBase ):
                     'Setting retry delay in minutes: ' + str(self.retry_delay) )
                 self.retry_delay_timer_start = task.clock.get_datetime()
                 self.try_number += 1
-                self.state.set_status( 'waiting' )
+                self.state.set_status( 'retry_delayed' )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 state_changed = True
@@ -515,7 +515,7 @@ class task( Pyro.core.ObjBase ):
             # log other (non-failed) unregistered messages with a '*' prefix
             message = '*' + message
             self.log( priority, message )
-       
+
     def update( self, reqs ):
         for req in reqs.get_list():
             if req in self.prerequisites.get_list():
