@@ -206,11 +206,7 @@ class xupdater(threading.Thread):
     def run(self):
         glbl = None
         while not self.quit:
-            try:
-                should_update = self.update()
-            except:
-                break
-            if should_update:
+            if self.update():
                 self.update_graph()
                 # DO NOT USE gobject.idle_add() HERE - IT DRASTICALLY
                 # AFFECTS PERFORMANCE FOR LARGE SUITES? appears to

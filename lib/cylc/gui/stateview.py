@@ -364,11 +364,7 @@ class tupdater(threading.Thread):
         glbl = None
         states = {}
         while not self.quit:
-            try:
-                should_update = self.update()
-            except:
-                break
-            if should_update:
+            if self.update():
                 gobject.idle_add( self.update_gui )
             # TO DO: only update globals if they change, as for tasks
             gobject.idle_add( self.update_globals )
@@ -600,11 +596,7 @@ class lupdater(threading.Thread):
         glbl = None
         states = {}
         while not self.quit:
-            try:
-                should_update = self.update()
-            except:
-                break
-            if should_update:
+            if self.update():
                 gobject.idle_add( self.update_gui )
             # TO DO: only update globals if they change, as for tasks
             gobject.idle_add( self.update_globals )

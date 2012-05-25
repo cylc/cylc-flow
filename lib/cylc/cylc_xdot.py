@@ -278,8 +278,8 @@ class MyDotWindow( xdot.DotWindow ):
 
         # Create a Toolbar
 
-        self.toolbar = uimanager.get_widget('/ToolBar')
-        vbox.pack_start(self.toolbar, False)
+        toolbar = uimanager.get_widget('/ToolBar')
+        vbox.pack_start(toolbar, False)
         vbox.pack_start(self.widget)
 
         eb = gtk.EventBox()
