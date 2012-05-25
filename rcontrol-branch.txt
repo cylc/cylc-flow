@@ -8,7 +8,10 @@ the proviso that it would not work for remote controlled suites.
 suite, we still need to parse the config file to get, for example, configured
 initial and final cycle times. 
 
-3/ gcylc --host=FOO still starts up if FOO is an unknown host.
+3/ gcylc --host=FOO still starts up if FOO is an unknown host, and then tries
+to start the suite locally.
+
+3.5/ tree GUI currently needs task list before connecting to the suite.
 
 4/ run suite from GUI after shutting down a remote suite, will attempt 
 to run it locally.

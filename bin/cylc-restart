@@ -18,10 +18,10 @@
 
 import os, sys, re
 import subprocess
-from optparse import OptionParser
+from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.scheduler import scheduler
-from cylc.hostname import hostname
+from cylc.hostname import shorthostname
 
 global debug
 debug = True
@@ -45,15 +45,13 @@ command, and you can choose to restart from one of these (just
 cut-and-paste the filename from the log to the command line).
 
 NOTE: daemonize important suites with the POSIX nohup command:
-    nohup cylc [con] restart SUITE > suite.out 2> suite.err &
+    nohup cylc [con] restart SUITE > suite.out 2> suite.err &"""
 
-Arguments:
-   SUITE                Target suite.
-   FILE                 Optional non-default state dump file (assumed to
+        self.parser = NoPromptOptionParser( usage,
+   ["""FILE                 Optional non-default state dump file (assumed to
                         reside in the suite state dump directory unless
-                        you give the full path).""" 
+                        you give the full path)."""]) 
 
-        self.parser = OptionParser( usage )
         self.parser.add_option( "--no-reset", 
             help="Do not reset failed tasks to ready on restarting",
             action="store_true", default=False, dest="no_reset" )
@@ -293,11 +291,12 @@ if __name__ == '__main__':
     if m:
         owner = m.groups()[1]
         if owner != os.environ['USER']:
+	    print owner, os.environ['USER'] 
             remote = True
     n = re.search( '(--host=)(\w+)', argstr )
     if n:
         host = n.groups()[1]
-        if host != hostname:
+        if host != shorthostname:
             remote = True
     if remote:
         print "_________________________________________________"
@@ -306,6 +305,7 @@ if __name__ == '__main__':
         print "to foo.out on the remote account and then detach."
         print "-------------------------------------------------"
         scanopts = []
+        sshopts = ''
         if owner: 
             sshopts = owner  + '@'
         if host:
@@ -313,24 +313,39 @@ if __name__ == '__main__':
             scanopts = [ '--host=' + host ]
         else:
             sshopts += 'localhost'
-        command = ['ssh', sshopts, 'source', '.profile;', 'cylc', 'restart' ] + sys.argv[1:] + [ '> foo.out 2>&1 &' ]
+	command = "ssh " + sshopts + """ '\
+if [[ -f /etc/profile ]]; then source /etc/profile; fi; \
+if [[ -f .profile ]]; then source .profile; fi; cylc -v; \
+cylc restart """ + ' '.join(sys.argv[1:]) + " >/dev/null &'"
+
         try:
-            # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-            retcode = subprocess.call( command )
-        except OSError, x:
-            print >> sys.stderr, 'ERROR: Unable to invoke', ' '.join(command)
-            raise 
-        else:
-            if retcode != 0:
-                print >> sys.stderr, 'ERROR: remote command failed'
-                sys.exit(retcode)
+	    #stdin = subprocess.PIPE
+            print command
+            popen = subprocess.Popen( command, shell=True )
+            res = popen.wait()
+            if res < 0:
+                print >> sys.stderr, "command terminated by signal", res
+            elif res > 0:
+                print >> sys.stderr, "command failed", res
+            else:
+                # res == 0
+		pass
+        except OSError, e:
+            # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
+            # (i.e. cylc's simplest "background" job submit method)
+            # because a background job returns immediately and the failure
+            # occurs in the background sub-shell.
+            print >> sys.stderr, "Job submission failed", e
+            success = False
+            raise
 
         print "Done. Checking running suites on " + sshopts + ":"
         print "1/ local scan of remote account:"
-        command = ['cylc', 'scan' ] + scanopts
+        command = "cylc scan " + scanopts
         try:
             # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-            retcode = subprocess.call( command )
+            popen = subprocess.Popen( command, shell=True )
+
         except OSError, x:
             print >> sys.stderr, 'ERROR: Unable to invoke', ' '.join(command)
             raise 
@@ -341,6 +356,7 @@ if __name__ == '__main__':
  
         print "2/ remote scan of remote account:"
         command = ['ssh', sshopts, 'source', '.profile;', 'cylc', 'scan' ]
+        print command
         try:
             # THIS BLOCKS UNTIL THE COMMAND COMPLETES
             retcode = subprocess.call( command )

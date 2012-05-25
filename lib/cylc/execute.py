@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys, subprocess
+from hostname import hostname
 
 # subprocess.call() - if shell=True, command is string, not list.
 
@@ -42,4 +43,5 @@ def execute( command_list, ignore_output=False, notify=False ):
         # the command was not invoked
         print >> sys.stderr, 'ERROR: unable to execute ', ' '.join(command_list)
         sys.exit(1)
+
 
