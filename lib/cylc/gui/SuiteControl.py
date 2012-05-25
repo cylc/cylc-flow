@@ -269,27 +269,61 @@ and associated methods for their control widgets.
         top_parent.pack_start( new_pane, expand=True, fill=True )
         self.window.show_all()
 
-    def _cb_change_view0( self, item ):
-        if isinstance( item, gtk.ToolItem ):
-            # item.set_sensitive(False)
-            # for alt_item in self.tool_view_buttons:
-            #    if alt_item != item:
-            #        alt_item.set_sensitive(True)
-            pass
-        elif isinstance( item, gtk.RadioMenuItem ):
-            if not item.get_active():
-                return False
+    def _cb_change_view0_menu( self, item ):
+        if not item.get_active():
+            return False
+        if self.current_views[0].name == item._viewname:
+            return False
         self.switch_view( item._viewname )
         return False
 
-    def _cb_change_view1( self, widget ):
-        if isinstance( widget, gtk.ComboBox ):
-            viewname = widget.get_model().get_value(widget.get_active_iter(), 1)
-        elif isinstance( widget, gtk.RadioMenuItem ):
-            if not widget.get_active():
+    def _cb_change_view0_tool( self, item ):
+        if self.current_views[0].name == item._viewname:
+            return False
+        self.switch_view( item._viewname )
+        for view_item in self.view_menu_views0:
+            if ( view_item._viewname == item._viewname and
+                 not view_item.get_active() ):
+                return view_item.set_active( True )
+        return False
+            
+    def _cb_change_view1_menu( self, item ):
+        if not item.get_active():
+            return False
+        if self.current_views[1] is None:
+            if item._viewname not in self.VIEWS:
                 return False
-            viewname = widget._viewname
+        elif self.current_views[1].name == item._viewname:
+            return False
+        self.switch_view( item._viewname, view_num=1 )
+        model = self.tool_bar_view1.get_model()
+        c_iter = model.get_iter_first()
+        while c_iter is not None:
+            if model.get_value(c_iter, 1) == item._viewname:
+                index = model.get_path( c_iter )[0]
+                self.tool_bar_view1.set_active( index )
+                break
+            c_iter = model.iter_next( c_iter )
+        else:
+            self.tool_bar_view1.set_active( 0 )
+        return False
+
+    def _cb_change_view1_tool( self, widget ):
+        viewname = widget.get_model().get_value(widget.get_active_iter(), 1)
+        if self.current_views[1] is None:
+            if viewname not in self.VIEWS:
+                return False
+        elif self.current_views[1].name == viewname:
+            return False
         self.switch_view( viewname, view_num=1 )
+        for view_item in self.view_menu_views1:
+            if ( view_item._viewname == viewname and
+                 not view_item.get_active() ):
+                return view_item.set_active( True )
+            if ( view_item._viewname not in self.VIEWS and
+                 viewname not in self.VIEWS and
+                 not view_item.get_active() ):
+                return view_item.set_active( True )
         return False
 
     def _cb_change_view_align( self, widget ):
@@ -1678,56 +1712,60 @@ shown here in the state they were in at the time of triggering.''' )
 
         self.view_menu.append( gtk.SeparatorMenuItem() )
 
-        graph_view_item = gtk.RadioMenuItem( label="View _Graph" )
-        self.view_menu.append( graph_view_item )
-        graph_view_item._viewname = "graph"
-        graph_view_item.set_active( True )
-        graph_view_item.connect( 'toggled', self._cb_change_view0 )
+        graph_view0_item = gtk.RadioMenuItem( label="View _Graph" )
+        self.view_menu.append( graph_view0_item )
+        graph_view0_item._viewname = "graph"
+        graph_view0_item.set_active( self.DEFAULT_VIEW == "graph" )
 
-        led_view_item = gtk.RadioMenuItem( group=graph_view_item, label="View _LED" )
-        self.view_menu.append( led_view_item )
-        led_view_item._viewname = "led"
-        led_view_item.connect( 'toggled', self._cb_change_view0 )
+        led_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="View _LED" )
+        self.view_menu.append( led_view0_item )
+        led_view0_item._viewname = "led"
+        led_view0_item.set_active( self.DEFAULT_VIEW == "led" )
 
-        tree_view_item = gtk.RadioMenuItem( group=graph_view_item, label="View _Tree" )
-        self.view_menu.append( tree_view_item )
-        tree_view_item._viewname = "tree"
-        tree_view_item.connect( 'toggled', self._cb_change_view0 )
+        tree_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="View _Tree" )
+        self.view_menu.append( tree_view0_item )
+        tree_view0_item._viewname = "tree"
+        tree_view0_item.set_active( self.DEFAULT_VIEW == "tree" )
 
+        graph_view0_item.connect( 'toggled', self._cb_change_view0_menu )
+        led_view0_item.connect( 'toggled', self._cb_change_view0_menu )
+        tree_view0_item.connect( 'toggled', self._cb_change_view0_menu )
+        self.view_menu_views0 = [ graph_view0_item, led_view0_item, tree_view0_item ]
         self.view_menu.append( gtk.SeparatorMenuItem() )
         
-        second_view_menu = gtk.Menu()
-        second_view_menu_root = gtk.MenuItem( '_Secondary ...' )
-        self.view_menu.append( second_view_menu_root )
-        second_view_menu_root.set_submenu( second_view_menu )
+        view1_menu = gtk.Menu()
+        view1_menu_root = gtk.MenuItem( '_Secondary ...' )
+        self.view_menu.append( view1_menu_root )
+        view1_menu_root.set_submenu( view1_menu )
 
-        second_no_view_item = gtk.RadioMenuItem( label="None" )
-        second_no_view_item.set_active( True )
-        second_view_menu.append( second_no_view_item )
-        second_no_view_item._viewname = "None"
-        second_no_view_item.connect( 'toggled', self._cb_change_view1 )
+        no_view1_item = gtk.RadioMenuItem( label="None" )
+        no_view1_item.set_active( True )
+        view1_menu.append( no_view1_item )
+        no_view1_item._viewname = "None"
+        no_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        second_graph_view_item = gtk.RadioMenuItem( group=second_no_view_item,
-                                                    label="View _Graph" )
-        second_view_menu.append( second_graph_view_item )
-        second_graph_view_item._viewname = "graph"
-        second_graph_view_item.connect( 'toggled', self._cb_change_view1 )
+        graph_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="View _Graph" )
+        view1_menu.append( graph_view1_item )
+        graph_view1_item._viewname = "graph"
+        graph_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        second_led_view_item = gtk.RadioMenuItem( group=second_no_view_item,
-                                                  label="View _LED" )
-        second_view_menu.append( second_led_view_item )
-        second_led_view_item._viewname = "led"
-        second_led_view_item.connect( 'toggled', self._cb_change_view1 )
+        led_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="View _LED" )
+        view1_menu.append( led_view1_item )
+        led_view1_item._viewname = "led"
+        led_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        second_tree_view_item = gtk.RadioMenuItem( group=second_no_view_item,
-                                                   label="View _Tree" )
-        second_view_menu.append( second_tree_view_item )
-        second_tree_view_item._viewname = "tree"
-        second_tree_view_item.connect( 'toggled', self._cb_change_view1 )
+        tree_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="View _Tree" )
+        view1_menu.append( tree_view1_item )
+        tree_view1_item._viewname = "tree"
+        tree_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        second_view_align_item = gtk.CheckMenuItem( label="View side-by-side" )
-        second_view_align_item.connect( 'toggled', self._cb_change_view_align )
-        second_view_menu.append( second_view_align_item )
+        self.view_menu_views1 = [ no_view1_item,
+                                  graph_view1_item,
+                                  led_view1_item,
+                                  tree_view1_item ]
+        view1_align_item = gtk.CheckMenuItem( label="View side-by-side" )
+        view1_align_item.connect( 'toggled', self._cb_change_view_align )
+        view1_menu.append( view1_align_item )
 
         start_menu = gtk.Menu()
         start_menu_root = gtk.MenuItem( '_Control' )
@@ -1860,7 +1898,7 @@ shown here in the state they were in at the time of triggering.''' )
 
         items = [( "Run suite", gtk.STOCK_MEDIA_PLAY, True, self.startsuite_popup ),
                  ( "Stop suite", gtk.STOCK_MEDIA_STOP, True, self.pause_suite )]
-        view2_combo_box = gtk.ComboBox()
+        self.tool_bar_view1 = gtk.ComboBox()
         pixlist = gtk.ListStore( gtk.gdk.Pixbuf, str, bool, bool )
         view_items = []
         for v in views:
@@ -1869,20 +1907,20 @@ shown here in the state they were in at the time of triggering.''' )
              view_items.append( ( v, image) )
              pixlist.append( ( pixbuf, v, True, False ) )
         pixlist.insert( 0, ( pixbuf, "None", False, True ) )
-        view2_combo_box.set_model( pixlist )
+        self.tool_bar_view1.set_model( pixlist )
         cell_pix = gtk.CellRendererPixbuf()
         cell_text = gtk.CellRendererText()
-        view2_combo_box.pack_start( cell_pix )
-        view2_combo_box.pack_start( cell_text )
-        view2_combo_box.add_attribute( cell_pix, "pixbuf", 0 )
-        view2_combo_box.add_attribute( cell_text, "text", 1 )
-        view2_combo_box.add_attribute( cell_pix, "visible", 2 )
-        view2_combo_box.add_attribute( cell_text, "visible", 3 )
-        view2_combo_box.set_active(0)
-        view2_combo_box.connect( "changed", self._cb_change_view1 )
-        view2_toolitem = gtk.ToolItem()
-        view2_toolitem.add( view2_combo_box )
-        self.tool_bar.insert( view2_toolitem, 0 )
+        self.tool_bar_view1.pack_start( cell_pix )
+        self.tool_bar_view1.pack_start( cell_text )
+        self.tool_bar_view1.add_attribute( cell_pix, "pixbuf", 0 )
+        self.tool_bar_view1.add_attribute( cell_text, "text", 1 )
+        self.tool_bar_view1.add_attribute( cell_pix, "visible", 2 )
+        self.tool_bar_view1.add_attribute( cell_text, "visible", 3 )
+        self.tool_bar_view1.set_active(0)
+        self.tool_bar_view1.connect( "changed", self._cb_change_view1_tool )
+        view1_toolitem = gtk.ToolItem()
+        view1_toolitem.add( self.tool_bar_view1 )
+        self.tool_bar.insert( view1_toolitem, 0 )
         self.tool_bar.insert( gtk.SeparatorToolItem(), 0 )
         self.tool_view_buttons = []
         for viewname, image in reversed(view_items):
@@ -1891,7 +1929,7 @@ shown here in the state they were in at the time of triggering.''' )
             tooltip.enable()
             tooltip.set_tip( toolbutton, viewname )
             toolbutton._viewname = viewname
-            toolbutton.connect( "clicked", self._cb_change_view0 )
+            toolbutton.connect( "clicked", self._cb_change_view0_tool )
             self.tool_view_buttons.append( toolbutton )
             self.tool_bar.insert( toolbutton, 0 )
         sep = gtk.SeparatorToolItem()
