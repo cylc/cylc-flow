@@ -68,10 +68,11 @@ class InfoBar(gtk.HBox):
 Class to create an information bar.
     """
 
-    def __init__( self, suite ):
+    def __init__( self, suite, status_changed_hook=lambda s: False ):
         super(InfoBar, self).__init__()
 
         self._status = "status..."
+        self.notify_status_changed = status_changed_hook
         self.label_status = gtk.Label()
         tooltip = gtk.Tooltips()
         tooltip.enable()
@@ -152,6 +153,7 @@ Class to create an information bar.
             self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ffde00' ))
         else:
             self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
+        self.notify_status_changed( self._status )
 
     def set_time(self, time):
         text = time.replace("state last updated at:", "").strip() 
@@ -249,24 +251,31 @@ and associated methods for their control widgets.
     def change_view_layout( self, horizontal=False ):
         self.view_layout_horizontal = horizontal
         old_pane = self.view_containers[0].get_parent()
+        if not isinstance(old_pane, gtk.Paned):
+            return False
         old_pane.remove( self.view_containers[0] )
         old_pane.remove( self.view_containers[1] )
         top_parent = old_pane.get_parent()
         top_parent.remove( old_pane )
-        if self.view_layout_horizonal:
+        if self.view_layout_horizontal:
            new_pane = gtk.HPaned()
+           extent = top_parent.get_allocation().width
         else:
            new_pane = gtk.VPaned()
+           extent = top_parent.get_allocation().height
         new_pane.pack1( self.view_containers[0] )
         new_pane.pack2( self.view_containers[1] )
+        new_pane.set_position( extent / 2 )
         top_parent.pack_start( new_pane, expand=True, fill=True )
+        self.window.show_all()
 
     def _cb_change_view0( self, item ):
         if isinstance( item, gtk.ToolItem ):
-            item.set_sensitive(False)
-            for alt_item in self.tool_view_buttons:
-                if alt_item != item:
-                    alt_item.set_sensitive(True)
+            # item.set_sensitive(False)
+            # for alt_item in self.tool_view_buttons:
+            #    if alt_item != item:
+            #        alt_item.set_sensitive(True)
+            pass
         elif isinstance( item, gtk.RadioMenuItem ):
             if not item.get_active():
                 return False
@@ -282,6 +291,10 @@ and associated methods for their control widgets.
             viewname = widget._viewname
         self.switch_view( viewname, view_num=1 )
         return False
+
+    def _cb_change_view_align( self, widget ):
+        if isinstance( widget, gtk.CheckMenuItem ):
+            self.change_view_layout( widget.get_active() )
 
     def switch_view( self, new_viewname, view_num=0 ):
         if new_viewname not in self.VIEWS:
@@ -305,7 +318,7 @@ and associated methods for their control widgets.
                                                    self.cfg,
                                                    self.suiterc,
                                                    self.info_bar,
-                                                   self.right_click_menu )
+                                                   self.get_right_click_menu )
         view = self.current_views[view_num]
         view.name = viewname
         if view_num == 1:
@@ -353,6 +366,10 @@ and associated methods for their control widgets.
     def remove_view( self, view_num ):
         self.current_views[view_num].stop()
         self.current_views[view_num] = None
+        while len(self.current_view_menuitems[view_num]):
+            self.view_menu.remove( self.current_view_menuitems[view_num].pop() )
+        while len(self.current_view_toolitems[view_num]):
+            self.tool_bar.remove( self.current_view_toolitems[view_num].pop() )    
         if view_num == 1:
             parent = self.view_containers[0].get_parent()
             parent.remove( self.view_containers[0] )
@@ -647,31 +664,26 @@ The cylc forecast suite metascheduler.
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def right_click_menu( self, event, task_id ):
+    def get_right_click_menu( self, task_id, hide_task=False ):
         menu = gtk.Menu()
-        menu_root = gtk.MenuItem( task_id )
-        menu_root.set_submenu( menu )
+        if not hide_task:
+            menu_root = gtk.MenuItem( task_id )
+            menu_root.set_submenu( menu )
 
-        title_item = gtk.MenuItem( 'Task: ' + task_id )
-        title_item.set_sensitive(False)
-        menu.append( title_item )
-        menu.append( gtk.SeparatorMenuItem() )
+            title_item = gtk.MenuItem( 'Task: ' + task_id )
+            title_item.set_sensitive(False)
+            menu.append( title_item )
+            menu.append( gtk.SeparatorMenuItem() )
 
-        menu_items = self.get_right_click_menu_items( task_id )
+        menu_items = self._get_right_click_menu_items( task_id )
         for item in menu_items:
             menu.append( item )
 
         menu.show_all()
-        menu.popup( None, None, None, event.button, event.time )
+        return menu
 
-        # TO DO: popup menus are not automatically destroyed and can be
-        # reused if saved; however, we need to reconstruct or at least
-        # alter ours dynamically => should destroy after each use to
-        # prevent a memory leak? But I'm not sure how to do this as yet.)
 
-        return True
-
-    def get_right_click_menu_items( self, task_id ):
+    def _get_right_click_menu_items( self, task_id ):
         name, ctime = task_id.split('%')
 
         items = []
@@ -1711,7 +1723,11 @@ shown here in the state they were in at the time of triggering.''' )
         second_view_menu.append( second_tree_view_item )
         second_tree_view_item._viewname = "tree"
         second_tree_view_item.connect( 'toggled', self._cb_change_view1 )
-        
+
+        second_view_align_item = gtk.CheckMenuItem( label="View side-by-side" )
+        second_view_align_item.connect( 'toggled', self._cb_change_view_align )
+        second_view_menu.append( second_view_align_item )
+
         start_menu = gtk.Menu()
         start_menu_root = gtk.MenuItem( '_Control' )
         start_menu_root.set_submenu( start_menu )
@@ -1882,28 +1898,56 @@ shown here in the state they were in at the time of triggering.''' )
 
         stop_icon = gtk.image_new_from_stock( gtk.STOCK_MEDIA_STOP,
                                               gtk.ICON_SIZE_SMALL_TOOLBAR )
-        stop_toolbutton = gtk.ToolButton( icon_widget=stop_icon )
+        self.stop_toolbutton = gtk.ToolButton( icon_widget=stop_icon )
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip( stop_toolbutton, "Stop Suite" )
+        tooltip.set_tip( self.stop_toolbutton, "Stop Suite" )
         if self.cfg.readonly:
-            stop_toolbutton.set_sensitive( False )
-        stop_toolbutton.connect( "clicked", self.stopsuite_default )
-        self.tool_bar.insert(stop_toolbutton, 0)
+            self.stop_toolbutton.set_sensitive( False )
+        self.stop_toolbutton.connect( "clicked", self.stopsuite_default )
+        self.tool_bar.insert(self.stop_toolbutton, 0)
 
         run_icon = gtk.image_new_from_stock( gtk.STOCK_MEDIA_PLAY,
                                              gtk.ICON_SIZE_SMALL_TOOLBAR )
-        run_toolbutton = gtk.ToolButton( icon_widget=run_icon )
+        self.run_pause_toolbutton = gtk.ToolButton( icon_widget=run_icon )
+        if self.cfg.readonly:
+            self.run_pause_toolbutton.set_sensitive( False )
+        click_func = self.startsuite_popup
+        self.run_pause_toolbutton.connect( "clicked", lambda w: w.click_func( w ) )
+        self.tool_bar.insert(self.run_pause_toolbutton, 0)
+
+    def _alter_status_tool_bar( self, new_status ):
+        self.stop_toolbutton.set_sensitive( "STOP" not in new_status )
+        if "running" in new_status:
+            icon = gtk.STOCK_MEDIA_PAUSE
+            tip_text = "Hold Suite (pause)"
+            click_func = self.pause_suite
+            print icon, tip_text
+        elif "STOPPED" in new_status:
+            icon = gtk.STOCK_MEDIA_PLAY
+            tip_text = "Run Suite"
+            click_func = self.startsuite_popup
+        elif "HELD" in new_status or "STOPPING" in new_status:
+            icon = gtk.STOCK_MEDIA_PLAY
+            tip_text = "Release Suite (unpause)"
+            print icon, tip_text
+            click_func = self.resume_suite
+        else:
+            self.run_pause_toolbutton.set_sensitive( False )
+            return False
+        if not self.cfg.readonly:
+            self.run_pause_toolbutton.set_sensitive( True )
+        icon_widget = gtk.image_new_from_stock( icon,
+                                                gtk.ICON_SIZE_SMALL_TOOLBAR )
+        icon_widget.show()
+        self.run_pause_toolbutton.set_icon_widget( icon_widget )
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip( run_toolbutton, "Run Suite" )
-        if self.cfg.readonly:
-            run_toolbutton.set_sensitive( False )
-        run_toolbutton.connect( "clicked", self.startsuite_popup )
-        self.tool_bar.insert(run_toolbutton, 0)
+        tooltip.set_tip( self.run_pause_toolbutton, tip_text )
+        self.run_pause_toolbutton.click_func = click_func
 
     def create_info_bar( self ):
-        self.info_bar = InfoBar( self.cfg.suite )
+        self.info_bar = InfoBar( self.cfg.suite, self._alter_status_tool_bar )
 
     #def check_connection( self ):
     #    # called on a timeout in the gtk main loop, tell the log viewer

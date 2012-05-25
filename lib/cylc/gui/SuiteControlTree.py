@@ -27,12 +27,12 @@ class ControlTree(object):
     """
 Text Treeview GUI suite control interface.
     """
-    def __init__(self, cfg, suiterc, info_bar, right_click_menu):
+    def __init__(self, cfg, suiterc, info_bar, get_right_click_menu):
 
         self.cfg = cfg
         self.suiterc = suiterc
         self.info_bar = info_bar
-        self.right_click_menu = right_click_menu
+        self.get_right_click_menu = get_right_click_menu
 
         self.gcapture_windows = []
 
@@ -213,7 +213,15 @@ Text Treeview GUI suite control interface.
 
         task_id = name + '%' + ctime
 
-        self.right_click_menu( event, task_id )
+        menu = self.get_right_click_menu( task_id )
+        menu.popup( None, None, None, event.button, event.time )
+
+        # TO DO: popup menus are not automatically destroyed and can be
+        # reused if saved; however, we need to reconstruct or at least
+        # alter ours dynamically => should destroy after each use to
+        # prevent a memory leak? But I'm not sure how to do this as yet.)
+
+        return True
 
     def rearrange( self, col, n ):
         cols = self.ttreeview.get_columns()

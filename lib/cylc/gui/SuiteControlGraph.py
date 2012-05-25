@@ -30,12 +30,12 @@ class ControlGraph(object):
     """
 Dependency graph GUI suite control interface.
     """
-    def __init__(self, cfg, suiterc, info_bar, right_click_menu ):
+    def __init__(self, cfg, suiterc, info_bar, get_right_click_menu ):
 
         self.cfg = cfg
         self.suiterc = suiterc
         self.info_bar = info_bar
-        self.right_click_menu = right_click_menu
+        self.get_right_click_menu = get_right_click_menu
 
         self.gcapture_windows = []
 
@@ -157,9 +157,10 @@ Dependency graph GUI suite control interface.
 
         if type == 'live task':
             menu.append( gtk.SeparatorMenuItem() )
-
-            menu_items = self.get_right_click_menu_items( task_id )
-            for item in menu_items:
+            
+            default_menu = self.get_right_click_menu( task_id, hide_task=True )
+            for item in default_menu.get_children():
+                default_menu.remove( item )
                 menu.append( item )
 
         menu.show_all()

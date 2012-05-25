@@ -27,12 +27,12 @@ class ControlLED(object):
     """
 LED GUI suite control interface.
     """
-    def __init__(self, cfg, suiterc, info_bar, right_click_menu):
+    def __init__(self, cfg, suiterc, info_bar, get_right_click_menu):
 
         self.cfg = cfg
         self.suiterc = suiterc
         self.info_bar = info_bar
-        self.right_click_menu = right_click_menu
+        self.get_right_click_menu = get_right_click_menu
 
         self.gcapture_windows = []
 
@@ -134,40 +134,6 @@ LED GUI suite control interface.
         sw.add( treeview )
         return sw
     
-    def on_treeview_button_pressed( self, treeview, event ):
-        # DISPLAY MENU ONLY ON RIGHT CLICK ONLY
-        if event.button != 3:
-            return False
-
-        # the following sets selection to the position at which the
-        # right click was done (otherwise selection lags behind the
-        # right click):
-        x = int( event.x )
-        y = int( event.y )
-        time = event.time
-        pth = treeview.get_path_at_pos(x,y)
-
-        if pth is None:
-            return False
-
-        treeview.grab_focus()
-        path, col, cellx, celly = pth
-        treeview.set_cursor( path, col, 0 )
-
-        selection = treeview.get_selection()
-        treemodel, iter = selection.get_selected()
-        name = treemodel.get_value( iter, 0 )
-        iter2 = treemodel.iter_parent( iter )
-        try:
-            ctime = treemodel.get_value( iter2, 0 )
-        except TypeError:
-            # must have clicked on the top level ctime 
-            return
-
-        task_id = name + '%' + ctime
-
-        self.right_click_menu( event, task_id )
-
     def rearrange( self, col, n ):
         cols = self.ttreeview.get_columns()
         for i_n in range(0,len(cols)):
