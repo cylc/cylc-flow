@@ -114,6 +114,7 @@ class xupdater(threading.Thread):
             return False
         else:
             self.status = "status:\nconnected"
+            print "Connected!"
             self.info_bar.set_status( self.status )
             return True
 
@@ -130,6 +131,7 @@ class xupdater(threading.Thread):
             [glbl, states_full] = self.god.get_state_summary()
         except:
             gobject.idle_add( self.connection_lost )
+            print "Oh noes, no update!"
             return False
 
         # The graph layout is not stable even when (py)graphviz is  
@@ -213,9 +215,7 @@ class xupdater(threading.Thread):
                 # be unnecessary anyway (due to xdot internals?)
                 ################ gobject.idle_add( self.update_xdot )
                 self.update_xdot()
-                 
-            # TO DO: only update globals if they change, as for tasks
-            gobject.idle_add( self.update_globals )
+                gobject.idle_add( self.update_globals )
             time.sleep(1)
         else:
             pass
