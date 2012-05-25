@@ -318,7 +318,8 @@ and associated methods for their control widgets.
                                                    self.cfg,
                                                    self.suiterc,
                                                    self.info_bar,
-                                                   self.get_right_click_menu )
+                                                   self.get_right_click_menu,
+                                                   self.log_colors )
         view = self.current_views[view_num]
         view.name = viewname
         if view_num == 1:
@@ -1922,7 +1923,6 @@ shown here in the state they were in at the time of triggering.''' )
             icon = gtk.STOCK_MEDIA_PAUSE
             tip_text = "Hold Suite (pause)"
             click_func = self.pause_suite
-            print icon, tip_text
         elif "STOPPED" in new_status:
             icon = gtk.STOCK_MEDIA_PLAY
             tip_text = "Run Suite"
@@ -1930,7 +1930,6 @@ shown here in the state they were in at the time of triggering.''' )
         elif "HELD" in new_status or "STOPPING" in new_status:
             icon = gtk.STOCK_MEDIA_PLAY
             tip_text = "Release Suite (unpause)"
-            print icon, tip_text
             click_func = self.resume_suite
         else:
             self.run_pause_toolbutton.set_sensitive( False )

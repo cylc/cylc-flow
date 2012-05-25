@@ -27,12 +27,13 @@ class ControlLED(object):
     """
 LED GUI suite control interface.
     """
-    def __init__(self, cfg, suiterc, info_bar, get_right_click_menu):
+    def __init__(self, cfg, suiterc, info_bar, get_right_click_menu, log_colors):
 
         self.cfg = cfg
         self.suiterc = suiterc
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
+        self.log_colors = log_colors
 
         self.gcapture_windows = []
 
