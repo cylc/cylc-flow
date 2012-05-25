@@ -55,6 +55,8 @@ def markup( col, string ):
 def get_col( state ):
     if state == 'waiting':
         return '#38a'
+    if state == 'retry_delayed':
+        return '#faa'
     elif state == 'submitted':
         return '#f83'
     elif state == 'running':
@@ -118,6 +120,7 @@ class updater(threading.Thread):
         self.reconnect()
 
         self.waiting_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-waiting-glow.xpm" )
+        self.retry_delayed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-retry-glow.xpm" )
         self.runahead_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-runahead-glow.xpm" )
         self.queued_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-queued-glow.xpm" )
         self.submitted_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-submitted-glow.xpm" )
@@ -429,6 +432,8 @@ class updater(threading.Thread):
                     state = self.state_summary[ name + '%' + ctime ][ 'state' ] 
                     if state == 'waiting':
                         state_list.append( self.waiting_led )
+                    elif state == 'retry_delayed':
+                        state_list.append( self.retry_delayed_led )
                     elif state == 'submitted':
                         state_list.append( self.submitted_led )
                     elif state == 'running':
