@@ -164,7 +164,7 @@ class task( Pyro.core.ObjBase ):
         self.etc = None
         self.to_go = None
         self.try_number = 1
-        self.retry_delay = None
+        self.retry_delay_timer_start = None
 
     def log( self, priority, message ):
         logger = logging.getLogger( "main" )
@@ -195,7 +195,13 @@ class task( Pyro.core.ObjBase ):
         ready = False
         if self.state.is_queued() or \
             self.state.is_waiting() and self.prerequisites.all_satisfied():
-                ready = True
+                if self.retry_delay_timer_start:
+                     diff = task.clock.get_datetime() - self.retry_delay_timer_start
+                     foo = datetime.timedelta( 0,0,0,0,self.retry_delay,0,0 )
+                     if diff >= foo:
+                        ready = True
+                else:
+                        ready = True
         return ready
 
     def get_resolved_dependencies( self ):
@@ -461,7 +467,7 @@ class task( Pyro.core.ObjBase ):
             self.succeeded_time = task.clock.get_datetime()
             try:
                 # Is there a retry lined up for this task?
-                retry_delay = self.retry_delays.popleft()
+                self.retry_delay = float(self.retry_delays.popleft())
             except IndexError:
                 # Nope, we are now failed as.
                 # Add the failed method as a task output so that other
@@ -475,7 +481,9 @@ class task( Pyro.core.ObjBase ):
                 state_changed = True
             else:
                 # Yep, we can retry.
-                self.log( 'CRITICAL',  'Retrying with next command' )
+                self.log( 'CRITICAL',  \
+                    'Setting retry delay in minutes: ' + str(self.retry_delay) )
+                self.retry_delay_timer_start = task.clock.get_datetime()
                 self.try_number += 1
                 self.state.set_status( 'waiting' )
                 self.prerequisites.set_all_satisfied()
@@ -507,7 +515,7 @@ class task( Pyro.core.ObjBase ):
             # log other (non-failed) unregistered messages with a '*' prefix
             message = '*' + message
             self.log( priority, message )
-
+       
     def update( self, reqs ):
         for req in reqs.get_list():
             if req in self.prerequisites.get_list():
