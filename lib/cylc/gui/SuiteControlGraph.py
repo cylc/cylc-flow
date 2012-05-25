@@ -43,21 +43,23 @@ Dependency graph GUI suite control interface.
     def get_control_widgets( self ):
         self.xdot = xdot_widgets()
         self.xdot.widget.connect( 'clicked', self.on_url_clicked )
-        self.xdot.graph_disconnect_button.connect( 'toggled', self.toggle_graph_disconnect )
-        self.xdot.graph_update_button.connect( 'clicked', self.graph_update )
         self.x = xupdater( self.cfg, self.suiterc, self.info_bar, self.xdot )
         self.x.start()
         return self.xdot.get()
 
-    def toggle_graph_disconnect( self, w ):
+    def toggle_graph_disconnect( self, w, update_button ):
         if w.get_active():
             self.x.graph_disconnect = True
-            w.set_label( '_REconnect' )
-            self.xdot.graph_update_button.set_sensitive(True)
+            w.set_image( gtk.image_new_from_stock( gtk.STOCK_DISCONNECT,
+                                                   gtk.ICON_SIZE_SMALL_TOOLBAR ) )
+            self._set_tooltip( w, "Click to reconnect" )
+            update_button.set_sensitive(True)
         else:
             self.x.graph_disconnect = False
-            w.set_label( '_DISconnect' )
-            self.xdot.graph_update_button.set_sensitive(False)
+            w.set_image( gtk.image_new_from_stock( gtk.STOCK_CONNECT,
+                                                   gtk.ICON_SIZE_SMALL_TOOLBAR ) )
+            self._set_tooltip( w, "Click to disconnect" )
+            update_button.set_sensitive(False)
         return True
 
     def graph_update( self, w ):
@@ -244,6 +246,11 @@ Dependency graph GUI suite control interface.
         
         return items
 
+    def _set_tooltip( self, widget, tip_text ):
+        tip = gtk.Tooltips()
+        tip.enable()
+        tip.set_tip( widget, tip_text )
+
     def get_toolitems( self ):
         items = []
         for child in self.xdot.vbox.get_children():
@@ -253,25 +260,48 @@ Dependency graph GUI suite control interface.
         zoomin_button = gtk.ToolButton( gtk.STOCK_ZOOM_IN )
         zoomin_button.connect( 'clicked', self.xdot.widget.on_zoom_in )
         zoomin_button.set_label( None )
+        self._set_tooltip( zoomin_button, "Zoom In" )
         items.append( zoomin_button )
 
         zoomout_button = gtk.ToolButton( gtk.STOCK_ZOOM_OUT )
         zoomout_button.connect( 'clicked', self.xdot.widget.on_zoom_out )
         zoomout_button.set_label( None )
+        self._set_tooltip( zoomout_button, "Zoom Out" )
         items.append( zoomout_button )
         
         zoomfit_button = gtk.ToolButton( gtk.STOCK_ZOOM_FIT )
         zoomfit_button.connect('clicked', self.xdot.widget.on_zoom_fit)
         zoomfit_button.set_label( None )
+        self._set_tooltip( zoomfit_button, "Best Fit" )
         items.append( zoomfit_button )
 
         zoom100_button = gtk.ToolButton( gtk.STOCK_ZOOM_100 )
         zoom100_button.connect('clicked', self.xdot.widget.on_zoom_100)
         zoom100_button.set_label( None )
+        self._set_tooltip( zoom100_button, "Normal Size" )
         items.append( zoom100_button )
+       
+        connect_button = gtk.ToggleButton()
+        image = gtk.image_new_from_stock( gtk.STOCK_CONNECT,
+                                          gtk.ICON_SIZE_SMALL_TOOLBAR )
+        connect_button.set_image( image )
+        connect_button.set_relief( gtk.RELIEF_NONE )
+        self._set_tooltip( connect_button, "Click to disconnect" )
+        connect_item = gtk.ToolItem()
+        connect_item.add( connect_button )
+        items.append( connect_item )
+
+        update_button = gtk.ToolButton( gtk.STOCK_REFRESH )
+        update_button.connect( 'clicked', self.graph_update )
+        update_button.set_label( None )
+        update_button.set_sensitive( False )
+        self._set_tooltip( update_button, "Update graph" ) 
+        items.append( update_button )
+        
+        connect_button.connect( 'clicked', self.toggle_graph_disconnect, update_button )
 
         return items
-            
+             
     def group_all_families( self, w, group ):
         if group:
             self.x.group_all = True

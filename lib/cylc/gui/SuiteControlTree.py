@@ -250,23 +250,30 @@ Text Treeview GUI suite control interface.
         autoex_item.connect( 'activate', self.toggle_autoexpand )
         return items
 
+    def _set_tooltip( self, widget, tip_text ):
+        tip = gtk.Tooltips()
+        tip.enable()
+        tip.set_tip( widget, tip_text )
+
     def get_toolitems( self ):
         items = []
 
-        expand_button = gtk.Button( label="E_xpand" )
+        expand_button = gtk.ToolButton()
+        image = gtk.image_new_from_stock( gtk.STOCK_ADD, gtk.ICON_SIZE_SMALL_TOOLBAR )
+        expand_button.set_icon_widget( image )
+        self._set_tooltip( expand_button, "Expand all" )
         expand_button.connect( 'clicked', lambda x: self.ttreeview.expand_all() )
-        expand_button.show()
-        expand_item = gtk.ToolItem()
-        expand_item.add( expand_button )
-        items.append( expand_item )
+        items.append( expand_button )
 
-        collapse_button = gtk.Button( label="_Collapse" )
+        collapse_button = gtk.ToolButton()
+        image = gtk.image_new_from_stock( gtk.STOCK_REMOVE, gtk.ICON_SIZE_SMALL_TOOLBAR )
+        collapse_button.set_icon_widget( image )        
         collapse_button.connect( 'clicked', lambda x: self.ttreeview.collapse_all() )
-        collapse_item = gtk.ToolItem()
-        collapse_item.add( collapse_button )
-        items.append( collapse_item )
+        self._set_tooltip( collapse_button, "Collapse all" )
+        items.append( collapse_button )
      
         self.filter_entry = gtk.Entry()
+        self.filter_entry.set_width_chars( 10 )  # Reduce width in toolbar
         self.filter_entry.connect( "activate", self.check_filter_entry )
         filter_toolitem = gtk.ToolItem()
         filter_toolitem.add(self.filter_entry)
