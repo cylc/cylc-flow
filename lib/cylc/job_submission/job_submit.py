@@ -20,7 +20,7 @@
 Job submission base class.
 
 Writes a temporary "job file" that exports the cylc environment (so the
-executing task can access cylc commands), suite environment, and then  
+executing task can access cylc commands), suite environment, and then
 executes the task command scripting. Derived job submission classes
 define the means by which the job file itself is executed.
 
@@ -37,7 +37,7 @@ from jobfile import jobfile
 import socket
 import subprocess
 import time
- 
+
 class job_submit(object):
     REMOTE_COMMAND_TEMPLATE = ( " '"
             + "mkdir -p $(dirname %(jobfile_path)s)"
@@ -45,7 +45,7 @@ class job_submit(object):
             + " && chmod +x %(jobfile_path)s"
             + " && (%(command)s)"
             + "'" )
- 
+
     # class variables that are set remotely at startup:
     # (e.g. 'job_submit.simulation_mode = True')
     simulation_mode = False
@@ -53,12 +53,13 @@ class job_submit(object):
     cylc_env = None
 
     def __init__( self, task_id, initial_scripting, pre_command, task_command,
-            post_command, task_env, ns_hier, directives, 
+            try_number, post_command, task_env, ns_hier, directives,
             manual_messaging, logfiles, log_dir, share_dir, work_dir, task_owner,
             remote_host, remote_cylc_dir, remote_suite_dir,
-            remote_shell_template, remote_log_dir, 
-            job_submit_command_template, job_submission_shell ): 
+            remote_shell_template, remote_log_dir,
+            job_submit_command_template, job_submission_shell ):
 
+        self.try_number = try_number
         self.task_id = task_id
         self.initial_scripting = initial_scripting
         self.pre_command = pre_command
@@ -71,7 +72,7 @@ class job_submit(object):
         self.namespace_hierarchy = ns_hier
         self.directives  = directives
         self.logfiles = logfiles
- 
+
         self.share_dir = share_dir
         self.work_dir = work_dir
         self.job_submit_command_template = job_submit_command_template
@@ -115,7 +116,7 @@ class job_submit(object):
             # Remote log files
             self.stdout_file = self.remote_jobfile_path + ".out"
             self.stderr_file = self.remote_jobfile_path + ".err"
- 
+
             # Used in command construction:
             self.jobfile_path = self.remote_jobfile_path
 
@@ -126,16 +127,16 @@ class job_submit(object):
                 self.logfiles.add_path( url_prefix + ':' + self.stdout_file)
                 self.logfiles.add_path( url_prefix + ':' + self.stderr_file)
             else:
-                # CURRENTLY DISABLED: 
+                # CURRENTLY DISABLED:
                 # If the remote and suite hosts see a common filesystem, or
                 # if the remote task is really just a local task with a
-                # different owner, we could just use local filesystem access. 
+                # different owner, we could just use local filesystem access.
                 # But to use this: (a) special namespace config would be
                 # required to indicate we have a common filesystem, and
                 # (b) we'd need to consider how the log directory can be
                 # specified (for example use of '$HOME' as for remote
                 # task use would not work here as log file access is by
-                # gcylc under the suite owner account. 
+                # gcylc under the suite owner account.
                 self.logfiles.add_path( self.stdout_file )
                 self.logfiles.add_path( self.stderr_file )
         else:
@@ -157,7 +158,7 @@ class job_submit(object):
         self.set_directives()
         self.set_scripting()
         self.set_environment()
- 
+
     def set_directives( self ):
         # OVERRIDE IN DERIVED JOB SUBMISSION CLASSES THAT USE DIRECTIVES
         # (directives will be ignored if the prefix below is not overridden)
@@ -184,21 +185,21 @@ class job_submit(object):
         raise SystemExit( 'ERROR: no job submission command defined!' )
 
     def submit( self, dry_run ):
-        try: 
+        try:
             os.chdir( pwd.getpwnam(self.suite_owner).pw_dir )
         except OSError, e:
             print >> sys.stderr, "Failed to change to suite owner's home directory"
             print >> sys.stderr, e
             return False
 
-        jf = jobfile( self.task_id, 
+        jf = jobfile( self.task_id,
                 self.__class__.cylc_env, self.task_env,
                 self.namespace_hierarchy, self.directive_prefix,
                 self.directive_connector, self.directives,
                 self.final_directive, self.manual_messaging,
                 self.initial_scripting, self.pre_command,
-                self.task_command, self.post_command,
-                self.remote_cylc_dir, self.remote_suite_dir, 
+                self.task_command, self.try_number, self.post_command,
+                self.remote_cylc_dir, self.remote_suite_dir,
                 self.job_submission_shell, self.share_dir,
                 self.work_dir, self.jobfile_path,
                 self.__class__.simulation_mode, self.__class__.__name__ )
@@ -210,7 +211,7 @@ class job_submit(object):
 
         # Construct self.command, the command to submit the jobfile to run
         self.construct_jobfile_submission_command()
-    
+
         if self.local or self.simulation_mode:
             stdin = None
             command = self.command

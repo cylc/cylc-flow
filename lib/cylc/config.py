@@ -29,6 +29,7 @@
 
 import taskdef
 from copy import deepcopy
+from collections import deque
 from OrderedDict import OrderedDict
 from cycle_time import ct, CycleTimeError
 import re, os, sys, logging
@@ -1492,11 +1493,13 @@ class config( CylcConfigObj ):
 
         if self.simulation_mode:
             taskd.job_submit_method = self['cylc']['simulation mode']['job submission']['method']
-            taskd.commands = self['cylc']['simulation mode']['command scripting']
+            taskd.command = self['cylc']['simulation mode']['command scripting']
+            taskd.retry_delays = self['cylc']['simulation mode']['retry delays']
         else:
             taskd.owner = taskconfig['remote']['owner']
             taskd.job_submit_method = taskconfig['job submission']['method']
-            taskd.commands   = taskconfig['command scripting']
+            taskd.command   = taskconfig['command scripting']
+            taskd.retry_delays = deque( taskconfig['retry delays'])
             taskd.precommand = taskconfig['pre-command scripting'] 
             taskd.postcommand = taskconfig['post-command scripting'] 
 

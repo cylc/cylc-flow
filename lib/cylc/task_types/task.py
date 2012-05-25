@@ -17,18 +17,13 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # This module uses the @classmethod decorator, introduced in Python 2.4.
-# To get it to work with Python 2.3 (note that cylc gui will not work!),
-# replace:
-# 
-# @classmethod
-# def foo( bar ):
-#   pass
-# 
-# with:
-#
-# def foo( bar ):
-#   pass
-# foo = classmethod( foo )
+# . @classmethod
+# . def foo( bar ):
+# .   pass
+# Equivalent Python<2.4 form:
+# . def foo( bar ):
+# .   pass
+# . foo = classmethod( foo )
 
 # TASK PROXY BASE CLASS:
 
@@ -38,7 +33,6 @@ from cylc import task_state
 import logging
 import Pyro.core
 import subprocess
-from collections import deque
 
 global state_changed
 state_changed = True
@@ -71,7 +65,7 @@ def displaytd( td ):
 # manager must instantiate each task with a flattened list of all the
 # state values found in the state dump file.
 
-# NOTE ON EXECUTION OF EVENT HOOK SCRIPTS: 
+# NOTE ON EXECUTION OF EVENT HOOK SCRIPTS:
 # These have to be executed in the background because (a) they could
 # take a long time to execute, or (b) they could try to operate on the
 # suite in some way (e.g. to remove a failed task automatically) - this
@@ -81,18 +75,18 @@ def displaytd( td ):
 # background thread...?)
 
 class task( Pyro.core.ObjBase ):
-    
+
     clock = None
     intercycle = False
     suite = None
 
     @classmethod
     def describe( cls ):
-        return cls.description 
+        return cls.description
 
     @classmethod
     def set_class_var( cls, item, value ):
-        # set the value of a class variable 
+        # set the value of a class variable
         # that will be written to the state dump file
         try:
             cls.class_vars[ item ] = value
@@ -129,14 +123,14 @@ class task( Pyro.core.ObjBase ):
         elt_sec = [x.days * 86400 + x.seconds for x in cls.elapsed_times ]
         mtet_sec = sum( elt_sec ) / len( elt_sec )
         cls.mean_total_elapsed_time = datetime.timedelta( seconds=mtet_sec )
- 
+
     def __init__( self, state ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
         #  * self.id: unique identity (e.g. NAME%CYCLE for cycling tasks)
         #  * prerequisites and outputs
-        #  * self.env_vars 
+        #  * self.env_vars
 
         class_vars = {}
         self.state = task_state.task_state( state )
@@ -153,21 +147,13 @@ class task( Pyro.core.ObjBase ):
 
         Pyro.core.ObjBase.__init__(self)
 
-        # set state_changed True if any task's state changes 
+        # set state_changed True if any task's state changes
         # as a result of a remote method call
-        global state_changed 
+        global state_changed
         state_changed = True
 
         self.latest_message = ""
         self.latest_message_priority = "NORMAL"
-
-        try:
-            # is there a task command lined up?
-            self.external_task = self.external_tasks.popleft()
-        except IndexError:
-            # this is currently an error; even scripting-only tasks
-            # default to the dummy task command (/bin/true).
-            raise
 
         self.submission_timer_start = None
         self.execution_timer_start = None
@@ -177,9 +163,11 @@ class task( Pyro.core.ObjBase ):
         self.succeeded_time = None
         self.etc = None
         self.to_go = None
+        self.try_number = 1
+        self.retry_delay = None
 
     def log( self, priority, message ):
-        logger = logging.getLogger( "main" ) 
+        logger = logging.getLogger( "main" )
         message = '[' + self.id + '] -' + message
         if priority == "WARNING":
             logger.warning( message )
@@ -200,13 +188,13 @@ class task( Pyro.core.ObjBase ):
         # __del__() function for this, but that is only called when a
         # deleted object is about to be garbage collected (which is not
         # guaranteed to be right away). This was once used for
-        # constraining the number of instances of each task type. 
+        # constraining the number of instances of each task type.
         self.__class__.instance_count -= 1
 
     def ready_to_run( self ):
         ready = False
         if self.state.is_queued() or \
-            self.state.is_waiting() and self.prerequisites.all_satisfied(): 
+            self.state.is_waiting() and self.prerequisites.all_satisfied():
                 ready = True
         return ready
 
@@ -274,7 +262,7 @@ class task( Pyro.core.ObjBase ):
             subprocess.call( command, shell=True )
 
     def unfail( self ):
-        # if a task is manually reset remove any previous failed message 
+        # if a task is manually reset remove any previous failed message
         # or on later success it will be seen as an incomplete output.
         failed_msg = self.id + " failed"
         if self.outputs.exists(failed_msg):
@@ -338,16 +326,16 @@ class task( Pyro.core.ObjBase ):
 
         self.launcher = launcher_class(
                         self.id, self.initial_scripting,
-                        self.precommand, self.external_task,
+                        self.precommand, self.command, self.try_number,
                         self.postcommand, self.env_vars,
                         self.namespace_hierarchy, self.directives,
-                        self.manual_messaging, self.logfiles, 
+                        self.manual_messaging, self.logfiles,
                         self.__class__.job_submit_log_directory,
                         self.__class__.job_submit_share_directory,
                         self.__class__.job_submit_work_directory,
                         self.__class__.owner,
                         self.__class__.remote_host,
-                        self.__class__.remote_cylc_directory, 
+                        self.__class__.remote_cylc_directory,
                         self.__class__.remote_suite_directory,
                         self.__class__.remote_shell_template,
                         self.__class__.remote_log_directory,
@@ -446,7 +434,7 @@ class task( Pyro.core.ObjBase ):
         if self.reset_timer:
             self.execution_timer_start = task.clock.get_datetime()
 
-        # receive all incoming pyro messages for this task 
+        # receive all incoming pyro messages for this task
         self.latest_message = message
         self.latest_message_priority = priority
 
@@ -455,9 +443,8 @@ class task( Pyro.core.ObjBase ):
         # incoming message results in a state change that matters to
         # scheduling ... but system monitor may need latest message, and
         # we don't yet have a separate state-summary-update invocation
-        # flag. 
-        
-        # new round of dependency renegotiations)
+        # flag.
+
         global state_changed
         state_changed = True
 
@@ -474,12 +461,12 @@ class task( Pyro.core.ObjBase ):
             self.succeeded_time = task.clock.get_datetime()
             try:
                 # Is there a retry lined up for this task?
-                self.external_task = self.external_tasks.popleft()
+                retry_delay = self.retry_delays.popleft()
             except IndexError:
-                # Nope, can't retry, we are failed as.
+                # Nope, we are now failed as.
                 # Add the failed method as a task output so that other
                 # tasks can trigger off the failure event (failure
-                # outputs are not added in advance as under normal 
+                # outputs are not added in advance as under normal
                 # circumstances they will not be completed outputs).
                 self.outputs.add( message )
                 self.outputs.set_completed( message )
@@ -487,15 +474,13 @@ class task( Pyro.core.ObjBase ):
                 self.set_failed( message )
                 state_changed = True
             else:
-                # yes, retry.
-                if self.launcher and not self.launcher.simulation_mode:
-                    # ('family' tasks have no launcher)
-                    self.log( 'CRITICAL',  'Retrying with next command' )
-                    self.launcher.task = self.external_task
-                    self.state.set_status( 'waiting' )
-                    self.prerequisites.set_all_satisfied()
-                    self.outputs.set_all_incomplete()
-                    state_changed = True
+                # Yep, we can retry.
+                self.log( 'CRITICAL',  'Retrying with next command' )
+                self.try_number += 1
+                self.state.set_status( 'waiting' )
+                self.prerequisites.set_all_satisfied()
+                self.outputs.set_all_incomplete()
+                state_changed = True
 
         elif self.outputs.exists( message ):
             # registered output messages
@@ -556,11 +541,11 @@ class task( Pyro.core.ObjBase ):
             return False
 
     def check_requisites( self ):
-        # overridden by asynchronous tasks and task families
+        # overridden by asynchronous tasks
         pass
 
     def get_state_summary( self ):
-        # derived classes can call this method and then 
+        # derived classes can call this method and then
         # add more information to the summary if necessary.
 
         n_total = self.outputs.count()
@@ -608,7 +593,7 @@ class task( Pyro.core.ObjBase ):
                     current_time = task.clock.get_datetime()
                     run_time = current_time - self.started_time
                     self.to_go = met - run_time
-                    self.etc = current_time + self.to_go 
+                    self.etc = current_time + self.to_go
                     summary[ 'Tetc' ] = self.etc.strftime( "%H:%M:%S" ) + '(' + re.sub( '\.\d*$', '', displaytd(self.to_go) ) + ')'
                 elif self.etc:
                     # the first time a task finishes self.etc is not defined
@@ -623,9 +608,9 @@ class task( Pyro.core.ObjBase ):
             # first instance: no mean time computed yet
             summary[ 'mean total elapsed time' ] =  '*'
             summary[ 'Tetc' ] = '*'
- 
+
         summary[ 'logfiles' ] = self.logfiles.get_paths()
- 
+
         return summary
 
     def not_fully_satisfied( self ):
