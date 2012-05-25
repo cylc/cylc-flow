@@ -131,7 +131,6 @@ class xupdater(threading.Thread):
             [glbl, states_full] = self.god.get_state_summary()
         except:
             gobject.idle_add( self.connection_lost )
-            print "Oh noes, no update!"
             return False
 
         # The graph layout is not stable even when (py)graphviz is  

@@ -50,7 +50,7 @@ Class to hold initialisation data.
     """
 
     def __init__( self, suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir,
-        readonly=False ):
+                  readonly=False ):
         
         self.readonly = readonly
         self.logdir = logging_dir
@@ -172,6 +172,7 @@ and associated methods for their control widgets.
     """
 
     DEFAULT_VIEW = "graph"
+    VIEWS_ORDERED = ["graph", "led", "tree"]
     VIEWS = {"graph": ControlGraph,
              "led": ControlLED,
              "tree": ControlTree}
@@ -229,9 +230,6 @@ and associated methods for their control widgets.
 
         self.window.add( bigbox )
         self.window.show_all()
-
-    def _sort_views( self, v1, v2 ):
-        return ( v2 == self.DEFAULT_VIEW ) - ( v1 == self.DEFAULT_VIEW )
 
     def setup_views( self ):
         num_views = 2
@@ -1892,12 +1890,8 @@ shown here in the state they were in at the time of triggering.''' )
                 self.tool_bar.remove( child )
         else:
             self.tool_bar = gtk.Toolbar()
-        views = self.VIEWS.keys()
-        views.sort()
-        views.sort( self._sort_views )
+        views = self.VIEWS_ORDERED
 
-        items = [( "Run suite", gtk.STOCK_MEDIA_PLAY, True, self.startsuite_popup ),
-                 ( "Stop suite", gtk.STOCK_MEDIA_STOP, True, self.pause_suite )]
         self.tool_bar_view1 = gtk.ComboBox()
         pixlist = gtk.ListStore( gtk.gdk.Pixbuf, str, bool, bool )
         view_items = []
@@ -1952,18 +1946,21 @@ shown here in the state they were in at the time of triggering.''' )
         if self.cfg.readonly:
             self.run_pause_toolbutton.set_sensitive( False )
         click_func = self.startsuite_popup
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip( self.run_pause_toolbutton, "Run Suite..." )
         self.run_pause_toolbutton.connect( "clicked", lambda w: w.click_func( w ) )
         self.tool_bar.insert(self.run_pause_toolbutton, 0)
 
     def _alter_status_tool_bar( self, new_status ):
-        self.stop_toolbutton.set_sensitive( "STOP" not in new_status )
-        if "running" in new_status:
+        self.stop_toolbutton.set_sensitive( "STOPPED" not in new_status )
+        if "running" in new_status or new_status.endswith( "STOP" ):
             icon = gtk.STOCK_MEDIA_PAUSE
             tip_text = "Hold Suite (pause)"
             click_func = self.pause_suite
         elif "STOPPED" in new_status:
             icon = gtk.STOCK_MEDIA_PLAY
-            tip_text = "Run Suite"
+            tip_text = "Run Suite ..."
             click_func = self.startsuite_popup
         elif "HELD" in new_status or "STOPPING" in new_status:
             icon = gtk.STOCK_MEDIA_PLAY

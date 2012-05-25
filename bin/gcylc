@@ -148,5 +148,6 @@ for var in senv:
 gtk.settings_get_default().set_long_property("gtk-toolbar-icon-size", gtk.ICON_SIZE_SMALL_TOOLBAR, "main")
 gtk.settings_get_default().set_long_property("gtk-button-images", True, "main")
 gtk.settings_get_default().set_long_property("gtk-menu-images", True, "main")
+
 app = ControlApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir )
 gtk.main()
