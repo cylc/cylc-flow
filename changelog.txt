@@ -678,3 +678,14 @@ format "suite owner host port", for better parsing.
 + Fixed a bug in the "cylc util housekeeping" script - it was not
 correctly interpolating month MM in the archive destination path.
 
++ Jinja2 processing leaves extra blank lines in the suite definition
+corresponding to lines that originally had only Jinja2 code. This could
+result in a non-validating suite if the line preceding the blank one
+ended in a line continuation marker. 'cylc view -p' was removing blanks
+lines, purely (it was thought) for display purposes, which made such
+non-validating suites appear to be correct. All blank lines are now
+removed following Jinja2 processing, to prevent this problem occuring. 
+
++ Fixed a bug in the "cylc show" command for retrieving live task info.
+
+

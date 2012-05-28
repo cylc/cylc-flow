@@ -51,11 +51,6 @@ parser.add_option( "-d","--debug",
         help="Print full exception traceback and abort on error.",
         action="store_true", default=False, dest="debug" )
 
-parser.add_option( "-p","--pretty",
-        help="(with -v,--verbose) Use unicode box drawing characters "
-        "when printing the suite runtime inheritance hierarchy.",
-        action="store_true", default=False, dest="pretty" )
-
 (options, args) = parser.parse_args()
 
 if len(args) != 1:
