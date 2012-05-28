@@ -472,20 +472,24 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             if not gwindow.quit_already:
                 gwindow.quit( None, None )
 
-    def delete_event(self, widget, event, data=None):
+    def quit( self ):
+        print 'HELLO'
         self.quit_gcapture()
         for q in self.quitters:
+            print 'x'
             q.quit()
         for view in self.current_views:
+            print 'y'
             if view is not None:
+                print 'z'
                 view.stop()
         gtk.main_quit()
 
+    def delete_event(self, widget, event, data=None):
+        self.quit()
+
     def click_exit( self, foo ):
-        self.quit_gcapture()
-        if self.current_view is not None:
-            self.current_view.stop()
-        gtk.main_quit()
+        self.quit()
 
     def pause_suite( self, bt ):
         try:
@@ -709,12 +713,6 @@ The cylc forecast suite metascheduler.
         about.set_logo( gtk.gdk.pixbuf_new_from_file( self.imagedir + "/logo.png" ))
         about.run()
         about.destroy()
-
-    def click_exit( self, foo ):
-        for q in self.quitters:
-            q.quit()
-        self.window.destroy()
-        return False
 
     def view_task_descr( self, w, task_id ):
         command = "cylc show " + self.cfg.suite + " " + task_id
