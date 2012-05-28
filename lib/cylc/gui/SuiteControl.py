@@ -291,7 +291,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         return False
 
     def _set_tool_bar_view0( self, viewname ):
-        # Set the tool bar state for the secondary view.
+        # Set the tool bar state for the primary view.
         model = self.tool_bar_view0.get_model()
         c_iter = model.get_iter_first()
         while c_iter is not None:
@@ -302,7 +302,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             c_iter = model.iter_next( c_iter )
 
     def _cb_change_view0_tool( self, widget ):
-        # This is the toolbar callback for the secondary view.
+        # This is the tool bar callback for the primary view.
         viewname = widget.get_model().get_value(widget.get_active_iter(), 1)
         if self.current_views[0].name == viewname:
             return False
@@ -344,7 +344,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.tool_bar_view1.set_active( 0 )
 
     def _cb_change_view1_tool( self, widget ):
-        # This is the toolbar callback for the secondary view.
+        # This is the tool bar callback for the secondary view.
         viewname = widget.get_model().get_value(widget.get_active_iter(), 1)
         if self.current_views[1] is None:
             if viewname not in self.VIEWS:
