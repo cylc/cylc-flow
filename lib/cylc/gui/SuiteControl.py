@@ -717,8 +717,8 @@ The cylc forecast suite metascheduler.
         return False
 
     def view_task_descr( self, w, task_id ):
-        command = "cylc show " + self.suite + " " + task_id
-        foo = gcapture_tmpfile( command, self.tmpdir, 600, 400 )
+        command = "cylc show " + self.cfg.suite + " " + task_id
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
 
@@ -2102,8 +2102,8 @@ shown here in the state they were in at the time of triggering.''' )
         self.quitters.append(foo)
 
     def view_suite_info( self, w ):
-        command = "cylc show " + self.suite 
-        foo = gcapture_tmpfile( command, self.tmpdir, 600, 400 )
+        command = "cylc show " + self.cfg.suite 
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
 
