@@ -229,8 +229,10 @@ and associated methods for their control widgets.
         self.window.add( bigbox )
         self.window.show_all()
 
-    def setup_views( self, startup_views=[ self.DEFAULT_VIEW ] ):
+    def setup_views( self, startup_views=[] ):
         num_views = 2
+        if not startup_views:
+            startup_views = [ self.DEFAULT_VIEW ]
         self.view_containers = []
         self.current_views = []
         self.current_view_menuitems = []
