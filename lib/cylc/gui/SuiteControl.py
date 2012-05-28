@@ -1720,7 +1720,8 @@ shown here in the state they were in at the time of triggering.''' )
 
 
     def create_main_menu( self ):
-        
+        self.menu_bar = gtk.MenuBar()
+
         file_menu = gtk.Menu()
 
         file_menu_root = gtk.MenuItem( '_File' )
@@ -1920,6 +1921,7 @@ shown here in the state they were in at the time of triggering.''' )
 
     def create_tool_bar( self ):
         """Create the tool bar for the control GUI."""
+        self.tool_bar = gtk.Toolbar()
         views = self.VIEWS_ORDERED
         self.tool_bar_view1 = gtk.ComboBox()
         pixlist = gtk.ListStore( gtk.gdk.Pixbuf, str, bool, bool )
