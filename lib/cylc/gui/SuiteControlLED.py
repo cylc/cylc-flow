@@ -25,7 +25,7 @@ from gcapture import gcapture_tmpfile
 
 class ControlLED(object):
     """
-LED GUI suite control interface.
+LED suite control interface.
     """
     def __init__(self, cfg, suiterc, info_bar, get_right_click_menu, log_colors):
 
@@ -155,6 +155,7 @@ LED GUI suite control interface.
         w.destroy()
 
     def get_menuitems( self ):
+        """Return the menuitems specific to this view."""
         items = []
         names_item = gtk.MenuItem( '_Toggle Task Names (light panel)' )
         items.append( names_item )
@@ -162,4 +163,5 @@ LED GUI suite control interface.
         return items
 
     def get_toolitems( self ):
+        """Return the tool bar items specific to this view."""
         return []

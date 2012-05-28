@@ -25,7 +25,7 @@ from gcapture import gcapture_tmpfile
 
 class ControlTree(object):
     """
-Text Treeview GUI suite control interface.
+Text Treeview suite control interface.
     """
     def __init__(self, cfg, suiterc, info_bar, get_right_click_menu, log_colors):
 
@@ -243,6 +243,7 @@ Text Treeview GUI suite control interface.
         w.destroy()
 
     def get_menuitems( self ):
+        """Return the menu items specific to this view."""
         items = []
         autoex_item = gtk.MenuItem( 'Toggle _Auto-Expand Tree' )
         items.append( autoex_item )
@@ -250,11 +251,13 @@ Text Treeview GUI suite control interface.
         return items
 
     def _set_tooltip( self, widget, tip_text ):
+        # Convenience function to add hover over text to a widget.
         tip = gtk.Tooltips()
         tip.enable()
         tip.set_tip( widget, tip_text )
 
     def get_toolitems( self ):
+        """Return the tool bar items specific to this view."""
         items = []
 
         expand_button = gtk.ToolButton()

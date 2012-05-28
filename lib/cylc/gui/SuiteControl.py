@@ -114,6 +114,7 @@ Class to create an information bar.
         self.pack_end( eb, False )
 
     def set_block( self, block ):
+        """Set block or access icon."""
         if block == self._block:
             return False
         self._block = block
@@ -131,6 +132,7 @@ Class to create an information bar.
         tooltip.set_tip(self.block_widget, self._block)
 
     def set_mode(self, mode):
+        """Set mode text."""
         text = mode.replace( "mode:", "" ).strip()
         if text == self._mode:
             return False
@@ -138,6 +140,7 @@ Class to create an information bar.
         self.mode_widget.set_text( self._mode )
 
     def set_status(self, status):
+        """Set status text."""
         text = status.replace( "status:", "" ).strip()
         if text == self._status:
             return False
@@ -154,6 +157,7 @@ Class to create an information bar.
         self.notify_status_changed( self._status )
 
     def set_time(self, time):
+        """Set last update text."""
         text = time.replace("state last updated at:", "").strip() 
         if text == self._time:
             return False
@@ -163,10 +167,7 @@ Class to create an information bar.
 
 class ControlApp(object):
     """
-Base class for suite control GUI functionality.
-Derived classes must provide:
-  self.get_control_widgets()
-and associated methods for their control widgets.
+Main Control GUI that displays one or more views or interfaces to the suite.
     """
 
     DEFAULT_VIEW = "graph"
@@ -209,12 +210,12 @@ and associated methods for their control widgets.
         self.window.set_size_request(800, 500)
         self.window.connect("delete_event", self.delete_event)
 
-        self.generate_main_menu()
+        self.create_main_menu()
 
         bigbox = gtk.VBox()
         bigbox.pack_start( self.menu_bar, False )
 
-        self.generate_tool_bar()
+        self.create_tool_bar()
         bigbox.pack_start( self.tool_bar, False )
         self.create_info_bar()
 
@@ -230,6 +231,7 @@ and associated methods for their control widgets.
         self.window.show_all()
 
     def setup_views( self, startup_views=[] ):
+        """Create our view containers and the startup views."""
         num_views = 2
         if not startup_views:
             startup_views = [ self.DEFAULT_VIEW ]
@@ -253,6 +255,7 @@ and associated methods for their control widgets.
                 self._set_tool_bar_view1( view )
 
     def change_view_layout( self, horizontal=False ):
+        """Switch between horizontal or vertical positioning of views."""
         self.view_layout_horizontal = horizontal
         old_pane = self.view_containers[0].get_parent()
         if not isinstance(old_pane, gtk.Paned):
@@ -274,6 +277,7 @@ and associated methods for their control widgets.
         self.window.show_all()
 
     def _cb_change_view0_menu( self, item ):
+        # This is the view menu callback for the primary view.
         if not item.get_active():
             return False
         if self.current_views[0].name == item._viewname:
@@ -282,6 +286,7 @@ and associated methods for their control widgets.
         return False
 
     def _cb_change_view0_tool( self, item ):
+        # This is the toolbar callback for the primary view.
         if self.current_views[0].name == item._viewname:
             return False
         self.switch_view( item._viewname )
@@ -289,12 +294,14 @@ and associated methods for their control widgets.
         return False
 
     def _set_menu_view0( self, viewname ):
+        # Set the view menu state for the primary view.
         for view_item in self.view_menu_views0:
             if ( view_item._viewname == viewname and
                  not view_item.get_active() ):
                 return view_item.set_active( True )
 
     def _cb_change_view1_menu( self, item ):
+        # This is the view menu callback for the secondary view.
         if not item.get_active():
             return False
         if self.current_views[1] is None:
@@ -307,6 +314,7 @@ and associated methods for their control widgets.
         return False
 
     def _set_tool_bar_view1( self, viewname ):
+        # Set the tool bar state for the secondary view.
         model = self.tool_bar_view1.get_model()
         c_iter = model.get_iter_first()
         while c_iter is not None:
@@ -319,6 +327,7 @@ and associated methods for their control widgets.
             self.tool_bar_view1.set_active( 0 )
 
     def _cb_change_view1_tool( self, widget ):
+        # This is the toolbar callback for the secondary view.
         viewname = widget.get_model().get_value(widget.get_active_iter(), 1)
         if self.current_views[1] is None:
             if viewname not in self.VIEWS:
@@ -330,6 +339,7 @@ and associated methods for their control widgets.
         return False
 
     def _set_menu_view1( self, viewname ):
+        # Set the view menu state for the secondary view.
         for view_item in self.view_menu_views1:
             if ( view_item._viewname == viewname and
                  not view_item.get_active() ):
@@ -341,10 +351,12 @@ and associated methods for their control widgets.
         return False
 
     def _cb_change_view_align( self, widget ):
+        # This is the view menu callback to toggle side-by-side layout.
         if isinstance( widget, gtk.CheckMenuItem ):
             self.change_view_layout( widget.get_active() )
 
     def switch_view( self, new_viewname, view_num=0 ):
+        """Remove a view instance and replace with a different one."""
         if new_viewname not in self.VIEWS:
             self.remove_view( view_num )
             return False
@@ -359,6 +371,11 @@ and associated methods for their control widgets.
         return False
 
     def create_view( self, viewname=None, view_num=0, pane_position=-1 ):
+        """Create a view instance.
+        
+        Toolbars and menus must be updated, as does pane positioning.
+        
+        """
         if viewname is None:
             viewname = self.DEFAULT_VIEW
         container = self.view_containers[view_num]
@@ -371,6 +388,7 @@ and associated methods for their control widgets.
         view = self.current_views[view_num]
         view.name = viewname
         if view_num == 1:
+            # Secondary view creation
             viewbox0 = self.view_containers[0]
             zero_parent = viewbox0.get_parent()
             zero_parent.remove( viewbox0 )
@@ -382,13 +400,14 @@ and associated methods for their control widgets.
                 extent = zero_parent.get_allocation().height
             pane.pack1( viewbox0, resize=True, shrink=True )
             pane.pack2( container, resize=True, shrink=True )
+            # Handle pane positioning
             if pane_position == -1:
                 pane_position =  extent / 2
             pane.set_position( pane_position )
             zero_parent.pack_start(pane, expand=True, fill=True)          
         container.pack_start( view.get_control_widgets(),
                               expand=True, fill=True )
-
+        # Handle menu
         for view_menuitems in self.current_view_menuitems:
             for item in view_menuitems:
                 self.view_menu.remove( item )
@@ -399,7 +418,7 @@ and associated methods for their control widgets.
         for menuitems in self.current_view_menuitems:
             for item in menuitems:
                 self.view_menu.append( item )
-
+        # Handle toolbar
         for view_toolitems in self.current_view_toolitems:
             for item in view_toolitems:
                 self.tool_bar.remove( item )
@@ -413,6 +432,7 @@ and associated methods for their control widgets.
         self.window.show_all()
 
     def remove_view( self, view_num ):
+        """Remove a view instance."""
         self.current_views[view_num].stop()
         self.current_views[view_num] = None
         while len(self.current_view_menuitems[view_num]):
@@ -475,6 +495,7 @@ and associated methods for their control widgets.
             warning_dialog( result.reason ).warn()
 
     def stopsuite_default( self, *args ):
+        """Try to stop the suite (after currently running tasks...)."""
         try:
             god = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
             result = god.shutdown()
@@ -714,6 +735,7 @@ The cylc forecast suite metascheduler.
         foo.run()
 
     def get_right_click_menu( self, task_id, hide_task=False ):
+        """Return the default menu for a task."""
         menu = gtk.Menu()
         if not hide_task:
             menu_root = gtk.MenuItem( task_id )
@@ -733,6 +755,7 @@ The cylc forecast suite metascheduler.
 
 
     def _get_right_click_menu_items( self, task_id ):
+        # Return the default menu items for a task
         name, ctime = task_id.split('%')
 
         items = []
@@ -1696,12 +1719,7 @@ shown here in the state they were in at the time of triggering.''' )
         window.show_all()
 
 
-    def generate_main_menu( self ):
-        if hasattr(self, "menu_bar"):
-            for child in self.menu_bar.get_children():
-                self.menu_bar.remove(child)
-        else:
-            self.menu_bar = gtk.MenuBar()
+    def create_main_menu( self ):
         
         file_menu = gtk.Menu()
 
@@ -1900,14 +1918,9 @@ shown here in the state they were in at the time of triggering.''' )
                 com_menu.append( bar_item )
                 bar_item.connect( 'activate', self.command_help, category, command )
 
-    def generate_tool_bar( self ):
-        if hasattr(self, "tool_bar"):
-            for child in self.tool_bar.get_children():
-                self.tool_bar.remove( child )
-        else:
-            self.tool_bar = gtk.Toolbar()
+    def create_tool_bar( self ):
+        """Create the tool bar for the control GUI."""
         views = self.VIEWS_ORDERED
-
         self.tool_bar_view1 = gtk.ComboBox()
         pixlist = gtk.ListStore( gtk.gdk.Pixbuf, str, bool, bool )
         view_items = []
@@ -1969,6 +1982,7 @@ shown here in the state they were in at the time of triggering.''' )
         self.tool_bar.insert(self.run_pause_toolbutton, 0)
 
     def _alter_status_tool_bar( self, new_status ):
+        # Handle changes in status for the status-sensitive tool bar items.
         if "connected" in new_status:
             self.run_pause_toolbutton.set_sensitive( False )
             self.stop_toolbutton.set_sensitive( False )

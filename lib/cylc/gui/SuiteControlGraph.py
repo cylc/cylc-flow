@@ -28,7 +28,7 @@ from gcapture import gcapture_tmpfile
 
 class ControlGraph(object):
     """
-Dependency graph GUI suite control interface.
+Dependency graph suite control interface.
     """
     def __init__(self, cfg, suiterc, info_bar, get_right_click_menu, log_colors ):
 
@@ -215,6 +215,7 @@ Dependency graph GUI suite control interface.
         self.ttreestore.set_sort_column_id(n, col.get_sort_order()) 
 
     def get_menuitems( self ):
+        """Return the menu items specific to this view."""
         items = []
         graph_range_item = gtk.MenuItem( 'Time Range Focus ...' )
         items.append( graph_range_item )
@@ -252,6 +253,7 @@ Dependency graph GUI suite control interface.
         tip.set_tip( widget, tip_text )
 
     def get_toolitems( self ):
+        """Return the tool bar items specific to this view."""
         items = []
         for child in self.xdot.vbox.get_children():
             if isinstance(child, gtk.HButtonBox):
