@@ -716,6 +716,12 @@ The cylc forecast suite metascheduler.
         self.window.destroy()
         return False
 
+    def view_task_descr( self, w, task_id ):
+        command = "cylc show " + self.suite + " " + task_id
+        foo = gcapture_tmpfile( command, self.tmpdir, 600, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
     def view_task_info( self, w, task_id, jsonly ):
         try:
             [ glbl, states ] = self.get_pyro( 'state_summary').get_state_summary()
@@ -776,6 +782,10 @@ The cylc forecast suite metascheduler.
         name, ctime = task_id.split('%')
 
         items = []
+
+        js0_item = gtk.MenuItem( 'View Task Info' )
+        items.append( js0_item )
+        js0_item.connect( 'activate', self.view_task_descr, task_id )
 
         js_item = gtk.MenuItem( 'View The Job Script' )
         items.append( js_item )
@@ -1756,6 +1766,10 @@ shown here in the state they were in at the time of triggering.''' )
         view_menu_root = gtk.MenuItem( '_View' )
         view_menu_root.set_submenu( self.view_menu )
 
+        info_item = gtk.MenuItem( 'View Suite _Info' )
+        self.view_menu.append( info_item )
+        info_item.connect( 'activate', self.view_suite_info )
+
         log_item = gtk.MenuItem( 'View _Suite Log' )
         self.view_menu.append( log_item )
         log_item.connect( 'activate', self.view_log )
@@ -2086,6 +2100,12 @@ shown here in the state they were in at the time of triggering.''' )
         logdir = os.path.join( self.suiterc['cylc']['logging']['directory'] )
         foo = cylc_logviewer( 'log', logdir, self.suiterc.get_task_name_list() )
         self.quitters.append(foo)
+
+    def view_suite_info( self, w ):
+        command = "cylc show " + self.suite 
+        foo = gcapture_tmpfile( command, self.tmpdir, 600, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
 
     def launch_cug( self, b, pdf ):
         fail = []

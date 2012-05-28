@@ -470,6 +470,9 @@ def userguide( w, graph=False ):
     update_tb( tb, "View the cylc log for this suite, updating the view "
             "in real time if the suite is running." )
 
+    update_tb( tb, "\n o View Suite Info: ", [bold])
+    update_tb( tb, "View the suite's description and task list." )
+
     if graph:
         update_tb( tb, "\n o Expand All Subtrees ", [bold])
         update_tb( tb, "Expand any graph subtrees that you have "
@@ -542,8 +545,12 @@ def userguide( w, graph=False ):
     update_tb( tb, "View the script used to submit this task to run." )
     update_tb( tb, "\n o View Output: ", [bold])
     update_tb( tb, "View task stdout and stderr logs in real time." )
+    update_tb( tb, "\n o View Task Info: ", [bold])
+    update_tb( tb, "View a task's description and the current state "
+            "of its prerequisites and outputs.")
     update_tb( tb, "\n o View State: ", [bold])
-    update_tb( tb, "View the state of a task's prerequisites and outputs.")
+    update_tb( tb, "View the current state of a task's prerequisites "
+            "and outputs.")
     update_tb( tb, "\n o Trigger: ", [bold])
     update_tb( tb, "Set a task's prerequisites satisfied "
             "and, for clock-triggered tasks, ignore the trigger time. "
