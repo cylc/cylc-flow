@@ -65,8 +65,8 @@ to suite control and monitoring.
 This directly invokes a suite control and monitoring application for a
 particular suite. Alternatively you can get this by right-clicking on 
 the suite in the main gcylc suite database viewer (1/ above). Without
-the -g option you'll get a filtered text treeview GUI; with it, a
-dependency graph based GUI.
+the -g option the GUI will show a filtered text treeview on startup;
+with it, the startup view will be dependency graph based.
 
 NOTE: daemonize important suites with the POSIX nohup command:
     $ nohup gcylc [options] SUITE &
@@ -149,5 +149,10 @@ gtk.settings_get_default().set_long_property("gtk-toolbar-icon-size", gtk.ICON_S
 gtk.settings_get_default().set_long_property("gtk-button-images", True, "main")
 gtk.settings_get_default().set_long_property("gtk-menu-images", True, "main")
 
-app = ControlApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir )
+if options.depgraph:
+    views = ["graph"]
+else:
+    views = ["led", "tree"]
+
+app = ControlApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir, views )
 gtk.main()

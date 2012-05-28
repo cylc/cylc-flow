@@ -88,8 +88,7 @@ Text Treeview GUI suite control interface.
 
     def check_filter_entry( self, e ):
         ftxt = self.filter_entry.get_text()
-        if ftxt != '(task name filter)':
-            self.tfilt = self.filter_entry.get_text()
+        self.tfilt = self.filter_entry.get_text()
         self.tmodelfilter.refilter()
 
     def stop(self):
@@ -279,7 +278,7 @@ Text Treeview GUI suite control interface.
         filter_toolitem.add(self.filter_entry)
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip(filter_toolitem, "task name filter")
+        tooltip.set_tip(filter_toolitem, "Filter tasks by name")
         items.append(filter_toolitem)
         
         return items

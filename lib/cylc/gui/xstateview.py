@@ -114,7 +114,6 @@ class xupdater(threading.Thread):
             return False
         else:
             self.status = "status:\nconnected"
-            print "Connected!"
             self.info_bar.set_status( self.status )
             return True
 

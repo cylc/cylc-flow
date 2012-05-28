@@ -73,46 +73,44 @@ Class to create an information bar.
 
         self._status = "status..."
         self.notify_status_changed = status_changed_hook
-        self.label_status = gtk.Label()
+        self.status_widget = gtk.Label()
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip( self.label_status, "status" )
+        tooltip.set_tip( self.status_widget, "status" )
 
         self._mode = "mode..."
-        self.label_mode = gtk.Label()
+        self.mode_widget = gtk.Label()
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip( self.label_mode, "mode" )
+        tooltip.set_tip( self.mode_widget, "mode" )
 
         self._time = "time..."
-        self.label_time = gtk.Label()
+        self.time_widget = gtk.Label()
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip( self.label_time, "last update time" )
+        tooltip.set_tip( self.time_widget, "last update time" )
 
         self._block = "access..."
-        self.label_block = gtk.image_new_from_stock( gtk.STOCK_DIALOG_QUESTION,
-                                                     gtk.ICON_SIZE_SMALL_TOOLBAR )
-
+        self.block_widget = gtk.image_new_from_stock( gtk.STOCK_DIALOG_QUESTION,
+                                                      gtk.ICON_SIZE_SMALL_TOOLBAR )
 
         eb = gtk.EventBox()
-        eb.add( self.label_mode )
+        eb.add( self.mode_widget )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
         self.pack_start( eb, True )
 
         eb = gtk.EventBox()
-        eb.add( self.label_status )
+        eb.add( self.status_widget )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
         self.pack_start( eb, True )
 
         eb = gtk.EventBox()
-        eb.add( self.label_time )
+        eb.add( self.time_widget )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) ) 
         self.pack_start( eb, True )
 
         eb = gtk.EventBox()
-        eb.add( self.label_block )
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) ) 
+        eb.add( self.block_widget )
         self.pack_end( eb, False )
 
     def set_block( self, block ):
@@ -120,39 +118,39 @@ Class to create an information bar.
             return False
         self._block = block
         if "unblocked" in block:
-            self.label_block.set_from_stock( gtk.STOCK_DIALOG_AUTHENTICATION,
-                                             gtk.ICON_SIZE_SMALL_TOOLBAR )
+            self.block_widget.set_from_stock( gtk.STOCK_DIALOG_AUTHENTICATION,
+                                              gtk.ICON_SIZE_SMALL_TOOLBAR )
         elif "blocked" in block:
-            self.label_block.set_from_stock( gtk.STOCK_DIALOG_ERROR,
-                                             gtk.ICON_SIZE_SMALL_TOOLBAR )
+            self.block_widget.set_from_stock( gtk.STOCK_DIALOG_ERROR,
+                                              gtk.ICON_SIZE_SMALL_TOOLBAR )
         elif "waiting" in block:
-            self.label_block.set_from_stock( gtk.STOCK_DIALOG_QUESTION,
-                                             gtk.ICON_SIZE_SMALL_TOOLBAR )
+            self.block_widget.set_from_stock( gtk.STOCK_DIALOG_QUESTION,
+                                              gtk.ICON_SIZE_SMALL_TOOLBAR )
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip(self.label_block, self._block)
+        tooltip.set_tip(self.block_widget, self._block)
 
     def set_mode(self, mode):
         text = mode.replace( "mode:", "" ).strip()
         if text == self._mode:
             return False
         self._mode = text
-        self.label_mode.set_text( self._mode )
+        self.mode_widget.set_text( self._mode )
 
     def set_status(self, status):
         text = status.replace( "status:", "" ).strip()
         if text == self._status:
             return False
         self._status = text
-        self.label_status.set_text( self._status )
+        self.status_widget.set_text( self._status )
         if re.search( 'STOPPED', status ):
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
+            self.status_widget.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
         elif re.search( 'STOP', status ):  # stopping
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff8c2a' ))
+            self.status_widget.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff8c2a' ))
         elif re.search( 'HELD', status ):
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ffde00' ))
+            self.status_widget.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ffde00' ))
         else:
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
+            self.status_widget.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
         self.notify_status_changed( self._status )
 
     def set_time(self, time):
@@ -160,7 +158,7 @@ Class to create an information bar.
         if text == self._time:
             return False
         self._time = text
-        self.label_time.set_text( self._time )
+        self.time_widget.set_text( self._time )
 
 
 class ControlApp(object):
@@ -172,17 +170,17 @@ and associated methods for their control widgets.
     """
 
     DEFAULT_VIEW = "graph"
-    VIEWS_ORDERED = ["graph", "led", "tree"]
-    VIEWS = {"graph": ControlGraph,
-             "led": ControlLED,
-             "tree": ControlTree}
-    VIEW_ICON_PATHS = {"graph": "/icons/tab-graph.xpm",
-                       "led": "/icons/tab-led.xpm",
-                       "tree": "/icons/tab-tree.xpm"}
+    VIEWS_ORDERED = [ "graph", "led", "tree" ]
+    VIEWS = { "graph": ControlGraph,
+              "led": ControlLED,
+              "tree": ControlTree }
+    VIEW_ICON_PATHS = { "graph": "/icons/tab-graph.xpm",
+                        "led": "/icons/tab-led.xpm",
+                        "tree": "/icons/tab-tree.xpm" }
                        
 
     def __init__( self, suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir,
-        readonly=False ):
+                  startup_views, readonly=False ):
         gobject.threads_init()
         
         self.cfg = InitData( suite, owner, host, port, suite_dir, logging_dir, imagedir,
@@ -222,7 +220,7 @@ and associated methods for their control widgets.
 
         self.views_parent = gtk.VBox()
         bigbox.pack_start( self.views_parent, True )
-        self.setup_views()
+        self.setup_views(startup_views)
 
         hbox = gtk.HBox()
         hbox.pack_start( self.info_bar, True )
@@ -231,7 +229,7 @@ and associated methods for their control widgets.
         self.window.add( bigbox )
         self.window.show_all()
 
-    def setup_views( self ):
+    def setup_views( self, startup_views=[ self.DEFAULT_VIEW ] ):
         num_views = 2
         self.view_containers = []
         self.current_views = []
@@ -244,7 +242,13 @@ and associated methods for their control widgets.
             self.current_view_toolitems.append([])
         self.views_parent.pack_start( self.view_containers[0],
                                       expand=True, fill=True )
-        self.create_view()
+        for i, view in enumerate(startup_views):
+            self.create_view(view, i)
+            if i == 0:
+                self._set_menu_view0( view )
+            elif i == 1:
+                self._set_menu_view1( view )
+                self._set_tool_bar_view1( view )
 
     def change_view_layout( self, horizontal=False ):
         self.view_layout_horizontal = horizontal
@@ -279,12 +283,15 @@ and associated methods for their control widgets.
         if self.current_views[0].name == item._viewname:
             return False
         self.switch_view( item._viewname )
+        self._set_menu_view0( item._viewname )
+        return False
+
+    def _set_menu_view0( self, viewname ):
         for view_item in self.view_menu_views0:
-            if ( view_item._viewname == item._viewname and
+            if ( view_item._viewname == viewname and
                  not view_item.get_active() ):
                 return view_item.set_active( True )
-        return False
-            
+
     def _cb_change_view1_menu( self, item ):
         if not item.get_active():
             return False
@@ -294,17 +301,20 @@ and associated methods for their control widgets.
         elif self.current_views[1].name == item._viewname:
             return False
         self.switch_view( item._viewname, view_num=1 )
+        self._set_tool_bar_view1( item._viewname )
+        return False
+
+    def _set_tool_bar_view1( self, viewname ):
         model = self.tool_bar_view1.get_model()
         c_iter = model.get_iter_first()
         while c_iter is not None:
-            if model.get_value(c_iter, 1) == item._viewname:
+            if model.get_value(c_iter, 1) == viewname:
                 index = model.get_path( c_iter )[0]
                 self.tool_bar_view1.set_active( index )
                 break
             c_iter = model.iter_next( c_iter )
         else:
             self.tool_bar_view1.set_active( 0 )
-        return False
 
     def _cb_change_view1_tool( self, widget ):
         viewname = widget.get_model().get_value(widget.get_active_iter(), 1)
@@ -314,6 +324,10 @@ and associated methods for their control widgets.
         elif self.current_views[1].name == viewname:
             return False
         self.switch_view( viewname, view_num=1 )
+        self._set_menu_view1( viewname )
+        return False
+
+    def _set_menu_view1( self, viewname ):
         for view_item in self.view_menu_views1:
             if ( view_item._viewname == viewname and
                  not view_item.get_active() ):
@@ -693,7 +707,7 @@ The cylc forecast suite metascheduler.
 
     def jobscript( self, w, suite, task ):
         command = "cylc jobscript " + suite + " " + task
-        foo = gcapture_tmpfile( command, self.tmpdir, 800, 800 )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 800, 800 )
         self.gcapture_windows.append(foo)
         foo.run()
 
@@ -2047,11 +2061,11 @@ shown here in the state they were in at the time of triggering.''' )
             return
 
         command = appl + " " + file 
-        foo = gcapture_tmpfile( command, self.tmpdir )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
         foo.run()
  
     def command_help( self, w, cat='', com='' ):
         command = "cylc " + cat + " " + com + " help"
-        foo = gcapture_tmpfile( command, self.tmpdir, 700, 600 )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 700, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
