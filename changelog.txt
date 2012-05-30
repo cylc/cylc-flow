@@ -688,4 +688,6 @@ removed following Jinja2 processing, to prevent this problem occuring.
 
 + Fixed a bug in the "cylc show" command for retrieving live task info.
 
++ Merged the two suite control GUIs into one multi-view GUI with a
+cleaner interface (which is still evolving).
 
