@@ -43,6 +43,7 @@ LED suite control interface.
         ### updating the viewed task list, we can retrieve the task list
         ### (etc.) from the suite's remote state summary object.
         self.task_list = self.suiterc.get_task_name_list()
+        self.task_list.sort(key=str.lower) # order alphabetically for column titles
 
         main_box = gtk.VBox()
         main_box.pack_start( self.ledview_widgets(), expand=True, fill=True )
