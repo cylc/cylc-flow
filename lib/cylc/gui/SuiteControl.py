@@ -473,13 +473,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 gwindow.quit( None, None )
 
     def quit( self ):
-        print 'HELLO'
         self.quit_gcapture()
         for q in self.quitters:
-            print 'x'
             q.quit()
         for view in self.current_views:
-            print 'y'
             if view is not None:
                 print 'z'
                 view.stop()
