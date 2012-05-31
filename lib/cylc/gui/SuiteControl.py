@@ -478,7 +478,6 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             q.quit()
         for view in self.current_views:
             if view is not None:
-                print 'z'
                 view.stop()
         gtk.main_quit()
 
