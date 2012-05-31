@@ -691,3 +691,6 @@ removed following Jinja2 processing, to prevent this problem occuring.
 + Merged the two suite control GUIs into one multi-view GUI with a
 cleaner interface (which is still evolving).
 
++ Tasks ready to run at the same time will now be submitted in the order
+in which they are first encountered in the suite graph.
+
