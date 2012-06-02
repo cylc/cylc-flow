@@ -85,21 +85,17 @@ def get_col_priority( priority ):
         # not needed
         return '#f0f'
 
-class updater(threading.Thread):
+class tupdater(threading.Thread):
 
-    def __init__(self, suite, owner, host, port, imagedir,
-            led_liststore, ttreeview, task_list,
-            label_mode, label_status, label_time, label_block ):
+    def __init__(self, cfg, ttreeview, task_list, info_bar ):
 
-        super(updater, self).__init__()
+        super(tupdater, self).__init__()
 
         self.quit = False
         self.autoexpand = True
 
-        self.suite = suite
-        self.owner = owner
-        self.host = host
-        self.port = port
+        self.cfg = cfg
+        self.info_bar = info_bar
 
         self.state_summary = {}
         self.global_summary = {}
@@ -110,45 +106,22 @@ class updater(threading.Thread):
 
         self.ttreeview = ttreeview
         self.ttreestore = ttreeview.get_model().get_model()
-        self.led_liststore = led_liststore
         self.task_list = task_list
-        self.label_mode = label_mode
-        self.label_status = label_status
-        self.label_time = label_time
-        self.label_block = label_block
+        self.info_bar = info_bar
 
         self.reconnect()
 
-        self.waiting_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-waiting-glow.xpm" )
-        self.retry_delayed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-retry-glow.xpm" )
-        self.runahead_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-runahead-glow.xpm" )
-        self.queued_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-queued-glow.xpm" )
-        self.submitted_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-submitted-glow.xpm" )
-        self.running_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-running-glow.xpm" )
-        self.failed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-failed-glow.xpm" )
-        self.stopped_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-stopped-glow.xpm" )
-        self.succeeded_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-finished.xpm" )
-
-        self.empty_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-empty.xpm" )
-
-        self.led_digits_one = []
-        self.led_digits_two = []
-        self.led_digits_blank = gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-blank.xpm" )
-        for i in range(10):
-            self.led_digits_one.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-" + str(i) + ".xpm" ))
-            self.led_digits_two.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/two/digit-" + str(i) + ".xpm" ))
-
-        #self.config = config( self.suite )
-
     def reconnect( self ):
         try:
-            self.god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'state_summary' )
+            self.god = cylc_pyro_client.client( self.cfg.suite,
+                                                self.cfg.owner,
+                                                self.cfg.host,
+                                                self.cfg.port ).get_proxy( 'state_summary' )
         except:
             return False
         else:
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
             self.status = "status:\nconnected"
-            self.label_status.set_text( self.status )
+            self.info_bar.set_status( self.status )
             return True
 
     def connection_lost( self ):
@@ -161,12 +134,8 @@ class updater(threading.Thread):
         # changes in the state summary)
         self.state_summary = {}
 
-        # Keep LED panel to show what state the suite was in at shutdown
-        #self.led_liststore.clear()
-
         self.status = "status:\nSTOPPED"
-        self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
-        self.label_status.set_text( self.status )
+        self.info_bar.set_status( self.status )
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
         self.reconnect()
         return False
@@ -244,30 +213,6 @@ class updater(threading.Thread):
         column, key = data
         value = model.get_value( iter, column )
         return value == key
-
-    def digitize( self, ctin ):
-        # Digitize cycle time for the LED panel display.
-        # For asynchronous tasks blank-pad the task tag.
-
-        # TO DO: if we ever have cycling modules for which minutes and
-        # seconds are important, take the whole of ctin here:
-        ncol = 10 # columns in the digital cycletime row
-        ct = ctin[:ncol]
-        led_ctime = []
-        if len(ct) < ncol: # currently can't happen due to ctin[:ncol]
-            zct = string.rjust( ct, ncol, ' ' ) # pad the string
-        else:
-            zct = ct
-        for i in range( ncol ):
-            digit = zct[i:i+1]
-            if digit == ' ':
-                led_ctime.append( self.led_digits_blank )  
-            elif i in [0,1,2,3,6,7]:
-                led_ctime.append( self.led_digits_one[ int(digit) ] )  
-            else:
-                led_ctime.append( self.led_digits_two[ int(digit) ] )  
-
-        return led_ctime
 
     def update_gui( self ):
         #print "Updating GUI"
@@ -408,7 +353,196 @@ class updater(threading.Thread):
             for iter in expand_me:
                 self.ttreeview.expand_row(self.ttreestore.get_path(iter),False)
 
-        # LED VIEW
+        return False
+
+    def update_globals( self ):
+        self.info_bar.set_mode( self.mode )
+        self.info_bar.set_time( self.dt )
+        self.info_bar.set_block( self.block )
+        self.info_bar.set_status( self.status )
+        return False
+ 
+    def run(self):
+        glbl = None
+        states = {}
+        while not self.quit:
+            if self.update():
+                gobject.idle_add( self.update_gui )
+                # TO DO: only update globals if they change, as for tasks
+                gobject.idle_add( self.update_globals )
+            time.sleep(1)
+        else:
+            pass
+            ####print "Disconnecting task state info thread"
+
+
+class lupdater(threading.Thread):
+
+    def __init__(self, cfg, led_liststore, task_list, info_bar ):
+
+        super(lupdater, self).__init__()
+
+        self.quit = False
+        self.autoexpand = True
+
+        self.cfg = cfg
+        self.info_bar = info_bar
+        imagedir = self.cfg.imagedir
+
+        self.state_summary = {}
+        self.global_summary = {}
+        self.god = None
+        self.mode = "mode:\nwaiting..."
+        self.dt = "state last updated at:\nwaiting..."
+        self.block = "access:\nwaiting ..."
+
+        self.led_liststore = led_liststore
+        self.task_list = task_list
+
+        self.reconnect()
+
+        self.waiting_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-waiting-glow.xpm" )
+        self.retry_delayed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-retry-glow.xpm" )
+        self.runahead_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-runahead-glow.xpm" )
+        self.queued_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-queued-glow.xpm" )
+        self.submitted_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-submitted-glow.xpm" )
+        self.running_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-running-glow.xpm" )
+        self.failed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-failed-glow.xpm" )
+        self.stopped_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-stopped-glow.xpm" )
+        self.succeeded_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-finished.xpm" )
+
+        self.empty_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-empty.xpm" )
+
+        self.led_digits_one = []
+        self.led_digits_two = []
+        self.led_digits_blank = gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-blank.xpm" )
+        for i in range(10):
+            self.led_digits_one.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-" + str(i) + ".xpm" ))
+            self.led_digits_two.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/two/digit-" + str(i) + ".xpm" ))
+
+        #self.config = config( self.cfg.suite )
+
+    def reconnect( self ):
+        try:
+            self.god = cylc_pyro_client.client( self.cfg.suite,
+                                                self.cfg.owner,
+                                                self.cfg.host,
+                                                self.cfg.port ).get_proxy( 'state_summary' )
+        except:
+            return False
+        else:
+            self.status = "status:\nconnected"
+            self.info_bar.set_status( self.status )
+            return True
+
+    def connection_lost( self ):
+        self.state_summary = {}
+
+        # Keep LED panel to show what state the suite was in at shutdown
+        #self.led_liststore.clear()
+
+        self.status = "status:\nSTOPPED"
+        if not self.quit:
+            self.info_bar.set_status( self.status )
+        # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
+        self.reconnect()
+        return False
+
+    def update(self):
+        #print "Updating"
+        try:
+            [glbl, states] = self.god.get_state_summary()
+        except:
+            gobject.idle_add( self.connection_lost )
+            return False
+
+        # always update global info
+        self.global_summary = glbl
+
+        if glbl['stopping']:
+            self.status = 'status:\nSTOPPING'
+
+        elif glbl['paused']:
+            self.status = 'status:\nHELD'
+       
+        elif glbl['will_pause_at']:
+            self.status = 'status:\nHOLD ' + glbl[ 'will_pause_at' ]
+
+        elif glbl['will_stop_at']:
+            self.status = 'status:\nSTOP ' + glbl[ 'will_stop_at' ]
+
+        else:
+            self.status = 'status:\nrunning'
+
+        if glbl[ 'simulation_mode' ]:
+            #rate = glbl[ 'simulation_clock_rate' ]
+            #self.mode = 'SIMULATION (' + str( rate ) + 's/hr)'
+            #self.mode = 'SIMULATION'
+            self.mode = 'mode:\nsimulation'
+        else:
+            self.mode = 'mode:\nlive'
+
+        if glbl[ 'blocked' ]:
+            self.block = 'access:\nblocked'
+        else:
+            self.block = 'access:\nunblocked'
+
+        dt = glbl[ 'last_updated' ]
+        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
+
+        # only update states if a change occurred
+        if compare_dict_of_dict( states, self.state_summary ):
+            #print "STATE UNCHANGED"
+            # only update if state changed
+            return False
+        else:
+            #print "STATE CHANGED"
+            self.state_summary = states
+            return True
+
+    def digitize( self, ctin ):
+        # Digitize cycle time for the LED panel display.
+        # For asynchronous tasks blank-pad the task tag.
+
+        # TO DO: if we ever have cycling modules for which minutes and
+        # seconds are important, take the whole of ctin here:
+        ncol = 10 # columns in the digital cycletime row
+        ct = ctin[:ncol]
+        led_ctime = []
+        if len(ct) < ncol: # currently can't happen due to ctin[:ncol]
+            zct = string.rjust( ct, ncol, ' ' ) # pad the string
+        else:
+            zct = ct
+        for i in range( ncol ):
+            digit = zct[i:i+1]
+            if digit == ' ':
+                led_ctime.append( self.led_digits_blank )  
+            elif i in [0,1,2,3,6,7]:
+                led_ctime.append( self.led_digits_one[ int(digit) ] )  
+            else:
+                led_ctime.append( self.led_digits_two[ int(digit) ] )  
+
+        return led_ctime
+
+    def update_gui( self ):
+        #print "Updating GUI"
+        expand_me = []
+        new_data = {}
+        for id in self.state_summary:
+            name, ctime = id.split( '%' )
+            if ctime not in new_data:
+                new_data[ ctime ] = {}
+            state = self.state_summary[ id ][ 'state' ]
+            message = self.state_summary[ id ][ 'latest_message' ]
+            tsub = self.state_summary[ id ][ 'submitted_time' ]
+            tstt = self.state_summary[ id ][ 'started_time' ]
+            meant = self.state_summary[ id ][ 'mean total elapsed time' ]
+            tetc = self.state_summary[ id ][ 'Tetc' ]
+            priority = self.state_summary[ id ][ 'latest_message_priority' ]
+            message = markup( get_col_priority( priority ), message )
+            state = markup( get_col(state), state )
+            new_data[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc ]
+
         self.led_liststore.clear()
 
         tasks = {}
@@ -456,25 +590,10 @@ class updater(threading.Thread):
         return False
 
     def update_globals( self ):
-        self.label_mode.set_text( self.mode )
-        self.label_time.set_text( self.dt )
-
-        self.label_block.set_text( self.block )
-        if self.block == 'access:\nblocked':
-            self.label_block.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
-        else:
-            self.label_block.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
-
-        self.label_status.set_text( self.status )
-        if re.search( 'STOPPED', self.status ):
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
-        elif re.search( 'STOP', self.status ):  # stopping
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff8c2a' ))
-        elif re.search( 'HELD', self.status ):
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ffde00' ))
-        else:
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
-  
+        self.info_bar.set_mode( self.mode )
+        self.info_bar.set_time( self.dt )
+        self.info_bar.set_block( self.block )
+        self.info_bar.set_status( self.status )
         return False
  
     def run(self):
@@ -483,8 +602,8 @@ class updater(threading.Thread):
         while not self.quit:
             if self.update():
                 gobject.idle_add( self.update_gui )
-            # TO DO: only update globals if they change, as for tasks
-            gobject.idle_add( self.update_globals )
+                # TO DO: only update globals if they change, as for tasks
+                gobject.idle_add( self.update_globals )
             time.sleep(1)
         else:
             pass

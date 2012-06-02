@@ -16,36 +16,26 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from SuiteControl import ControlAppBase
 import gtk
 import os, re
 import gobject
 import helpwindow
-from stateview import updater
+from stateview import tupdater
 from gcapture import gcapture_tmpfile
 
-class ControlTree(ControlAppBase):
+class ControlTree(object):
     """
-Text treeview base GUI suite control interface.
+Text Treeview suite control interface.
     """
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir,
-            imagedir, tmpdir, readonly=False ):
+    def __init__(self, cfg, suiterc, info_bar, get_right_click_menu, log_colors):
 
-        ControlAppBase.__init__(self, suite, owner, host, port,
-                suite_dir, logging_dir, imagedir, readonly=False )
+        self.cfg = cfg
+        self.suiterc = suiterc
+        self.info_bar = info_bar
+        self.get_right_click_menu = get_right_click_menu
+        self.log_colors = log_colors
 
-        self.userguide_item.connect( 'activate', helpwindow.userguide, False )
-
-        self.tmpdir = tmpdir
         self.gcapture_windows = []
-
-        self.tfilt = ''
-        self.full_task_headings()
-        self.t = updater( self.suite, self.owner, self.host, self.port,
-                self.imagedir, self.led_treeview.get_model(),
-                self.ttreeview, self.task_list, self.label_mode,
-                self.label_status, self.label_time, self.label_block )
-        self.t.start()
 
     def get_control_widgets( self ):
         # Load task list from suite config.
@@ -54,11 +44,15 @@ Text treeview base GUI suite control interface.
         ### (etc.) from the suite's remote state summary object.
         self.task_list = self.suiterc.get_task_name_list()
 
-        main_panes = gtk.VPaned()
-        main_panes.set_position(200)
-        main_panes.add1( self.ledview_widgets())
-        main_panes.add2( self.treeview_widgets())
-        return main_panes
+        main_box = gtk.VBox()
+        main_box.pack_start( self.treeview_widgets(), expand=True, fill=True )
+        
+        self.tfilt = ''
+        
+        self.t = tupdater( self.cfg, self.ttreeview,
+                           self.task_list, self.info_bar )
+        self.t.start()
+        return main_box
 
     def visible_cb(self, model, iter ):
         # visibility determined by state matching active toggle buttons
@@ -94,95 +88,15 @@ Text treeview base GUI suite control interface.
 
     def check_filter_entry( self, e ):
         ftxt = self.filter_entry.get_text()
-        if ftxt != '(task name filter)':
-            self.tfilt = self.filter_entry.get_text()
+        self.tfilt = self.filter_entry.get_text()
         self.tmodelfilter.refilter()
 
-    def delete_event(self, widget, event, data=None):
+    def stop(self):
         self.t.quit = True
-        return ControlAppBase.delete_event(self, widget, event, data )
-
-    def click_exit( self, foo ):
-        self.t.quit = True
-        return ControlAppBase.click_exit(self, foo )
 
     def toggle_autoexpand( self, w ):
         self.t.autoexpand = not self.t.autoexpand
 
-    def toggle_headings( self, w ):
-        if self.task_headings_on:
-            self.no_task_headings()
-        else:
-            self.full_task_headings()
-
-    def no_task_headings( self ):
-        self.task_headings_on = False
-        self.led_headings = ['Task Tag' ] + [''] * len( self.task_list )
-        self.reset_led_headings()
-
-    def full_task_headings( self ):
-        self.task_headings_on = True
-        self.led_headings = ['Task Tag' ] + self.task_list
-        self.reset_led_headings()
-
-    def reset_led_headings( self ):
-        tvcs = self.led_treeview.get_columns()
-        labels = []
-        for n in range( 1,1+len( self.task_list) ):
-            labels.append(gtk.Label(self.led_headings[n]))
-            labels[-1].set_use_underline(False)
-            labels[-1].set_angle(90)
-            labels[-1].show()
-            label_box = gtk.VBox()
-            label_box.pack_start(labels[-1], expand=False, fill=False)
-            label_box.show()
-            tvcs[n].set_widget( label_box )
-        max_pixel_length = -1
-        for label in labels:
-            x, y = label.get_layout().get_size()
-            if x > max_pixel_length:
-                max_pixel_length = x
-        for label in labels:
-            while label.get_layout().get_size()[0] < max_pixel_length:
-                label.set_text(label.get_text() + ' ')
-
-    def ledview_widgets( self ):
-        types = tuple( [gtk.gdk.Pixbuf]* (10 + len( self.task_list)))
-        liststore = gtk.ListStore( *types )
-        treeview = gtk.TreeView( liststore )
-        treeview.get_selection().set_mode( gtk.SELECTION_NONE )
-
-        # this is how to set background color of the entire treeview to black:
-        #treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) ) 
-
-        tvc = gtk.TreeViewColumn( 'Task Tag' )
-        for i in range(10):
-            cr = gtk.CellRendererPixbuf()
-            #cr.set_property( 'cell-background', 'black' )
-            tvc.pack_start( cr, False )
-            tvc.set_attributes( cr, pixbuf=i )
-        treeview.append_column( tvc )
-
-        # hardwired 10px lamp image width!
-        lamp_width = 10
-
-        for n in range( 10, 10+len( self.task_list )):
-            cr = gtk.CellRendererPixbuf()
-            #cr.set_property( 'cell_background', 'black' )
-            cr.set_property( 'xalign', 0 )
-            tvc = gtk.TreeViewColumn( ""  )
-            tvc.set_min_width( lamp_width )  # WIDTH OF LED PIXBUFS
-            tvc.pack_end( cr, True )
-            tvc.set_attributes( cr, pixbuf=n )
-            treeview.append_column( tvc )
-
-        sw = gtk.ScrolledWindow()
-        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
-
-        self.led_treeview = treeview
-        sw.add( treeview )
-        return sw
-    
     def treeview_widgets( self ):
         # Treeview of current suite state, with filtering and sorting.
         # sorting is handled somewhat manually because the simple method 
@@ -258,33 +172,10 @@ Text treeview base GUI suite control interface.
                 b.set_active(True)
             b.connect('toggled', self.check_tfilter_buttons)
 
-        hbox = gtk.HBox()
-        eb = gtk.EventBox()
-        eb.add( gtk.Label( "BELOW: right-click on tasks to control or interrogate" ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
-        hbox.pack_start( eb, True )
-
-        bbox = gtk.HButtonBox()
-        expand_button = gtk.Button( "E_xpand" )
-        expand_button.connect( 'clicked', lambda x: self.ttreeview.expand_all() )
-        collapse_button = gtk.Button( "_Collapse" )
-        collapse_button.connect( 'clicked', lambda x: self.ttreeview.collapse_all() )
-     
-        bbox.add( expand_button )
-        bbox.add( collapse_button )
-        bbox.set_layout( gtk.BUTTONBOX_START )
-
-        self.filter_entry = gtk.Entry()
-        self.filter_entry.set_text( '(task name filter)' )
-        self.filter_entry.connect( "activate", self.check_filter_entry )
-
         ahbox = gtk.HBox()
-        ahbox.pack_start( bbox, True )
-        ahbox.pack_start( self.filter_entry, True )
         ahbox.pack_start( self.tfilterbox, True)
 
         vbox = gtk.VBox()
-        vbox.pack_start( hbox, False )
         vbox.pack_start( sw, True )
         vbox.pack_end( ahbox, False )
 
@@ -322,23 +213,7 @@ Text treeview base GUI suite control interface.
 
         task_id = name + '%' + ctime
 
-        self.right_click_menu( event, task_id )
-
-    def right_click_menu( self, event, task_id ):
-        menu = gtk.Menu()
-        menu_root = gtk.MenuItem( task_id )
-        menu_root.set_submenu( menu )
-
-        title_item = gtk.MenuItem( 'Task: ' + task_id )
-        title_item.set_sensitive(False)
-        menu.append( title_item )
-        menu.append( gtk.SeparatorMenuItem() )
-
-        menu_items = self.get_right_click_menu_items( task_id )
-        for item in menu_items:
-            menu.append( item )
-
-        menu.show_all()
+        menu = self.get_right_click_menu( task_id )
         menu.popup( None, None, None, event.button, event.time )
 
         # TO DO: popup menus are not automatically destroyed and can be
@@ -367,33 +242,46 @@ Text treeview base GUI suite control interface.
         self.quitters.remove( lv )
         w.destroy()
 
-    def create_main_menu( self ):
-        ControlAppBase.create_main_menu(self)
-
-        names_item = gtk.MenuItem( '_Toggle Task Names (light panel)' )
-        self.view_menu.append( names_item )
-        names_item.connect( 'activate', self.toggle_headings )
-
+    def get_menuitems( self ):
+        """Return the menu items specific to this view."""
+        items = []
         autoex_item = gtk.MenuItem( 'Toggle _Auto-Expand Tree' )
-        self.view_menu.append( autoex_item )
+        items.append( autoex_item )
         autoex_item.connect( 'activate', self.toggle_autoexpand )
+        return items
 
-class StandaloneControlTreeApp( ControlTree ):
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
-        gobject.threads_init()
-        ControlTree.__init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly )
- 
-    def quit_gcapture( self ):
-        for gwindow in self.gcapture_windows:
-            if not gwindow.quit_already:
-                gwindow.quit( None, None )
+    def _set_tooltip( self, widget, tip_text ):
+        # Convenience function to add hover over text to a widget.
+        tip = gtk.Tooltips()
+        tip.enable()
+        tip.set_tip( widget, tip_text )
 
-    def delete_event(self, widget, event, data=None):
-        self.quit_gcapture()
-        ControlTree.delete_event( self, widget, event, data )
-        gtk.main_quit()
+    def get_toolitems( self ):
+        """Return the tool bar items specific to this view."""
+        items = []
 
-    def click_exit( self, foo ):
-        self.quit_gcapture()
-        ControlTree.click_exit( self, foo )
-        gtk.main_quit()
+        expand_button = gtk.ToolButton()
+        image = gtk.image_new_from_stock( gtk.STOCK_ADD, gtk.ICON_SIZE_SMALL_TOOLBAR )
+        expand_button.set_icon_widget( image )
+        self._set_tooltip( expand_button, "Expand all" )
+        expand_button.connect( 'clicked', lambda x: self.ttreeview.expand_all() )
+        items.append( expand_button )
+
+        collapse_button = gtk.ToolButton()
+        image = gtk.image_new_from_stock( gtk.STOCK_REMOVE, gtk.ICON_SIZE_SMALL_TOOLBAR )
+        collapse_button.set_icon_widget( image )        
+        collapse_button.connect( 'clicked', lambda x: self.ttreeview.collapse_all() )
+        self._set_tooltip( collapse_button, "Collapse all" )
+        items.append( collapse_button )
+     
+        self.filter_entry = gtk.Entry()
+        self.filter_entry.set_width_chars( 10 )  # Reduce width in toolbar
+        self.filter_entry.connect( "activate", self.check_filter_entry )
+        filter_toolitem = gtk.ToolItem()
+        filter_toolitem.add(self.filter_entry)
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(filter_toolitem, "Filter tasks by name")
+        items.append(filter_toolitem)
+        
+        return items

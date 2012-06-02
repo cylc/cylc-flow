@@ -18,17 +18,13 @@
 
 import os, sys
 import gtk
+import warnings
+warnings.filterwarnings('ignore', 'use the new', Warning)
 from optparse import OptionParser
 
-# Make current working directory be $HOME. Otherwise (1) if the user
-# attempts to start gcylc from a CWD that has been removed, Pyro will
-# not be importable below; and (2) if the CWD gets removed later while
-# gcylc is running, subprocesses spawned by gcylc will fail when they
-# attempt to determine their CWD.
-os.chdir(os.environ['HOME'])
-
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
-from cylc.conf.CylcGlobals import cylc_tmpdir
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
+from conf.CylcGlobals import cylc_tmpdir
 from cylc.hostname import hostname
 from cylc.version import compat
 
@@ -41,8 +37,16 @@ except Exception, x:
 from cylc import port_scan
 from cylc.passphrase import passphrase
 from cylc.gui.gcylc import MainApp
+from cylc.gui.SuiteControl import ControlApp
 from cylc.config import config, SuiteConfigError
 from cylc.registration import dbgetter, RegistrationError
+
+# Make current working directory be $HOME. Otherwise (1) if the user
+# attempts to start gcylc from a CWD that has been removed, Pyro will
+# not be importable below; and (2) if the CWD gets removed later while
+# gcylc is running, subprocesses spawned by gcylc will fail when they
+# attempt to determine their CWD.
+os.chdir(os.environ['HOME'])
 
 parser = OptionParser( """cylc gcylc [SUITE]
        gcylc [SUITE]
@@ -61,8 +65,8 @@ to suite control and monitoring.
 This directly invokes a suite control and monitoring application for a
 particular suite. Alternatively you can get this by right-clicking on 
 the suite in the main gcylc suite database viewer (1/ above). Without
-the -g option you'll get a filtered text treeview GUI; with it, a
-dependency graph based GUI.
+the -g option the GUI will show a filtered text treeview on startup;
+with it, the startup view will be dependency graph based.
 
 NOTE: daemonize important suites with the POSIX nohup command:
     $ nohup gcylc [options] SUITE &
@@ -141,10 +145,14 @@ senv = conf['cylc']['environment']
 for var in senv:
     os.environ[var] = os.path.expandvars(senv[var])
 
+gtk.settings_get_default().set_long_property("gtk-toolbar-icon-size", gtk.ICON_SIZE_SMALL_TOOLBAR, "main")
+gtk.settings_get_default().set_long_property("gtk-button-images", True, "main")
+gtk.settings_get_default().set_long_property("gtk-menu-images", True, "main")
+
 if options.depgraph:
-    from cylc.gui.SuiteControlGraph import StandaloneControlGraphApp
-    app = StandaloneControlGraphApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir )
+    views = ["graph"]
 else:
-    from cylc.gui.SuiteControlTree import StandaloneControlTreeApp
-    app = StandaloneControlTreeApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir )
+    views = ["led", "tree"]
+
+app = ControlApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir, views )
 gtk.main()

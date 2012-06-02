@@ -688,4 +688,17 @@ removed following Jinja2 processing, to prevent this problem occuring.
 
 + Fixed a bug in the "cylc show" command for retrieving live task info.
 
++ Merged the two suite control GUIs into one multi-view GUI with a
+cleaner interface (which is still evolving).
+
++ Tasks ready to run at the same time will now be submitted in the order
+in which they are first encountered in the suite graph.
+
++ Task retry overhauled: "command scripting" is now a single item, not a
+list, but a new config item "retry delays" lists delays in minutes after 
+which to resubmit the job with the same command scripting. Whilst delayed
+prior to a retry, tasks go into a new "retry delayed" state, coloured pink,
+and a new task execution environment variable $CYLC_TASK_TRY_NUMBER is 
+incremented (staring from 1 in the original run).
+
 
