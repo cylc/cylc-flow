@@ -30,51 +30,32 @@ class start( scheduler ):
     def __init__( self ):
         usage = """cylc [control] run|start [options] SUITE [START]
 
-Start a suite running at a specified initial cycle time. To restart a
-suite from a previous state (which may contain tasks at multiple cycle
-times), see 'cylc restart SUITE'.
+Start a suite running at a specified initial cycle time.
+(To restart a suite from a previous state, see 'cylc restart SUITE').
 
-There are three start up modes that differ in how initial intercycle
-dependencies are handled (at start up there is no previous cycle for
-tasks, such as warm cycled forecast models, that normally depend on
-tasks in previous cycles): 
-  1/ Cold start (the default) -- start from scratch with special tasks 
-  2/ Warm start (-w,--warm)   -- assume a previous cycle 
-  3/ Raw  start (-r,--raw)    -- assume nothing
-These are all the same for a suite that has no intercycle dependencies.
-Otherwise, cold start tasks should be defined in the suite.rc file:
-# SUITE.RC:
-[scheduling]->[[special tasks]]->cold-start = task1, task2, ...
+The following are all equivalent if no intercycle dependence exists:
+  1/ Cold start (default)    : use special cold-start tasks 
+  2/ Warm start (-w,--warm)  : assume a previous cycle 
+  3/ Raw  start (-r,--raw)   : assume nothing
 
-1/ COLD START -- start from scratch, with special one off "cold start
-tasks" to satisfy the initial dependencies of any tasks that normally
-depend on tasks from a previous cycle (most notably the restart
-dependencies of warm cycled forecast models). Cold start tasks
-can run real processes (e.g. a special forecast to generate the initial
-restart files for a warm cycled model) or, with no task command defined,
-just act as a dummy proxy for some external process that has to occur
-before the suite is started (e.g. a spinup run of some kind). For a
-suite with no intercycle dependencies there is no distinction between
-the cold, warm, and raw start methods. For a cold start, each task,
-including designated cold start tasks, starts in the 'waiting' state
-(i.e. prerequisites not satisfied) at the initial cycle time or at the
-next valid cycle time thereafter for the task. 
+1/ COLD START -- at start up, insert designated cold-start tasks in the 
+waiting state, to satisfy any initial dependence on a previous cycle.
 
-2/ WARM START -- this assumes that there was a previous cycle (from a
-previous suite run - in which case a 'cylc restart' may be an option
-too) or that files required from previous cycles have been put in place
-by some external means. Start up is as for a cold start, except that
-designated cold start tasks are inserted in the 'succeeded' state (i.e.
-outputs completed).
+2/ WARM START -- at start up, insert designated cold-start tasks in the
+succeeded state, to stand in for a previous cycle (from a previous run).
 
-3/ RAW START -- this starts the suite as if in mid run without any
-special handling - any tasks that depend on previous cycles will have to
-be triggered manually. Start up is as for a cold start, except that
-designated cold start tasks are excluded from the suite.
+3/ RAW START -- do not insert cold-start tasks at all.
 
 NOTE: daemonize important suites with the POSIX nohup command:
   $ nohup cylc [con] run SUITE [START] > suite.out 2> suite.err &
-"""
+
+NOTE: suites can be (re)started on remote hosts or other user accounts
+if passwordless ssh is set up. The ssh tunnel will remain open to
+receive the suite stdout and stderr streams. To control the running 
+suite from the local host requires the suite passphrase to be installed.
+If they exist /etc/profile and $HOME/.profile will be sourced on the
+remote host prior to attempting to run the suite.""" 
+
         self.parser = NoPromptOptionParser( usage,
                 [ """START                Initial cycle time. This is optional if defined in the 
                         suite.rc file, in which case the command line
@@ -236,68 +217,45 @@ if __name__ == '__main__':
         owner = m.groups()[1]
         if owner != os.environ['USER']:
             remote = True
-            argstr = re.sub( '(-o\s+|--owner=)(\w+)\s+', '', argstr )
     n = re.search( '(--host=)(\w+)', argstr )
     if n:
         host = n.groups()[1]
-        if host != hostname:
+        if host != shorthostname:
             remote = True
-            argstr = re.sub( '--host=\w+\s+', '', argstr )
     if remote:
-        print "_________________________________________________"
-        print "Remote suite invocation by passwordless ssh. The "
-        print "invocation process will direct stdout and stderr "
-        print "to foo.out on the remote account and then detach."
-        print "-------------------------------------------------"
-        scanopts = []
+        sshopts = ''
         if owner: 
             sshopts = owner  + '@'
         if host:
             sshopts += host
-            scanopts = [ '--host=' + host ]
         else:
             sshopts += 'localhost'
-        args = re.split('\s+', argstr)
-        command = ['ssh', sshopts, 'source', '.profile;', 'cylc', 'run' ] + args + [ '> foo.out 2>&1 &' ]
-        try:
-            # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-            retcode = subprocess.call( command )
-        except OSError, x:
-            print >> sys.stderr, 'ERROR: Unable to invoke', ' '.join(command)
-            raise 
-        else:
-            if retcode != 0:
-                print >> sys.stderr, 'ERROR: remote command failed'
-                sys.exit(retcode)
 
-        print "Done. Checking running suites on " + sshopts + ":"
-        print "1/ local scan of remote account:"
-        command = ['cylc', 'scan' ] + scanopts
-        try:
-            # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-            retcode = subprocess.call( command )
-        except OSError, x:
-            print >> sys.stderr, 'ERROR: Unable to invoke', ' '.join(command)
-            raise 
-        else:
-            if retcode != 0:
-                print >> sys.stderr, 'ERROR: remote command failed'
-                sys.exit(retcode)
- 
-        print "2/ remote scan of remote account:"
-        command = ['ssh', sshopts, 'source', '.profile;', 'cylc', 'scan' ]
-        try:
-            # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-            retcode = subprocess.call( command )
-        except OSError, x:
-            print >> sys.stderr, 'ERROR: Unable to invoke', ' '.join(command)
-            raise 
-        else:
-            if retcode != 0:
-                print >> sys.stderr, 'ERROR: remote command failed'
-                sys.exit(retcode)
-        sys.exit(0)
+	command = "ssh " + sshopts + """ '\
+if [[ -f /etc/profile ]]; then source /etc/profile; fi; \
+if [[ -f .profile ]]; then source .profile; fi; cylc -v; \
+cylc restart """ + ' '.join(sys.argv[1:]) + "'"
 
+        try:
+            popen = subprocess.Popen( command, shell=True )
+            res = popen.wait()
+            if res < 0:
+                print >> sys.stderr, "command terminated by signal", res
+            elif res > 0:
+                print >> sys.stderr, "command failed", res
+            else:
+                # res == 0
+                pass
+        except OSError, e:
+            # (note this would not catch background execution failure)
+            print >> sys.stderr, "Job submission failed", e
+            success = False
+            raise
+        else:
+            # done (remote suite finished)
+            sys.exit(0)
+
+    # local invocation
     try:
         server = start()
     except Exception, x:

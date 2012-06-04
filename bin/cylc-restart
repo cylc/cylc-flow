@@ -30,22 +30,30 @@ class restart( scheduler ):
     def __init__( self ):
         usage = """cylc [control] restart [options] SUITE [FILE]
 
-Restart a cylc suite from a previous state. Tasks in the 'submitted',
-'running', or 'failed' states will immediately be resubmitted at
-start up unless you specify '--no-reset'. Any 'held' tasks will be
-released unless you specify the '--no-release' option. A final cycle
-time that was set prior to shutdown will be ignored on restart unless
-you specify '--keep-stopcycle'
+Restart a cylc suite from a previous state.
+(To start a suite from a specific cycle time, see 'cylc run SUITE').
 
-By default the suite will restart from the suite state dump file, which is
-updated whenever a task changes state and thus records the most recent
-previous state of the suite. However, cylc also records a special named
-state dump, and logs its filename, before actioning any intervention
-command, and you can choose to restart from one of these (just
-cut-and-paste the filename from the log to the command line).
+The most recent previous state is used by default but other state dumps
+can be specified on the command line (e.g. cylc writes a special state
+dump and logs its filename before actioning any intervention command).
+
+By default:
+ 1/ 'submitted', 'running', or 'failed' states will be resubmitted.
+     Use '--no-reset' to prevent this.
+ 2/ 'held' tasks will be released.
+    Use '--no-release' to prevent this.
+ 3/ A final cycle time set prior to shutdown will be ignored on restart.
+    Use '--keep-stopcycle' to prevent this.
 
 NOTE: daemonize important suites with the POSIX nohup command:
-    nohup cylc [con] restart SUITE > suite.out 2> suite.err &"""
+    nohup cylc [con] restart SUITE > suite.out 2> suite.err &
+    
+NOTE: suites can be (re)started on remote hosts or other user accounts
+if passwordless ssh is set up. The ssh tunnel will remain open to
+receive the suite stdout and stderr streams. To control the running 
+suite from the local host requires the suite passphrase to be installed.
+If they exist /etc/profile and $HOME/.profile will be sourced on the
+remote host prior to attempting to run the suite."""
 
         self.parser = NoPromptOptionParser( usage,
    ["""FILE                 Optional non-default state dump file (assumed to
@@ -291,7 +299,6 @@ if __name__ == '__main__':
     if m:
         owner = m.groups()[1]
         if owner != os.environ['USER']:
-	    print owner, os.environ['USER'] 
             remote = True
     n = re.search( '(--host=)(\w+)', argstr )
     if n:
@@ -299,28 +306,20 @@ if __name__ == '__main__':
         if host != shorthostname:
             remote = True
     if remote:
-        print "_________________________________________________"
-        print "Remote suite invocation by passwordless ssh. The "
-        print "invocation process will direct stdout and stderr "
-        print "to foo.out on the remote account and then detach."
-        print "-------------------------------------------------"
-        scanopts = []
         sshopts = ''
         if owner: 
             sshopts = owner  + '@'
         if host:
             sshopts += host
-            scanopts = [ '--host=' + host ]
         else:
             sshopts += 'localhost'
+
 	command = "ssh " + sshopts + """ '\
 if [[ -f /etc/profile ]]; then source /etc/profile; fi; \
 if [[ -f .profile ]]; then source .profile; fi; cylc -v; \
-cylc restart """ + ' '.join(sys.argv[1:]) + " >/dev/null &'"
+cylc restart """ + ' '.join(sys.argv[1:]) + "'"
 
         try:
-	    #stdin = subprocess.PIPE
-            print command
             popen = subprocess.Popen( command, shell=True )
             res = popen.wait()
             if res < 0:
@@ -329,46 +328,17 @@ cylc restart """ + ' '.join(sys.argv[1:]) + " >/dev/null &'"
                 print >> sys.stderr, "command failed", res
             else:
                 # res == 0
-		pass
+                pass
         except OSError, e:
-            # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
-            # (i.e. cylc's simplest "background" job submit method)
-            # because a background job returns immediately and the failure
-            # occurs in the background sub-shell.
+            # (note this would not catch background execution failure)
             print >> sys.stderr, "Job submission failed", e
             success = False
             raise
-
-        print "Done. Checking running suites on " + sshopts + ":"
-        print "1/ local scan of remote account:"
-        command = "cylc scan " + scanopts
-        try:
-            # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-            popen = subprocess.Popen( command, shell=True )
-
-        except OSError, x:
-            print >> sys.stderr, 'ERROR: Unable to invoke', ' '.join(command)
-            raise 
         else:
-            if retcode != 0:
-                print >> sys.stderr, 'ERROR: remote command failed'
-                sys.exit(retcode)
- 
-        print "2/ remote scan of remote account:"
-        command = ['ssh', sshopts, 'source', '.profile;', 'cylc', 'scan' ]
-        print command
-        try:
-            # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-            retcode = subprocess.call( command )
-        except OSError, x:
-            print >> sys.stderr, 'ERROR: Unable to invoke', ' '.join(command)
-            raise 
-        else:
-            if retcode != 0:
-                print >> sys.stderr, 'ERROR: remote command failed'
-                sys.exit(retcode)
-        sys.exit(0)
+            # done (remote suite finished)
+            sys.exit(0)
 
+    # local invocation
     try:
         server = restart()
     except Exception, x:

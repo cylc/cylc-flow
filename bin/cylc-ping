@@ -25,6 +25,7 @@ from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.hostname import hostname
 from cylc.passphrase import SecurityError
+from cylc.version import compat
 
 parser = NoPromptOptionParser( """cylc [discover] ping [options] SUITE [TASKID]
     
