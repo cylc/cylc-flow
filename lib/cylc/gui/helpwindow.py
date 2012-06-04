@@ -373,9 +373,6 @@ def update_tb( tb, line, tags = None ):
 
 def userguide( w, graph=False ):
     window = gtk.Window()
-    #if readonly:
-    #    window.set_title( "Cylc View Quick Guide" )
-    #else:
     window.set_title( "Cylc Suite Control Quick Guide" )
     window.set_size_request(600, 600)
 
@@ -402,11 +399,6 @@ def userguide( w, graph=False ):
     red = tb.create_tag( None, foreground = "darkgreen" )
     alert = tb.create_tag( None, foreground = "red" )
     bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
-
-    #if readonly:
-    #    update_tb( tb, "\n\nThis is 'cylc view', the read-only "
-    #        "version of the 'cylc control' GUI: all of the suite control "
-    #        "functionality documented below has been disabled.'\n\n", [bold, alert] )
 
     update_tb( tb, "Suite Control GUI Quick Guide", [bold, blue] )
 

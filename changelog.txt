@@ -695,3 +695,17 @@ removed following Jinja2 processing, to prevent this problem occuring.
   distributed to any remote task hosts, or any remote control hosts from 
   which you need to connect to the suite.
 
++ Merged the two suite control GUIs into one multi-view GUI with a
+cleaner interface (which is still evolving).
+
++ Tasks ready to run at the same time will now be submitted in the order
+in which they are first encountered in the suite graph.
+
++ Task retry implementation changed: "command scripting" is now a single
+item, not a list, and a new config item "retry delays" lists successive
+delays in minutes, if any, after which to resubmit the job with the same
+command scripting. Whilst delayed prior to a retry, tasks go into a new
+"retry delayed" state, coloured pink, and a new task execution
+environment variable $CYLC_TASK_TRY_NUMBER is incremented (staring from
+one in the original run); use this variable to change behavior per retry.
+

@@ -29,6 +29,7 @@
 
 import taskdef
 from copy import deepcopy
+from collections import deque
 from OrderedDict import OrderedDict
 from cycle_time import ct, CycleTimeError
 import re, os, sys, logging
@@ -186,7 +187,7 @@ class config( CylcConfigObj ):
         self.verbose = verbose
         self.edges = []
         self.cyclers = []
-        self.taskdefs = {}
+        self.taskdefs = OrderedDict()
 
         self.async_oneoff_edges = []
         self.async_oneoff_tasks = []
@@ -875,7 +876,6 @@ class config( CylcConfigObj ):
     def get_task_name_list( self ):
         # return a list of all tasks used in the dependency graph
         tasknames = self.taskdefs.keys()
-        tasknames.sort(key=str.lower)  # case-insensitive sort
         return tasknames
 
     def get_asynchronous_task_name_list( self ):
@@ -885,7 +885,6 @@ class config( CylcConfigObj ):
                     self.taskdefs[tn].type == 'async_daemon' or \
                     self.taskdefs[tn].type == 'async_oneoff':
                 names.append(tn)
-        names.sort(key=str.lower)
         return names
 
     def process_graph_line( self, line, section ):
@@ -1509,11 +1508,13 @@ class config( CylcConfigObj ):
 
         if self.simulation_mode:
             taskd.job_submit_method = self['cylc']['simulation mode']['job submission']['method']
-            taskd.commands = self['cylc']['simulation mode']['command scripting']
+            taskd.command = self['cylc']['simulation mode']['command scripting']
+            taskd.retry_delays = self['cylc']['simulation mode']['retry delays']
         else:
             taskd.owner = taskconfig['remote']['owner']
             taskd.job_submit_method = taskconfig['job submission']['method']
-            taskd.commands   = taskconfig['command scripting']
+            taskd.command   = taskconfig['command scripting']
+            taskd.retry_delays = deque( taskconfig['retry delays'])
             taskd.precommand = taskconfig['pre-command scripting'] 
             taskd.postcommand = taskconfig['post-command scripting'] 
 

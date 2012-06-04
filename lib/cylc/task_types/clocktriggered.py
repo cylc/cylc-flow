@@ -20,14 +20,12 @@ import sys
 import datetime
 from cylc.cycle_time import ct
 
+# TO DO: the task base class now has clock-triggering functionality too, to
+# handle retry delays, so this class could probably disappear now to leave
+# clock-triggering as just a special case of normal task initialization.
+
 class clocktriggered(object):
     clock = None
-
-    # A task that waits on an event in the external world, such as
-    # incoming data, that occurs at some known (but approximate) time
-    # interval IN HOURS relative to the task cycle time. There's no
-    # point in running the task earlier than this delayed start time as
-    # the task would just sit in the queue waiting on the external event.
 
     def is_clock_triggered( self ):
         return True
@@ -44,7 +42,7 @@ class clocktriggered(object):
         reached = False
         # check current time against expected start time
         rt = ct( self.c_time ).get_datetime()
-        delayed_start = rt + datetime.timedelta( 0,0,0,0,0,self.real_time_delay,0 ) 
+        delayed_start = rt + datetime.timedelta( 0,0,0,0,0,self.real_time_delay,0 )
         current_time = clocktriggered.clock.get_datetime()
         if current_time >= delayed_start:
            reached = True
