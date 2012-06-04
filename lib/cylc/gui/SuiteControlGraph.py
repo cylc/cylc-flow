@@ -16,7 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from SuiteControl import ControlAppBase
 import gtk
 import os, re
 import gobject
@@ -27,41 +26,40 @@ from cylc.cycle_time import ct
 from cylc.cylc_xdot import xdot_widgets
 from gcapture import gcapture_tmpfile
 
-class ControlGraph(ControlAppBase):
+class ControlGraph(object):
     """
-Dependency graph based GUI suite control interface.
+Dependency graph suite control interface.
     """
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir,
-            imagedir, tmpdir, readonly=False ):
+    def __init__(self, cfg, info_bar, get_right_click_menu, log_colors ):
 
-        ControlAppBase.__init__(self, suite, owner, host, port,
-                suite_dir, logging_dir, imagedir, readonly=False )
+        self.cfg = cfg
+        self.info_bar = info_bar
+        self.get_right_click_menu = get_right_click_menu
+        self.log_colors = log_colors
 
-        self.userguide_item.connect( 'activate', helpwindow.userguide, True )
-
-        self.tmpdir = tmpdir
         self.gcapture_windows = []
 
-        self.x = xupdater( self.suite, self.suiterc, self.owner, self.host, self.port,
-                self.label_mode, self.label_status, self.label_time, self.label_block, self.xdot )
-        self.x.start()
-
-    def get_control_widgets(self ):
         self.xdot = xdot_widgets()
         self.xdot.widget.connect( 'clicked', self.on_url_clicked )
-        self.xdot.graph_disconnect_button.connect( 'toggled', self.toggle_graph_disconnect )
-        self.xdot.graph_update_button.connect( 'clicked', self.graph_update )
+
+    def get_control_widgets( self ):
+        self.x = xupdater( self.cfg, self.info_bar, self.xdot )
+        self.x.start()
         return self.xdot.get()
 
-    def toggle_graph_disconnect( self, w ):
+    def toggle_graph_disconnect( self, w, update_button ):
         if w.get_active():
             self.x.graph_disconnect = True
-            w.set_label( '_REconnect' )
-            self.xdot.graph_update_button.set_sensitive(True)
+            w.set_image( gtk.image_new_from_stock( gtk.STOCK_DISCONNECT,
+                                                   gtk.ICON_SIZE_SMALL_TOOLBAR ) )
+            self._set_tooltip( w, "Click to reconnect" )
+            update_button.set_sensitive(True)
         else:
             self.x.graph_disconnect = False
-            w.set_label( '_DISconnect' )
-            self.xdot.graph_update_button.set_sensitive(False)
+            w.set_image( gtk.image_new_from_stock( gtk.STOCK_CONNECT,
+                                                   gtk.ICON_SIZE_SMALL_TOOLBAR ) )
+            self._set_tooltip( w, "Click to disconnect" )
+            update_button.set_sensitive(False)
         return True
 
     def graph_update( self, w ):
@@ -97,13 +95,8 @@ Dependency graph based GUI suite control interface.
         #print 'LIVE TASK'
         self.right_click_menu( event, url, type='live task' )
 
-    def delete_event(self, widget, event, data=None):
+    def stop(self):
         self.x.quit = True
-        return ControlAppBase.delete_event(self, widget, event, data )
-
-    def click_exit( self, foo ):
-        self.x.quit = True
-        return ControlAppBase.click_exit(self, foo )
 
     def right_click_menu( self, event, task_id, type='live task' ):
         name, ctime = task_id.split('%')
@@ -167,9 +160,10 @@ Dependency graph based GUI suite control interface.
 
         if type == 'live task':
             menu.append( gtk.SeparatorMenuItem() )
-
-            menu_items = self.get_right_click_menu_items( task_id )
-            for item in menu_items:
+            
+            default_menu = self.get_right_click_menu( task_id, hide_task=True )
+            for item in default_menu.get_children():
+                default_menu.remove( item )
                 menu.append( item )
 
         menu.show_all()
@@ -220,37 +214,96 @@ Dependency graph based GUI suite control interface.
             col.set_sort_order(gtk.SORT_ASCENDING)
         self.ttreestore.set_sort_column_id(n, col.get_sort_order()) 
 
-    def create_main_menu( self ):
-        ControlAppBase.create_main_menu(self)
-
+    def get_menuitems( self ):
+        """Return the menu items specific to this view."""
+        items = []
         graph_range_item = gtk.MenuItem( 'Time Range Focus ...' )
-        self.view_menu.append( graph_range_item )
+        items.append( graph_range_item )
         graph_range_item.connect( 'activate', self.graph_timezoom_popup )
 
         crop_item = gtk.MenuItem( 'Toggle _Crop Base Graph' )
-        self.view_menu.append( crop_item )
+        items.append( crop_item )
         crop_item.connect( 'activate', self.toggle_crop )
 
         filter_item = gtk.MenuItem( 'Task _Filtering ...' )
-        self.view_menu.append( filter_item )
+        items.append( filter_item )
         filter_item.connect( 'activate', self.filter_popup )
 
         expand_item = gtk.MenuItem( '_Expand All Subtrees' )
-        self.view_menu.append( expand_item )
+        items.append( expand_item )
         expand_item.connect( 'activate', self.expand_all_subtrees )
 
         group_item = gtk.MenuItem( '_Group All Families' )
-        self.view_menu.append( group_item )
+        items.append( group_item )
         group_item.connect( 'activate', self.group_all_families, True )
 
         ungroup_item = gtk.MenuItem( '_UnGroup All Families' )
-        self.view_menu.append( ungroup_item )
+        items.append( ungroup_item )
         ungroup_item.connect( 'activate', self.group_all_families, False )
 
         key_item = gtk.MenuItem( 'Toggle Graph _Key' )
-        self.view_menu.append( key_item )
+        items.append( key_item )
         key_item.connect( 'activate', self.toggle_key )
+        
+        return items
 
+    def _set_tooltip( self, widget, tip_text ):
+        tip = gtk.Tooltips()
+        tip.enable()
+        tip.set_tip( widget, tip_text )
+
+    def get_toolitems( self ):
+        """Return the tool bar items specific to this view."""
+        items = []
+        for child in self.xdot.vbox.get_children():
+            if isinstance(child, gtk.HButtonBox):
+                self.xdot.vbox.remove(child)
+
+        zoomin_button = gtk.ToolButton( gtk.STOCK_ZOOM_IN )
+        zoomin_button.connect( 'clicked', self.xdot.widget.on_zoom_in )
+        zoomin_button.set_label( None )
+        self._set_tooltip( zoomin_button, "Zoom In" )
+        items.append( zoomin_button )
+
+        zoomout_button = gtk.ToolButton( gtk.STOCK_ZOOM_OUT )
+        zoomout_button.connect( 'clicked', self.xdot.widget.on_zoom_out )
+        zoomout_button.set_label( None )
+        self._set_tooltip( zoomout_button, "Zoom Out" )
+        items.append( zoomout_button )
+        
+        zoomfit_button = gtk.ToolButton( gtk.STOCK_ZOOM_FIT )
+        zoomfit_button.connect('clicked', self.xdot.widget.on_zoom_fit)
+        zoomfit_button.set_label( None )
+        self._set_tooltip( zoomfit_button, "Best Fit" )
+        items.append( zoomfit_button )
+
+        zoom100_button = gtk.ToolButton( gtk.STOCK_ZOOM_100 )
+        zoom100_button.connect('clicked', self.xdot.widget.on_zoom_100)
+        zoom100_button.set_label( None )
+        self._set_tooltip( zoom100_button, "Normal Size" )
+        items.append( zoom100_button )
+       
+        connect_button = gtk.ToggleButton()
+        image = gtk.image_new_from_stock( gtk.STOCK_CONNECT,
+                                          gtk.ICON_SIZE_SMALL_TOOLBAR )
+        connect_button.set_image( image )
+        connect_button.set_relief( gtk.RELIEF_NONE )
+        self._set_tooltip( connect_button, "Click to disconnect" )
+        connect_item = gtk.ToolItem()
+        connect_item.add( connect_button )
+        items.append( connect_item )
+
+        update_button = gtk.ToolButton( gtk.STOCK_REFRESH )
+        update_button.connect( 'clicked', self.graph_update )
+        update_button.set_label( None )
+        update_button.set_sensitive( False )
+        self._set_tooltip( update_button, "Update graph" ) 
+        items.append( update_button )
+        
+        connect_button.connect( 'clicked', self.toggle_graph_disconnect, update_button )
+
+        return items
+             
     def group_all_families( self, w, group ):
         if group:
             self.x.group_all = True
@@ -293,9 +346,10 @@ Dependency graph based GUI suite control interface.
 
         filterbox = gtk.HBox()
         # allow filtering out of 'succeeded' and 'waiting'
-        all_states = [ 'waiting', 'runahead', 'queued', 'submitted', 'running', 'succeeded', 'failed', 'held' ]
+        all_states = [ 'waiting', 'retry_delayed', 'runahead', 'queued', 'submitted', 'running', 'succeeded', 'failed', 'held' ]
         labels = {}
         labels[ 'waiting'   ] = '_waiting'
+        labels[ 'retry_delayed'   ] = 'retry-_delayed'
         labels[ 'runahead'  ] = 'run_ahead'
         labels[ 'queued'   ] = '_queued'
         labels[ 'submitted' ] = 's_ubmitted'
@@ -512,9 +566,9 @@ class StandaloneControlGraphApp( ControlGraph ):
     # 1/ call gobject.threads_init() on startup
     # 2/ call gtk.main_quit() on exit
 
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
+    def __init__(self, suite, owner, host, port ):
         gobject.threads_init()
-        ControlGraph.__init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly )
+        ControlGraph.__init__(self, suite, owner, host, port )
  
     def quit_gcapture( self ):
         for gwindow in self.gcapture_windows:

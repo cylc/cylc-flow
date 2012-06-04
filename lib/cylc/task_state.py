@@ -32,7 +32,7 @@ dump file.
 
 class task_state(object):
 
-    allowed_status = [ 'waiting', 'submitted', 'running', 'succeeded', 'failed', 'held', 'runahead', 'queued', 'neutral' ]
+    allowed_status = [ 'waiting', 'retry_delayed', 'submitted', 'running', 'succeeded', 'failed', 'held', 'runahead', 'queued', 'neutral' ]
     # INTERNALLY TO THIS CLASS, SPAWNED STATUS IS A STRING
     allowed_bool = [ 'true', 'false' ]
 
@@ -88,7 +88,8 @@ class task_state(object):
             return False
 
     def is_waiting( self ):
-        if self.state[ 'status' ] == 'waiting':
+        if self.state[ 'status' ] == 'waiting' or \
+        self.state[ 'status' ] == 'retry_delayed':
             return True
         else:
             return False

@@ -19,13 +19,14 @@
 import sys, os
 from cylc.hostname import hostname
 from cylc import cylc_pyro_client
-from cylc.CylcOptionParsers import NoPromptOptionParser_u
+from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
 from cylc.TaskID import TaskID, InvalidTaskIDError, InvalidCycleTimeError
 from cylc.registration import dbgetter, RegistrationError
 from cylc.version import compat
+from cylc.passphrase import SecurityError
 
-parser = NoPromptOptionParser_u( """cylc [info] show [options] SUITE [NAME[%TAG]]
+parser = NoPromptOptionParser( """cylc [info] show [options] SUITE [NAME[%TAG]]
 
 Print global or task-specific information from a running suite: title
 and task list, task descriptions, current state of task prerequisites
@@ -36,17 +37,16 @@ time is up yet.""",
 
 (options, args) = parser.parse_args()
 
-if options.owner != os.environ['USER'] or options.host != hostname:
-    # can't check remote suite reg validity
-    suite = args[0]
+reg = parser.get_suite_name()
+dbg = dbgetter()
+try:
+    # unalias your own suite names
+    suite, suiterc = dbg.get_suite(reg)
+except RegistrationError, x:
+    # may be a remote suite (if not we fail to get a Pyro proxy below)
+    suite = reg
 else:
-    # check local suite reg validity
-    reg = parser.get_suite_name()
-    dbg = dbgetter()
-    try:
-        suite, suiterc = dbg.get_suite(reg)
-    except RegistrationError, x:
-        raise SystemExit(x)
+    # pseudo backward compatibility for your own suites
     compat( suite, suiterc ).execute( sys.argv )
 
 prnt_suite = False
@@ -74,8 +74,11 @@ else:
 owner=options.owner 
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner, host=options.host ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite, owner, \
+	host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
+    raise SystemExit(x)
+except SecurityError, x:
     raise SystemExit(x)
 
 title, defdir, username = proxy.get_suite_info()
@@ -92,22 +95,22 @@ if prnt_name or prnt_id:
     idx = name
     if prnt_id:
         idx = task_id
-    print 'TASK ' + idx + ' in suite ' + suite + ':' 
+    print '\nTASK ' + idx + ' in suite ' + suite + ':' 
     for name in info.keys():
-        print ' + ', info[name]
+        print ' ', info[name]
 
 if prnt_id:
     # PREREQUISITES AND OUTPUTS
     result = proxy.get_task_requisites( [ task_id ] )
 
-    if not result or id not in result:
-        print "Task " + task_id + " not found in " + suite
+    if not result or task_id not in result:
+        print "\nTask " + task_id + " not found in " + suite
         sys.exit(1)
 
     for task_id in result.keys():
         [ pre, out, extra_info ] = result[ task_id ]
 
-        print 'PREREQUISITES (- => not satisfied):'
+        print '\nPREREQUISITES (- => not satisfied):'
         if len( pre ) == 0:
             print '  (None)'
         for item in pre:
@@ -118,7 +121,7 @@ if prnt_id:
                 descr = '  - '
             print descr + msg
 
-        print 'OUTPUTS (- => not completed):'
+        print '\nOUTPUTS (- => not completed):'
         if len( out ) == 0:
             print '  (None)'
         for item in out:
@@ -130,7 +133,7 @@ if prnt_id:
             print descr + msg
 
         if len( extra_info.keys() ) > 0:
-            print 'Other:'
+            print '\nOther:'
             for item in extra_info:
                 print '  o ', item, '...', extra_info[ item ]
         print """

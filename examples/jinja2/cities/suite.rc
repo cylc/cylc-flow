@@ -55,6 +55,3 @@ generation of groups of related dependencies and runtime properties."""
     [[node attributes]]
         cleaning = 'style=filled', 'fillcolor=yellow'
         NewYork = 'style=filled', 'fillcolor=lightblue'        
-{% for JOB in CITYJOBS %}
-        NewYork_{{ JOB }} = 'style=filled', 'fillcolor=lightblue'        
-{% endfor %}

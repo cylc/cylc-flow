@@ -283,25 +283,25 @@ class db_updater(threading.Thread):
         return value == key
 
 class MainApp(object):
-    def __init__(self, host, tmpdir, imagedir, readonly=False ):
+    def __init__(self, host, tmpdir ):
         self.updater = None
         self.tmpdir = tmpdir
         self.filter_window = None
         self.owner = os.environ['USER']
-        self.readonly = readonly
         self.gcapture_windows = []
 
         gobject.threads_init()
 
         self.host = host
-        self.imagedir = imagedir
+
+        try:
+            self.imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
+        except KeyError:
+            # This should not happen (unecessary)
+            raise SystemExit("ERROR: $CYLC_DIR is not defined!")
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        if self.readonly:
-            # TO DO: READONLY IS NO LONGER USED?
-            self.window.set_title("Registered Suites (PRIVATE DATABASE; READONLY)" )
-        else:
-            self.window.set_title("Registered Suites (PRIVATE DATABASE)" )
+        self.window.set_title("Registered Suites (PRIVATE DATABASE)" )
         self.window.set_size_request(600, 300)
         #self.window.set_border_width( 5 )
         self.window.connect("delete_event", self.delete_all_event)

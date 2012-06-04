@@ -16,16 +16,17 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.CylcOptionParsers import NoPromptOptionParser_u
+import os, sys
+from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.port_scan import get_port, SuiteIdentificationError
 from cylc.conf.CylcGlobals import pyro_base_port, pyro_port_range
 from cylc.registration import dbgetter, RegistrationError
 from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.hostname import hostname
-import os, sys
+from cylc.passphrase import SecurityError
 
-parser = NoPromptOptionParser_u( """cylc [discover] ping [options] SUITE [TASKID]
+parser = NoPromptOptionParser( """cylc [discover] ping [options] SUITE [TASKID]
     
 If SUITE (or TASKID in SUITE) is running just exit with success status,
 else print an error message and exit with error status. i.e. without
@@ -48,21 +49,18 @@ if options.print_ports:
     print pyro_base_port, '<= port <=', pyro_base_port + pyro_port_range
     sys.exit(0)
 
-if len( args ) == 0 or len( args ) > 2:
-    parser.error( "Wrong number of arguments" ) 
-
-if options.owner != os.environ['USER'] or options.host != hostname:
-    # can't check remote suite reg validity
-    suite = args[0]
+reg = args[0]
+dbg = dbgetter()
+try:
+    # unalias your own suite names
+    suite, suiterc = dbg.get_suite(reg)
+except RegistrationError, x:
+    # may be a remote suite (if not we fail to get a Pyro proxy below)
+    suite = reg
 else:
-    # check local suite reg validity
-    reg = args[0]
-    dbg = dbgetter()
-    try:
-        suite, junk = dbg.get_suite(reg)
-    except RegistrationError, x:
-        # suite not found
-        raise SystemExit(x)
+    # pseudo backward compatibility for your own suites
+    compat( suite, suiterc ).execute( sys.argv )
+
 try:
     port = get_port( suite, owner=options.owner, host=options.host, \
             silent = not options.verbose )
@@ -82,8 +80,11 @@ else:
     task_id = tid.getstr()
 
 try:
-    proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
+		host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
+    raise SystemExit(x)
+except SecurityError, x:
     raise SystemExit(x)
 
 result = proxy.ping_task( task_id )

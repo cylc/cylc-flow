@@ -202,9 +202,9 @@ class scheduler(object):
                 "(SIMULATION MODE) get the specified task to report failure and then abort.",
                 metavar="NAME%YYYYMMDDHH", action="store", dest="failout_task_id" )
 
-        self.parser.add_option( "--debug", help=\
-                "Turn on 'debug' logging and full exception tracebacks.",
-                action="store_true", dest="debug" )
+        #self.parser.add_option( "--debug", help=\
+                #        "Turn on 'debug' logging and full exception tracebacks.",
+                #action="store_true", dest="debug" )
 
         self.parser.add_option( "--timing", help=\
                 "Turn on main task processing loop timing, which may be useful "
@@ -399,7 +399,7 @@ class scheduler(object):
                 self.lockserver_port = lockserver( self.host ).get_port()
             except port_scan.SuiteNotFoundError, x:
                 raise SystemExit( 'Lockserver not found. See \'cylc lockserver status\'')
- 
+
         # CONFIGURE SUITE PYRO SERVER
         #DISABLED if self.practice:
         #DISABLED     # modify suite name so we can run next to the original suite.
@@ -407,10 +407,12 @@ class scheduler(object):
         #DISABLED else:
         suitename = self.suite
         try:
-            self.pyro = pyro_server( suitename, use_passphrase=self.config['cylc']['use secure passphrase'] )
+            self.pyro = pyro_server( suitename )
         except SecurityError, x:
-            print >> sys.stderr, 'SECURITY ERROR (secure passphrase problem)'
+            #TO DO: HANDLE IN COMMAND SCRIPT
+            print >> sys.stderr, 'ERROR: secure passphrase problem'
             raise SystemExit( str(x) )
+
         self.port = self.pyro.get_port()
         self.banner[ 'PORT' ] = self.port
 
@@ -419,7 +421,7 @@ class scheduler(object):
         self.pyro.connect( suite_id, 'cylcid', qualified = False )
 
         # USE QUICK TASK ELIMINATION?
-        self.use_quick = self.config['development']['use quick task elimination'] 
+        self.use_quick = self.config['development']['use quick task elimination']
 
         # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
         self.exclusive_suite_lock = not self.config['cylc']['lockserver']['simultaneous instances']

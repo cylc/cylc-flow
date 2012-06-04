@@ -26,7 +26,6 @@ from optparse import OptionParser
 from cylc.config import config, SuiteConfigError
 from cylc.registration import dbgetter, RegistrationError
 from cylc.version import compat
-from cylc.graphing import CGraphPlain
 from xdot import DotWindow
 
 # DEVELOPER NOTE: family grouping controls via the viewer toolbar and
@@ -35,7 +34,7 @@ from xdot import DotWindow
 # of which could stand some refactoring to streamline the code a bit.
 
 try:
-    from cylc.cylc_xdot import MyDotWindow
+    from cylc.cylc_xdot import MyDotWindow, MyDotWindow2
 except Exception, x:
     print >> sys.stderr, str(x)
     raise SystemExit( "Cylc graphing disabled" )
@@ -137,8 +136,7 @@ parser.add_option( "-w", "--warmstart",
 
 parser.add_option( "-n", "--namespaces", 
     help="Plot the suite namespace inheritance hierarchy "
-    "(task run time properties). Currently the '-o' option"
-    "does not work for namespace graphs. ",
+    "(task run time properties).",
     action="store_true", default=False, dest="namespaces" )
 
 parser.add_option( "-f", "--file", 
@@ -152,7 +150,7 @@ parser.add_option( "-c", "--central",
 parser.add_option( "-o", "--output", 
     help="Write an image file with format determined by file extension. "
     "This currently works for suite dependency graphs but not "
-    "namespace hierarchy graphs."
+    "namespace hierarchy graphs. "
     "The image will be rewritten automatically, for the configured "
     "(suite.rc) graph as you edit the suite. Available formats may "
     "include png, svg, jpg, gif, ps, ..., depending on your graphviz "
@@ -201,36 +199,7 @@ except RegistrationError, x:
 compat( suite, suiterc ).execute( sys.argv )
 
 if options.namespaces:
-    try:
-        config = config( suite, suiterc )
-    except SuiteConfigError,x:
-        raise SystemExit(x)
-
-    # SUITE NAMESPACE INHERITANCE HIERARCHY GRAPH
-    title = suite + ' runtime namespace inheritance graph'
-    graph = CGraphPlain( title )
-    inherit = config.get_inheritance()
-    for ns in inherit:
-        if inherit[ns]:
-            attr = {}
-            attr['color'] = 'royalblue'
-            graph.add_edge( inherit[ns], ns, **attr )
-            nl = graph.get_node( inherit[ns] )
-            nr = graph.get_node( ns )
-            for n in nl, nr:
-                n.attr['shape'] = 'box'
-                n.attr['style'] = 'filled'
-                n.attr['fillcolor'] = 'powderblue'
-                n.attr['color'] = 'royalblue'
-    window = DotWindow()
-    try:
-        window.set_dotcode( graph.string() )
-    except OSError, x:
-        print >> sys.stderr, x
-        sys.exit(1)
-    window.connect( 'destroy', gtk.main_quit)
-    gtk.main()
-    sys.exit(0)
+    window = MyDotWindow2( suite, suiterc, watchers, options.outputfile )
 else:
     # SUITE DEPENDENCY GRAPH
 
@@ -261,16 +230,18 @@ else:
         raw = True
 
     window = MyDotWindow( suite, suiterc, watchers, start_ctime, stop_ctime, raw, options.outputfile )
-    window.widget.connect( 'clicked', on_url_clicked, window )
 
-    #try:
-    window.get_graph()
-    #except config.SuiteConfigError, x:
-    #    raise SystemExit(x)
-    window.connect( 'destroy', gtk.main_quit)
+window.widget.connect( 'clicked', on_url_clicked, window )
 
-    #if options.updatelive:
-    # checking periodically for file changed
-    gobject.timeout_add(1000, window.update)
-    gtk.main()
-    sys.exit(0)
+#try:
+window.get_graph()
+#except config.SuiteConfigError, x:
+#    raise SystemExit(x)
+window.connect( 'destroy', gtk.main_quit)
+
+#if options.updatelive:
+# checking periodically for file changed
+gobject.timeout_add(1000, window.update)
+gtk.main()
+sys.exit(0)
+

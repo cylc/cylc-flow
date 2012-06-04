@@ -114,7 +114,7 @@ class message(object):
         return cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( self.task_id )
 
     def print_msg( self, msg ):
-        now = self.now().strftime( "%Y/%m/%d %H:%M:%S" ) 
+        now = self.now().strftime( "%Y/%m/%d %H:%M:%S" )
         prefix = 'cylc (' + self.mode + ' - ' + now + '): '
         if self.priority == 'NORMAL':
             print prefix + msg

@@ -18,10 +18,13 @@
 
 import os, sys
 import gtk
+import warnings
+warnings.filterwarnings('ignore', 'use the new', Warning)
 from optparse import OptionParser
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
-from cylc.conf.CylcGlobals import cylc_tmpdir
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
+from conf.CylcGlobals import cylc_tmpdir
 from cylc.hostname import hostname
 from cylc.version import compat
 
@@ -32,10 +35,17 @@ except Exception, x:
     raise SystemExit('ERROR: Pyro is not installed (or not accessible)')
 
 from cylc import port_scan
-from cylc.passphrase import passphrase
 from cylc.gui.gcylc import MainApp
+from cylc.gui.SuiteControl import ControlApp
 from cylc.config import config, SuiteConfigError
 from cylc.registration import dbgetter, RegistrationError
+
+# Make current working directory be $HOME. Otherwise (1) if the user
+# attempts to start gcylc from a CWD that has been removed, Pyro will
+# not be importable below; and (2) if the CWD gets removed later while
+# gcylc is running, subprocesses spawned by gcylc will fail when they
+# attempt to determine their CWD.
+os.chdir(os.environ['HOME'])
 
 parser = OptionParser( """cylc gcylc [SUITE]
        gcylc [SUITE]
@@ -54,8 +64,8 @@ to suite control and monitoring.
 This directly invokes a suite control and monitoring application for a
 particular suite. Alternatively you can get this by right-clicking on 
 the suite in the main gcylc suite database viewer (1/ above). Without
-the -g option you'll get a filtered text treeview GUI; with it, a
-dependency graph based GUI.
+the -g option the GUI will show a filtered text treeview on startup;
+with it, the startup view will be dependency graph based.
 
 NOTE: daemonize important suites with the POSIX nohup command:
     $ nohup gcylc [options] SUITE &
@@ -63,10 +73,15 @@ NOTE: daemonize important suites with the POSIX nohup command:
 Arguments:
     SUITE      Target suite.""")
 
-#parser.add_option( "--host",
-#        help="cylc suite host (defaults to localhost).",
-#        metavar="HOST", action="store", default=hostname,
-#        dest="host" )
+parser.add_option( "--host",
+        help="Cylc suite host (defaults to localhost).",
+        metavar="HOST", action="store", default=hostname,
+        dest="host" )
+
+parser.add_option( "-o", "--owner",
+        help="Owner of the target suite (defaults to $USER).",
+        metavar="HOST", action="store", default=os.environ["USER"],
+        dest="owner" )
 
 parser.add_option( "-g", "--graph",
         help="With SUITE - invoked the new dependency graph based suite "
@@ -78,11 +93,8 @@ parser.add_option( "-g", "--graph",
 if len(args) != 0 and len(args) != 1:
     parser.error( "Wrong number of arguments" )
 
-imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
-
-#host = options.host
-host = hostname
-owner = os.environ["USER"]
+host = options.host
+owner = options.owner
 
 if len( args ) == 1:
     if args[0] == 'help':
@@ -90,54 +102,26 @@ if len( args ) == 1:
         sys.exit(0)
 
 if len( args ) == 0:
-    app = MainApp( host, cylc_tmpdir, imagedir )
+    app = MainApp( host, cylc_tmpdir )
     gtk.main()
     sys.exit(0)
 
-reg = args[0]
-
-# get suite definition directory
-dbg = dbgetter()
-try:
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    raise SystemExit(x)
-
-compat( suite, suiterc ).execute( sys.argv )
-
-suite_dir = os.path.dirname(suiterc)
-
-# get suite logging directory
-try:
-    conf = config( suite, suiterc )
-except SuiteConfigError,x:
-    raise SystemExit(x)
-
-logging_dir = os.path.join( conf['cylc']['logging']['directory'] )
-
-# scan for suite port
+suite = args[0]
 try:
     port = port_scan.get_port( suite )
 except:
     port = None
-    #print "Suite " + suite + " is not running"
 else:
-    print "Suite " + suite + " is running on port " + str(port)
+    print "Suite " + suite + " is running on " + str(port)
 
-# Export the suite's "cylc local environment" here - gcylc spawns
-# external processes via the shell so the suite owner could want 
-# variables to affect these processes. Example: the ssh process to 
-# retrieve remote task output: 
-#   ssh owner@foobar 'cat $HOME/path/to/log/file'
-# owner is defined as "nwp_$SYS" and $SYS is computed from $HOME.
-senv = conf['cylc']['environment']
-for var in senv:
-    os.environ[var] = os.path.expandvars(senv[var])
+gtk.settings_get_default().set_long_property("gtk-toolbar-icon-size", gtk.ICON_SIZE_SMALL_TOOLBAR, "main")
+gtk.settings_get_default().set_long_property("gtk-button-images", True, "main")
+gtk.settings_get_default().set_long_property("gtk-menu-images", True, "main")
 
 if options.depgraph:
-    from cylc.gui.SuiteControlGraph import StandaloneControlGraphApp
-    app = StandaloneControlGraphApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir )
+    views = ["graph"]
 else:
-    from cylc.gui.SuiteControlTree import StandaloneControlTreeApp
-    app = StandaloneControlTreeApp( suite, owner, host, port, suite_dir, logging_dir, imagedir, cylc_tmpdir )
+    views = ["led", "tree"]
+
+app = ControlApp( suite, owner, host, port, cylc_tmpdir, views )
 gtk.main()

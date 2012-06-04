@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # THIS MODULE HANDLES DYNAMIC DEFINITION OF TASK PROXY CLASSES according
-# to information parsed from the suite.rc file via config.py. It could 
+# to information parsed from the suite.rc file via config.py. It could
 # probably do with some refactoring to make it more transparent ...
 
 # TO DO : ONEOFF FOLLOWON TASKS: still needed but can now be identified
@@ -38,7 +38,6 @@ from prerequisites.prerequisites import prerequisites
 from prerequisites.plain_prerequisites import plain_prerequisites
 from prerequisites.conditionals import conditional_prerequisites
 from task_output_logs import logfiles
-from collections import deque
 from outputs import outputs
 from cycle_time import ct, at
 from cycling import container
@@ -99,16 +98,17 @@ class taskdef(object):
         self.clocktriggered_offset = None
 
         # triggers[0,6] = [ A, B:1, C(T-6), ... ]
-        self.triggers = OrderedDict()         
+        self.triggers = OrderedDict()
         # cond[6,18] = [ '(A & B)|C', 'C | D | E', ... ]
-        self.cond_triggers = OrderedDict()             
+        self.cond_triggers = OrderedDict()
 
         self.outputs = [] # list of explicit internal outputs; change to
                           # OrderedDict() if need to vary per cycle.
 
         self.loose_prerequisites = [] # asynchronous tasks
 
-        self.commands = [] # list of commands
+        self.command = None
+        self.retry_delays = []
         self.precommand = None
         self.postcommand = None
         self.initial_scripting = None
@@ -140,13 +140,13 @@ class taskdef(object):
         # translate a time of the form:
         #  x sec, y min, z hr
         # into float MINUTES or HOURS,
-    
+
         if not re.search( '^\s*(.*)\s*min\s*$', strng ) and \
             not re.search( '^\s*(.*)\s*sec\s*$', strng ) and \
             not re.search( '^\s*(.*)\s*hr\s*$', strng ):
                 print >> sys.stderr, "ERROR: missing time unit on " + strng
                 sys.exit(1)
-    
+
         m = re.search( '^\s*(.*)\s*min\s*$', strng )
         if m:
             [ mins ] = m.groups()
@@ -154,7 +154,7 @@ class taskdef(object):
                 return str( float( mins / 60.0 ) )
             else:
                 return str( float(mins) )
-    
+
         m = re.search( '^\s*(.*)\s*sec\s*$', strng )
         if m:
             [ secs ] = m.groups()
@@ -162,7 +162,7 @@ class taskdef(object):
                 return str( float(secs)/3600.0 )
             else:
                 return str( float(secs)/60.0 )
-    
+
         m = re.search( '^\s*(.*)\s*hr\s*$', strng )
         if m:
             [ hrs ] = m.groups()
@@ -225,18 +225,18 @@ class taskdef(object):
             #     self.triggers[cycler] = [list of triggers for this cycler]
             # The list of triggers associated with cyclerX will only be
             # used by a particular task if the task's cycle time is a
-            # valid member of cyclerX's sequence of cycle times. 
+            # valid member of cyclerX's sequence of cycle times.
 
             # 1) non-conditional triggers
-            pp = plain_prerequisites( sself.id ) 
-            sp = plain_prerequisites( sself.id ) 
+            pp = plain_prerequisites( sself.id )
+            sp = plain_prerequisites( sself.id )
             lp = loose_prerequisites( sself.id )
             for cyc in self.triggers:
                 for trig in self.triggers[ cyc ]:
                     if trig.startup and not startup:
                             continue
                     if trig.cycling and not cyc.valid( ct(sself.tag) ):
-                        # This trigger is not used in current cycle. 
+                        # This trigger is not used in current cycle.
                         # (see NOTE just above)
                         ##DEBUGGING:
                         ##print >> sys.stderr, sself.name + ': this trigger not used for', sself.tag + ':'
@@ -263,7 +263,7 @@ class taskdef(object):
                     if ctrig[foo].startup and not startup:
                         continue
                     if ctrig[foo].cycling and not cyc.valid( ct(sself.tag)):
-                        # This trigger is not valid for current cycle. 
+                        # This trigger is not valid for current cycle.
                         # (see NOTE just above)
                         ##DEBUGGING:
                         ##print >> sys.stderr, sself.name + ': this trigger not used for', sself.tag + ':'
@@ -297,18 +297,17 @@ class taskdef(object):
                 sself.tag = start_tag
 
             sself.c_time = sself.tag
- 
+
             sself.id = sself.name + '%' + sself.tag
 
-            sself.external_tasks = deque()
             sself.asyncid_pattern = self.asyncid_pattern
 
             sself.initial_scripting = self.initial_scripting
-            for command in self.commands:
-                sself.external_tasks.append( command )
+            sself.command = self.command
+            sself.retry_delays = self.retry_delays
             sself.precommand = self.precommand
             sself.postcommand = self.postcommand
- 
+
             if 'clocktriggered' in self.modifiers:
                 sself.real_time_delay =  float( self.clocktriggered_offset )
 
@@ -324,7 +323,7 @@ class taskdef(object):
             # outputs
             sself.outputs = outputs( sself.id )
             for outp in self.outputs:
-                msg = outp.get( sself.tag ) 
+                msg = outp.get( sself.tag )
                 if not sself.outputs.exists( msg ):
                     sself.outputs.add( msg )
             sself.outputs.register()
@@ -341,14 +340,14 @@ class taskdef(object):
 
             if 'catchup_clocktriggered' in self.modifiers:
                 catchup_clocktriggered.__init__( sself )
- 
+
             if stop_c_time:
                 # cycling tasks with a final cycle time set
-                super( sself.__class__, sself ).__init__( initial_state, stop_c_time ) 
+                super( sself.__class__, sself ).__init__( initial_state, stop_c_time )
             else:
                 # TO DO: TEMPORARY HACK FOR ASYNC
                 sself.stop_c_time = '99991231230000'
-                super( sself.__class__, sself ).__init__( initial_state ) 
+                super( sself.__class__, sself ).__init__( initial_state )
 
         tclass.__init__ = tclass_init
 

@@ -17,15 +17,15 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re, os, sys, logging
+import subprocess
 from time import sleep
-from optparse import OptionParser
 from OrderedDict import OrderedDict
 from cylc.mkdir_p import mkdir_p
 from cylc.execute import execute
 from cylc.job_submission.job_submit import job_submit
 from cylc.config import config, SuiteConfigError, TaskNotDefinedError
 from cylc.registration import dbgetter, RegistrationError
-from cylc import pimp_my_logger
+from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.TaskID import TaskID, TaskIDError
 from cylc.locking.suite_lock import suite_lock
 from cylc.locking.lockserver import lockserver
@@ -36,6 +36,7 @@ from cylc.hostname import hostname
 from cylc.port_scan import SuiteIdentificationError
 from cylc.version import compat
 from cylc.regpath import RegPath
+from cylc import pimp_my_logger
 
 usage = """cylc [task] submit|single [options] SUITE TASK
 
@@ -49,14 +50,11 @@ exclusive suite lock (which means you cannot running multiple instances
 of the suite at once, even under different registrations) then the
 lockserver will let you 'submit' a task from the suite only under the
 same registration, and only if the task is not locked (i.e. only if 
-the same task, NAME%CYCLE, is not currently running in the suite). 
-
-Arguments:
-   SUITE           Registered name of the target suite.
-   TASK            Identity of the task to run (NAME%CYCLE).""" 
+the same task, NAME%CYCLE, is not currently running in the suite)."""
 
 def commandline_parser():
-    parser = OptionParser( usage )
+    parser = NoPromptOptionParser( usage, 
+            [ "TASK                 Identity of the task to run (NAME%CYCLE)." ])
 
     parser.set_defaults( sched=False, dry_run=False )
 
@@ -79,6 +77,33 @@ parser = commandline_parser()
 
 if len( args ) != 2:
     parser.error( "suite name and task ID required." )
+
+owner = options.owner
+host = options.host
+if owner != os.environ['USER'] or host != hostname:
+    print "_________________________________________________"
+    print "Remote suite invocation by passwordless ssh. The "
+    print "invocation process will direct stdout and stderr "
+    print "to bar.out on the remote account and then detach."
+    print "-------------------------------------------------"
+    if owner: 
+        sshopts = owner  + '@'
+    if host:
+        sshopts += host
+    else:
+        sshopts += 'localhost'
+    command = ['ssh', sshopts, 'source', '.profile;', 'cylc', 'submit' ] + sys.argv[1:] + [ '> bar.out 2>&1 &' ]
+    try:
+        # THIS BLOCKS UNTIL THE COMMAND COMPLETES
+        retcode = subprocess.call( command )
+    except OSError, x:
+        print >> sys.stderr, 'ERROR: Unable to invoke', ' '.join(command)
+        raise 
+    else:
+        if retcode != 0:
+            print >> sys.stderr, 'ERROR: remote command failed'
+            sys.exit(retcode)
+    sys.exit(0)
 
 # get input args------------------------------------------------------
 reg = args[0]
@@ -105,6 +130,8 @@ except TaskIDError, x:
 else:
     task_name, ctime = tid.splitstr()
 
+# owner is now local (i.e. at this point the command is executing on 
+# the suite owner account on the suite host).
 owner = os.environ['USER']
 
 # load suite config item --------------------------------------------

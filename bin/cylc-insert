@@ -24,6 +24,7 @@ from cylc.CylcOptionParsers import PromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
 from cylc.registration import dbgetter, RegistrationError
 from cylc.version import compat
+from cylc.passphrase import SecurityError
 
 parser = PromptOptionParser( """cylc [control] insert [options] SUITE TASK[%STOP]
 
@@ -43,12 +44,16 @@ target = args[1]
 
 reg = parser.get_suite_name()
 dbg = dbgetter()
+ suite, suiterc ).execute( sys.argv )
 try:
+    # unalias your own suite names
     suite, suiterc = dbg.get_suite(reg)
 except RegistrationError, x:
-    raise SystemExit(x)
-
-compat( suite, suiterc ).execute( sys.argv )
+    # may be a remote suite (if not we fail to get a Pyro proxy below)
+    suite = reg
+else:
+    # pseudo backward compatibility for your own suites
+    compat( suite, suiterc ).execute( sys.argv )
 
 try:
     # name%tag%stoptag
@@ -82,8 +87,11 @@ else:
     stop = None
 
 try:
-    proxy = cylc_pyro_client.client( suite ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
+	host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
+    raise SystemExit(x)
+except SecurityError, x:
     raise SystemExit(x)
 
 if not parser.prompt( 'Insert ' + target + ' in'):

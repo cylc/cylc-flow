@@ -38,7 +38,6 @@ description = string( default="No description provided" )
 [cylc]
     UTC mode = boolean( default=False )
     simulation mode only = boolean( default=False )
-    use secure passphrase = boolean( default=False )
     [[logging]]
         directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite' )
         roll over at start-up = boolean( default=True )
@@ -53,7 +52,8 @@ description = string( default="No description provided" )
     [[simulation mode]]
         clock offset = integer( default=24 )
         clock rate = integer( default=10 )
-        command scripting = force_list( default=list( "echo SIMULATION MODE $CYLC_TASK_ID; sleep 10; echo BYE",))
+        command scripting = string( default="echo SIMULATION MODE $CYLC_TASK_ID; sleep 10; echo BYE")
+        retry delays = force_list( default=list() )
         [[[event hooks]]]
             enable = boolean( default=False )
         [[[job submission]]]
@@ -94,9 +94,8 @@ description = string( default="No description provided" )
         inherit = string( default=None )
         description = string( default="No description provided" )
         initial scripting = string( default=None )
-        # ! unfortunately the configobj spec does not take multiline strings!
-        # "#SPECDEFAULT" is detected in config.py to supply default scripting
-        command scripting = force_list( default=list( '#SPECDEFAULT', ))
+        command scripting = string( default='echo "Default runtime command scripting: sleep 10..."; sleep 10')
+        retry delays = force_list( default=list() )
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
         manual completion = boolean( default=False )
@@ -135,7 +134,8 @@ description = string( default="No description provided" )
         inherit = string( default=root )
         description = string( default=None )
         initial scripting = string( default=None )
-        command scripting = force_list( default=None )
+        command scripting = string( default=None )
+        retry delays = force_list( default=list() )
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
         manual completion = boolean( default=None )
@@ -179,6 +179,7 @@ description = string( default="No description provided" )
     use node color for labels = boolean( default=False )
     default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=box'))
     default edge attributes = force_list( default=list('color=black'))
+    enable live graph movie = boolean( default=False )
     [[node groups]]
         __many__ = force_list( default=list())
     [[node attributes]]
@@ -190,5 +191,4 @@ description = string( default="No description provided" )
 #____________________________________________________________DEVELOPMENT
 [development]
     use quick task elimination = boolean( default=True )
-    live graph movie = boolean( default=False )
 

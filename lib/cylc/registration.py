@@ -204,6 +204,7 @@ class regdb(object):
                 print "   (database unchanged)"
 
     def register( self, suite, dir ):
+
         suite = RegPath(suite).get()
         for key in self.items:
             if key == suite:
@@ -354,7 +355,7 @@ class regdb(object):
         else:
             target = alias
         return target
-         
+
     def get_invalid( self ):
         invalid = []
         for reg in self.items:

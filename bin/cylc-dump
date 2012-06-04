@@ -19,12 +19,13 @@
 import os, sys
 from cylc.hostname import hostname
 from cylc import cylc_pyro_client
-from cylc.CylcOptionParsers import NoPromptOptionParser_u
+from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.port_scan import SuiteIdentificationError
 from cylc.registration import dbgetter, RegistrationError
 from cylc.version import compat
+from cylc.passphrase import SecurityError
 
-parser = NoPromptOptionParser_u( """cylc [info] dump [options] SUITE 
+parser = NoPromptOptionParser( """cylc [info] dump [options] SUITE 
 
 Print current suite state information (e.g. the state of each task). For
 small suites 'watch cylc [info] dump SUITE' is an effective non-GUI real
@@ -52,17 +53,16 @@ parser.add_option( "-s", "--sort", help="Task states only; "
 
 ( options, args ) = parser.parse_args()
 
-if options.owner != os.environ['USER'] or options.host != hostname:
-    # can't check remote suite reg validity
-    suite = args[0]
+reg = parser.get_suite_name()
+dbg = dbgetter()
+try:
+    # unalias your own suite names
+    suite, suiterc = dbg.get_suite(reg)
+except RegistrationError, x:
+    # may be a remote suite (if not we fail to get a Pyro proxy below)
+    suite = reg
 else:
-    # check local suite reg validity
-    reg = parser.get_suite_name()
-    dbg = dbgetter()
-    try:
-        suite, suiterc = dbg.get_suite(reg)
-    except RegistrationError, x:
-        raise SystemExit(x)
+    # pseudo backward compatibility for your own suites
     compat( suite, suiterc ).execute( sys.argv )
 
 # default: display all information
@@ -75,8 +75,11 @@ if options.tasks_only:
     display_global = False
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner, host=options.host ).get_proxy( 'state_summary' )
+    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
+	host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
 except SuiteIdentificationError, x:
+    raise SystemExit(x)
+except SecurityError, x:
     raise SystemExit(x)
 
 # get state summary, task names, cycle times
@@ -111,7 +114,7 @@ if display_tasks:
     #print 'TASK INFORMATION'
     task_ids = states.keys()
     #task_ids.sort()
- 
+
     for id in task_ids:
         name  = states[ id ][ 'name' ]
         label = states[ id ][ 'label' ]
@@ -127,14 +130,13 @@ if display_tasks:
         else:
             line = name + ', ' + label + ', '
 
-        line += state + ', ' + spawned 
+        line += state + ', ' + spawned
 
         if 'asyncid' in states[id]:
-            line += ', ' + states[id]['asyncid'] 
+            line += ', ' + states[id]['asyncid']
 
         lines.append( line )
 
     lines.sort()
     for line in lines:
         print line
-     
