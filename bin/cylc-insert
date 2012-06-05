@@ -44,7 +44,6 @@ target = args[1]
 
 reg = parser.get_suite_name()
 dbg = dbgetter()
- suite, suiterc ).execute( sys.argv )
 try:
     # unalias your own suite names
     suite, suiterc = dbg.get_suite(reg)

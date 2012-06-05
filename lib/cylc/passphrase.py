@@ -83,14 +83,13 @@ must therefore install the passphrase in the secondary standard location
 (below) or use the command line option to explicitly reveal the
 location.
 
-3/ $HOME/.cylc/SUITE/; this is a more sensible location for enabling
-remote suite control from accounts that do not actually need the suite
-definition directory to be installed.
+3/ $HOME/.cylc/HOST/OWNER/SUITE/; this is a more sensible location for
+enabling remote suite control from accounts that do not actually need
+the suite definition directory to be installed. OWNER is the username 
+of the suite owner on the suite HOST.
 
-So... if locations 1 and/or 2 are known, they will be checked first. If
-not known, or if a passphrase is not found there, the secondary location
-will be checked.
-    """
+4/ $HOME/.cylc/SUITE/; this is simpler than 3/ if you are not concerned
+about other suites with the same name."""
 
         location = None
 
@@ -129,7 +128,13 @@ will be checked.
                 if os.path.isfile( pfile ):
                     location = pfile
 
-        # check under .cylc
+        # check under .cylc/HOST/OWNER/SUITE
+        if not location:
+            pfile = os.path.join( os.environ['HOME'], '.cylc', self.host, self.owner, self.suite, 'passphrase' )
+            if os.path.isfile( pfile ):
+                location = pfile
+
+        # check under .cylc/SUITE
         if not location:
             pfile = os.path.join( os.environ['HOME'], '.cylc', self.suite, 'passphrase' )
             if os.path.isfile( pfile ):
@@ -163,9 +168,10 @@ which cylc commands will be used to connect to the running suite.
 Cylc's remote task messaging commands will look for the passphrase at 
 $CYLC_SUITE_DEF_PATH/passphrase; if not found there (e.g. if the suite
 definition is not installed on a remote task host) they will look in
-$HOME/.cylc/SUITE/passphrase. You may also use the latter location 
-for remote suite control (in which case the suite definition directory
-will not be known) or you can specify the location on the commandline.
+$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE/passphrase; and then in
+$HOME/.cylc/SUITE/passphrase. The latter locations are convenient for
+remote suite control, in which case the suite definition directory will
+not be known; finally, you can specify the location on the commandline.
 ------------------------------------------------------------------------
 """
 

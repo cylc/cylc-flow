@@ -154,31 +154,30 @@ the next cycle early, as is illustrated in Figure~\ref{fig-job-no-overlap}.
 \subsubsection{Intercycle Dependence} 
 \label{IntercycleDependence}
 
-In most suites dependence between tasks in different cycles
-exist. Forecast models, as above, typically depend on their own most
-recent previous forecast for a background state, and different
-types of tasks in different forecast cycles can also be linked (in an 
-atmospheric forecast analysis suite, for instance, the weather model 
-may also generate background states for use by the observation
+Forecast models typically depend on their own most recent previous
+forecast for background state or restart files of some kind, and
+different types of tasks in different forecast cycles can also be linked
+(in an atmospheric forecast analysis suite, for instance, the weather
+model may also generate background states for use by the observation
 processing and data-assimilation systems in the next cycle). In real
-time operation this intercycle dependence
-can be ignored because it is automatically satisfied when each cycle
-finishes before the next one begins. This is just as well
-because they dramatically increase the complexity of the dependency
-graph of even the simplest suites, by destroying the clean boundary
+time operation this intercycle dependence can be ignored because it is
+automatically satisfied when each cycle finishes before the next one
+begins. If, on the other hand, it is explicitly accounted for, it 
+complicates the dependency graph by destroying the clean boundary
 between forecast cycles. Figure~\ref{fig-dep-multi} illustrates the
-problem for our simple example suite assuming the minimal likely
-intercycle dependence: the forecast models ($a$, $b$, and $c$) each
-depend on their own previous instances.
+problem for our simple example suite assuming the minimal intercycle
+dependence: the forecast models ($a$, $b$, and $c$) each depend on their
+own previous instances.
 
-For this reason, and because we tend to imagine that forecasting suites
-always run in distinct cycles, existing metaschedulers (as far as the author
-is aware!) ignore intercycle dependence and therefore {\em require} a
-series of distinct cycles at all times. While this does not affect
-normal real time operation it can be a serious impediment when advance
-availability of external driving data makes it possible, in principle,
-to run some tasks from upcoming cycles before the current cycle is
-finished - as suggested at the end of the previous section. This occurs
+For this reason, and perhaps because we tend to see forecasting suites
+as inheritently sequential (with respect to whole forecast cycles)
+other metaschedulers ignore intercycle dependence and therefore {\em
+require} a series of distinct cycles at all times. While this does not
+affect normal real time operation it can be a serious impediment when
+advance availability of external driving data makes it possible, in
+principle, to run some tasks from upcoming cycles before the current
+cycle is finished - as suggested at the end of the previous section.
+This occurs
 after delays (late arrival of external data, system maintenance, etc.)
 and, to an even greater extent, in historical case studies, and parallel
 test suites that are delayed with respect to the main operation. It is
@@ -2862,7 +2861,7 @@ model | recover => post
 [runtime]
     [[model]]
         # UNCOMMENT TO TEST FAILURE:
-        # command scripting = false
+        # command scripting = /bin/false
 \end{lstlisting}
 \lstset{language=transcript}
 \end{minipage}
@@ -3806,10 +3805,9 @@ treatment is required at all:
                                echo BYE""" 
     [[baz]]
         description = a task that runs baz.sh and retries on failure
-        command scripting = """echo attempt No.1
-                               baz.sh""", \
-                            """echo attempt No.2  # only invoked if try No.1 fails
-                               baz.sh --retry"""
+        retry delays = 1,1
+        command scripting = """echo attempt No. $CYLC_TASK_TRY_NUMBER
+                               baz.sh"""
 \end{lstlisting}
 \lstset{language=transcript}
 
@@ -3817,8 +3815,7 @@ treatment is required at all:
 
 Simple tasks can be entirely implemented within the suite.rc file
 because the task {\em command scripting} string can contain as many
-lines of code as you like (or even a list of such strings, for retry 
-on failure).
+lines of code as you like.
 
 
 \subsection{Voluntary Messaging Modifications}
@@ -4539,7 +4536,7 @@ at the top of the example file above).
 
 \section{Running Suites}
 
-This section is still incomplete - please see also the Quick Start
+This section may be incomplete - please see also the Quick Start
 Guide (Section~\ref{QuickStartGuide}), command documentation 
 (Section~\ref{CommandReference}), and play with the example suites.
 
@@ -4549,26 +4546,25 @@ As a suite runs its tasks (or rather the task proxies that represent
 the real tasks) move through a series of defined states:
 
 \begin{myitemize}
-    \item {\bf waiting} - a {\em waiting} task's prerequisites have
-        not yet been satisfied (clock-triggered tasks may also be 
-        waiting on their trigger time).
+    \item {\bf waiting} - prerequisites have not yet been satisfied
+        (clock-triggered tasks also wait on their trigger time).
 
-    \item {\bf queued} - a {\em queued} task is ready to run but
-        has been temporarily prevented from doing so by the internal
-        cylc queue to which it is assigned (see {\em Internal Queues},
-        Section~\ref{InternalQueues}). Note this does mean the
-        task is sitting in an external batch scheduler queue (that, 
-        depending on the chosen job submission method, would be 
-        the {\em submitted} state).
+    \item {\bf queued} - ready to be submitted (i.e.\ prerequisites
+        satisfied) but temporarily held back  by an internal
+        cylc queue (see Section~\ref{InternalQueues}). 
 
-    \item {\bf submitted} - a {\em submitted} task has been submitted 
-        by its defined job submission method but has not yet started
-        executing (it may be waiting in an external batch scheduler
-        queue, depending on job submission method).
+    \item {\bf submitted} - submitted to be executed by the specified 
+        job submission method, but not yet running (it may be waiting in
+        an external batch scheduler queue, for example).
 
-    \item {\bf running} - a {\em running} task has started executing
-        (reported via a messaging call near the top of the task job
-        script) but has not yet finished.
+    \item {\bf running} - the task ``started'' message received (sent
+        when a task starts executing) but not yet finished.
+
+    \item {\bf retry delayed} - if a task configures the ``retry
+        delays'' item (a list of delay intervals in minutes), then if it
+        fails it will be put in this state for the specified interval
+        and then resubmitted after incrementing the task try number. 
+        A task only enters the final ``failed'' if the last retry fails.
 
     \item two finished states:
         \begin{myitemize}
@@ -4614,12 +4610,27 @@ Finally, you may see references to the following pseudo states:
          clock-triggered tasks, which also wait on a trigger time).
 
     \item {\bf base} (Graph Control GUI only) - off-white base color
-        graph nodes are displayed in order to show the proper graph
-        structure but the corresponding task proxies are
-        not actually present in the suite, because they have not been
-        spawned yet, or they have been removed by cylc as spent tasks,
-        or removed by the suite operator. 
+        graph nodes can be used to connect the nodes representing
+        current live task proxies according to the structure of the suite).
 \end{myitemize}
+
+\subsection{Remote Control And Secure Passphrases}
+
+Use of secure passphrases is now compulsory (a random passphrase is
+generated automatically when a suite is registered, if one does not
+already exist in the suite definition directory). This means cylc can
+allow control of suites from remote hosts and other user accounts.
+The suite passphrase must be installed in any account that requires
+access to the suite - including remote task hosts. 
+
+Cylc's remote task messaging commands look for the passphrase at 
+\lstinline=$CYLC_SUITE_DEF_PATH/passphrase=; if not found there (e.g. if
+the suite definition is not installed on a remote task host) they will
+look in \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE/passphrase=;
+and then in \lstinline=$HOME/.cylc/SUITE/passphrase=. The latter
+locations are convenient for remote suite control, in which case the
+suite definition directory will not be known. Finally, you can specify
+the passphrase location on the cylc commandline.
 
 \subsection{Limiting Suite Activity}
 
