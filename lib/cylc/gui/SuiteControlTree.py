@@ -49,9 +49,21 @@ Text Treeview suite control interface.
     def visible_cb(self, model, iter ):
         # visibility determined by state matching active toggle buttons
         # set visible if model value NOT in filter_states
+        ctime = model.get_value(iter, 0 )
+        name = model.get_value(iter, 1)
         state = model.get_value(iter, 2 ) 
         # strip formatting tags
-        if state:
+        if state or (state is None and ctime != name):
+            # Task or family.
+            if state is None:
+                # Deal with family children
+                iter = model.iter_children( iter )
+                while iter is not None:
+                    # The next function is recursive.
+                    if self.visible_cb(model, iter):
+                        return True
+                    iter = model.iter_next( iter )                  
+                return False
             state = re.sub( r'<.*?>', '', state )
             sres = state not in self.tfilter_states
             # AND if taskname matches filter entry text
@@ -67,7 +79,7 @@ Text Treeview suite control interface.
         else:
             # this must be a cycle-time line (not state etc.)
             sres = True
-            nres = True
+            nres = True           
         return sres and nres
 
     def check_tfilter_buttons(self, tb):

@@ -16,6 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 import sys, os
 import Pyro.core
 import logging
@@ -319,6 +320,9 @@ class remote_switch( Pyro.core.ObjBase ):
     def do_live_graph_movie( self ):
         return ( self.config['visualization']['enable live graph movie'],
                  self.config['visualization']['run time graph']['directory'] ) 
+
+    def get_family_hierarchy( self ):
+        return copy.deepcopy(self.config.family_hierarchy)
 
     def get_graph_raw( self, cto, ctn, raw, group_nodes, ungroup_nodes,
             ungroup_recursive, group_all, ungroup_all ):

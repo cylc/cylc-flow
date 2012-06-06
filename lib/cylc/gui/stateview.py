@@ -119,13 +119,14 @@ class tupdater(threading.Thread):
                     self.cfg.host,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
-           # self.remote = client.get_proxy( 'remote' )
+            self.remote = client.get_proxy( 'remote' )
         except:
             return False
         else:
             self.status = "status:\nconnected"
             self.info_bar.set_status( self.status )
-            # self.family_nodes = self.remote.get_family_nodes()
+            self.family_hierarchy = self.remote.get_family_hierarchy()
+            self.allowed_families = self.remote.get_graphed_family_nodes()
             return True
 
     def connection_lost( self ):
@@ -293,14 +294,29 @@ class tupdater(threading.Thread):
         self.ttreestore.clear()
         times = new_data.keys()
         times.sort()
-        print self.family_nodes
+        self.group_families = True
         for ctime in times:
             piter = self.ttreestore.append(None, [ ctime, ctime ] + [ None ] * 6)
+            family_iters = {}
+            name_iters = {}
+            for name in new_data[ ctime ].keys():
+                families = [f for f in self.family_hierarchy[name] if f in self.allowed_families]
+                families.sort(lambda x, y: (y in self.family_hierarchy[x]) - (x in family_hierarchy[y]))
+                fam_key = tuple(families)
+                f_iter = piter
+                if fam_key in family_iters:
+                    f_iter = family_iters[fam_key]
+                if fam_key not in family_iters:
+                    for family in [f for f in families if f != "root"]:
+                        f_iter = self.ttreestore.append(f_iter, [ ctime, family ] + [ None ] * 6)
+                    family_iters.setdefault(fam_key, f_iter)
+                name_iters.update({name: f_iter})
             names = new_data[ ctime ].keys()
             names.sort()
             for name in names:
                 #print "  adding", name, "to", ctime
-                riter = self.ttreestore.append( piter, [ ctime, name ] + new_data[ctime][name])
+                niter = name_iters[name]
+                riter = self.ttreestore.append( niter, [ ctime, name ] + new_data[ctime][name])
                 rpath = self.ttreestore.get_path(riter)
                 state = new_data[ ctime ][ name ][0]
                 st = re.sub('<[^>]+>', '', state ) # remove tags
