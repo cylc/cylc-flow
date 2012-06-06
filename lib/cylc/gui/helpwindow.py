@@ -373,9 +373,6 @@ def update_tb( tb, line, tags = None ):
 
 def userguide( w, graph=False ):
     window = gtk.Window()
-    #if readonly:
-    #    window.set_title( "Cylc View Quick Guide" )
-    #else:
     window.set_title( "Cylc Suite Control Quick Guide" )
     window.set_size_request(600, 600)
 
@@ -402,11 +399,6 @@ def userguide( w, graph=False ):
     red = tb.create_tag( None, foreground = "darkgreen" )
     alert = tb.create_tag( None, foreground = "red" )
     bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
-
-    #if readonly:
-    #    update_tb( tb, "\n\nThis is 'cylc view', the read-only "
-    #        "version of the 'cylc control' GUI: all of the suite control "
-    #        "functionality documented below has been disabled.'\n\n", [bold, alert] )
 
     update_tb( tb, "Suite Control GUI Quick Guide", [bold, blue] )
 
@@ -469,6 +461,9 @@ def userguide( w, graph=False ):
     update_tb( tb, "\n o View Suite Log: ", [bold])
     update_tb( tb, "View the cylc log for this suite, updating the view "
             "in real time if the suite is running." )
+
+    update_tb( tb, "\n o View Suite Info: ", [bold])
+    update_tb( tb, "View the suite's description and task list." )
 
     if graph:
         update_tb( tb, "\n o Expand All Subtrees ", [bold])
@@ -542,8 +537,12 @@ def userguide( w, graph=False ):
     update_tb( tb, "View the script used to submit this task to run." )
     update_tb( tb, "\n o View Output: ", [bold])
     update_tb( tb, "View task stdout and stderr logs in real time." )
+    update_tb( tb, "\n o View Task Info: ", [bold])
+    update_tb( tb, "View a task's description and the current state "
+            "of its prerequisites and outputs.")
     update_tb( tb, "\n o View State: ", [bold])
-    update_tb( tb, "View the state of a task's prerequisites and outputs.")
+    update_tb( tb, "View the current state of a task's prerequisites "
+            "and outputs.")
     update_tb( tb, "\n o Trigger: ", [bold])
     update_tb( tb, "Set a task's prerequisites satisfied "
             "and, for clock-triggered tasks, ignore the trigger time. "

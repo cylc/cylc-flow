@@ -22,10 +22,10 @@ from copy import deepcopy
 
 class jobfile(object):
 
-    def __init__( self, task_id, cylc_env, task_env, ns_hier, 
+    def __init__( self, task_id, cylc_env, task_env, ns_hier,
             directive_prefix, directive_connector, directives,
             final_directive, manual_messaging, initial_scripting,
-            precommand_scripting, command_scripting,
+            precommand_scripting, command_scripting, try_number,
             postcommand_scripting, remote_cylc_dir, remote_suite_dir,
             shell, share_dir, work_dir, log_root, simulation_mode,
             job_submission_method ):
@@ -40,6 +40,7 @@ class jobfile(object):
         self.initial_scripting = initial_scripting
         self.precommand_scripting = precommand_scripting
         self.command_scripting = command_scripting
+        self.try_number = try_number
         self.postcommand_scripting = postcommand_scripting
         self.shell = shell
         self.share_dir = share_dir
@@ -140,6 +141,7 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_CYCLE_TIME=" + self.cycle_time )
         BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
         BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.namespace_hierarchy) + '"')
+        BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.try_number) )
 
     def write_cylc_access( self, BUFFER=None ):
         # configure access to cylc first so that cylc commands can be
@@ -197,7 +199,10 @@ cd $CYLC_TASK_WORK_PATH""" % data )
         if len( self.task_env.keys()) > 0:
             self.FILE.write( "\n\n# ENVIRONMENT:" )
             for var in self.task_env:
-                self.FILE.write( "\n" + var + "=\"" + str( self.task_env[var] ) + "\"" )
+                value = str( self.task_env[var] )
+                for old, new in [('"', '\\"'), ("'", "\\'"), (" ", "\\ ")]:
+                    value = value.replace(old, new)
+                self.FILE.write( "\n%s=%s" % ( var, value ) )
             # export them all (see note below)
             self.FILE.write( "\nexport" )
             for var in self.task_env:
@@ -229,6 +234,7 @@ cd $CYLC_TASK_WORK_PATH""" % data )
         self.FILE.write( '''
 echo "Cylc Task Identity Info:"
 echo "  TASK IDENT: $CYLC_TASK_ID"
+echo "  TRY NUMBER: $CYLC_TASK_TRY_NUMBER"
 echo "  RUNNING ON: $(hostname)"
 echo "  SUITE NAME: $CYLC_SUITE_REG_NAME"
 echo "  SUITE HOST: $CYLC_SUITE_HOST"

@@ -6,6 +6,23 @@ can be migrated to the github issue tracker.
 _______
 GENERAL
 
+ + New multi-view suite control GUI: all suite info is now got from the
+ suite via Pyro instead of from a local config file parsed when the GUI
+ starts up (because with remote control capability we may not have a
+ local config file to parse).  Will this be a performance hit (either
+ for the GUI or the suite) in large suites?  If so, we could optionally
+ allow the old method with the proviso that it would not work for remote
+ controlled suites.
+
+ + To start a suite by GUI we still need to parse the config file to
+ get, for example, configured initial and final cycle times for display!
+
+ + gcylc --host=FOO still starts up if FOO is an unknown host, and then tries
+to start the suite locally.
+
+ + run suite from GUI after shutting down a remote suite, will attempt 
+to run it locally.
+
  + cylc command tab completion?  see /etc/bash_completion.d/git.sh !
 
  + cycling modules: for clarity, instead of initial_adjust_up adjusting

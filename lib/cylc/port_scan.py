@@ -88,7 +88,7 @@ class port_interrogator(object):
                         # this indicates that one of my suites has an
                         # identical passphrase to this other suite.
                         continue
-                
+
             # loop end without returning ID => all of my passphrases denied
             raise Pyro.errors.ConnectionDeniedError, x
         except:
@@ -119,7 +119,7 @@ def get_port( suite, owner=os.environ['USER'], host=hostname, pphrase=None, time
     # does this suite have a secure passphrase defined?
     if not pphrase:
         try:
-            pphrase = passphrase( suite ).get()
+            pphrase = passphrase( suite, owner, host ).get()
         except:
             pphrase = None
 
@@ -165,7 +165,7 @@ def check_port( suite, port, owner=os.environ['USER'], host=hostname, timeout=No
 
     # does this suite have a secure passphrase defined?
     try:
-        pphrase = passphrase( suite ).get()
+        pphrase = passphrase( suite, owner, host ).get()
     except:
         pphrase = None
 
@@ -202,7 +202,7 @@ def scan( host, verbose=True, mine=False, silent=False ):
     # scan all cylc Pyro ports for cylc suites
     me = os.environ['USER']
 
-    # load my passphrases in case any secure suites are encountered in the scan.
+    # load my suite passphrases 
     reg = localdb()
     reg.load_from_file()
     reg_suites = reg.get_list()
@@ -211,7 +211,7 @@ def scan( host, verbose=True, mine=False, silent=False ):
         rg = item[0]
         try:
             # in case one is using a secure passphrase
-            pp = passphrase( rg ).get()
+            pp = passphrase( rg, me, host ).get()
         except:
             # we have no passphrase defined for this suite
             pass

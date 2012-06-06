@@ -29,6 +29,7 @@
 
 import taskdef
 from copy import deepcopy
+from collections import deque
 from OrderedDict import OrderedDict
 from cycle_time import ct, CycleTimeError
 import re, os, sys, logging
@@ -186,7 +187,7 @@ class config( CylcConfigObj ):
         self.verbose = verbose
         self.edges = []
         self.cyclers = []
-        self.taskdefs = {}
+        self.taskdefs = OrderedDict()
 
         self.async_oneoff_edges = []
         self.async_oneoff_tasks = []
@@ -875,7 +876,6 @@ class config( CylcConfigObj ):
     def get_task_name_list( self ):
         # return a list of all tasks used in the dependency graph
         tasknames = self.taskdefs.keys()
-        tasknames.sort(key=str.lower)  # case-insensitive sort
         return tasknames
 
     def get_asynchronous_task_name_list( self ):
@@ -885,7 +885,6 @@ class config( CylcConfigObj ):
                     self.taskdefs[tn].type == 'async_daemon' or \
                     self.taskdefs[tn].type == 'async_oneoff':
                 names.append(tn)
-        names.sort(key=str.lower)
         return names
 
     def process_graph_line( self, line, section ):
@@ -1242,11 +1241,11 @@ class config( CylcConfigObj ):
         expr = re.sub( '[-\[\]:]', '_', lexpression )
         self.taskdefs[right].add_conditional_trigger( ctrig, expr, cycler )
 
-    def get_graph( self, start_ctime, stop, colored=True, raw=False,
+    def get_graph_raw( self, start_ctime, stop, raw=False,
             group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
             group_all=False, ungroup_all=False ):
         """Convert the abstract graph edges held in self.edges (etc.) to
-        actual graphviz edges for a concrete range of cycle times."""
+        actual edges for a concrete range of cycle times."""
 
         if group_all:
             # Group all family nodes
@@ -1274,15 +1273,6 @@ class config( CylcConfigObj ):
                         if fam in self.members[node]:
                             self.closed_families.remove(fam)
 
-        # Get a graph object
-        if colored:
-            graph = graphing.CGraph( self.suite, self['visualization'] )
-        else:
-            graph = graphing.CGraphPlain( self.suite )
-
-        startup_exclude_list = self.get_coldstart_task_list() + \
-                self.get_startup_task_list()
-
         # Now define the concrete graph edges (pairs of nodes) for plotting.
         gr_edges = []
 
@@ -1306,6 +1296,9 @@ class config( CylcConfigObj ):
             actual_first_ctime = adjusted[0]
         else:
             actual_first_ctime = start_ctime
+
+        startup_exclude_list = self.get_coldstart_task_list() + \
+                self.get_startup_task_list()
 
         for e in self.edges:
             # Get initial cycle time for this cycler
@@ -1344,7 +1337,30 @@ class config( CylcConfigObj ):
 
                 # increment the cycle time
                 ctime = e.cyclr.next( ctime )
-            
+
+        return gr_edges
+ 
+    def get_graph( self, start_ctime, stop, colored=True, raw=False,
+            group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
+            group_all=False, ungroup_all=False ):
+
+        # TO DO: this method could be put in the graphing module? It is
+        # currently duplicated in xstateview.py.
+
+        # get_graph_raw is factored out here because the graph control
+        # GUI has to retrieve the raw graph, because the PyGraphviz 
+        # graph object does not seem to be serializable (pickle error)
+        # for Pyro.
+        gr_edges = self.get_graph_raw( start_ctime, stop, raw,
+                group_nodes, ungroup_nodes, ungroup_recursive,
+                group_all, ungroup_all )
+
+        # Get a graph object
+        if colored:
+            graph = graphing.CGraph( self.suite, self['visualization'] )
+        else:
+            graph = graphing.CGraphPlain( self.suite )
+
         # sort and then add edges in the hope that edges added in the
         # same order each time will result in the graph layout not
         # jumping around (does this help? -if not discard)
@@ -1492,11 +1508,13 @@ class config( CylcConfigObj ):
 
         if self.simulation_mode:
             taskd.job_submit_method = self['cylc']['simulation mode']['job submission']['method']
-            taskd.commands = self['cylc']['simulation mode']['command scripting']
+            taskd.command = self['cylc']['simulation mode']['command scripting']
+            taskd.retry_delays = self['cylc']['simulation mode']['retry delays']
         else:
             taskd.owner = taskconfig['remote']['owner']
             taskd.job_submit_method = taskconfig['job submission']['method']
-            taskd.commands   = taskconfig['command scripting']
+            taskd.command   = taskconfig['command scripting']
+            taskd.retry_delays = deque( taskconfig['retry delays'])
             taskd.precommand = taskconfig['pre-command scripting'] 
             taskd.postcommand = taskconfig['post-command scripting'] 
 

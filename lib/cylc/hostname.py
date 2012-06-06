@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
-import sys, socket
+import re, sys, socket
 
 # If getfqdn() returns a bad Fully Qualified Domain Name due to problems
 # with the local host networking settings (or DNS?) try gethostname().
 try:
     hostname = socket.getfqdn()
     socket.gethostbyname(hostname)  # test hostname valid in DNS
+    # short name
+    shorthostname = re.sub( '\..*', '', hostname )
 #except socket.gaierror:  # (any exception here will do)
 except:
     print >> sys.stderr, "WARNING from cylc.hostname:"
@@ -21,3 +23,4 @@ except:
     except:
         print >> sys.stderr, "ERROR: Unable to determine hostname. Check network settings."
         sys.exit(1)
+

@@ -29,14 +29,14 @@ from cylc.port_scan import SuiteIdentificationError
 import os, re, sys
 from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
 from time import sleep
-from cylc.CylcOptionParsers import NoPromptOptionParser_u
+from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.registration import dbgetter, RegistrationError
 from cylc.version import compat
-from cylc.hostname import hostname
+from cylc.passphrase import SecurityError
 
 compress = True
 
-parser = NoPromptOptionParser_u( """cylc [info] monitor [options] SUITE 
+parser = NoPromptOptionParser( """cylc [info] monitor [options] SUITE 
 
 A terminal-based suite monitor that updates the current state of all
 tasks in real time. It is effective even for quite large suites if
@@ -51,24 +51,23 @@ parser.add_option( "-a", "--align",
 
 ( options, args ) = parser.parse_args()
 
-if options.owner != os.environ['USER'] or options.host != hostname:
-    # can't check remote suite reg validity
-    suite = args[0]
+reg = parser.get_suite_name()
+dbg = dbgetter()
+try:
+    # unalias your own suite names
+    suite, suiterc = dbg.get_suite(reg)
+except RegistrationError, x:
+    # may be a remote suite (if not we fail to get a Pyro proxy below)
+    suite = reg
 else:
-    # check local suite reg validity
-    reg = parser.get_suite_name()
-    dbg = dbgetter()
-    try:
-        suite, suiterc = dbg.get_suite(reg)
-    except RegistrationError, x:
-        raise SystemExit(x)
+    # pseudo backward compatibility for your own suites
     compat( suite, suiterc ).execute( sys.argv )
 
-header = 'waiting runahead queued submitted running succeeded held failed'
-header = '                                                               '
+header = 'waiting retry runahead queued submitted running succeeded held failed'
+header = '                                                                     '
 
 ctrl_end = "\033[0m"
-key = "\033[1;37;43mheld\033[0m \033[1;36mwaiting \033[1;37;44mrunahead\033[0m \033[1;38;44mqueued\033[0m\033[1;32m submitted \033[1;37;42mrunning\033[0m succeeded \033[1;37;41mfailed" + ctrl_end 
+key = "\033[1;37;43mheld\033[0m \033[1;36mwaiting \033[1;35mretry \033[1;37;44mrunahead\033[0m \033[1;38;44mqueued\033[0m\033[1;32m submitted \033[1;37;42mrunning\033[0m succeeded \033[1;37;41mfailed" + ctrl_end 
 
 alerted = False
 alerted2 = False
@@ -78,8 +77,10 @@ try:
     while True:
         # connect to remote state summary object
         try: 
-            proxy = cylc_pyro_client.client( suite, owner=options.owner, host=options.host ).get_proxy( 'state_summary' )
-
+            proxy = cylc_pyro_client.client( suite, owner=options.owner, \
+		host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
+	except SecurityError, x:
+	    raise SystemExit(x)
         except SuiteIdentificationError, x:
             if not alerted:
                 print "\n\033[1;37;41mfailed to connect" + ctrl_end 
@@ -205,6 +206,8 @@ try:
                     ctrl_start = "\033[1;37;42m"
                 elif state == "waiting":
                     ctrl_start = "\033[1;36m"
+                elif state == "retry_delayed":
+                    ctrl_start = "\033[1;35m"
                 elif state == "failed":
                     ctrl_start = "\033[1;37;41m"
                 elif state == "held":
@@ -237,7 +240,7 @@ try:
 
             # last time state summary was updated by cylc (only happens
             # when task processing is invoked).
-            blit.append( 'suite state summary last updated at:         ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
+            blit.append( 'suite state summary last updated at:              ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
             if simulation_mode:
                 foo = 'SIMULATION:'
@@ -248,15 +251,15 @@ try:
                 blit.append( baz )
 
             if stopping:
-                foo = '_________________________________________________S_T_O_P_P_I_N_G'
+                foo = '______________________________________________________S_T_O_P_P_I_N_G'
             elif paused:
-                foo = '_____________________________________________________P_A_U_S_E_D'
+                foo = '__________________________________________________________P_A_U_S_E_D'
             elif will_pause_at:
-                foo = '__________________________________P_A_U_S_I_N_G__A_T__' + will_pause_at
+                foo = '_______________________________________P_A_U_S_I_N_G__A_T__' + will_pause_at
             elif will_stop_at:
-                foo = '________________________________S_T_O_P_P_I_N_G__A_T__' + will_stop_at
+                foo = '_____________________________________S_T_O_P_P_I_N_G__A_T__' + will_stop_at
             else:
-                foo = '___________________________________________________R_U_N_N_I_N_G'
+                foo = '________________________________________________________R_U_N_N_I_N_G'
          
             #blit.append( '\033[1;33;44m' + foo + ctrl_end )
             blit.append( '\033[1;31m' + foo + ctrl_end )

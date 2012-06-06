@@ -301,6 +301,30 @@ class remote_switch( Pyro.core.ObjBase ):
                 info[ name ] = ['ERROR: no such task type']
         return info
 
+    def get_sim_mode_only( self ):
+        return self.config['cylc']['simulation mode only']
+
+    def get_cycle_range( self ):
+        return (self.config['scheduling']['initial cycle time'], self.config['scheduling']['final cycle time'] )
+
+    def get_logging_directory( self ):
+        return self.config['cylc']['logging']['directory']
+
+    def get_family_nodes( self ):
+        return self.config.members.keys()
+
+    def get_graphed_family_nodes( self ):
+        return self.config.families_used_in_graph
+
+    def do_live_graph_movie( self ):
+        return ( self.config['visualization']['enable live graph movie'],
+                 self.config['visualization']['run time graph']['directory'] ) 
+
+    def get_graph_raw( self, cto, ctn, raw, group_nodes, ungroup_nodes,
+            ungroup_recursive, group_all, ungroup_all ):
+        return self.config.get_graph_raw( cto, ctn, raw, group_nodes,
+                ungroup_nodes, ungroup_recursive, group_all, ungroup_all)
+
     def get_task_requisites( self, in_ids ):
         self.log.info( "servicing task state info request")
         in_ids_real = {}

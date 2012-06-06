@@ -17,9 +17,11 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
-from optparse import OptionParser
+import subprocess
+from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.scheduler import scheduler
+from cylc.hostname import shorthostname
 
 global debug
 debug = True
@@ -28,30 +30,36 @@ class restart( scheduler ):
     def __init__( self ):
         usage = """cylc [control] restart [options] SUITE [FILE]
 
-Restart a cylc suite from a previous state. Tasks in the 'submitted',
-'running', or 'failed' states will immediately be resubmitted at
-start up unless you specify '--no-reset'. Any 'held' tasks will be
-released unless you specify the '--no-release' option. A final cycle
-time that was set prior to shutdown will be ignored on restart unless
-you specify '--keep-stopcycle'
+Restart a cylc suite from a previous state.
+(To start a suite from a specific cycle time, see 'cylc run SUITE').
 
-By default the suite will restart from the suite state dump file, which is
-updated whenever a task changes state and thus records the most recent
-previous state of the suite. However, cylc also records a special named
-state dump, and logs its filename, before actioning any intervention
-command, and you can choose to restart from one of these (just
-cut-and-paste the filename from the log to the command line).
+The most recent previous state is used by default but other state dumps
+can be specified on the command line (e.g. cylc writes a special state
+dump and logs its filename before actioning any intervention command).
+
+By default:
+ 1/ 'submitted', 'running', or 'failed' states will be resubmitted.
+     Use '--no-reset' to prevent this.
+ 2/ 'held' tasks will be released.
+    Use '--no-release' to prevent this.
+ 3/ A final cycle time set prior to shutdown will be ignored on restart.
+    Use '--keep-stopcycle' to prevent this.
 
 NOTE: daemonize important suites with the POSIX nohup command:
     nohup cylc [con] restart SUITE > suite.out 2> suite.err &
+    
+NOTE: suites can be (re)started on remote hosts or other user accounts
+if passwordless ssh is set up. The ssh tunnel will remain open to
+receive the suite stdout and stderr streams. To control the running 
+suite from the local host requires the suite passphrase to be installed.
+If they exist /etc/profile and $HOME/.profile will be sourced on the
+remote host prior to attempting to run the suite."""
 
-Arguments:
-   SUITE                Target suite.
-   FILE                 Optional non-default state dump file (assumed to
+        self.parser = NoPromptOptionParser( usage,
+   ["""FILE                 Optional non-default state dump file (assumed to
                         reside in the suite state dump directory unless
-                        you give the full path).""" 
+                        you give the full path)."""]) 
 
-        self.parser = OptionParser( usage )
         self.parser.add_option( "--no-reset", 
             help="Do not reset failed tasks to ready on restarting",
             action="store_true", default=False, dest="no_reset" )
@@ -283,6 +291,54 @@ Arguments:
             self.pool.add( itask )
 
 if __name__ == '__main__':
+    owner = None
+    host = None
+    remote = False
+    argstr = ' '.join(sys.argv[1:])
+    m = re.search( '(-o\s+|--owner=)(\w+)\s+', argstr )
+    if m:
+        owner = m.groups()[1]
+        if owner != os.environ['USER']:
+            remote = True
+    n = re.search( '(--host=)(\w+)', argstr )
+    if n:
+        host = n.groups()[1]
+        if host != shorthostname:
+            remote = True
+    if remote:
+        sshopts = ''
+        if owner: 
+            sshopts = owner  + '@'
+        if host:
+            sshopts += host
+        else:
+            sshopts += 'localhost'
+
+	command = "ssh " + sshopts + """ '\
+if [[ -f /etc/profile ]]; then source /etc/profile; fi; \
+if [[ -f .profile ]]; then source .profile; fi; cylc -v; \
+cylc restart """ + ' '.join(sys.argv[1:]) + "'"
+
+        try:
+            popen = subprocess.Popen( command, shell=True )
+            res = popen.wait()
+            if res < 0:
+                print >> sys.stderr, "command terminated by signal", res
+            elif res > 0:
+                print >> sys.stderr, "command failed", res
+            else:
+                # res == 0
+                pass
+        except OSError, e:
+            # (note this would not catch background execution failure)
+            print >> sys.stderr, "Job submission failed", e
+            success = False
+            raise
+        else:
+            # done (remote suite finished)
+            sys.exit(0)
+
+    # local invocation
     try:
         server = restart()
     except Exception, x:

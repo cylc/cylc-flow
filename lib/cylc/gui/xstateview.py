@@ -21,6 +21,7 @@ import gobject
 import time
 import threading
 from cylc import cylc_pyro_client
+from cylc import graphing
 import gtk
 import pygtk
 from cylc.cycle_time import ct
@@ -48,10 +49,7 @@ def compare_dict_of_dict( one, two ):
     return True
 
 class xupdater(threading.Thread):
-
-    def __init__(self, suite, suiterc, owner, host, port, 
-            label_mode, label_status, label_time, label_block, xdot ):
-
+    def __init__(self, cfg, info_bar, xdot ):
         super(xupdater, self).__init__()
 
         self.quit = False
@@ -69,26 +67,16 @@ class xupdater(threading.Thread):
         self.filter_exclude = None
         self.state_filter = None
 
-        self.suite = suite
-        self.owner = owner
-        self.host = host
-        self.port = port
+        self.cfg = cfg
+        self.info_bar = info_bar
 
         self.god = None
         self.mode = "mode:\nwaiting..."
         self.dt = "state last updated at:\nwaiting..."
         self.block = "access:\nwaiting ..."
 
-        self.label_mode = label_mode
-        self.label_status = label_status
-        self.label_time = label_time
-        self.label_block = label_block
-
         self.reconnect()
-
-        self.suiterc = suiterc
-        self.family_nodes = suiterc.members.keys()
-        self.graphed_family_nodes = suiterc.families_used_in_graph
+        # TO DO: handle failure to get a remote proxy in reconnect()
 
         self.graph_warned = {}
 
@@ -101,31 +89,52 @@ class xupdater(threading.Thread):
         self.ungroup_all = False
 
         self.graph_frame_count = 0
-        self.live_graph_movie = False
-        if self.suiterc["visualization"]["enable live graph movie"]:
-            self.live_graph_movie = True
-            self.live_graph_dir = suiterc["visualization"]["run time graph"]["directory"]
-            try:
-                mkdir_p( self.live_graph_dir )
-            except Exception, x:
-                print >> sys.stderr, x
-                raise SuiteConfigError, 'ERROR, illegal dir? ' + self.live_graph_dir 
- 
+
     def reconnect( self ):
+ 
         try:
-            self.god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'state_summary' )
+            self.god = cylc_pyro_client.client( 
+                    self.cfg.suite,
+                    self.cfg.owner,
+                    self.cfg.host,
+                    self.cfg.port ).get_proxy( 'state_summary' )
+
+            self.remote = cylc_pyro_client.client( 
+                    self.cfg.suite,
+                    self.cfg.owner,
+                    self.cfg.host,
+                    self.cfg.port ).get_proxy( 'remote' )
         except:
             return False
         else:
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
+            self.family_nodes = self.remote.get_family_nodes()
+            self.graphed_family_nodes = self.remote.get_graphed_family_nodes()
+
+            self.live_graph_movie, self.live_graph_dir = self.remote.do_live_graph_movie()
+            if self.live_graph_movie:
+                try:
+                    mkdir_p( self.live_graph_dir )
+                except Exception, x:
+                    print >> sys.stderr, x
+                    raise SuiteConfigError, 'ERROR, illegal dir? ' + self.live_graph_dir 
+
             self.status = "status:\nconnected"
-            self.label_status.set_text( self.status )
+            self.info_bar.set_status( self.status )
+            self.info_bar.status_widget.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
             return True
 
     def connection_lost( self ):
         self.status = "status:\nSTOPPED"
-        self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
-        self.label_status.set_text( self.status )
+
+        # Get an *empty* graph object
+        # (comment out to show the last suite state before shutdown)
+        self.graphw = graphing.CGraphPlain( self.cfg.suite )
+        # TO DO: if connection is lost we should just set the state
+        # summary arrays to empty and update to clear only once.
+        self.update_xdot()
+
+        if not self.quit:
+            self.info_bar.set_status( self.status )
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
         self.reconnect()
         return False
@@ -203,25 +212,10 @@ class xupdater(threading.Thread):
             return False
 
     def update_globals( self ):
-        self.label_mode.set_text( self.mode )
-        self.label_time.set_text( self.dt )
-
-        self.label_block.set_text( self.block )
-        if self.block == 'access:\nblocked':
-            self.label_block.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
-        else:
-            self.label_block.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
-
-        self.label_status.set_text( self.status )
-        if re.search( 'STOPPED', self.status ):
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
-        elif re.search( 'STOP', self.status ):  # stopping
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff8c2a' ))
-        elif re.search( 'HELD', self.status ):
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ffde00' ))
-        else:
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
- 
+        self.info_bar.set_mode( self.mode )
+        self.info_bar.set_time( self.dt )
+        self.info_bar.set_block( self.block )
+        self.info_bar.set_status( self.status )
         return False
  
     def run(self):
@@ -234,9 +228,7 @@ class xupdater(threading.Thread):
                 # be unnecessary anyway (due to xdot internals?)
                 ################ gobject.idle_add( self.update_xdot )
                 self.update_xdot()
-                 
-            # TO DO: only update globals if they change, as for tasks
-            gobject.idle_add( self.update_globals )
+                gobject.idle_add( self.update_globals )
             time.sleep(1)
         else:
             pass
@@ -254,6 +246,7 @@ class xupdater(threading.Thread):
 
     def add_graph_key(self):
         self.graphw.cylc_add_node( 'waiting', True )
+        self.graphw.cylc_add_node( 'retry_delayed', True )
         self.graphw.cylc_add_node( 'runahead', True )
         self.graphw.cylc_add_node( 'queued', True )
         self.graphw.cylc_add_node( 'submitted', True )
@@ -266,6 +259,7 @@ class xupdater(threading.Thread):
         self.graphw.cylc_add_node( 'trigger family', True )
 
         waiting = self.graphw.get_node( 'waiting' )
+        retry_delayed = self.graphw.get_node( 'retry_delayed' )
         runahead = self.graphw.get_node( 'runahead' )
         queued = self.graphw.get_node( 'queued' )
         submitted = self.graphw.get_node( 'submitted' )
@@ -278,7 +272,7 @@ class xupdater(threading.Thread):
         grfamily = self.graphw.get_node( 'trigger family' )
 
 
-        for node in [ waiting, runahead, queued, submitted, running, succeeded, failed, held, base, family, grfamily ]:
+        for node in [ waiting, retry_delayed, runahead, queued, submitted, running, succeeded, failed, held, base, family, grfamily ]:
             node.attr['style'] = 'filled'
             node.attr['shape'] = 'ellipse'
             node.attr['URL'] = 'KEY'
@@ -288,6 +282,10 @@ class xupdater(threading.Thread):
 
         waiting.attr['fillcolor'] = 'cadetblue2'
         waiting.attr['color'] = 'cadetblue4'
+
+        retry_delayed.attr['fillcolor'] = 'pink'
+        retry_delayed.attr['color'] = 'red'
+
         runahead.attr['fillcolor'] = 'cadetblue'
         runahead.attr['color'] = 'cadetblue4'
         queued.attr['fillcolor'] = 'purple'
@@ -317,6 +315,7 @@ class xupdater(threading.Thread):
         self.graphw.cylc_add_edge( failed, held, False, style='invis')
         self.graphw.cylc_add_edge( held, queued, False, style='invis')
 
+        self.graphw.cylc_add_edge( retry_delayed, base, False, style='invis')
         self.graphw.cylc_add_edge( base, grfamily, False, style='invis')
         self.graphw.cylc_add_edge( grfamily, family, False, style='invis')
 
@@ -332,6 +331,9 @@ class xupdater(threading.Thread):
         elif self.state_summary[id]['state'] == 'waiting':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'cadetblue2'
+        elif self.state_summary[id]['state'] == 'retry_delayed':
+            node.attr['style'] = 'filled'
+            node.attr['fillcolor'] = 'pink'
         elif self.state_summary[id]['state'] == 'succeeded':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'grey'
@@ -372,11 +374,36 @@ class xupdater(threading.Thread):
         extra_node_ids = {}
 
         # TO DO: mv ct().get() out of this call (for error checking):
-        self.graphw = self.suiterc.get_graph( ct(oldest).get(), ct(newest).get(),
-                colored=False, raw=rawx, group_nodes=self.group,
-                ungroup_nodes=self.ungroup,
+        # TO DO: remote connection exception handling?
+        gr_edges = self.remote.get_graph_raw( ct(oldest).get(), ct(newest).get(),
+                raw=rawx, group_nodes=self.group, ungroup_nodes=self.ungroup,
                 ungroup_recursive=self.ungroup_recursive, 
                 group_all=self.group_all, ungroup_all=self.ungroup_all) 
+
+        # Get a graph object
+        self.graphw = graphing.CGraphPlain( self.cfg.suite )
+
+        # sort and then add edges in the hope that edges added in the
+        # same order each time will result in the graph layout not
+        # jumping around (does this help? -if not discard)
+        gr_edges.sort()
+        for e in gr_edges:
+            l, r, dashed, suicide, conditional = e
+            style=None
+            arrowhead='normal'
+            if dashed:
+                style='dashed'
+            if suicide:
+                style='dashed'
+                arrowhead='dot'
+            if conditional:
+                arrowhead='onormal'
+            self.graphw.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead )
+
+        for n in self.graphw.nodes():
+            n.attr['style'] = 'filled'
+            n.attr['fillcolor'] = 'cornsilk'
+
         self.group = []
         self.ungroup = []
         self.group_all = False
