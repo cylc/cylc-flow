@@ -49,7 +49,7 @@ Text Treeview suite control interface.
     def visible_cb(self, model, iter ):
         # visibility determined by state matching active toggle buttons
         # set visible if model value NOT in filter_states
-        state = model.get_value(iter, 1 ) 
+        state = model.get_value(iter, 2 ) 
         # strip formatting tags
         if state:
             state = re.sub( r'<.*?>', '', state )
@@ -58,7 +58,7 @@ Text Treeview suite control interface.
             if self.tfilt == '':
                 nres = True
             else:
-                tname = model.get_value(iter, 0)
+                tname = model.get_value(iter, 1)
                 tname = re.sub( r'<.*?>', '', tname )
                 if re.search( self.tfilt, tname ):
                     nres = True
@@ -103,37 +103,34 @@ Text Treeview suite control interface.
         # filtering in use) although the exact same code worked for a
         # liststore.
 
-        self.ttreestore = gtk.TreeStore(str, str, str, str, str, str, str )
+        self.sort_col_num = 0
+
+        self.ttreestore = gtk.TreeStore(str, str, str, str, str, str, str, str)
         self.tmodelfilter = self.ttreestore.filter_new()
         self.tmodelfilter.set_visible_func(self.visible_cb)
+        self.tmodelsort = gtk.TreeModelSort(self.tmodelfilter)
         self.ttreeview = gtk.TreeView()
-        self.ttreeview.set_model(self.tmodelfilter)
+        self.ttreeview.set_model(self.tmodelsort)
 
         ts = self.ttreeview.get_selection()
         ts.set_mode( gtk.SELECTION_SINGLE )
 
         self.ttreeview.connect( 'button_press_event', self.on_treeview_button_pressed )
 
-        headings = ['task', 'state', 'message', 'Tsubmit', 'Tstart', 'mean dT', 'ETC' ]
-        bkgcols  = [ None,  '#def',  '#fff',    '#def',    '#fff',   '#def',    '#fff']
-        for n in range(len(headings)):
+        headings = [ None, 'task', 'state', 'message', 'Tsubmit', 'Tstart', 'mean dT', 'ETC' ]
+        bkgcols  = [ None, None,  '#def',  '#fff',    '#def',    '#fff',   '#def',    '#fff']
+        for n in range(1, len(headings)):
+            # Skip first column (cycle time)
             cr = gtk.CellRendererText()
             cr.set_property( 'cell-background', bkgcols[n] )
             #tvc = gtk.TreeViewColumn( headings[n], cr, text=n )
             tvc = gtk.TreeViewColumn( headings[n], cr, markup=n )
             tvc.set_resizable(True)
-            if n == 0:
-                # allow click sorting only on first column (cycle time
-                # and task name) as I don't understand the effect of
-                # sorting on other columns in a treeview (it doesn't
-                # seem to work as expected).
-                tvc.set_clickable(True)
-                tvc.connect("clicked", self.rearrange, n )
-                tvc.set_sort_order(gtk.SORT_ASCENDING)
-                tvc.set_sort_indicator(True)
-                self.ttreestore.set_sort_column_id(n, gtk.SORT_ASCENDING ) 
+            tvc.set_clickable(True)
+         #   tvc.connect("clicked", self.change_sort_order, n - 1 )
             self.ttreeview.append_column(tvc)
- 
+            tvc.set_sort_column_id( n - 1 )
+            self.tmodelsort.set_sort_func( n - 1, self.sort_column, n - 1 )
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
         sw.add( self.ttreeview )
@@ -195,11 +192,9 @@ Text Treeview suite control interface.
 
         selection = treeview.get_selection()
         treemodel, iter = selection.get_selected()
-        name = treemodel.get_value( iter, 0 )
-        iter2 = treemodel.iter_parent( iter )
-        try:
-            ctime = treemodel.get_value( iter2, 0 )
-        except TypeError:
+        ctime = treemodel.get_value( iter, 0 )
+        name = treemodel.get_value( iter, 1 )
+        if ctime == name:
             # must have clicked on the top level ctime 
             return
 
@@ -215,19 +210,48 @@ Text Treeview suite control interface.
 
         return True
 
-    def rearrange( self, col, n ):
+    def sort_column( self, model, iter1, iter2, col_num ):
         cols = self.ttreeview.get_columns()
-        for i_n in range(0,len(cols)):
-            if i_n == n: 
-                cols[i_n].set_sort_indicator(True)
-            else:
-                cols[i_n].set_sort_indicator(False)
-        # col is cols[n]
-        if col.get_sort_order() == gtk.SORT_ASCENDING:
-            col.set_sort_order(gtk.SORT_DESCENDING)
+        ctime1 = model.get_value( iter1 , 0 )
+        ctime2 = model.get_value( iter2, 0 )
+        if ctime1 != ctime2:
+            if cols[col_num].get_sort_order() == gtk.SORT_DESCENDING:
+                return cmp(ctime2, ctime1)
+            return cmp(ctime1, ctime2)
+       
+      #  if ctime1 != ctime2:
+      #      if cols[0].get_sort_order() == cols[col_num].get_sort_order():
+      #          return cmp( ctime2, ctime1 )
+      #      return cmp( ctime1, ctime2 )
+        # Columns do not include the cycle time (0th col), so add 1.
+        prop1 = model.get_value( iter1, col_num + 1 )
+        prop2 = model.get_value( iter2, col_num + 1 )
+        return cmp( prop1, prop2 )
+
+    def change_sort_order( self, col, event=None, n=0 ):
+        if hasattr(event, "button") and event.button != 1:
+            return False
+        cols = self.ttreeview.get_columns()
+        self.sort_col_num = n
+        print
+        print "Change sort order", n, cols[n].get_sort_order()
+        print
+        if cols[n].get_sort_order() == gtk.SORT_ASCENDING:
+            print gtk.SORT_DESCENDING
+            # self.tmodelsort.set_sort_column_id( n, gtk.SORT_DESCENDING )
+            cols[n].set_sort_order( gtk.SORT_DESCENDING )
         else:
-            col.set_sort_order(gtk.SORT_ASCENDING)
-        self.ttreestore.set_sort_column_id(n, col.get_sort_order()) 
+            print gtk.SORT_ASCENDING
+            # self.tmodelsort.set_sort_column_id( n, gtk.SORT_ASCENDING )
+            cols[n].set_sort_order( gtk.SORT_ASCENDING )
+       #         cols[i_n].set_sort_indicator(True)
+       #     else:
+       #         cols[i_n].set_sort_indicator(False)
+       # if col.get_sort_order() == gtk.SORT_ASCENDING:
+       #     col.set_sort_order(gtk.SORT_DESCENDING)
+       # else:
+       #     col.set_sort_order(gtk.SORT_ASCENDING)
+        return False
 
     def on_popup_quit( self, b, lv, w ):
         lv.quit()

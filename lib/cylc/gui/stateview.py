@@ -105,25 +105,27 @@ class tupdater(threading.Thread):
         self.block = "access:\nwaiting ..."
 
         self.ttreeview = ttreeview
-        self.ttreestore = ttreeview.get_model().get_model()
+        # Hierarchy of models: view <- sorted <- filtered <- base model
+        self.ttreestore = ttreeview.get_model().get_model().get_model()
         self.info_bar = info_bar
 
         self.reconnect()
 
     def reconnect( self ):
         try:
-            client = cylc_pyro_client.client(
+            client = cylc_pyro_client.client( 
                     self.cfg.suite,
                     self.cfg.owner,
                     self.cfg.host,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
- 
+           # self.remote = client.get_proxy( 'remote' )
         except:
             return False
         else:
             self.status = "status:\nconnected"
             self.info_bar.set_status( self.status )
+            # self.family_nodes = self.remote.get_family_nodes()
             return True
 
     def connection_lost( self ):
@@ -215,9 +217,43 @@ class tupdater(threading.Thread):
         value = model.get_value( iter, column )
         return value == key
 
+
+    def _get_row_id( self, rpath ):
+        # Record a rows first two values.
+        riter = self.ttreeview.get_model().get_iter( rpath )
+        ctime = self.ttreeview.get_model().get_value( riter, 0 ) 
+        name = self.ttreeview.get_model().get_value( riter, 1 )
+        return (ctime, name)
+
+    def _add_expanded_row( self, model, rpath, names ):
+        riter = self.ttreeview.get_model().get_iter( rpath )
+        (ctime, name) = self._get_row_id( rpath )
+        state = self.ttreeview.get_model().get_value( riter, 2 )
+        if state is None:
+            names.append( ( ctime, name ) )
+            return False
+        st = re.sub('<[^>]+>', '', state ) # remove tags
+        if st not in ['submitted', 'running', 'failed', 'held']:
+            # Must have been expanded on purpose.
+            names.append( ( ctime, name ) )
+        return False
+        
+    def get_expanded_row_ids( self ):
+        """Return a list of row ctimes and names that are already expanded."""
+        names = []
+        self.ttreeview.map_expanded_rows( self._add_expanded_row, names )
+        return names
+
+    def autoexpand_row( self, model, rpath, riter, expand_ctime_names ):
+        """Expand a row if it matches expand_ctime_names."""
+        ctime_name_tuple = self._get_row_id( rpath )
+        if ctime_name_tuple in expand_ctime_names:
+            self.ttreeview.expand_to_path( rpath )
+        return False
+        
     def update_gui( self ):
         #print "Updating GUI"
-        expand_me = []
+        expand_me = self.get_expanded_row_ids()
         new_data = {}
         for id in self.state_summary:
             name, ctime = id.split( '%' )
@@ -253,6 +289,23 @@ class tupdater(threading.Thread):
         #print
 
         tree_data = {}
+        time0 = time.time()
+        self.ttreestore.clear()
+        times = new_data.keys()
+        times.sort()
+        print self.family_nodes
+        for ctime in times:
+            piter = self.ttreestore.append(None, [ ctime, ctime ] + [ None ] * 6)
+            names = new_data[ ctime ].keys()
+            names.sort()
+            for name in names:
+                #print "  adding", name, "to", ctime
+                riter = self.ttreestore.append( piter, [ ctime, name ] + new_data[ctime][name])
+                rpath = self.ttreestore.get_path(riter)
+                state = new_data[ ctime ][ name ][0]
+                st = re.sub('<[^>]+>', '', state ) # remove tags
+                if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
+                    expand_me.append( ( ctime, name ) )
 
         # The treestore.remove() method removes the row pointed to by
         # iter from the treestore. After being removed, iter is set to
@@ -261,99 +314,101 @@ class tupdater(threading.Thread):
         # 2.0. Returns True in PyGTK 2.2 and above if iter is still
         # valid.
 
-        iter = self.ttreestore.get_iter_first()
-        while iter:
-            # get parent ctime 
-            row = []
-            for col in range( self.ttreestore.get_n_columns() ):
-                row.append( self.ttreestore.get_value( iter, col) )
-            [ ctime, state, message, tsub, tstt, meant, tetc ] = row
-            # note state etc. is empty string for parent row
-            tree_data[ ctime ] = {}
+#        iter = self.ttreestore.get_iter_first()
+#        while iter:
+#            # get parent ctime 
+#            row = []
+#            for col in range( self.ttreestore.get_n_columns() ):
+#                row.append( self.ttreestore.get_value( iter, col) )
+#            [ ctime, state, message, tsub, tstt, meant, tetc ] = row
+#            # note state etc. is empty string for parent row
+#            tree_data[ ctime ] = {}
 
-            if ctime not in new_data:
-                # parent ctime not in new data; remove it
-                #print "REMOVING", ctime
-                res = self.ttreestore.remove( iter )
-                if not self.ttreestore.iter_is_valid( iter ):
-                    iter = None
-            else:
-                # parent ctime IS in new data; check children
-                iterch = self.ttreestore.iter_children( iter )
-                while iterch:
-                    ch_row = []
-                    for col in range( self.ttreestore.get_n_columns() ):
-                        ch_row.append( self.ttreestore.get_value( iterch, col) )
-                    [ name, state, message, tsub, tstt, meant, tetc ] = ch_row
-                    tree_data[ ctime ][name] = [ state, message, tsub, tstt, meant, tetc ]
-
-                    if name not in new_data[ ctime ]:
-                        #print "  removing", name, "from", ctime
-                        res = self.ttreestore.remove( iterch )
-                        if not self.ttreestore.iter_is_valid( iterch ):
-                            iterch = None
-
-                    elif tree_data[ctime][name] != new_data[ ctime ][name]:
-                        #print "   changing", name, "at", ctime
-                        self.ttreestore.append( iter, [ name ] + new_data[ctime][name] )
-                        res = self.ttreestore.remove( iterch )
-                        if not self.ttreestore.iter_is_valid( iterch ):
-                            iterch = None
-
-                        st = re.sub('<[^>]+>', '', state ) # remove tags
-                        if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
-                            if iter not in expand_me:
-                                expand_me.append( iter )
-                    else:
-                        # row unchanged
-                        iterch = self.ttreestore.iter_next( iterch )
-                        st = re.sub('<[^>]+>', '', state ) # remove tags
-                        if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
-                            if iter not in expand_me:
-                                expand_me.append( iter )
-
-                # then increment parent ctime
-                iter = self.ttreestore.iter_next( iter )
-
-        for ctime in new_data:
-            if ctime not in tree_data:
-                # add new ctime tree
-                #print "ADDING", ctime
-                piter = self.ttreestore.append(None, [ctime, None, None, None, None, None, None ])
-                for name in new_data[ ctime ]:
-                    #print "  adding", name, "to", ctime
-                    self.ttreestore.append( piter, [ name ] + new_data[ctime][name] )
-                    state = new_data[ ctime ][ name ][0]
-                    st = re.sub('<[^>]+>', '', state ) # remove tags
-                    if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
-                        if iter not in expand_me:
-                            expand_me.append( piter )
-                continue
-
-            # this ctime tree is already in model
-            p_iter = self.search_level( self.ttreestore, 
-                    self.ttreestore.get_iter_first(),
-                    self.match_func, (0, ctime ))
-
-            for name in new_data[ ctime ]:
-                # look for a matching row in the model
-                ch_iter = self.search_treemodel( self.ttreestore, 
-                        self.ttreestore.iter_children( p_iter ),
-                        self.match_func, (0, name ))
-                if not ch_iter:
-                    #print "  adding", name, "to", ctime
-                    self.ttreestore.append( p_iter, [ name ] + new_data[ctime][name] )
-                state = new_data[ ctime ][ name ][0]
-                # expand whether new or old data
-                st = re.sub('<[^>]+>', '', state ) # remove tags
-                if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
-                    if iter not in expand_me:
-                        expand_me.append( p_iter )
+#            if ctime not in new_data:
+#                # parent ctime not in new data; remove it
+#                #print "REMOVING", ctime
+#                res = self.ttreestore.remove( iter )
+#                if not self.ttreestore.iter_is_valid( iter ):
+#                    iter = None
+#            else:
+#                # parent ctime IS in new data; check children
+#                iterch = self.ttreestore.iter_children( iter )
+#                while iterch:
+#                    ch_row = []
+#                    for col in range( self.ttreestore.get_n_columns() ):
+#                        ch_row.append( self.ttreestore.get_value( iterch, col) )
+#                    [ name, state, message, tsub, tstt, meant, tetc ] = ch_row
+#                    tree_data[ ctime ][name] = [ state, message, tsub, tstt, meant, tetc ]
+#
+#                    if name not in new_data[ ctime ]:
+#                        #print "  removing", name, "from", ctime
+#                        res = self.ttreestore.remove( iterch )
+#                        if not self.ttreestore.iter_is_valid( iterch ):
+#                            iterch = None
+#
+#                    elif tree_data[ctime][name] != new_data[ ctime ][name]:
+#                        #print "   changing", name, "at", ctime
+#                        self.ttreestore.append( iter, [ name ] + new_data[ctime][name] )
+#                        res = self.ttreestore.remove( iterch )
+#                        if not self.ttreestore.iter_is_valid( iterch ):
+#                            iterch = None
+#
+#                        st = re.sub('<[^>]+>', '', state ) # remove tags
+#                        if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
+#                            if iter not in expand_me:
+#                                expand_me.append( iter )
+#                    else:
+#                        # row unchanged
+#                        iterch = self.ttreestore.iter_next( iterch )
+#                        st = re.sub('<[^>]+>', '', state ) # remove tags
+#                        if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
+#                            if iter not in expand_me:
+#                                expand_me.append( iter )
+#
+#                # then increment parent ctime
+#                iter = self.ttreestore.iter_next( iter )
+#
+#        for ctime in new_data:
+#            if ctime not in tree_data:
+#                # add new ctime tree
+#                #print "ADDING", ctime
+#                piter = self.ttreestore.append(None, [ctime, None, None, None, None, None, None ])
+#                for name in new_data[ ctime ]:
+#                    #print "  adding", name, "to", ctime
+#                    self.ttreestore.append( piter, [ name ] + new_data[ctime][name] )
+#                    state = new_data[ ctime ][ name ][0]
+#                    st = re.sub('<[^>]+>', '', state ) # remove tags
+#                    if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
+#                        if iter not in expand_me:
+#                            expand_me.append( piter )
+#                continue
+#
+#            # this ctime tree is already in model
+#            p_iter = self.search_level( self.ttreestore, 
+#                    self.ttreestore.get_iter_first(),
+#                    self.match_func, (0, ctime ))
+#
+#            for name in new_data[ ctime ]:
+#                # look for a matching row in the model
+#                ch_iter = self.search_treemodel( self.ttreestore, 
+#                        self.ttreestore.iter_children( p_iter ),
+#                        self.match_func, (0, name ))
+#                if not ch_iter:
+#                    #print "  adding", name, "to", ctime
+#                    self.ttreestore.append( p_iter, [ name ] + new_data[ctime][name] )
+#                state = new_data[ ctime ][ name ][0]
+#                # expand whether new or old data
+#                st = re.sub('<[^>]+>', '', state ) # remove tags
+#                if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
+#                    if iter not in expand_me:
+#                        expand_me.append( p_iter )
 
         if self.autoexpand:
-            for iter in expand_me:
-                self.ttreeview.expand_row(self.ttreestore.get_path(iter),False)
-
+            self.ttreeview.get_model().foreach( self.autoexpand_row, expand_me )
+        self.ttreeview.get_model().get_model().refilter()
+        self.ttreeview.get_model().sort_column_changed()
+        time1 = time.time()
+        print "DT: ", time1 - time0
         return False
 
     def update_globals( self ):
