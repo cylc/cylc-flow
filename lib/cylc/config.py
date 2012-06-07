@@ -393,7 +393,7 @@ class config( CylcConfigObj ):
             if cfam not in self.members:
                 print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
                 self.closed_families.remove( cfam )
-
+        self.vis_families = [f for f in self.closed_families]
         if self.verbose:
             print "Checking suite event hooks"
         script = None

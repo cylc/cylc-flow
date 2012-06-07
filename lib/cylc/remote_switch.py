@@ -317,6 +317,9 @@ class remote_switch( Pyro.core.ObjBase ):
     def get_graphed_family_nodes( self ):
         return self.config.families_used_in_graph
 
+    def get_vis_families( self ):
+        return self.config.vis_families
+
     def do_live_graph_movie( self ):
         return ( self.config['visualization']['enable live graph movie'],
                  self.config['visualization']['run time graph']['directory'] ) 

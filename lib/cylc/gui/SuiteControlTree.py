@@ -95,6 +95,30 @@ Text Treeview suite control interface.
         self.tfilt = self.filter_entry.get_text()
         self.tmodelfilter.refilter()
 
+    def toggle_grouping( self, toggle_item ):
+        """Toggle grouping by visualisation families."""
+        if isinstance( toggle_item, gtk.ToggleToolButton ):
+            group_on = not toggle_item.get_active()
+            if group_on == self.t.should_group_families:
+                return False
+            self.t.should_group_families = group_on
+            if group_on:
+                tip_text = "Click to ungroup families"
+            else:
+                tip_text = "Click to group tasks by families"
+            self._set_tooltip( toggle_item, tip_text )
+            self.group_menu_item.set_active( group_on )
+        else:
+            group_on = toggle_item.get_active()
+            if group_on == self.t.should_group_families:
+                return False
+            self.t.should_group_families = group_on
+            if not isinstance( toggle_item, gtk.CheckMenuItem ):
+                self.group_menu_item.set_active( group_on )
+            self.ungroup_toolbutton.set_active( not group_on )            
+        self.t.update_gui()
+        return False
+
     def stop(self):
         self.t.quit = True
 
@@ -213,6 +237,15 @@ Text Treeview suite control interface.
         task_id = name + '%' + ctime
 
         menu = self.get_right_click_menu( task_id )
+
+        menu.append( gtk.SeparatorMenuItem() )
+
+        group_item = gtk.CheckMenuItem( 'Toggle Family Grouping' )
+        group_item.set_active( self.t.should_group_families )
+        menu.append( group_item )
+        group_item.connect( 'toggled', self.toggle_grouping )
+        group_item.show()
+
         menu.popup( None, None, None, event.button, event.time )
 
         # TO DO: popup menus are not automatically destroyed and can be
@@ -245,15 +278,10 @@ Text Treeview suite control interface.
             return False
         cols = self.ttreeview.get_columns()
         self.sort_col_num = n
-        print
-        print "Change sort order", n, cols[n].get_sort_order()
-        print
         if cols[n].get_sort_order() == gtk.SORT_ASCENDING:
-            print gtk.SORT_DESCENDING
             # self.tmodelsort.set_sort_column_id( n, gtk.SORT_DESCENDING )
             cols[n].set_sort_order( gtk.SORT_DESCENDING )
         else:
-            print gtk.SORT_ASCENDING
             # self.tmodelsort.set_sort_column_id( n, gtk.SORT_ASCENDING )
             cols[n].set_sort_order( gtk.SORT_ASCENDING )
        #         cols[i_n].set_sort_indicator(True)
@@ -276,6 +304,11 @@ Text Treeview suite control interface.
         autoex_item = gtk.MenuItem( 'Toggle _Auto-Expand Tree' )
         items.append( autoex_item )
         autoex_item.connect( 'activate', self.toggle_autoexpand )
+
+        self.group_menu_item = gtk.CheckMenuItem( 'Toggle _Family Grouping' )
+        self.group_menu_item.set_active( True )
+        items.append( self.group_menu_item )
+        self.group_menu_item.connect( 'toggled', self.toggle_grouping )
         return items
 
     def _set_tooltip( self, widget, tip_text ):
@@ -311,7 +344,15 @@ Text Treeview suite control interface.
         tooltip.enable()
         tooltip.set_tip(filter_toolitem, "Filter tasks by name")
         items.append(filter_toolitem)
-        
+
+        self.ungroup_toolbutton = gtk.ToggleToolButton()
+        root_img_dir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
+        g_image = gtk.image_new_from_file( root_img_dir + '/ungroup.png' )
+        self.ungroup_toolbutton.set_icon_widget( g_image )
+        self.ungroup_toolbutton.connect( 'toggled', self.toggle_grouping )
+        self._set_tooltip( self.ungroup_toolbutton, "Ungroup families" )
+        items.append( self.ungroup_toolbutton )
+
         return items
 
 class StandaloneControlTreeApp( ControlTree ):

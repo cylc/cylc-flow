@@ -757,7 +757,7 @@ The cylc forecast suite metascheduler.
             menu_root = gtk.MenuItem( task_id )
             menu_root.set_submenu( menu )
 
-            title_item = gtk.MenuItem( 'Task: ' + task_id )
+            title_item = gtk.MenuItem( 'Task: ' + task_id.replace( "_", "__" ) )
             title_item.set_sensitive(False)
             menu.append( title_item )
             menu.append( gtk.SeparatorMenuItem() )
@@ -1953,7 +1953,13 @@ shown here in the state they were in at the time of triggering.''' )
         view1_toolitem = gtk.ToolItem()
         view1_toolitem.add( self.tool_bar_view1 )
         # Horizontal layout toggler
-        self.layout_toolbutton = gtk.CheckButton()
+        self.layout_toolbutton = gtk.ToggleToolButton()
+        image1 = gtk.image_new_from_stock( gtk.STOCK_GOTO_FIRST, gtk.ICON_SIZE_MENU )
+        image2 = gtk.image_new_from_stock( gtk.STOCK_GOTO_LAST, gtk.ICON_SIZE_MENU )
+        im_box = gtk.HBox()
+        im_box.pack_start( image1, expand=False, fill=False )
+        im_box.pack_start( image2, expand=False, fill=False )
+        self.layout_toolbutton.set_icon_widget( im_box )
         self.layout_toolbutton.connect( "toggled", self._cb_change_view_align )
         self.layout_toolbutton.set_active( self.view_layout_horizontal )
         self._set_tooltip( self.layout_toolbutton,
@@ -2046,7 +2052,7 @@ shown here in the state they were in at the time of triggering.''' )
         self.quitters.append(foo)
 
     def view_suite_info( self, w ):
-        command = "cylc show --host=" + self.cfg.host + " " + self.suite 
+        command = "cylc show --host=" + self.cfg.host + " " + self.cfg.suite 
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
