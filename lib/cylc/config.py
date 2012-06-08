@@ -413,7 +413,13 @@ class config( CylcConfigObj ):
             raise SuiteConfigError, "ERROR, no handler specified for these suite events: " + ','.join(events)
 
         self.process_directories()
-        self.load()
+
+        if self.verbose:
+            print 'Parsing the dependency graph'
+        self.graph_found = False
+        self.load_graph()
+        if not self.graph_found:
+            raise SuiteConfigError, 'No suite dependency graph defined.'
 
         # Compute maximum runahead limit
         # 1/ take the largest of the minimum limits from each graph section
@@ -1437,46 +1443,39 @@ class config( CylcConfigObj ):
 
         return nl, nr
 
-    def load( self ):
-        if self.verbose:
-            print 'Parsing the dependency graph'
-        found_graph = False
-        # parse the suite dependencies section
+    def load_graph( self ):
         for item in self['scheduling']['dependencies']:
             if item == 'graph':
-                # One-off asynchronous tasks.
-                section = "once"
+                # asynchronous graph
                 graph = self['scheduling']['dependencies']['graph']
                 if graph:
-                    found_graph = True
-                else:
-                    # no async_oneoff tasks defined
-                    continue
+                    section = "once"
+                    self.parse_graph( section, graph )
             else:
-                section = item
                 try:
                     graph = self['scheduling']['dependencies'][item]['graph']
-                except IndexError:
-                    raise SuiteConfigError, 'Missing graph string in [scheduling][dependencies]['+item+']'
+                except KeyError:
+                    pass
                 else:
-                    graph_found = True
-
-            if not graph_found:
-                raise SuiteConfigError, 'No suite dependency graph defined.'
-
-            # split the graph string into successive lines
-            lines = re.split( '\s*\n\s*', graph )
-            for xline in lines:
-                # strip comments
-                line = re.sub( '#.*', '', xline ) 
-                # ignore blank lines
-                if re.match( '^\s*$', line ):
-                    continue
-                # strip leading or trailing spaces
-                line = re.sub( '^\s*', '', line )
-                line = re.sub( '\s*$', '', line )
-                # generate pygraphviz graph nodes and edges, and task definitions
-                self.process_graph_line( line, section )
+                    if graph:
+                        section = item
+                        self.parse_graph( section, graph )
+ 
+    def parse_graph( self, section, graph ):
+        self.graph_found = True
+        # split the graph string into successive lines
+        lines = re.split( '\s*\n\s*', graph )
+        for xline in lines:
+            # strip comments
+            line = re.sub( '#.*', '', xline ) 
+            # ignore blank lines
+            if re.match( '^\s*$', line ):
+                continue
+            # strip leading or trailing spaces
+            line = re.sub( '^\s*', '', line )
+            line = re.sub( '\s*$', '', line )
+            # generate pygraphviz graph nodes and edges, and task definitions
+            self.process_graph_line( line, section )
 
     def get_taskdef( self, name ):
         # (DefinitionError caught above)
