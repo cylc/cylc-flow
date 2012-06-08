@@ -553,7 +553,7 @@ class lupdater(threading.Thread):
                 label.set_text(label.get_text() + ' ')
 
     def ledview_widgets( self ):
-        types = tuple( [gtk.gdk.Pixbuf]* (10 + len( self.task_list)))
+        types = tuple( [gtk.gdk.Pixbuf]* (10 + len( self.task_list)) + [str])
         self.led_liststore = gtk.ListStore( *types )
 
         tvcs = self.led_treeview.get_columns()
@@ -650,7 +650,7 @@ class lupdater(threading.Thread):
                 else:
                     state_list.append( self.empty_led )
 
-            self.led_liststore.append( self.digitize( ctime ) + state_list )
+            self.led_liststore.append( self.digitize( ctime ) + state_list + [ctime])
 
         return False
 
