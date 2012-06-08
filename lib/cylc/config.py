@@ -417,26 +417,30 @@ class config( CylcConfigObj ):
 
         # Compute maximum runahead limit
         # 1/ take the largest of the minimum limits from each graph section
-        mrls = []
-        for cyc in self.cyclers:
-            mrls.append(cyc.minimum_runahead_limit)
-        mrl = max(mrls)
-        if self.verbose:
-            print "Largest minimum runahead limit from cycling modules:", mrl, "hours"
-        # 2/ or if there is a configured maximum runahead limit, use it.
-        rl = self['scheduling']['runahead limit']
-        if rl:
+        if len(self.cyclers) != 0:
+            # runahead limit is only relevant for cycling sections
+            mrls = []
+            mrl = None
+            for cyc in self.cyclers:
+                mrls.append(cyc.minimum_runahead_limit)
+            mrl = max(mrls)
             if self.verbose:
-                print "Configured maximum runahead limit: ", rl, "hours"
-            if rl < mrl:
-                print >> sys.stderr, 'WARNING: runahead limit (' + str(rl) + ') is too low (<' + str(mrl) + '), suite may stall'
-            crl = rl
-        else:
-            crl = mrl
-            if self.verbose:
-                print "Maximum runahead limit defaulting to:", crl, "hours"
+                print "Largest minimum runahead limit from cycling modules:", mrl, "hours"
 
-        self['scheduling']['runahead limit'] = crl
+            # 2/ or if there is a configured maximum runahead limit, use it.
+            rl = self['scheduling']['runahead limit']
+            if rl:
+                if self.verbose:
+                    print "Configured maximum runahead limit: ", rl, "hours"
+                if rl < mrl:
+                    print >> sys.stderr, 'WARNING: runahead limit (' + str(rl) + ') is too low (<' + str(mrl) + '), suite may stall'
+                crl = rl
+            else:
+                crl = mrl
+                if self.verbose:
+                    print "Maximum runahead limit defaulting to:", crl, "hours"
+
+            self['scheduling']['runahead limit'] = crl
 
         self.family_tree = {}
         self.task_runtimes = {}
@@ -1436,14 +1440,17 @@ class config( CylcConfigObj ):
     def load( self ):
         if self.verbose:
             print 'Parsing the dependency graph'
+        found_graph = False
         # parse the suite dependencies section
         for item in self['scheduling']['dependencies']:
             if item == 'graph':
                 # One-off asynchronous tasks.
                 section = "once"
                 graph = self['scheduling']['dependencies']['graph']
-                if graph == None:
-                    # this means no async_oneoff tasks defined
+                if graph:
+                    found_graph = True
+                else:
+                    # no async_oneoff tasks defined
                     continue
             else:
                 section = item
@@ -1451,6 +1458,11 @@ class config( CylcConfigObj ):
                     graph = self['scheduling']['dependencies'][item]['graph']
                 except IndexError:
                     raise SuiteConfigError, 'Missing graph string in [scheduling][dependencies]['+item+']'
+                else:
+                    graph_found = True
+
+            if not graph_found:
+                raise SuiteConfigError, 'No suite dependency graph defined.'
 
             # split the graph string into successive lines
             lines = re.split( '\s*\n\s*', graph )
