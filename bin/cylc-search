@@ -21,29 +21,7 @@ from optparse import OptionParser
 from collections import deque
 from cylc.registration import dbgetter, RegistrationError
 from cylc.version import compat
-
-def include_files( suitedir, inf ):
-    outf = []
-    for line in inf:
-        m = re.match( '\s*%include\s+([\w/\.\-]+)\s*$', line )
-        if m:
-            match = m.groups()[0]
-            inc = os.path.join( suitedir, match )
-            if os.path.isfile(inc):
-                #print "Inlining", inc
-                outf.append('++++ START INLINED INCLUDE FILE ' + match + '\n')
-                h = open(inc, 'rb')
-                inc = h.readlines()
-                h.close()
-                # recursive inclusion
-                outf.extend( include_files( suitedir, inc ))
-                outf.append('++++ END INLINED INCLUDE FILE ' + match + '\n')
-            else:
-                raise SystemExit( "File not found: " + inc )
-        else:
-            # no match
-            outf.append( line )
-    return outf
+from cylc.include_files import inline_for_search
 
 def section_level( heading ):
     # e.g. foo => 0
@@ -134,7 +112,7 @@ if os.path.isfile( suiterc ):
     h = open( suiterc, 'rb' )
     lines0 = h.readlines()
     h.close()
-    lines = include_files( suitedir, lines0 )
+    lines = inline_for_search( suitedir, lines0 )
 else:
     parser.error("Suite " + suite + " config file not found: " + suiterc )
 

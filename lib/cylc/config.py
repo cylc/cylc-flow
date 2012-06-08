@@ -44,13 +44,9 @@ from regpath import RegPath
 from trigger import triggerx
 from output import outputx
 from TaskID import TaskID, AsyncTag
-
-try:
-    from jinja2 import Environment, FileSystemLoader, TemplateError
-except ImportError:
-    jinja2_loaded = False
-else:
-    jinja2_loaded = True
+from Jinja2Support import Jinja2Process
+from continuation_lines import join
+from include_files import inline
 
 try:
     import graphing
@@ -58,46 +54,6 @@ except:
     graphing_disabled = True
 else:
     graphing_disabled = False
-
-def include_files( inf, dir ):
-    outf = []
-    for line in inf:
-        m = re.match( '\s*%include\s+(.*)\s*$', line )
-        if m:
-            # include statement found
-            match = m.groups()[0]
-            # strip off possible quotes: %include "foo.inc"
-            match = match.replace('"','')
-            match = match.replace("'",'')
-            inc = os.path.join( dir, match )
-            if os.path.isfile(inc):
-                #print "Inlining", inc
-                h = open(inc, 'rb')
-                inc = h.readlines()
-                h.close()
-                # recursive inclusion
-                outf.extend( include_files( inc, dir ))
-            else:
-                raise ConfigObjError, "ERROR, Include-file not found: " + inc
-        else:
-            # no match
-            outf.append( line )
-    return outf
-
-def continuation_lines( inf ):
-    outf = []
-    cline = ''
-    for line in inf:
-        # detect continuation line endings
-        m = re.match( '(.*)\\\$', line )
-        if m:
-            # add line to cline instead of appending to outf.
-            cline += m.groups()[0]
-        else:
-            outf.append( cline + line )
-            # reset cline 
-            cline = ''
-    return outf
 
 class SuiteConfigError( Exception ):
     """
@@ -210,52 +166,17 @@ class config( CylcConfigObj ):
 
         if self.verbose:
             print "Loading suite.rc"
+
         f = open( self.file )
         flines = f.readlines()
         f.close()
+
         # handle cylc include-files
-        flines = include_files( flines, self.dir )
-
-        # check first line of file for template engine directive
-        # (check for new empty suite.rc files - zero lines - first)
-        if flines and re.match( '^#![jJ]inja2\s*', flines[0] ):
-            # This suite.rc file requires processing with jinja2.
-            if not jinja2_loaded:
-                print >> sys.stderr, 'ERROR: This suite requires processing with the Jinja2 template engine'
-                print >> sys.stderr, 'ERROR: but the Jinja2 modules are not installed in your PYTHONPATH.'
-                raise SuiteConfigError, 'Aborting (Jinja2 required).'
-            if self.verbose:
-                print "Processing the suite with Jinja2"
-            env = Environment( loader=FileSystemLoader(self.dir) )
-             # load file lines into a template, excluding '#!jinja2' so
-             # that '#!cylc-x.y.z' rises to the top.
-            try:
-                template = env.from_string( ''.join(flines[1:]) )
-            except TemplateError, x:
-                raise SuiteConfigError, "Jinja2 template error: " + str(x)
-
-            try:
-                # (converting unicode to plain string; configobj doesn't like?)
-                rendered = str( template.render() )
-            except Exception, x:
-                raise SuiteConfigError, "ERROR: Jinja2 template rendering failed: " + str(x)
-
-            xlines = rendered.split('\n') # pass a list of lines to configobj
-            suiterc = []
-            for line in xlines:
-                # Jinja2 leaves blank lines where source lines contain
-                # only Jinja2 code; this matters if line continuation
-                # markers are involved, so we remove blank lines here.
-                if re.match( '^\s*$', line ):
-                    continue
-                # restoring newlines is not necessary here:
-                suiterc.append(line)
-        else:
-            # This is a plain suite.rc file.
-            suiterc = flines
-
+        flines = inline( flines, self.dir )
+        # handle Jinja2 expressions
+        suiterc = Jinja2Process( flines, self.dir, self.verbose )
         # handle cylc continuation lines
-        suiterc = continuation_lines( suiterc )
+        suiterc = join( suiterc )
 
         try:
             CylcConfigObj.__init__( self, suiterc, configspec=self.spec )

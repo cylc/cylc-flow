@@ -22,134 +22,8 @@ from shutil import copy
 import subprocess
 from optparse import OptionParser
 from cylc.registration import dbgetter, RegistrationError
-
-included = []
-modtimes = {}
-backups = {}
-newfiles = []
-
-def cleanup( suitedir ):
-    print 'CLEANUP REQUESTED, deleting:'
-    for root, dirs, files in os.walk( suitedir ):
-        for file in files:
-            if re.search( '\.EDIT\..*$', file ):
-                print ' + ' + re.sub( suitedir + '/', '', file )
-                os.unlink( os.path.join( root, file ))
-
-def include_files( inf, level=None ):
-    # using globals here for commonality across recursive calls:
-    global suitedir
-    global included
-    global modtimes
-    outf = []
-    if level == None:
-        # suite.rc itself
-        level = ''
-        outf.append("""# !WARNING! CYLC EDIT INLINED (DO NOT MODIFY THIS LINE).
-# !WARNING! This is an inlined suite.rc file; include-files are split
-# !WARNING! out again on exiting the edit session.  If you are editing
-# !WARNING! this file manually then a previous inlined session may have
-# !WARNING! crashed; exit now and use 'cylc edit -i' to recover (this 
-# !WARNING! will split the file up again on exiting).\n""")
-    else:
-        level += ' > '
-    for line in inf:
-        m = re.match( '\s*%include\s+(.*)\s*$', line )
-        if m:
-            match = m.groups()[0]
-            # include statement found
-            # strip off possible quotes: %include "foo.inc"
-            match = match.replace('"','')
-            match = match.replace("'",'')
-            inc = os.path.join( suitedir, match )
-            if inc not in included:
-                # new include file detected
-                # back up the original
-                included.append(inc)
-                backup( inc )
-                # store original modtime
-                modtimes[inc] = os.stat( inc ).st_mtime
-                if os.path.isfile(inc):
-                    #print " + inlining", inc
-                    outf.append('#++++ START INLINED INCLUDE FILE ' + match  + ' (DO NOT MODIFY THIS LINE!)\n')
-                    h = open(inc, 'rb')
-                    inc = h.readlines()
-                    h.close()
-                    # recursive inclusion
-                    outf.extend( include_files( inc, level ))
-                    outf.append('#---- END INLINED INCLUDE FILE ' + match  + ' (DO NOT MODIFY THIS LINE!)\n')
-                else:
-                    raise SystemExit( "ERROR, Include-file not found: " + inc )
-            else:
-                outf.append(line)
-        else:
-            # no match
-            outf.append(line)
-    return outf
-
-def split_file( lines, file, level=None ):
-    global suitedir
-    global modtimes
-    global newfiles
-
-    if level == None:
-        # suite.rc itself
-        level = ''
-    else:
-        level += ' > '
-        # check mod time on the target file
-        if not recovery:
-            mtime = os.stat( file ).st_mtime
-            if mtime != modtimes[file]:
-                # oops - original file has changed on disk since we started editing
-                f = re.sub( suitedir + '/', '', file )
-                file = file + '.EDIT.NEW.' + datetime.datetime.now().isoformat()
-        newfiles.append(file)
-
-    inclines = []
-    fnew = open( file, 'wb' )
-    match_on = False
-    for line in lines:
-        if re.match( '^# !WARNING!', line ):
-            continue
-        if not match_on:
-            m = re.match('^#\+\+\+\+ START INLINED INCLUDE FILE ([\w\/\.\-]+)', line )
-            if m:
-                match_on = True
-                inc_filename = m.groups()[0]
-                inc_file = os.path.join( suitedir, m.groups()[0] )
-                fnew.write( '%include ' + inc_filename + '\n')
-            else:
-                fnew.write(line)
-        elif match_on:
-            # match on, go to end of the 'on' include-file
-            m = re.match('^#\-\-\-\- END INLINED INCLUDE FILE ' + inc_filename, line )
-            if m:
-                match_on = False
-                # now split this lot, in case of nested inclusions
-                split_file( inclines, inc_file, level )
-                # now empty the inclines list ready for the next inclusion in this file
-                inclines = []
-            else:
-                inclines.append(line)
-    if match_on:
-        for line in inclines:
-            fnew.write( line )
-        print >> sys.stderr 
-        print >> sys.stderr, "ERROR: end-of-file reached while matching include-file", inc_filename + "."
-        print >> sys.stderr, """This probably means you have corrupted the inlined file by
-modifying one of the include-file boundary markers. Fix the backed-
-up inlined suite.rc file, copy it to 'suite.rc' and invoke another
-inlined edit session split the file up again."""
-        print >> sys.stderr 
-
-def backup(src, tag='' ):
-    if not os.path.exists(src):
-        raise SystemExit( "File not found: " + src )
-    bkp = src + tag + '.EDIT.' + datetime.datetime.now().isoformat()
-    global backups
-    copy( src, bkp )
-    backups[ src ] = bkp
+from cylc.include_files import inline_for_editing, \
+    split_file, backup, backups, newfiles, cleanup, modtimes
 
 parser = OptionParser( """1/ cylc [prep] edit SUITE 
        2/ cylc [prep] edit -i,--inline SUITE
@@ -238,8 +112,6 @@ except KeyError:
     raise SystemExit( 'export $' + edvar + ' before using this command' )
 
 # find location of the suite definition directory
-global suitedir
-
 dbg = dbgetter( options.central )
 try:
     suite, suiterc = dbg.get_suite(reg)
@@ -303,7 +175,7 @@ if os.path.isfile( suiterc ):
     else:
         recovery = False
         # inline any include files
-        lines = include_files( lines0 )
+        lines = inline_for_editing( suitedir, lines0 )
 else:
     parser.error("File not found: " + suiterc )
 
@@ -347,7 +219,7 @@ lines = h.readlines()
 h.close()
 
 # split it back into separate files
-split_file( lines, suiterc )
+split_file( suitedir, lines, suiterc, recovery )
 
 print ' + edited:', suiterc
 print ' + backup:', inlined_suiterc_backup
