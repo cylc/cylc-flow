@@ -1170,20 +1170,12 @@ configured in the example suite, so it defaults, for all tasks, to the
 Section~\ref{SuiteDefinition}):
 \begin{lstlisting}
 % cylc get-config QuickStart.a runtime GetData 'command scripting'
-['echo DUMMY $CYLC_TASK_ID; sleep 10; echo BYE']
+['echo Dummy command scripting; sleep $CYLC_TASK_DUMMY_RUN_LENGTH']
 \end{lstlisting}
-where \lstinline=$CYLC_TASK_ID= is the unique identifier by which 
-cylc knows the task (\lstinline=NAME%CYCLE=) exported to each task's
+where \lstinline=$CYLC_TASK_DUMMY_RUN_LENGTH= can be set in the suite 
+definition and defaults to 10 seconds; this is exported to the task
 execution environment by cylc. The command arguments reflect the suite
-definition section nesting. If it were explicitly configured in the 
-example suite it would look like this:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[runtime]
-    [[GetData]]
-        command scripting = "echo DUMMY $CYLC_TASK_ID; sleep 10; echo BYE"
-\end{lstlisting}
-\lstset{language=transcript}
+definition section nesting. 
 
 Now start a suite control GUI by right-clicking on the suite in gcylc
 and choosing `Control (graph)'.  You can also open a text treeview
