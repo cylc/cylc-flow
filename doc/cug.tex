@@ -505,11 +505,12 @@ template processing:
 
 \subsection{Known Version Compatibility Issues}
 
-Cylc should run out of the box on reasonably recent Linux distributions.
+Cylc should run ``out of the box'' on recent Linux distributions.
 
 For distributed suites the Pyro versions installed on all suite or task
 hosts must be mutually compatible. Using identical Pyro versions
-guarantees compatibility but is generally not necessary.
+guarantees compatibility but may not be strictly necessary because 
+cylc uses Pyro rather minimally.
 
 Recent versions of Pyro require Python 2.5 or greater, due to use of the 
 \lstinline=with= statement introduced in 2.5.
@@ -885,16 +886,16 @@ central suite group to something sensible using
 \lstinline=cylc db reregister= - it will have an ungainly string of
 digits attached to ensure uniqueness. 
 
-\subsection{Cross-Version Suite Compatibility}
+\subsection{Pseudo Backward Compatibility}
 \label{compat}
 
 It may not be convenient for users to upgrade all of their suites at
 once when a new cylc release is installed. As of cylc-4.2.0 any installed
 version of cylc can act as a transparent front end to any other installed
-version. This allows construction of new-version suites while older
-existing ones are still in use, without having to reconfigure your
-environment or explicitly invoke different cylc versions for different
-suites.
+version (technically this also provides pseudo forward compatibility).
+This allows construction of new-version suites while older existing ones
+are still in use, without having to reconfigure your environment or
+explicitly invoke different cylc versions for different suites.
 
 The required cylc version must be specified on the {\em first line} of a
 non-Jinja2 suite definition:
@@ -923,7 +924,7 @@ suite-referencing command, e.g.:
 \begin{lstlisting}
 % cylc validate foo
 --------------------------------------------------------
-Cylc cross-version suite compatibility:
+Pseudo backward compatibility:
   Invoked version: cylc-4.2.0 (/home/oliverh/cylc-4.2.0)
   Suite requires:  cylc-4.2.1
 Path not given, assuming parallel cylc installations
@@ -943,18 +944,38 @@ Suite.rc Reference} (Appendix~\ref{SuiteRCReference}) to identify
 problems, and consult the cylc change log to see what changed between
 versions.
 
-\subsubsection{Version Compatibility Limitations}
+\subsubsection{Limitations}
 
 The top level command interface, \lstinline=$CYLC_DIR/bin/cylc=,
 determines the legality of requested sub-commands prior to version
-compatibility checking (which is in fact done by the
+compatibility processing (which is in fact done by the
 sub-command\footnote{This is because the top level command interface
 just passes options and arguments, which vary according to the
 sub-command, on to the sub-command; it does not understand them
 itself and so it cannot determine which one, if any, is the 
 suite reference.}) so the correct cylc version must be explicitly
-invoked if the sub-command has undergone a name change between the
-versions concerned. 
+invoked in the unlikely event that the sub-command has undergone a name
+change between the versions concerned. 
+
+\subsubsection{A Usage Suggestion}
+
+You can use the Jinja2 template processor (see Section~\ref{Jinja2}) to
+store the required cylc version in a single variable, which can then 
+also be used (for example) to specify the right cylc version to use on a
+remote task host:
+\lstset{language=suiterc}
+\begin{lstlisting}
+#!Jinja2
+{% set CYLC_VERSION = "cylc-4.2.2" %}
+#!{{CYLC_VERSION}}
+
+#...
+[runtime]
+   [[on_hpc]]
+       [[[remote]]]
+           cylc directory = /path/to/cylc/top/dir/{{CYLC_VERSION}}
+\end{lstlisting}
+\lstset{language=transcript}
 
 \section{On The Meaning Of {\em Cycle Time} In Cylc}
 
@@ -1172,10 +1193,11 @@ Section~\ref{SuiteDefinition}):
 % cylc get-config QuickStart.a runtime GetData 'command scripting'
 ['echo Dummy command scripting; sleep $CYLC_TASK_DUMMY_RUN_LENGTH']
 \end{lstlisting}
-where \lstinline=$CYLC_TASK_DUMMY_RUN_LENGTH= can be set in the suite 
-definition and defaults to 10 seconds; this is exported to the task
-execution environment by cylc. The command arguments reflect the suite
-definition section nesting. 
+where \lstinline=$CYLC_TASK_DUMMY_RUN_LENGTH= defaults to 10 seconds 
+but can be overridden in task or family environments in the suite
+definition; this is exported to the task execution environment by cylc.
+The command arguments above reflect suite definition section
+nesting. 
 
 Now start a suite control GUI by right-clicking on the suite in gcylc
 and choosing `Control (graph)'.  You can also open a text treeview
@@ -4865,7 +4887,7 @@ Instead, consider organising restart files by cycle time, through a file
 or directory naming convention, and keep them in a simple rolling
 archive (cylc's filename templating and housekeeping
 utilities can easily do this for you). Then, given availability of 
-any external inputs, you can easily rerun the task for any cycle still
+external inputs, you can easily rerun the task for any cycle still
 in the restart archive.
 
 \subsection{Limit Previous-Instance Dependence} 
@@ -4937,9 +4959,9 @@ file rather than hard wiring it into the task implementations.
 \item {\bf Add Connector Tasks To The Suite} 
 
 Tasks can be added to a suite to move files from A's output directory to
-B's input directory, and so on.  These connector tasks may all be able
-to call the same file transfer script or command, with differing input
-parameters defined in the suite.rc file. 
+B's input directory, and so on.  Many connector tasks may be able
+to call the same file transfer script or command, with task-dependendent
+input parameters defined in the suite.rc file. 
 
 \item {\bf Dynamic Configuration Of I/O Paths}
 
@@ -4997,10 +5019,10 @@ it has no choice but to depend on. If this rule is followed, your suite
 will be as flexible as possible in terms of being able to run single
 tasks, or subsets of the suite, whilst debugging or developing new
 features.\footnote{The \lstinline=cylc submit= command runs a single
-task exactly as its suite would, in terms of both job submission method and
-execution environment.}  For example, every task should create its own
-output directories if they do not already exist, instead of assuming
-their existence due to the action of some another task; then you will be
+task exactly as its suite would, in terms of both job submission method
+and execution environment.}  For example, every task should create its
+own output directories if they do not already exist, instead of assuming
+their existence due to the action of some other task; then you will be
 able to run single tasks without having to manually create output
 directories first. 
 
@@ -5338,7 +5360,7 @@ restored if needed.}
 %
 %    \item Pyro must be installed on every host used by the suite.
 %         Ideally all relevant machines should have the same version of
-%         Pyro, but you can easily check for Pyro cross-version
+%         Pyro, but you can easily check for Pyro version
 %         compatibility by attempting to run one of the cylc example
 %         system.
 %        

@@ -94,7 +94,6 @@ description = string( default="No description provided" )
         inherit = string( default=None )
         description = string( default="No description provided" )
         initial scripting = string( default=None )
-        dummy task run length = integer( default=10 )
         command scripting = string( default='echo Dummy command scripting; sleep $CYLC_TASK_DUMMY_RUN_LENGTH')
         retry delays = force_list( default=list() )
         pre-command scripting = string( default=None )
@@ -125,6 +124,7 @@ description = string( default="No description provided" )
             execution timeout = float( default=None )
             reset timer = boolean( default=False )
         [[[environment]]]
+            CYLC_TASK_DUMMY_RUN_LENGTH = integer( default=10 )
             __many__ = string
         [[[directives]]]
             __many__ = string
@@ -135,7 +135,6 @@ description = string( default="No description provided" )
         inherit = string( default=root )
         description = string( default=None )
         initial scripting = string( default=None )
-        dummy task run length = integer( default=None )
         command scripting = string( default=None )
         retry delays = force_list( default=list() )
         pre-command scripting = string( default=None )
@@ -167,6 +166,7 @@ description = string( default="No description provided" )
             execution timeout = float( default=None )
             reset timer = boolean( default=False )
         [[[environment]]]
+            CYLC_TASK_DUMMY_RUN_LENGTH = integer( default=None )
             __many__ = string
         [[[directives]]]
             __many__ = string

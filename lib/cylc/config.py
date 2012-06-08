@@ -1534,9 +1534,7 @@ class config( CylcConfigObj ):
          
         taskd.logfiles    = taskconfig[ 'extra log files' ]
 
-        taskd.environment = OrderedDict()
-        taskd.environment['CYLC_TASK_DUMMY_RUN_LENGTH'] = taskconfig['dummy task run length'] 
-        taskd.environment.update( taskconfig[ 'environment' ] )
+        taskd.environment = taskconfig[ 'environment' ]
         self.check_environment( taskd.name, taskd.environment )
 
         taskd.directives  = taskconfig[ 'directives' ]
