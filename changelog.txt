@@ -709,3 +709,10 @@ command scripting. Whilst delayed prior to a retry, tasks go into a new
 environment variable $CYLC_TASK_TRY_NUMBER is incremented (staring from
 one in the original run); use this variable to change behavior per retry.
 
++ A new config item conifiguration item:
+    [runtime][[NAME]]dummy task run length = <integer> (seconds)
+  allows users to change the default dummy task run length. This sets 
+  the value of a new task execution environment variable 
+  $CYLC_TASK_DUMMY_RUN_LENGTH, which is used as an argument to the
+  sleep command in default command scripting. 
+

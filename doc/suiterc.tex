@@ -742,21 +742,29 @@ environment, should normally be used in preference to this item.
 \item {\em example:} \lstinline@initial scripting = ". $HOME/.profile"@
 \end{myitemize}
 
-
 \paragraph[command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ command scripting}
 
-The scripting to execute when the associated task is ready to run. The
-value can be a single command, or a multiline string of scripting, or a
-list of commands or multiline strings. If a list is provided the task
-will automatically resubmit with the second list member if the task
-fails, and then the third if the task fails again, and so on until no
-command scripting list members remain - this is one of the ways you can
-do automated failure recovery in cylc. 
+The scripting to execute when the associated task is ready to run - this
+can be a single command or a multiline string of scripting. 
 
 \begin{myitemize}
-\item {\em type:} (a list of) strings (each )
+\item {\em type:} multiline string
 \item {\em root default:} \lstinline=echo "Default command scripting: sleep 10..."; sleep 10=
 \end{myitemize}
+
+\paragraph[retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ retry delays}
+
+A list of time intervals in minutes after which to resubmit the task if it 
+fails. Before each try the variable \lstinline=$CYLC_TASK_TRY_NUMBER= is
+incremented and passed to the task execution environment; this can be
+used to alter the behaviour at each try.
+
+\begin{myitemize}
+\item {\em type:} multiline string
+\item {\em root default:} \lstinline=echo "Default command scripting: sleep 10..."; sleep 10=
+\end{myitemize}
+
+
 
 \paragraph[pre-command scripting]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ pre-command scripting}
 

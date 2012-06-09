@@ -22,72 +22,9 @@ import subprocess
 from optparse import OptionParser
 from cylc.registration import dbgetter, RegistrationError
 from cylc.conf.CylcGlobals import cylc_tmpdir
-
-try:
-    from jinja2 import Environment, FileSystemLoader, TemplateError
-except ImportError:
-    jinja2_loaded = False
-else:
-    jinja2_loaded = True
-
-done = []
-
-def continuation_lines( inf ):
-    outf = []
-    cline = ''
-    for line in inf:
-        # detect continuation line endings
-        m = re.match( '(.*)\\\$', line )
-        if m:
-            # add line to cline instead of appending to outf.
-            cline += m.groups()[0]
-        else:
-            outf.append( cline + line )
-            # reset cline 
-            cline = ''
-    return outf
-
-def include_files( suitedir, inf, mark=False, single=False, label=False, level=None ):
-    global done
-    outf = []
-
-    if level == None:
-        level = ''
-    else:
-        if mark:
-            level += '!'
-
-    for line in inf:
-        m = re.match( '\s*%include\s+(.*)\s*$', line )
-        if m:
-            match = m.groups()[0]
-            # include statement found
-            # strip off possible quotes: %include "foo.inc"
-            match = match.replace('"','')
-            match = match.replace("'",'')
-            inc = os.path.join( suitedir, match )
-            if inc not in done:
-                if single:
-                    done.append(inc)
-                if os.path.isfile(inc):
-                    print " + inlining", inc
-                    if single or label:
-                        outf.append('++++ START INLINED INCLUDE FILE ' + match + '\n' )
-                    h = open(inc, 'rb')
-                    inc = h.readlines()
-                    h.close()
-                    # recursive inclusion
-                    outf.extend( include_files( suitedir, inc, mark, single, label, level ))
-                    if single or label:
-                        outf.append('---- END INLINED INCLUDE FILE ' + match + '\n' )
-                else:
-                    raise SystemExit( "File not found: " + inc )
-            else:
-                outf.append(level + line)
-        else:
-            # no match
-            outf.append(level + line)
-    return outf
+from cylc.continuation_lines import join
+from cylc.Jinja2Support import Jinja2Process
+from cylc.include_files import inline_for_viewing
 
 parser = OptionParser( """cylc [prep] view [options] SUITE 
 
@@ -192,38 +129,14 @@ if os.path.isfile( suiterc ):
 
     if options.inline or options.process:
         # inline any include files
-        lines = include_files( suitedir, lines, options.mark, options.single, options.label )
-    if options.process:
-        if re.match( '#![Jj]inja2', lines[0] ):
-            # This suite.rc file requires processing with jinja2.
-            if not jinja2_loaded:
-                print >> sys.stderr, 'WARNING: This suite requires processing with the Jinja2 template engine'
-                print >> sys.stderr, 'WARNING: but the Jinja2 modules are not installed in your PYTHONPATH.'
-                print >> sys.stderr, 'WARNING: Continuing without template processing.'
-            else:
-                env = Environment( loader=FileSystemLoader(suitedir) )
-                # load file lines into a template, excluding '#!jinja2' so
-                # that '#!cylc-x.y.z' rises to the top.
-                try:
-                    template = env.from_string( ''.join(lines[1:]) )
-                except TemplateError, x:
-                    print >> sys.stderr, "Jinja2 template error: " + str(x)
-                    sys.exit(1)
+        lines = inline_for_viewing( suitedir, lines, options.mark, options.single, options.label )
 
-                # convert unicode to plain string (needed here?)
-                rendered = str( template.render() )
-                # split back into lines
-                xlines = rendered.split('\n')
-                lines = []
-                for line in xlines:
-                    # remove blank lines left by Jinja2
-                    if re.match( '^\s*$', line ):
-                        continue
-                    # restore newlines to each line
-                    lines.append(line + '\n')
+    if options.process:
+        lines = Jinja2Process( lines, suitedir, False )
+
     if not options.nojoin:
         # join any continuation lines
-        lines = continuation_lines( lines )
+        lines = join( lines )
 else:
     parser.error("File not found: " + suiterc )
 
