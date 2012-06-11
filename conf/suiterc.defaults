@@ -31,7 +31,7 @@ description = "No description provided" # DEFAULT
     [[simulation mode]]
         clock offset = 24  # DEFAULT
         clock rate = 10  # DEFAULT
-        command scripting = "echo SIMULATION MODE $CYLC_TASK_ID; sleep 10; echo BYE"  # DEFAULT
+        command scripting = "echo SIMULATION MODE; sleep $CYLC_TASK_DUMMY_RUN_LENGTH"  # DEFAULT
         retry delays = (none)
         [[[job submission]]]
             method = background  # DEFAULT
@@ -66,7 +66,7 @@ description = "No description provided" # DEFAULT
         description = "No description provided"  # DEFAULT
         initial scripting = None
         pre-command scripting = None
-        command scripting = "echo Default runtime command scripting: sleep 10...; sleep 10" # DEFAULT
+        command scripting = "echo Dummy command scripting; sleep $CYLC_TASK_DUMMY_RUN_LENGTH" # DEFAULT
         retry delays = (none)
         post-command scripting = None
         manual completion = False  # DEFAULT
@@ -94,6 +94,7 @@ description = "No description provided" # DEFAULT
             execution timeout = None
             reset timer = False  # DEFAULT
         [[[environment]]]
+            CYLC_TASK_DUMMY_RUN_LENGTH = 10 # DEFAULT
             # (SUITE AND TASK IDENTITY VARIABLES ARE PROVIDED)
         [[[directives]]]
             # (none)

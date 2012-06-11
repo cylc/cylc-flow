@@ -52,7 +52,7 @@ description = string( default="No description provided" )
     [[simulation mode]]
         clock offset = integer( default=24 )
         clock rate = integer( default=10 )
-        command scripting = string( default="echo SIMULATION MODE $CYLC_TASK_ID; sleep 10; echo BYE")
+        command scripting = string( default="echo SIMULATION MODE; sleep $CYLC_TASK_DUMMY_RUN_LENGTH")
         retry delays = force_list( default=list() )
         [[[event hooks]]]
             enable = boolean( default=False )
@@ -94,7 +94,7 @@ description = string( default="No description provided" )
         inherit = string( default=None )
         description = string( default="No description provided" )
         initial scripting = string( default=None )
-        command scripting = string( default='echo "Default runtime command scripting: sleep 10..."; sleep 10')
+        command scripting = string( default='echo Dummy command scripting; sleep $CYLC_TASK_DUMMY_RUN_LENGTH')
         retry delays = force_list( default=list() )
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
@@ -124,6 +124,7 @@ description = string( default="No description provided" )
             execution timeout = float( default=None )
             reset timer = boolean( default=False )
         [[[environment]]]
+            CYLC_TASK_DUMMY_RUN_LENGTH = integer( default=10 )
             __many__ = string
         [[[directives]]]
             __many__ = string
@@ -165,6 +166,7 @@ description = string( default="No description provided" )
             execution timeout = float( default=None )
             reset timer = boolean( default=False )
         [[[environment]]]
+            CYLC_TASK_DUMMY_RUN_LENGTH = integer( default=None )
             __many__ = string
         [[[directives]]]
             __many__ = string
