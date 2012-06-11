@@ -11,7 +11,7 @@
 ;;   (global-font-lock-mode t)
 ;;______________________________________________________________________________
 
-(defconst cylc-mode-version "0.02")
+(defconst cylc-mode-version "0.1")
 
 (setq cylc-font-lock-keywords
       '(("{%[[:alnum:], _=\\(\\)]*%}" . font-lock-constant-face) 
@@ -38,3 +38,10 @@
 )
 
 (provide 'cylc-mode)
+
+(add-hook 'cylc-mode-hook
+  (lambda ()
+    (font-lock-add-keywords nil
+       '(("\\({%[[:alnum:], _=\\(\\)]*%}\\|{{[[:alnum:] ]*}}\\)" 0
+	  font-lock-constant-face t)))))
+
