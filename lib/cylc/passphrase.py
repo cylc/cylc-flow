@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, re
+import os
 from stat import *
 import random
 import string
@@ -142,38 +142,26 @@ about other suites with the same name."""
 
         if not location:
             raise SecurityError, 'ERROR: suite passphrase not found.'
-        else:
-            # set passphrase file permissions to owner-only
-            os.chmod( location, 0600 )
-            return location
+
+        return location
 
     def generate( self, dir ):
         pfile = os.path.join(dir, 'passphrase')
         if os.path.isfile( pfile ):
-            print "\nThis suite has an existing passphrase.\n"
-            return
+            try:
+                self.get( dir=pfile )
+                return
+            except SecurityError:
+                pass
+        # Note: Perhaps a UUID might be better here?
         char_set = string.ascii_uppercase + string.ascii_lowercase + string.digits
-        self.passphrase = ''.join(random.sample(char_set,20))
+        self.passphrase = ''.join(random.sample(char_set, 20))
         mkdir_p(dir)
         f = open(os.path.join(dir, 'passphrase'), 'w')
         f.write(self.passphrase)
         f.close()
-        print """
-________________________________________________________________________
-A new random passphrase has been generated for this suite:\n   """, pfile, """
-It must be distributed to any other user accounts (local or remote)
-that host this suite's tasks, and similarly to any user accounts from
-which cylc commands will be used to connect to the running suite. 
-
-Cylc's remote task messaging commands will look for the passphrase at 
-$CYLC_SUITE_DEF_PATH/passphrase; if not found there (e.g. if the suite
-definition is not installed on a remote task host) they will look in
-$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE/passphrase; and then in
-$HOME/.cylc/SUITE/passphrase. The latter locations are convenient for
-remote suite control, in which case the suite definition directory will
-not be known; finally, you can specify the location on the commandline.
-------------------------------------------------------------------------
-"""
+        # set passphrase file permissions to owner-only
+        os.chmod( location, 0600 )
 
     def get( self, dir=None ):
         ppfile = self.get_passphrase_file( dir )
@@ -182,8 +170,7 @@ not be known; finally, you can specify the location on the commandline.
         psf.close()
         if len(lines) != 1:
             raise InvalidPassphraseError, 'Passphrase file contains multiple lines: ' + ppfile
-        line0 = lines[0]
         # chomp trailing whitespace and newline
-        self.passphrase = re.sub( '\s*\n', '', line0 )
+        self.passphrase = lines[0].strip()
         return self.passphrase
 
