@@ -98,7 +98,7 @@ Text Treeview suite control interface.
     def toggle_grouping( self, toggle_item ):
         """Toggle grouping by visualisation families."""
         if isinstance( toggle_item, gtk.ToggleToolButton ):
-            group_on = not toggle_item.get_active()
+            group_on = toggle_item.get_active()
             if group_on == self.t.should_group_families:
                 return False
             self.t.should_group_families = group_on
@@ -113,9 +113,9 @@ Text Treeview suite control interface.
             if group_on == self.t.should_group_families:
                 return False
             self.t.should_group_families = group_on
-            if not isinstance( toggle_item, gtk.CheckMenuItem ):
+            if toggle_item != self.group_menu_item:
                 self.group_menu_item.set_active( group_on )
-            self.ungroup_toolbutton.set_active( not group_on )            
+            self.group_toolbutton.set_active( group_on )            
         self.t.update_gui()
         return False
 
@@ -306,7 +306,7 @@ Text Treeview suite control interface.
         autoex_item.connect( 'activate', self.toggle_autoexpand )
 
         self.group_menu_item = gtk.CheckMenuItem( 'Toggle _Family Grouping' )
-        self.group_menu_item.set_active( True )
+        self.group_menu_item.set_active( self.t.should_group_families )
         items.append( self.group_menu_item )
         self.group_menu_item.connect( 'toggled', self.toggle_grouping )
         return items
@@ -345,13 +345,14 @@ Text Treeview suite control interface.
         tooltip.set_tip(filter_toolitem, "Filter tasks by name")
         items.append(filter_toolitem)
 
-        self.ungroup_toolbutton = gtk.ToggleToolButton()
+        self.group_toolbutton = gtk.ToggleToolButton()
+        self.group_toolbutton.set_active( self.t.should_group_families )
         root_img_dir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
-        g_image = gtk.image_new_from_file( root_img_dir + '/ungroup.png' )
-        self.ungroup_toolbutton.set_icon_widget( g_image )
-        self.ungroup_toolbutton.connect( 'toggled', self.toggle_grouping )
-        self._set_tooltip( self.ungroup_toolbutton, "Ungroup families" )
-        items.append( self.ungroup_toolbutton )
+        g_image = gtk.image_new_from_file( root_img_dir + '/group.png' )
+        self.group_toolbutton.set_icon_widget( g_image )
+        self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
+        self._set_tooltip( self.group_toolbutton, "Group families" )
+        items.append( self.group_toolbutton )
 
         return items
 

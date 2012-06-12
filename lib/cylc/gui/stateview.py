@@ -105,7 +105,7 @@ class tupdater(threading.Thread):
         self.dt = "state last updated at:\nwaiting..."
         self.block = "access:\nwaiting ..."
 
-        self.should_group_families = True
+        self.should_group_families = False
         self.ttreeview = ttreeview
         # Hierarchy of models: view <- sorted <- filtered <- base model
         self.ttreestore = ttreeview.get_model().get_model().get_model()
@@ -128,7 +128,7 @@ class tupdater(threading.Thread):
             self.status = "status:\nconnected"
             self.info_bar.set_status( self.status )
             self.family_hierarchy = self.remote.get_family_hierarchy()
-            self.allowed_families = self.remote.get_closed_families()
+            self.allowed_families = self.remote.get_vis_families()
             return True
 
     def connection_lost( self ):
@@ -299,31 +299,33 @@ class tupdater(threading.Thread):
             piter = self.ttreestore.append(None, [ ctime, ctime ] + [ None ] * 6)
             family_iters = {}
             name_iters = {}
+            task_named_paths = []
             for name in new_data[ ctime ].keys():
-                families = [f for f in self.family_hierarchy[name] if f in self.allowed_families]
+                # The following line should filter by allowed families.
+                families = [f for f in self.family_hierarchy[name]]
                 families.sort(lambda x, y: (y in self.family_hierarchy[x]) -
                                            (x in self.family_hierarchy[y]))
                 if "root" in families:
                     families.remove("root")
+                if name in families:
+                    families.remove(name)
                 if not self.should_group_families:
                     families = []
+                task_path = families + [name]
+                task_named_paths.append(task_path)
+            task_named_paths.sort()
+            for named_path in task_named_paths:
+                name = named_path[-1]
                 f_iter = piter
-                for i, fam in enumerate(families):
+                for i, fam in enumerate(named_path[:-1]):
                     if fam in family_iters:
                         f_iter = family_iters[fam]
                     else:
                         f_iter = self.ttreestore.append(
                                       f_iter, [ ctime, fam ] + [ None ] * 6 )
                         family_iters[fam] = f_iter
-                name_iters[name] = f_iter
-            names = new_data[ ctime ].keys()
-            names.sort()
-            for name in names:
-                #print "  adding", name, "to", ctime
-                niter = name_iters[name]
-                parent_name = self.ttreestore.get_value( niter, 1 )
-                riter = self.ttreestore.append( niter, [ ctime, name ] + new_data[ctime][name])
-                rpath = self.ttreestore.get_path(riter)
+                parent_name = self.ttreestore.get_value( f_iter, 1 )
+                self.ttreestore.append( f_iter, [ ctime, name ] + new_data[ctime][name])
                 state = new_data[ ctime ][ name ][0]
                 st = re.sub('<[^>]+>', '', state ) # remove tags
                 if self.autoexpand and st in [ 'submitted', 'running', 'failed', 'held' ]:
