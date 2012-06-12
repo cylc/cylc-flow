@@ -157,11 +157,11 @@ about other suites with the same name."""
         char_set = string.ascii_uppercase + string.ascii_lowercase + string.digits
         self.passphrase = ''.join(random.sample(char_set, 20))
         mkdir_p(dir)
-        f = open(os.path.join(dir, 'passphrase'), 'w')
+        f = open(pfile, 'w')
         f.write(self.passphrase)
         f.close()
         # set passphrase file permissions to owner-only
-        os.chmod( location, 0600 )
+        os.chmod( pfile, 0600 )
 
     def get( self, dir=None ):
         ppfile = self.get_passphrase_file( dir )
