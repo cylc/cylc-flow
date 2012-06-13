@@ -11,3 +11,4 @@ doc/suiterc.spec.tex
 *.swp
 *.dot
 CDB
+.DS_Store
