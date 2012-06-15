@@ -1,50 +1,140 @@
-#!/bin/bash
+#!/usr/bin/env python
+#_______________________________________________________________________________
+#
+#  Luis Kornblueh, MPIM, 2012-06-14
+#
+#  As python must be available anyway, but 'mail' eventually not anymore, this
+#  pure python varant has been implemented, replacing the previous provided 
+#  shell script. Same user interface, same functionality. 
+#_______________________________________________________________________________
+#
+#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import sys, os, pwd, smtplib, socket
+from optparse import OptionParser
+from email.MIMEText import MIMEText
+from email.utils import formataddr
+from email.utils import make_msgid
+from email.utils import formatdate
+
+import os
+import pwd
+
+#_______________________________________________________________________________
+# determine current user, host and domain in the most reliable way 
+
+def get_userid():
+    return pwd.getpwuid( os.getuid() )[ 0 ]
+
+def get_username():
+    return pwd.getpwuid( os.getuid() )[ 4 ]
+
+def get_hostname():
+    return (socket.gethostbyaddr(socket.gethostname())[0]).split('.')[0]
+
+def get_domainname():
+    # for some countries like Austria, New Zealand, Great Britain, and others
+    slds = [ 'ac', 'co', 'gov', 'govt', 'gv', 'net', 'or', 'org', 'sch', 'school']
+    fqdn = (socket.gethostbyaddr(socket.gethostname())[0]).split('.')
+    if fqdn[-2] in map(str, slds):
+        domainname = fqdn[-3] + '.' + fqdn[-2] + '.' + fqdn[-1]
+    else:
+        domainname = fqdn[-2] + '.' + fqdn[-1]        
+    return domainname
+
+#_______________________________________________________________________________
+# usage and argument processing
+
+usage = """Usage: cylc [hook] email-task EVENT SUITE TASKID MESSAGE
+
+This is a simple task event hook handler script that sends an email.
+The command line arguments are supplied automatically by cylc.
+
+For example, to get an email alert whenever any task fails:
+
+# SUITE.RC
+[cylc]
+   [[environment]]
+      MAIL_ADDRESS = foo@bar.baz.waz
+[runtime]
+   [[root]]
+      [[[event hooks]]]
+         events = failed
+         script = cylc email-task
+
+See the Suite.rc Reference (Cylc User Guide) for more information
+on suite and task event hooks and event handler scripts."""
+
+parser = OptionParser( usage )
+
+(options, args) = parser.parse_args()
+
+if len(args) != 4:
+    print usage
+    sys.exit(1)
+    
+event   = args[0]  # e.g. "failed"
+suite   = args[1]  # registered name of the suite
+taskid  = args[2]  # name of the task 
+message = args[3]
+
+#_______________________________________________________________________________
+# Setting up the required information.
+
+try:
+    mail_to = os.environ['MAIL_ADDRESS']
+except KeyError:
+    print 'Please set the MAIL_ADDRESS in suite.rc of %s' % suite
+    sys.exit(1)
+
+mail_from = get_userid() + '@' + get_domainname()
+
+mail_body = 'SUITE: %s\nTASK: %s\nMESSAGE: %s\n' % (suite, taskid, message)
+
+mail_message = MIMEText(mail_body)
+mail_message['From']    = formataddr((get_username(), mail_from))
+mail_message['To']      = formataddr(('CYLC Operator', mail_to))
+mail_message['Subject'] = '!!cylc alert!! suite %s task %s %s' % ( suite, taskid, event)
+mail_message['Date'] = formatdate(localtime=True)
+mail_message['Message-Id'] = make_msgid()
+#_______________________________________________________________________________
+
+print 'cylc hook email-task: Sending email to %s' % mail_to
+
+# ZMAW world wide, just as an example configuration
+
+#zmaw_user = 'luis.kornblueh'
+#zmaw_passwd = 'very secret password'
+#smtpserver = smtplib.SMTP_SSL('smtp.zmaw.de',465)
+#smtpserver.login(zmaw_user, zmaw_passwd)
+#smtpserver.sendmail(mail_from, [mail_to], mail_message.as_string())
+#smtpserver.close()
+
+# ZMAW inside 
+
+smtpserver = smtplib.SMTP('smtp.zmaw.de', 25)
+smtpserver.sendmail(mail_from, [mail_to], mail_message.as_string())
+smtpserver.close()
+
+# DKRZ inside blizzard
+
+#smtpserver = smtplib.SMTP('mailhost.dkrz.de', 25)
+#smtpserver.sendmail(mail_from, [mail_to], mail_message.as_string())
+#smtpserver.close()
 
 
-usage() {
-    echo "USAGE: cylc [hook] email-task EVENT SUITE TASKID MESSAGE"
-    echo ""
-    echo "This is a simple task event hook handler script that sends an email."
-    echo "The command line arguments are supplied automatically by cylc."
-    echo ""
-    echo "For example, to get an email alert whenever any task fails:"
-    echo ""
-    echo "# SUITE.RC"
-    echo "[cylc]"
-    echo "   [[environment]]"
-    echo "      MAIL_ADDRESS = foo@bar.baz.waz"
-    echo "[runtime]"
-    echo "   [[root]]"
-    echo "      [[[event hooks]]]"
-    echo "         events = failed"
-    echo "         script = cylc email-task"
-    echo ""
-    echo "See the Suite.rc Reference (Cylc User Guide) for more information"
-    echo "on suite and task event hooks and event handler scripts."
-}
-
-if [[ $# = 1 ]]; then
-    if [[ $1 = '--help' ]]; then
-        usage
-        exit 0
-    fi
-fi
-
-if [[ $# < 4 ]]; then
-    usage
-    exit 1
-fi
-
-EVENT=$1      # e.g. "failed"
-SUITE=$2      # registered name of the suite
-TASKID=$3     # name of the task 
-MESSAGE="$4"  # quotes required (message contains spaces)
-
-MAIL_SUBJECT="!!cylc alert!! suite $SUITE task $TASKID $EVENT" 
-MAIL_ADDRESS=${MAIL_ADDRESS:-$USER@$HOSTNAME}
-MAIL_BODY="SUITE: $SUITE
-TASK: $TASKID
-MESSAGE: $MESSAGE"
-
-echo "cylc hook email-task: Sending email to $MAIL_ADDRESS"
-echo "$MAIL_BODY" | mail -s "$MAIL_SUBJECT" $MAIL_ADDRESS
+#_______________________________________________________________________________
