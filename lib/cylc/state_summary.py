@@ -38,10 +38,48 @@ class state_summary( Pyro.core.ObjBase ):
             paused, will_pause_at, stopping, will_stop_at, blocked ):
         self.task_summary = {}
         self.global_summary = {}
+        self.family_summary = {}
+        task_states = {}
 
         for task in tasks:
             self.task_summary[ task.id ] = task.get_state_summary()
+            name, ctime = task.id.split( '%' )
+            task_states.setdefault(ctime, {})
+            task_states[ctime][name] = self.task_summary [ task.id ][ 'state' ]
 
+        tree = self.config.family_tree
+        fam_states = {}
+        for ctime in task_states.keys():
+            # For each time, construct a family state tree
+            fam_states.setdefault(ctime, {})
+            stack = tree.keys()
+            c_fam_states = fam_states[ctime]
+            c_task_states = task_states[ctime]
+            while len(stack) > 0:
+                node = stack.pop()
+                if [node in c_task_states or
+                    node in c_fam_states]:
+                    continue
+                can_get_state = True
+                child_states = []
+                for child in tree[node]:
+                    if child in c_task_states:
+                        child_states.append(c_task_states[child])
+                    elif child in c_fam_states:
+                        child_states.append(c_fam_states[child])
+                    else:
+                        stack.append(child)
+                        can_get_state = False
+                if child_states and can_get_state:
+                    node_id = ctime + "%" + node
+                    state = self.extract_group_state(child_states)
+                    self.family_summary[node_id] = { 'name': node,
+                                                     'label': ctime,
+                                                     'state':  state }
+                    c_fam_states[node] = state
+                else:
+                    stack.append(node)
+                         
         self.global_summary[ 'start time' ] = self.start_time
         self.global_summary[ 'oldest cycle time' ] = oldest
         self.global_summary[ 'newest cycle time' ] = newest
@@ -59,4 +97,25 @@ class state_summary( Pyro.core.ObjBase ):
         #self.get_summary()
 
     def get_state_summary( self ):
-        return [ self.global_summary, self.task_summary ]
+        return [ self.global_summary, self.task_summary, self.family_summary ]
+
+    def extract_group_state( self, child_states ):
+        """Summarise child states as a group."""
+        if 'failed' in child_states:
+            return 'failed'
+        elif 'held' in child_states:
+            return 'held'
+        elif 'running' in child_states:
+            return 'running'
+        elif 'submitted' in child_states:
+            return 'submitted'
+        elif 'retry_delayed' in child_states:
+            return 'retry_delayed'
+        elif 'queued' in child_states:
+            return 'queued'
+        elif 'waiting' in child_states:
+            return 'waiting'
+        elif 'runahead' in child_states:
+            return 'runahead'
+        else:  # (all are succeeded)
+            return 'succeeded'

@@ -717,7 +717,7 @@ The cylc forecast suite metascheduler.
 
     def view_task_info( self, w, task_id, jsonly ):
         try:
-            [ glbl, states ] = self.get_pyro( 'state_summary').get_state_summary()
+            [ glbl, states, fam_states ] = self.get_pyro( 'state_summary').get_state_summary()
         except SuiteIdentificationError, x:
             warning_dialog( str(x) ).warn()
             return

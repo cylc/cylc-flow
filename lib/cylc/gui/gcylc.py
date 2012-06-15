@@ -1734,7 +1734,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             except SuiteIdentificationError, x:
                 warning_dialog( str(x) ).warn()
                 return False
-            [ glbl, states] = ssproxy.get_state_summary()
+            [ glbl, states, fam_states ] = ssproxy.get_state_summary()
             if glbl['started by gcylc']:
                 started_by_gcylc = True
                 #info_dialog( "This suite is running already. It was started by "
@@ -1843,7 +1843,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             except SuiteIdentificationError, x:
                 warning_dialog( str(x) ).warn()
                 return False
-            [ glbl, states] = ssproxy.get_state_summary()
+            [ glbl, states, fam_states ] = ssproxy.get_state_summary()
             if glbl['started by gcylc']:
                 started_by_gcylc = True
                 # suite is running already, started by gcylc, which

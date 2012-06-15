@@ -142,7 +142,7 @@ class xupdater(threading.Thread):
     def update(self):
         #print "Updating"
         try:
-            [glbl, states_full] = self.god.get_state_summary()
+            [glbl, states_full, fam_states_full] = self.god.get_state_summary()
         except:
             gobject.idle_add( self.connection_lost )
             return False
@@ -163,6 +163,13 @@ class xupdater(threading.Thread):
             states[id]['label'] = states_full[id]['label']
             states[id]['state'] = states_full[id]['state']
 
+        for id in fam_states_full:
+            if id not in states:
+                states[id] = {}
+            states[id]['name' ] = fam_states_full[id]['name' ]
+            states[id]['label'] = fam_states_full[id]['label']
+            states[id]['state'] = fam_states_full[id]['state'] 
+            print fam_states_full[id]
         # always update global info
         self.global_summary = glbl
 
