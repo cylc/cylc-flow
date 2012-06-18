@@ -41,6 +41,8 @@ Dependency graph suite control interface.
 
         self.xdot = xdot_widgets()
         self.xdot.widget.connect( 'clicked', self.on_url_clicked )
+        self.xdot.widget.drag_action.on_motion_notify = self.on_motion_notify
+        self.last_url = None
 
     def get_control_widgets( self ):
         self.x = xupdater( self.cfg, self.info_bar, self.xdot )
@@ -94,6 +96,44 @@ Dependency graph suite control interface.
         # URL is task ID
         #print 'LIVE TASK'
         self.right_click_menu( event, url, type='live task' )
+
+    def on_motion_notify( self, event ):
+        """Add a new tooltip when the cursor moves in the graph."""
+        url = self.xdot.widget.get_url( event.x, event.y )
+        if url == self.last_url:
+            return False
+        self.last_url = url
+        if url is None:
+            self.xdot.widget.set_tooltip_text(None)
+            return False
+        url = unicode(url.url)
+        if url == 'KEY':
+            # graph key node
+            return False
+
+        m = re.match( 'SUBTREE:(.*)', url )
+        if m:
+            #print 'SUBTREE'
+            task_id = m.groups()[0]
+            self.xdot.widget.set_tooltip_text(self.x.get_summary(task_id))
+            return False
+
+        m = re.match( 'base:(.*)', url )
+        if m:
+            #print 'BASE GRAPH'
+            task_id = m.groups()[0]
+            #warning_dialog( 
+            #        task_id + "\n"
+            #        "This task is part of the base graph, taken from the\n"
+            #        "suite config file (suite.rc) dependencies section, \n" 
+            #        "but it does not currently exist in the running suite." ).warn()
+            self.xdot.widget.set_tooltip_text(self.x.get_summary(task_id))
+            return False
+
+        # URL is task ID
+        #print 'LIVE TASK'
+        self.xdot.widget.set_tooltip_text(self.x.get_summary(url))
+        return False
 
     def stop(self):
         self.x.quit = True

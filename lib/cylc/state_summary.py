@@ -18,6 +18,7 @@
 
 import Pyro.core
 import logging
+import os
 
 class state_summary( Pyro.core.ObjBase ):
     """supply suite state summary information to remote cylc clients."""
@@ -52,34 +53,45 @@ class state_summary( Pyro.core.ObjBase ):
         for ctime in task_states.keys():
             # For each time, construct a family state tree
             fam_states.setdefault(ctime, {})
-            stack = tree.keys()
+            stack = []
+            for key in tree:
+                stack.append([key, tree[key]])
             c_fam_states = fam_states[ctime]
             c_task_states = task_states[ctime]
+            nodes_redone = []
+            i = 0
             while len(stack) > 0:
-                node = stack.pop()
-                if [node in c_task_states or
-                    node in c_fam_states]:
+                i = i + 1
+                node, subtree = stack.pop(0)
+                if (node in c_task_states or node in c_fam_states):
                     continue
-                can_get_state = True
+                is_first_attempt = node not in nodes_redone
+                can_calc_state = True
+                could_get_later = True
                 child_states = []
-                for child in tree[node]:
+                for child, grandchild_dict in subtree.items():
                     if child in c_task_states:
                         child_states.append(c_task_states[child])
                     elif child in c_fam_states:
                         child_states.append(c_fam_states[child])
                     else:
-                        stack.append(child)
-                        can_get_state = False
-                if child_states and can_get_state:
-                    node_id = ctime + "%" + node
+                        if isinstance(grandchild_dict, dict) and is_first_attempt:
+                            stack.insert(0, [child, subtree[child]])
+                        else:
+                            # Parent state can not be calculated
+                            could_get_later = False
+                        can_calc_state = False
+                if child_states and can_calc_state:
+                    node_id = node + "%" + ctime
                     state = self.extract_group_state(child_states)
                     self.family_summary[node_id] = { 'name': node,
                                                      'label': ctime,
-                                                     'state':  state }
+                                                     'state': state }
                     c_fam_states[node] = state
-                else:
-                    stack.append(node)
-                         
+                elif could_get_later and is_first_attempt:
+                    stack.append([node, subtree])
+                    nodes_redone.append(node)
+        
         self.global_summary[ 'start time' ] = self.start_time
         self.global_summary[ 'oldest cycle time' ] = oldest
         self.global_summary[ 'newest cycle time' ] = newest
