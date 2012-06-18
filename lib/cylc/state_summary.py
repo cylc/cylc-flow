@@ -44,51 +44,60 @@ class state_summary( Pyro.core.ObjBase ):
 
         for task in tasks:
             self.task_summary[ task.id ] = task.get_state_summary()
-            name, ctime = task.id.split( '%' )
+            name, ctime = task.id.split('%')
             task_states.setdefault(ctime, {})
-            task_states[ctime][name] = self.task_summary [ task.id ][ 'state' ]
+            task_states[ctime][name] = self.task_summary[task.id]['state']
 
         tree = self.config.family_tree
         fam_states = {}
-        for ctime in task_states.keys():
+        for ctime, c_task_states in task_states.items():
             # For each time, construct a family state tree
             fam_states.setdefault(ctime, {})
+            c_fam_states = fam_states[ctime]
+            nodes_redone = []
+            # A stack item contains a task/family name and their child dict.
             stack = []
+            # Initialise the stack with the top names and children (just root)
             for key in tree:
                 stack.append([key, tree[key]])
-            c_fam_states = fam_states[ctime]
-            c_task_states = task_states[ctime]
-            nodes_redone = []
-            i = 0
-            while len(stack) > 0:
-                i = i + 1
+            # Begin depth-first tree search, building states as we go.
+            while stack:
                 node, subtree = stack.pop(0)
                 if (node in c_task_states or node in c_fam_states):
+                    # node and children don't need any state calculation.
                     continue
                 is_first_attempt = node not in nodes_redone
                 can_calc_state = True
                 could_get_later = True
                 child_states = []
                 for child, grandchild_dict in subtree.items():
+                    # Iterate through child task names and info.
                     if child in c_task_states:
                         child_states.append(c_task_states[child])
                     elif child in c_fam_states:
                         child_states.append(c_fam_states[child])
                     else:
-                        if isinstance(grandchild_dict, dict) and is_first_attempt:
+                        # No state for this child
+                        can_calc_state = False
+                        if (isinstance(grandchild_dict, dict) and
+                            is_first_attempt):
+                            # Child is a family, so calculate its state next.
+                            # Dive down tree.
                             stack.insert(0, [child, subtree[child]])
                         else:
-                            # Parent state can not be calculated
+                            # Child is a task with no state.
+                            # Discard this node.
                             could_get_later = False
-                        can_calc_state = False
                 if child_states and can_calc_state:
+                    # Calculate the node state.
                     node_id = node + "%" + ctime
                     state = self.extract_group_state(child_states)
-                    self.family_summary[node_id] = { 'name': node,
-                                                     'label': ctime,
-                                                     'state': state }
+                    self.family_summary[node_id] = {'name': node,
+                                                    'label': ctime,
+                                                    'state': state}
                     c_fam_states[node] = state
                 elif could_get_later and is_first_attempt:
+                    # Put this off until later (when the children are done).
                     stack.append([node, subtree])
                     nodes_redone.append(node)
         

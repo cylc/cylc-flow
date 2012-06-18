@@ -41,7 +41,9 @@ Dependency graph suite control interface.
 
         self.xdot = xdot_widgets()
         self.xdot.widget.connect( 'clicked', self.on_url_clicked )
-        self.xdot.widget.drag_action.on_motion_notify = self.on_motion_notify
+        self.xdot.widget.handler_block_by_func(self.xdot.widget.on_area_motion_notify)
+        self.xdot.widget.connect('motion-notify-event', self.on_motion_notify)
+        print self.xdot.widget.drag_action
         self.last_url = None
 
     def get_control_widgets( self ):
@@ -68,6 +70,7 @@ Dependency graph suite control interface.
         self.x.action_required = True
  
     def on_url_clicked( self, widget, url, event ):
+        self.xdot.widget.drag_action.on_motion_notify = self.on_motion_notify
         if event.button != 3:
             return False
         if url == 'KEY':
@@ -97,7 +100,7 @@ Dependency graph suite control interface.
         #print 'LIVE TASK'
         self.right_click_menu( event, url, type='live task' )
 
-    def on_motion_notify( self, event ):
+    def on_motion_notify( self, widget, event ):
         """Add a new tooltip when the cursor moves in the graph."""
         url = self.xdot.widget.get_url( event.x, event.y )
         if url == self.last_url:
