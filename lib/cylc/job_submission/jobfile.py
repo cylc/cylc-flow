@@ -206,7 +206,7 @@ cd $CYLC_TASK_WORK_PATH""" % data )
                 head, tail = "", value
                 match = re.match("^(~[^/]*)(.*)$", value)
                 if match:
-                    head, tail = match.groups
+                    head, tail = match.groups()
                 self.FILE.write( '\n%s=%s"%s"' % ( var, head, tail ) )
             # export them all (see note below)
             self.FILE.write( "\nexport" )
