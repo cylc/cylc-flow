@@ -1441,7 +1441,7 @@ class config( CylcConfigObj ):
         if self.simulation_mode:
             taskd.job_submit_method = self['cylc']['simulation mode']['job submission']['method']
             taskd.command = self['cylc']['simulation mode']['command scripting']
-            taskd.retry_delays = self['cylc']['simulation mode']['retry delays']
+            taskd.retry_delays = deque( self['cylc']['simulation mode']['retry delays'] )
         else:
             taskd.owner = taskconfig['remote']['owner']
             taskd.job_submit_method = taskconfig['job submission']['method']
