@@ -203,9 +203,11 @@ cd $CYLC_TASK_WORK_PATH""" % data )
             self.FILE.write( "\n\n# ENVIRONMENT:" )
             for var in self.task_env:
                 value = str( self.task_env[var] )
-                for old, new in [('"', '\\"'), ("'", "\\'"), (" ", "\\ ")]:
-                    value = value.replace(old, new)
-                self.FILE.write( "\n%s=%s" % ( var, value ) )
+                head, tail = "", value
+                match = re.match("^(~[^/]*)(.*)$", value)
+                if match:
+                    head, tail = match.groups
+                self.FILE.write( '\n%s=%s"%s"' % ( var, head, tail ) )
             # export them all (see note below)
             self.FILE.write( "\nexport" )
             for var in self.task_env:
