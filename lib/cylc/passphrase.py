@@ -168,7 +168,9 @@ about other suites with the same name."""
         psf = open( ppfile, 'r' )
         lines = psf.readlines()
         psf.close()
-        if len(lines) != 1:
+        if len(lines) == 0:
+            raise InvalidPassphraseError, 'Passphrase file is empty: ' + ppfile
+        if len(lines) > 1:
             raise InvalidPassphraseError, 'Passphrase file contains multiple lines: ' + ppfile
         # chomp trailing whitespace and newline
         self.passphrase = lines[0].strip()

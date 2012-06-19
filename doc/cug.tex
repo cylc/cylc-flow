@@ -1143,7 +1143,7 @@ Finally, when the suite is {\em cold-started} (started from scratch) it
 is made to wait on a special {\em synchronous start-up task} called
 Prep. Start-up tasks are one-off (non-spawning) tasks that are only used
 at suite start-up, and any dependence on them only applies at suite
-start-up. Hey cannot be used in conditional trigger expressions with 
+start-up. They cannot be used in conditional trigger expressions with 
 normal cycling tasks, because the trigger becomes undefined in
 subsequent cycles. Start-up tasks are {\em synchronous} because they
 have a defined cycle time even though they are not cycling tasks. Cylc
@@ -4631,7 +4631,7 @@ Finally, you may see references to the following pseudo states:
 \subsection{Remote Control And Secure Passphrases}
 
 Use of secure passphrases is now compulsory (a random passphrase is
-generated automatically when a suite is registered, if one does not
+generated automatically when a suite is registered if one does not
 already exist in the suite definition directory). This means cylc can
 allow control of suites from remote hosts and other user accounts.
 The suite passphrase must be installed in any account that requires
