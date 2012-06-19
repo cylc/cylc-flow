@@ -76,7 +76,10 @@ class jobfile(object):
         self.write_cylc_access()
         self.write_err_trap()
         self.write_task_started()
-        if not self.simulation_mode:
+        if self.simulation_mode:
+            key = "CYLC_TASK_DUMMY_RUN_LENGTH"
+            self.FILE.write( "\n%s=%s" % ( key, self.task_env[key] ) )
+        else:
             self.write_work_directory_create()
             self.write_environment_2()
             self.write_manual_environment()
