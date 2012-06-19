@@ -202,12 +202,28 @@ cd $CYLC_TASK_WORK_PATH""" % data )
         if len( self.task_env.keys()) > 0:
             self.FILE.write( "\n\n# ENVIRONMENT:" )
             for var in self.task_env:
+                # Write each variable assignment expression, with
+                # values quoted to handle spaces.
                 value = str( self.task_env[var] )
-                head, tail = "", value
-                match = re.match("^(~[^/]*)(.*)$", value)
+                # But first check for an initial tilde as shell tilde
+                # expansion is broken by quoting.
+                match = re.match("^(~[^/\s]*/)(.*)$", value)
                 if match:
+                    # ~foo/bar or ~/bar
+                    # write as ~foo/"bar" or ~/"bar"
                     head, tail = match.groups()
-                self.FILE.write( '\n%s=%s"%s"' % ( var, head, tail ) )
+                    self.FILE.write( '\n%s=%s"%s"' % ( var, head, tail ) )
+                elif re.match("^~[^\s]*$", value):
+                    # plain ~foo or just ~
+                    # just leave unquoted as subsequent spaces don't
+                    # make sense in this case anyway
+                    self.FILE.write( '\n%s=%s' % ( var, value ) )
+                else:
+                    # Non tilde values - quote the lot.
+                    # This gets values like "~one ~two" too, but these
+                    # (in variable values) aren't expanded by the shell
+                    # anyway so it doesn't matter.
+                    self.FILE.write( '\n%s="%s"' % ( var, value ) )
             # export them all (see note below)
             self.FILE.write( "\nexport" )
             for var in self.task_env:
@@ -219,6 +235,14 @@ cd $CYLC_TASK_WORK_PATH""" % data )
             # 'echo' command name):
             # export FOO=$( ecko foo )  # error not trapped!
             # FOO=$( ecko foo )  # error trapped
+
+            # NOTE ON TILDE EXPANSION:
+            # The code above handles the following correctly:
+            #| ~foo/bar
+            #| ~/bar
+            #| ~/filename with spaces
+            #| ~foo
+            #| ~
 
     def write_manual_environment( self ):
         if self.manual_messaging:
