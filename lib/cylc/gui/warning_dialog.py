@@ -25,8 +25,6 @@ class warning_dialog(object):
         self.dialog = gtk.MessageDialog( parent,
                 gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING,
                 gtk.BUTTONS_CLOSE, msg )
-     #   if parent is not None:
-     #       self.dialog.set_icon(parent.get_icon())
 
     def warn( self ):
         self.dialog.run()
@@ -37,8 +35,6 @@ class info_dialog(object):
         self.dialog = gtk.MessageDialog( parent,
                 gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_INFO,
                 gtk.BUTTONS_OK, msg )
-       # if parent is not None:
-       #     self.dialog.set_icon(parent.get_icon())
 
     def inform( self ):
         self.dialog.run()
@@ -49,8 +45,6 @@ class question_dialog(object):
         self.dialog = gtk.MessageDialog( parent,
                 gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_QUESTION,
                 gtk.BUTTONS_YES_NO, msg )
-     #   if parent is not None:
-     #       self.dialog.set_icon(parent.get_icon())
 
     def ask( self ):
         response = self.dialog.run()
