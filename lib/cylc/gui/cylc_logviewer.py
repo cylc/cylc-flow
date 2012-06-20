@@ -40,11 +40,14 @@ class cylc_logviewer( logviewer ):
 
     def create_gui_panel( self ):
         logviewer.create_gui_panel( self )
-        
-        window = gtk.Window()
-        #window.set_border_width(5)
-        window.set_title( "log viewer" )
-        window.set_size_request(600, 400)
+
+        self.window = gtk.Window()
+        #self.window.set_border_width(5)
+        self.window.set_title( "log viewer" )
+        self.window.set_size_request(600, 400)
+        imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
+        icon_path = os.path.join(imagedir, "icon.png")
+        self.window.set_icon( gtk.gdk.pixbuf_new_from_file( icon_path ) )
  
         combobox = gtk.combo_box_new_text()
         combobox.append_text( 'Task' ) 
@@ -75,13 +78,13 @@ class cylc_logviewer( logviewer ):
         self.hbox.pack_end( filterbox, False )
 
         close = gtk.Button( "_Close" )
-        close.connect("clicked", self.shutdown, None, window )
+        close.connect("clicked", self.shutdown, None, self.window )
         self.hbox.pack_start( close, False )
 
-        window.add( self.vbox )
-        window.connect("delete_event", self.shutdown, window )
+        self.window.add( self.vbox )
+        self.window.connect("delete_event", self.shutdown, self.window )
  
-        window.show_all()
+        self.window.show_all()
 
     def shutdown( self, w, e, wind ):
         self.quit()
@@ -131,16 +134,16 @@ class cylc_logviewer( logviewer ):
         if self.level < 0:
             warning_dialog( """
 At newest rotation; reloading in case 
-the suite has been restarted.""" ).warn()
+the suite has been restarted.""", self.window ).warn()
             self.level = 0
             # but update view in case user started suite after gui
         if self.current_log() not in os.listdir( self.dir ):
             if go_older:
-                warning_dialog( "Older log not available" ).warn()
+                warning_dialog( "Older log not available", self.window ).warn()
                 self.level -= 1
                 return
             else:
-                warning_dialog( "Newer log not available" ).warn()
+                warning_dialog( "Newer log not available", self.window ).warn()
                 self.level += 1
                 return
         else:

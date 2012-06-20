@@ -28,6 +28,10 @@ class helpwindow_base( object ):
         self.window.set_title( title )
 
         self.window.set_size_request(600, int(height))
+        
+        imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
+        icon_path = os.path.join( imagedir, "icon.png" )
+        self.window.set_icon( gtk.gdk.pixbuf_new_from_file( icon_path ) )
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
@@ -375,6 +379,9 @@ def userguide( w, graph=False ):
     window = gtk.Window()
     window.set_title( "Cylc Suite Control Quick Guide" )
     window.set_size_request(600, 600)
+    imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
+    icon_path = os.path.join( imagedir, "icon.png" )
+    window.set_icon( gtk.gdk.pixbuf_new_from_file( icon_path ) )
 
     sw = gtk.ScrolledWindow()
     sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )

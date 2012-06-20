@@ -57,6 +57,10 @@ class MyDotWindow2( xdot.DotWindow ):
 
         window.set_title('Suite Runtime Namespace Graph Viewer')
         window.set_default_size(512, 512)
+        imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
+        icon_path = os.path.join( imagedir, "icon.png" )
+        window.set_icon( gtk.gdk.pixbuf_new_from_file( icon_path ) )
+
         vbox = gtk.VBox()
         window.add(vbox)
 
@@ -234,6 +238,9 @@ class MyDotWindow( xdot.DotWindow ):
 
         window.set_title('Suite Dependency Graph Viewer')
         window.set_default_size(512, 512)
+        imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
+        icon_path = os.path.join( imagedir, "icon.png" )
+        window.set_icon( gtk.gdk.pixbuf_new_from_file( icon_path ) )
         vbox = gtk.VBox()
         window.add(vbox)
 

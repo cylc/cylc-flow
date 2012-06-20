@@ -208,7 +208,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.log_colors = rotator()
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_title("gcylc <" + self.cfg.suite + ">" )
+        icon_path = os.path.join(self.cfg.imagedir, 'icon.png')
+        self.window.set_title( self.cfg.suite + " - gcylc" )
+        self.window.set_icon(gtk.gdk.pixbuf_new_from_file(icon_path))
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(800, 500)
         self.window.connect("delete_event", self.delete_event)
@@ -491,24 +493,24 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             god = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
             result = god.hold()
         except SuiteIdentificationError, x:
-            warning_dialog( x.__str__() ).warn()
+            warning_dialog( x.__str__(), self.window ).warn()
         else:
             if result.success:
-                info_dialog( result.reason ).inform()
+                info_dialog( result.reason, self.window ).inform()
             else:
-                warning_dialog( result.reason ).warn()
+                warning_dialog( result.reason, self.window ).warn()
 
     def resume_suite( self, bt ):
         try:
             god = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
-            warning_dialog( x.__str__() ).warn()
+            warning_dialog( x.__str__(), self.window ).warn()
             return
         result = god.resume()
         if result.success:
-            info_dialog( result.reason ).inform()
+            info_dialog( result.reason, self.window ).inform()
         else:
-            warning_dialog( result.reason ).warn()
+            warning_dialog( result.reason, self.window ).warn()
 
     def stopsuite_default( self, *args ):
         """Try to stop the suite (after currently running tasks...)."""
@@ -516,12 +518,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             god = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
             result = god.shutdown()
         except SuiteIdentificationError, x:
-            warning_dialog( x.__str__() ).warn()
+            warning_dialog( x.__str__(), self.window ).warn()
         else:
             if result.success:
-                info_dialog( result.reason ).inform()
+                info_dialog( result.reason, self.window ).inform()
             else:
-                warning_dialog( result.reason ).warn()
+                warning_dialog( result.reason, self.window ).warn()
 
     def stopsuite( self, bt, window,
             stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
@@ -539,7 +541,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             stopat = True
             stoptag = stoptag_entry.get_text()
             if stoptag == '':
-                warning_dialog( "ERROR: No stop TAG entered" ).warn()
+                warning_dialog( "ERROR: No stop TAG entered", self.window ).warn()
                 return
             if re.match( '^a:', stoptag ):
                 # async
@@ -548,7 +550,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 try:
                     ct(stoptag)
                 except CycleTimeError,x:
-                    warning_dialog( str(x) ).warn()
+                    warning_dialog( str(x), self.window ).warn()
                     return
 
         elif stopnow_rb.get_active():
@@ -558,7 +560,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             stopclock = True
             stopclock_time = stopclock_entry.get_text()
             if stopclock_time == '':
-                warning_dialog( "ERROR: No stop time entered" ).warn()
+                warning_dialog( "ERROR: No stop time entered", self.window ).warn()
                 return
             try:
                 # YYYY/MM/DD-HH:mm
@@ -567,25 +569,27 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 HH,MM = time.split(':')
                 stop_dtime = datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
             except:
-                warning_dialog( "ERROR: Bad datetime (YYYY/MM/DD-HH:mm): " + stopclock_time ).warn()
+                warning_dialog( "ERROR: Bad datetime (YYYY/MM/DD-HH:mm): " + stopclock_time,
+                                self.window ).warn()
                 return
 
         elif stoptt_rb.get_active():
             stoptask = True
             stoptask_id = stoptask_entry.get_text()
             if stoptask_id == '':
-                warning_dialog( "ERROR: No stop task ID entered" ).warn()
+                warning_dialog( "ERROR: No stop task ID entered", self.window ).warn()
                 return
             try:
                 tid = TaskID( stoptask_id )
             except TaskIDError,x:
-                warning_dialog( "ERROR: Bad task ID (TASK%YYYYMMDDHH): " + stoptask_id ).warn()
+                warning_dialog( "ERROR: Bad task ID (TASK%YYYYMMDDHH): " + stoptask_id,
+                                self.window ).warn()
                 return
             else:
                 stoptask_id = tid.getstr()
         else:
             # SHOULD NOT BE REACHED
-            warning_dialog( "ERROR: Bug in GUI?" ).warn()
+            warning_dialog( "ERROR: Bug in GUI?", self.window ).warn()
             return
 
         window.destroy()
@@ -603,12 +607,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             elif stoptask:
                 result = god.set_stop( stoptask_id, 'stop after task' )
         except SuiteIdentificationError, x:
-            warning_dialog( x.__str__() ).warn()
+            warning_dialog( x.__str__(), self.window ).warn()
         else:
             if result.success:
-                info_dialog( result.reason ).inform()
+                info_dialog( result.reason, self.window ).inform()
             else:
-                warning_dialog( result.reason ).warn()
+                warning_dialog( result.reason, self.window ).warn()
 
     def startsuite( self, bt, window, 
             coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
@@ -640,7 +644,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 try:
                     ct(ctime)
                 except CycleTimeError,x:
-                    warning_dialog( str(x) ).warn()
+                    warning_dialog( str(x), self.window ).warn()
                     return
 
         ste = stoptime_entry.get_text()
@@ -648,7 +652,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             try:
                 ct(ste)
             except CycleTimeError,x:
-                warning_dialog( str(x) ).warn()
+                warning_dialog( str(x), self.window ).warn()
                 return
             options += ' --until=' + ste
  
@@ -668,13 +672,15 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 command += ' ' + statedump_entry.get_text()
 
         # DEBUGGING:
-        #info_dialog( "I'm about to run this command: \n" + command ).inform()
+        #info_dialog( "I'm about to run this command: \n" + command,
+        #             self.window ).inform()
         #return
 
         try:
             subprocess.Popen( [command], shell=True )
         except OSError, e:
-            warning_dialog( 'Error: failed to start ' + self.cfg.suite ).warn()
+            warning_dialog( 'Error: failed to start ' + self.cfg.suite,
+                            self.window ).warn()
             success = False
 
     def unblock_suite( self, bt ):
@@ -682,14 +688,14 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             god = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
             god.unblock()
         except SuiteIdentificationError, x:
-            warning_dialog( 'ERROR: ' + str(x) ).warn()
+            warning_dialog( 'ERROR: ' + str(x), self.window ).warn()
 
     def block_suite( self, bt ):
         try:
             god = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
             god.block()
         except SuiteIdentificationError, x:
-            warning_dialog( 'ERROR: ' + str(x) ).warn()
+            warning_dialog( 'ERROR: ' + str(x), self.window ).warn()
 
     def about( self, bt ):
         about = gtk.AboutDialog()
@@ -706,6 +712,7 @@ The cylc forecast suite metascheduler.
 """ )
         #about.set_website( "http://www.niwa.co.nz" )
         about.set_logo( gtk.gdk.pixbuf_new_from_file( self.imagedir + "/logo.png" ))
+        about.set_icon( self.window.get_icon() )
         about.run()
         about.destroy()
 
@@ -719,14 +726,14 @@ The cylc forecast suite metascheduler.
         try:
             [ glbl, states ] = self.get_pyro( 'state_summary').get_state_summary()
         except SuiteIdentificationError, x:
-            warning_dialog( str(x) ).warn()
+            warning_dialog( str(x), self.window ).warn()
             return
         view = True
         reasons = []
         try:
             logfiles = states[ task_id ][ 'logfiles' ]
         except KeyError:
-            warning_dialog( task_id + ' is no longer live' ).warn()
+            warning_dialog( task_id + ' is no longer live', self.window ).warn()
             return False
 
         if len(logfiles) == 0:
@@ -738,7 +745,7 @@ The cylc forecast suite metascheduler.
             reasons.append( task_id + ' has not started running yet' )
 
         if not view:
-            warning_dialog( '\n'.join( reasons ) ).warn()
+            warning_dialog( '\n'.join( reasons ), self.window ).warn()
         else:
             self.popup_logview( task_id, logfiles, jsonly )
 
@@ -860,6 +867,7 @@ The cylc forecast suite metascheduler.
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( "Change Suite Runahead Limit" )
+        window.set_transient_for( self.window )
         #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
@@ -905,7 +913,7 @@ The cylc forecast suite metascheduler.
             try:
                 int( ent )
             except ValueError:
-                warning_dialog( 'Hours value must be integer!' ).warn()
+                warning_dialog( 'Hours value must be integer!', self.window ).warn()
                 return
             else:
                 limit = ent
@@ -913,13 +921,13 @@ The cylc forecast suite metascheduler.
         try:
             proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
-            warning_dialog( x.__str__() ).warn()
+            warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.set_runahead( limit )
         if result.success:
-            info_dialog( result.reason ).inform()
+            info_dialog( result.reason, self.window ).inform()
         else:
-            warning_dialog( result.reason ).warn()
+            warning_dialog( result.reason, self.window ).warn()
 
     def add_prerequisite_popup( self, b, task_id ):
         window = gtk.Window()
@@ -927,6 +935,7 @@ The cylc forecast suite metascheduler.
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( "Add A Prequisite" )
+        window.set_transient_for( self.window )
         #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
@@ -979,25 +988,26 @@ The cylc forecast suite metascheduler.
         try:
             (name, cycle ) = task_id.split('%')
         except ValueError:
-            warning_dialog( "ERROR, Task or Group ID must be NAME%YYYYMMDDHH").warn()
+            warning_dialog( "ERROR, Task or Group ID must be NAME%YYYYMMDDHH",
+                            self.window ).warn()
             return
         try:
             ct(cycle)
         except CycleTimeError,x:
-            warning_dialog( str(x) ).warn()
+            warning_dialog( str(x), self.window ).warn()
             return
 
         window.destroy()
         try:
             proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
-            warning_dialog( x.__str__() ).warn()
+            warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.add_prerequisite( task_id, msg )
         if result.success:
-            info_dialog( result.reason ).inform()
+            info_dialog( result.reason, self.window ).inform()
         else:
-            warning_dialog( result.reason ).warn()
+            warning_dialog( result.reason, self.window ).warn()
 
     def update_tb( self, tb, line, tags = None ):
         if tags:
@@ -1009,7 +1019,7 @@ The cylc forecast suite metascheduler.
         try:
             result = self.get_pyro( 'remote' ).get_task_requisites( [ task_id ] )
         except SuiteIdentificationError,x:
-            warning_dialog(str(x)).warn()
+            warning_dialog(str(x), self.window).warn()
             return
 
         if result:
@@ -1017,7 +1027,8 @@ The cylc forecast suite metascheduler.
             if task_id not in result:
                 warning_dialog( 
                     "Task proxy " + task_id + " not found in " + self.cfg.suite + \
-                 ".\nTasks are removed once they are no longer needed.").warn()
+                 ".\nTasks are removed once they are no longer needed.",
+                 self.window ).warn()
                 return
 
         window = gtk.Window()
@@ -1025,6 +1036,7 @@ The cylc forecast suite metascheduler.
         #window.modify_bg( gtk.STATE_NORMAL, 
         #       gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_size_request(600, 400)
+        window.set_transient_for( self.window )
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
@@ -1108,7 +1120,9 @@ shown here in the state they were in at the time of triggering.''' )
         else:
             msg = "release " + task_id + "?"
 
-        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+        prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL,
+                                    gtk.MESSAGE_QUESTION,
+                                    gtk.BUTTONS_OK_CANCEL, msg )
 
         prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
         response = prompt.run()
@@ -1128,7 +1142,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             # the suite was probably shut down by another process
-            warning_dialog( x.__str__() ).warn()
+            warning_dialog( x.__str__(), self.window ).warn()
             return
         if stop:
             result = proxy.hold_task( task_id )
@@ -1136,13 +1150,14 @@ shown here in the state they were in at the time of triggering.''' )
             result = proxy.release_task( task_id )
 
         if result.success:
-            info_dialog( result.reason ).inform()
+            info_dialog( result.reason, self.window ).inform()
         else:
-            warning_dialog( result.reason ).warn()
+            warning_dialog( result.reason, self.window ).warn()
 
     def trigger_task_now( self, b, task_id ):
         msg = "trigger " + task_id + " now?"
-        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+        prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL,
+                                    gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
 
         prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
         response = prompt.run()
@@ -1158,17 +1173,19 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             # the suite was probably shut down by another process
-            warning_dialog( x.__str__() ).warn()
+            warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.trigger_task( task_id )
         if result.success:
-            info_dialog( result.reason ).inform()
+            info_dialog( result.reason, self.window ).inform()
         else:
-            warning_dialog( result.reason ).warn()
+            warning_dialog( result.reason, self.window ).warn()
 
     def reset_task_state( self, b, task_id, state ):
         msg = "reset " + task_id + " to " + state +"?"
-        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+        prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL,
+                                    gtk.MESSAGE_QUESTION,
+                                    gtk.BUTTONS_OK_CANCEL, msg )
 
         prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
         response = prompt.run()
@@ -1184,18 +1201,19 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             # the suite was probably shut down by another process
-            warning_dialog( x.__str__() ).warn()
+            warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.reset_task_state( task_id, state )
         if result.success:
-            info_dialog( result.reason ).inform()
+            info_dialog( result.reason, self.window ).inform()
         else:
-            warning_dialog( result.reason ).warn()
+            warning_dialog( result.reason, self.window ).warn()
 
     def kill_task( self, b, task_id ):
         msg = "remove " + task_id + " (after spawning)?"
 
-        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+        prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION,
+                                    gtk.BUTTONS_OK_CANCEL, msg )
 
         prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
         response = prompt.run()
@@ -1210,17 +1228,18 @@ shown here in the state they were in at the time of triggering.''' )
         try:
             proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
-            warning_dialog(str(x)).warn()
+            warning_dialog(str(x), self.window).warn()
             return
         result = proxy.spawn_and_die( task_id )
         if result.success:
-            info_dialog( result.reason ).inform()
+            info_dialog( result.reason, self.window ).inform()
         else:
-            warning_dialog( result.reason ).warn()
+            warning_dialog( result.reason, self.window ).warn()
  
     def kill_task_nospawn( self, b, task_id ):
         msg = "remove " + task_id + " (without spawning)?"
-        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+        prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL,
+                                    gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
 
         prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
         response = prompt.run()
@@ -1235,13 +1254,13 @@ shown here in the state they were in at the time of triggering.''' )
         try:
             proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
-            warning_dialog(str(x)).warn()
+            warning_dialog(str(x), self.window).warn()
             return
         result = proxy.die( task_id )
         if result.success:
-            info_dialog( result.reason ).inform()
+            info_dialog( result.reason, self.window ).inform()
         else:
-            warning_dialog( result.reason ).warn()
+            warning_dialog( result.reason, self.window ).warn()
 
     def purge_cycle_entry( self, e, w, task_id ):
         stop = e.get_text()
@@ -1249,13 +1268,13 @@ shown here in the state they were in at the time of triggering.''' )
         try:
             proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
-            warning_dialog(str(x)).warn()
+            warning_dialog(str(x), self.window).warn()
             return
         result = proxy.purge( task_id, stop )
         if result.success:
-            info_dialog( result.reason ).inform()
+            info_dialog( result.reason, self.window ).inform()
         else:
-            warning_dialog( result.reason ).warn()
+            warning_dialog( result.reason, self.window ).warn()
 
     def purge_cycle_button( self, b, e, w, task_id ):
         stop = e.get_text()
@@ -1263,13 +1282,13 @@ shown here in the state they were in at the time of triggering.''' )
         try:
             proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
-            warning_dialog(str(x)).warn()
+            warning_dialog(str(x), self.window).warn()
             return
         result = proxy.purge( task_id, stop )
         if result.success:
-            info_dialog( result.reason ).inform()
+            info_dialog( result.reason, self.window ).inform()
         else:
-            warning_dialog( result.reason ).warn()
+            warning_dialog( result.reason, self.window ).warn()
 
     def stopsuite_popup( self, b ):
         window = gtk.Window()
@@ -1277,6 +1296,7 @@ shown here in the state they were in at the time of triggering.''' )
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( "Stop Suite")
+        window.set_transient_for( self.window )
 
         vbox = gtk.VBox()
 
@@ -1397,6 +1417,7 @@ shown here in the state they were in at the time of triggering.''' )
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( "Start Suite '" + self.cfg.suite + "'")
+        window.set_transient_for( self.window )
 
         vbox = gtk.VBox()
 
@@ -1506,6 +1527,7 @@ shown here in the state they were in at the time of triggering.''' )
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( "Purge " + task_id )
+        window.set_transient_for( self.window )
         #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
@@ -1547,6 +1569,7 @@ shown here in the state they were in at the time of triggering.''' )
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( title )
+        window.set_transient_for( self.window )
         #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
@@ -1575,6 +1598,7 @@ shown here in the state they were in at the time of triggering.''' )
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( "Insert Task" )
+        window.set_transient_for( self.window )
         #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
@@ -1619,13 +1643,13 @@ shown here in the state they were in at the time of triggering.''' )
     def insert_task( self, w, window, entry_taskorgroup, entry_stoptag ):
         torg = entry_taskorgroup.get_text()
         if torg == '':
-            warning_dialog( "Enter task or group ID" ).warn()
+            warning_dialog( "Enter task or group ID", self.window ).warn()
             return
         else:
             try:
                 tid = TaskID( torg )
             except TaskIDError,x:
-                warning_dialog( str(x) ).warn()
+                warning_dialog( str(x), self.window ).warn()
                 return
             else:
                 torg= tid.getstr()
@@ -1635,7 +1659,7 @@ shown here in the state they were in at the time of triggering.''' )
             try:
                 ct(stoptag)
             except CycleTimeError,x:
-                warning_dialog( str(x) ).warn()
+                warning_dialog( str(x), self.window ).warn()
                 return
         window.destroy()
         if stoptag == '':
@@ -1645,23 +1669,23 @@ shown here in the state they were in at the time of triggering.''' )
         try:
             proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
-            warning_dialog( x.__str__() ).warn()
+            warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.insert( torg, stop )
         if result.success:
-            info_dialog( result.reason ).inform()
+            info_dialog( result.reason, self.window ).inform()
         else:
-            warning_dialog( result.reason ).warn()
+            warning_dialog( result.reason, self.window ).warn()
 
     def nudge_suite( self, w ):
         try:
             proxy = cylc_pyro_client.client( self.cfg.suite ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
-            warning_dialog( str(x) ).warn()
+            warning_dialog( str(x), self.window ).warn()
             return False
         result = proxy.nudge()
         if not result:
-            warning_dialog( 'Failed to nudge the suite' ).warn()
+            warning_dialog( 'Failed to nudge the suite', self.window ).warn()
 
     def popup_logview( self, task_id, logfiles, jsonly ):
         # TO DO: jsonly is dirty hack to separate the task Job script from
@@ -1672,6 +1696,7 @@ shown here in the state they were in at the time of triggering.''' )
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
+        window.set_transient_for( self.window )
         logs = []
         jsfound = False
         for f in logfiles:
@@ -2081,7 +2106,7 @@ shown here in the state they were in at the time of triggering.''' )
                 fail.append( "File not found: " + file )
 
         if len(fail) > 0:
-            warning_dialog( '\n'.join( fail ) ).warn()
+            warning_dialog( '\n'.join( fail ), self.window ).warn()
             return
 
         command = appl + " " + file 
