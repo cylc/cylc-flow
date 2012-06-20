@@ -131,12 +131,14 @@ about other suites with the same name."""
         # check under .cylc/HOST/OWNER/SUITE
         if not location:
             pfile = os.path.join( os.environ['HOME'], '.cylc', self.host, self.owner, self.suite, 'passphrase' )
+            print pfile
             if os.path.isfile( pfile ):
                 location = pfile
 
         # check under .cylc/SUITE
         if not location:
             pfile = os.path.join( os.environ['HOME'], '.cylc', self.suite, 'passphrase' )
+            print pfile
             if os.path.isfile( pfile ):
                 location = pfile
 

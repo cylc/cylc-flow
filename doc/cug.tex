@@ -4640,8 +4640,8 @@ access to the suite - including remote task hosts.
 Cylc's remote task messaging commands look for the passphrase at 
 \lstinline=$CYLC_SUITE_DEF_PATH/passphrase=; if not found there (e.g. if
 the suite definition is not installed on a remote task host) they will
-look in \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE/passphrase=;
-and then in \lstinline=$HOME/.cylc/SUITE/passphrase=. The latter
+look in \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase=;
+and then in \lstinline=$HOME/.cylc/SUITE_NAME/passphrase=. The latter
 locations are convenient for remote suite control, in which case the
 suite definition directory will not be known. Finally, you can specify
 the passphrase location on the cylc commandline.

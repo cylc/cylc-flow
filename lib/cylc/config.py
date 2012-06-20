@@ -44,7 +44,7 @@ from regpath import RegPath
 from trigger import triggerx
 from output import outputx
 from TaskID import TaskID, AsyncTag
-from Jinja2Support import Jinja2Process
+from Jinja2Support import Jinja2Process, TemplateSyntaxError, TemplateError
 from continuation_lines import join
 from include_files import inline
 
@@ -173,8 +173,19 @@ class config( CylcConfigObj ):
 
         # handle cylc include-files
         flines = inline( flines, self.dir )
+
         # handle Jinja2 expressions
-        suiterc = Jinja2Process( flines, self.dir, self.verbose )
+        try:
+            suiterc = Jinja2Process( flines, self.dir, self.verbose )
+        except TemplateSyntaxError, x:
+            lineno = x.lineno + 1  # (flines array starts from 0)
+            print >> sys.stderr, 'Jinja2 Template Syntax Error, line', lineno
+            print >> sys.stderr, flines[x.lineno]
+            raise SystemExit(str(x))
+        except TemplateError, x:
+            print >> sys.stderr, 'Jinja2 Template Error'
+            raise SystemExit(x)
+
         # handle cylc continuation lines
         suiterc = join( suiterc )
 

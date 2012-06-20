@@ -18,7 +18,7 @@
 
 import subprocess
 import os, sys, re
-from Jinja2Support import Jinja2Process
+from Jinja2Support import Jinja2Process, TemplateSyntaxError, TemplateError
 
 # auto-replaced with version tag by new-release script:
 cylc_version = "VERSION-TEMPLATE"
@@ -99,7 +99,17 @@ class compat( object ):
         #----
 
         # handle Jinja2 expressions
-        suiterc = Jinja2Process( flines, self.dir, False )
+        try:
+            # (this will do nothing for non Jinja2 suites)
+            suiterc = Jinja2Process( flines, self.dir, False )
+        except TemplateSyntaxError, x:
+            lineno = x.lineno + 1  # (flines array starts from 0)
+            print >> sys.stderr, 'Jinja2 Template Syntax Error, line', lineno
+            print >> sys.stderr, flines[x.lineno]
+            raise SystemExit(str(x))
+        except TemplateError, x:
+            print >> sys.stderr, 'Jinja2 Template Error'
+            raise SystemExit(x)
 
         line0 = suiterc[0]
         line1 = suiterc[1]
