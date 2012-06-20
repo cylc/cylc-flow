@@ -65,9 +65,9 @@ Arguments:
                 help="Turn on exception tracebacks.",
                 action="store_true", default=False, dest="debug" )
 
-        self.add_option( "-p", "--passphrase-dir",
-                help="Suite passphrase file location",
-                action="store", dest="pfile" )
+        self.add_option( "-p", "--passphrase",
+                help="Suite passphrase file",
+                metavar="FILE", action="store", dest="pfile" )
 
     def parse_args( self ):
         (options, args) = OptionParser.parse_args( self )

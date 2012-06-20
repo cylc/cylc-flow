@@ -4637,14 +4637,18 @@ allow control of suites from remote hosts and other user accounts.
 The suite passphrase must be installed in any account that requires
 access to the suite - including remote task hosts. 
 
-Cylc's remote task messaging commands look for the passphrase at 
-\lstinline=$CYLC_SUITE_DEF_PATH/passphrase=; if not found there (e.g. if
-the suite definition is not installed on a remote task host) they will
-look in \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase=;
-and then in \lstinline=$HOME/.cylc/SUITE_NAME/passphrase=. The latter
-locations are convenient for remote suite control, in which case the
-suite definition directory will not be known. Finally, you can specify
-the passphrase location on the cylc commandline.
+The passphrase is expected to be in one of the following locations, in
+order of preference:
+\begin{myitemize}
+    \item \lstinline=$CYLC_SUITE_DEF_PATH/passphrase=
+    \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase=
+    \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_NAME/passphrase=
+    \item \lstinline=$HOME/.cylc/SUITE_NAME/passphrase=
+    \item (or given on the commandline)
+\end{myitemize}
+where the suite hostname should be the fully qualified domain name.
+The latter locations are convenient for remote suite control in which
+case the suite definition directory may not be known or accessible.
 
 \subsection{Limiting Suite Activity}
 
