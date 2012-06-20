@@ -30,6 +30,7 @@ from warning_dialog import warning_dialog, info_dialog
 from cylc.gui.SuiteControlGraph import ControlGraph
 from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
+from cylc.gui.util import get_icon, get_image_dir, get_logo
 from cylc.port_scan import SuiteIdentificationError
 from cylc import cylc_pyro_client
 from cylc.cycle_time import ct, CycleTimeError
@@ -54,11 +55,8 @@ Class to hold initialisation data.
         self.owner = owner
         self.cylc_tmpdir = cylc_tmpdir
 
-        try:
-            self.imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
-        except KeyError:
-            # This should not happen (unecessary)
-            raise SystemExit("ERROR: $CYLC_DIR is not defined!")
+        self.imagedir = get_image_dir()
+
 
 class InfoBar(gtk.HBox):
     """
@@ -208,9 +206,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.log_colors = rotator()
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        icon_path = os.path.join(self.cfg.imagedir, 'icon.png')
         self.window.set_title( self.cfg.suite + " - gcylc" )
-        self.window.set_icon(gtk.gdk.pixbuf_new_from_file(icon_path))
+        self.window.set_icon(get_icon())
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(800, 500)
         self.window.connect("delete_event", self.delete_event)
@@ -711,8 +708,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 The cylc forecast suite metascheduler.
 """ )
         #about.set_website( "http://www.niwa.co.nz" )
-        about.set_logo( gtk.gdk.pixbuf_new_from_file( self.imagedir + "/logo.png" ))
-        about.set_icon( self.window.get_icon() )
+        about.set_logo( get_logo() )
+        about.set_transient_for( self.window )
         about.run()
         about.destroy()
 
@@ -868,6 +865,7 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "Change Suite Runahead Limit" )
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
@@ -936,6 +934,7 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "Add A Prequisite" )
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
@@ -1037,6 +1036,7 @@ The cylc forecast suite metascheduler.
         #       gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_size_request(600, 400)
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
@@ -1297,6 +1297,7 @@ shown here in the state they were in at the time of triggering.''' )
         window.set_border_width(5)
         window.set_title( "Stop Suite")
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
 
@@ -1418,6 +1419,7 @@ shown here in the state they were in at the time of triggering.''' )
         window.set_border_width(5)
         window.set_title( "Start Suite '" + self.cfg.suite + "'")
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
 
@@ -1528,6 +1530,7 @@ shown here in the state they were in at the time of triggering.''' )
         window.set_border_width(5)
         window.set_title( "Purge " + task_id )
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
@@ -1570,6 +1573,7 @@ shown here in the state they were in at the time of triggering.''' )
         window.set_border_width(5)
         window.set_title( title )
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
@@ -1599,6 +1603,7 @@ shown here in the state they were in at the time of triggering.''' )
         window.set_border_width(5)
         window.set_title( "Insert Task" )
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
@@ -1697,6 +1702,7 @@ shown here in the state they were in at the time of triggering.''' )
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         logs = []
         jsfound = False
         for f in logfiles:

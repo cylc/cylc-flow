@@ -326,8 +326,10 @@ Dependency graph suite control interface.
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( "Task Filtering")
-        icon_path = os.path.join( self.cfg.imagedir, "icon.png" )
-        window.set_icon( gtk.gdk.pixbuf_new_from_file( icon_path ) )
+        parent_window = self.xdot.widget.get_toplevel()
+        if isinstance(parent_window, gtk.Window):
+            window.set_transient_for( parent_window )
+            window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         vbox = gtk.VBox()
 
         # TO DO: error checking on date range given
@@ -434,8 +436,10 @@ Dependency graph suite control interface.
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( "Cycle-Time Zoom")
-        icon_path = os.path.join( self.cfg.imagedir, "icon.png" )
-        window.set_icon( gtk.gdk.pixbuf_new_from_file( icon_path ) )
+        parent_window = self.xdot.widget.get_toplevel()
+        if isinstance(parent_window, gtk.Window):
+            window.set_transient_for( parent_window )
+            window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         vbox = gtk.VBox()
 
         name, ctime = id.split('%')
@@ -498,9 +502,10 @@ Dependency graph suite control interface.
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( "Time Zoom")
-        icon_path = os.path.join( self.cfg.imagedir, "icon.png" )
-        window.set_icon( gtk.gdk.pixbuf_new_from_file( icon_path ) )
-
+        parent_window = self.xdot.widget.get_toplevel()
+        if isinstance(parent_window, gtk.Window):
+            window.set_transient_for( parent_window )
+            window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         vbox = gtk.VBox()
 
         # TO DO: error checking on date range given

@@ -23,7 +23,7 @@ import pygtk
 ####pygtk.require('2.0')
 import time, os, re, sys
 from warning_dialog import warning_dialog
-
+from util import get_icon
 from logviewer import logviewer
 
 class cylc_logviewer( logviewer ):
@@ -45,9 +45,7 @@ class cylc_logviewer( logviewer ):
         #self.window.set_border_width(5)
         self.window.set_title( "log viewer" )
         self.window.set_size_request(600, 400)
-        imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
-        icon_path = os.path.join(imagedir, "icon.png")
-        self.window.set_icon( gtk.gdk.pixbuf_new_from_file( icon_path ) )
+        self.window.set_icon( get_icon() )
  
         combobox = gtk.combo_box_new_text()
         combobox.append_text( 'Task' ) 

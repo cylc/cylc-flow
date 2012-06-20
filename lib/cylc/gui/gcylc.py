@@ -31,6 +31,7 @@ from cylc.port_scan import scan, SuiteIdentificationError
 from cylc.registration import dbgetter, localdb, centraldb, RegistrationError
 from cylc.regpath import RegPath
 from warning_dialog import warning_dialog, info_dialog, question_dialog
+from util import get_icon, get_image_dir, get_logo
 import helpwindow
 from gcapture import gcapture, gcapture_tmpfile
 from cylc.mkdir_p import mkdir_p
@@ -294,17 +295,12 @@ class MainApp(object):
 
         self.host = host
 
-        try:
-            self.imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
-        except KeyError:
-            # This should not happen (unecessary)
-            raise SystemExit("ERROR: $CYLC_DIR is not defined!")
+        self.imagedir = get_image_dir()
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_title("Registered Suites (PRIVATE DATABASE)" )
         self.window.set_size_request(600, 300)
-        icon_path = os.path.join(self.imagedir, "icon.png")
-        self.window.set_icon(gtk.gdk.pixbuf_new_from_file(icon_path))
+        self.window.set_icon(get_icon())
         #self.window.set_border_width( 5 )
         self.window.connect("delete_event", self.delete_all_event)
 
@@ -505,7 +501,7 @@ class MainApp(object):
 The cylc forecast suite metascheduler.
 """ )
         #about.set_website( "http://www.niwa.co.nz" )
-        about.set_logo( gtk.gdk.pixbuf_new_from_file( self.imagedir + "/logo.png" ))
+        about.set_logo( get_logo() )
         about.run()
         about.destroy()
 
@@ -558,6 +554,7 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "New Registration" )
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
 
@@ -619,6 +616,7 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "New Suite" )
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         vbox = gtk.VBox()
 
         label = gtk.Label( 'PATH: ' + dir )
@@ -686,6 +684,7 @@ The cylc forecast suite metascheduler.
         self.filter_window.set_border_width(5)
         self.filter_window.set_title( "FILTER" )
         self.filter_window.set_transient_for( self.window )
+        self.filter_window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         vbox = gtk.VBox()
 
         box = gtk.HBox()
@@ -1079,6 +1078,7 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "Alias A Suite")
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
         label = gtk.Label( "SUITE: " + reg )
@@ -1122,6 +1122,7 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "Unregister Suite(s)")
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
 
@@ -1182,6 +1183,7 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "Import Suite(s)")
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
         label = gtk.Label( 'SOURCE: ' + reg )
@@ -1236,6 +1238,7 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "Export Suite(s)")
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
         label = gtk.Label( 'SOURCE: ' + reg )
@@ -1288,6 +1291,7 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "Reregister Suite(s)" )
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
 
@@ -1333,6 +1337,7 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "Compare")
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
         label = gtk.Label("SUITE1: " + reg)
@@ -1374,6 +1379,7 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "Copy Suite(s)")
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
 
@@ -1444,6 +1450,7 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "Suite Search" )
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
 
@@ -1490,6 +1497,7 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "Plot Suite Dependency Graph")
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
 
@@ -1645,6 +1653,7 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "Generate A Task Job Script")
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
         label = gtk.Label("SUITE: " + reg )
@@ -1680,6 +1689,7 @@ The cylc forecast suite metascheduler.
         window.set_border_width(5)
         window.set_title( "Submit A Single Task")
         window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
         label = gtk.Label("SUITE: " + reg )

@@ -22,6 +22,7 @@ import pango
 import tempfile
 import os, re, sys
 from warning_dialog import warning_dialog, info_dialog
+from util import get_icon
 import subprocess
 import helpwindow
 
@@ -48,9 +49,7 @@ are displayed in red.
         self.window.set_title( 'subprocess output capture' )
         self.window.connect("delete_event", self.quit)
         self.window.set_size_request(width, height)
-        imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
-        icon_path = os.path.join( imagedir, "icon.png" )
-        self.window.set_icon( gtk.gdk.pixbuf_new_from_file( icon_path ) )
+        self.window.set_icon( get_icon() )
         self.quit_already = False
 
         self.find_current = None
