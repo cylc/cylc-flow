@@ -41,9 +41,7 @@ Dependency graph suite control interface.
 
         self.xdot = xdot_widgets()
         self.xdot.widget.connect( 'clicked', self.on_url_clicked )
-        self.xdot.widget.handler_block_by_func(self.xdot.widget.on_area_motion_notify)
-        self.xdot.widget.connect('motion-notify-event', self.on_motion_notify)
-        print self.xdot.widget.drag_action
+        self.xdot.widget.connect_after( 'motion-notify-event', self.on_motion_notify )
         self.last_url = None
 
     def get_control_widgets( self ):
