@@ -35,7 +35,7 @@ def Jinja2Process( flines, dir, verbose ):
         if not jinja2_loaded:
             print >> sys.stderr, 'ERROR: This suite requires processing with the Jinja2 template engine'
             print >> sys.stderr, 'ERROR: but the Jinja2 modules are not installed in your PYTHONPATH.'
-            raise SuiteJinja2Error( 'Aborting (Jinja2 required).')
+            raise TemplateError( 'Aborting (Jinja2 required).')
         if verbose:
             print "Processing the suite with Jinja2"
         env = Environment( loader=FileSystemLoader(dir) )
