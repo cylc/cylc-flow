@@ -68,7 +68,6 @@ Dependency graph suite control interface.
         self.x.action_required = True
  
     def on_url_clicked( self, widget, url, event ):
-        self.xdot.widget.drag_action.on_motion_notify = self.on_motion_notify
         if event.button != 3:
             return False
         if url == 'KEY':

@@ -18,7 +18,7 @@
 
 import Pyro.core
 import logging
-import os
+
 
 class state_summary( Pyro.core.ObjBase ):
     """supply suite state summary information to remote cylc clients."""
@@ -79,8 +79,8 @@ class state_summary( Pyro.core.ObjBase ):
                     else:
                         # No state for this child
                         can_calc_state = False
-                        if (isinstance(grandchild_dict, dict) and
-                            is_first_attempt):
+                        if (is_first_attempt and
+                            isinstance(grandchild_dict, dict)):
                             # Child is a family, so calculate its state next.
                             # Dive down tree.
                             stack.insert(0, [child, subtree[child]])
@@ -122,21 +122,10 @@ class state_summary( Pyro.core.ObjBase ):
 
     def extract_group_state( self, child_states ):
         """Summarise child states as a group."""
-        if 'failed' in child_states:
-            return 'failed'
-        elif 'held' in child_states:
-            return 'held'
-        elif 'running' in child_states:
-            return 'running'
-        elif 'submitted' in child_states:
-            return 'submitted'
-        elif 'retry_delayed' in child_states:
-            return 'retry_delayed'
-        elif 'queued' in child_states:
-            return 'queued'
-        elif 'waiting' in child_states:
-            return 'waiting'
-        elif 'runahead' in child_states:
-            return 'runahead'
-        else:  # (all are succeeded)
-            return 'succeeded'
+        ordered_states = ['failed', 'held', 'running', 'submitted',
+                          'retry_delayed', 'queued', 'waiting', 'runahead']
+        for state in ordered_states:
+            if state in child_states:
+                return state
+        # All child states must be 'succeeded'
+        return 'succeeded'
