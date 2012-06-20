@@ -103,12 +103,17 @@ Dependency graph suite control interface.
         if url == self.last_url:
             return False
         self.last_url = url
+        if not hasattr(self.xdot.widget, "set_tooltip_text"):
+            # Unfortunately, the older gtk.Tooltips doesn't work well here.
+            # gtk.Widget.set_tooltip_text was introduced at PyGTK 2.12
+            return False
         if url is None:
             self.xdot.widget.set_tooltip_text(None)
             return False
         url = unicode(url.url)
         if url == 'KEY':
             # graph key node
+            self.xdot.widget.set_tooltip_text(url)
             return False
 
         m = re.match( 'SUBTREE:(.*)', url )
