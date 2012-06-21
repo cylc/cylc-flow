@@ -663,7 +663,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             options += group.get_options()
         window.destroy()
 
+        options += ' -o ' + self.cfg.owner + ' --host=' + self.cfg.host
+
         command += ' ' + options + ' ' + self.cfg.suite + ' ' + ctime
+
+        print command 
+
         if method == 'restart':
             if statedump_entry.get_text():
                 command += ' ' + statedump_entry.get_text()
