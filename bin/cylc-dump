@@ -83,7 +83,7 @@ except SecurityError, x:
     raise SystemExit(x)
 
 # get state summary, task names, cycle times
-[glbl, states] = proxy.get_state_summary()
+[glbl, states, fam_states] = proxy.get_state_summary()
 
 if display_global:
     print "suite : " + suite
