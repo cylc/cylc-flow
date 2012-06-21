@@ -718,3 +718,5 @@ one in the original run); use this variable to change behavior per retry.
 
 + For Jinja2 syntax errors, we now print out the problem line.
 
++ Family node state coloring in the graph control view.
+
