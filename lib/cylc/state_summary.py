@@ -67,7 +67,6 @@ class state_summary( Pyro.core.ObjBase ):
                     # node and children don't need any state calculation.
                     continue
                 is_first_attempt = node not in nodes_redone
-                can_calc_state = True
                 could_get_later = True
                 child_states = []
                 for child, grandchild_dict in subtree.items():
@@ -78,17 +77,17 @@ class state_summary( Pyro.core.ObjBase ):
                         child_states.append(c_fam_states[child])
                     else:
                         # No state for this child
-                        can_calc_state = False
+                        # Family and empty (base graph) nodes.
                         if (is_first_attempt and
                             isinstance(grandchild_dict, dict)):
                             # Child is a family, so calculate its state next.
                             # Dive down tree.
                             stack.insert(0, [child, subtree[child]])
                         else:
-                            # Child is a task with no state.
-                            # Discard this node.
+                            # Child is a task with no state (base graph).
+                            child_states.append('NULL')
                             could_get_later = False
-                if child_states and can_calc_state:
+                if child_states:
                     # Calculate the node state.
                     node_id = node + "%" + ctime
                     state = self.extract_group_state(child_states)
