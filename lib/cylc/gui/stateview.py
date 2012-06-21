@@ -144,7 +144,7 @@ class tupdater(threading.Thread):
 
     def update(self):
         try:
-            [glbl, states] = self.god.get_state_summary()
+            [glbl, states, fam_states] = self.god.get_state_summary()
         except:
             gobject.idle_add( self.connection_lost )
             return False
@@ -454,7 +454,7 @@ class lupdater(threading.Thread):
     def update(self):
         #print "Updating"
         try:
-            [glbl, states] = self.god.get_state_summary()
+            [glbl, states, fam_states] = self.god.get_state_summary()
             self.task_list = self.rem.get_task_list()
         except Exception, x:
             #print >> sys.stderr, x

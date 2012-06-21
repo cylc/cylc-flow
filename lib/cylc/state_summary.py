@@ -19,6 +19,7 @@
 import Pyro.core
 import logging
 
+
 class state_summary( Pyro.core.ObjBase ):
     """supply suite state summary information to remote cylc clients."""
 
@@ -38,10 +39,68 @@ class state_summary( Pyro.core.ObjBase ):
             paused, will_pause_at, stopping, will_stop_at, blocked ):
         self.task_summary = {}
         self.global_summary = {}
+        self.family_summary = {}
+        task_states = {}
 
         for task in tasks:
             self.task_summary[ task.id ] = task.get_state_summary()
+            name, ctime = task.id.split('%')
+            task_states.setdefault(ctime, {})
+            task_states[ctime][name] = self.task_summary[task.id]['state']
 
+        tree = self.config.family_tree
+        fam_states = {}
+        for ctime, c_task_states in task_states.items():
+            # For each time, construct a family state tree
+            fam_states.setdefault(ctime, {})
+            c_fam_states = fam_states[ctime]
+            nodes_redone = []
+            # A stack item contains a task/family name and their child dict.
+            stack = []
+            # Initialise the stack with the top names and children (just root)
+            for key in tree:
+                stack.append([key, tree[key]])
+            # Begin depth-first tree search, building states as we go.
+            while stack:
+                node, subtree = stack.pop(0)
+                if (node in c_task_states or node in c_fam_states):
+                    # node and children don't need any state calculation.
+                    continue
+                is_first_attempt = node not in nodes_redone
+                can_calc_state = True
+                could_get_later = True
+                child_states = []
+                for child, grandchild_dict in subtree.items():
+                    # Iterate through child task names and info.
+                    if child in c_task_states:
+                        child_states.append(c_task_states[child])
+                    elif child in c_fam_states:
+                        child_states.append(c_fam_states[child])
+                    else:
+                        # No state for this child
+                        can_calc_state = False
+                        if (is_first_attempt and
+                            isinstance(grandchild_dict, dict)):
+                            # Child is a family, so calculate its state next.
+                            # Dive down tree.
+                            stack.insert(0, [child, subtree[child]])
+                        else:
+                            # Child is a task with no state.
+                            # Discard this node.
+                            could_get_later = False
+                if child_states and can_calc_state:
+                    # Calculate the node state.
+                    node_id = node + "%" + ctime
+                    state = self.extract_group_state(child_states)
+                    self.family_summary[node_id] = {'name': node,
+                                                    'label': ctime,
+                                                    'state': state}
+                    c_fam_states[node] = state
+                elif could_get_later and is_first_attempt:
+                    # Put this off until later (when the children are done).
+                    stack.append([node, subtree])
+                    nodes_redone.append(node)
+        
         self.global_summary[ 'start time' ] = self.start_time
         self.global_summary[ 'oldest cycle time' ] = oldest
         self.global_summary[ 'newest cycle time' ] = newest
@@ -59,4 +118,14 @@ class state_summary( Pyro.core.ObjBase ):
         #self.get_summary()
 
     def get_state_summary( self ):
-        return [ self.global_summary, self.task_summary ]
+        return [ self.global_summary, self.task_summary, self.family_summary ]
+
+    def extract_group_state( self, child_states ):
+        """Summarise child states as a group."""
+        ordered_states = ['failed', 'held', 'running', 'submitted',
+                          'retry_delayed', 'queued', 'waiting', 'runahead']
+        for state in ordered_states:
+            if state in child_states:
+                return state
+        # All child states must be 'succeeded'
+        return 'succeeded'
