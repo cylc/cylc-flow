@@ -196,6 +196,7 @@ class tupdater(threading.Thread):
         else:
             #print "STATE CHANGED"
             self.state_summary = states
+            self.fam_state_summary = fam_states
             return True
 
     def search_level( self, model, iter, func, data ):
@@ -258,21 +259,26 @@ class tupdater(threading.Thread):
         #print "Updating GUI"
         expand_me = self.get_expanded_row_ids()
         new_data = {}
-        for id in self.state_summary:
-            name, ctime = id.split( '%' )
-            if ctime not in new_data:
-                new_data[ ctime ] = {}
-            state = self.state_summary[ id ][ 'state' ]
-            message = self.state_summary[ id ][ 'latest_message' ]
-            tsub = self.state_summary[ id ][ 'submitted_time' ]
-            tstt = self.state_summary[ id ][ 'started_time' ]
-            meant = self.state_summary[ id ][ 'mean total elapsed time' ]
-            tetc = self.state_summary[ id ][ 'Tetc' ]
-            priority = self.state_summary[ id ][ 'latest_message_priority' ]
-            message = markup( get_col_priority( priority ), message )
-            state = markup( get_col(state), state )
-            new_data[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc ]
-
+        new_fam_data = {}
+        for summary, dest in [(self.state_summary, new_data),
+                              (self.fam_state_summary, new_fam_data)]:
+            # Populate new_data and new_fam_data.
+            for id in summary:
+                name, ctime = id.split( '%' )
+                if ctime not in dest:
+                    dest[ ctime ] = {}
+                state = summary[ id ].get( 'state' )
+                message = summary[ id ].get( 'latest_message', )
+                tsub = summary[ id ].get( 'submitted_time' )
+                tstt = summary[ id ].get( 'started_time' )
+                meant = summary[ id ].get( 'mean total elapsed time' )
+                tetc = summary[ id ].get( 'Tetc' )
+                priority = summary[ id ].get( 'latest_message_priority' )
+                if message is not None:
+                    message = markup( get_col_priority( priority ), message )
+                state = markup( get_col(state), state )
+                dest[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc ]
+               
         # print existing tree:
         #print
         #iter = self.ttreestore.get_iter_first()
@@ -321,14 +327,21 @@ class tupdater(threading.Thread):
                     if fam in family_iters:
                         f_iter = family_iters[fam]
                     else:
+                        f_data = [ None ] * 6
+                        if fam in new_fam_data[ctime]:
+                            f_data = new_fam_data[ctime][fam]
                         f_iter = self.ttreestore.append(
-                                      f_iter, [ ctime, fam ] + [ None ] * 6 )
+                                      f_iter, [ ctime, fam ] + f_data )
                         family_iters[fam] = f_iter
                 parent_name = self.ttreestore.get_value( f_iter, 1 )
+                parent_id = parent_name + "%" + ctime
+                parent_st = self.fam_state_summary.get(parent_id, {}).get('state')
                 self.ttreestore.append( f_iter, [ ctime, name ] + new_data[ctime][name])
                 state = new_data[ ctime ][ name ][0]
                 st = re.sub('<[^>]+>', '', state ) # remove tags
-                if self.autoexpand and st in [ 'submitted', 'running', 'failed', 'held' ]:
+                if (self.autoexpand and
+                    st in [ 'submitted', 'running', 'failed', 'held' ] and
+                    parent_st not in [ 'submitted', 'running', 'failed', 'held' ]):
                     if ( ctime, parent_name ) not in expand_me:
                         expand_me.append( ( ctime, parent_name ) )
 

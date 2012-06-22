@@ -44,7 +44,8 @@ from regpath import RegPath
 from trigger import triggerx
 from output import outputx
 from TaskID import TaskID, AsyncTag
-from Jinja2Support import Jinja2Process, TemplateSyntaxError, TemplateError
+from jinja2 import TemplateError, TemplateSyntaxError
+from Jinja2Support import Jinja2Process
 from continuation_lines import join
 from include_files import inline
 

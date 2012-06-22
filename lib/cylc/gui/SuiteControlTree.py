@@ -53,7 +53,7 @@ Text Treeview suite control interface.
         name = model.get_value(iter, 1)
         state = model.get_value(iter, 2 ) 
         # strip formatting tags
-        if state or (state is None and ctime != name):
+        if ctime != name:
             # Task or family.
             if state is None:
                 # Deal with family children
@@ -351,7 +351,8 @@ Text Treeview suite control interface.
         g_image = gtk.image_new_from_file( root_img_dir + '/group.png' )
         self.group_toolbutton.set_icon_widget( g_image )
         self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
-        self._set_tooltip( self.group_toolbutton, "Group families" )
+        self._set_tooltip( self.group_toolbutton,
+                           "Click to group tasks by families" )
         items.append( self.group_toolbutton )
 
         return items
