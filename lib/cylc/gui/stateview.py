@@ -232,14 +232,7 @@ class tupdater(threading.Thread):
     def _add_expanded_row( self, model, rpath, names ):
         riter = self.ttreeview.get_model().get_iter( rpath )
         (ctime, name) = self._get_row_id( rpath )
-        state = self.ttreeview.get_model().get_value( riter, 2 )
-        if state is None:
-            names.append( ( ctime, name ) )
-            return False
-        st = re.sub('<[^>]+>', '', state ) # remove tags
-        if st not in ['submitted', 'running', 'failed', 'held']:
-            # Must have been expanded on purpose.
-            names.append( ( ctime, name ) )
+        names.append( ( ctime, name ) )
         return False
         
     def get_expanded_row_ids( self ):
