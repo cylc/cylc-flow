@@ -109,7 +109,7 @@ class xupdater(threading.Thread):
         else:
             self.family_nodes = self.remote.get_family_nodes()
             self.graphed_family_nodes = self.remote.get_graphed_family_nodes()
-
+            self.families = self.remote.get_families()
             self.live_graph_movie, self.live_graph_dir = self.remote.do_live_graph_movie()
             if self.live_graph_movie:
                 try:
@@ -120,7 +120,6 @@ class xupdater(threading.Thread):
 
             self.status = "status:\nconnected"
             self.info_bar.set_status( self.status )
-            self.info_bar.status_widget.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
             return True
 
     def connection_lost( self ):
@@ -139,10 +138,22 @@ class xupdater(threading.Thread):
         self.reconnect()
         return False
 
+    def get_summary( self, task_id ):
+        if task_id in self.state_summary:
+            return task_id + " " + self.state_summary[task_id]['state']
+        if task_id in self.fam_state_summary:
+            name, ctime = task_id.split("%")
+            text = task_id + " " + self.fam_state_summary[task_id]['state']
+            for child in self.families[name]:
+                child_id = child + "%" + ctime
+                text += "\n    " + self.get_summary(child_id).replace("\n", "\n    ")
+            return text
+        return task_id
+
     def update(self):
         #print "Updating"
         try:
-            [glbl, states_full] = self.god.get_state_summary()
+            [glbl, states_full, fam_states_full] = self.god.get_state_summary()
         except:
             gobject.idle_add( self.connection_lost )
             return False
@@ -163,6 +174,13 @@ class xupdater(threading.Thread):
             states[id]['label'] = states_full[id]['label']
             states[id]['state'] = states_full[id]['state']
 
+        f_states = {}
+        for id in fam_states_full:
+            if id not in states:
+                f_states[id] = {}
+            f_states[id]['name' ] = fam_states_full[id]['name' ]
+            f_states[id]['label'] = fam_states_full[id]['label']
+            f_states[id]['state'] = fam_states_full[id]['state'] 
         # always update global info
         self.global_summary = glbl
 
@@ -200,13 +218,15 @@ class xupdater(threading.Thread):
         # only update states if a change occurred, or action required
         if self.action_required:
             self.state_summary = states
+            self.fam_state_summary = f_states
             return True
         elif self.graph_disconnect:
             return False
         elif not compare_dict_of_dict( states, self.state_summary ):
-            # state changed
+            # state changed - implicitly includes family state change.
             #print 'STATE CHANGED'
             self.state_summary = states
+            self.fam_state_summary = f_states
             return True
         else:
             return False
@@ -322,31 +342,35 @@ class xupdater(threading.Thread):
     def set_live_node_attr( self, node, id, shape=None ):
         # override base graph URL to distinguish live tasks
         node.attr['URL'] = id
-        if self.state_summary[id]['state'] == 'submitted':
+        if id in self.state_summary:
+            state = self.state_summary[id]['state']
+        else:
+            state = self.fam_state_summary[id]['state']
+        if state == 'submitted':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'orange'
-        elif self.state_summary[id]['state'] == 'running':
+        elif state == 'running':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'green'
-        elif self.state_summary[id]['state'] == 'waiting':
+        elif state == 'waiting':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'cadetblue2'
-        elif self.state_summary[id]['state'] == 'retry_delayed':
+        elif state == 'retry_delayed':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'pink'
-        elif self.state_summary[id]['state'] == 'succeeded':
+        elif state == 'succeeded':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'grey'
-        elif self.state_summary[id]['state'] == 'failed':
+        elif state == 'failed':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'red'
-        elif self.state_summary[id]['state'] == 'held':
+        elif state == 'held':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'yellow'
-        elif self.state_summary[id]['state'] == 'runahead':
+        elif state == 'runahead':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'cadetblue'
-        elif self.state_summary[id]['state'] == 'queued':
+        elif state == 'queued':
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'purple'
 
@@ -480,6 +504,13 @@ class xupdater(threading.Thread):
                 else:
                     continue
 
+            self.set_live_node_attr( node, id )
+
+        for id in self.fam_state_summary:
+            try:
+                node = self.graphw.get_node( id )
+            except:
+                continue
             self.set_live_node_attr( node, id )
 
         for id in self.collapse:

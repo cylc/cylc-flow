@@ -320,6 +320,9 @@ class remote_switch( Pyro.core.ObjBase ):
     def get_vis_families( self ):
         return self.config.vis_families
 
+    def get_families( self ):
+        return copy.deepcopy(self.config.members)
+
     def do_live_graph_movie( self ):
         return ( self.config['visualization']['enable live graph movie'],
                  self.config['visualization']['run time graph']['directory'] ) 

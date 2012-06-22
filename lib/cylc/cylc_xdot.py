@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from graphing import xdot
-from gui import helpwindow
+from gui import helpwindow, util
 import subprocess
 import gtk
 import time
@@ -57,6 +57,8 @@ class MyDotWindow2( xdot.DotWindow ):
 
         window.set_title('Suite Runtime Namespace Graph Viewer')
         window.set_default_size(512, 512)
+        window.set_icon( util.get_icon() )
+
         vbox = gtk.VBox()
         window.add(vbox)
 
@@ -234,6 +236,7 @@ class MyDotWindow( xdot.DotWindow ):
 
         window.set_title('Suite Dependency Graph Viewer')
         window.set_default_size(512, 512)
+        window.set_icon( util.get_icon() )
         vbox = gtk.VBox()
         window.add(vbox)
 
@@ -395,13 +398,23 @@ class MyDotWindow( xdot.DotWindow ):
         return True
 
 
+class DotTipWidget(xdot.DotWidget):
+
+    """Subclass that allows connection of 'motion-notify-event'."""
+
+    def on_area_motion_notify(self, area, event):
+        """This returns False, instead of True as in the base class."""
+        self.drag_action.on_motion_notify(event)
+        return False
+
+
 class xdot_widgets(object):
     def __init__(self):
         self.graph = xdot.Graph()
 
         self.vbox = gtk.VBox()
 
-        self.widget = xdot.DotWidget()
+        self.widget = DotTipWidget()
 
         #open_button = gtk.Button( stock=gtk.STOCK_OPEN )
         #open_button.connect( 'clicked', self.on_open)

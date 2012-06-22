@@ -1143,7 +1143,7 @@ Finally, when the suite is {\em cold-started} (started from scratch) it
 is made to wait on a special {\em synchronous start-up task} called
 Prep. Start-up tasks are one-off (non-spawning) tasks that are only used
 at suite start-up, and any dependence on them only applies at suite
-start-up. Hey cannot be used in conditional trigger expressions with 
+start-up. They cannot be used in conditional trigger expressions with 
 normal cycling tasks, because the trigger becomes undefined in
 subsequent cycles. Start-up tasks are {\em synchronous} because they
 have a defined cycle time even though they are not cycling tasks. Cylc
@@ -1781,6 +1781,18 @@ means that you cannot copy a single suite into a group that does not
 exist yet unless you specify the entire target registration name. 
 
 \lstinline=cylc db register --help= shows a number of other examples.
+
+\subsubsection{Suite Passphrases}
+
+In order to allow secure remote control of running suites, cylc requires
+that each suite has an associated passphrase file. The content of the
+passphrase file is essentially arbitrary, so when a suite is registered
+a passphrase is generated automatically in the suite definition
+directory, if one does not already exist there. The same passphrase file 
+must be distributed to any other user accounts on the local or remote
+hosts from which you need access to the running suite. For more information 
+see Section~\ref{passphrases}.
+
 
 \subsection{Private Suite Database}
 
@@ -4628,23 +4640,32 @@ Finally, you may see references to the following pseudo states:
         current live task proxies according to the structure of the suite).
 \end{myitemize}
 
-\subsection{Remote Control And Secure Passphrases}
+\subsection{Suite Security: Passphrases}
+\label{passphrases}
 
-Use of secure passphrases is now compulsory (a random passphrase is
-generated automatically when a suite is registered, if one does not
-already exist in the suite definition directory). This means cylc can
-allow control of suites from remote hosts and other user accounts.
+Cylc restricts access to running suites (by running tasks, cylc commands
+and GUI) to host accounts holding a special passphrase with secure
+permissions.  The passphrase itself is never transferred across the
+network (a secure MD5 checksum is). This should guarantee suite security
+so long as your user accounts aren't breached. 
+
+A random passphrase generated automatically when a suite is registered,
+if one does not already exist in the suite definition directory. 
 The suite passphrase must be installed in any account that requires
 access to the suite - including remote task hosts. 
 
-Cylc's remote task messaging commands look for the passphrase at 
-\lstinline=$CYLC_SUITE_DEF_PATH/passphrase=; if not found there (e.g. if
-the suite definition is not installed on a remote task host) they will
-look in \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE/passphrase=;
-and then in \lstinline=$HOME/.cylc/SUITE/passphrase=. The latter
-locations are convenient for remote suite control, in which case the
-suite definition directory will not be known. Finally, you can specify
-the passphrase location on the cylc commandline.
+The passphrase can be held in any of the following locations, in
+order of preference:
+\begin{myitemize}
+    \item \lstinline=$CYLC_SUITE_DEF_PATH/passphrase=
+    \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase=
+    \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_NAME/passphrase=
+    \item \lstinline=$HOME/.cylc/SUITE_NAME/passphrase=
+    \item (or given on the commandline)
+\end{myitemize}
+(the suite hostname should be the fully qualified domain name). The
+latter locations are suitable for remote suite control in which case
+the suite definition directory may not be known or accessible.
 
 \subsection{Limiting Suite Activity}
 
@@ -4768,19 +4789,6 @@ limited to 2 and 3 tasks respectively:
 \lstinputlisting{../examples/queues/suite.rc}
 Note assignment of runtime task family members to queues using the
 family name.
-
-\subsection[Suite Security]{Suite Security and Secure Passphrases}
-
-Cylc now restricts access to running suites to host accounts holding a special
-passphrase with secure permissions (as for ssh keys).  Remote task host
-accounts, and any accounts used to remotely control a suite via cylc commands
-or GUI, must all use the same passphrase.  The passphrase itself is never
-transferred across the network (a secure MD5 checksum is). This should 
-guarantee suite security so long as your user accounts aren't breached. 
-
-A random passphrase is generated automatically when you register the suite; it
-must then be distributed to any remote task or remote control hosts that will
-need to connect to the running suite.
 
 \subsection{Other Topics In Brief}
 

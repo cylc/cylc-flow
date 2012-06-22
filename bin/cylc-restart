@@ -21,7 +21,7 @@ import subprocess
 from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.scheduler import scheduler
-from cylc.hostname import shorthostname
+from cylc.hostname import hostname
 
 global debug
 debug = True
@@ -300,10 +300,10 @@ if __name__ == '__main__':
         owner = m.groups()[1]
         if owner != os.environ['USER']:
             remote = True
-    n = re.search( '(--host=)(\w+)', argstr )
+    n = re.search( '(--host=)([.\-\w]+)', argstr )
     if n:
         host = n.groups()[1]
-        if host != shorthostname:
+        if host != hostname:
             remote = True
     if remote:
         sshopts = ''
