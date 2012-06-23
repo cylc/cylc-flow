@@ -101,7 +101,7 @@ try:
 
             # get state summary, task names, cycle times
             try:
-                [glbl, states] = proxy.get_state_summary()
+                [glbl, states, fam_states] = proxy.get_state_summary()
 
             except TimeoutError:
                 if not alerted3:

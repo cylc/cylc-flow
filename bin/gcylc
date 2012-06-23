@@ -34,7 +34,6 @@ try:
 except Exception, x:
     raise SystemExit('ERROR: Pyro is not installed (or not accessible)')
 
-from cylc import port_scan
 from cylc.gui.gcylc import MainApp
 from cylc.gui.SuiteControl import ControlApp
 from cylc.config import config, SuiteConfigError
@@ -88,6 +87,10 @@ parser.add_option( "-g", "--graph",
         "control and monitoring interface.",
         action="store_true", default=False, dest="depgraph" )
 
+parser.add_option( "-d","--debug",
+        help="Print full exception traceback and abort on error.",
+        action="store_true", default=False, dest="debug" )
+
 ( options, args ) = parser.parse_args()
 
 if len(args) != 0 and len(args) != 1:
@@ -107,12 +110,7 @@ if len( args ) == 0:
     sys.exit(0)
 
 suite = args[0]
-try:
-    port = port_scan.get_port( suite )
-except:
-    port = None
-else:
-    print "Suite " + suite + " is running on " + str(port)
+port = None
 
 gtk.settings_get_default().set_long_property("gtk-toolbar-icon-size", gtk.ICON_SIZE_SMALL_TOOLBAR, "main")
 gtk.settings_get_default().set_long_property("gtk-button-images", True, "main")
@@ -123,5 +121,10 @@ if options.depgraph:
 else:
     views = ["led", "tree"]
 
-app = ControlApp( suite, owner, host, port, cylc_tmpdir, views )
+try:
+    app = ControlApp( suite, owner, host, port, cylc_tmpdir, views )
+except Exception, x:
+    if options.debug:
+        raise
+    raise SystemExit(x)
 gtk.main()

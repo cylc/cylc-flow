@@ -21,6 +21,7 @@ import gtk
 import pango
 import string
 from color_rotator import rotator
+from util import get_icon
 
 class helpwindow_base( object ):
     def __init__( self, title, height=400 ):
@@ -28,6 +29,8 @@ class helpwindow_base( object ):
         self.window.set_title( title )
 
         self.window.set_size_request(600, int(height))
+        
+        self.window.set_icon( get_icon() )
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
@@ -375,6 +378,7 @@ def userguide( w, graph=False ):
     window = gtk.Window()
     window.set_title( "Cylc Suite Control Quick Guide" )
     window.set_size_request(600, 600)
+    window.set_icon( get_icon() )
 
     sw = gtk.ScrolledWindow()
     sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )

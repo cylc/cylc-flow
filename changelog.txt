@@ -716,3 +716,7 @@ one in the original run); use this variable to change behavior per retry.
   $CYLC_TASK_DUMMY_RUN_LENGTH, which is used as an argument to the
   sleep command in default command scripting. 
 
++ For Jinja2 syntax errors, we now print out the problem line.
+
++ Family node state coloring in the graph control view.
+
