@@ -2085,7 +2085,7 @@ shown here in the state they were in at the time of triggering.''' )
         self.quitters.append(foo)
 
     def view_suite_info( self, w ):
-        command = "cylc show --host=" + self.cfg.host + " " + self.suite 
+        command = "cylc show --host=" + self.cfg.host + " " + self.cfg.suite 
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
