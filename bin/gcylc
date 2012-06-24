@@ -34,7 +34,6 @@ try:
 except Exception, x:
     raise SystemExit('ERROR: Pyro is not installed (or not accessible)')
 
-from cylc import port_scan
 from cylc.gui.gcylc import MainApp
 from cylc.gui.SuiteControl import ControlApp
 from cylc.config import config, SuiteConfigError
@@ -111,12 +110,7 @@ if len( args ) == 0:
     sys.exit(0)
 
 suite = args[0]
-try:
-    port = port_scan.get_port( suite )
-except:
-    port = None
-else:
-    print "Suite " + suite + " is running on " + str(port)
+port = None
 
 gtk.settings_get_default().set_long_property("gtk-toolbar-icon-size", gtk.ICON_SIZE_SMALL_TOOLBAR, "main")
 gtk.settings_get_default().set_long_property("gtk-button-images", True, "main")

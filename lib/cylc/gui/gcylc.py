@@ -31,6 +31,7 @@ from cylc.port_scan import scan, SuiteIdentificationError
 from cylc.registration import dbgetter, localdb, centraldb, RegistrationError
 from cylc.regpath import RegPath
 from warning_dialog import warning_dialog, info_dialog, question_dialog
+from util import get_icon, get_image_dir, get_logo
 import helpwindow
 from gcapture import gcapture, gcapture_tmpfile
 from cylc.mkdir_p import mkdir_p
@@ -294,15 +295,12 @@ class MainApp(object):
 
         self.host = host
 
-        try:
-            self.imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
-        except KeyError:
-            # This should not happen (unecessary)
-            raise SystemExit("ERROR: $CYLC_DIR is not defined!")
+        self.imagedir = get_image_dir()
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_title("Registered Suites (PRIVATE DATABASE)" )
         self.window.set_size_request(600, 300)
+        self.window.set_icon(get_icon())
         #self.window.set_border_width( 5 )
         self.window.connect("delete_event", self.delete_all_event)
 
@@ -503,7 +501,7 @@ class MainApp(object):
 The cylc forecast suite metascheduler.
 """ )
         #about.set_website( "http://www.niwa.co.nz" )
-        about.set_logo( gtk.gdk.pixbuf_new_from_file( self.imagedir + "/logo.png" ))
+        about.set_logo( get_logo() )
         about.run()
         about.destroy()
 
@@ -555,6 +553,8 @@ The cylc forecast suite metascheduler.
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "New Registration" )
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
 
@@ -603,11 +603,11 @@ The cylc forecast suite metascheduler.
         if os.path.isdir( res ):
             suiterc = os.path.join( res, 'suite.rc' )
         else:
-            warning_dialog( res + " is not a directory" ).warn()
+            warning_dialog( res + " is not a directory", self.window ).warn()
             return False
             
         if not os.path.isfile( suiterc ):
-            info_dialog( "creating empty suite.rc file: " + suiterc ).inform()
+            info_dialog( "creating empty suite.rc file: " + suiterc, self.window ).inform()
             os.system( 'touch ' + suiterc )
 
         dir = os.path.dirname( suiterc )
@@ -615,7 +615,8 @@ The cylc forecast suite metascheduler.
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "New Suite" )
-
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         vbox = gtk.VBox()
 
         label = gtk.Label( 'PATH: ' + dir )
@@ -669,7 +670,7 @@ The cylc forecast suite metascheduler.
         try:
             re.compile( filtr )
         except:
-            warning_dialog( "Bad Expression: " + filt ).warn()
+            warning_dialog( "Bad Expression: " + filt, self.window ).warn()
             self.filtr_reset( w, filtr_e )
             return
         self.start_updater( filtr )
@@ -682,6 +683,8 @@ The cylc forecast suite metascheduler.
         self.filter_window = gtk.Window()
         self.filter_window.set_border_width(5)
         self.filter_window.set_title( "FILTER" )
+        self.filter_window.set_transient_for( self.window )
+        self.filter_window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         vbox = gtk.VBox()
 
         box = gtk.HBox()
@@ -1074,6 +1077,8 @@ The cylc forecast suite metascheduler.
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Alias A Suite")
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
         label = gtk.Label( "SUITE: " + reg )
@@ -1116,6 +1121,8 @@ The cylc forecast suite metascheduler.
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Unregister Suite(s)")
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
 
@@ -1148,7 +1155,8 @@ The cylc forecast suite metascheduler.
         options = ''
         if oblit_cb.get_active():
             res = question_dialog( "!DANGER! !DANGER! !DANGER! !DANGER! !DANGER! !DANGER!\n"
-                    "?Do you REALLY want to delete the associated suite definitions?" ).ask()
+                    "?Do you REALLY want to delete the associated suite definitions?",
+                    self.window ).ask()
             if res == gtk.RESPONSE_YES:
                 options = '--delete '
             else:
@@ -1174,6 +1182,8 @@ The cylc forecast suite metascheduler.
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Import Suite(s)")
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
         label = gtk.Label( 'SOURCE: ' + reg )
@@ -1227,6 +1237,8 @@ The cylc forecast suite metascheduler.
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Export Suite(s)")
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
         label = gtk.Label( 'SOURCE: ' + reg )
@@ -1278,6 +1290,8 @@ The cylc forecast suite metascheduler.
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Reregister Suite(s)" )
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
 
@@ -1322,6 +1336,8 @@ The cylc forecast suite metascheduler.
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Compare")
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
         label = gtk.Label("SUITE1: " + reg)
@@ -1362,6 +1378,8 @@ The cylc forecast suite metascheduler.
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Copy Suite(s)")
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
 
@@ -1431,6 +1449,8 @@ The cylc forecast suite metascheduler.
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Suite Search" )
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
 
@@ -1468,14 +1488,16 @@ The cylc forecast suite metascheduler.
 
     def graph_suite_popup( self, w, reg, suite_dir ):
         try:
-            from cylc.graphing import xdot
+            import xdot
         except Exception, x:
-            warning_dialog( str(x) + "\nGraphing disabled.").warn()
+            warning_dialog( str(x) + "\nGraphing disabled.", self.window ).warn()
             return False
 
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Plot Suite Dependency Graph")
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
 
@@ -1501,7 +1523,8 @@ The cylc forecast suite metascheduler.
             suiterc = config( suite, rcfile )
         except SuiteConfigError, x:
             warning_dialog( str(x) + \
-                    '\n\n Suite.rc parsing failed (needed\nfor default start and stop cycles.' ).warn()
+                    '\n\n Suite.rc parsing failed (needed\nfor default start and stop cycles.',
+                    self.window ).warn()
             return
         defstartc = suiterc['visualization']['initial cycle time']
         defstopc  = suiterc['visualization']['final cycle time']
@@ -1567,17 +1590,18 @@ The cylc forecast suite metascheduler.
                 try:
                     ct(start)
                 except CycleTimeError,x:
-                    warning_dialog( str(x) ).warn()
+                    warning_dialog( str(x), self.window ).warn()
                     return False
             if stop != '':
                 if start == '':
-                    warning_dialog( "You cannot override Final Cycle without overriding Initial Cycle.").warn()
+                    warning_dialog( "You cannot override Final Cycle without overriding Initial Cycle.",
+                                    self.window ).warn()
                     return False
 
                 try:
                     ct(stop)
                 except CycleTimeError,x:
-                    warning_dialog( str(x) ).warn()
+                    warning_dialog( str(x), self.window ).warn()
                     return False
 
         if warm_rb.get_active():
@@ -1628,6 +1652,8 @@ The cylc forecast suite metascheduler.
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Generate A Task Job Script")
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
         label = gtk.Label("SUITE: " + reg )
@@ -1662,6 +1688,8 @@ The cylc forecast suite metascheduler.
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Submit A Single Task")
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
         label = gtk.Label("SUITE: " + reg )
@@ -1732,19 +1760,20 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             try:
                 ssproxy = cylc_pyro_client.client( name ).get_proxy( 'state_summary' )
             except SuiteIdentificationError, x:
-                warning_dialog( str(x) ).warn()
+                warning_dialog( str(x), self.window ).warn()
                 return False
-            [ glbl, states] = ssproxy.get_state_summary()
+            [ glbl, states, fam_states ] = ssproxy.get_state_summary()
             if glbl['started by gcylc']:
                 started_by_gcylc = True
                 #info_dialog( "This suite is running already. It was started by "
                 #    "gcylc, which redirects suite stdout and stderr to special files "
-                #    "so we can connect a new output capture window to those files.").inform()
+                #    "so we can connect a new output capture window to those files.",
+                #    self.window ).inform()
             else:
                 started_by_gcylc = False
                 info_dialog( "This suite is running but it was started from "
                     "the command line, so gcylc does not have access its stdout "
-                    "and stderr streams.").inform()
+                    "and stderr streams.", self.window ).inform()
 
         if running_already and started_by_gcylc or not running_already:
             # Use suite-specific special stdout and stderr files.
@@ -1763,7 +1792,8 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             try:
                 mkdir_p( pdir )
             except Exception, x:
-                warning_dialog( str(x) + '\n' + 'ERROR: Illegal directory for suite stdout? ' + pdir ).warn()
+                warning_dialog( str(x) + '\n' + 'ERROR: Illegal directory for suite stdout? ' + pdir,
+                                self.window ).warn()
                 return False
 
             stdoutf = prefix + '.out'
@@ -1780,13 +1810,14 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
                         "(Deleting this file is safe - it only contains cylc stdout "
                         "and stderr messages from previous runs launched via gcylc. "
                         "Click 'Yes' to delete it and start anew, or 'No' to append "
-                        "new output to the existing file)." ).ask()
+                        "new output to the existing file).",
+                        self.window ).ask()
                     if response == gtk.RESPONSE_YES:
                         try:
                             if stdout_exists:
                                 os.unlink( stdoutf )
                         except OSError, x:
-                            warning_dialog( str(x) ).warn()
+                            warning_dialog( str(x), self.window ).warn()
                             return False
             try:
                 # open in append mode 'ab' (write mode 'wb' nukes the files
@@ -1794,7 +1825,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
                 # controllers are opened).
                 stdout = open( stdoutf, 'ab' )
             except IOError,x:
-                warning_dialog( str(x) ).warn()
+                warning_dialog( str(x), self.window ).warn()
                 return False
 
             if depgraph:
@@ -1827,7 +1858,8 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             suiterc = config( suite, rcfile )
         except SuiteConfigError, x:
             warning_dialog( str(x) + \
-                    '\n\n Suite.rc parsing failed (needed\nto determine the suite log path.' ).warn()
+                    '\n\n Suite.rc parsing failed (needed\nto determine the suite log path.',
+                    self.window ).warn()
             return
         logdir = os.path.join( suiterc['cylc']['logging']['directory'] )
         cylc_logviewer( 'log', logdir, suiterc.get_task_name_list() )
@@ -1841,9 +1873,9 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             try:
                 ssproxy = cylc_pyro_client.client( name ).get_proxy( 'state_summary' )
             except SuiteIdentificationError, x:
-                warning_dialog( str(x) ).warn()
+                warning_dialog( str(x), self.window ).warn()
                 return False
-            [ glbl, states] = ssproxy.get_state_summary()
+            [ glbl, states, fam_states ] = ssproxy.get_state_summary()
             if glbl['started by gcylc']:
                 started_by_gcylc = True
                 # suite is running already, started by gcylc, which
@@ -1852,7 +1884,8 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             else:
                 started_by_gcylc = False
                 info_dialog( "This suite is running, but it was started from "
-                    "the command line, so gcylc cannot access its cylc stdout/stderr file.").inform()
+                    "the command line, so gcylc cannot access its cylc stdout/stderr file.",
+                    self.window ).inform()
                 return False
         else:
             # suite not running
@@ -1860,7 +1893,8 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
                     "the suite output window will show stdout and stderr "
                     "messages captured the last time(s) the suite was started "
                     "from via the GUI (gcylc cannot access stdout "
-                    "and stderr for suites started by the command line).").inform()
+                    "and stderr for suites started by the command line).",
+                    self.window ).inform()
 
         # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?
         # a hard-wired prefix makes it possible for us to 
@@ -1878,7 +1912,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         except IOError,x:
             msg = '''This probably means the suite has not yet been started via gcylc
 (if you start a suite on the command line stdout and stderr redirection is up to you).'''
-            warning_dialog( str(x) + '\n' + msg ).warn()
+            warning_dialog( str(x) + '\n' + msg, self.window ).warn()
             return False
 
         foo = gcapture( None, stdout, width=600, height=400, ignore_command=True )
@@ -1892,7 +1926,8 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             if entry == '':
                 bad = True
         if bad:
-            warning_dialog( "Please complete all required text entry panels!" ).warn()
+            warning_dialog( "Please complete all required text entry panels!",
+                            self.window ).warn()
             return False
         else:
             return True

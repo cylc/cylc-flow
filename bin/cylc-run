@@ -217,10 +217,10 @@ if __name__ == '__main__':
         owner = m.groups()[1]
         if owner != os.environ['USER']:
             remote = True
-    n = re.search( '(--host=)(\w+)', argstr )
+    n = re.search( '(--host=)([.\-\w]+)', argstr )
     if n:
         host = n.groups()[1]
-        if host != shorthostname:
+        if host != hostname:
             remote = True
     if remote:
         sshopts = ''
@@ -234,7 +234,7 @@ if __name__ == '__main__':
 	command = "ssh " + sshopts + """ '\
 if [[ -f /etc/profile ]]; then source /etc/profile; fi; \
 if [[ -f .profile ]]; then source .profile; fi; cylc -v; \
-cylc restart """ + ' '.join(sys.argv[1:]) + "'"
+cylc run """ + ' '.join(sys.argv[1:]) + "'"
 
         try:
             popen = subprocess.Popen( command, shell=True )

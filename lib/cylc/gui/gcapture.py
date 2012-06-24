@@ -22,6 +22,7 @@ import pango
 import tempfile
 import os, re, sys
 from warning_dialog import warning_dialog, info_dialog
+from util import get_icon
 import subprocess
 import helpwindow
 
@@ -48,6 +49,7 @@ are displayed in red.
         self.window.set_title( 'subprocess output capture' )
         self.window.connect("delete_event", self.quit)
         self.window.set_size_request(width, height)
+        self.window.set_icon( get_icon() )
         self.quit_already = False
 
         self.find_current = None
@@ -160,11 +162,11 @@ are displayed in red.
         try:
             f = open( fname, 'wb' )
         except IOError, x:
-            warning_dialog( str(x) ).warn()
+            warning_dialog( str(x), self.window ).warn()
         else:
             f.write( txt )
             f.close()
-            info_dialog( "Buffer saved to " + fname ).inform()
+            info_dialog( "Buffer saved to " + fname, self.window ).inform()
 
     def quit( self, w, e, data=None ):
         if self.quit_already:
@@ -197,7 +199,8 @@ are displayed in red.
         self.freeze_button.set_active(True)
         self.freeze_button.set_label('_Reconnect')
         if not self.search_warning_done:
-            warning_dialog( "Find Next disconnects the live feed. Click Reconnect when you're done." ).warn()
+            warning_dialog( "Find Next disconnects the live feed. Click Reconnect when you're done.",
+                            self.window ).warn()
             self.search_warning_done = True
 
         if needle == self.find_current:
@@ -210,7 +213,7 @@ are displayed in red.
         try:
             f, l = s.backward_search(needle, gtk.TEXT_SEARCH_VISIBLE_ONLY) 
         except:
-            warning_dialog( '"' + needle + '"' + " not found" ).warn()
+            warning_dialog( '"' + needle + '"' + " not found", self.window ).warn()
         else:
             tb.apply_tag( self.ftag, f, l )
             self.find_current_iter = f
