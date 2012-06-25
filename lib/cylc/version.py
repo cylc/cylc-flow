@@ -18,8 +18,7 @@
 
 import subprocess
 import os, sys, re
-from Jinja2Support import Jinja2Process
-from jinja2 import TemplateSyntaxError, TemplateError
+from Jinja2Support import Jinja2Process, TemplateSyntaxError, TemplateError
 
 # auto-replaced with version tag by new-release script:
 cylc_version = "VERSION-TEMPLATE"
