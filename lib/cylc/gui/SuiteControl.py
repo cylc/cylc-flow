@@ -273,8 +273,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         else:
            new_pane = gtk.VPaned()
            extent = top_parent.get_allocation().height
-        new_pane.pack1( self.view_containers[0] )
-        new_pane.pack2( self.view_containers[1] )
+        new_pane.pack1( self.view_containers[0], resize=True, shrink=True )
+        new_pane.pack2( self.view_containers[1], resize=True, shrink=True )
         new_pane.set_position( extent / 2 )
         top_parent.pack_start( new_pane, expand=True, fill=True )
         self.window.show_all()
@@ -419,8 +419,11 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             if pane_position == -1:
                 pane_position =  extent / 2
             pane.set_position( pane_position )
-            zero_parent.pack_start(pane, expand=True, fill=True)          
-        container.pack_start( view.get_control_widgets(),
+            zero_parent.pack_start(pane, expand=True, fill=True)  
+        view_widgets = view.get_control_widgets()
+        if view_widgets.size_request() == (0, 0):
+            view_widgets.set_size_request(1, 1)      
+        container.pack_start( view_widgets,
                               expand=True, fill=True )
         # Handle menu
         for view_menuitems in self.current_view_menuitems:
@@ -2082,7 +2085,7 @@ shown here in the state they were in at the time of triggering.''' )
         self.quitters.append(foo)
 
     def view_suite_info( self, w ):
-        command = "cylc show --host=" + self.cfg.host + " " + self.suite 
+        command = "cylc show --host=" + self.cfg.host + " " + self.cfg.suite 
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()

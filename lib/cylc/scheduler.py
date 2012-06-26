@@ -944,8 +944,8 @@ class scheduler(object):
 
     def release_runahead( self ):
         if self.runahead_limit:
-            #ouct = self.get_oldest_unfailed_c_time() 
-            ouct = self.get_oldest_waiting_c_time() 
+            ouct = self.get_oldest_unfailed_c_time() 
+            #ouct = self.get_oldest_waiting_c_time() 
             for itask in self.pool.get_tasks():
                 if not itask.is_cycling():
                     # TO DO: this test is not needed?
