@@ -1488,7 +1488,7 @@ The cylc forecast suite metascheduler.
 
     def graph_suite_popup( self, w, reg, suite_dir ):
         try:
-            from cylc.graphing import xdot
+            import xdot
         except Exception, x:
             warning_dialog( str(x) + "\nGraphing disabled.", self.window ).warn()
             return False
