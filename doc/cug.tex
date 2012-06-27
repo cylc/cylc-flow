@@ -3729,6 +3729,22 @@ Figure~\ref{fig-jinja2-cities}.
     \label{fig-jinja2-cities} 
 \end{figure} 
 
+\subsubsection{Accessing Environment Variables With Jinja2}
+
+This functionality is not provided by Jinja2 by default, but cylc
+automatically imports the user environment to the template in a 
+dictionary structure called {\em environ}. A usage example:
+\begin{lstlisting}
+#!Jinja2
+#...
+[runtime]
+    [[root]]
+        [[[environment]]]
+            SUITE_OWNER_HOME_DIR_ON_SUITE_HOST = {{environ['HOME']}}
+\end{lstlisting}
+This example is emphasizes that {\em the environment is read on the suite
+host at the time the suite definition is parsed} - it is not, for
+instance, read at task run time on the task host.
 
 \subsection{Special Placeholder Variables}
 \label{SPHV}
