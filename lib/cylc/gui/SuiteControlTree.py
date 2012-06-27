@@ -36,13 +36,16 @@ Text Treeview suite control interface.
 
         self.gcapture_windows = []
 
+        self.ttree_paths = {}  # Cache dict of tree paths & states, names.
+
     def get_control_widgets( self ):
         main_box = gtk.VBox()
         main_box.pack_start( self.treeview_widgets(), expand=True, fill=True )
         
         self.tfilt = ''
         
-        self.t = tupdater( self.cfg, self.ttreeview, self.info_bar )
+        self.t = tupdater( self.cfg, self.ttreeview, self.ttree_paths,
+                           self.info_bar )
         self.t.start()
         return main_box
 
@@ -51,35 +54,32 @@ Text Treeview suite control interface.
         # set visible if model value NOT in filter_states
         ctime = model.get_value(iter, 0 )
         name = model.get_value(iter, 1)
+        if name is None or ctime is None:
+            return True
+        name = re.sub( r'<.*?>', '', name )
+
+        if ctime == name:
+            # Cycle-time line (not state etc.)
+            return True
+
+         # Task or family.
         state = model.get_value(iter, 2 ) 
-        # strip formatting tags
-        if ctime != name:
-            # Task or family.
-            if state is None:
-                # Deal with family children
-                iter = model.iter_children( iter )
-                while iter is not None:
-                    # The next function is recursive.
-                    if self.visible_cb(model, iter):
-                        return True
-                    iter = model.iter_next( iter )                  
-                return False
+        if state is not None:
             state = re.sub( r'<.*?>', '', state )
-            sres = state not in self.tfilter_states
-            # AND if taskname matches filter entry text
-            if self.tfilt == '':
-                nres = True
-            else:
-                tname = model.get_value(iter, 1)
-                tname = re.sub( r'<.*?>', '', tname )
-                if re.search( self.tfilt, tname ):
-                    nres = True
-                else:
-                    nres = False
-        else:
-            # this must be a cycle-time line (not state etc.)
-            sres = True
-            nres = True           
+        sres = state not in self.tfilter_states
+
+        nres = not self.tfilt or self.tfilt in name
+
+        if model.iter_has_child( iter ):
+            # Family.
+            path = model.get_path( iter )
+
+            sub_st = self.ttree_paths.get( path, {} ).get( 'states', [] )
+            sres = sres or any([s not in self.tfilter_states for t in sub_st])
+
+            if self.tfilt:
+                sub_nm = self.ttree_paths.get( path, {} ).get( 'names', [] )
+                nres = nres or any([self.tfilt in n for n in sub_nm])
         return sres and nres
 
     def check_tfilter_buttons(self, tb):
