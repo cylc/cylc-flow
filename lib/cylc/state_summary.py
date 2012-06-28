@@ -58,7 +58,7 @@ class state_summary( Pyro.core.ObjBase ):
                 if state is None:
                     continue
                 for parent in parent_list:
-                    if parent in [key, "root"]:
+                    if parent == key:
                         continue
                     c_fam_task_states.setdefault(parent, [])
                     c_fam_task_states[parent].append(state)

@@ -284,7 +284,10 @@ class tupdater(threading.Thread):
         times = new_data.keys()
         times.sort()
         for ctime in times:
-            piter = self.ttreestore.append(None, [ ctime, ctime ] + [ None ] * 6)
+            f_data = [ None ] * 6
+            if "root" in new_fam_data[ctime]:
+                f_data = new_fam_data[ctime]["root"]
+            piter = self.ttreestore.append(None, [ ctime, ctime ] + f_data )
             family_iters = {}
             name_iters = {}
             task_named_paths = []
