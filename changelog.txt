@@ -719,9 +719,14 @@ one in the original run); use this variable to change behavior per retry.
 
 + The "cylc cycletime" utility command has been extended to handle
 daily, monthly, and yearly cycle time offsets, as well as hours.
+WARNING: this change will break any previous computation of cycle time
+offsets with this utility command, because extending the functionality
+required changing the existing command line options.
 
 + The "cylc template" filename templating utility has been removed;
 templating is now handled by the "cylc cycletime" utility.
+WARNING: this change will obviously break any previous use of the "cylc
+template" command - replace with equivalent use of "cylc cycletime".
 
 + The user environment on the suite host is now imported into the Jinja2
 template when the suite is parsed, as a dictionary structure called
