@@ -225,10 +225,20 @@ class tupdater(threading.Thread):
         return value == key
        
     def update_gui( self ):
-        #print "Updating GUI"
+        """Update the treeview with new task and family information.
+        
+        This redraws the treeview, but keeps a memory of user-expanded
+        rows in 'expand_me' so that the tree is still expanded in the
+        right places.
+        
+        If auto-expand is on, calculate which rows need auto-expansion
+        and expand those as well.
+        
+        """
+        
+        # Retrieve any user-expanded rows so that we can expand them later.
         expand_me = self._get_user_expanded_row_ids()
-        for ctime, name in expand_me:
-            print "user-exp", (ctime, name)
+
         new_data = {}
         new_fam_data = {}
         self.ttree_paths.clear()
@@ -300,9 +310,12 @@ class tupdater(threading.Thread):
                 self._update_path_info( piter, state, name )
                 f_iter = piter
                 for i, fam in enumerate(named_path[:-1]):
+                    # Construct family tree for this task.
                     if fam in family_iters:
+                        # Family already in tree
                         f_iter = family_iters[fam]
                     else:
+                        # Add family to tree
                         f_data = [ None ] * 6
                         if fam in new_fam_data[ctime]:
                             f_data = new_fam_data[ctime][fam]
@@ -310,9 +323,7 @@ class tupdater(threading.Thread):
                                       f_iter, [ ctime, fam ] + f_data )
                         family_iters[fam] = f_iter
                     self._update_path_info( f_iter, state, fam )
-                parent_name = self.ttreestore.get_value( f_iter, 1 )
-                parent_id = parent_name + "%" + ctime
-                parent_st = self.fam_state_summary.get(parent_id, {}).get('state')
+                # Add task to tree
                 self.ttreestore.append( f_iter, [ ctime, name ] + new_data[ctime][name])
         if self.autoexpand:
             autoexpand_me = self._get_autoexpand_rows()
@@ -324,6 +335,8 @@ class tupdater(threading.Thread):
             self._last_autoexpand_me = autoexpand_me
         self.ttreeview.get_model().get_model().refilter()
         self.ttreeview.get_model().sort_column_changed()
+        
+        # Expand all the rows that were user-expanded or need auto-expansion.
         self.ttreeview.get_model().foreach( self._expand_row, expand_me )
 
         return False
@@ -336,9 +349,9 @@ class tupdater(threading.Thread):
         return (ctime, name)
 
     def _add_expanded_row( self, view, rpath, expand_me ):
+        # Add user-expanded rows to a list of rows to be expanded.
         model = view.get_model()
         row_iter = model.get_iter( rpath )
-        # We should only expand rows that were user-expanded
         row_id = self._get_row_id( model, rpath )
         if (not self.autoexpand or
             row_id not in self._last_autoexpand_me):
@@ -361,6 +374,7 @@ class tupdater(threading.Thread):
         return False
 
     def _update_path_info( self, row_iter, descendant_state, descendant_name ):
+        # Cache states and names from the subtree below this row.
         path = self.ttreestore.get_path( row_iter )
         self.ttree_paths.setdefault( path, {})
         self.ttree_paths[path].setdefault( 'states', [] )
@@ -369,6 +383,7 @@ class tupdater(threading.Thread):
         self.ttree_paths[path]['names'].append( descendant_name )
 
     def _get_autoexpand_rows( self ):
+        # Return a list of rows that meet the auto-expansion criteria.
         autoexpand_me = []
         r_iter = self.ttreestore.get_iter_first()
         while r_iter is not None:
@@ -376,9 +391,12 @@ class tupdater(threading.Thread):
             name = self.ttreestore.get_value( r_iter, 1 )
             if (( ctime, name ) not in autoexpand_me and
                 self._calc_autoexpand_row( r_iter )):
+                # This row should be auto-expanded.
                 autoexpand_me.append( ( ctime, name ) )
+                # Now check whether the child rows also need this.
                 new_iter = self.ttreestore.iter_children( r_iter )
             else:
+                # This row shouldn't be auto-expanded, move on.
                 new_iter = self.ttreestore.iter_next( r_iter )
                 if new_iter is None:
                     new_iter = self.ttreestore.iter_parent( r_iter )
@@ -386,12 +404,19 @@ class tupdater(threading.Thread):
         return autoexpand_me
         
     def _calc_autoexpand_row( self, row_iter ):
+        """Calculate whether a row meets the auto-expansion criteria.
+
+        Currently, a family row with tasks in the right states will not
+        be expanded, but the tree above it (parents, grandparents, etc)
+        will.
+        
+        """
         path = self.ttreestore.get_path( row_iter )
         sub_st = self.ttree_paths.get( path, {} ).get( 'states', [] )
         ctime = self.ttreestore.get_value( row_iter, 0 )
         name = self.ttreestore.get_value( row_iter, 1 )
         if any( [ s in self.autoexpand_states for s in sub_st ] ):
-            return True
+            # return True  # Uncomment if we just want to expand to tasks
             if ctime == name:
                 # Expand cycle times if any child states comply.
                 return True
@@ -402,18 +427,11 @@ class tupdater(threading.Thread):
                                                  {} ).get('states', [] )
                 if any( [s in self.autoexpand_states for s in c_sub_st ] ):
                      # Expand if there are sub-families with valid states.
+                     # Do not expand if it's just tasks with valid states.
                      return True
                 child_iter = self.ttreestore.iter_next( child_iter )
             return False
         return False 
-#        state = self.ttreestore.get_value( row_iter, 2 )
-#        if state is not None:
-#            state = re.sub('<[^>]+>', '', state)
-#        if (any( [ s in self.autoexpand_states for s in sub_states ] ) and
-#            state not in self.autoexpand_states ):
-#            # Descendant nodes have a valid expand state, but this doesn't.
-#            return True
-#        return False
 
     def update_globals( self ):
         self.info_bar.set_mode( self.mode )
