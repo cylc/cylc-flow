@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys, gtk, gobject
+import os, sys
 import subprocess
 from optparse import OptionParser
 from cylc.config import config, SuiteConfigError

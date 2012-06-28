@@ -16,16 +16,18 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
+import os, sys, re
 
 try:
-    from jinja2 import Environment, FileSystemLoader, TemplateError
+    from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError, TemplateError
 except ImportError:
     jinja2_loaded = False
 else:
     jinja2_loaded = True
 
 def Jinja2Process( flines, dir, verbose ):
+    # Callers should handle Jinja2 TemplateSyntaxError or TemplateError
+
     # check first line of file for template engine directive
     # (check for new empty suite.rc files - zero lines - first)
     if flines and re.match( '^#![jJ]inja2\s*', flines[0] ):
@@ -33,22 +35,21 @@ def Jinja2Process( flines, dir, verbose ):
         if not jinja2_loaded:
             print >> sys.stderr, 'ERROR: This suite requires processing with the Jinja2 template engine'
             print >> sys.stderr, 'ERROR: but the Jinja2 modules are not installed in your PYTHONPATH.'
-            raise SuiteConfigError, 'Aborting (Jinja2 required).'
+            raise TemplateError( 'Aborting (Jinja2 required).')
         if verbose:
             print "Processing the suite with Jinja2"
         env = Environment( loader=FileSystemLoader(dir) )
-         # load file lines into a template, excluding '#!jinja2' so
-         # that '#!cylc-x.y.z' rises to the top.
-        try:
-            template = env.from_string( ''.join(flines[1:]) )
-        except TemplateError, x:
-            raise SuiteConfigError, "Jinja2 template error: " + str(x)
 
-        try:
-            # (converting unicode to plain string; configobj doesn't like?)
-            rendered = str( template.render() )
-        except Exception, x:
-            raise SuiteConfigError, "ERROR: Jinja2 template rendering failed: " + str(x)
+        # Import SUITE HOST USER ENVIRONMENT into template:
+        # (usage e.g.: {{environ['HOME']}}).
+        env.globals['environ'] = os.environ
+
+        # load file lines into a template, excluding '#!jinja2' so
+        # that '#!cylc-x.y.z' rises to the top.
+        template = env.from_string( ''.join(flines[1:]) )
+
+        # (converting unicode to plain string; configobj doesn't like?)
+        rendered = str( template.render() )
 
         xlines = rendered.split('\n') # pass a list of lines to configobj
         suiterc = []
