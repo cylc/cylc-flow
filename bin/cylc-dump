@@ -76,7 +76,7 @@ if options.tasks_only:
 
 try:
     proxy = cylc_pyro_client.client( suite, owner=options.owner, \
-	host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
+    host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 except SecurityError, x:
