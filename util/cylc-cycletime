@@ -24,32 +24,32 @@ from optparse import OptionParser
 
 parser = OptionParser( usage = """cylc [util] cycletime [options] [CYCLE]
 
-Perform arithmetic operations on cycle times and print the results to 
-sdtout. Examples:
+Arithmetic cycle time offset computation, and filename templating.
 
-   # offset from explicit cycle time:
-   $ cylc [util] cycletime --offset-hours=6 2010082318
+Examples:
+
+1) print offset from an explicit cycle time:
+  % cylc [util] cycletime --offset-hours=6 2010082318
   2010082400
 
-   # offset from $CYLC_TASK_CYCLE_TIME:
-   $ export CYLC_TASK_CYCLE_TIME=2010082318
-   $ cylc cycletime --offset-hours=-6 
+2) print offset from $CYLC_TASK_CYCLE_TIME (as in suite tasks):
+  % export CYLC_TASK_CYCLE_TIME=2010082318
+  % cylc cycletime --offset-hours=-6 
   2010082312
 
+3) cycle time filename templating, explicit template:
+  % export CYLC_TASK_CYCLE_TIME=201008
+  % cylc cycletime --offset-years=2 --template=foo-YYYYMM.nc
+  foo-201208.nc
+
+4) cycle time filename templating, template in a variable:
+  % export CYLC_TASK_CYCLE_TIME=201008
+  % export MYTEMPLATE=foo-YYYYMM.nc
+  % cylc cycletime --offset-years=2 --template=MYTEMPLATE
+  foo-201208.nc
+
 Arguments:
-   CYCLE        YYYY[MM[DD[HH[mm[ss]]]]] OR defaults to $CYLC_TASK_CYCLE_TIME.""" )
-
-parser.add_option( "-s", "--subtract", metavar="HOURS",
-        help="(DEPRECATED) Subtract HOURS from CYCLE", 
-        action="store", dest="subtract" )
-
-parser.add_option( "-a", "--add", metavar="HOURS",
-        help="(DEPRECATED) Add HOURS to CYCLE", 
-        action="store", dest="add" )
-
-parser.add_option( "-o", "--offset", metavar="HOURS",
-        help="(DEPRECATED) Apply an offset of +/-HOURS to CYCLE", 
-        action="store", dest="offset" )
+   CYCLE        YYYY[MM[DD[HH[mm[ss]]]]] OR default to $CYLC_TASK_CYCLE_TIME.""" )
 
 parser.add_option( "--offset-hours", metavar="HOURS",
         help="Add N hours to CYCLE (may be negative)", 
@@ -67,16 +67,20 @@ parser.add_option( "--offset-years", metavar="YEARS",
         help="Add N years to CYCLE (N may be negative)", 
         action="store", dest="offsetyears" )
 
-parser.add_option( "--year", help="Print only YYYY of result",
+parser.add_option( "--template", metavar="TEMPLATE",
+        help="Filename template string or variable", 
+        action="store", dest="template" )
+
+parser.add_option( "--print-year", help="Print only YYYY of result",
         action="store_true", default=False, dest="print_year" )
 
-parser.add_option( "--month", help="Print only MM of result",
+parser.add_option( "--print-month", help="Print only MM of result",
         action="store_true", default=False, dest="print_month" )
 
-parser.add_option( "--day", help="Print only DD of result",
+parser.add_option( "--print-day", help="Print only DD of result",
         action="store_true", default=False, dest="print_day" )
 
-parser.add_option( "--hour", help="Print only HH of result",
+parser.add_option( "--print-hour", help="Print only HH of result",
         action="store_true", default=False, dest="print_hour" )
 
 (options, args) = parser.parse_args()
@@ -101,6 +105,20 @@ elif len( args ) == 1:
 else:
     parser.error( "Wrong number of arguments!" )
 
+# template string
+template = None
+if options.template:
+    if options.print_month or options.print_year or \
+            options.print_day or options.print_hour:
+                parser.error( '"print only" options are incompatible with templating' )
+    tmp = options.template
+    if tmp in os.environ:
+        # name of a variable that contains a template
+        template = os.environ[ tmp ]
+    else:
+        # or a raw template string
+        template = tmp
+
 n_chosen = 0
 
 #hours = int( cycle.hour ) 
@@ -109,30 +127,6 @@ offset_hours  = False
 offset_days   = False
 offset_months = False
 offset_years  = False
-
-if options.subtract:
-    offset_hours = True
-    n_chosen += 1 
-    try:
-        hours = - int( options.subtract )
-    except ValueError:
-        parser.error( 'ERROR: offset must be integer' )
-
-if options.add:
-    offset_hours = True
-    n_chosen += 1
-    try:
-        hours = int( options.add )
-    except ValueError:
-        parser.error( 'ERROR: offset must be integer' )
-
-if options.offset:
-    offset_hours = True
-    n_chosen += 1
-    try:
-        hours = int( options.offset )
-    except ValueError:
-        parser.error( 'ERROR: offset must be integer' )
 
 if options.offsethours:
     offset_hours = True
@@ -166,8 +160,9 @@ if options.offsetyears:
     except ValueError:
         parser.error( 'ERROR: offset must be integer' )
 
-if n_chosen > 1:
-    parser.error( "Choose ZERO or ONE of subtract, add, or offset" )
+# (can chose to offset months and years, for example)
+#if n_chosen > 1:
+#    parser.error( "Choose ZERO or ONE of subtract, add, or offset" )
 
 n_chosen = 0
 print_year = False
@@ -206,7 +201,21 @@ if offset_months:
 if offset_years:
     cycle = ct( Yearly.offset( cycle.get(), -years ) )
 
-if print_year:
+if template:
+    string = template
+    # replace YYYYMMDDHH
+    string = re.sub( "YYYYMMDDHH", cycle.get(), string )
+    # replace YYYYMM
+    string = re.sub( "YYYYMM", cycle.year + cycle.month, string )
+    # replace YYYY, MM, DD, HH
+    string = re.sub( 'YYYY', cycle.year,  string )
+    string = re.sub( 'MM',   cycle.month,  string )
+    string = re.sub( 'DD',   cycle.day,  string )
+    string = re.sub( 'HH',   cycle.hour, string )
+    # replace YY
+    string = re.sub( 'YY',   cycle.year[2:4],  string )
+    print string
+elif print_year:
     print cycle.year
 elif print_month:
     print cycle.month

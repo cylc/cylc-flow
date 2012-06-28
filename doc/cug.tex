@@ -4951,17 +4951,19 @@ overwrite of important files from one cycle to the next. Cylc has
 powerful utilities for cycle time offset based filename templating and
 housekeeping.
 
-\subsubsection{Use Cylc's Cycle Time Filename Template Utility}
+\subsubsection{Use Cylc Cycle Time Filename Templating}
 
-The command line utility program \lstinline=cylc template=
-determines filenames based on a template string containing
-YYYYMMDDHH (or variations thereof) by substituting the
-current cycle time, or some offset from it, into the template.
-This can be used in the suite.rc environment sections, or in
-task implementation scripts if necessary, to instantly generate cycle
-time appropriate filenames for any purpose in the suite.
+The command line utility program \lstinline=cylc [util] cycletime=
+computes offsets (in hours, days, months, and years) from a given or
+current (in the environment) cycle time, and optionally inserts the
+resulting computed cycle time, or components of it, into a given 
+template string containing ``YYYY'' as a placeholder for the year
+value, ``MM'' for month, and so on. This can be used in the suite.rc
+environment or command scripting sections, or in task implementation
+scripting, to generate filenames containing the current cycle time (or
+some offset from it) for use by tasks.
 
-See \lstinline=cylc util template help= for more information.
+See \lstinline=cylc [util] cycletime --help= for examples.
 
 \subsection{How To Manage Input/Output File Dependencies}
 \label{HandlingDependencies}

@@ -653,9 +653,6 @@ cycling mechanism, e.g. [[0,6,12,18]], has replaced with an extensible
 mechanism that currently supports hours-of-the-day, and stepped daily,
 monthly, and yearly cycling - extend. 
 
-+ Extended the cycletime utility command to handle daily, monthly, and 
-yearly cycle time offsets.
-
 + More flexible specification of cycle time on the command line (in
 combination with generalized cycling, above). YYYYMMDDHH has been
 replaced with YYYY[MM[DD[HH[mm[ss]]]]] (brackets indicate optional
@@ -720,9 +717,20 @@ one in the original run); use this variable to change behavior per retry.
 
 + Family node state coloring in the graph control view.
 
-+ The user environment (read on the suite host when the suite definition
-is parsed) is now imported into the Jinja2 template, as a dictionary
-structure called "environ". Example:
++ The "cylc cycletime" utility command has been extended to handle
+daily, monthly, and yearly cycle time offsets, as well as hours.
+WARNING: this change will break any previous computation of cycle time
+offsets with this utility command, because extending the functionality
+required changing the existing command line options.
+
++ The "cylc template" filename templating utility has been removed;
+templating is now handled by the "cylc cycletime" utility.
+WARNING: this change will obviously break any previous use of the "cylc
+template" command - replace with equivalent use of "cylc cycletime".
+
++ The user environment on the suite host is now imported into the Jinja2
+template when the suite is parsed, as a dictionary structure called
+"environ". Example:
     #!Jinja2
     #...
     [[[environment]]]
