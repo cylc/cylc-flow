@@ -263,11 +263,7 @@ Text Treeview suite control interface.
             if cols[col_num].get_sort_order() == gtk.SORT_DESCENDING:
                 return cmp(ctime2, ctime1)
             return cmp(ctime1, ctime2)
-       
-      #  if ctime1 != ctime2:
-      #      if cols[0].get_sort_order() == cols[col_num].get_sort_order():
-      #          return cmp( ctime2, ctime1 )
-      #      return cmp( ctime1, ctime2 )
+
         # Columns do not include the cycle time (0th col), so add 1.
         prop1 = model.get_value( iter1, col_num + 1 )
         prop2 = model.get_value( iter2, col_num + 1 )
@@ -279,18 +275,9 @@ Text Treeview suite control interface.
         cols = self.ttreeview.get_columns()
         self.sort_col_num = n
         if cols[n].get_sort_order() == gtk.SORT_ASCENDING:
-            # self.tmodelsort.set_sort_column_id( n, gtk.SORT_DESCENDING )
             cols[n].set_sort_order( gtk.SORT_DESCENDING )
         else:
-            # self.tmodelsort.set_sort_column_id( n, gtk.SORT_ASCENDING )
             cols[n].set_sort_order( gtk.SORT_ASCENDING )
-       #         cols[i_n].set_sort_indicator(True)
-       #     else:
-       #         cols[i_n].set_sort_indicator(False)
-       # if col.get_sort_order() == gtk.SORT_ASCENDING:
-       #     col.set_sort_order(gtk.SORT_DESCENDING)
-       # else:
-       #     col.set_sort_order(gtk.SORT_ASCENDING)
         return False
 
     def on_popup_quit( self, b, lv, w ):
