@@ -723,3 +723,11 @@ daily, monthly, and yearly cycle time offsets, as well as hours.
 + The "cylc template" filename templating utility has been removed;
 templating is now handled by the "cylc cycletime" utility.
 
++ The user environment on the suite host is now imported into the Jinja2
+template when the suite is parsed, as a dictionary structure called
+"environ". Example:
+    #!Jinja2
+    #...
+    [[[environment]]]
+        MY_HOME_DIR_ON_SUITE_HOST = {{environ['HOME']}}
+

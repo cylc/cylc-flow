@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, re
+import os, sys, re
 
 try:
     from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError, TemplateError
@@ -39,6 +39,11 @@ def Jinja2Process( flines, dir, verbose ):
         if verbose:
             print "Processing the suite with Jinja2"
         env = Environment( loader=FileSystemLoader(dir) )
+
+        # Import SUITE HOST USER ENVIRONMENT into template:
+        # (usage e.g.: {{environ['HOME']}}).
+        env.globals['environ'] = os.environ
+
         # load file lines into a template, excluding '#!jinja2' so
         # that '#!cylc-x.y.z' rises to the top.
         template = env.from_string( ''.join(flines[1:]) )
