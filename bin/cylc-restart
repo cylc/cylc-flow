@@ -20,7 +20,7 @@ import os, sys, re
 from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.scheduler import scheduler
-from cylc.run import debug, main
+from cylc.run import main, set_main_debug
 
 class restart( scheduler ):
     def __init__( self ):
@@ -88,8 +88,7 @@ remote host prior to attempting to run the suite."""
 
         scheduler.parse_commandline( self )
 
-        global debug
-        debug = self.options.debug
+        set_main_debug( self.options.debug )
 
         if self.restart_from:
             self.banner['RESTART'] = self.restart_from

@@ -108,3 +108,8 @@ cylc %s %s""" % (name, ' '.join(args)) )
         raise
     else:
         server.shutdown('Run completed normally')
+
+
+def set_main_debug(mode):
+    global debug
+    debug = mode

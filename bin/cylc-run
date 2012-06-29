@@ -19,7 +19,7 @@
 from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.scheduler import scheduler
-from cylc.run import debug, main
+from cylc.run import main, set_main_debug
 
 class start( scheduler ):
     def __init__( self ):
@@ -93,8 +93,7 @@ remote host prior to attempting to run the suite."""
             self.banner[ "COLD START" ] = self.start_time
             self.load_tasks = self.load_tasks_cold
 
-        global debug
-        debug = self.options.debug
+        set_main_debug( self.options.debug )
 
     def load_tasks_cold( self ):
         if self.start_time:
