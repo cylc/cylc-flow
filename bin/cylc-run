@@ -68,14 +68,8 @@ remote host prior to attempting to run the suite."""
 
     def parse_commandline( self ):
         ( self.options, self.args ) = self.parser.parse_args()
-        largs = len( self.args )
-        if largs == 0:
-            self.parser.error( "ERROR: suite group:name required." )
-        elif largs > 2:
-            self.parser.error( "ERROR: too many arguments." )
-
         self.start_time = None
-        if largs == 2:
+        if len( self.args ) == 2:
             try:
                 self.start_time = ct( self.args[1] ).get()
             except CycleTimeError, x:
