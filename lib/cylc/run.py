@@ -59,7 +59,9 @@ def remote_run( name ):
             popen = subprocess.Popen( command, stdin=subprocess.PIPE )
             popen.communicate( """
 for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE; done
-cylc %s %s""" % (name, ' '.join(args)) )
+cylc %s %s""" % (name, ' '.join( '"' + arg + '"' for arg in args)) )
+            # above: args quoted to avoid interpretation by the shell, 
+            # e.g. for match patterns such as '.*' on the command line.
             res = popen.wait()
             if res < 0:
                 sys.exit("command terminated by signal %d" % res)
