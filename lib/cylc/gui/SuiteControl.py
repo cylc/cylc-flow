@@ -191,8 +191,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.logging_dir = god.get_logging_directory()
             self.task_list = god.get_task_list()
         except SuiteIdentificationError, x:
-    	    self.initial_cycle_time = None
-    	    self.final_cycle_time = None
+            self.initial_cycle_time = None
+            self.final_cycle_time = None
             self.sim_only = None
             self.logging_dir = None
             self.task_list = []

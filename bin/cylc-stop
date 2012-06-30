@@ -69,7 +69,7 @@ else:
 
 try:
     proxy = cylc_pyro_client.client( suite, owner=options.owner, \
-	host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
+    host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 except SecurityError, x:

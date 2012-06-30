@@ -1228,7 +1228,7 @@ class config( CylcConfigObj ):
             left  = e.get_left( 1, False, False, [], [])
             nl, nr = self.close_families( left, right )
             gr_edges.append( (nl, nr, False, e.suicide, e.conditional) )
-	
+
         # Get actual first real cycle time for the whole suite (get all
         # cyclers to adjust the putative start time upward)
         adjusted = []
