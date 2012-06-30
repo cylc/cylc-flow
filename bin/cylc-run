@@ -52,7 +52,7 @@ If they exist /etc/profile and $HOME/.profile will be sourced on the
 remote host prior to attempting to run the suite.""" 
 
         self.parser = NoPromptOptionParser( usage,
-                [ """START                Initial cycle time. This is optional if defined in the 
+                extra_args=[ """START                Initial cycle time. This is optional if defined in the 
                         suite.rc file, in which case the command line
                         takes priority (and a suite.rc final cycle time
                         will be ignored), and is not required if the

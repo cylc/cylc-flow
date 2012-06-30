@@ -240,7 +240,6 @@ database_commands['get-directory' ] = [ 'get-directory' ]
 database_commands['export'    ] = [ 'export' ]
 database_commands['import'    ] = [ 'import' ]
 database_commands['refresh'   ] = [ 'refresh' ]
-database_commands['browse'   ] = [ 'browse' ]
 
 preparation_commands = OrderedDict()
 preparation_commands['gcylc'   ] = information_commands['gcylc']

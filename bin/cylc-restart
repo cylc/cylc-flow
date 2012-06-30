@@ -52,7 +52,7 @@ If they exist /etc/profile and $HOME/.profile will be sourced on the
 remote host prior to attempting to run the suite."""
 
         self.parser = NoPromptOptionParser( usage,
-   ["""FILE                 Optional non-default state dump file (assumed to
+   extra_args=["""FILE                 Optional non-default state dump file (assumed to
                         reside in the suite state dump directory unless
                         you give the full path)."""]) 
 

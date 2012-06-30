@@ -26,7 +26,7 @@ from cylc.hostname import is_remote_host
 global debug
 debug = True
 
-def main(name, start):
+def remote_run( name ):
     owner = None
     host = None
     argv = sys.argv[1:]
@@ -71,6 +71,10 @@ cylc %s %s""" % (name, ' '.join(args)) )
         else:
             # done (remote suite finished)
             sys.exit(0)
+
+def main(name, start):
+
+    remote_run(name)
 
     # local invocation
     try:
