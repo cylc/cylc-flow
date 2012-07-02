@@ -353,30 +353,30 @@ class config( CylcConfigObj ):
         if not self.graph_found:
             raise SuiteConfigError, 'No suite dependency graph defined.'
 
-        # Compute maximum runahead limit
+        # Compute runahead limit
         # 1/ take the largest of the minimum limits from each graph section
         if len(self.cyclers) != 0:
             # runahead limit is only relevant for cycling sections
             mrls = []
             mrl = None
             for cyc in self.cyclers:
-                mrls.append(cyc.minimum_runahead_limit)
+                mrls.append(cyc.get_def_min_runahead())
             mrl = max(mrls)
             if self.verbose:
                 print "Largest minimum runahead limit from cycling modules:", mrl, "hours"
 
-            # 2/ or if there is a configured maximum runahead limit, use it.
+            # 2/ or if there is a configured runahead limit, use it.
             rl = self['scheduling']['runahead limit']
             if rl:
                 if self.verbose:
-                    print "Configured maximum runahead limit: ", rl, "hours"
+                    print "Configured runahead limit: ", rl, "hours"
                 if rl < mrl:
                     print >> sys.stderr, 'WARNING: runahead limit (' + str(rl) + ') is too low (<' + str(mrl) + '), suite may stall'
                 crl = rl
             else:
                 crl = mrl
                 if self.verbose:
-                    print "Maximum runahead limit defaulting to:", crl, "hours"
+                    print "Runahead limit defaulting to:", crl, "hours"
 
             self['scheduling']['runahead limit'] = crl
 
@@ -861,9 +861,14 @@ class config( CylcConfigObj ):
             args = []
         else:
             ttype = 'cycling'
-            m = re.match( '^(\w+)\(([\w,]*)\)$', section )
+            # match cycler, e.g. "Yearly( 2010, 2 )"
+            m = re.match( '^(\w+)\(([\s\w,]*)\)$', section )
             if m:
-                modname, arglist = m.groups()
+                modname, cycargs = m.groups()
+                # remove leading and trailing space
+                cycargs = cycargs.strip()
+                arglist = re.sub( '\s+$', '', cycargs )
+                # split on comma with optional space each side
                 args = re.split( '\s*,\s*', arglist )
             else:
                 modname = self['scheduling']['cycling']

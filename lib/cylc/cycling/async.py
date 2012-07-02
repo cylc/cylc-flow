@@ -30,6 +30,9 @@ class async( cycler ):
         self.minimum_runahead_limit = 0
         pass
 
+    def get_def_min_runahead( self ):
+        return self.minimum_runahead_limit
+
     def next( self, tag ):
         return str( int(tag) + 1 )
 

@@ -16,15 +16,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, re, sys
-import subprocess
 from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.scheduler import scheduler
-from cylc.hostname import hostname
-
-global debug
-debug = True
+from cylc.run import main, set_main_debug
 
 class start( scheduler ):
     def __init__( self ):
@@ -57,7 +52,7 @@ If they exist /etc/profile and $HOME/.profile will be sourced on the
 remote host prior to attempting to run the suite.""" 
 
         self.parser = NoPromptOptionParser( usage,
-                [ """START                Initial cycle time. This is optional if defined in the 
+                extra_args=[ """START                Initial cycle time. This is optional if defined in the 
                         suite.rc file, in which case the command line
                         takes priority (and a suite.rc final cycle time
                         will be ignored), and is not required if the
@@ -73,14 +68,8 @@ remote host prior to attempting to run the suite."""
 
     def parse_commandline( self ):
         ( self.options, self.args ) = self.parser.parse_args()
-        largs = len( self.args )
-        if largs == 0:
-            self.parser.error( "ERROR: suite group:name required." )
-        elif largs > 2:
-            self.parser.error( "ERROR: too many arguments." )
-
         self.start_time = None
-        if largs == 2:
+        if len( self.args ) == 2:
             try:
                 self.start_time = ct( self.args[1] ).get()
             except CycleTimeError, x:
@@ -98,8 +87,7 @@ remote host prior to attempting to run the suite."""
             self.banner[ "COLD START" ] = self.start_time
             self.load_tasks = self.load_tasks_cold
 
-        global debug
-        debug = self.options.debug
+        set_main_debug( self.options.debug )
 
     def load_tasks_cold( self ):
         if self.start_time:
@@ -208,86 +196,4 @@ remote host prior to attempting to run the suite."""
             self.pool.add( itask )
 
 if __name__ == '__main__':
-    owner = None
-    host = None
-    remote = False
-    argstr = ' '.join(sys.argv[1:])
-    m = re.search( '(-o\s+|--owner=)(\w+)\s+', argstr )
-    if m:
-        owner = m.groups()[1]
-        if owner != os.environ['USER']:
-            remote = True
-    n = re.search( '(--host=)([.\-\w]+)', argstr )
-    if n:
-        host = n.groups()[1]
-        if host != hostname:
-            remote = True
-    if remote:
-        sshopts = ''
-        if owner: 
-            sshopts = owner  + '@'
-        if host:
-            sshopts += host
-        else:
-            sshopts += 'localhost'
-
-        command = "ssh " + sshopts + """ '\
-if [[ -f /etc/profile ]]; then source /etc/profile; fi; \
-if [[ -f .profile ]]; then source .profile; fi; cylc -v; \
-cylc run """ + ' '.join(sys.argv[1:]) + "'"
-
-        try:
-            popen = subprocess.Popen( command, shell=True )
-            res = popen.wait()
-            if res < 0:
-                print >> sys.stderr, "command terminated by signal", res
-            elif res > 0:
-                print >> sys.stderr, "command failed", res
-            else:
-                # res == 0
-                pass
-        except OSError, e:
-            # (note this would not catch background execution failure)
-            print >> sys.stderr, "Job submission failed", e
-            success = False
-            raise
-        else:
-            # done (remote suite finished)
-            sys.exit(0)
-
-    # local invocation
-    try:
-        server = start()
-    except Exception, x:
-        if debug:
-            raise
-        else:
-            print >> sys.stderr, x
-            print >> sys.stderr, "(use --debug to see exception traceback)"
-            sys.exit(1)
-    try:
-        server.run()
-        #   For profiling:
-        #import cProfile
-        #cProfile.run( 'server.run()', 'fooprof' )
-        #   and see Python docs "The Python Profilers"
-        #   for how to display the resulting stats.
-    except Exception, x:
-        print >> sys.stderr, "ERROR CAUGHT, will clean up before exit"
-        # this assumes no exceptions in shutdown():
-        server.shutdown( 'ERROR: ' + str(x) )
-
-        if debug:
-            raise
-        else:
-            print >> sys.stderr, "THE ERROR WAS:"
-            print >> sys.stderr, x
-            print >> sys.stderr, "(use --debug to see exception traceback)"
-            sys.exit(1)
-    except:
-        # ?catch 'sys.exit(1)' and 'raise SystemExit("foo")'?
-        print >> sys.stderr, "ERROR CAUGHT; will clean up before exit"
-        server.shutdown('!cylc error - please report!')
-        raise
-    else:
-        server.shutdown('Run completed normally')
+    main("run", start)

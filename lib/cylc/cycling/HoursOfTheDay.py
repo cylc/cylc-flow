@@ -47,8 +47,8 @@ class HoursOfTheDay( cycler ):
                 self.valid_hours.append( int(arg) )
             self.valid_hours.sort()
 
-        # default minimum runahead limit: find largest interval between
-        # successive cycle times.
+        # default minimum runahead limit in hours: the largest interval
+        # between successive cycle times.
         if len(self.valid_hours) == 1:
             mrl = 24
         else:
@@ -64,8 +64,10 @@ class HoursOfTheDay( cycler ):
             diff = 24 - prev + self.valid_hours[0]
             if diff > mrl:
                 mrl = diff
-
         self.minimum_runahead_limit = mrl
+
+    def get_def_min_runahead( self ):
+        return self.minimum_runahead_limit
 
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""

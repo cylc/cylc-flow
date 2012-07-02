@@ -144,7 +144,7 @@ that do not actually need the suite definition directory to be installed.
         pfile = os.path.join(dir, 'passphrase')
         if os.path.isfile( pfile ):
             try:
-                self.get( dir=pfile )
+                self.get( pfile )
                 return
             except SecurityError:
                 pass
