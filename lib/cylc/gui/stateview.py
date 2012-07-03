@@ -118,7 +118,7 @@ class tupdater(threading.Thread):
 
     def reconnect( self ):
         try:
-            client = cylc_pyro_client.client( 
+            client = cylc_pyro_client.client(
                     self.cfg.suite,
                     self.cfg.owner,
                     self.cfg.host,
@@ -137,7 +137,7 @@ class tupdater(threading.Thread):
     def connection_lost( self ):
         # clear the ttreestore ...
         self.ttreestore.clear()
-        # ... and the data structure used to populate it (otherwise 
+        # ... and the data structure used to populate it (otherwise
         # we'll get a blank treeview after a shutdown and restart via
         # the same gui when nothing is changing (e.g. all tasks waiting
         # on a clock trigger - because we only update the tree after
@@ -165,7 +165,7 @@ class tupdater(threading.Thread):
 
         elif glbl['paused']:
             self.status = 'status:\nHELD'
-       
+
         elif glbl['will_pause_at']:
             self.status = 'status:\nHOLD ' + glbl[ 'will_pause_at' ]
 
@@ -189,7 +189,7 @@ class tupdater(threading.Thread):
             self.block = 'access:\nunblocked'
 
         dt = glbl[ 'last_updated' ]
-        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
+        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" )
 
         # only update states if a change occurred
         if compare_dict_of_dict( states, self.state_summary ):
@@ -223,19 +223,19 @@ class tupdater(threading.Thread):
         column, key = data
         value = model.get_value( iter, column )
         return value == key
-       
+
     def update_gui( self ):
         """Update the treeview with new task and family information.
-        
+
         This redraws the treeview, but keeps a memory of user-expanded
         rows in 'expand_me' so that the tree is still expanded in the
         right places.
-        
+
         If auto-expand is on, calculate which rows need auto-expansion
         and expand those as well.
-        
+
         """
-        
+
         # Retrieve any user-expanded rows so that we can expand them later.
         expand_me = self._get_user_expanded_row_ids()
 
@@ -260,7 +260,7 @@ class tupdater(threading.Thread):
                     message = markup( get_col_priority( priority ), message )
                 state = markup( get_col(state), state )
                 dest[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc ]
-               
+
         # print existing tree:
         #print
         #iter = self.ttreestore.get_iter_first()
@@ -293,7 +293,7 @@ class tupdater(threading.Thread):
             task_named_paths = []
             for name in new_data[ ctime ].keys():
                 # The following line should filter by allowed families.
-                families = [f for f in self.family_hierarchy[name]]
+                families = list(self.family_hierarchy[name])
                 families.sort(lambda x, y: (y in self.family_hierarchy[x]) -
                                            (x in self.family_hierarchy[y]))
                 if "root" in families:
@@ -330,7 +330,7 @@ class tupdater(threading.Thread):
                 self.ttreestore.append( f_iter, [ ctime, name ] + new_data[ctime][name])
         if self.autoexpand:
             autoexpand_me = self._get_autoexpand_rows()
-            for row_id in [i for i in autoexpand_me]:
+            for row_id in list(autoexpand_me):
                 if row_id in expand_me:
                     # User expanded row also meets auto-expand criteria.
                     autoexpand_me.remove(row_id)
@@ -338,7 +338,7 @@ class tupdater(threading.Thread):
             self._last_autoexpand_me = autoexpand_me
         self.ttreeview.get_model().get_model().refilter()
         self.ttreeview.get_model().sort_column_changed()
-        
+
         # Expand all the rows that were user-expanded or need auto-expansion.
         self.ttreeview.get_model().foreach( self._expand_row, expand_me )
 
@@ -347,7 +347,7 @@ class tupdater(threading.Thread):
     def _get_row_id( self, model, rpath ):
         # Record a rows first two values.
         riter = model.get_iter( rpath )
-        ctime = model.get_value( riter, 0 ) 
+        ctime = model.get_value( riter, 0 )
         name = model.get_value( riter, 1 )
         return (ctime, name)
 
@@ -360,7 +360,7 @@ class tupdater(threading.Thread):
             row_id not in self._last_autoexpand_me):
             expand_me.append( row_id )
         return False
-        
+
     def _get_user_expanded_row_ids( self ):
         """Return a list of row ctimes and names that were user expanded."""
         names = []
@@ -405,21 +405,21 @@ class tupdater(threading.Thread):
                     new_iter = self.ttreestore.iter_parent( r_iter )
             r_iter = new_iter
         return autoexpand_me
-        
+
     def _calc_autoexpand_row( self, row_iter ):
         """Calculate whether a row meets the auto-expansion criteria.
 
         Currently, a family row with tasks in the right states will not
         be expanded, but the tree above it (parents, grandparents, etc)
         will.
-        
+
         """
         path = self.ttreestore.get_path( row_iter )
         sub_st = self.ttree_paths.get( path, {} ).get( 'states', [] )
         ctime = self.ttreestore.get_value( row_iter, 0 )
         name = self.ttreestore.get_value( row_iter, 1 )
         if any( [ s in self.autoexpand_states for s in sub_st ] ):
-            # return True  # Uncomment if we just want to expand to tasks
+            # return True  # TODO: Option for different expansion rules?
             if ctime == name:
                 # Expand cycle times if any child states comply.
                 return True
@@ -434,7 +434,7 @@ class tupdater(threading.Thread):
                      return True
                 child_iter = self.ttreestore.iter_next( child_iter )
             return False
-        return False 
+        return False
 
     def update_globals( self ):
         self.info_bar.set_mode( self.mode )
@@ -442,7 +442,7 @@ class tupdater(threading.Thread):
         self.info_bar.set_block( self.block )
         self.info_bar.set_status( self.status )
         return False
- 
+
     def run(self):
         glbl = None
         states = {}
@@ -549,7 +549,7 @@ class lupdater(threading.Thread):
 
         elif glbl['paused']:
             self.status = 'status:\nHELD'
-       
+
         elif glbl['will_pause_at']:
             self.status = 'status:\nHOLD ' + glbl[ 'will_pause_at' ]
 
@@ -573,7 +573,7 @@ class lupdater(threading.Thread):
             self.block = 'access:\nunblocked'
 
         dt = glbl[ 'last_updated' ]
-        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
+        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" )
 
         # only update states if a change occurred
         if compare_dict_of_dict( states, self.state_summary ):
@@ -601,11 +601,11 @@ class lupdater(threading.Thread):
         for i in range( ncol ):
             digit = zct[i:i+1]
             if digit == ' ':
-                led_ctime.append( self.led_digits_blank )  
+                led_ctime.append( self.led_digits_blank )
             elif i in [0,1,2,3,6,7]:
-                led_ctime.append( self.led_digits_one[ int(digit) ] )  
+                led_ctime.append( self.led_digits_one[ int(digit) ] )
             else:
-                led_ctime.append( self.led_digits_two[ int(digit) ] )  
+                led_ctime.append( self.led_digits_two[ int(digit) ] )
 
         return led_ctime
 
@@ -644,7 +644,7 @@ class lupdater(threading.Thread):
         self.led_treeview.get_selection().set_mode( gtk.SELECTION_NONE )
 
         # this is how to set background color of the entire treeview to black:
-        #treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) ) 
+        #treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) )
 
         tvc = gtk.TreeViewColumn( 'Task Tag' )
         for i in range(10):
@@ -696,7 +696,7 @@ class lupdater(threading.Thread):
                 tasks[ ctime ] = [ name ]
             else:
                 tasks[ ctime ].append( name )
- 
+
         # flat (a liststore would do)
         ctimes = tasks.keys()
         ctimes.sort()
@@ -707,7 +707,7 @@ class lupdater(threading.Thread):
 
             for name in self.task_list:
                 if name in tasks_at_ctime:
-                    state = self.state_summary[ name + '%' + ctime ][ 'state' ] 
+                    state = self.state_summary[ name + '%' + ctime ][ 'state' ]
                     if state == 'waiting':
                         state_list.append( self.waiting_led )
                     elif state == 'retry_delayed':
@@ -739,7 +739,7 @@ class lupdater(threading.Thread):
         self.info_bar.set_block( self.block )
         self.info_bar.set_status( self.status )
         return False
- 
+
     def run(self):
         glbl = None
         states = {}
