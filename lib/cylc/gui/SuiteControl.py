@@ -191,8 +191,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.logging_dir = god.get_logging_directory()
             self.task_list = god.get_task_list()
         except SuiteIdentificationError, x:
-    	    self.initial_cycle_time = None
-    	    self.final_cycle_time = None
+            self.initial_cycle_time = None
+            self.final_cycle_time = None
             self.sim_only = None
             self.logging_dir = None
             self.task_list = []
@@ -2034,7 +2034,6 @@ shown here in the state they were in at the time of triggering.''' )
     def _alter_status_tool_bar( self, new_status ):
         # Handle changes in status for the status-sensitive tool bar items.
         if "connected" in new_status:
-            self.run_pause_toolbutton.set_sensitive( False )
             self.stop_toolbutton.set_sensitive( False )
             return False
         self.stop_toolbutton.set_sensitive( "STOPPED" not in new_status )
@@ -2051,6 +2050,7 @@ shown here in the state they were in at the time of triggering.''' )
             tip_text = "Release Suite (unpause)"
             click_func = self.resume_suite
         else:
+            # how do we end up here?
             self.run_pause_toolbutton.set_sensitive( False )
             return False
         icon_widget = gtk.image_new_from_stock( icon,

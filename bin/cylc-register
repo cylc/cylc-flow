@@ -17,12 +17,15 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
-from optparse import OptionParser
+from cylc.run import remote_run
+from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.registration import localdb, RegistrationError, DatabaseLockedError
 from cylc.passphrase import passphrase
 from cylc.hostname import hostname
 
-parser = OptionParser( usage = """cylc [db] register [options] SUITE PATH
+remote_run( 'register' )
+
+parser = NoPromptOptionParser( usage = """cylc [db] register [options] SUITE PATH
 
 Register a suite in your private suite database.
 
@@ -57,11 +60,8 @@ EXAMPLES, for suite definition dirs /home/bob/(one,two,three,four):
    |-bag     "Test Suite Two"   | /home/bob/two
    `-bar
      |-baz   "Test Suite Three" | /home/bob/three
-     `-waz   "Test Suite Four"  | /home/bob/four
-
-Arguments:
-     SUITE  -  The new hierarchical suite registration name.
-     PATH   -  A cylc suite definition directory.""" )
+     `-waz   "Test Suite Four"  | /home/bob/four""",
+     extra_args = ["PATH                 A cylc suite definition directory."] )
 
 parser.add_option( "-v","--verbose",
         help="Print extra information.",

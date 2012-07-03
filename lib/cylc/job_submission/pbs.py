@@ -47,7 +47,7 @@ PBS qsub job submission.
         # This restriction has been removed at PBS version 11
         # but truncating to 15 chars should not cause any harm.
         if len( defaults[ '-N' ] ) > 15:
-        	defaults[ '-N' ] = defaults[ '-N' ][:15]
+            defaults[ '-N' ] = defaults[ '-N' ][:15]
         self.directives = defaults
 
     def construct_jobfile_submission_command( self ):

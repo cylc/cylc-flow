@@ -17,17 +17,17 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from optparse import OptionParser
+from cylc.run import remote_run
+from cylc.CylcOptionParsers import NoPromptOptionParser
 from cylc.registration import dbgetter, RegistrationError
 
-parser = OptionParser( usage = """cylc [db] get-directory SUITE
+remote_run( 'get-directory' )
+
+parser = NoPromptOptionParser( usage = """cylc [db] get-directory SUITE
 
 Retrieve and print a suite definition directory path.
 How to move to a suite definition directory, for the lazy: 
-  $ cd $(cylc get SUITE)
-
-Arguments:
-    SUITE - target suite.""" )
+  $ cd $(cylc get SUITE).""" )
 
 parser.add_option( "-c", "--central",
         help="Target the central suite database.",
