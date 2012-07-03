@@ -736,3 +736,4 @@ template when the suite is parsed, as a dictionary structure called
     [[[environment]]]
         MY_HOME_DIR_ON_SUITE_HOST = {{environ['HOME']}}
 
++ Bug fix "cylc log -r N" (for viewing old rotations)
