@@ -19,6 +19,7 @@
 import subprocess
 import os, sys, re
 from Jinja2Support import Jinja2Process, TemplateSyntaxError, TemplateError
+from cylc.include_files import inline
 
 # auto-replaced with version tag by new-release script:
 cylc_version = "VERSION-TEMPLATE"
@@ -80,7 +81,9 @@ class compat( object ):
             # Don't just exit here - causes problems with db commands
             # like register that need to unlock the db after errors.
             raise 
-        flines = f.readlines()
+        lines = f.readlines()
+        # inline any include-files first
+        flines = inline( self.dir, lines )
 
         # Here we must process with Jinja2 before checking the first two
         # lines, to allow use of the cylc version number as a Jinja2
