@@ -89,8 +89,7 @@ Arguments:
 
         if self.suite_specific and len( args ) == 0:
             self.error( "Please supply a target suite name" )
-        elif len( args ) > self.n_args:
-            print args, len(args), self.n_args
+        elif len( args ) > self.n_args + 1:
             self.error( "Too many arguments" )
 
         if self.suite_specific:
