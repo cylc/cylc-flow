@@ -44,7 +44,7 @@ from regpath import RegPath
 from trigger import triggerx
 from output import outputx
 from TaskID import TaskID, AsyncTag
-from Jinja2Support import Jinja2Process, TemplateSyntaxError, TemplateError
+from Jinja2Support import Jinja2Process, TemplateError, TemplateSyntaxError
 from continuation_lines import join
 from include_files import inline
 
@@ -325,7 +325,7 @@ class config( CylcConfigObj ):
             if cfam not in self.members:
                 print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
                 self.closed_families.remove( cfam )
-
+        self.vis_families = list(self.closed_families)
         if self.verbose:
             print "Checking suite event hooks"
         script = None
