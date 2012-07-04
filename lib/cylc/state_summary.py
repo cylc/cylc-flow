@@ -48,57 +48,29 @@ class state_summary( Pyro.core.ObjBase ):
             task_states.setdefault(ctime, {})
             task_states[ctime][name] = self.task_summary[task.id]['state']
 
-        tree = self.config.family_tree
         fam_states = {}
         for ctime, c_task_states in task_states.items():
-            # For each time, construct a family state tree
-            fam_states.setdefault(ctime, {})
-            c_fam_states = fam_states[ctime]
-            nodes_redone = []
-            # A stack item contains a task/family name and their child dict.
-            stack = []
-            # Initialise the stack with the top names and children (just root)
-            for key in tree:
-                stack.append([key, tree[key]])
-            # Begin depth-first tree search, building states as we go.
-            while stack:
-                node, subtree = stack.pop(0)
-                if (node in c_task_states or node in c_fam_states):
-                    # node and children don't need any state calculation.
+            # For each cycle time, construct a family state tree           
+            c_fam_task_states = {}
+            
+            for key, parent_list in self.config.family_hierarchy.items():
+                state = task_states.get(ctime, {}).get(key)
+                if state is None:
                     continue
-                is_first_attempt = node not in nodes_redone
-                could_get_later = True
-                child_states = []
-                for child, grandchild_dict in subtree.items():
-                    # Iterate through child task names and info.
-                    if child in c_task_states:
-                        child_states.append(c_task_states[child])
-                    elif child in c_fam_states:
-                        child_states.append(c_fam_states[child])
-                    else:
-                        # No state for this child
-                        # Family and empty (base graph) nodes.
-                        if (is_first_attempt and
-                            isinstance(grandchild_dict, dict)):
-                            # Child is a family, so calculate its state next.
-                            # Dive down tree.
-                            stack.insert(0, [child, subtree[child]])
-                        else:
-                            # Child is a task with no state (base graph).
-                            child_states.append('NULL')
-                            could_get_later = False
-                if child_states:
-                    # Calculate the node state.
-                    node_id = node + "%" + ctime
-                    state = self.extract_group_state(child_states)
-                    self.family_summary[node_id] = {'name': node,
-                                                    'label': ctime,
-                                                    'state': state}
-                    c_fam_states[node] = state
-                elif could_get_later and is_first_attempt:
-                    # Put this off until later (when the children are done).
-                    stack.append([node, subtree])
-                    nodes_redone.append(node)
+                for parent in parent_list:
+                    if parent == key:
+                        continue
+                    c_fam_task_states.setdefault(parent, [])
+                    c_fam_task_states[parent].append(state)
+            
+            for fam, child_states in c_fam_task_states.items():
+                f_id = fam + "%" + ctime
+                state = self.extract_group_state(child_states)
+                if state is None:
+                    continue
+                self.family_summary[f_id] = {'name': fam,
+                                             'label': ctime,
+                                             'state': state}
         
         self.global_summary[ 'start time' ] = self.start_time
         self.global_summary[ 'oldest cycle time' ] = oldest
@@ -122,9 +94,9 @@ class state_summary( Pyro.core.ObjBase ):
     def extract_group_state( self, child_states ):
         """Summarise child states as a group."""
         ordered_states = ['failed', 'held', 'running', 'submitted',
-                          'retry_delayed', 'queued', 'waiting', 'runahead']
+                          'retry_delayed', 'queued', 'waiting', 'runahead',
+                          'succeeded']
         for state in ordered_states:
             if state in child_states:
                 return state
-        # All child states must be 'succeeded'
-        return 'succeeded'
+        return None

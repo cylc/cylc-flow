@@ -36,38 +36,50 @@ Text Treeview suite control interface.
 
         self.gcapture_windows = []
 
+        self.ttree_paths = {}  # Cache dict of tree paths & states, names.
+
     def get_control_widgets( self ):
         main_box = gtk.VBox()
         main_box.pack_start( self.treeview_widgets(), expand=True, fill=True )
         
         self.tfilt = ''
         
-        self.t = tupdater( self.cfg, self.ttreeview, self.info_bar )
+        self.t = tupdater( self.cfg, self.ttreeview, self.ttree_paths,
+                           self.info_bar )
         self.t.start()
         return main_box
 
     def visible_cb(self, model, iter ):
         # visibility determined by state matching active toggle buttons
         # set visible if model value NOT in filter_states
-        state = model.get_value(iter, 1 ) 
-        # strip formatting tags
-        if state:
+        ctime = model.get_value(iter, 0 )
+        name = model.get_value(iter, 1)
+        if name is None or ctime is None:
+            return True
+        name = re.sub( r'<.*?>', '', name )
+
+        if ctime == name:
+            # Cycle-time line (not state etc.)
+            return True
+
+         # Task or family.
+        state = model.get_value(iter, 2 ) 
+        if state is not None:
             state = re.sub( r'<.*?>', '', state )
-            sres = state not in self.tfilter_states
-            # AND if taskname matches filter entry text
-            if self.tfilt == '':
-                nres = True
-            else:
-                tname = model.get_value(iter, 0)
-                tname = re.sub( r'<.*?>', '', tname )
-                if re.search( self.tfilt, tname ):
-                    nres = True
-                else:
-                    nres = False
-        else:
-            # this must be a cycle-time line (not state etc.)
-            sres = True
-            nres = True
+        sres = state not in self.tfilter_states
+
+        nres = not self.tfilt or self.tfilt in name
+
+        if model.iter_has_child( iter ):
+            # Family.
+            path = model.get_path( iter )
+
+            sub_st = self.ttree_paths.get( path, {} ).get( 'states', [] )
+            sres = sres or any([s not in self.tfilter_states for t in sub_st])
+
+            if self.tfilt:
+                sub_nm = self.ttree_paths.get( path, {} ).get( 'names', [] )
+                nres = nres or any([self.tfilt in n for n in sub_nm])
         return sres and nres
 
     def check_tfilter_buttons(self, tb):
@@ -82,6 +94,30 @@ Text Treeview suite control interface.
         ftxt = self.filter_entry.get_text()
         self.tfilt = self.filter_entry.get_text()
         self.tmodelfilter.refilter()
+
+    def toggle_grouping( self, toggle_item ):
+        """Toggle grouping by visualisation families."""
+        if isinstance( toggle_item, gtk.ToggleToolButton ):
+            group_on = toggle_item.get_active()
+            if group_on == self.t.should_group_families:
+                return False
+            self.t.should_group_families = group_on
+            if group_on:
+                tip_text = "Click to ungroup families"
+            else:
+                tip_text = "Click to group tasks by families"
+            self._set_tooltip( toggle_item, tip_text )
+            self.group_menu_item.set_active( group_on )
+        else:
+            group_on = toggle_item.get_active()
+            if group_on == self.t.should_group_families:
+                return False
+            self.t.should_group_families = group_on
+            if toggle_item != self.group_menu_item:
+                self.group_menu_item.set_active( group_on )
+            self.group_toolbutton.set_active( group_on )            
+        self.t.update_gui()
+        return False
 
     def stop(self):
         self.t.quit = True
@@ -103,37 +139,34 @@ Text Treeview suite control interface.
         # filtering in use) although the exact same code worked for a
         # liststore.
 
-        self.ttreestore = gtk.TreeStore(str, str, str, str, str, str, str )
+        self.sort_col_num = 0
+
+        self.ttreestore = gtk.TreeStore(str, str, str, str, str, str, str, str)
         self.tmodelfilter = self.ttreestore.filter_new()
         self.tmodelfilter.set_visible_func(self.visible_cb)
+        self.tmodelsort = gtk.TreeModelSort(self.tmodelfilter)
         self.ttreeview = gtk.TreeView()
-        self.ttreeview.set_model(self.tmodelfilter)
+        self.ttreeview.set_model(self.tmodelsort)
 
         ts = self.ttreeview.get_selection()
         ts.set_mode( gtk.SELECTION_SINGLE )
 
         self.ttreeview.connect( 'button_press_event', self.on_treeview_button_pressed )
 
-        headings = ['task', 'state', 'message', 'Tsubmit', 'Tstart', 'mean dT', 'ETC' ]
-        bkgcols  = [ None,  '#def',  '#fff',    '#def',    '#fff',   '#def',    '#fff']
-        for n in range(len(headings)):
+        headings = [ None, 'task', 'state', 'message', 'Tsubmit', 'Tstart', 'mean dT', 'ETC' ]
+        bkgcols  = [ None, None,  '#def',  '#fff',    '#def',    '#fff',   '#def',    '#fff']
+        for n in range(1, len(headings)):
+            # Skip first column (cycle time)
             cr = gtk.CellRendererText()
             cr.set_property( 'cell-background', bkgcols[n] )
             #tvc = gtk.TreeViewColumn( headings[n], cr, text=n )
             tvc = gtk.TreeViewColumn( headings[n], cr, markup=n )
             tvc.set_resizable(True)
-            if n == 0:
-                # allow click sorting only on first column (cycle time
-                # and task name) as I don't understand the effect of
-                # sorting on other columns in a treeview (it doesn't
-                # seem to work as expected).
-                tvc.set_clickable(True)
-                tvc.connect("clicked", self.rearrange, n )
-                tvc.set_sort_order(gtk.SORT_ASCENDING)
-                tvc.set_sort_indicator(True)
-                self.ttreestore.set_sort_column_id(n, gtk.SORT_ASCENDING ) 
+            tvc.set_clickable(True)
+         #   tvc.connect("clicked", self.change_sort_order, n - 1 )
             self.ttreeview.append_column(tvc)
- 
+            tvc.set_sort_column_id( n - 1 )
+            self.tmodelsort.set_sort_func( n - 1, self.sort_column, n - 1 )
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
         sw.add( self.ttreeview )
@@ -195,17 +228,24 @@ Text Treeview suite control interface.
 
         selection = treeview.get_selection()
         treemodel, iter = selection.get_selected()
-        name = treemodel.get_value( iter, 0 )
-        iter2 = treemodel.iter_parent( iter )
-        try:
-            ctime = treemodel.get_value( iter2, 0 )
-        except TypeError:
+        ctime = treemodel.get_value( iter, 0 )
+        name = treemodel.get_value( iter, 1 )
+        if ctime == name:
             # must have clicked on the top level ctime 
             return
 
         task_id = name + '%' + ctime
 
         menu = self.get_right_click_menu( task_id )
+
+        menu.append( gtk.SeparatorMenuItem() )
+
+        group_item = gtk.CheckMenuItem( 'Toggle Family Grouping' )
+        group_item.set_active( self.t.should_group_families )
+        menu.append( group_item )
+        group_item.connect( 'toggled', self.toggle_grouping )
+        group_item.show()
+
         menu.popup( None, None, None, event.button, event.time )
 
         # TO DO: popup menus are not automatically destroyed and can be
@@ -215,19 +255,30 @@ Text Treeview suite control interface.
 
         return True
 
-    def rearrange( self, col, n ):
+    def sort_column( self, model, iter1, iter2, col_num ):
         cols = self.ttreeview.get_columns()
-        for i_n in range(0,len(cols)):
-            if i_n == n: 
-                cols[i_n].set_sort_indicator(True)
-            else:
-                cols[i_n].set_sort_indicator(False)
-        # col is cols[n]
-        if col.get_sort_order() == gtk.SORT_ASCENDING:
-            col.set_sort_order(gtk.SORT_DESCENDING)
+        ctime1 = model.get_value( iter1 , 0 )
+        ctime2 = model.get_value( iter2, 0 )
+        if ctime1 != ctime2:
+            if cols[col_num].get_sort_order() == gtk.SORT_DESCENDING:
+                return cmp(ctime2, ctime1)
+            return cmp(ctime1, ctime2)
+
+        # Columns do not include the cycle time (0th col), so add 1.
+        prop1 = model.get_value( iter1, col_num + 1 )
+        prop2 = model.get_value( iter2, col_num + 1 )
+        return cmp( prop1, prop2 )
+
+    def change_sort_order( self, col, event=None, n=0 ):
+        if hasattr(event, "button") and event.button != 1:
+            return False
+        cols = self.ttreeview.get_columns()
+        self.sort_col_num = n
+        if cols[n].get_sort_order() == gtk.SORT_ASCENDING:
+            cols[n].set_sort_order( gtk.SORT_DESCENDING )
         else:
-            col.set_sort_order(gtk.SORT_ASCENDING)
-        self.ttreestore.set_sort_column_id(n, col.get_sort_order()) 
+            cols[n].set_sort_order( gtk.SORT_ASCENDING )
+        return False
 
     def on_popup_quit( self, b, lv, w ):
         lv.quit()
@@ -240,6 +291,11 @@ Text Treeview suite control interface.
         autoex_item = gtk.MenuItem( 'Toggle _Auto-Expand Tree' )
         items.append( autoex_item )
         autoex_item.connect( 'activate', self.toggle_autoexpand )
+
+        self.group_menu_item = gtk.CheckMenuItem( 'Toggle _Family Grouping' )
+        self.group_menu_item.set_active( self.t.should_group_families )
+        items.append( self.group_menu_item )
+        self.group_menu_item.connect( 'toggled', self.toggle_grouping )
         return items
 
     def _set_tooltip( self, widget, tip_text ):
@@ -275,7 +331,17 @@ Text Treeview suite control interface.
         tooltip.enable()
         tooltip.set_tip(filter_toolitem, "Filter tasks by name")
         items.append(filter_toolitem)
-        
+
+        self.group_toolbutton = gtk.ToggleToolButton()
+        self.group_toolbutton.set_active( self.t.should_group_families )
+        root_img_dir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
+        g_image = gtk.image_new_from_file( root_img_dir + '/group.png' )
+        self.group_toolbutton.set_icon_widget( g_image )
+        self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
+        self._set_tooltip( self.group_toolbutton,
+                           "Click to group tasks by families" )
+        items.append( self.group_toolbutton )
+
         return items
 
 class StandaloneControlTreeApp( ControlTree ):
