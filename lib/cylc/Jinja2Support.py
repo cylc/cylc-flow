@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
+import glob
 
 try:
     from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError, TemplateError
@@ -40,13 +41,39 @@ def Jinja2Process( flines, dir, verbose ):
             print "Processing the suite with Jinja2"
         env = Environment( loader=FileSystemLoader(dir) )
 
+        # Load any custom Jinja2 filters in the suite definition directory
+        # Example: a filter to pad integer values some fill character:
+        #|(file SUITE_DEFINIION_DIRECTORY/Jinja2/foo.py)
+        #|  #!/usr/bin/env python
+        #|  def foo( value, length, fillchar ):
+        #|     return str(value).rjust( int(length), str(fillchar) )
+        fdirs = [os.path.join( dir, 'Jinja2' ), os.path.join( dir, 'jinja2' ), \
+                os.path.join( os.path.join( os.environ['HOME'], '.cylc', 'Jinja2' )), \
+                os.path.join( os.path.join( os.environ['HOME'], '.cylc', 'jinja2' ))]
+        usedfdirs = []
+        for fdir in fdirs:
+            if os.path.isdir( fdir ):
+                usedfdirs.append( fdir )
+        for filterdir in usedfdirs:
+            sys.path.append( os.path.abspath( filterdir ))
+            for f in glob.glob( os.path.join( filterdir, '*.py' )):
+                fname = os.path.basename( f ).rstrip( '.py' )
+                # TO DO: EXCEPTION HANDLING FOR LOADING CUSTOM FILTERS
+                m = __import__( fname )
+                env.filters[ fname ] = getattr( m, fname )
+
         # Import SUITE HOST USER ENVIRONMENT into template:
         # (usage e.g.: {{environ['HOME']}}).
         env.globals['environ'] = os.environ
 
         # load file lines into a template, excluding '#!jinja2' so
         # that '#!cylc-x.y.z' rises to the top.
-        template = env.from_string( ''.join(flines[1:]) )
+        try:
+            template = env.from_string( ''.join(flines[1:]) )
+        except Exception, x:
+            # This happens if we use an unknown Jinja2 filter, for example.
+            # TO DO: THIS IS CAUGHT BY VALIDATE BUT NOT BY VIEW COMMAND...
+            raise TemplateError( x )
 
         # (converting unicode to plain string; configobj doesn't like?)
         rendered = str( template.render() )
