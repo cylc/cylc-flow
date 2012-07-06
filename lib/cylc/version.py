@@ -18,6 +18,8 @@
 
 import subprocess
 import os, sys, re
+from Jinja2Support import Jinja2Process, TemplateSyntaxError, TemplateError
+from cylc.include_files import inline
 
 # auto-replaced with version tag by new-release script:
 cylc_version = "VERSION-TEMPLATE"
@@ -70,6 +72,7 @@ class compat( object ):
         self.suite = suite
         self.suiterc = suiterc
         self.messages = []
+        self.dir = os.path.dirname(suiterc)
 
         try:
             f = open( suiterc, 'r' )
@@ -78,9 +81,41 @@ class compat( object ):
             # Don't just exit here - causes problems with db commands
             # like register that need to unlock the db after errors.
             raise 
-        # read first line of the suite.rc file
-        line0 = f.readline()
-        line1 = f.readline()
+        lines = f.readlines()
+        # inline any include-files first
+        flines = inline( self.dir, lines )
+
+        # Here we must process with Jinja2 before checking the first two
+        # lines, to allow use of the cylc version number as a Jinja2
+        # variable (for use in multiple places):
+        #====
+        # #!Jinja2
+        # {% set CYLC_VERSION=4.2.2 %}
+        # #!{{CYLC_VERSION}}
+        # # ...
+        #----
+        # This will be processed to:
+        #====
+        # #!Jinja2
+        # #!cylc-4.2.2
+        # # ...
+        #----
+
+        # handle Jinja2 expressions
+        try:
+            # (this will do nothing for non Jinja2 suites)
+            suiterc = Jinja2Process( flines, self.dir, False )
+        except TemplateSyntaxError, x:
+            lineno = x.lineno + 1  # (flines array starts from 0)
+            print >> sys.stderr, 'Jinja2 Template Syntax Error, line', lineno
+            print >> sys.stderr, flines[x.lineno]
+            raise SystemExit(str(x))
+        except TemplateError, x:
+            print >> sys.stderr, 'Jinja2 Template Error'
+            raise SystemExit(x)
+
+        line0 = suiterc[0]
+        line1 = suiterc[1]
         f.close()
 
         # location of the invoked cylc
@@ -103,7 +138,7 @@ class compat( object ):
             self.required_version = re.sub( '^.*cylc-', '', self.required_cylc )  # e.g. 4.1.1
             if self.required_version != cylc_version:
                 self.compatible = False
-                self.messages.append( 'Cylc cross-version suite compatibility:' )
+                self.messages.append( 'Pseudo backward compatibility:' )
                 self.messages.append( '  Invoked version: cylc-' + cylc_version + ' (' + self.cylc_dir + ')')
                 self.messages.append( '  Suite requires:  ' + self.required_cylc )
             else:

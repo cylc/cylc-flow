@@ -78,9 +78,9 @@ try:
         # connect to remote state summary object
         try: 
             proxy = cylc_pyro_client.client( suite, owner=options.owner, \
-		host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
-	except SecurityError, x:
-	    raise SystemExit(x)
+            host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
+        except SecurityError, x:
+            raise SystemExit(x)
         except SuiteIdentificationError, x:
             if not alerted:
                 print "\n\033[1;37;41mfailed to connect" + ctrl_end 
@@ -101,7 +101,7 @@ try:
 
             # get state summary, task names, cycle times
             try:
-                [glbl, states] = proxy.get_state_summary()
+                [glbl, states, fam_states] = proxy.get_state_summary()
 
             except TimeoutError:
                 if not alerted3:

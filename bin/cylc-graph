@@ -148,14 +148,10 @@ parser.add_option( "-c", "--central",
     metavar="FILE", action="store_true", default=False, dest="central" )
 
 parser.add_option( "-o", "--output", 
-    help="Write an image file with format determined by file extension. "
-    "This currently works for suite dependency graphs but not "
-    "namespace hierarchy graphs. "
-    "The image will be rewritten automatically, for the configured "
-    "(suite.rc) graph as you edit the suite. Available formats may "
-    "include png, svg, jpg, gif, ps, ..., depending on your graphviz "
-    "build; to see what's available specify a non-existent format "
-    "and read the resulting error message.",
+    help="Write out an image file, format determined by file extension. "
+    "The file will be rewritten if the suite definition is changed while "
+    "the viewer is running.  Available formats depend on your graphviz "
+    "build and may include png, jpg, gif, svg, pdf, ps, etc.",
     metavar="FILE", action="store", default=None, dest="outputfile" )
 
 ( options, args ) = parser.parse_args()

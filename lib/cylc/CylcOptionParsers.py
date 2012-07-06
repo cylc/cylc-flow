@@ -24,30 +24,44 @@ from hostname import hostname
 
 class NoPromptOptionParser( OptionParser ):
 
-    def __init__( self, usage, extra_args=None ):
+    def __init__( self, usage, suite_specific=True, extra_args=None ):
+        self.suite_specific = suite_specific
 
-        usage += """
+        self.n_args = 0
+        if suite_specific:
+            usage += """
 
 Arguments:
    SUITE                Target suite.""" 
 
-        self.n_args = 1  # suite name
-        if extra_args:
-            for arg in extra_args:
-                usage += '\n   ' + arg
-                self.n_args += 1
+            self.n_args = 1  # suite name
+            if extra_args:
+                for arg in extra_args:
+                    usage += '\n   ' + arg
+                    self.n_args += 1
 
         OptionParser.__init__( self, usage )
 
-        self.add_option( "-o", "--owner",
-                help="Owner of the target suite (defaults to $USER).",
-                metavar="USER", default=os.environ["USER"],
-                action="store", dest="owner" )
+        if suite_specific:
+            self.add_option( "-o", "--owner",
+                    help="Owner of the target suite (defaults to $USER).",
+                    metavar="USER", default=os.environ["USER"],
+                    action="store", dest="owner" )
 
-        self.add_option( "--host",
-                help="Cylc suite host (defaults to localhost).",
-                metavar="HOST", action="store", default=hostname,
-                dest="host" )
+            self.add_option( "--host",
+                    help="Cylc suite host (defaults to localhost).",
+                    metavar="HOST", action="store", default=hostname,
+                    dest="host" )
+        else:
+            self.add_option( "-o", "--owner",
+                    help="User account owner (defaults to $USER).",
+                    metavar="USER", default=os.environ["USER"],
+                    action="store", dest="owner" )
+
+            self.add_option( "--host",
+                    help="Host name (defaults to localhost).",
+                    metavar="HOST", action="store", default=hostname,
+                    dest="host" )
 
         #self.add_option( "--port",
         #        help="Cylc suite port (default: scan cylc ports).",
@@ -65,25 +79,31 @@ Arguments:
                 help="Turn on exception tracebacks.",
                 action="store_true", default=False, dest="debug" )
 
-        self.add_option( "-p", "--passphrase-dir",
-                help="Suite passphrase file location",
-                action="store", dest="pfile" )
+        if suite_specific:
+            self.add_option( "-p", "--passphrase",
+                    help="Suite passphrase file",
+                    metavar="FILE", action="store", dest="pfile" )
 
     def parse_args( self ):
         (options, args) = OptionParser.parse_args( self )
 
-        if len( args ) == 0:
+        if self.suite_specific and len( args ) == 0:
             self.error( "Please supply a target suite name" )
-        elif len( args ) > self.n_args:
+        elif len( args ) > self.n_args + 1:
             self.error( "Too many arguments" )
 
-        self.suite_name = args[0]
+        if self.suite_specific:
+            self.suite_name = args[0]
 
         #DISABLED self.practice = options.practice  # practice mode or not
         return ( options, args )
 
     def get_suite_name( self ):
-       return self.suite_name
+        if self.suite_specific:
+            return self.suite_name
+        else:
+            # should not happen
+            raise SystemExit( "This command is not suite specific" )
 
 class PromptOptionParser( NoPromptOptionParser ):
 

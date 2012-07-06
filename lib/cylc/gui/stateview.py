@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.config import config
+import inspect
 import sys, re, string
 import gobject
 import time
@@ -87,7 +88,7 @@ def get_col_priority( priority ):
 
 class tupdater(threading.Thread):
 
-    def __init__(self, cfg, ttreeview, info_bar ):
+    def __init__(self, cfg, ttreeview, ttree_paths, info_bar ):
 
         super(tupdater, self).__init__()
 
@@ -104,8 +105,13 @@ class tupdater(threading.Thread):
         self.dt = "state last updated at:\nwaiting..."
         self.block = "access:\nwaiting ..."
 
+        self.autoexpand_states = [ 'submitted', 'running', 'failed', 'held' ]
+        self._last_autoexpand_me = []
+        self.ttree_paths = {}  # Dict of paths vs all descendant node states
+        self.should_group_families = False
         self.ttreeview = ttreeview
-        self.ttreestore = ttreeview.get_model().get_model()
+        # Hierarchy of models: view <- sorted <- filtered <- base model
+        self.ttreestore = ttreeview.get_model().get_model().get_model()
         self.info_bar = info_bar
 
         self.reconnect()
@@ -118,18 +124,20 @@ class tupdater(threading.Thread):
                     self.cfg.host,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
- 
+            self.remote = client.get_proxy( 'remote' )
         except:
             return False
         else:
             self.status = "status:\nconnected"
             self.info_bar.set_status( self.status )
+            self.family_hierarchy = self.remote.get_family_hierarchy()
+            self.allowed_families = self.remote.get_vis_families()
             return True
 
     def connection_lost( self ):
         # clear the ttreestore ...
         self.ttreestore.clear()
-        # ... and the data structure used to populate it (otherwise 
+        # ... and the data structure used to populate it (otherwise
         # we'll get a blank treeview after a shutdown and restart via
         # the same gui when nothing is changing (e.g. all tasks waiting
         # on a clock trigger - because we only update the tree after
@@ -144,7 +152,7 @@ class tupdater(threading.Thread):
 
     def update(self):
         try:
-            [glbl, states] = self.god.get_state_summary()
+            [glbl, states, fam_states] = self.god.get_state_summary()
         except:
             gobject.idle_add( self.connection_lost )
             return False
@@ -157,7 +165,7 @@ class tupdater(threading.Thread):
 
         elif glbl['paused']:
             self.status = 'status:\nHELD'
-       
+
         elif glbl['will_pause_at']:
             self.status = 'status:\nHOLD ' + glbl[ 'will_pause_at' ]
 
@@ -181,7 +189,7 @@ class tupdater(threading.Thread):
             self.block = 'access:\nunblocked'
 
         dt = glbl[ 'last_updated' ]
-        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
+        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" )
 
         # only update states if a change occurred
         if compare_dict_of_dict( states, self.state_summary ):
@@ -191,6 +199,7 @@ class tupdater(threading.Thread):
         else:
             #print "STATE CHANGED"
             self.state_summary = states
+            self.fam_state_summary = fam_states
             return True
 
     def search_level( self, model, iter, func, data ):
@@ -216,23 +225,41 @@ class tupdater(threading.Thread):
         return value == key
 
     def update_gui( self ):
-        #print "Updating GUI"
-        expand_me = []
+        """Update the treeview with new task and family information.
+
+        This redraws the treeview, but keeps a memory of user-expanded
+        rows in 'expand_me' so that the tree is still expanded in the
+        right places.
+
+        If auto-expand is on, calculate which rows need auto-expansion
+        and expand those as well.
+
+        """
+
+        # Retrieve any user-expanded rows so that we can expand them later.
+        expand_me = self._get_user_expanded_row_ids()
+
         new_data = {}
-        for id in self.state_summary:
-            name, ctime = id.split( '%' )
-            if ctime not in new_data:
-                new_data[ ctime ] = {}
-            state = self.state_summary[ id ][ 'state' ]
-            message = self.state_summary[ id ][ 'latest_message' ]
-            tsub = self.state_summary[ id ][ 'submitted_time' ]
-            tstt = self.state_summary[ id ][ 'started_time' ]
-            meant = self.state_summary[ id ][ 'mean total elapsed time' ]
-            tetc = self.state_summary[ id ][ 'Tetc' ]
-            priority = self.state_summary[ id ][ 'latest_message_priority' ]
-            message = markup( get_col_priority( priority ), message )
-            state = markup( get_col(state), state )
-            new_data[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc ]
+        new_fam_data = {}
+        self.ttree_paths.clear()
+        for summary, dest in [(self.state_summary, new_data),
+                              (self.fam_state_summary, new_fam_data)]:
+            # Populate new_data and new_fam_data.
+            for id in summary:
+                name, ctime = id.split( '%' )
+                if ctime not in dest:
+                    dest[ ctime ] = {}
+                state = summary[ id ].get( 'state' )
+                message = summary[ id ].get( 'latest_message', )
+                tsub = summary[ id ].get( 'submitted_time' )
+                tstt = summary[ id ].get( 'started_time' )
+                meant = summary[ id ].get( 'mean total elapsed time' )
+                tetc = summary[ id ].get( 'Tetc' )
+                priority = summary[ id ].get( 'latest_message_priority' )
+                if message is not None:
+                    message = markup( get_col_priority( priority ), message )
+                state = markup( get_col(state), state )
+                dest[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc ]
 
         # print existing tree:
         #print
@@ -253,107 +280,160 @@ class tupdater(threading.Thread):
         #print
 
         tree_data = {}
-
-        # The treestore.remove() method removes the row pointed to by
-        # iter from the treestore. After being removed, iter is set to
-        # the next valid row at that level, or invalidated if it
-        # previously pointed to the last one. Returns : None in PyGTK
-        # 2.0. Returns True in PyGTK 2.2 and above if iter is still
-        # valid.
-
-        iter = self.ttreestore.get_iter_first()
-        while iter:
-            # get parent ctime 
-            row = []
-            for col in range( self.ttreestore.get_n_columns() ):
-                row.append( self.ttreestore.get_value( iter, col) )
-            [ ctime, state, message, tsub, tstt, meant, tetc ] = row
-            # note state etc. is empty string for parent row
-            tree_data[ ctime ] = {}
-
-            if ctime not in new_data:
-                # parent ctime not in new data; remove it
-                #print "REMOVING", ctime
-                res = self.ttreestore.remove( iter )
-                if not self.ttreestore.iter_is_valid( iter ):
-                    iter = None
-            else:
-                # parent ctime IS in new data; check children
-                iterch = self.ttreestore.iter_children( iter )
-                while iterch:
-                    ch_row = []
-                    for col in range( self.ttreestore.get_n_columns() ):
-                        ch_row.append( self.ttreestore.get_value( iterch, col) )
-                    [ name, state, message, tsub, tstt, meant, tetc ] = ch_row
-                    tree_data[ ctime ][name] = [ state, message, tsub, tstt, meant, tetc ]
-
-                    if name not in new_data[ ctime ]:
-                        #print "  removing", name, "from", ctime
-                        res = self.ttreestore.remove( iterch )
-                        if not self.ttreestore.iter_is_valid( iterch ):
-                            iterch = None
-
-                    elif tree_data[ctime][name] != new_data[ ctime ][name]:
-                        #print "   changing", name, "at", ctime
-                        self.ttreestore.append( iter, [ name ] + new_data[ctime][name] )
-                        res = self.ttreestore.remove( iterch )
-                        if not self.ttreestore.iter_is_valid( iterch ):
-                            iterch = None
-
-                        st = re.sub('<[^>]+>', '', state ) # remove tags
-                        if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
-                            if iter not in expand_me:
-                                expand_me.append( iter )
+        self.ttreestore.clear()
+        times = new_data.keys()
+        times.sort()
+        for ctime in times:
+            f_data = [ None ] * 6
+            if "root" in new_fam_data[ctime]:
+                f_data = new_fam_data[ctime]["root"]
+            piter = self.ttreestore.append(None, [ ctime, ctime ] + f_data )
+            family_iters = {}
+            name_iters = {}
+            task_named_paths = []
+            for name in new_data[ ctime ].keys():
+                # The following line should filter by allowed families.
+                families = list(self.family_hierarchy[name])
+                families.sort(lambda x, y: (y in self.family_hierarchy[x]) -
+                                           (x in self.family_hierarchy[y]))
+                if "root" in families:
+                    families.remove("root")
+                if name in families:
+                    families.remove(name)
+                if not self.should_group_families:
+                    families = []
+                task_path = families + [name]
+                task_named_paths.append(task_path)
+            task_named_paths.sort()
+            for named_path in task_named_paths:
+                name = named_path[-1]
+                state = new_data[ctime][name][0]
+                if state is not None:
+                    state = re.sub('<[^>]+>', '', state)
+                self._update_path_info( piter, state, name )
+                f_iter = piter
+                for i, fam in enumerate(named_path[:-1]):
+                    # Construct family tree for this task.
+                    if fam in family_iters:
+                        # Family already in tree
+                        f_iter = family_iters[fam]
                     else:
-                        # row unchanged
-                        iterch = self.ttreestore.iter_next( iterch )
-                        st = re.sub('<[^>]+>', '', state ) # remove tags
-                        if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
-                            if iter not in expand_me:
-                                expand_me.append( iter )
-
-                # then increment parent ctime
-                iter = self.ttreestore.iter_next( iter )
-
-        for ctime in new_data:
-            if ctime not in tree_data:
-                # add new ctime tree
-                #print "ADDING", ctime
-                piter = self.ttreestore.append(None, [ctime, None, None, None, None, None, None ])
-                for name in new_data[ ctime ]:
-                    #print "  adding", name, "to", ctime
-                    self.ttreestore.append( piter, [ name ] + new_data[ctime][name] )
-                    state = new_data[ ctime ][ name ][0]
-                    st = re.sub('<[^>]+>', '', state ) # remove tags
-                    if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
-                        if iter not in expand_me:
-                            expand_me.append( piter )
-                continue
-
-            # this ctime tree is already in model
-            p_iter = self.search_level( self.ttreestore, 
-                    self.ttreestore.get_iter_first(),
-                    self.match_func, (0, ctime ))
-
-            for name in new_data[ ctime ]:
-                # look for a matching row in the model
-                ch_iter = self.search_treemodel( self.ttreestore, 
-                        self.ttreestore.iter_children( p_iter ),
-                        self.match_func, (0, name ))
-                if not ch_iter:
-                    #print "  adding", name, "to", ctime
-                    self.ttreestore.append( p_iter, [ name ] + new_data[ctime][name] )
-                state = new_data[ ctime ][ name ][0]
-                # expand whether new or old data
-                st = re.sub('<[^>]+>', '', state ) # remove tags
-                if st == 'submitted' or st == 'running' or st == 'failed' or st == 'held':
-                    if iter not in expand_me:
-                        expand_me.append( p_iter )
-
+                        # Add family to tree
+                        f_data = [ None ] * 6
+                        if fam in new_fam_data[ctime]:
+                            f_data = new_fam_data[ctime][fam]
+                        f_iter = self.ttreestore.append(
+                                      f_iter, [ ctime, fam ] + f_data )
+                        family_iters[fam] = f_iter
+                    self._update_path_info( f_iter, state, fam )
+                # Add task to tree
+                self.ttreestore.append( f_iter, [ ctime, name ] + new_data[ctime][name])
         if self.autoexpand:
-            for iter in expand_me:
-                self.ttreeview.expand_row(self.ttreestore.get_path(iter),False)
+            autoexpand_me = self._get_autoexpand_rows()
+            for row_id in list(autoexpand_me):
+                if row_id in expand_me:
+                    # User expanded row also meets auto-expand criteria.
+                    autoexpand_me.remove(row_id)
+            expand_me += autoexpand_me
+            self._last_autoexpand_me = autoexpand_me
+        self.ttreeview.get_model().get_model().refilter()
+        self.ttreeview.get_model().sort_column_changed()
 
+        # Expand all the rows that were user-expanded or need auto-expansion.
+        self.ttreeview.get_model().foreach( self._expand_row, expand_me )
+
+        return False
+
+    def _get_row_id( self, model, rpath ):
+        # Record a rows first two values.
+        riter = model.get_iter( rpath )
+        ctime = model.get_value( riter, 0 )
+        name = model.get_value( riter, 1 )
+        return (ctime, name)
+
+    def _add_expanded_row( self, view, rpath, expand_me ):
+        # Add user-expanded rows to a list of rows to be expanded.
+        model = view.get_model()
+        row_iter = model.get_iter( rpath )
+        row_id = self._get_row_id( model, rpath )
+        if (not self.autoexpand or
+            row_id not in self._last_autoexpand_me):
+            expand_me.append( row_id )
+        return False
+
+    def _get_user_expanded_row_ids( self ):
+        """Return a list of row ctimes and names that were user expanded."""
+        names = []
+        if self.ttreeview.get_model().get_iter_first() is None:
+            return names
+        self.ttreeview.map_expanded_rows( self._add_expanded_row, names )
+        return names
+
+    def _expand_row( self, model, rpath, riter, expand_me ):
+        """Expand a row if it matches expand_me ctimes and names."""
+        ctime_name_tuple = self._get_row_id( model, rpath )
+        if ctime_name_tuple in expand_me:
+            self.ttreeview.expand_row( rpath, False )
+        return False
+
+    def _update_path_info( self, row_iter, descendant_state, descendant_name ):
+        # Cache states and names from the subtree below this row.
+        path = self.ttreestore.get_path( row_iter )
+        self.ttree_paths.setdefault( path, {})
+        self.ttree_paths[path].setdefault( 'states', [] )
+        self.ttree_paths[path]['states'].append( descendant_state )
+        self.ttree_paths[path].setdefault( 'names', [] )
+        self.ttree_paths[path]['names'].append( descendant_name )
+
+    def _get_autoexpand_rows( self ):
+        # Return a list of rows that meet the auto-expansion criteria.
+        autoexpand_me = []
+        r_iter = self.ttreestore.get_iter_first()
+        while r_iter is not None:
+            ctime = self.ttreestore.get_value( r_iter, 0 )
+            name = self.ttreestore.get_value( r_iter, 1 )
+            if (( ctime, name ) not in autoexpand_me and
+                self._calc_autoexpand_row( r_iter )):
+                # This row should be auto-expanded.
+                autoexpand_me.append( ( ctime, name ) )
+                # Now check whether the child rows also need this.
+                new_iter = self.ttreestore.iter_children( r_iter )
+            else:
+                # This row shouldn't be auto-expanded, move on.
+                new_iter = self.ttreestore.iter_next( r_iter )
+                if new_iter is None:
+                    new_iter = self.ttreestore.iter_parent( r_iter )
+            r_iter = new_iter
+        return autoexpand_me
+
+    def _calc_autoexpand_row( self, row_iter ):
+        """Calculate whether a row meets the auto-expansion criteria.
+
+        Currently, a family row with tasks in the right states will not
+        be expanded, but the tree above it (parents, grandparents, etc)
+        will.
+
+        """
+        path = self.ttreestore.get_path( row_iter )
+        sub_st = self.ttree_paths.get( path, {} ).get( 'states', [] )
+        ctime = self.ttreestore.get_value( row_iter, 0 )
+        name = self.ttreestore.get_value( row_iter, 1 )
+        if any( [ s in self.autoexpand_states for s in sub_st ] ):
+            # return True  # TODO: Option for different expansion rules?
+            if ctime == name:
+                # Expand cycle times if any child states comply.
+                return True
+            child_iter = self.ttreestore.iter_children( row_iter )
+            while child_iter is not None:
+                c_path = self.ttreestore.get_path( child_iter )
+                c_sub_st = self.ttree_paths.get( c_path,
+                                                 {} ).get('states', [] )
+                if any( [s in self.autoexpand_states for s in c_sub_st ] ):
+                     # Expand if there are sub-families with valid states.
+                     # Do not expand if it's just tasks with valid states.
+                     return True
+                child_iter = self.ttreestore.iter_next( child_iter )
+            return False
         return False
 
     def update_globals( self ):
@@ -362,7 +442,7 @@ class tupdater(threading.Thread):
         self.info_bar.set_block( self.block )
         self.info_bar.set_status( self.status )
         return False
- 
+
     def run(self):
         glbl = None
         states = {}
@@ -454,7 +534,7 @@ class lupdater(threading.Thread):
     def update(self):
         #print "Updating"
         try:
-            [glbl, states] = self.god.get_state_summary()
+            [glbl, states, fam_states] = self.god.get_state_summary()
             self.task_list = self.rem.get_task_list()
         except Exception, x:
             #print >> sys.stderr, x
@@ -469,7 +549,7 @@ class lupdater(threading.Thread):
 
         elif glbl['paused']:
             self.status = 'status:\nHELD'
-       
+
         elif glbl['will_pause_at']:
             self.status = 'status:\nHOLD ' + glbl[ 'will_pause_at' ]
 
@@ -493,7 +573,7 @@ class lupdater(threading.Thread):
             self.block = 'access:\nunblocked'
 
         dt = glbl[ 'last_updated' ]
-        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
+        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" )
 
         # only update states if a change occurred
         if compare_dict_of_dict( states, self.state_summary ):
@@ -521,11 +601,11 @@ class lupdater(threading.Thread):
         for i in range( ncol ):
             digit = zct[i:i+1]
             if digit == ' ':
-                led_ctime.append( self.led_digits_blank )  
+                led_ctime.append( self.led_digits_blank )
             elif i in [0,1,2,3,6,7]:
-                led_ctime.append( self.led_digits_one[ int(digit) ] )  
+                led_ctime.append( self.led_digits_one[ int(digit) ] )
             else:
-                led_ctime.append( self.led_digits_two[ int(digit) ] )  
+                led_ctime.append( self.led_digits_two[ int(digit) ] )
 
         return led_ctime
 
@@ -564,12 +644,12 @@ class lupdater(threading.Thread):
         self.led_treeview.get_selection().set_mode( gtk.SELECTION_NONE )
 
         # this is how to set background color of the entire treeview to black:
-        #treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) ) 
+        #treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) )
 
         tvc = gtk.TreeViewColumn( 'Task Tag' )
         for i in range(10):
             cr = gtk.CellRendererPixbuf()
-            #cr.set_property( 'cell-background', 'black' )
+            # cr.set_property( 'cell-background', 'black' )
             tvc.pack_start( cr, False )
             tvc.set_attributes( cr, pixbuf=i )
         self.led_treeview.append_column( tvc )
@@ -591,7 +671,6 @@ class lupdater(threading.Thread):
 
     def update_gui( self ):
         #print "Updating GUI"
-        expand_me = []
         new_data = {}
         for id in self.state_summary:
             name, ctime = id.split( '%' )
@@ -617,7 +696,7 @@ class lupdater(threading.Thread):
                 tasks[ ctime ] = [ name ]
             else:
                 tasks[ ctime ].append( name )
- 
+
         # flat (a liststore would do)
         ctimes = tasks.keys()
         ctimes.sort()
@@ -628,7 +707,7 @@ class lupdater(threading.Thread):
 
             for name in self.task_list:
                 if name in tasks_at_ctime:
-                    state = self.state_summary[ name + '%' + ctime ][ 'state' ] 
+                    state = self.state_summary[ name + '%' + ctime ][ 'state' ]
                     if state == 'waiting':
                         state_list.append( self.waiting_led )
                     elif state == 'retry_delayed':
@@ -660,7 +739,7 @@ class lupdater(threading.Thread):
         self.info_bar.set_block( self.block )
         self.info_bar.set_status( self.status )
         return False
- 
+
     def run(self):
         glbl = None
         states = {}

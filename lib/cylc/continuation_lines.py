@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
-#C:
+#C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -16,29 +16,21 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.cycle_time import at
-from cylc.cycling.base import cycler
+import re
 
-class async( cycler ):
-    is_async = True
-    @classmethod
-    def offset( cls, tag, n ):
-        return str(int(tag)-int(n))
- 
-    def __init__( self, *args ):
-        # asynchronous task do not have a runahead limit
-        self.minimum_runahead_limit = 0
-        pass
-
-    def get_def_min_runahead( self ):
-        return self.minimum_runahead_limit
-
-    def next( self, tag ):
-        return str( int(tag) + 1 )
-
-    def initial_adjust_up( self, tag ):
-        return tag
-
-    def valid( self, tag ):
-        return True
+def join( lines ):
+    """cylc suite definition continuation line support"""
+    outf = []
+    cline = ''
+    for line in lines:
+        # detect continuation line endings
+        m = re.match( '(.*)\\\$', line )
+        if m:
+            # add line to cline instead of appending to outf.
+            cline += m.groups()[0]
+        else:
+            outf.append( cline + line )
+            # reset cline 
+            cline = ''
+    return outf
 

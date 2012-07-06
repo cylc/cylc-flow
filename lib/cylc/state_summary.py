@@ -19,6 +19,7 @@
 import Pyro.core
 import logging
 
+
 class state_summary( Pyro.core.ObjBase ):
     """supply suite state summary information to remote cylc clients."""
 
@@ -38,10 +39,39 @@ class state_summary( Pyro.core.ObjBase ):
             paused, will_pause_at, stopping, will_stop_at, blocked ):
         self.task_summary = {}
         self.global_summary = {}
+        self.family_summary = {}
+        task_states = {}
 
         for task in tasks:
             self.task_summary[ task.id ] = task.get_state_summary()
+            name, ctime = task.id.split('%')
+            task_states.setdefault(ctime, {})
+            task_states[ctime][name] = self.task_summary[task.id]['state']
 
+        fam_states = {}
+        for ctime, c_task_states in task_states.items():
+            # For each cycle time, construct a family state tree           
+            c_fam_task_states = {}
+            
+            for key, parent_list in self.config.family_hierarchy.items():
+                state = task_states.get(ctime, {}).get(key)
+                if state is None:
+                    continue
+                for parent in parent_list:
+                    if parent == key:
+                        continue
+                    c_fam_task_states.setdefault(parent, [])
+                    c_fam_task_states[parent].append(state)
+            
+            for fam, child_states in c_fam_task_states.items():
+                f_id = fam + "%" + ctime
+                state = self.extract_group_state(child_states)
+                if state is None:
+                    continue
+                self.family_summary[f_id] = {'name': fam,
+                                             'label': ctime,
+                                             'state': state}
+        
         self.global_summary[ 'start time' ] = self.start_time
         self.global_summary[ 'oldest cycle time' ] = oldest
         self.global_summary[ 'newest cycle time' ] = newest
@@ -59,4 +89,14 @@ class state_summary( Pyro.core.ObjBase ):
         #self.get_summary()
 
     def get_state_summary( self ):
-        return [ self.global_summary, self.task_summary ]
+        return [ self.global_summary, self.task_summary, self.family_summary ]
+
+    def extract_group_state( self, child_states ):
+        """Summarise child states as a group."""
+        ordered_states = ['failed', 'held', 'running', 'submitted',
+                          'retry_delayed', 'queued', 'waiting', 'runahead',
+                          'succeeded']
+        for state in ordered_states:
+            if state in child_states:
+                return state
+        return None

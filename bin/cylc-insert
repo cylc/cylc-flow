@@ -44,7 +44,6 @@ target = args[1]
 
 reg = parser.get_suite_name()
 dbg = dbgetter()
- suite, suiterc ).execute( sys.argv )
 try:
     # unalias your own suite names
     suite, suiterc = dbg.get_suite(reg)
@@ -88,7 +87,7 @@ else:
 
 try:
     proxy = cylc_pyro_client.client( suite, owner=options.owner, \
-	host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
+    host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 except SecurityError, x:

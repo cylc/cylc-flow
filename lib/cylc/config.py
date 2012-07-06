@@ -44,13 +44,9 @@ from regpath import RegPath
 from trigger import triggerx
 from output import outputx
 from TaskID import TaskID, AsyncTag
-
-try:
-    from jinja2 import Environment, FileSystemLoader, TemplateError
-except ImportError:
-    jinja2_loaded = False
-else:
-    jinja2_loaded = True
+from Jinja2Support import Jinja2Process, TemplateError, TemplateSyntaxError
+from continuation_lines import join
+from include_files import inline
 
 try:
     import graphing
@@ -58,46 +54,6 @@ except:
     graphing_disabled = True
 else:
     graphing_disabled = False
-
-def include_files( inf, dir ):
-    outf = []
-    for line in inf:
-        m = re.match( '\s*%include\s+(.*)\s*$', line )
-        if m:
-            # include statement found
-            match = m.groups()[0]
-            # strip off possible quotes: %include "foo.inc"
-            match = match.replace('"','')
-            match = match.replace("'",'')
-            inc = os.path.join( dir, match )
-            if os.path.isfile(inc):
-                #print "Inlining", inc
-                h = open(inc, 'rb')
-                inc = h.readlines()
-                h.close()
-                # recursive inclusion
-                outf.extend( include_files( inc, dir ))
-            else:
-                raise ConfigObjError, "ERROR, Include-file not found: " + inc
-        else:
-            # no match
-            outf.append( line )
-    return outf
-
-def continuation_lines( inf ):
-    outf = []
-    cline = ''
-    for line in inf:
-        # detect continuation line endings
-        m = re.match( '(.*)\\\$', line )
-        if m:
-            # add line to cline instead of appending to outf.
-            cline += m.groups()[0]
-        else:
-            outf.append( cline + line )
-            # reset cline 
-            cline = ''
-    return outf
 
 class SuiteConfigError( Exception ):
     """
@@ -210,52 +166,28 @@ class config( CylcConfigObj ):
 
         if self.verbose:
             print "Loading suite.rc"
+
         f = open( self.file )
         flines = f.readlines()
         f.close()
+
         # handle cylc include-files
-        flines = include_files( flines, self.dir )
+        flines = inline( flines, self.dir )
 
-        # check first line of file for template engine directive
-        # (check for new empty suite.rc files - zero lines - first)
-        if flines and re.match( '^#![jJ]inja2\s*', flines[0] ):
-            # This suite.rc file requires processing with jinja2.
-            if not jinja2_loaded:
-                print >> sys.stderr, 'ERROR: This suite requires processing with the Jinja2 template engine'
-                print >> sys.stderr, 'ERROR: but the Jinja2 modules are not installed in your PYTHONPATH.'
-                raise SuiteConfigError, 'Aborting (Jinja2 required).'
-            if self.verbose:
-                print "Processing the suite with Jinja2"
-            env = Environment( loader=FileSystemLoader(self.dir) )
-             # load file lines into a template, excluding '#!jinja2' so
-             # that '#!cylc-x.y.z' rises to the top.
-            try:
-                template = env.from_string( ''.join(flines[1:]) )
-            except TemplateError, x:
-                raise SuiteConfigError, "Jinja2 template error: " + str(x)
-
-            try:
-                # (converting unicode to plain string; configobj doesn't like?)
-                rendered = str( template.render() )
-            except Exception, x:
-                raise SuiteConfigError, "ERROR: Jinja2 template rendering failed: " + str(x)
-
-            xlines = rendered.split('\n') # pass a list of lines to configobj
-            suiterc = []
-            for line in xlines:
-                # Jinja2 leaves blank lines where source lines contain
-                # only Jinja2 code; this matters if line continuation
-                # markers are involved, so we remove blank lines here.
-                if re.match( '^\s*$', line ):
-                    continue
-                # restoring newlines is not necessary here:
-                suiterc.append(line)
-        else:
-            # This is a plain suite.rc file.
-            suiterc = flines
+        # handle Jinja2 expressions
+        try:
+            suiterc = Jinja2Process( flines, self.dir, self.verbose )
+        except TemplateSyntaxError, x:
+            lineno = x.lineno + 1  # (flines array starts from 0)
+            print >> sys.stderr, 'Jinja2 Template Syntax Error, line', lineno
+            print >> sys.stderr, flines[x.lineno]
+            raise SystemExit(str(x))
+        except TemplateError, x:
+            print >> sys.stderr, 'Jinja2 Template Error'
+            raise SystemExit(x)
 
         # handle cylc continuation lines
-        suiterc = continuation_lines( suiterc )
+        suiterc = join( suiterc )
 
         try:
             CylcConfigObj.__init__( self, suiterc, configspec=self.spec )
@@ -393,7 +325,7 @@ class config( CylcConfigObj ):
             if cfam not in self.members:
                 print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
                 self.closed_families.remove( cfam )
-
+        self.vis_families = list(self.closed_families)
         if self.verbose:
             print "Checking suite event hooks"
         script = None
@@ -413,30 +345,40 @@ class config( CylcConfigObj ):
             raise SuiteConfigError, "ERROR, no handler specified for these suite events: " + ','.join(events)
 
         self.process_directories()
-        self.load()
 
-        # Compute maximum runahead limit
-        # 1/ take the largest of the minimum limits from each graph section
-        mrls = []
-        for cyc in self.cyclers:
-            mrls.append(cyc.minimum_runahead_limit)
-        mrl = max(mrls)
         if self.verbose:
-            print "Largest minimum runahead limit from cycling modules:", mrl, "hours"
-        # 2/ or if there is a configured maximum runahead limit, use it.
-        rl = self['scheduling']['runahead limit']
-        if rl:
-            if self.verbose:
-                print "Configured maximum runahead limit: ", rl, "hours"
-            if rl < mrl:
-                print >> sys.stderr, 'WARNING: runahead limit (' + str(rl) + ') is too low (<' + str(mrl) + '), suite may stall'
-            crl = rl
-        else:
-            crl = mrl
-            if self.verbose:
-                print "Maximum runahead limit defaulting to:", crl, "hours"
+            print 'Parsing the dependency graph'
+        self.graph_found = False
+        self.load_graph()
+        if not self.graph_found:
+            raise SuiteConfigError, 'No suite dependency graph defined.'
 
-        self['scheduling']['runahead limit'] = crl
+        # Compute runahead limit
+        # 1/ take the largest of the minimum limits from each graph section
+        if len(self.cyclers) != 0:
+            # runahead limit is only relevant for cycling sections
+            mrls = []
+            mrl = None
+            for cyc in self.cyclers:
+                mrls.append(cyc.get_def_min_runahead())
+            mrl = max(mrls)
+            if self.verbose:
+                print "Largest minimum runahead limit from cycling modules:", mrl, "hours"
+
+            # 2/ or if there is a configured runahead limit, use it.
+            rl = self['scheduling']['runahead limit']
+            if rl:
+                if self.verbose:
+                    print "Configured runahead limit: ", rl, "hours"
+                if rl < mrl:
+                    print >> sys.stderr, 'WARNING: runahead limit (' + str(rl) + ') is too low (<' + str(mrl) + '), suite may stall'
+                crl = rl
+            else:
+                crl = mrl
+                if self.verbose:
+                    print "Runahead limit defaulting to:", crl, "hours"
+
+            self['scheduling']['runahead limit'] = crl
 
         self.family_tree = {}
         self.task_runtimes = {}
@@ -919,9 +861,14 @@ class config( CylcConfigObj ):
             args = []
         else:
             ttype = 'cycling'
-            m = re.match( '^(\w+)\(([\w,]*)\)$', section )
+            # match cycler, e.g. "Yearly( 2010, 2 )"
+            m = re.match( '^(\w+)\(([\s\w,]*)\)$', section )
             if m:
-                modname, arglist = m.groups()
+                modname, cycargs = m.groups()
+                # remove leading and trailing space
+                cycargs = cycargs.strip()
+                arglist = re.sub( '\s+$', '', cycargs )
+                # split on comma with optional space each side
                 args = re.split( '\s*,\s*', arglist )
             else:
                 modname = self['scheduling']['cycling']
@@ -1281,7 +1228,7 @@ class config( CylcConfigObj ):
             left  = e.get_left( 1, False, False, [], [])
             nl, nr = self.close_families( left, right )
             gr_edges.append( (nl, nr, False, e.suicide, e.conditional) )
-	
+
         # Get actual first real cycle time for the whole suite (get all
         # cyclers to adjust the putative start time upward)
         adjusted = []
@@ -1433,38 +1380,39 @@ class config( CylcConfigObj ):
 
         return nl, nr
 
-    def load( self ):
-        if self.verbose:
-            print 'Parsing the dependency graph'
-        # parse the suite dependencies section
+    def load_graph( self ):
         for item in self['scheduling']['dependencies']:
             if item == 'graph':
-                # One-off asynchronous tasks.
-                section = "once"
+                # asynchronous graph
                 graph = self['scheduling']['dependencies']['graph']
-                if graph == None:
-                    # this means no async_oneoff tasks defined
-                    continue
+                if graph:
+                    section = "once"
+                    self.parse_graph( section, graph )
             else:
-                section = item
                 try:
                     graph = self['scheduling']['dependencies'][item]['graph']
-                except IndexError:
-                    raise SuiteConfigError, 'Missing graph string in [scheduling][dependencies]['+item+']'
-
-            # split the graph string into successive lines
-            lines = re.split( '\s*\n\s*', graph )
-            for xline in lines:
-                # strip comments
-                line = re.sub( '#.*', '', xline ) 
-                # ignore blank lines
-                if re.match( '^\s*$', line ):
-                    continue
-                # strip leading or trailing spaces
-                line = re.sub( '^\s*', '', line )
-                line = re.sub( '\s*$', '', line )
-                # generate pygraphviz graph nodes and edges, and task definitions
-                self.process_graph_line( line, section )
+                except KeyError:
+                    pass
+                else:
+                    if graph:
+                        section = item
+                        self.parse_graph( section, graph )
+ 
+    def parse_graph( self, section, graph ):
+        self.graph_found = True
+        # split the graph string into successive lines
+        lines = re.split( '\s*\n\s*', graph )
+        for xline in lines:
+            # strip comments
+            line = re.sub( '#.*', '', xline ) 
+            # ignore blank lines
+            if re.match( '^\s*$', line ):
+                continue
+            # strip leading or trailing spaces
+            line = re.sub( '^\s*', '', line )
+            line = re.sub( '\s*$', '', line )
+            # generate pygraphviz graph nodes and edges, and task definitions
+            self.process_graph_line( line, section )
 
     def get_taskdef( self, name ):
         # (DefinitionError caught above)
@@ -1509,7 +1457,7 @@ class config( CylcConfigObj ):
         if self.simulation_mode:
             taskd.job_submit_method = self['cylc']['simulation mode']['job submission']['method']
             taskd.command = self['cylc']['simulation mode']['command scripting']
-            taskd.retry_delays = self['cylc']['simulation mode']['retry delays']
+            taskd.retry_delays = deque( self['cylc']['simulation mode']['retry delays'] )
         else:
             taskd.owner = taskconfig['remote']['owner']
             taskd.job_submit_method = taskconfig['job submission']['method']

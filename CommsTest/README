@@ -4,7 +4,8 @@ cylc metascheduler.
 CommsTestServer.py and CommsTestClient.py are minimal Pyro server and
 client programs that communicate over the network in the same way that
 cylc clients (tasks, commands, and GUIs) communicate with cylc servers
-(running suites). This code was adapted from the simple "Joke Generator"
+(running suites). EXCEPT THAT UNLIKE CYLC THEY DON'T USE CONNECTION
+AUTHENTICATION. This code was adapted from the simple "Joke Generator"
 Pyro3 example by Irmen de Jong (adapted to avoid the Pyro Nameserver,
 which is not used by cylc, in particular).
 

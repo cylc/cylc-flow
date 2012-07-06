@@ -76,14 +76,14 @@ if options.tasks_only:
 
 try:
     proxy = cylc_pyro_client.client( suite, owner=options.owner, \
-	host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
+    host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
 except SuiteIdentificationError, x:
     raise SystemExit(x)
 except SecurityError, x:
     raise SystemExit(x)
 
 # get state summary, task names, cycle times
-[glbl, states] = proxy.get_state_summary()
+[glbl, states, fam_states] = proxy.get_state_summary()
 
 if display_global:
     print "suite : " + suite

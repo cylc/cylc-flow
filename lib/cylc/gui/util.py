@@ -16,29 +16,28 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.cycle_time import at
-from cylc.cycling.base import cycler
+import os
 
-class async( cycler ):
-    is_async = True
-    @classmethod
-    def offset( cls, tag, n ):
-        return str(int(tag)-int(n))
- 
-    def __init__( self, *args ):
-        # asynchronous task do not have a runahead limit
-        self.minimum_runahead_limit = 0
-        pass
+import gtk
 
-    def get_def_min_runahead( self ):
-        return self.minimum_runahead_limit
 
-    def next( self, tag ):
-        return str( int(tag) + 1 )
+def get_image_dir():
+    """Return the root directory for cylc images."""
+    try:
+        cylc_dir = os.environ['CYLC_DIR']
+    except KeyError:
+        # This should not happen (unecessary)
+        raise SystemExit("ERROR: $CYLC_DIR is not defined!")
+    return os.path.join(cylc_dir, "images")
 
-    def initial_adjust_up( self, tag ):
-        return tag
 
-    def valid( self, tag ):
-        return True
+def get_icon():
+    """Return the gcylc icon as a gtk.gdk.Pixbuf."""
+    icon_path = os.path.join(get_image_dir(), "icon.png")
+    return gtk.gdk.pixbuf_new_from_file(icon_path)
 
+
+def get_logo():
+    """Return the gcylc logo as a gtk.gdk.Pixbuf."""
+    logo_path = os.path.join(get_image_dir(), "logo.png")
+    return gtk.gdk.pixbuf_new_from_file(logo_path)

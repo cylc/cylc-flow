@@ -76,7 +76,7 @@ except SuiteConfigError, x:
     raise SystemExit(x)
  
 if options.rotation != "0":
-    filename = filename + options.rotation
+    filename = filename + '.' + options.rotation
 
 if options.print_location:
     print filename

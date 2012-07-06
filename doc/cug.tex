@@ -154,31 +154,30 @@ the next cycle early, as is illustrated in Figure~\ref{fig-job-no-overlap}.
 \subsubsection{Intercycle Dependence} 
 \label{IntercycleDependence}
 
-In most suites dependence between tasks in different cycles
-exist. Forecast models, as above, typically depend on their own most
-recent previous forecast for a background state, and different
-types of tasks in different forecast cycles can also be linked (in an 
-atmospheric forecast analysis suite, for instance, the weather model 
-may also generate background states for use by the observation
+Forecast models typically depend on their own most recent previous
+forecast for background state or restart files of some kind, and
+different types of tasks in different forecast cycles can also be linked
+(in an atmospheric forecast analysis suite, for instance, the weather
+model may also generate background states for use by the observation
 processing and data-assimilation systems in the next cycle). In real
-time operation this intercycle dependence
-can be ignored because it is automatically satisfied when each cycle
-finishes before the next one begins. This is just as well
-because they dramatically increase the complexity of the dependency
-graph of even the simplest suites, by destroying the clean boundary
+time operation this intercycle dependence can be ignored because it is
+automatically satisfied when each cycle finishes before the next one
+begins. If, on the other hand, it is explicitly accounted for, it 
+complicates the dependency graph by destroying the clean boundary
 between forecast cycles. Figure~\ref{fig-dep-multi} illustrates the
-problem for our simple example suite assuming the minimal likely
-intercycle dependence: the forecast models ($a$, $b$, and $c$) each
-depend on their own previous instances.
+problem for our simple example suite assuming the minimal intercycle
+dependence: the forecast models ($a$, $b$, and $c$) each depend on their
+own previous instances.
 
-For this reason, and because we tend to imagine that forecasting suites
-always run in distinct cycles, existing metaschedulers (as far as the author
-is aware!) ignore intercycle dependence and therefore {\em require} a
-series of distinct cycles at all times. While this does not affect
-normal real time operation it can be a serious impediment when advance
-availability of external driving data makes it possible, in principle,
-to run some tasks from upcoming cycles before the current cycle is
-finished - as suggested at the end of the previous section. This occurs
+For this reason, and perhaps because we tend to see forecasting suites
+as inheritently sequential (with respect to whole forecast cycles)
+other metaschedulers ignore intercycle dependence and therefore {\em
+require} a series of distinct cycles at all times. While this does not
+affect normal real time operation it can be a serious impediment when
+advance availability of external driving data makes it possible, in
+principle, to run some tasks from upcoming cycles before the current
+cycle is finished - as suggested at the end of the previous section.
+This occurs
 after delays (late arrival of external data, system maintenance, etc.)
 and, to an even greater extent, in historical case studies, and parallel
 test suites that are delayed with respect to the main operation. It is
@@ -506,11 +505,12 @@ template processing:
 
 \subsection{Known Version Compatibility Issues}
 
-Cylc should run out of the box on reasonably recent Linux distributions.
+Cylc should run ``out of the box'' on recent Linux distributions.
 
 For distributed suites the Pyro versions installed on all suite or task
 hosts must be mutually compatible. Using identical Pyro versions
-guarantees compatibility but is generally not necessary.
+guarantees compatibility but may not be strictly necessary because 
+cylc uses Pyro rather minimally.
 
 Recent versions of Pyro require Python 2.5 or greater, due to use of the 
 \lstinline=with= statement introduced in 2.5.
@@ -886,16 +886,16 @@ central suite group to something sensible using
 \lstinline=cylc db reregister= - it will have an ungainly string of
 digits attached to ensure uniqueness. 
 
-\subsection{Cross-Version Suite Compatibility}
+\subsection{Pseudo Backward Compatibility}
 \label{compat}
 
 It may not be convenient for users to upgrade all of their suites at
 once when a new cylc release is installed. As of cylc-4.2.0 any installed
 version of cylc can act as a transparent front end to any other installed
-version. This allows construction of new-version suites while older
-existing ones are still in use, without having to reconfigure your
-environment or explicitly invoke different cylc versions for different
-suites.
+version (technically this also provides pseudo forward compatibility).
+This allows construction of new-version suites while older existing ones
+are still in use, without having to reconfigure your environment or
+explicitly invoke different cylc versions for different suites.
 
 The required cylc version must be specified on the {\em first line} of a
 non-Jinja2 suite definition:
@@ -924,7 +924,7 @@ suite-referencing command, e.g.:
 \begin{lstlisting}
 % cylc validate foo
 --------------------------------------------------------
-Cylc cross-version suite compatibility:
+Pseudo backward compatibility:
   Invoked version: cylc-4.2.0 (/home/oliverh/cylc-4.2.0)
   Suite requires:  cylc-4.2.1
 Path not given, assuming parallel cylc installations
@@ -944,18 +944,38 @@ Suite.rc Reference} (Appendix~\ref{SuiteRCReference}) to identify
 problems, and consult the cylc change log to see what changed between
 versions.
 
-\subsubsection{Version Compatibility Limitations}
+\subsubsection{Limitations}
 
 The top level command interface, \lstinline=$CYLC_DIR/bin/cylc=,
 determines the legality of requested sub-commands prior to version
-compatibility checking (which is in fact done by the
+compatibility processing (which is in fact done by the
 sub-command\footnote{This is because the top level command interface
 just passes options and arguments, which vary according to the
 sub-command, on to the sub-command; it does not understand them
 itself and so it cannot determine which one, if any, is the 
 suite reference.}) so the correct cylc version must be explicitly
-invoked if the sub-command has undergone a name change between the
-versions concerned. 
+invoked in the unlikely event that the sub-command has undergone a name
+change between the versions concerned. 
+
+\subsubsection{A Usage Suggestion}
+
+You can use the Jinja2 template processor (see Section~\ref{Jinja2}) to
+store the required cylc version in a single variable, which can then 
+also be used (for example) to specify the right cylc version to use on a
+remote task host:
+\lstset{language=suiterc}
+\begin{lstlisting}
+#!Jinja2
+{% set CYLC_VERSION = "cylc-4.2.2" %}
+#!{{CYLC_VERSION}}
+
+#...
+[runtime]
+   [[on_hpc]]
+       [[[remote]]]
+           cylc directory = /path/to/cylc/top/dir/{{CYLC_VERSION}}
+\end{lstlisting}
+\lstset{language=transcript}
 
 \section{On The Meaning Of {\em Cycle Time} In Cylc}
 
@@ -1123,7 +1143,7 @@ Finally, when the suite is {\em cold-started} (started from scratch) it
 is made to wait on a special {\em synchronous start-up task} called
 Prep. Start-up tasks are one-off (non-spawning) tasks that are only used
 at suite start-up, and any dependence on them only applies at suite
-start-up. Hey cannot be used in conditional trigger expressions with 
+start-up. They cannot be used in conditional trigger expressions with 
 normal cycling tasks, because the trigger becomes undefined in
 subsequent cycles. Start-up tasks are {\em synchronous} because they
 have a defined cycle time even though they are not cycling tasks. Cylc
@@ -1171,20 +1191,13 @@ configured in the example suite, so it defaults, for all tasks, to the
 Section~\ref{SuiteDefinition}):
 \begin{lstlisting}
 % cylc get-config QuickStart.a runtime GetData 'command scripting'
-['echo DUMMY $CYLC_TASK_ID; sleep 10; echo BYE']
+['echo Dummy command scripting; sleep $CYLC_TASK_DUMMY_RUN_LENGTH']
 \end{lstlisting}
-where \lstinline=$CYLC_TASK_ID= is the unique identifier by which 
-cylc knows the task (\lstinline=NAME%CYCLE=) exported to each task's
-execution environment by cylc. The command arguments reflect the suite
-definition section nesting. If it were explicitly configured in the 
-example suite it would look like this:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[runtime]
-    [[GetData]]
-        command scripting = "echo DUMMY $CYLC_TASK_ID; sleep 10; echo BYE"
-\end{lstlisting}
-\lstset{language=transcript}
+where \lstinline=$CYLC_TASK_DUMMY_RUN_LENGTH= defaults to 10 seconds 
+but can be overridden in task or family environments in the suite
+definition; this is exported to the task execution environment by cylc.
+The command arguments above reflect suite definition section
+nesting. 
 
 Now start a suite control GUI by right-clicking on the suite in gcylc
 and choosing `Control (graph)'.  You can also open a text treeview
@@ -1768,6 +1781,18 @@ means that you cannot copy a single suite into a group that does not
 exist yet unless you specify the entire target registration name. 
 
 \lstinline=cylc db register --help= shows a number of other examples.
+
+\subsubsection{Suite Passphrases}
+
+In order to allow secure remote control of running suites, cylc requires
+that each suite has an associated passphrase file. The content of the
+passphrase file is essentially arbitrary, so when a suite is registered
+a passphrase is generated automatically in the suite definition
+directory, if one does not already exist there. The same passphrase file 
+must be distributed to any other user accounts on the local or remote
+hosts from which you need access to the running suite. For more information 
+see Section~\ref{passphrases}.
+
 
 \subsection{Private Suite Database}
 
@@ -2862,7 +2887,7 @@ model | recover => post
 [runtime]
     [[model]]
         # UNCOMMENT TO TEST FAILURE:
-        # command scripting = false
+        # command scripting = /bin/false
 \end{lstlisting}
 \lstset{language=transcript}
 \end{minipage}
@@ -3704,6 +3729,35 @@ Figure~\ref{fig-jinja2-cities}.
     \label{fig-jinja2-cities} 
 \end{figure} 
 
+\subsubsection{Accessing Environment Variables With Jinja2}
+
+This functionality is not provided by Jinja2 by default, but cylc
+automatically imports the user environment to the template in a 
+dictionary structure called {\em environ}. A usage example:
+\begin{lstlisting}
+#!Jinja2
+#...
+[runtime]
+    [[root]]
+        [[[environment]]]
+            SUITE_OWNER_HOME_DIR_ON_SUITE_HOST = {{environ['HOME']}}
+\end{lstlisting}
+This example is emphasizes that {\em the environment is read on the suite
+host at the time the suite definition is parsed} - it is not, for
+instance, read at task run time on the task host.
+
+\subsubsection{Custom Jinja2 Filters}
+
+Jinja2 variable values can be modified by filters. Some built in filters
+are available (see Jinja2 documentation), and cylc supports loading of
+custom Jinja2 filters.  These should be defined as Python functions (the
+function name defines the filter name) in a module of the same name under 
+a \lstinline=Jinja2/= sub-directory of the suite definition directory, or
+for use by mulitple suites, in \lstinline=$HOME/.cylc/Jinja2=.
+
+The example suite \lstinline=$CYLC_DIR/examples/jinja2/filter= shows how 
+to use a custom filter to left-pad integer values with '0' characters,
+for use in generated task names.
 
 \subsection{Special Placeholder Variables}
 \label{SPHV}
@@ -3806,10 +3860,9 @@ treatment is required at all:
                                echo BYE""" 
     [[baz]]
         description = a task that runs baz.sh and retries on failure
-        command scripting = """echo attempt No.1
-                               baz.sh""", \
-                            """echo attempt No.2  # only invoked if try No.1 fails
-                               baz.sh --retry"""
+        retry delays = 1,1
+        command scripting = """echo attempt No. $CYLC_TASK_TRY_NUMBER
+                               baz.sh"""
 \end{lstlisting}
 \lstset{language=transcript}
 
@@ -3817,8 +3870,7 @@ treatment is required at all:
 
 Simple tasks can be entirely implemented within the suite.rc file
 because the task {\em command scripting} string can contain as many
-lines of code as you like (or even a list of such strings, for retry 
-on failure).
+lines of code as you like.
 
 
 \subsection{Voluntary Messaging Modifications}
@@ -4539,7 +4591,7 @@ at the top of the example file above).
 
 \section{Running Suites}
 
-This section is still incomplete - please see also the Quick Start
+This section may be incomplete - please see also the Quick Start
 Guide (Section~\ref{QuickStartGuide}), command documentation 
 (Section~\ref{CommandReference}), and play with the example suites.
 
@@ -4549,26 +4601,25 @@ As a suite runs its tasks (or rather the task proxies that represent
 the real tasks) move through a series of defined states:
 
 \begin{myitemize}
-    \item {\bf waiting} - a {\em waiting} task's prerequisites have
-        not yet been satisfied (clock-triggered tasks may also be 
-        waiting on their trigger time).
+    \item {\bf waiting} - prerequisites have not yet been satisfied
+        (clock-triggered tasks also wait on their trigger time).
 
-    \item {\bf queued} - a {\em queued} task is ready to run but
-        has been temporarily prevented from doing so by the internal
-        cylc queue to which it is assigned (see {\em Internal Queues},
-        Section~\ref{InternalQueues}). Note this does mean the
-        task is sitting in an external batch scheduler queue (that, 
-        depending on the chosen job submission method, would be 
-        the {\em submitted} state).
+    \item {\bf queued} - ready to be submitted (i.e.\ prerequisites
+        satisfied) but temporarily held back  by an internal
+        cylc queue (see Section~\ref{InternalQueues}). 
 
-    \item {\bf submitted} - a {\em submitted} task has been submitted 
-        by its defined job submission method but has not yet started
-        executing (it may be waiting in an external batch scheduler
-        queue, depending on job submission method).
+    \item {\bf submitted} - submitted to be executed by the specified 
+        job submission method, but not yet running (it may be waiting in
+        an external batch scheduler queue, for example).
 
-    \item {\bf running} - a {\em running} task has started executing
-        (reported via a messaging call near the top of the task job
-        script) but has not yet finished.
+    \item {\bf running} - the task ``started'' message received (sent
+        when a task starts executing) but not yet finished.
+
+    \item {\bf retry delayed} - if a task configures the ``retry
+        delays'' item (a list of delay intervals in minutes), then if it
+        fails it will be put in this state for the specified interval
+        and then resubmitted after incrementing the task try number. 
+        A task only enters the final ``failed'' if the last retry fails.
 
     \item two finished states:
         \begin{myitemize}
@@ -4614,12 +4665,36 @@ Finally, you may see references to the following pseudo states:
          clock-triggered tasks, which also wait on a trigger time).
 
     \item {\bf base} (Graph Control GUI only) - off-white base color
-        graph nodes are displayed in order to show the proper graph
-        structure but the corresponding task proxies are
-        not actually present in the suite, because they have not been
-        spawned yet, or they have been removed by cylc as spent tasks,
-        or removed by the suite operator. 
+        graph nodes can be used to connect the nodes representing
+        current live task proxies according to the structure of the suite).
 \end{myitemize}
+
+\subsection{Suite Security: Passphrases}
+\label{passphrases}
+
+Cylc restricts access to running suites (by running tasks, cylc commands
+and GUI) to host accounts holding a special passphrase with secure
+permissions.  The passphrase itself is never transferred across the
+network (a secure MD5 checksum is). This should guarantee suite security
+so long as your user accounts aren't breached. 
+
+A random passphrase generated automatically when a suite is registered,
+if one does not already exist in the suite definition directory. 
+The suite passphrase must be installed in any account that requires
+access to the suite - including remote task hosts. 
+
+The passphrase can be held in any of the following locations, in
+order of preference:
+\begin{myitemize}
+    \item \lstinline=$CYLC_SUITE_DEF_PATH/passphrase=
+    \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase=
+    \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_NAME/passphrase=
+    \item \lstinline=$HOME/.cylc/SUITE_NAME/passphrase=
+    \item (or given on the commandline)
+\end{myitemize}
+(the suite hostname should be the fully qualified domain name). The
+latter locations are suitable for remote suite control in which case
+the suite definition directory may not be known or accessible.
 
 \subsection{Limiting Suite Activity}
 
@@ -4744,19 +4819,6 @@ limited to 2 and 3 tasks respectively:
 Note assignment of runtime task family members to queues using the
 family name.
 
-\subsection[Suite Security]{Suite Security and Secure Passphrases}
-
-Cylc now restricts access to running suites to host accounts holding a special
-passphrase with secure permissions (as for ssh keys).  Remote task host
-accounts, and any accounts used to remotely control a suite via cylc commands
-or GUI, must all use the same passphrase.  The passphrase itself is never
-transferred across the network (a secure MD5 checksum is). This should 
-guarantee suite security so long as your user accounts aren't breached. 
-
-A random passphrase is generated automatically when you register the suite; it
-must then be distributed to any remote task or remote control hosts that will
-need to connect to the running suite.
-
 \subsection{Other Topics In Brief}
 
 The following topics have yet to be documented in detail.
@@ -4862,7 +4924,7 @@ Instead, consider organising restart files by cycle time, through a file
 or directory naming convention, and keep them in a simple rolling
 archive (cylc's filename templating and housekeeping
 utilities can easily do this for you). Then, given availability of 
-any external inputs, you can easily rerun the task for any cycle still
+external inputs, you can easily rerun the task for any cycle still
 in the restart archive.
 
 \subsection{Limit Previous-Instance Dependence} 
@@ -4902,17 +4964,19 @@ overwrite of important files from one cycle to the next. Cylc has
 powerful utilities for cycle time offset based filename templating and
 housekeeping.
 
-\subsubsection{Use Cylc's Cycle Time Filename Template Utility}
+\subsubsection{Use Cylc Cycle Time Filename Templating}
 
-The command line utility program \lstinline=cylc template=
-determines filenames based on a template string containing
-YYYYMMDDHH (or variations thereof) by substituting the
-current cycle time, or some offset from it, into the template.
-This can be used in the suite.rc environment sections, or in
-task implementation scripts if necessary, to instantly generate cycle
-time appropriate filenames for any purpose in the suite.
+The command line utility program \lstinline=cylc [util] cycletime=
+computes offsets (in hours, days, months, and years) from a given or
+current (in the environment) cycle time, and optionally inserts the
+resulting computed cycle time, or components of it, into a given 
+template string containing ``YYYY'' as a placeholder for the year
+value, ``MM'' for month, and so on. This can be used in the suite.rc
+environment or command scripting sections, or in task implementation
+scripting, to generate filenames containing the current cycle time (or
+some offset from it) for use by tasks.
 
-See \lstinline=cylc util template help= for more information.
+See \lstinline=cylc [util] cycletime --help= for examples.
 
 \subsection{How To Manage Input/Output File Dependencies}
 \label{HandlingDependencies}
@@ -4934,9 +4998,9 @@ file rather than hard wiring it into the task implementations.
 \item {\bf Add Connector Tasks To The Suite} 
 
 Tasks can be added to a suite to move files from A's output directory to
-B's input directory, and so on.  These connector tasks may all be able
-to call the same file transfer script or command, with differing input
-parameters defined in the suite.rc file. 
+B's input directory, and so on.  Many connector tasks may be able
+to call the same file transfer script or command, with task-dependendent
+input parameters defined in the suite.rc file. 
 
 \item {\bf Dynamic Configuration Of I/O Paths}
 
@@ -4994,10 +5058,10 @@ it has no choice but to depend on. If this rule is followed, your suite
 will be as flexible as possible in terms of being able to run single
 tasks, or subsets of the suite, whilst debugging or developing new
 features.\footnote{The \lstinline=cylc submit= command runs a single
-task exactly as its suite would, in terms of both job submission method and
-execution environment.}  For example, every task should create its own
-output directories if they do not already exist, instead of assuming
-their existence due to the action of some another task; then you will be
+task exactly as its suite would, in terms of both job submission method
+and execution environment.}  For example, every task should create its
+own output directories if they do not already exist, instead of assuming
+their existence due to the action of some other task; then you will be
 able to run single tasks without having to manually create output
 directories first. 
 
@@ -5335,7 +5399,7 @@ restored if needed.}
 %
 %    \item Pyro must be installed on every host used by the suite.
 %         Ideally all relevant machines should have the same version of
-%         Pyro, but you can easily check for Pyro cross-version
+%         Pyro, but you can easily check for Pyro version
 %         compatibility by attempting to run one of the cylc example
 %         system.
 %        

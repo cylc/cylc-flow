@@ -57,6 +57,9 @@ class Daily( cycler ):
         # default minimum runahead limit in hours
         self.minimum_runahead_limit = 24 * self.step
 
+    def get_def_min_runahead( self ):
+        return self.minimum_runahead_limit
+
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""
 
