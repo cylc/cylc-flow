@@ -77,13 +77,25 @@ LED suite control interface.
         path, col, cellx, celly = pth
         r_iter = treeview.get_model().get_iter( path )
 
-        name = col.get_widget().get_children()[0].get_text().strip()
+        column_index = treeview.get_columns().index(col)
+        name = self.t.task_list[column_index - 1]
         ctime_column = treeview.get_model().get_n_columns() - 1
         ctime = treeview.get_model().get_value( r_iter, ctime_column )
 
         task_id = name + '%' + ctime
 
         menu = self.get_right_click_menu( task_id )
+
+        sep = gtk.SeparatorMenuItem()
+        sep.show()
+        menu.append( sep )
+
+        group_item = gtk.CheckMenuItem( 'Toggle Hide Task Headings' )
+        group_item.set_active( self.t.should_hide_headings )
+        menu.append( group_item )
+        group_item.connect( 'toggled', self.toggle_headings )
+        group_item.show()
+
         menu.popup( None, None, None, event.button, event.time )
 
         # TO DO: popup menus are not automatically destroyed and can be
@@ -92,6 +104,15 @@ LED suite control interface.
         # prevent a memory leak? But I'm not sure how to do this as yet.)
 
         return True
+
+    def toggle_headings(self, toggle_item):
+        headings_off = toggle_item.get_active()
+        if headings_off == self.t.should_hide_headings:
+            return False
+        self.t.should_hide_headings = headings_off
+        if toggle_item != self.headings_menu_item:
+            self.headings_menu_item.set_active( headings_off )
+        self.t.set_led_headings()
 
     def stop(self):
         self.t.quit = True
@@ -103,7 +124,13 @@ LED suite control interface.
 
     def get_menuitems( self ):
         """Return the menuitems specific to this view."""
-        return []
+        items = []
+        self.headings_menu_item = gtk.CheckMenuItem( 'Toggle _Hide Task Headings' )
+        self.headings_menu_item.set_active( self.t.should_hide_headings )
+        items.append( self.headings_menu_item )
+        self.headings_menu_item.show()
+        self.headings_menu_item.connect( 'toggled', self.toggle_headings )
+        return items
 
     def get_toolitems( self ):
         """Return the tool bar items specific to this view."""

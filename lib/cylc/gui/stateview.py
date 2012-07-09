@@ -465,6 +465,7 @@ class lupdater(threading.Thread):
 
         self.quit = False
         self.autoexpand = True
+        self.should_hide_headings = False
 
         self.cfg = cfg
         self.info_bar = info_bar
@@ -517,6 +518,11 @@ class lupdater(threading.Thread):
             self.status = "status:\nconnected"
             self.info_bar.set_status( self.status )
             return True
+
+    def _set_tooltip(self, widget, tip_text):
+        tip = gtk.Tooltips()
+        tip.enable()
+        tip.set_tip( widget, tip_text )
 
     def connection_lost( self ):
         self.state_summary = {}
@@ -609,19 +615,24 @@ class lupdater(threading.Thread):
 
         return led_ctime
 
-
     def set_led_headings( self ):
         self.led_headings = ['Tag' ] + self.task_list
         tvcs = self.led_treeview.get_columns()
         labels = []
         for n in range( 1,1+len( self.task_list) ):
-            labels.append(gtk.Label(self.led_headings[n]))
-            labels[-1].set_use_underline(False)
-            labels[-1].set_angle(90)
-            labels[-1].show()
+            text = self.led_headings[n]
+            tip = self.led_headings[n]
+            if self.should_hide_headings:
+                text = " "
+            label = gtk.Label(text)
+            label.set_use_underline(False)
+            label.set_angle(90)
+            label.show()
+            labels.append(label)
             label_box = gtk.VBox()
-            label_box.pack_start(labels[-1], expand=False, fill=False)
+            label_box.pack_start( label, expand=False, fill=False )
             label_box.show()
+            self._set_tooltip( label_box, tip )
             tvcs[n].set_widget( label_box )
         max_pixel_length = -1
         for label in labels:
@@ -643,6 +654,14 @@ class lupdater(threading.Thread):
         self.led_treeview.set_model( self.led_liststore )
         self.led_treeview.get_selection().set_mode( gtk.SELECTION_NONE )
 
+        if hasattr(self.led_treeview, "set_tooltip_cell"):
+            self.led_treeview.set_has_tooltip(True)
+            try:
+                self.led_treeview.connect('query-tooltip',
+                                          self.on_query_tooltip)
+            except TypeError:
+                # Lower PyGTK version.
+                pass
         # this is how to set background color of the entire treeview to black:
         #treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) )
 
@@ -668,6 +687,20 @@ class lupdater(threading.Thread):
             self.led_treeview.append_column( tvc )
 
         self.set_led_headings()
+
+    def on_query_tooltip(self, widget, x, y, kbd_ctx, tooltip):
+        tip_context = self.led_treeview.get_tooltip_context(x, y, kbd_ctx)
+        if tip_context is None:
+            return False
+        x, y = self.led_treeview.convert_widget_to_tree_coords(x, y)
+        path, column, cell_x, cell_y = self.led_treeview.get_path_at_pos(x, y)
+        col_index = self.led_treeview.get_columns().index(column)
+        name = self.task_list[col_index - 1]
+        ctime = self.ctimes[path[0]]
+        task_id = name + "%" + ctime
+        state = self.state_summary.get(task_id, {}).get("state", "")
+        tooltip.set_text((task_id + "\n" + state).strip())
+        return True
 
     def update_gui( self ):
         #print "Updating GUI"
@@ -701,10 +734,13 @@ class lupdater(threading.Thread):
         ctimes = tasks.keys()
         ctimes.sort()
 
+        tvcs = self.led_treeview.get_columns()
+        self.ctimes = []
         for ctime in ctimes:
+            self.ctimes.append(ctime)
             tasks_at_ctime = tasks[ ctime ]
             state_list = [ ]
-
+            
             for name in self.task_list:
                 if name in tasks_at_ctime:
                     state = self.state_summary[ name + '%' + ctime ][ 'state' ]
