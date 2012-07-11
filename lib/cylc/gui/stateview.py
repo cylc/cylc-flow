@@ -623,7 +623,7 @@ class lupdater(threading.Thread):
             text = self.led_headings[n]
             tip = self.led_headings[n]
             if self.should_hide_headings:
-                text = " "
+                text = "..."
             label = gtk.Label(text)
             label.set_use_underline(False)
             label.set_angle(90)
@@ -654,7 +654,7 @@ class lupdater(threading.Thread):
         self.led_treeview.set_model( self.led_liststore )
         self.led_treeview.get_selection().set_mode( gtk.SELECTION_NONE )
 
-        if hasattr(self.led_treeview, "set_tooltip_cell"):
+        if hasattr(self.led_treeview, "set_has_tooltip"):
             self.led_treeview.set_has_tooltip(True)
             try:
                 self.led_treeview.connect('query-tooltip',
@@ -689,6 +689,7 @@ class lupdater(threading.Thread):
         self.set_led_headings()
 
     def on_query_tooltip(self, widget, x, y, kbd_ctx, tooltip):
+        """Handle a tooltip creation request."""
         tip_context = self.led_treeview.get_tooltip_context(x, y, kbd_ctx)
         if tip_context is None:
             return False
