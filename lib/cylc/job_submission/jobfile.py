@@ -288,11 +288,13 @@ echo "  SUITE OWNR: $CYLC_SUITE_OWNER"''')
 
     def write_work_directory_remove( self ):
         if self.manual_messaging:
-            # don't remove the running directory of detaching tasks
+            self.FILE.write( """
+
+# (detaching task: cannot safely remove the WORK DIRECTORY here)""")
             return
         self.FILE.write( """
 
-# WORK DIRECTORY REMOVE:
+# EMPTY WORK DIRECTORY REMOVE:
 cd
 rmdir $CYLC_TASK_WORK_PATH 2>/dev/null || true""" )
 

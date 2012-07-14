@@ -901,12 +901,11 @@ before the task runs.
 \subparagraph[work directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ work directory}
 \label{LocalWork}
 
-Each task runs in its own working directory. The work directory is
-created on the fly by the task job script prior to executing the task
-command scripting. For non-detaching tasks the work directory is 
-removed, if it is empty, before the job script exits. It can be accessed
-by tasks at run time via the environment variable 
-\lstinline=$CYLC_TASK_WORK_PATH=.
+Task command scripting is executed from within a work directory created
+on the fly, if necessary, by the task's job script. In non-detaching
+tasks the work directory is automatically removed again {\em if it is
+empty} before the job script exits. The work directory can be accessed
+by tasks via the environment variable \lstinline=$CYLC_TASK_WORK_PATH=.
 
 \begin{myitemize}
 \item {\em type:} string (directory path, may contain environment variables)
@@ -916,13 +915,12 @@ by tasks at run time via the environment variable
 \subparagraph[share directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ share directory}
 \label{LocalShare}
 
-This is intended as a shared data directory for multiple tasks. As
-such it should be defined at root level, if for all tasks; or in a
-family namespace, if for a subset of tasks; however, it can be 
-made unique for every task if you like. The share directory is
-created on the fly by the task job script prior to executing the task
-command scripting. It can be accessed by tasks at run time via the
-environment variable \lstinline=$CYLC_SUITE_SHARE_PATH=.
+Like task work directories (above) this directory is created on the fly,
+if necessary, by the job script. It is intended as a shared data area
+for multiple tasks on the same host, but as for any task runtime config
+item it can be specialized to particular tasks or groups of tasks. 
+It can be accessed by tasks at run time via the environment variable
+\lstinline=$CYLC_SUITE_SHARE_PATH=.
 
 \begin{myitemize}
 \item {\em type:} string (directory path, may contain environment variables)
