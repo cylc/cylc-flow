@@ -3753,6 +3753,19 @@ This example is emphasizes that {\em the environment is read on the suite
 host at the time the suite definition is parsed} - it is not, for
 instance, read at task run time on the task host.
 
+\subsubsection{Custom Jinja2 Filters}
+
+Jinja2 variable values can be modified by filters. Some built in filters
+are available (see Jinja2 documentation), and cylc supports loading of
+custom Jinja2 filters.  These should be defined as Python functions (the
+function name defines the filter name) in a module of the same name under 
+a \lstinline=Jinja2/= sub-directory of the suite definition directory, or
+for use by mulitple suites, in \lstinline=$HOME/.cylc/Jinja2=.
+
+The example suite \lstinline=$CYLC_DIR/examples/jinja2/filter= shows how 
+to use a custom filter to left-pad integer values with '0' characters,
+for use in generated task names.
+
 \subsection{Special Placeholder Variables}
 \label{SPHV}
 

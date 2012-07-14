@@ -740,3 +740,5 @@ template when the suite is parsed, as a dictionary structure called
 
 + Optional family (runtime namespace grouping) in the tree view GUI.
 
++ Support for Jinja2 custom filters.
+
