@@ -131,10 +131,8 @@ def get_port( suite, owner=os.environ['USER'], host=hostname, pphrase=None, time
             # No such host?
             raise SuiteNotFoundError, x
         proxy._setTimeout(timeout)
-        # note: we'll get a TimeoutError if the connection times out
+        # (we'll get a TimeoutError if the connection times out)
 
-        # Giving the suite passphrase does not result in connection
-        # denied if the suite is currently not using its passphrase
         proxy._setIdentification( pphrase )
 
         try:

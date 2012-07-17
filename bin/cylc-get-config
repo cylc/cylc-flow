@@ -16,13 +16,14 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
-from optparse import OptionParser
-from cylc.registration import dbgetter, RegistrationError
-from cylc.config import config, SuiteConfigError
-from cylc.version import compat
+from cylc.remote import remrun
+remrun().execute()
 
-parser = OptionParser( usage = """cylc [info] get-config SUITE [HIERARCHY]
+import sys
+from cylc.config import config
+from cylc.CylcOptionParsers import cop
+
+parser = cop( usage = """cylc [info] get-config REG [ITEMS...]
 
 Print configuration items parsed from a suite definition (including any 
 defaults not explicitly set in the suite.rc file). This enables scripts
@@ -53,15 +54,9 @@ $ cylc get-config foo.bar.baz cylc lockserver enable
 $ True
 
 $ cylc get-config foo.bar.baz runtime modelX environment OUTPUT_DIR
-$ /oper/live/modelX/output
-
-Arguments:
-    SUITE - target suite.
-    HIERARCHY - list of suite.rc item hierarchy elements.""" )
-
-parser.add_option( "-c", "--central",
-        help="Target the central suite database.",
-        action="store_true", default=False, dest="central" )
+$ /oper/live/modelX/output""", 
+    argdoc=[('REG', 'Suite name'), 
+        ('[ITEMS...]', 'suite.rc section and item hierarchy')])
 
 parser.add_option( "-d", "--directories",
         help="Print all configured suite directory paths.",
@@ -69,21 +64,16 @@ parser.add_option( "-d", "--directories",
 
 ( options, args ) = parser.parse_args()
 
-if len(args) < 1:
-    parser.error( "Wrong number of arguments" )
-
-reg = args[0]
-dbg = dbgetter( options.central )
-try:
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    raise SystemExit(x)
-
-compat( suite, suiterc ).execute( sys.argv )
+from cylc.compat import compat_reg
+compat = compat_reg( args[0], options.db, options.verbose, options.debug )
+compat.execute()
+suite, suiterc = compat.get_suite()
 
 try:
     config = config( suite, suiterc )
-except SuiteConfigError,x:
+except Exception,x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 
 if options.dpaths:

@@ -16,18 +16,21 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.remote import remrun
+remrun().execute()
+
 import os, sys, re
-from cylc.CylcOptionParsers import NoPromptOptionParser
+from cylc.CylcOptionParsers import cop
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.scheduler import scheduler
 from cylc.run import main, set_main_debug
 
 class restart( scheduler ):
     def __init__( self ):
-        usage = """cylc [control] restart [options] SUITE [FILE]
+        usage = """cylc [control] restart [OPTIONS] ARGS
 
 Restart a cylc suite from a previous state.
-(To start a suite from a specific cycle time, see 'cylc run SUITE').
+(To start a suite from a specific cycle time, see 'cylc run REG').
 
 The most recent previous state is used by default but other state dumps
 can be specified on the command line (e.g. cylc writes a special state
@@ -51,10 +54,10 @@ suite from the local host requires the suite passphrase to be installed.
 If they exist /etc/profile and $HOME/.profile will be sourced on the
 remote host prior to attempting to run the suite."""
 
-        self.parser = NoPromptOptionParser( usage,
-   extra_args=["""FILE                 Optional non-default state dump file (assumed to
-                        reside in the suite state dump directory unless
-                        you give the full path)."""]) 
+        self.parser = cop( usage,
+   argdoc=[("REG", "Suite name"),
+   ( "[FILE]", """Optional state dump file (in the suite state
+                        dump directory, or give full path).""")]) 
 
         self.parser.add_option( "--no-reset", 
             help="Do not reset failed tasks to ready on restarting",
@@ -71,8 +74,14 @@ remote host prior to attempting to run the suite."""
 
     def parse_commandline( self ):
         ( self.options, self.args ) = self.parser.parse_args()
+        from cylc.compat import compat_reg
+        compat = compat_reg( self.args[0], self.options.db,
+                self.options.verbose, self.options.debug )
+        compat.execute()
+        self.suite, self.suiterc = compat.get_suite()
+        self.suite_dir = os.path.dirname( self.suiterc )
+
         self.no_reset = False
-        #DISABLED if self.options.no_reset or self.options.practice_mode:
         if self.options.no_reset:
             self.no_reset = True
         self.restart_from = None
@@ -97,11 +106,6 @@ remote host prior to attempting to run the suite."""
 
     def load_tasks( self ):
         # FIND THE INITIAL STATE DUMP FILE
-        #DISABLED if self.practice:
-        #DISABLED     # in practice mode, we reset from the parent suite's state dump
-        #DISABLED     state_dump_dir = re.sub( '-practice', '', self.state_dump_dir )
-        #DISABLED     state_dump_file = re.sub( '-practice', '', self.state_dump_filename )
-        #DISABLED else:
         state_dump_dir = self.state_dump_dir
         state_dump_file = self.state_dump_filename
 

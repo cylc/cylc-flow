@@ -139,6 +139,13 @@ echo -n "   ... "
 cylc purge -f $SUITE_REG X%2010010112 2010010200 >> $OUT 2>&1
 echo done
 
+# INCREASE THE RUNAHEAD LIMIT TO GET OVER THE GAP
+echo
+echo ">> Setting suite runahead limit to 48"
+echo -n "   ... "
+cylc set-runahead -f $SUITE_REG 48 >> $OUT 2>&1
+echo done
+
 # WAIT FOR THE SUITE TO FINISH AT 2010010212
 echo
 echo ">> WAITING for the suite to shut down"

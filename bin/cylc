@@ -202,25 +202,25 @@ control_commands['unblock'] = ['unblock' ]
 control_commands['reset'  ] = ['reset'  ]
 control_commands['nudge'  ] = ['nudge' ]
 control_commands['depend' ] = ['depend']
-control_commands['maxrunahead'] = ['maxrunahead']
-control_commands['lockserver'] = ['lockserver' ]
-control_commands['lockclient'] = ['lockclient', 'lc' ]
-control_commands['verbosity' ] = ['verbosity' ]
+control_commands['set-runahead'] = ['set-runahead']
+control_commands['set-verbosity' ] = ['set-verbosity' ]
  
 utility_commands = OrderedDict()
 utility_commands['cycletime'    ] = ['cycletime' ]
 utility_commands['checkvars'    ] = ['checkvars'] 
 utility_commands['housekeeping' ] = ['housekeeping'] 
 utility_commands['scp-transfer' ] = ['scp-transfer'] 
+utility_commands['lockserver'] = ['lockserver' ]
+utility_commands['lockclient'] = ['lockclient', 'lc' ]
 
 hook_commands = OrderedDict()
 hook_commands['email-suite' ] = ['email-suite'] 
 hook_commands['email-task'  ] = ['email-task' ] 
 
 admin_commands = OrderedDict()
-admin_commands['create-cdb'  ] = [ 'create-cdb']
 admin_commands['test-db'     ] = [ 'test-db']
 admin_commands['test-suite'  ] = [ 'test-suite']
+admin_commands['import-examples' ] = ['import-examples']
 admin_commands['check-examples'  ] = [ 'check-examples']
 
 license_commands = OrderedDict()
@@ -236,8 +236,6 @@ database_commands['unregister'] = [ 'unregister' ]
 database_commands['copy'      ] = [ 'copy', 'cp' ]
 database_commands['print'     ] = [ 'print' ]
 database_commands['get-directory' ] = [ 'get-directory' ]
-database_commands['export'    ] = [ 'export' ]
-database_commands['import'    ] = [ 'import' ]
 database_commands['refresh'   ] = [ 'refresh' ]
 
 preparation_commands = OrderedDict()
@@ -277,9 +275,8 @@ for dct in [
         all_commands[com] = dct[com]
 
 general_usage = """
-Cylc is a metascheduler or suite engine for complex cycling
-meteorological forecasting systems and related data processing. 
-This is the cylc command line interface; the cylc GUI is gcylc.
+Cylc is a suite engine and metascheduler for meteorological and climate
+forecasting, and related data processing. The cylc GUI is gcylc.
 
 Version: cylc-"""+cylc_version+""" 
 
@@ -299,7 +296,7 @@ catsum = OrderedDict()
 catsum['all'    ]        = "the complete cylc command set"
 catsum['admin'       ]   = "commands for use by the cylc administrator."
 catsum['license'     ]   = "Software licensing information (GPL v3.0)."
-catsum['database'    ]   = "private and central suite registration."
+catsum['database'    ]   = "commands manipulating suite registrations."
 catsum['information' ]   = "retrieve and print information about a suite."
 catsum['preparation' ]   = "suite editing, graphing, validation etc."
 catsum['discovery'   ]   = "what suites are running at the moment?"
@@ -310,8 +307,8 @@ catsum['utility'     ]   = "cycle time arithmetic, filename templating, etc."
 
 usage = general_usage + """
 
-Commands and categories can be abbreviated; categories can disambiguate
-highly abbreviated commands but their use is optional:
+Commands and categories can be abbreviated; use of categories is
+optional but they can disambiguate abbreviated commands:
   % cylc control trigger SUITE TASK     # trigger TASK in SUITE
   % cylc trigger SUITE TASK             # ditto
   % cylc con trig SUITE TASK            # ditto
@@ -337,23 +334,21 @@ Command CATEGORIES:"""
 # command summaries
 comsum = OrderedDict()
 # admin
-comsum[ 'create-cdb' ] = '(ADMIN) Create the central suite database'
 comsum[ 'test-db'    ] = '(ADMIN) Automated suite database test'
 comsum[ 'test-suite' ] = '(ADMIN) Automated cylc scheduler test'
 comsum[ 'check-examples' ] = '(ADMIN) Check all example suites validate'
+comsum[ 'import-examples' ] = '(ADMIN) import example suites your user database'
 # license
 comsum[ 'warranty'   ] = 'Print the GPLv3 disclaimer of warranty'
 comsum[ 'conditions' ] = 'Print the GNU General Public License v3.0'
 # database
-comsum[ 'register'   ] = 'Add a suite to your private registration database'
+comsum[ 'register'   ] = 'Register a suite for use.'
 comsum[ 'reregister' ] = 'Change a suite\'s registered name.'
 comsum[ 'alias'      ] = 'Register an alias for another registered suite'
-comsum[ 'unregister' ] = 'Remove suites from the private or central database'
+comsum[ 'unregister' ] = 'Unregister, and optionally delete, suites.'
 comsum[ 'copy'       ] = 'Copy a suite or group of suites.'
-comsum[ 'print'      ] = 'Print private or central suite registrations'
+comsum[ 'print'      ] = 'Print suite registrations'
 comsum[ 'get-directory'    ] = 'Print a suite definition directory path'
-comsum[ 'import'     ] = 'Import central registrations to your private database'
-comsum[ 'export'     ] = 'Export private registrations to the central database'
 comsum[ 'refresh'    ] = 'Report invalid registrations and update suite titles'
 # preparation
 comsum[ 'edit'       ] = 'Edit a suite.rc file in $EDITOR, optionally inlined'
@@ -386,10 +381,10 @@ comsum[ 'unblock'    ] = 'Comply with subsequent intervention commands'
 comsum[ 'reset'      ] = 'Force a task to waiting, ready, or succeeded state'
 comsum[ 'nudge'      ] = 'Cause the cylc task processing loop to be invoked'
 comsum[ 'depend'     ] = 'Add prerequisites to tasks on the fly'
-comsum[ 'maxrunahead'   ] = 'Change the runahead limit in a running suite.'
+comsum[ 'set-runahead'   ] = 'Change the runahead limit in a running suite.'
 comsum[ 'lockserver' ] = 'The cylc lockserver daemon'
 comsum[ 'lockclient' ] = 'Manual suite and task lock management'
-comsum[ 'verbosity'  ] = 'Change a suite\'s logging verbosity level'
+comsum[ 'set-verbosity'  ] = 'Change a running suite\'s logging verbosity'
 # discovery
 comsum[ 'ping'       ] = 'Check that a suite is running'
 comsum[ 'scan'       ] = 'Scan a host for running suites and lockservers'
@@ -464,11 +459,6 @@ if len(args) == 1:
         commands = eval( category + '_commands')
         for command in commands:
             print command
-        sys.exit(0)
-    if args[0] == 'print-cdb-dir':
-        # temporary secret argument used by create-cdb
-        from cylc.conf.CylcGlobals import central_regdb_dir
-        print central_regdb_dir
         sys.exit(0)
     if is_help( args[0] ):
         # cylc help

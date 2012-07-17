@@ -19,9 +19,8 @@
 import sys
 from optparse import OptionParser
 from cylc.task_message import message
-from Pyro.errors import NamingError
 
-usage = """cylc [task] message [options]
+usage = """cylc [task] message [OPTIONS]
 
 This command is part of the cylc task messaging interface, by which
 means running tasks communicate with their parent suite; it is used to

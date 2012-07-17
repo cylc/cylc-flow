@@ -111,7 +111,7 @@ class jobfile(object):
             self.FILE.write( '\n' + self.final_directive )
 
     def write_task_job_script_starting( self ):
-        self.FILE.write( '\n\necho "TASK JOB SCRIPT STARTING"')
+        self.FILE.write( '\n\necho "JOB SCRIPT STARTING"')
 
     def write_initial_scripting( self, BUFFER=None ):
         # This can be used for remote environment set up,
@@ -261,14 +261,16 @@ cd $CYLC_TASK_WORK_PATH""" % data )
     def write_identity_scripting( self ):
         self.FILE.write( "\n\n# TASK IDENTITY SCRIPTING:" )
         self.FILE.write( '''
-echo "Cylc Task Identity Info:"
-echo "  TASK IDENT: $CYLC_TASK_ID"
-echo "  TRY NUMBER: $CYLC_TASK_TRY_NUMBER"
-echo "  RUNNING ON: $(hostname)"
-echo "  SUITE NAME: $CYLC_SUITE_REG_NAME"
-echo "  SUITE HOST: $CYLC_SUITE_HOST"
-echo "  SUITE PORT: $CYLC_SUITE_PORT"
-echo "  SUITE OWNR: $CYLC_SUITE_OWNER"''')
+echo "cylc Suite and Task Identity:"
+echo "  Suite Name  : $CYLC_SUITE_REG_NAME"
+echo "  Suite Host  : $CYLC_SUITE_HOST"
+echo "  Suite Port  : $CYLC_SUITE_PORT"
+echo "  Suite Owner : $CYLC_SUITE_OWNER"
+echo "  Task ID     : $CYLC_TASK_ID"
+echo "  Task Host   : $(hostname -f)"
+echo "  Task Owner  : $USER"
+echo "  Task Try No.: $CYLC_TASK_TRY_NUMBER"
+echo ""''')
 
     def write_pre_scripting( self ):
         if not self.precommand_scripting:

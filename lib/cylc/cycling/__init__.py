@@ -29,7 +29,7 @@ def environ_init(argv0=None):
         argv0 = sys.argv[0]
     # NOTE: the above works if invoked via top level cylc or gcylc
     # command but not for this:
-    # CDB=$(python -c 'from cylc.conf.CylcGlobals import central_regdb_dir; print central_regdb_dir')
+    # BAZ=$(python -c 'from cylc.foo import bar; print bar')
     # where argv0 will be '-c'.
 
     cylc_dir = os.path.dirname(os.path.dirname(os.path.abspath(argv0)))

@@ -16,12 +16,15 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.remote import remrun
+remrun().execute()
+
 import os, re
 import tempfile
 import subprocess
-from optparse import OptionParser
+from cylc.CylcOptionParsers import cop
 
-parser = OptionParser( """cylc [info] browse [options]
+parser = cop( """cylc [info] browse [OPTIONS]
 
 Browse cylc documentation:
  1/ The User Guide in PDF format (default)
@@ -34,7 +37,7 @@ Depending on the chosen browse target you must define one or more of:
   $HTML_READER   (e.g. firefox)
   $EDITOR        (e.g. vim)
   $GEDITOR       (e.g. 'gvim -f')
- """)
+ """, argdoc=[])
 
 parser.add_option( "--html",
         help="Browse the HTML User Guide (default is PDF).",
@@ -53,9 +56,6 @@ parser.add_option( "-g",
         action="store_true", default=False, dest="geditor" )
 
 ( options, args ) = parser.parse_args()
-
-if len(args) != 0:
-    parser.error( "wrong number of arguments" )
 
 if options.log:
     if options.geditor:
@@ -109,3 +109,4 @@ try:
 except OSError:
     # the command was not invoked
     raise SystemExit( 'ERROR: unable to execute: ' + command )
+

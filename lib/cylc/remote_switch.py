@@ -24,6 +24,7 @@ from TaskID import TaskID, TaskIDError
 from CylcError import TaskNotFoundError, TaskStateError
 from job_submission.job_submit import job_submit
 from datetime import datetime
+from version import cylc_version
 
 class result:
     def __init__( self, success, reason="Action succeeded", value=None ):
@@ -65,6 +66,8 @@ class remote_switch( Pyro.core.ObjBase ):
         return result( True, "the suite has been unblocked" )
 
     def set_runahead( self, hours=None ):
+        if self._suite_is_blocked():
+            return result( False, "Suite Blocked" )
         # change the suite maximum runahead limit
         self.log.info( "setting runahead limit to " + str(hours) )
         if hours:
@@ -104,7 +107,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def trigger_task( self, task_id ):
         if self._suite_is_blocked():
-            return result( false, "suite blocked" )
+            return result( False, "suite blocked" )
         try:
             self.pool.trigger_task( task_id )
         except TaskNotFoundError, x:
@@ -121,7 +124,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def reset_task_state( self, task_id, state ):
         if self._suite_is_blocked():
-            return result( false, "suite blocked" )
+            return result( False, "suite blocked" )
         if task_id == self.failout_id:
             self._reset_failout()
         try:
@@ -282,6 +285,10 @@ class remote_switch( Pyro.core.ObjBase ):
         # process, to update state summary
         self.process_tasks = True
         return result( True, "The suite will shut down immediately" )
+
+    def get_cylc_version( self ):
+        # for internal use (compat processing)
+        return cylc_version
 
     def get_suite_info( self ):
         self.log.info( "servicing suite info request" )

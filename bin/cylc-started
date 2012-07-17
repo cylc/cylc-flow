@@ -21,9 +21,8 @@ from cylc import cylc_mode
 from optparse import OptionParser
 from cylc.task_message import message
 from cylc.locking.task_lock import task_lock
-from Pyro.errors import NamingError
 
-usage = """cylc [task] started [options]
+usage = """cylc [task] started [OPTIONS]
 
 This command is part of the cylc task messaging interface, by which
 means running tasks communicate with their parent suite; it is used to
@@ -66,3 +65,4 @@ if not cylc_mode.mode().is_raw():
         # (don"t send task failed message - handled by trapping)
         print >> sys.stderr, z
         raise SystemExit( "Failed to connect to the lockserver" )
+

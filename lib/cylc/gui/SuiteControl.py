@@ -900,7 +900,7 @@ The cylc forecast suite metascheduler.
         start_button.connect("clicked", self.change_runahead, entry, window )
 
         help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, "control", "maxrunahead" )
+        help_button.connect("clicked", self.command_help, "control", "set-runahead" )
 
         hbox = gtk.HBox()
         hbox.pack_start( cancel_button, True )

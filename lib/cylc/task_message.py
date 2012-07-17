@@ -16,26 +16,22 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# messaging class to be used for task-to-cylc Pyro communication
-
-# SEND MESSAGES TO A CYLC SCHEDULER VIA PYRO IF THIS SCRIPT WAS:
-#  (a) called by a task that was invoked by a cylc scheduler
-#  (b) invoked manually on the command line
-# OTHERWISE DIVERT MESSAGES TO STDOUT, i.e. IF THIS SCRIPT WAS:
-#  (a) called by a task that was invoked by 'cylc submit'
-#  (b) called by a task that was run manually on the command line
+"""Task to cylc progress messaging."""
 
 import os, sys
+import socket
 import subprocess
 import datetime
 import cylc_pyro_client
+from remote import remrun
 from port_scan import NoSuiteFoundError, OtherSuiteFoundError, ConnectionDeniedError
 import Pyro.errors
 
 class message(object):
-    def __init__( self, msg=None, priority='NORMAL' ):
+    def __init__( self, msg=None, priority='NORMAL', verbose=False ):
 
         self.msg = msg
+        self.verbose = verbose
 
         legal_priority = [ 'NORMAL', 'WARNING', 'CRITICAL' ]
 
@@ -128,18 +124,53 @@ class message(object):
         elif self.msg:
             msg = self.msg
         if not msg:
-            # nothing to send
+            # nothing to send (To Do: this is not needed?)
             return
         if self.mode != 'scheduler':
-            # no suite to communicate with
+            # no suite to communicate with, just print to stdout.
             self.print_msg( msg )
             return
         if self.ssh_messaging:
-            print "Invoking messaging on the suite host by ssh"
-            self.send_ssh()
-        else:
-            self.print_msg( msg )
-            self.send_pyro( msg )
+            # The suite definition specified that this task should
+            # communicate back to the suite by means of using
+            # passwordless ssh to re-invoke the messaging command on the
+            # suite host. 
+
+            #print socket.getfqdn(), os.environ['USER'] # DEBUGGING
+
+            # The remote_run() function expects command line options
+            # to identify the target user and host names:
+            sys.argv.append( '--owner=' + self.owner )
+            sys.argv.append( '--host=' + self.host )
+            if self.verbose:
+                sys.argv.append( '-v' )
+            # Some variables from the task execution environment are
+            # also required by the re-invoked remote command: Note that
+            # $CYLC_SSH_MESSAGING is not passed through so the
+            # re-invoked command on the remote side will not end up in
+            # this code block.
+            env = {}
+            for var in ['CYLC_MODE', 'CYLC_TASK_ID',
+                    'CYLC_SUITE_REG_NAME', 'CYLC_SUITE_OWNER',
+                    'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC']:
+                env[var] = os.environ[var]
+
+            # The path to cylc on the remote end may be required:
+            path = [ os.environ['CYLC_DIR_LOCAL'] ]
+
+            # Note that remrun().execute() calls sys.exit(0) after successful
+            # remote command invocation (i.e. execution on the local
+            # side stops at that point) but if it determines that host
+            # and owner are actually local it does not do the
+            # reinvocation and just returns rather than exits. This
+            # allows us to drop straight through to local Pyro messaging
+            # (immediately below) in case of inadvertant use of
+            # "ssh messaging = True" for local tasks.
+            remrun().execute( env=env, path=path )
+
+        #print socket.getfqdn(), os.environ['USER'] # DEBUGGING
+        self.print_msg( msg )
+        self.send_pyro( msg )
 
     def send_pyro( self, msg ):
         try:
@@ -160,29 +191,6 @@ class message(object):
             # possible network config problems
             # (ports not opened for cylc suites?)
             raise SystemExit(x)
-
-    def send_ssh( self ):
-        cylc_command = os.path.basename( sys.argv[0] )  # 'cylc-failed'
-        cylc_command_list = cylc_command.split('-') + sys.argv[1:]    # 'cylc failed (reason)'
-        sshcommand = 'ssh -oBatchMode=yes ' + self.owner + '@' + self.host + ' '
-        commandenv = 'PATH=' + os.environ['CYLC_DIR_LOCAL'] + '/bin:$PATH '
-        for var in ['CYLC_MODE', 'CYLC_TASK_ID', 'CYLC_SUITE_REG_NAME', 'CYLC_SUITE_OWNER', 
-                'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC']:
-            commandenv += var + '=' + os.environ[var] + ' '
-        command_list = sshcommand.split() + commandenv.split() + cylc_command_list
-        #print ' '.join(command_list)
-
-        command = sshcommand + cylc_command + ' '.join( sys.argv[1:])
-        try:
-            # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-            retcode = subprocess.call( command_list )
-            if retcode != 0:
-                # the command returned non-zero exist status
-                raise SystemExit( command + ' failed: ' + str( retcode ))
-        except OSError:
-            raise
-            # the command was not invoked
-            raise SystemExit( 'ERROR: unable to execute: ' + command )
 
     def send_succeeded( self ):
         self.send( self.task_id + ' succeeded' )

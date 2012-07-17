@@ -19,9 +19,7 @@
 import os, sys, re
 import pickle
 import datetime, time
-from version import compat
-from conf.CylcGlobals import central_regdb_dir, local_regdb_dir
-import config
+from conf.CylcGlobals import local_regdb_path
 from regpath import RegPath
 
 # NOTE:ABSPATH (see below)
@@ -95,9 +93,9 @@ class OwnerError( RegistrationError ):
 
 class dbgetter:
     # Use to get unaliased suite registration data from an input registration.
-    def __init__( self, central=False, verbose=False ):
-        if central:
-            self.db = centraldb(verbose=verbose)
+    def __init__( self, db=None, verbose=False ):
+        if db:
+            self.db = localdb(verbose=verbose, file=db )
         else:
             self.db = localdb(verbose=verbose)
     def get_suite( self, reg ):
@@ -118,6 +116,7 @@ class regdb(object):
         # items[one][two]...[name] = (dir,title)
         self.items = {}
         # create initial database directory if necessary
+        # TO DO: CREATE ONLY WHEN REGISTERING?
         if not os.path.exists( self.dir ):
             try:
                 os.makedirs( self.dir )
@@ -248,12 +247,6 @@ class regdb(object):
                 print >> sys.stderr, "You can update the title later with 'cylc db refresh'.\n"
                 title = "SUITE PARSE ERROR"
 
-        # TO DO: put suite version in database?
-        # The following works, disabling until used:
-        #version = self.get_suite_version( suite, dir )
-        #if version:
-        #    print 'VERSION:', version
-
         #if self.verbose:
         print 'REGISTER', suite + ':', dir
 
@@ -289,20 +282,16 @@ class regdb(object):
             res.append( [suite, dir, title] )
         return res
 
-    def unregister( self, exp, regfilter=False ):
-        if not regfilter:
-            # suite (regexp ends in '$') or group (regexp ends in '.')
-            # must match from beginning.
-            exp = '^' + exp + '(\.|$)'
+    def unregister( self, exp ):
         dirs = []
         for key in self.items.keys():
-            if re.search( exp, key ):
+            if re.search( exp + '$', key ):
                 #if self.verbose:
                 dir, junk = self.items[key]
                 print 'UNREGISTER', key + ':', dir 
                 if dir not in dirs:
                     # (there could be multiple registrations of the same
-                    # suite defintion).
+                    # suite definition).
                     dirs.append(dir)
                 del self.items[key]
         # check for aliases that now need to be unregistered
@@ -367,25 +356,34 @@ class regdb(object):
         return invalid
 
     def get_suite_title( self, suite, path=None ):
+        # Attempt to determine the suite title without parsing the full
+        # suite definition file. This is quick, and it no cylc version
+        # pseudo backward compatibility checking is needed for suite 
+        # database commands.
         if path:
             suiterc = os.path.join( path, 'suite.rc' )
         else:
             suite = self.unalias(suite)
             suiterc = self.getrc( suite )
-        comp = compat( suite, suiterc )
-        if not comp.is_compatible():
-            self.unlock()
-            comp.execute( sys.argv )
-        return config.config( suite, suiterc ).get_title()
 
-    def get_suite_version( self, suite, path=None ):
-        if path:
-            suiterc = os.path.join( path, 'suite.rc' )
-            suite = "unnamed"
-        else:
-            suite = self.unalias(suite)
-            suiterc = self.getrc( suite )
-        return compat( suite, suiterc ).get_version()
+        title = ""
+        found_start = False
+        for xline in open( suiterc, 'rb' ):
+            line = xline.strip()
+            if not found_start:
+                m = re.match( '^title\s*=\s*([\'\"]+)(.*)', line )
+                if m:
+                    found_start = True
+                    start_quotes, line = m.groups()
+            if found_start:
+                if line.endswith( start_quotes ):
+                    line = re.sub( start_quotes, '', line )
+                    title += " " + line
+                    break
+                title += line
+        if title == "":
+            title = "No title provided"
+        return title
 
     def refresh_suite_title( self, suite ):
         dir, title = self.items[suite]
@@ -422,45 +420,12 @@ class localdb( regdb ):
     """
     Local (user-specific) suite registration database.
     """
-    dir = local_regdb_dir
+
+    # TO DO: REABSORB BACK INTO regdb CLASS
+
     def __init__( self, file=None, verbose=False):
-        if file:
-            # use for testing
-            dir = os.path.dirname( file )
-        else:
-            # file in which to store suite registrations
-            dir = self.__class__.dir
-            file = os.path.join( dir, 'db' )
+        if not file:
+            file = local_regdb_path
+        dir = os.path.dirname( file )
         regdb.__init__(self, dir, file, verbose)
-
-class centraldb( regdb ):
-    """
-    Central registration database for sharing suites between users.
-    """
-    dir = central_regdb_dir
-    def __init__( self, file=None, verbose=False ):
-        if file:
-            # use for testing
-            dir = os.path.dirname( file )
-        else:
-            # file in which to store suite registrations
-            dir = self.__class__.dir
-            file = os.path.join( dir, 'db' )
-        regdb.__init__(self, dir, file, verbose )
-
-    def register( self, suite, dir, owner=None ):
-        if owner:
-            user = owner
-        else:
-            user = self.user
-        regdb.register( self, user + RegPath.delimiter + suite, dir )
-
-    def reregister( self, srce, targ ):
-        sreglist = srce.split(RegPath.delimiter)
-        treglist = targ.split(RegPath.delimiter)
-        if sreglist[0] != self.user:
-            raise OwnerError, 'ERROR: You are not the owner of ' + srce
-        if treglist[0] != self.user:
-            raise OwnerError, 'ERROR: You cannot change your own username'
-        regdb.reregister( self, srce, targ )
 

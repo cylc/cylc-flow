@@ -135,15 +135,11 @@ class helpwindow( helpwindow_base ):
 def main( b ):
     help = helpwindow( "gcylc Main Window Help", 500, """%h2 Overview
 
-When gcylc starts up it shows your private suite database. Using
-the menu bar and right-click menu items you can register new suites;
-copy, reregister, and unregister existing suites; start a suite control
-application to run a dormant suite or connect to one that is already
-running; edit, search, validate, and graph suite definitions; and import
-suites from, or export them to, the central suite database (which is
-seen by all users). You can also view, search, validate, and graph
-suites in the central database when considering whether to import them
-for your own use.
+Gcylc displays your suite registration database. Using the menu bar and
+right-click menu items you can register new suites; copy, reregister,
+and unregister existing suites; start a suite control GUI to run a
+dormant suite or to connect to one that is already running; or edit,
+search, validate, and graph suite definitions.
 
 %h2 Menu Bar
 
@@ -181,11 +177,8 @@ time - use refresh if you change a suite's title.
 %h3 View > Reload
 Reload the suite database from scratch.
 
-%h3 Database > Private
-Switch to your private suite registration database.
-
-%h3 Database > Central
-Switch to the central suite registration database.
+%h3 Database > User
+(Not currently used)
 
 %h2 Right Click Menu Options
 
@@ -284,14 +277,6 @@ for use. See 'cylc db copy --help'.
 Create an alias (generally a short nickname) for an existing registered
 suite. Referring to a suite via its alias is entirely equivalent to using
 the full registered name.  See 'cylc db alias --help'.
-
-%h3 Database -> Export
-Export a suite (or group of suites) to the central database to make it
-(or them) available to others.  See 'cylc db export --help'.
-
-%h3 Database -> Import
-Import a suite (or group of suites) from the central database, to modify
-and use yourself. See 'cylc db import --help'.
 
 %h3 Database -> Reregister
 Reregister an existing suite (or group of suites) under a different

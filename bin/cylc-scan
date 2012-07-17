@@ -16,14 +16,20 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys, re
+import sys
+if '--use-ssh' in sys.argv[1:]: 
+    sys.argv.remove( '--use-ssh' )
+    from cylc.remote import remrun
+    remrun().execute()
+
+import os, re
 import socket
-from optparse import OptionParser
 from cylc.port_scan import scan
 from cylc.hostname import hostname
+from cylc.CylcOptionParsers import cop
 from cylc.conf.CylcGlobals import pyro_base_port, pyro_port_range
 
-parser = OptionParser( """cylc [discover] scan [options]
+parser = cop( """cylc [discover] scan [OPTIONS]
     
 Detect (by port scanning) running cylc suites and lockservers, and 
 print the results. The simple space-delimited output format is designed
@@ -41,12 +47,7 @@ IFS=$'\n'; for LINE in $( cylc scan ); do
 done
 IFS=$OFIS
 ----------------------------------------------------------------
-"Connection Denied" indicates another user's secure suite.""" )
-
-parser.add_option( "--host",
-        help="Cylc suite host (defaults to localhost).",
-        metavar="HOST", action="store", default=hostname,
-        dest="host" )
+"Connection Denied" indicates another user's suite.""", argdoc=[])
 
 parser.add_option( "--print-ports",
         help="Print cylc's configured port range.",
@@ -59,9 +60,5 @@ if options.print_ports:
     print pyro_base_port, '<= port <=', pyro_base_port + pyro_port_range
     sys.exit(0)
 
-host = options.host
+suites = scan( options.host, verbose=True )
 
-if len(args) != 0:
-    parser.error( "Wrong number of arguments" ) 
-
-suites = scan( host, verbose=True )

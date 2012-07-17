@@ -16,21 +16,14 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Here lies the unfinished early beginnings of more consistent
-cylc-wide exception handling ..."""
+"""In analogy with cylc.hostname.is_remote_host(), determine if a
+username is "remote"."""
 
-class CylcError( Exception ):
+import os, pwd
+
+def is_remote_user(name):
+    """Return True if name is different than the current username.
+    Return False if name is None.
     """
-    Attributes:
-        message - what the problem is. 
-    """
-    def __init__( self, msg ):
-        self.msg = msg
-    def __str__( self ):
-        return repr(self.msg)
+    return name and name != os.environ.get("USER", pwd.getpwuid(os.getuid()).pw_name)
 
-class TaskStateError( CylcError ):
-    pass
-
-class TaskNotFoundError( CylcError ):
-    pass

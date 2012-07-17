@@ -16,17 +16,21 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.CylcOptionParsers import NoPromptOptionParser
+from cylc.remote import remrun
+remrun().execute()
+
+import os
+from cylc.CylcOptionParsers import cop
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.scheduler import scheduler
 from cylc.run import main, set_main_debug
 
 class start( scheduler ):
     def __init__( self ):
-        usage = """cylc [control] run|start [options] SUITE [START]
+        usage = """cylc [control] run|start [OPTIONS] ARGS
 
 Start a suite running at a specified initial cycle time.
-(To restart a suite from a previous state, see 'cylc restart SUITE').
+(To restart a suite from a previous state, see 'cylc restart REG').
 
 The following are all equivalent if no intercycle dependence exists:
   1/ Cold start (default)    : use special cold-start tasks 
@@ -51,12 +55,13 @@ suite from the local host requires the suite passphrase to be installed.
 If they exist /etc/profile and $HOME/.profile will be sourced on the
 remote host prior to attempting to run the suite.""" 
 
-        self.parser = NoPromptOptionParser( usage,
-                extra_args=[ """START                Initial cycle time. This is optional if defined in the 
+        self.parser = cop( usage,
+                argdoc=[ ("REG", "Suite name"), 
+                ("[START]", """Initial cycle time. This is optional if defined in the 
                         suite.rc file, in which case the command line
                         takes priority (and a suite.rc final cycle time
                         will be ignored), and is not required if the
-                        suite contains no cycling tasks.""" ])
+                        suite contains no cycling tasks.""")])
 
         self.parser.add_option( "-w", "--warm", help="Warm start the suite",
         action="store_true", default=False, dest="warm" )
@@ -68,6 +73,13 @@ remote host prior to attempting to run the suite."""
 
     def parse_commandline( self ):
         ( self.options, self.args ) = self.parser.parse_args()
+        from cylc.compat import compat_reg
+        compat = compat_reg( self.args[0], self.options.db,
+                self.options.verbose, self.options.debug )
+        compat.execute()
+        self.suite, self.suiterc = compat.get_suite()
+        self.suite_dir = os.path.dirname( self.suiterc )
+
         self.start_time = None
         if len( self.args ) == 2:
             try:

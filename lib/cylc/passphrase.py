@@ -100,7 +100,7 @@ that do not actually need the suite definition directory to be installed.
                 location = pfile
             else:
                 # if an explicit location is given, the file must exist
-                raise SecurityError, 'ERROR: suite passphrase not found in ' + dir
+                raise SecurityError, 'ERROR: passphrase not found: ' + pfile
 
         # 2/ suite definition directory from the task execution environment
         if not location:

@@ -42,8 +42,7 @@ from mkdir_p import mkdir_p
 from config import config, SuiteConfigError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
-from version import compat, cylc_version
-from registration import localdb, RegistrationError
+from version import cylc_version
 from regpath import RegPath
 from CylcError import TaskNotFoundError, TaskStateError
 
@@ -68,7 +67,7 @@ class pool(object):
         try:
             self.pyro.connect( task, task.id )
         except NamingError:
-            # ATTEMPTED INSERTION OF A TASK THAT ALREADY EXISTS.
+            # Attempted insertion of a task that already exists.
             self.log.critical( task.id + ' CANNOT BE INSERTED (already exists)' )
             return
         except Exception, x:
@@ -89,7 +88,7 @@ class pool(object):
         try:
             self.pyro.disconnect( task )
         except NamingError:
-            # ATTEMPTED REMOVAL OF A TASK THAT DOES NOT EXIST.
+            # Attempted removal of a task that does not exist.
             self.log.critical( task.id + ' CANNOT BE REMOVED (no such task)' )
             return
         except Exception, x:
@@ -147,10 +146,6 @@ class pool(object):
 
 class scheduler(object):
     def __init__( self, is_restart=False ):
-        # PROVIDE IN DERIVED CLASSES:
-        # 1/ self.parser = OptionParser( usage )
-        # 2/ load_tasks()
-
         # SUITE OWNER
         self.owner = os.environ['USER']
 
@@ -169,7 +164,6 @@ class scheduler(object):
         self.is_restart = is_restart
 
         # COMMANDLINE OPTIONS
-        #DISABLED PRACTICE MODE self.parser.set_defaults( simulation_mode=False, practice_mode=False, debug=False )
         self.parser.set_defaults( simulation_mode=False, debug=False )
 
         self.graph_warned = {}
@@ -191,12 +185,6 @@ class scheduler(object):
                 "and accelerate the wall clock: get the scheduling right "
                 "without having to run the real suite tasks.",
                 action="store_true", dest="simulation_mode" )
-
-        #DISABLED self.parser.add_option( "-p", "--practice-mode",
-        #DISABLED         help="Clone an existing suite in simulation mode using new state "
-        #DISABLED         "and logging directories to avoid corrupting the original. "
-        #DISABLED         "Failed tasks will not be reset to waiting in the clone.",
-        #DISABLED         action="store_true", dest="practice_mode" )
 
         self.parser.add_option( "--fail", help=\
                 "(SIMULATION MODE) get the specified task to report failure and then abort.",
@@ -253,39 +241,16 @@ class scheduler(object):
                 my_queue[task] = queue['default']
 
     def parse_commandline( self ):
-        # SUITE NAME
-        suite = self.args[0]
-
-        # find location of the suite definition directory
-        try:
-            db = localdb()
-            db.load_from_file()
-            self.suite_dir, junk = db.get(suite)
-            self.suiterc = db.getrc(suite)
-            self.suite = db.unalias(suite)
-        except RegistrationError,x:
-            raise SystemExit(x)
-
-        compat( self.suite, self.suiterc ).execute( sys.argv )
-
         self.banner[ 'SUITE NAME' ] = self.suite
         self.banner[ 'SUITE DEFN' ] = self.suiterc
 
-        # MODE OF OPERATION (REAL, SIMULATION, practice)
-        #DISABLED if self.options.simulation_mode and self.options.practice_mode:
-        #DISABLED     parser.error( "Choose ONE of simulation or practice mode")
+        # MODE OF OPERATION (REAL, SIMULATION)
         if self.options.simulation_mode:
             self.banner['MODE'] = 'SIMULATION'
             self.simulation_mode = True
-            #DISABLED self.practice = False
-        #DISABLED elif self.options.practice_mode:
-        #DISABLED     self.banner['Mode of operation'] = 'SIMULATION (PRACTICE)'
-        #DISABLED     self.simulation_mode = True
-        #DISABLED     self.practice = True
         else:
             self.banner['Mode of operation'] = 'REAL'
             self.simulation_mode = False
-            #DISABLED self.practice = False
 
         # LOGGING LEVEL
         if self.options.debug:
@@ -299,16 +264,13 @@ class scheduler(object):
             self.gcylc = False
 
     def check_not_running_already( self ):
-        # CHECK SUITE IS NOT ALREADY RUNNING (unless practice mode)
+        # CHECK SUITE IS NOT ALREADY RUNNING
         try:
             port = port_scan.get_port( self.suite, self.owner, self.host )
         except port_scan.SuiteNotFoundError,x:
             # Suite Not Found: good - it's not running already!
             pass
         else:
-            #DISABLED if self.options.practice_mode:
-            #DISABLED     print "Continuing in Cylc Practice Mode"
-            #DISABLED else:
             raise SystemExit( "ERROR: suite " + self.suite + " is already running")
 
     def configure_suite( self ):
@@ -321,9 +283,6 @@ class scheduler(object):
         # DETERMINE SUITE LOGGING AND STATE DUMP DIRECTORIES
         self.logging_dir = self.config['cylc']['logging']['directory']
         self.state_dump_dir = self.config['cylc']['state dumps']['directory']
-        #DISABLED if self.practice:
-        #DISABLED     self.logging_dir += '-practice'
-        #DISABLED     self.state_dump_dir   += '-practice'
 
         self.banner[ 'LOG DIR' ] = self.logging_dir
         self.banner[ 'STATE DIR' ] = self.state_dump_dir
@@ -401,10 +360,6 @@ class scheduler(object):
                 raise SystemExit( 'Lockserver not found. See \'cylc lockserver status\'')
 
         # CONFIGURE SUITE PYRO SERVER
-        #DISABLED if self.practice:
-        #DISABLED     # modify suite name so we can run next to the original suite.
-        #DISABLED     suitename = self.suite + "-practice"
-        #DISABLED else:
         suitename = self.suite
         try:
             self.pyro = pyro_server( suitename )
@@ -547,8 +502,7 @@ class scheduler(object):
 
     def back_up_statedump_file( self ):
        # back up the configured state dump (i.e. the one that will be used
-       # by the suite unless in practice mode, but not necessarily the
-       # initial one). 
+       # by the suite, but not necessarily the initial one). 
        if os.path.exists( self.state_dump_filename ):
            backup = self.state_dump_filename + '.' + self.clock.get_datetime().isoformat()
            print "Backing up the state dump file:"
@@ -560,9 +514,6 @@ class scheduler(object):
 
     def run( self ):
         if self.use_lockserver:
-            #DISABLED if self.practice:
-            #DISABLED     suitename = self.suite + '-practice'
-            #DISABLED else:
             suitename = self.suite
 
             # request suite access from the lock server
@@ -570,9 +521,6 @@ class scheduler(object):
                self.lock_acquired = True
             else:
                raise SystemExit( "Failed to acquire a suite lock" )
-
-        #DISABLED if not self.practice:
-        #DISABLED     self.back_up_statedump_file()
 
         if self.hold_time:
             # TO DO: HANDLE STOP AND PAUSE TIMES THE SAME WAY?
@@ -729,9 +677,6 @@ class scheduler(object):
 
         if self.use_lockserver:
             # do this last
-            #DISABLED if self.practice:
-            #DISABLED     suitename = self.suite + '-practice'
-            #DISABLED else:
             suitename = self.suite
 
             if self.lock_acquired:

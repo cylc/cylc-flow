@@ -367,7 +367,7 @@ if __name__ == "__main__":
     cylcdir = os.environ[ 'CYLC_DIR' ]
     configfile =  os.path.join( cylcdir, 'conf/lockserver.conf' )
 
-    usage = """Usage: cylc [control] lockserver [-f CONFIG] ACTION 
+    usage = """Usage: cylc [util] lockserver [-f CONFIG] ACTION 
 
 The cylc lockserver daemon brokers suite and task locks for a single
 user. These locks are analogous to traditional lock files, but they work

@@ -25,7 +25,8 @@ from passphrase import passphrase, PassphraseNotFoundError, SecurityError
 from port_scan import get_port, check_port
 
 class client( object ):
-    def __init__( self, suite, owner=os.environ['USER'], host=hostname, port=None, pfile=None ):
+    def __init__( self, suite,
+            owner=os.environ['USER'], host=hostname, port=None, pfile=None ):
         self.suite = suite
         self.owner = owner
         self.host = host

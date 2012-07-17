@@ -23,26 +23,29 @@ For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
 """
 
+import sys
+if '--use-ssh' in sys.argv[1:]: 
+    # requires local terminal
+    sys.exit( "No '--use-ssh': this command requires a local terminal." )
+
+import os, re
+from time import sleep
 from cylc.cycle_time import ct, CycleTimeError
 from cylc import cylc_pyro_client
 from cylc.port_scan import SuiteIdentificationError
-import os, re, sys
-from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
-from time import sleep
-from cylc.CylcOptionParsers import NoPromptOptionParser
-from cylc.registration import dbgetter, RegistrationError
-from cylc.version import compat
+from cylc.CylcOptionParsers import cop
 from cylc.passphrase import SecurityError
+from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
 
 compress = True
 
-parser = NoPromptOptionParser( """cylc [info] monitor [options] SUITE 
+parser = cop( """cylc [info] monitor [OPTIONS] ARGS 
 
 A terminal-based suite monitor that updates the current state of all
 tasks in real time. It is effective even for quite large suites if
 '--align' is not used. Being a passive monitor that cannot intervene in
 a suite's operation, it is allowed to monitor suites owned by others
-and/or running on remote hosts.""")
+and/or running on remote hosts.""", pyro=True )
 
 parser.add_option( "-a", "--align", 
         help="Align columns by task name. This option "
@@ -51,17 +54,11 @@ parser.add_option( "-a", "--align",
 
 ( options, args ) = parser.parse_args()
 
-reg = parser.get_suite_name()
-dbg = dbgetter()
-try:
-    # unalias your own suite names
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    # may be a remote suite (if not we fail to get a Pyro proxy below)
-    suite = reg
-else:
-    # pseudo backward compatibility for your own suites
-    compat( suite, suiterc ).execute( sys.argv )
+from cylc.compat import compat_pyro
+compat = compat_pyro( args[0], options.owner, options.host,
+        options.pfile, options.verbose, options.debug )
+compat.execute()
+suite, junk = compat.get_suite()
 
 header = 'waiting retry runahead queued submitted running succeeded held failed'
 header = '                                                                     '
@@ -80,6 +77,8 @@ try:
             proxy = cylc_pyro_client.client( suite, owner=options.owner, \
             host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
         except SecurityError, x:
+            if options.debug:
+                raise
             raise SystemExit(x)
         except SuiteIdentificationError, x:
             if not alerted:

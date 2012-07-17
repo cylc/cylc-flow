@@ -16,27 +16,26 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.remote import remrun
+remrun().execute()
+
 import os, re, sys
 from shutil import copytree
-from optparse import OptionParser
+from cylc.CylcOptionParsers import cop
 from cylc.mkdir_p import mkdir_p
-from cylc.registration import localdb, centraldb, \
+from cylc.registration import localdb, \
         RegistrationError, SuiteTakenError, DatabaseLockedError
 from cylc.regpath import RegPath, IllegalRegPathError 
 
-parser = OptionParser( usage = """cylc [db] copy|cp [OPTIONS] SOURCE TARGET TOPDIR
+parser = cop( usage = """cylc [db] copy|cp [OPTIONS] REG REG2 TOPDIR
 
-Make copies of suites, or groups of suites, in your private database
-(to get copies of suites in the central database use 'cylc import'). 
+Copy suite or group REG to TOPDIR, and register the copy as REG2.
 
-Cylc suites have hierarchical "registration names" that are analogous to
-file paths in a directory tree (but which are not necessarily related to
-the actual directory paths in which the suite definitions are stored!).
 Consider the following three suites:
 
 % cylc db print '^foo'     # printed in flat form
 foo.bag     | "Test Suite Zero" | /home/bob/zero
-foo.bar.waz | "Test Suite Two"  | /home/bob/two
+foo.bar.qux | "Test Suite Two"  | /home/bob/two
 foo.bar.baz | "Test Suite One"  | /home/bob/one
 
 % cylc db print -t '^foo'  # printed in tree from
@@ -44,12 +43,12 @@ foo
  |-bag    "Test Suite Zero" | /home/bob/zero
  `-bar   
    |-baz  "Test Suite One"  | /home/bob/one
-   `-waz  "Test Suite Two"  | /home/bob/two
+   `-qux  "Test Suite Two"  | /home/bob/two
 
 These suites are stored in a flat directory structure under /home/bob, but
 they are organised in the suite database as a group 'foo' that contains
 the suite 'foo.bag' and a group 'foo.bar', which in turn contains the
-suites 'foo.bar.baz' and 'foo.bar.waz'.
+suites 'foo.bar.baz' and 'foo.bar.qux'.
 
 When you copy suites with this command, the target registration names
 are determined by TARGET and the name structure underneath SOURCE, and
@@ -71,59 +70,31 @@ EXAMPLES (using the three suites above):
   blue.green | "Test Suite One" | /home/bob/blue/green
 
 % cylc copy foo.bar orange /home/bob           # group to group
-  Copying suite definition for orange.waz
+  Copying suite definition for orange.qux
   Copying suite definition for orange.baz
 % cylc db pr '^orange'
-  orange.waz | "Test Suite Two" | /home/bob/orange/waz
-  orange.baz | "Test Suite One" | /home/bob/orange/baz
-
-Arguments:
-    SOURCE - Source suite or group
-    TARGET - Target suite or group
-    TOPDIR - Destination for copied suite definition directories""" )
-
-parser.add_option( "-v","--verbose",
-        help="Print extra information.",
-        action="store_true", default=False, dest="verbose" )
-
-# hidden arguments for import from and export to central db
-c_import = False
-c_export = False
-if '--import' in sys.argv:
-    c_import = True
-    sys.argv.remove( '--import' ) 
-elif '--export' in sys.argv:
-    c_export = True
-    sys.argv.remove( '--export' ) 
-    
+  orange.qux | "Test Suite Two" | /home/bob/orange/qux
+  orange.baz | "Test Suite One" | /home/bob/orange/baz""",
+  argdoc=[('REG', 'Source suite name'),
+          ('REG2', 'Target suite name'), 
+          ('TOPDIR', 'Top level target directory.')] )
+   
 ( options, args ) = parser.parse_args()
-
-if len(args) != 3:
-    parser.error('Wrong number of arguments')
 
 try:
     arg_from = RegPath(args[0]).get()
     arg_to = RegPath(args[1]).get()
 except IllegalRegPathError, x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 arg_dir = args[2]
 
-if c_import:
-    sourcedb = centraldb( verbose=options.verbose )
-    targetdb = localdb( verbose=options.verbose )
-elif c_export:
-    sourcedb = localdb( verbose=options.verbose )
-    targetdb = centraldb( verbose=options.verbose )
-else:
-    sourcedb = localdb( verbose=options.verbose )
-    targetdb = sourcedb
+sourcedb = localdb( verbose=options.verbose )
+targetdb = sourcedb
 
 try:
-    if c_import or c_export:
-        targetdb.lock()
-        targetdb.load_from_file()
-    else:
-        sourcedb.lock()
+    sourcedb.lock()
     sourcedb.load_from_file()
 
     flist = sourcedb.get_list( '^' + arg_from + r'\b' )
@@ -168,20 +139,20 @@ try:
 
     targetdb.dump_to_file()
     targetdb.unlock()
-    if c_import or c_export:
-        sourcedb.unlock()
 
 except DatabaseLockedError, x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 except RegistrationError, x:
     print >> sys.stderr, x
     targetdb.unlock()
-    if c_import or c_export:
-        sourcedb.unlock()
+    if options.debug:
+        raise
     sys.exit(1)
 except Exception, x:
     print >> sys.stderr, 'ERROR:', x
     targetdb.unlock()
-    if c_import or c_export:
-        sourcedb.unlock()
+    if options.debug:
+        raise
     sys.exit(1)

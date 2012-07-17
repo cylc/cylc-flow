@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
-#C:
+#C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -16,21 +16,14 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Here lies the unfinished early beginnings of more consistent
-cylc-wide exception handling ..."""
+import sys
 
-class CylcError( Exception ):
-    """
-    Attributes:
-        message - what the problem is. 
-    """
-    def __init__( self, msg ):
-        self.msg = msg
-    def __str__( self ):
-        return repr(self.msg)
+def prompt( reason, force=False ):
+    if force:
+        return
+    response = raw_input( reason + ' (y/n)? ' )
+    if response == 'y':
+        return
+    else:
+        sys.exit(0)
 
-class TaskStateError( CylcError ):
-    pass
-
-class TaskNotFoundError( CylcError ):
-    pass
