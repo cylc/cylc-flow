@@ -87,7 +87,7 @@ cylc db unreg $REG2
 echo
 echo "> TEST14: delete the rest of group $GRP from DB"
 echo cylc db unreg --delete -f $GRP
-cylc db unreg --delete -f $GRP
+cylc db unreg --delete -f "${GRP}\..*"
 
 echo
 echo "> TEST16: print DB group $GRP (should be empty)"
@@ -96,3 +96,4 @@ cylc db pr $GRP
 
 echo
 echo "> All database tests passed."
+
