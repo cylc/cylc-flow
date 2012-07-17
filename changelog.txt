@@ -639,9 +639,8 @@ network ports for cylc's normal Pyro TCP/IP communication mechanisim.
 from <CYLC_TASK_CYCLE_TIME+n> to [T+n]. The new syntax is the same as
 for cycle time offsets in the suite graph.
 
-+ If a task has a list of "command scripting" items to retry on failure, 
-a task failure hook script is now only called for a final definitive
-failure.
++ If multiple retries are configured for a task, the task failure event
+hook script is now called only for the final definitive failure.
 
 + The temporary directory required by some cylc commands is now chosen 
 automatically, by default, using Python's tempfile.mkdtemp(), but users
@@ -664,16 +663,17 @@ digits).
 
 + New graphing option: use node outline color for node labels.
 
-+ The cylc scan command now reports results in simple space-delimited
-format "suite owner host port", for better parsing.
++ The cylc scan command now reports simple space-delimited output,
+    suite owner host port
+for easier parsing.
 
-+ The cylc ping command changes:
++ Changes to the cylc ping command:
   1/ "host not found" errors are handled properly,
   2/ a successful ping just exits with success status (no output) ...
   3/ ... unless verbose mode is chosen, the it prints as scan above.
 
-+ Fixed a bug in the "cylc util housekeeping" script - it was not
-correctly interpolating month MM in the archive destination path.
++ Bug fix: the "cylc util housekeeping" script was not correctly
+interpolating month MM in the archive destination path.
 
 + Jinja2 processing leaves extra blank lines in the suite definition
 corresponding to lines that originally had only Jinja2 code. This could
@@ -685,27 +685,28 @@ removed following Jinja2 processing, to prevent this problem occuring.
 
 + Fixed a bug in the "cylc show" command for retrieving live task info.
 
-+ Complete remote control of suites has been enabled, along with compulsory 
-  use of secure passphrases (and the "use secure passphrase" suite
-  configuration item has been removed).  A random passphrase is
-  generated automatically in the suite definition directory when a suite
-  is registered; it must be distributed to any remote task host
-  accounts, or any remote accounts from which you need to control the
-  suite.
++ Complete remote control of suites has been enabled, 
 
-+ Merged the two suite control GUIs into one multi-view GUI with a
-cleaner interface (which is still evolving).
++ Use of secure passphrases is now compulsory for all suites. This was
+provides security for remote control of runnign suites. Accordingly the
+"use secure passphrase" suite configuration item has been removed.  A
+random passphrase is generated automatically in the suite definition
+directory when a suite is registered; it must be distributed to any
+remote task host accounts and any remote accounts from which you want to
+control the suite.
 
-+ Tasks ready to run at the same time will now be submitted in the order
-in which they are first encountered in the suite graph.
++ Tasks ready to run at the same time are now be submitted in the order
+in which they are first encountered in the suite graph (at least in the
+first cycle).
 
-+ Task retry implementation changed: "command scripting" is now a single
-item, not a list, and a new config item "retry delays" lists successive
-delays in minutes, if any, after which to resubmit the job with the same
-command scripting. Whilst delayed prior to a retry, tasks go into a new
-"retry delayed" state, coloured pink, and a new task execution
-environment variable $CYLC_TASK_TRY_NUMBER is incremented (staring from
-one in the original run); use this variable to change behavior per retry.
++ The task retry mechanism has changed: "command scripting" is now a
+single item, not a list, and a new config item "retry delays" lists
+successive delays in minutes, if any, after which to resubmit the job
+with the same command scripting. When delayed prior to a retry tasks
+go into a new "retry delayed" state, coloured pink, and a new task
+execution environment variable $CYLC_TASK_TRY_NUMBER is incremented
+(starting from one in the original run); this variable can be used to
+modify task behavior in each try.
 
 + A new config item conifiguration item:
     [runtime][[NAME]]dummy task run length = <integer> (seconds)
@@ -714,9 +715,13 @@ one in the original run); use this variable to change behavior per retry.
   $CYLC_TASK_DUMMY_RUN_LENGTH, which is used as an argument to the
   sleep command in default command scripting. 
 
-+ For Jinja2 syntax errors, we now print out the problem line.
++ Line numbers are now printed for Jinja2 syntax errors, by validate.
 
-+ Family node state coloring in the graph control view.
++ Control GUI improvements:
+  + The two control GUIs have been merged into a single multi-view GUI
+  with a cleaner interface (still evolving)
+  + Families can now be expand and collapsed in the text tree view
+  + Family state coloring (graph view and text tree view)
 
 + The "cylc cycletime" utility command has been extended to handle
 daily, monthly, and yearly cycle time offsets, as well as hours.
@@ -726,28 +731,22 @@ required changing the existing command line options.
 
 + The "cylc template" filename templating utility has been removed;
 templating is now handled by the "cylc cycletime" utility.
-WARNING: this change will obviously break any previous use of the "cylc
-template" command - replace with equivalent use of "cylc cycletime".
 
-+ The user environment on the suite host is now imported into the Jinja2
-template when the suite is parsed, as a dictionary structure called
-"environ". Example:
-    #!Jinja2
-    #...
-    [[[environment]]]
-        MY_HOME_DIR_ON_SUITE_HOST = {{environ['HOME']}}
++ The suite host environment can now be accessed via Jinja2, e.g.:
+   #!Jinja2
+   #...
+   [[[environment]]]
+       MY_HOME_DIR_ON_SUITE_HOST = {{environ['HOME']}}
 
 + The grep command now supports only cylc-style (not grep-style)
 argument order: 'cylc grep SUITE pattern' 
 
-+ Moved cylc lockserver commands to the 'utility' command category.
++ Moved the lockserver commands to the 'utility' command category.
 
-+ Removed all "central suite database" functionality.
++ Removed all central suite database functionality.
 
 + Bug fix "cylc log -r N" (for viewing old rotations)
 
-+ Optional family (runtime namespace grouping) in the tree view GUI.
-
-+ Support for Jinja2 custom filters.
-
++ Support for Jinja2 custom filters, by which you can modify Jinja2
+variable values using custom Python functions.
 
