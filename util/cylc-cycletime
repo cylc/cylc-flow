@@ -22,7 +22,7 @@ from cylc.cycling.Monthly import Monthly
 from cylc.cycling.Yearly import Yearly
 from optparse import OptionParser
 
-parser = OptionParser( usage = """cylc [util] cycletime [options] [CYCLE]
+parser = OptionParser( usage = """cylc [util] cycletime [OPTIONS] [CYCLE]
 
 Arithmetic cycle time offset computation, and filename templating.
 

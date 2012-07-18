@@ -27,7 +27,7 @@ from cylc.hostname import hostname
 
 parser = cop( usage = """cylc [db] register [OPTIONS] ARGS
 
-Register the suite in suite definition directory PATH as REG.
+Register the suite definition located in PATH as REG.
 
 Suite names are hierarchical, delimited by '.' (foo.bar.baz); they
 may contain letters, digits, underscore, and hyphens. Colons are not

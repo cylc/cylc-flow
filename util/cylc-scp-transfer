@@ -19,7 +19,7 @@
 set -e
 
 usage() {
-    echo "Usage: cylc [util] scp-transfer [options]"
+    echo "Usage: cylc [util] scp-transfer [OPTIONS]"
     echo ""
     echo "An scp wrapper for transferring a list of files and/or directories"
     echo "at once. The source and target scp URLs can be local or remote (scp"

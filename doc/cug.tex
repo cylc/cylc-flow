@@ -628,9 +628,10 @@ destination directory, and registering each one for use in your suite
 database:
 
 \begin{lstlisting}
-% cylc admin import-examples
+% cylc admin import-examples TOPDIR
 \end{lstlisting}
-
+Where \lstinline=TOPDIR= is the top level directory into which the
+example suite definitions will be copied.
 To view the content of the resulting suite database, run gcylc or 
 use the \lstinline=cylc db print= command:
 
@@ -897,36 +898,35 @@ versions.
 \subsubsection{Explicit Cylc Version Reinvocation}
 
 Other cylc versions can be specified explicitly on the command line,
-\lstinline=cylc -V x.y.z= or \lstinline@cylc -Version=x.y.z@. This
-feature will only work properly for versions 4.5.0 and later.
+\lstinline=cylc -V x.y.z= (capital V). This feature works for
+versions 4.5.0 and later.
 
 \subsubsection{Available Cylc Versions}
 
-To list available versions of cylc installed in parallel with the
-invoked version, run \lstinline=cylc -V avail= or
-\lstinline@cylc -Version=avail@.
+To list available cylc versions installed in parallel with the
+invoked version: \lstinline=cylc -V avail= (capital V).
 
 \subsubsection{Limitations}
 
 The top level command interface, \lstinline=$CYLC_DIR/bin/cylc=,
 determines the legality of requested sub-command names so any attempt to
-run a sub-command that no longer exists in the initially-invoked version
-of cylc will fail. Additionally, the command line must necessarily be
-parsed first by the invoked sub-command in order to determine which
-argument refers to the suite (the suite name is always the first
-non-option argument but only sub-commands know if particular options
-have their own arguments or are just logical flags, and can therefore
-determine which is the first true argument); consequently any attempt to
-use a command option that is illegal in the initially-invoked version of
-cylc will also fail.
+run a sub-command that no longer exists in the invoked version
+of cylc will fail. Additionally, the command line must be parsed first
+by the sub-command of the invoked cylc version in order to determine
+which command line argument references the suite (the suite name is
+always the first non-option argument but only sub-commands know if
+particular options have their own arguments or are just logical flags,
+and can therefore determine which is the first true argument);
+consequently any attempt to use a command option that is illegal in the
+invoked version of cylc will also fail.
 
 
 \subsubsection{A Usage Suggestion}
 
 You can use the Jinja2 template processor (see Section~\ref{Jinja2}) to
-store the required cylc version in a single variable, which can then 
-also be used (for example) to specify the right cylc version to use on a
-remote task host:
+store the required cylc version in a single variable that can also be  
+used elsewhere in the suite definition - to specify the cylc version to
+use on a remote task host, for example:
 \lstset{language=suiterc}
 \begin{lstlisting}
 #!Jinja2
@@ -2979,9 +2979,9 @@ namespace, in which the leaves are the individual tasks of the suite.
 
 Nested families from the namespace inheritance hierarchy, even if 
 they are not used as family triggers in the graph, can be expanded or
-collapsed in suite graphs, and in the graph-based suite control GUI
-(this will also be added to the text treeview control GUI in a future
-release). See {\em Visualization} (Section~\ref{viso}) for more on this. 
+collapsed in the suite dependency graphs viewer, the graph view of the
+suite control GUI, and since cylc-4.5.0, in the text tree view of the
+control GUI.
 
 The following listing of the {\em namespace.one} example suite
 illustrates basic runtime property inheritance. How it works should be
@@ -3228,7 +3228,7 @@ $CYLC_SUITE_SHARE_PATH   # suite shared directory
 
 Task command scripting is executed from within a work directory created
 on the fly, if necessary, by the task's job script. In non-detaching
-tasks the work directory is automatically removed again {\em if it
+tasks the work directory is automatically removed again {\em if it is 
 empty} before the job script exits. 
 
 The share directory is also created on the fly, if necessary, by the job
@@ -3247,9 +3247,8 @@ command line, are passed to task execution environments as:
 $CYLC_SUITE_INITIAL_CYCLE_TIME 
 $CYLC_SUITE_FINAL_CYCLE_TIME 
 \end{lstlisting}
-These can be used, for example, for a cleanup task to determine whether
-or not it is running for the final time.
-
+Running tasks can use these to determine whether or not they are running
+in the first or final cycles.
 
 \lstset{language=transcript}
 
@@ -3289,8 +3288,8 @@ using passwordless ssh.
     \item passwordless ssh must be configured between the suite owner on
         the suite host and the task owner on the remote host.
     \item cylc and Pyro must be installed on the remote host so that the
-        remote task can communicate with the suite (but graphviz is not
-        needed).
+        remote task can communicate with the suite (but graphviz,
+        Pygraphviz, and Jinja2 are not needed there).
     \item the suite definition directory must be installed on the remote
         host, if the task needs access to scripts in the suite bin
         directory or to any other files stored there.

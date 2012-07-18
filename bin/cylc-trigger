@@ -36,7 +36,7 @@ prerequisites satisfied) and, for clock-triggered tasks, ignoring
 the designated trigger time.""",
     pyro=True, 
     argdoc=[ ('REG', 'Suite name'),
-             ('TASK' 'Target task')] )
+             ('TASK', 'Target task')] )
 
 (options, args) = parser.parse_args()
 

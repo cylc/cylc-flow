@@ -45,8 +45,7 @@ from cylc.registration import dbgetter, RegistrationError
 # attempt to determine their CWD.
 os.chdir(os.environ['HOME'])
 
-parser = OptionParser( """cylc gcylc [OPTIONS] [REG]
-       gcylc [OPTIONS] [REG]
+parser = OptionParser( """gcylc [OPTIONS] [REG]
 
 This is the cylc graphical user interface. It is functionally equivalent
 to the command line interface ('cylc help') in most respects.

@@ -26,9 +26,12 @@ from cylc.registration import localdb, RegistrationError, DatabaseLockedError
 parser = cop( usage = """cylc [db] alias [OPTIONS] ARGS
 
 Register an alias REG2 for suite REG1. Using an alias is equivalent to
-using the original suite name. Note however that the '--use-ssh' option 
-is required for [control] category commands to interact with remote suites 
-via a (remote) alias.
+using the full suite name, except for the following caveat: aliases are
+stored in your local suite db and aliased suites run under their full
+name; therefore you can't interact with remote suites via an alias
+unless you use '--use-ssh' (for [control] category commands), which
+re-invokes the control command on the remote suite host (where the alias
+is known).
 
   $ cylc alias global.ensemble.parallel.test3 bob
   $ cylc edit bob

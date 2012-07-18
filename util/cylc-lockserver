@@ -406,7 +406,7 @@ Arguments:
     parser.set_defaults( config = configfile )
 
     parser.add_option( "-c", "--config-file", 
-            help="Config file (default " + configfile + ")",
+            help="Config file (default $CYLC_DIR/lockserver.conf",
             metavar="CONFIGFILE", action="store", dest="config" )
 
     ( options, args ) = parser.parse_args()

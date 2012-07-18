@@ -22,7 +22,7 @@ usage() {
     echo "USAGE: cylc [admin] test-suite [--help]"
     echo ""
     echo "Run an automated test of core cylc functionality using a new copy of"
-    echo "'$CYLC_DIR/examples/admin'. This should be used to check that new"
+    echo "\$CYLC_DIR/examples/admin. This should be used to check that new"
     echo "developments in the cylc codebase have not introduced serious bugs."
     echo "The test runs a suite registered as 'test'; to watch its progress"
     echo "use 'cylc view'. Aside from timing differences results should be the"
@@ -30,7 +30,7 @@ usage() {
     echo
     echo "Currently the test does the following:"
     echo "  - Copies the 'intro' example suite definition directory;"
-    echo "  - Registers the new suite as $SUITE_REG;"
+    echo "  - Registers the new suite;"
     echo "  - Starts the suite at T0=06Z, with task X set to fail at 12Z;"
     echo "  - Unlocks the running suite;"
     echo "  - Sets a stop time at 12Z (i.e. T0+30 hours);"
