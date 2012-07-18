@@ -19,7 +19,7 @@
 from cylc.remote import remrun
 remrun().execute()
 
-import os, re
+import os, re, sys
 import tempfile
 import subprocess
 from cylc.CylcOptionParsers import cop
@@ -32,7 +32,7 @@ Browse cylc documentation:
  3/ The change log (plain text format)
  4/ The cylc internet homepage.
  
-Depending on the chosen browse target you must define one or more of:
+Required environment variables:
   $PDF_READER    (e.g. evince)
   $HTML_READER   (e.g. firefox)
   $EDITOR        (e.g. vim)
@@ -41,7 +41,7 @@ Depending on the chosen browse target you must define one or more of:
 
 parser.add_option( "--pdf",
         help="Browse the PDF User Guide (DEFAULT).",
-        action="store_true", default=True, dest="pdf" )
+        action="store_true", default=False, dest="pdf" )
 
 parser.add_option( "--html",
         help="Browse the multi-page HTML User Guide.",
@@ -100,11 +100,21 @@ else:
         file = os.path.join( cdir, 'doc', 'single', 'cug-html.html' )
     elif options.log:
         file = os.path.join( cdir, 'changelog.txt' )
-    elif options.pdf:
+    else:
+        if not options.pdf:
+            print "No option chosen: defaulting to --pdf"
+            options.pdf = True
         file = os.path.join( cdir, 'doc', 'CylcUserGuide.pdf' )
 
     if not os.path.isfile( file ):
-        raise SystemExit( "ERROR, File not found: " + file )
+        print >> sys.stderr, "ERROR, File not found:", file
+        if not options.pdf:
+            sys.exit(1)
+        else:
+           file = os.path.join( cdir, 'doc', 'cug-pdf.pdf' )
+           if not os.path.isfile( file ):
+               print >> sys.stderr, "ERROR, File not found:", file
+               sys.exit(1)
 
 # in case $EDITOR has options, e.g. 'emacs -nw':
 command_list = re.split( ' ', appl )
