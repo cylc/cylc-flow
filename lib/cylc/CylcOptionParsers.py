@@ -31,8 +31,6 @@ class cop( OptionParser ):
         # ("--use-ssh") you can use passwordless ssh to re-invoke the
         # command on the suite host, as for non-control commands.
 
-        print argdoc
-
         usage += """
 
 Arguments:"""

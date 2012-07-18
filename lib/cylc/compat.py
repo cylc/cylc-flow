@@ -112,7 +112,6 @@ class compat( object ):
         except OSError, x:
             sys.exit( 'ERROR: Unable to invoke ' + new_cylc )
 
-
 class compat_explicit( compat ):
     def __init__( self, required_version ):
         compat.__init__(self, None, None, False, False )
@@ -130,10 +129,9 @@ class compat_file( compat ):
         try:
             f = open( suiterc, 'r' )
         except IOError, x:
-            print >> sys.stderr, "ERROR: unable to open the suite.rc file."
-            # Don't just exit here - causes problems with db commands
-            # like register that need to unlock the db after errors.
-            raise 
+            if self.debug:
+                raise
+            sys.exit( "ERROR: unable to open the suite.rc file." )
         flines = f.readlines()
 
         # Here we must process with Jinja2 before checking the first two
@@ -188,15 +186,13 @@ class compat_file( compat ):
         if z:
             self.required_version = re.sub( '^.*cylc-', '', z.groups()[0] )  # e.g. 4.1.1
 
-    def get_rcfiles( self ):
-        return self.db.get_rcfiles( self.suite )
-
 
 class compat_reg( compat_file ):
     """Determine version compatibility given a registered suite name"""
 
     def __init__( self, reg, db, verbose, debug ):
         dbg = dbgetter( db )
+        self.db = dbg.db
         try:
             # this will also de-reference a suite name alias 
             suite, suiterc = dbg.get_suite( reg )
@@ -205,6 +201,9 @@ class compat_reg( compat_file ):
                 raise
             raise SystemExit(x)
         compat_file.__init__( self, suite, suiterc, verbose, debug )
+
+    def get_rcfiles( self ):
+        return self.db.get_rcfiles( self.suite )
 
 class compat_pyro( compat ):
     """Determine version compatibility given a running suite name"""
