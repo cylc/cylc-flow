@@ -840,16 +840,20 @@ your cylc installation by running the automated suite database test
 Upgrading is just a matter of unpacking the new cylc release and 
 optionally re-importing the example suites for the new version. 
 
-\subsection{Pseudo Backward Compatibility}
+\subsection{Cylc Version Re-invocation (Pseudo Backward Compatibility)}
 \label{compat}
 
 It may not be convenient for users to upgrade all of their suites at
 once when a new cylc release is installed. As of cylc-4.2.0 any installed
 version of cylc can act as a transparent front end to any other installed
-version (technically this also provides pseudo forward compatibility).
-This allows construction of new-version suites while older existing ones
-are still in use, without having to reconfigure your environment or
-explicitly invoke different cylc versions for different suites.
+version that is installed in parallel (i.e. in the same location) with
+the invoked version. Technically this also provides pseudo forward
+compatibility.  New-version suites can therefore be worked on at the
+same time as older suites that have yet to be upgraded, without the user 
+reconfiguring his environment or having to explicitly invoke different
+cylc versions for different suites. Since \lstinline=cylc-4.5.0= this
+applies to commands that connect to running suites as well as those that
+parse suite definitions.
 
 The required cylc version must be specified on the {\em first line} of a
 non-Jinja2 suite definition:
@@ -858,18 +862,10 @@ non-Jinja2 suite definition:
 #!cylc-4.2.0
 # suite definition follows ...
 \end{lstlisting}
-And on the {\em second line} for Jinja2 suites:
+or on the {\em second line} for Jinja2 suites:
 \begin{lstlisting}
 #!Jinja2
 #!cylc-4.2.0
-# suite definition follows ...
-\end{lstlisting}
-If cylc releases are installed in parallel under the same top level
-directory then the location of the required cylc installation is
-automatically computed from that of the invoked one. Otherwise,
-for unrelated install locations, the full path can be specified:
-\begin{lstlisting}
-#!/path/to/cylc-4.2.0
 # suite definition follows ...
 \end{lstlisting}
 This results in the right cylc version being used for any
@@ -878,10 +874,10 @@ suite-referencing command, e.g.:
 \begin{lstlisting}
 % cylc validate foo
 --------------------------------------------------------
-Pseudo backward compatibility:
+Cylc version re-invocation:
   Invoked version: cylc-4.2.0 (/home/oliverh/cylc-4.2.0)
   Suite requires:  cylc-4.2.1
-Path not given, assuming parallel cylc installations
+(assuming parallel cylc installations)
 => Re-issuing command using /home/oliverh/cylc-4.2.1
 --------------------------------------------------------
 Suite foo is valid for cylc-4.2.1
@@ -898,6 +894,18 @@ Suite.rc Reference} (Appendix~\ref{SuiteRCReference}) to identify
 problems, and consult the cylc change log to see what changed between
 versions.
 
+\subsubsection{Explicit Cylc Version Reinvocation}
+
+Other cylc versions can be specified explicitly on the command line,
+\lstinline=cylc -V x.y.z= or \lstinline@cylc -Version=x.y.z@. This
+feature will only work properly for versions 4.5.0 and later.
+
+\subsubsection{Available Cylc Versions}
+
+To list available versions of cylc installed in parallel with the
+invoked version, run \lstinline=cylc -V avail= or \lstinline@cylc
+-Version=avail@
+
 \subsubsection{Limitations}
 
 The top level command interface, \lstinline=$CYLC_DIR/bin/cylc=,
@@ -906,11 +914,12 @@ run a sub-command that no longer exists in the initially-invoked version
 of cylc will fail. Additionally, the command line must necessarily be
 parsed first by the invoked sub-command in order to determine which
 argument refers to the suite (the suite name is always the first
-non-option argument, but only sub-commands know if particular options
+non-option argument but only sub-commands know if particular options
 have their own arguments or are just logical flags, and can therefore
 determine which is the first true argument); consequently any attempt to
-use a command option that is illegal in the initially-invoked versino of
+use a command option that is illegal in the initially-invoked version of
 cylc will also fail.
+
 
 \subsubsection{A Usage Suggestion}
 

@@ -37,7 +37,11 @@ class compat( object ):
         self.suite = suite
         self.suiterc = suiterc
         self.required_version = None
-        self.messages = [ 'Pseudo backward compatibility' ]
+        self.explicit = False
+
+        self.cylc_top_dir = os.path.dirname( cylc_dir )
+
+        self.messages = [ 'Cylc version reinvocation' ]
 
     def get_suite( self ):
         return self.suite, self.suiterc
@@ -54,6 +58,15 @@ class compat( object ):
         else:
             return False
 
+    def available( self ):
+        # (print to stderr so user can just parse cylc versions)
+        print >> sys.stderr, "Cylc versions installed under", self.cylc_top_dir + ':'
+        for entry in os.listdir( self.cylc_top_dir ):
+            if not entry.startswith( 'cylc-' ):
+                continue
+            if os.path.exists( os.path.join( self.cylc_top_dir, entry, 'bin', 'cylc' )):
+                print entry
+
     def execute( self ):
         if self.is_compatible():
             return
@@ -63,10 +76,8 @@ class compat( object ):
 
         # re-invoke the command (sys.argv) using the required cylc version
 
-        # determine location of the required cylc
-        # assume parallel installations at the same location
-        new_cylc_dir = os.path.join( os.path.dirname( cylc_dir ), \
-                'cylc-' + self.required_version )
+        # guess location of the required cylc
+        new_cylc_dir = os.path.join( self.cylc_top_dir, 'cylc-' + self.required_version )
         self.messages.append( '(assuming parallel cylc installations)' )
 
         self.messages.append( '=> Re-issuing command using ' + new_cylc_dir )
@@ -74,13 +85,15 @@ class compat( object ):
         # full path to new cylc command
         new_cylc = os.path.join( new_cylc_dir, 'bin', 'cylc')
 
-        # construct the command to re-invoke
-        command_path = sys.argv[0]     # /path/to/this/cylc/bin/cylc-validate
-        command_name = os.path.basename( command_path ) # cylc-validate
-        # strip off initial 'cylc-' if it exists (may not be, e.g. gcylc SUITE) 
-        command_name = re.sub( '^cylc-', '', command_name ) # validate
-
-        command = [new_cylc, command_name] + sys.argv[1:] 
+        if not self.explicit:
+            # construct the command to re-invoke
+            command_path = sys.argv[0]     # /path/to/this/cylc/bin/cylc-validate
+            command_name = os.path.basename( command_path ) # cylc-validate
+            # strip off initial 'cylc-' if it exists (may not be, e.g. gcylc SUITE) 
+            command_name = re.sub( '^cylc-', '', command_name ) # validate
+            command = [new_cylc, command_name] + sys.argv[1:] 
+        else:
+            command = [new_cylc] + sys.argv
 
         maxlen = 0
         for item in self.messages:
@@ -93,14 +106,18 @@ class compat( object ):
         print >> sys.stderr, border
 
         try:
-            # THIS BLOCKS UNTIL THE COMMAND COMPLETES
+            # this blocks until the command completes
             retcode = subprocess.call( command )
             sys.exit(retcode)
         except OSError, x:
-            print >> sys.stderr, 'ERROR: Unable to invoke', new_cylc
-            # Don't just exit here - causes problems with db commands
-            # like register that need to unlock the db after errors.
-            raise 
+            sys.exit( 'ERROR: Unable to invoke ' + new_cylc )
+
+
+class compat_explicit( compat ):
+    def __init__( self, required_version ):
+        compat.__init__(self, None, None, False, False )
+        self.required_version = required_version
+        self.explicit = True
 
 class compat_file( compat ):
     """Determine version compatibility given a suite.rc file"""
@@ -214,4 +231,5 @@ class compat_pyro( compat ):
                 raise
             raise SystemExit(x)
         self.required_version = proxy.get_cylc_version()
+
 

@@ -19,7 +19,10 @@
 import os, re, sys
 import subprocess
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
+# Prepend cylc lib to python search path (appending is not sufficient if 
+# we've been called by another cylc version via 'cylc -Version=x.y.z').
+##sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
+sys.path = [os.path.dirname(os.path.abspath(__file__)) + '/../lib'] + sys.path
 
 try:
     os.getcwd()
@@ -33,6 +36,7 @@ except OSError,x:
     raise SystemExit( 'ERROR: your current working directory does not exist!')
 
 from cylc.version import cylc_version
+from cylc.compat import compat_explicit
 from cylc.execute import execute
 from OrderedDict import OrderedDict
 
@@ -158,7 +162,32 @@ def pretty_print( incom, choose_dict, indent=True, numbered=False, sort=False ):
             print digit + '/', 
         print label[item], '.'*(longest-len(label[item])) + '...', incom[item]
 
-# categories[ categorey ] = [ aliases ] 
+# BEGIN MAIN
+
+# first check for explicit cylc version re-invocation:
+argv = sys.argv[1:]
+args = []
+req_ver = None
+while argv:
+    arg = argv.pop(0)
+    if arg.startswith("--Version="):
+        req_ver = arg.replace("--Version=", "")
+    elif arg == "-V":
+        req_ver = argv.pop(0)
+    else:
+        args.append(arg)
+
+if req_ver:
+    req_ver = req_ver.replace( 'cylc-', '' )
+    sys.argv = args
+    compat = compat_explicit( req_ver )
+    if req_ver.startswith( 'avail' ):
+        compat.available()
+        sys.exit(0)
+    else:
+        compat.execute()
+
+# categories[ category ] = [ aliases ] 
 categories = OrderedDict()
 categories['all'         ] = ['all' ]
 categories['database'    ] = ['db', 'database' ]
@@ -275,18 +304,25 @@ for dct in [
         all_commands[com] = dct[com]
 
 general_usage = """
-Cylc is a suite engine and metascheduler for meteorological and climate
-forecasting, and related data processing. The cylc GUI is gcylc.
+Cylc is a suite engine and metascheduler for weather and climate
+forecasting and related data processing. The cylc GUI is gcylc.
 
 Version: cylc-"""+cylc_version+""" 
 
 USAGE:
-  % cylc -v,--version                   # cylc version
-  % cylc help,--help,-h,?               # this help page
-  % cylc help CATEGORY                  # help by category
+  % cylc -v,--version                   # print cylc version
+  % cylc help,--help,-h,?               # print this help page
+
+  % cylc -V,--Version=avail[able]       # print available cylc versions
+  % cylc -V,--Version=x.y.z             # reinvoke another cylc version
+                                          (works for 4.5.0 and later)
+  % cylc help CATEGORY                  # print help by category
   % cylc CATEGORY help                  # (ditto)
-  % cylc help [CATEGORY] COMMAND        # command help
+
+  % cylc help [CATEGORY] COMMAND        # print command help
   % cylc [CATEGORY] COMMAND help,--help # (ditto)
+  % cylc [CATEGORY] COMMAND -v          # verbose, not version!
+
 Command syntax:
   % cylc [CATEGORY] COMMAND [options] SUITE [arguments]
   % cylc [CATEGORY] COMMAND [options] SUITE TASK [arguments]"""
@@ -315,8 +351,8 @@ optional but they can disambiguate abbreviated commands:
   % cylc c t SUITE TASK                 # ditto
 (these commands target a particular TASK in a particular SUITE).
 
-Suites are referred to by registered names that allow hierarchical
-grouping, e.g. nwp.test.LAM1, nwp.test.LAM2, nwp.oper.global.
+Suites are addressed by hierarchical names registered in your suite
+database, e.g. nwp.test.LAM1, nwp.test.LAM2, nwp.oper.global.
 
 Tasks are identified by NAME%TAG where TAG is a cycle time for cycling
 tasks (GetData%2011080806) or 'a:INT' for asynchronous tasks (foo%a:1).

@@ -750,3 +750,7 @@ argument order: 'cylc grep SUITE pattern'
 + Support for Jinja2 custom filters, by which you can modify Jinja2
 variable values using custom Python functions.
 
++ Cylc version reinvocation (pseudo backward compatibility) now assumes 
+parallel cylc installations - you can no longer specify a full path to a
+required cylc version at the top of a suite definition.
+
