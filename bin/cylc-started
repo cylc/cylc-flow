@@ -24,17 +24,17 @@ from cylc.locking.task_lock import task_lock
 
 usage = """cylc [task] started [OPTIONS]
 
-This command is part of the cylc task messaging interface, by which
-means running tasks communicate with their parent suite; it is used to
-report commencement of task execution (and acquires a task lock from the
-lockserver, if the lockserver is used). 
+This command is part of the cylc task messaging interface, used by
+running tasks to communicate progress to their parent suite.
 
-NOTE that this command is automatically called at the start of task job
-scripts; it does not need to be used in external task implementation.
+The started command reports commencement of task execution (and it
+acquires a task lock from the lockserver if necessary). It is
+automatically written to the top of task job scripts by cylc and
+therefore does not need to be called explicitly by task scripting.
 
 Suite and task identity are determined from the task execution
-environment supplied by the suite or by 'cylc [task] submit'. In the
-latter case no communication occurs, but a message is printed to stdout.
+environment supplied by the suite (or by the single task 'submit'
+command, in which case case the message is just printed to stdout).
 
 See also:
     cylc [task] message

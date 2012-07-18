@@ -20,16 +20,14 @@ import sys
 from optparse import OptionParser
 from cylc.task_message import message
 
-usage = """cylc [task] message [OPTIONS]
+usage = """cylc [task] message [OPTIONS] MESSAGE
 
-This command is part of the cylc task messaging interface, by which
-means running tasks communicate with their parent suite; it is used to
-report registered outputs completed, and any general progress messages
-(which will be logged by the suite).
+This command is part of the cylc task messaging interface, used by
+running tasks to communicate progress to their parent suite.
 
 Suite and task identity are determined from the task execution
-environment supplied by the suite or by 'cylc [task] submit'. In the
-latter case no communication occurs, but a message is printed to stdout.
+environment supplied by the suite (or by the single task 'submit'
+command, in which case case the message is just printed to stdout).
 
 See also:
     cylc [task] started
