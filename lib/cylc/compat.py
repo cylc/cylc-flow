@@ -133,6 +133,7 @@ class compat_file( compat ):
                 raise
             sys.exit( "ERROR: unable to open the suite.rc file." )
         flines = f.readlines()
+        f.close()
 
         # Here we must process with Jinja2 before checking the first two
         # lines, to allow use of the cylc version number as a Jinja2
@@ -150,26 +151,30 @@ class compat_file( compat ):
         # # ...
         #----
 
-        # handle Jinja2 expressions
         try:
             # (this will do nothing for non Jinja2 suites)
             suiterclines = Jinja2Process( flines, os.path.dirname(suiterc), False )
+            # if this fails due to a Jinja2 error, carry on in order to
+            # prevent commands such as edit from working...
         except TemplateSyntaxError, x:
             lineno = x.lineno + 1  # (flines array starts from 0)
             print >> sys.stderr, 'Jinja2 Template Syntax Error, line', lineno
             print >> sys.stderr, flines[x.lineno]
-            if debug:
-                raise
-            raise SystemExit(str(x))
+            print >> sys.stderr, 'Continuing cylc version check without Jinja2'
+            suiterclines = flines
+            #if debug:
+            #    raise
+            #raise SystemExit(str(x))
         except TemplateError, x:
             print >> sys.stderr, 'Jinja2 Template Error'
-            if debug:
-                raise
-            raise SystemExit(x)
+            print >> sys.stderr, 'Continuing cylc version check without Jinja2'
+            suiterclines = flines
+            #if debug:
+            #    raise
+            #raise SystemExit(x)
 
         line0 = suiterclines[0]
         line1 = suiterclines[1]
-        f.close()
 
         # check for "#!cylc-x.y.z" (not being strict about the form of
         # x.y.z because of unofficial releases):
