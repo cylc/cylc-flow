@@ -96,6 +96,7 @@ remote host prior to attempting to run the suite."""
                 raise SystemExit("ERROR: restart dump filename is a valid cycle time!")
 
         scheduler.parse_commandline( self )
+        self.verbose = self.options.verbose
 
         set_main_debug( self.options.debug )
 

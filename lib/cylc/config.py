@@ -138,12 +138,16 @@ class edge( object):
 
 class config( CylcConfigObj ):
 
-    def __init__( self, suite, suiterc, simulation_mode=False, verbose=False, collapsed=[] ):
+    def __init__( self, suite, suiterc, 
+            simulation_mode=False, verbose=False, 
+            validation=False,
+            collapsed=[] ):
         self.simulation_mode = simulation_mode
         self.verbose = verbose
         self.edges = []
         self.cyclers = []
         self.taskdefs = OrderedDict()
+        self.validation = validation
 
         self.async_oneoff_edges = []
         self.async_oneoff_tasks = []
@@ -386,7 +390,8 @@ class config( CylcConfigObj ):
         self.prune_inheritance_tree( self.family_tree, self.task_runtimes )
 
         self.process_queues()
-        self.check_tasks()
+        if self.validation:
+            self.check_tasks()
 
         # Default visualization start and stop cycles (defined here
         # rather than in the spec file so we can set a sensible stop
@@ -664,6 +669,9 @@ class config( CylcConfigObj ):
 
     def check_tasks( self ):
         # Call after all tasks are defined.
+        # ONLY IF VALIDATING THE SUITE
+        # because checking conditional triggers below may be slow for
+        # huge suites (several thousand tasks).
         # Note: 
         #   (a) self['runtime'][name] 
         #       contains the task definition sections of the suite.rc file.
@@ -1085,7 +1093,7 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, str(x)
 
             if name not in self['runtime']:
-                if self.verbose:
+                if self.verbose and self.validation:
                     print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph - it will inherit root.'
                 # inherit the root runtime
                 self['runtime'][name] = self['runtime']['root'].odict()
@@ -1536,7 +1544,7 @@ class config( CylcConfigObj ):
             taskd.execution_timeout  = taskconfig['event hooks']['execution timeout']
             taskd.reset_timer = taskconfig['event hooks']['reset timer']
 
-        if len(taskd.hook_events) == 0 and taskd.hook_script:
+        if self.validation and len(taskd.hook_events) == 0 and taskd.hook_script:
             # this is not a fatal error
             print >> sys.stderr, "WARNING: task event handler specified without events to handle."
         if len(taskd.hook_events) > 0 and not taskd.hook_script:

@@ -43,7 +43,7 @@ if options.verbose:
     print "Parsing Suite Definition"
 
 try:
-    config = config( suite, suiterc, verbose=options.verbose )
+    config = config( suite, suiterc, validation=True, verbose=options.verbose )
 except Exception,x:
     if options.debug:
         raise

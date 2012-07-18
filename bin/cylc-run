@@ -88,6 +88,7 @@ remote host prior to attempting to run the suite."""
                 raise SystemExit(x)
 
         scheduler.parse_commandline( self )
+        self.verbose = self.options.verbose
 
         if self.options.warm:
             self.banner[ "WARM START" ] = self.start_time

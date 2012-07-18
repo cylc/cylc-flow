@@ -101,7 +101,7 @@ else:
 
 # load suite config
 try:
-    config = config( suite, suiterc )
+    config = config( suite, suiterc, verbose=options.verbose )
     config.create_directories( task_name )
 except Exception,x:
     if options.debug:

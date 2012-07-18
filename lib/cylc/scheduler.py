@@ -275,7 +275,9 @@ class scheduler(object):
 
     def configure_suite( self ):
         # LOAD SUITE CONFIG FILE
-        self.config = config( self.suite, self.suiterc, simulation_mode=self.simulation_mode )
+        self.config = config( self.suite, self.suiterc,
+                verbose=self.verbose,
+                simulation_mode=self.simulation_mode )
         self.config.create_directories()
         if self.config['cylc']['simulation mode only'] and not self.simulation_mode:
             raise SystemExit( "ERROR: this suite can only run in simulation mode (see suite.rc)" )
@@ -648,7 +650,6 @@ class scheduler(object):
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
         process = False
-        print task.task.state_changed, '<---'
         if task.task.state_changed:
             task.task.state_changed = False
             process = True
