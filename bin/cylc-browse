@@ -39,9 +39,17 @@ Depending on the chosen browse target you must define one or more of:
   $GEDITOR       (e.g. 'gvim -f')
  """, argdoc=[])
 
+parser.add_option( "--pdf",
+        help="Browse the PDF User Guide (DEFAULT).",
+        action="store_true", default=True, dest="pdf" )
+
 parser.add_option( "--html",
-        help="Browse the HTML User Guide (default is PDF).",
+        help="Browse the multi-page HTML User Guide.",
         action="store_true", default=False, dest="html" )
+
+parser.add_option( "--html-single",
+        help="Browse the single page HTML User Guide.",
+        action="store_true", default=False, dest="htmlsingle" )
 
 parser.add_option( "--www",
         help="Browse the cylc internet homepage.",
@@ -67,7 +75,7 @@ if options.log:
     except KeyError:
         raise SystemExit( 'ERROR: $' + edvar + ' is not defined' )
 
-elif options.www or options.html:
+elif options.www or options.html or options.htmlsingle:
     try:
         appl = os.environ['HTML_READER']
     except KeyError:
@@ -88,9 +96,11 @@ else:
 
     if options.html:
         file = os.path.join( cdir, 'doc', 'cug-html.html' )
+    elif options.htmlsingle:
+        file = os.path.join( cdir, 'doc', 'single', 'cug-html.html' )
     elif options.log:
         file = os.path.join( cdir, 'changelog.txt' )
-    else:
+    elif options.pdf:
         file = os.path.join( cdir, 'doc', 'CylcUserGuide.pdf' )
 
     if not os.path.isfile( file ):
