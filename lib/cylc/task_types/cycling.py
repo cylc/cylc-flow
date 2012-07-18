@@ -22,10 +22,6 @@ from task import task
 from cylc.cycle_time import ct
 from copy import deepcopy
 
-global state_changed
-#state_changed = False
-state_changed = True
-
 # Cycling tasks: cycle time also required for a cold start. Init with: 
 #  (1) cycle time
 #  (2) state ('waiting', 'submitted', 'running', and 'succeeded' or 'failed')

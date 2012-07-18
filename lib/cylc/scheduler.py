@@ -634,13 +634,13 @@ class scheduler(object):
             # REMOTE METHOD HANDLING; with no timeout and single- threaded pyro,
             # handleRequests() returns after one or more remote method
             # invocations are processed (these are not just task messages, hence
-            # the use of the state_changed variable above).
+            # the use of the state_changed variable below).
             # HOWEVER, we now need to check if clock-triggered tasks are ready
             # to trigger according on wall clock time, so we also need a
             # timeout to handle this when nothing else is happening.
             #--
 
-            # incoming task messages set task.state_changed to True
+            # incoming task messages set task.task.state_changed to True
             self.pyro.handleRequests(timeout=1)
         # END MAIN LOOP
         self.log.critical( "SHUTTING DOWN" )
@@ -648,9 +648,9 @@ class scheduler(object):
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
         process = False
-        if task.state_changed:
-            # reset task.state_changed
-            task.state_changed = False
+        print task.task.state_changed, '<---'
+        if task.task.state_changed:
+            task.task.state_changed = False
             process = True
         elif self.remote.process_tasks:
             # reset the remote control flag

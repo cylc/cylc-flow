@@ -34,9 +34,6 @@ import logging
 import Pyro.core
 import subprocess
 
-global state_changed
-state_changed = True
-
 def displaytd( td ):
     # Display a python timedelta sensibly.
     # Default for str(td) of -5 sec is '-1 day, 23:59:55' !
@@ -79,6 +76,7 @@ class task( Pyro.core.ObjBase ):
     clock = None
     intercycle = False
     suite = None
+    state_changed = True
 
     @classmethod
     def describe( cls ):
@@ -146,11 +144,6 @@ class task( Pyro.core.ObjBase ):
         self.__class__.upward_instance_count += 1
 
         Pyro.core.ObjBase.__init__(self)
-
-        # set state_changed True if any task's state changes
-        # as a result of a remote method call
-        global state_changed
-        state_changed = True
 
         self.latest_message = ""
         self.latest_message_priority = "NORMAL"
@@ -444,15 +437,14 @@ class task( Pyro.core.ObjBase ):
         self.latest_message = message
         self.latest_message_priority = priority
 
-        # setting state_change results in task processing loop
+        # setting state_changed results in task processing loop
         # invocation. We should really only do this when the
         # incoming message results in a state change that matters to
         # scheduling ... but system monitor may need latest message, and
         # we don't yet have a separate state-summary-update invocation
         # flag.
 
-        global state_changed
-        state_changed = True
+        task.state_changed = True
 
         if message == self.id + ' started':
             self.set_running()
@@ -478,7 +470,7 @@ class task( Pyro.core.ObjBase ):
                 self.outputs.set_completed( message )
                 # this also calls the task failure hook script:
                 self.set_failed( message )
-                state_changed = True
+                task.state_changed = True
             else:
                 # Yep, we can retry.
                 self.log( 'CRITICAL',  \
@@ -488,7 +480,7 @@ class task( Pyro.core.ObjBase ):
                 self.state.set_status( 'retry_delayed' )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
-                state_changed = True
+                task.state_changed = True
 
         elif self.outputs.exists( message ):
             # registered output messages
