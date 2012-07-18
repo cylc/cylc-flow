@@ -3583,16 +3583,41 @@ instance, read at task run time on the task host.
 
 \subsubsection{Custom Jinja2 Filters}
 
-Jinja2 variable values can be modified by filters. Some built in filters
-are available (see Jinja2 documentation), and cylc supports loading of
-custom Jinja2 filters.  These should be defined as Python functions (the
-function name defines the filter name) in a module of the same name under 
-a \lstinline=Jinja2/= sub-directory of the suite definition directory, or
-for use by mulitple suites, in \lstinline=$HOME/.cylc/Jinja2=.
+Jinja2 variable values can be modified by ``filters'', using pipe
+notation. For example, the built-in \lstinline=trim= filter strips
+leading and trailing white space from a string:
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% set MyString = "   dog   " %}
+{{ MyString | trim() }}  # "dog"
+\end{lstlisting}
+(See official Jinja2 documentation for available built-in filters.) 
 
-The example suite \lstinline=$CYLC_DIR/examples/jinja2/filter= shows how 
-to use a custom filter to left-pad integer values with '0' characters,
-for use in generated task names.
+Cylc also supports custom Jinja2 filters. A custom filter is a 
+single Python function in a source file with the same name as the
+function (plus ``.py'' extension) and stored in one of the following
+locations:
+\begin{myitemize}
+    \item \lstinline=$CYLC_DIR/lib/Jinja2Filters/=
+    \item \lstinline=[suite definition directory]/Jinja2Filters/=
+    \item \lstinline=$HOME/.cylc/Jinja2Filters/=
+\end{myitemize}
+
+In the filter function argument list, the first argument is the variable
+value to be ``filtered'', and subsequent arguments can be whatever is
+needed. Currently there is one custom filter called ``pad'' in the
+central cylc Jinja2 filter directory, for padding string values to some 
+constant length with a fill character - useful for generating task names 
+and related values in ensemble suites:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% for i in range(0,100) %}  # 0, 1, ..., 99
+    {% set j = i | pad(2,'0') %}
+    A_{{j}}          # A_00, A_01, ..., A_99
+{% endfor %}
+\end{lstlisting}
+
 
 \subsection{Special Placeholder Variables}
 \label{SPHV}

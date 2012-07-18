@@ -47,9 +47,9 @@ def Jinja2Process( flines, dir, verbose ):
         #|  #!/usr/bin/env python
         #|  def foo( value, length, fillchar ):
         #|     return str(value).rjust( int(length), str(fillchar) )
-        fdirs = [os.path.join( dir, 'Jinja2' ), os.path.join( dir, 'jinja2' ), \
-                os.path.join( os.path.join( os.environ['HOME'], '.cylc', 'Jinja2' )), \
-                os.path.join( os.path.join( os.environ['HOME'], '.cylc', 'jinja2' ))]
+        fdirs = [os.path.join( os.environ['CYLC_DIR'], 'lib', 'Jinja2Filters' ),
+                os.path.join( dir, 'Jinja2Filters' ),
+                os.path.join( os.path.join( os.environ['HOME'], '.cylc', 'Jinja2Filters' ))]
         usedfdirs = []
         for fdir in fdirs:
             if os.path.isdir( fdir ):
