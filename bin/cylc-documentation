@@ -24,9 +24,9 @@ import tempfile
 import subprocess
 from cylc.CylcOptionParsers import cop
 
-parser = cop( """cylc [info] browse [OPTIONS]
+parser = cop( """cylc [info] documentation|browse [OPTIONS]
 
-Browse cylc documentation:
+Display cylc documentation:
  1/ The User Guide in PDF format (default)
  2/ The User Guide in HTML format
  3/ The change log (plain text format)
@@ -40,23 +40,23 @@ Required environment variables:
  """, argdoc=[])
 
 parser.add_option( "--pdf",
-        help="Browse the PDF User Guide (DEFAULT).",
+        help="Display the PDF User Guide (DEFAULT).",
         action="store_true", default=False, dest="pdf" )
 
 parser.add_option( "--html",
-        help="Browse the multi-page HTML User Guide.",
+        help="Display the multi-page HTML User Guide.",
         action="store_true", default=False, dest="html" )
 
 parser.add_option( "--html-single",
-        help="Browse the single page HTML User Guide.",
+        help="Display the single page HTML User Guide.",
         action="store_true", default=False, dest="htmlsingle" )
 
 parser.add_option( "--www",
-        help="Browse the cylc internet homepage.",
+        help="Display the cylc internet homepage.",
         action="store_true", default=False, dest="www" )
 
 parser.add_option( "--log",
-        help="Browse the cylc repository change log.",
+        help="Display the cylc repository change log.",
         action="store_true", default=False, dest="log" )
 
 parser.add_option( "-g",

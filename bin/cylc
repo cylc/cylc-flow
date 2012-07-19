@@ -207,7 +207,7 @@ information_commands['list'     ] = ['list', 'ls' ]
 information_commands['dump'     ] = ['dump'       ]
 information_commands['show'     ] = ['show'       ]
 information_commands['log'      ] = ['log'        ]
-information_commands['browse'   ] = ['browse'        ]
+information_commands['documentation'   ] = ['documentation', 'browse']
 information_commands['monitor'  ] = ['monitor'  ]
 information_commands['nudge'    ] = ['nudge' ]
 information_commands['get-config'] = ['get-config' ]
@@ -398,7 +398,7 @@ comsum[ 'list'       ] = 'Print a suite task list or runtime namespace hierarchy
 comsum[ 'dump'       ] = 'Print the state of each task in a running suite'
 comsum[ 'show'       ] = 'Print task-specific information (prerequisites...)'
 comsum[ 'log'        ] = 'Print or view suite logs, with filtering'
-comsum[ 'browse'     ] = 'Browse cylc documentation'
+comsum[ 'documentation'     ] = 'Display cylc documentation'
 comsum[ 'monitor'    ] = 'An in-terminal suite monitor (see also gcylc)'
 comsum[ 'get-config' ] = 'Parse a suite and report configuration values'
 # control
