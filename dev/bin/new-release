@@ -80,6 +80,7 @@ cp doc/*.html tmpdoc
 cp doc/*.css tmpdoc
 cp -r doc/images tmpdoc
 cp -r doc/screenshots tmpdoc
+cp -r doc/single/ tmpdoc
 rm -r doc
 mv tmpdoc doc
 mv doc/cug-pdf.pdf doc/CylcUserGuide.pdf
