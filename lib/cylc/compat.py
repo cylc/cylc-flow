@@ -41,7 +41,7 @@ class compat( object ):
 
         self.cylc_top_dir = os.path.dirname( cylc_dir )
 
-        self.messages = [ 'Cylc version reinvocation' ]
+        self.messages = [ 'Cylc version reinvocation on ' + hostname ]
 
     def get_suite( self ):
         return self.suite, self.suiterc
@@ -71,16 +71,16 @@ class compat( object ):
         if self.is_compatible():
             return
 
-        self.messages.append( '  Invoked version:  cylc-' + cylc_version + ' (' + cylc_dir + ')')
-        self.messages.append( '  Required version:  ' + self.required_version )
+        self.messages.append( '  Invoked:  cylc-' + cylc_version + ' (' + cylc_dir + ')')
+        self.messages.append( '  Required: cylc-' + self.required_version )
 
         # re-invoke the command (sys.argv) using the required cylc version
 
         # guess location of the required cylc
         new_cylc_dir = os.path.join( self.cylc_top_dir, 'cylc-' + self.required_version )
-        self.messages.append( '(assuming parallel cylc installations)' )
+        self.messages.append( 'Assuming parallel cylc installations,' )
 
-        self.messages.append( '=> Re-issuing command using ' + new_cylc_dir )
+        self.messages.append( '  reinvoking command with ' + new_cylc_dir )
 
         # full path to new cylc command
         new_cylc = os.path.join( new_cylc_dir, 'bin', 'cylc')

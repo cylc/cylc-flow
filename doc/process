@@ -103,16 +103,16 @@ pdflatex cug-pdf.tex
 
 # multiple referencing runs don't seem to be required for htlatex:
 
-# HTML MULTI-PAGE
-rm *.aux
-htlatex cug-html.tex "cug-html.cfg,xhtml,3,next"
-
-# HTML ONE PAGE
+# HTML ONE PAGE (generate in sub-dir single/)
 rm *.aux
 mkdir -p single
 htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in" "" -dsingle/
-cp -r images single
+cp -r images single  # needs to be done manually!
 cp -r screenshots single
+
+# HTML MULTI-PAGE (overwrites cug-html.html in doc)
+rm *.aux
+htlatex cug-html.tex "cug-html.cfg,xhtml,3,next"
 
 rm cylc-version.txt # gets regenerated every time
 
