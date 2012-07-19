@@ -125,7 +125,7 @@ class regdb(object):
                 print >> sys.stderr, x
                 sys.exit(1)
         self.mtime_at_load = None
-        self.lockfile = os.path.join( self.dir, 'lock' )
+        self.lockfile = self.file + '.lock'
         self.statehash = None
 
     def get_hash(self):
