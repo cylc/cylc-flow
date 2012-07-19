@@ -452,10 +452,10 @@ operational suite graphed by cylc.}
 \label{Requirements}
 
 \begin{myitemize}
-    \item {\bf A Linux or Unix OS.} Cylc assumes Unix-style file paths
-        in places, and a few command scripts are written in the Bash shell.
-        In principle it could be made more portable without much effort.
-        Cylc has run successfully on Mac OSX.
+    \item {\bf OS: Linux or Unix (including Mac OS X).} Cylc may assume
+        Unix-style file paths in places, a tiny minority of cylc
+        commands are Bash shell scripts (most are Python), and
+        cylc-generated task job scripts are written for Bash.
     \item {\bf The Python Language, v 2.4$+$, preferably 2.5$+$,
         latest tested 2.7.2}. 
         Not Python 3.x yet; as of mid 2011 version 2.7 is the
