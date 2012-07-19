@@ -377,15 +377,19 @@ class MainApp(object):
         help_menu.append( chelp_menu )
         self.construct_command_menu( chelp_menu )
 
-        cug_pdf_item = gtk.MenuItem( 'User Guide (_PDF)' )
+        cug_pdf_item = gtk.MenuItem( '_PDF User Guide' )
         help_menu.append( cug_pdf_item )
-        cug_pdf_item.connect( 'activate', self.browse )
+        cug_pdf_item.connect( 'activate', self.browse, '--pdf' )
   
-        cug_html_item = gtk.MenuItem( 'User Guide (_HTML)' )
+        cug_html_item = gtk.MenuItem( '_Multi Page HTML User Guide' )
         help_menu.append( cug_html_item )
         cug_html_item.connect( 'activate', self.browse, '--html' )
 
-        cug_www_item = gtk.MenuItem( '_Home Page (www)' )
+        cug_shtml_item = gtk.MenuItem( '_Single Page HTML User Guide' )
+        help_menu.append( cug_shtml_item )
+        cug_shtml_item.connect( 'activate', self.browse, '--html-single' )
+
+        cug_www_item = gtk.MenuItem( '_Internet Home Page' )
         help_menu.append( cug_www_item )
         cug_www_item.connect( 'activate', self.browse, '--www' )
  
@@ -1110,7 +1114,7 @@ The cylc forecast suite metascheduler.
         w.destroy()
 
     def browse( self, b, option='' ):
-        command = 'cylc browse ' + option
+        command = 'cylc documentation ' + option
         foo = gcapture_tmpfile( command, self.tmpdir, 400 )
         self.gcapture_windows.append(foo)
         foo.run()

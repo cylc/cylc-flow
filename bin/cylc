@@ -314,8 +314,8 @@ USAGE:
   % cylc help,--help,-h,?               # print this help page
 
   % cylc -V,--Version=avail[able]       # print available cylc versions
-  % cylc -V,--Version=x.y.z             # reinvoke another cylc version
-                                          (works for 4.5.0 and later)
+  % cylc -V,--Version=x.y.z             # reinvoke with another version
+
   % cylc help CATEGORY                  # print help by category
   % cylc CATEGORY help                  # (ditto)
 

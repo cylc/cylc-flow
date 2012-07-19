@@ -1896,18 +1896,26 @@ shown here in the state they were in at the time of triggering.''' )
         help_menu.append( chelp_menu )
         self.construct_command_menu( chelp_menu )
 
-        cug_pdf_item = gtk.MenuItem( 'Cylc User Guide (_PDF)' )
+        cug_pdf_item = gtk.MenuItem( '_PDF User Guide' )
         help_menu.append( cug_pdf_item )
-        cug_pdf_item.connect( 'activate', self.launch_cug, True )
+        cug_pdf_item.connect( 'activate', self.browse, '--pdf' )
   
-        cug_html_item = gtk.MenuItem( 'Cylc User Guide (_HTML)' )
+        cug_html_item = gtk.MenuItem( '_Multi Page HTML User Guide' )
         help_menu.append( cug_html_item )
-        cug_html_item.connect( 'activate', self.launch_cug, False )
+        cug_html_item.connect( 'activate', self.browse, '--html' )
 
-        #self.todo_item = gtk.MenuItem( '_To Do' )
-        #help_menu.append( self.todo_item )
-        #self.todo_item.connect( 'activate', helpwindow.todo )
-  
+        cug_shtml_item = gtk.MenuItem( '_Single Page HTML User Guide' )
+        help_menu.append( cug_shtml_item )
+        cug_shtml_item.connect( 'activate', self.browse, '--html-single' )
+
+        cug_www_item = gtk.MenuItem( '_Internet Home Page' )
+        help_menu.append( cug_www_item )
+        cug_www_item.connect( 'activate', self.browse, '--www' )
+ 
+        cug_clog_item = gtk.MenuItem( 'Change _Log' )
+        help_menu.append( cug_clog_item )
+        cug_clog_item.connect( 'activate', self.browse, '-g --log' )
+ 
         about_item = gtk.MenuItem( '_About' )
         help_menu.append( about_item )
         about_item.connect( 'activate', self.about )
@@ -2096,43 +2104,12 @@ shown here in the state they were in at the time of triggering.''' )
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def launch_cug( self, b, pdf ):
-        fail = []
-        cdir = None
-
-        try:
-            cdir = os.environ['CYLC_DIR']
-        except KeyError:
-            fail.append( "$CYLC_DIR is not defined" )
- 
-        if pdf:
-            try:
-                appl = os.environ['PDF_READER']
-            except KeyError:
-                fail.append( "$PDF_READER is not defined" )
-        else:
-            try:
-                appl = os.environ['HTML_READER']
-            except KeyError:
-                fail.append( "$HTML_READER is not defined" )
-
-        if cdir:
-            if pdf:
-                file = os.path.join( cdir, 'doc', 'CylcUserGuide.pdf' )
-            else:
-                file = os.path.join( cdir, 'doc', 'cug-html.html' )
-
-            if not os.path.isfile( file ):
-                fail.append( "File not found: " + file )
-
-        if len(fail) > 0:
-            warning_dialog( '\n'.join( fail ), self.window ).warn()
-            return
-
-        command = appl + " " + file 
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+    def browse( self, b, option='' ):
+        command = 'cylc documentation ' + option
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 400 )
+        self.gcapture_windows.append(foo)
         foo.run()
- 
+
     def command_help( self, w, cat='', com='' ):
         command = "cylc " + cat + " " + com + " help"
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 700, 600 )
