@@ -53,7 +53,7 @@ Arguments:"""
         
         OptionParser.__init__( self, usage )
 
-        self.add_option( "-o", "--owner",
+        self.add_option( "--owner",
                 help="User account name (defaults to $USER).",
                 metavar="USER", default=os.environ["USER"],
                 action="store", dest="owner" )
@@ -75,6 +75,10 @@ Arguments:"""
                 help="Alternative suite database location.",
                 metavar="FILE", action="store", default=None,
                 dest="db" )
+
+        self.add_option( "-o", "--override",
+                help="Override cylc version compatibilty checking.",
+                action="store_true", default=False, dest="override" )
 
         if pyro:
             self.add_option( "--use-ssh",

@@ -45,8 +45,6 @@ class remrun( object ):
             arg = argv.pop(0)
             if arg.startswith("--owner="):
                 self.owner = arg.replace("--owner=", "")
-            elif arg == "-o":
-                self.owner = argv.pop(0)
             elif arg.startswith("--host="):
                 self.host = arg.replace("--host=", "")
             else:

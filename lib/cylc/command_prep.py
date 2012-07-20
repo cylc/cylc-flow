@@ -40,8 +40,9 @@ class prep( object ):
                 raise SystemExit(x)
 
     def execute( self ):
-        # cylc version re-invocation
-        self.compat.execute()
+        if not self.options.override:
+            # cylc version re-invocation
+            self.compat.execute()
         return self.get_suite()
 
 class prep_pyro( prep ):

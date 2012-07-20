@@ -105,7 +105,9 @@ class compat( object ):
             retcode = subprocess.call( command )
             sys.exit(retcode)
         except OSError, x:
-            sys.exit( 'ERROR: Unable to invoke ' + new_cylc )
+            print >> sys.stderr, "ERROR: Failed to invoke " + new_cylc
+            print >> sys.stderr, "NOTE: Use '--override' to force use of the invoked cylc version."
+            sys.exit(1)
 
 class compat_explicit( compat ):
     def __init__( self, required_version ):
