@@ -18,7 +18,7 @@
 
 import os
 from cylc.CylcOptionParsers import cop
-from cylc.registration import dbgetter, RegistrationError
+from cylc.registration import localdb, RegistrationError
 
 from cylc.remote import remrun
 remrun().execute()
@@ -35,9 +35,10 @@ Tip: here's how to move to a suite definition directory:
 # the suite database but not the suite defintion).
 
 reg = args[0]
-dbg = dbgetter()
+db = localdb( file=options.db, verbose=options.verbose )
+db.load_from_file()
 try:
-    suite, suiterc = dbg.get_suite(reg)
+    suite, suiterc = db.get_suite(reg)
 except RegistrationError, x:
     raise SystemExit(x)
 

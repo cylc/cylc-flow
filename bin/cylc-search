@@ -20,9 +20,10 @@ from cylc.remote import remrun
 remrun().execute()
 
 import os, re, sys
+from collections import deque
 from cylc.CylcOptionParsers import cop
 from cylc.include_files import inline_for_search
-from collections import deque
+from cylc.command_prep import prep_file
 
 def section_level( heading ):
     # e.g. foo => 0
@@ -65,10 +66,7 @@ parser.add_option( "-x", help="Do not search in the suite bin directory",
 
 ( options, args ) = parser.parse_args()
 
-from cylc.compat import compat_reg
-compat = compat_reg( args[0], options.db, options.verbose, options.debug )
-compat.execute()
-suite, suiterc = compat.get_suite()
+suite, suiterc = prep_file( args[0], options ).execute()
 
 # cylc search SUITE PATTERN
 pattern = '|'.join(args[1:])

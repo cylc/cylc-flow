@@ -24,6 +24,7 @@ from cylc.CylcOptionParsers import cop
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.scheduler import scheduler
 from cylc.run import main, set_main_debug
+from cylc.command_prep import prep_file
 
 class restart( scheduler ):
     def __init__( self ):
@@ -74,11 +75,9 @@ remote host prior to attempting to run the suite."""
 
     def parse_commandline( self ):
         ( self.options, self.args ) = self.parser.parse_args()
-        from cylc.compat import compat_reg
-        compat = compat_reg( self.args[0], self.options.db,
-                self.options.verbose, self.options.debug )
-        compat.execute()
-        self.suite, self.suiterc = compat.get_suite()
+
+        self.suite, self.suiterc = prep_file( self.args[0], self.options ).execute()
+
         self.suite_dir = os.path.dirname( self.suiterc )
 
         self.no_reset = False

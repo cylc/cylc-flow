@@ -22,9 +22,7 @@ import os, sys, re
 from cylc_pyro_client import client
 from Jinja2Support import Jinja2Process, TemplateSyntaxError, TemplateError
 from version import cylc_version, cylc_dir
-from registration import dbgetter, RegistrationError
-from hostname import hostname, is_remote_host
-from owner import is_remote_user
+from hostname import hostname
 
 # To ensure that users are aware of this compat processing info is 
 # always printed for suites that use it, but to stderr so as not to
@@ -42,9 +40,6 @@ class compat( object ):
         self.cylc_top_dir = os.path.dirname( cylc_dir )
 
         self.messages = [ 'Cylc version reinvocation on ' + hostname ]
-
-    def get_suite( self ):
-        return self.suite, self.suiterc
 
     def get_version( self ):
         if self.required_version:
@@ -191,49 +186,17 @@ class compat_file( compat ):
         if z:
             self.required_version = re.sub( '^.*cylc-', '', z.groups()[0] )  # e.g. 4.1.1
 
-
-class compat_reg( compat_file ):
-    """Determine version compatibility given a registered suite name"""
-
-    def __init__( self, reg, db, verbose, debug ):
-        dbg = dbgetter( db )
-        self.db = dbg.db
-        try:
-            # this will also de-reference a suite name alias 
-            suite, suiterc = dbg.get_suite( reg )
-        except RegistrationError, x:
-            if debug:
-                raise
-            raise SystemExit(x)
-        compat_file.__init__( self, suite, suiterc, verbose, debug )
-
-    def get_rcfiles( self ):
-        return self.db.get_rcfiles( self.suite )
-
 class compat_pyro( compat ):
     """Determine version compatibility given a running suite name"""
 
-    def __init__( self, suite, owner, host, pfile, verbose, debug ):
+    def __init__( self, suite, owner, host, pphrase, verbose, debug ):
         compat.__init__( self, suite, None, verbose, debug )
 
-        # de-alias the suite name, for local suites
-        if not is_remote_host( host ) and \
-                not is_remote_user( owner ):
-            dbg = dbgetter()
-            try:
-                self.suite, junk = dbg.get_suite( suite )
-            except RegistrationError, x:
-                if debug:
-                    raise
-                raise SystemExit(x)
-
         try:
-            proxy = client( self.suite, owner=owner, \
-                    host=host, pfile=pfile ).get_proxy( 'remote' )
+            proxy = client( self.suite, pphrase, owner, host).get_proxy( 'remote' )
+            self.required_version = proxy.get_cylc_version()
         except Exception, x:
             if debug:
                 raise
             raise SystemExit(x)
-        self.required_version = proxy.get_cylc_version()
-
 

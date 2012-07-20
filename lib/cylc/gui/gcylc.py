@@ -28,7 +28,7 @@ from cylc.config import config, SuiteConfigError
 from cylc.version import cylc_version
 from cylc import cylc_pyro_client
 from cylc.port_scan import scan, SuiteIdentificationError
-from cylc.registration import dbgetter, localdb, RegistrationError
+from cylc.registration import localdb, RegistrationError
 from cylc.regpath import RegPath
 from warning_dialog import warning_dialog, info_dialog, question_dialog
 from util import get_icon, get_image_dir, get_logo
@@ -55,13 +55,15 @@ class db_updater(threading.Thread):
         self.quit = False
         self.host = host
         self.reload = False
+
         self.regd_treestore = regd_treestore
         super(db_updater, self).__init__()
-        self.running_choices = []
 
+        self.running_choices = []
         self.newtree = {}
 
         self.db.load_from_file()
+
         self.regd_choices = []
         self.regd_choices = self.db.get_list(filtr)
 
@@ -283,7 +285,14 @@ class db_updater(threading.Thread):
         return value == key
 
 class MainApp(object):
-    def __init__(self, host, tmpdir ):
+    def __init__(self, db, host, tmpdir ):
+
+        if not db:
+            dbname = "(default DB)"
+        else:
+            dbname = db
+        self.db = db
+
         self.updater = None
         self.tmpdir = tmpdir
         self.filter_window = None
@@ -297,7 +306,7 @@ class MainApp(object):
         self.imagedir = get_image_dir()
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_title("Registered Suites" )
+        self.window.set_title("Registered Suites " + dbname )
         self.window.set_size_request(600, 300)
         self.window.set_icon(get_icon())
         #self.window.set_border_width( 5 )
@@ -354,14 +363,15 @@ class MainApp(object):
         reload_item = gtk.MenuItem( '_Reload' )
         view_menu.append( reload_item )
         reload_item.connect( 'activate', self.reload )
+ 
+        ## TO DO: restore ability to switch databases
+        ##db_menu = gtk.Menu()
+        ##db_menu_root = gtk.MenuItem( '_Database' )
+        ##db_menu_root.set_submenu( db_menu )
 
-        db_menu = gtk.Menu()
-        db_menu_root = gtk.MenuItem( '_Database' )
-        db_menu_root.set_submenu( db_menu )
-
-        self.dblocal_item = gtk.MenuItem( '_User' )
-        db_menu.append( self.dblocal_item )
-        self.dblocal_item.set_sensitive(False) # (already on local at startup)
+        ##self.dblocal_item = gtk.MenuItem( '_User' )
+        ##db_menu.append( self.dblocal_item )
+        ##self.dblocal_item.set_sensitive(False) # (already on local at startup)
 
         #self.dblocal_item.connect( 'activate', self.localdb )
 
@@ -403,14 +413,18 @@ class MainApp(object):
  
         self.menu_bar = gtk.MenuBar()
         self.menu_bar.append( file_menu_root )
-        self.menu_bar.append( db_menu_root )
+        ##self.menu_bar.append( db_menu_root )
         self.menu_bar.append( view_menu_root )
         self.menu_bar.append( help_menu_root )
 
         # Start updating the liststore now, as we need values in it
         # immediately below (it may be possible to delay this till the
         # end of __init___() but it doesn't really matter.
-        self.dbopt = ''
+        if self.db:
+            self.dbopt = '--db='+self.db
+        else:
+            self.dbopt = ''
+
         self.start_updater()
 
         regd_ts = self.regd_treeview.get_selection()
@@ -515,7 +529,7 @@ The cylc forecast suite metascheduler.
         view.collapse_all()
 
     def start_updater(self, filtr=None ):
-        db = localdb()
+        db = localdb(self.db)
         #self.db_button.set_label( "_Local/Central DB" )
         #self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:

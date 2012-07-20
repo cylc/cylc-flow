@@ -22,6 +22,7 @@ remrun().execute()
 import os, re, sys
 from cylc.CylcOptionParsers import cop
 from cylc.config import config, SuiteConfigError
+from cylc.command_prep import prep_file
 
 parser = cop( """cylc [info] log [OPTIONS] ARGS 
 Print and filter cylc suite (not task) log files.""" )
@@ -46,10 +47,7 @@ parser.add_option( "-r", "--rotation",
 
 ( options, args ) = parser.parse_args()
 
-from cylc.compat import compat_reg
-compat = compat_reg( args[0], options.db, options.verbose, options.debug )
-compat.execute()
-suite, suiterc = compat.get_suite()
+suite, suiterc = prep_file( args[0], options ).execute()
 
 try:
     filename = os.path.join( config( suite, suiterc )['cylc']['logging']['directory'], 'log' )

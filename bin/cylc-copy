@@ -78,7 +78,11 @@ EXAMPLES (using the three suites above):
   argdoc=[('REG', 'Source suite name'),
           ('REG2', 'Target suite name'), 
           ('TOPDIR', 'Top level target directory.')] )
-   
+
+  self.add_option( "--db2",
+          help="Target suite database location, if different from source.",
+          metavar="FILE", action="store", default=None, dest="db2" )
+  
 ( options, args ) = parser.parse_args()
 
 try:
@@ -90,12 +94,19 @@ except IllegalRegPathError, x:
     raise SystemExit(x)
 arg_dir = args[2]
 
-sourcedb = localdb( verbose=options.verbose )
-targetdb = sourcedb
+sourcedb = localdb( file=options.db, verbose=options.verbose )
+if options.db2:
+    transfer = True
+    targetdb = localdb( file=options.db2, verbose=options.verbose )
+else:
+    targetdb = sourcedb
 
 try:
     sourcedb.lock()
     sourcedb.load_from_file()
+    if transfer:
+        targetdb.lock()
+        targetdb.load_from_file()
 
     flist = sourcedb.get_list( '^' + arg_from + r'\b' )
     if len(flist) == 0:
@@ -139,6 +150,9 @@ try:
 
     targetdb.dump_to_file()
     targetdb.unlock()
+    if transfer:
+        # (source and transfer dbs are different)
+        sourcedb.unlock()
 
 except DatabaseLockedError, x:
     if options.debug:
@@ -147,12 +161,16 @@ except DatabaseLockedError, x:
 except RegistrationError, x:
     print >> sys.stderr, x
     targetdb.unlock()
+    if transfer:
+        sourcedb.unlock()
     if options.debug:
         raise
     sys.exit(1)
 except Exception, x:
     print >> sys.stderr, 'ERROR:', x
     targetdb.unlock()
+    if transfer:
+        sourcedb.unlock()
     if options.debug:
         raise
     sys.exit(1)

@@ -42,15 +42,10 @@ is known).
 
 ( options, args ) = parser.parse_args()
 
-# use compat as aliasing involves parsing the suite for the title:
-from cylc.compat import compat_reg
-compat = compat_reg( args[0], options.db, options.verbose, options.debug )
-compat.execute()
-suite, suiterc = compat.get_suite()
-
+suite = args[0]
 alias = args[1]
 
-db = localdb( verbose=options.verbose )
+db = localdb( file=options.db, verbose=options.verbose )
 try:
     db.lock()
     db.load_from_file()
@@ -68,3 +63,4 @@ except Exception, x:
     print >> sys.stderr, 'ERROR:', x
     db.unlock()
     sys.exit(1)
+

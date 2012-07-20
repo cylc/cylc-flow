@@ -21,9 +21,10 @@ remrun().execute()
 
 import sys
 import gtk, gobject
+from xdot import DotWindow
 from cylc.CylcOptionParsers import cop
 from cylc.cycle_time import ct, CycleTimeError
-from xdot import DotWindow
+from cylc.command_prep import prep_file
 
 # DEVELOPER NOTE: family grouping controls via the viewer toolbar and
 # right-click menu have been rather hastily stuck on to the original
@@ -146,11 +147,9 @@ parser.add_option( "--output",
 
 ( options, args ) = parser.parse_args()
 
-from cylc.compat import compat_reg
-compat = compat_reg( args[0], options.db, options.verbose, options.debug )
-compat.execute()
-suite, suiterc = compat.get_suite()
-watchers = compat.get_rcfiles()
+prep = prep_file( args[0], options )
+suite, suiterc = prep.execute()
+watchers = prep.get_rcfiles()
 
 if options.filename:
     if len(args) != 0:
@@ -220,5 +219,4 @@ window.connect( 'destroy', gtk.main_quit)
 # checking periodically for file changed
 gobject.timeout_add(1000, window.update)
 gtk.main()
-sys.exit(0)
 

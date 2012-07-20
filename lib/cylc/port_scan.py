@@ -113,15 +113,9 @@ def portid( host, port ):
 def cylcid_uri( host, port ):
     return 'PYROLOC://' + host + ':' + str(port) + '/cylcid' 
 
-def get_port( suite, owner=os.environ['USER'], host=hostname, pphrase=None, timeout=None, silent=False ):
+def get_port( suite, owner=os.environ['USER'], host=hostname,
+        pphrase=None, timeout=None, silent=False ):
     # Scan ports until a particular suite is found.
-
-    # does this suite have a secure passphrase defined?
-    if not pphrase:
-        try:
-            pphrase = passphrase( suite, owner, host ).get()
-        except:
-            pphrase = None
 
     for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
         uri = cylcid_uri( host, port )
@@ -196,20 +190,19 @@ def check_port( suite, port, owner=os.environ['USER'], host=hostname, timeout=No
             print >> sys.stderr, ' NOT ' + suite + ' ' + owner + ' ' + host + ' ' + port
             raise OtherSuiteFoundError, "ERROR: Found another suite"
 
-def scan( host, verbose=True, mine=False, silent=False ):
+def scan( host, verbose=True, mine=False, silent=False, db=None ):
     # scan all cylc Pyro ports for cylc suites
     me = os.environ['USER']
 
     # load my suite passphrases 
-    reg = localdb()
+    reg = localdb(db)
     reg.load_from_file()
     reg_suites = reg.get_list()
     my_passphrases = {}
     for item in reg_suites:
         rg = item[0]
         try:
-            # in case one is using a secure passphrase
-            pp = passphrase( rg, me, host ).get()
+            pp = passphrase( rg, me, host ).get(db=db)
         except:
             # we have no passphrase defined for this suite
             pass

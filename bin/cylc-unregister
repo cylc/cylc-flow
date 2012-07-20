@@ -50,7 +50,7 @@ parser.add_option( "--dry-run",
 
 arg = args[0]
 
-db = localdb( verbose=options.verbose )
+db = localdb( file=options.db, verbose=options.verbose )
 
 try:
     if not options.dryrun:

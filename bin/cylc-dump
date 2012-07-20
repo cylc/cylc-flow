@@ -23,9 +23,9 @@ if '--use-ssh' in sys.argv[1:]:
     remrun().execute()
 
 import os
-from cylc.hostname import hostname
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
+from cylc.command_prep import prep_pyro
 
 parser = cop( """cylc [info] dump [OPTIONS] ARGS
 
@@ -55,11 +55,7 @@ parser.add_option( "-s", "--sort", help="Task states only; "
 
 ( options, args ) = parser.parse_args()
 
-from cylc.compat import compat_pyro
-compat = compat_pyro( args[0], options.owner, options.host,
-        options.pfile, options.verbose, options.debug )
-compat.execute()
-suite, junk = compat.get_suite()
+suite, pphrase = prep_pyro( args[0], options ).execute()
 
 # default: display all information
 display_tasks = True
@@ -71,8 +67,8 @@ if options.tasks_only:
     display_global = False
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
-    host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host).get_proxy( 'state_summary' )
 except Exception, x:
     if options.debug:
         raise

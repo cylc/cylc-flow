@@ -19,7 +19,6 @@
 from cylc.remote import remrun
 remrun().execute()
 
-
 import os, re, sys
 import datetime
 from shutil import copy
@@ -27,6 +26,7 @@ import subprocess
 from cylc.CylcOptionParsers import cop
 from cylc.include_files import inline_for_editing, \
     split_file, backup, backups, newfiles, cleanup, modtimes
+from cylc.command_prep import prep_file
 
 parser = cop( """cylc [prep] edit [OPTIONS] ARGS
 
@@ -91,10 +91,7 @@ parser.add_option( "--gui", "-g",
 
 ( options, args ) = parser.parse_args()
 
-from cylc.compat import compat_reg
-compat = compat_reg( args[0], options.db, options.verbose, options.debug )
-compat.execute()
-suite, suiterc = compat.get_suite()
+suite, suiterc = prep_file( args[0], options ).execute()
 
 if options.geditor:
     edvar = 'GEDITOR'

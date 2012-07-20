@@ -28,8 +28,8 @@ from cylc.port_scan import get_port, SuiteIdentificationError
 from cylc.conf.CylcGlobals import pyro_base_port, pyro_port_range
 from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
-from cylc.hostname import hostname
 from cylc.passphrase import passphrase, SecurityError
+from cylc.command_prep import prep_pyro
 
 parser = cop( """cylc [discover] ping [OPTIONS] ARGS
     
@@ -47,20 +47,15 @@ parser.add_option( "--print-ports",
 
 ( options, args ) = parser.parse_args()
 
-from cylc.compat import compat_pyro
-compat = compat_pyro( args[0], options.owner, options.host,
-        options.pfile, options.verbose, options.debug )
-compat.execute()
-suite, junk = compat.get_suite()
+suite, pphrase = prep_pyro( args[0], options ).execute()
 
 if options.print_ports:
     print "cylc port range from $CYLC_DIR/lib/cylc/pyro_server.py:"
     print pyro_base_port, '<= port <=', pyro_base_port + pyro_port_range
     sys.exit(0)
 
-pphrase = passphrase( suite, options.owner, options.host ).get(options.pfile)
 try:
-    port = get_port( suite, owner=options.owner, host=options.host,
+    port = get_port( suite, options.owner, options.host,
             pphrase=pphrase, silent = not options.verbose )
 except SuiteIdentificationError, x:
     if options.debug:
@@ -80,8 +75,8 @@ else:
     task_id = tid.getstr()
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner,
-            host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host).get_proxy( 'remote' )
 except Exception, x:
     if options.debug:
         raise

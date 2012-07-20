@@ -21,7 +21,7 @@ remrun().execute()
 
 import os, re, sys
 from cylc.CylcOptionParsers import cop
-from cylc.registration import dbgetter
+from cylc.registration import localdb
 from cylc.print_tree import print_tree
 from cylc.regpath import RegPath
 
@@ -83,7 +83,7 @@ elif len(args) == 1:
 else:
     parser.error( "Wrong number of arguments.")
 
-db = dbgetter(options.db).db
+db = localdb(file=options.db, verbose=options.verbose)
 try:
     db.load_from_file()
     allsuites = db.get_list(regfilter)

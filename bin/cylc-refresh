@@ -21,7 +21,7 @@ remrun().execute()
 
 import sys
 from cylc.CylcOptionParsers import cop
-from cylc.registration import dbgetter, RegistrationError, DatabaseLockedError
+from cylc.registration import localdb, RegistrationError, DatabaseLockedError
 from cylc.config import config, SuiteConfigError
 from cylc.regpath import RegPath
 
@@ -40,7 +40,7 @@ parser.add_option( "-u","--unregister",
 
 ( options, args ) = parser.parse_args()
 
-db = dbgetter(verbose=options.verbose).db
+db = localdb(file=options.db, verbose=options.verbose)
 
 if len(args) == 0:
     pattern = '.*'

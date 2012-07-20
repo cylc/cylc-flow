@@ -26,6 +26,7 @@ from cylc.prompt import prompt
 from cylc import cylc_pyro_client
 from cylc.TaskID import TaskID, TaskIDError
 from cylc.CylcOptionParsers import cop
+from cylc.command_prep import prep_pyro
 
 parser = cop( """cylc [control] trigger [OPTIONS] ARGS
 
@@ -40,11 +41,7 @@ the designated trigger time.""",
 
 (options, args) = parser.parse_args()
 
-from cylc.compat import compat_pyro
-compat = compat_pyro( args[0], options.owner, options.host,
-        options.pfile, options.verbose, options.debug )
-compat.execute()
-suite, junk = compat.get_suite()
+suite, pphrase = prep_pyro( args[0], options ).execute()
 
 task_id = args[1]
 
@@ -56,8 +53,8 @@ else:
     task_id = tid.getstr()
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
-    host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host).get_proxy( 'remote' )
 except Exception, x:
     if options.debug:
         raise

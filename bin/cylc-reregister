@@ -21,7 +21,7 @@ remrun().execute()
 
 import sys
 from cylc.CylcOptionParsers import cop
-from cylc.registration import dbgetter, RegistrationError, DatabaseLockedError
+from cylc.registration import localdb, RegistrationError, DatabaseLockedError
 
 parser = cop( usage = """cylc [db] reregister|rename [OPTIONS] ARGS
 
@@ -36,7 +36,7 @@ Example:
 arg_from = args[0]
 arg_to = args[1]
 
-db = dbgetter( verbose=options.verbose ).db
+db = localdb( file=options.db, verbose=options.verbose )
 
 try:
     db.lock()

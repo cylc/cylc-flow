@@ -26,6 +26,7 @@ from cylc.prompt import prompt
 from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
+from cylc.command_prep import prep_pyro
 
 parser = cop( """cylc [control] release|unhold [OPTIONS] ARGS
 
@@ -41,11 +42,7 @@ See also 'cylc [control] hold'.""", pyro=True,
 
 (options, args) = parser.parse_args()
 
-from cylc.compat import compat_pyro
-compat = compat_pyro( args[0], options.owner, options.host,
-        options.pfile, options.verbose, options.debug )
-compat.execute()
-suite, junk = compat.get_suite()
+suite, pphrase = prep_pyro( args[0], options ).execute()
 
 task_only = False
 if len(args) == 2:
@@ -63,8 +60,8 @@ else:
     prompt( 'Release suite ' + suite, options.force )
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner,
-            host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host).get_proxy( 'remote' )
 except Exception, x:
     if options.debug:
         raise

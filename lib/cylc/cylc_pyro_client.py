@@ -21,24 +21,22 @@ import Pyro.core
 from optparse import OptionParser
 from hostname import hostname
 from time import sleep
-from passphrase import passphrase, PassphraseNotFoundError, SecurityError
 from port_scan import get_port, check_port
 
 class client( object ):
-    def __init__( self, suite,
-            owner=os.environ['USER'], host=hostname, port=None, pfile=None ):
+    def __init__( self, suite, pphrase, owner=os.environ['USER'], host=hostname, port=None ):
         self.suite = suite
         self.owner = owner
         self.host = host
         self.port = port
-        self.passphrase = passphrase( suite, owner, host ).get(pfile)
+        self.pphrase = pphrase
 
     def get_proxy( self, target ):
         # callers need to check for port_scan.SuiteIdentificationError:
         if self.port:
             check_port( self.suite, self.port, self.owner, self.host, silent=True )
         else:
-            self.port = get_port( self.suite, self.owner, self.host, silent=True, pphrase=self.passphrase )
+            self.port = get_port( self.suite, self.owner, self.host, silent=True, pphrase=self.pphrase )
 
         # get a pyro proxy for the target object
         objname = self.owner + '.' + self.suite + '.' + target
@@ -48,7 +46,8 @@ class client( object ):
         proxy = Pyro.core.getProxyForURI(uri)
 
         # set set passphrase if necessary:
-        if self.passphrase:
-            proxy._setIdentification( self.passphrase )
+        if self.pphrase:
+            proxy._setIdentification( self.pphrase )
 
         return proxy
+

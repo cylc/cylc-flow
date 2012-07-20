@@ -22,7 +22,6 @@ import random
 import string
 from mkdir_p import mkdir_p
 from hostname import hostname
-from registration import dbgetter, RegistrationError
 
 class SecurityError( Exception ):
     """
@@ -61,7 +60,7 @@ class passphrase(object):
         ##    raise InsecurePassphraseError, 'OTHERS have access to passphrase file: ' + ppfile
         ##if S_IRGRP & mode or S_IWGRP & mode or S_IXGRP & mode:
         ##    raise InsecurePassphraseError, 'GROUP has access to passphrase file: ' + ppfile
-    def get_passphrase_file( self, pfile=None ):
+    def get_passphrase_file( self, pfile=None, suiterc=None ):
         """
 Passphrase location, order of preference:
 
@@ -88,7 +87,6 @@ the location.
 These are more sensible locations for remote suite control from accounts
 that do not actually need the suite definition directory to be installed.
 """
-
         location = None
 
         # 1/ given location
@@ -112,17 +110,11 @@ that do not actually need the suite definition directory to be installed.
                 if os.path.isfile( pfile ):
                     location = pfile
 
-        # 3/ suite definition directory from registration (local suite owners only)
-        if not location and os.environ['USER'] == self.owner and self.host == hostname:
-            dbg = dbgetter()
-            try:
-                suite, suiterc = dbg.get_suite(self.suite)
-            except RegistrationError, x:
-                pass
-            else:
-                pfile = os.path.join( os.path.dirname(suiterc), 'passphrase' )
-                if os.path.isfile( pfile ):
-                    location = pfile
+        # 3/ suite definition directory from local registration
+        if suiterc:
+            pfile = os.path.join( os.path.dirname(suiterc), 'passphrase' )
+            if os.path.isfile( pfile ):
+                location = pfile
 
         # 4/ other allow locations as documented
         if not location:
@@ -158,8 +150,8 @@ that do not actually need the suite definition directory to be installed.
         # set passphrase file permissions to owner-only
         os.chmod( pfile, 0600 )
 
-    def get( self, pfile=None ):
-        ppfile = self.get_passphrase_file( pfile )
+    def get( self, pfile=None, suiterc=None ):
+        ppfile = self.get_passphrase_file( pfile, suiterc )
         psf = open( ppfile, 'r' )
         lines = psf.readlines()
         psf.close()

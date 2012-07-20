@@ -26,7 +26,7 @@ import os
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
 from cylc.TaskID import TaskID, InvalidTaskIDError, InvalidCycleTimeError
-from cylc.passphrase import SecurityError
+from cylc.command_prep import prep_pyro
 
 parser = cop( """cylc [info] show [OPTIONS] ARGS
 
@@ -38,11 +38,7 @@ time is up yet.""", pyro=True,
 
 (options, args) = parser.parse_args()
 
-from cylc.compat import compat_pyro
-compat = compat_pyro( args[0], options.owner, options.host,
-        options.pfile, options.verbose, options.debug )
-compat.execute()
-suite, junk = compat.get_suite()
+suite, pphrase = prep_pyro( args[0], options ).execute()
 
 prnt_suite = False
 prnt_name = False
@@ -66,11 +62,9 @@ if len(args) == 2:
 else:
     prnt_suite = True
  
-owner=options.owner
-
 try:
-    proxy = cylc_pyro_client.client( suite, owner, 
-            host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host).get_proxy( 'remote' )
 except Exception, x:
     if options.debug:
         raise
@@ -79,7 +73,7 @@ except Exception, x:
 title, defdir, username = proxy.get_suite_info()
 
 if prnt_suite:
-    print suite + ' (' + owner + ') --> ' + defdir
+    print suite + ' (' + options.owner + ') --> ' + defdir
     print title
 
     for task in proxy.get_task_list():

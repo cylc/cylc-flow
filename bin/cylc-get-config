@@ -22,6 +22,7 @@ remrun().execute()
 import sys
 from cylc.config import config
 from cylc.CylcOptionParsers import cop
+from cylc.command_prep import prep_file
 
 parser = cop( usage = """cylc [info] get-config REG [ITEMS...]
 
@@ -64,10 +65,7 @@ parser.add_option( "-d", "--directories",
 
 ( options, args ) = parser.parse_args()
 
-from cylc.compat import compat_reg
-compat = compat_reg( args[0], options.db, options.verbose, options.debug )
-compat.execute()
-suite, suiterc = compat.get_suite()
+suite, suiterc = prep_file( args[0], options ).execute()
 
 try:
     config = config( suite, suiterc )

@@ -28,8 +28,7 @@ from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
-from cylc.port_scan import SuiteIdentificationError
-from cylc.passphrase import SecurityError
+from cylc.command_prep import prep_pyro
 
 parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 
@@ -56,11 +55,7 @@ parser.add_option( "--now",
 
 (options, args) = parser.parse_args()
 
-from cylc.compat import compat_pyro
-compat = compat_pyro( args[0], options.owner, options.host,
-        options.pfile, options.verbose, options.debug )
-compat.execute()
-suite, junk = compat.get_suite()
+suite, pphrase = prep_pyro( args[0], options ).execute()
 
 shutdown_at = False
 if len( args ) == 2:
@@ -68,11 +63,11 @@ if len( args ) == 2:
     shutdown_arg = args[1] 
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
-    host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
-except SuiteIdentificationError, x:
-    raise SystemExit(x)
-except SecurityError, x:
+    proxy = cylc_pyro_client.client( suite, pphrase,
+            options.host).get_proxy( 'remote' )
+except Exception, x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 
 method = None

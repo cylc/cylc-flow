@@ -91,19 +91,6 @@ class DatabaseLockedError( RegistrationError ):
 class OwnerError( RegistrationError ):
     pass
 
-class dbgetter:
-    # Use to get unaliased suite registration data from an input registration.
-    def __init__( self, db=None, verbose=False ):
-        if db:
-            self.db = localdb(verbose=verbose, file=db )
-        else:
-            self.db = localdb(verbose=verbose)
-    def get_suite( self, reg ):
-        self.db.load_from_file()
-        suite = self.db.unalias( reg )
-        suiterc = self.db.getrc( suite )
-        return suite, suiterc
-
 class regdb(object):
     """
     A simple suite registration database.
@@ -167,7 +154,7 @@ class regdb(object):
         
     def load_from_file( self ):
         if self.verbose:
-            print "LOADING " + self.file
+            print "LOADING DATABASE " + self.file
         try:
             self.mtime_at_load = os.stat(self.file).st_mtime
         except OSError:
@@ -261,6 +248,14 @@ class regdb(object):
         except KeyError:
             raise SuiteNotRegisteredError, "Suite not registered: " + suite
         return dir, title
+
+    def get_suite( self, reg ):
+        suite = self.unalias(reg)
+        try:
+            dir, title = self.items[suite]
+        except KeyError:
+            raise SuiteNotRegisteredError, "Suite not registered: " + suite
+        return suite, os.path.join( dir, 'suite.rc' )
 
     def getrc( self, reg ):
         dir, junk = self.get( reg )

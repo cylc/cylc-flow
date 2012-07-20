@@ -19,17 +19,15 @@
 from cylc.remote import remrun
 remrun().execute()
 
-
 import os, re, sys
 import tempfile
 import subprocess
 from cylc.CylcOptionParsers import cop
-from cylc.registration import dbgetter, RegistrationError
 from cylc.conf.CylcGlobals import cylc_tmpdir
 from cylc.continuation_lines import join
 from cylc.Jinja2Support import Jinja2Process
 from cylc.include_files import inline_for_viewing
-from cylc.hostname import is_remote_host
+from cylc.command_prep import prep_file
 
 parser = cop( """cylc [prep] view [OPTIONS] ARGS 
 
@@ -95,10 +93,7 @@ parser.add_option( "--stdout",
 
 ( options, args ) = parser.parse_args()
 
-from cylc.compat import compat_reg
-compat = compat_reg( args[0], options.db, options.verbose, options.debug )
-compat.execute()
-suite, suiterc = compat.get_suite()
+suite, suiterc = prep_file( args[0], options ).execute()
 
 if options.geditor:
     edvar = 'GEDITOR'

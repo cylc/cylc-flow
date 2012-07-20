@@ -22,6 +22,7 @@ remrun().execute()
 import os, sys
 from cylc.CylcOptionParsers import cop
 from cylc.config import config
+from cylc.command_prep import prep_file
 
 n_oone = 0
 n_otwo = 0
@@ -115,33 +116,28 @@ parser.add_option( "-n", "--nested", help="print suite.rc "
 
 (options, args) = parser.parse_args()
 
-reg1 = args[0]
-reg2 = args[1]
+prep1 = prep_file( args[0], options )
+prep2 = prep_file( args[1], options )
 
-from cylc.compat import compat_reg
-compat1 = compat_reg( reg1, options.db, options.verbose, options.debug )
-compat2 = compat_reg( reg2, options.db, options.verbose, options.debug )
-
-ver1 = compat1.get_version()
-ver2 = compat2.get_version()
+ver1 = prep1.get_version()
+ver2 = prep2.get_version()
 
 if ver1 != ver2:
     print >> sys.stderr, 'Suite cylc version spec:'
-    print >> sys.stderr, ' ', suite1 + ':', ver1
-    print >> sys.stderr, ' ', suite2 + ':', ver2
+    print >> sys.stderr, ' ', args[0] + ':', ver1
+    print >> sys.stderr, ' ', args[1] + ':', ver2
     # To Do: this may not matter - we should carry on with difference
     # here, but account for new or missing config items.
     raise SystemExit('ERROR: these suites require different cylc versions' )
 
-compat1.execute()
-suite1, suiterc1 = compat1.get_suite()
-suite2, suiterc2 = compat2.get_suite()
+suite1, suite1rc = prep1.execute()
+suite2, suite2rc = prep2.get_suite()
 
 try:
     print "Parsing", suite1
-    config1 = config( suite1, suiterc1 )
+    config1 = config( suite1, suite1rc )
     print "Parsing", suite2
-    config2 = config( suite2, suiterc2 )
+    config2 = config( suite2, suite2rc )
 except Exception,x:
     if options.debug:
         raise

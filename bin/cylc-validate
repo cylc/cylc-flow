@@ -22,6 +22,7 @@ remrun().execute()
 from cylc.CylcOptionParsers import cop
 from cylc.version import cylc_version
 from cylc.config import config
+from cylc.command_prep import prep_file
 
 parser = cop( """cylc [prep] validate [OPTIONS] REG 
 
@@ -34,10 +35,7 @@ Use 'cylc view -i SUITE' to see the inlined version for comparison.""" )
 
 (options, args) = parser.parse_args()
 
-from cylc.compat import compat_reg
-compat = compat_reg( args[0], options.db, options.verbose, options.debug )
-compat.execute()
-suite, suiterc = compat.get_suite()
+suite, suiterc = prep_file( args[0], options ).execute()
 
 if options.verbose:
     print "Parsing Suite Definition"
