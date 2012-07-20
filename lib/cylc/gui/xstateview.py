@@ -95,12 +95,14 @@ class xupdater(threading.Thread):
         try:
             self.god = cylc_pyro_client.client( 
                     self.cfg.suite,
+                    self.cfg.pphrase,
                     self.cfg.owner,
                     self.cfg.host,
                     self.cfg.port ).get_proxy( 'state_summary' )
 
             self.remote = cylc_pyro_client.client( 
                     self.cfg.suite,
+                    self.cfg.pphrase,
                     self.cfg.owner,
                     self.cfg.host,
                     self.cfg.port ).get_proxy( 'remote' )

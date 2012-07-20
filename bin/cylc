@@ -202,7 +202,7 @@ categories['admin'       ] = ['admin' ]
 categories['license'     ] = ['license', 'GPL' ]
  
 information_commands = OrderedDict()
-information_commands['gcylc'    ] = ['gcylc'      ]
+information_commands['gui'    ] = ['gui', 'gcylc' ]
 information_commands['list'     ] = ['list', 'ls' ]
 information_commands['dump'     ] = ['dump'       ]
 information_commands['show'     ] = ['show'       ]
@@ -213,7 +213,7 @@ information_commands['nudge'    ] = ['nudge' ]
 information_commands['get-config'] = ['get-config' ]
 
 control_commands = OrderedDict()
-control_commands['gcylc'  ] = information_commands[ 'gcylc' ]
+control_commands['gui'  ] = information_commands[ 'gui' ]
 # NOTE: don't change 'run' to 'start' or the category [control]
 # becomes compulsory to disambiguate from 'cylc [task] started'.
 # Keeping 'start' as an alias however: 'cylc con start'.
@@ -257,7 +257,7 @@ license_commands['warranty'  ] = [ 'warranty']
 license_commands['conditions'] = [ 'conditions']
 
 database_commands = OrderedDict()
-database_commands['gcylc'     ] = information_commands['gcylc']
+database_commands['gui'     ] = information_commands['gui']
 database_commands['register'  ] = [ 'register' ]
 database_commands['reregister'] = [ 'reregister','rename' ]
 database_commands['alias']      = [ 'alias' ]
@@ -268,7 +268,7 @@ database_commands['get-directory' ] = [ 'get-directory' ]
 database_commands['refresh'   ] = [ 'refresh' ]
 
 preparation_commands = OrderedDict()
-preparation_commands['gcylc'   ] = information_commands['gcylc']
+preparation_commands['gui'   ] = information_commands['gui']
 preparation_commands['edit'    ] = [ 'edit'    ]
 preparation_commands['view'    ] = [ 'view'    ]
 preparation_commands['validate'] = [ 'validate'    ]
@@ -402,7 +402,7 @@ comsum[ 'documentation'     ] = 'Display cylc documentation'
 comsum[ 'monitor'    ] = 'An in-terminal suite monitor (see also gcylc)'
 comsum[ 'get-config' ] = 'Parse a suite and report configuration values'
 # control
-comsum[ 'gcylc'      ] = 'The cylc Graphical User Interface'
+comsum[ 'gui'        ] = 'The cylc Graphical User Interface (a.k.a. gcylc)'
 comsum[ 'run'        ] = 'Start a suite running at a specified cycle time'
 comsum[ 'stop'       ] = 'Stop a suite running by various means'
 comsum[ 'restart'    ] = 'Restart a suite from a previous state'

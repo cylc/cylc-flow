@@ -19,7 +19,6 @@
 import os, sys
 from hostname import hostname
 from registration import localdb
-from passphrase import passphrase
 import Pyro.errors, Pyro.core
 from conf.CylcGlobals import pyro_base_port, pyro_port_range
 
@@ -152,14 +151,8 @@ def get_port( suite, owner=os.environ['USER'], host=hostname,
                 pass
     raise SuiteNotFoundError, "Suite not running: " + suite + ' ' + owner + ' ' + host
 
-def check_port( suite, port, owner=os.environ['USER'], host=hostname, timeout=None, silent=False ):
+def check_port( suite, pphrase, port, owner=os.environ['USER'], host=hostname, timeout=None, silent=False ):
     # is a particular suite running at host:port?
-
-    # does this suite have a secure passphrase defined?
-    try:
-        pphrase = passphrase( suite, owner, host ).get()
-    except:
-        pphrase = None
 
     uri = cylcid_uri( host, port )
     proxy = Pyro.core.getProxyForURI(uri)
@@ -200,11 +193,13 @@ def scan( host, verbose=True, mine=False, silent=False, db=None ):
     reg_suites = reg.get_list()
     my_passphrases = {}
     for item in reg_suites:
+        print item
         rg = item[0]
         try:
-            pp = passphrase( rg, me, host ).get(db=db)
-        except:
-            # we have no passphrase defined for this suite
+            pp = passphrase( rg, me, host ).get()
+        except Exception, x:
+            #print >> sys.stderr, x
+            # no passphrase defined for this suite
             pass
         else:
             my_passphrases[ rg ] = pp

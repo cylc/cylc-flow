@@ -22,21 +22,28 @@ from optparse import OptionParser
 from hostname import hostname
 from time import sleep
 from port_scan import get_port, check_port
+from passphrase import passphrase
 
 class client( object ):
-    def __init__( self, suite, pphrase, owner=os.environ['USER'], host=hostname, port=None ):
+    def __init__( self, suite, pphrase=None, owner=os.environ['USER'], host=hostname, port=None ):
         self.suite = suite
         self.owner = owner
         self.host = host
         self.port = port
-        self.pphrase = pphrase
+
+        if pphrase:
+            self.pphrase = pphrase
+        else:
+            # TO DO: IS THIS NECESSARY - called from gcylc
+            # get the suite passphrase
+            self.pphrase = passphrase( suite, owner, host).get( None, None )
 
     def get_proxy( self, target ):
         # callers need to check for port_scan.SuiteIdentificationError:
         if self.port:
-            check_port( self.suite, self.port, self.owner, self.host, silent=True )
+            check_port( self.suite, self.pphrase, self.port, self.owner, self.host, silent=True )
         else:
-            self.port = get_port( self.suite, self.owner, self.host, silent=True, pphrase=self.pphrase )
+            self.port = get_port( self.suite, self.owner, self.host, self.pphrase, silent=True )
 
         # get a pyro proxy for the target object
         objname = self.owner + '.' + self.suite + '.' + target

@@ -120,14 +120,17 @@ class tupdater(threading.Thread):
         try:
             client = cylc_pyro_client.client(
                     self.cfg.suite,
+                    self.cfg.pphrase,
                     self.cfg.owner,
                     self.cfg.host,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
             self.remote = client.get_proxy( 'remote' )
-        except:
+        except Exception, x:
+            #print 'FAILED TO GET A CLIENT PROXY'
             return False
         else:
+            #print 'GOT A CLIENT PROXY'
             self.status = "status:\nconnected"
             self.info_bar.set_status( self.status )
             self.family_hierarchy = self.remote.get_family_hierarchy()
@@ -506,6 +509,7 @@ class lupdater(threading.Thread):
         try:
             client = cylc_pyro_client.client(
                     self.cfg.suite,
+                    self.cfg.pphrase,
                     self.cfg.owner,
                     self.cfg.host,
                     self.cfg.port )
