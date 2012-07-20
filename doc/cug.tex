@@ -4687,7 +4687,7 @@ with the suite owner's username as the first hierarchical name component.
 However, it was not on the network, and the suite store had to be
 writeable by all users and hence very insecure. Rather than develop a
 network server for better security and wider access, as was the original
-intention, it was decided to remove the functionality entirely for the
+intention, it was decided to remove this functionality entirely for the
 following reasons:
 
 \begin{myitemize}
@@ -4695,10 +4695,11 @@ following reasons:
         control requirements and preferences beyond what can be provided 
         by a light-weight native cylc database.
     \item Small groups of light cylc users, on the other hand,
-        can easily just share suites by means of copying suite
-        definition directories from mutually readable storage locations
-        (their home directory spaces, typically); they are then free to
-        use preferred revision control tools and so on as they see fit.
+        can easily share suites by means of manually copying suite
+        definitions, or with the \lstinline=cylc copy= command which 
+        now supports copying registered suites between databases; they
+        are then free to use preferred revision control tools and so on
+        as they see fit.
 \end{myitemize}
 
 We may in the future recommend particular tools that can be used for 

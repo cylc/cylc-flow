@@ -104,5 +104,7 @@ Arguments:"""
         elif not self.unlimited_args and \
                 len(args) > self.n_compulsory_args + self.n_optional_args:
             self.error( "Wrong number of arguments (too many)" )
+        if options.db:
+            options.db = os.path.abspath( options.db )
         return ( options, args )
 

@@ -37,13 +37,6 @@ from cylc.gui.gcylc import MainApp
 from cylc.gui.SuiteControl import ControlApp
 from cylc.config import config, SuiteConfigError
 
-# Make current working directory be $HOME. Otherwise (1) if the user
-# attempts to start gcylc from a CWD that has been removed, Pyro will
-# not be importable below; and (2) if the CWD gets removed later while
-# gcylc is running, subprocesses spawned by gcylc will fail when they
-# attempt to determine their CWD.
-os.chdir(os.environ['HOME'])
-
 parser = OptionParser( """gcylc [OPTIONS] [REG]
 
 This is the cylc graphical user interface. It is functionally equivalent
@@ -94,6 +87,16 @@ parser.add_option( "--db",
 
 if len(args) != 0 and len(args) != 1:
     parser.error( "Wrong number of arguments" )
+
+if options.db:
+    options.db = os.path.abspath( options.db )
+
+# Make current working directory be $HOME. Otherwise (1) if the user
+# attempts to start gcylc from a CWD that has been removed, Pyro will
+# not be importable below; and (2) if the CWD gets removed later while
+# gcylc is running, subprocesses spawned by gcylc will fail when they
+# attempt to determine their CWD.
+os.chdir(os.environ['HOME'])
 
 host = options.host
 owner = options.owner

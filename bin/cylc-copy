@@ -57,6 +57,11 @@ TOPDIR whose structure reflects the target registration names. If this
 is not what you want, you can copy suite definition directories manually
 and then register the copied directories manually with 'cylc register'.
 
+To copy suites between different databases use one or both of the 
+--db-to, --db-from options.  If only one is used the other database
+(source or target) will be the default database, which may in turn 
+be specified with the plain --db option.
+
 EXAMPLES (using the three suites above):
 
 % cylc db copy foo.bar.baz red /home/bob       # suite to suite
@@ -79,11 +84,29 @@ EXAMPLES (using the three suites above):
           ('REG2', 'Target suite name'), 
           ('TOPDIR', 'Top level target directory.')] )
 
-  self.add_option( "--db2",
-          help="Target suite database location, if different from source.",
-          metavar="FILE", action="store", default=None, dest="db2" )
-  
+parser.add_option( "--db-to",
+        help="Target suite database, if not the default.",
+        metavar="FILE", action="store", default=None, dest="dbto" )
+
+parser.add_option( "--db-from",
+        help="Source suite database, if not the default.",
+        metavar="FILE", action="store", default=None, dest="dbfrom" )
+   
 ( options, args ) = parser.parse_args()
+
+dbto = options.db
+dbfrom = options.db
+if options.dbto:
+    options.dbto = os.path.abspath( options.dbto )
+    dbto = options.dbto
+if options.dbfrom:
+    options.dbfrom = os.path.abspath( options.dbfrom )
+    dbfrom = options.dbfrom
+
+if dbfrom != dbto:
+    transfer = True
+else:
+    transfer = False
 
 try:
     arg_from = RegPath(args[0]).get()
@@ -94,12 +117,8 @@ except IllegalRegPathError, x:
     raise SystemExit(x)
 arg_dir = args[2]
 
-sourcedb = localdb( file=options.db, verbose=options.verbose )
-if options.db2:
-    transfer = True
-    targetdb = localdb( file=options.db2, verbose=options.verbose )
-else:
-    targetdb = sourcedb
+sourcedb = localdb( file=dbfrom, verbose=options.verbose )
+targetdb = localdb( file=dbto, verbose=options.verbose )
 
 try:
     sourcedb.lock()
