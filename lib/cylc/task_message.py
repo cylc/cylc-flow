@@ -26,6 +26,7 @@ import cylc_pyro_client
 from remote import remrun
 from port_scan import NoSuiteFoundError, OtherSuiteFoundError, ConnectionDeniedError
 import Pyro.errors
+from cylc.passphrase import passphrase
 
 class message(object):
     def __init__( self, msg=None, priority='NORMAL', verbose=False ):
@@ -98,6 +99,7 @@ class message(object):
             if os.environ['CYLC_SSH_MESSAGING'] == 'True':
                 self.ssh_messaging = True
 
+        self.pphrase = passphrase( self.suite, self.owner, self.host).get( None, None )
 
     def now( self ):
         if self.utc:
@@ -107,7 +109,7 @@ class message(object):
 
     def get_proxy( self ):
         # this raises an exception on failure to connect:
-        return cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( self.task_id )
+        return cylc_pyro_client.client( self.suite, self.pphrase, self.owner, self.host, self.port ).get_proxy( self.task_id )
 
     def print_msg( self, msg ):
         now = self.now().strftime( "%Y/%m/%d %H:%M:%S" )
