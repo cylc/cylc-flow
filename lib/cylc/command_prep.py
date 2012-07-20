@@ -39,14 +39,14 @@ class prep( object ):
                     raise
                 raise SystemExit(x)
 
+    def execute( self ):
+        # cylc version re-invocation
+        self.compat.execute()
+        return self.get_suite()
+
 class prep_pyro( prep ):
     def __init__( self, suite, options ):
         prep.__init__( self, suite, options )
-        self.compat = compat_pyro( self.suite, self.options.owner,
-                self.options.host, self.pphrase, self.options.verbose,
-                self.options.debug)
-
-    def execute( self ):
         # get the suite passphrase
         try:
             self.pphrase = passphrase( self.suite, self.options.owner,
@@ -55,8 +55,11 @@ class prep_pyro( prep ):
             if self.options.debug:
                 raise
             raise SystemExit(x)
-        # cylc version re-invocation
-        self.compat.execute()
+        self.compat = compat_pyro( self.suite, self.options.owner,
+                self.options.host, self.pphrase, self.options.verbose,
+                self.options.debug)
+
+    def get_suite( self ):
         return self.suite, self.pphrase
 
 class prep_file( prep ):
@@ -70,11 +73,6 @@ class prep_file( prep ):
 
     def get_suite( self ):
         return self.suite, self.suiterc
-
-    def execute( self ):
-        # cylc version re-invocation
-        self.compat.execute()
-        return self.get_suite()
 
     def get_rcfiles( self ):
         return self.db.get_rcfiles( self.suite )
