@@ -60,6 +60,7 @@ class passphrase(object):
         ##    raise InsecurePassphraseError, 'OTHERS have access to passphrase file: ' + ppfile
         ##if S_IRGRP & mode or S_IWGRP & mode or S_IXGRP & mode:
         ##    raise InsecurePassphraseError, 'GROUP has access to passphrase file: ' + ppfile
+
     def get_passphrase_file( self, pfile=None, suiterc=None ):
         """
 Passphrase location, order of preference:
@@ -91,8 +92,8 @@ that do not actually need the suite definition directory to be installed.
 
         # 1/ given location
         if pfile:
-            if not pfile.endswith('passphrase'):
-                # in case user just gives the directory
+            if os.path.isdir( pfile ):
+                # if a directory is given assume the filename
                 pfile = os.path.join( pfile, 'passphrase' )
             if os.path.isfile( pfile ):
                 location = pfile
@@ -111,7 +112,7 @@ that do not actually need the suite definition directory to be installed.
                     location = pfile
 
         # 3/ suite definition directory from local registration
-        if suiterc:
+        if not location and suiterc:
             pfile = os.path.join( os.path.dirname(suiterc), 'passphrase' )
             if os.path.isfile( pfile ):
                 location = pfile
