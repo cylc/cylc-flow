@@ -74,8 +74,7 @@ class compat( object ):
         # guess location of the required cylc
         new_cylc_dir = os.path.join( self.cylc_top_dir, 'cylc-' + self.required_version )
         self.messages.append( 'Assuming parallel cylc installations,' )
-
-        self.messages.append( '  reinvoking command with ' + new_cylc_dir )
+        self.messages.append( '  Reinvoking command with ' + new_cylc_dir )
 
         # full path to new cylc command
         new_cylc = os.path.join( new_cylc_dir, 'bin', 'cylc')
@@ -106,7 +105,7 @@ class compat( object ):
             sys.exit(retcode)
         except OSError, x:
             print >> sys.stderr, "ERROR: Failed to invoke " + new_cylc
-            print >> sys.stderr, "NOTE: Use '--override' to force use of the invoked cylc version."
+            print >> sys.stderr, "TO FORCE THE INVOKED VERSION USE THE '-o,--override' OPTION."
             sys.exit(1)
 
 class compat_explicit( compat ):
