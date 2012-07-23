@@ -18,9 +18,6 @@ GENERAL
  allow the old method with the proviso that it would not work for remote
  controlled suites.
 
- + To start a suite by GUI we still need to parse the config file to
- get, for example, configured initial and final cycle times for display!
-
  + gcylc --host=FOO still starts up if FOO is an unknown host, and then tries
 to start the suite locally.
 

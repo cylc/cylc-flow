@@ -193,7 +193,6 @@ def scan( host, verbose=True, mine=False, silent=False, db=None ):
     reg_suites = reg.get_list()
     my_passphrases = {}
     for item in reg_suites:
-        print item
         rg = item[0]
         try:
             pp = passphrase( rg, me, host ).get()
