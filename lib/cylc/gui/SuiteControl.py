@@ -56,7 +56,7 @@ def run_get_stdout( command, filter=False ):
         elif res > 0:
             warning_dialog("ERROR: command failed %d\n%s" % (res,err)).warn()
             return (False, [])
-    except OSError as e:
+    except OSError, e:
         warning_dialog("ERROR: command invocation failed %s\n%s" % (str(e),err)).warn()
         return (False, [])
     else:

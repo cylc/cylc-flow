@@ -104,7 +104,7 @@ for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE; done
                 sys.exit("ERROR: remote command terminated by signal %d" % res)
             elif res > 0:
                 sys.exit("ERROR: remote command failed %d" % res)
-        except OSError as e:
+        except OSError, e:
             sys.exit("ERROR: remote command invocation failed %s" % str(e))
         else:
             print >> sys.stderr, 'Remote command re-invocation done'

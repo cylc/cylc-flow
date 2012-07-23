@@ -47,7 +47,7 @@ def is_remote_host(name):
         return False
     try:
         ipa = socket.gethostbyname(name) 
-    except Exception as e:
+    except Exception, e:
         print >> sys.stderr, str(e)
         sys.exit( 'ERROR, host not found: ' + name )
     return name and ipa != host_ip_address
