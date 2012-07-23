@@ -209,14 +209,14 @@ class config( CylcConfigObj ):
             # Always print reason for validation failure
             for item in failed_items:
                 sections, key, result = item
-                print ' ',
+                print >> sys.stderr, ' ',
                 for sec in sections:
-                    print sec, '->',
-                print key
+                    print >> sys.stderr, sec, '->',
+                print >> sys.stderr, key
                 if result == False:
-                    print "Required item missing."
+                    print >> sys.stderr, "Required item missing."
                 else:
-                    print result
+                    print >> sys.stderr, result
             raise SuiteConfigError, "ERROR: suite.rc validation failed"
         
         extras = []
