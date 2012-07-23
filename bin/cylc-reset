@@ -48,7 +48,7 @@ the problem, because sequential tasks do not spawn until they succeed.
 Alternatively, you could force the failed task to the succeeded state, 
 or insert a new instance into the suite at the next cycle time.""",
     pyro=True,
-    argdoc=[ ('REG', 'Suite name'), ('TASK', 'Target task')])
+    argdoc=[ ('REG', 'Suite name'), ('TASK', 'Target task ID')])
 
 parser.add_option( "--ready", 
         help="Force task to the 'ready' state.",

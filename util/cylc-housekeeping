@@ -100,7 +100,7 @@ parser.add_option( "--cycletime",
 #        action="store_true", dest="force", default=False )
 
 parser.add_option( "--mode", 
-        help="Octal umask for creating new destination directories"
+        help="Octal umask for creating new destination directories. "
         "E.g. 0775 for drwxrwxr-x",
         metavar='MODE',
         action="store", dest="mode", default=None )

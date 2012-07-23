@@ -33,10 +33,12 @@ parser = cop("""cylc [control] set-runahead [OPTIONS] ARGS
 Change the suite runahead limit in a running suite. This is the number of 
 hours that the fastest task is allowed to get ahead of the slowest. If a 
 task spawns beyond that limit it will be held back from running until the
-slowest tasks catch up enough. WARNING: if you omit HOURS no limit will
-be used!""", pyro=True,
+slowest tasks catch up enough. WARNING: if you omit HOURS no runahead
+limit will be set - DO NOT DO THIS for for any cycling suite that has
+no near stop cycle set and is not constrained by clock-triggered
+tasks.""", pyro=True,
     argdoc=[ ('REG', 'Suite name'),
-             ('[HOURS]', 'Runahead limit (no limit if omitted)')])
+        ('[HOURS]', 'Runahead limit (default: no limit)')])
 
 (options, args) = parser.parse_args()
 

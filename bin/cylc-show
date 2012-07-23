@@ -30,10 +30,10 @@ from cylc.command_prep import prep_pyro
 
 parser = cop( """cylc [info] show [OPTIONS] ARGS
 
-Print information obtained by interrogating a running suite: title
-and task list, task descriptions, current state of task prerequisites
-and outputs and, for clock-triggered tasks, whether or not the trigger
-time is up yet.""", pyro=True,
+Interrogate a running suite for its title and task list, task
+descriptions, current state of task prerequisites and outputs and, for
+clock-triggered tasks, whether or not the trigger time is up yet.""",
+    pyro=True, 
     argdoc=[('REG', 'Suite name'), ('[NAME[%TAG]]', 'Task name or ID')])
 
 (options, args) = parser.parse_args()

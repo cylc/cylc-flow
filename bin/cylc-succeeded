@@ -30,7 +30,7 @@ running tasks to communicate progress to their parent suite.
 The succeeded command reports successful completion of task execution
 (and releases the task lock to the lockserver if necessary). It is
 automatically written to the end of task jobs scripts by cylc, except in
-the case of detaching tasks (suite.rc: manual completion = True"), in
+the case of detaching tasks (suite.rc: 'manual completion = True'), in
 which case it must be called explicitly by final task scripting. 
 
 Suite and task identity are determined from the task execution

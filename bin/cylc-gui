@@ -92,8 +92,10 @@ if not is_remote_host( options.host ) and not is_remote_user( options.owner ):
         if options.debug:
             raise
         raise SystemExit(x)
-# get the suite passphrase
-pphrase = passphrase( suite, options.owner, options.host).get( options.pfile, suiterc )
+    pphrase = passphrase( suite, options.owner, options.host).get( options.pfile, suiterc )
+else:
+    suite = args[0]
+    pphrase = passphrase( suite, options.owner, options.host).get( options.pfile )
 
 gtk.settings_get_default().set_long_property("gtk-toolbar-icon-size", gtk.ICON_SIZE_SMALL_TOOLBAR, "main")
 gtk.settings_get_default().set_long_property("gtk-button-images", True, "main")

@@ -354,8 +354,10 @@ optional but they can disambiguate abbreviated commands:
 Suites are addressed by hierarchical names registered in your suite
 database, e.g. nwp.test.LAM1, nwp.test.LAM2, nwp.oper.global.
 
-Tasks are identified by NAME%TAG where TAG is a cycle time for cycling
-tasks (GetData%2011080806) or 'a:INT' for asynchronous tasks (foo%a:1).
+Tasks are identified by NAME%TAG where for cycling tasks TAG is a cycle
+time (YYYY[MM[DD[HH[mm[ss]]]]]) and for asynchronous tasks TAG is an
+integer (just '1' for one-off asynchronous tasks) preceded on the
+command line by "a:" (a:1).
 
 Here's how to drill down to usage help for a particular command:
   % cylc help           # list all available categories (this page)
@@ -432,7 +434,7 @@ comsum[ 'succeeded'  ] = 'Release task lock and report succeeded'
 comsum[ 'failed'     ] = 'Release task lock and report failure'
 
 # utility
-comsum[ 'cycletime'    ] = 'Cycle time arithmetic'
+comsum[ 'cycletime'    ] = 'Cycle time arithmetic and filename templating'
 comsum[ 'checkvars'    ] = 'Check required environment variables en masse'
 comsum[ 'jobscript'    ] = 'Generate a task job script and print it to stdout'
 comsum[ 'housekeeping' ] = 'Parallel archiving and cleanup on cycle time offsets'

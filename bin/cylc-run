@@ -58,10 +58,10 @@ remote host prior to attempting to run the suite."""
 
         self.parser = cop( usage,
                 argdoc=[ ("REG", "Suite name"), 
-                ("[START]", """Initial cycle time. This is optional if defined in the 
-                        suite.rc file, in which case the command line
-                        takes priority (and a suite.rc final cycle time
-                        will be ignored), and is not required if the
+                ("[START]", """Initial cycle time, optional if defined in the 
+                        suite.rc file (in which case the command line
+                        takes priority and a suite.rc final cycle time
+                        will be ignored); not required if the
                         suite contains no cycling tasks.""")])
 
         self.parser.add_option( "-w", "--warm", help="Warm start the suite",

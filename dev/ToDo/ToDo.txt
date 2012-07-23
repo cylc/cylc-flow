@@ -6,6 +6,10 @@ can be migrated to the github issue tracker.
 _______
 GENERAL
 
++ can we keep the control GUI graph view centered, after layout
+ changes, on the most recently clicked-on task? (clicking on a task
+ centers it now, for a given layout).
+
  + New multi-view suite control GUI: all suite info is now got from the
  suite via Pyro instead of from a local config file parsed when the GUI
  starts up (because with remote control capability we may not have a

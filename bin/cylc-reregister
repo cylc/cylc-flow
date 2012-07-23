@@ -28,8 +28,8 @@ parser = cop( usage = """cylc [db] reregister|rename [OPTIONS] ARGS
 Change the name of a suite (or group of suites) from REG1 to REG2.
 Example:
   cylc db rereg foo.bar.baz test.baz""",
-       argdoc=[("REG1", "old suite name"), 
-         ("REG2", "new suite name")])
+       argdoc=[("REG1", "original name"), 
+         ("REG2", "new name")])
 
 ( options, args ) = parser.parse_args()
 

@@ -674,7 +674,7 @@ since updating PYTHONPATH.
 which downloads and installs python packages in one shot.}
 
 At this point you should have access to all cylc functionality except
-for suite graphing and the graph-based control GUI view.  For example
+for suite graphing and the graph control GUI view.  For example
 
 \subsubsection{Graphviz}
 
@@ -1057,8 +1057,6 @@ the same time will automatically connect to the same running suite (they
 won't try to run separate instances). Note also that if you shut down a
 suite control GUI, the suite will keep running. You can reconnect to it
 later by opening another control GUI.
-%See {\em The Graph-Based Suite Control GUI},
-%Section~\ref{TheGraphBasedcontrolGUI}.
 
 In the control GUI click on Control $\rightarrow$ Run, enter an initial
 cold-start cycle time (e.g.\ 2011052306), and select ``Hold (pause) on
@@ -1556,7 +1554,7 @@ registration name is a hierarchical name akin to a directory path but
 delimited by the `.' character; this allows suites to be organised in
 nested tree-like structures:
 \begin{lstlisting}
-% cylc db print -tp nwp
+% cylc db print -t nwp
 nwp          
  |-oper      
  | |-region1  Local Model Region1       /oper/nwp/suite_defs/LocalModel/nested/Region1
@@ -1573,7 +1571,7 @@ for example, to move the suite \lstinline=nwp.oper.region2= into the
 \begin{lstlisting}
 % cylc db rereg nwp.oper.region2 nwp.test.region2
 REREGISTER nwp.oper.region2 to nwp.test.region2
-% cylc db print -tpx nwp
+% cylc db print -tx nwp
 nwp          
  |-oper      
  | `-region1  Local Model Region1
@@ -1585,7 +1583,7 @@ And to move \lstinline=nwp.test.region2= into a new group \lstinline=nwp.para=:
 \begin{lstlisting}
 % cylc db rereg nwp.test.region2 nwp.para.region2
 REREGISTER nwp.test.region2 to nwp.para.region2
-% cylc db print -tpx nwp
+% cylc db print -tx nwp
 nwp          
  |-oper      
  | `-region1  Local Model Region1
@@ -3298,15 +3296,12 @@ reference (Appendix~\ref{SuiteRCReference}) for details.
 
 Nested families from the namespace inheritance hierarchy, even if 
 they are not used as family triggers in the graph, can be expanded or
-collapsed in suite graphs and by menu options in the graph-based suite control GUI (this
-will also be added to the text treeview control GUI in a future
-release). 
+collapsed in suite graphs and in the suite control GUI's text and graph
+views.
 
-Family nodes in the graph-based suite control GUI are not currently 
-color-coded in real time according to what state their members are in.
-However, any ungraphed tasks, which includes the members of collapsed
-families, are automatically plotted as rectangular nodes to the
-right of the main graph if they are doing anything interesting
+In the graph view ungraphed tasks, which includes the members of
+collapsed families, are automatically plotted as rectangular nodes to
+the right of the main graph if they are doing anything interesting
 (submitted, running, or failed).
 
 Note that family relationships can be defined purely for visualization
@@ -4793,7 +4788,7 @@ directories, stamped with the cycle time of the generating task greatly
 aids in managing suite disk usage, both for archiving and cleanup. It
 also enables the aforementioned task rerunnability recommendation by avoiding
 overwrite of important files from one cycle to the next. Cylc has 
-powerful utilities for cycle time offset based filename templating and
+powerful utilities for cycle time offset filename templating and
 housekeeping.
 
 \subsubsection{Use Cylc Cycle Time Filename Templating}
@@ -5052,26 +5047,30 @@ To watch suite locks being acquired and released as a suite runs,
 % watch cylc lockclient --print
 \end{lstlisting}
 
-\section{The Graph-Based Suite Control GUI}
+\section{The Suite Control GUI Graph View}
 \label{TheGraphBasedcontrolGUI}
 
-The graph-based suite control GUI has the advantage that it shows
-the structure of a suite very clearly as it evolves. It works 
-remarkably well even for very large suites, on the order of one hundred
-tasks or more {\em but} on the downside, the graphviz engine does a new
-global optimization every time the graph changes, so the layout is often
-not very stable. This may or may not be a solvable problem - it seems
-likely that making continual incremental changes to an existing graph
-without redoing the global layout would inevitably result in some kind
-of horrible mess.
+The graph view in the suite control GUI has the advantage that it shows
+the structure of a suite very clearly as it evolves. It works remarkably
+well even for very large suites (up to several hundred tasks or more)
+{\em but} because the graphviz engine does a new global layout every
+time the graph changes the layout is often not very stable. This may not
+be a solvable problem even in principle as it seems likely that making
+continual incremental changes to an existing graph without redoing the
+global layout would inevitably result in a horrible mess.
 
-The following features of the graph-based control GUI go a long way 
-toward mitigating the changing layout problem:
+The following features of the graph view, however, help mitigate the the
+jumping layout problem:
 
 \begin{myitemize}
     \item The disconnect button can be used to temporarily prevent the
         graph from changing as the content of the suite changes (and
         in real time operation suites evolve quite slowly anyway)
+    \item In most suites, toggling the off-white ``base graph'' nodes
+        (which do not represent current live task proxies and are just
+        present to fill out the graph structure) will dramatically
+        reduce the size of the graph (but it will split into several
+        disconnected sub-trees).
     \item Right-click on a task and choose the ``Focus'' option to restrict
         the graph display to that task's cycle time. Anything interesting
         happening in other cycles will show up as disconnected
@@ -5081,9 +5080,6 @@ toward mitigating the changing layout problem:
         on just the tasks you're interested in (but this will 
         destroy the graph structure, to state the obvious).
 \end{myitemize}
-
-In future cylc releases we plan to keep the graph centered, after layout
-changes, on the most recently clicked-on task.
 
 
 \section{Simulation Mode} 

@@ -170,7 +170,7 @@ class scheduler(object):
 
         self.parser.add_option( "--until", 
                 help="Shut down after all tasks have PASSED this cycle time.",
-                metavar="YYYYMMDDHH", action="store", dest="stop_time" )
+                metavar="CYCLE", action="store", dest="stop_time" )
 
         self.parser.add_option( "--hold", help="Hold (don't run tasks) "
                 "immediately on starting.",
@@ -178,7 +178,7 @@ class scheduler(object):
 
         self.parser.add_option( "--hold-after",
                 help="Hold (don't run tasks) AFTER this cycle time.",
-                metavar="YYYYMMDDHH", action="store", dest="hold_time" )
+                metavar="CYCLE", action="store", dest="hold_time" )
 
         self.parser.add_option( "-s", "--simulation-mode",
                 help="Use dummy tasks that masquerade as the real thing, "
@@ -188,7 +188,7 @@ class scheduler(object):
 
         self.parser.add_option( "--fail", help=\
                 "(SIMULATION MODE) get the specified task to report failure and then abort.",
-                metavar="NAME%YYYYMMDDHH", action="store", dest="failout_task_id" )
+                metavar="NAME%TAG", action="store", dest="failout_task_id" )
 
         #self.parser.add_option( "--debug", help=\
                 #        "Turn on 'debug' logging and full exception tracebacks.",
@@ -200,7 +200,7 @@ class scheduler(object):
                 action="store_true", default=False, dest="timing" )
 
         self.parser.add_option( "--gcylc", help=\
-                "(DO NOT USE THIS OPTION).",
+                "(for use by gcylc only).",
                 action="store_true", default=False, dest="gcylc" )
 
         self.parse_commandline()
