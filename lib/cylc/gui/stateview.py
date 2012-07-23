@@ -100,6 +100,7 @@ class tupdater(threading.Thread):
 
         self.state_summary = {}
         self.global_summary = {}
+        self.fam_state_summary = {}
         self.god = None
         self.mode = "mode:\nwaiting..."
         self.dt = "state last updated at:\nwaiting..."
