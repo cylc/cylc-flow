@@ -23,6 +23,16 @@ import helpwindow
 from stateview import tupdater
 from gcapture import gcapture_tmpfile
 
+try:
+    any
+except NameError:
+    # any() appeared in Python 2.5
+    def any(iterable):
+        for entry in iterable:
+            if entry:
+                return True
+        return False
+
 class ControlTree(object):
     """
 Text Treeview suite control interface.

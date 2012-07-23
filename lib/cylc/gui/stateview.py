@@ -28,6 +28,16 @@ import pygtk
 from string import zfill
 ####pygtk.require('2.0')
 
+try:
+    any
+except NameError:
+    # any() appeared in Python 2.5
+    def any(iterable):
+        for entry in iterable:
+            if entry:
+                return True
+        return False
+
 def compare_dict_of_dict( one, two ):
     for key in one:
         if key not in two:
