@@ -1375,7 +1375,9 @@ The cylc forecast suite metascheduler.
         hbox.pack_start (warm_rb, True)
         vbox.pack_start( hbox, True )
 
-        suite, rcfile = dbgetter().get_suite(reg)
+        db = localdb()
+        db.load_from_file()
+        suite, rcfile = db.get_suite(reg)
         try:
             suiterc = config( suite, rcfile )
         except SuiteConfigError, x:
@@ -1710,7 +1712,9 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         clv.quit()
 
     def view_log( self, w, reg ):
-        suite, rcfile = dbgetter().get_suite(reg)
+        db = localdb()
+        db.load_from_file()
+        suite, rcfile = db.get_suite(reg)
         try:
             suiterc = config( suite, rcfile )
         except SuiteConfigError, x:
