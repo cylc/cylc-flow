@@ -1477,7 +1477,7 @@ The cylc forecast suite metascheduler.
         if method == 'inlined':
             extra = ' -i'
         elif method == 'processed':
-            extra = ' -p'
+            extra = ' -j'
 
         command = "cylc view " + self.dbopt + " --notify-completion -g " + extra + ' ' + reg
         foo = gcapture_tmpfile( command, self.tmpdir )
