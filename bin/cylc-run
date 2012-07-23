@@ -21,7 +21,6 @@ remrun().execute()
 
 import os
 from cylc.CylcOptionParsers import cop
-from cylc.cycle_time import ct, CycleTimeError
 from cylc.scheduler import scheduler
 from cylc.run import main, set_main_debug
 from cylc.command_prep import prep_file
@@ -81,10 +80,7 @@ remote host prior to attempting to run the suite."""
 
         self.start_time = None
         if len( self.args ) == 2:
-            try:
-                self.start_time = ct( self.args[1] ).get()
-            except CycleTimeError, x:
-                raise SystemExit(x)
+            self.start_time = self.args[1]
 
         scheduler.parse_commandline( self )
         self.verbose = self.options.verbose

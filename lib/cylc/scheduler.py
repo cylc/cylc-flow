@@ -298,37 +298,39 @@ class scheduler(object):
         self.stop_clock_time = None
         # (self.start_time is set already if provided on the command line).
 
-        if self.is_restart:
-            # May provide a stop time on the command line only
+        if not self.start_time:
+            # No initial cycle time provided on the command line.
+            if self.config['scheduling']['initial cycle time']:
+                # Use suite.rc initial cycle time, if one is defined.
+                self.start_time = str(self.config['scheduling']['initial cycle time'])
             if self.options.stop_time:
+                # But a final cycle time was provided on the command line.
+                # NOTE: this will have to be changed if we use a STOP
+                # arg instead of the '--until=STOP' option - then it
+                # will not be possible to use STOP without START. 
                 self.stop_time = self.options.stop_time
- 
+            elif self.config['scheduling']['final cycle time']:
+                # Use suite.rc final cycle time, if one is defined.
+                self.stop_time = str(self.config['scheduling']['final cycle time'])
         else:
-            if not self.start_time:
-                # No initial cycle time provided on the command line.
-                if self.config['scheduling']['initial cycle time']:
-                    # Use suite.rc initial cycle time, if one is defined.
-                    self.start_time = str(self.config['scheduling']['initial cycle time'])
-                if self.options.stop_time:
-                    # But a final cycle time was provided on the command line.
-                    # NOTE: this will have to be changed if we use a STOP
-                    # arg instead of the '--until=STOP' option - then it
-                    # will not be possible to use STOP without START. 
-                    self.stop_time = self.options.stop_time
-                elif self.config['scheduling']['final cycle time']:
-                    # Use suite.rc final cycle time, if one is defined.
-                    self.stop_time = str(self.config['scheduling']['final cycle time'])
-            else:
-                # An initial cycle time was provided on the command line
-                # => also use command line final cycle time, if provided,
-                # but otherwise don't use the suite.rc default stop time
-                # (user may change start without considering stop cycle).
-                if self.options.stop_time:
-                    # stop time provided on the command line
-                    try:
-                        self.stop_time = ct( self.options.stop_time ).get()
-                    except CycleTimeError, x:
-                        raise SystemExit(x)
+            # An initial cycle time was provided on the command line
+            # => also use command line final cycle time, if provided,
+            # but otherwise don't use the suite.rc default stop time
+            # (user may change start without considering stop cycle).
+            if self.options.stop_time:
+                # stop time provided on the command line
+                self.stop_time = ct( self.options.stop_time ).get()
+
+        if self.stop_time:
+            try:
+                self.stop_time = ct( self.stop_time ).get()
+            except CycleTimeError, x:
+                raise SystemExit(x)
+        if self.start_time:
+            try:
+                self.start_time = ct( self.start_time ).get()
+            except CycleTimeError, x:
+                raise SystemExit(x)
 
         if not self.start_time and not self.is_restart:
             print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'

@@ -21,7 +21,7 @@ remrun().execute()
 
 import os, sys, re
 from cylc.CylcOptionParsers import cop
-from cylc.cycle_time import ct, CycleTimeError
+from cylc.cycle_time import ct
 from cylc.scheduler import scheduler
 from cylc.run import main, set_main_debug
 from cylc.command_prep import prep_file
