@@ -63,6 +63,13 @@ parser.add_option( "-d", "--directories",
         help="Print all configured suite directory paths.",
         action="store_true", default=False, dest="dpaths" )
 
+parser.add_option( "-m", "--mark-output",
+        help="Prefix output lines with '!cylc!' to aid "
+        "in automatic parsing (output can be contaminated by "
+        "stdout from login scripts, for example, for remote "
+        "invocation).",
+        action="store_true", default=False, dest="markoutput" )
+
 ( options, args ) = parser.parse_args()
 
 suite, suiterc = prep_file( args[0], options ).execute()
@@ -104,5 +111,8 @@ for item in args[1:]:
         sys.exit(1)
     got.append(item)
 
-print res
+if options.markoutput:
+    print '!cylc!' + str(res)
+else:
+    print res
     

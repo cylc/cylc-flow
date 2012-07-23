@@ -43,6 +43,35 @@ from textload import textload
 from datetime import datetime
 from gcapture import gcapture_tmpfile
 
+def run_get_stdout( command, filter=False ):
+    try:
+        popen = subprocess.Popen( command, shell=True,
+                stderr=subprocess.PIPE, stdout=subprocess.PIPE )
+        out = popen.stdout.read()
+        err = popen.stderr.read()
+        res = popen.wait()
+        if res < 0:
+            warning_dialog( "ERROR: command terminated by signal %d\n%s" % (res, err) ).warn()
+            return (False, [])
+        elif res > 0:
+            warning_dialog("ERROR: command failed %d\n%s" % (res,err)).warn()
+            return (False, [])
+    except OSError as e:
+        warning_dialog("ERROR: command invocation failed %s\n%s" % (str(e),err)).warn()
+        return (False, [])
+    else:
+        # output is a single string with newlines; but we return a list of
+        # lines filtered (optionally) for a special '!cylc!' prefix.
+        res = []
+        for line in out.split():
+            line.strip()
+            if filter:
+                if line.startswith( '!cylc!' ):
+                    res.append(line[6:])
+            else:
+                res.append(line)
+        return ( True, res )
+    return (False, [])
 
 class InitData(object):
     """
@@ -615,6 +644,35 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             else:
                 warning_dialog( result.reason, self.window ).warn()
 
+    def loadctimes( self, bt, startentry, stopentry ):
+        command = "cylc get-config --mark-output --host=" + \
+                self.cfg.host + " --owner=" + self.cfg.owner + " " + \
+                self.cfg.suite 
+        item1 = " scheduling 'initial cycle time'"
+        item2 = " scheduling 'final cycle time'"
+        res1 = run_get_stdout( command + item1, filter=True ) # (T/F,[lines])
+        res2 = run_get_stdout( command + item2, filter=True )
+
+        if res1[0] and res2[0]:
+            out1 = res1[1][0]
+            out2 = res2[1][0]
+            if out1 == "None" and out2 == "None":  # (default value from suite.rc spec)
+                info_dialog( """Initial and final cycle times have not
+been defined for this suite""").inform()
+            elif out1 == "None":
+                info_dialog( """An initial cycle time has not
+been defined for this suite""").inform()
+                stopentry.set_text( out2 )
+            elif out2 == "None":
+                info_dialog( """A final cycle time has not
+been defined for this suite""").inform()
+                startentry.set_text( out1 )
+            else:
+                startentry.set_text( out1 )
+                stopentry.set_text( out2 )
+        else: 
+            pass # error dialogs done by run_get_stdout()
+
     def startsuite( self, bt, window, 
             coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
             entry_ctime, stoptime_entry, no_reset_cb, statedump_entry,
@@ -686,7 +744,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             subprocess.Popen( [command], shell=True )
         except OSError, e:
             warning_dialog( 'Error: failed to start ' + self.cfg.suite,
-                            self.window ).warn()
+                    self.window ).warn()
             success = False
 
     def unblock_suite( self, bt ):
@@ -1463,6 +1521,10 @@ shown here in the state they were in at the time of triggering.''' )
             stoptime_entry.set_text( str(self.final_cycle_time))
         fc_box.pack_start (stoptime_entry, True)
         vbox.pack_start( fc_box )
+
+        load_button = gtk.Button( "_Parse the suite for START and STOP" )
+        load_button.connect("clicked", self.loadctimes, ctime_entry, stoptime_entry )
+        vbox.pack_start(load_button)
 
         is_box = gtk.HBox()
         label = gtk.Label( 'FILE (state dump, optional)' )
