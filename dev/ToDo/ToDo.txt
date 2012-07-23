@@ -21,9 +21,6 @@ GENERAL
  + gcylc --host=FOO still starts up if FOO is an unknown host, and then tries
 to start the suite locally.
 
- + run suite from GUI after shutting down a remote suite, will attempt 
-to run it locally.
-
  + cylc command tab completion?  see /etc/bash_completion.d/git.sh !
 
  + cycling modules: for clarity, instead of initial_adjust_up adjusting

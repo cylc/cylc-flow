@@ -73,7 +73,6 @@ except Exception, x:
     if options.debug:
         raise
     raise SystemExit(x)
-print suite, pphrase, options.owner, options.host
 
 # get state summary, task names, cycle times
 [glbl, states, fam_states] = proxy.get_state_summary()

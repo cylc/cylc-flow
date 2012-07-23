@@ -18,6 +18,7 @@
 
 import os, sys
 from hostname import hostname
+from passphrase import passphrase
 from registration import localdb
 import Pyro.errors, Pyro.core
 from conf.CylcGlobals import pyro_base_port, pyro_port_range

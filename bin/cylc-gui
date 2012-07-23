@@ -35,7 +35,7 @@ from cylc.port_scan import SuiteNotFoundError
 from cylc.gui.gcylc import MainApp
 from cylc.gui.SuiteControl import ControlApp
 from cylc.config import config, SuiteConfigError
-from cylc.hostname import is_remote_host
+from cylc.hostname import hostname, is_remote_host
 from cylc.owner import is_remote_user
 
 parser = cop( """cylc gui|gcylc [OPTIONS] [REG]
@@ -74,28 +74,33 @@ parser.add_option( "-g", "--graph",
 os.chdir(os.environ['HOME'])
 
 if len( args ) == 0:
-    app = MainApp( options.db, options.host, cylc_tmpdir )
+    # DATABASE VIEWER APP (only local hostname needed here)
+    app = MainApp( options.db, hostname, cylc_tmpdir )
     gtk.main()
     sys.exit(0)
 
+# SUITE CONTROL APP
 from cylc.registration import localdb
 from cylc.passphrase import passphrase
 
+suite = args[0]
+suiterc = None
 # dealias the suite name (an aliased name may be given for local suites)
 if not is_remote_host( options.host ) and not is_remote_user( options.owner ):
     db = localdb(file=options.db, verbose=options.verbose)
     db.load_from_file()
     try:
-        suite = db.unalias( args[0] )
+        suite = db.unalias( suite )
         suiterc = db.getrc( suite )
     except Exception, x:
         if options.debug:
             raise
         raise SystemExit(x)
+
+try:
     pphrase = passphrase( suite, options.owner, options.host).get( options.pfile, suiterc )
-else:
-    suite = args[0]
-    pphrase = passphrase( suite, options.owner, options.host).get( options.pfile )
+except Exception, x:
+    sys.exit(str(x))
 
 gtk.settings_get_default().set_long_property("gtk-toolbar-icon-size", gtk.ICON_SIZE_SMALL_TOOLBAR, "main")
 gtk.settings_get_default().set_long_property("gtk-button-images", True, "main")

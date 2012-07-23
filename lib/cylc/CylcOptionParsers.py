@@ -38,6 +38,7 @@ Arguments:"""
         self.n_compulsory_args = 0
         self.n_optional_args = 0
         self.unlimited_args = False
+        self.pyro = pyro
         for arg in argdoc:
             if arg[0].startswith('['):
                 self.n_optional_args += 1
@@ -106,5 +107,9 @@ Arguments:"""
             self.error( "Wrong number of arguments (too many)" )
         if options.db:
             options.db = os.path.abspath( options.db )
+        if self.pyro:
+            if options.pfile:
+                options.pfile = os.path.abspath( options.pfile )
+
         return ( options, args )
 
