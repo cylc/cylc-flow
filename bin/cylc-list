@@ -38,8 +38,8 @@ parser.add_option( "-g","--graph",
         help="Graph the full runtime inheritance hierarchy.",
         action="store_true", default=False, dest="gui" )
 
-parser.add_option( "--pretty",
-        help="(with -t,--tree) use unicode box characters.",
+parser.add_option( "-b", "--box",
+        help="(with -t,--tree) Use unicode box characters.",
         action="store_true", default=False, dest="pretty" )
 
 (options, args) = parser.parse_args()

@@ -54,7 +54,7 @@ parser.add_option( "-t","--tree",
         help="Print registrations in nested tree form.",
         action="store_true", default=False, dest="tree" )
 
-parser.add_option( "--pretty",
+parser.add_option( "-b", "--box",
         help="Use unicode box drawing characters in tree views.",
         action="store_true", default=False, dest="unicode" )
 

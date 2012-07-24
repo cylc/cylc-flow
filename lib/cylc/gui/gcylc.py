@@ -888,9 +888,7 @@ The cylc forecast suite metascheduler.
 
             tree_item = gtk.MenuItem( 'Print _Namespaces' )
             listmenu.append( tree_item )
-            # use "-tp" for unicode box-drawing characters (seems to be
-            # OK in pygtk textview).
-            tree_item.connect( 'activate', self.list_suite, reg, '-tp' )
+            tree_item.connect( 'activate', self.list_suite, reg, '-t' )
 
             gtree_item = gtk.MenuItem( '_Graph Namespaces' )
             listmenu.append( gtree_item )
@@ -967,9 +965,7 @@ The cylc forecast suite metascheduler.
 
             ptree_item = gtk.MenuItem( 'Print _Namespaces' )
             plistmenu.append( ptree_item )
-            # use "-tp" for unicode box-drawing characters (seems to be
-            # OK in pygtk textview).
-            ptree_item.connect( 'activate', self.list_suite, reg, '-tp' )
+            ptree_item.connect( 'activate', self.list_suite, reg, '-t' )
  
             gtree_item = gtk.MenuItem( '_Graph Namespaces' )
             plistmenu.append( gtree_item )
