@@ -20,6 +20,7 @@ from task_types import task
 from task_types import clocktriggered
 from prerequisites.plain_prerequisites import plain_prerequisites
 from hostname import hostname
+from cycle_time import CycleTimeError
 import logging
 import datetime
 import port_scan
