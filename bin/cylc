@@ -36,7 +36,6 @@ except OSError,x:
     raise SystemExit( 'ERROR: your current working directory does not exist!')
 
 from cylc.version import cylc_version
-from cylc.compat import compat_explicit
 from cylc.execute import execute
 from OrderedDict import OrderedDict
 
@@ -178,6 +177,9 @@ while argv:
         args.append(arg)
 
 if req_ver:
+    # only import compat here if needed; otherwise it will nobble task
+    # messaging on remote task hosts that do not have Jinja2 installed.
+    from cylc.compat import compat_explicit
     req_ver = req_ver.replace( 'cylc-', '' )
     sys.argv = args
     compat = compat_explicit( req_ver )
