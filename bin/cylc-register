@@ -24,7 +24,7 @@ from cylc.CylcOptionParsers import cop
 from cylc.registration import localdb, RegistrationError, DatabaseLockedError
 from cylc.passphrase import passphrase
 from cylc.hostname import hostname
-from cylc.user import user
+from cylc.owner import user
 
 parser = cop( usage = """cylc [db] register [OPTIONS] ARGS
 
