@@ -24,7 +24,7 @@ from hostname import hostname
 from conf.CylcGlobals import pyro_base_port, pyro_port_range
 
 class pyro_server( object ):
-    def __init__( self, suite, user=os.environ['USER'] ):
+    def __init__( self, suite, suiterc, user=os.environ['USER'] ):
 
         self.suite = suite
         self.owner = user
@@ -42,7 +42,7 @@ class pyro_server( object ):
 
         Pyro.core.initServer()
         self.daemon = Pyro.core.Daemon()
-        self.daemon.setAllowedIdentifications( [passphrase(suite,user,hostname).get()] )
+        self.daemon.setAllowedIdentifications( [passphrase(suite,user,hostname).get(suiterc=suiterc)] )
 
     def shutdown( self ):
         print "Pyro daemon shutdown"

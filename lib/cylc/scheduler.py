@@ -366,12 +366,7 @@ class scheduler(object):
 
         # CONFIGURE SUITE PYRO SERVER
         suitename = self.suite
-        try:
-            self.pyro = pyro_server( suitename )
-        except SecurityError, x:
-            #TO DO: HANDLE IN COMMAND SCRIPT
-            print >> sys.stderr, 'ERROR: secure passphrase problem'
-            raise SystemExit( str(x) )
+        self.pyro = pyro_server( suitename, self.suiterc )
 
         self.port = self.pyro.get_port()
         self.banner[ 'PORT' ] = self.port
@@ -401,7 +396,9 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
         cylcenv[ 'CYLC_SUITE_REG_NAME' ] = self.suite
         cylcenv[ 'CYLC_SUITE_REG_PATH' ] = RegPath( self.suite ).get_fpath()
+        # replace home dir with literal '$HOME' for the benefit of remote tasks:
         cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', self.suite_dir )
+        cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner
         cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
         if self.use_lockserver:

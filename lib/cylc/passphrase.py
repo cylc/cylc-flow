@@ -21,7 +21,7 @@ from stat import *
 import random
 import string
 from mkdir_p import mkdir_p
-from hostname import hostname
+from hostname import is_remote_host
 
 class SecurityError( Exception ):
     """
@@ -79,7 +79,10 @@ implies a common filesystem or a different remote suite that happens to
 be registered under the same name. User accounts used for remote control
 must therefore install the passphrase in the secondary standard
 locations (below) or use the command line option to explicitly reveal
-the location.
+the location. Remote tasks with 'ssh messaging = True' look first in the 
+suite definition directory of the suite host, which they know through 
+the variable CYLC_SUITE_DEF_PATH_ON_SUITE_HOST in the task execution
+environment.
 
 3/ Secondary locations:
     (i) $HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase
@@ -104,12 +107,28 @@ that do not actually need the suite definition directory to be installed.
         # 2/ suite definition directory from the task execution environment
         if not location:
             try:
-                pfile = os.path.join( os.environ['CYLC_SUITE_DEF_PATH'], 'passphrase' )
+                # Test for presence of task execution environment
+                suite_host = os.environ['CYLC_SUITE_HOST']
             except KeyError:
+                # not called by a task
                 pass
             else:
-                if os.path.isfile( pfile ):
-                    location = pfile
+                # called by a task
+                if not is_remote_host( suite_host ):
+                    # On suite host, called by a task. Could be a local
+                    # task or a remote task that has ssh-messaged back
+                    # to the suite host, so determine the suite
+                    # definition directory by
+                    # $CYLC_SUITE_DEF_PATH_ON_SUITE_HOST (which never
+                    # changes) not $CYLC_SUITE_DEF_PATH (which gets
+                    # modified for remote tasks (for the remote dir).
+                    try:
+                        pfile = os.path.join( os.environ['CYLC_SUITE_DEF_PATH_ON_SUITE_HOST'], 'passphrase' )
+                    except KeyError:
+                        pass
+                    else:
+                        if os.path.isfile( pfile ):
+                            location = pfile
 
         # 3/ suite definition directory from local registration
         if not location and suiterc:

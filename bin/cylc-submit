@@ -149,7 +149,9 @@ else:
     cylcenv[ 'CYLC_MODE' ] = 'submit'
 cylcenv[ 'CYLC_SUITE_HOST' ] = hostname
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
+# replace home dir with literal '$HOME' for the benefit of remote tasks:
 cylcenv[ 'CYLC_SUITE_DEF_PATH' ] =  re.sub( os.environ['HOME'], '$HOME', suite_dir )
+cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] =  suite_dir
 cylcenv[ 'CYLC_SUITE_REG_NAME' ] = suite
 cylcenv[ 'CYLC_SUITE_REG_PATH' ] = RegPath( suite ).get_fpath()
 cylcenv[ 'CYLC_SUITE_OWNER' ] = owner

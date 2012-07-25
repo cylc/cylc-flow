@@ -153,6 +153,7 @@ class message(object):
             # this code block.
             env = {}
             for var in ['CYLC_MODE', 'CYLC_TASK_ID',
+                    'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 
                     'CYLC_SUITE_REG_NAME', 'CYLC_SUITE_OWNER',
                     'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC']:
                 env[var] = os.environ[var]
