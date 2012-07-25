@@ -51,7 +51,7 @@ class prep_pyro( prep ):
         # get the suite passphrase
         try:
             self.pphrase = passphrase( self.suite, self.options.owner,
-                    self.options.host).get( self.options.pfile, self.suiterc )
+                    self.options.host, verbose=options.verbose ).get( self.options.pfile, self.suiterc )
         except Exception, x:
             if self.options.debug:
                 raise

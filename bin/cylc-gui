@@ -29,12 +29,10 @@ from cylc.CylcOptionParsers import cop
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
-from conf.CylcGlobals import cylc_tmpdir
-from cylc.port_scan import SuiteNotFoundError
 
+from conf.CylcGlobals import cylc_tmpdir
 from cylc.gui.gcylc import MainApp
 from cylc.gui.SuiteControl import ControlApp
-from cylc.config import config, SuiteConfigError
 from cylc.hostname import hostname, is_remote_host
 from cylc.owner import is_remote_user
 
@@ -98,7 +96,7 @@ if not is_remote_host( options.host ) and not is_remote_user( options.owner ):
         raise SystemExit(x)
 
 try:
-    pphrase = passphrase( suite, options.owner, options.host).get( options.pfile, suiterc )
+    pphrase = passphrase( suite, options.owner, options.host, verbose=options.verbose ).get( options.pfile, suiterc )
 except Exception, x:
     sys.exit(str(x))
 

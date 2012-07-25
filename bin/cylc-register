@@ -98,5 +98,5 @@ except Exception, x:
     sys.exit(1)
 
 # create a new passphrase for the suite if necessary
-passphrase( suite, os.environ['USER'], hostname ).generate(rdir)
+passphrase( suite, os.environ['USER'], hostname, verbose=options.verbose ).generate(rdir)
 
