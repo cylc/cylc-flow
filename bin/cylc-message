@@ -78,7 +78,7 @@ elif len( args ) == 0:
 else:
     msg = ' '.join( args )
     try:
-        message( msg=msg, priority=options.priority, options.verbose ).send()
+        message( msg=msg, priority=options.priority, verbose=options.verbose ).send()
     except Exception, x:
         print >> sys.stderr, 'ERROR: task messaging failure.'
         raise SystemExit(x)
