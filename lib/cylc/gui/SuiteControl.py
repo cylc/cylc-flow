@@ -196,16 +196,16 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     """
 
     DEFAULT_VIEW = "graph"
-    VIEWS_ORDERED = [ "graph", "led", "tree" ]
+    VIEWS_ORDERED = [ "graph", "dot", "text" ]
     VIEWS = { "graph": ControlGraph,
-              "led": ControlLED,
-              "tree": ControlTree }
+              "dot": ControlLED,
+              "text": ControlTree }
     VIEW_DESC = { "graph": "Dependency graph view",
-                  "led": "LED summary view",
-                  "tree": "Detailed list view" }
+                  "dot": "DOT summary view",
+                  "text": "Detailed list view" }
     VIEW_ICON_PATHS = { "graph": "/icons/tab-graph.xpm",
-                        "led": "/icons/tab-led.xpm",
-                        "tree": "/icons/tab-tree.xpm" }
+                        "dot": "/icons/tab-led.xpm",
+                        "text": "/icons/tab-tree.xpm" }
                        
 
     def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir, startup_views):
@@ -1855,22 +1855,22 @@ shown here in the state they were in at the time of triggering.''' )
         graph_view0_item._viewname = "graph"
         graph_view0_item.set_active( self.DEFAULT_VIEW == "graph" )
 
-        led_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="1 - View _LED" )
-        self.view_menu.append( led_view0_item )
-        self._set_tooltip( led_view0_item, self.VIEW_DESC["led"] + " - primary panel" )
-        led_view0_item._viewname = "led"
-        led_view0_item.set_active( self.DEFAULT_VIEW == "led" )
+        dot_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="1 - View _Dot" )
+        self.view_menu.append( dot_view0_item )
+        self._set_tooltip( dot_view0_item, self.VIEW_DESC["dot"] + " - primary panel" )
+        dot_view0_item._viewname = "dot"
+        dot_view0_item.set_active( self.DEFAULT_VIEW == "dot" )
 
-        tree_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="1 - View _Tree" )
-        self.view_menu.append( tree_view0_item )
-        self._set_tooltip( tree_view0_item, self.VIEW_DESC["tree"] + " - primary panel" )
-        tree_view0_item._viewname = "tree"
-        tree_view0_item.set_active( self.DEFAULT_VIEW == "tree" )
+        text_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="1 - View _Text" )
+        self.view_menu.append( text_view0_item )
+        self._set_tooltip( text_view0_item, self.VIEW_DESC["text"] + " - primary panel" )
+        text_view0_item._viewname = "text"
+        text_view0_item.set_active( self.DEFAULT_VIEW == "text" )
 
         graph_view0_item.connect( 'toggled', self._cb_change_view0_menu )
-        led_view0_item.connect( 'toggled', self._cb_change_view0_menu )
-        tree_view0_item.connect( 'toggled', self._cb_change_view0_menu )
-        self.view_menu_views0 = [ graph_view0_item, led_view0_item, tree_view0_item ]
+        dot_view0_item.connect( 'toggled', self._cb_change_view0_menu )
+        text_view0_item.connect( 'toggled', self._cb_change_view0_menu )
+        self.view_menu_views0 = [ graph_view0_item, dot_view0_item, text_view0_item ]
         
         self.view_menu.append( gtk.SeparatorMenuItem() )
         
@@ -1887,22 +1887,22 @@ shown here in the state they were in at the time of triggering.''' )
         graph_view1_item._viewname = "graph"
         graph_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        led_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - View LE_D" )
-        self.view_menu.append( led_view1_item )
-        self._set_tooltip( led_view1_item, self.VIEW_DESC["led"] + " - secondary panel" )
-        led_view1_item._viewname = "led"
-        led_view1_item.connect( 'toggled', self._cb_change_view1_menu )
+        dot_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - View D_OT" )
+        self.view_menu.append( dot_view1_item )
+        self._set_tooltip( dot_view1_item, self.VIEW_DESC["dot"] + " - secondary panel" )
+        dot_view1_item._viewname = "dot"
+        dot_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        tree_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - View Tre_e" )
-        self.view_menu.append( tree_view1_item )
-        self._set_tooltip( tree_view1_item, self.VIEW_DESC["tree"] + " - secondary panel" )
-        tree_view1_item._viewname = "tree"
-        tree_view1_item.connect( 'toggled', self._cb_change_view1_menu )
+        text_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - View Te_xt" )
+        self.view_menu.append( text_view1_item )
+        self._set_tooltip( text_view1_item, self.VIEW_DESC["text"] + " - secondary panel" )
+        text_view1_item._viewname = "text"
+        text_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
         self.view_menu_views1 = [ no_view1_item,
                                   graph_view1_item,
-                                  led_view1_item,
-                                  tree_view1_item ]
+                                  dot_view1_item,
+                                  text_view1_item ]
 
         self.view_menu.append( gtk.SeparatorMenuItem() )
         

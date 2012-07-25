@@ -860,14 +860,32 @@ The cylc forecast suite metascheduler.
             ctrlmenu = gtk.Menu()
             ctrlmenu_item.set_submenu(ctrlmenu)
  
-            con_item = gtk.MenuItem( '_Dot Control GUI')
+            con_item = gtk.MenuItem( '_Text View')
             ctrlmenu.append( con_item )
-            con_item.connect( 'activate', self.launch_controller, reg, state )
+            con_item.connect( 'activate', self.launch_controller, reg, state, 'text' )
 
-            cong_item = gtk.MenuItem( '_Graph Control GUI')
+            con_item = gtk.MenuItem( '_Dot View')
+            ctrlmenu.append( con_item )
+            con_item.connect( 'activate', self.launch_controller, reg, state, 'dot' )
+
+            con_item = gtk.MenuItem( '_Graph View')
+            ctrlmenu.append( con_item )
+            con_item.connect( 'activate', self.launch_controller, reg, state, 'graph' )
+
+            cong_item = gtk.MenuItem( '_Dot,Text View')
             ctrlmenu.append( cong_item )
-            cong_item.connect( 'activate', self.launch_controller, reg, state, True )
+            cong_item.connect( 'activate', self.launch_controller, reg, state, 'dot,text' )
 
+            cong_item = gtk.MenuItem( '_Graph,Text View')
+            ctrlmenu.append( cong_item )
+            cong_item.connect( 'activate', self.launch_controller, reg, state, 'graph,text' )
+
+            cong_item = gtk.MenuItem( '_Dot,Graph View')
+            ctrlmenu.append( cong_item )
+            cong_item.connect( 'activate', self.launch_controller, reg, state, 'dot,graph' )
+
+            ctrlmenu.append( gtk.SeparatorMenuItem() )
+ 
             subm_item = gtk.MenuItem( '_Submit a Task')
             ctrlmenu.append( subm_item )
             subm_item.connect( 'activate', self.submit_task_popup, reg )
@@ -1605,7 +1623,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def launch_controller( self, w, name, state, depgraph=False ):
+    def launch_controller( self, w, name, state, views=None ):
         running_already = False
         if state != '-':
             # suite running
@@ -1682,8 +1700,8 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
                 warning_dialog( str(x), self.window ).warn()
                 return False
 
-            if depgraph:
-                command = "gcylc --graph " + name
+            if views:
+                command = "gcylc --views=" + views + " " + name
             else:
                 command = "gcylc " + name
             foo = gcapture( command, stdout, 800, 400 )
@@ -1694,8 +1712,8 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             # connecting a controller to a running suite started by command line
             # so no point in connecting to the special stdout and stderr files.
             # User was informed of this already by a dialog above.
-            if depgraph:
-                command = "gcylc --graph " + name
+            if views:
+                command = "gcylc --views=" + views + " " + Name
             else:
                 command = "gcylc " + name
             foo = gcapture_tmpfile( command, self.tmpdir, 400 )
