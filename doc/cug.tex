@@ -1606,21 +1606,27 @@ exist yet unless you specify the entire target registration name.
 
 \subsubsection{Suite Passphrases}
 
-In order to allow secure remote control of running suites, cylc requires
-that each suite has an associated passphrase file. The content of the
-passphrase file is essentially arbitrary, so when a suite is registered
-a passphrase is generated automatically in the suite definition
-directory, if one does not already exist there. The same passphrase file 
-must be distributed to any other user accounts on the local or remote
-hosts from which you need access to the running suite. For more information 
-see Section~\ref{passphrases}.
+Any client process that connects to a running suite (this includes task
+messaging and user-invoked interrogation and control commands) must
+authenticate with a secure passphrase that has been loaded by the suite. 
+A random passphrase is generated automatically in the suite definition
+directory at registration time, if one does not already exist there. For 
+the default Pyro-based connection method the passphrase file must be
+distributed to any other accounts that host running tasks or from which
+you need monitoring or control access to the running suite.
+Alternatively, an ssh-based communication method can be used to
+automatically re-invoke cylc commands, including task messaging, on the
+suite host, in which case the suite passphrase is only needed on the
+suite host. See Section~\ref{passphrases} for more on how cylc's
+client/server communication works and how to use it.
 
+\subsection{Suite Databases}
 
-\subsection{User Suite Database}
-
-Each cylc user has a suite database for organising with her own
-suites. By right-clicking on a suite in your private database 
-(or using cylc commands) you can:
+Each user has a suite database that associates registered suite names
+with their respective suite definition directory locations. Hierarchical
+suite names stored in the database can be displayed in a tree structure.
+By right-clicking on a suite in your database, from within gcylc, or
+using cylc commands, you can:
 \begin{myenumerate}
     \item start a suite control GUI to run the suite (or connect to a running suite),
     \item submit a single task to run, just as it would be submitted by its suite
@@ -4461,37 +4467,103 @@ Finally, you may see references to the following pseudo states:
         of its prerequisites satisfied - i.e.\ ready to run (except 
          clock-triggered tasks, which also wait on a trigger time).
 
-    \item {\bf base} (Graph Control GUI only) - off-white base color
-        graph nodes can be used to connect the nodes representing
-        current live task proxies according to the structure of the suite).
+    \item {\bf base} (Graph Control GUI only) - off-white base graph
+        nodes do not represent current live task proxies in the suite,
+        they just connect the current live nodes according to the
+        full suite graph.
 \end{myitemize}
 
-\subsection{Suite Security: Passphrases}
+\subsection{Secure Passphrases, Remote Control, And Task Messaging}
 \label{passphrases}
 
-Cylc restricts access to running suites (by running tasks, cylc commands
-and GUI) to host accounts holding a special passphrase with secure
-permissions.  The passphrase itself is never transferred across the
-network (a secure MD5 checksum is). This should guarantee suite security
-so long as your user accounts aren't breached. 
+There are two ways in which suite interrogation and control commands,
+suite control GUIs, and running tasks (cylc clients) can communicate
+with running suites (cylc servers):
+\begin{myenumerate}
+    \item Pyro RPC (remote procedure call) over the network, or
+    \item Re-invocation of cylc commands on the suite host by
+        passwordless ssh, so that the ultimate Pyro RPC connection only
+        occurs on the suite host.
+\end{myenumerate}
+For the Pyro connection method to work the right network ports must be
+open (cylc starts grabbing ports at port 7766 by default.\footnote{The
+Pyro port range is configured in
+\lstinline=$CYLC_DIR/conf/CylcGlobals.py=.}) and there must be network
+routing between the involved hosts.
 
-A random passphrase generated automatically when a suite is registered,
-if one does not already exist in the suite definition directory. 
-The suite passphrase must be installed in any account that requires
-access to the suite - including remote task hosts. 
+\subsubsection{Pyro Connections and Secure Passphrases}
 
-The passphrase can be held in any of the following locations, in
-order of preference:
-\begin{myitemize}
+All Pyro connections to a suite require authentication with a secure
+passphrase.\footnote{Suite passphrases are never transferred across the
+network (a secure MD5 checksum is).} A random passphrase is generated in
+the suite definition directory when a suite is registered. It must be
+distributed to any other user account, local or remote, that hosts tasks
+from the suite, or from which you need to do Pyro-based remote suite
+monitoring or control.  Passphrases can be installed into any of the
+following locations, in order of preference:
+\begin{myenumerate}
     \item \lstinline=$CYLC_SUITE_DEF_PATH/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_NAME/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_NAME/passphrase=
-    \item (or given on the commandline)
+    \item (or, optionally, given on the commandline with \lstinline=-p FILE=)
+\end{myenumerate}
+The locations under \lstinline=$HOME/.cylc= are suitable for remote
+suite control accounts - in which case the suite definition directory
+may not be known or accessible. If the suite definition directory is
+installed on a remote task host (it can be in the same location with
+respect to \lstinline=$HOME= as the suite definition directory on the
+suite host, or it can be specified explicitly in the suite definition) 
+the passphrase can go there; otherwise use one of the secondary
+locations listed above. 
+
+\subsubsection{Ssh-Pyro Connections}
+
+For ssh-based messaging and suite control, ssh keys must be installed in
+the relevant accounts to allow passwordless ssh connections back to the
+suite host account. The suite passphrase is then only required on the
+suite host.  
+
+\subsubsection{Choosing The Communication Method}
+
+The Pyro connection method is the default because it is simpler and more
+efficient, but if your remote task host does not have the right network
+ports open, and the IT staff are reluctant to change that, then the ssh
+alternative is available {\em so long as your local system and network
+configurations do not also prevent ssh connections back to the suite
+host - in that case see Section~\ref{difficultnetworkenv} below}.
+
+To use the ssh-Pyro connection method:
+\begin{myitemize}
+    \item For remote tasks, set \lstinline@ssh messaging = True@ for the
+relevant tasks or families under the suite definition.
+\lstinline=[runtime]= section.
+    \item For user-invoked suite interrogation and control commands, use
+        the \lstinline=--use-ssh= command line option. Commands that
+        normally prompt before taking action will also require use of
+        \lstinline=-f,--force=.
 \end{myitemize}
-(the suite hostname should be the fully qualified domain name). The
-latter locations are suitable for remote suite control in which case
-the suite definition directory may not be known or accessible.
+
+\subsubsection{If You Cannot Use Pyro or Ssh Connections}
+\label{difficultnetworkenv}
+
+It has come to our attention that some HPC facilities do not have any
+networking routing back out of the compute nodes, for security reasons
+and/or to avoid network chatter that could affect performance.  Any
+kind of communication back to a cylc suite running on an external host
+would then presumably be impossible, but: 
+
+\begin{myitemize}
+    \item You may be able to run cylc itself on one of the HPC login
+        nodes. Depending on what software is installed on the HPC,
+        however, this may preclude use of the cylc GUI and suite
+        visualization tools.
+    \item You may be able to persuade your system administrators to
+        provide networking routing to a dedicated cylc server,
+        if not to the wider world.
+    \item It has been suggested that some kind of network {\em port
+        forwarding} could provide a possible solution ...
+\end{myitemize}
 
 \subsection{Internal Queues And The Runahead Limit}
 
