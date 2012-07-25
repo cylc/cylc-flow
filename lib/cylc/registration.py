@@ -261,6 +261,10 @@ class regdb(object):
         dir, junk = self.get( reg )
         return os.path.join( dir, 'suite.rc' )
 
+    def getdir( self, reg ):
+        dir, junk = self.get( reg )
+        return dir
+
     def get_list( self, regfilter=None ):
         # Return a list of all registered suites, or a filtered list.
         # The list can be empty if no suites are registered, or if 

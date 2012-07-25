@@ -314,7 +314,6 @@ Version: cylc-"""+cylc_version+"""
 USAGE:
   % cylc -v,--version                   # print cylc version
   % cylc help,--help,-h,?               # print this help page
-
   % cylc -V,--Version=avail[able]       # print available cylc versions
   % cylc -V,--Version=x.y.z             # reinvoke with another version
 
@@ -323,9 +322,8 @@ USAGE:
 
   % cylc help [CATEGORY] COMMAND        # print command help
   % cylc [CATEGORY] COMMAND help,--help # (ditto)
-  % cylc [CATEGORY] COMMAND -v          # verbose, not version!
+  % cylc [CATEGORY] COMMAND -v          # verbose (not version!)
 
-Command syntax:
   % cylc [CATEGORY] COMMAND [options] SUITE [arguments]
   % cylc [CATEGORY] COMMAND [options] SUITE TASK [arguments]"""
 

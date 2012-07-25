@@ -64,12 +64,12 @@ class passphrase(object):
         ##if S_IRGRP & mode or S_IWGRP & mode or S_IXGRP & mode:
         ##    raise InsecurePassphraseError, 'GROUP has access to passphrase file: ' + ppfile
 
-    def get_passphrase_file( self, pfile=None, suiterc=None ):
+    def get_passphrase_file( self, pfile=None, suitedir=None ):
         """
 Passphrase location, order of preference:
 
 1/ The pfile argument (used for initial passphrase creation by the
-register command, and optionally on the command line.
+register command, and optionally on the command line).
 
 2/ The suite definition directory, because suites may be automatically
 installed (e.g. by Rose) to remote task hosts, and remote tasks know
@@ -148,8 +148,8 @@ that do not actually need the suite definition directory to be installed.
                             self.set_location( pfile )
 
         # 3/ cylc commands with suite definition directory from local registration
-        if not self.location and suiterc:
-            pfile = os.path.join( os.path.dirname(suiterc), 'passphrase' )
+        if not self.location and suitedir:
+            pfile = os.path.join( suitedir, 'passphrase' )
             if os.path.isfile( pfile ):
                 self.set_location( pfile )
 
@@ -202,8 +202,8 @@ that do not actually need the suite definition directory to be installed.
         if self.verbose:
             print 'Generated suite passphrase file on', user + '@' + hostname + ':', pfile
 
-    def get( self, pfile=None, suiterc=None ):
-        ppfile = self.get_passphrase_file( pfile, suiterc )
+    def get( self, pfile=None, suitedir=None ):
+        ppfile = self.get_passphrase_file( pfile, suitedir )
         psf = open( ppfile, 'r' )
         lines = psf.readlines()
         psf.close()

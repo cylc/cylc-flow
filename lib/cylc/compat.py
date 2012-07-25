@@ -39,7 +39,7 @@ class compat( object ):
 
         self.cylc_top_dir = os.path.dirname( cylc_dir )
 
-        self.messages = [ 'Cylc version reinvocation on ' + hostname ]
+        self.messages = [ 'Cylc version re-invocation on ' + hostname + ':']
 
     def get_version( self ):
         if self.required_version:

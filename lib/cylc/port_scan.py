@@ -194,8 +194,9 @@ def scan( host, verbose=True, mine=False, silent=False, db=None ):
     my_passphrases = {}
     for item in reg_suites:
         rg = item[0]
+        di = item[1]
         try:
-            pp = passphrase( rg, user, host ).get()
+            pp = passphrase( rg, user, host ).get( suitedir=di )
         except Exception, x:
             #print >> sys.stderr, x
             # no passphrase defined for this suite

@@ -367,7 +367,7 @@ class scheduler(object):
 
         # CONFIGURE SUITE PYRO SERVER
         suitename = self.suite
-        self.pyro = pyro_server( suitename, self.suiterc )
+        self.pyro = pyro_server( suitename, self.suite_dir )
 
         self.port = self.pyro.get_port()
         self.banner[ 'PORT' ] = self.port

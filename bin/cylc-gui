@@ -79,21 +79,21 @@ from cylc.registration import localdb
 from cylc.passphrase import passphrase
 
 suite = args[0]
-suiterc = None
+suitedir = None
 # dealias the suite name (an aliased name may be given for local suites)
 if not is_remote_host( options.host ) and not is_remote_user( options.owner ):
     db = localdb(file=options.db, verbose=options.verbose)
     db.load_from_file()
     try:
         suite = db.unalias( suite )
-        suiterc = db.getrc( suite )
+        suitedir = db.getdir( suite )
     except Exception, x:
         if options.debug:
             raise
         raise SystemExit(x)
 
 try:
-    pphrase = passphrase( suite, options.owner, options.host, verbose=options.verbose ).get( options.pfile, suiterc )
+    pphrase = passphrase( suite, options.owner, options.host, verbose=options.verbose ).get( options.pfile, suitedir )
 except Exception, x:
     sys.exit(str(x))
 

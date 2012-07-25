@@ -1522,7 +1522,7 @@ shown here in the state they were in at the time of triggering.''' )
         fc_box.pack_start (stoptime_entry, True)
         vbox.pack_start( fc_box )
 
-        load_button = gtk.Button( "_Parse the suite for START and STOP" )
+        load_button = gtk.Button( "_Load START and STOP from suite definition" )
         load_button.connect("clicked", self.loadctimes, ctime_entry, stoptime_entry )
         vbox.pack_start(load_button)
 

@@ -743,7 +743,9 @@ argument order: 'cylc grep SUITE pattern'
 
 + Moved the lockserver commands to the 'utility' command category.
 
-+ Removed all central suite database functionality.
++ Removed central suite database functionality.
+
++ Suite database location has changed to $HOME/.cylc/DB
 
 + Bug fix "cylc log -r N" (for viewing old rotations)
 

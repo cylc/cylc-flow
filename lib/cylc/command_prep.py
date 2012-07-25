@@ -16,6 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 from cylc.passphrase import passphrase
 from cylc.registration import localdb
 from cylc.hostname import is_remote_host
@@ -34,6 +35,7 @@ class prep( object ):
             try:
                 self.suite = self.db.unalias( suite )
                 self.suiterc = self.db.getrc( suite )
+                self.suitedir = os.path.dirname( self.suiterc )
             except Exception, x:
                 if options.debug:
                     raise
@@ -51,7 +53,7 @@ class prep_pyro( prep ):
         # get the suite passphrase
         try:
             self.pphrase = passphrase( self.suite, self.options.owner,
-                    self.options.host, verbose=options.verbose ).get( self.options.pfile, self.suiterc )
+                    self.options.host, verbose=options.verbose ).get( self.options.pfile, self.suitedir )
         except Exception, x:
             if self.options.debug:
                 raise
