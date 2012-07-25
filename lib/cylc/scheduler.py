@@ -55,6 +55,17 @@ except:
 else:
     graphing_disabled = False
 
+class SchedulerError( Exception ):
+    """
+    Attributes:
+        message - what the problem is. 
+        TO DO: element - config element causing the problem
+    """
+    def __init__( self, msg ):
+        self.msg = msg
+    def __str__( self ):
+        return repr(self.msg)
+
 class pool(object):
     def __init__( self, qconfig, pyro ):
         self.pyro = pyro
@@ -273,7 +284,7 @@ class scheduler(object):
             # Suite Not Found: good - it's not running already!
             pass
         else:
-            raise SystemExit( "ERROR: suite " + self.suite + " is already running")
+            raise SchedulerError( "ERROR: suite " + self.suite + " is already running")
 
     def configure_suite( self ):
         # LOAD SUITE CONFIG FILE
@@ -282,7 +293,7 @@ class scheduler(object):
                 simulation_mode=self.simulation_mode )
         self.config.create_directories()
         if self.config['cylc']['simulation mode only'] and not self.simulation_mode:
-            raise SystemExit( "ERROR: this suite can only run in simulation mode (see suite.rc)" )
+            raise SchedulerError( "ERROR: this suite can only run in simulation mode (see suite.rc)" )
 
         # DETERMINE SUITE LOGGING AND STATE DUMP DIRECTORIES
         self.logging_dir = self.config['cylc']['logging']['directory']
@@ -324,15 +335,11 @@ class scheduler(object):
                 self.stop_time = ct( self.options.stop_time ).get()
 
         if self.stop_time:
-            try:
-                self.stop_time = ct( self.stop_time ).get()
-            except CycleTimeError, x:
-                raise SystemExit(x)
+            # raises CycleTimeError:
+            self.stop_time = ct( self.stop_time ).get()
         if self.start_time:
-            try:
-                self.start_time = ct( self.start_time ).get()
-            except CycleTimeError, x:
-                raise SystemExit(x)
+            # raises CycleTimeError:
+            self.start_time = ct( self.start_time ).get()
 
         if not self.start_time and not self.is_restart:
             print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
@@ -344,10 +351,8 @@ class scheduler(object):
         self.hold_suite_now = False
         self.hold_time = None
         if self.options.hold_time:
-            try:
-                self.hold_time = ct( self.options.hold_time ).get()
-            except CycleTimeError, x:
-                raise SystemExit(x)
+            # raises CycleTimeError:
+            self.hold_time = ct( self.options.hold_time ).get()
             #    self.parser.error( "invalid cycle time: " + self.hold_time )
             self.banner[ 'Pausing at' ] = self.hold_time
 
@@ -360,10 +365,8 @@ class scheduler(object):
             # check that user is running a lockserver
             # DO THIS BEFORE CONFIGURING PYRO FOR THE SUITE
             # (else scan etc. will hang on the partially started suite).
-            try:
-                self.lockserver_port = lockserver( self.host ).get_port()
-            except port_scan.SuiteNotFoundError, x:
-                raise SystemExit( 'Lockserver not found. See \'cylc lockserver status\'')
+            # raises port_scan.SuiteNotFound error:
+            self.lockserver_port = lockserver( self.host ).get_port()
 
         # CONFIGURE SUITE PYRO SERVER
         suitename = self.suite
@@ -505,16 +508,17 @@ class scheduler(object):
             print ' o ', re.sub( '^.{' + str(len(item))+ '}', item, template) + '...' + str( self.banner[ item ] )
 
     def back_up_statedump_file( self ):
-       # back up the configured state dump (i.e. the one that will be used
-       # by the suite, but not necessarily the initial one). 
-       if os.path.exists( self.state_dump_filename ):
-           backup = self.state_dump_filename + '.' + self.clock.get_datetime().isoformat()
-           print "Backing up the state dump file:"
-           print "  " + self.state_dump_filename + " --> " + backup
-           try:
-               shutil.copyfile( self.state_dump_filename, backup )
-           except:
-               raise SystemExit( "ERROR: State dump file copy failed" )
+        # TO DO: THIS IS NO LONGER USED - SHOULD IT BE?
+        # back up the configured state dump (i.e. the one that will be used
+        # by the suite, but not necessarily the initial one). 
+        if os.path.exists( self.state_dump_filename ):
+            backup = self.state_dump_filename + '.' + self.clock.get_datetime().isoformat()
+            print "Backing up the state dump file:"
+            print "  " + self.state_dump_filename + " --> " + backup
+            try:
+                shutil.copyfile( self.state_dump_filename, backup )
+            except:
+                raise SchedulerError( "ERROR: State dump file copy failed" )
 
     def run( self ):
         if self.use_lockserver:
@@ -524,7 +528,7 @@ class scheduler(object):
             if suite_lock( suitename, self.suite_dir, self.host, self.lockserver_port, 'scheduler' ).request_suite_access( self.exclusive_suite_lock ):
                self.lock_acquired = True
             else:
-               raise SystemExit( "Failed to acquire a suite lock" )
+               raise SchedulerError( "Failed to acquire a suite lock" )
 
         if self.hold_time:
             # TO DO: HANDLE STOP AND PAUSE TIMES THE SAME WAY?
@@ -1594,12 +1598,8 @@ class scheduler(object):
         title = 'suite ' + self.suite + ' run-time dependency graph'
         # create output directory if necessary
         odir = self.config['visualization']['run time graph']['directory']
-        try:
-            mkdir_p( odir )
-        except Exception,x:
-            print >> sys.stderr, x
-            print >> sys.stderr, 'ERROR, illegal run time graph dir?', odir
-            sys.exit(1)
+        # raises OSError:
+        mkdir_p( odir )
 
         self.runtime_graph_file = \
                 os.path.join( odir, 'runtime-graph.dot' )
