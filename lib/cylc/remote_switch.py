@@ -25,6 +25,7 @@ from CylcError import TaskNotFoundError, TaskStateError
 from job_submission.job_submit import job_submit
 from datetime import datetime
 from version import cylc_version
+from owner import user
 
 class result:
     def __init__( self, success, reason="Action succeeded", value=None ):
@@ -292,8 +293,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def get_suite_info( self ):
         self.log.info( "servicing suite info request" )
-        owner = os.environ['USER']
-        return [ self.config['title'], self.suite_dir, owner ]
+        return [ self.config['title'], self.suite_dir, user ]
 
     def get_task_list( self ):
         self.log.info( "servicing task list request" )

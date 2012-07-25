@@ -44,6 +44,10 @@ See also:
 
 parser = OptionParser( usage )
 
+parser.add_option( "-v", "--verbose",
+        help="Verbose output mode.",
+        action="store_true", default=False, dest="verbose" )
+
 ( options, args ) = parser.parse_args()
 
 if len( args ) != 0:
@@ -60,7 +64,7 @@ if not cylc_mode.mode().is_raw():
  
 # send succeeded message
 try:
-    message().send_succeeded()
+    message(verbose=options.verbose).send_succeeded()
 except Exception, x:
     print >> sys.stderr, 'ERROR: task messaging failure.'
     raise SystemExit(x)

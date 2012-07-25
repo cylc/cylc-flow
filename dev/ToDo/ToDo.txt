@@ -1,10 +1,13 @@
 
 Since moving cylc to github, I'm using this page to keep track of 
-half-formed ideas and issues that require further investigation 
-before concluding there is a problem ... at which point the issue
-can be migrated to the github issue tracker.
+half-formed and relatively insignificant ideas, and issues that require
+further investigation before concluding there is a problem ... at which
+point the issue can be migrated to the github issue tracker.
 _______
 GENERAL
+
+ + Python dict.get( key, default ) never returns KeyError, and seems to
+ be valid right back to Python 2.4 and earlier.
 
  + cylc command tab completion?  see /etc/bash_completion.d/git.sh !
 

@@ -29,14 +29,14 @@ If OWNER@REMOTE_HOST is not equivalent to whoami@localhost:
 so passwordless ssh must be configured.
 """
 
-import pwd
-import re, os, sys
+import pwd, re, sys, os
 import stat
 import string
 from jobfile import jobfile
 import socket
 import subprocess
 import time
+from cylc.owner import user
 
 class job_submit(object):
     REMOTE_COMMAND_TEMPLATE = ( " '"
@@ -89,7 +89,7 @@ class job_submit(object):
         # The directory is created in config.py
         self.logfiles.add_path( self.local_jobfile_path )
 
-        self.suite_owner = os.environ['USER']
+        self.suite_owner = user
         self.remote_shell_template = remote_shell_template
         self.remote_cylc_dir = remote_cylc_dir
         self.remote_suite_dir = remote_suite_dir

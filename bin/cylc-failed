@@ -50,6 +50,10 @@ Arguments:
 
 parser = OptionParser( usage )
 
+parser.add_option( "-v", "--verbose",
+        help="Verbose output mode.",
+        action="store_true", default=False, dest="verbose" )
+
 ( options, args ) = parser.parse_args()
 
 if len( args ) == 0:
@@ -66,7 +70,7 @@ if not cylc_mode.mode().is_raw():
         print >> sys.stderr, z
         raise SystemExit( "Failed to connect to a lockserver" )
 try:
-    message( msg=reason ).send_failed()
+    message( msg=reason, verbose=options.verbose ).send_failed()
 except Exception, x:
     print >> sys.stderr, 'ERROR: task messaging failure.'
     raise SystemExit(x)

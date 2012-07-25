@@ -19,6 +19,7 @@
 import os, re
 from optparse import OptionParser
 from hostname import hostname
+from owner import user
 
 """Common options for all cylc commands."""
 
@@ -56,7 +57,7 @@ Arguments:"""
 
         self.add_option( "--owner",
                 help="User account name (defaults to $USER).",
-                metavar="USER", default=os.environ["USER"],
+                metavar="USER", default=user,
                 action="store", dest="owner" )
 
         self.add_option( "--host",
@@ -65,7 +66,7 @@ Arguments:"""
                 dest="host" )
 
         self.add_option( "-v", "--verbose",
-                help="Verbose output mode (if applicable).",
+                help="Verbose output mode.",
                 action="store_true", default=False, dest="verbose" )
 
         self.add_option( "--debug",

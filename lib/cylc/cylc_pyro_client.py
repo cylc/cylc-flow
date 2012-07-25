@@ -16,16 +16,17 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
+import sys
 import Pyro.core
 from optparse import OptionParser
 from hostname import hostname
 from time import sleep
 from port_scan import get_port, check_port
 from passphrase import passphrase
+from owner import user
 
 class client( object ):
-    def __init__( self, suite, pphrase=None, owner=os.environ['USER'], host=hostname, port=None ):
+    def __init__( self, suite, pphrase=None, owner=user, host=hostname, port=None ):
         self.suite = suite
         self.owner = owner
         self.host = host

@@ -21,6 +21,7 @@ import pickle
 import datetime, time
 from conf.CylcGlobals import local_regdb_path
 from regpath import RegPath
+from owner import user
 
 # NOTE:ABSPATH (see below)
 #   dir = os.path.abspath( dir )
@@ -97,7 +98,6 @@ class regdb(object):
     """
     def __init__( self, dir, file, verbose=False ):
         self.verbose = verbose
-        self.user = os.environ['USER']
         self.dir = dir
         self.file = file
         # items[one][two]...[name] = (dir,title)
@@ -125,7 +125,7 @@ class regdb(object):
         if self.verbose:
             print "   (locking database " + self.file + ")"
         lockfile = open( self.lockfile, 'wb' )
-        lockfile.write( 'locked by ' + self.user + '\n' )
+        lockfile.write( 'locked by ' + user + '\n' )
         lockfile.write( str(datetime.datetime.now()))
         lockfile.close()
 

@@ -19,11 +19,12 @@
 # INTERFACE TO THE LOCKSERVER FOR CLIENT PROGRAMS
 
 import Pyro.core, Pyro.naming, Pyro.errors
-import socket, os
+import socket
+from cylc.owner import user
 from cylc.port_scan import get_port, check_port
 
 class lockserver(object):
-    def __init__( self, host, owner=os.environ['USER'], port=None ):
+    def __init__( self, host, owner=user, port=None ):
         self.owner = owner
         self.host = host
         self.port = port

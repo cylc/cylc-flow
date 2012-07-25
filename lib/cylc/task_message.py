@@ -33,6 +33,12 @@ class message(object):
 
         self.msg = msg
         self.verbose = verbose
+        if not verbose:
+            try:
+                if os.environ['CYLC_VERBOSE'] == 'True':
+                    self.verbose = True
+            except:
+                pass
 
         legal_priority = [ 'NORMAL', 'WARNING', 'CRITICAL' ]
 
@@ -99,8 +105,6 @@ class message(object):
             if os.environ['CYLC_SSH_MESSAGING'] == 'True':
                 self.ssh_messaging = True
 
-        self.pphrase = passphrase( self.suite, self.owner, self.host).get( None, None )
-
     def now( self ):
         if self.utc:
             return datetime.datetime.utcnow()
@@ -108,6 +112,10 @@ class message(object):
             return datetime.datetime.now()
 
     def get_proxy( self ):
+        # get passphrase here, not in __init__, because it is not needed
+        # on remote task hosts if 'ssh messaging = True' (otherwise, if
+        # it is needed, we will end up in this method). 
+        self.pphrase = passphrase( self.suite, self.owner, self.host, verbose=self.verbose ).get( None, None )
         # this raises an exception on failure to connect:
         return cylc_pyro_client.client( self.suite, self.pphrase, self.owner, self.host, self.port ).get_proxy( self.task_id )
 
@@ -138,8 +146,6 @@ class message(object):
             # passwordless ssh to re-invoke the messaging command on the
             # suite host. 
 
-            #print socket.getfqdn(), os.environ['USER'] # DEBUGGING
-
             # The remote_run() function expects command line options
             # to identify the target user and host names:
             sys.argv.append( '--owner=' + self.owner )
@@ -152,7 +158,7 @@ class message(object):
             # re-invoked command on the remote side will not end up in
             # this code block.
             env = {}
-            for var in ['CYLC_MODE', 'CYLC_TASK_ID',
+            for var in ['CYLC_MODE', 'CYLC_TASK_ID', 'CYLC_VERBOSE', 
                     'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 
                     'CYLC_SUITE_REG_NAME', 'CYLC_SUITE_OWNER',
                     'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC']:
@@ -171,7 +177,6 @@ class message(object):
             # "ssh messaging = True" for local tasks.
             remrun().execute( env=env, path=path )
 
-        #print socket.getfqdn(), os.environ['USER'] # DEBUGGING
         self.print_msg( msg )
         self.send_pyro( msg )
 

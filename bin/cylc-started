@@ -43,6 +43,10 @@ See also:
 
 parser = OptionParser( usage )
 
+parser.add_option( "-v", "--verbose",
+        help="Verbose output mode.",
+        action="store_true", default=False, dest="verbose" )
+
 ( options, args ) = parser.parse_args()
 
 if len( args ) != 0:
@@ -50,7 +54,7 @@ if len( args ) != 0:
 
 # send start message
 try:
-    message().send_started()
+    message(verbose=options.verbose).send_started()
 except Exception, x:
     print >> sys.stderr, 'ERROR: task messaging failure.'
     raise SystemExit(x)

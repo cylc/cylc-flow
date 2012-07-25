@@ -21,9 +21,11 @@ username is "remote"."""
 
 import os, pwd
 
+user = os.environ.get( 'USER', pwd.getpwuid(os.getuid()).pw_name )
+
 def is_remote_user(name):
     """Return True if name is different than the current username.
     Return False if name is None.
     """
-    return name and name != os.environ.get("USER", pwd.getpwuid(os.getuid()).pw_name)
+    return name and name != user
 

@@ -18,6 +18,7 @@
 
 import os, sys
 from hostname import hostname
+from owner import user
 from passphrase import passphrase
 from registration import localdb
 import Pyro.errors, Pyro.core
@@ -54,7 +55,6 @@ class port_interrogator(object):
         self.port = port
         self.timeout = timeout
         self.my_passphrases = my_passphrases
-        self.me = os.environ['USER']
 
     def interrogate( self ):
         # get a proxy to the cylcid object
@@ -82,7 +82,7 @@ class port_interrogator(object):
                     continue
                 else:
                     # got access
-                    if name == reg and owner == self.me:
+                    if name == reg and owner == user:
                         return name, owner, 'secure'
                     else:
                         # this indicates that one of my suites has an
@@ -113,7 +113,7 @@ def portid( host, port ):
 def cylcid_uri( host, port ):
     return 'PYROLOC://' + host + ':' + str(port) + '/cylcid' 
 
-def get_port( suite, owner=os.environ['USER'], host=hostname,
+def get_port( suite, owner=user, host=hostname,
         pphrase=None, timeout=None, silent=False ):
     # Scan ports until a particular suite is found.
 
@@ -152,7 +152,7 @@ def get_port( suite, owner=os.environ['USER'], host=hostname,
                 pass
     raise SuiteNotFoundError, "Suite not running: " + suite + ' ' + owner + ' ' + host
 
-def check_port( suite, pphrase, port, owner=os.environ['USER'], host=hostname, timeout=None, silent=False ):
+def check_port( suite, pphrase, port, owner=user, host=hostname, timeout=None, silent=False ):
     # is a particular suite running at host:port?
 
     uri = cylcid_uri( host, port )
@@ -186,7 +186,6 @@ def check_port( suite, pphrase, port, owner=os.environ['USER'], host=hostname, t
 
 def scan( host, verbose=True, mine=False, silent=False, db=None ):
     # scan all cylc Pyro ports for cylc suites
-    me = os.environ['USER']
 
     # load my suite passphrases 
     reg = localdb(db)
@@ -196,7 +195,7 @@ def scan( host, verbose=True, mine=False, silent=False, db=None ):
     for item in reg_suites:
         rg = item[0]
         try:
-            pp = passphrase( rg, me, host ).get()
+            pp = passphrase( rg, user, host ).get()
         except Exception, x:
             #print >> sys.stderr, x
             # no passphrase defined for this suite
@@ -227,7 +226,7 @@ def scan( host, verbose=True, mine=False, silent=False, db=None ):
                     print name, owner, host, port
             # found a cylc suite or lock server
             if mine:
-                if owner == me:
+                if owner == user:
                     suites.append( ( name, port ) )
             else:
                 suites.append( ( name, owner, port ) )

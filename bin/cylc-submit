@@ -147,6 +147,8 @@ if options.sched:
     cylcenv[ 'CYLC_MODE' ] = 'scheduler'
 else:
     cylcenv[ 'CYLC_MODE' ] = 'submit'
+
+cylcenv[ 'CYLC_VERBOSE' ] = str(options.verbose)
 cylcenv[ 'CYLC_SUITE_HOST' ] = hostname
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
 # replace home dir with literal '$HOME' for the benefit of remote tasks:

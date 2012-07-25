@@ -16,15 +16,16 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
+import sys
 import socket
 import Pyro
 from passphrase import passphrase
 from hostname import hostname
+from owner import user
 from conf.CylcGlobals import pyro_base_port, pyro_port_range
 
 class pyro_server( object ):
-    def __init__( self, suite, suiterc, user=os.environ['USER'] ):
+    def __init__( self, suite, suiterc, user=user ):
 
         self.suite = suite
         self.owner = user

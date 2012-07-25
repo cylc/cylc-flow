@@ -35,6 +35,7 @@ from util import get_icon, get_image_dir, get_logo
 import helpwindow
 from gcapture import gcapture, gcapture_tmpfile
 from cylc.mkdir_p import mkdir_p
+from cylc.owner import user
 from cylc_logviewer import cylc_logviewer
 
 debug = False
@@ -51,7 +52,6 @@ class db_updater(threading.Thread):
         self.me = self.__class__.count
         self.filtr = filtr
         self.db = db
-        self.owner = owner
         self.quit = False
         self.host = host
         self.reload = False
@@ -296,7 +296,6 @@ class MainApp(object):
         self.updater = None
         self.tmpdir = tmpdir
         self.filter_window = None
-        self.owner = os.environ['USER']
         self.gcapture_windows = []
 
         gobject.threads_init()
@@ -534,7 +533,7 @@ The cylc forecast suite metascheduler.
         #self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:
             self.updater.quit = True # does this take effect?
-        self.updater = db_updater( self.owner, self.regd_treestore, db, self.host, filtr )
+        self.updater = db_updater( user, self.regd_treestore, db, self.host, filtr )
         self.updater.start()
 
     def newreg_popup( self, w ):

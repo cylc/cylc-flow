@@ -54,18 +54,22 @@ parser.add_option( "--all-outputs-completed",
         help="Report all internal outputs completed at once.",
         action="store_true", dest="all_outputs_completed" )
 
+parser.add_option( "-v", "--verbose",
+        help="Verbose output mode.",
+        action="store_true", default=False, dest="verbose" )
+
 ( options, args ) = parser.parse_args()
 
 if options.next_restart_completed:
-    message().shortcut_next_restart()
+    message(verbose=options.verbose).shortcut_next_restart()
     sys.exit(0)
 
 elif options.all_restarts_completed:
-    message().shortcut_all_restarts()
+    message(verbose=options.verbose).shortcut_all_restarts()
     sys.exit(0)
 
 elif options.all_outputs_completed:
-    message().shortcut_all_outputs()
+    message(verbose=options.verbose).shortcut_all_outputs()
     sys.exit(0)
 
 elif len( args ) == 0:
@@ -74,7 +78,7 @@ elif len( args ) == 0:
 else:
     msg = ' '.join( args )
     try:
-        message( msg=msg, priority=options.priority ).send()
+        message( msg=msg, priority=options.priority, options.verbose ).send()
     except Exception, x:
         print >> sys.stderr, 'ERROR: task messaging failure.'
         raise SystemExit(x)

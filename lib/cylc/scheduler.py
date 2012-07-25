@@ -20,6 +20,7 @@ from task_types import task
 from task_types import clocktriggered
 from prerequisites.plain_prerequisites import plain_prerequisites
 from hostname import hostname
+from owner import user
 from cycle_time import CycleTimeError
 import logging
 import datetime
@@ -148,7 +149,7 @@ class pool(object):
 class scheduler(object):
     def __init__( self, is_restart=False ):
         # SUITE OWNER
-        self.owner = os.environ['USER']
+        self.owner = user
 
         # SUITE HOST
         self.host= hostname
@@ -392,6 +393,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]        # this is overridden in remote tasks ...
         cylcenv[ 'CYLC_DIR_LOCAL' ] = os.environ[ 'CYLC_DIR' ]  # ... but this is not
         cylcenv[ 'CYLC_MODE' ] = 'scheduler'
+        cylcenv[ 'CYLC_VERBOSE' ] = str(self.verbose)
         cylcenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
         cylcenv[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
         cylcenv[ 'CYLC_SUITE_REG_NAME' ] = self.suite
