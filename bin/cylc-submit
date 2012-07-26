@@ -151,11 +151,9 @@ else:
 cylcenv[ 'CYLC_VERBOSE' ] = str(options.verbose)
 cylcenv[ 'CYLC_SUITE_HOST' ] = hostname
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
-# replace home dir with literal '$HOME' for the benefit of remote tasks:
-cylcenv[ 'CYLC_SUITE_DEF_PATH' ] =  re.sub( os.environ['HOME'], '$HOME', suite_dir )
-cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] =  suite_dir
 cylcenv[ 'CYLC_SUITE_REG_NAME' ] = suite
 cylcenv[ 'CYLC_SUITE_REG_PATH' ] = RegPath( suite ).get_fpath()
+# replace home dir with literal '$HOME' for the benefit of remote tasks:
 cylcenv[ 'CYLC_SUITE_OWNER' ] = owner
 cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 if use_lockserver:
@@ -167,6 +165,8 @@ if ict:
     cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( ict )
 if fct:
     cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( fct )
+cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] =  suite_dir
+cylcenv[ 'CYLC_SUITE_DEF_PATH' ] =  re.sub( os.environ['HOME'], '$HOME', suite_dir )
 
 # SCHEDULER ENVIRONMENT
 # Access to the suite bin directory for alert scripts executed

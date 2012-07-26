@@ -97,13 +97,12 @@ parser.add_option( "--db-from",
 dbto = options.db
 dbfrom = options.db
 if options.dbto:
-    options.dbto = os.path.abspath( options.dbto )
-    dbto = options.dbto
+    dbto = os.path.abspath( options.dbto )
 if options.dbfrom:
-    options.dbfrom = os.path.abspath( options.dbfrom )
-    dbfrom = options.dbfrom
+    dbfrom = os.path.abspath( options.dbfrom )
 
 if dbfrom != dbto:
+    print 'FOO!'
     transfer = True
 else:
     transfer = False

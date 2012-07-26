@@ -402,8 +402,6 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_REG_NAME' ] = self.suite
         cylcenv[ 'CYLC_SUITE_REG_PATH' ] = RegPath( self.suite ).get_fpath()
         # replace home dir with literal '$HOME' for the benefit of remote tasks:
-        cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', self.suite_dir )
-        cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner
         cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
         if self.use_lockserver:
@@ -416,6 +414,8 @@ class scheduler(object):
             cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( ict )
         if fct:
             cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( fct )
+        cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
+        cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', self.suite_dir )
 
         # CLOCK (accelerated time in simulation mode)
         rate = self.config['cylc']['simulation mode']['clock rate']
