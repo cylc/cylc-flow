@@ -756,7 +756,8 @@ variable values using custom Python functions.
 parallel cylc installations - you can no longer specify a full path to a
 required cylc version at the top of a suite definition.
 
-+ Support for alternative suite databases. Copying suites between
-databases is also supported, but currently only by the command line
-interface.
++ Support for alternative suite databases, with '--db=' command line option.
+
++ Copying suites between databases is now supported, by the command line
+interface only.
 
