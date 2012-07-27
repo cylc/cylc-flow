@@ -347,8 +347,8 @@ run time.
     \begin{center}
         \includegraphics[width=1.0\textwidth]{screenshots/gcylc-db.png}
     \end{center}
-\caption[gcylc suite database view]{\scriptsize
-gcylc suite database view, showing one suite running on port 7766.}
+\caption[The gcylc GUI]{\scriptsize
+The gcylc GUI, showing one suite running on port 7766.}
 \label{fig-db}
 \end{figure} 
 
@@ -365,7 +365,7 @@ gcylc suite database view, showing one suite running on port 7766.}
     \begin{center}
         \includegraphics[width=0.8\textwidth]{screenshots/control1.png}
     \end{center}
-\caption[The gcylc suite control app, dot and text views]{\scriptsize The gcylc suite control app showing dot and text views.}
+\caption[The gcontrol GUI, dot and text views]{\scriptsize The gcontrol GUI, showing dot and text views.}
 \label{fig-control1}
 \end{figure} 
 
@@ -373,7 +373,7 @@ gcylc suite database view, showing one suite running on port 7766.}
     \begin{center}
         \includegraphics[width=0.8\textwidth]{screenshots/control2.png}
     \end{center}
-\caption[The gcylc suite control app, graph and text views]{\scriptsize The gcylc suite control app showing dot and text views.}
+\caption[The gcontrol GUI, graph and text views]{\scriptsize The gcontrol GUI, showing graph and text views.}
 \label{fig-control2}
 \end{figure} 
 
@@ -418,7 +418,7 @@ template processing:
 
 \begin{myitemize}
     \item {\bf PyGTK}, a Python wrapper for the GTK+ GUI toolkit,
-        required for the gcylc GUI (but you can prepare and control
+        required for the cylc GUI (but you can prepare and control
         cylc suites entirely from the command line if you like).
         PyGTK is included in most Linux Distributions.  
         \newline \url{http://www.pygtk.org}
@@ -614,7 +614,7 @@ itself by running a suite temporarily registered under
 then doing some advanced failure recovery intervention on it (recursive
 purge plus insertion of cold-start tasks). This process should complete
 in 2-3 minutes and can be watched in real time by right-clicking on the
-temporary test suite when it appears in the gcylc GUI and opening up a
+temporary test suite when it appears in gcylc and opening a gcontrol
 suite control GUI.
 
 \subsection{Complete Non-System-Level Installation}
@@ -1170,8 +1170,8 @@ Figure~\ref{fig-QuickStartA-ModelState}.
     \begin{center}
         \includegraphics[width=0.4\textwidth]{screenshots/QuickStartA-ModelState.png}
     \end{center}
-    \caption[Viewing current task state in gcylc]
-{\scriptsize Viewing current task state after right-clicking on a task in gcylc. The
+    \caption[Viewing current task state in gcontrol]
+{\scriptsize Viewing current task state after right-clicking on a task in gcontrol. The
     same information is available from the \lstinline=cylc show= command.}
     \label{fig-QuickStartA-ModelState}
 \end{figure} 
@@ -1684,7 +1684,7 @@ a directory tree, under the target directory, that reflects the
 registration name hierarchy. \lstinline=cylc copy --help= has some explicit examples.
 
 The same functionality is also available by right-clicking on suites
-or groups in the gcylc GUI, as shown in Figure~\ref{fig-db}.
+or suite groups in the gcylc GUI, as shown in Figure~\ref{fig-db}.
 
 %\pagebreak
 \section{Suite Definition} 
@@ -5123,7 +5123,7 @@ To watch suite locks being acquired and released as a suite runs,
 \section{The Suite Control GUI Graph View}
 \label{TheGraphBasedcontrolGUI}
 
-The graph view in the suite control GUI has the advantage that it shows
+The graph view in the gcontrol GUI has the advantage that it shows
 the structure of a suite very clearly as it evolves. It works remarkably
 well even for very large suites (up to several hundred tasks or more)
 {\em but} because the graphviz engine does a new global layout every
