@@ -47,57 +47,71 @@ class message(object):
         else:
             raise Exception( 'Illegal message priority ' + priority )
 
-        if 'CYLC_MODE' in os.environ:
+        try:
             self.mode = os.environ[ 'CYLC_MODE' ] # 'scheduler' or 'submit'
-        else:
-            self.mode = 'raw'
+        except:
+            self.mode = 'raw' # direct manual execution
 
-        if 'CYLC_TASK_ID' in os.environ.keys():
+        try:
             self.task_id = os.environ[ 'CYLC_TASK_ID' ]
-        elif self.mode == 'raw':
-            self.task_id = 'CYLC_TASK_ID'
-        else:
-            raise Exception( '$CYLC_TASK_ID not defined' )
+        except:
+            if self.mode == 'raw':
+                self.task_id = '(CYLC_TASK_ID)'
+            else:
+                raise
 
-        if 'CYLC_SUITE_REG_NAME' in os.environ.keys():
+        try:
             self.suite = os.environ[ 'CYLC_SUITE_REG_NAME' ]
-        elif self.mode == 'raw':
-            pass
-        else:
-            raise Exception( '$CYLC_SUITE_REG_NAME not defined' )
+        except:
+            if self.mode == 'raw':
+                pass
+            else:
+                raise
 
-        if 'CYLC_SUITE_OWNER' in os.environ.keys():
+        try:
             self.owner = os.environ[ 'CYLC_SUITE_OWNER' ]
-        elif self.mode == 'raw':
-            pass
-        else:
-            raise Exception( '$CYLC_SUITE_OWNER not defined' )
+        except:
+            if self.mode == 'raw':
+                pass
+            else:
+                raise
 
-        if 'CYLC_SUITE_HOST' in os.environ.keys():
+        try:
             self.host = os.environ[ 'CYLC_SUITE_HOST' ]
-        elif self.mode == 'raw':
-            pass
-        else:
-            # we always define the host explicitly, but could
-            # default to localhost's fully qualified domain name.
-            raise Exception( '$CYLC_SUITE_HOST not defined' )
+        except:
+            if self.mode == 'raw':
+                self.host = '(CYLC_SUITE_HOST)'
+            else:
+                raise
 
-        if 'CYLC_SUITE_PORT' in os.environ.keys():
+        try:
             self.port = os.environ[ 'CYLC_SUITE_PORT' ]
-        elif self.mode == 'raw':
-            pass
-        else:
-            raise Exception( '$CYLC_SUITE_PORT not defined' )
+        except:
+            if self.mode == 'raw':
+                self.port = '(CYLC_SUITE_PORT)'
+            else:
+                raise
 
         self.utc = False
-        if 'CYLC_UTC' in os.environ.keys():
+        try:
             if os.environ['CYLC_UTC'] == 'True':
                 self.utc = True
-
+        except:
+            pass
+    
         self.ssh_messaging = False
-        if 'CYLC_SSH_MESSAGING' in os.environ.keys():
+        try:
             if os.environ['CYLC_SSH_MESSAGING'] == 'True':
                 self.ssh_messaging = True
+        except:
+            pass
+            
+        try:
+            self.timeout = float(os.environ['CYLC_PYRO_TIMEOUT'])
+        except:
+            self.timeout = 1.0
+
+        print 'TASK MESSAGE: timeout is', self.timeout
 
     def now( self ):
         if self.utc:
@@ -111,7 +125,7 @@ class message(object):
         # it is needed, we will end up in this method). 
         self.pphrase = passphrase( self.suite, self.owner, self.host, verbose=self.verbose ).get( None, None )
         # this raises an exception on failure to connect:
-        return cylc_pyro_client.client( self.suite, self.pphrase, self.owner, self.host, port=self.port ).get_proxy( self.task_id )
+        return cylc_pyro_client.client( self.suite, self.pphrase, self.owner, self.host, timeout=self.timeout, port=self.port ).get_proxy( self.task_id )
 
     def print_msg( self, msg ):
         now = self.now().strftime( "%Y/%m/%d %H:%M:%S" )
@@ -153,7 +167,7 @@ class message(object):
             # this code block.
             env = {}
             for var in ['CYLC_MODE', 'CYLC_TASK_ID', 'CYLC_VERBOSE', 
-                    'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 
+                    'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 'CYLC_PYRO_TIMEOUT', 
                     'CYLC_SUITE_REG_NAME', 'CYLC_SUITE_OWNER',
                     'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC']:
                 env[var] = os.environ[var]

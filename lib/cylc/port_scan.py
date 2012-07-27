@@ -122,7 +122,6 @@ def get_port( suite, owner=user, host=hostname, pphrase=None, timeout=1.0, silen
             # No such host?
             raise SuiteNotFoundError, x
 
-        print timeout, '<-------------------------------'
         proxy._setTimeout(timeout)
         proxy._setIdentification( pphrase )
 

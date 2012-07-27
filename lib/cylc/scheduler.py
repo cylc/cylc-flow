@@ -286,8 +286,8 @@ class scheduler(object):
     def configure_suite( self ):
         # LOAD SUITE CONFIG FILE
         self.config = config( self.suite, self.suiterc,
-                verbose=self.verbose,
-                simulation_mode=self.simulation_mode )
+                simulation_mode=self.simulation_mode,
+                verbose=self.verbose, timeout=float(self.options.timeout))
         self.config.create_directories()
         if self.config['cylc']['simulation mode only'] and not self.simulation_mode:
             raise SchedulerError( "ERROR: this suite can only run in simulation mode (see suite.rc)" )

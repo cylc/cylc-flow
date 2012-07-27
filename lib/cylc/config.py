@@ -140,10 +140,11 @@ class config( CylcConfigObj ):
 
     def __init__( self, suite, suiterc, 
             simulation_mode=False, verbose=False, 
-            validation=False,
+            validation=False, timeout=1.0,
             collapsed=[] ):
         self.simulation_mode = simulation_mode
         self.verbose = verbose
+        self.timeout = timeout
         self.edges = []
         self.cyclers = []
         self.taskdefs = OrderedDict()
@@ -1479,13 +1480,13 @@ class config( CylcConfigObj ):
         # the ssh messaging variable must go in initial scripting so
         # that it affects the task started call as well as later
         # messages:
-        tmp = taskconfig['remote']['ssh messaging']
-        if tmp != None:
-            tmp = "\nexport CYLC_SSH_MESSAGING=" + str(tmp) + "\n"
-            if taskd.initial_scripting != None: 
-                taskd.initial_scripting += tmp
-            else:
-                taskd.initial_scripting = tmp
+        tmp = """
+export CYLC_SSH_MESSAGING=""" + str(taskconfig['remote']['ssh messaging']) + """
+export CYLC_PYRO_TIMEOUT=""" + str(self.timeout) + "\n"
+        if taskd.initial_scripting != None: 
+            taskd.initial_scripting += tmp
+        else:
+            taskd.initial_scripting = tmp
 
         taskd.job_submission_shell = taskconfig['job submission']['shell']
 
