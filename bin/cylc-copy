@@ -27,6 +27,12 @@ from cylc.registration import localdb, \
         RegistrationError, SuiteTakenError, DatabaseLockedError
 from cylc.regpath import RegPath, IllegalRegPathError 
 
+def unlock( transfer=False ):
+    if transfer:
+        targetdb.unlock()
+    else:
+        sourcedb.unlock()
+
 parser = cop( usage = """cylc [db] copy|cp [OPTIONS] REG REG2 TOPDIR
 
 Copy suite or group REG to TOPDIR, and register the copy as REG2.
@@ -102,7 +108,6 @@ if options.dbfrom:
     dbfrom = os.path.abspath( options.dbfrom )
 
 if dbfrom != dbto:
-    print 'FOO!'
     transfer = True
 else:
     transfer = False
@@ -117,14 +122,19 @@ except IllegalRegPathError, x:
 arg_dir = args[2]
 
 sourcedb = localdb( file=dbfrom, verbose=options.verbose )
-targetdb = localdb( file=dbto, verbose=options.verbose )
+if transfer:
+    targetdb = localdb( file=dbto, verbose=options.verbose )
+else:
+    targetdb = sourcedb
 
 try:
-    sourcedb.lock()
-    sourcedb.load_from_file()
     if transfer:
+        sourcedb.load_from_file()
         targetdb.lock()
         targetdb.load_from_file()
+    else:
+        sourcedb.lock()
+        sourcedb.load_from_file()
 
     flist = sourcedb.get_list( '^' + arg_from + r'\b' )
     if len(flist) == 0:
@@ -166,11 +176,9 @@ try:
             print >> sys.stderr, 'ERROR, ' + str(x)
             continue
 
+    #targetdb.dump()
     targetdb.dump_to_file()
-    targetdb.unlock()
-    if transfer:
-        # (source and transfer dbs are different)
-        sourcedb.unlock()
+    unlock(transfer)
 
 except DatabaseLockedError, x:
     if options.debug:
@@ -178,17 +186,13 @@ except DatabaseLockedError, x:
     raise SystemExit(x)
 except RegistrationError, x:
     print >> sys.stderr, x
-    targetdb.unlock()
-    if transfer:
-        sourcedb.unlock()
+    unlock()
     if options.debug:
         raise
     sys.exit(1)
 except Exception, x:
     print >> sys.stderr, 'ERROR:', x
-    targetdb.unlock()
-    if transfer:
-        sourcedb.unlock()
+    unlock()
     if options.debug:
         raise
     sys.exit(1)

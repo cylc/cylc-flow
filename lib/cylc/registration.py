@@ -176,6 +176,10 @@ class regdb(object):
         # record state at load
         self.statehash = self.get_hash()
 
+    def dump( self ):
+        for i, j in self.items.items():
+            print i, j
+
     def dump_to_file( self ):
         newhash = self.get_hash()
         if newhash != self.statehash:
