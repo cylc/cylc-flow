@@ -74,6 +74,7 @@ rm -f $OUT $OUT_SCHED
 # START UP THE TEST SUITE
 echo
 echo ">> STARTING at 2010010106, with TASK X to FAIL at 2010010112"
+echo ">> Output logs: $PWD/$OUT $PWD/$OUT_SCHED"
 export TEST_X_FAIL_TIME=2010010112
 
 # startup errors aren't trapped here because we run cylc in the background

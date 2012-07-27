@@ -1632,7 +1632,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             running_already = True
             # was it started by gcylc?
             try:
-                ssproxy = cylc_pyro_client.client( name ).get_proxy( 'state_summary' )
+                ssproxy = cylc_pyro_client.client( name, timeout=self.timeout ).get_proxy( 'state_summary' )
             except SuiteIdentificationError, x:
                 warning_dialog( str(x), self.window ).warn()
                 return False
@@ -1747,7 +1747,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             running_already = True
             # was it started by gcylc?
             try:
-                ssproxy = cylc_pyro_client.client( name ).get_proxy( 'state_summary' )
+                ssproxy = cylc_pyro_client.client( name, timeout=self.timeout ).get_proxy( 'state_summary' )
             except SuiteIdentificationError, x:
                 warning_dialog( str(x), self.window ).warn()
                 return False
