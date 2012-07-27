@@ -279,7 +279,8 @@ class scheduler(object):
     def check_not_running_already( self ):
         # CHECK SUITE IS NOT ALREADY RUNNING
         try:
-            port = port_scan.get_port( self.suite, self.owner, self.host )
+            print 'SCANNING...', self.options.timeout
+            port = port_scan.get_port( self.suite, self.owner, self.host, timeout=float(self.options.timeout) )
         except port_scan.SuiteNotFoundError,x:
             # Suite Not Found: good - it's not running already!
             pass

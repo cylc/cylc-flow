@@ -185,11 +185,11 @@ class compat_file( compat ):
 class compat_pyro( compat ):
     """Determine version compatibility given a running suite name"""
 
-    def __init__( self, suite, owner, host, pphrase, verbose, debug ):
+    def __init__( self, suite, owner, host, pphrase, timeout, verbose, debug ):
         compat.__init__( self, suite, None, verbose, debug )
 
         try:
-            proxy = client( self.suite, pphrase, owner, host).get_proxy( 'remote' )
+            proxy = client( self.suite, pphrase, owner, host, timeout ).get_proxy( 'remote' )
             self.required_version = proxy.get_cylc_version()
         except Exception, x:
             if debug:

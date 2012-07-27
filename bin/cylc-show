@@ -36,6 +36,8 @@ clock-triggered tasks, whether or not the trigger time is up yet.""",
     pyro=True, 
     argdoc=[('REG', 'Suite name'), ('[NAME[%TAG]]', 'Task name or ID')])
 
+parser.remove_option("-f" ) # don't need force
+
 (options, args) = parser.parse_args()
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
@@ -64,7 +66,7 @@ else:
  
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host).get_proxy( 'remote' )
+            options.host, float(options.timeout)).get_proxy( 'remote' )
 except Exception, x:
     if options.debug:
         raise

@@ -114,6 +114,10 @@ See also:
             help="Print lockserver PID, log, and state filenames.",
             action="store_true", dest="get_filenames" )
 
+    parser.add_option( "-t", "--timeout", metavar='SECONDS',
+            help="Network connection timeout (default 1 second).",
+            action="store",default=1, dest="timeout" )
+
     #parser.add_option( "--debug",
     #        help="Print full Python exception tracebacks",
     #        action="store_true", default=False, dest="debug" )
@@ -164,7 +168,7 @@ See also:
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.suite_release )
 
         elif options.list_all:
-            (task_locks, suite_ex, suite_nonex ) = lockserver( hostname ).dump()
+            (task_locks, suite_ex, suite_nonex ) = lockserver( hostname, timeout=float(options.timeout) ).dump()
 
             print_heading( str( len( suite_ex ) ) + " exclusive suite locks" )
             for suitedir in suite_ex:
@@ -182,10 +186,10 @@ See also:
                 print " - ", lock
 
         elif options.clear_all:
-            lockserver( hostname ).clear()
+            lockserver( hostname, timeout=float(options.timeout) ).clear()
 
         elif options.get_filenames:
-            pid, log, state = lockserver( hostname ).get_filenames()
+            pid, log, state = lockserver( hostname, timeout=float(options.timeout) ).get_filenames()
 
             print "lockserver files:"
             print "  PID ......", pid

@@ -59,8 +59,8 @@ class prep_pyro( prep ):
                 raise
             raise SystemExit(x)
         self.compat = compat_pyro( self.suite, self.options.owner,
-                self.options.host, self.pphrase, self.options.verbose,
-                self.options.debug)
+                self.options.host, self.pphrase, float(self.options.timeout),
+                self.options.verbose, self.options.debug)
 
     def get_suite( self ):
         return self.suite, self.pphrase

@@ -47,7 +47,7 @@ debug = False
 
 class db_updater(threading.Thread):
     count = 0
-    def __init__(self, owner, regd_treestore, db, host, filtr=None ):
+    def __init__(self, owner, regd_treestore, db, host, filtr=None, timeout=1.0 ):
         self.__class__.count += 1
         self.me = self.__class__.count
         self.filtr = filtr
@@ -55,6 +55,7 @@ class db_updater(threading.Thread):
         self.quit = False
         self.host = host
         self.reload = False
+        self.timeout = timeout
 
         self.regd_treestore = regd_treestore
         super(db_updater, self).__init__()
@@ -228,7 +229,7 @@ class db_updater(threading.Thread):
     
     def running_choices_changed( self ):
         # (name, port)
-        suites = scan( self.host, mine=True, silent=True )
+        suites = scan( self.host, mine=True, silent=True, timeout=self.timeout )
         if suites != self.running_choices:
             self.running_choices = suites
             return True
@@ -285,13 +286,14 @@ class db_updater(threading.Thread):
         return value == key
 
 class MainApp(object):
-    def __init__(self, db, host, tmpdir ):
+    def __init__(self, db, host, tmpdir, timeout ):
 
         if not db:
             dbname = "(default DB)"
         else:
             dbname = db
         self.db = db
+        self.timeout = timeout
 
         self.updater = None
         self.tmpdir = tmpdir
@@ -424,8 +426,6 @@ class MainApp(object):
         else:
             self.dbopt = ''
 
-        self.start_updater()
-
         regd_ts = self.regd_treeview.get_selection()
         regd_ts.set_mode( gtk.SELECTION_SINGLE )
 
@@ -473,6 +473,8 @@ class MainApp(object):
 
         self.window.add(vbox)
         self.window.show_all()
+
+        self.start_updater()
 
     def construct_command_menu( self, menu ):
         # ALL COMMANDS
@@ -533,7 +535,7 @@ The cylc forecast suite metascheduler.
         #self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:
             self.updater.quit = True # does this take effect?
-        self.updater = db_updater( user, self.regd_treestore, db, self.host, filtr )
+        self.updater = db_updater( user, self.regd_treestore, db, self.host, filtr, self.timeout )
         self.updater.start()
 
     def newreg_popup( self, w ):

@@ -5,6 +5,10 @@ further investigation before concluding there is a problem ... at which
 point the issue can be migrated to the github issue tracker.
 _______
 GENERAL
+ 
+ + with a ctrl-Z stopped suite present, gcylc takes the port scan
+ timeout time to start up. We should be able to show the window *before*
+ the updater thread does a port scan.
 
  + Python dict.get( key, default ) never returns KeyError, and seems to
  be valid right back to Python 2.4 and earlier.

@@ -49,6 +49,9 @@ editing and graphing suites through to suite control and monitoring.
 With a suite name argument (REG), directly invoke a suite control GUI
 for the named suite.
 
+The '--timeout' network connection timeout option applies to the
+database viewer, which repeatedly scans ports for running suites. 
+
 NOTE: daemonize important suites with the POSIX nohup command:
     $ nohup gcylc [OPTIONS] REG &""", pyro=True,
     argdoc=[('[REG]', 'Suite name' )])
@@ -58,6 +61,8 @@ parser.add_option( "-w", "--views", metavar="VIEWS",
         "choose one or two, comma separated, from 'dot', "
         "'text', and 'graph'; the default is 'dot,text'",
         action="store", default='dot,text', dest="gviews" )
+
+parser.remove_option("-f" ) # don't need force (To Do: a read-only GUI)
 
 ( options, args ) = parser.parse_args()
 
@@ -70,7 +75,7 @@ os.chdir(os.environ['HOME'])
 
 if len( args ) == 0:
     # DATABASE VIEWER APP (only local hostname needed here)
-    app = MainApp( options.db, hostname, cylc_tmpdir )
+    app = MainApp( options.db, hostname, cylc_tmpdir, float(options.timeout))
     gtk.main()
     sys.exit(0)
 

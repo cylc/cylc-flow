@@ -53,6 +53,8 @@ parser.add_option( "-a", "--align",
         "is only useful for small suites.",
         action="store_true", default=False, dest="align_columns" )
 
+parser.remove_option("-f" ) # don't need force
+
 ( options, args ) = parser.parse_args()
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
@@ -72,7 +74,8 @@ try:
         # connect to remote state summary object
         try: 
             proxy = cylc_pyro_client.client( suite, pphrase,
-                    options.owner, options.host).get_proxy( 'state_summary' )
+                    options.owner, options.host,
+                    float(options.timeout)).get_proxy( 'state_summary' )
         except SecurityError, x:
             if options.debug:
                 raise

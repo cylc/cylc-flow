@@ -761,3 +761,8 @@ required cylc version at the top of a suite definition.
 + Copying suites between databases is now supported, by the command line
 interface only.
 
++ New network connection timeout option for commands that connect to
+running suites. Previously, with no timeout, a Ctrl-Z-stopped suite
+(or similar) could hold up its port and cause port scans to hang
+indefinitely.
+

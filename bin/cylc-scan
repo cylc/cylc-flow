@@ -47,8 +47,11 @@ IFS=$'\n'; for LINE in $( cylc scan ); do
 done
 IFS=$OFIS
 ----------------------------------------------------------------
-"Connection Denied" indicates another user's suite.""", argdoc=[])
+"Connection Denied" indicates another user's suite.""", pyro=True, 
+argdoc=[])
 
+parser.remove_option("-p" ) # don't need passphrase
+parser.remove_option("-f" ) # don't need force
 parser.add_option( "--print-ports",
         help="Print cylc's configured port range.",
         action="store_true",default=False, dest="print_ports" )
@@ -60,5 +63,5 @@ if options.print_ports:
     print pyro_base_port, '<= port <=', pyro_base_port + pyro_port_range
     sys.exit(0)
 
-suites = scan( options.host, verbose=True, db=options.db )
+suites = scan( options.host, verbose=True, db=options.db, timeout=float(options.timeout))
 

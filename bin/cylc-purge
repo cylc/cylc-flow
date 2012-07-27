@@ -91,7 +91,7 @@ else:
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host ).get_proxy( 'remote' )
+            options.host, float(options.timeout) ).get_proxy( 'remote' )
 except Exception, x:
     if options.debug:
         raise

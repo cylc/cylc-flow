@@ -87,16 +87,16 @@ Arguments:"""
                     help="Use ssh to re-invoke the command on the suite host.",
                     action="store_true", default=False, dest="use_ssh" )
 
+            self.add_option( "-t", "--timeout", metavar='SEC',
+                    help="Network connection timeout (default 1 second).",
+                    action="store",default=1, dest="timeout" )
+
             self.add_option( "-p", "--passphrase",
-                    help="Suite passphrase file",
+                    help="Suite passphrase file (if not in a default location)",
                     metavar="FILE", action="store", dest="pfile" )
 
-            # This is only required for commands that prompt for
-            # confirmation before interfering in a running suite,
-            # but for simplicity we add it to all suite-connecting
-            # commands (it has no affect for non-prompted ones).
             self.add_option( "-f", "--force",
-                help="Do not ask for confirmation before acting (if applicable).",
+                help="Do not ask for confirmation before acting.",
                 action="store_true", default=False, dest="force" )
 
     def parse_args( self ):
