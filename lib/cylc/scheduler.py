@@ -203,10 +203,6 @@ class scheduler(object):
                 "(SIMULATION MODE) get the specified task to report failure and then abort.",
                 metavar="NAME%TAG", action="store", dest="failout_task_id" )
 
-        #self.parser.add_option( "--debug", help=\
-                #        "Turn on 'debug' logging and full exception tracebacks.",
-                #action="store_true", dest="debug" )
-
         self.parser.add_option( "--timing", help=\
                 "Turn on main task processing loop timing, which may be useful "
                 "for testing very large suites of 1000+ tasks.",
@@ -397,6 +393,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]        # this is overridden in remote tasks ...
         cylcenv[ 'CYLC_DIR_LOCAL' ] = os.environ[ 'CYLC_DIR' ]  # ... but this is not
         cylcenv[ 'CYLC_MODE' ] = 'scheduler'
+        cylcenv[ 'CYLC_DEBUG' ] = str( self.options.debug )
         cylcenv[ 'CYLC_VERBOSE' ] = str(self.verbose)
         cylcenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
         cylcenv[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())

@@ -147,7 +147,7 @@ if options.sched:
     cylcenv[ 'CYLC_MODE' ] = 'scheduler'
 else:
     cylcenv[ 'CYLC_MODE' ] = 'submit'
-
+cylcenv[ 'CYLC_DEBUG' ] = str( options.debug )
 cylcenv[ 'CYLC_VERBOSE' ] = str(options.verbose)
 cylcenv[ 'CYLC_SUITE_HOST' ] = hostname
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'

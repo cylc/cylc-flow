@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import os, sys
 from cylc import cylc_mode
 from optparse import OptionParser
 from cylc.task_message import message
@@ -53,13 +53,25 @@ parser.add_option( "-v", "--verbose",
 if len( args ) != 0:
     parser.error( "Wrong number of arguments" )
 
+debug = False
+try:
+    # from task execution environment
+    if os.environ['CYLC_DEBUG'] == 'True':
+        debug = True
+except KeyError:
+    pass
+
 # release task lock if using the lockserver
 if not cylc_mode.mode().is_raw():
     try:
         if not task_lock().release():
+            if debug:
+                raise
             raise SystemExit( "Failed to release task lock" )
     except Exception, z:
         print >> sys.stderr, z
+        if debug:
+            raise
         raise SystemExit( "Failed to connect to the lockserver" )
  
 # send succeeded message
@@ -67,4 +79,7 @@ try:
     message(verbose=options.verbose).send_succeeded()
 except Exception, x:
     print >> sys.stderr, 'ERROR: task messaging failure.'
+    if debug:
+        raise
     raise SystemExit(x)
+

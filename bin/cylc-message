@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import os, sys
 from optparse import OptionParser
 from cylc.task_message import message
 
@@ -75,10 +75,21 @@ elif options.all_outputs_completed:
 elif len( args ) == 0:
     parser.error( "No task message supplied" )
 
+debug = False
+try:
+    # from task execution environment
+    if os.environ['CYLC_DEBUG'] == 'True':
+        debug = True
+except KeyError:
+    pass
+
 else:
     msg = ' '.join( args )
     try:
         message( msg=msg, priority=options.priority, verbose=options.verbose ).send()
     except Exception, x:
         print >> sys.stderr, 'ERROR: task messaging failure.'
+        if debug:
+            raise
         raise SystemExit(x)
+

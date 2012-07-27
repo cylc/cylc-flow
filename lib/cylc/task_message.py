@@ -45,8 +45,7 @@ class message(object):
         if priority in legal_priority:
             self.priority = priority
         else:
-            print >> sys.stderr, 'illegal message priority', priority
-            sys.exit(1)
+            raise Exception( 'Illegal message priority ' + priority )
 
         if 'CYLC_MODE' in os.environ:
             self.mode = os.environ[ 'CYLC_MODE' ] # 'scheduler' or 'submit'
@@ -58,24 +57,21 @@ class message(object):
         elif self.mode == 'raw':
             self.task_id = 'CYLC_TASK_ID'
         else:
-            print >> sys.stderr, '$CYLC_TASK_ID not defined'
-            sys.exit(1)
+            raise Exception( '$CYLC_TASK_ID not defined' )
 
         if 'CYLC_SUITE_REG_NAME' in os.environ.keys():
             self.suite = os.environ[ 'CYLC_SUITE_REG_NAME' ]
         elif self.mode == 'raw':
             pass
         else:
-            print >> sys.stderr, '$CYLC_SUITE_REG_NAME not defined'
-            sys.exit(1)
+            raise Exception( '$CYLC_SUITE_REG_NAME not defined' )
 
         if 'CYLC_SUITE_OWNER' in os.environ.keys():
             self.owner = os.environ[ 'CYLC_SUITE_OWNER' ]
         elif self.mode == 'raw':
             pass
         else:
-            print >> sys.stderr, '$CYLC_SUITE_OWNER not defined'
-            sys.exit(1)
+            raise Exception( '$CYLC_SUITE_OWNER not defined' )
 
         if 'CYLC_SUITE_HOST' in os.environ.keys():
             self.host = os.environ[ 'CYLC_SUITE_HOST' ]
@@ -84,16 +80,14 @@ class message(object):
         else:
             # we always define the host explicitly, but could
             # default to localhost's fully qualified domain name.
-            print >> sys.stderr, '$CYLC_SUITE_HOST not defined'
-            sys.exit(1)
+            raise Exception( '$CYLC_SUITE_HOST not defined' )
 
         if 'CYLC_SUITE_PORT' in os.environ.keys():
             self.port = os.environ[ 'CYLC_SUITE_PORT' ]
         elif self.mode == 'raw':
             pass
         else:
-            print >> sys.stderr, '$CYLC_SUITE_PORT not defined'
-            sys.exit(1)
+            raise Exception( '$CYLC_SUITE_PORT not defined' )
 
         self.utc = False
         if 'CYLC_UTC' in os.environ.keys():
@@ -117,7 +111,7 @@ class message(object):
         # it is needed, we will end up in this method). 
         self.pphrase = passphrase( self.suite, self.owner, self.host, verbose=self.verbose ).get( None, None )
         # this raises an exception on failure to connect:
-        return cylc_pyro_client.client( self.suite, self.pphrase, self.owner, self.host, self.port ).get_proxy( self.task_id )
+        return cylc_pyro_client.client( self.suite, self.pphrase, self.owner, self.host, port=self.port ).get_proxy( self.task_id )
 
     def print_msg( self, msg ):
         now = self.now().strftime( "%Y/%m/%d %H:%M:%S" )
@@ -181,24 +175,25 @@ class message(object):
         self.send_pyro( msg )
 
     def send_pyro( self, msg ):
-        try:
-            self.get_proxy().incoming( self.priority, msg )
-        except Pyro.errors.NamingError, x:
-            # suite found but task not in it
-            raise SystemExit(x)
-        except Pyro.errors.URIError, x:
-            # unknown host (ssh messaging will be no use either!)
-            raise SystemExit(x)
-        except NoSuiteFoundError, x:
-            # no suite found at this port
-            raise SystemExit(x)
-        except OtherSuiteFoundError, x:
-            # other suite found at this port
-            raise SystemExit(x)
-        except ConnectionDeniedError, x:
-            # possible network config problems
-            # (ports not opened for cylc suites?)
-            raise SystemExit(x)
+        #try:
+        # errors handled by messaging commands now
+        self.get_proxy().incoming( self.priority, msg )
+        #except Pyro.errors.NamingError, x:
+        #    # suite found but task not in it
+        #    raise SystemExit(x)
+        #except Pyro.errors.URIError, x:
+        #    # unknown host (ssh messaging will be no use either!)
+        #    raise SystemExit(x)
+        #except NoSuiteFoundError, x:
+        #    # no suite found at this port
+        #    raise SystemExit(x)
+        #except OtherSuiteFoundError, x:
+        #    # other suite found at this port
+        #    raise SystemExit(x)
+        #except ConnectionDeniedError, x:
+        #    # possible network config problems
+        #    # (ports not opened for cylc suites?)
+        #    raise SystemExit(x)
 
     def send_succeeded( self ):
         self.send( self.task_id + ' succeeded' )
