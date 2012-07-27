@@ -35,7 +35,6 @@ from util import get_icon, get_image_dir, get_logo
 import helpwindow
 from gcapture import gcapture, gcapture_tmpfile
 from cylc.mkdir_p import mkdir_p
-from cylc.owner import user
 from cylc_logviewer import cylc_logviewer
 
 debug = False
@@ -47,13 +46,12 @@ debug = False
 
 class db_updater(threading.Thread):
     count = 0
-    def __init__(self, owner, regd_treestore, db, host, filtr=None, timeout=1.0 ):
+    def __init__(self, regd_treestore, db, filtr=None, timeout=1.0 ):
         self.__class__.count += 1
         self.me = self.__class__.count
         self.filtr = filtr
         self.db = db
         self.quit = False
-        self.host = host
         self.reload = False
         self.timeout = timeout
 
@@ -229,7 +227,7 @@ class db_updater(threading.Thread):
     
     def running_choices_changed( self ):
         # (name, port)
-        suites = scan( self.host, mine=True, silent=True, timeout=self.timeout )
+        suites = scan( mine=True, silent=True, timeout=self.timeout )
         if suites != self.running_choices:
             self.running_choices = suites
             return True
@@ -286,7 +284,7 @@ class db_updater(threading.Thread):
         return value == key
 
 class MainApp(object):
-    def __init__(self, db, host, tmpdir, timeout ):
+    def __init__(self, db, tmpdir, timeout ):
 
         if not db:
             dbname = "(default DB)"
@@ -301,8 +299,6 @@ class MainApp(object):
         self.gcapture_windows = []
 
         gobject.threads_init()
-
-        self.host = host
 
         self.imagedir = get_image_dir()
 
@@ -535,7 +531,7 @@ The cylc forecast suite metascheduler.
         #self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:
             self.updater.quit = True # does this take effect?
-        self.updater = db_updater( user, self.regd_treestore, db, self.host, filtr, self.timeout )
+        self.updater = db_updater( self.regd_treestore, db, filtr, self.timeout )
         self.updater.start()
 
     def newreg_popup( self, w ):
@@ -864,27 +860,27 @@ The cylc forecast suite metascheduler.
  
             con_item = gtk.MenuItem( '_Text View')
             ctrlmenu.append( con_item )
-            con_item.connect( 'activate', self.launch_controller, reg, state, 'text' )
+            con_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'text' )
 
             con_item = gtk.MenuItem( '_Dot View')
             ctrlmenu.append( con_item )
-            con_item.connect( 'activate', self.launch_controller, reg, state, 'dot' )
+            con_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'dot' )
 
             con_item = gtk.MenuItem( '_Graph View')
             ctrlmenu.append( con_item )
-            con_item.connect( 'activate', self.launch_controller, reg, state, 'graph' )
+            con_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'graph' )
 
             cong_item = gtk.MenuItem( '_Dot,Text View')
             ctrlmenu.append( cong_item )
-            cong_item.connect( 'activate', self.launch_controller, reg, state, 'dot,text' )
+            cong_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'dot,text' )
 
             cong_item = gtk.MenuItem( '_Graph,Text View')
             ctrlmenu.append( cong_item )
-            cong_item.connect( 'activate', self.launch_controller, reg, state, 'graph,text' )
+            cong_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'graph,text' )
 
             cong_item = gtk.MenuItem( '_Dot,Graph View')
             ctrlmenu.append( cong_item )
-            cong_item.connect( 'activate', self.launch_controller, reg, state, 'dot,graph' )
+            cong_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'dot,graph' )
 
             ctrlmenu.append( gtk.SeparatorMenuItem() )
  
@@ -1625,12 +1621,18 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def launch_controller( self, w, name, state, views=None ):
+    def launch_controller( self, w, name, suite_dir, state, views=None ):
         running_already = False
         if state != '-':
             # suite running
             running_already = True
             # was it started by gcylc?
+
+            try:
+                pphrase = passphrase( name ).get( suitedir=suite_dir )
+            except Exception, x:
+                sys.exit(str(x))
+
             try:
                 ssproxy = cylc_pyro_client.client( name, timeout=self.timeout ).get_proxy( 'state_summary' )
             except SuiteIdentificationError, x:

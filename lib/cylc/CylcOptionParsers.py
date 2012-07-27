@@ -88,7 +88,8 @@ Arguments:"""
                     action="store_true", default=False, dest="use_ssh" )
 
             self.add_option( "-t", "--timeout", metavar='SEC',
-                    help="Network connection timeout (default 1 second).",
+                    help="Network connection timeout in "
+                    "case of hung ports (default 1 second).",
                     action="store",default=1, dest="timeout" )
 
             self.add_option( "-p", "--passphrase",

@@ -183,7 +183,7 @@ def check_port( suite, pphrase, port, owner=user, host=hostname, timeout=1.0, si
             print >> sys.stderr, ' NOT ' + suite + ' ' + owner + ' ' + host + ' ' + port
             raise OtherSuiteFoundError, "ERROR: Found another suite"
 
-def scan( host, verbose=True, mine=False, silent=False, db=None, timeout=1.0 ):
+def scan( host=hostname, verbose=True, mine=False, silent=False, db=None, timeout=1.0 ):
     #print 'SCANNING PORTS'
     # scan all cylc Pyro ports for cylc suites
 

@@ -63,16 +63,20 @@ remote host prior to attempting to run the suite."""
         self.parser.add_option( "--no-reset", 
             help="Do not reset failed tasks to ready on restarting",
             action="store_true", default=False, dest="no_reset" )
+
         self.parser.add_option( "--no-release", 
             help="Do not release held tasks on restarting.",
             action="store_true", default=False, dest="no_release" )
+
         self.parser.add_option( "--keep-stopcycle", 
             help="Do not ignore a previously set final cycle time on restarting",
             action="store_true", default=False, dest="keep_stopcycle" )
+
         self.parser.add_option( "-t", "--timeout", metavar='SEC',
-                help="Network connection timeout (default 1 second)."
-                "For an initial check that the suite isn't already running.",
-                action="store",default=1, dest="timeout" )
+                help="Network connection timeout in case of hung ports "
+                "(default 1 second). For an initial check that the suite "
+                "isn't already running.", action="store", default=1,
+                dest="timeout" )
 
         self.start_time = None  # used in scheduler.py:initialize_graph()
         scheduler.__init__( self, is_restart=True )

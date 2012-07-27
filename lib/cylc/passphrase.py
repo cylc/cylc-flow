@@ -47,7 +47,7 @@ class InvalidPassphraseError( SecurityError ):
     pass
 
 class passphrase(object):
-    def __init__( self, suite, owner, host, verbose=False ):
+    def __init__( self, suite, owner=user, host=hostname, verbose=False ):
         self.suite = suite
         self.owner = owner
         self.host = host

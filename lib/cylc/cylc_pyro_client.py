@@ -34,12 +34,12 @@ class client( object ):
         self.port = port
         self.timeout=timeout
 
-        if pphrase:
-            self.pphrase = pphrase
-        else:
-            # TO DO: IS THIS NECESSARY - called from gcylc
-            # get the suite passphrase
-            self.pphrase = passphrase( suite, owner, host).get( None, None )
+        #if pphrase:
+        self.pphrase = pphrase
+        #else:
+        #    # TO DO: IS THIS NECESSARY - called from gcylc
+        #    # get the suite passphrase
+        #    self.pphrase = passphrase( suite, owner, host).get( None, None )
 
     def get_proxy( self, target ):
         # callers need to check for port_scan.SuiteIdentificationError:
