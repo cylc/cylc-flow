@@ -36,13 +36,14 @@ import helpwindow
 from gcapture import gcapture, gcapture_tmpfile
 from cylc.mkdir_p import mkdir_p
 from cylc_logviewer import cylc_logviewer
+from cylc.passphrase import passphrase
 
 debug = False
 
 # WHY LAUNCH CONTROL GUIS AS STANDALONE APPS (via gcapture) rather than
-# as part of the main gcylc app: we can then capture out and err
-# streams into suite-specific log files rather than have it all come
-# out with the gcylc stdout and stderr streams.
+# as part of the main gcylc app: we can then capture out and err streams
+# into suite-specific log files rather than have it all come out with
+# the gcylc stdout and stderr streams.
 
 class db_updater(threading.Thread):
     count = 0
@@ -870,15 +871,15 @@ The cylc forecast suite metascheduler.
             ctrlmenu.append( con_item )
             con_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'graph' )
 
-            cong_item = gtk.MenuItem( '_Dot,Text View')
+            cong_item = gtk.MenuItem( '_Dot & Text View')
             ctrlmenu.append( cong_item )
             cong_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'dot,text' )
 
-            cong_item = gtk.MenuItem( '_Graph,Text View')
+            cong_item = gtk.MenuItem( '_Graph & Text View')
             ctrlmenu.append( cong_item )
             cong_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'graph,text' )
 
-            cong_item = gtk.MenuItem( '_Dot,Graph View')
+            cong_item = gtk.MenuItem( '_Dot & Graph View')
             ctrlmenu.append( cong_item )
             cong_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'dot,graph' )
 
@@ -1622,19 +1623,20 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         foo.run()
 
     def launch_controller( self, w, name, suite_dir, state, views=None ):
+        suite_dir = os.path.expanduser(suite_dir)
+        # (we replaced home dir with '~' above for display purposes)
         running_already = False
         if state != '-':
             # suite running
             running_already = True
             # was it started by gcylc?
-
             try:
                 pphrase = passphrase( name ).get( suitedir=suite_dir )
             except Exception, x:
-                sys.exit(str(x))
-
+                warning_dialog( str(x), self.window ).warn()
+                return False
             try:
-                ssproxy = cylc_pyro_client.client( name, timeout=self.timeout ).get_proxy( 'state_summary' )
+                ssproxy = cylc_pyro_client.client( name, pphrase, timeout=self.timeout ).get_proxy( 'state_summary' )
             except SuiteIdentificationError, x:
                 warning_dialog( str(x), self.window ).warn()
                 return False
@@ -1642,13 +1644,14 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             if glbl['started by gcylc']:
                 started_by_gcylc = True
                 #info_dialog( "This suite is running already. It was started by "
-                #    "gcylc, which redirects suite stdout and stderr to special files "
-                #    "so we can connect a new output capture window to those files.",
+                #    "gcontrol which redirects suite stdout and stderr "
+                #    "to special files so we can connect a new output "
+                #    "capture window to those files.",
                 #    self.window ).inform()
             else:
                 started_by_gcylc = False
                 info_dialog( "This suite is running but it was started from "
-                    "the command line, so gcylc does not have access its stdout "
+                    "the command line so we do not have access its stdout "
                     "and stderr streams.", self.window ).inform()
 
         if running_already and started_by_gcylc or not running_already:
@@ -1705,9 +1708,9 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
                 return False
 
             if views:
-                command = "gcylc --views=" + views + " " + name
+                command = "gcontrol --views=" + views + " " + name
             else:
-                command = "gcylc " + name
+                command = "gcontrol " + name
             foo = gcapture( command, stdout, 800, 400 )
             self.gcapture_windows.append(foo)
             foo.run()
@@ -1717,9 +1720,9 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             # so no point in connecting to the special stdout and stderr files.
             # User was informed of this already by a dialog above.
             if views:
-                command = "gcylc --views=" + views + " " + Name
+                command = "gcontrol --views=" + views + " " + name
             else:
-                command = "gcylc " + name
+                command = "gcontrol " + name
             foo = gcapture_tmpfile( command, self.tmpdir, 400 )
             self.gcapture_windows.append(foo)
             foo.run()
@@ -1762,16 +1765,16 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             else:
                 started_by_gcylc = False
                 info_dialog( "This suite is running, but it was started from "
-                    "the command line, so gcylc cannot access its cylc stdout/stderr file.",
+                    "the command line so we cannot access its stdout/stderr.",
                     self.window ).inform()
                 return False
         else:
             # suite not running
-            info_dialog( "This suite is not running, so "
-                    "the suite output window will show stdout and stderr "
-                    "messages captured the last time(s) the suite was started "
-                    "from via the GUI (gcylc cannot access stdout "
-                    "and stderr for suites started by the command line).",
+            info_dialog( "This suite is not running. "
+                    "The suite output window may show stdout and stderr "
+                    "captured during the last GUI-initiated run "
+                    "(we can't access stdout/stderr from suites started "
+                    "at the command line).",
                     self.window ).inform()
 
         # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?
@@ -1788,7 +1791,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             # open existing out and err files
             stdout = open( prefix + '.out', 'rb' )
         except IOError,x:
-            msg = '''This probably means the suite has not yet been started via gcylc
+            msg = '''This probably means the suite has not yet been started via gcontrol
 (if you start a suite on the command line stdout and stderr redirection is up to you).'''
             warning_dialog( str(x) + '\n' + msg, self.window ).warn()
             return False
