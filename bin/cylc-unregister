@@ -105,7 +105,11 @@ if options.obliterate and len(dirs) > 0:
     if options.force:
         really_obliterate = True
     else:
-        response = raw_input( "DO YOU REALLY WANT TO DELETE THESE SUITE DEFINITIONS? (y/n) " )
+        if len(dirs) == 1:
+            words = "THIS SUITE DEFINITION"
+        else:
+            words = "THESE SUITE DEFINITIONS"
+        response = raw_input( "DO YOU REALLY WANT TO DELETE " + words + "? (y/n) " )
         if response == 'y':
             really_obliterate = True
     if really_obliterate and len(dirs)>0:

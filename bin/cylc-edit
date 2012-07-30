@@ -146,7 +146,12 @@ if not options.inline:
 # read the suite.rc file
 if os.path.isfile( suiterc ):
     # back up the original
-    backup( suiterc )
+    try:
+        backup( suiterc )
+    except IOError, x:
+        # e.g. if attempting inlined edit of another user's suite.
+        print >> sys.stderr, x
+        sys.exit("Write access to suite definition directory is required.")
     # record original modtime
     modtimes[suiterc] = os.stat( suiterc ).st_mtime
     # read the file

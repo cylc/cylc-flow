@@ -27,16 +27,12 @@ from cylc.command_prep import prep_file
 
 parser = cop( """cylc [info|prep] list|ls [OPTIONS] ARGS 
 
-Print a suite's task list; or print or graph its runtime namespace
-inheritance hierarchy.""" )
+Print a suite's task list or runtime namespace inheritance hierarchy.
+To graph the namespace hierarchy, see 'cylc graph'.""" )
 
 parser.add_option( "-t","--tree",
         help="Print the full runtime inheritance hierarchy.",
         action="store_true", default=False, dest="tree" )
-
-parser.add_option( "-g","--graph",
-        help="Graph the full runtime inheritance hierarchy.",
-        action="store_true", default=False, dest="gui" )
 
 parser.add_option( "-b", "--box",
         help="(with -t,--tree) Use unicode box characters.",
@@ -45,17 +41,6 @@ parser.add_option( "-b", "--box",
 (options, args) = parser.parse_args()
 
 suite, suiterc = prep_file( args[0], options ).execute()
-
-if options.gui:
-    command = [ 'cylc', 'graph', '--namespaces', suite ]
-    try:
-        # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-        retcode = subprocess.call( command )
-    except OSError, x:
-        print >> sys.stderr, 'ERROR: Unable to invoke', new_cylc
-        raise SystemExit( str(x) )
-    else:
-        sys.exit(retcode)
 
 try:
     config = config( suite, suiterc )

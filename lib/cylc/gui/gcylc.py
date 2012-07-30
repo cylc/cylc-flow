@@ -899,21 +899,26 @@ The cylc forecast suite metascheduler.
             listmenu = gtk.Menu()
             listitem.set_submenu(listmenu)
  
-            flat_item = gtk.MenuItem( 'Print _Tasks' )
+            flat_item = gtk.MenuItem( '_Tasks' )
             listmenu.append( flat_item )
             flat_item.connect( 'activate', self.list_suite, reg )
 
-            tree_item = gtk.MenuItem( 'Print _Namespaces' )
+            tree_item = gtk.MenuItem( '_Namespaces' )
             listmenu.append( tree_item )
             tree_item.connect( 'activate', self.list_suite, reg, '-t' )
 
-            gtree_item = gtk.MenuItem( '_Graph Namespaces' )
-            listmenu.append( gtree_item )
-            gtree_item.connect( 'activate', self.nsgraph_suite, reg )
-
             igraph_item = gtk.MenuItem( '_Graph' )
             infomenu.append( igraph_item )
-            igraph_item.connect( 'activate', self.graph_suite_popup, reg, suite_dir )
+            igraphmenu = gtk.Menu()
+            igraph_item.set_submenu(igraphmenu)
+
+            igtree_item = gtk.MenuItem( '_Dependencies' )
+            igraphmenu.append( igtree_item )
+            igtree_item.connect( 'activate', self.graph_suite_popup, reg, suite_dir )
+
+            igns_item = gtk.MenuItem( '_Namespaces' )
+            igraphmenu.append( igns_item )
+            igns_item.connect( 'activate', self.nsgraph_suite, reg )
 
             jobs_item = gtk.MenuItem( 'Generate A _Job Script')
             infomenu.append( jobs_item )
@@ -976,21 +981,26 @@ The cylc forecast suite metascheduler.
             plistmenu = gtk.Menu()
             plistitem.set_submenu(plistmenu)
  
-            pflat_item = gtk.MenuItem( 'Print _Tasks' )
+            pflat_item = gtk.MenuItem( '_Tasks' )
             plistmenu.append( pflat_item )
             pflat_item.connect( 'activate', self.list_suite, reg )
 
-            ptree_item = gtk.MenuItem( 'Print _Namespaces' )
+            ptree_item = gtk.MenuItem( '_Namespaces' )
             plistmenu.append( ptree_item )
             ptree_item.connect( 'activate', self.list_suite, reg, '-t' )
  
-            gtree_item = gtk.MenuItem( '_Graph Namespaces' )
-            plistmenu.append( gtree_item )
-            gtree_item.connect( 'activate', self.nsgraph_suite, reg )
-
             graph_item = gtk.MenuItem( '_Graph' )
             prepmenu.append( graph_item )
-            graph_item.connect( 'activate', self.graph_suite_popup, reg, suite_dir )
+            graphmenu = gtk.Menu()
+            graph_item.set_submenu(graphmenu)
+
+            gtree_item = gtk.MenuItem( '_Dependencies' )
+            graphmenu.append( gtree_item )
+            gtree_item.connect( 'activate', self.graph_suite_popup, reg, suite_dir )
+
+            gns_item = gtk.MenuItem( '_Namespaces' )
+            graphmenu.append( gns_item )
+            gns_item.connect( 'activate', self.nsgraph_suite, reg )
 
             search_item = gtk.MenuItem( '_Search' )
             prepmenu.append( search_item )
@@ -1334,7 +1344,7 @@ The cylc forecast suite metascheduler.
         hbox.pack_start(pattern_entry, True) 
         vbox.pack_start( hbox )
 
-        yesbin_cb = gtk.CheckButton( "search suite bin/ directory" )
+        yesbin_cb = gtk.CheckButton( "Also search suite bin directory" )
         yesbin_cb.set_active(True)
         vbox.pack_start (yesbin_cb, True)
 
