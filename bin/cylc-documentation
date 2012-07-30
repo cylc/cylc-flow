@@ -36,8 +36,7 @@ Required environment variables:
   $PDF_READER    (e.g. evince)
   $HTML_READER   (e.g. firefox)
   $EDITOR        (e.g. vim)
-  $GEDITOR       (e.g. 'gvim -f')
- """, argdoc=[])
+  $GEDITOR       (e.g. 'gvim -f')""", argdoc=[])
 
 parser.add_option( "--pdf",
         help="Display the PDF User Guide (DEFAULT).",
