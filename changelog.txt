@@ -777,3 +777,5 @@ differently because gcylc is not suite-connecting but gcontrol is).
 This change also resolves the ambiguity of the former "gcylc" name, which 
 could refer to either the main db-viewer or a suite control GUI. 
 
++ Bug fix: explicit outputs now work for one-off asynchronous tasks.
+
