@@ -638,10 +638,11 @@ mechanisim.
 
 + Time offset syntax in explicit internal output messages has been changed
 from <CYLC_TASK_CYCLE_TIME+n> to [T+n]. The new syntax is the same as
-for cycle time offsets in the suite graph.
+for cycle time offsets in the suite graph. Angle brackets are now
+reserved for a few "place holder" variables in suite.rc (see User Guide).
 
 + If multiple retries are configured for a task, the task failure event
-hook script is now called only for the final definitive failure.
+hook is now activated only for the final definitive failure.
 
 + The temporary directory required by some cylc commands is now chosen 
 automatically, by default, using Python's tempfile.mkdtemp(), but users
@@ -649,23 +650,31 @@ can optionally override by setting CYLC_TMPDIR. In the default case
 the temporary directory is also cleaned up automatically after use.
 
 + GENERALIZED CYCLING: cylc's original NWP-style hours-of-the-day
-cycling mechanism, e.g. [[0,6,12,18]], has replaced with an extensible
-mechanism that currently supports hours-of-the-day, and stepped daily,
-monthly, and yearly cycling - extend. 
+cycling mechanism, e.g. [[0,6,12,18]], has been replaced with an
+extensible mechanism that currently supports hours-of-the-day, and
+stepped daily, monthly, and yearly cycling - for climate modeling. 
 
-+ More flexible specification of cycle time on the command line (in
-combination with generalized cycling, above). YYYYMMDDHH has been
-replaced with YYYY[MM[DD[HH[mm[ss]]]]] (brackets indicate optional
-digits).
++ The "cylc cycletime" utility command has been extended to handle
+daily, monthly, and yearly cycle time offsets, as well as hours.
+WARNING: this change will break any previous computation of cycle time
+offsets with this utility command, because extending the functionality
+required changing the existing command line options.
 
-+ suite.rc syntax highlighting for the emacs editor.
++ The "cylc template" filename templating utility has been removed;
+templating is now handled by the "cylc cycletime" utility.
 
-+ The task job scripting now prints out suite, task, and host ID info.
++ Flexible specification of cycle times on the command line (in
+combination with generalized cycling, above): YYYY[MM[DD[HH[mm[ss]]]]]
+(brackets indicate optional digits).
+
++ Added an emacs mode for syntax highlighting suite.rc files.
+
++ Task job scripting now prints out suite, task, and host ID info.
 
 + New graphing option: use node outline color for node labels.
 
 + The cylc scan command now reports simple space-delimited output,
-    suite owner host port
+    "suite owner host port"
 for easier parsing.
 
 + Changes to the cylc ping command:
@@ -679,59 +688,46 @@ interpolating month MM in the archive destination path.
 + Jinja2 processing leaves extra blank lines in the suite definition
 corresponding to lines that originally had only Jinja2 code. This could
 result in a non-validating suite if the line preceding the blank one
-ended in a line continuation marker. 'cylc view -p' was removing blanks
-lines, purely (it was thought) for display purposes, which made such
-non-validating suites appear to be correct. All blank lines are now
-removed following Jinja2 processing, to prevent this problem occuring. 
+ended in a line continuation marker. 'cylc view -j' (formerly '-p) was
+removing blank lines, purely (it was thought) for display purposes,
+which made such non-validating suites appear to be correct. All blank
+lines are now removed following Jinja2 processing, to prevent this.
 
-+ Fixed a bug in the "cylc show" command for retrieving live task info.
-
-+ Complete remote control of suites has been enabled, 
-
-+ Use of secure passphrases is now compulsory for all suites. This was
-provides security for remote control of runnign suites. Accordingly the
-"use secure passphrase" suite configuration item has been removed.  A
++ Complete remote control of suites has been enabled, with compulsory
+use of suite passphrases for authentication.  Accordingly the "use
+secure passphrase" suite configuration item has been removed.  A
 random passphrase is generated automatically in the suite definition
 directory when a suite is registered; it must be distributed to any
-remote task host accounts and any remote accounts from which you want to
-control the suite.
+remote task host accounts and any remote accounts from which you want 
+suite control access.
 
 + Tasks ready to run at the same time are now be submitted in the order
 in which they are first encountered in the suite graph (at least in the
-first cycle).
+first cycle...).
 
-+ The task retry mechanism has changed: "command scripting" is now a
-single item, not a list, and a new config item "retry delays" lists
-successive delays in minutes, if any, after which to resubmit the job
-with the same command scripting. When delayed prior to a retry tasks
-go into a new "retry delayed" state, coloured pink, and a new task
-execution environment variable $CYLC_TASK_TRY_NUMBER is incremented
-(starting from one in the original run); this variable can be used to
-modify task behavior in each try.
++ Task retry mechanism upgraded: "command scripting" is now a single
+item, not a list, and a new config item "retry delays" lists successive
+delays in minutes, if any, after which to resubmit the job with the same
+command scripting. When delayed prior to a retry tasks go into a new
+"retry delayed" state, coloured pink, and a new task execution
+environment variable $CYLC_TASK_TRY_NUMBER is incremented (starting from
+one in the original run); this variable can be used to modify task
+behavior in each try.
 
-+ A new config item conifiguration item:
++ A new config item:
     [runtime][[NAME]]dummy task run length = <integer> (seconds)
-  allows users to change the default dummy task run length. This sets 
-  the value of a new task execution environment variable 
-  $CYLC_TASK_DUMMY_RUN_LENGTH, which is used as an argument to the
-  sleep command in default command scripting. 
+allows users to change the default dummy task run length. This sets 
+the value of a new task execution environment variable 
+$CYLC_TASK_DUMMY_RUN_LENGTH, which is used as an argument to the
+sleep command in default command scripting. 
 
-+ Line numbers are now printed for Jinja2 syntax errors, by validate.
++ Line numbers are now printed for Jinja2 syntax errors.
 
-+ Control GUI improvements:
++ Major suite control GUI improvements:
   + The two control GUIs have been merged into a single multi-view GUI
   with a cleaner interface (still evolving)
-  + Families can now be expand and collapsed in the text tree view
-  + Family state coloring (graph view and text tree view)
-
-+ The "cylc cycletime" utility command has been extended to handle
-daily, monthly, and yearly cycle time offsets, as well as hours.
-WARNING: this change will break any previous computation of cycle time
-offsets with this utility command, because extending the functionality
-required changing the existing command line options.
-
-+ The "cylc template" filename templating utility has been removed;
-templating is now handled by the "cylc cycletime" utility.
+  + Families can now be expand and collapsed in the text view
+  + Family state coloring in the graph text views
 
 + The suite host environment can now be accessed via Jinja2, e.g.:
    #!Jinja2
@@ -744,23 +740,22 @@ argument order: 'cylc grep SUITE pattern'
 
 + Moved the lockserver commands to the 'utility' command category.
 
-+ Removed central suite database functionality.
-
-+ Suite database location has changed to $HOME/.cylc/DB
++ Removed central suite database functionality, but extended user
+database functionality to allow viewing (etc.) of suites registered in
+other databases, including suites owned by other users (see the new
+'--db=' command option. Copying suites between databases is also 
+supported, although currently by the command line interface only.
+Accordingly, the default suite database location has been changed to
+$HOME/.cylc/DB. 
 
 + Bug fix "cylc log -r N" (for viewing old rotations)
 
 + Support for Jinja2 custom filters, by which you can modify Jinja2
-variable values using custom Python functions.
+variable values with custom Python functions.
 
-+ Cylc version reinvocation (pseudo backward compatibility) now assumes 
++ Cylc version re-invocation (pseudo backward compatibility) now assumes 
 parallel cylc installations - you can no longer specify a full path to a
 required cylc version at the top of a suite definition.
-
-+ Support for alternative suite databases, with '--db=' command line option.
-
-+ Copying suites between databases is now supported, by the command line
-interface only.
 
 + New network connection timeout option for commands that connect to
 running suites. Previously, with no timeout, a Ctrl-Z-stopped suite
