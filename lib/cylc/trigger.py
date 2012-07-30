@@ -80,7 +80,12 @@ where output x of foo may also have an offset:
     def get( self, ctime, cycler ):
         if self.async_oneoff:
             # oneoff async
-            preq = self.name + '%1' + ' ' + self.type
+            if self.msg:
+                # if oneoff async tasks declare an explicit output, it is
+                # just the given message (no cycle time offsetting to do).
+                preq = self.msg
+            else:
+                preq = self.name + '%1' + ' ' + self.type
         elif self.async_repeating:
             # repeating async
             preq = re.sub( '<ASYNCID>', '(' + self.asyncid_pattern + ')', self.msg )

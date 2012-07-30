@@ -720,6 +720,7 @@ class config( CylcConfigObj ):
                     # startup True here or oneoff async tasks will be ignored:
                     itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True )
                 except TypeError, x:
+                    raise
                     # This should not happen as we now explicitly catch use
                     # of synchronous special tasks in an asynchronous graph.
                     # But in principle a clash of multiply inherited base
@@ -729,7 +730,7 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, '(inconsistent use of special tasks?)' 
                 except Exception, x:
                     print >> sys.stderr, x
-                    raise SuiteConfigError, 'ERROR, failed to instantiate task ' + name
+                    raise SuiteConfigError, 'ERROR, failed to instantiate task ' + str(name)
                 # force trigger evaluation now
                 try:
                     itask.prerequisites.eval_all()

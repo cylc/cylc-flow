@@ -599,7 +599,7 @@ already. So, for instance, if a waiting task is forced to the failed
 state, it will spawn a successor.
 
 ________________________________________________________________________
-4.5.0 PENDING
+4.5.0
 
 + Bug fix: disabling the runahead limit now works (but is not advisable!)
 
@@ -608,15 +608,15 @@ now handled correctly. Previously, only one was handled as a start-up
 task (in that dependence on it should disappear after the first cycle).
 
 + Validation now fails use of start-up tasks and normal cycling tasks in
-the same conditional trigger expression, because the meaning of such a
-trigger is undefined beyond the first cycle. 
+the same conditional trigger expression (the meaning of such a trigger
+is undefined beyond the first cycle). 
 
-+ Suite visualization: node groups are now automatically defined for
++ Suite visualization node groups are now automatically defined for
 all task families so that styling can be applied to family and member
 nodes at once using the family name.
 
 + Bug fix: "release suite" now does not release tasks to run if they are
-held due to passing the suite stop time already.
+on hold because they have passed the suite stop time.
 
 + Sequential tasks now do not spawn on failure, only success, reversing
 a change in 4.2.2 (otherwise restarting a suite with a failed sequential
@@ -630,10 +630,11 @@ of a failed sequential task that cannot be re-run successfully, to force
 it to carry on into the next cycle (see previous bullet point for why 
 this should not be done automatically).
 
-+ Optional new task-to-suite communication mechansim: use of ssh to
-re-invoke messaging commands on the suite host. This may be useful at
-sites in which one or more remote task hosts do not allow access to
-network ports for cylc's normal Pyro TCP/IP communication mechanisim.
++ An alternative task-to-suite communication mechansim: optional use of
+ssh to re-invoke messaging commands on the suite host. This may be
+useful at sites in which one or more remote task hosts do not allow
+access to network ports for cylc's normal Pyro TCP/IP communication
+mechanisim.
 
 + Time offset syntax in explicit internal output messages has been changed
 from <CYLC_TASK_CYCLE_TIME+n> to [T+n]. The new syntax is the same as
