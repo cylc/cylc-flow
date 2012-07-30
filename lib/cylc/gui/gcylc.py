@@ -285,13 +285,14 @@ class db_updater(threading.Thread):
         return value == key
 
 class MainApp(object):
-    def __init__(self, db, tmpdir, timeout ):
+    def __init__(self, db, db_owner, tmpdir, timeout ):
 
         if not db:
             dbname = "(default DB)"
         else:
             dbname = db
         self.db = db
+        self.db_owner = db_owner
         self.timeout = timeout
 
         self.updater = None
@@ -1441,7 +1442,7 @@ The cylc forecast suite metascheduler.
         options = ''
         if not yesbin_cb.get_active():
             options += ' -x '
-        command = "cylc search " + self.dbopt + " --notify-completion " + options + ' ' + pattern + ' ' + reg 
+        command = "cylc search " + self.dbopt + " --notify-completion " + options + ' ' + reg + ' ' + pattern 
         foo = gcapture_tmpfile( command, self.tmpdir, width=600, height=500 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1483,6 +1484,7 @@ The cylc forecast suite metascheduler.
         foo = gcapture_tmpfile( command, self.tmpdir )
         self.gcapture_windows.append(foo)
         foo.run()
+        return False
 
     def view_suite( self, w, reg, method ):
         extra = ''
@@ -1530,7 +1532,7 @@ The cylc forecast suite metascheduler.
         label = gtk.Label("SUITE: " + reg )
         vbox.pack_start( label )
 
-        label = gtk.Label("TASK: " )
+        label = gtk.Label("TASK ID: " )
         task_entry = gtk.Entry()
         hbox = gtk.HBox()
         hbox.pack_start( label, True )
@@ -1566,7 +1568,7 @@ The cylc forecast suite metascheduler.
         label = gtk.Label("SUITE: " + reg )
         vbox.pack_start( label )
  
-        label = gtk.Label("TASK" )
+        label = gtk.Label("TASK ID" )
         task_entry = gtk.Entry()
         hbox = gtk.HBox()
         hbox.pack_start( label, True )
@@ -1592,13 +1594,13 @@ The cylc forecast suite metascheduler.
         window.show_all()
 
     def submit_task( self, w, reg, task_entry ):
-        command = "cylc submit --notify-completion " + reg + " " + task_entry.get_text()
+        command = "cylc submit --notify-completion " + self.dbopt + " " + reg + " " + task_entry.get_text()
         foo = gcapture_tmpfile( command, self.tmpdir, 500, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
 
     def jobscript( self, w, reg, task_entry ):
-        command = "cylc jobscript " + reg + " " + task_entry.get_text()
+        command = "cylc jobscript " + self.dbopt + " " + reg + " " + task_entry.get_text()
         foo = gcapture_tmpfile( command, self.tmpdir, 800, 800 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1732,11 +1734,11 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         clv.quit()
 
     def view_log( self, w, reg ):
-        db = localdb()
+        db = localdb( self.db )
         db.load_from_file()
         suite, rcfile = db.get_suite(reg)
         try:
-            suiterc = config( suite, rcfile )
+            suiterc = config( suite, rcfile, self.db_owner )
         except SuiteConfigError, x:
             warning_dialog( str(x) + \
                     '\n\n Suite.rc parsing failed (needed\nto determine the suite log path.',
@@ -1782,7 +1784,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         # reconnect to the output of a running suite. Some
         # non-fatal textbuffer insertion warnings may occur if several
         # control guis are open at once both trying to write to it.
-        prefix = os.path.join( '$HOME', '.cylc', name )
+        prefix = os.path.join( '~' + self.db_owner, '.cylc', name )
 
         # environment variables allowed
         prefix = os.path.expandvars( prefix )

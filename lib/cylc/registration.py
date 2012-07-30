@@ -157,9 +157,10 @@ class regdb(object):
             print "LOADING DATABASE " + self.file
         try:
             self.mtime_at_load = os.stat(self.file).st_mtime
-        except OSError:
+        except OSError, x:
             # no file: no suites registered  yet
             self.mtime_at_load = time.time()
+            print >> sys.stderr, x
             return
 
         input = open( self.file, 'rb' )

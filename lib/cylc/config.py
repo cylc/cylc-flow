@@ -138,7 +138,7 @@ class edge( object):
 
 class config( CylcConfigObj ):
 
-    def __init__( self, suite, suiterc, 
+    def __init__( self, suite, suiterc, owner=None, 
             simulation_mode=False, verbose=False, 
             validation=False, timeout=1.0,
             collapsed=[] ):
@@ -163,6 +163,12 @@ class config( CylcConfigObj ):
         self.suite = suite
         self.file = suiterc
         self.dir = os.path.dirname(suiterc)
+
+        self.owner = owner
+        if owner:
+            self.homedir = os.path.expanduser( '~' + owner )
+        else:
+            self.homedir = os.environ[ 'HOME' ]
 
         if not os.path.isfile( self.file ):
             raise SuiteConfigError, 'File not found: ' + self.file
@@ -546,6 +552,13 @@ class config( CylcConfigObj ):
         padding = (maxlen+1) * ' '
         print_tree( ft, padding=padding, unicode=pretty, labels=labels )
 
+    def expandvars( self, item ):
+        # first replace '$HOME' with actual home dir
+        item = item.replace( '$HOME', self.homedir )
+        # now expand any other environment variable or tilde-username
+        item = os.path.expandvars( os.path.expanduser( item ))
+        return item
+
     def process_directories(self):
         # Environment variable interpolation in directory paths.
         # Allow use of suite, BUT NOT TASK, identity variables.
@@ -559,15 +572,15 @@ class config( CylcConfigObj ):
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
         self['cylc']['logging']['directory'] = \
-                os.path.expandvars( os.path.expanduser( self['cylc']['logging']['directory']))
+                self.expandvars( self['cylc']['logging']['directory'])
         self['cylc']['state dumps']['directory'] =  \
-                os.path.expandvars( os.path.expanduser( self['cylc']['state dumps']['directory']))
+                self.expandvars( self['cylc']['state dumps']['directory'])
         self['visualization']['run time graph']['directory'] = \
-                os.path.expandvars( os.path.expanduser( self['visualization']['run time graph']['directory']))
+                self.expandvars( self['visualization']['run time graph']['directory'])
 
         for item in self['runtime']:
             # Local job sub log directories: interpolate all environment variables.
-            self['runtime'][item]['job submission']['log directory'] = os.path.expandvars( os.path.expanduser( self['runtime'][item]['job submission']['log directory']))
+            self['runtime'][item]['job submission']['log directory'] = self.expandvars( self['runtime'][item]['job submission']['log directory'])
             # Remote job sub log directories: just suite identity - local variables aren't relevant.
             if self['runtime'][item]['remote']['log directory']:
                 for var in ['CYLC_SUITE_REG_PATH', 'CYLC_SUITE_DEF_PATH', 'CYLC_SUITE_REG_NAME']: 
@@ -1511,7 +1524,7 @@ export CYLC_PYRO_TIMEOUT=""" + str(self.timeout) + "\n"
                 # Use local log directory path, but replace home dir
                 # (if present) with literal '$HOME' for interpretation
                 # on the remote host.
-                taskd.remote_log_directory  = re.sub( os.environ['HOME'], '$HOME', taskd.job_submit_log_directory )
+                taskd.remote_log_directory  = re.sub( self.homedir, '$HOME', taskd.job_submit_log_directory )
 
             if taskconfig['remote']['work directory']:
                 # Replace local work directory.
@@ -1520,7 +1533,7 @@ export CYLC_PYRO_TIMEOUT=""" + str(self.timeout) + "\n"
                 # Use local work directory path, but replace home dir
                 # (if present) with literal '$HOME' for interpretation
                 # on the remote host.
-                taskd.job_submit_work_directory  = re.sub( os.environ['HOME'], '$HOME', taskd.job_submit_work_directory )
+                taskd.job_submit_work_directory  = re.sub( self.homedir, '$HOME', taskd.job_submit_work_directory )
 
             if taskconfig['remote']['share directory']:
                 # Replace local share directory.
@@ -1529,7 +1542,7 @@ export CYLC_PYRO_TIMEOUT=""" + str(self.timeout) + "\n"
                 # Use local share directory path, but replace home dir
                 # (if present) with literal '$HOME' for interpretation
                 # on the remote host.
-                taskd.job_submit_share_directory  = re.sub( os.environ['HOME'], '$HOME', taskd.job_submit_share_directory )
+                taskd.job_submit_share_directory  = re.sub( self.homedir, '$HOME', taskd.job_submit_share_directory )
 
         taskd.manual_messaging = taskconfig['manual completion']
 

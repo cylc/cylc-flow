@@ -48,9 +48,10 @@ parser.add_option( "-r", "--rotation",
 ( options, args ) = parser.parse_args()
 
 suite, suiterc = prep_file( args[0], options ).execute()
+owner = options.db_owner
 
 try:
-    filename = os.path.join( config( suite, suiterc )['cylc']['logging']['directory'], 'log' )
+    filename = os.path.join( config( suite, suiterc, owner )['cylc']['logging']['directory'], 'log' )
 except Exception, x:
     if options.debug:
         raise

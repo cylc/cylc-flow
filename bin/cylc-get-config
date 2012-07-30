@@ -71,11 +71,12 @@ parser.add_option( "-m", "--mark-output",
         action="store_true", default=False, dest="markoutput" )
 
 ( options, args ) = parser.parse_args()
+owner = options.db_owner
 
 suite, suiterc = prep_file( args[0], options ).execute()
 
 try:
-    config = config( suite, suiterc )
+    config = config( suite, suiterc, owner )
 except Exception,x:
     if options.debug:
         raise

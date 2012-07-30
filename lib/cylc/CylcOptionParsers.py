@@ -23,6 +23,31 @@ from owner import user
 
 """Common options for all cylc commands."""
 
+class db_optparse( object ):
+    def __init__( self, dbopt ):
+        # input is DB option spec from the cylc command line
+        self.owner = user
+        self.location = None
+        if dbopt:
+            self.parse( dbopt )
+
+    def parse( self, dbopt ):
+        # determine DB location and owner
+        if dbopt.startswith('u:'):
+            self.owner = dbopt[2:]
+            dbopt = os.path.join( '~' + self.owner, '.cylc', 'DB' )
+        if dbopt.startswith( '~' ):
+            dbopt = os.path.expanduser( dbopt )
+        else: 
+            dbopt = os.path.abspath( dbopt )
+        self.location = dbopt
+
+    def get_db_owner( self ):
+        return self.owner
+
+    def get_db_location( self ):
+        return self.location
+
 class cop( OptionParser ):
 
     def __init__( self, usage, argdoc=[('REG', 'Suite name')], pyro=False ):
@@ -74,9 +99,10 @@ Arguments:"""
                 action="store_true", default=False, dest="debug" )
 
         self.add_option( "--db",
-                help="Alternative suite database location.",
-                metavar="FILE", action="store", default=None,
-                dest="db" )
+                help="Suite database: 'u:USERNAME' for another user's "
+                "default database, or PATH to an explicit location. "
+                "Defaults to $HOME/.cylc/DB.",
+                metavar="DB", action="store", default=None, dest="db" )
 
         self.add_option( "-o", "--override",
                 help="Override cylc version compatibilty checking.",
@@ -102,16 +128,22 @@ Arguments:"""
 
     def parse_args( self ):
         (options, args) = OptionParser.parse_args( self )
+
         if len(args) < self.n_compulsory_args:
             self.error( "Wrong number of arguments (too few)" )
+
         elif not self.unlimited_args and \
                 len(args) > self.n_compulsory_args + self.n_optional_args:
             self.error( "Wrong number of arguments (too many)" )
-        if options.db:
-            options.db = os.path.abspath( options.db )
+
+        foo = db_optparse( options.db )
+        options.db = foo.get_db_location()
+        options.db_owner = foo.get_db_owner()
+
         if self.pyro:
             if options.pfile:
                 options.pfile = os.path.abspath( options.pfile )
 
         return ( options, args )
+
 

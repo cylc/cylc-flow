@@ -41,3 +41,4 @@ def get_logo():
     """Return the gcylc logo as a gtk.gdk.Pixbuf."""
     logo_path = os.path.join(get_image_dir(), "logo.png")
     return gtk.gdk.pixbuf_new_from_file(logo_path)
+
