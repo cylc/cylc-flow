@@ -73,8 +73,6 @@ except KeyError:
 if not cylc_mode.mode().is_raw():
     try:
         if not task_lock().release():
-            if debug:
-                raise
             raise SystemExit( "Failed to release task lock" )
     except Exception, z:
         print >> sys.stderr, z

@@ -169,7 +169,8 @@ class message(object):
             for var in ['CYLC_MODE', 'CYLC_TASK_ID', 'CYLC_VERBOSE', 
                     'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 'CYLC_PYRO_TIMEOUT', 
                     'CYLC_SUITE_REG_NAME', 'CYLC_SUITE_OWNER',
-                    'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC']:
+                    'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC',
+                    'CYLC_USE_LOCKSERVER', 'CYLC_LOCKSERVER_PORT' ]:
                 env[var] = os.environ[var]
 
             # The path to cylc on the remote end may be required:

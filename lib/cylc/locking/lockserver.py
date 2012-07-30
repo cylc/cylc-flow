@@ -32,7 +32,7 @@ class lockserver(object):
 
     def get_proxy( self ):
         if self.port:
-            check_port( "lockserver", self.port, owner=self.owner, host=self.host, silent=True, timeout=self.timeout )
+            check_port( "lockserver", None, self.port, owner=self.owner, host=self.host, silent=True, timeout=self.timeout )
         else:
             self.port = get_port( "lockserver", owner=self.owner, host=self.host, silent=True, timeout=self.timeout )
 

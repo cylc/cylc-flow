@@ -73,9 +73,7 @@ except Exception, x:
 if not cylc_mode.mode().is_raw():
     try:
         if not task_lock().acquire():
-            # (don"t send task failed message - handled by trapping)
-            if debug:
-                raise
+            # (don't send task failed message - handled by trapping)
             raise SystemExit( "Failed to acquire a task lock" )
     except Exception, z:
         # (don"t send task failed message - handled by trapping)

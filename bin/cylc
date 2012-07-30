@@ -168,11 +168,19 @@ argv = sys.argv[1:]
 args = []
 req_ver = None
 while argv:
-    arg = argv.pop(0)
+    try:
+        arg = argv.pop(0)
+    except IndexError:
+        # this won't happen
+        sys.exit( "Command line error" )
     if arg.startswith("--Version="):
         req_ver = arg.replace("--Version=", "")
     elif arg == "-V":
-        req_ver = argv.pop(0)
+        try:
+            req_ver = argv.pop(0)
+        except IndexError:
+            # this might happen
+            sys.exit("ERROR: -V requires an argument")
     else:
         args.append(arg)
 

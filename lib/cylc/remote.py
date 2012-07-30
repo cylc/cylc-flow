@@ -61,7 +61,7 @@ class remrun( object ):
 
         if force_required and \
                 '-f' not in sys.argv[1:] and '--force' not in sys.argv[1:]:
-           sys.exit("FORCE REQUIRED")
+                    sys.exit("ERROR: force (-f) required for non-interactive command invocation.")
 
         name = os.path.basename(sys.argv[0])[5:] # /path/to/cylc-foo => foo
 

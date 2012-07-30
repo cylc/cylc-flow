@@ -109,9 +109,14 @@ db = db_optparse( options.db ).get_db_location()
 if dbfrom:
     if not dbto:
         dbto = db
+else:
+    dbfrom = db
+
 if dbto:
     if not dbfrom:
         dbfrom = db
+else:
+    dbto = db
 
 if dbfrom != dbto:
     transfer = True
@@ -180,7 +185,8 @@ try:
             print 'WARNINGS:'
             for e in x.args[0]:
                 src, trg, err = e
-                print >> sys.stderr, "  ", src, '-->', trg, err
+                print >> sys.stderr, "  ", src, '-->', trg
+                print >> sys.stderr, "     ", err
         try:
             targetdb.register( treg, tdir )
         except SuiteTakenError, x:

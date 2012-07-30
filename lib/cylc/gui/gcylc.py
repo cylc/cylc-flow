@@ -1088,7 +1088,7 @@ The cylc forecast suite metascheduler.
         window.show_all()
 
     def alias_suite( self, b, w, reg, alias_entry ):
-        command = "cylc alias --notify-completion " + reg + " " + alias_entry.get_text()
+        command = "cylc alias --notify-completion " + self.dbopt + " " + reg + " " + alias_entry.get_text()
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1319,7 +1319,7 @@ The cylc forecast suite metascheduler.
         #    reg = '^' + reg + '\..*$'
         #else:
         #    reg = '^' + reg + '$'
-        command = "cylc copy --notify-completion " + reg + ' ' + name + ' ' + sdir
+        command = "cylc copy --notify-completion " + self.dbopt + ' ' + reg + ' ' + name + ' ' + sdir
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1398,11 +1398,11 @@ The cylc forecast suite metascheduler.
         hbox.pack_start (warm_rb, True)
         vbox.pack_start( hbox, True )
 
-        db = localdb()
+        db = localdb(self.db)
         db.load_from_file()
         suite, rcfile = db.get_suite(reg)
         try:
-            suiterc = config( suite, rcfile )
+            suiterc = config( suite, rcfile, self.db_owner )
         except SuiteConfigError, x:
             warning_dialog( str(x) + \
                     '\n\n Suite.rc parsing failed (needed\nfor default start and stop cycles.',
@@ -1720,9 +1720,9 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
                 return False
 
             if views:
-                command = "gcontrol --views=" + views + " " + name
+                command = "gcontrol --views=" + views + " " + self.dbopt + " " + name
             else:
-                command = "gcontrol " + name
+                command = "gcontrol " + self.dbopt + " " + name
             foo = gcapture( command, stdout, 800, 400 )
             self.gcapture_windows.append(foo)
             foo.run()
@@ -1732,9 +1732,9 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             # so no point in connecting to the special stdout and stderr files.
             # User was informed of this already by a dialog above.
             if views:
-                command = "gcontrol --views=" + views + " " + name
+                command = "gcontrol --views=" + views + " " + self.dbopt + " " + name
             else:
-                command = "gcontrol " + name
+                command = "gcontrol " + self.dbopt + " " + name
             foo = gcapture_tmpfile( command, self.tmpdir, 400 )
             self.gcapture_windows.append(foo)
             foo.run()

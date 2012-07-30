@@ -28,6 +28,7 @@ class prep( object ):
         self.options = options
         self.suite = suite
         self.suiterc = None
+        self.suitedir = None
         # dealias the suite name (an aliased name may be given for local suites)
         if not is_remote_host( options.host ) and not is_remote_user( options.owner ):
             self.db = localdb(file=options.db, verbose=options.verbose)
@@ -52,8 +53,8 @@ class prep_pyro( prep ):
         prep.__init__( self, suite, options )
         # get the suite passphrase
         try:
-            self.pphrase = passphrase( self.suite, self.options.owner,
-                    self.options.host, verbose=options.verbose ).get( self.options.pfile, self.suitedir )
+            self.pphrase = passphrase( self.suite, self.options.owner, self.options.host,
+                    verbose=options.verbose ).get( self.options.pfile, self.suitedir )
         except Exception, x:
             if self.options.debug:
                 raise
