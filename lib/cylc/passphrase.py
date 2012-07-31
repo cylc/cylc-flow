@@ -165,7 +165,7 @@ that do not actually need the suite definition directory to be installed.
                 locations.append( os.path.join( os.environ['HOME'], '.cylc', short_host, self.owner, self.suite, 'passphrase' ))
             locations.append( os.path.join( os.environ['HOME'], '.cylc', self.host, self.suite, 'passphrase' ))
             if short_host != self.host:
-                locations.append( os.path.join( os.environ['HOME'], '.cylc', self.short_host, self.suite, 'passphrase' ))
+                locations.append( os.path.join( os.environ['HOME'], '.cylc', short_host, self.suite, 'passphrase' ))
             locations.append( os.path.join( os.environ['HOME'], '.cylc', self.suite, 'passphrase' ))
             for pfile in locations:
                 if os.path.isfile( pfile ):
