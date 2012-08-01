@@ -774,3 +774,29 @@ could refer to either the main db-viewer or a suite control GUI.
 
 + Bug fix: explicit outputs now work for one-off asynchronous tasks.
 
+________________________________________________________________________
+4.5.1
+
++ Task retry delays now work with clock-triggered tasks.
+
++ Cleaned up use of Pyro connection timeouts. Prior to 4.5.0 there was
+no timeout. At 4.5.0 we set a 1 seconds default, but depending on
+circumstances (network, load, etc.) this proved to be too short
+(resulting in messaging failures when tasks timed out attempting to
+communicate with their suite). So now:
+  * The timeout value passed to tasks by their parent suite can be set
+    by '[cylc]-> pyro connection timeout' and defaults to no timeout.
+  * A value specified on the command line of the run, restart, gcylc,
+    and gcontrol commands will be passed on the started suites,
+    overriding the above default.
+  * Suite-connecting commands ("cylc dump" etc.) also take a timeout
+    value on the command line but default to no timeout.
+
++ Fixed a bug in the passphrase location checking code (this would not 
+have affected running suites with the passphrase installed in the suite
+definition directory on the suite host or remote task hosts).
+
++ Stopped profilic suite logging caused by gcontrol continually checking
+for the current list of task names (as of 4.5.0 the displayed task list
+is determined dynamically).
+
