@@ -125,7 +125,7 @@ class message(object):
         self.pphrase = passphrase( self.suite, self.owner, self.host, verbose=self.verbose ).get( None, None )
         # this raises an exception on failure to connect:
         return cylc_pyro_client.client( self.suite, self.pphrase,
-                self.owner, self.host, self.pyro_timeout, self.port ).get_proxy( self.task_id )
+                self.owner, self.host, self.pyro_timeout, self.port, self.verbose ).get_proxy( self.task_id )
 
     def print_msg( self, msg ):
         now = self.now().strftime( "%Y/%m/%d %H:%M:%S" )
