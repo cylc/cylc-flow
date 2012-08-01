@@ -107,11 +107,9 @@ class message(object):
             pass
             
         try:
-            self.timeout = float(os.environ['CYLC_PYRO_TIMEOUT'])
+            self.pyro_timeout = float(os.environ['CYLC_PYRO_TIMEOUT'])
         except:
-            self.timeout = 1.0
-
-        print 'TASK MESSAGE: timeout is', self.timeout
+            self.pyro_timeout = None
 
     def now( self ):
         if self.utc:
@@ -125,7 +123,8 @@ class message(object):
         # it is needed, we will end up in this method). 
         self.pphrase = passphrase( self.suite, self.owner, self.host, verbose=self.verbose ).get( None, None )
         # this raises an exception on failure to connect:
-        return cylc_pyro_client.client( self.suite, self.pphrase, self.owner, self.host, timeout=self.timeout, port=self.port ).get_proxy( self.task_id )
+        return cylc_pyro_client.client( self.suite, self.pphrase,
+                self.owner, self.host, self.pyro_timeout, self.port ).get_proxy( self.task_id )
 
     def print_msg( self, msg ):
         now = self.now().strftime( "%Y/%m/%d %H:%M:%S" )

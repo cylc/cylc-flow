@@ -140,11 +140,13 @@ class config( CylcConfigObj ):
 
     def __init__( self, suite, suiterc, owner=None, 
             simulation_mode=False, verbose=False, 
-            validation=False, timeout=1.0,
-            collapsed=[] ):
+            validation=False, pyro_timeout=None, collapsed=[] ):
         self.simulation_mode = simulation_mode
         self.verbose = verbose
-        self.timeout = timeout
+        if pyro_timeout:
+            self.pyro_timeout = float(pyro_timeout)
+        else:
+            self.pyro_timeout = None
         self.edges = []
         self.cyclers = []
         self.taskdefs = OrderedDict()
@@ -337,6 +339,14 @@ class config( CylcConfigObj ):
                 print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
                 self.closed_families.remove( cfam )
         self.vis_families = list(self.closed_families)
+
+        if not self.pyro_timeout:
+            # a command line override was not used
+            self.pyro_timeout = float(self['cylc']['pyro connection timeout'])
+
+        if self.verbose:
+            print "Pyro connection timeout for tasks in this suite:", self.pyro_timeout, "seconds"
+
         if self.verbose:
             print "Checking suite event hooks"
         script = None
@@ -1491,12 +1501,11 @@ class config( CylcConfigObj ):
 
         # initial scripting (could be required to access cylc even in sim mode).
         taskd.initial_scripting = taskconfig['initial scripting'] 
-        # the ssh messaging variable must go in initial scripting so
-        # that it affects the task started call as well as later
-        # messages:
+        # ssh messaging and pyro timeout variables must go in initial
+        # scripting in order to affect the 'task' started call
         tmp = """
 export CYLC_SSH_MESSAGING=""" + str(taskconfig['remote']['ssh messaging']) + """
-export CYLC_PYRO_TIMEOUT=""" + str(self.timeout) + "\n"
+export CYLC_PYRO_TIMEOUT=""" + str(self.pyro_timeout) + "\n"
         if taskd.initial_scripting != None: 
             taskd.initial_scripting += tmp
         else:

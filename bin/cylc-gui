@@ -38,16 +38,16 @@ to the Command Line Interface in most respects (see 'cylc help').
 Right-click on suites or groups to access cylc functionality from
 suite editing and graphing through to suite control and monitoring.
 
-The '-t,--timeout' timeout option affects port scanning to detect
-running suites. 
-
 NOTE: to daemonize suites launched from the GUI use POSIX nohup command:
     $ nohup gcylc [OPTIONS] &""", argdoc=[])
 
 parser.add_option( "-t", "--timeout", metavar='SEC',
-        help="Network connection timeout in "
-        "case of hung ports (default 1 second).",
-        action="store",default=1, dest="timeout" )
+        help="Set a timeout value for Pyro network connections. The default "
+        "is no timeout. In gcylc the timeout value is used when scanning "
+        "ports for running suites, and it is also passed on to any suite "
+        "started from a gcontrol app launched from gcylc (in which case it "
+        "will override a Pyro timeout set in the suite definition).",
+        action="store", default=None, dest="pyro_timeout" )
 
 ( options, args ) = parser.parse_args()
 
@@ -58,7 +58,6 @@ parser.add_option( "-t", "--timeout", metavar='SEC',
 # attempt to determine their CWD.
 os.chdir(os.environ['HOME'])
 
-app = MainApp( options.db, options.db_owner, cylc_tmpdir,
-        float(options.timeout))
+app = MainApp( options.db, options.db_owner, cylc_tmpdir, options.pyro_timeout )
 gtk.main()
 

@@ -280,7 +280,7 @@ class scheduler(object):
         except Exception, x:
             raise SchedulerError( "ERROR: failed to find passphrase for " + self.suite )
         try:
-            port = port_scan.get_port( self.suite, self.owner, self.host, pphrase, timeout=float(self.options.timeout) )
+            port = port_scan.get_port( self.suite, self.owner, self.host, pphrase, pyro_timeout=self.options.pyro_timeout )
         except port_scan.SuiteNotFoundError,x:
             # The suite is not already running
             pass
@@ -291,7 +291,7 @@ class scheduler(object):
         # LOAD SUITE CONFIG FILE
         self.config = config( self.suite, self.suiterc,
                 simulation_mode=self.simulation_mode,
-                verbose=self.verbose, timeout=float(self.options.timeout))
+                verbose=self.verbose, pyro_timeout=self.options.pyro_timeout )
         self.config.create_directories()
         if self.config['cylc']['simulation mode only'] and not self.simulation_mode:
             raise SchedulerError( "ERROR: this suite can only run in simulation mode (see suite.rc)" )

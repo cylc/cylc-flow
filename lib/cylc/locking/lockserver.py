@@ -24,17 +24,20 @@ from cylc.owner import user
 from cylc.port_scan import get_port, check_port
 
 class lockserver(object):
-    def __init__( self, host, owner=user, port=None, timeout=1.0 ):
+    def __init__( self, host, owner=user, port=None, timeout=None ):
         self.owner = owner
         self.host = host
         self.port = port
-        self.timeout = timeout
+        if timeout:
+            self.timeout = float(timeout)
+        else:
+            self.timeout = None
 
     def get_proxy( self ):
         if self.port:
-            check_port( "lockserver", None, self.port, owner=self.owner, host=self.host, silent=True, timeout=self.timeout )
+            check_port( "lockserver", None, self.port, self.owner, self.host, self.timeout )
         else:
-            self.port = get_port( "lockserver", owner=self.owner, host=self.host, silent=True, timeout=self.timeout )
+            self.port = get_port( "lockserver", self.owner, self.host, None, self.timeout )
 
         # lockservers are connected to Pyro with owner name
         # see comment in bin/_lockserver. TO DO: reuse code.

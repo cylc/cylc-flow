@@ -134,6 +134,7 @@ class tupdater(threading.Thread):
                     self.cfg.pphrase,
                     self.cfg.owner,
                     self.cfg.host,
+                    self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
             self.remote = client.get_proxy( 'remote' )
@@ -523,6 +524,7 @@ class lupdater(threading.Thread):
                     self.cfg.pphrase,
                     self.cfg.owner,
                     self.cfg.host,
+                    self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
             self.rem = client.get_proxy( 'remote' )

@@ -43,6 +43,10 @@ gcontrol [OPTIONS] REG
 The cylc Suite Control GUI - can also be launched from the main GUI
 (cylc gui / gcylc)
 
+If the '-t,--timeout=' option is used the timeout value will be passed
+on to the suite if it is subsequently started up from the gcontrol GUI
+(where it will in turn be passed to tasks submitted by the suite).
+
 NOTE: daemonize important suites with the POSIX nohup command:
     $ nohup gcontrol [OPTIONS] REG &""", pyro=True,
     argdoc=[('REG', 'Suite name' )])
@@ -101,7 +105,8 @@ if len(illegal) != 0:
     sys.exit( "ERROR, illegal view specs: " + ', '.join( illegal))
 
 try:
-    app = ControlApp( suite, pphrase, options.owner, options.host, None, cylc_tmpdir, views )
+    app = ControlApp( suite, pphrase, options.owner, options.host, None,
+            cylc_tmpdir, views, options.pyro_timeout )
 except Exception, x:
     if options.debug:
         raise

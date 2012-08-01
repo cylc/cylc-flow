@@ -75,7 +75,7 @@ try:
         try: 
             proxy = cylc_pyro_client.client( suite, pphrase,
                     options.owner, options.host,
-                    float(options.timeout)).get_proxy( 'state_summary' )
+                    options.pyro_timeout ).get_proxy( 'state_summary' )
         except SecurityError, x:
             if options.debug:
                 raise

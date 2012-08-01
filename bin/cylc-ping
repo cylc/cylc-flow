@@ -55,8 +55,7 @@ if options.print_ports:
 
 try:
     port = get_port( suite, options.owner, options.host,
-            pphrase=pphrase, timeout=float(options.timeout), 
-            silent = not options.verbose )
+            pphrase, options.pyro_timeout, not options.verbose )
 except Exception, x:
     if options.debug:
         raise

@@ -114,9 +114,9 @@ Arguments:"""
                     action="store_true", default=False, dest="use_ssh" )
 
             self.add_option( "-t", "--timeout", metavar='SEC',
-                    help="Network connection timeout in "
-                    "case of hung ports (default 1 second).",
-                    action="store",default=1, dest="timeout" )
+                    help="Set a timeout value for Pyro network connections "
+                    "to the running suite. The default is no timeout.",
+                    action="store", default=None, dest="pyro_timeout" )
 
             self.add_option( "-p", "--passphrase",
                     help="Suite passphrase file (if not in a default location)",

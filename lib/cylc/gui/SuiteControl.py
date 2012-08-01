@@ -77,11 +77,16 @@ class InitData(object):
     """
 Class to hold initialisation data.
     """
-    def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir ):
+    def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir, pyro_timeout ):
         self.suite = suite
         self.pphrase = pphrase
         self.host = host
         self.port = port
+        if pyro_timeout:
+            self.pyro_timeout = float(pyro_timeout)
+        else:
+            self.pyro_timeout = None
+
         self.owner = owner
         self.cylc_tmpdir = cylc_tmpdir
 
@@ -208,18 +213,24 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                         "text": "/icons/tab-tree.xpm" }
                        
 
-    def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir, startup_views):
+    def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir,
+            startup_views, pyro_timeout ):
+
         gobject.threads_init()
         
-        self.cfg = InitData( suite, pphrase, owner, host, port, cylc_tmpdir )
+        self.cfg = InitData( suite, pphrase, owner, host, port, cylc_tmpdir, pyro_timeout )
 
         self.view_layout_horizontal = False
         try:
-            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
+
             self.sim_only = god.get_sim_mode_only()
             self.initial_cycle_time, self.final_cycle_time = god.get_cycle_range()
             self.logging_dir = god.get_logging_directory()
             self.task_list = god.get_task_list(logit=False)
+
         except SuiteIdentificationError, x:
             self.initial_cycle_time = None
             self.final_cycle_time = None
@@ -520,7 +531,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     def pause_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             result = god.hold()
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
@@ -532,7 +545,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     def resume_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
@@ -545,7 +560,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     def stopsuite_default( self, *args ):
         """Try to stop the suite (after currently running tasks...)."""
         try:
-            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             result = god.shutdown()
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
@@ -625,7 +642,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         window.destroy()
 
         try:
-            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             if stop:
                 result = god.shutdown()
             elif stopat:
@@ -695,6 +714,9 @@ been defined for this suite""").inform()
             if no_reset_cb.get_active():
                 options += ' --no-reset'
 
+        if self.cfg.pyro_timeout:
+            command += ' --timeout=' + str(self.cfg.pyro_timeout)
+
         ctime = ''
         if method != 'restart':
             # start time
@@ -749,14 +771,18 @@ been defined for this suite""").inform()
 
     def unblock_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             god.unblock()
         except SuiteIdentificationError, x:
             warning_dialog( 'ERROR: ' + str(x), self.window ).warn()
 
     def block_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             god.block()
         except SuiteIdentificationError, x:
             warning_dialog( 'ERROR: ' + str(x), self.window ).warn()
@@ -984,7 +1010,9 @@ The cylc forecast suite metascheduler.
                 limit = ent
         window.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
@@ -1065,7 +1093,9 @@ The cylc forecast suite metascheduler.
 
         window.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
@@ -1206,7 +1236,9 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
@@ -1237,7 +1269,9 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
@@ -1265,7 +1299,9 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
@@ -1293,7 +1329,9 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog(str(x), self.window).warn()
             return
@@ -1319,7 +1357,9 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog(str(x), self.window).warn()
             return
@@ -1333,7 +1373,9 @@ shown here in the state they were in at the time of triggering.''' )
         stop = e.get_text()
         w.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog(str(x), self.window).warn()
             return
@@ -1347,7 +1389,9 @@ shown here in the state they were in at the time of triggering.''' )
         stop = e.get_text()
         w.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog(str(x), self.window).warn()
             return
@@ -1743,7 +1787,9 @@ shown here in the state they were in at the time of triggering.''' )
         else:
             stop = stoptag
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
@@ -1755,7 +1801,9 @@ shown here in the state they were in at the time of triggering.''' )
 
     def nudge_suite( self, w ):
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( str(x), self.window ).warn()
             return False
@@ -2155,7 +2203,9 @@ shown here in the state they were in at the time of triggering.''' )
     #    return True
 
     def get_pyro( self, object ):
-        return cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( object )
+        return cylc_pyro_client.client( self.cfg.suite,
+                self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                self.cfg.pyro_timeout, self.cfg.port ).get_proxy( object )
  
     def view_log( self, w ):
         foo = cylc_logviewer( 'log', self.logging_dir, self.task_list)

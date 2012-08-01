@@ -38,6 +38,7 @@ description = string( default="No description provided" )
 [cylc]
     UTC mode = boolean( default=False )
     simulation mode only = boolean( default=False )
+    pyro connection timeout = integer( min=0, default=0 )
     [[logging]]
         directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite' )
         roll over at start-up = boolean( default=True )

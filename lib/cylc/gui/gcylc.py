@@ -47,14 +47,17 @@ debug = False
 
 class db_updater(threading.Thread):
     count = 0
-    def __init__(self, regd_treestore, db, filtr=None, timeout=1.0 ):
+    def __init__(self, regd_treestore, db, filtr=None, pyro_timeout=None ):
         self.__class__.count += 1
         self.me = self.__class__.count
         self.filtr = filtr
         self.db = db
         self.quit = False
         self.reload = False
-        self.timeout = timeout
+        if pyro_timeout:
+            self.pyro_timeout = float(pyro_timeout)
+        else:
+            self.pyro_timeout = None
 
         self.regd_treestore = regd_treestore
         super(db_updater, self).__init__()
@@ -228,7 +231,7 @@ class db_updater(threading.Thread):
     
     def running_choices_changed( self ):
         # (name, port)
-        suites = scan( mine=True, silent=True, timeout=self.timeout )
+        suites = scan( pyro_timeout=self.pyro_timeout )
         if suites != self.running_choices:
             self.running_choices = suites
             return True
@@ -285,7 +288,7 @@ class db_updater(threading.Thread):
         return value == key
 
 class MainApp(object):
-    def __init__(self, db, db_owner, tmpdir, timeout ):
+    def __init__(self, db, db_owner, tmpdir, pyro_timeout ):
 
         if not db:
             dbname = "(default DB)"
@@ -293,7 +296,10 @@ class MainApp(object):
             dbname = db
         self.db = db
         self.db_owner = db_owner
-        self.timeout = timeout
+        if pyro_timeout:
+            self.pyro_timeout = float(pyro_timeout)
+        else:
+            self.pyro_timeout = None
 
         self.updater = None
         self.tmpdir = tmpdir
@@ -533,7 +539,7 @@ The cylc forecast suite metascheduler.
         #self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:
             self.updater.quit = True # does this take effect?
-        self.updater = db_updater( self.regd_treestore, db, filtr, self.timeout )
+        self.updater = db_updater( self.regd_treestore, db, filtr, self.pyro_timeout )
         self.updater.start()
 
     def newreg_popup( self, w ):
@@ -862,27 +868,27 @@ The cylc forecast suite metascheduler.
  
             con_item = gtk.MenuItem( '_Text View')
             ctrlmenu.append( con_item )
-            con_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'text' )
+            con_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'text' )
 
             con_item = gtk.MenuItem( '_Dot View')
             ctrlmenu.append( con_item )
-            con_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'dot' )
+            con_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'dot' )
 
             con_item = gtk.MenuItem( '_Graph View')
             ctrlmenu.append( con_item )
-            con_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'graph' )
+            con_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'graph' )
 
             cong_item = gtk.MenuItem( '_Dot & Text View')
             ctrlmenu.append( cong_item )
-            cong_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'dot,text' )
+            cong_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'dot,text' )
 
             cong_item = gtk.MenuItem( '_Graph & Text View')
             ctrlmenu.append( cong_item )
-            cong_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'graph,text' )
+            cong_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'graph,text' )
 
             cong_item = gtk.MenuItem( '_Dot & Graph View')
             ctrlmenu.append( cong_item )
-            cong_item.connect( 'activate', self.launch_controller, reg, suite_dir, state, 'dot,graph' )
+            cong_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'dot,graph' )
 
             ctrlmenu.append( gtk.SeparatorMenuItem() )
  
@@ -1634,7 +1640,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def launch_controller( self, w, name, suite_dir, state, views=None ):
+    def launch_gcontrol( self, w, name, suite_dir, state, views=None ):
         suite_dir = os.path.expanduser(suite_dir)
         # (we replaced home dir with '~' above for display purposes)
         running_already = False
@@ -1648,7 +1654,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
                 warning_dialog( str(x), self.window ).warn()
                 return False
             try:
-                ssproxy = cylc_pyro_client.client( name, pphrase, timeout=self.timeout ).get_proxy( 'state_summary' )
+                ssproxy = cylc_pyro_client.client( name, pphrase, pyro_timeout=self.pyro_timeout ).get_proxy( 'state_summary' )
             except SuiteIdentificationError, x:
                 warning_dialog( str(x), self.window ).warn()
                 return False
@@ -1720,9 +1726,12 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
                 return False
 
             if views:
-                command = "gcontrol --views=" + views + " " + self.dbopt + " " + name
+                command = "gcontrol --views=" + views + " " + self.dbopt
             else:
-                command = "gcontrol " + self.dbopt + " " + name
+                command = "gcontrol " + self.dbopt
+            if self.pyro_timeout:
+                command += " --timeout=" + str(self.pyro_timeout)
+            command += " " + name
             foo = gcapture( command, stdout, 800, 400 )
             self.gcapture_windows.append(foo)
             foo.run()
@@ -1764,7 +1773,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             running_already = True
             # was it started by gcylc?
             try:
-                ssproxy = cylc_pyro_client.client( name, timeout=self.timeout ).get_proxy( 'state_summary' )
+                ssproxy = cylc_pyro_client.client( name, pyro_timeout=self.pyro_timeout ).get_proxy( 'state_summary' )
             except SuiteIdentificationError, x:
                 warning_dialog( str(x), self.window ).warn()
                 return False
