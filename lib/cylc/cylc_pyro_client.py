@@ -26,11 +26,12 @@ from passphrase import passphrase
 from owner import user
 
 class client( object ):
-    def __init__( self, suite, pphrase=None, owner=user, host=hostname, pyro_timeout=None, port=None ):
+    def __init__( self, suite, pphrase=None, owner=user, host=hostname, pyro_timeout=None, port=None, verbose=False ):
         self.suite = suite
         self.owner = owner
         self.host = host
         self.port = port
+        self.verbose = verbose
         if pyro_timeout:
             self.pyro_timeout = float(pyro_timeout)
         else:
@@ -46,9 +47,9 @@ class client( object ):
     def get_proxy( self, target ):
         # callers need to check for port_scan.SuiteIdentificationError:
         if self.port:
-            check_port( self.suite, self.pphrase, self.port, self.owner, self.host, self.pyro_timeout )
+            check_port( self.suite, self.pphrase, self.port, self.owner, self.host, self.pyro_timeout, self.verbose )
         else:
-            self.port = get_port( self.suite, self.owner, self.host, self.pphrase, self.pyro_timeout )
+            self.port = get_port( self.suite, self.owner, self.host, self.pphrase, self.pyro_timeout, self.verbose )
 
         # get a pyro proxy for the target object
         objname = self.owner + '.' + self.suite + '.' + target
