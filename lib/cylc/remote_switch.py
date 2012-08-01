@@ -295,8 +295,9 @@ class remote_switch( Pyro.core.ObjBase ):
         self.log.info( "servicing suite info request" )
         return [ self.config['title'], self.suite_dir, user ]
 
-    def get_task_list( self ):
-        self.log.info( "servicing task list request" )
+    def get_task_list( self, logit=True ):
+        if logit:
+            self.log.info( "servicing task list request" )
         return self.config.get_task_name_list()
  
     def get_task_info( self, task_names ):

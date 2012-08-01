@@ -550,7 +550,7 @@ class lupdater(threading.Thread):
         #print "Updating"
         try:
             [glbl, states, fam_states] = self.god.get_state_summary()
-            self.task_list = self.rem.get_task_list()
+            self.task_list = self.rem.get_task_list(logit=False)
         except Exception, x:
             #print >> sys.stderr, x
             gobject.idle_add( self.connection_lost )

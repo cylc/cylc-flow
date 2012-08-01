@@ -219,7 +219,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.sim_only = god.get_sim_mode_only()
             self.initial_cycle_time, self.final_cycle_time = god.get_cycle_range()
             self.logging_dir = god.get_logging_directory()
-            self.task_list = god.get_task_list()
+            self.task_list = god.get_task_list(logit=False)
         except SuiteIdentificationError, x:
             self.initial_cycle_time = None
             self.final_cycle_time = None
