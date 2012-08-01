@@ -33,7 +33,7 @@ from rolling_archive import rolling_archive
 from cylc_pyro_server import pyro_server
 from state_summary import state_summary
 from remote_switch import remote_switch
-from passphrase import SecurityError
+from passphrase import passphrase
 from OrderedDict import OrderedDict
 from job_submission.job_submit import job_submit
 from locking.lockserver import lockserver
@@ -273,14 +273,19 @@ class scheduler(object):
             self.gcylc = False
 
     def check_not_running_already( self ):
-        # CHECK SUITE IS NOT ALREADY RUNNING
         try:
-            port = port_scan.get_port( self.suite, self.owner, self.host, timeout=float(self.options.timeout) )
+            # get the suite passphrase
+            pphrase = passphrase( self.suite, self.owner, self.host,
+                    verbose=self.verbose ).get( None, self.suite_dir )
+        except Exception, x:
+            raise SchedulerError( "ERROR: failed to find passphrase for " + self.suite )
+        try:
+            port = port_scan.get_port( self.suite, self.owner, self.host, pphrase, timeout=float(self.options.timeout) )
         except port_scan.SuiteNotFoundError,x:
-            # Suite Not Found: good - it's not running already!
+            # The suite is not already running
             pass
         else:
-            raise SchedulerError( "ERROR: suite " + self.suite + " is already running")
+            raise SchedulerError( "ERROR: " + self.suite + " is already running")
 
     def configure_suite( self ):
         # LOAD SUITE CONFIG FILE

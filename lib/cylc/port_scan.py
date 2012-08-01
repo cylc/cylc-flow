@@ -36,6 +36,9 @@ class SuiteIdentificationError( Exception ):
 class ConnectionDeniedError( SuiteIdentificationError ):
     pass
 
+class ConnectionTimedOutError( SuiteIdentificationError ):
+    pass
+
 class NoSuiteFoundError( SuiteIdentificationError ):
     pass
 
@@ -96,6 +99,11 @@ class port_interrogator(object):
             # got access with no passphrase => not a secure suite
             return name, owner, 'insecure'
 
+def warn_timeout( host, port, timeout ):
+    print >> sys.stderr, "WARNING: connection timed out (" + str(timeout) + "s) at", portid( host, port )
+    print >> sys.stderr, '  This could mean a Ctrl-Z stopped suite or similar is holding up the port,'
+    print >> sys.stderr, '  or your cylc connection timeout needs to be longer than', str(timeout), 'seconds.'
+
 def portid( host, port ):
     return host + ":" + str(port)
 
@@ -128,8 +136,8 @@ def get_port( suite, owner=user, host=hostname, pphrase=None, timeout=1.0, silen
         try:
             name, xowner = proxy.id()
         except Pyro.errors.TimeoutError:
-            print >> sys.stderr, "WARNING: connection timed out (" + str(timeout) + "s) at", portid( host, port )
-            print >> sys.stderr, '(this could mean a Ctrl-Z stopped suite or similar is holding up the port)'
+            warn_timeout( host, port, timeout )
+            pass
         except Pyro.errors.ConnectionDeniedError:
             #print >> sys.stderr, "Wrong suite or wrong passphrase at " + portid( host, port )
             pass
@@ -165,6 +173,9 @@ def check_port( suite, pphrase, port, owner=user, host=hostname, timeout=1.0, si
 
     try:
         name, xowner = proxy.id()
+    except Pyro.errors.TimeoutError:
+        warn_timeout( host, port, timeout )
+        raise ConnectionTimedOutError, "ERROR, Connection Timed Out " + portid( host, port )
     except Pyro.errors.ConnectionDeniedError:
         raise ConnectionDeniedError, "ERROR: Connection Denied  at " + portid( host, port )
     except Pyro.errors.ProtocolError:
@@ -209,8 +220,8 @@ def scan( host=hostname, verbose=True, mine=False, silent=False, db=None, timeou
         try:
             name, owner, security = port_interrogator( host, port, my_passphrases, timeout ).interrogate()
         except Pyro.errors.TimeoutError:
-            print >> sys.stderr, "WARNING: connection timed out (" + str(timeout) + "s) at", portid( host, port )
-            print >> sys.stderr, '(this could mean a Ctrl-Z stopped suite or similar is holding up the port)'
+            warn_timeout( host, port, timeout )
+            pass
         except Pyro.errors.ConnectionDeniedError:
             # secure suite
             if not silent:
