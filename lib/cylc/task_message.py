@@ -107,6 +107,7 @@ class message(object):
             pass
             
         try:
+            # value may be string 'None'
             self.pyro_timeout = float(os.environ['CYLC_PYRO_TIMEOUT'])
         except:
             self.pyro_timeout = None

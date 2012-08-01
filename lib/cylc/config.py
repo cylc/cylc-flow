@@ -341,8 +341,10 @@ class config( CylcConfigObj ):
         self.vis_families = list(self.closed_families)
 
         if not self.pyro_timeout:
-            # a command line override was not used
-            self.pyro_timeout = float(self['cylc']['pyro connection timeout'])
+            # no timeout specified on the command line
+            tmp = self['cylc']['pyro connection timeout']
+            if tmp:
+                self.pyro_timeout = float(tmp)
 
         if self.verbose:
             print "Pyro connection timeout for tasks in this suite:", self.pyro_timeout, "seconds"
