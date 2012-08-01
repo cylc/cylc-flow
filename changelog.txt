@@ -774,6 +774,12 @@ could refer to either the main db-viewer or a suite control GUI.
 
 + Bug fix: explicit outputs now work for one-off asynchronous tasks.
 
++ (missed above: In gcontrol views - graphical and text based - the task
+content of the suite is now determined and updated dynamically by
+interrogating the running suite. Previously the task content was only
+loaded once, at GUI start up, and thus did not update if the suite was
+altered while the GUI was still running. 
+
 ________________________________________________________________________
 4.5.1
 
