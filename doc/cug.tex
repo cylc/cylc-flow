@@ -4598,11 +4598,12 @@ overridden in suite definitions: \begin{lstlisting}
 \end{lstlisting} A 120 task ensemble, for example, would be submitted in
 two batches of 50 followed by one of 20, with cylc waiting on all member
 job submissions to return before going on to the next batch. Note that
-are waiting on the {\em job submission command} to return here, not the
-submitted job. Typically local job submission will take a small fraction
-of a second, but for remote tasks it may take on the order of a second
-to open the ssh tunnel, create remote log directories if necessary,
-transmit the task job script over, and run the remote job submission. 
+we are waiting on the {\em job submission process} to return here, not the
+submitted job itself. Typically local job submission will take a small
+fraction of a second, but for remote tasks it may take on the order of a
+second to open the ssh tunnel, create remote log directories if
+necessary, transmit the task job script over, and run the remote job
+submission. 
 
 \subsubsection{Network Connection Timeouts}
 
@@ -4617,15 +4618,15 @@ commands, and for one-off connections by user-invoked suite-connecting
 commands). The downside of setting no connection timeout is that certain
 exceptional conditions can result in connection processes hanging
 indefinitely (to see this try hitting Ctrl-Z to stop a running
-suite and then attempting a \lstinline=cylc scan= or 
-\lstinline=cylc dump SUITE=, for instance, first with no timeout then
-using the \lstinline@-t,--timeout=@ command option to set one). The
-downside of having a timeout set is that you have to ensure it is long
-enough to handle the legitimate communication delays experienced when
-cylc is in the dependency negotation and job submission sections of its
-main loop.  It is probably sensible not to set a timeout and just be
-aware of what the likely cause is if you do occasionally strike a hung
-port. 
+suite and then attempt a \lstinline=cylc scan= or 
+\lstinline=cylc dump SUITE= etc. - first with no timeout, then
+with a timeout set using the \lstinline@-t,--timeout=@ command option).
+The downside of configuring a timeout in the suite is that you have to
+ensure it is long enough to handle the legitimate communication delays
+experienced when cylc is in the dependency negotation and job submission
+sections of its main loop.  It is probably sensible not to set a timeout
+and just be aware of what the likely cause is if you do occasionally
+strike a hung port. 
 
 \subsection{Internal Queues And The Runahead Limit}
 
