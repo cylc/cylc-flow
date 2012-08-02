@@ -813,3 +813,6 @@ is determined dynamically).
 parallel. During job submission cylc cannot respond to network requests,
 so this will significantly improve performance for large ensemble suites.
 
++ gcontrol "View -> Suite Log" now works even if the suite was not
+running when the GUI started up.
+
