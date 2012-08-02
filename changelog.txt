@@ -816,3 +816,7 @@ so this will significantly improve performance for large ensemble suites.
 + gcontrol "View -> Suite Log" now works even if the suite was not
 running when the GUI started up.
 
++ the "outputs" example suite was not validating due to use of old-style 
+cycle time variable in output messages. The new release generator
+script now aborts in case of non-validating examples.
+
