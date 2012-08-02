@@ -2209,7 +2209,8 @@ shown here in the state they were in at the time of triggering.''' )
  
     def view_log( self, w ):
         foo = cylc_logviewer( 'log', self.logging_dir, self.task_list)
-        self.quitters.append(foo)
+        if foo:
+            self.quitters.append(foo)
 
     def view_suite_info( self, w ):
         command = "cylc show --host=" + self.cfg.host + " " + self.cfg.suite 
