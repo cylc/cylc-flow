@@ -40,7 +40,8 @@ from cylc.owner import user
 
 class job_submit(object):
     REMOTE_COMMAND_TEMPLATE = ( " '"
-            + "mkdir -p $(dirname %(jobfile_path)s)"
+            + "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1;"
+            + " mkdir -p $(dirname %(jobfile_path)s)"
             + " && cat >%(jobfile_path)s"
             + " && chmod +x %(jobfile_path)s"
             + " && (%(command)s)"
