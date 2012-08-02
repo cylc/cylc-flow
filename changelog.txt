@@ -820,3 +820,8 @@ running when the GUI started up.
 cycle time variable in output messages. The new release generator
 script now aborts in case of non-validating examples.
 
++ The remote task execution mechanism now automatically sources
+/etc/profile and $HOME/.profile on the remote host, if they exist.
+This may make most previous use of the "initial scripting" config item
+obsolete.
+
