@@ -20,8 +20,8 @@ from job_submit import job_submit
 
 class background_slow( job_submit ):
     """
-This is a deliberately slow version of background job submission,
-used for cylc development purpose.
+This is a deliberately slow version of background job submission, used
+for cylc development purposes.
     """
     # stdin redirection (< /dev/null) allows background execution
     # even on a remote host - ssh can exit without waiting for the

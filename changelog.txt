@@ -806,3 +806,10 @@ definition directory on the suite host or remote task hosts).
 for the current list of task names (as of 4.5.0 the displayed task list
 is determined dynamically).
 
++ Two new job submission methods for test purposes: background_slow
+(takes 10 seconds to complete) and fail (always fails).
+
++ Tasks that are ready to run at the same time are now submitted in
+parallel. During job submission cylc cannot respond to network requests,
+so this will significantly improve performance for large ensemble suites.
+

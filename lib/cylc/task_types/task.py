@@ -299,7 +299,7 @@ class task( Pyro.core.ObjBase ):
         itask.state.set_status( 'held' )
 
     def run_external_task( self, dry_run=False ):
-        self.log( 'DEBUG',  'submitting task script' )
+        self.log( 'DEBUG',  'submitting task job script' )
         # construct the job launcher here so that a new one is used if
         # the task is re-triggered by the suite operator - so it will
         # get new stdout/stderr logfiles and not overwrite the old ones.
@@ -341,11 +341,15 @@ class task( Pyro.core.ObjBase ):
                         self.__class__.job_submit_command_template,
                         self.__class__.job_submission_shell )
 
-        if self.launcher.submit( dry_run ):
+        try:
+            p = self.launcher.submit( dry_run )
+        except:
+            self.set_submit_failed()
+            return None
+        else:
             self.set_submitted()
             self.submission_timer_start = task.clock.get_datetime()
-        else:
-            self.set_submit_failed()
+            return p
 
     def check_submission_timeout( self ):
         if not self.__class__.hook_script:

@@ -207,7 +207,8 @@ class job_submit(object):
         jf.write( self.local_jobfile_path )
         # make it executable
         os.chmod( self.local_jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
-        print "GENERATED JOB SCRIPT: " + self.local_jobfile_path
+        # not needed as the submit command is printed anyway:
+        #print "GENERATED JOB SCRIPT: " + self.local_jobfile_path
 
         # Construct self.command, the command to submit the jobfile to run
         self.construct_jobfile_submission_command()
@@ -225,33 +226,21 @@ class job_submit(object):
         if dry_run:
             print "THIS IS A DRY RUN. HERE'S HOW I WOULD SUBMIT THE TASK:"
             print command
-            return True
+            return None
 
-        print "SUBMITTING TASK: " + command
+        print command
         try:
             popen = subprocess.Popen( command, shell=True, stdin=stdin )
             if not self.local:
                 f = open(self.local_jobfile_path)
                 popen.communicate(f.read())
                 f.close()
-            res = popen.wait()
-            if res < 0:
-                print >> sys.stderr, "command terminated by signal", res
-                success = False
-            elif res > 0:
-                print >> sys.stderr, "command failed", res
-                success = False
-            else:
-                # res == 0
-                success = True
+            # To test sequential job submission (pre cylc-4.5.1)
+            # uncomment the following line (this tie cylc up for a while
+            # in the event of submitting many ensemble tasks at once):
+            ###popen.wait()
         except OSError, e:
-            # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
-            # (i.e. cylc's simplest "background" job submit method)
-            # because a background job returns immediately and the failure
-            # occurs in the background sub-shell.
-            print >> sys.stderr, "Job submission failed", e
-            success = False
-            raise
-
-        return success
+            print >> sys.stderr, "ERROR: Job submission failed", e
+            popen = None
+        return popen
 

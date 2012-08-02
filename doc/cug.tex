@@ -4059,6 +4059,11 @@ Cylc has a number of built-in job submission methods. If these do
 not suite your needs Section~\ref{DefiningNewJobSubmissionMethods} 
 shows how to extend cylc with new user-defined job submission methods.
 
+There are also two job submission methods intended for use in cylc
+development and testing: \lstinline=background_slow=, in which the job
+submission subprocess takes ten seconds to complete; and
+\lstinline=fail=, in which the job submission subprocess always fails.  
+
 \subsubsection{background}
 
 This job submission method runs tasks directly in a background shell.
@@ -4566,13 +4571,47 @@ would then presumably be impossible, but:
         forwarding} could provide a possible solution ...
 \end{myitemize}
 
+
+\subsection{Job Submission, Ensemble Suites, And Network Timeouts}
+
+From a high level perspective cylc works like this: the scheduling
+algorithm determines which tasks, if any, are ready to run; these tasks
+are submitted to run; then cylc processes network requests (running
+tasks reporting state changes back to the suite, for instance) before
+repeating the whole process.. Prior to cylc-4.5.1 any tasks ready at the
+same time were submitted sequentially and success or failure of each job
+submission subprocess was checked before continuing to the next one. For
+ensemble suites in which a large number of tasks are submitted at once
+this could take quite some time, especially if submitting jobs to a
+remote host, and cylc was unable to respond to network requests during
+this period (the control GUI was likewise unable to obtain information
+from the suite until the job submissions completed). This problem was
+revealed when network connection timeouts were introduced in cylc-4.5.0
+- submitting many tasks at once, in sequence, could take quite some time
+and the first tasks to begin running could suffer messaging timeouts and
+fail as a result.
+
+From cylc-4.5.1 all tasks ready at the same time are submitted in
+parallel, which is very much faster. Additionally, to be safe we have
+reverted to having no network connection timeouts by default, but you can
+configure one if you like in the suite definition (which applies to
+connections from running tasks) or on the command line (to override a 
+suite timeout for suite start-up commands, and for one-off connections
+by user-invoked suite-connecting commands). The downside of having no
+network connection timeout set is that certain exceptional conditions
+can result in connection processes hanging indefinitely. To see this,
+try hitting Ctrl-Z to stop a running suite and then attempt a
+\lstinline=cylc scan= or \lstinline=cylc dump SUITE=, for instance,
+first with no timeout, then using the \lstinline@-t,--timeout=@ command
+option.
+
 \subsection{Internal Queues And The Runahead Limit}
 
 Cylc suites are self-limiting to the extent that tasks are only
 submitted to run if they are actually ready to run. But even so some
 suites may generate too much activity at once, particularly in
 delayed/catch-up/historical operation when they are not constrained by
-the clock-triggered tasks that normally have to wait on real time data.
+clock-triggered tasks that normally have to wait on real time data.
 There are two issues to be aware of here: overburdening an external
 batch queueing system, or the task host hardware, by submitting too many
 tasks at once
