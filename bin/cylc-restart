@@ -52,8 +52,8 @@ NOTE: suites can be (re)started on remote hosts or other user accounts
 if passwordless ssh is set up. The ssh tunnel will remain open to
 receive the suite stdout and stderr streams. To control the running 
 suite from the local host requires the suite passphrase to be installed.
-If they exist /etc/profile and $HOME/.profile will be sourced on the
-remote host prior to attempting to run the suite."""
+Both /etc/profile and $HOME/.profile, if they exist, will be sourced on
+the remote host before starting the suite."""
 
         self.parser = cop( usage,
    argdoc=[("REG", "Suite name"),

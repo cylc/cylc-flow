@@ -67,10 +67,11 @@ class SchedulerError( Exception ):
         return repr(self.msg)
 
 class pool(object):
-    def __init__( self, qconfig, pyro, verbose ):
+    def __init__( self, qconfig, n_max_sub, pyro, verbose ):
         self.pyro = pyro
         self.qconfig = qconfig
         self.verbose = verbose
+        self.n_max_sub = n_max_sub
         self.myq = {}   # self.myq[taskname] = 'foo'
         for queue in qconfig:
             for taskname in qconfig[queue]['members']:
@@ -149,17 +150,25 @@ class pool(object):
                             task.state.set_status('queued')
                     else:
                         readytogo.append(task)
-        self.submit( readytogo )
 
-    def submit( self, tasks ):
-        if len(tasks) == 0:
+        if len(readytogo) == 0:
             if self.verbose:
                 print "(No tasks ready to run)"
             return
 
         print
-        print len(tasks), 'TASKS READY TO BE SUBMITTED'
+        n_tasks = len(readytogo)
+        print n_tasks, 'TASKS READY TO BE SUBMITTED'
+        n_max = self.n_max_sub
+        if n_tasks > n_max:
+            print 'BATCHING max simultaneous job submissions is set to:', n_max
+        batches, remainder = divmod( n_tasks, n_max )
+        for i in range(0,batches):
+            start = i*n_max
+            self.batch_submit( readytogo[start:start+n_max] )
+        self.batch_submit( readytogo[batches*n_max:n_tasks] )
 
+    def batch_submit( self, tasks ):
         before = datetime.datetime.now()
         ps = []
         for task in tasks:
@@ -169,24 +178,31 @@ class pool(object):
             if p:
                 ps.append( (task,p) ) 
         print
-        print 'WAITING ON JOB SUBMISSION SUBPROCESSES'    
-        count = 0
+        print 'WAITING ON JOB SUBMISSION SUBPROCESSES'
+        n_succ = 0
+        n_fail = 0
         for task, p in ps:
             res = p.wait()
             if res < 0:
                 print >> sys.stderr, "ERROR: Task", task.id, "job submission terminated by signal", res
                 task.reset_state_failed()
+                n_fail += 1
             elif res > 0:
                 print >> sys.stderr, "ERROR: Task", task.id, "job submission failed", res
                 task.reset_state_failed()
+                n_fail += 1
             else:
-                count += 1
+                n_succ += 1
                 if self.verbose:
                     print "Task", task.id, "job submission succeeded"
 
         after = datetime.datetime.now()
+        n_tasks = len(tasks)
         print
-        print count, "JOB SUBMISSION(S) SUCCESSFUL (timed: " + str( after - before ) + ")"
+        print "JOB SUBMISSION SUMMARY:", len(tasks)
+        print "  Time taken: " + str( after - before )
+        print " ", n_succ, "of", n_tasks, "job submissions succeeded" 
+        print " ", n_fail, "of", n_tasks, "job submissions failed" 
 
         ##### TO DO: RUNTIME GRAPH NOT ACCESSIBLE FROM INSIDE THIS CLASS ########
         #if not graphing_disabled and not self.runtime_graph_finalized:
@@ -263,7 +279,9 @@ class scheduler(object):
         qlimits = {}
         qmembers['default'] = task_name_list
         qlimits['default'] = 2
-        self.pool = pool( self.config['scheduling']['queues'], self.pyro, self.verbose )
+        self.pool = pool( self.config['scheduling']['queues'], 
+                self.config['cylc']['max simultaneous job submissions'],
+                self.pyro, self.verbose )
         
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD
         self.load_tasks()

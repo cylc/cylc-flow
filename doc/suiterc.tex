@@ -183,6 +183,57 @@ The handler script to call when one of the nominated events occurs.
     \item {\em default:} (none)
 \end{myitemize}
 
+
+\subsubsection[{[[}max simultaneous job submissions{]]} ]{[cylc] $\rightarrow$ [[max simultaneous job submissions]]}
+
+This sets the maximum allowable number of simultaneous (parallel) job
+submissions. If a greater number of tasks than this happen to become
+ready to run at once (as would be typical for ensemble suites), cylc
+will submit them in batches of this size, waiting for all members of a
+batch to return before proceeding to the next batch.  See
+Section~\ref{MaxSimJobSub}.
+
+\begin{myitemize}
+    \item {\em type:} integer (minimum 1)
+    \item {\em default:} 50
+\end{myitemize}
+
+\subsubsection[{[[}pyro connection timeout{]]} ]{[cylc] $\rightarrow$ [[pyro connection timeout]]}
+
+This sets the network connection timeout for Pyro connections to a
+running suite. The default is no timeout at all. See
+Section~\ref{MaxSimJobSub} for more on why this matters.
+
+\begin{myitemize}
+    \item {\em type:} float (seconds; minimum 0.0)
+    \item {\em default:} (none)
+\end{myitemize}
+
+\paragraph[directory]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ directory}
+
+The cylc log and its backups are stored in this directory. If you change
+the directory make sure it remains suite-specific by using suite
+identity environment variables in the path.
+
+\begin{myitemize}
+    \item {\em type:} string (directory path, may contain environment variables)
+    \item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite=
+\end{myitemize}
+
+\paragraph[roll over at start-up]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ roll over at start-up}
+
+Suite logs roll over (start anew) automatically when they reach a
+certain size - currently hardwired to 1MB in
+\lstinline=$CYLC_DIR/lib/cylc/pimp_my_logger.py=. 
+They can also be rolled automatically whenever a
+suite is started or restarted.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} True
+\end{myitemize}
+
+
 \subsubsection[{[[}lockserver{]]}]{[cylc] $\rightarrow$ [[lockserver]]}
 
 The cylc lockserver brokers suite and task locks on the network (these

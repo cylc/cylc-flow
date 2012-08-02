@@ -809,9 +809,13 @@ is determined dynamically).
 + Two new job submission methods for test purposes: background_slow
 (takes 10 seconds to complete) and fail (always fails).
 
-+ Tasks that are ready to run at the same time are now submitted in
-parallel. During job submission cylc cannot respond to network requests,
-so this will significantly improve performance for large ensemble suites.
++ Submission of tasks that become ready to run at the same time
+is now done in batches (size configurable): batch members
+are submitted in parallel, and cylc waits on all member job submissions
+(but not the submitted jobs, note) to return before continuing to the
+next batch. Cylc cannot respond to network requests while submitting 
+tasks so this should significantly improve performance for large
+ensemble suites.
 
 + gcontrol "View -> Suite Log" now works even if the suite was not
 running when the GUI started up.

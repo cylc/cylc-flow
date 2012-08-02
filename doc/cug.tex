@@ -3252,34 +3252,28 @@ be declared globally (in the root namespace) or per family, or per
 individual task. Use the global settings if all or most of your tasks
 need to run on the same remote host.
 
-The remote cylc directory must be used to give remote tasks access 
-to cylc commands if cylc is not in the default \lstinline=$PATH=) 
-on the remote host. Similarly the remote suite directory gives task
-access to suite files via \lstinline=$CYLC_SUITE_DEF_PATH= on the remote
+The remote cylc directory must be specified to give remote tasks access 
+to cylc commands, if cylc is not in the default \lstinline=$PATH= 
+on the remote host. If \lstinline=$PATH= is configured in your
+\lstinline=$HOME/.profile= script it will be picked up as the remote
+job submission mechanism automatically sources \lstinline=.profile= if
+it exists. Similarly the remote suite directory gives tasks access to
+suite files via \lstinline=$CYLC_SUITE_DEF_PATH= on the remote
 host and to the suite bin directory via \lstinline=$PATH=. If a remote
-suite definition directory is not given the local path will be used 
-with the local user's home directory, if present, substituted for the
+suite definition directory is not given the local (suite host) path will
+be assumed with the local home directory, if present, substituted with 
 literal \lstinline=$HOME= for evaluation on the remote host.
 
-Note that you can easily run the cylc example suites on a remote
-host. For the example suites with task implementations that work
-with ``real'' files, you'll have to run {\em all} tasks on the same
-remote host so that they can access their common input and output
-files. To distribute a suite across several hosts you must arrange
-(using additional tasks) to transfer files between the hosts as required
-to satisfy the real I/O dependencies.
+\paragraph{Remote Task Log Directories}
 
-\paragraph{Remote Log Directories}
-
-The stdout and stderr from local tasks is directed into files in the
-{\em job submission log directory} (specified in the suite.rc file) 
+The stdout and stderr streams from local tasks are directed into files in
+the {\em job submission log directory} (specified in the suite.rc file) 
 as explained in Section~\ref{WhitherStdoutAndStderr}. The same goes
 for remotely hosted tasks, except that the task owner's home directory
 is substituted as described above for the remote suite definition
-directory. Remote log directories are created on the fly by cylc, 
-during job submission, if they do not already exist.
+directory. Remote task log directories, like local ones, are created on
+the fly, if necessary, during job submission.
  
-
 \subsection{Visualization}
 \label{viso}
 
@@ -4573,37 +4567,65 @@ would then presumably be impossible, but:
 
 
 \subsection{Job Submission, Ensemble Suites, And Network Timeouts}
+\label{MaxSimJobSub}
 
 From a high level perspective cylc works like this: the scheduling
 algorithm determines which tasks, if any, are ready to run; these tasks
 are submitted to run; then cylc processes network requests (running
 tasks reporting state changes back to the suite, for instance) before
-repeating the whole process.. Prior to cylc-4.5.1 any tasks ready at the
+repeating the whole process. Prior to cylc-4.5.1 any tasks ready at the
 same time were submitted sequentially and success or failure of each job
 submission subprocess was checked before continuing to the next one. For
 ensemble suites in which a large number of tasks are submitted at once
 this could take quite some time, especially if submitting jobs to a
 remote host, and cylc was unable to respond to network requests during
 this period (the control GUI was likewise unable to obtain information
-from the suite until the job submissions completed). This problem was
-revealed when network connection timeouts were introduced in cylc-4.5.0
-- submitting many tasks at once, in sequence, could take quite some time
-and the first tasks to begin running could suffer messaging timeouts and
-fail as a result.
+from the suite until the job submissions completed). This created a problem 
+when network connection timeouts were introduced in cylc-4.5.0:
+submitting many tasks at once, in sequence, could take quite some time
+and the earlier tasks to begin running (while others in the same batch
+were still being submitted) could fail because of messaging timeouts.
 
-From cylc-4.5.1 all tasks ready at the same time are submitted in
-parallel, which is very much faster. Additionally, to be safe we have
-reverted to having no network connection timeouts by default, but you can
-configure one if you like in the suite definition (which applies to
-connections from running tasks) or on the command line (to override a 
-suite timeout for suite start-up commands, and for one-off connections
-by user-invoked suite-connecting commands). The downside of having no
-network connection timeout set is that certain exceptional conditions
-can result in connection processes hanging indefinitely. To see this,
-try hitting Ctrl-Z to stop a running suite and then attempt a
-\lstinline=cylc scan= or \lstinline=cylc dump SUITE=, for instance,
-first with no timeout, then using the \lstinline@-t,--timeout=@ command
-option.
+\subsubsection{Parallel Submission Of Jobs Ready At The Same Time}
+
+From cylc-4.5.1 all tasks ready at the same time can be submitted at
+once, or rather - to avoid swamping the host system as each job
+submission occurs in its own spawned subprocess - in batches whose
+members are submitted in parallel. The default batch size of 50 can be
+overridden in suite definitions: \begin{lstlisting}
+# SUITE.RC
+[cylc] maximum number of simultaneous job submissions = 50
+\end{lstlisting} A 120 task ensemble, for example, would be submitted in
+two batches of 50 followed by one of 20, with cylc waiting on all member
+job submissions to return before going on to the next batch. Note that
+are waiting on the {\em job submission command} to return here, not the
+submitted job. Typically local job submission will take a small fraction
+of a second, but for remote tasks it may take on the order of a second
+to open the ssh tunnel, create remote log directories if necessary,
+transmit the task job script over, and run the remote job submission. 
+
+\subsubsection{Network Connection Timeouts}
+
+Parallel job submission greatly reduces the amount of time during which
+cylc cannot respond to network requests when running large ensemble
+suites, but to be safe we have
+reverted to setting no network connection timeout by default. A timeout
+can be configured in the suite definition if you like though (in which
+case it applies to connections initiated by the suite's tasks)
+or on the command line (to override a suite timeout for suite start-up
+commands, and for one-off connections by user-invoked suite-connecting
+commands). The downside of setting no connection timeout is that certain
+exceptional conditions can result in connection processes hanging
+indefinitely (to see this try hitting Ctrl-Z to stop a running
+suite and then attempting a \lstinline=cylc scan= or 
+\lstinline=cylc dump SUITE=, for instance, first with no timeout then
+using the \lstinline@-t,--timeout=@ command option to set one). The
+downside of having a timeout set is that you have to ensure it is long
+enough to handle the legitimate communication delays experienced when
+cylc is in the dependency negotation and job submission sections of its
+main loop.  It is probably sensible not to set a timeout and just be
+aware of what the likely cause is if you do occasionally strike a hung
+port. 
 
 \subsection{Internal Queues And The Runahead Limit}
 
