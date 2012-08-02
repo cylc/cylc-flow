@@ -166,7 +166,8 @@ class pool(object):
         for i in range(0,batches):
             start = i*n_max
             self.batch_submit( readytogo[start:start+n_max] )
-        self.batch_submit( readytogo[batches*n_max:n_tasks] )
+        if remainder != 0:
+            self.batch_submit( readytogo[batches*n_max:n_tasks] )
 
     def batch_submit( self, tasks ):
         before = datetime.datetime.now()
@@ -199,7 +200,7 @@ class pool(object):
         after = datetime.datetime.now()
         n_tasks = len(tasks)
         print
-        print "JOB SUBMISSION SUMMARY:", len(tasks)
+        print "JOB SUBMISSION SUMMARY (" + str(len(tasks)) + " tasks):"
         print "  Time taken: " + str( after - before )
         print " ", n_succ, "of", n_tasks, "job submissions succeeded" 
         print " ", n_fail, "of", n_tasks, "job submissions failed" 
