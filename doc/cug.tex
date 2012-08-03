@@ -259,10 +259,10 @@ with dependency violations.
 To further illustrate the potential benefits of proper intercycle
 dependency handling, Figure~\ref{fig-time-three} shows an operational
 delay of almost one whole cycle in a suite with little downtime between
-cycles. Above the time axis is the optimal schedule that is possible, in
-principle, when intercycle dependence is taken into account, and
-below is the only safe schedule possible {\em in general} when they are
-ignored.  In the former case, even the cycle immediately after the delay
+cycles. Above the time axis is the optimal schedule that is possible in
+principle when intercycle dependence is taken into account, and below it
+is the only safe schedule possible {\em in general} when it is ignored.
+In the former case, even the cycle immediately after the delay
 is hardly affected, and subsequent cycles are all on time, whilst in the
 latter case it takes five full cycles to catch up to normal real time
 operation.
