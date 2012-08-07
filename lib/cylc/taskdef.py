@@ -31,6 +31,7 @@
 
 import sys, re
 from OrderedDict import OrderedDict
+from copy import deepcopy
 
 from prerequisites.prerequisites_fuzzy import fuzzy_prerequisites
 from prerequisites.prerequisites_loose import loose_prerequisites
@@ -304,7 +305,12 @@ class taskdef(object):
 
             sself.initial_scripting = self.initial_scripting
             sself.command = self.command
-            sself.retry_delays = self.retry_delays
+
+            # deepcopy retry delays: the deque gets pop()'ed in the task
+            # proxy objects, which is no good if all instances of the
+            # same task class reference the original deque!
+            sself.retry_delays = deepcopy(self.retry_delays)
+
             sself.precommand = self.precommand
             sself.postcommand = self.postcommand
 
