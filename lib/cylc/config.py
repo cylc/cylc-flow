@@ -1501,6 +1501,13 @@ class config( CylcConfigObj ):
             taskd.precommand = taskconfig['pre-command scripting'] 
             taskd.postcommand = taskconfig['post-command scripting'] 
 
+        # check retry delay type (must be float):
+        for i in taskd.retry_delays:
+            try:
+                float(i)
+            except ValueError:
+                raise SuiteConfigError, "ERROR, retry delay values must be floats: " + str(i)
+
         # initial scripting (could be required to access cylc even in sim mode).
         taskd.initial_scripting = taskconfig['initial scripting'] 
         # ssh messaging and pyro timeout variables must go in initial
