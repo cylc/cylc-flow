@@ -40,7 +40,9 @@ from cylc.owner import user
 
 class job_submit(object):
     REMOTE_COMMAND_TEMPLATE = ( " '"
-            + "mkdir -p $(dirname %(jobfile_path)s)"
+            + "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1;"
+            + "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1;"
+            + " mkdir -p $(dirname %(jobfile_path)s)"
             + " && cat >%(jobfile_path)s"
             + " && chmod +x %(jobfile_path)s"
             + " && (%(command)s)"
@@ -228,13 +230,13 @@ class job_submit(object):
             print command
             return None
 
+        if not self.local:
+            # direct the local jobfile across the ssh tunnel via stdin
+            command = command + ' < ' + self.local_jobfile_path
         print command
+
         try:
-            popen = subprocess.Popen( command, shell=True, stdin=stdin )
-            if not self.local:
-                f = open(self.local_jobfile_path)
-                popen.communicate(f.read())
-                f.close()
+            popen = subprocess.Popen( command, shell=True )
             # To test sequential job submission (pre cylc-4.5.1)
             # uncomment the following line (this tie cylc up for a while
             # in the event of submitting many ensemble tasks at once):

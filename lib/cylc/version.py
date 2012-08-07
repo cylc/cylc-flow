@@ -32,7 +32,7 @@ if cylc_version == "VERSION-" + "TEMPLATE": # (to avoid the replacement)
         p = subprocess.Popen( ['git', 'describe' ], stdout=subprocess.PIPE, stderr=subprocess.PIPE )
     except OSError,x:
         # git not found, 
-        print sys.stderr, 'WARNING: failed to get repository pseudo version tag:'
+        cylc_version = "(DEV)"
     else:
         retcode = p.wait()
         if retcode != 0:

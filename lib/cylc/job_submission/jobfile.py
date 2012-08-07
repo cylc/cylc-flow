@@ -114,8 +114,6 @@ class jobfile(object):
         self.FILE.write( '\n\necho "JOB SCRIPT STARTING"')
 
     def write_initial_scripting( self, BUFFER=None ):
-        # This can be used for remote environment set up,
-        # e.g. ". $HOME/.profile", as ssh does not source .profile.
         if not self.initial_scripting:
             # ignore initial scripting in simulation mode
             return

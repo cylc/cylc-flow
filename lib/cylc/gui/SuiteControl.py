@@ -221,26 +221,19 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.cfg = InitData( suite, pphrase, owner, host, port, cylc_tmpdir, pyro_timeout )
 
         self.view_layout_horizontal = False
-        try:
-            god = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
+        #try:
+        #    god = cylc_pyro_client.client( self.cfg.suite,
+        #            self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+        #            self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
 
-            self.sim_only = god.get_sim_mode_only()
-            self.initial_cycle_time, self.final_cycle_time = god.get_cycle_range()
-            self.logging_dir = god.get_logging_directory()
-            self.task_list = god.get_task_list(logit=False)
+        #    self.logging_dir = god.get_logging_directory()
 
-        except SuiteIdentificationError, x:
-            self.initial_cycle_time = None
-            self.final_cycle_time = None
-            self.sim_only = None
-            self.logging_dir = None
-            self.task_list = []
-            warning_dialog( x.__str__() ).warn()
-            # TO DO: ABORT HERE!!!!???
+        #except SuiteIdentificationError, x:
+        self.logging_dir = None
+        self.task_list = []
+        #    warning_dialog( x.__str__() ).warn()
 
-        self.connection_lost = False # (not used)
+        #self.connection_lost = False # (not used)
         self.quitters = []
         self.gcapture_windows = []
 
@@ -1551,8 +1544,6 @@ shown here in the state they were in at the time of triggering.''' )
         ic_box.pack_start( label, True )
         ctime_entry = gtk.Entry()
         ctime_entry.set_max_length(14)
-        if self.initial_cycle_time != None:
-            ctime_entry.set_text( str(self.initial_cycle_time))
         ic_box.pack_start (ctime_entry, True)
         vbox.pack_start( ic_box )
 
@@ -1561,8 +1552,6 @@ shown here in the state they were in at the time of triggering.''' )
         fc_box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(14)
-        if self.final_cycle_time != None:
-            stoptime_entry.set_text( str(self.final_cycle_time))
         fc_box.pack_start (stoptime_entry, True)
         vbox.pack_start( fc_box )
 
@@ -1590,7 +1579,7 @@ shown here in the state they were in at the time of triggering.''' )
         rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ic_box, is_box, no_reset_cb )
         restart_rb.connect(   "toggled", self.startup_method, "re",   ic_box, is_box, no_reset_cb )
 
-        dmode_group = controlled_option_group( "Simulation Mode", option="--simulation-mode", reverse=self.sim_only )
+        dmode_group = controlled_option_group( "Simulation Mode", option="--simulation-mode" )
         dmode_group.add_entry('Fail A Task (NAME%YYYYMMDDHH)', '--fail=')
         dmode_group.pack( vbox )
         
@@ -2136,7 +2125,9 @@ shown here in the state they were in at the time of triggering.''' )
         self.stop_toolbutton = gtk.ToolButton( icon_widget=stop_icon )
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip( self.stop_toolbutton, "Stop Suite" )
+        tooltip.set_tip( self.stop_toolbutton, 
+"""Stop Suite after all running tasks finish.
+For more Stop options use the Control menu.""" )
         self.stop_toolbutton.connect( "clicked", self.stopsuite_default )
         self.tool_bar.insert(self.stop_toolbutton, 0)
 
@@ -2208,8 +2199,15 @@ shown here in the state they were in at the time of triggering.''' )
                 self.cfg.pyro_timeout, self.cfg.port ).get_proxy( object )
  
     def view_log( self, w ):
-        foo = cylc_logviewer( 'log', self.logging_dir, self.task_list)
-        if foo:
+        try:
+            god = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
+            self.logging_dir = god.get_logging_directory()
+        except SuiteIdentificationError, x:
+            warning_dialog( x.__str__() ).warn()
+        else:
+            foo = cylc_logviewer( 'log', self.logging_dir, self.task_list)
             self.quitters.append(foo)
 
     def view_suite_info( self, w ):

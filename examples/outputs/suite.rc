@@ -26,6 +26,6 @@ sleep 10
 echo BYE"""
         [[[outputs]]]
             # use cylc placeholder variables here
-            out1 = "<TASK> uploaded file set 1 for <CYLC_TASK_CYCLE_TIME>"
-            out2 = "<TASK> uploaded file set 2 for <CYLC_TASK_CYCLE_TIME>"
+            out1 = "<TASK> uploaded file set 1 for [T]"
+            out2 = "<TASK> uploaded file set 2 for [T]"
 

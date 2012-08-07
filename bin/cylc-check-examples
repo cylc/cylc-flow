@@ -49,5 +49,7 @@ else
     for DIR in $BAD; do
         echo "   $DIR"
     done
+    # FAIL!
+    exit 1
 fi
 
