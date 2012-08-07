@@ -398,6 +398,7 @@ class scheduler(object):
 
         # USE LOCKSERVER?
         self.use_lockserver = self.config['cylc']['lockserver']['enable']
+        self.lockserver_port = None
         if self.use_lockserver:
             # check that user is running a lockserver
             # DO THIS BEFORE CONFIGURING PYRO FOR THE SUITE
@@ -442,8 +443,7 @@ class scheduler(object):
         # replace home dir with literal '$HOME' for the benefit of remote tasks:
         cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner
         cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
-        if self.use_lockserver:
-            cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port )
+        cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port ) # "None" if not using lockserver
         cylcenv[ 'CYLC_UTC' ] = str(utc)
 
         ict = self.start_time

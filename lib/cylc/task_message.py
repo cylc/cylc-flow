@@ -171,6 +171,8 @@ class message(object):
                     'CYLC_SUITE_REG_NAME', 'CYLC_SUITE_OWNER',
                     'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC',
                     'CYLC_USE_LOCKSERVER', 'CYLC_LOCKSERVER_PORT' ]:
+                # (no exception handling here as these variables should
+                # always be present in the task execution environment)
                 env[var] = os.environ[var]
 
             # The path to cylc on the remote end may be required:
