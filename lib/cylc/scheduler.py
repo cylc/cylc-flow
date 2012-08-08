@@ -450,8 +450,10 @@ class scheduler(object):
 
         # CYLC EXECUTION ENVIRONMENT
         cylcenv = OrderedDict()
-        cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]        # this is overridden in remote tasks ...
-        cylcenv[ 'CYLC_DIR_LOCAL' ] = os.environ[ 'CYLC_DIR' ]  # ... but this is not
+        # this gets modified on suite hosts:
+        cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
+        # this does not:
+        cylcenv[ 'CYLC_DIR_ON_SUITE_HOST' ] = os.environ[ 'CYLC_DIR' ]
         cylcenv[ 'CYLC_MODE' ] = 'scheduler'
         cylcenv[ 'CYLC_DEBUG' ] = str( self.options.debug )
         cylcenv[ 'CYLC_VERBOSE' ] = str(self.verbose)

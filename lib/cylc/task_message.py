@@ -175,8 +175,8 @@ class message(object):
                 # always be present in the task execution environment)
                 env[var] = os.environ[var]
 
-            # The path to cylc on the remote end may be required:
-            path = [ os.environ['CYLC_DIR_LOCAL'] ]
+            # The path to cylc/bin on the remote end may be required:
+            path = [ os.path.join( os.environ['CYLC_DIR_ON_SUITE_HOST'], 'bin' ) ]
 
             # Note that remrun().execute() calls sys.exit(0) after successful
             # remote command invocation (i.e. execution on the local
