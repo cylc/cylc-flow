@@ -829,3 +829,14 @@ script now aborts in case of non-validating examples.
 This may make most previous use of the "initial scripting" config item
 obsolete.
 
+________________________________________________________________________
+4.5.2 PENDING
+
++ Fixed the new delayed retry feature, which was not working properly for
+cycling tasks after the first cycle.
+
++ For ssh messaging, where remote tasks reinvoke messaging commands on
+the suite host, the path to cylc on the suite host is now transferred
+explicitly via the remote job script so we don't assume .profile will do
+the job on the suite host (although it probably will).
+
