@@ -137,12 +137,12 @@ are logged by cylc.
 \subsubsection[{[[}event hooks{]]}]{[cylc] $\rightarrow$ [[event hooks]]}
 \label{SuiteEventHandling}
 
-Cylc can call a nominated ``event handler'' script when certain suite
-events occur. This is intended to facilitate centralized alerting and
-automated handling of critical events. Event handlers can do anything
-you like, such as send emails or SMS, call pagers, or intervene in the
-operation of their parent suite with cylc commands. The command
-\lstinline=cylc [hook] email-suite= is a ready made suite event handler.
+Cylc can call a nominated suite event handler when suite shutdown
+occurs (in the future there may also be other suite-level event hooks).
+Event handlers can send an email or an SMS, call a pager, and so on; or
+intervene in the operation of their own suite using cylc commands. The
+command \lstinline=cylc [hook] email-suite= is a ready-made suite event
+handler.
 
 A single script can be nominated to handle a list of chosen events, and
 the event name is passed to the handler to allow it to distinguish
@@ -807,6 +807,7 @@ can be a single command or a multiline string of scripting.
 \end{myitemize}
 
 \paragraph[retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ retry delays}
+\label{RefRetries}
 
 A list of time intervals in minutes after which to resubmit the task if it 
 fails. Before each try the variable \lstinline=$CYLC_TASK_TRY_NUMBER= is
@@ -1120,13 +1121,13 @@ queueing system or resource manager.
 \paragraph[{[[[}event hooks{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]]}
 \label{TaskEventHandling}
 
-Cylc can call a nominated ``event handler'' script when certain task
-events, such as task failure or timeout, occur.  This is intended to
-facilitate centralized alerting and automated handling of critical
-events. Event handlers can do anything you like, such as send emails or
-SMS, call pagers, or intervene in the operation of their parent suite
-with cylc commands. The command \lstinline=cylc [hook] email-task= 
-is a ready made task event handler.
+Cylc can call a nominated ``event handler'' script when task events
+such as failure or timeout occur. This is intended to facilitate
+centralized alerting and automated handling of critical events. Event
+handlers can send an email or an SMS, call a pager, and so on; or
+intervene in the operation of their suite using cylc commands. The
+command \lstinline=cylc [hook] email-task= is an example event handler
+that comes with cylc.
 
 Currently a single script can be nominated to handle a list of chosen
 events, and the event name is passed to the handler to allow it to
@@ -1147,6 +1148,7 @@ where EVENT is one of the following strings:
     \item `submission\_failed' - the task failed in job submission
     \item `warning' - the task reported a warning message
     \item `failed' - the task failed
+    \item `retry' - the task failed but will retry
     \item `submission\_timeout' - task job submission timed out
     \item `execution\_timeout' - task execution timed out
 \end{myitemize}
@@ -1175,7 +1177,9 @@ The list of events to handle, as documented for EVENT just above.
 
 \subparagraph[script]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ script}
 
-The handler script to call when one of the nominated events occurs.
+The handler script to call when one of the nominated events occurs. To
+test event handling try \lstinline=script = "echo !!!!"= and watch suite
+stdout when nominated events occur.
 
 \begin{myitemize}
     \item {\em type:} string

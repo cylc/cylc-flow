@@ -837,6 +837,12 @@ cycling tasks after the first cycle.
 
 + For ssh messaging, where remote tasks reinvoke messaging commands on
 the suite host, the path to cylc on the suite host is now transferred
-explicitly via the remote job script so we don't assume .profile will do
-the job on the suite host (although it probably will).
+explicitly via the remote job script - we no longer assume that the
+user's .profile on the suite host will set the path.
+
++ New 'retry' event hook - calls your event handler when a task fails
+but will retry after a configured delay.
+
++ New User Guide sections under "Running Suites" to document "Automatic
+Retry On Task Failure" and "Suite And Task Event Handling".
 

@@ -159,6 +159,11 @@ class task( Pyro.core.ObjBase ):
         self.try_number = 1
         self.retry_delay_timer_start = None
 
+    def plog( self, message ):
+        # print and log a low priority message
+        print message
+        self.log( 'NORMAL', message )
+
     def log( self, priority, message ):
         logger = logging.getLogger( "main" )
         message = '[' + self.id + '] -' + message
@@ -205,7 +210,7 @@ class task( Pyro.core.ObjBase ):
         return dep
 
     def call_warning_hook( self, message ):
-        self.log( 'WARNING', 'calling task warning hook script' )
+        self.plog( 'calling task warning hook script' )
         command = ' '.join( [self.__class__.hook_script, 'warning', self.__class__.suite, self.id, "'" + message + "' &"] )
         subprocess.call( command, shell=True )
 
@@ -215,7 +220,7 @@ class task( Pyro.core.ObjBase ):
         self.submitted_time = task.clock.get_datetime()
         self.submission_timer_start = self.submitted_time
         if 'submitted' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'WARNING', 'calling task submitted hook script' )
+            self.plog( 'calling task submitted hook script' )
             command = ' '.join( [self.__class__.hook_script, 'submitted', self.__class__.suite, self.id, "'(task submitted)' &"] )
             subprocess.call( command, shell=True )
 
@@ -224,7 +229,7 @@ class task( Pyro.core.ObjBase ):
         self.started_time = task.clock.get_datetime()
         self.execution_timer_start = self.started_time
         if 'started' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'WARNING', 'calling task started hook script' )
+            self.plog( 'calling task started hook script' )
             command = ' '.join( [self.__class__.hook_script, 'started', self.__class__.suite, self.id, "'(task running)' &"] )
             subprocess.call( command, shell=True )
 
@@ -239,24 +244,23 @@ class task( Pyro.core.ObjBase ):
         print '\n' + self.id + " SUCCEEDED"
         self.state.set_status( 'succeeded' )
         if 'succeeded' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'WARNING', 'calling task succeeded hook script' )
+            self.plog( 'calling task succeeded hook script' )
             command = ' '.join( [self.__class__.hook_script, 'succeeded', self.__class__.suite, self.id, "'(task succeeded)' &"] )
             subprocess.call( command, shell=True )
 
-    def set_failed( self, reason ):
+    def set_failed( self, reason='(task failed)' ):
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
         if 'failed' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'WARNING', 'calling task failed hook script' )
+            self.plog( 'calling task failed hook script' )
             command = ' '.join( [self.__class__.hook_script, 'failed', self.__class__.suite, self.id, "'" + reason + "' &"] )
             subprocess.call( command, shell=True )
 
-    def set_submit_failed( self ):
-        reason = 'job submission failed'
+    def set_submit_failed( self, reason='(job submission failed)' ):
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
         if 'submission_failed' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'WARNING', 'calling task submission failed hook script' )
+            self.plog( 'calling task submission failed hook script' )
             command = ' '.join( [self.__class__.hook_script, 'submission_failed', self.__class__.suite, self.id, "'" + reason + "' &"] )
             subprocess.call( command, shell=True )
 
@@ -370,7 +374,7 @@ class task( Pyro.core.ObjBase ):
             if current_time > timeout:
                 msg = 'submitted ' + str( self.submission_timeout ) + ' minutes ago, but has not started'
                 self.log( 'WARNING', msg )
-                self.log( 'WARNING', 'Calling task submission timeout hook script.' )
+                self.plog( 'Calling task submission timeout hook script.' )
                 command = ' '.join( [ self.__class__.hook_script, 'submission_timeout', self.__class__.suite, self.id, "'" + msg + "' &" ] )
                 subprocess.call( command, shell=True )
                 self.submission_timer_start = None
@@ -398,7 +402,7 @@ class task( Pyro.core.ObjBase ):
                 else:
                     msg = 'started ' + str( self.execution_timeout ) + ' minutes ago, but has not succeeded'
                 self.log( 'WARNING', msg )
-                self.log( 'WARNING', 'Calling task execution timeout hook script.' )
+                self.plog( 'Calling task execution timeout hook script.' )
                 command = ' '.join( [ self.__class__.hook_script, 'execution_timeout', self.__class__.suite, self.id, "'" + msg + "' &" ] )
                 subprocess.call( command, shell=True )
                 self.execution_timer_start = None
@@ -477,14 +481,17 @@ class task( Pyro.core.ObjBase ):
                 task.state_changed = True
             else:
                 # Yep, we can retry.
-                self.log( 'CRITICAL',  \
-                    'Setting retry delay in minutes: ' + str(self.retry_delay) )
+                self.plog( 'Setting retry delay: ' + str(self.retry_delay) +  ' minutes' )
                 self.retry_delay_timer_start = task.clock.get_datetime()
                 self.try_number += 1
                 self.state.set_status( 'retry_delayed' )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 task.state_changed = True
+                if 'retry' in self.__class__.hook_events and self.__class__.hook_script:
+                    self.plog( 'calling task retry hook script' )
+                    command = ' '.join( [self.__class__.hook_script, 'retry', self.__class__.suite, self.id, "'(task retrying)' &"] )
+                    subprocess.call( command, shell=True )
 
         elif self.outputs.exists( message ):
             # registered output messages

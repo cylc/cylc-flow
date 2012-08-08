@@ -1570,8 +1570,8 @@ export CYLC_PYRO_TIMEOUT=""" + str(self.pyro_timeout) + "\n"
             taskd.hook_script = taskconfig['event hooks']['script']
             taskd.hook_events = taskconfig['event hooks']['events']
             for event in taskd.hook_events:
-                if event not in ['submitted', 'started', 'succeeded', 'warning', 'failed', 'submission_failed', \
-                        'submission_timeout', 'execution_timeout' ]:
+                if event not in ['submitted', 'started', 'succeeded', 'warning', 'failed', 'retry', \
+                        'submission_failed', 'submission_timeout', 'execution_timeout' ]:
                     raise SuiteConfigError, name + ": illegal task event: " + event
             taskd.submission_timeout = taskconfig['event hooks']['submission timeout']
             taskd.execution_timeout  = taskconfig['event hooks']['execution timeout']
