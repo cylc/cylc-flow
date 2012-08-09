@@ -209,8 +209,9 @@ class job_submit(object):
         jf.write( self.local_jobfile_path )
         # make it executable
         os.chmod( self.local_jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
-        # not needed as the submit command is printed anyway:
-        #print "GENERATED JOB SCRIPT: " + self.local_jobfile_path
+
+        # this is needed by the 'cylc jobscript' command:
+        print "GENERATED JOB SCRIPT: " + self.local_jobfile_path
 
         # Construct self.command, the command to submit the jobfile to run
         self.construct_jobfile_submission_command()
