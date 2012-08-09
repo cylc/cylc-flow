@@ -71,9 +71,9 @@ class jobfile(object):
         if not self.simulation_mode:
             self.write_directives()
         self.write_task_job_script_starting()
+        self.write_environment_1()
         if not self.simulation_mode:
             self.write_initial_scripting()
-        self.write_environment_1()
         self.write_cylc_access()
         self.write_err_trap()
         self.write_task_started()
@@ -155,7 +155,7 @@ class jobfile(object):
         if self.remote_cylc_dir:
             BUFFER.write( "\n\n# ACCESS TO CYLC:" )
             BUFFER.write( "\nPATH=$CYLC_DIR/bin:$PATH" )
-        BUFFER.write( "\n# Access to the suite bin dir:" )
+        BUFFER.write( "\n\n# Access to the suite bin dir:" )
         BUFFER.write( "\nPATH=$CYLC_SUITE_DEF_PATH/bin:$PATH" )
         BUFFER.write( "\nexport PATH" )
 

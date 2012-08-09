@@ -3953,7 +3953,9 @@ script for a task in the QuickStart.c example suite and then examine it:
     1> ~/cylc-run/QuickStart.c/log/job/Model%2011080506-1317298378.191123.out 
     2> ~/cylc-run/QuickStart.c/log/job/Model%2011080506-1317298378.191123.err &
 \end{lstlisting}
-And here is the generated job script:
+Here is the generated job script (not that some config items not used in
+this suite, such as task \lstinline=initial scripting= , result in extra 
+job script sections not shown here):
 \lstset{language=bash}
 \begin{lstlisting}
 #!/bin/bash
@@ -4043,8 +4045,8 @@ trap "" EXIT
 #EOF
 \end{lstlisting}
 
-You can also generate a job script and print it directly to stdout, with
-\lstinline=cylc jobscript=.
+You can also generate a job script and print it directly to stdout with
+\lstinline=cylc jobscript SUITE TASKID=.
 
 \subsection{Built-in Job Submission Methods}
 \label{AvailableMethods}

@@ -778,11 +778,11 @@ A description of this namespace, retrievable from running tasks via
 
 \paragraph[initial scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ initial scripting}
 
-Initial scripting goes at the top of the task job script, before the 
-task execution environment is configured, and before configuring access
-to cylc. The original intention for this item was to allow remote tasks
-to source login scripts before calling the first cylc command (i.e. the task
-started message), to set \lstinline=$PYTHONPATH= if Pyro has been
+Initial scripting goes at the top of the task job script after the 
+task execution environment is configured but before configuring access
+to cylc itself. The original intention was to allow remote tasks
+to source login scripts before calling the first cylc command (i.e.\ the
+task started message) to set \lstinline=$PYTHONPATH= if Pyro has been
 installed locally rather than at system level for example. Note however
 that the remote task invocation mechanism now automatically sources both 
 \lstinline=/etc/profile= and \lstinline=$HOME/.profile=, if they exist. 
