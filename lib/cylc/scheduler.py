@@ -505,6 +505,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( self.stop_tag  ) # may be "None"
         cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', self.suite_dir )
+        cylcenv[ 'CYLC_SUITE_PYRO_TIMEOUT' ] = str( self.config.pyro_timeout )
         job_submit.cylc_env = cylcenv
 
         # Put suite identity variables (for event handlers executed by

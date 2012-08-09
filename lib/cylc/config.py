@@ -1513,14 +1513,6 @@ class config( CylcConfigObj ):
 
         taskd.ssh_messaging = str(taskconfig['remote']['ssh messaging'])
 
-        # ssh messaging and pyro timeout variables must go in initial
-        # scripting in order to affect the 'task' started call
-        tmp = "export CYLC_PYRO_TIMEOUT=" + str(self.pyro_timeout) + "\n"
-        if taskd.initial_scripting != None: 
-            taskd.initial_scripting += tmp
-        else:
-            taskd.initial_scripting = tmp
-
         taskd.job_submission_shell = taskconfig['job submission']['shell']
 
         taskd.job_submit_command_template = taskconfig['job submission']['command template']

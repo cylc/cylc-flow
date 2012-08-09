@@ -108,7 +108,7 @@ class message(object):
             
         try:
             # value may be string 'None'
-            self.pyro_timeout = float(os.environ['CYLC_PYRO_TIMEOUT'])
+            self.pyro_timeout = float(os.environ['CYLC_SUITE_PYRO_TIMEOUT'])
         except:
             self.pyro_timeout = None
 
@@ -167,7 +167,7 @@ class message(object):
             # this code block.
             env = {}
             for var in ['CYLC_MODE', 'CYLC_TASK_ID', 'CYLC_VERBOSE', 
-                    'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 'CYLC_PYRO_TIMEOUT', 
+                    'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 'CYLC_SUITE_PYRO_TIMEOUT', 
                     'CYLC_SUITE_REG_NAME', 'CYLC_SUITE_OWNER',
                     'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC',
                     'CYLC_USE_LOCKSERVER', 'CYLC_LOCKSERVER_PORT' ]:
