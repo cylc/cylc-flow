@@ -846,3 +846,19 @@ but will retry after a configured delay.
 + New User Guide sections under "Running Suites" to document "Automatic
 Retry On Task Failure" and "Suite And Task Event Handling".
 
++ Better handling of initial and final cycle time in restarts:
+  + Initial cycle time (which ends up in $CYLC_SUITE_INITIAL_CYCLE_TIME)
+    now persists across suite restarts, but can optionally be ignored.
+  + Final cycle time (which ends up in $CYLC_SUITE_FINAL_CYCLE_TIME)
+    already persisted across restarts but not by default. For
+    consistency with the above, it now persists but can be ignored.
+  + The initial and final cycle time environment variables are now never
+    undefined, but will have the value of "None" if no value is set on
+    the command line or in the suite.rc file.
+  + A warm start, which assumes a previous cycle but is not a restart,
+    necessarily wipes out the initial cycle time unless it is hardwired
+    into the suite definition.
+  + While initial and final cycle times in the suite state dump can be
+    ignored at restart, those (if any) hardwired into the suite.rc can't.
+
+

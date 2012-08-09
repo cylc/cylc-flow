@@ -236,7 +236,7 @@ class scheduler(object):
 
         self.parser.add_option( "--until", 
                 help="Shut down after all tasks have PASSED this cycle time.",
-                metavar="CYCLE", action="store", dest="stop_time" )
+                metavar="CYCLE", action="store", dest="stop_tag" )
 
         self.parser.add_option( "--hold", help="Hold (don't run tasks) "
                 "immediately on starting.",
@@ -268,6 +268,7 @@ class scheduler(object):
         self.parse_commandline()
         self.check_not_running_already()
         self.configure_suite()
+        self.add_to_banner()
 
         # RUNAHEAD LIMIT
         self.runahead_limit = self.config['scheduling']['runahead limit']
@@ -289,7 +290,7 @@ class scheduler(object):
         self.initial_oldest_ctime = self.get_oldest_c_time()
 
         # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
-        #self.suite_state = state_summary( self.config, self.simulation_mode, self.start_time, self.gcylc )
+        #self.suite_state = state_summary( self.config, self.simulation_mode, self.start_tag, self.gcylc )
         self.suite_state = state_summary( self.config, self.simulation_mode, self.initial_oldest_ctime, self.gcylc )
         self.pyro.connect( self.suite_state, 'state_summary')
 
@@ -363,45 +364,44 @@ class scheduler(object):
         self.stop_task = None
 
         # START and STOP CYCLE TIMES
-        self.stop_time = None
+        self.stop_tag = None
         self.stop_clock_time = None
-        # (self.start_time is set already if provided on the command line).
+        # (self.start_tag is set already if provided on the command line).
 
-        if not self.start_time:
+        if not self.start_tag:
             # No initial cycle time provided on the command line.
             if self.config['scheduling']['initial cycle time']:
                 # Use suite.rc initial cycle time, if one is defined.
-                self.start_time = str(self.config['scheduling']['initial cycle time'])
-            if self.options.stop_time:
+                self.start_tag = str(self.config['scheduling']['initial cycle time'])
+            if self.options.stop_tag:
                 # But a final cycle time was provided on the command line.
                 # NOTE: this will have to be changed if we use a STOP
                 # arg instead of the '--until=STOP' option - then it
                 # will not be possible to use STOP without START. 
-                self.stop_time = self.options.stop_time
+                self.stop_tag = self.options.stop_tag
             elif self.config['scheduling']['final cycle time']:
                 # Use suite.rc final cycle time, if one is defined.
-                self.stop_time = str(self.config['scheduling']['final cycle time'])
+                self.stop_tag = str(self.config['scheduling']['final cycle time'])
         else:
             # An initial cycle time was provided on the command line
             # => also use command line final cycle time, if provided,
             # but otherwise don't use the suite.rc default stop time
             # (user may change start without considering stop cycle).
-            if self.options.stop_time:
+            if self.options.stop_tag:
                 # stop time provided on the command line
-                self.stop_time = ct( self.options.stop_time ).get()
+                self.stop_tag = ct( self.options.stop_tag ).get()
 
-        if self.stop_time:
+        if self.stop_tag:
             # raises CycleTimeError:
-            self.stop_time = ct( self.stop_time ).get()
-        if self.start_time:
+            self.stop_tag = ct( self.stop_tag ).get()
+        if self.start_tag:
             # raises CycleTimeError:
-            self.start_time = ct( self.start_time ).get()
+            self.start_tag = ct( self.start_tag ).get()
 
-        if not self.start_time and not self.is_restart:
+        if not self.start_tag and not self.is_restart:
             print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
 
-        if self.stop_time:
-            self.banner[ 'Stopping at' ] = self.stop_time
+        self.banner[ 'Final Cycle' ] = self.stop_tag
 
         # PAUSE TIME?
         self.hold_suite_now = False
@@ -466,13 +466,8 @@ class scheduler(object):
         cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
         cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port ) # "None" if not using lockserver
         cylcenv[ 'CYLC_UTC' ] = str(utc)
-
-        ict = self.start_time
-        fct = self.stop_time
-        if ict:
-            cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( ict )
-        if fct:
-            cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( fct )
+        cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( self.start_tag ) # may be "None"
+        cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( self.stop_tag  ) # may be "None"
         cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', self.suite_dir )
 
@@ -648,8 +643,8 @@ class scheduler(object):
                         # must be about to spawn. Otherwise they must be 
                         # stalled at the runahead limit, in which case we
                         # can stop.
-                        if self.stop_time:
-                            if int(itask.tag) < int(self.stop_time):
+                        if self.stop_tag:
+                            if int(itask.tag) < int(self.stop_tag):
                                 stop_now = False
                                 break
                         else:
@@ -765,9 +760,9 @@ class scheduler(object):
     def get_tasks( self ):
         return self.pool.get_tasks()
 
-    def set_stop_ctime( self, stop_time ):
-        self.log.warning( "Setting stop cycle time: " + stop_time )
-        self.stop_time = stop_time
+    def set_stop_ctime( self, stop_tag ):
+        self.log.warning( "Setting stop cycle time: " + stop_tag )
+        self.stop_tag = stop_tag
 
     def set_stop_clock( self, dtime ):
         self.log.warning( "Setting stop clock time: " + dtime.isoformat() )
@@ -798,9 +793,9 @@ class scheduler(object):
             self.hold_time = None
         for itask in self.pool.get_tasks():
             if itask.state.is_held():
-                if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+                if self.stop_tag and int( itask.c_time ) > int( self.stop_tag ):
                     # this task has passed the suite stop time
-                    itask.log( 'WARNING', "Not releasing (beyond suite stop cycle) " + self.stop_time )
+                    itask.log( 'WARNING', "Not releasing (beyond suite stop cycle) " + self.stop_tag )
                 elif itask.stop_c_time and int( itask.c_time ) > int( itask.stop_c_time ):
                     # this task has passed its own stop time
                     itask.log( 'WARNING', "Not releasing (beyond task stop cycle) " + itask.stop_c_time )
@@ -809,13 +804,13 @@ class scheduler(object):
                     itask.state.set_status('waiting')
  
         # TO DO: write a separate method for cancelling a stop time:
-        #if self.stop_time:
+        #if self.stop_tag:
         #    self.log.warning( "UNSTOP: unsetting suite stop time")
-        #    self.stop_time = None
+        #    self.stop_tag = None
 
     def will_stop_at( self ):
-        if self.stop_time:
-            return self.stop_time
+        if self.stop_tag:
+            return self.stop_tag
         elif self.stop_clock_time:
             return self.stop_clock_time.isoformat()
         elif self.stop_task:
@@ -824,7 +819,7 @@ class scheduler(object):
             return None
 
     def clear_stop_times( self ):
-        self.stop_time = None
+        self.stop_tag = None
         self.stop_clock_time = None
         self.stop_task = None
  
@@ -832,7 +827,7 @@ class scheduler(object):
         return self.hold_suite_now
 
     def stopping( self ):
-        if self.stop_time or self.stop_clock_time:
+        if self.stop_tag or self.stop_clock_time:
             return True
         else:
             return False
@@ -976,9 +971,9 @@ class scheduler(object):
         if self.hold_suite_now:
             new_task.log( 'WARNING', "HOLDING (general suite hold) " )
             new_task.state.set_status('held')
-        elif self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
+        elif self.stop_tag and int( new_task.c_time ) > int( self.stop_tag ):
             # we've reached the suite stop time
-            new_task.log( 'WARNING', "HOLDING (beyond suite stop cycle) " + self.stop_time )
+            new_task.log( 'WARNING', "HOLDING (beyond suite stop cycle) " + self.stop_tag )
             new_task.state.set_status('held')
         elif self.hold_time and int( new_task.c_time ) > int( self.hold_time ):
             # we've reached the suite hold time
@@ -1040,10 +1035,15 @@ class scheduler(object):
         else:
             FILE.write( 'suite time : ' + self.clock.dump_to_str() + '\n' )
 
-        if self.stop_time:
-            FILE.write( 'stop time : ' + self.stop_time + '\n' )
+        if self.start_tag:
+            FILE.write( 'initial cycle : ' + self.start_tag + '\n' )
         else:
-            FILE.write( 'stop time : (none)\n' )
+            FILE.write( 'initial cycle : (none)\n' )
+
+        if self.stop_tag:
+            FILE.write( 'final cycle : ' + self.stop_tag + '\n' )
+        else:
+            FILE.write( 'final cycle : (none)\n' )
 
         for itask in self.pool.get_tasks():
             # TO DO: CHECK THIS STILL WORKS 
@@ -1462,8 +1462,8 @@ class scheduler(object):
                     itask.prepare_for_death()
                     del itask
                 else: 
-                    if self.stop_time and int( itask.tag ) > int( self.stop_time ):
-                        itask.log( 'WARNING', "HOLDING at configured suite stop time " + self.stop_time )
+                    if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
+                        itask.log( 'WARNING', "HOLDING at configured suite stop time " + self.stop_tag )
                         itask.state.set_status('held')
                     if itask.stop_c_time and int( itask.tag ) > int( itask.stop_c_time ):
                         # this task has a stop time configured, and we've reached it
@@ -1608,7 +1608,7 @@ class scheduler(object):
 
                 new_task = itask.spawn( 'waiting' )
  
-                if self.stop_time and int( new_task.tag ) > int( self.stop_time ):
+                if self.stop_tag and int( new_task.tag ) > int( self.stop_tag ):
                     # we've reached the stop time
                     new_task.log( 'WARNING', 'HOLDING at configured suite stop time' )
                     new_task.state.set_status('held')
@@ -1676,8 +1676,8 @@ class scheduler(object):
  
     def update_runtime_graph( self, task ):
         # stop if all tasks are more than cutoff hours beyond suite start time
-        if self.start_time:
-            st = ct( self.start_time )
+        if self.start_tag:
+            st = ct( self.start_tag )
         else:
             st = ct( self.initial_oldest_ctime )
 

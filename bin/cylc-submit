@@ -163,10 +163,8 @@ if use_lockserver:
 cylcenv[ 'CYLC_UTC' ] = str(utc)
 ict = config['scheduling']['initial cycle time']
 fct = config['scheduling']['final cycle time'  ]
-if ict:
-    cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( ict )
-if fct:
-    cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( fct )
+cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( ict ) # may be "None"
+cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( fct ) # may be "None"
 cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] =  suite_dir
 cylcenv[ 'CYLC_SUITE_DEF_PATH' ] =  re.sub( os.environ['HOME'], '$HOME', suite_dir )
 
