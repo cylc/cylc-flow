@@ -832,33 +832,30 @@ obsolete.
 ________________________________________________________________________
 4.5.2 PENDING
 
-+ Fixed the new delayed retry feature, which was not working properly for
-cycling tasks after the first cycle.
++ The new delayed retry feature now works properly for cycling tasks
+beyond the first cycle.
 
-+ For ssh messaging, where remote tasks reinvoke messaging commands on
-the suite host, the path to cylc on the suite host is now transferred
-explicitly via the remote job script - we no longer assume that the
-user's .profile on the suite host will set the path.
++ For ssh messaging, where remote messaging commands re-invoke
+themselves on the suite host, the path to cylc on the suite host is now
+transferred explicitly via the remote task job script - we no longer
+rely on the user's .profile on the suite host for this.
 
-+ New 'retry' event hook - calls your event handler when a task fails
-but will retry after a configured delay.
++ New 'retry' event hook - calls the event handler if a task fails when
+it has a retry lined up.
 
 + New User Guide sections under "Running Suites" to document "Automatic
 Retry On Task Failure" and "Suite And Task Event Handling".
 
-+ Better handling of initial and final cycle time in restarts:
-  + Initial cycle time (which ends up in $CYLC_SUITE_INITIAL_CYCLE_TIME)
-    now persists across suite restarts, but can optionally be ignored.
-  + Final cycle time (which ends up in $CYLC_SUITE_FINAL_CYCLE_TIME)
-    already persisted across restarts but not by default. For
-    consistency with the above, it now persists but can be ignored.
-  + The initial and final cycle time environment variables are now never
-    undefined, but will have the value of "None" if no value is set on
-    the command line or in the suite.rc file.
-  + A warm start, which assumes a previous cycle but is not a restart,
-    necessarily wipes out the initial cycle time unless it is hardwired
-    into the suite definition.
-  + While initial and final cycle times in the suite state dump can be
-    ignored at restart, those (if any) hardwired into the suite.rc can't.
-
++ Initial and final cycle times: $CYLC_SUITE_INITIAL_CYCLE_TIME and
+$CYLC_SUITE_FINAL_CYCLE_TIME now persist across restarts by default, but
+the old value in the restart file can be ignored by command line option.
+Values hardwired into the suite.rc file cannot be ignored. The
+environment variables are now always defined, but may have the value
+"None" if no value is set on the command line, state dump, or suite.rc
+file. $CYLC_SUITE_INITIAL_CYCLE_TIME is only set by a cold start (and
+thence persists through restarts), not by a warm start (which is really
+a form of restart that does not explicitly reference a previous suite
+state). In a warm start you can optionally push the value of "initial
+cycle time", command line or suite.rc, through to the environment
+variable.
 

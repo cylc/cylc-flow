@@ -103,10 +103,13 @@ the remote host before starting the suite."""
     def add_to_banner( self ):
         if self.options.warm:
             self.banner[ "WARM START" ] = self.start_tag
+            self.ict = None
         elif self.options.raw:
             self.banner[ "RAW START" ] = self.start_tag
+            self.ict = None
         else:
             self.banner[ "COLD START" ] = self.start_tag
+            self.ict = self.start_tag
 
     def load_tasks_cold( self ):
         if self.start_tag:

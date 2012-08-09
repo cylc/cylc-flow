@@ -226,6 +226,8 @@ the remote host before starting the suite."""
                 # reinstate the former start cycle
                 self.start_tag = oldstartcycle
  
+        self.ict = self.start_tag
+
         line3 = lines[2]
         line3 = line3.rstrip()
         try:

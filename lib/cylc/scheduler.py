@@ -267,20 +267,17 @@ class scheduler(object):
 
         self.parse_commandline()
         self.check_not_running_already()
+
         self.configure_suite()
-        self.add_to_banner()
-
-        # RUNAHEAD LIMIT
         self.runahead_limit = self.config['scheduling']['runahead limit']
-
-        self.print_banner()
-
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
         task_name_list = self.config.get_task_name_list()
+
         qmembers = {}
         qlimits = {}
         qmembers['default'] = task_name_list
         qlimits['default'] = 2
+
         self.pool = pool( self.config['scheduling']['queues'], 
                 self.config['cylc']['max simultaneous job submissions'],
                 self.pyro, self.verbose )
@@ -299,6 +296,11 @@ class scheduler(object):
             graphing_disabled = True
         if not graphing_disabled:
             self.initialize_runtime_graph()
+
+        self.add_to_banner() # must be before configure_environments for self.ict
+        self.configure_environments()
+
+        self.print_banner()
 
     def assign_to_queues( self ):
         for task in self.tasks:
@@ -446,9 +448,42 @@ class scheduler(object):
         task.task.suite = self.suite
 
         # Running in UTC time? (else just use the system clock)
-        utc = self.config['cylc']['UTC mode']
+        self.utc = self.config['cylc']['UTC mode']
 
-        # CYLC EXECUTION ENVIRONMENT
+        # CLOCK (accelerated time in simulation mode)
+        rate = self.config['cylc']['simulation mode']['clock rate']
+        offset = self.config['cylc']['simulation mode']['clock offset']
+        self.clock = accelerated_clock.clock( int(rate), int(offset), self.utc, self.simulation_mode ) 
+
+        # nasty kludge to give the simulation mode clock to task classes:
+        task.task.clock = self.clock
+        clocktriggered.clocktriggered.clock = self.clock
+
+        self.pyro.connect( self.clock, 'clock' )
+
+        self.failout_task_id = self.options.failout_task_id
+
+        # JOB SUBMISSION
+        job_submit.simulation_mode = self.simulation_mode
+        if self.simulation_mode and self.failout_task_id:
+                job_submit.failout_id = self.failout_task_id
+
+        # PIMP THE SUITE LOG
+        self.log = logging.getLogger( 'main' )
+        pimp_my_logger.pimp_it( \
+             self.log, self.logging_dir, self.config['cylc']['logging']['roll over at start-up'], \
+                self.logging_level, self.clock )
+
+        # STATE DUMP ROLLING ARCHIVE
+        arclen = self.config[ 'cylc']['state dumps']['number of backups' ]
+        self.state_dump_archive = rolling_archive( self.state_dump_filename, arclen )
+
+        # REMOTE CONTROL INTERFACE
+        # (note: passing in self to give access to task pool methods is a bit clunky?).
+        self.remote = remote_switch( self.config, self.clock, self.suite_dir, self, self.failout_task_id )
+        self.pyro.connect( self.remote, 'remote' )
+
+    def configure_environments( self ):
         cylcenv = OrderedDict()
         # this gets modified on suite hosts:
         cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
@@ -465,58 +500,24 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner
         cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
         cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port ) # "None" if not using lockserver
-        cylcenv[ 'CYLC_UTC' ] = str(utc)
-        cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( self.start_tag ) # may be "None"
+        cylcenv[ 'CYLC_UTC' ] = str(self.utc)
+        cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( self.ict ) # may be "None"
         cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( self.stop_tag  ) # may be "None"
         cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', self.suite_dir )
-
-        # CLOCK (accelerated time in simulation mode)
-        rate = self.config['cylc']['simulation mode']['clock rate']
-        offset = self.config['cylc']['simulation mode']['clock offset']
-        self.clock = accelerated_clock.clock( int(rate), int(offset), utc, self.simulation_mode ) 
-
-        # nasty kludge to give the simulation mode clock to task classes:
-        task.task.clock = self.clock
-        clocktriggered.clocktriggered.clock = self.clock
-
-        self.pyro.connect( self.clock, 'clock' )
-
-        self.failout_task_id = self.options.failout_task_id
-
-        # JOB SUBMISSION
-        job_submit.simulation_mode = self.simulation_mode
         job_submit.cylc_env = cylcenv
-        if self.simulation_mode and self.failout_task_id:
-                job_submit.failout_id = self.failout_task_id
 
-        # SCHEDULER ENVIRONMENT
-        # Suite bin directory for alert scripts executed by the scheduler. 
-        os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 
-        # User defined local variables that may be required by alert scripts
-        senv = self.config['cylc']['environment']
-        for var in senv:
-            os.environ[var] = os.path.expandvars(senv[var])
-
-        # Suite identity for alert scripts (which are executed by the scheduler).
-        # Also put cylcenv variables in the scheduler environment
+        # Put suite identity variables (for event handlers executed by
+        # cylc) into the environment in which cylc runs
         for var in cylcenv:
             os.environ[var] = cylcenv[var]
 
-        # PIMP THE SUITE LOG
-        self.log = logging.getLogger( 'main' )
-        pimp_my_logger.pimp_it( \
-             self.log, self.logging_dir, self.config['cylc']['logging']['roll over at start-up'], \
-                self.logging_level, self.clock )
-
-        # STATE DUMP ROLLING ARCHIVE
-        arclen = self.config[ 'cylc']['state dumps']['number of backups' ]
-        self.state_dump_archive = rolling_archive( self.state_dump_filename, arclen )
-
-        # REMOTE CONTROL INTERFACE
-        # (note: passing in self to give access to task pool methods is a bit clunky?).
-        self.remote = remote_switch( self.config, self.clock, self.suite_dir, self, self.failout_task_id )
-        self.pyro.connect( self.remote, 'remote' )
+        # Suite bin directory for event handlers executed by the scheduler. 
+        os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 
+        # User defined local variables that may be required by event handlers
+        senv = self.config['cylc']['environment']
+        for var in senv:
+            os.environ[var] = os.path.expandvars(senv[var])
 
 
     def print_banner( self ):
