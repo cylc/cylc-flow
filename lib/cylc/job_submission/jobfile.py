@@ -28,7 +28,7 @@ class jobfile(object):
             precommand_scripting, command_scripting, try_number,
             postcommand_scripting, remote_cylc_dir, remote_suite_dir,
             shell, share_dir, work_dir, log_root, simulation_mode,
-            job_submission_method ):
+            job_submission_method, ssh_messaging ):
 
         self.task_id = task_id
         self.cylc_env = deepcopy(cylc_env)  # deep copy as may be modified below
@@ -52,6 +52,7 @@ class jobfile(object):
         self.remote_suite_dir = remote_suite_dir
         self.manual_messaging = manual_messaging
         self.namespace_hierarchy = ns_hier
+        self.ssh_messaging = ssh_messaging
 
         # Get NAME%CYCLE (cycling tasks) or NAME%TAG (asynchronous tasks)
         ( self.task_name, tag ) = task_id.split( '%' )
@@ -143,6 +144,7 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
         BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.namespace_hierarchy) + '"')
         BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.try_number) )
+        BUFFER.write( "\nexport CYLC_TASK_SSH_MESSAGING=" + str(self.ssh_messaging) )
 
     def write_cylc_access( self, BUFFER=None ):
         # configure access to cylc first so that cylc commands can be

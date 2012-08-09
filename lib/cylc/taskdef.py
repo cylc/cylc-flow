@@ -113,6 +113,7 @@ class taskdef(object):
         self.precommand = None
         self.postcommand = None
         self.initial_scripting = None
+        self.ssh_messaging = False
 
         self.environment = OrderedDict()  # var = value
         self.directives  = OrderedDict()  # var = value
@@ -304,6 +305,8 @@ class taskdef(object):
             sself.asyncid_pattern = self.asyncid_pattern
 
             sself.initial_scripting = self.initial_scripting
+            sself.ssh_messaging = self.ssh_messaging
+
             sself.command = self.command
 
             # deepcopy retry delays: the deque gets pop()'ed in the task

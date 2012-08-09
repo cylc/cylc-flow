@@ -59,7 +59,7 @@ class job_submit(object):
             manual_messaging, logfiles, log_dir, share_dir, work_dir, task_owner,
             remote_host, remote_cylc_dir, remote_suite_dir,
             remote_shell_template, remote_log_dir,
-            job_submit_command_template, job_submission_shell ):
+            job_submit_command_template, job_submission_shell, ssh_messaging ):
 
         self.try_number = try_number
         self.task_id = task_id
@@ -74,6 +74,7 @@ class job_submit(object):
         self.namespace_hierarchy = ns_hier
         self.directives  = directives
         self.logfiles = logfiles
+        self.ssh_messaging = ssh_messaging
 
         self.share_dir = share_dir
         self.work_dir = work_dir
@@ -204,7 +205,9 @@ class job_submit(object):
                 self.remote_cylc_dir, self.remote_suite_dir,
                 self.job_submission_shell, self.share_dir,
                 self.work_dir, self.jobfile_path,
-                self.__class__.simulation_mode, self.__class__.__name__ )
+                self.__class__.simulation_mode,
+                self.__class__.__name__,
+                self.ssh_messaging )
         # write the job file
         jf.write( self.local_jobfile_path )
         # make it executable

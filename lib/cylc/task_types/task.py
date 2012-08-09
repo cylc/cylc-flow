@@ -327,6 +327,7 @@ class task( Pyro.core.ObjBase ):
 
         launcher_class = getattr( mod, class_name )
 
+        # To Do: most of the following arguments could be class variables
         self.launcher = launcher_class(
                         self.id, self.initial_scripting,
                         self.precommand, self.command, self.try_number,
@@ -343,7 +344,8 @@ class task( Pyro.core.ObjBase ):
                         self.__class__.remote_shell_template,
                         self.__class__.remote_log_directory,
                         self.__class__.job_submit_command_template,
-                        self.__class__.job_submission_shell )
+                        self.__class__.job_submission_shell,
+                        self.ssh_messaging )
 
         try:
             p = self.launcher.submit( dry_run )

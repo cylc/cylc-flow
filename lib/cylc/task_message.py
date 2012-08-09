@@ -101,7 +101,7 @@ class message(object):
     
         self.ssh_messaging = False
         try:
-            if os.environ['CYLC_SSH_MESSAGING'] == 'True':
+            if os.environ['CYLC_TASK_SSH_MESSAGING'] == 'True':
                 self.ssh_messaging = True
         except:
             pass
@@ -162,7 +162,7 @@ class message(object):
                 sys.argv.append( '-v' )
             # Some variables from the task execution environment are
             # also required by the re-invoked remote command: Note that
-            # $CYLC_SSH_MESSAGING is not passed through so the
+            # $CYLC_TASK_SSH_MESSAGING is not passed through so the
             # re-invoked command on the remote side will not end up in
             # this code block.
             env = {}

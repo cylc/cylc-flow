@@ -1510,11 +1510,12 @@ class config( CylcConfigObj ):
 
         # initial scripting (could be required to access cylc even in sim mode).
         taskd.initial_scripting = taskconfig['initial scripting'] 
+
+        taskd.ssh_messaging = str(taskconfig['remote']['ssh messaging'])
+
         # ssh messaging and pyro timeout variables must go in initial
         # scripting in order to affect the 'task' started call
-        tmp = """
-export CYLC_SSH_MESSAGING=""" + str(taskconfig['remote']['ssh messaging']) + """
-export CYLC_PYRO_TIMEOUT=""" + str(self.pyro_timeout) + "\n"
+        tmp = "export CYLC_PYRO_TIMEOUT=" + str(self.pyro_timeout) + "\n"
         if taskd.initial_scripting != None: 
             taskd.initial_scripting += tmp
         else:
