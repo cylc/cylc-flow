@@ -933,7 +933,12 @@ to be modified slightly to allow use of the C shell.
 This is where task job scripts, and the stdout and stderr logs for local
 tasks, are written. The directory path may contain environment
 variables, including suite identity variables to make the path
-suite-specific (as the default value does).
+suite-specific (as the default value does) but {\em it may not 
+contain task identity variables such as \lstinline=$CYLC_TASK_NAME= and
+\lstinline=$CYLC_TASK_CYCLE_TIME= or any variables defined in the task
+environment section} - the directory has to be created by cylc before
+the task runs so the directory creation process does not see the task
+execution environment.
 %? Remote tasks must also define a [[[remote]]] log directory. 
 %? For owned tasks, the suite owner's home directory is replaced by the
 %? task owner's.
@@ -943,12 +948,7 @@ from the task ID and {\em seconds since epoch}, and then {\em .out} and
 respectively. These filenames are thus unique even if a task
 gets retriggered and yet will be correctly time ordered if the log
 directory is listed. The filenames are also recorded by the task proxies 
-for access via cylc commands and the suite control GUIs. Suite identity
-variables can be used in the path, as in the default value, but {\em not
-task identity variables} such as \lstinline=$CYLC_TASK_NAME= and
-\lstinline=$CYLC_TASK_CYCLE_TIME=, because the log directory is created
-before the task runs.
-
+for access via cylc commands and the suite control GUIs.
 \begin{myitemize}
 \item {\em type:} string (directory path, may contain environment variables)
 \item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job=
