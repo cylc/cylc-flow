@@ -141,9 +141,6 @@ dclock = accelerated_clock.clock( None, None, utc, False )
 
 # CYLC EXECUTION ENVIRONMENT
 cylcenv = OrderedDict()
-# this gets modified for remote task hosts:
-cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
-# this does not:
 cylcenv[ 'CYLC_DIR_ON_SUITE_HOST' ] = os.environ[ 'CYLC_DIR' ]
 if options.sched:
     cylcenv[ 'CYLC_MODE' ] = 'scheduler'
@@ -152,7 +149,7 @@ else:
 cylcenv[ 'CYLC_DEBUG' ] = str( options.debug )
 cylcenv[ 'CYLC_VERBOSE' ] = str(options.verbose)
 cylcenv[ 'CYLC_SUITE_HOST' ] = hostname
-cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
+cylcenv[ 'CYLC_SUITE_PORT' ] = 'None'
 cylcenv[ 'CYLC_SUITE_REG_NAME' ] = suite
 cylcenv[ 'CYLC_SUITE_REG_PATH' ] = RegPath( suite ).get_fpath()
 # replace home dir with literal '$HOME' for the benefit of remote tasks:

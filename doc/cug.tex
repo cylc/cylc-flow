@@ -3252,12 +3252,12 @@ be declared globally (in the root namespace) or per family, or per
 individual task. Use the global settings if all or most of your tasks
 need to run on the same remote host.
 
-The remote cylc directory must be specified to give remote tasks access 
-to cylc commands, if cylc is not in the default \lstinline=$PATH= 
-on the remote host. If \lstinline=$PATH= is configured in your
-\lstinline=$HOME/.profile= script it will be picked up as the remote
-job submission mechanism automatically sources \lstinline=.profile= if
-it exists. Similarly the remote suite directory gives tasks access to
+If cylc is not in your \lstinline=$PATH= on the remote host use the
+``cylc directory'' item to give remote tasks access to cylc commands.
+If \lstinline=$PATH= is configured in your \lstinline=$HOME/.profile=
+script it will be picked up as the remote job submission mechanism
+automatically sources \lstinline=.profile= if it exists. Similarly the
+remote suite directory gives tasks access to
 suite files via \lstinline=$CYLC_SUITE_DEF_PATH= on the remote
 host and to the suite bin directory via \lstinline=$PATH=. If a remote
 suite definition directory is not given the local (suite host) path will
@@ -3967,16 +3967,20 @@ job script sections not shown here):
 echo "TASK JOB SCRIPT STARTING"
 
 # CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY:
-export CYLC_DIR=/home/oliverh/cylc
 export CYLC_MODE=submit
 export CYLC_SUITE_HOST=oliverh-33586DL.greta.niwa.co.nz
-export CYLC_SUITE_PORT=NONE
+export CYLC_SUITE_PORT=None
 export CYLC_SUITE_DEF_PATH=/tmp/oliverh/QuickStart/c
 export CYLC_SUITE_REG_NAME=QuickStart.c
 export CYLC_SUITE_REG_PATH=QuickStart/c
 export CYLC_SUITE_OWNER=oliverh
 export CYLC_USE_LOCKSERVER=False
 export CYLC_UTC=False
+export CYLC_SUITE_INITIAL_CYCLE_TIME=None
+export CYLC_SUITE_FINAL_CYCLE_TIME=None
+export CYLC_SUITE_DEF_PATH_ON_SUITE_HOST=/home/oliverh/cylc/bar
+export CYLC_SUITE_DEF_PATH=$HOME/cylc/bar
+export CYLC_SUITE_PYRO_TIMEOUT=None
 
 # TASK IDENTITY:
 export CYLC_TASK_ID=Model%2011080506
@@ -3984,12 +3988,20 @@ export CYLC_TASK_NAME=Model
 export CYLC_TASK_CYCLE_TIME=2011080506
 export CYLC_TASK_LOG_ROOT=~/cylc-run/QuickStart.c/log/job/Model%2011080506-1317298378.191123
 export CYLC_TASK_NAMESPACE_HIERARCHY="root Models Model"
+export CYLC_TASK_TRY_NUMBER=1
+export CYLC_TASK_SSH_MESSAGING=True
 
-# ACCESS TO CYLC:
-PATH=$CYLC_DIR/bin:$PATH
 # Access to the suite bin dir:
 PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH
 export PATH
+
+# SUITE RUNTIME ENVIRONMENT:
+TASK_EXE_SECONDS="5"
+WORKSPACE="/tmp/$USER/$CYLC_SUITE_REG_NAME/common"
+MODEL_INPUT_DIR="$WORKSPACE"
+MODEL_OUTPUT_DIR="$WORKSPACE"
+MODEL_RUNNING_DIR="$WORKSPACE/Model"
+export TASK_EXE_SECONDS WORKSPACE MODEL_INPUT_DIR MODEL_OUTPUT_DIR MODEL_RUNNING_DIR
 
 # SET ERROR TRAPPING:
 set -u # Fail when using an undefined variable
@@ -4021,18 +4033,27 @@ mkdir -p $(dirname $CYLC_TASK_WORK_PATH) || true
 mkdir -p $CYLC_TASK_WORK_PATH
 cd $CYLC_TASK_WORK_PATH
 
-# ENVIRONMENT:
-TASK_EXE_SECONDS="5"
-WORKSPACE="/tmp/$USER/$CYLC_SUITE_REG_NAME/common"
-MODEL_INPUT_DIR="$WORKSPACE"
-MODEL_OUTPUT_DIR="$WORKSPACE"
-MODEL_RUNNING_DIR="$WORKSPACE/Model"
-export TASK_EXE_SECONDS WORKSPACE MODEL_INPUT_DIR MODEL_OUTPUT_DIR MODEL_RUNNING_DIR
+# TASK IDENTITY SCRIPTING:
+echo "cylc Suite and Task Identity:"
+echo "  Suite Name  : $CYLC_SUITE_REG_NAME"
+echo "  Suite Host  : $CYLC_SUITE_HOST"
+echo "  Suite Port  : $CYLC_SUITE_PORT"
+echo "  Suite Owner : $CYLC_SUITE_OWNER"
+echo "  Task ID     : $CYLC_TASK_ID"
+if [[ $(uname) == AIX ]]; then
+   # on AIX the hostname command has no '-f' option
+   echo "  Task Host   : $(hostname).$(namerslv -sn | awk '{print $2}')"
+else
+    echo "  Task Host   : $(hostname -f)"
+fi
+echo "  Task Owner  : $USER"
+echo "  Task Try No.: $CYLC_TASK_TRY_NUMBER"
+echo ""
 
 # TASK COMMAND SCRIPTING:
 Model.sh
 
-# WORK DIRECTORY REMOVE:
+# EMPTY WORK DIRECTORY REMOVE:
 cd
 rmdir $CYLC_TASK_WORK_PATH 2>/dev/null || true
 

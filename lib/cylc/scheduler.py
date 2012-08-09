@@ -485,9 +485,6 @@ class scheduler(object):
 
     def configure_environments( self ):
         cylcenv = OrderedDict()
-        # this gets modified on suite hosts:
-        cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
-        # this does not:
         cylcenv[ 'CYLC_DIR_ON_SUITE_HOST' ] = os.environ[ 'CYLC_DIR' ]
         cylcenv[ 'CYLC_MODE' ] = 'scheduler'
         cylcenv[ 'CYLC_DEBUG' ] = str( self.options.debug )

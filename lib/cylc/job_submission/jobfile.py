@@ -66,6 +66,11 @@ class jobfile(object):
         # environment may cause trouble by referencing undefined variables 
         # or sourcing scripts that are only available in the script's
         # normal setting).
+
+        # configure access to cylc before user environment so that cylc
+        # commands can be used in defining user environment variables,
+        # e.g.: NEXT_CYCLE=$( cylc util cycletime --offset-hours=6 )
+
         self.FILE = open( path, 'wb' )
         self.write_header()
         if not self.simulation_mode:
@@ -75,6 +80,8 @@ class jobfile(object):
         if not self.simulation_mode:
             self.write_initial_scripting()
         self.write_cylc_access()
+        if not self.simulation_mode:
+            self.write_environment_2()
         self.write_err_trap()
         self.write_task_started()
         if self.simulation_mode:
@@ -82,7 +89,6 @@ class jobfile(object):
             self.FILE.write( "\n%s=%s" % ( key, self.task_env[key] ) )
         else:
             self.write_work_directory_create()
-            self.write_environment_2()
             self.write_manual_environment()
             self.write_identity_scripting()
             self.write_pre_scripting()
@@ -127,9 +133,7 @@ class jobfile(object):
         if not BUFFER:
             BUFFER = self.FILE
 
-        # Override $CYLC_DIR and CYLC_SUITE_DEF_PATH for remotely hosted tasks
-        if self.remote_cylc_dir:
-            self.cylc_env['CYLC_DIR'] = self.remote_cylc_dir
+        # Override CYLC_SUITE_DEF_PATH for remotely hosted tasks
         if self.remote_suite_dir:
             self.cylc_env['CYLC_SUITE_DEF_PATH'] = self.remote_suite_dir
 
@@ -147,14 +151,11 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_SSH_MESSAGING=" + str(self.ssh_messaging) )
 
     def write_cylc_access( self, BUFFER=None ):
-        # configure access to cylc first so that cylc commands can be
-        # used in defining user environment variables, e.g.:
-        #    NEXT_CYCLE=$( cylc util cycletime --add=6 )
         if not BUFFER:
             BUFFER = self.FILE
         if self.remote_cylc_dir:
             BUFFER.write( "\n\n# ACCESS TO CYLC:" )
-            BUFFER.write( "\nPATH=$CYLC_DIR/bin:$PATH" )
+            BUFFER.write( "\nPATH=" + self.remote_cylc_dir + "/bin:$PATH" )
         BUFFER.write( "\n\n# Access to the suite bin dir:" )
         BUFFER.write( "\nPATH=$CYLC_SUITE_DEF_PATH/bin:$PATH" )
         BUFFER.write( "\nexport PATH" )
@@ -200,7 +201,7 @@ cd $CYLC_TASK_WORK_PATH""" % data )
     def write_environment_2( self ):
 
         if len( self.task_env.keys()) > 0:
-            self.FILE.write( "\n\n# ENVIRONMENT:" )
+            self.FILE.write( "\n\n# SUITE RUNTIME ENVIRONMENT:" )
             for var in self.task_env:
                 # Write each variable assignment expression, with
                 # values quoted to handle spaces.
