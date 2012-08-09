@@ -83,13 +83,12 @@ try:
 except KeyError:
     pass
 
-else:
-    msg = ' '.join( args )
-    try:
-        message( msg=msg, priority=options.priority, verbose=options.verbose ).send()
-    except Exception, x:
-        print >> sys.stderr, 'ERROR: task messaging failure.'
-        if debug:
-            raise
-        raise SystemExit(x)
+msg = ' '.join( args )
+try:
+    message( msg=msg, priority=options.priority, verbose=options.verbose ).send()
+except Exception, x:
+    print >> sys.stderr, 'ERROR: task messaging failure.'
+    if debug:
+        raise
+    raise SystemExit(x)
 
