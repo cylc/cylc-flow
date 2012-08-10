@@ -4849,6 +4849,42 @@ cutting-and-pasting the original job submission command from the suite
 stdout stream.
 
 
+
+\subsection{The Meaning And Use Of Initial Cycle Time}
+
+When a suite is started with the \lstinline=cylc run= command (cold or
+warm start) the cycle time at which it starts can be given on the
+command line or hardwired into the suite.rc file:
+\begin{lstlisting}
+cylc run foo 2012080806
+\end{lstlisting}
+or,
+\begin{lstlisting}
+# SUITE.RC
+[scheduling]
+    initial cycle time = 2010080806
+\end{lstlisting}
+A initial cycle time given on the command line will override one in the
+suite.rc file.
+
+\subsubsection[CYLC\_SUITE\_INITIAL\_CYCLE\_TIME]{The Environment Variable CYLC\_SUITE\_INITIAL\_CYCLE\_TIME}
+
+In the case of {\em cold starts only} the initial cycle time will also
+be passed through to task execution environments as
+\lstinline=$CYLC_SUITE_INITIAL_CYCLE_TIME=.  The intended use of this
+variable is to allow tasks to determine whether they are running in the
+initial cold-start cycle (when different behaviour may be required) or
+in a normal mid-run cycle. {\em This is not done for warm starts}
+because a warm start is really an implicit restart - it does not
+reference a particular previous suite state but it does assume that a 
+previous cycle (for each task) has been run and completed entirely.
+It follows that in a warm start tasks are really in a normal mid-run
+cycle, and because no actual previous state is referenced
+\lstinline=$CYLC_SUITE_INITIAL_CYCLE_TIME= gets the value
+\lstinline=None=. After a cold-start, however, the value of the 
+environment variable does persist across restarts because the original
+cold-start cycle time is stored in suite state dump files. 
+
 \subsection{Cylc Version Re-invocation (Pseudo Backward Compatibility)}
 \label{compat}
 
