@@ -866,3 +866,9 @@ so that suite and task identity can be used in intiial scripting.
 the dead if they start running again (by external non-cylc means) after
 reporting failure. This can be used to handle HPC-style job preemption.
 
++ Moved the User Guide documentation of cylc version re-invocation from
+the installation section to the running suites section. 
+
++ Correct Quick Start Guide suite names (the initial component of the
+registration name hierarchy had been omitted.
+

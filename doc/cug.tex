@@ -563,11 +563,9 @@ x.y.z
 \subsection{Import The Example Suites}
 \label{ImportTheExampleSuites}
 
-Run the following command immediately after installation to create your
-suite database and import the example suites to it (this involves
-copying the suite definitions to sub-directories of the given
-destination directory, and registering each one for use in your suite
-database:
+Run the following command immediately after installation to copy the
+cylc example suites to a given destination directory, and registering
+each one for use:
 
 \begin{lstlisting}
 % cylc admin import-examples TOPDIR
@@ -579,22 +577,55 @@ use the \lstinline=cylc db print= command:
 
 \begin{lstlisting}
 % cylc db print --tree -x 'Auto|Quick'
- cylc-x-y-z         
-   |-AutoCleanup      
-   | |-FamilyFailHook  family failure hook script example
-   | `-FamilyFailTask  family failure cleanup task example
-   |-AutoRecover      
-   | |-async           asynchronous automated failure recovery example
-   | `-cycling         cycling automated failure recovery example
-   `-QuickStart       
-     |-a          Quick Start Example A
-     |-b          Quick Start Example B
-     |-c          Quick Start Example C
-     `-z          Quick Start Example Z
+cylc-4-5-1-1344571037
+  |-AutoCleanup      
+  | |-FamilyFailHook  family failure hook script example
+  | `-FamilyFailTask  family failure cleanup task example
+  |-AutoRecover      
+  | |-async           asynchronous automated failure recovery example
+  | `-cycling         cycling automated failure recovery example
+  `-QuickStart       
+    |-a          Quick Start Example A
+    |-b          Quick Start Example B
+    |-c          Quick Start Example C
+    `-z          Quick Start Example Z
 \end{lstlisting}
 Note that the dots in the cylc release version number are replaced with
 hyphens because `.' is the registration name delimiter. Type
 \lstinline=cylc db print --help= to see what the command options mean.
+Note also that the Unix ``seconds since epoch'' string is appended to
+the top level of the suite name hierarchy in order ensure uniqueness if 
+the example suites are imported multiple times at the same cylc version:
+\lstinline=cylc-4-5-1-1344571037=. You can re-register the example
+suites to get rid of this and make the names easier to type:
+
+\begin{lstlisting}
+% cylc rereg cylc-4-5-1-1344571037 examples
+
+% cylc db print --tree -x 'Auto|Quick'
+examples         
+ |-AutoRecover   
+ | |-CleanupTask  No title provided
+ | |-EventHook     family failure task event hook example
+ | `-suicide       automated failure recovery example
+ `-QuickStart    
+   |-a             Quick Start Example A
+   |-b             Quick Start Example B
+   |-c             Quick Start Example C
+   `-z             Quick Start Example Z
+\end{lstlisting}
+
+Here's the same suite database listing in flat form:
+\begin{lstlisting}
+% cylc db print -y 'Auto|Quick'
+examples.QuickStart.c | /tmp/oliverh/examples/QuickStart/c
+examples.QuickStart.z | /tmp/oliverh/examples/QuickStart/z
+examples.QuickStart.a | /tmp/oliverh/examples/QuickStart/a
+examples.QuickStart.b | /tmp/oliverh/examples/QuickStart/b
+examples.AutoRecover.CleanupTask | /tmp/oliverh/examples/AutoRecover/CleanupTask
+examples.AutoRecover.EventHook | /tmp/oliverh/examples/AutoRecover/EventHook
+examples.AutoRecover.suicide | /tmp/oliverh/examples/AutoRecover/suicide
+\end{lstlisting}
 
 \subsection{Automated Database Test} 
 \label{RTADT}
@@ -783,105 +814,6 @@ your cylc installation by running the automated suite database test
 Upgrading is just a matter of unpacking the new cylc release and 
 optionally re-importing the example suites for the new version. 
 
-\subsection{Cylc Version Re-invocation (Pseudo Backward Compatibility)}
-\label{compat}
-
-It may not be convenient for users to upgrade all of their suites at
-once when a new cylc release is installed. As of cylc-4.2.0 any installed
-version of cylc can act as a transparent front end to any other installed
-version that is installed in parallel (i.e. in the same location) with
-the invoked version. Technically this also provides pseudo forward
-compatibility.  New-version suites can therefore be worked on at the
-same time as older suites that have yet to be upgraded, without the user 
-reconfiguring his environment or having to explicitly invoke different
-cylc versions for different suites. Since \lstinline=cylc-4.5.0= this
-applies to commands that connect to running suites as well as those that
-parse suite definitions.
-
-The required cylc version must be specified on the {\em first line} of a
-non-Jinja2 suite definition:
-\lstset{language=suiterc}
-\begin{lstlisting}
-#!cylc-4.2.0
-# suite definition follows ...
-\end{lstlisting}
-or on the {\em second line} for Jinja2 suites:
-\begin{lstlisting}
-#!Jinja2
-#!cylc-4.2.0
-# suite definition follows ...
-\end{lstlisting}
-This results in the right cylc version being used for any
-suite-referencing command, e.g.:
-\lstset{language=transcript}
-\begin{lstlisting}
-% cylc validate foo
---------------------------------------------------------
-Cylc version re-invocation:
-  Invoked version: cylc-4.2.0 (/home/oliverh/cylc-4.2.0)
-  Suite requires:  cylc-4.2.1
-(assuming parallel cylc installations)
-=> Re-issuing command using /home/oliverh/cylc-4.2.1
---------------------------------------------------------
-Suite foo is valid for cylc-4.2.1
-\end{lstlisting}
-Note that non suite-referencing commands necessarily execute exactly as
-invoked. This includes all command line help so it is advisable, although 
-not strictly necessary, to keep your login environment configured for
-the latest cylc version.
-
-If the required cylc version is not installed the command will abort 
-and you will have to upgrade the suite definition for compatibility
-with an installed version: use \lstinline=cylc validate= and the {\em
-Suite.rc Reference} (Appendix~\ref{SuiteRCReference}) to identify
-problems, and consult the cylc change log to see what changed between
-versions.
-
-\subsubsection{Explicit Cylc Version Reinvocation}
-
-Other cylc versions can be specified explicitly on the command line,
-\lstinline=cylc -V x.y.z= (capital V). This feature works for
-versions 4.5.0 and later.
-
-\subsubsection{Available Cylc Versions}
-
-To list available cylc versions installed in parallel with the
-invoked version: \lstinline=cylc -V avail= (capital V).
-
-\subsubsection{Limitations}
-
-The top level command interface, \lstinline=$CYLC_DIR/bin/cylc=,
-determines the legality of requested sub-command names so any attempt to
-run a sub-command that no longer exists in the invoked version
-of cylc will fail. Additionally, the command line must be parsed first
-by the sub-command of the invoked cylc version in order to determine
-which command line argument references the suite (the suite name is
-always the first non-option argument but only sub-commands know if
-particular options have their own arguments or are just logical flags,
-and can therefore determine which is the first true argument);
-consequently any attempt to use a command option that is illegal in the
-invoked version of cylc will also fail.
-
-
-\subsubsection{A Usage Suggestion}
-
-You can use the Jinja2 template processor (see Section~\ref{Jinja2}) to
-store the required cylc version in a single variable that can also be  
-used elsewhere in the suite definition - to specify the cylc version to
-use on a remote task host, for example:
-\lstset{language=suiterc}
-\begin{lstlisting}
-#!Jinja2
-{% set CYLC_VERSION = "cylc-4.2.2" %}
-#!{{CYLC_VERSION}}
-
-#...
-[runtime]
-   [[on_hpc]]
-       [[[remote]]]
-           cylc directory = /path/to/cylc/top/dir/{{CYLC_VERSION}}
-\end{lstlisting}
-\lstset{language=transcript}
 
 \section{On The Meaning Of {\em Cycle Time} In Cylc}
 
@@ -913,17 +845,20 @@ particularly in delayed (catch up) operation.
 
 This section works through some basic cylc functionality using the
 ``QuickStart'' example suites, which you can import to your suite database 
-by running the \lstinline=cylc admin import-examples= command: 
+by running the \lstinline=cylc admin import-examples= command and then
+reregistering the top level suite name to ``examples'' as described in
+Section~\ref{ImportTheExampleSuites}. You should end up with the
+following QuickStart suites (but the directory paths on the right are up
+to you):
 
 \begin{lstlisting}
-% cylc admin import-examples $HOME/examples
 % cylc db print --tree QuickStart
- cylc-x-y-z   
+ examples   
    `-QuickStart 
-     |-a        Quick Start Example A | ~/examples/cylc-x-y-z/QuickStart/a
-     |-b        Quick Start Example B | ~/examples/cylc-x-y-z/QuickStart/b
-     |-c        Quick Start Example C | ~/examples/cylc-x-y-z/QuickStart/c
-     `-z        Quick Start Example Z | ~/examples/cylc-x-y-z/QuickStart/z
+     |-a        Quick Start Example A | /tmp/oliverh/examples/QuickStart/a
+     |-b        Quick Start Example B | /tmp/oliverh/examples/QuickStart/b
+     |-c        Quick Start Example C | /tmp/oliverh/examples/QuickStart/c
+     `-z        Quick Start Example Z | /tmp/oliverh/examples/QuickStart/z
 \end{lstlisting}
 
 \subsection{Configure Your Environment}
@@ -933,15 +868,15 @@ in your login script, as described in
 Section~\ref{ConfiguringYourEnvironmentForCylc}.
 
 
-\subsection{View The QuickStart.a Suite Definition}
+\subsection{View The examples.QuickStart.a Suite Definition}
 
 Cylc suites are defined by {\em suite.rc files}, discussed at length in
 {\em Suite Definition} (Section~\ref{SuiteDefinition}) and the {\em
 Suite.rc Reference} (Appendix~\ref{SuiteRCReference}).  To view the
-QuickStart.a suite definition right-click on the suite
+examples.QuickStart.a suite definition right-click on the suite
 name and choose `Edit'; or use the edit command:
 \begin{lstlisting}
-% cylc edit QuickStart.a
+% cylc edit examples.QuickStart.a
 \end{lstlisting}
 
 This opens the suite definition in your editor (\lstinline=$EDITOR=, or
@@ -952,7 +887,7 @@ interface you don't have to remember suite definition directory
 locations. For the rare occasions that you do need to move to a 
 suite definition directory, you can do this:
 \begin{lstlisting}
-% cd $( cylc db get-dir QuickStart.a )
+% cd $( cylc db get-dir examples.QuickStart.a )
 \end{lstlisting}
 Suites that use include-files can optionally be edited in a temporarily
 inlined state - the inlined file gets split back into its constituent
@@ -964,8 +899,8 @@ Anyhow, you should now see the following suite.rc file in your editor:
 \lstset{language=suiterc}
 \lstinputlisting{../examples/QuickStart/a/suite.rc}
 \lstset{language=transcript}
-(Cylc comes with syntax highlighting and section folding for the {\em vim}
-editor - see Section~\ref{SyntaxHighlighting}).
+Cylc comes with syntax highlighting and section folding for the {\em vim}
+editor, and an emacs font-lock mode - see Section~\ref{SyntaxHighlighting}.
 
 This defines a complete, valid, runnable suite.  Here's how to interpret
 it: At 0, 6, 12, and 18 hours each day a clock-triggered task called GetData
@@ -1012,12 +947,12 @@ also has {\em asynchronous one-off tasks}, which have no cycle time:
 
 The optional visualization section configures graph plotting.
 
-\subsection{Plotting The QuickStart.a Dependency Graph}
+\subsection[Plotting examples.QuickStart.a]{Plotting The examples.QuickStart.a Dependency Graph}
 
-Right-click on the {\em QuickStart.a} suite in gcylc and choose Graph;
-or by command line,
+Right-click on the {\em examples.QuickStart.a} suite in gcylc and choose
+Graph; or by command line,
 \begin{lstlisting}
-% cylc graph QuickStart.a 2011052300 2011052318 &
+% cylc graph examples.QuickStart.a 2011052300 2011052318 &
 \end{lstlisting}
 This will pop up a zoomable, pannable, graph viewer showing
 the graph of Figure~\ref{fig-QuickStartA-graph18}. 
@@ -1028,12 +963,13 @@ whenever you save the file.
     \begin{center}
         \includegraphics[width=0.7\textwidth]{screenshots/QuickStartA-graph18.png}
     \end{center}
-    \caption[The {\em QuickStart.a} dependency graph]{\scriptsize The
-    {\em QuickStart.a} dependency graph, plotted by cylc.}
+    \caption[The {\em examples.QuickStart.a} dependency
+    graph]{\scriptsize The {\em QuickStart.a} dependency graph, plotted
+    by cylc.}
 \label{fig-QuickStartA-graph18}
 \end{figure}
 
-\subsection{Run The QuickStart.a Suite}
+\subsection{Run The examples.QuickStart.a Suite}
 
 Each cylc task defines command scripting to invoke the right external
 processing when the task is ready to run. This has not been explicilty
@@ -1041,7 +977,7 @@ configured in the example suite, so it defaults, for all tasks, to the
 {\em dummy task} scripting inherited from the {\em root namespace} (see
 Section~\ref{SuiteDefinition}):
 \begin{lstlisting}
-% cylc get-config QuickStart.a runtime GetData 'command scripting'
+% cylc get-config examples.QuickStart.a runtime GetData 'command scripting'
 ['echo Dummy command scripting; sleep $CYLC_TASK_DUMMY_RUN_LENGTH']
 \end{lstlisting}
 where \lstinline=$CYLC_TASK_DUMMY_RUN_LENGTH= defaults to 10 seconds 
@@ -1051,12 +987,12 @@ The command arguments above reflect suite definition section
 nesting. 
 
 Now start a suite control GUI by right-clicking on the suite in gcylc
-and choosing `Control (graph)'.  You can also open a text treeview
-control GUI for the same suite, if you like. Multiple GUIs running at
-the same time will automatically connect to the same running suite (they
-won't try to run separate instances). Note also that if you shut down a
-suite control GUI, the suite will keep running. You can reconnect to it
-later by opening another control GUI.
+and choosing Control $\rightarrow$ Graph View.  You can also open other control GUIs
+for the same suite if you like. Multiple GUIs running at the same time
+will automatically connect to the same running suite (they won't try to
+run separate instances). Note also that if you shut down a suite control
+GUI, the suite will keep running. You can reconnect to it later by
+opening another control GUI.
 
 In the control GUI click on Control $\rightarrow$ Run, enter an initial
 cold-start cycle time (e.g.\ 2011052306), and select ``Hold (pause) on
@@ -1077,8 +1013,8 @@ Figure~\ref{fig-QuickStartA-ControlStart00}.
     \begin{center}
         \includegraphics[width=0.8\textwidth]{screenshots/QuickStartA-ControlStart06.png}
     \end{center}
-    \caption[Suite {\em QuickStart.a} at start-up, 06 or 18 hours.]{\scriptsize
-    Suite {\em QuickStart:one} at start-up with an initial
+    \caption[Suite {\em examples.QuickStart.a} at start-up, 06 or 18 hours.]{\scriptsize
+    Suite {\em examples.QuickStart:one} at start-up with an initial
     cycle time ending in 06 or 18 hours. Yellow nodes represent 
     waiting tasks in the held state.}
     \label{fig-QuickStartA-ControlStart06}
@@ -1088,8 +1024,8 @@ Figure~\ref{fig-QuickStartA-ControlStart00}.
     \begin{center}
         \includegraphics[width=0.8\textwidth]{screenshots/QuickStartA-ControlStart00.png}
     \end{center}
-    \caption[Suite {\em QuickStart.a} at start-up, 00 or 12
-    hours]{\scriptsize Suite {\em QuickStart.a} at start-up with an
+    \caption[Suite {\em examples.QuickStart.a} at start-up, 00 or 12
+    hours]{\scriptsize Suite {\em examples.QuickStart.a} at start-up with an
     initial cycle time ending in 00 or 12 hours. Yellow nodes represent 
     waiting tasks in the held state and off-white nodes are tasks from
     the base graph, defined in the suite.rc file, that aren't currently
@@ -1118,8 +1054,8 @@ and~\ref{fig-QuickStartA-ControlStalled}.
     \begin{center}
         \includegraphics[width=0.8\textwidth]{screenshots/QuickStartA-ControlRunning.png}
     \end{center}
-    \caption[Suite {\em QuickStart.a} running.]
-    {\scriptsize Suite {\em QuickStart.a} running, showing several
+    \caption[Suite {\em examples.QuickStart.a} running.]
+    {\scriptsize Suite {\em examples.QuickStart.a} running, showing several
     consecutive instances of the clock-triggered GetData task running at
     once, out to the suite runahead limit of 12 hours.}
     \label{fig-QuickStartA-ControlRunning}
@@ -1128,8 +1064,8 @@ and~\ref{fig-QuickStartA-ControlStalled}.
     \begin{center}
         \includegraphics[width=0.8\textwidth]{screenshots/QuickStartA-ControlStalled.png}
     \end{center}
-    \caption[ Suite {\em QuickStart.a} stalled.]
-    {\scriptsize Suite {\em QuickStart.a} stalled after the
+    \caption[ Suite {\em examples.QuickStart.a} stalled.]
+    {\scriptsize Suite {\em examples.QuickStart.a} stalled after the
     clock-triggered GetData tasks have finished, because of Model's
     previous-cycle dependence and the suite runahead limit (see main
     text).}
@@ -1194,7 +1130,7 @@ this properly shortly.
 
 \subsubsection{Suite Shut-Down And Restart}
 
-Having watched the {\em QuickStart.a} suite run for a while, choose
+Having watched the {\em examples.QuickStart.a} suite run for a while, choose
 Stop from the Control menu, or \lstinline=cylc stop=, to shut it down.
 The default stop method waits for any tasks that are currently running
 to finish before shutting the suite down, so that the final recorded
@@ -1207,10 +1143,10 @@ state dump, and logs its name, prior to actioning any intervention, and
 you can also restart a suite from one of these states, rather than the 
 default most recent state.
 
-\subsection{QuickStart.b - Handling Cold-Starts Properly}
+\subsection{examples.QuickStart.b - Handling Cold-Starts Properly}
 
-Now take a look at {\em QuickStart.b}, which is a minor
-modification of {\em QuickStart.a}. Its suite.rc file has a new
+Now take a look at {\em examples.QuickStart.b}, which is a minor
+modification of {\em examples.QuickStart.a}. Its suite.rc file has a new
 {\em cold-start} task called ColdModel,
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -1242,8 +1178,8 @@ ColdModel[T].
     \begin{center}
         \includegraphics[width=0.7\textwidth]{screenshots/QuickStartB-graph18.png}
     \end{center}
-    \caption[The {\em QuickStart.b} graph with model cold-start task.]{\scriptsize
-    The {\em QuickStart.b} dependency graph showing a model cold
+    \caption[The {\em examples.QuickStart.b} graph with model cold-start task.]{\scriptsize
+    The {\em examples.QuickStart.b} dependency graph showing a model cold
     start task.}
 \label{fig-QuickStartB-graph18}
 \end{figure}
@@ -1267,12 +1203,12 @@ suite is started (in the latter case the cold-start task would be a
 dummy task that just reports successful completion in order to satisfy
 the initial previous-cycle dependence of the model).
 
-Run {\em QuickStart.b} to confirm that that no manual triggering is
+Run {\em examples.QuickStart.b} to confirm that that no manual triggering is
 required to get the suite started now.
 
-\subsection{QuickStart.c - Real Task Implementations}
+\subsection{examples.QuickStart.c - Real Task Implementations}
 
-The suite {\em QuickStart.c} is the same as {\em QuickStart.b}
+The suite {\em examples.QuickStart.c} is the same as {\em examples.QuickStart.b}
 except that it has real task implementations (scripts located
 in the suite bin directory) that generate and consume files in such a
 way that they have to run according to the graph of
@@ -1288,7 +1224,7 @@ to build real cylc suites. Here's the complete suite definition
 \lstset{language=transcript}
 Here's the namespace hierarchy defined by this suite:
 \begin{lstlisting}
-% cylc list --tree QuickStart.c
+% cylc list --tree examples.QuickStart.c
 root           
  |-GetData     retrieve data for the current cycle time
  |-Models      
@@ -1346,7 +1282,7 @@ Figure~\ref{fig-suite-log} shows a suite log viewed from within gcylc. The
 without having to remember the actual log file location. But if you want 
 to know the location:
 \begin{lstlisting}
-% cylc get-config --directories QuickStart.a
+% cylc get-config --directories examples.QuickStart.a
 SUITE LOG DIRECTORY:
   /home/oliverh/cylc-run/QuickStart.a/log/suite
 SUITE STATE DUMP DIRECTORY:
@@ -1367,7 +1303,7 @@ the suite.rc {\em job submission log directory}, default location
 variable \lstinline=$CYLC_SUITE_REG_NAME= evalutes to the registered
 suite name hierarchy, e.g.\ foo.bar.baz): 
 \begin{lstlisting}
-% get-config QuickStart.a runtime GetData 'job submission' 'log directory'
+% get-config examples.QuickStart.a runtime GetData 'job submission' 'log directory'
 /home/oliverh/cylc-run/QuickStart.a/log/job
 \end{lstlisting}
 (or use the \lstinline=--directories= argument as shown just above).
@@ -1384,13 +1320,13 @@ The cylc suite search tool reports matches in the suite.rc file
 by line number, suite section, and file, even if include-files
 are used (and even if they are nested), and by file and line number for
 matches in the suite bin directory. The following output listing is from
-a search of the {\em QuickStart.c} suite. 
+a search of the {\em examples.QuickStart.c} suite. 
 \begin{lstlisting}
-% cylc grep OUTPUT_DIR QuickStart.c
+% cylc grep OUTPUT_DIR examples.QuickStart.c
 \end{lstlisting}
 \lstset{language=suiterc}
 \begin{lstlisting}
-SUITE: QuickStart.c /tmp/oliverh/QuickStart/c/suite.rc
+SUITE: examples.QuickStart.c /tmp/oliverh/QuickStart/c/suite.rc
 PATTERN: OUTPUT_DIR
 
 FILE: /tmp/oliverh/QuickStart/c/suite.rc
@@ -1425,19 +1361,19 @@ FILE: /tmp/oliverh/QuickStart/c/bin/GetData.sh
 
 Cylc can also compare suites and report differences by suite.rc 
 section and item. For instance, comparing the example suites 
-\lstinline=QuickStart.a= and \lstinline=QuickStart.b= by GUI or
+\lstinline=examples.QuickStart.a= and \lstinline=examples.QuickStart.b= by GUI or
 command line results in:
 \lstset{language=transcript}
 \begin{lstlisting}
-% cylc diff QuickStart.a QuickStart.b
+% cylc diff examples.QuickStart.a examples.QuickStart.b
 \end{lstlisting}
 \lstset{language=suiterc}
 \begin{lstlisting}
-Parsing QuickStart.a
-Parsing QuickStart.b
-Suite definitions QuickStart.a and QuickStart.b differ.
+Parsing examples.QuickStart.a
+Parsing examples.QuickStart.b
+Suite definitions examples.QuickStart.a and examples.QuickStart.b differ.
 !SNIP!
-13 common items differ QuickStart.a(<) QuickStart.b(>)
+13 common items differ examples.QuickStart.a(<) examples.QuickStart.b(>)
    (top)
  <   description = (see the Cylc User Guide)
  >   description = (Quick Start a plus a cold-start task)
@@ -1445,8 +1381,8 @@ Suite definitions QuickStart.a and QuickStart.b differ.
  >   title = Quick Start Example B
 
    [cylc] [[logging]]
- <   directory = /home/oliverh/cylc-run/QuickStart.a/log/suite
- >   directory = /home/oliverh/cylc-run/QuickStart.b/log/suite
+ <   directory = /home/oliverh/cylc-run/examples.QuickStart.a/log/suite
+ >   directory = /home/oliverh/cylc-run/examples.QuickStart.b/log/suite
 
    [scheduling] [[dependencies]] [[[0,6,12,18]]]
  <   graph = Prep => GetData => Model => PostA
@@ -1460,8 +1396,8 @@ Suite definitions QuickStart.a and QuickStart.b differ.
 (much of the diff output has been omitted here for the sake of brevity).
 Note that suite log directories and the like may differ even though they
 are not explicitly configured in either suite, because their default
-values (see the {\em Suite.rc Reference},
-Appendix~\ref{SuiteRCReference}) are suite-registration-specific.
+values are suite-registration-specific (see the {\em Suite.rc Reference},
+Appendix~\ref{SuiteRCReference}).
 
 \subsection{Validating A Suite}
 
@@ -1877,17 +1813,19 @@ although this is more akin to Python module import than simple text
 inclusion, and the implications of this for suite design have not yet
 been explored.
 
-\subsubsection{Syntax Highlighting In Vim}
+\subsubsection{Syntax Highlighting In Vim and Emacs}
 \label{SyntaxHighlighting}
 
 \lstset{language=transcript}
 Cylc comes with a syntax file to configure suite.rc syntax
 highlighting and section folding in the {\em vim} editor, as shown in
-Figure~\ref{fig-cylc-vim}. To use this, copy 
-\lstinline=$CYLC_DIR/conf/cylc.vim= to your
-\lstinline=$HOME/.vim/syntax/= directory and make some minor
-modifications, as described in the syntax file, to your
-\lstinline=$HOME/.vimrc= file.
+Figure~\ref{fig-cylc-vim}, and an emacs font-lock mode. Both are stored
+under the cylc conf directory:
+\begin{lstlisting}
+$CYLC_DIR/conf/cylc.vim
+$CYLC_DIR/conf/cylc-mode.el
+\end{lstlisting}
+Refer to comments at the top of each file to see how to use them.
 
 \subsubsection{Gross File Structure}
 
@@ -3943,15 +3881,16 @@ specific tasks or families:
 
 The actual command line used to submit the job script is written to
 stdout by cylc. In the following shell transcript we generate a job
-script for a task in the QuickStart.c example suite and then examine it:
+script for a task in the examples.QuickStart.c example suite and then
+examine it:
 \lstset{language=transcript}
 \begin{lstlisting}
-% cylc submit --dry-run QuickStart.c Model%2011080506
-> JOB SCRIPT: ~/cylc-run/QuickStart.c/log/job/Model%2011080506-1317298378.191123
+% cylc submit --dry-run examples.QuickStart.c Model%2011080506
+> JOB SCRIPT: ~/cylc-run/examples.QuickStart.c/log/job/Model%2011080506-1317298378.191123
 > THIS IS A DRY RUN. HERE'S HOW I WOULD SUBMIT THE TASK:
-~/cylc-run/QuickStart.c/log/job/Model%2011080506-1317298378.191123 </dev/null 
-    1> ~/cylc-run/QuickStart.c/log/job/Model%2011080506-1317298378.191123.out 
-    2> ~/cylc-run/QuickStart.c/log/job/Model%2011080506-1317298378.191123.err &
+~/cylc-run/examples.QuickStart.c/log/job/Model%2011080506-1317298378.191123 </dev/null 
+    1> ~/cylc-run/examples.QuickStart.c/log/job/Model%2011080506-1317298378.191123.out 
+    2> ~/cylc-run/examples.QuickStart.c/log/job/Model%2011080506-1317298378.191123.err &
 \end{lstlisting}
 Here is the generated job script (not that some config items not used in
 this suite, such as task \lstinline=initial scripting= , result in extra 
@@ -3970,9 +3909,9 @@ echo "TASK JOB SCRIPT STARTING"
 export CYLC_MODE=submit
 export CYLC_SUITE_HOST=oliverh-33586DL.greta.niwa.co.nz
 export CYLC_SUITE_PORT=None
-export CYLC_SUITE_DEF_PATH=/tmp/oliverh/QuickStart/c
-export CYLC_SUITE_REG_NAME=QuickStart.c
-export CYLC_SUITE_REG_PATH=QuickStart/c
+export CYLC_SUITE_DEF_PATH=/tmp/oliverh/examples/QuickStart/c
+export CYLC_SUITE_REG_NAME=examples.QuickStart.c
+export CYLC_SUITE_REG_PATH=examples/QuickStart/c
 export CYLC_SUITE_OWNER=oliverh
 export CYLC_USE_LOCKSERVER=False
 export CYLC_UTC=False
@@ -3986,7 +3925,7 @@ export CYLC_SUITE_PYRO_TIMEOUT=None
 export CYLC_TASK_ID=Model%2011080506
 export CYLC_TASK_NAME=Model
 export CYLC_TASK_CYCLE_TIME=2011080506
-export CYLC_TASK_LOG_ROOT=~/cylc-run/QuickStart.c/log/job/Model%2011080506-1317298378.191123
+export CYLC_TASK_LOG_ROOT=~/cylc-run/examples/QuickStart.c/log/job/Model%2011080506-1317298378.191123
 export CYLC_TASK_NAMESPACE_HIERARCHY="root Models Model"
 export CYLC_TASK_TRY_NUMBER=1
 export CYLC_TASK_SSH_MESSAGING=True
@@ -4190,11 +4129,11 @@ epoch; so that rerunning the task won't overwrite old output):
 \lstset{language=bash}
 \begin{lstlisting}
 # task job script:
-~/cylc-run/QuickStart.c/log/job/Model%2011080506-1317298378.191123
+~/cylc-run/examples.QuickStart.c/log/job/Model%2011080506-1317298378.191123
 # task stdout:
-~/cylc-run/QuickStart.c/log/job/Model%2011080506-1317298378.191123.out 
+~/cylc-run/examples.QuickStart.c/log/job/Model%2011080506-1317298378.191123.out 
 # task stderr:
-~/cylc-run/QuickStart.c/log/job/Model%2011080506-1317298378.191123.err
+~/cylc-run/examples.QuickStart.c/log/job/Model%2011080506-1317298378.191123.err
 \end{lstlisting}
 (the job submission log directory is configurable in the suite.rc file).
 
@@ -4908,6 +4847,107 @@ To test this in any suite, manually kill a running task then, after cylc
 registers the task failed, resubmit the killed job manually by
 cutting-and-pasting the original job submission command from the suite
 stdout stream.
+
+
+\subsection{Cylc Version Re-invocation (Pseudo Backward Compatibility)}
+\label{compat}
+
+It may not be convenient for users to upgrade all of their suites at
+once when a new cylc release is installed. As of cylc-4.2.0 any installed
+version of cylc can act as a transparent front end to any other installed
+version that is installed in parallel (i.e. in the same location) with
+the invoked version. Technically this also provides pseudo forward
+compatibility.  New-version suites can therefore be worked on at the
+same time as older suites that have yet to be upgraded, without the user 
+reconfiguring his environment or having to explicitly invoke different
+cylc versions for different suites. Since \lstinline=cylc-4.5.0= this
+applies to commands that connect to running suites as well as those that
+parse suite definitions.
+
+The required cylc version must be specified on the {\em first line} of a
+non-Jinja2 suite definition:
+\lstset{language=suiterc}
+\begin{lstlisting}
+#!cylc-4.2.0
+# suite definition follows ...
+\end{lstlisting}
+or on the {\em second line} for Jinja2 suites:
+\begin{lstlisting}
+#!Jinja2
+#!cylc-4.2.0
+# suite definition follows ...
+\end{lstlisting}
+This results in the right cylc version being used for any
+suite-referencing command, e.g.:
+\lstset{language=transcript}
+\begin{lstlisting}
+% cylc validate foo
+--------------------------------------------------------
+Cylc version re-invocation:
+  Invoked version: cylc-4.2.0 (/home/oliverh/cylc-4.2.0)
+  Suite requires:  cylc-4.2.1
+(assuming parallel cylc installations)
+=> Re-issuing command using /home/oliverh/cylc-4.2.1
+--------------------------------------------------------
+Suite foo is valid for cylc-4.2.1
+\end{lstlisting}
+Note that non suite-referencing commands necessarily execute exactly as
+invoked. This includes all command line help so it is advisable, although 
+not strictly necessary, to keep your login environment configured for
+the latest cylc version.
+
+If the required cylc version is not installed the command will abort 
+and you will have to upgrade the suite definition for compatibility
+with an installed version: use \lstinline=cylc validate= and the {\em
+Suite.rc Reference} (Appendix~\ref{SuiteRCReference}) to identify
+problems, and consult the cylc change log to see what changed between
+versions.
+
+\subsubsection{Explicit Cylc Version Reinvocation}
+
+Other cylc versions can be specified explicitly on the command line,
+\lstinline=cylc -V x.y.z= (capital V). This feature works for
+versions 4.5.0 and later.
+
+\subsubsection{Available Cylc Versions}
+
+To list available cylc versions installed in parallel with the
+invoked version: \lstinline=cylc -V avail= (capital V).
+
+\subsubsection{Limitations}
+
+The top level command interface, \lstinline=$CYLC_DIR/bin/cylc=,
+determines the legality of requested sub-command names so any attempt to
+run a sub-command that no longer exists in the invoked version
+of cylc will fail. Additionally, the command line must be parsed first
+by the sub-command of the invoked cylc version in order to determine
+which command line argument references the suite (the suite name is
+always the first non-option argument but only sub-commands know if
+particular options have their own arguments or are just logical flags,
+and can therefore determine which is the first true argument);
+consequently any attempt to use a command option that is illegal in the
+invoked version of cylc will also fail.
+
+
+\subsubsection{A Usage Suggestion}
+
+You can use the Jinja2 template processor (see Section~\ref{Jinja2}) to
+store the required cylc version in a single variable that can also be  
+used elsewhere in the suite definition - to specify the cylc version to
+use on a remote task host, for example:
+\lstset{language=suiterc}
+\begin{lstlisting}
+#!Jinja2
+{% set CYLC_VERSION = "cylc-4.2.2" %}
+#!{{CYLC_VERSION}}
+
+#...
+[runtime]
+   [[on_hpc]]
+       [[[remote]]]
+           cylc directory = /path/to/cylc/top/dir/{{CYLC_VERSION}}
+\end{lstlisting}
+\lstset{language=transcript}
 
 \section{Other Topics In Brief}
 
