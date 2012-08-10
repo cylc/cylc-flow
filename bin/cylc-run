@@ -42,6 +42,9 @@ waiting state, to satisfy any initial dependence on a previous cycle.
 
 2/ WARM START -- at start up, insert designated cold-start tasks in the
 succeeded state, to stand in for a previous cycle (from a previous run).
+A warm start is really an implicit restart. It does not reference an
+explicit previous state but instead assumes that the previous cycle (for
+each task) completed entirely in a previous run.
 
 3/ RAW START -- do not insert cold-start tasks at all.
 
