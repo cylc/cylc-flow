@@ -1583,6 +1583,7 @@ class config( CylcConfigObj ):
             print >> sys.stderr, 'WARNING:', taskd.name, 'job execution timeout disabled (no timeout given)'
          
         taskd.logfiles    = taskconfig[ 'extra log files' ]
+        taskd.resurrectable = taskconfig[ 'enable resurrection' ]
 
         taskd.environment = taskconfig[ 'environment' ]
         self.check_environment( taskd.name, taskd.environment )

@@ -4872,6 +4872,43 @@ fi"""
 \end{lstlisting}
 
 
+\subsection{Handling Job Preemption}
+\label{PreemptionHPC}
+
+Some HPC facilities allow job preemption: the resource manager can kill
+or suspend running low priority jobs in order to make way for high
+priority jobs. The preempted jobs may then be restarted later from the
+same point (if suspended) or requeued to run again from the start (if killed).
+If a running cylc task get suspended or hard-killed 
+(\lstinline=kill -9 <PID>= is not a trappable signal so cylc cannot detect
+task failure in this case) and then later restarted, it will just appear
+to cylc as if it takes longer than normal to run. If the job is
+soft-killed the signal will be trapped by the task job script and a
+failure message sent, resulting in cylc putting the task into the failed
+state.  When the preempted task restarts and sends its started message
+cylc would normally treat this as an error condition (a
+dead task is not supposed to be sending messages anymore) - a warning
+will be logged and the task will remain in the failed state. However, if
+you know that preemption is possible on your system you can tell cylc
+that affected tasks should be resurrected from the dead, to carry on as
+normal if progress messages start coming in again after a failure: 
+
+\begin{lstlisting}
+# SUITE.RC
+# ...
+[runtime]
+    [[on_HPC]]
+        enable resurrection = True
+    [[TaskFoo]]
+        inherit = on_HPC
+# ...
+\end{lstlisting}
+
+To test this in any suite, manually kill a running task then, after cylc
+registers the task failed, resubmit the killed job manually by
+cutting-and-pasting the original job submission command from the suite
+stdout stream.
+
 \section{Other Topics In Brief}
 
 The following topics have yet to be documented in detail.

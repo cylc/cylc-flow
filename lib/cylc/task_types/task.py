@@ -427,8 +427,12 @@ class task( Pyro.core.ObjBase ):
 
     def reject_if_failed( self, message ):
         if self.state.is_failed():
-            self.log( 'WARNING', 'rejecting the following message as I am in the failed state:' )
-            self.log( 'WARNING', '  ' + message )
+            if self.__class__.resurrectable:
+                self.log( 'WARNING', 'message receive while failed: I am returning from the dead!' )
+                return False
+            else:
+                self.log( 'WARNING', 'rejecting a message received while in the failed state:' )
+                self.log( 'WARNING', '  ' + message )
             return True
         else:
             return False

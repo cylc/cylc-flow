@@ -873,10 +873,26 @@ Section~\ref{DetachingTasks}).
 
 % HIDDEN \paragraph[extra log files]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ extra log files}
 
+\paragraph[enable resurrection]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ enable resurrection}
+
+If a message is received from a failed task cylc will normally treat
+this as an error condition, issue a warning, and leave the task in the
+``failed'' state.  But if ``enable resurrection'' is switched on failed
+tasks can come back from the dead: if the same task job script is
+executed again cylc will put the task back into the running state and
+continue as normal when the started message is received. This can be
+used to handle HPC-style job preemption wherein a resource manager may
+kill a running task and reschedule it to run again later, to make way
+for a job with higher immediate priority. See also
+Section~\ref{PreemptionHPC}, {\em Handling Job Preemption}
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em default:} \lstinline=False=
+\end{myitemize}
+
 \paragraph[{[[[}job submission{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]]}
 
-This is where to configure the means by which cylc submits task job
-scripts to run.
+This section configures the means by which cylc submits task job scripts to run.
 
 \subparagraph[method]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ method}
 \label{RuntimeJobSubMethods}

@@ -88,6 +88,7 @@ class taskdef(object):
         self.submission_timeout = None
         self.execution_timeout = None
         self.reset_timer = None
+        self.resurrectable = False
 
         self.intercycle = False
         self.cyclers = []
@@ -199,6 +200,7 @@ class taskdef(object):
         tclass.submission_timeout = self.submission_timeout
         tclass.execution_timeout  = self.execution_timeout
         tclass.reset_timer =self.reset_timer
+        tclass.resurrectable = self.resurrectable
 
         tclass.remote_host = self.remote_host
         tclass.owner = self.owner

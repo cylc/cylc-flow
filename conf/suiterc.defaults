@@ -72,6 +72,7 @@ description = "No description provided"
         retry delays = (none)
         post-command scripting = None
         manual completion = False
+        enable resurrection = False
         [[[job submission]]]
             method = background
             command template = None

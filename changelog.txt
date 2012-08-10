@@ -859,3 +859,10 @@ state). In a warm start you can optionally push the value of "initial
 cycle time", command line or suite.rc, through to the environment
 variable.
 
++ moved task "initial scripting" below cylc-defined task environment
+so that suite and task identity can be used in intiial scripting.
+
++ Tasks that specify "enable resurrection = True" will be revived from
+the dead if they start running again (by external non-cylc means) after
+reporting failure. This can be used to handle HPC-style job preemption.
+
