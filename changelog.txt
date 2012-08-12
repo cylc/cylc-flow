@@ -872,3 +872,7 @@ the installation section to the running suites section.
 + Correct Quick Start Guide suite names (the initial component of the
 registration name hierarchy had been omitted.
 
++ Do remote request handling before shutdown check (reverses the
+original order) so that the suite can shutdown if requested even if a
+failing task has retries lined up with a very short delay period.
+

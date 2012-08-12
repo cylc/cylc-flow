@@ -619,6 +619,18 @@ class scheduler(object):
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     print "MAIN LOOP TIME TAKEN:", seconds, "seconds"
 
+            # REMOTE METHOD HANDLING; with no timeout and single- threaded pyro,
+            # handleRequests() returns after one or more remote method
+            # invocations are processed (these are not just task messages, hence
+            # the use of the state_changed variable below).
+            # HOWEVER, we now need to check if clock-triggered tasks are ready
+            # to trigger according on wall clock time, so we also need a
+            # timeout to handle this when nothing else is happening.
+            #--
+
+            # incoming task messages set task.task.state_changed to True
+            self.pyro.handleRequests(timeout=1)
+
             # SHUT DOWN IF ALL TASKS ARE SUCCEEDED OR HELD
             stop_now = True  # assume stopping
 
@@ -692,17 +704,6 @@ class scheduler(object):
             self.check_timeouts()
             self.release_runahead()
 
-            # REMOTE METHOD HANDLING; with no timeout and single- threaded pyro,
-            # handleRequests() returns after one or more remote method
-            # invocations are processed (these are not just task messages, hence
-            # the use of the state_changed variable below).
-            # HOWEVER, we now need to check if clock-triggered tasks are ready
-            # to trigger according on wall clock time, so we also need a
-            # timeout to handle this when nothing else is happening.
-            #--
-
-            # incoming task messages set task.task.state_changed to True
-            self.pyro.handleRequests(timeout=1)
         # END MAIN LOOP
         self.log.critical( "SHUTTING DOWN" )
 
