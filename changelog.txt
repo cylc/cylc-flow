@@ -870,7 +870,7 @@ reporting failure. This can be used to handle HPC-style job preemption.
 the installation section to the running suites section. 
 
 + Correct Quick Start Guide suite names (the initial component of the
-registration name hierarchy had been omitted.
+registration name hierarchy had been omitted).
 
 + Do remote request handling before shutdown check (reverses the
 original order) so suites can shutdown if requested even when a
@@ -878,14 +878,15 @@ failing task has retries lined up with a very short delay period.
 
 + New config item "[cylc] abort if any task fails = False"; if True,
 the suite will abort with exit status 1 if any task false. The main
-intended use for this is in pre-release automated test suites.
+intended use for this is for pre-release automated test suites.
 
 + Initial GUI text view task state filtering now shows all tasks, as
-users often forget which task states are filtered out.
+users often forget that some task states are filtered out if they did
+not activate the filters themselves.
 
-+ The runahead limit now waits on waiting and running tasks (waiting alone
-is not enough to contstrain a single task cycling suite, in which
-successive instances all go off at once).
++ The runahead limit now waits on waiting, submitted, and running tasks
+(waiting alone is not enough to contstrain a single task cycling suite,
+in which successive instances all go off at once).
 
 + Removed the requirement to preface the integer TAG of an asynchronous
 task, on the command line, with 'a:'.
