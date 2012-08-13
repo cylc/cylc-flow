@@ -1079,19 +1079,15 @@ wait on any upstream tasks), their trigger time has long passed (the
 initial cycle time was in the past), and they are not sequential tasks
 (so they are able to run in parallel - try declaring GetData
 sequential to see the difference).
-Beyond the suite {\em runahead limit} of 12 hours (set in the suite.rc
-file), however, GetData is put into a special `runahead' held state 
-indicated by the darker blue graph node. The task will be released 
-from this state once the slower tasks in the suite have caught up 
-sufficiently.  The runahead limit is designed to stop free tasks like
-this from running off too far into the future in delayed operation. It
-is of little conseqence in real time operation\footnote{So long as the
-runahead limit is sufficient to span the normal range of cycle times
-present in the suite - task that only run once per day, for example,
-have to spawn a successor that is 24 hours ahead.} because clock
-triggered tasks are then constrained by the wall clock, and other tasks
-have to wait on them, generally speaking. See Section~\ref{RunaheadLimit} 
-for more on this. 
+Beyond the suite {\em runahead limit}, which defaults to 12 hours for
+this suite - see Section~\ref{RunaheadLimit}) GetData is put into a
+special `runahead' held state indicated by the darker blue graph node.
+The task will be released from this state when the slower tasks have
+caught up sufficiently. The runahead limit is designed to stop tasks
+like this from running off too far into the future in delayed operation.
+It is of little consequence in real time operation because such tasks
+are then typically constrained by a clock trigger, and other tasks
+have to wait on them.
 
 \subsubsection{Viewing The State Of Tasks}
 
@@ -4611,55 +4607,60 @@ suite runahead limit.
 \subsubsection{The Suite Runahead Limit}
 \label{RunaheadLimit}
 
-In a cylc suite each task cycles independently constrained only by
+In a cylc suite each task cycles independently, constrained only by
 dependence on other tasks or by clock triggers. A cycling task with no
-prerequisites and no clock-trigger will tend to run off into the future
+prerequisites and no clock-trigger will want to run off into the future
 (it is unlikely that you will need such a task but it is possible to
 define one). Similarly, in delayed or historical operation a
 clock-triggered task with no dependence on other tasks will run off
 ahead because the clock trigger provides no constraint until the task
-catches up to the wall clock (or rather its cycle time catches up to 
-the wall clock). There is no advantage in letting a few
+catches up to the wall clock. There is no advantage in letting a few
 fast data retrieval tasks, say, get way ahead of the slower tasks
-that actually use the data, and in large suites this could eventually
-swamp cylc because a large number of ``succeeded'' tasks would have to
-be maintained until the slower tasks, which might depend on them, have
-caught up. 
+that actually use the data; in fact it makes suite monitoring more
+difficult and for large suites it could eventually swamp cylc because a
+large number of ``succeeded'' tasks would have to be maintained until
+the slower tasks, which might depend on them, have caught up. 
 
-To control this sort of behaviour cylc has a configurable {\em suite
-runahead limit} that prevents the fastest tasks getting too far
-ahead of the slowest tasks:
+To control this sort of behaviour cylc has a configurable {\em runahead
+limit} that stops the fastest tasks from getting too far ahead of the
+slowest tasks:
 \lstset{language=suiterc}
 \begin{lstlisting}
 #SUITE.RC
 [scheduling]
-    runahead limit = 48 # (hours; default 24)
+    runahead limit = 48 # hours
 \end{lstlisting}
 
 A cycling task spawns its successor when it enters the submitted state
 or, for sequential tasks, when it finishes. If the successor's cycle
 time is ahead of the oldest non-failed task by more than the runahead
-limit it is put into the special ``runahead'' held state until other
+limit it is put into the special ``runahead held'' state until other
 tasks catch up sufficiently. In real time operation the runahead limit
 is of little consequence, because the suite will be constrained by its
 clock-triggered tasks, but the limit must be long enough to cover the
-minimum cycle time range present in the suite. A task
-that only runs once per day, for example, must be able to spawn 24 hours
-ahead. 
+minimum cycle time range present in the suite. A task that only runs
+once per day, for example, must be able to spawn 24 hours ahead. 
+
+The default runahead limit is now set to the largest of the minimum
+limit values supplied by each of the suite's cycling modules (which are
+referenced by the graph section headings). So, for instance, for a suite
+that has tasks cycling every 12 hours and every day, the default limit
+will be 24 hours.  Recent versions of cylc, however, can take a lower
+limit than this without actually stalling the suite, because
+runahead-constrained tasks are now just put into the temporary
+``runahead held'' state instead of being prevented from spawning. 
 
 Failed tasks, which are not automatically removed from a suite,
-are ignored when computing the runahead limit (but tasks that can't run
+are ignored when applying the runahead limit (but tasks that can't run
 because they depend on a failed task are not ignored, of course). 
 
-Note that it may occasionally be useful to define tasks that are
-entirely unconstrained even in real time operation. For instance,
-consider a tide prediction model that contributes, along with weather
-and sea state models, to a ``seagram'' product, but which does not wait
-on any real time data (tide is astronomically determined) and does not
-take inputs from other tasks in the suite. Such a task could be
-prevented from running off into the future by giving it artificial
-dependence on some other task, but the runahead limit will have the same
-effect.
+Note that it may occasionally be useful to have tasks that are
+entirely unconstrained even in real time operation.  Consider a tide
+prediction model, for instance, that does not wait on real time data
+(tide is astronomically determined) and does not take inputs from other
+tasks. The runahead limit prevents tasks like this from running off into
+the future without tying them artificially (via false dependencies) to
+slower tasks.
 
 \subsubsection{Internal Queues}
 \label{InternalQueues}
