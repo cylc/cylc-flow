@@ -319,7 +319,7 @@ Cylc ("silk") is a suite engine and metascheduler that specializes in
 cycling weather and climate forecasting suites and related processing
 (but it can also be used for one-off workflows of non-cycling tasks).
 
-Version: cylc-"""+cylc_version+""" 
+Version """+cylc_version+""" 
 
 This is the Command Line Interface; the Graphical User Interface is
 "gcylc" (a.k.a. "cylc gui"). Control GUIs for particular suites can be
