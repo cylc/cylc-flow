@@ -230,7 +230,6 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         #except SuiteIdentificationError, x:
         self.logging_dir = None
-        self.task_list = []
         #    warning_dialog( x.__str__() ).warn()
 
         #self.connection_lost = False # (not used)
@@ -800,7 +799,8 @@ The cylc forecast suite metascheduler.
         about.destroy()
 
     def view_task_descr( self, w, task_id ):
-        command = "cylc show --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite + " " + task_id
+        command = "cylc show --host=" + self.cfg.host + " --owner=" + \
+                self.cfg.owner + " " + self.cfg.suite + " " + task_id
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -2222,10 +2222,11 @@ For more Stop options use the Control menu.""" )
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             self.logging_dir = god.get_logging_directory()
+            task_list = god.get_task_list()
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__() ).warn()
         else:
-            foo = cylc_logviewer( 'log', self.logging_dir, self.task_list)
+            foo = cylc_logviewer( 'log', self.logging_dir, task_list)
             self.quitters.append(foo)
 
     def view_suite_info( self, w ):
