@@ -343,6 +343,13 @@ class remote_switch( Pyro.core.ObjBase ):
         return self.config.get_graph_raw( cto, ctn, raw, group_nodes,
                 ungroup_nodes, ungroup_recursive, group_all, ungroup_all)
 
+    def reconfigure( self ):
+        self.log.info( "servicing suite reconfigure request")
+        if self._suite_is_blocked():
+            return result( False, "Suite is blocked" )
+        self.pool.reconfigure()
+        return result( True, 'OK' )
+
     def get_task_requisites( self, in_ids ):
         self.log.info( "servicing task state info request")
         in_ids_real = {}

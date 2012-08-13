@@ -195,8 +195,9 @@ Text Treeview suite control interface.
         labels[ 'runahead'  ] = '_runahead'
         labels[ 'queued'   ] = '_queued'
   
-        # initially filter out 'succeeded' and 'waiting' tasks
-        self.tfilter_states = [ 'waiting', 'succeeded' ]
+        # To initially filter out 'succeeded' and 'waiting' tasks:
+        #self.tfilter_states = [ 'waiting', 'succeeded' ]
+        self.tfilter_states = []
 
         for st in all_states:
             b = gtk.CheckButton( labels[st] )

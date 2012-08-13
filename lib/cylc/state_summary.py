@@ -37,6 +37,7 @@ class state_summary( Pyro.core.ObjBase ):
  
     def update( self, tasks, clock, oldest, newest,
             paused, will_pause_at, stopping, will_stop_at, blocked ):
+        self.task_name_list = []
         self.task_summary = {}
         self.global_summary = {}
         self.family_summary = {}
@@ -47,6 +48,8 @@ class state_summary( Pyro.core.ObjBase ):
             name, ctime = task.id.split('%')
             task_states.setdefault(ctime, {})
             task_states[ctime][name] = self.task_summary[task.id]['state']
+            if name not in self.task_name_list:
+                self.task_name_list.append(name)
 
         fam_states = {}
         for ctime, c_task_states in task_states.items():
@@ -84,10 +87,10 @@ class state_summary( Pyro.core.ObjBase ):
         self.global_summary[ 'will_stop_at' ] = will_stop_at
         self.global_summary[ 'started by gcylc' ] = self.gcylc
         self.global_summary[ 'blocked' ] = blocked
-            
-        # update deprecated old-style summary (DELETE WHEN NO LONGER NEEDED)
-        #self.get_summary()
 
+    def get_task_name_list( self ):
+        return self.task_name_list
+            
     def get_state_summary( self ):
         return [ self.global_summary, self.task_summary, self.family_summary ]
 

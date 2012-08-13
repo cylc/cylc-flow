@@ -19,9 +19,6 @@
 # TO DO: document use foo[T-6]:out1, not foo:out1 with
 # <CYLC_TASK_CYCLE_TIME-6> in the output message.
 
-# TO DO: check that mid-level families used in the graph are replaced
-# by *task* members, not *family* members.
-
 # NOTE: configobj.reload() apparently does not revalidate (list-forcing
 # is not done, for example, on single value lists with no trailing
 # comma) ... so to reparse the file  we have to instantiate a new config
@@ -447,10 +444,23 @@ class config( CylcConfigObj ):
         # nodes, whereas the reverse is needed - fixing this would
         # require reordering task_attr in lib/cylc/graphing.py).
 
+    def adopt_orphans( self, orphans ):
+        # Called by the scheduler after reloading the suite definition
+        # at run time and finding any live task proxies whose
+        # definitions have been removed from the suite. Keep them 
+        # in the default queue and under the root family, until they
+        # run their course and disappear.
+        queues = self['scheduling']['queues']
+        for orphan in orphans:
+            self.family_hierarchy[orphan] = [ orphan, 'root' ]
+            queues['default']['members'].append( orphan )
 
     def process_queues( self ):
         # TO DO: user input consistency checking (e.g. duplicate queue
         # assignments and non-existent task names)
+
+        # NOTE: this method modifies the parsed config dict itself.
+
         queues = self['scheduling']['queues']
         # add all tasks to the default queue
         queues['default']['members'] = self.get_task_name_list()

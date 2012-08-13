@@ -70,6 +70,66 @@ created by copying real suites out of their normal operating environment.
     \item {\em default:} False
 \end{myitemize}
 
+\subsubsection[max simultaneous job submissions]{[cylc] $\rightarrow$ max simultaneous job submission}
+
+This sets the maximum allowable number of simultaneous (parallel) job
+submissions. If a greater number of tasks than this happen to become
+ready to run at once (as would be typical for ensemble suites), cylc
+will submit them in batches of this size, waiting for all members of a
+batch to return before proceeding to the next batch.  See
+Section~\ref{MaxSimJobSub}.
+
+\begin{myitemize}
+    \item {\em type:} integer (minimum 1)
+    \item {\em default:} 50
+\end{myitemize}
+
+\subsubsection[pyro connection timeout]{[cylc] $\rightarrow$ pyro connection timeout}
+
+This sets the network connection timeout for Pyro connections to a
+running suite. The default is no timeout at all. See
+Section~\ref{MaxSimJobSub} for more on why this matters.
+
+\begin{myitemize}
+    \item {\em type:} float (seconds; minimum 0.0)
+    \item {\em default:} (none)
+\end{myitemize}
+
+\subsubsection[abort if any task fails]{[cylc] $\rightarrow$ abort if any task fails}
+
+Cylc does not normally abort if tasks fail, but if this item is turned
+on it will abort with exit status 1 if any task fails.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False
+\end{myitemize}
+
+\paragraph[directory]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ directory}
+
+The cylc log and its backups are stored in this directory. If you change
+the directory make sure it remains suite-specific by using suite
+identity environment variables in the path.
+
+\begin{myitemize}
+    \item {\em type:} string (directory path, may contain environment variables)
+    \item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite=
+\end{myitemize}
+
+\paragraph[roll over at start-up]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ roll over at start-up}
+
+Suite logs roll over (start anew) automatically when they reach a
+certain size - currently hardwired to 1MB in
+\lstinline=$CYLC_DIR/lib/cylc/pimp_my_logger.py=. 
+They can also be rolled automatically whenever a
+suite is started or restarted.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} True
+\end{myitemize}
+
+
 \subsubsection[{[[}logging{]]} ]{[cylc] $\rightarrow$ [[logging]]}
 
 This section configures cylc's logging functionality, which records
@@ -181,56 +241,6 @@ The handler script to call when one of the nominated events occurs.
 \begin{myitemize}
     \item {\em type:} string
     \item {\em default:} (none)
-\end{myitemize}
-
-
-\subsubsection[{[[}max simultaneous job submissions{]]} ]{[cylc] $\rightarrow$ [[max simultaneous job submissions]]}
-
-This sets the maximum allowable number of simultaneous (parallel) job
-submissions. If a greater number of tasks than this happen to become
-ready to run at once (as would be typical for ensemble suites), cylc
-will submit them in batches of this size, waiting for all members of a
-batch to return before proceeding to the next batch.  See
-Section~\ref{MaxSimJobSub}.
-
-\begin{myitemize}
-    \item {\em type:} integer (minimum 1)
-    \item {\em default:} 50
-\end{myitemize}
-
-\subsubsection[{[[}pyro connection timeout{]]} ]{[cylc] $\rightarrow$ [[pyro connection timeout]]}
-
-This sets the network connection timeout for Pyro connections to a
-running suite. The default is no timeout at all. See
-Section~\ref{MaxSimJobSub} for more on why this matters.
-
-\begin{myitemize}
-    \item {\em type:} float (seconds; minimum 0.0)
-    \item {\em default:} (none)
-\end{myitemize}
-
-\paragraph[directory]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ directory}
-
-The cylc log and its backups are stored in this directory. If you change
-the directory make sure it remains suite-specific by using suite
-identity environment variables in the path.
-
-\begin{myitemize}
-    \item {\em type:} string (directory path, may contain environment variables)
-    \item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite=
-\end{myitemize}
-
-\paragraph[roll over at start-up]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ roll over at start-up}
-
-Suite logs roll over (start anew) automatically when they reach a
-certain size - currently hardwired to 1MB in
-\lstinline=$CYLC_DIR/lib/cylc/pimp_my_logger.py=. 
-They can also be rolled automatically whenever a
-suite is started or restarted.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} True
 \end{myitemize}
 
 
@@ -778,7 +788,7 @@ A description of this namespace, retrievable from running tasks via
 
 \paragraph[initial scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ initial scripting}
 
-Initial scripting goes at the top of the task job script after the 
+Initial scripting appears at the top of the task job script after the 
 task execution environment is configured but before configuring access
 to cylc itself. The original intention was to allow remote tasks
 to source login scripts before calling the first cylc command (i.e.\ the
@@ -789,6 +799,10 @@ that the remote task invocation mechanism now automatically sources both
 Note also that pre-command scripting, command scripting, post-command
 scripting should be used for most other purposes, because these can
 access variables exported to the task execution environment.
+Finally, {\em job script error trapping is configured after any initial
+scripting completes} so errors in initial scripting will not be detected
+and will not cause a task to fail (unless downstream consequences cause
+failure indirectly).
 
 \begin{myitemize}
 \item {\em type:} string

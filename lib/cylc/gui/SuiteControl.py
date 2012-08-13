@@ -800,7 +800,7 @@ The cylc forecast suite metascheduler.
         about.destroy()
 
     def view_task_descr( self, w, task_id ):
-        command = "cylc show --host=" + self.cfg.host + " " + self.cfg.suite + " " + task_id
+        command = "cylc show --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite + " " + task_id
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -834,12 +834,6 @@ The cylc forecast suite metascheduler.
 
         return False
 
-    def jobscript( self, w, suite, task ):
-        command = "cylc jobscript " + suite + " " + task
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 800, 800 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
     def get_right_click_menu( self, task_id, hide_task=False ):
         """Return the default menu for a task."""
         menu = gtk.Menu()
@@ -870,13 +864,9 @@ The cylc forecast suite metascheduler.
         items.append( js0_item )
         js0_item.connect( 'activate', self.view_task_descr, task_id )
 
-        js_item = gtk.MenuItem( 'View The Job Script' )
+        js_item = gtk.MenuItem( 'View Job Script' )
         items.append( js_item )
         js_item.connect( 'activate', self.view_task_info, task_id, True )
-
-        js2_item = gtk.MenuItem( 'View New Job Script' )
-        items.append( js2_item )
-        js2_item.connect( 'activate', self.jobscript, self.cfg.suite, task_id )
 
         info_item = gtk.MenuItem( 'View Task Output' )
         items.append( info_item )
@@ -1222,7 +1212,6 @@ shown here in the state they were in at the time of triggering.''' )
                 self.command_help( "control", "hold" )
             else:
                 self.command_help( "control", "release" )
-
             response = prompt.run()
 
         prompt.destroy()
@@ -1788,6 +1777,28 @@ shown here in the state they were in at the time of triggering.''' )
         else:
             warning_dialog( result.reason, self.window ).warn()
 
+    def reload_suite( self, w ):
+        msg = "Reload the suite definition (EXPERIMENTAL!)"
+        prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL,
+                                    gtk.MESSAGE_QUESTION,
+                                    gtk.BUTTONS_OK_CANCEL, msg )
+
+        prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
+        response = prompt.run()
+
+        while response == gtk.RESPONSE_HELP:
+            self.command_help( "control", "reload" )
+            response = prompt.run()
+
+        prompt.destroy()
+        if response != gtk.RESPONSE_OK:
+            return
+
+        command = "cylc reload -f --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
     def nudge_suite( self, w ):
         try:
             proxy = cylc_pyro_client.client( self.cfg.suite,
@@ -1961,13 +1972,17 @@ shown here in the state they were in at the time of triggering.''' )
         start_menu.append( pause_item )
         pause_item.connect( 'activate', self.pause_suite )
 
-        resume_item = gtk.MenuItem( '_Release Suite (unpause)' )
+        resume_item = gtk.MenuItem( 'R_elease Suite (unpause)' )
         start_menu.append( resume_item )
         resume_item.connect( 'activate', self.resume_suite )
 
         nudge_item = gtk.MenuItem( "_Nudge (updates times)" )
         start_menu.append( nudge_item )
         nudge_item.connect( 'activate', self.nudge_suite  )
+
+        reload_item = gtk.MenuItem( "Re_load Suite Definition" )
+        start_menu.append( reload_item )
+        reload_item.connect( 'activate', self.reload_suite  )
 
         insert_item = gtk.MenuItem( '_Insert Task(s) ...' )
         start_menu.append( insert_item )
@@ -1977,7 +1992,7 @@ shown here in the state they were in at the time of triggering.''' )
         start_menu.append( block_item )
         block_item.connect( 'activate', self.block_suite )
 
-        unblock_item = gtk.MenuItem( 'U_nblock Access' )
+        unblock_item = gtk.MenuItem( 'Unbl_ock Access' )
         start_menu.append( unblock_item )
         unblock_item.connect( 'activate', self.unblock_suite )
 
@@ -2211,7 +2226,7 @@ For more Stop options use the Control menu.""" )
             self.quitters.append(foo)
 
     def view_suite_info( self, w ):
-        command = "cylc show --host=" + self.cfg.host + " " + self.cfg.suite 
+        command = "cylc show --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite 
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()

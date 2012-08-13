@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import sys
+if '--use-ssh' in sys.argv[1:]: 
+    sys.argv.remove( '--use-ssh' )
+    from cylc.remote import remrun
+    remrun().execute()
+
+from cylc import cylc_pyro_client
+from cylc.config import config
+from cylc.CylcOptionParsers import cop
+from cylc.command_prep import prep_pyro, prep_file
+from cylc.prompt import prompt
+
+parser = cop( """cylc [control] reload [OPTIONS] ARGS 
+
+Reload the suite definition at run time. This allows:
+ (a) changing task config such as command scripting or environment;
+ (b) adding tasks to, or removing them from, the suite definition,
+at run time - without shutting the suite down and restarting it. (It is
+easy to shut down and restart a cylc suite, but this may be useful if you
+don't want to wait for long-running tasks to finish first.)
+
+Note that *defined tasks* can be already be added to or removed from a
+running suite with the 'cylc insert' and 'cylc remove' commands. The
+reload command allows addition and removal of actual task definitions.
+If a new task is definition is added (and used in the graph) you will
+still need to manually insert an instance of the task (at a particular
+cycle time) into the running suite. If a task definition (and its use in
+the graph) is deleted, existing task proxies of the of the deleted type
+will run their course after the reload but new instances will not be
+spawned. Changes to a task definition will only take effect when the
+next task instance is spawned (existing instances will not be affected).
+
+WARNING: THIS IS AN EXPERIMENTAL FEATURE.""", pyro=True )
+
+(options, args) = parser.parse_args()
+
+suite, suiterc = prep_file( args[0], options ).execute()
+
+if options.verbose:
+    print "Parsing Suite Definition"
+try:
+    config = config( suite, suiterc, validation=True, verbose=options.verbose )
+except Exception,x:
+    print >> sys.stderr, 'Cannot reload: suite validation fails!'
+    if options.debug:
+        raise
+    raise SystemExit(x)
+
+suite, pphrase = prep_pyro( args[0], options ).execute()
+
+prompt( 'Reconfigure ' + suite, options.force )
+
+try:
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host, options.pyro_timeout, None, options.verbose ).get_proxy( 'remote' )
+except Exception, x:
+    if options.debug:
+        raise
+    raise SystemExit(x)
+
+
+result = proxy.reconfigure()
+
+if result.success:
+    print result.reason
+else:
+    sys.exit( 'ERROR: ' + result.reason )
+

@@ -873,6 +873,17 @@ the installation section to the running suites section.
 registration name hierarchy had been omitted.
 
 + Do remote request handling before shutdown check (reverses the
-original order) so that the suite can shutdown if requested even if a
+original order) so suites can shutdown if requested even when a
 failing task has retries lined up with a very short delay period.
+
++ New config item "[cylc] abort if any task fails = False"; if True,
+the suite will abort with exit status 1 if any task false. The main
+intended use for this is in pre-release automated test suites.
+
++ Initial GUI text view task state filtering now shows all tasks, as
+users often forget which task states are filtered out.
+
++ The runahead limit now waits on waiting and running tasks (waiting alone
+is not enough to contstrain a single task cycling suite, in which
+successive instances all go off at once).
 

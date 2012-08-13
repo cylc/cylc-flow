@@ -1079,19 +1079,15 @@ wait on any upstream tasks), their trigger time has long passed (the
 initial cycle time was in the past), and they are not sequential tasks
 (so they are able to run in parallel - try declaring GetData
 sequential to see the difference).
-Beyond the suite {\em runahead limit} of 12 hours (set in the suite.rc
-file), however, GetData is put into a special `runahead' held state 
-indicated by the darker blue graph node. The task will be released 
-from this state once the slower tasks in the suite have caught up 
-sufficiently.  The runahead limit is designed to stop free tasks like
-this from running off too far into the future in delayed operation. It
-is of little conseqence in real time operation\footnote{So long as the
-runahead limit is sufficient to span the normal range of cycle times
-present in the suite - task that only run once per day, for example,
-have to spawn a successor that is 24 hours ahead.} because clock
-triggered tasks are then constrained by the wall clock, and other tasks
-have to wait on them, generally speaking. See Section~\ref{RunaheadLimit} 
-for more on this. 
+Beyond the suite {\em runahead limit}, which defaults to 12 hours for
+this suite - see Section~\ref{RunaheadLimit}) GetData is put into a
+special `runahead' held state indicated by the darker blue graph node.
+The task will be released from this state when the slower tasks have
+caught up sufficiently. The runahead limit is designed to stop tasks
+like this from running off too far into the future in delayed operation.
+It is of little consequence in real time operation because such tasks
+are then typically constrained by a clock trigger, and other tasks
+have to wait on them.
 
 \subsubsection{Viewing The State Of Tasks}
 
@@ -2622,7 +2618,9 @@ Automated failure recovery via suicide triggers.}
 
 Family names defined by the namespace inheritance hierarchy
 (Section~\ref{NIORP}) can be used in the suite graph as shorthand
-for dependencies among the member tasks. Current semantics are:
+for dependencies among the member tasks (higher level families, i.e.
+families of families, can also be used and will be reduced to individual
+member tasks). Current semantics are:
 \begin{myitemize}
     \item {\em family started} means {\em one or more members started} 
     \item {\em family succeeded} means {\em all members succeeded}
@@ -2687,12 +2685,11 @@ same time anyway (e.g.\ forecast ensembles and multiple tasks for
 processing different observations at the same time) and whose outputs
 would all be put to use at a similar time too. Otherwise family triggers
 will unnecessarily constrain cylc's ability to achieve maximum
-functional parallelism,
-because all family members have to finish before downstream processing
-can continue.\footnote{Actually downstream tasks can also trigger off
-individual family members, rather than off the family as a whole, but
-extensive use of this would probably defeat the purpose of using a
-family in the first place.}
+functional parallelism because all family members have to finish before
+downstream processing can continue.\footnote{Actually downstream tasks
+can also trigger off individual family members, rather than off the
+family as a whole, but extensive use of this would probably defeat the
+purpose of using a family in the first place.}
 
 \subsubsection{Handling Intercycle Dependence At Start-Up}
 \label{HandlingIntercycleDependenceAtStartUp}
@@ -2741,7 +2738,7 @@ some kind prevents continued normal cycling}.
 Cold-start tasks have to be declared as such in the suite.rc ``special
 tasks'' section so that cylc knows they are one-off (non-spawning) tasks,
 but also because they play a critical role in suite warm-starts. 
-A suite that has previously been running and was then shut down 
+A suite that has previously been running and then shut down 
 can be warm-started at a particular cycle time, an alternative to {\em
 restarting} from a previous state (although restarting is preferred
 because a warm start is likely to involve re-running some tasks).
@@ -4610,55 +4607,60 @@ suite runahead limit.
 \subsubsection{The Suite Runahead Limit}
 \label{RunaheadLimit}
 
-In a cylc suite each task cycles independently constrained only by
+In a cylc suite each task cycles independently, constrained only by
 dependence on other tasks or by clock triggers. A cycling task with no
-prerequisites and no clock-trigger will tend to run off into the future
+prerequisites and no clock-trigger will want to run off into the future
 (it is unlikely that you will need such a task but it is possible to
 define one). Similarly, in delayed or historical operation a
 clock-triggered task with no dependence on other tasks will run off
 ahead because the clock trigger provides no constraint until the task
-catches up to the wall clock (or rather its cycle time catches up to 
-the wall clock). There is no advantage in letting a few
+catches up to the wall clock. There is no advantage in letting a few
 fast data retrieval tasks, say, get way ahead of the slower tasks
-that actually use the data, and in large suites this could eventually
-swamp cylc because a large number of ``succeeded'' tasks would have to
-be maintained until the slower tasks, which might depend on them, have
-caught up. 
+that actually use the data; in fact it makes suite monitoring more
+difficult and for large suites it could eventually swamp cylc because a
+large number of ``succeeded'' tasks would have to be maintained until
+the slower tasks, which might depend on them, have caught up. 
 
-To control this sort of behaviour cylc has a configurable {\em suite
-runahead limit} that prevents the fastest tasks getting too far
-ahead of the slowest tasks:
+To control this sort of behaviour cylc has a configurable {\em runahead
+limit} that stops the fastest tasks from getting too far ahead of the
+slowest tasks:
 \lstset{language=suiterc}
 \begin{lstlisting}
 #SUITE.RC
 [scheduling]
-    runahead limit = 48 # (hours; default 24)
+    runahead limit = 48 # hours
 \end{lstlisting}
 
 A cycling task spawns its successor when it enters the submitted state
 or, for sequential tasks, when it finishes. If the successor's cycle
 time is ahead of the oldest non-failed task by more than the runahead
-limit it is put into the special ``runahead'' held state until other
+limit it is put into the special ``runahead held'' state until other
 tasks catch up sufficiently. In real time operation the runahead limit
 is of little consequence, because the suite will be constrained by its
 clock-triggered tasks, but the limit must be long enough to cover the
-minimum cycle time range present in the suite. A task
-that only runs once per day, for example, must be able to spawn 24 hours
-ahead. 
+minimum cycle time range present in the suite. A task that only runs
+once per day, for example, must be able to spawn 24 hours ahead. 
+
+The default runahead limit is now set to the largest of the minimum
+limit values supplied by each of the suite's cycling modules (which are
+referenced by the graph section headings). So, for instance, for a suite
+that has tasks cycling every 12 hours and every day, the default limit
+will be 24 hours.  Recent versions of cylc, however, can take a lower
+limit than this without actually stalling the suite, because
+runahead-constrained tasks are now just put into the temporary
+``runahead held'' state instead of being prevented from spawning. 
 
 Failed tasks, which are not automatically removed from a suite,
-are ignored when computing the runahead limit (but tasks that can't run
+are ignored when applying the runahead limit (but tasks that can't run
 because they depend on a failed task are not ignored, of course). 
 
-Note that it may occasionally be useful to define tasks that are
-entirely unconstrained even in real time operation. For instance,
-consider a tide prediction model that contributes, along with weather
-and sea state models, to a ``seagram'' product, but which does not wait
-on any real time data (tide is astronomically determined) and does not
-take inputs from other tasks in the suite. Such a task could be
-prevented from running off into the future by giving it artificial
-dependence on some other task, but the runahead limit will have the same
-effect.
+Note that it may occasionally be useful to have tasks that are
+entirely unconstrained even in real time operation.  Consider a tide
+prediction model, for instance, that does not wait on real time data
+(tide is astronomically determined) and does not take inputs from other
+tasks. The runahead limit prevents tasks like this from running off into
+the future without tying them artificially (via false dependencies) to
+slower tasks.
 
 \subsubsection{Internal Queues}
 \label{InternalQueues}
@@ -4809,6 +4811,29 @@ fi"""
             events = retry, failed
             script = "echo !!!!!EVENT!!!!! "
 \end{lstlisting}
+
+
+
+\subsection{Reloading The Suite Definition At Runtime}
+
+The \lstinline=cylc reload= command, an experimental feature new in
+cylc-4.5.2, reloads the suite definition at run time. This allows:
+ (a) changing task config such as command scripting or environment;
+ (b) adding tasks to, or removing them from, the suite definition,
+at run time - without shutting the suite down and restarting it. (It is
+easy to shut down and restart cylc suites, but reloading may be useful
+if you don't want to wait for long-running tasks to finish first).
+
+Note that {\em defined tasks} can be already be added to or removed from
+a running suite with the 'cylc insert' and 'cylc remove' commands; the
+reload command allows addition and removal of {\em task definitions}.
+If a new task is definition is added (and used in the graph) you will
+still need to manually insert an instance of it (with a particular cycle
+time) into the running suite. If a task definition (and its use in
+the graph) is deleted, existing task proxies of the of the deleted type
+will run their course after the reload but new instances will not be
+spawned. Changes to a task definition will only take effect when the
+next task instance is spawned (existing instances will not be affected).
 
 
 \subsection{Handling Job Preemption}

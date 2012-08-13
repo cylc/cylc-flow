@@ -41,7 +41,7 @@ from locking.suite_lock import suite_lock
 import subprocess
 from suite_id import identifier
 from mkdir_p import mkdir_p
-from config import config, SuiteConfigError
+from config import config, SuiteConfigError, TaskNotDefinedError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
 from version import cylc_version
@@ -67,22 +67,43 @@ class SchedulerError( Exception ):
         return repr(self.msg)
 
 class pool(object):
-    def __init__( self, qconfig, n_max_sub, pyro, verbose ):
+    def __init__( self, qconfig, n_max_sub, pyro, log, verbose ):
         self.pyro = pyro
+        self.log = log
         self.qconfig = qconfig
         self.verbose = verbose
         self.n_max_sub = n_max_sub
-        self.myq = {}   # self.myq[taskname] = 'foo'
-        for queue in qconfig:
-            for taskname in qconfig[queue]['members']:
+        self.assign()
+
+    def assign( self, reload=False ):
+        # self.myq[taskname] = 'foo'
+        # self.queues['foo'] = [live tasks in queue foo]
+
+        self.myq = {}
+        for queue in self.qconfig:
+            for taskname in self.qconfig[queue]['members']:
                 self.myq[taskname] = queue
-        self.queues = {}  # self.queues['foo'] = [list of live task proxies in queue foo]
+
+        if not reload:
+            self.queues = {}
+        else:
+            # reassign live tasks from the old queues to the new
+            self.new_queues = {}
+            for queue in self.queues:
+                for task in self.queues[queue]:
+                    myq = self.myq[task.name]
+                    if myq not in self.new_queues:
+                        self.new_queues[myq] = [task]
+                    else:
+                        self.new_queues[myq].append( task )
+            self.queues = self.new_queues
 
     def add( self, task ):
         try:
             self.pyro.connect( task, task.id )
-        except NamingError:
+        except NamingError, x:
             # Attempted insertion of a task that already exists.
+            print >> sys.stderr, x
             self.log.critical( task.id + ' CANNOT BE INSERTED (already exists)' )
             return
         except Exception, x:
@@ -102,8 +123,9 @@ class pool(object):
         # remove a task from the pool
         try:
             self.pyro.disconnect( task )
-        except NamingError:
+        except NamingError, x:
             # Attempted removal of a task that does not exist.
+            print >> sys.stderr, x
             self.log.critical( task.id + ' CANNOT BE REMOVED (no such task)' )
             return
         except Exception, x:
@@ -161,7 +183,7 @@ class pool(object):
         print n_tasks, 'TASKS READY TO BE SUBMITTED'
         n_max = self.n_max_sub
         if n_tasks > n_max:
-            print 'BATCHING max simultaneous job submissions is set to:', n_max
+            print 'BATCHING: maximum simultaneous job submissions is set to', n_max
         batches, remainder = divmod( n_tasks, n_max )
         for i in range(0,batches):
             start = i*n_max
@@ -174,12 +196,12 @@ class pool(object):
         ps = []
         for task in tasks:
             print
-            print 'SUBMIT', task.id + ': ',  
+            print 'TASK READY:', task.id 
             p = task.run_external_task()
             if p:
                 ps.append( (task,p) ) 
         print
-        print 'WAITING ON JOB SUBMISSION SUBPROCESSES'
+        print 'WAITING ON JOB SUBMISSIONS'
         n_succ = 0
         n_fail = 0
         for task, p in ps:
@@ -199,8 +221,7 @@ class pool(object):
 
         after = datetime.datetime.now()
         n_tasks = len(tasks)
-        print
-        print "JOB SUBMISSION SUMMARY (" + str(len(tasks)) + " tasks):"
+        print 'JOB SUBMISSIONS COMPLETED:'
         print "  Time taken: " + str( after - before )
         print " ", n_succ, "of", n_tasks, "job submissions succeeded" 
         print " ", n_fail, "of", n_tasks, "job submissions failed" 
@@ -271,16 +292,10 @@ class scheduler(object):
         self.configure_suite()
         self.runahead_limit = self.config['scheduling']['runahead limit']
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
-        task_name_list = self.config.get_task_name_list()
-
-        qmembers = {}
-        qlimits = {}
-        qmembers['default'] = task_name_list
-        qlimits['default'] = 2
 
         self.pool = pool( self.config['scheduling']['queues'], 
-                self.config['cylc']['max simultaneous job submissions'],
-                self.pyro, self.verbose )
+                self.config['cylc']['maximum simultaneous job submissions'],
+                self.pyro, self.log, self.verbose )
         
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD
         self.load_tasks()
@@ -302,10 +317,31 @@ class scheduler(object):
 
         self.print_banner()
 
-    def assign_to_queues( self ):
-        for task in self.tasks:
-            if task.name not in my_queue:
-                my_queue[task] = queue['default']
+    def reconfigure( self ):
+        # EXPERIMENTAL
+        old_task_list = self.config.get_task_name_list()
+        self.configure_suite( reconfigure=True )
+        new_task_list = self.config.get_task_name_list()
+
+        # find any old tasks that have been removed from the suite
+        self.orphans = []
+        for name in old_task_list:
+            if name not in new_task_list:
+                self.orphans.append(name)
+        # adjust the new suite config to handle the orphans
+        self.config.adopt_orphans( self.orphans )
+ 
+        self.runahead_limit = self.config['scheduling']['runahead limit']
+        self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
+        self.pool.qconfig = self.config['scheduling']['queues']
+        self.pool.n_max_sub = self.config['cylc']['maximum simultaneous job submissions']
+        self.pool.verbose = self.verbose
+        self.pool.assign( reload=True )
+        self.suite_state.config = self.config
+        self.configure_environments()
+        self.print_banner( reload=True )
+        for itask in self.pool.get_tasks():
+            itask.reconfiguring = True
 
     def parse_commandline( self ):
         self.banner[ 'SUITE NAME' ] = self.suite
@@ -345,7 +381,7 @@ class scheduler(object):
         else:
             raise SchedulerError( "ERROR: " + self.suite + " is already running")
 
-    def configure_suite( self ):
+    def configure_suite( self, reconfigure=False ):
         # LOAD SUITE CONFIG FILE
         self.config = config( self.suite, self.suiterc,
                 simulation_mode=self.simulation_mode,
@@ -429,14 +465,14 @@ class scheduler(object):
 
         # CONFIGURE SUITE PYRO SERVER
         suitename = self.suite
-        self.pyro = pyro_server( suitename, self.suite_dir )
-
-        self.port = self.pyro.get_port()
-        self.banner[ 'PORT' ] = self.port
-
         # REMOTELY ACCESSIBLE SUITE IDENTIFIER
         suite_id = identifier( self.suite, self.owner )
-        self.pyro.connect( suite_id, 'cylcid', qualified = False )
+        if not reconfigure:
+            self.pyro = pyro_server( suitename, self.suite_dir )
+            self.port = self.pyro.get_port()
+            self.pyro.connect( suite_id, 'cylcid', qualified = False )
+
+        self.banner[ 'PORT' ] = self.port
 
         # USE QUICK TASK ELIMINATION?
         self.use_quick = self.config['development']['use quick task elimination']
@@ -453,13 +489,12 @@ class scheduler(object):
         # CLOCK (accelerated time in simulation mode)
         rate = self.config['cylc']['simulation mode']['clock rate']
         offset = self.config['cylc']['simulation mode']['clock offset']
-        self.clock = accelerated_clock.clock( int(rate), int(offset), self.utc, self.simulation_mode ) 
-
-        # nasty kludge to give the simulation mode clock to task classes:
-        task.task.clock = self.clock
-        clocktriggered.clocktriggered.clock = self.clock
-
-        self.pyro.connect( self.clock, 'clock' )
+        if not reconfigure:
+            self.clock = accelerated_clock.clock( int(rate), int(offset), self.utc, self.simulation_mode ) 
+            # nasty kludge to give the simulation mode clock to task classes:
+            task.task.clock = self.clock
+            clocktriggered.clocktriggered.clock = self.clock
+            self.pyro.connect( self.clock, 'clock' )
 
         self.failout_task_id = self.options.failout_task_id
 
@@ -468,20 +503,24 @@ class scheduler(object):
         if self.simulation_mode and self.failout_task_id:
                 job_submit.failout_id = self.failout_task_id
 
-        # PIMP THE SUITE LOG
-        self.log = logging.getLogger( 'main' )
-        pimp_my_logger.pimp_it( \
-             self.log, self.logging_dir, self.config['cylc']['logging']['roll over at start-up'], \
-                self.logging_level, self.clock )
+        if not reconfigure:
+            # PIMP THE SUITE LOG
+            self.log = logging.getLogger( 'main' )
+            pimp_my_logger.pimp_it( \
+                    self.log, self.logging_dir, self.config['cylc']['logging']['roll over at start-up'], \
+                    self.logging_level, self.clock )
 
-        # STATE DUMP ROLLING ARCHIVE
-        arclen = self.config[ 'cylc']['state dumps']['number of backups' ]
-        self.state_dump_archive = rolling_archive( self.state_dump_filename, arclen )
+            # STATE DUMP ROLLING ARCHIVE
+            arclen = self.config[ 'cylc']['state dumps']['number of backups' ]
+            self.state_dump_archive = rolling_archive( self.state_dump_filename, arclen )
 
-        # REMOTE CONTROL INTERFACE
-        # (note: passing in self to give access to task pool methods is a bit clunky?).
-        self.remote = remote_switch( self.config, self.clock, self.suite_dir, self, self.failout_task_id )
-        self.pyro.connect( self.remote, 'remote' )
+            # REMOTE CONTROL INTERFACE
+            # (note: passing in self to give access to task pool methods is a bit clunky?).
+            self.remote = remote_switch( self.config, self.clock, self.suite_dir, self, self.failout_task_id )
+            self.pyro.connect( self.remote, 'remote' )
+        else:
+            self.remote.config = self.config
+            # NOT NEEDED: self.remote.pool = self
 
     def configure_environments( self ):
         cylcenv = OrderedDict()
@@ -518,21 +557,27 @@ class scheduler(object):
             os.environ[var] = os.path.expandvars(senv[var])
 
 
-    def print_banner( self ):
+    def print_banner( self, reload=False ):
         msg = []
-        msg.append( "_" )
-        msg.append( "The cylc metascheduler suite engine, version cylc-" + cylc_version )
-        msg.append( "Project home page: http://hjoliver.github.com/cylc" )
-        msg.append( "-" )
-        msg.append( "Copyright (C) 2008-2012 Hilary Oliver, NIWA" )
-        msg.append( "-" )
-        msg.append( "This program comes with ABSOLUTELY NO WARRANTY; for details type:" )
-        msg.append( " `cylc license warranty'." )
-        msg.append( "This is free software, and you are welcome to redistribute it under" )
-        msg.append( "certain conditions; for details type:" )
-        msg.append( " `cylc license conditions'." )
-        msg.append( "-" )
-
+        if not reload:
+            msg.append( "_" )
+            msg.append( "The cylc suite engine, version " + cylc_version )
+            msg.append( "Home page: http://hjoliver.github.com/cylc" )
+            msg.append( "-" )
+            msg.append( "Copyright (C) 2008-2012 Hilary Oliver, NIWA" )
+            msg.append( "-" )
+            msg.append( "This program comes with ABSOLUTELY NO WARRANTY; for details type:" )
+            msg.append( " `cylc license warranty'." )
+            msg.append( "This is free software, and you are welcome to redistribute it under" )
+            msg.append( "certain conditions; for details type:" )
+            msg.append( " `cylc license conditions'." )
+            msg.append( "-" )
+        else:
+            msg.append( "_" )
+            msg.append( "RELOADING THE SUITE DEFINITION AT RUNTIME" )
+            msg.append( "WARNING: THIS IS AN EXPERIMENTAL FEATURE!" )
+            msg.append( "-" )
+ 
         lenm = 0
         for m in msg:
             if len(m) > lenm:
@@ -661,6 +706,10 @@ class scheduler(object):
                         else:
                             stop_now = False
                             break
+
+            if self.config['cylc']['abort if any task fails']:
+                if self.any_task_failed():
+                    raise SchedulerError( 'One or more tasks failed, and this suite sets "abort if any task fails"' )
 
             if stop_now:
                 self.log.warning( "ALL TASKS FINISHED OR HELD" )
@@ -835,11 +884,16 @@ class scheduler(object):
     def will_pause_at( self ):
         return self.hold_time
 
-    def get_oldest_waiting_c_time( self ):
-        # return the cycle time of the oldest waiting task
+    def get_oldest_waiting_or_running_or_submitted_c_time( self ):
+        # return the cycle time of the oldest waiting or running task
+        # ('or running' to handle a cycling single task suite - they all
+        # go off at once so 'waiting' won't constrain with runahead
+        # limit)
         oldest = '99991228235959'
         for itask in self.pool.get_tasks():
-            if not itask.state.is_waiting():
+            if not itask.state.is_waiting() and \
+                    not itask.state.is_running() and \
+                    not itask.state.is_submitted():
                 continue
             #if itask.is_daemon():
             #    # avoid daemon tasks
@@ -918,6 +972,12 @@ class scheduler(object):
                     return False
         return True
 
+    def any_task_failed( self ):
+        for itask in self.pool.get_tasks():
+            if itask.state.is_failed():
+                return True
+        return False
+
     def negotiate( self ):
         # run time dependency negotiation: tasks attempt to get their
         # prerequisites satisfied by other tasks' outputs.
@@ -984,13 +1044,14 @@ class scheduler(object):
             new_task.log( 'WARNING', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
             new_task.state.set_status('held')
         elif self.runahead_limit:
-            ouct = self.get_oldest_waiting_c_time() 
+            ouct = self.get_oldest_waiting_or_running_or_submitted_c_time() 
             foo = ct( new_task.c_time )
             foo.decrement( hours=self.runahead_limit )
             if int( foo.get() ) >= int( ouct ):
                 # beyond the runahead limit
                 new_task.log( 'DEBUG', "HOLDING (runahead limit)" )
                 new_task.state.set_status('runahead')
+
 
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
@@ -999,12 +1060,23 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if itask.ready_to_spawn():
                 itask.log( 'DEBUG', 'spawning')
-                # dynamic task object creation by task and module name
-                new_task = itask.spawn( 'waiting' )
+            
+                if itask.reconfiguring:
+                    itask.state.set_spawned()
+                    if itask.name not in self.orphans:
+                        self.log.warning( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
+                        new_task = self.config.get_task_proxy( itask.name, itask.next_tag(), 'waiting', None, False )
+                    else:
+                        self.log.warning( 'NOT RELOADING ORPHANED TASK ' + itask.id )
+                        continue
+                else: 
+                    new_task = itask.spawn( 'waiting' )
+
                 if itask.is_cycling():
                     self.check_hold_spawned_task( itask, new_task )
                     # perpetuate the task stop time, if there is one
                     new_task.stop_c_time = itask.stop_c_time
+
                 self.pool.add( new_task )
 
     def force_spawn( self, itask ):

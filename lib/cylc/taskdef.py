@@ -360,6 +360,8 @@ class taskdef(object):
                 sself.stop_c_time = '99991231230000'
                 super( sself.__class__, sself ).__init__( initial_state )
 
+            sself.reconfiguring = False
+
         tclass.__init__ = tclass_init
 
         return tclass

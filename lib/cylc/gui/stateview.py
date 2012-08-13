@@ -527,7 +527,6 @@ class lupdater(threading.Thread):
                     self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
-            self.rem = client.get_proxy( 'remote' )
         except:
             return False
         else:
@@ -552,7 +551,7 @@ class lupdater(threading.Thread):
         #print "Updating"
         try:
             [glbl, states, fam_states] = self.god.get_state_summary()
-            self.task_list = self.rem.get_task_list(logit=False)
+            self.task_list = self.god.get_task_name_list()
         except Exception, x:
             #print >> sys.stderr, x
             gobject.idle_add( self.connection_lost )
