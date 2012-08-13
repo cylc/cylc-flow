@@ -662,6 +662,10 @@ class scheduler(object):
                             stop_now = False
                             break
 
+            if self.config['cylc']['abort if any task fails']:
+                if self.any_task_failed():
+                    raise SchedulerError( 'One or more tasks failed, and this suite sets "abort if any task fails"' )
+
             if stop_now:
                 self.log.warning( "ALL TASKS FINISHED OR HELD" )
                 break
@@ -917,6 +921,12 @@ class scheduler(object):
                 else:
                     return False
         return True
+
+    def any_task_failed( self ):
+        for itask in self.pool.get_tasks():
+            if itask.state.is_failed():
+                return True
+        return False
 
     def negotiate( self ):
         # run time dependency negotiation: tasks attempt to get their
