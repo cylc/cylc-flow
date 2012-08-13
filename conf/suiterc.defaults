@@ -15,7 +15,7 @@ description = "No description provided"
     UTC mode = False
     simulation mode only = False
     pyro connection timeout = (none)
-    max simultaneous job submissions = 50
+    maximum simultaneous job submissions = 50
     abort if any task fails = boolean = False
     [[logging]]
         directory = '$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite'

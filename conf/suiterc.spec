@@ -39,7 +39,7 @@ description = string( default="No description provided" )
     UTC mode = boolean( default=False )
     simulation mode only = boolean( default=False )
     pyro connection timeout = float( min=0.0, default=None )
-    max simultaneous job submissions = integer( min=1, default=50 )
+    maximum simultaneous job submissions = integer( min=1, default=50 )
     abort if any task fails = boolean( default=False )
     [[logging]]
         directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite' )

@@ -873,7 +873,7 @@ the installation section to the running suites section.
 registration name hierarchy had been omitted.
 
 + Do remote request handling before shutdown check (reverses the
-original order) so that the suite can shutdown if requested even if a
+original order) so suites can shutdown if requested even when a
 failing task has retries lined up with a very short delay period.
 
 + New config item "[cylc] abort if any task fails = False"; if True,

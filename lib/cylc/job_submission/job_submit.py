@@ -214,7 +214,7 @@ class job_submit(object):
         os.chmod( self.local_jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
 
         # this is needed by the 'cylc jobscript' command:
-        print "GENERATED JOB SCRIPT: " + self.local_jobfile_path
+        print "JOB SCRIPT: " + self.local_jobfile_path
 
         # Construct self.command, the command to submit the jobfile to run
         self.construct_jobfile_submission_command()
@@ -231,13 +231,13 @@ class job_submit(object):
         # execute the local command to submit the job
         if dry_run:
             print "THIS IS A DRY RUN. HERE'S HOW I WOULD SUBMIT THE TASK:"
-            print command
+            print 'SUBMIT:', command
             return None
 
         if not self.local:
             # direct the local jobfile across the ssh tunnel via stdin
             command = command + ' < ' + self.local_jobfile_path
-        print command
+        print 'SUBMISSION:', command
 
         try:
             popen = subprocess.Popen( command, shell=True )

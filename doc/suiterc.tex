@@ -788,7 +788,7 @@ A description of this namespace, retrievable from running tasks via
 
 \paragraph[initial scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ initial scripting}
 
-Initial scripting goes at the top of the task job script after the 
+Initial scripting appears at the top of the task job script after the 
 task execution environment is configured but before configuring access
 to cylc itself. The original intention was to allow remote tasks
 to source login scripts before calling the first cylc command (i.e.\ the
@@ -799,6 +799,10 @@ that the remote task invocation mechanism now automatically sources both
 Note also that pre-command scripting, command scripting, post-command
 scripting should be used for most other purposes, because these can
 access variables exported to the task execution environment.
+Finally, {\em job script error trapping is configured after any initial
+scripting completes} so errors in initial scripting will not be detected
+and will not cause a task to fail (unless downstream consequences cause
+failure indirectly).
 
 \begin{myitemize}
 \item {\em type:} string

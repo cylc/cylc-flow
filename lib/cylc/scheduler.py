@@ -161,7 +161,7 @@ class pool(object):
         print n_tasks, 'TASKS READY TO BE SUBMITTED'
         n_max = self.n_max_sub
         if n_tasks > n_max:
-            print 'BATCHING max simultaneous job submissions is set to:', n_max
+            print 'BATCHING: maximum simultaneous job submissions is set to', n_max
         batches, remainder = divmod( n_tasks, n_max )
         for i in range(0,batches):
             start = i*n_max
@@ -174,12 +174,12 @@ class pool(object):
         ps = []
         for task in tasks:
             print
-            print 'SUBMIT', task.id + ': ',  
+            print 'TASK READY:', task.id 
             p = task.run_external_task()
             if p:
                 ps.append( (task,p) ) 
         print
-        print 'WAITING ON JOB SUBMISSION SUBPROCESSES'
+        print 'WAITING ON JOB SUBMISSIONS'
         n_succ = 0
         n_fail = 0
         for task, p in ps:
@@ -199,8 +199,7 @@ class pool(object):
 
         after = datetime.datetime.now()
         n_tasks = len(tasks)
-        print
-        print "JOB SUBMISSION SUMMARY (" + str(len(tasks)) + " tasks):"
+        print 'JOB SUBMISSIONS COMPLETED:'
         print "  Time taken: " + str( after - before )
         print " ", n_succ, "of", n_tasks, "job submissions succeeded" 
         print " ", n_fail, "of", n_tasks, "job submissions failed" 
@@ -279,7 +278,7 @@ class scheduler(object):
         qlimits['default'] = 2
 
         self.pool = pool( self.config['scheduling']['queues'], 
-                self.config['cylc']['max simultaneous job submissions'],
+                self.config['cylc']['maximum simultaneous job submissions'],
                 self.pyro, self.verbose )
         
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD
@@ -521,8 +520,8 @@ class scheduler(object):
     def print_banner( self ):
         msg = []
         msg.append( "_" )
-        msg.append( "The cylc metascheduler suite engine, version cylc-" + cylc_version )
-        msg.append( "Project home page: http://hjoliver.github.com/cylc" )
+        msg.append( "The cylc suite engine, version cylc-" + cylc_version )
+        msg.append( "Home page: http://hjoliver.github.com/cylc" )
         msg.append( "-" )
         msg.append( "Copyright (C) 2008-2012 Hilary Oliver, NIWA" )
         msg.append( "-" )
