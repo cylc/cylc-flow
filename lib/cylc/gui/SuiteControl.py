@@ -1872,33 +1872,29 @@ shown here in the state they were in at the time of triggering.''' )
         view_menu_root = gtk.MenuItem( '_View' )
         view_menu_root.set_submenu( self.view_menu )
 
-        info_item = gtk.MenuItem( 'View Suite _Info' )
+        info_item = gtk.MenuItem( 'Suite _Info' )
         self.view_menu.append( info_item )
         info_item.connect( 'activate', self.view_suite_info )
 
-        log_item = gtk.MenuItem( 'View _Suite Log' )
+        log_item = gtk.MenuItem( 'Suite _Log' )
         self.view_menu.append( log_item )
         log_item.connect( 'activate', self.view_log )
 
-        nudge_item = gtk.MenuItem( "_Nudge Suite (update times)" )
-        self.view_menu.append( nudge_item )
-        nudge_item.connect( 'activate', self.nudge_suite  )
-
         self.view_menu.append( gtk.SeparatorMenuItem() )
 
-        graph_view0_item = gtk.RadioMenuItem( label="1 - View _Graph" )
+        graph_view0_item = gtk.RadioMenuItem( label="1 - _Graph View" )
         self.view_menu.append( graph_view0_item )
         self._set_tooltip( graph_view0_item, self.VIEW_DESC["graph"] + " - primary panel" )
         graph_view0_item._viewname = "graph"
         graph_view0_item.set_active( self.DEFAULT_VIEW == "graph" )
 
-        dot_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="1 - View _Dot" )
+        dot_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="1 - _Dot View" )
         self.view_menu.append( dot_view0_item )
         self._set_tooltip( dot_view0_item, self.VIEW_DESC["dot"] + " - primary panel" )
         dot_view0_item._viewname = "dot"
         dot_view0_item.set_active( self.DEFAULT_VIEW == "dot" )
 
-        text_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="1 - View _Text" )
+        text_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="1 - _Text View" )
         self.view_menu.append( text_view0_item )
         self._set_tooltip( text_view0_item, self.VIEW_DESC["text"] + " - primary panel" )
         text_view0_item._viewname = "text"
@@ -1918,19 +1914,19 @@ shown here in the state they were in at the time of triggering.''' )
         no_view1_item._viewname = "None"
         no_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        graph_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - View Grap_h" )
+        graph_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - Grap_h View" )
         self.view_menu.append( graph_view1_item )
         self._set_tooltip( graph_view1_item, self.VIEW_DESC["graph"] + " - secondary panel" )
         graph_view1_item._viewname = "graph"
         graph_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        dot_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - View D_OT" )
+        dot_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - D_OT View" )
         self.view_menu.append( dot_view1_item )
         self._set_tooltip( dot_view1_item, self.VIEW_DESC["dot"] + " - secondary panel" )
         dot_view1_item._viewname = "dot"
         dot_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        text_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - View Te_xt" )
+        text_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - Te_xt View" )
         self.view_menu.append( text_view1_item )
         self._set_tooltip( text_view1_item, self.VIEW_DESC["text"] + " - secondary panel" )
         text_view1_item._viewname = "text"
@@ -1968,6 +1964,10 @@ shown here in the state they were in at the time of triggering.''' )
         resume_item = gtk.MenuItem( '_Release Suite (unpause)' )
         start_menu.append( resume_item )
         resume_item.connect( 'activate', self.resume_suite )
+
+        nudge_item = gtk.MenuItem( "_Nudge (updates times)" )
+        start_menu.append( nudge_item )
+        nudge_item.connect( 'activate', self.nudge_suite  )
 
         insert_item = gtk.MenuItem( '_Insert Task(s) ...' )
         start_menu.append( insert_item )
