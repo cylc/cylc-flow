@@ -91,10 +91,6 @@ class edge( object):
         # strip off special outputs
         self.right = re.sub( ':\w+', '', self.right )
 
-        # TO DO: SORT OUT USE OF ASYNC TAGS!!!!
-        if len(str(tag)) < 6:
-            tag = 'a:' + tag
-
         return TaskID( self.right, tag )
 
     def get_left( self, intag, not_first_cycle, raw, startup_only, exclude ):
@@ -126,10 +122,6 @@ class edge( object):
                 tag = self.cyclr.__class__.offset( tag, offset )
             else:
                 tag = tag
-
-        # TO DO: SORT OUT USE OF ASYNC TAGS!!!!
-        if len(tag) < 6:
-            tag = 'a:' + tag
 
         return TaskID( left, tag )
 

@@ -582,14 +582,13 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             if stoptag == '':
                 warning_dialog( "ERROR: No stop TAG entered", self.window ).warn()
                 return
-            if re.match( '^a:', stoptag ):
-                # async
-                stoptag = stoptag[2:]
-            else:
+            try:
+                ct(stoptag)
+            except CycleTimeError,x:
                 try:
-                    ct(stoptag)
-                except CycleTimeError,x:
-                    warning_dialog( str(x), self.window ).warn()
+                    int(stoptag)
+                except ValueError:
+                    warning_dialog( 'ERROR, Invalid stop tag: ' + stoptag, self.window ).warn()
                     return
 
         elif stopnow_rb.get_active():
@@ -1409,7 +1408,7 @@ shown here in the state they were in at the time of triggering.''' )
         vbox.pack_start (stopat_rb, True)
 
         st_box = gtk.HBox()
-        label = gtk.Label( "STOP (cycle or 'a:INT')" )
+        label = gtk.Label( "STOP (CYCLE or INT')" )
         st_box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(14)

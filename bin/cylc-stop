@@ -45,7 +45,7 @@ parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
    these may need to be killed manually, and they will (by default) be
    resubmitted if the suite is restarted.""", pyro=True,
     argdoc=[ ("REG", "Suite name"), 
-    ("[STOP]", """a/ task TAG (cycle time or 'a:INTEGER'), or
+    ("[STOP]", """a/ task TAG (cycle time or integer), or
                         b/ YYYY/MM/DD-HH:mm (clock time), or
                         c/ TASK (task ID).""")] )
 
@@ -85,27 +85,34 @@ if shutdown_at:
             HH,MM = time.split(':')
         except:
             # not a task ID or a date time; 
-            if re.match( '^a:', shutdown_arg ):
-                # is an async TAG
-                shutdown_arg = shutdown_arg[2:]
-                method = 'stop after TAG'
-            else:
-                # nope
+            try:
+                # is it a cycle time?
+                ct(shutdown_arg)
+            except CycleTimeError,x:
+                # nope: is it an async integer tag?
                 try:
-                    # is it a cycle time?
-                    ct(shutdown_arg)
-                except CycleTimeError,x:
+                    int( shutdown_arg )
+                except ValueError:
                     # nope: not task ID, date time, or TAG
-                    raise SystemExit( "Invalid STOP argument: " + shutdown_arg )
+                    raise SystemExit( "ERROR:, invalid STOP argument: " + shutdown_arg )
                 else:
-                    # is a cycle time
+                    # is probably an async TAG
                     method = 'stop after TAG'
+                    #print 'async'
+            else:
+                # is a cycle time
+                method = 'stop after TAG'
+                #print 'cycling'
         else:
             # is a date time
             method = 'stop after clock time'
+            #print 'date-time'
     else:
         # is a task ID
         method = 'stop after task'
+        #print 'task id'
+
+    #print method
 
     prompt( 'Set shutdown ' + shutdown_arg + ' for ' + suite, options.force )
     result = proxy.set_stop( shutdown_arg, method )

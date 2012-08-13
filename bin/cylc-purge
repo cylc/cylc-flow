@@ -80,14 +80,14 @@ except TaskIDError, x:
     raise SystemExit(x)
 else:
     task_id, (name, start) = tid.getstr(), tid.splitstr()
- 
-if re.match( '^a:', stoptag ):
-    stop = stoptag[2:]
+
+stopid = 'junk%' + stoptag
+try:
+    tid = TaskID( stopid )
+except TaskIDError, x:
+    raise SystemExit( 'ERROR, invalid purge stop tag: ' + stoptag )
 else:
-    try:
-        stop = ct(stoptag).get()
-    except CycleTimeError,x:
-        raise SystemExit(x)
+    junk, stop = tid.splitstr()
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,

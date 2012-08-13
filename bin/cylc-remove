@@ -33,14 +33,14 @@ from cylc.command_prep import prep_pyro
 parser = cop( """cylc [control] remove|kill [OPTIONS] ARGS
 
 Remove a single task, or all tasks with a common TAG (cycle time or
-asynchronous 'a:INT'), from a running suite. 
+integer) from a running suite. 
 
 Target tasks will be forced to spawn successors before being removed if
 they have not done so already, unless you use '--no-spawn'.""",
     pyro=True,
     argdoc=[("REG", "Suite name"), 
-            ("TARGET", """NAME%CYCLE or NAME%a:TAG to remove a single task;
-               CYCLE or a:TAG to remove all tasks with the same tag.""")])
+            ("TARGET", """NAME%TAG to remove a single task;
+               CYCLE or INT to remove all tasks with the same tag.""")])
 
 parser.add_option( "--no-spawn", 
         help="Do not spawn successors before removal.",
@@ -61,16 +61,24 @@ try:
 except TaskIDError:
     # no
     kill_tag = True
-    # is target a valid cycle time or asynchronous ID?
-    if re.match( '^a:', target ):
-        target = target[2:]
-    else:
+    try:
+        # is it a cycle time?
+        ct(target)
+    except CycleTimeError,x:
+        # nope: is it an async integer tag?
         try:
-            ct(target)
-        except CycleTimeError,x:
-            raise SystemExit(x)
+            int( target )
+        except ValueError:
+            # nope: not task ID, date time, or TAG
+            raise SystemExit( "ERROR, invalid kill target: " + target )
+        else:
+            # is probably an async TAG
+            pass
+    else:
+        # is a cycle time
+        pass
 else:
-    # yes
+    # is a task id
     kill_task = True
     target = tid.getstr()
 

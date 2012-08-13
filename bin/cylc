@@ -406,8 +406,7 @@ connection is only made on the suite host (ssh keys are needed though).
 TASK IDENTIFICATION
   Tasks are identified by NAME%TAG where for cycling tasks TAG is a
 cycle time (YYYY[MM[DD[HH[mm[ss]]]]]) and for asynchronous tasks TAG is
-an integer (just '1' for one-off asynchronous tasks). On the command
-line an asynchronous tag must be preceded by "a:" (a:1).
+an integer (just '1' for one-off asynchronous tasks).
 
 HOW TO DRILL DOWN TO COMMAND USAGE HELP:
   % cylc help           # list all available categories (this page)

@@ -62,17 +62,16 @@ try:
 except TaskIDError, x:
     raise SystemExit(x)
 else:
-    name, tag = tid.splitstr() # (tag will have 'a:' removed)
+    name, tag = tid.splitstr()
 
-# check if stoptag is cycling or asynchronous
 if stoptag:
-    if re.match( '^a:', stoptag ):
-        stop = stoptag[2:]
+    # check if stoptag is cycling or asynchronous
+    try:
+        tid = TaskID( 'junk%' + stoptag )
+    except TaskIDError, x:
+        raise SystemExit('ERROR, invalid stop tag: ' + stoptag )
     else:
-        try:
-            stop = ct(stoptag).get()
-        except CycleTimeError,x:
-            raise SystemExit(x)
+        junk, stop = tid.splitstr()
 else:
     stop = None
 
