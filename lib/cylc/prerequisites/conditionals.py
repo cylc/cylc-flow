@@ -85,6 +85,9 @@ class conditional_prerequisites(object):
 
         self.conditional_expression = expr
 
+    def any_satisfied( self ):
+        return self.all_satisfied()
+ 
     def all_satisfied( self ):
         try:
             res = eval( self.conditional_expression )

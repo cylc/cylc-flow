@@ -259,7 +259,6 @@ class taskdef(object):
             sself.prerequisites.add_requisites( pp )
             sself.prerequisites.add_requisites( lp )
             sself.suicide_prerequisites.add_requisites( sp )
-
             # 2) conditional triggers
             for cyc in self.cond_triggers.keys():
                 for ctrig, exp in self.cond_triggers[ cyc ]:
@@ -326,6 +325,10 @@ class taskdef(object):
             sself.prerequisites = prerequisites()
             sself.suicide_prerequisites = prerequisites()
             sself.add_prerequisites( startup, sself.cycon, sself.tag )
+
+            #print '_____'
+            #print sself.id
+            #print sself.suicide_prerequisites.dump()
 
             sself.logfiles = logfiles()
             for lfile in self.logfiles:

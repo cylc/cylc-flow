@@ -39,6 +39,14 @@ class prerequisites(object):
         for reqs in self.container:
             reqs.all_satisfied()
  
+    def any_satisfied( self ):
+        result = False
+        for reqs in self.container:
+            if reqs.any_satisfied():
+                result = True
+                break
+        return result
+ 
     def all_satisfied( self ):
         result = True
         for reqs in self.container:
