@@ -43,10 +43,10 @@ reload command allows addition and removal of actual task definitions.
 If a new task is definition is added (and used in the graph) you will
 still need to manually insert an instance of the task (at a particular
 cycle time) into the running suite. If a task definition (and its use in
-the graph) is deleted, existing task proxies of the of the deleted type
-will run their course after the reload but new instances will not be
-spawned. Changes to a task definition will only take effect when the
-next task instance is spawned (existing instances will not be affected).
+the graph) is deleted, existing task proxies of the deleted type will
+run their course after the reload but new instances will not be spawned.
+Changes to a task definition will only take effect when the next task
+instance is spawned (existing instances will not be affected).
 
 WARNING: THIS IS AN EXPERIMENTAL FEATURE.""", pyro=True )
 

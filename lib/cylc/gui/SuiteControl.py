@@ -1778,7 +1778,10 @@ shown here in the state they were in at the time of triggering.''' )
             warning_dialog( result.reason, self.window ).warn()
 
     def reload_suite( self, w ):
-        msg = "Reload the suite definition (EXPERIMENTAL!)"
+        msg = """Reload the suite definition (EXPERIMENTAL!)
+This allows you change task runtime config items
+and add or remove task definitions
+without restarting the suite."""
         prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL,
                                     gtk.MESSAGE_QUESTION,
                                     gtk.BUTTONS_OK_CANCEL, msg )
@@ -1980,7 +1983,7 @@ shown here in the state they were in at the time of triggering.''' )
         start_menu.append( nudge_item )
         nudge_item.connect( 'activate', self.nudge_suite  )
 
-        reload_item = gtk.MenuItem( "Re_load Suite Definition" )
+        reload_item = gtk.MenuItem( "Re_load Suite Definition ..." )
         start_menu.append( reload_item )
         reload_item.connect( 'activate', self.reload_suite  )
 
