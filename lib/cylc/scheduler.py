@@ -838,11 +838,14 @@ class scheduler(object):
     def will_pause_at( self ):
         return self.hold_time
 
-    def get_oldest_waiting_c_time( self ):
-        # return the cycle time of the oldest waiting task
+    def get_oldest_waiting_or_running_c_time( self ):
+        # return the cycle time of the oldest waiting or running task
+        # ('or running' to handle a cycling single task suite - they all
+        # go off at once so 'waiting' won't constrain with runahead
+        # limit)
         oldest = '99991228235959'
         for itask in self.pool.get_tasks():
-            if not itask.state.is_waiting():
+            if not itask.state.is_waiting() and not itask.state.is_running():
                 continue
             #if itask.is_daemon():
             #    # avoid daemon tasks
@@ -993,7 +996,7 @@ class scheduler(object):
             new_task.log( 'WARNING', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
             new_task.state.set_status('held')
         elif self.runahead_limit:
-            ouct = self.get_oldest_waiting_c_time() 
+            ouct = self.get_oldest_waiting_or_running_c_time() 
             foo = ct( new_task.c_time )
             foo.decrement( hours=self.runahead_limit )
             if int( foo.get() ) >= int( ouct ):
