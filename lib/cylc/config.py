@@ -19,9 +19,6 @@
 # TO DO: document use foo[T-6]:out1, not foo:out1 with
 # <CYLC_TASK_CYCLE_TIME-6> in the output message.
 
-# TO DO: check that mid-level families used in the graph are replaced
-# by *task* members, not *family* members.
-
 # NOTE: configobj.reload() apparently does not revalidate (list-forcing
 # is not done, for example, on single value lists with no trailing
 # comma) ... so to reparse the file  we have to instantiate a new config
