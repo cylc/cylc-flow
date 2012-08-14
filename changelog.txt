@@ -891,3 +891,7 @@ in which successive instances all go off at once).
 + Removed the requirement to preface the integer TAG of an asynchronous
 task, on the command line, with 'a:'.
 
++ Suites can now be restarted after task definitions have been deleted 
+without manually altering the suite state dump file. Undefined tasks in
+the state dump are just be ignored at start up.
+

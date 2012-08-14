@@ -301,8 +301,8 @@ the remote host before starting the suite."""
                 itask = self.config.get_task_proxy( name, tag, state, stopctime=None, startup=False )
             except Exception, x:
                 print >> sys.stderr, x
-                print >> sys.stderr, "ERROR, Unable to instantiate task", name, "from state dump."
-                sys.exit( "ERROR: corrupted state dump" )
+                print >> sys.stderr, "WARNING: ignoring task", name, "from the suite state dump file"
+                print >> sys.stderr, "(the task definition has probably been deleted from the suite)."
 
             if itask.state.is_succeeded():  
                 # must have satisfied prerequisites and completed outputs
