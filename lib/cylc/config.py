@@ -1351,15 +1351,24 @@ class config( CylcConfigObj ):
         gr_edges.sort()
         for e in gr_edges:
             l, r, dashed, suicide, conditional = e
-            style=None
-            arrowhead='normal'
-            if dashed:
-                style='dashed'
-            if suicide:
-                style='dashed'
-                arrowhead='dot'
             if conditional:
-                arrowhead='onormal'
+                if suicide:
+                    style='dashed'
+                    arrowhead='odot'
+                else:
+                    style='solid'
+                    arrowhead='onormal'
+            else:
+                if suicide:
+                    style='dashed'
+                    arrowhead='dot'
+                else:
+                    style='solid'
+                    arrowhead='normal'
+            if dashed:
+                # override
+                style='dashed'
+
             graph.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead )
 
         for n in graph.nodes():
