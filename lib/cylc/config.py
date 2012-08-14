@@ -577,10 +577,10 @@ class config( CylcConfigObj ):
         # Environment variable interpolation in directory paths.
         # Allow use of suite, BUT NOT TASK, identity variables.
         for item in self['runtime']:
-            logd = self['runtime'][item]['job submission']['log directory']
+            logd = self['runtime'][item]['log directory']
             if logd.find( '$CYLC_TASK_' ) != -1:
-                print >> sys.stderr, 'runtime -> job submission -> log directory =', logd
-                raise SuiteConfigError, 'ERROR: job submission log directories cannot be task-specific'
+                print >> sys.stderr, 'runtime -> log directory =', logd
+                raise SuiteConfigError, 'ERROR: log directories cannot be task-specific'
 
         os.environ['CYLC_SUITE_REG_NAME'] = self.suite
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
@@ -594,8 +594,8 @@ class config( CylcConfigObj ):
 
         for item in self['runtime']:
             # Local job sub log directories: interpolate all environment variables.
-            self['runtime'][item]['job submission']['log directory'] = self.expandvars( self['runtime'][item]['job submission']['log directory'])
-            # Remote job sub log directories: just suite identity - local variables aren't relevant.
+            self['runtime'][item]['log directory'] = self.expandvars( self['runtime'][item]['log directory'])
+            # Remote log directories: just suite identity - local variables aren't relevant.
             if self['runtime'][item]['remote']['log directory']:
                 for var in ['CYLC_SUITE_REG_PATH', 'CYLC_SUITE_DEF_PATH', 'CYLC_SUITE_REG_NAME']: 
                     self['runtime'][item]['remote']['log directory'] = re.sub( '\${'+var+'}'+r'\b', os.environ[var], self['runtime'][item]['remote']['log directory'])
@@ -822,7 +822,7 @@ class config( CylcConfigObj ):
         # Create suite log, state, and local job log directories.
         dirs = [ self['cylc']['logging']['directory'], self['cylc']['state dumps']['directory'] ]
         for item in self['runtime']:
-            d = self['runtime'][item]['job submission']['log directory']
+            d = self['runtime'][item]['log directory']
             if d not in dirs:
                 dirs.append(d)
         for d in dirs:
@@ -1519,9 +1519,9 @@ class config( CylcConfigObj ):
 
         taskd.job_submit_command_template = taskconfig['job submission']['command template']
 
-        taskd.job_submit_log_directory = taskconfig['job submission']['log directory']
-        taskd.job_submit_share_directory = taskconfig['job submission']['share directory']
-        taskd.job_submit_work_directory = taskconfig['job submission']['work directory']
+        taskd.job_submit_log_directory = taskconfig['log directory']
+        taskd.job_submit_share_directory = taskconfig['share directory']
+        taskd.job_submit_work_directory = taskconfig['work directory']
 
         if not self.simulation_mode and (taskconfig['remote']['host'] or taskconfig['remote']['owner']):
             # Remote task hosting config, ignored in sim mode.

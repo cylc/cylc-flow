@@ -73,13 +73,13 @@ description = "No description provided"
         post-command scripting = None
         manual completion = False
         enable resurrection = False
+        log directory = '$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job'
+        share directory = '$CYLC_SUITE_DEF_PATH/share'
+        work directory = '$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID'
         [[[job submission]]]
             method = background
             command template = None
             shell = /bin/bash
-            log directory = '$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job'
-            share directory = '$CYLC_SUITE_DEF_PATH/share'
-            work directory = '$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID'
         [[[remote]]]
             host = None
             owner = None

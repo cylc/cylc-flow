@@ -904,6 +904,64 @@ Section~\ref{PreemptionHPC}, {\em Handling Job Preemption}
 \item {\em default:} \lstinline=False=
 \end{myitemize}
 
+
+\subparagraph[log directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ log directory}
+\label{LocalLog}
+
+This is where task job scripts, and the stdout and stderr logs for local
+tasks, are written. The directory path may contain environment
+variables, including suite identity variables to make the path
+suite-specific (as the default value does) but {\em it may not 
+contain task identity variables such as \lstinline=$CYLC_TASK_NAME= and
+\lstinline=$CYLC_TASK_CYCLE_TIME= or any variables defined in the task
+environment section} - the directory has to be created by cylc before
+the task runs so the directory creation process does not see the task
+execution environment.
+%? Remote tasks must also define a [[[remote]]] log directory. 
+%? For owned tasks, the suite owner's home directory is replaced by the
+%? task owner's.
+The job script filename is constructed, just before job submission,
+from the task ID and {\em seconds since epoch}, and then {\em .out} and
+{\em .err} are appended to construct the stdout and stderr log names,
+respectively. These filenames are thus unique even if a task
+gets retriggered and yet will be correctly time ordered if the log
+directory is listed. The filenames are also recorded by the task proxies 
+for access via cylc commands and the suite control GUIs.
+\begin{myitemize}
+\item {\em type:} string (directory path, may contain environment variables)
+\item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job=
+\end{myitemize}
+
+\subparagraph[work directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ work directory}
+\label{LocalWork}
+
+Task command scripting is executed from within a work directory created
+on the fly, if necessary, by the task's job script. In non-detaching
+tasks the work directory is automatically removed again {\em if it is
+empty} before the job script exits. The work directory can be accessed
+by tasks via the environment variable \lstinline=$CYLC_TASK_WORK_PATH=.
+
+\begin{myitemize}
+\item {\em type:} string (directory path, may contain environment variables)
+\item {\em default:} \lstinline=$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID=
+\end{myitemize}
+
+\subparagraph[share directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ share directory}
+\label{LocalShare}
+
+Like task work directories (above) this directory is created on the fly,
+if necessary, by the job script. It is intended as a shared data area
+for multiple tasks on the same host, but as for any task runtime config
+item it can be specialized to particular tasks or groups of tasks. 
+It can be accessed by tasks at run time via the environment variable
+\lstinline=$CYLC_SUITE_SHARE_PATH=.
+
+\begin{myitemize}
+\item {\em type:} string (directory path, may contain environment variables)
+\item {\em default:} \lstinline=$CYLC_SUITE_DEF_PATH/share=
+\end{myitemize}
+
+
 \paragraph[{[[[}job submission{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]]}
 
 This section configures the means by which cylc submits task job scripts to run.
@@ -957,61 +1015,6 @@ to be modified slightly to allow use of the C shell.
 \item {\em root default:} \lstinline=/bin/bash= 
 \end{myitemize}
 
-\subparagraph[log directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ log directory}
-\label{LocalLog}
-
-This is where task job scripts, and the stdout and stderr logs for local
-tasks, are written. The directory path may contain environment
-variables, including suite identity variables to make the path
-suite-specific (as the default value does) but {\em it may not 
-contain task identity variables such as \lstinline=$CYLC_TASK_NAME= and
-\lstinline=$CYLC_TASK_CYCLE_TIME= or any variables defined in the task
-environment section} - the directory has to be created by cylc before
-the task runs so the directory creation process does not see the task
-execution environment.
-%? Remote tasks must also define a [[[remote]]] log directory. 
-%? For owned tasks, the suite owner's home directory is replaced by the
-%? task owner's.
-The job script filename is constructed, just before job submission,
-from the task ID and {\em seconds since epoch}, and then {\em .out} and
-{\em .err} are appended to construct the stdout and stderr log names,
-respectively. These filenames are thus unique even if a task
-gets retriggered and yet will be correctly time ordered if the log
-directory is listed. The filenames are also recorded by the task proxies 
-for access via cylc commands and the suite control GUIs.
-\begin{myitemize}
-\item {\em type:} string (directory path, may contain environment variables)
-\item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job=
-\end{myitemize}
-
-\subparagraph[work directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ work directory}
-\label{LocalWork}
-
-Task command scripting is executed from within a work directory created
-on the fly, if necessary, by the task's job script. In non-detaching
-tasks the work directory is automatically removed again {\em if it is
-empty} before the job script exits. The work directory can be accessed
-by tasks via the environment variable \lstinline=$CYLC_TASK_WORK_PATH=.
-
-\begin{myitemize}
-\item {\em type:} string (directory path, may contain environment variables)
-\item {\em default:} \lstinline=$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID=
-\end{myitemize}
-
-\subparagraph[share directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ share directory}
-\label{LocalShare}
-
-Like task work directories (above) this directory is created on the fly,
-if necessary, by the job script. It is intended as a shared data area
-for multiple tasks on the same host, but as for any task runtime config
-item it can be specialized to particular tasks or groups of tasks. 
-It can be accessed by tasks at run time via the environment variable
-\lstinline=$CYLC_SUITE_SHARE_PATH=.
-
-\begin{myitemize}
-\item {\em type:} string (directory path, may contain environment variables)
-\item {\em default:} \lstinline=$CYLC_SUITE_DEF_PATH/share=
-\end{myitemize}
 
 \paragraph[{[[[}remote{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]]}
 

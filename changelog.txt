@@ -890,3 +890,8 @@ task, on the command line, with 'a:'.
 without manually altering the suite state dump file. Undefined tasks in
 the state dump are just be ignored at start up.
 
++ WARNING: if you override the default task log, work, and share
+directory config items, they have been moved up out of the "job
+submission" runtime sub-section, because they are common to all job
+submission methods. 
+
