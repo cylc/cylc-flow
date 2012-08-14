@@ -2614,6 +2614,23 @@ Automated failure recovery via suicide triggers.}
 \label{fig-suicide} 
 \end{figure}
 
+Note that multiple suicide triggers combine in the same way as other triggers, so this:
+\begin{lstlisting}
+foo => !baz
+bar => !baz
+\end{lstlisting}
+is equivalent to this:
+\begin{lstlisting}
+foo & bar => !baz
+\end{lstlisting}
+i.e.\ both \lstinline=foo= and \lstinline=bar= must succeed for
+\lstinline=baz= to be taken out of the suite. If you really want a task
+to be taken out if any one of several events occurs then be careful to
+right it that way:
+\begin{lstlisting}
+foo | bar => !baz
+\end{lstlisting}
+
 \paragraph{Family Triggers}
 
 Family names defined by the namespace inheritance hierarchy

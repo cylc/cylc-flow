@@ -1,0 +1,43 @@
+
+description = """
+A triple check-and-retry suite. This could be use of the main task VAR
+sometimes fails to do its job without actually reporting failure. Of
+course it would be better to fix VAR (get it to report failure properly)
+and use normal task retries.
+"""
+
+# NOTE that suicide triggers combine in the same way as other triggers:
+#   foo => !baz
+#   bar => !baz
+# is equivalent to this:
+#   foo & bar => !baz
+# NOT to this:
+#   foo | bar => !baz
+
+[scheduling]
+    initial cycle time = 2010080800
+    final cycle time = 2010080900
+    [[dependencies]]
+        [[[0]]]
+            graph = """
+# first VAR and check:
+VAR1 => check1
+# Get rid of unneeded or failed recovery tasks ("PostVAR => !check1"
+# automatically removes check1 even if it failed).
+PostVAR => !check1
+check1 | PostVAR => !VAR2 & !check2
+check1 | check2 | PostVAR => !VAR3 & !check3
+# if check1 fails, try again:
+check1:fail => VAR2 => check2
+# if check2 fails, try again:
+check2:fail => VAR3 => check3
+# if any checks succeed, run PostVAR:
+check1 | check2 | check3 => PostVAR
+                    """
+[runtime]
+    [[FAIL]]
+        command scripting = "sleep 10; /bin/false"
+    #[[check1]] # first check fails, OR:
+    [[check1, check2]] # first and second check fails
+        inherit = FAIL
+
