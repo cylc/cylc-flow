@@ -268,9 +268,8 @@ class scheduler(object):
                 metavar="CYCLE", action="store", dest="hold_time" )
 
         self.parser.add_option( "-s", "--simulation-mode",
-                help="Use dummy tasks that masquerade as the real thing, "
-                "and accelerate the wall clock: get the scheduling right "
-                "without having to run the real suite tasks.",
+                help="Replace real tasks with dummy tasks, and run "
+                "on an accelerated clock.",
                 action="store_true", dest="simulation_mode" )
 
         self.parser.add_option( "--fail", help=\
@@ -404,37 +403,26 @@ class scheduler(object):
         # START and STOP CYCLE TIMES
         self.stop_tag = None
         self.stop_clock_time = None
+
         # (self.start_tag is set already if provided on the command line).
-
         if not self.start_tag:
-            # No initial cycle time provided on the command line.
+            # No initial cycle time on the command line
             if self.config['scheduling']['initial cycle time']:
-                # Use suite.rc initial cycle time, if one is defined.
+                # Use suite.rc initial cycle time
                 self.start_tag = str(self.config['scheduling']['initial cycle time'])
-            if self.options.stop_tag:
-                # But a final cycle time was provided on the command line.
-                # NOTE: this will have to be changed if we use a STOP
-                # arg instead of the '--until=STOP' option - then it
-                # will not be possible to use STOP without START. 
-                self.stop_tag = self.options.stop_tag
-            elif self.config['scheduling']['final cycle time']:
-                # Use suite.rc final cycle time, if one is defined.
-                self.stop_tag = str(self.config['scheduling']['final cycle time'])
-        else:
-            # An initial cycle time was provided on the command line
-            # => also use command line final cycle time, if provided,
-            # but otherwise don't use the suite.rc default stop time
-            # (user may change start without considering stop cycle).
-            if self.options.stop_tag:
-                # stop time provided on the command line
-                self.stop_tag = ct( self.options.stop_tag ).get()
 
-        if self.stop_tag:
-            # raises CycleTimeError:
-            self.stop_tag = ct( self.stop_tag ).get()
-        if self.start_tag:
-            # raises CycleTimeError:
-            self.start_tag = ct( self.start_tag ).get()
+        if self.options.stop_tag:
+            # A final cycle time was provided on the command line.
+            self.stop_tag = self.options.stop_tag
+        elif self.config['scheduling']['final cycle time']:
+            # Use suite.rc final cycle time
+            self.stop_tag = str(self.config['scheduling']['final cycle time'])
+
+        # could be async tags:
+        ##if self.stop_tag:
+        ##    self.stop_tag = ct( self.stop_tag ).get()
+        ##if self.start_tag:
+        ##    self.start_tag = ct( self.start_tag ).get()
 
         if not self.start_tag and not self.is_restart:
             print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
