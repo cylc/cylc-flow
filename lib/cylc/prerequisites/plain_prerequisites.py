@@ -60,9 +60,6 @@ class plain_prerequisites(object):
         del self.satisfied[lbl]
         del self.satisfied_by[lbl]
 
-    def any_satisfied( self ):
-        return ( True in self.satisfied.values() ) 
- 
     def all_satisfied( self ):
         return not ( False in self.satisfied.values() ) 
             

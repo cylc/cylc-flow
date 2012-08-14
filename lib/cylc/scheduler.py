@@ -1199,7 +1199,7 @@ class scheduler(object):
         # suicide
         for itask in self.pool.get_tasks():
             if itask.suicide_prerequisites.count() != 0:
-                if itask.suicide_prerequisites.any_satisfied():
+                if itask.suicide_prerequisites.all_satisfied():
                     self.spawn_and_die( [itask.id], dump_state=False, reason='suicide' )
 
         if self.use_quick:
