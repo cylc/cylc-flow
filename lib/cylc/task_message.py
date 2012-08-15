@@ -122,6 +122,7 @@ class message(object):
         self.pphrase = passphrase( self.suite, self.owner, self.host,
                 verbose=self.verbose ).get( None, None )
         # this raises an exception on failure to connect:
+        import cylc_pyro_client
         return cylc_pyro_client.client( self.suite, self.pphrase,
                 self.owner, self.host, self.pyro_timeout, self.port,
                 self.verbose ).get_proxy( self.task_id )
@@ -191,7 +192,6 @@ class message(object):
         self.send_pyro( msg )
 
     def send_pyro( self, msg ):
-        import cylc_pyro_client
         # exceptions are handled by the messaging commands now
         self.get_proxy().incoming( self.priority, msg )
 
