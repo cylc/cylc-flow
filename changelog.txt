@@ -854,9 +854,6 @@ variable is automatically set in a cold start, but only optionally by a
 warm start - which is really an implicit restart that does not
 reference a previous state.
 
-+ moved task "initial scripting" below cylc-defined task environment
-so that suite and task identity can be used in intiial scripting.
-
 + Tasks that specify "enable resurrection = True" will be revived from
 the dead if they start running again (by external non-cylc means) after
 reporting failure. This can be used to handle HPC-style job preemption.
@@ -890,8 +887,13 @@ task, on the command line, with 'a:'.
 without manually altering the suite state dump file. Undefined tasks in
 the state dump are just be ignored at start up.
 
-+ WARNING: if you override the default task log, work, and share
++ WARNING for those who override the default task log, work, and share
 directory config items, they have been moved up out of the "job
 submission" runtime sub-section, because they are common to all job
 submission methods. 
+
++ In task job scripts "initial scripting" is still executed before the
+"cylc task started" call, but it has been moved to below the environment
+and error trapping sections so that it can make use of suite and task
+environment variables and cylc commands.  
 

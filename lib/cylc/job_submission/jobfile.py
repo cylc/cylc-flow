@@ -77,12 +77,14 @@ class jobfile(object):
             self.write_directives()
         self.write_task_job_script_starting()
         self.write_environment_1()
-        if not self.simulation_mode:
-            self.write_initial_scripting()
         self.write_cylc_access()
         if not self.simulation_mode:
             self.write_environment_2()
         self.write_err_trap()
+
+        if not self.simulation_mode:
+            self.write_initial_scripting()
+
         self.write_task_started()
         if self.simulation_mode:
             key = "CYLC_TASK_DUMMY_RUN_LENGTH"
@@ -137,11 +139,11 @@ class jobfile(object):
         if self.remote_suite_dir:
             self.cylc_env['CYLC_SUITE_DEF_PATH'] = self.remote_suite_dir
 
-        BUFFER.write( "\n\n# CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY:" )
+        BUFFER.write( "\n\n# CYLC LOCATION; SUITE LOCATION, IDENTITY, AND ENVIRONMENT:" )
         for var in self.cylc_env:
             BUFFER.write( "\nexport " + var + "=" + str( self.cylc_env[var] ) )
 
-        BUFFER.write( "\n\n# TASK IDENTITY:" )
+        BUFFER.write( "\n\n# CYLC TASK IDENTITY AND ENVIRONMENT:" )
         BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
         BUFFER.write( "\nexport CYLC_TASK_NAME=" + self.task_name )
         BUFFER.write( "\nexport CYLC_TASK_CYCLE_TIME=" + self.cycle_time )
@@ -149,6 +151,9 @@ class jobfile(object):
         BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.namespace_hierarchy) + '"')
         BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.try_number) )
         BUFFER.write( "\nexport CYLC_TASK_SSH_MESSAGING=" + str(self.ssh_messaging) )
+        BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=" + self.work_dir )
+        BUFFER.write( "\n# Note the suite share path may actually be family- or task-specific:" )
+        BUFFER.write( "\nexport CYLC_SUITE_SHARE_PATH=" + self.share_dir )
 
     def write_cylc_access( self, BUFFER=None ):
         if not BUFFER:
@@ -156,7 +161,7 @@ class jobfile(object):
         if self.remote_cylc_dir:
             BUFFER.write( "\n\n# ACCESS TO CYLC:" )
             BUFFER.write( "\nPATH=" + self.remote_cylc_dir + "/bin:$PATH" )
-        BUFFER.write( "\n\n# Access to the suite bin dir:" )
+        BUFFER.write( "\n\n# ACCESS TO THE SUITE BIN DIRECTORY:" )
         BUFFER.write( "\nPATH=$CYLC_SUITE_DEF_PATH/bin:$PATH" )
         BUFFER.write( "\nexport PATH" )
 
@@ -183,25 +188,20 @@ class jobfile(object):
 cylc task started""" )
 
     def write_work_directory_create( self ):
-        data = { "share_dir": self.share_dir,  "work_dir": self.work_dir }
         self.FILE.write( """
 
 # SHARE DIRECTORY CREATE:
-CYLC_SUITE_SHARE_PATH=%(share_dir)s
-export CYLC_SUITE_SHARE_PATH
 mkdir -p $CYLC_SUITE_SHARE_PATH || true
 
 # WORK DIRECTORY CREATE:
-CYLC_TASK_WORK_PATH=%(work_dir)s
-export CYLC_TASK_WORK_PATH
 mkdir -p $(dirname $CYLC_TASK_WORK_PATH) || true
 mkdir -p $CYLC_TASK_WORK_PATH
-cd $CYLC_TASK_WORK_PATH""" % data )
+cd $CYLC_TASK_WORK_PATH""" )
 
     def write_environment_2( self ):
 
         if len( self.task_env.keys()) > 0:
-            self.FILE.write( "\n\n# SUITE RUNTIME ENVIRONMENT:" )
+            self.FILE.write( "\n\n# TASK RUNTIME ENVIRONMENT:" )
             for var in self.task_env:
                 # Write each variable assignment expression, with
                 # values quoted to handle spaces.

@@ -3914,47 +3914,51 @@ job script sections not shown here):
 #!/bin/bash
 
 # ++++ THIS IS A CYLC TASK JOB SCRIPT ++++
-# Task: Model%2011080506
+# Task: foo%2010080800
 # To be submitted by method: 'background'
 
-echo "TASK JOB SCRIPT STARTING"
+echo "JOB SCRIPT STARTING"
 
-# CYLC LOCATION, SUITE LOCATION, SUITE IDENTITY:
+# CYLC LOCATION; SUITE LOCATION, IDENTITY, AND ENVIRONMENT:
+export CYLC_DIR_ON_SUITE_HOST=/home/oliverh/cylc
 export CYLC_MODE=submit
+export CYLC_DEBUG=False
+export CYLC_VERBOSE=False
 export CYLC_SUITE_HOST=oliverh-33586DL.greta.niwa.co.nz
 export CYLC_SUITE_PORT=None
-export CYLC_SUITE_DEF_PATH=/tmp/oliverh/examples/QuickStart/c
-export CYLC_SUITE_REG_NAME=examples.QuickStart.c
-export CYLC_SUITE_REG_PATH=examples/QuickStart/c
+export CYLC_SUITE_REG_NAME=baz
+export CYLC_SUITE_REG_PATH=baz
 export CYLC_SUITE_OWNER=oliverh
 export CYLC_USE_LOCKSERVER=False
 export CYLC_UTC=False
-export CYLC_SUITE_INITIAL_CYCLE_TIME=None
+export CYLC_SUITE_INITIAL_CYCLE_TIME=2010080800
 export CYLC_SUITE_FINAL_CYCLE_TIME=None
-export CYLC_SUITE_DEF_PATH_ON_SUITE_HOST=/home/oliverh/cylc/bar
-export CYLC_SUITE_DEF_PATH=$HOME/cylc/bar
+export CYLC_SUITE_DEF_PATH_ON_SUITE_HOST=/home/oliverh/cylc/baz
+export CYLC_SUITE_DEF_PATH=$HOME/cylc/baz
 export CYLC_SUITE_PYRO_TIMEOUT=None
 
-# TASK IDENTITY:
-export CYLC_TASK_ID=Model%2011080506
-export CYLC_TASK_NAME=Model
-export CYLC_TASK_CYCLE_TIME=2011080506
-export CYLC_TASK_LOG_ROOT=~/cylc-run/examples/QuickStart.c/log/job/Model%2011080506-1317298378.191123
-export CYLC_TASK_NAMESPACE_HIERARCHY="root Models Model"
+# CYLC TASK IDENTITY AND ENVIRONMENT:
+export CYLC_TASK_ID=foo%2010080800
+export CYLC_TASK_NAME=foo
+export CYLC_TASK_CYCLE_TIME=2010080800
+export CYLC_TASK_LOG_ROOT=$HOME/cylc-run/baz/log/job/foo%2010080800-1344989599.086064
+export CYLC_TASK_NAMESPACE_HIERARCHY="root foo"
 export CYLC_TASK_TRY_NUMBER=1
-export CYLC_TASK_SSH_MESSAGING=True
+export CYLC_TASK_SSH_MESSAGING=False
+export CYLC_TASK_WORK_PATH=$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID
+# Note the suite share path may actually be family- or task-specific:
+export CYLC_SUITE_SHARE_PATH=$CYLC_SUITE_DEF_PATH/share
 
-# Access to the suite bin dir:
+# ACCESS TO CYLC:
+PATH=/home/oliverh/cylc/bin:$PATH
+
+# ACCESS TO THE SUITE BIN DIRECTORY:
 PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH
 export PATH
 
-# SUITE RUNTIME ENVIRONMENT:
-TASK_EXE_SECONDS="5"
-WORKSPACE="/tmp/$USER/$CYLC_SUITE_REG_NAME/common"
-MODEL_INPUT_DIR="$WORKSPACE"
-MODEL_OUTPUT_DIR="$WORKSPACE"
-MODEL_RUNNING_DIR="$WORKSPACE/Model"
-export TASK_EXE_SECONDS WORKSPACE MODEL_INPUT_DIR MODEL_OUTPUT_DIR MODEL_RUNNING_DIR
+# TASK RUNTIME ENVIRONMENT:
+CYLC_TASK_DUMMY_RUN_LENGTH="10"
+export CYLC_TASK_DUMMY_RUN_LENGTH
 
 # SET ERROR TRAPPING:
 set -u # Fail when using an undefined variable
@@ -3971,17 +3975,16 @@ trap "HANDLE_TRAP ERR"  ERR
 trap "HANDLE_TRAP TERM" TERM
 trap "HANDLE_TRAP XCPU" XCPU
 
+# INITIAL SCRIPTING:
+echo Hello World
+
 # SEND TASK STARTED MESSAGE:
-cylc task started || exit 1
+cylc task started
 
 # SHARE DIRECTORY CREATE:
-CYLC_SUITE_SHARE_PATH=$CYLC_SUITE_DEF_PATH/share
-export CYLC_SUITE_SHARE_PATH
-mkdir -p $CYLC_SUITE_DEF_PATH/share || true
+mkdir -p $CYLC_SUITE_SHARE_PATH || true
 
 # WORK DIRECTORY CREATE:
-CYLC_TASK_WORK_PATH=$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID
-export CYLC_TASK_WORK_PATH
 mkdir -p $(dirname $CYLC_TASK_WORK_PATH) || true
 mkdir -p $CYLC_TASK_WORK_PATH
 cd $CYLC_TASK_WORK_PATH
@@ -4004,7 +4007,7 @@ echo "  Task Try No.: $CYLC_TASK_TRY_NUMBER"
 echo ""
 
 # TASK COMMAND SCRIPTING:
-Model.sh
+echo Dummy command scripting; sleep $CYLC_TASK_DUMMY_RUN_LENGTH
 
 # EMPTY WORK DIRECTORY REMOVE:
 cd
