@@ -892,11 +892,6 @@ directory config items, they have been moved up out of the "job
 submission" runtime sub-section, because they are common to all job
 submission methods. 
 
-+ In task job scripts "initial scripting" is still executed before the
-"cylc task started" call, but it has been moved to below the environment
-and error trapping sections so that it can make use of suite and task
-environment variables and cylc commands.  
-
 + The main cylc command interface no longer checks that Pyro is
 installed, but the commands that it do. Consequently Pyro does not have
 to be installed on a remote task host if you choose to use ssh

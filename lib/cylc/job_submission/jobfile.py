@@ -61,31 +61,35 @@ class jobfile(object):
 
     def write( self, path ):
         # Write each job script section in turn. In simulation mode,
-        # omitting anything that's not required for local submission of
-        # dummy tasks (e.g. initial scripting or user-defined
-        # environment may cause trouble by referencing undefined variables 
-        # or sourcing scripts that are only available in the script's
-        # normal setting).
+        # omit anything not required for local submission of dummy tasks
+        # (initial scripting or user-defined environment etc. may cause
+        # trouble in sim mode by referencing undefined variables or
+        # sourcing scripts that are not available locally).
 
-        # configure access to cylc before user environment so that cylc
-        # commands can be used in defining user environment variables,
-        # e.g.: NEXT_CYCLE=$( cylc util cycletime --offset-hours=6 )
+        # Access to cylc must be configured before user environment so
+        # that cylc commands can be used in defining user environment
+        # variables: NEXT_CYCLE=$( cylc cycletime --offset-hours=6 )
 
         self.FILE = open( path, 'wb' )
         self.write_header()
+
         if not self.simulation_mode:
             self.write_directives()
+
         self.write_task_job_script_starting()
-        self.write_environment_1()
-        self.write_cylc_access()
-        if not self.simulation_mode:
-            self.write_environment_2()
+
         self.write_err_trap()
 
         if not self.simulation_mode:
+            self.write_cylc_access()
             self.write_initial_scripting()
 
         self.write_task_started()
+        self.write_environment_1()
+        if not self.simulation_mode:
+            self.write_environment_2()
+            self.write_suite_bin_access()
+
         if self.simulation_mode:
             key = "CYLC_TASK_DUMMY_RUN_LENGTH"
             self.FILE.write( "\n%s=%s" % ( key, self.task_env[key] ) )
@@ -94,10 +98,13 @@ class jobfile(object):
             self.write_manual_environment()
             self.write_identity_scripting()
             self.write_pre_scripting()
+
         self.write_command_scripting()
+
         if not self.simulation_mode:
             self.write_post_scripting()
             self.write_work_directory_remove()
+
         self.write_task_succeeded()
         self.write_eof()
         self.FILE.close()
@@ -160,10 +167,13 @@ class jobfile(object):
             BUFFER = self.FILE
         if self.remote_cylc_dir:
             BUFFER.write( "\n\n# ACCESS TO CYLC:" )
-            BUFFER.write( "\nPATH=" + self.remote_cylc_dir + "/bin:$PATH" )
+            BUFFER.write( "\nexport PATH=" + self.remote_cylc_dir + "/bin:$PATH" )
+
+    def write_suite_bin_access( self, BUFFER=None ):
+        if not BUFFER:
+            BUFFER = self.FILE
         BUFFER.write( "\n\n# ACCESS TO THE SUITE BIN DIRECTORY:" )
-        BUFFER.write( "\nPATH=$CYLC_SUITE_DEF_PATH/bin:$PATH" )
-        BUFFER.write( "\nexport PATH" )
+        BUFFER.write( "\nexport PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH" )
 
     def write_err_trap( self ):
         self.FILE.write( '\n\n# SET ERROR TRAPPING:' )
@@ -171,6 +181,7 @@ class jobfile(object):
         self.FILE.write( '\n# Define the trap handler' )
         self.FILE.write( '\nHANDLE_TRAP() {' )
         self.FILE.write( '\n  echo Received signal "$@"' )
+        self.FILE.write( '\n  # SEND TASK FAILED MESSAGE' )
         self.FILE.write( '\n  cylc task failed "Task job script received signal $@"' )
         self.FILE.write( '\n  trap "" EXIT' )
         self.FILE.write( '\n  exit 0' )

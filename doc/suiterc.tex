@@ -788,22 +788,17 @@ A description of this namespace, retrievable from running tasks via
 
 \paragraph[initial scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ initial scripting}
 
-Initial scripting appears at the top of the task job script after the 
-task execution environment is configured but before configuring access
-to cylc itself. The original intention was to allow remote tasks
-to source login scripts before calling the first cylc command (i.e.\ the
-task started message) to set \lstinline=$PYTHONPATH= if Pyro has been
-installed locally rather than at system level for example. Note however
-that the remote task invocation mechanism now automatically sources both 
-\lstinline=/etc/profile= and \lstinline=$HOME/.profile=, if they exist. 
-Note also that pre-command scripting, command scripting, post-command
-scripting should be used for most other purposes, because these can
-access variables exported to the task execution environment.
-Finally, {\em job script error trapping is configured after any initial
-scripting completes} so errors in initial scripting will not be detected
-and will not cause a task to fail (unless downstream consequences cause
-failure indirectly).
-
+Initial scripting is executed at the top of the task job script just
+before the \lstinline=cylc task started= message call is made, and
+before the task execution environment is configured - so it does not
+have access to any suite or task environment variables.  The original
+intention was to allow remote tasks to source login scripts before
+calling the first cylc command, e.g.\ to set \lstinline=$PYTHONPATH= if
+Pyro has been installed locally. Note however that the remote task
+invocation mechanism now automatically sources both
+\lstinline=/etc/profile= and \lstinline=$HOME/.profile= if they exist. 
+For other uses pre-command scripting should be used if possible because
+it can has access to the task execution environment.
 \begin{myitemize}
 \item {\em type:} string
 \item {\em default:} (none)
