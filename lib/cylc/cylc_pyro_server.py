@@ -1,4 +1,4 @@
-#!/usr/bin/pyro
+#!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
