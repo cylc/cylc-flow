@@ -18,8 +18,6 @@
 
 import subprocess
 import os, sys, re
-#from port_scan import SuiteIdentificationError
-from cylc_pyro_client import client
 from Jinja2Support import Jinja2Process, TemplateSyntaxError, TemplateError
 from version import cylc_version, cylc_dir
 from hostname import hostname
@@ -183,9 +181,12 @@ class compat_file( compat ):
             self.required_version = re.sub( '^.*cylc-', '', z.groups()[0] )  # e.g. 4.1.1
 
 class compat_pyro( compat ):
+
     """Determine version compatibility given a running suite name"""
 
     def __init__( self, suite, owner, host, pphrase, pyro_timeout, verbose, debug ):
+        from cylc_pyro_client import client
+
         compat.__init__( self, suite, None, verbose, debug )
 
         try:

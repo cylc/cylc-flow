@@ -16,8 +16,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+try:
+    import Pyro.core
+except ImportError, x:
+    raise SystemExit("ERROR: Pyro is not installed")
+
 import sys
-import Pyro.core
 from optparse import OptionParser
 from hostname import hostname
 from time import sleep

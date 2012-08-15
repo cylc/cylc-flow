@@ -18,7 +18,11 @@
 
 import sys
 import socket
-import Pyro
+try:
+    import Pyro
+except ImportError, x:
+    print >> sys.stderr, x
+    sys.exit( "ERROR: Pyro is not installed" )
 from passphrase import passphrase
 from hostname import hostname
 from owner import user

@@ -21,13 +21,21 @@ import gobject
 #pygtk.require('2.0')
 import gtk
 import subprocess
-import time, os, re
+import time, os, re, sys
 import threading
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.config import config, SuiteConfigError
 from cylc.version import cylc_version
-from cylc import cylc_pyro_client
-from cylc.port_scan import scan, SuiteIdentificationError
+
+try:
+    from cylc import cylc_pyro_client
+except BaseException, x: # this catches SystemExit
+    PyroInstalled = False
+    print >> sys.stderr, "WARNING: Pyro is not installed."
+else:
+    PyroInstalled = True
+    from cylc.port_scan import scan, SuiteIdentificationError
+
 from cylc.registration import localdb, RegistrationError
 from cylc.regpath import RegPath
 from warning_dialog import warning_dialog, info_dialog, question_dialog
@@ -230,6 +238,8 @@ class db_updater(threading.Thread):
             self.__class__.count -= 1
     
     def running_choices_changed( self ):
+        if not PyroInstalled:
+            return
         # (name, port)
         suites = scan( pyro_timeout=self.pyro_timeout )
         if suites != self.running_choices:
@@ -1641,6 +1651,10 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         foo.run()
 
     def launch_gcontrol( self, w, name, suite_dir, state, views=None ):
+        if not PyroInstalled:
+            warning_dialog( "Cannot run gcontrol: Pyro is not installed"  ).warn()
+            return
+
         suite_dir = os.path.expanduser(suite_dir)
         # (we replaced home dir with '~' above for display purposes)
         running_already = False

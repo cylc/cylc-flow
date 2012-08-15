@@ -39,12 +39,6 @@ from cylc.version import cylc_version
 from cylc.execute import execute
 from OrderedDict import OrderedDict
 
-# check Pyro is installed
-try:
-    import Pyro.constants
-except Exception, x:
-    raise SystemExit('ERROR: Pyro is not installed (or not accessible)')
-
 class CommandError( Exception ):
     """
     Attributes:

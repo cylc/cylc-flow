@@ -717,6 +717,22 @@ class config( CylcConfigObj ):
 
         self.check_for_case_errors()
 
+        # warn if listed special tasks are not defined
+        for type in self['scheduling']['special tasks']:
+            for name in self['scheduling']['special tasks'][type]:
+                if type == 'clock-triggered':
+                    name = re.sub('\(.*\)','',name)
+                if re.search( '[^0-9a-zA-Z_]', name ):
+                    raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
+                if name not in self.taskdefs and name not in self['runtime']:
+                    raise SuiteConfigError, 'ERROR: special task "' + name + '" is not defined.' 
+
+        try:
+            import Pyro.constants
+        except:
+            print >> sys.stderr, "WARNING, INCOMPLETE VALIDATION: Pyro is not installed"
+            return
+
         # Instantiate tasks and force evaluation of conditional trigger expressions.
         if self.verbose:
             print "Checking conditional trigger expressions"
@@ -757,18 +773,7 @@ class config( CylcConfigObj ):
                 tag = itask.next_tag()
             #print "OK:", itask.id
 
-        # warn if listed special tasks are not defined
-        for type in self['scheduling']['special tasks']:
-            for name in self['scheduling']['special tasks'][type]:
-                if type == 'clock-triggered':
-                    name = re.sub('\(.*\)','',name)
-                if re.search( '[^0-9a-zA-Z_]', name ):
-                    raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
-                if name not in self.taskdefs and name not in self['runtime']:
-                    raise SuiteConfigError, 'ERROR: special task "' + name + '" is not defined.' 
-
-        # TASK INSERTION GROUPS TEMPORARILY DISABLED PENDING USE OF
-        # RUNTIME GROUPS FOR INSERTION ETC.
+        # TASK INSERTION GROUPS DISABLED - WILL USE RUNTIME GROUPS FOR INSERTION ETC.
         ### check task insertion groups contain valid tasks
         ##for group in self['task insertion groups']:
         ##    for name in self['task insertion groups'][group]:

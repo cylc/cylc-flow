@@ -21,8 +21,7 @@ import gtk
 #pygtk.require('2.0')
 import gobject
 import pango
-import os, re
-import Pyro.errors
+import os, re, sys
 import subprocess
 import helpwindow
 from combo_logviewer import combo_logviewer
@@ -31,8 +30,8 @@ from cylc.gui.SuiteControlGraph import ControlGraph
 from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
 from cylc.gui.util import get_icon, get_image_dir, get_logo
-from cylc.port_scan import SuiteIdentificationError
 from cylc import cylc_pyro_client
+from cylc.port_scan import SuiteIdentificationError
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
 from cylc.version import cylc_version

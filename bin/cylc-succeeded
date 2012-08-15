@@ -20,7 +20,6 @@ import os, sys
 from cylc import cylc_mode
 from optparse import OptionParser
 from cylc.task_message import message
-from cylc.locking.task_lock import task_lock
 
 usage = """cylc [task] succeeded [OPTIONS]
 
@@ -63,6 +62,7 @@ except KeyError:
 
 # release task lock if using the lockserver
 if not cylc_mode.mode().is_raw():
+    from cylc.locking.task_lock import task_lock
     try:
         if not task_lock().release():
             raise SystemExit( "Failed to release task lock" )

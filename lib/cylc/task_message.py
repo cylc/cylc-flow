@@ -22,10 +22,7 @@ import os, sys
 import socket
 import subprocess
 import datetime
-import cylc_pyro_client
 from remote import remrun
-from port_scan import NoSuiteFoundError, OtherSuiteFoundError, ConnectionDeniedError
-import Pyro.errors
 from cylc.passphrase import passphrase
 
 class message(object):
@@ -122,10 +119,12 @@ class message(object):
         # get passphrase here, not in __init__, because it is not needed
         # on remote task hosts if 'ssh messaging = True' (otherwise, if
         # it is needed, we will end up in this method). 
-        self.pphrase = passphrase( self.suite, self.owner, self.host, verbose=self.verbose ).get( None, None )
+        self.pphrase = passphrase( self.suite, self.owner, self.host,
+                verbose=self.verbose ).get( None, None )
         # this raises an exception on failure to connect:
         return cylc_pyro_client.client( self.suite, self.pphrase,
-                self.owner, self.host, self.pyro_timeout, self.port, self.verbose ).get_proxy( self.task_id )
+                self.owner, self.host, self.pyro_timeout, self.port,
+                self.verbose ).get_proxy( self.task_id )
 
     def print_msg( self, msg ):
         now = self.now().strftime( "%Y/%m/%d %H:%M:%S" )
@@ -192,25 +191,9 @@ class message(object):
         self.send_pyro( msg )
 
     def send_pyro( self, msg ):
-        #try:
-        # errors handled by messaging commands now
+        import cylc_pyro_client
+        # exceptions are handled by the messaging commands now
         self.get_proxy().incoming( self.priority, msg )
-        #except Pyro.errors.NamingError, x:
-        #    # suite found but task not in it
-        #    raise SystemExit(x)
-        #except Pyro.errors.URIError, x:
-        #    # unknown host (ssh messaging will be no use either!)
-        #    raise SystemExit(x)
-        #except NoSuiteFoundError, x:
-        #    # no suite found at this port
-        #    raise SystemExit(x)
-        #except OtherSuiteFoundError, x:
-        #    # other suite found at this port
-        #    raise SystemExit(x)
-        #except ConnectionDeniedError, x:
-        #    # possible network config problems
-        #    # (ports not opened for cylc suites?)
-        #    raise SystemExit(x)
 
     def send_succeeded( self ):
         self.send( self.task_id + ' succeeded' )

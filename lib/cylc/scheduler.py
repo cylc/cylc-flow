@@ -16,6 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc_pyro_server import pyro_server
 from task_types import task
 from task_types import clocktriggered
 from prerequisites.plain_prerequisites import plain_prerequisites
@@ -30,7 +31,6 @@ import pimp_my_logger
 import accelerated_clock 
 import re, os, sys, shutil
 from rolling_archive import rolling_archive
-from cylc_pyro_server import pyro_server
 from state_summary import state_summary
 from remote_switch import remote_switch
 from passphrase import passphrase
