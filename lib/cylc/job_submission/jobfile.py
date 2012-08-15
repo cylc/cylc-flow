@@ -84,11 +84,13 @@ class jobfile(object):
             self.write_cylc_access()
             self.write_initial_scripting()
 
-        self.write_task_started()
         self.write_environment_1()
+
         if not self.simulation_mode:
             self.write_environment_2()
             self.write_suite_bin_access()
+
+        self.write_task_started()
 
         if self.simulation_mode:
             key = "CYLC_TASK_DUMMY_RUN_LENGTH"
