@@ -376,6 +376,11 @@ class config( CylcConfigObj ):
             mrl = max(mrls)
             if self.verbose:
                 print "Largest minimum runahead limit from cycling modules:", mrl, "hours"
+            # Add one hour, which is enough to prevent single-cycle intercycle
+            # dependence from stalling the suite. To Do: find a robust
+            # method to handle any kind of intercycle dependence (is it
+            # ever more than one cycle in practice?)
+            mrl += 1
 
             # 2/ or if there is a configured runahead limit, use it.
             rl = self['scheduling']['runahead limit']
@@ -383,7 +388,7 @@ class config( CylcConfigObj ):
                 if self.verbose:
                     print "Configured runahead limit: ", rl, "hours"
                 if rl < mrl:
-                    print >> sys.stderr, 'WARNING: runahead limit (' + str(rl) + ') is too low (<' + str(mrl) + '), suite may stall'
+                    print >> sys.stderr, 'WARNING: runahead limit (' + str(rl) + ') may be too low (<' + str(mrl) + ')'
                 crl = rl
             else:
                 crl = mrl

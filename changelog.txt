@@ -898,3 +898,10 @@ to be installed on a remote task host if you choose to use ssh
 messaging, and you can still work with suites - but not run them - if
 Pyro is not installed on the suite host.
 
++ Runahead limit now defaults to (the largest of the maximum interval
+between cycles in each graph section) plus 1 hour. The extra hour is
+sufficient to stop suites with single-cycle intercycle dependence from
+stalling. Note that for good cycle interleaving you should set the
+runahead limit higher than this!
+
+
