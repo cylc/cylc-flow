@@ -26,7 +26,9 @@ description = "No description provided"
     [[event hooks]]
         script = None
         events = (none)
+        timeout = None
         abort if shutdown handler fails = False
+        abort on timeout = False
     [[lockserver]]
         enable = False
         simultaneous instances = False

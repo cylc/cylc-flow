@@ -322,6 +322,12 @@ class scheduler(object):
         self.add_to_banner() # must be before configure_environments for self.ict
         self.configure_environments()
 
+        self.already_timed_out = False
+        if self.config.event_config.timeout:
+            now = datetime.datetime.now()
+            self.suite_timer_start = now
+            print str(self.config.event_config.timeout) + " minute suite timer starts NOW:", str(now)
+
         self.print_banner()
 
     def ctexpand( self, tag ):
@@ -553,6 +559,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', self.suite_dir )
         cylcenv[ 'CYLC_SUITE_PYRO_TIMEOUT' ] = str( self.config.pyro_timeout )
+        cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = self.config['cylc']['logging']['directory']
         job_submit.cylc_env = cylcenv
 
         # Put suite identity variables (for event handlers executed by
@@ -687,6 +694,9 @@ class scheduler(object):
             # incoming task messages set task.task.state_changed to True
             self.pyro.handleRequests(timeout=1)
 
+            if self.config.event_config.timeout:
+                self.check_suite_timer()
+
             # SHUT DOWN IF ALL TASKS ARE SUCCEEDED OR HELD
             stop_now = True  # assume stopping
 
@@ -767,6 +777,24 @@ class scheduler(object):
         # END MAIN LOOP
         self.log.critical( "SHUTTING DOWN" )
 
+    def check_suite_timer( self ):
+        if self.already_timed_out:
+            return
+        now = datetime.datetime.now()
+        timeout = self.suite_timer_start + datetime.timedelta( minutes=self.config.event_config.timeout )
+        if now > timeout:
+            self.already_timed_out = True
+            self.log.warning( "Suite timed out (" + str(self.config.event_config.timeout) + " minutes)" )
+            if 'timeout' in self.config.event_config.events:
+                self.log.warning( 'Calling suite timeout event handler' )
+                message = 'suite timed out after ' + str( self.config.event_config.timeout) + ' minutes' 
+                # run in the background
+                command = self.config.event_config.script + ' timeout ' + self.suite + " '" + message + "' &"
+                subprocess.call( command, shell=True )
+            if self.config.event_config.abort_on_timeout:
+                print >> sys.stderr, 'Abort on suite timeout is set'
+                raise SchedulerError, 'Aborting on suite timeout'
+
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
         process = False
@@ -812,18 +840,15 @@ class scheduler(object):
 
         print message
 
-        events = self.config['cylc']['event hooks']['events']
-        script = self.config['cylc']['event hooks']['script']
-        if script and 'shutdown' in events:
-            command = script + ' shutdown ' + self.suite + "'" + message + "'"
-            if self.config['cylc']['event hooks']['abort if shutdown handler fails']:
+        if 'shutdown' in self.config.event_config.events:
+            command = self.config.event_config.script + ' shutdown ' + self.suite + " '" + message + "'"
+            if self.config.event_config.abort_if_shutdown_handler_fails:
                 msg = 'Calling shutdown handler in the foreground'
                 self.log.warning( msg )
                 res = subprocess.call( command, shell=True )
                 if res != 0:
                     raise SystemExit( 'Suite shutdown event handler failed!' )
             else:
-                # execute the shutdown handler in the background
                 msg = 'Calling shutdown handler in the background'
                 print msg
                 self.log.info( msg )
@@ -867,10 +892,10 @@ class scheduler(object):
             if itask.state.is_held():
                 if self.stop_tag and int( itask.c_time ) > int( self.stop_tag ):
                     # this task has passed the suite stop time
-                    itask.log( 'WARNING', "Not releasing (beyond suite stop cycle) " + self.stop_tag )
+                    itask.log( 'NORMAL', "Not releasing (beyond suite stop cycle) " + self.stop_tag )
                 elif itask.stop_c_time and int( itask.c_time ) > int( itask.stop_c_time ):
                     # this task has passed its own stop time
-                    itask.log( 'WARNING', "Not releasing (beyond task stop cycle) " + itask.stop_c_time )
+                    itask.log( 'NORMAL', "Not releasing (beyond task stop cycle) " + itask.stop_c_time )
                 else:
                     # release this task
                     itask.state.set_status('waiting')
@@ -1052,19 +1077,19 @@ class scheduler(object):
 
     def check_hold_spawned_task( self, old_task, new_task ):
         if self.hold_suite_now:
-            new_task.plog( "HOLDING (general suite hold) " )
+            new_task.log( 'NORMAL', "HOLDING (general suite hold) " )
             new_task.state.set_status('held')
         elif self.stop_tag and int( new_task.c_time ) > int( self.stop_tag ):
             # we've reached the suite stop time
-            new_task.plog( "HOLDING (beyond suite stop cycle) " + self.stop_tag )
+            new_task.log( 'NORMAL', "HOLDING (beyond suite stop cycle) " + self.stop_tag )
             new_task.state.set_status('held')
         elif self.hold_time and int( new_task.c_time ) > int( self.hold_time ):
             # we've reached the suite hold time
-            new_task.plog( "HOLDING (beyond suite hold cycle) " + self.hold_time )
+            new_task.log( 'NORMAL', "HOLDING (beyond suite hold cycle) " + self.hold_time )
             new_task.state.set_status('held')
         elif old_task.stop_c_time and int( new_task.c_time ) > int( old_task.stop_c_time ):
             # this task has a stop time configured, and we've reached it
-            new_task.plog( "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
+            new_task.log( 'NORMAL', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
             new_task.state.set_status('held')
         elif self.runahead_limit:
             ouct = self.get_oldest_waiting_or_running_or_submitted_c_time() 
@@ -1452,7 +1477,7 @@ class scheduler(object):
             raise TaskNotFoundError, "Task not present in suite: " + task_id
         # dump state
         self.log.warning( 'pre-trigger state dump: ' + self.dump_state( new_file = True ))
-        itask.log( 'WARNING', "triggering now" )
+        itask.plog( "triggering now" )
         itask.reset_state_ready()
         if itask.is_clock_triggered():
             itask.set_trigger_now(True)
@@ -1469,7 +1494,7 @@ class scheduler(object):
         if not found:
             raise TaskNotFoundError, "Task not present in suite: " + task_id
 
-        itask.log( 'WARNING', "resetting to " + state + " state" )
+        itask.plog( "resetting to " + state + " state" )
 
         # dump state
         self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
@@ -1557,11 +1582,11 @@ class scheduler(object):
                     del itask
                 else: 
                     if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
-                        itask.log( 'WARNING', "HOLDING at configured suite stop time " + self.stop_tag )
+                        itask.plog( "HOLDING at configured suite stop time " + self.stop_tag )
                         itask.state.set_status('held')
                     if itask.stop_c_time and int( itask.tag ) > int( itask.stop_c_time ):
                         # this task has a stop time configured, and we've reached it
-                        itask.log( 'WARNING', "HOLDING at configured task stop time " + itask.stop_c_time )
+                        itask.plog( "HOLDING at configured task stop time " + itask.stop_c_time )
                         itask.state.set_status('held')
                     inserted.append( itask.id )
                     to_insert.append(itask)
@@ -1704,7 +1729,7 @@ class scheduler(object):
  
                 if self.stop_tag and int( new_task.tag ) > int( self.stop_tag ):
                     # we've reached the stop time
-                    new_task.log( 'WARNING', 'HOLDING at configured suite stop time' )
+                    new_task.plog( 'HOLDING at configured suite stop time' )
                     new_task.state.set_status('held')
                 # perpetuate the task stop time, if there is one
                 new_task.stop_c_time = itask.stop_c_time
