@@ -117,7 +117,7 @@ class pool(object):
             self.queues[queue] = [task]
         else:
             self.queues[queue].append(task)
-        task.log('NORMAL', "task proxy inserted" )
+        task.log('DEBUG', "task proxy inserted" )
 
     def remove( self, task, reason ):
         # remove a task from the pool
@@ -136,7 +136,7 @@ class pool(object):
         # remove task from its queue
         queue = self.myq[task.name]
         self.queues[queue].remove( task )
-        task.log( 'NORMAL', "task proxy removed (" + reason + ")" )
+        task.log( 'DEBUG', "task proxy removed (" + reason + ")" )
         del task
 
     def get_tasks( self ):
