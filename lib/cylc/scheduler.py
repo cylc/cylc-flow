@@ -789,13 +789,6 @@ class scheduler(object):
     def shutdown( self, message='' ):
         # called by main command
         print "\nSUITE SHUTTING DOWN"
-        events = self.config['cylc']['event hooks']['events']
-        script = self.config['cylc']['event hooks']['script']
-        if script and 'shutdown' in events:
-            self.log.warning( 'calling suite shutdown hook script' )
-            command = ' '.join( [script, 'shutdown', self.suite, "'" + message + "' &"] )
-            subprocess.call( command, shell=True )
-
         if self.use_lockserver:
             # do this last
             suitename = self.suite
@@ -816,6 +809,25 @@ class scheduler(object):
         global graphing_disabled
         if not graphing_disabled:
             self.finalize_runtime_graph()
+
+        print message
+
+        events = self.config['cylc']['event hooks']['events']
+        script = self.config['cylc']['event hooks']['script']
+        if script and 'shutdown' in events:
+            command = script + ' shutdown ' + self.suite + "'" + message + "'"
+            if self.config['cylc']['event hooks']['abort if shutdown handler fails']:
+                msg = 'Calling shutdown handler in the foreground'
+                self.log.warning( msg )
+                res = subprocess.call( command, shell=True )
+                if res != 0:
+                    raise SystemExit( 'Suite shutdown event handler failed!' )
+            else:
+                # execute the shutdown handler in the background
+                msg = 'Calling shutdown handler in the background'
+                print msg
+                self.log.info( msg )
+                subprocess.call( command + '&', shell=True )
 
     def get_tasks( self ):
         return self.pool.get_tasks()

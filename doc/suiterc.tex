@@ -234,6 +234,7 @@ The list of events to handle, as documented for EVENT just above.
     \item {\em default:} (none)
 \end{myitemize}
 
+
 \paragraph[script]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ script}
 
 The handler script to call when one of the nominated events occurs.
@@ -243,6 +244,19 @@ The handler script to call when one of the nominated events occurs.
     \item {\em default:} (none)
 \end{myitemize}
 
+\paragraph[script]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort if shutdown handler fails}
+
+Cylc does not normally care whether a shutdown handler, executed just
+prior to shutting down, succeeds or fails; but if this is turned on 
+cylc will execute the shutdown handler in the foreground and the suite
+will abort with error status if the handler script fails. This feature
+is used by cylc test suites which can use shutdown handlers to diagnose
+the run.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False
+\end{myitemize}
 
 \subsubsection[{[[}lockserver{]]}]{[cylc] $\rightarrow$ [[lockserver]]}
 

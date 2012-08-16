@@ -64,6 +64,7 @@ description = string( default="No description provided" )
     [[event hooks]]
         script = string( default=None )
         events = force_list( default=list() )
+        abort if shutdown handler fails = boolean( default=False )
 #_____________________________________________________________SCHEDULING
 [scheduling]
     initial cycle time = integer( default=None )

@@ -55,7 +55,7 @@ def main(name, start):
             print >> sys.stderr, "(use --debug to see exception traceback)"
             sys.exit(1)
     except:
-        # ?catch 'sys.exit(1)' and 'raise SystemExit("foo")'?
+        # (note: to catch SystemExit use "except BaseException")
         print >> sys.stderr, "ERROR CAUGHT; will clean up before exit"
         server.shutdown('!cylc error - please report!')
         raise
