@@ -161,7 +161,7 @@ class task( Pyro.core.ObjBase ):
 
     def plog( self, message ):
         # print and log a low priority message
-        print message
+        print self.id + ':', message
         self.log( 'NORMAL', message )
 
     def log( self, priority, message ):

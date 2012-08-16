@@ -117,7 +117,7 @@ class pool(object):
             self.queues[queue] = [task]
         else:
             self.queues[queue].append(task)
-        task.log('NORMAL', "task proxy inserted" )
+        task.log('DEBUG', "task proxy inserted" )
 
     def remove( self, task, reason ):
         # remove a task from the pool
@@ -136,7 +136,7 @@ class pool(object):
         # remove task from its queue
         queue = self.myq[task.name]
         self.queues[queue].remove( task )
-        task.log( 'NORMAL', "task proxy removed (" + reason + ")" )
+        task.log( 'DEBUG', "task proxy removed (" + reason + ")" )
         del task
 
     def get_tasks( self ):
@@ -1052,19 +1052,19 @@ class scheduler(object):
 
     def check_hold_spawned_task( self, old_task, new_task ):
         if self.hold_suite_now:
-            new_task.log( 'WARNING', "HOLDING (general suite hold) " )
+            new_task.plog( "HOLDING (general suite hold) " )
             new_task.state.set_status('held')
         elif self.stop_tag and int( new_task.c_time ) > int( self.stop_tag ):
             # we've reached the suite stop time
-            new_task.log( 'WARNING', "HOLDING (beyond suite stop cycle) " + self.stop_tag )
+            new_task.plog( "HOLDING (beyond suite stop cycle) " + self.stop_tag )
             new_task.state.set_status('held')
         elif self.hold_time and int( new_task.c_time ) > int( self.hold_time ):
             # we've reached the suite hold time
-            new_task.log( 'WARNING', "HOLDING (beyond suite hold cycle) " + self.hold_time )
+            new_task.plog( "HOLDING (beyond suite hold cycle) " + self.hold_time )
             new_task.state.set_status('held')
         elif old_task.stop_c_time and int( new_task.c_time ) > int( old_task.stop_c_time ):
             # this task has a stop time configured, and we've reached it
-            new_task.log( 'WARNING', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
+            new_task.plog( "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
             new_task.state.set_status('held')
         elif self.runahead_limit:
             ouct = self.get_oldest_waiting_or_running_or_submitted_c_time() 
@@ -1072,9 +1072,8 @@ class scheduler(object):
             foo.decrement( hours=self.runahead_limit )
             if int( foo.get() ) >= int( ouct ):
                 # beyond the runahead limit
-                new_task.log( 'DEBUG', "HOLDING (runahead limit)" )
+                new_task.plog( "HOLDING (runahead limit)" )
                 new_task.state.set_status('runahead')
-
 
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
