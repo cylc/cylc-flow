@@ -108,3 +108,8 @@ class Daily( cycler ):
                 res = False
         return res
  
+    def adjust_state( self, offset ):
+        foo = ct( self.anchorYYYYMMDD )
+        foo.decrement( days=int(offset) )
+        self.anchorYYYYMMDD = foo.get()[0:8]
+

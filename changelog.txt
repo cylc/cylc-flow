@@ -904,4 +904,14 @@ sufficient to stop suites with single-cycle intercycle dependence from
 stalling. Note that for good cycle interleaving you should set the
 runahead limit higher than this!
 
++ Suites with intercycle connections like the following now run correctly:
+    [scheduling]
+        initial cycle time = 20110101
+        final cycle time = 20110102
+        [[dependencies]]
+            [[[ 0,12 ]]]
+                graph = "A"
+            [[[ 6,18 ]]]
+                graph  =  "A[T-6] => B"
+(previously A would run in 6,18 as well as 0,12, which it shouldn't).
 
