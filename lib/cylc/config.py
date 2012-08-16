@@ -648,8 +648,8 @@ class config( CylcConfigObj ):
                 self.expandvars( self['cylc']['logging']['directory'])
         self['cylc']['state dumps']['directory'] =  \
                 self.expandvars( self['cylc']['state dumps']['directory'])
-        self['visualization']['run time graph']['directory'] = \
-                self.expandvars( self['visualization']['run time graph']['directory'])
+        self['visualization']['runtime graph']['directory'] = \
+                self.expandvars( self['visualization']['runtime graph']['directory'])
 
         for item in self['runtime']:
             # Local job sub log directories: interpolate all environment variables.

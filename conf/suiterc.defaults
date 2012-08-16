@@ -120,7 +120,7 @@ description = "No description provided"
         # DEFAULT via config.py: all families are defined as node groups
     [[node attributes]]
         # (none)
-    [[run time graph]]
+    [[runtime graph]]
         enable = False
         cutoff = 24
         directory = '$CYLC_SUITE_DEF_PATH/graphing'

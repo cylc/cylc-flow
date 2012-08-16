@@ -113,7 +113,7 @@ GRAPH VIEWER CONTROLS:
     * "group" - close this node's parent family.
     * "ungroup" - open this family node.
     * "recursive ungroup" - ungroup all families below this node.""",
-    argdoc = [('REG', 'Suite name'), 
+    argdoc = [('[REG]', 'Suite name'), 
         ('[START]', 'Initial cycle time to plot (default=2999010100)'),
         ('[STOP]', 'Final cycle time to plot (default=2999010123)') ])
 
@@ -147,10 +147,6 @@ parser.add_option( "--output",
 
 ( options, args ) = parser.parse_args()
 
-prep = prep_file( args[0], options )
-suite, suiterc = prep.execute()
-watchers = prep.get_rcfiles()
-
 if options.filename:
     if len(args) != 0:
         parser.error( 'file graphing arguments: \'-f FILE\' or \'--file=FILE\'' )
@@ -172,6 +168,10 @@ if options.filename:
     gobject.timeout_add(1000, window.update, file)
     gtk.main()
     sys.exit(0)
+
+prep = prep_file( args[0], options )
+suite, suiterc = prep.execute()
+watchers = prep.get_rcfiles()
 
 # parse and plot the suite.rc dependency graph
 if len(args) < 1 or len(args) > 3:

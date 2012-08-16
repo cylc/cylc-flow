@@ -1528,24 +1528,24 @@ assignment.
 \end{lstlisting}
 \end{myitemize}
 
-\subsubsection[{[[}run time graph{]]}]{[visualization] $\rightarrow$ [[run time graph]]}
+\subsubsection[{[[}runtime graph{]]}]{[visualization] $\rightarrow$ [[runtime graph]]}
 
 Cylc can generate graphs of dependencies resolved at run time, i.e.\ what 
 actually triggers off what as the suite runs. This feature is retained
 mainly for development and debugging purposes. You can use simulation
-mode to generate run time graphs very quickly.
+mode to generate runtime graphs very quickly.
 
-\paragraph[enable]{[visualization] $\rightarrow$ [[run time graph]] $\rightarrow$ enable}
+\paragraph[enable]{[visualization] $\rightarrow$ [[runtime graph]] $\rightarrow$ enable}
 
-Run time graphing is now disabled by default.
+Runtime graphing is disabled by default.
 \begin{myitemize}
     \item {\em type:} boolean
     \item {\em default:} False
 \end{myitemize}
 
-\paragraph[cutoff]{[visualization] $\rightarrow$ [[run time graph]] $\rightarrow$ cutoff}
+\paragraph[cutoff]{[visualization] $\rightarrow$ [[runtime graph]] $\rightarrow$ cutoff}
 
-New nodes will be added to the run time graph as the corresponding tasks
+New nodes will be added to the runtime graph as the corresponding tasks
 trigger, until their cycle time exceeds the initial cycle time by more
 than this cutoff, in hours.
 
@@ -1554,9 +1554,9 @@ than this cutoff, in hours.
     \item {\em default:} $24$
 \end{myitemize}
 
-\paragraph[directory]{[visualization] $\rightarrow$ [[run time graph]] $\rightarrow$ directory}
+\paragraph[directory]{[visualization] $\rightarrow$ [[runtime graph]] $\rightarrow$ directory}
 
-Where to put the run time graph file, \lstinline=runtime-graph.dot=.
+Where to put the runtime graph file, \lstinline=runtime-graph.dot=.
 
 \begin{myitemize}
     \item {\em type:} string (a valid directory path, may contain environment variables)

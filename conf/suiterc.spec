@@ -194,7 +194,7 @@ description = string( default="No description provided" )
         __many__ = force_list( default=list())
     [[node attributes]]
         __many__ = force_list( default=list())
-    [[run time graph]]
+    [[runtime graph]]
         enable = boolean( default=False )
         cutoff = integer( default=24 )
         directory = string( default='$CYLC_SUITE_DEF_PATH/graphing')

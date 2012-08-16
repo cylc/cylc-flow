@@ -40,20 +40,13 @@ from locking.lockserver import lockserver
 from locking.suite_lock import suite_lock
 import subprocess
 from suite_id import identifier
-from mkdir_p import mkdir_p
 from config import config, SuiteConfigError, TaskNotDefinedError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
 from version import cylc_version
 from regpath import RegPath
 from CylcError import TaskNotFoundError, TaskStateError
-
-try:
-    import graphing
-except:
-    graphing_disabled = True
-else:
-    graphing_disabled = False
+from RuntimeGraph import rGraph
 
 class SchedulerError( Exception ):
     """
@@ -67,12 +60,12 @@ class SchedulerError( Exception ):
         return repr(self.msg)
 
 class pool(object):
-    def __init__( self, qconfig, n_max_sub, pyro, log, verbose ):
+    def __init__( self, suite, config, pyro, log, verbose ):
         self.pyro = pyro
         self.log = log
-        self.qconfig = qconfig
         self.verbose = verbose
-        self.n_max_sub = n_max_sub
+        self.qconfig = config['scheduling']['queues'] 
+        self.n_max_sub = config['cylc']['maximum simultaneous job submissions']
         self.assign()
 
     def assign( self, reload=False ):
@@ -176,7 +169,7 @@ class pool(object):
         if len(readytogo) == 0:
             if self.verbose:
                 print "(No tasks ready to run)"
-            return
+            return []
 
         print
         n_tasks = len(readytogo)
@@ -190,6 +183,7 @@ class pool(object):
             self.batch_submit( readytogo[start:start+n_max] )
         if remainder != 0:
             self.batch_submit( readytogo[batches*n_max:n_tasks] )
+        return readytogo
 
     def batch_submit( self, tasks ):
         before = datetime.datetime.now()
@@ -225,11 +219,6 @@ class pool(object):
         print "  Time taken: " + str( after - before )
         print " ", n_succ, "of", n_tasks, "job submissions succeeded" 
         print " ", n_fail, "of", n_tasks, "job submissions failed" 
-
-        ##### TO DO: RUNTIME GRAPH NOT ACCESSIBLE FROM INSIDE THIS CLASS ########
-        #if not graphing_disabled and not self.runtime_graph_finalized:
-        #    # add tasks to the runtime graph when they start running.
-        #    self.update_runtime_graph( task )
 
 class scheduler(object):
     def __init__( self, is_restart=False ):
@@ -300,10 +289,9 @@ class scheduler(object):
         self.runahead_limit = self.config['scheduling']['runahead limit']
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
-        self.pool = pool( self.config['scheduling']['queues'], 
-                self.config['cylc']['maximum simultaneous job submissions'],
-                self.pyro, self.log, self.verbose )
-        
+       
+        self.pool = pool( self.suite, self.config, self.pyro, self.log, self.verbose )
+
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD
         self.load_tasks()
         self.initial_oldest_ctime = self.get_oldest_c_time()
@@ -312,12 +300,6 @@ class scheduler(object):
         #self.suite_state = state_summary( self.config, self.simulation_mode, self.start_tag, self.gcylc )
         self.suite_state = state_summary( self.config, self.simulation_mode, self.initial_oldest_ctime, self.gcylc )
         self.pyro.connect( self.suite_state, 'state_summary')
-
-        global graphing_disabled
-        if not self.config['visualization']['run time graph']['enable']:
-            graphing_disabled = True
-        if not graphing_disabled:
-            self.initialize_runtime_graph()
 
         self.add_to_banner() # must be before configure_environments for self.ict
         self.configure_environments()
@@ -329,6 +311,8 @@ class scheduler(object):
             print str(self.config.event_config.timeout) + " minute suite timer starts NOW:", str(now)
 
         self.print_banner()
+
+        self.runtime_graph = rGraph( self.suite, self.config, self.initial_oldest_ctime, self.start_tag )
 
     def ctexpand( self, tag ):
         # expand truncated cycle times (2012 => 2012010100)
@@ -667,7 +651,13 @@ class scheduler(object):
                     main_loop_start_time = datetime.datetime.now()
 
                 self.negotiate()
-                self.pool.process()
+                submitted = self.pool.process( )
+                for task in submitted:
+                    # add tasks to the runtime graph when they start running.
+                    self.runtime_graph.update( task,
+                            self.get_oldest_c_time(),
+                            self.get_oldest_async_tag() )
+
                 self.cleanup()
                 self.spawn()
                 self.dump_state()
@@ -834,9 +824,7 @@ class scheduler(object):
         if self.pyro:
             self.pyro.shutdown()
 
-        global graphing_disabled
-        if not graphing_disabled:
-            self.finalize_runtime_graph()
+        self.runtime_graph.finalize()
 
         print message
 
@@ -1772,75 +1760,3 @@ class scheduler(object):
             outlist.append( name ) 
         return outlist
 
-    def initialize_runtime_graph( self ):
-        title = 'suite ' + self.suite + ' run-time dependency graph'
-        # create output directory if necessary
-        odir = self.config['visualization']['run time graph']['directory']
-        # raises OSError:
-        mkdir_p( odir )
-
-        self.runtime_graph_file = \
-                os.path.join( odir, 'runtime-graph.dot' )
-        self.runtime_graph = graphing.CGraph( title, self.config['visualization'] )
-        self.runtime_graph_finalized = False
-        self.runtime_graph_cutoff = self.config['visualization']['run time graph']['cutoff']
-
-    def update_runtime_graph( self, task ):
-        if self.runtime_graph_finalized:
-            return
-        if task.is_cycling():
-            self.update_runtime_graph( task )
-        else:
-            self.update_runtime_graph_async( task )
- 
-    def update_runtime_graph( self, task ):
-        # stop if all tasks are more than cutoff hours beyond suite start time
-        if self.start_tag:
-            st = ct( self.start_tag )
-        else:
-            st = ct( self.initial_oldest_ctime )
-
-        ot = ct( self.get_oldest_c_time() )
-        delta1 = ot.subtract( st )
-        delta2 = datetime.timedelta( 0, 0, 0, 0, 0, self.runtime_graph_cutoff, 0 )
-        if delta1 >= delta2:
-            self.finalize_runtime_graph()
-            return
-        # ignore task if its ctime more than configured hrs beyond suite start time?
-        st = st
-        tt = ct( task.c_time )
-        delta1 = tt.subtract(st)
-        if delta1 >= delta2:
-            return
-        for id in task.get_resolved_dependencies():
-            l = id
-            r = task.id 
-            self.runtime_graph.add_edge( l,r,False )
-            self.write_runtime_graph()
-
-    def update_runtime_graph_async( self, task ):
-        # stop if all tasks are beyond the first tag
-        ot = self.get_oldest_async_tag()
-        if ot > 1:
-            self.finalize_runtime_graph()
-            return
-        # ignore tasks beyond the first tag 
-        tt = int( task.tag )
-        if tt > 1:
-            return
-        for id in task.get_resolved_dependencies():
-            l = id
-            r = task.id 
-            self.runtime_graph.add_edge( l,r,False )
-            self.write_runtime_graph()
-
-    def write_runtime_graph( self ):
-        #print "Writing graph", self.runtime_graph_file
-        self.runtime_graph.write( self.runtime_graph_file )
-
-    def finalize_runtime_graph( self ):
-        #if self.runtime_graph_finalized:
-        #    return
-        #print "Finalizing graph", self.runtime_graph_file
-        self.write_runtime_graph()
-        self.runtime_graph_finalized = True

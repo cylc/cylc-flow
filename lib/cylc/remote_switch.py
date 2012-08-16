@@ -333,7 +333,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def do_live_graph_movie( self ):
         return ( self.config['visualization']['enable live graph movie'],
-                 self.config['visualization']['run time graph']['directory'] ) 
+                 self.config['visualization']['runtime graph']['directory'] ) 
 
     def get_family_hierarchy( self ):
         return copy.deepcopy(self.config.family_hierarchy)
