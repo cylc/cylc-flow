@@ -165,7 +165,8 @@ cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( fct ) # may be "None"
 cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] =  suite_dir
 cylcenv[ 'CYLC_SUITE_DEF_PATH' ] =  re.sub( os.environ['HOME'], '$HOME', suite_dir )
 cylcenv[ 'CYLC_SUITE_PYRO_TIMEOUT' ] = str( config.pyro_timeout )
- 
+cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = config['cylc']['logging']['directory']
+
 # SCHEDULER ENVIRONMENT
 # Access to the suite bin directory for alert scripts executed
 # by the scheduler (probably not required for single submit).
