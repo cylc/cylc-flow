@@ -1122,6 +1122,7 @@ class config( CylcConfigObj ):
                 continue
             try:
                 name = graphnode( node ).name
+                offset = graphnode( node ).offset
             except GraphNodeError, x:
                 print >> sys.stderr, line
                 raise SuiteConfigError, str(x)
@@ -1159,7 +1160,15 @@ class config( CylcConfigObj ):
                 self.taskdefs[name].cycling = True
                 if name not in self.cycling_tasks:
                     self.cycling_tasks.append(name)
-            self.taskdefs[ name ].add_to_valid_cycles( cyclr )
+
+            if offset:
+                cyc = deepcopy( cyclr )
+                # this changes the cyclers internal state so we need a
+                # private copy of it:
+                cyc.adjust_state(offset)
+            else:
+                cyc = cyclr
+            self.taskdefs[ name ].add_to_valid_cycles( cyc )
 
             if not self.simulation_mode:
                 # register any explicit internal outputs
@@ -1170,6 +1179,7 @@ class config( CylcConfigObj ):
                     self.taskdefs[ name ].outputs.append( outp )
 
             # collate which tasks appear in each section
+            # (used in checking conditional trigger expressions)
             if cyclr not in self.tasks_by_cycler:
                 self.tasks_by_cycler[cyclr] = []
             if name not in self.tasks_by_cycler[cyclr]:
