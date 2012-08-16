@@ -60,6 +60,13 @@ class jobfile(object):
         self.cycle_time = tag
 
     def write( self, path ):
+        ############# !!!!!!!! WARNING !!!!!!!!!!! #####################
+        # BE EXTREMELY WARY OF CHANGING THE ORDER OF JOB SCRIPT SECTIONS
+        # Users may be relying on the existing order (see for example
+        # the comment below on suite bin path being required before
+        # task runtime environment setup).
+        ################################################################
+
         # Write each job script section in turn. In simulation mode,
         # omit anything not required for local submission of dummy tasks
         # (initial scripting or user-defined environment etc. may cause
@@ -87,8 +94,11 @@ class jobfile(object):
         self.write_environment_1()
 
         if not self.simulation_mode:
-            self.write_environment_2()
+            # suite bin access must be before runtime environment
+            # because suite bin commands may be used in variable
+            # assignment expressions: FOO=$(command args).
             self.write_suite_bin_access()
+            self.write_environment_2()
 
         self.write_task_started()
 
