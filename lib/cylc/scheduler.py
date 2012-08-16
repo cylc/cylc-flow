@@ -312,7 +312,8 @@ class scheduler(object):
 
         self.print_banner()
 
-        self.runtime_graph = rGraph( self.suite, self.config, self.initial_oldest_ctime, self.start_tag )
+        if self.config['visualization']['runtime graph']['enable']:
+            self.runtime_graph = rGraph( self.suite, self.config, self.initial_oldest_ctime, self.start_tag )
 
     def ctexpand( self, tag ):
         # expand truncated cycle times (2012 => 2012010100)
@@ -651,12 +652,9 @@ class scheduler(object):
                     main_loop_start_time = datetime.datetime.now()
 
                 self.negotiate()
+
                 submitted = self.pool.process( )
-                for task in submitted:
-                    # add tasks to the runtime graph when they start running.
-                    self.runtime_graph.update( task,
-                            self.get_oldest_c_time(),
-                            self.get_oldest_async_tag() )
+                self.process_resolved( submitted )
 
                 self.cleanup()
                 self.spawn()
@@ -767,6 +765,14 @@ class scheduler(object):
         # END MAIN LOOP
         self.log.critical( "SHUTTING DOWN" )
 
+    def process_resolved( self, tasks ):
+        # process resolved dependencies (what actually triggers off what at run time).
+        for task in tasks:
+            if self.config['visualization']['runtime graph']['enable']:
+                self.runtime_graph.update( task, self.get_oldest_c_time(), self.get_oldest_async_tag() )
+            if self.config['cylc']['log resolved dependencies']:
+                task.log( 'NORMAL', 'triggered off ' + str( task.get_resolved_dependencies()) )
+
     def check_suite_timer( self ):
         if self.already_timed_out:
             return
@@ -824,7 +830,8 @@ class scheduler(object):
         if self.pyro:
             self.pyro.shutdown()
 
-        self.runtime_graph.finalize()
+        if self.config['visualization']['runtime graph']['enable']:
+            self.runtime_graph.finalize()
 
         print message
 

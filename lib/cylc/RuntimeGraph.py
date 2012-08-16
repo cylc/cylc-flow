@@ -20,19 +20,10 @@ import os, sys
 from mkdir_p import mkdir_p
 from cycle_time import ct
 import datetime
+from graphing import CGraph
 
 class rGraph( object ):
     def __init__(self, suite, config, initial_oldest_ctime, start_tag ):
-        self.enabled = False
-        if not config['visualization']['runtime graph']['enable']:
-            return
-        else:
-            try:
-                import graphing
-            except:
-                print >> sys.stderr, 'WARNING: Graphing disabled'
-                return
-        self.enabled = True
         self.config = config
         self.initial_oldest_ctime = initial_oldest_ctime
         self.start_tag = start_tag
@@ -44,12 +35,12 @@ class rGraph( object ):
         mkdir_p( odir )
 
         self.file = os.path.join( odir, 'runtime-graph.dot' )
-        self.graph = graphing.CGraph( title, config['visualization'] )
+        self.graph = CGraph( title, config['visualization'] )
         self.finalized = False
         self.cutoff = config['visualization']['runtime graph']['cutoff']
 
     def update( self, task, oldest_ctime=None, oldest_async_tag=None ):
-        if not self.enabled or self.finalized:
+        if self.finalized:
             return
         if task.is_cycling():
             self.update_cycling( task, oldest_ctime )
@@ -98,8 +89,6 @@ class rGraph( object ):
             self.write()
 
     def write( self ):
-        if not self.enabled:
-            return
         #print "Writing graph", self.file
         self.graph.write( self.file )
 

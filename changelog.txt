@@ -919,6 +919,6 @@ runahead limit higher than this!
 fails - to allow use of shutdown handlers as suite run diagnosis tools
 in cylc test suites.
 
-+ Restored runtime graphing capability (disabled since internal queues
-were implemented).
-
++ Restored runtime "resolved dependency" graphing (disabled since
+internal queues were implemented); and added optional logging of
+resolved dependencies.

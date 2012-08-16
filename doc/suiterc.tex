@@ -95,10 +95,24 @@ Section~\ref{MaxSimJobSub} for more on why this matters.
     \item {\em default:} (none)
 \end{myitemize}
 
+
 \subsubsection[abort if any task fails]{[cylc] $\rightarrow$ abort if any task fails}
 
 Cylc does not normally abort if tasks fail, but if this item is turned
 on it will abort with exit status 1 if any task fails.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False
+\end{myitemize}
+
+
+\subsubsection[log resolved dependencies]{[cylc] $\rightarrow$ log resolved dependencies}
+
+If this is turned on cylc will write the resolved dependencies of each
+task to the suite log as it becomes ready to run (a list of the IDs of
+the tasks that actually satisfied its prerequisites at run time). Mainly
+used for cylc testing and development.
 
 \begin{myitemize}
     \item {\em type:} boolean
@@ -128,6 +142,32 @@ suite is started or restarted.
     \item {\em type:} boolean
     \item {\em default:} True
 \end{myitemize}
+
+
+\paragraph[directory]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ directory}
+
+The cylc log and its backups are stored in this directory. If you change
+the directory make sure it remains suite-specific by using suite
+identity environment variables in the path.
+
+\begin{myitemize}
+    \item {\em type:} string (directory path, may contain environment variables)
+    \item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite=
+\end{myitemize}
+
+\paragraph[roll over at start-up]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ roll over at start-up}
+
+Suite logs roll over (start anew) automatically when they reach a
+certain size - currently hardwired to 1MB in
+\lstinline=$CYLC_DIR/lib/cylc/pimp_my_logger.py=. 
+They can also be rolled automatically whenever a
+suite is started or restarted.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} True
+\end{myitemize}
+
 
 
 \subsubsection[{[[}logging{]]} ]{[cylc] $\rightarrow$ [[logging]]}

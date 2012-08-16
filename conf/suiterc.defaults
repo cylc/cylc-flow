@@ -16,7 +16,8 @@ description = "No description provided"
     simulation mode only = False
     pyro connection timeout = (none)
     maximum simultaneous job submissions = 50
-    abort if any task fails = boolean = False
+    abort if any task fails = False
+    log resolved dependencies = False
     [[logging]]
         directory = '$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite'
         roll over at start-up = True

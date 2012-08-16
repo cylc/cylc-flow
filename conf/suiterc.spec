@@ -41,6 +41,7 @@ description = string( default="No description provided" )
     pyro connection timeout = float( min=0.0, default=None )
     maximum simultaneous job submissions = integer( min=1, default=50 )
     abort if any task fails = boolean( default=False )
+    log resolved dependencies = boolean( default=False )
     [[logging]]
         directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite' )
         roll over at start-up = boolean( default=True )

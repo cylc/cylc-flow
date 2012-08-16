@@ -460,6 +460,10 @@ class config( CylcConfigObj ):
         if self.validation:
             self.check_tasks()
 
+        if self['visualization']['runtime graph']['enable'] and graphing_disabled:
+            print >> sys.stderr, 'WARNING: disabling runtime graphing (graphing not available).'
+            self['visualization']['runtime graph']['enable'] = False
+
         # Default visualization start and stop cycles (defined here
         # rather than in the spec file so we can set a sensible stop
         # time if only the start time is specified by the user).
