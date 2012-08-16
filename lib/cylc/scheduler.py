@@ -891,10 +891,10 @@ class scheduler(object):
             if itask.state.is_held():
                 if self.stop_tag and int( itask.c_time ) > int( self.stop_tag ):
                     # this task has passed the suite stop time
-                    itask.log( 'WARNING', "Not releasing (beyond suite stop cycle) " + self.stop_tag )
+                    itask.log( 'NORMAL', "Not releasing (beyond suite stop cycle) " + self.stop_tag )
                 elif itask.stop_c_time and int( itask.c_time ) > int( itask.stop_c_time ):
                     # this task has passed its own stop time
-                    itask.log( 'WARNING', "Not releasing (beyond task stop cycle) " + itask.stop_c_time )
+                    itask.log( 'NORMAL', "Not releasing (beyond task stop cycle) " + itask.stop_c_time )
                 else:
                     # release this task
                     itask.state.set_status('waiting')
@@ -1076,19 +1076,19 @@ class scheduler(object):
 
     def check_hold_spawned_task( self, old_task, new_task ):
         if self.hold_suite_now:
-            new_task.log( 'WARNING', "HOLDING (general suite hold) " )
+            new_task.log( 'NORMAL', "HOLDING (general suite hold) " )
             new_task.state.set_status('held')
         elif self.stop_tag and int( new_task.c_time ) > int( self.stop_tag ):
             # we've reached the suite stop time
-            new_task.log( 'WARNING', "HOLDING (beyond suite stop cycle) " + self.stop_tag )
+            new_task.log( 'NORMAL', "HOLDING (beyond suite stop cycle) " + self.stop_tag )
             new_task.state.set_status('held')
         elif self.hold_time and int( new_task.c_time ) > int( self.hold_time ):
             # we've reached the suite hold time
-            new_task.log( 'WARNING', "HOLDING (beyond suite hold cycle) " + self.hold_time )
+            new_task.log( 'NORMAL', "HOLDING (beyond suite hold cycle) " + self.hold_time )
             new_task.state.set_status('held')
         elif old_task.stop_c_time and int( new_task.c_time ) > int( old_task.stop_c_time ):
             # this task has a stop time configured, and we've reached it
-            new_task.log( 'WARNING', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
+            new_task.log( 'NORMAL', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
             new_task.state.set_status('held')
         elif self.runahead_limit:
             ouct = self.get_oldest_waiting_or_running_or_submitted_c_time() 
@@ -1477,7 +1477,7 @@ class scheduler(object):
             raise TaskNotFoundError, "Task not present in suite: " + task_id
         # dump state
         self.log.warning( 'pre-trigger state dump: ' + self.dump_state( new_file = True ))
-        itask.log( 'WARNING', "triggering now" )
+        itask.plog( "triggering now" )
         itask.reset_state_ready()
         if itask.is_clock_triggered():
             itask.set_trigger_now(True)
@@ -1494,7 +1494,7 @@ class scheduler(object):
         if not found:
             raise TaskNotFoundError, "Task not present in suite: " + task_id
 
-        itask.log( 'WARNING', "resetting to " + state + " state" )
+        itask.plog( "resetting to " + state + " state" )
 
         # dump state
         self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
@@ -1582,11 +1582,11 @@ class scheduler(object):
                     del itask
                 else: 
                     if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
-                        itask.log( 'WARNING', "HOLDING at configured suite stop time " + self.stop_tag )
+                        itask.plog( "HOLDING at configured suite stop time " + self.stop_tag )
                         itask.state.set_status('held')
                     if itask.stop_c_time and int( itask.tag ) > int( itask.stop_c_time ):
                         # this task has a stop time configured, and we've reached it
-                        itask.log( 'WARNING', "HOLDING at configured task stop time " + itask.stop_c_time )
+                        itask.plog( "HOLDING at configured task stop time " + itask.stop_c_time )
                         itask.state.set_status('held')
                     inserted.append( itask.id )
                     to_insert.append(itask)
@@ -1729,7 +1729,7 @@ class scheduler(object):
  
                 if self.stop_tag and int( new_task.tag ) > int( self.stop_tag ):
                     # we've reached the stop time
-                    new_task.log( 'WARNING', 'HOLDING at configured suite stop time' )
+                    new_task.plog( 'HOLDING at configured suite stop time' )
                     new_task.state.set_status('held')
                 # perpetuate the task stop time, if there is one
                 new_task.stop_c_time = itask.stop_c_time
