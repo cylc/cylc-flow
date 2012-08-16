@@ -66,6 +66,66 @@ class SuiteConfigError( Exception ):
 class TaskNotDefinedError( SuiteConfigError ):
     pass
 
+class SuiteEventHookConfig( object ):
+    legal_events = ['shutdown', 'timeout']
+
+    def __init__( self, events, script, timeout, abort_on_timeout,
+            abort_on_shutdown, verbose ):
+        self.events = events
+        self.script = script
+        self.timeout = timeout
+        self.abort_on_timeout = abort_on_timeout
+        self.abort_if_shutdown_handler_fails = abort_on_shutdown
+        self.verbose = verbose
+        self.check()
+
+    def check( self ):
+        if self.verbose:
+            print "Checking suite event hook config"
+
+        for event in self.events:
+            if event not in self.__class__.legal_events:
+                raise SuiteConfigError, "ERROR, illegal suite hook event: " + event
+
+        if len(self.events) > 0 and not self.script:
+            raise SuiteConfigError, "ERROR, no handler specified for the nominated suite events: " + ','.join(self.events)
+
+        if len(self.events) == 0 and self.script:
+            print >> sys.stderr, "WARNING: a suite event handler is specified, but no events"
+            self.script = None
+
+        if 'timeout' in self.events and not self.timeout:
+            print >> sys.stderr, 'WARNING: disabling suite timeout (no timeout given)'
+            self.events.remove('timeout')
+ 
+        if self.timeout and 'timeout' not in self.events and not self.abort_on_timeout:
+            print >> sys.stderr, 'WARNING: a suite timeout was given, but the timeout event ...'
+            print >> sys.stderr, 'WARNING: ... is not handled and abort-on-timeout is not set'
+            self.timeout = None
+ 
+        if self.abort_if_shutdown_handler_fails:
+            if 'shutdown' not in self.events:
+                print >> sys.stderr, 'WARNING: abort-if-shutdown-handler-fails is set, but event is not handled'
+                self.abort_if_shutdown_handler_fails = False
+            if not self.script:
+                print >> sys.stderr, 'WARNING: abort-if-shutdown-handler-fails is set, but no handler script'
+                self.abort_if_shutdown_handler_fails = False
+ 
+        if self.abort_on_timeout:
+            if not self.timeout:
+                print >> sys.stderr, 'WARNING: disabling abort-on-timeout (no timeout given)'
+                self.abort_on_timeout = False
+            else:
+                print >> sys.stderr, 'WARNING: suite will abort on timeout (' + str( self.timeout ) + ' minutes)'
+
+    def disable( self ):
+        self.events = []
+        self.script = None
+        self.timeout = None
+        self.abort_on_timeout
+        self.timeout = None
+
+
 class edge( object):
     def __init__( self, l, r, cyclr, sasl=False, suicide=False, conditional=False ):
         """contains qualified node names, e.g. 'foo[T-6]:out1'"""
@@ -338,23 +398,17 @@ class config( CylcConfigObj ):
         if self.verbose:
             print "Pyro connection timeout for tasks in this suite:", self.pyro_timeout, "seconds"
 
-        if self.verbose:
-            print "Checking suite event hooks"
-        script = None
-        events = []
-        if not self.simulation_mode or self['cylc']['simulation mode']['event hooks']['enable']:
-            # configure suite event hooks
-            script = self['cylc']['event hooks']['script']
-            events = self['cylc']['event hooks']['events']
-            for event in events:
-                if event not in ['shutdown']:
-                    raise SuiteConfigError, "ERROR, illegal suite hook event: " + event
-        if len(events) == 0 and script:
-            # this is not a fatal error
-            print >> sys.stderr, "WARNING: suite event handler specified without events to handle."
-        if len(events) > 0 and not script:
-            # but this is
-            raise SuiteConfigError, "ERROR, no handler specified for these suite events: " + ','.join(events)
+        self.event_config = SuiteEventHookConfig( \
+                self['cylc']['event hooks']['events'],
+                self['cylc']['event hooks']['script'],
+                self['cylc']['event hooks']['timeout'],
+                self['cylc']['event hooks']['abort on timeout'],
+                self['cylc']['event hooks']['abort if shutdown handler fails'],
+                self.verbose )
+
+        if self.simulation_mode and not self['cylc']['simulation mode']['event hooks']['enable']:
+            print >> sys.stderr, 'WARNING: disabling suite event hooks for simulation mode'
+            self.event_config.disable()
 
         self.process_directories()
 
@@ -1604,14 +1658,15 @@ class config( CylcConfigObj ):
         if self.validation and len(taskd.hook_events) == 0 and taskd.hook_script:
             # this is not a fatal error
             print >> sys.stderr, "WARNING: task event handler specified without events to handle."
+
         if len(taskd.hook_events) > 0 and not taskd.hook_script:
             # but this is
-            raise SuiteConfigError, "ERROR, no handler specified for these task events: " + ','.join(taskd.hook_events)
+            raise SuiteConfigError, "ERROR, no handler specified for task events: " + ','.join(taskd.hook_events)
 
         if 'submission_timeout' in taskd.hook_events and not taskd.submission_timeout:
-            print >> sys.stderr, 'WARNING:', taskd.name, 'job submission timeout disabled (no timeout given)'
+            print >> sys.stderr, 'WARNING:', taskd.name, 'disabling job submission timeout (no timeout given)'
         if 'execution_timeout' in taskd.hook_events and not taskd.execution_timeout:
-            print >> sys.stderr, 'WARNING:', taskd.name, 'job execution timeout disabled (no timeout given)'
+            print >> sys.stderr, 'WARNING:', taskd.name, 'disabling job execution timeout (no timeout given)'
          
         taskd.logfiles    = taskconfig[ 'extra log files' ]
         taskd.resurrectable = taskconfig[ 'enable resurrection' ]

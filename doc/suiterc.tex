@@ -197,8 +197,7 @@ are logged by cylc.
 \subsubsection[{[[}event hooks{]]}]{[cylc] $\rightarrow$ [[event hooks]]}
 \label{SuiteEventHandling}
 
-Cylc can call a nominated suite event handler when suite shutdown
-occurs (in the future there may also be other suite-level event hooks).
+Cylc can call a nominated handler when certain suite events occur.
 Event handlers can send an email or an SMS, call a pager, and so on; or
 intervene in the operation of their own suite using cylc commands. The
 command \lstinline=cylc [hook] email-suite= is a ready-made suite event
@@ -214,15 +213,22 @@ They are passed the following arguments by cylc:
 \begin{lstlisting}
 <hook-script> EVENT SUITE MESSAGE
 \end{lstlisting}
-Currently there is only one suite EVENT defined:
+where EVENT is one of the following strings:
 \begin{myitemize}
     \item `shutdown' - the suite stopped, normally or not. 
+    \item `timeout' - the suite timed out
 \end{myitemize}
 MESSAGE, if provided, describes what has happened.
 
 {\em Note that event handlers are called by cylc itself} so if you wish
 to pass them additional information via the environment you must use
-[cylc] $\rightarrow$ [[environment]], not task runtime environments.
+[cylc] $\rightarrow$ [[environment]], not task runtime environments
+(suite-level variables - \lstinline=$CYLC_SUITE_INITIAL_CYCLE_TIME=
+etc.\ - are exported into the suite environment, however).
+
+To configure suite timeout handling put `timeout' in the event list and
+specify corresponding timeout values in minutes for the timeout item
+below.
 
 See also Section~\ref{TaskEventHandling} for task event hooks.
 
@@ -244,14 +250,38 @@ The handler script to call when one of the nominated events occurs.
     \item {\em default:} (none)
 \end{myitemize}
 
+\paragraph[timeout]{[cylc] $\rightarrow$ [[[event hooks]]] $\rightarrow$ timeout}
+
+If a timeout is set and the timeout event is handled the event
+handler will be called if the suite times out before it finishes.
+See also ``abort on timeout'', below.
+
+\begin{myitemize}
+    \item {\em type:} float (minutes)
+    \item {\em default:} (none)
+\end{myitemize}
+
+
 \paragraph[script]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort if shutdown handler fails}
 
 Cylc does not normally care whether a shutdown handler, executed just
 prior to shutting down, succeeds or fails; but if this is turned on 
 cylc will execute the shutdown handler in the foreground and the suite
 will abort with error status if the handler script fails. This feature
-is used by cylc test suites which can use shutdown handlers to diagnose
-the run.
+is used by cylc test suites that diagnose their own logs with shutdown
+handlers.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False
+\end{myitemize}
+
+\paragraph[script]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort on timeout}
+
+If a suite timer is set (above) this will cause the suite to abort with
+error status if the suite times out while still running. This feature
+is used by cylc test suites to catch any error that prevents a suite
+from completing.
 
 \begin{myitemize}
     \item {\em type:} boolean
@@ -1197,15 +1227,16 @@ where EVENT is one of the following strings:
 MESSAGE, if provided, describes what has happened, and TASKID identifies
 the task (\lstinline=NAME%CYCLE= for cycling tasks).
 
-To configure timeout handling, list `submission\_timeout' and/or
-`execution\_timeout' in the events to handle, and then specify 
-corresponding timeout values in minutes using the timeout config items
-below.
+To configure timeout handling put `submission\_timeout' and/or
+`execution\_timeout' in the event list and specify corresponding timeout
+values in minutes for the timeout items below.
 
 {\em Note that event handlers are called by cylc itself, not by the 
 running tasks} so if you wish to pass them additional information via
 the environment you must use [cylc] $\rightarrow$ [[environment]],
-not task runtime environments.
+not task runtime environments (suite-level variables -
+\lstinline=$CYLC_SUITE_INITIAL_CYCLE_TIME=
+etc.\ - are exported into the suite environment, however).
 
 See also Section~\ref{SuiteEventHandling} for suite event hooks.
 

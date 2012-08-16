@@ -322,6 +322,12 @@ class scheduler(object):
         self.add_to_banner() # must be before configure_environments for self.ict
         self.configure_environments()
 
+        self.already_timed_out = False
+        if self.config.event_config.timeout:
+            now = datetime.datetime.now()
+            self.suite_timer_start = now
+            print str(self.config.event_config.timeout) + " minute suite timer starts NOW:", str(now)
+
         self.print_banner()
 
     def ctexpand( self, tag ):
@@ -687,6 +693,9 @@ class scheduler(object):
             # incoming task messages set task.task.state_changed to True
             self.pyro.handleRequests(timeout=1)
 
+            if self.config.event_config.timeout:
+                self.check_suite_timer()
+
             # SHUT DOWN IF ALL TASKS ARE SUCCEEDED OR HELD
             stop_now = True  # assume stopping
 
@@ -767,6 +776,24 @@ class scheduler(object):
         # END MAIN LOOP
         self.log.critical( "SHUTTING DOWN" )
 
+    def check_suite_timer( self ):
+        if self.already_timed_out:
+            return
+        now = datetime.datetime.now()
+        timeout = self.suite_timer_start + datetime.timedelta( minutes=self.config.event_config.timeout )
+        if now > timeout:
+            self.already_timed_out = True
+            self.log.warning( "Suite timed out (" + str(self.config.event_config.timeout) + " minutes)" )
+            if 'timeout' in self.config.event_config.events:
+                self.log.warning( 'Calling suite timeout event handler' )
+                message = 'suite timed out after ' + str( self.config.event_config.timeout) + ' minutes' 
+                # run in the background
+                command = self.config.event_config.script + ' timeout ' + self.suite + " '" + message + "' &"
+                subprocess.call( command, shell=True )
+            if self.config.event_config.abort_on_timeout:
+                print >> sys.stderr, 'Abort on suite timeout is set'
+                raise SchedulerError, 'Aborting on suite timeout'
+
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
         process = False
@@ -812,18 +839,15 @@ class scheduler(object):
 
         print message
 
-        events = self.config['cylc']['event hooks']['events']
-        script = self.config['cylc']['event hooks']['script']
-        if script and 'shutdown' in events:
-            command = script + ' shutdown ' + self.suite + "'" + message + "'"
-            if self.config['cylc']['event hooks']['abort if shutdown handler fails']:
+        if 'shutdown' in self.config.event_config.events:
+            command = self.config.event_config.script + ' shutdown ' + self.suite + " '" + message + "'"
+            if self.config.event_config.abort_if_shutdown_handler_fails:
                 msg = 'Calling shutdown handler in the foreground'
                 self.log.warning( msg )
                 res = subprocess.call( command, shell=True )
                 if res != 0:
                     raise SystemExit( 'Suite shutdown event handler failed!' )
             else:
-                # execute the shutdown handler in the background
                 msg = 'Calling shutdown handler in the background'
                 print msg
                 self.log.info( msg )
