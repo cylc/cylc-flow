@@ -289,6 +289,14 @@ class scheduler(object):
         self.check_not_running_already()
 
         self.configure_suite()
+
+        if self.start_tag:
+            self.start_tag = self.ctexpand( self.start_tag)
+        if self.stop_tag:
+            self.stop_tag = self.ctexpand( self.stop_tag)
+
+        self.banner[ 'Final Cycle' ] = self.stop_tag
+
         self.runahead_limit = self.config['scheduling']['runahead limit']
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
@@ -315,6 +323,23 @@ class scheduler(object):
         self.configure_environments()
 
         self.print_banner()
+
+    def ctexpand( self, tag ):
+        # expand truncated cycle times (2012 => 2012010100)
+        try:
+            # cycle time
+            tag = ct(tag).get()
+        except CycleTimeError,x:
+            try:
+                # async integer tag
+                int( tag )
+            except ValueError:
+                raise SystemExit( "ERROR:, invalid task tag : " + tag )
+            else:
+                pass
+        else:
+            pass
+        return tag
 
     def reconfigure( self ):
         # EXPERIMENTAL
@@ -426,8 +451,6 @@ class scheduler(object):
 
         if not self.start_tag and not self.is_restart:
             print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
-
-        self.banner[ 'Final Cycle' ] = self.stop_tag
 
         # PAUSE TIME?
         self.hold_suite_now = False
