@@ -915,3 +915,7 @@ runahead limit higher than this!
                 graph  =  "A[T-6] => B"
 (previously A would run in 6,18 as well as 0,12, which it shouldn't).
 
++ Suites can now be told to abort with error status if a shutdown handler 
+fails - to allow use of shutdown handlers as suite run diagnosis tools
+in cylc test suites.
+
