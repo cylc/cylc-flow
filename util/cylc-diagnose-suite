@@ -4,7 +4,7 @@ import sys, os
 from cylc.LogDiagnosis import LogAnalyser
 
 if len(sys.argv) == 2 and sys.argv[1] == '--help':
-    print """Usage: cylc [hook] diagnose-suite ARGS
+    print """USAGE: cylc [hook] diagnose-suite ARGS
 
 This is a cylc Suite Run Diagnosis shutdown event handler, intended 
 mainly for use in automated cylc test suites. Arguments are supplied by

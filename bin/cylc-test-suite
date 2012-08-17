@@ -22,8 +22,10 @@ usage() {
     echo "USAGE: cylc [admin] test-suite [--help]"
     echo ""
     echo "Run an automated test of core cylc functionality using a new copy of"
-    echo "\$CYLC_DIR/examples/admin. This should be used to check that new"
-    echo "developments in the cylc codebase have not introduced serious bugs."
+    echo "\$CYLC_DIR/examples/admin. This is recommended by the User Guide as"
+    echo "a check that a new cylc installation is working properly; it is also"
+    echo "one of many automated tests run before releasing a new cylc version."
+    echo "See also cylc-test-db and cylc-test-battery."
     echo
     echo "Currently the test does the following:"
     echo "  - Copies the 'intro' example suite definition directory;"

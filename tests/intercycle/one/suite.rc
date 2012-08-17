@@ -5,6 +5,7 @@ description = """
 Task A should only run at 0, 12 hours; Task B at 6, 18"""
 
 [cylc]
+    abort if any task fails = True
     log resolved dependencies = True
     [[event hooks]]
         events = shutdown

@@ -1,0 +1,107 @@
+#!/bin/bash
+
+#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -e; trap "echo 'TEST BATTERY FAILED'" ERR
+
+usage() {
+    echo "USAGE: cylc [admin] test-battery [--help]"
+    echo ""
+    echo "This command runs the full battery of self-diagnosing test-suites"
+    echo "under \$CYLC_DIR/tests/ - part of the automated testing done before"
+    echo "releasing a new cylc version."
+    echo
+    echo "Options:"
+    echo "  -h, --help   Print this help message and exit."
+}
+
+if [[ $# != 0 ]]; then 
+    usage
+    if [[ $1 == "--help" ]]; then
+        exit 0
+    else
+        echo "ERROR: illegal command line arguments"
+        exit 1
+    fi
+fi
+
+MY_TMPDIR=${CYLC_TMPDIR:-${TMPDIR:-/tmp}}
+mkdir -p $MY_TMPDIR
+
+SOURCE_DIR=$CYLC_DIR/tests
+TARGET_DIR=$(mktemp -d)
+REG_GROUP=battery
+
+echo
+echo ">> COPYING test suites to $TARGET_DIR... "
+cp -r $SOURCE_DIR $TARGET_DIR
+
+echo
+echo ">> UNREGISTERING any previous test battery... "
+cylc unreg -df ${REG_GROUP}'.*' #> /dev/null
+
+echo
+echo ">> REGISTERING test suites under ${REG_GROUP}... "
+CWD=$PWD
+cd $TARGET_DIR
+for RC in $( find tests -name 'suite.rc' ); do
+    DIR=$(dirname $RC)
+    NAME=${DIR#tests/}
+    NAME=${REG_GROUP}.$(echo $NAME | tr '/' '.')
+    cylc db reg $NAME $DIR
+done
+
+echo
+echo ">> RUNNING test suites now... "
+set +e
+cd ..
+N_FAILED=0
+N_PASSED=0
+N_TOTAL=0
+for REG in $( cylc db pr -xy $REG_GROUP ); do
+    N_TOTAL=$(( N_TOTAL + 1 ))
+    LOG=$PWD/${REG}.log
+    echo -n "$REG (see $LOG)..."
+    if $( cylc run $REG > $LOG 2>&1 ); then
+        echo PASSED
+        N_PASSED=$(( N_PASSED + 1 ))
+    else
+        echo FAILED
+        N_FAILED=$(( N_FAILED + 1 ))
+    fi
+done
+
+set -e; trap "echo 'TEST BATTERY FAILED'" ERR
+
+echo
+echo "SUMMARY:"
+echo "  $N_PASSED of $N_TOTAL passed"
+echo "  $N_FAILED of $N_TOTAL failed"
+
+if (( N_FAILED != 0 )); then
+    echo
+    echo "ERROR: $N_FAILED test suites FAILED"
+    exit 1
+fi
+
+echo
+echo ">> UNREGISTERING the test battery ..."
+cylc unreg -df ${REG_GROUP}'.*'
+
+echo
+echo ">> DONE: all test suites passed."
+
