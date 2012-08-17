@@ -922,3 +922,8 @@ in cylc test suites.
 + Restored runtime "resolved dependency" graphing (disabled since
 internal queues were implemented); and added optional logging of
 resolved dependencies.
+ 
++ The gcapture log window (used to display suite stdout) now only color-highlights 
+lines containing the strings CRITICAL, WARNING, or ERROR (not "failed"
+or "error" anymore).
+
