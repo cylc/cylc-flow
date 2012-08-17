@@ -927,3 +927,7 @@ resolved dependencies.
 lines containing the strings CRITICAL, WARNING, or ERROR (not "failed"
 or "error" anymore).
 
++ Added a simple framework for creating self-diagnosing cylc test suites
+(the intention is to create a battery of automatic tests to make it
+harder to break cylc in the future).
+
