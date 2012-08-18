@@ -38,7 +38,6 @@ from OrderedDict import OrderedDict
 from job_submission.job_submit import job_submit
 from locking.lockserver import lockserver
 from locking.suite_lock import suite_lock
-import subprocess
 from suite_id import identifier
 from config import config, SuiteConfigError, TaskNotDefinedError
 from broker import broker
@@ -47,6 +46,7 @@ from version import cylc_version
 from regpath import RegPath
 from CylcError import TaskNotFoundError, TaskStateError
 from RuntimeGraph import rGraph
+from RunEventHandler import RunHandler
 
 class SchedulerError( Exception ):
     """
@@ -222,6 +222,7 @@ class pool(object):
 
 class scheduler(object):
     def __init__( self, is_restart=False ):
+
         # SUITE OWNER
         self.owner = user
 
@@ -278,6 +279,13 @@ class scheduler(object):
         self.check_not_running_already()
 
         self.configure_suite()
+
+        if 'startup' in self.config.event_config.events:
+            # we have to wait until the suite is configured before doing this
+            msg = 'Calling startup event handler'
+            print msg
+            self.log.info(msg)
+            RunHandler( 'startup', self.config.event_config.script, self.suite, msg='suite starting' )
 
         if self.start_tag:
             self.start_tag = self.ctexpand( self.start_tag)
@@ -784,9 +792,7 @@ class scheduler(object):
             if 'timeout' in self.config.event_config.events:
                 self.log.warning( 'Calling suite timeout event handler' )
                 message = 'suite timed out after ' + str( self.config.event_config.timeout) + ' minutes' 
-                # run in the background
-                command = self.config.event_config.script + ' timeout ' + self.suite + " '" + message + "' &"
-                subprocess.call( command, shell=True )
+                RunHandler( 'timeout', self.config.event_config.script, self.suite, msg=message )
             if self.config.event_config.abort_on_timeout:
                 print >> sys.stderr, 'Abort on suite timeout is set'
                 raise SchedulerError, 'Aborting on suite timeout'
@@ -836,18 +842,12 @@ class scheduler(object):
         print message
 
         if 'shutdown' in self.config.event_config.events:
-            command = self.config.event_config.script + ' shutdown ' + self.suite + " '" + message + "'"
             if self.config.event_config.abort_if_shutdown_handler_fails:
-                msg = 'Calling shutdown handler in the foreground'
-                self.log.warning( msg )
-                res = subprocess.call( command, shell=True )
-                if res != 0:
-                    raise SystemExit( 'Suite shutdown event handler failed!' )
+                foreground = True
+                self.log.warning('Calling shutdown handler in the foreground')
             else:
-                msg = 'Calling shutdown handler in the background'
-                print msg
-                self.log.info( msg )
-                subprocess.call( command + '&', shell=True )
+                foreground = False
+            RunHandler( 'shutdown', self.config.event_config.script, self.suite, msg=message, fg=foreground )
 
     def get_tasks( self ):
         return self.pool.get_tasks()

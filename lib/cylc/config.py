@@ -67,7 +67,7 @@ class TaskNotDefinedError( SuiteConfigError ):
     pass
 
 class SuiteEventHookConfig( object ):
-    legal_events = ['shutdown', 'timeout']
+    legal_events = ['startup', 'shutdown', 'timeout']
 
     def __init__( self, events, script, timeout, abort_on_timeout,
             abort_on_shutdown, verbose ):
