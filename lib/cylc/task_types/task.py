@@ -30,9 +30,9 @@
 import sys, re
 import datetime
 from cylc import task_state
+from cylc.RunEventHandler import RunHandler
 import logging
 import Pyro.core
-import subprocess
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -211,8 +211,7 @@ class task( Pyro.core.ObjBase ):
 
     def call_warning_hook( self, message ):
         self.plog( 'calling task warning hook script' )
-        command = ' '.join( [self.__class__.hook_script, 'warning', self.__class__.suite, self.id, "'" + message + "' &"] )
-        subprocess.call( command, shell=True )
+        RunHandler( 'warning', self.__class__.hook_script, self.__class__.suite, self.id, message )
 
     def set_submitted( self ):
         self.state.set_status( 'submitted' )
@@ -221,8 +220,7 @@ class task( Pyro.core.ObjBase ):
         self.submission_timer_start = self.submitted_time
         if 'submitted' in self.__class__.hook_events and self.__class__.hook_script:
             self.plog( 'calling task submitted hook script' )
-            command = ' '.join( [self.__class__.hook_script, 'submitted', self.__class__.suite, self.id, "'(task submitted)' &"] )
-            subprocess.call( command, shell=True )
+            RunHandler( 'submitted', self.__class__.hook_script, self.__class__.suite, self.id, '(task submitted)' )
 
     def set_running( self ):
         self.state.set_status( 'running' )
@@ -230,8 +228,7 @@ class task( Pyro.core.ObjBase ):
         self.execution_timer_start = self.started_time
         if 'started' in self.__class__.hook_events and self.__class__.hook_script:
             self.plog( 'calling task started hook script' )
-            command = ' '.join( [self.__class__.hook_script, 'started', self.__class__.suite, self.id, "'(task running)' &"] )
-            subprocess.call( command, shell=True )
+            RunHandler( 'started', self.__class__.hook_script, self.__class__.suite, self.id, '(task started)' )
 
     def set_succeeded( self ):
         self.outputs.set_all_completed()
@@ -245,24 +242,21 @@ class task( Pyro.core.ObjBase ):
         self.state.set_status( 'succeeded' )
         if 'succeeded' in self.__class__.hook_events and self.__class__.hook_script:
             self.plog( 'calling task succeeded hook script' )
-            command = ' '.join( [self.__class__.hook_script, 'succeeded', self.__class__.suite, self.id, "'(task succeeded)' &"] )
-            subprocess.call( command, shell=True )
+            RunHandler( 'succeeded', self.__class__.hook_script, self.__class__.suite, self.id, '(task succeeded)' )
 
     def set_failed( self, reason='(task failed)' ):
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
         if 'failed' in self.__class__.hook_events and self.__class__.hook_script:
             self.plog( 'calling task failed hook script' )
-            command = ' '.join( [self.__class__.hook_script, 'failed', self.__class__.suite, self.id, "'" + reason + "' &"] )
-            subprocess.call( command, shell=True )
+            RunHandler( 'failed', self.__class__.hook_script, self.__class__.suite, self.id, reason )
 
     def set_submit_failed( self, reason='(job submission failed)' ):
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
         if 'submission_failed' in self.__class__.hook_events and self.__class__.hook_script:
             self.plog( 'calling task submission failed hook script' )
-            command = ' '.join( [self.__class__.hook_script, 'submission_failed', self.__class__.suite, self.id, "'" + reason + "' &"] )
-            subprocess.call( command, shell=True )
+            RunHandler( 'submission_failed', self.__class__.hook_script, self.__class__.suite, self.id, reason )
 
     def unfail( self ):
         # if a task is manually reset remove any previous failed message
@@ -377,8 +371,7 @@ class task( Pyro.core.ObjBase ):
                 msg = 'submitted ' + str( self.submission_timeout ) + ' minutes ago, but has not started'
                 self.log( 'WARNING', msg )
                 self.plog( 'Calling task submission timeout hook script.' )
-                command = ' '.join( [ self.__class__.hook_script, 'submission_timeout', self.__class__.suite, self.id, "'" + msg + "' &" ] )
-                subprocess.call( command, shell=True )
+                RunHandler( 'submission_timeout', self.__class__.hook_script, self.__class__.suite, self.id, msg )
                 self.submission_timer_start = None
 
     def check_execution_timeout( self ):
@@ -405,8 +398,7 @@ class task( Pyro.core.ObjBase ):
                     msg = 'started ' + str( self.execution_timeout ) + ' minutes ago, but has not succeeded'
                 self.log( 'WARNING', msg )
                 self.plog( 'Calling task execution timeout hook script.' )
-                command = ' '.join( [ self.__class__.hook_script, 'execution_timeout', self.__class__.suite, self.id, "'" + msg + "' &" ] )
-                subprocess.call( command, shell=True )
+                RunHandler( 'execution_timeout', self.__class__.hook_script, self.__class__.suite, self.id, msg )
                 self.execution_timer_start = None
 
     def set_all_internal_outputs_completed( self ):
@@ -496,8 +488,7 @@ class task( Pyro.core.ObjBase ):
                 task.state_changed = True
                 if 'retry' in self.__class__.hook_events and self.__class__.hook_script:
                     self.plog( 'calling task retry hook script' )
-                    command = ' '.join( [self.__class__.hook_script, 'retry', self.__class__.suite, self.id, "'(task retrying)' &"] )
-                    subprocess.call( command, shell=True )
+                    RunHandler( 'retry', self.__class__.hook_script, self.__class__.suite, self.id, '(task retrying)' )
 
         elif self.outputs.exists( message ):
             # registered output messages
