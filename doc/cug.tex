@@ -4759,7 +4759,7 @@ facilitate centralized alerting and automated handling of critical
 events. Event handlers can send an email or an SMS, call a pager, and so
 on; or intervene in the operation of their own suite using cylc commands.
 \lstinline=cylc [hook] email-suite= and \lstinline=cylc [hook] email-task=
-are example event handlers that come with cylc.
+are example event handlers packaged with cylc.
 
 Currently a single script can be nominated to handle a list of chosen
 events, and the event name is passed to the handler to allow it to
@@ -4831,8 +4831,6 @@ fi"""
             events = retry, failed
             script = "echo !!!!!EVENT!!!!! "
 \end{lstlisting}
-
-
 
 \subsection{Reloading The Suite Definition At Runtime}
 

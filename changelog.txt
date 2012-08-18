@@ -931,3 +931,5 @@ or "error" anymore).
 (the intention is to create a battery of automatic tests to make it
 harder to break cylc in the future).
 
++ Added a suite startup event hook.
+
