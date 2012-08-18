@@ -296,7 +296,7 @@ class task( Pyro.core.ObjBase ):
     def reset_state_held( self ):
         itask.state.set_status( 'held' )
 
-    def run_external_task( self, dry_run=False ):
+    def submit( self, dry_run=False ):
         self.log( 'DEBUG',  'submitting task job script' )
         # construct the job launcher here so that a new one is used if
         # the task is re-triggered by the suite operator - so it will

@@ -191,7 +191,7 @@ class pool(object):
         for task in tasks:
             print
             print 'TASK READY:', task.id 
-            p = task.run_external_task()
+            p = task.submit()
             if p:
                 ps.append( (task,p) ) 
         print
