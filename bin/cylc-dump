@@ -82,9 +82,9 @@ except Exception, x:
 if display_global:
     print "suite : " + suite
 
-    simulation_mode = glbl[ 'simulation_mode' ]
-    if simulation_mode:
-        print 'SIMULATION MODE (clock rate: ', glbl[ 'simulation_clock_rate' ], ')'
+    run_mode = glbl[ 'run_mode' ]
+    if run_mode != 'live':
+        print 'SIM MODE (clock rate: ', glbl[ 'clock_rate' ], ')'
 
     dt = glbl[ 'last_updated' ]
     print 'last summary update: ' +  dt.strftime( "%Y/%m/%d %H:%M:%S" )

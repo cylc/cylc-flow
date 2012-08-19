@@ -132,8 +132,8 @@ try:
             alerted3 = False
 
             dt = glbl[ 'last_updated' ]
-            rate = glbl[ 'simulation_clock_rate' ]
-            simulation_mode = glbl[ 'simulation_mode' ]
+            rate = glbl[ 'clock_rate' ]
+            run_mode = glbl[ 'run_mode' ]
             paused = glbl['paused']
             stopping = glbl['stopping']
             will_pause_at = glbl['will_pause_at']
@@ -227,7 +227,7 @@ try:
             # MONITOR HEADER and CURRENT TIME
             blit = []
             blitlines = {}
-            # SUITE NAME, NUMBER OF TASKS, SIMULATION MODE
+            # SUITE NAME, NUMBER OF TASKS, RUN MODE
             foo = header
             bar = suite + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'
             foo = re.sub( '^.{' + str(len('cylc!')) + '}', 'cylc!', foo )
@@ -241,7 +241,7 @@ try:
             # when task processing is invoked).
             blit.append( 'suite state summary last updated at:              ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
-            if simulation_mode:
+            if run_mode != live:
                 foo = 'SIMULATION:'
                 bar = str(rate) + ' real seconds = 1 hour' 
                 baz = header

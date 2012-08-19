@@ -179,7 +179,6 @@ for var in senv:
 for var in cylcenv:
     os.environ[var] = cylcenv[var]
 
-# nasty kludge to give the simulation mode clock to task classes:
 task.task.clock = dclock
 clocktriggered.clocktriggered.clock = dclock
 task.task.suite = suite

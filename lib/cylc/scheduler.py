@@ -60,8 +60,9 @@ class SchedulerError( Exception ):
         return repr(self.msg)
 
 class pool(object):
-    def __init__( self, suite, config, pyro, log, verbose ):
+    def __init__( self, suite, config, pyro, log, run_mode, verbose ):
         self.pyro = pyro
+        self.run_mode = run_mode
         self.log = log
         self.verbose = verbose
         self.qconfig = config['scheduling']['queues'] 
@@ -186,6 +187,13 @@ class pool(object):
         return readytogo
 
     def batch_submit( self, tasks ):
+        if self.run_mode == 'simulation':
+            for task in tasks:
+                print
+                print 'TASK READY:', task.id 
+                task.incoming( 'NORMAL', task.id + ' started' )
+            return
+
         before = datetime.datetime.now()
         ps = []
         for task in tasks:
@@ -240,10 +248,9 @@ class scheduler(object):
         self.blocked = True 
         self.is_restart = is_restart
 
-        # COMMANDLINE OPTIONS
-        self.parser.set_defaults( simulation_mode=False, debug=False )
-
         self.graph_warned = {}
+
+        # COMMANDLINE OPTIONS
 
         self.parser.add_option( "--until", 
                 help="Shut down after all tasks have PASSED this cycle time.",
@@ -257,14 +264,9 @@ class scheduler(object):
                 help="Hold (don't run tasks) AFTER this cycle time.",
                 metavar="CYCLE", action="store", dest="hold_time" )
 
-        self.parser.add_option( "-s", "--simulation-mode",
-                help="Replace real tasks with dummy tasks, and run "
-                "on an accelerated clock.",
-                action="store_true", dest="simulation_mode" )
-
-        self.parser.add_option( "--fail", help=\
-                "(SIMULATION MODE) get the specified task to report failure and then abort.",
-                metavar="NAME%TAG", action="store", dest="failout_task_id" )
+        self.parser.add_option( "-m", "--mode",
+                help="Run mode: live, simulation, or dummy; default is live.",
+                metavar="STRING", action="store", default='live', dest="run_mode" )
 
         self.parser.add_option( "--timing", help=\
                 "Turn on main task processing loop timing, which may be useful "
@@ -297,16 +299,14 @@ class scheduler(object):
         self.runahead_limit = self.config['scheduling']['runahead limit']
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
-       
-        self.pool = pool( self.suite, self.config, self.pyro, self.log, self.verbose )
+        self.pool = pool( self.suite, self.config, self.pyro, self.log, self.run_mode, self.verbose )
 
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD
         self.load_tasks()
         self.initial_oldest_ctime = self.get_oldest_c_time()
 
         # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
-        #self.suite_state = state_summary( self.config, self.simulation_mode, self.start_tag, self.gcylc )
-        self.suite_state = state_summary( self.config, self.simulation_mode, self.initial_oldest_ctime, self.gcylc )
+        self.suite_state = state_summary( self.config, self.run_mode, self.initial_oldest_ctime, self.gcylc )
         self.pyro.connect( self.suite_state, 'state_summary')
 
         self.add_to_banner() # must be before configure_environments for self.ict
@@ -370,13 +370,8 @@ class scheduler(object):
         self.banner[ 'SUITE NAME' ] = self.suite
         self.banner[ 'SUITE DEFN' ] = self.suiterc
 
-        # MODE OF OPERATION (REAL, SIMULATION)
-        if self.options.simulation_mode:
-            self.banner['MODE'] = 'SIMULATION'
-            self.simulation_mode = True
-        else:
-            self.banner['Mode of operation'] = 'REAL'
-            self.simulation_mode = False
+        self.run_mode = self.options.run_mode
+        self.banner['RUN MODE'] = self.run_mode
 
         # LOGGING LEVEL
         if self.options.debug:
@@ -406,12 +401,9 @@ class scheduler(object):
 
     def configure_suite( self, reconfigure=False ):
         # LOAD SUITE CONFIG FILE
-        self.config = config( self.suite, self.suiterc,
-                simulation_mode=self.simulation_mode,
+        self.config = config( self.suite, self.suiterc, run_mode=self.run_mode,
                 verbose=self.verbose, pyro_timeout=self.options.pyro_timeout )
         self.config.create_directories()
-        if self.config['cylc']['simulation mode only'] and not self.simulation_mode:
-            raise SchedulerError( "ERROR: this suite can only run in simulation mode (see suite.rc)" )
 
         # DETERMINE SUITE LOGGING AND STATE DUMP DIRECTORIES
         self.logging_dir = self.config['cylc']['logging']['directory']
@@ -496,22 +488,14 @@ class scheduler(object):
         # Running in UTC time? (else just use the system clock)
         self.utc = self.config['cylc']['UTC mode']
 
-        # CLOCK (accelerated time in simulation mode)
-        rate = self.config['cylc']['simulation mode']['clock rate']
-        offset = self.config['cylc']['simulation mode']['clock offset']
+        # ACCELERATED CLOCK for simulation and dummy run modes
+        rate = self.config['cylc']['accelerated clock']['rate']
+        offset = self.config['cylc']['accelerated clock']['offset']
         if not reconfigure:
-            self.clock = accelerated_clock.clock( int(rate), int(offset), self.utc, self.simulation_mode ) 
-            # nasty kludge to give the simulation mode clock to task classes:
+            self.clock = accelerated_clock.clock( int(rate), int(offset), self.utc, self.run_mode ) 
             task.task.clock = self.clock
             clocktriggered.clocktriggered.clock = self.clock
             self.pyro.connect( self.clock, 'clock' )
-
-        self.failout_task_id = self.options.failout_task_id
-
-        # JOB SUBMISSION
-        job_submit.simulation_mode = self.simulation_mode
-        if self.simulation_mode and self.failout_task_id:
-                job_submit.failout_id = self.failout_task_id
 
         if not reconfigure:
             # PIMP THE SUITE LOG
@@ -526,7 +510,7 @@ class scheduler(object):
 
             # REMOTE CONTROL INTERFACE
             # (note: passing in self to give access to task pool methods is a bit clunky?).
-            self.remote = remote_switch( self.config, self.clock, self.suite_dir, self, self.failout_task_id )
+            self.remote = remote_switch( self.config, self.clock, self.suite_dir, self )
             self.pyro.connect( self.remote, 'remote' )
         else:
             self.remote.config = self.config
@@ -800,6 +784,10 @@ class scheduler(object):
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
         process = False
+        if self.run_mode == 'simulation':
+            for itask in self.pool.get_tasks():
+                    itask.sim_time_check()
+
         if task.task.state_changed:
             task.task.state_changed = False
             process = True
@@ -1144,7 +1132,7 @@ class scheduler(object):
             FILE = self.state_dump_archive.roll_open()
 
         # suite time
-        if self.simulation_mode:
+        if self.run_mode != 'live':
             FILE.write( 'simulation time : ' + self.clock.dump_to_str() + ',' + str( self.clock.get_rate()) + '\n' )
         else:
             FILE.write( 'suite time : ' + self.clock.dump_to_str() + '\n' )

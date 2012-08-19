@@ -69,8 +69,9 @@ class TaskNotDefinedError( SuiteConfigError ):
 class SuiteEventHookConfig( object ):
     legal_events = ['startup', 'shutdown', 'timeout']
 
-    def __init__( self, events, script, timeout, abort_on_timeout,
-            abort_on_shutdown, verbose ):
+    def __init__( self, events=[], script=None, timeout=None,
+            abort_on_timeout=False, abort_on_shutdown=False,
+            verbose=False ):
         self.events = events
         self.script = script
         self.timeout = timeout
@@ -187,10 +188,9 @@ class edge( object):
 
 class config( CylcConfigObj ):
 
-    def __init__( self, suite, suiterc, owner=None, 
-            simulation_mode=False, verbose=False, 
-            validation=False, pyro_timeout=None, collapsed=[] ):
-        self.simulation_mode = simulation_mode
+    def __init__( self, suite, suiterc, owner=None, run_mode='live',
+            verbose=False, validation=False, pyro_timeout=None, collapsed=[] ):
+        self.run_mode = run_mode
         self.verbose = verbose
         if pyro_timeout:
             self.pyro_timeout = float(pyro_timeout)
@@ -398,17 +398,16 @@ class config( CylcConfigObj ):
         if self.verbose:
             print "Pyro connection timeout for tasks in this suite:", self.pyro_timeout, "seconds"
 
-        self.event_config = SuiteEventHookConfig( \
+        if self.run_mode != 'live':
+            self.event_config = SuiteEventHookConfig()
+        else:
+            self.event_config = SuiteEventHookConfig( \
                 self['cylc']['event hooks']['events'],
                 self['cylc']['event hooks']['script'],
                 self['cylc']['event hooks']['timeout'],
                 self['cylc']['event hooks']['abort on timeout'],
                 self['cylc']['event hooks']['abort if shutdown handler fails'],
                 self.verbose )
-
-        if self.simulation_mode and not self['cylc']['simulation mode']['event hooks']['enable']:
-            print >> sys.stderr, 'WARNING: disabling suite event hooks for simulation mode'
-            self.event_config.disable()
 
         self.process_directories()
 
@@ -729,7 +728,7 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, "ERROR: '" + task_name + "' does not define output '" + output_name  + "'"
             else:
                 # There is a matching output defined under the task runtime section
-                if self.simulation_mode:
+                if self.run_mode != 'live':
                     # Ignore internal outputs: dummy tasks will not report them finished.
                     return None
         else:
@@ -1233,7 +1232,7 @@ class config( CylcConfigObj ):
                 cyc = cyclr
             self.taskdefs[ name ].add_to_valid_cycles( cyc )
 
-            if not self.simulation_mode:
+            if self.run_mode == 'live':
                 # register any explicit internal outputs
                 taskconfig = self['runtime'][name]
                 for lbl in taskconfig['outputs']:
@@ -1578,17 +1577,18 @@ class config( CylcConfigObj ):
 
         taskd.description = taskconfig['description']
 
-        if self.simulation_mode:
-            taskd.job_submit_method = self['cylc']['simulation mode']['job submission']['method']
-            taskd.command = self['cylc']['simulation mode']['command scripting']
-            taskd.retry_delays = deque( self['cylc']['simulation mode']['retry delays'] )
-        else:
-            taskd.owner = taskconfig['remote']['owner']
-            taskd.job_submit_method = taskconfig['job submission']['method']
-            taskd.command   = taskconfig['command scripting']
+        taskd.owner = taskconfig['remote']['owner']
+        taskd.job_submit_method = taskconfig['job submission']['method']
+
+        taskd.command = taskconfig['command scripting']
+        if self.run_mode == 'dummy':
+            taskd.command = taskconfig['dummy command scripting']
+
+        if self.run_mode == 'live':
             taskd.retry_delays = deque( taskconfig['retry delays'])
-            taskd.precommand = taskconfig['pre-command scripting'] 
-            taskd.postcommand = taskconfig['post-command scripting'] 
+
+        taskd.precommand = taskconfig['pre-command scripting'] 
+        taskd.postcommand = taskconfig['post-command scripting'] 
 
         # check retry delay type (must be float):
         for i in taskd.retry_delays:
@@ -1610,8 +1610,8 @@ class config( CylcConfigObj ):
         taskd.job_submit_share_directory = taskconfig['share directory']
         taskd.job_submit_work_directory = taskconfig['work directory']
 
-        if not self.simulation_mode and (taskconfig['remote']['host'] or taskconfig['remote']['owner']):
-            # Remote task hosting config, ignored in sim mode.
+        if taskconfig['remote']['host'] or taskconfig['remote']['owner']:
+            # Remote task hosting
             taskd.remote_host = taskconfig['remote']['host']
             taskd.remote_shell_template = taskconfig['remote']['remote shell template']
             taskd.remote_cylc_directory = taskconfig['remote']['cylc directory']
@@ -1646,8 +1646,11 @@ class config( CylcConfigObj ):
                 taskd.job_submit_share_directory  = re.sub( self.homedir, '$HOME', taskd.job_submit_share_directory )
 
         taskd.manual_messaging = taskconfig['manual completion']
+        if self.run_mode == 'dummy':
+            print >> sys.stderr, "WARNING: unsetting manual completion (dummy tasks don't detach)" 
+            taskd.manual_messaging = False
 
-        if not self.simulation_mode or self['cylc']['simulation mode']['event hooks']['enable']:
+        if self.run_mode == 'live':
             # configure task event hooks
             taskd.hook_script = taskconfig['event hooks']['script']
             taskd.hook_events = taskconfig['event hooks']['events']

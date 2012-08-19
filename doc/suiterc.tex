@@ -60,15 +60,6 @@ logged by cylc will also be in UTC.
     \item {\em default:} False 
 \end{myitemize}
 
-\subsubsection[simulation mode only]{ [cylc] $\rightarrow$ simulation mode only}
-
-This prevents a suite from running in real mode - use for demo suites
-created by copying real suites out of their normal operating environment.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} False
-\end{myitemize}
 
 \subsubsection[max simultaneous job submissions]{[cylc] $\rightarrow$ max simultaneous job submission}
 
@@ -411,71 +402,31 @@ parser is concerned these are normal configuration items).
         \end{myitemize}
 \end{myitemize}
 
-\subsubsection[{[[}simulation mode{]]}]{[cylc] $\rightarrow$ [[simulation mode]] }
+\subsubsection[{[[}accelerated clock{]]}]{[cylc] $\rightarrow$ [[accelerated clock]] }
 
-Items specific to running suites in simulation mode.
+Accelerated clock settings, used to speed up the wait between cycles in
+the simulation and dummy run modes. 
 
-\paragraph[clock rate]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ clock rate}
+\paragraph[clock rate]{[cylc] $\rightarrow$ [[accelerated clock]] $\rightarrow$ clock rate}
 
-This determines the speed at which the simulation mode clock runs, in 
-real seconds per simulated hour. A value of 10, for example, means it
-will take 10 real seconds to simulate one hour of operation.
+The speed at which the accelerated clock runs in real seconds per
+simulated hour.
 
 \begin{myitemize}
     \item {\em type:} integer ($\geq 0$, real seconds per simulated hour)
     \item {\em default:} $10$
 \end{myitemize}
 
-\paragraph[clock offset]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ clock offset}
+\paragraph[clock offset]{[cylc] $\rightarrow$ [[accelerated clock]] $\rightarrow$ clock offset}
 
-The clock offset determines the initial time on the simulation clock, 
-at suite startup, relative to the initial cycle time.  An offset of
+The clock offset determines the initial time on the accelerated clock, 
+at suite startup, relative to the initial cycle time. An offset of
 $0$ simulates real time operation; greater offsets simulate catch up
 from a delay and subsequent transition to real time operation.
 
 \begin{myitemize}
     \item {\em type:} integer ($\geq 0$, hours behind initial cycle time)
     \item {\em default:} $24$
-\end{myitemize}
-
-\paragraph[command scripting]{ [cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ command scripting}
-
-The command scripting to execute for all tasks when running in simulation mode.
-\begin{myitemize}
-\item {\em type:} string (scripting valid in job submission shell;
-    triple quote for multiple lines)
-\item {\em default:} \lstinline=echo SIMULATION MODE $CYLC_TASK_ID; sleep 10; echo BYE=
-\end{myitemize}
-
-\paragraph[{[[[}job submission{]]]} ]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ [[[job submission]]]} 
-
-Configure job submission for simulation mode.
-
-\subparagraph[method]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ [[[job submission]]] $\rightarrow$ method } 
-
-The job submission method to use for all tasks in simulation mode. Any 
-available method can be used but the default is probably sufficient for simulation mode.
-
-\begin{myitemize}
-    \item {\em type:} string (a job submission method name - see Section~\ref{RuntimeJobSubMethods})
-    \item {\em default:} \lstinline=background=
-\end{myitemize}
-
-\paragraph[{[[[}event hooks{]]]} ]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ [[[event hooks]]]} 
-
-Configure event hooks for simulation mode.
-
-\subparagraph[enable]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ enable } 
-
-Event hooks are disabled by default in simulation mode. They can be
-enabled in order to test automated alerts, for example, without
-running the real suite tasks, but be aware that timeouts will be 
-relative to the accelerated simulation mode clock which by default runs
-very quickly.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} False
 \end{myitemize}
 
 \subsection{[scheduling]}
@@ -899,6 +850,17 @@ can be a single command or a multiline string of scripting.
 \item {\em type:} multiline string
 \item {\em root default:} \lstinline=echo "Default command scripting: sleep 10..."; sleep 10=
 \end{myitemize}
+
+\paragraph[dummy command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ dummy command scripting}
+
+The scripting to execute when the associated task is ready to run, {\em in dummy mode} - this
+can be a single command or a multiline string of scripting. 
+
+\begin{myitemize}
+\item {\em type:} multiline string
+\item {\em root default:} \lstinline=echo "Default command scripting: sleep 10..."; sleep 10=
+\end{myitemize}
+
 
 \paragraph[retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ retry delays}
 \label{RefRetries}

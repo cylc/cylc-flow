@@ -933,3 +933,9 @@ harder to break cylc in the future).
 
 + Added a suite startup event hook.
 
++ Replaced original simulation mode, which submitted real dummy tasks to
+run locally after nobbling the task job script, with: (1) a proper
+simulation mode that submits not real dummy tasks, and (2) a dummy mode
+that simply dummies out command scripting but leaves job submission,
+hosting, etc. intact.
+

@@ -27,7 +27,7 @@ class jobfile(object):
             final_directive, manual_messaging, initial_scripting,
             precommand_scripting, command_scripting, try_number,
             postcommand_scripting, remote_cylc_dir, remote_suite_dir,
-            shell, share_dir, work_dir, log_root, simulation_mode,
+            shell, share_dir, work_dir, log_root,
             job_submission_method, ssh_messaging ):
 
         self.task_id = task_id
@@ -46,7 +46,6 @@ class jobfile(object):
         self.share_dir = share_dir
         self.work_dir = work_dir
         self.log_root = log_root
-        self.simulation_mode = simulation_mode
         self.job_submission_method = job_submission_method
         self.remote_cylc_dir = remote_cylc_dir
         self.remote_suite_dir = remote_suite_dir
@@ -67,11 +66,7 @@ class jobfile(object):
         # task runtime environment setup).
         ################################################################
 
-        # Write each job script section in turn. In simulation mode,
-        # omit anything not required for local submission of dummy tasks
-        # (initial scripting or user-defined environment etc. may cause
-        # trouble in sim mode by referencing undefined variables or
-        # sourcing scripts that are not available locally).
+        # Write each job script section in turn. 
 
         # Access to cylc must be configured before user environment so
         # that cylc commands can be used in defining user environment
@@ -80,42 +75,34 @@ class jobfile(object):
         self.FILE = open( path, 'wb' )
         self.write_header()
 
-        if not self.simulation_mode:
-            self.write_directives()
+        self.write_directives()
 
         self.write_task_job_script_starting()
 
         self.write_err_trap()
 
-        if not self.simulation_mode:
-            self.write_cylc_access()
-            self.write_initial_scripting()
+        self.write_cylc_access()
+        self.write_initial_scripting()
 
         self.write_environment_1()
 
-        if not self.simulation_mode:
-            # suite bin access must be before runtime environment
-            # because suite bin commands may be used in variable
-            # assignment expressions: FOO=$(command args).
-            self.write_suite_bin_access()
-            self.write_environment_2()
+        # suite bin access must be before runtime environment
+        # because suite bin commands may be used in variable
+        # assignment expressions: FOO=$(command args).
+        self.write_suite_bin_access()
+        self.write_environment_2()
 
         self.write_task_started()
 
-        if self.simulation_mode:
-            key = "CYLC_TASK_DUMMY_RUN_LENGTH"
-            self.FILE.write( "\n%s=%s" % ( key, self.task_env[key] ) )
-        else:
-            self.write_work_directory_create()
-            self.write_manual_environment()
-            self.write_identity_scripting()
-            self.write_pre_scripting()
+        self.write_work_directory_create()
+        self.write_manual_environment()
+        self.write_identity_scripting()
+        self.write_pre_scripting()
 
         self.write_command_scripting()
 
-        if not self.simulation_mode:
-            self.write_post_scripting()
-            self.write_work_directory_remove()
+        self.write_post_scripting()
+        self.write_work_directory_remove()
 
         self.write_task_succeeded()
         self.write_eof()
@@ -124,8 +111,6 @@ class jobfile(object):
     def write_header( self ):
         self.FILE.write( '#!' + self.shell )
         self.FILE.write( '\n\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++' )
-        if self.simulation_mode:
-            self.FILE.write( '\n# SIMULATION MODE: some sections omitted.' )
         self.FILE.write( '\n# Task: ' + self.task_id )
         self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'')
 
@@ -143,7 +128,6 @@ class jobfile(object):
 
     def write_initial_scripting( self, BUFFER=None ):
         if not self.initial_scripting:
-            # ignore initial scripting in simulation mode
             return
         if not BUFFER:
             BUFFER = self.FILE
@@ -331,13 +315,7 @@ rmdir $CYLC_TASK_WORK_PATH 2>/dev/null || true""" )
 
     def write_task_succeeded( self ):
         if self.manual_messaging:
-            if self.simulation_mode:
-                self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE:')
-                self.FILE.write( '\n# (this task handles its own completion messaging in live mode)"')
-                self.FILE.write( '\ncylc task succeeded' )
-                self.FILE.write( '\n\necho "JOB SCRIPT EXITING (TASK SUCCEEDED)"')
-            else:
-                self.FILE.write( '\n\necho "JOB SCRIPT EXITING: THIS TASK HANDLES ITS OWN COMPLETION MESSAGING"')
+            self.FILE.write( '\n\necho "JOB SCRIPT EXITING: THIS TASK HANDLES ITS OWN COMPLETION MESSAGING"')
         else:
             self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE:')
             self.FILE.write( '\ncylc task succeeded' )

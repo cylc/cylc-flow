@@ -197,13 +197,7 @@ class xupdater(threading.Thread):
         else:
             self.status = 'status:\nrunning'
 
-        if glbl[ 'simulation_mode' ]:
-            #rate = glbl[ 'simulation_clock_rate' ]
-            #self.mode = 'SIMULATION (' + str( rate ) + 's/hr)'
-            #self.mode = 'SIMULATION'
-            self.mode = 'mode:\nsimulation'
-        else:
-            self.mode = 'mode:\nlive'
+        self.mode = 'mode:\n' + glbl['run_mode']
 
         if glbl[ 'blocked' ]:
             self.block = 'access:\nblocked'

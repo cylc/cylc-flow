@@ -36,7 +36,7 @@ class result:
 class remote_switch( Pyro.core.ObjBase ):
     "class to take remote suite control requests" 
 
-    def __init__( self, config, clock, suite_dir, pool, failout_id = None ):
+    def __init__( self, config, clock, suite_dir, pool ):
         self.log = logging.getLogger( "main" )
         Pyro.core.ObjBase.__init__(self)
 
@@ -44,7 +44,6 @@ class remote_switch( Pyro.core.ObjBase ):
         self.clock = clock
         self.suite_dir = suite_dir
         self.insert_this = None
-        self.failout_id = failout_id
 
         self.pool = pool
 
@@ -126,8 +125,6 @@ class remote_switch( Pyro.core.ObjBase ):
     def reset_task_state( self, task_id, state ):
         if self._suite_is_blocked():
             return result( False, "suite blocked" )
-        if task_id == self.failout_id:
-            self._reset_failout()
         try:
             self.pool.reset_task_state( task_id, state )
         except TaskStateError, x:
@@ -173,9 +170,6 @@ class remote_switch( Pyro.core.ObjBase ):
             return result( False, "there is no task " + ins_name + " in the suite graph." )
         ins = ins_id
         # insert a new task or task group into the suite
-        if ins == self.failout_id:
-            # TO DO: DOES EQUALITY TEST FAIL IF INS IS A GROUP?
-            self._reset_failout()
         try:
             inserted, rejected = self.pool.insertion( ins, stop_c_time )
         except Exception, x:
@@ -309,9 +303,6 @@ class remote_switch( Pyro.core.ObjBase ):
             else:
                 info[ name ] = ['ERROR: no such task type']
         return info
-
-    def get_sim_mode_only( self ):
-        return self.config['cylc']['simulation mode only']
 
     def get_cycle_range( self ):
         return (self.config['scheduling']['initial cycle time'], self.config['scheduling']['final cycle time'] )
@@ -504,10 +495,6 @@ class remote_switch( Pyro.core.ObjBase ):
     def _warning( self, msg ):
         print
         self.log.warning( msg )
-
-    def _reset_failout( self ):
-            print "resetting failout on " + self.failout_id
-            job_submit.failout_id = None
 
     def get_live_graph( self ):
         lg = self.pool.get_live_graph()

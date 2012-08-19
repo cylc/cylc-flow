@@ -23,7 +23,7 @@ import logging
 class state_summary( Pyro.core.ObjBase ):
     """supply suite state summary information to remote cylc clients."""
 
-    def __init__( self, config, simulation_mode, start_time, gcylc=False ):
+    def __init__( self, config, run_mode, start_time, gcylc=False ):
         Pyro.core.ObjBase.__init__(self)
         self.gcylc = gcylc
         self.task_summary = {}
@@ -32,7 +32,7 @@ class state_summary( Pyro.core.ObjBase ):
         # class, in case config items are ever updated dynamically by
         # remote control
         self.config = config
-        self.simulation_mode = simulation_mode
+        self.run_mode = run_mode
         self.start_time = start_time
  
     def update( self, tasks, clock, oldest, newest,
@@ -79,8 +79,8 @@ class state_summary( Pyro.core.ObjBase ):
         self.global_summary[ 'oldest cycle time' ] = oldest
         self.global_summary[ 'newest cycle time' ] = newest
         self.global_summary[ 'last_updated' ] = clock.get_datetime()
-        self.global_summary[ 'simulation_mode' ] = self.simulation_mode
-        self.global_summary[ 'simulation_clock_rate' ] = clock.get_rate()
+        self.global_summary[ 'run_mode' ] = self.run_mode
+        self.global_summary[ 'clock_rate' ] = clock.get_rate()
         self.global_summary[ 'paused' ] = paused
         self.global_summary[ 'stopping' ] = stopping
         self.global_summary[ 'will_pause_at' ] = will_pause_at

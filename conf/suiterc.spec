@@ -37,7 +37,7 @@ description = string( default="No description provided" )
 #___________________________________________________________________CYLC
 [cylc]
     UTC mode = boolean( default=False )
-    simulation mode only = boolean( default=False )
+    run mode = option( 'live', 'simulation', 'dummy', default='live' )
     pyro connection timeout = float( min=0.0, default=None )
     maximum simultaneous job submissions = integer( min=1, default=50 )
     abort if any task fails = boolean( default=False )
@@ -53,15 +53,11 @@ description = string( default="No description provided" )
         simultaneous instances = boolean( default=False )
     [[environment]]
         __many__ = string
-    [[simulation mode]]
-        clock offset = integer( default=24 )
-        clock rate = integer( default=10 )
-        command scripting = string( default="echo SIMULATION MODE; sleep $CYLC_TASK_DUMMY_RUN_LENGTH")
-        retry delays = force_list( default=list() )
+    [[accelerated clock]]
+        rate = integer( default=10 )
+        offset = integer( default=24 )
         [[[event hooks]]]
             enable = boolean( default=False )
-        [[[job submission]]]
-            method = string( default=background )
     [[event hooks]]
         script = string( default=None )
         events = force_list( default=list() )
@@ -101,7 +97,8 @@ description = string( default="No description provided" )
         inherit = string( default=None )
         description = string( default="No description provided" )
         initial scripting = string( default=None )
-        command scripting = string( default='echo Dummy command scripting; sleep $CYLC_TASK_DUMMY_RUN_LENGTH')
+        command scripting = string( default='echo Dummy command scripting; sleep 10')
+        dummy command scripting = string( default='echo Dummy command scripting; sleep 10')
         retry delays = force_list( default=list() )
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
@@ -132,7 +129,6 @@ description = string( default="No description provided" )
             execution timeout = float( default=None )
             reset timer = boolean( default=False )
         [[[environment]]]
-            CYLC_TASK_DUMMY_RUN_LENGTH = integer( default=10 )
             __many__ = string
         [[[directives]]]
             __many__ = string
@@ -144,6 +140,7 @@ description = string( default="No description provided" )
         description = string( default=None )
         initial scripting = string( default=None )
         command scripting = string( default=None )
+        dummy command scripting = string( default=None )
         retry delays = force_list( default=list() )
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
@@ -175,7 +172,6 @@ description = string( default="No description provided" )
             execution timeout = float( default=None )
             reset timer = boolean( default=False )
         [[[environment]]]
-            CYLC_TASK_DUMMY_RUN_LENGTH = integer( default=None )
             __many__ = string
         [[[directives]]]
             __many__ = string

@@ -180,13 +180,13 @@ the remote host before starting the suite."""
         line1 = line1.rstrip()
         [ time_type, time_string ] = line1.split(' : ')
         if time_type == 'simulation time':
-            if not self.simulation_mode:
-                sys.exit("ERROR: cannot RESTART in live mode from a simulation mode state dump")
+            if self.run_mode == 'live':
+                sys.exit("ERROR: cannot RESTART in live mode from a non live mode state dump")
             [ time, rate ] = time_string.split( ',' )
             self.clock.reset( time, rate )
         elif time_type == 'suite time':
-            if self.simulation_mode:
-                sys.exit("ERROR: cannot RESTART in simulation mode from a live mode state dump")
+            if self.run_mode != 'live':
+                sys.exit("ERROR: cannot RESTART in " + self.run_mode + " mode from a live mode state dump")
         else:
             print >> sys.stderr, "ERROR, Illegal state dump line 1 (time):"
             print >> sys.stderr, ' ', line1

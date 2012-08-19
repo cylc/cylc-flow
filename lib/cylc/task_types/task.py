@@ -225,6 +225,7 @@ class task( Pyro.core.ObjBase ):
     def set_running( self ):
         self.state.set_status( 'running' )
         self.started_time = task.clock.get_datetime()
+        self.started_time_real = datetime.datetime.now()
         self.execution_timer_start = self.started_time
         if 'started' in self.__class__.hook_events and self.__class__.hook_script:
             self.plog( 'calling task started hook script' )
@@ -400,6 +401,14 @@ class task( Pyro.core.ObjBase ):
                 self.plog( 'Calling task execution timeout hook script.' )
                 RunHandler( 'execution_timeout', self.__class__.hook_script, self.__class__.suite, self.id, msg )
                 self.execution_timer_start = None
+
+    def sim_time_check( self, sec=10 ):
+        if not self.state.is_running():
+            return
+        timeout = self.started_time_real + datetime.timedelta( seconds=sec )
+        if datetime.datetime.now() > timeout:
+            self.incoming( 'NORMAL', self.id + ' succeeded' )
+            task.state_changed = True
 
     def set_all_internal_outputs_completed( self ):
         if self.reject_if_failed( 'set_all_internal_outputs_completed' ):

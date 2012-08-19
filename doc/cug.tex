@@ -978,13 +978,9 @@ configured in the example suite, so it defaults, for all tasks, to the
 Section~\ref{SuiteDefinition}):
 \begin{lstlisting}
 % cylc get-config examples.QuickStart.a runtime GetData 'command scripting'
-['echo Dummy command scripting; sleep $CYLC_TASK_DUMMY_RUN_LENGTH']
+['echo Dummy command scripting; sleep 10']
 \end{lstlisting}
-where \lstinline=$CYLC_TASK_DUMMY_RUN_LENGTH= defaults to 10 seconds 
-but can be overridden in task or family environments in the suite
-definition; this is exported to the task execution environment by cylc.
-The command arguments above reflect suite definition section
-nesting. 
+The command arguments above reflect suite definition section nesting. 
 
 Now start a suite control GUI by right-clicking on the suite in gcylc
 and choosing Control $\rightarrow$ Graph View.  You can also open other control GUIs
@@ -3957,8 +3953,7 @@ PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH
 export PATH
 
 # TASK RUNTIME ENVIRONMENT:
-CYLC_TASK_DUMMY_RUN_LENGTH="10"
-export CYLC_TASK_DUMMY_RUN_LENGTH
+FOO=BAR
 
 # SET ERROR TRAPPING:
 set -u # Fail when using an undefined variable
@@ -4007,7 +4002,7 @@ echo "  Task Try No.: $CYLC_TASK_TRY_NUMBER"
 echo ""
 
 # TASK COMMAND SCRIPTING:
-echo Dummy command scripting; sleep $CYLC_TASK_DUMMY_RUN_LENGTH
+echo Dummy command scripting; sleep 10
 
 # EMPTY WORK DIRECTORY REMOVE:
 cd

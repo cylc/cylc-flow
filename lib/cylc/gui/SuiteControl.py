@@ -685,7 +685,8 @@ been defined for this suite""").inform()
     def startsuite( self, bt, window, 
             coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
             entry_ctime, stoptime_entry, no_reset_cb, statedump_entry,
-            optgroups, hold_cb, holdtime_entry ):
+            optgroups, mode_live_rb, mode_sim_rb, mode_dum_rb, hold_cb,
+            holdtime_entry ):
 
         command = 'cylc control run --gcylc'
         options = ''
@@ -703,6 +704,13 @@ been defined for this suite""").inform()
             command = 'cylc control restart --gcylc'
             if no_reset_cb.get_active():
                 options += ' --no-reset'
+
+        if mode_live_rb.get_active():
+            pass
+        elif mode_sim_rb.get_active():
+            command += ' --mode=simulation'
+        elif mode_dum_rb.get_active():
+            command += ' --mode=dummy'
 
         if self.cfg.pyro_timeout:
             command += ' --timeout=' + str(self.cfg.pyro_timeout)
@@ -1515,6 +1523,18 @@ shown here in the state they were in at the time of triggering.''' )
         vbox = gtk.VBox()
 
         box = gtk.HBox()
+        label = gtk.Label( 'Run mode' )
+        box.pack_start(label,True)
+        mode_live_rb = gtk.RadioButton( None, "live" )
+        box.pack_start (mode_live_rb, True)
+        mode_sim_rb = gtk.RadioButton( mode_live_rb, "simulation" )
+        box.pack_start (mode_sim_rb, True)
+        mode_dum_rb = gtk.RadioButton( mode_live_rb, "dummy" )
+        box.pack_start (mode_dum_rb, True)
+        mode_live_rb.set_active(True)
+        vbox.pack_start( box )
+ 
+        box = gtk.HBox()
         coldstart_rb = gtk.RadioButton( None, "Cold Start" )
         box.pack_start (coldstart_rb, True)
         warmstart_rb = gtk.RadioButton( coldstart_rb, "Warm Start" )
@@ -1565,10 +1585,6 @@ shown here in the state they were in at the time of triggering.''' )
         warmstart_rb.connect( "toggled", self.startup_method, "warm", ic_box, is_box, no_reset_cb )
         rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ic_box, is_box, no_reset_cb )
         restart_rb.connect(   "toggled", self.startup_method, "re",   ic_box, is_box, no_reset_cb )
-
-        dmode_group = controlled_option_group( "Simulation Mode", option="--simulation-mode" )
-        dmode_group.add_entry('Fail A Task (NAME%YYYYMMDDHH)', '--fail=')
-        dmode_group.pack( vbox )
         
         hold_cb = gtk.CheckButton( "Hold on start-up" )
   
@@ -1587,7 +1603,7 @@ shown here in the state they were in at the time of triggering.''' )
         debug_group = controlled_option_group( "Debug", "--debug" )
         debug_group.pack( vbox )
 
-        optgroups = [ dmode_group, debug_group ]
+        optgroups = [ debug_group ]
 
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
@@ -1596,7 +1612,8 @@ shown here in the state they were in at the time of triggering.''' )
         start_button.connect("clicked", self.startsuite, window,
                 coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
                 ctime_entry, stoptime_entry, no_reset_cb,
-                statedump_entry, optgroups, hold_cb, holdtime_entry )
+                statedump_entry, optgroups, mode_live_rb, mode_sim_rb,
+                mode_dum_rb, hold_cb, holdtime_entry )
 
         help_run_button = gtk.Button( "_Help Run" )
         help_run_button.connect("clicked", self.command_help, "control", "run" )

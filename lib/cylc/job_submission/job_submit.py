@@ -49,9 +49,6 @@ class job_submit(object):
             + "'" )
 
     # class variables that are set remotely at startup:
-    # (e.g. 'job_submit.simulation_mode = True')
-    simulation_mode = False
-    failout_id = None
     cylc_env = None
 
     def __init__( self, task_id, initial_scripting, pre_command, task_command,
@@ -67,8 +64,6 @@ class job_submit(object):
         self.pre_command = pre_command
         self.task_command = task_command
         self.post_command = post_command
-        if self.__class__.simulation_mode and self.__class__.failout_id == self.task_id:
-            self.task_command = '/bin/false'
 
         self.task_env = task_env
         self.namespace_hierarchy = ns_hier
@@ -97,10 +92,7 @@ class job_submit(object):
         self.remote_cylc_dir = remote_cylc_dir
         self.remote_suite_dir = remote_suite_dir
 
-        # Use remote job submission if (a) not simulation mode, (b) a
-        # remote host is defined or task owner is defined.
-        if not self.__class__.simulation_mode and \
-            ( remote_host and remote_host != "localhost" and remote_host != socket.gethostname() ) or \
+        if ( remote_host and remote_host != "localhost" and remote_host != socket.gethostname() ) or \
             ( task_owner and task_owner != self.suite_owner ):
             # REMOTE TASKS
             self.local = False
@@ -205,7 +197,6 @@ class job_submit(object):
                 self.remote_cylc_dir, self.remote_suite_dir,
                 self.job_submission_shell, self.share_dir,
                 self.work_dir, self.jobfile_path,
-                self.__class__.simulation_mode,
                 self.__class__.__name__,
                 self.ssh_messaging )
         # write the job file
@@ -219,7 +210,7 @@ class job_submit(object):
         # Construct self.command, the command to submit the jobfile to run
         self.construct_jobfile_submission_command()
 
-        if self.local or self.simulation_mode:
+        if self.local:
             stdin = None
             command = self.command
         else:
