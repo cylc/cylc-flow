@@ -85,13 +85,13 @@ except Exception,x:
 if options.dpaths:
     print "SUITE LOG DIRECTORY:\n ", config['cylc']['logging']['directory']
     print "SUITE STATE DUMP DIRECTORY:\n ", config['cylc']['state dumps']['directory']
-    print "JOB SUBMISSION LOG DIRECTORIES:"
+    print "TASK LOG DIRECTORIES:"
     logdirs = {}
-    root_ldir = config['runtime']['root']['job submission']['log directory']
+    root_ldir = config['runtime']['root']['log directory']
     ldirs = [root_ldir]
     logdirs['root'] = root_ldir
     for ns in config['runtime'].keys():
-        dir = config['runtime'][ns]['job submission']['log directory']
+        dir = config['runtime'][ns]['log directory']
         if dir not in ldirs:
             ldirs.append(dir)
             logdirs[ns] = dir
