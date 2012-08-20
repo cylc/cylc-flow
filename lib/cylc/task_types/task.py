@@ -402,10 +402,11 @@ class task( Pyro.core.ObjBase ):
                 RunHandler( 'execution_timeout', self.__class__.hook_script, self.__class__.suite, self.id, msg )
                 self.execution_timer_start = None
 
-    def sim_time_check( self, sec=10 ):
+    def sim_time_check( self ):
         if not self.state.is_running():
             return
-        timeout = self.started_time_real + datetime.timedelta( seconds=sec )
+        timeout = self.started_time_real + \
+                datetime.timedelta( seconds=self.sim_mode_run_length )
         if datetime.datetime.now() > timeout:
             self.incoming( 'NORMAL', self.id + ' succeeded' )
             task.state_changed = True

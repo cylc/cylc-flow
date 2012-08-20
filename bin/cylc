@@ -250,7 +250,7 @@ utility_commands['lockclient'] = ['lockclient', 'lc' ]
 hook_commands = OrderedDict()
 hook_commands['email-suite' ] = ['email-suite'] 
 hook_commands['email-task'  ] = ['email-task' ] 
-hook_commands['diagnose-suite'  ] = ['diagnose-suite' ] 
+hook_commands['check-triggering'  ] = ['check-triggering' ] 
 
 admin_commands = OrderedDict()
 admin_commands['test-db'     ] = [ 'test-db']
@@ -491,7 +491,7 @@ comsum[ 'scp-transfer' ] = 'Scp-based file transfer for cylc suites'
 # hook
 comsum[ 'email-task'  ] = 'A task event hook script that sends email alerts'
 comsum[ 'email-suite' ] = 'A suite event hook script that sends email alerts'
-comsum[ 'diagnose-suite' ] = 'A suite shutdown event hook for cylc testing'
+comsum[ 'check-triggering' ] = 'A suite shutdown event hook for cylc testing'
 
 def typo( str ):
     corrected = str

@@ -121,6 +121,8 @@ class taskdef(object):
 
         self.namespace_hierarchy = []
 
+        self.sim_mode_run_length = None
+
     def add_trigger( self, trigger, cycler ):
         if cycler not in self.triggers:
             self.triggers[ cycler ] = []
@@ -310,6 +312,8 @@ class taskdef(object):
             sself.ssh_messaging = self.ssh_messaging
 
             sself.command = self.command
+
+            sself.sim_mode_run_length = self.sim_mode_run_length
 
             # deepcopy retry delays: the deque gets pop()'ed in the task
             # proxy objects, which is no good if all instances of the

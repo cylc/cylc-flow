@@ -47,6 +47,7 @@ from regpath import RegPath
 from CylcError import TaskNotFoundError, TaskStateError
 from RuntimeGraph import rGraph
 from RunEventHandler import RunHandler
+from LogDiagnosis import LogSpec
 
 class SchedulerError( Exception ):
     """
@@ -268,9 +269,16 @@ class scheduler(object):
                 help="Run mode: live, simulation, or dummy; default is live.",
                 metavar="STRING", action="store", default='live', dest="run_mode" )
 
+        self.parser.add_option( "--reference-log", 
+                help="Generate a reference log for use in reference tests.",
+                action="store_true", default=False, dest="genref" )
+
+        self.parser.add_option( "--reference-test", 
+                help="Do a test run against a previously generated reference log.",
+                action="store_true", default=False, dest="reftest" )
+
         self.parser.add_option( "--timing", help=\
-                "Turn on main task processing loop timing, which may be useful "
-                "for testing very large suites of 1000+ tasks.",
+                "Turn on main task processing loop timing.",
                 action="store_true", default=False, dest="timing" )
 
         self.parser.add_option( "--gcylc", help=\
@@ -281,6 +289,46 @@ class scheduler(object):
         self.check_not_running_already()
 
         self.configure_suite()
+
+        forced_mode = self.config['cylc']['force run mode']
+        if forced_mode:
+            if self.run_mode != forced_mode:
+                raise SchedulerError, 'ERROR: this suite can only run in ' + forced_mode + ' mode'
+        
+        self.logfile = os.path.join(self.logging_dir,'log')
+        self.reflogfile = os.path.join(self.config.dir,'reference.log')
+
+        if self.options.genref:
+            self.config['cylc']['log resolved dependencies'] = True
+
+        elif self.options.reftest:
+            if 'shutdown' in self.config.event_config.events:
+                print >> sys.stderr, 'WARNING: replacing shutdown event handler for reference test run'
+            else:
+                self.config.event_config.events.append('shutdown')
+            self.config['cylc']['log resolved dependencies'] = True
+            self.config.event_config.abort_if_shutdown_handler_fails = True
+            self.config.event_config.script = self.config['cylc']['reference test']['suite shutdown event handler']
+            spec = LogSpec( self.reflogfile )
+            self.start_tag = spec.get_start_tag()
+            self.stop_tag = spec.get_stop_tag()
+            self.config['cylc']['abort if any task fails'] = True
+            self.config['cylc']['event hooks']['abort on timeout'] = True
+            timeout = self.config['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
+            if not timeout:
+                raise SystemExit( 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference runs' )
+            self.config['cylc']['event hooks']['timeout'] = timeout
+
+        # Note that the following lines must be present at the top of
+        # the suite log file for use in reference test runs:
+        self.log.critical( 'Suite starting at ' + str( datetime.datetime.now()) )
+        if self.run_mode == 'live':
+            self.log.info( 'Log event clock: real time' )
+        else:
+            self.log.info( 'Log event clock: accelerated' )
+        self.log.info( 'Run mode: ' + self.run_mode )
+        self.log.info( 'Start tag: ' + str(self.start_tag) )
+        self.log.info( 'Stop tag: ' + str(self.stop_tag) )
 
         if 'startup' in self.config.event_config.events:
             # we have to wait until the suite is configured before doing this
@@ -500,8 +548,8 @@ class scheduler(object):
         if not reconfigure:
             # PIMP THE SUITE LOG
             self.log = logging.getLogger( 'main' )
-            pimp_my_logger.pimp_it( \
-                    self.log, self.logging_dir, self.config['cylc']['logging']['roll over at start-up'], \
+            pimp_my_logger.pimp_it( self.log, self.logging_dir,
+                    self.config['cylc']['logging']['roll over at start-up'], 
                     self.logging_level, self.clock )
 
             # STATE DUMP ROLLING ARCHIVE
@@ -515,6 +563,7 @@ class scheduler(object):
         else:
             self.remote.config = self.config
             # NOT NEEDED: self.remote.pool = self
+
 
     def configure_environments( self ):
         cylcenv = OrderedDict()
@@ -755,7 +804,12 @@ class scheduler(object):
             self.release_runahead()
 
         # END MAIN LOOP
-        self.log.critical( "SHUTTING DOWN" )
+        self.log.critical( "Suite shutting down at " + str(datetime.datetime.now()) )
+
+        if self.options.genref:
+            print 'COPYING REFERENCE LOG to suite definition directory'
+            from shutil import copy
+            copy( self.logfile, self.reflogfile)
 
     def process_resolved( self, tasks ):
         # process resolved dependencies (what actually triggers off what at run time).
@@ -775,7 +829,7 @@ class scheduler(object):
             self.log.warning( "Suite timed out (" + str(self.config.event_config.timeout) + " minutes)" )
             if 'timeout' in self.config.event_config.events:
                 self.log.warning( 'Calling suite timeout event handler' )
-                message = 'suite timed out after ' + str( self.config.event_config.timeout) + ' minutes' 
+                message = 'Suite timed out after ' + str( self.config.event_config.timeout) + ' minutes' 
                 RunHandler( 'timeout', self.config.event_config.script, self.suite, msg=message )
             if self.config.event_config.abort_on_timeout:
                 print >> sys.stderr, 'Abort on suite timeout is set'
@@ -835,7 +889,14 @@ class scheduler(object):
                 self.log.warning('Calling shutdown handler in the foreground')
             else:
                 foreground = False
-            RunHandler( 'shutdown', self.config.event_config.script, self.suite, msg=message, fg=foreground )
+            try:
+                RunHandler( 'shutdown', self.config.event_config.script, self.suite, msg=message, fg=foreground )
+            except Exception, x:
+                if self.options.reftest:
+                    print '\nERROR: SUITE REFERENCE TEST FAILED' 
+                    raise
+            else:
+                print '\nSUITE REFERENCE TEST PASSED'
 
     def get_tasks( self ):
         return self.pool.get_tasks()

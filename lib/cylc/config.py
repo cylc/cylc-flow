@@ -190,6 +190,7 @@ class config( CylcConfigObj ):
 
     def __init__( self, suite, suiterc, owner=None, run_mode='live',
             verbose=False, validation=False, pyro_timeout=None, collapsed=[] ):
+
         self.run_mode = run_mode
         self.verbose = verbose
         if pyro_timeout:
@@ -1596,6 +1597,8 @@ class config( CylcConfigObj ):
                 float(i)
             except ValueError:
                 raise SuiteConfigError, "ERROR, retry delay values must be floats: " + str(i)
+
+        taskd.sim_mode_run_length = taskconfig['simulation mode run length'] 
 
         # initial scripting (could be required to access cylc even in sim mode).
         taskd.initial_scripting = taskconfig['initial scripting'] 

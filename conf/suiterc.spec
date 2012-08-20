@@ -37,7 +37,7 @@ description = string( default="No description provided" )
 #___________________________________________________________________CYLC
 [cylc]
     UTC mode = boolean( default=False )
-    run mode = option( 'live', 'simulation', 'dummy', default='live' )
+    force run mode = option( 'live', 'simulation', 'dummy', default=None )
     pyro connection timeout = float( min=0.0, default=None )
     maximum simultaneous job submissions = integer( min=1, default=50 )
     abort if any task fails = boolean( default=False )
@@ -53,17 +53,20 @@ description = string( default="No description provided" )
         simultaneous instances = boolean( default=False )
     [[environment]]
         __many__ = string
-    [[accelerated clock]]
-        rate = integer( default=10 )
-        offset = integer( default=24 )
-        [[[event hooks]]]
-            enable = boolean( default=False )
     [[event hooks]]
         script = string( default=None )
         events = force_list( default=list() )
         timeout = float( default=None )
         abort if shutdown handler fails = boolean( default=False )
         abort on timeout = boolean( default=False )
+    [[accelerated clock]]
+        rate = integer( default=10 )
+        offset = integer( default=24 )
+    [[reference test]]
+        suite shutdown event handler = string( default='cylc hook check-triggering' )
+        live mode suite timeout = float( default=None )
+        dummy mode suite timeout = float( default=None )
+        simulation mode suite timeout = float( default=None )
 #_____________________________________________________________SCHEDULING
 [scheduling]
     initial cycle time = integer( default=None )
@@ -99,6 +102,7 @@ description = string( default="No description provided" )
         initial scripting = string( default=None )
         command scripting = string( default='echo Dummy command scripting; sleep 10')
         dummy command scripting = string( default='echo Dummy command scripting; sleep 10')
+        simulation mode run length = float( default=10 )
         retry delays = force_list( default=list() )
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
@@ -141,6 +145,7 @@ description = string( default="No description provided" )
         initial scripting = string( default=None )
         command scripting = string( default=None )
         dummy command scripting = string( default=None )
+        simulation mode run length = float( default=None )
         retry delays = force_list( default=list() )
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )

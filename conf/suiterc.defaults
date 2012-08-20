@@ -12,7 +12,7 @@ title = "No title provided"
 description = "No description provided"
 
 [cylc]
-    run mode = live
+    force run mode = None
     UTC mode = False
     pyro connection timeout = (none)
     maximum simultaneous job submissions = 50
@@ -38,6 +38,11 @@ description = "No description provided"
     [[accelerated clock]]
         rate = 10
         offset = 24
+    [[reference test]]
+        suite shutdown event handler = 'cylc hook check-triggering'
+        live mode suite timeout = None
+        dummy mode suite timeout = None
+        simulation mode suite timeout = None
 [scheduling]
     initial cycle time = None
     final cycle time = None
