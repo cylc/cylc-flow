@@ -180,13 +180,11 @@ class task( Pyro.core.ObjBase ):
             logger.warning( '-> ' + message )
 
     def prepare_for_death( self ):
-        # The task manager MUST call this immediately before deleting a
-        # task object. It decrements the instance count of top level
-        # objects derived from task base. It would be nice to use Python's
-        # __del__() function for this, but that is only called when a
-        # deleted object is about to be garbage collected (which is not
-        # guaranteed to be right away). This was once used for
-        # constraining the number of instances of each task type.
+        # Decrement the instance count of objects derived from task
+        # base. Was once used for constraining the number of instances
+        # of each task type. Python's __del__() function cannot be used
+        # for this as it is only called when a deleted object is about
+        # to be garbage collected (not guaranteed to be right away). 
         self.__class__.instance_count -= 1
 
     def ready_to_run( self ):
@@ -556,7 +554,7 @@ class task( Pyro.core.ObjBase ):
             return False
 
     def check_requisites( self ):
-        # overridden by asynchronous tasks
+        # overridden by repeating asynchronous tasks
         pass
 
     def get_state_summary( self ):
@@ -631,14 +629,14 @@ class task( Pyro.core.ObjBase ):
     def not_fully_satisfied( self ):
         if not self.prerequisites.all_satisfied():
             return True
-        if not self.suicide_prerequisites.all_satisfied(): # TO DO: IS THIS CORRECT?
+        if not self.suicide_prerequisites.all_satisfied():
             return True
         return False
 
     def satisfy_me( self, outputs ):
         self.prerequisites.satisfy_me( outputs )
-        # TO DO: DONT DO THIS IF HAVE NO SUICIDE PREREQUISITES (efficiency reasons):
-        self.suicide_prerequisites.satisfy_me( outputs )
+        if self.suicide_prerequisites.count() > 0:
+            self.suicide_prerequisites.satisfy_me( outputs )
 
     def adjust_tag( self, tag ):
         # Override to modify initial tag if necessary.

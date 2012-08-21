@@ -53,13 +53,13 @@ prerequisites get satisfied to "succeeded"; then it negotiates
 dependencies again, and so on until the stop cycle is reached or nothing
 new triggers. Finally it marks "virtually triggered" tasks for removal.
 Consequently:
- * Dependent tasks will only be identified as such if they have already
-   spawned into the root cycle, otherwise they will be missed by the
-   purge. To avoid this, wait until all tasks that depend on the root
-   have caught up to it before purging.
- * If you purge a task that has already finished, only it and its own
-   successors will be purged (other downstream tasks will already have
-   triggered if they were able to).
+ * Dependent tasks will only be identified as such, and purged, if they
+   have already spawned into the root cycle - so let them catch up first.
+ * You can't purge a tree of tasks that has already triggered, because
+   the algorithm relies on detecting new triggering.
+Note also the suite runahead limit must be large enough to bridge the
+purge gap, or runahead-held tasks will prevent the full purge occuring.
+
 [development note: post cylc-3.0 we could potentially use the suite
 graph to determine downstream tasks to remove, without doing this
 internal triggering simulation.]""",

@@ -1139,16 +1139,8 @@ class scheduler(object):
                 self.broker.negotiate( itask )
 
         for itask in self.pool.get_tasks():
-            # This decides whether task families have succeeded or failed
-            # based on the state of their members.
-            if itask.state.is_succeeded() or itask.state.is_failed():
-                # already decided
-                continue
+            # (To Do: only used by repeating async tasks now)
             if not itask.not_fully_satisfied():
-                # families are not fully satisfied until all their
-                # members have succeeded or failed. Only then can
-                # we decide on the final family state, by checking
-                # on its special family member prerequisites.
                 itask.check_requisites()
 
     def release_runahead( self ):
@@ -1705,45 +1697,74 @@ class scheduler(object):
         # so we should explicitly record the tasks that get satisfied
         # during the purge.
 
-        self.log.warning( 'pre-purge state dump: ' + self.dump_state(
-            new_file = True ))
+        self.log.warning( 'pre-purge state dump: ' + self.dump_state( new_file = True ))
+
+        # Purge is an infrequently used power tool, so print 
+        # comprehensive information on what it does to stdout.
+        print
+        print "PURGE ALGORITHM RESULTS:"
 
         die = []
         spawn = []
 
+        print 'ROOT TASK:'
         for itask in self.pool.get_tasks():
             # Find the target task
             if itask.id == id:
                 # set it succeeded
+                print '  Setting', itask.id, 'succeeded'
                 itask.set_succeeded()
                 # force it to spawn
+                print '  Spawning', itask.id
                 foo = self.force_spawn( itask )
                 if foo:
                     spawn.append( foo )
                 # mark it for later removal
+                print '  Marking', itask.id, 'for deletion'
                 die.append( id )
                 break
 
+        print 'VIRTUAL TRIGGERING'
         # trace out the tree of dependent tasks
         something_triggered = True
         while something_triggered:
             self.negotiate()
             something_triggered = False
             for itask in self.pool.get_tasks():
-                if itask.ready_to_run() and int( itask.tag ) <= int( stop ):
+                if int( itask.tag ) > int( stop ):
+                    continue
+                if itask.ready_to_run():
                     something_triggered = True
+                    print '  Triggering', itask.id
                     itask.set_succeeded()
+                    print '  Spawning', itask.id
                     foo = self.force_spawn( itask )
                     if foo:
                         spawn.append( foo )
+                    print '  Marking', itask.id, 'for deletion'
+                    # kill these later (their outputs may still be needed)
                     die.append( itask.id )
+                elif itask.suicide_prerequisites.count() > 0:
+                    if itask.suicide_prerequisites.all_satisfied():
+                        print '  Spawning virtually activated suicide task', itask.id
+                        self.force_spawn( itask )
+                        # kill these now (not setting succeeded; outputs not needed)
+                        print '  Suiciding', itask.id, 'now'
+                        self.kill( [itask.id], dump_state=False )
 
         # reset any prerequisites "virtually" satisfied during the purge
+        print 'RESETTING spawned tasks to unsatisified:'
         for task in spawn:
+            print '  ', task.id
             task.prerequisites.set_all_unsatisfied()
 
         # finally, purge all tasks marked as depending on the target
+        print 'REMOVING PURGED TASKS:'
+        for id in die:
+            print '  ', id
         self.kill( die, dump_state=False )
+
+        print 'PURGE DONE'
 
     def check_timeouts( self ):
         for itask in self.pool.get_tasks():
