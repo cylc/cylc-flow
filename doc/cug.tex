@@ -5018,6 +5018,297 @@ use on a remote task host, for example:
 \end{lstlisting}
 \lstset{language=transcript}
 
+
+\subsection{The Simulation And Dummy Run Modes} 
+\label{SimulationMode}
+
+Since cylc-4.6.0 any cylc suite can run in {\em live}, {\em simulation},
+or {\em dummy} mode.  Prior to that release ``simulation mode'' was a
+hybrid mode that replaced real tasks with local dummy tasks. This
+allowed local simulation testing of any suite, to get the scheduling
+right without running real tasks, but running dummy tasks locally does
+not add much value over a pure simulation (in which no tasks are
+submitted at all) because all job submission configuration has to be
+ignored and most task job script sections have to be cut out to avoid
+any code that could potentially be specific to the intended task host.
+So at 4.6.0 we replaced this with a pure simulation mode (task proxies
+go through the ``running'' state automatically within cylc, and no
+dummy tasks are submitted to run) and a new dummy mode in which only the
+real task command scripting  is dummied out - each dummy task is
+submitted exactly as the task it represents on the correct host and in
+the same execution environment. A successful dummy run confirms not only
+that the scheduling works correctly but also tests real job submission,
+communication from remote task hosts, and the real task job scripts (in
+which errors such as use of undefined variables will cause a task to
+fail).
+
+The run mode, which defaults to {\em live}, is set on the command line
+(for run and restart):
+\lstset{language=transcript}
+\begin{lstlisting}
+% cylc run --mode=dummy SUITE
+\end{lstlisting}
+but you can configure the suite to force a particular run mode,
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[cylc]
+    force run mode = simulation
+\end{lstlisting}
+This can be used, for example, for demo suites that necessarily run out
+of their original context; or to temporarily prevent accidental
+execution of expensive real tasks during suite development.
+
+Dummy task command scripting just prints a message and sleeps for ten
+seconds by default, but you can override this behaviour for particular
+tasks or task groups if you like. Here's how to make a task sleep for
+twenty seconds and then fail in dummy mode:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[runtime]
+    [[foo]]
+        command scripting = "run-real-task.sh"
+        dummy mode command scripting = """
+echo "hello from dummy task $CYLC_TASK_ID"
+sleep 20
+echo "ABORTING"
+/bin/false"""
+\end{lstlisting}
+
+Finally, in simulation mode each task tasks ten seconds to ``run'' by
+default, but you can also alter this for particular tasks or groups of
+tasks:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[runtime]
+    [[foo]]
+        simulation mode run length = 20 # (seconds)
+        fail in simulation mode = True
+\end{lstlisting}
+Note that to get a failed simulation or dummy mode task to succeed on
+re-triggering, just change the suite.rc file appropriately and reload
+the suite definition at run time with \lstinline=cylc reload SUITE=
+before re-triggering the task.
+
+Dummy mode is equivalent to simply commenting out the a task's command
+scripting to expose the default dummy scripting. 
+
+\subsubsection{The Non-live-mode Accelerated Clock}
+
+In simulation and dummy mode cylc uses an accelerated clock with
+configurable rate and offset relative to the suite's initial cycle time.
+This affects the trigger time of any clock-triggered tasks in the suite,
+and the length of time between cycles if simulating ``caught up''
+operation (without this a six-hour cycling suite, for instance, would
+wait six hours between cycles when simulating caught-up operation, even
+though the simulated or dummy tasks run very quickly). By configuring
+the initial clock offset you can quickly simulate how suites catch up
+and transition from delayed to real time operation.
+
+See Section~\ref{ClockConfig} for accelerated clock configuration
+settings.
+
+\subsubsection{Restarting Suites With A Different Run Mode?}
+
+The run mode is recorded in the suite state dump file. Cylc will not let
+you {\em restart} a non-live mode suite in live mode, or vice versa -
+any attempt to do the former would certainly be a mistake (because the
+simulation mode dummy tasks do not generate any of the real outputs
+depended on by downstream live tasks), and the latter, while feasible,
+would corrupt the live state dump by turning it over to simulation mode.
+The easiest way to test a live suite in simulation mode, if you don't
+want to obliterate the current state dump by doing a cold or warm start
+(as opposed to a restart from the previous state) is to take a quick
+copy of the suite and run the copy in simulation mode. However, if you
+really want to run a live suite forward in simulation mode without
+copying it, do this:
+\begin{myenumerate}
+    \item Back up the live mode suite state dump file.
+    \item Edit the mode line in the state dump and restart in simulation mode.
+    \item Later, restart the live suite from the restored live state dump back up.
+\end{myenumerate}
+
+%{\em Finally, it should be noted that cylc previously had the ability to
+%create an instant safe simulation mode clone of the current state of any
+%suite, running or stopped, but this ``practice mode'' has been disabled
+%since the upgrade to cylc-3, pending testing; it could easily be
+%restored if needed.}
+
+%\subsubsection{Practice Mode}
+%
+%Practice mode allows quick and easy testing of potentially complex
+%suite interventions, with complete safety.
+%
+%\begin{lstlisting}
+%cylc restart --practice examples:CUG_1
+%\end{lstlisting}
+%
+%This will start a simulation mode clone of an existing suite from the
+%current state of that suite (which may be paused, still running, or
+%halted), but using different state and log files so that the original
+%suite will not be corrupted by the clone.
+%
+%{\em At start-up in practice mode, failed tasks are not reset to waiting}
+%because the whole point of practice mode is to ``practice'' how to
+%recover from failures.
+%
+%Note that other cylc commands for monitoring or interacting with the
+%suite must also use the \lstinline=--practice= option in order to
+%target the practice suite and not the real one. Be sure to set
+%\lstinline=cylc lock= on the original suite first, to avoid
+%accidentally messing with it (even if you do screw up, however, cylc's
+%automatic pre-intervention state dumps will save you!).
+%
+%
+%\subsubsection{Roll Your Own Practice Mode}
+%
+%A less automated way to ``practice'' on a copy of an existing suite
+%that starts up from the current (or previous) state of that suite, 
+%\lstinline=cylc run --practice= is this:
+%
+%\begin{myitemize}
+%    \item register your suite again under a different name. This allows
+%        you to run a simulation mode copy of the same suite without
+%        interfering with the original suite (it also allows you to run
+%        a copy of the live mode suite without interference, but only if
+%        the real suite tasks are configured to use the registered
+%        suite name in all important input and output filenames and/or
+%        directory paths - see {\em Command Reference} Section~\ref{register}).
+%
+%    \item start-up the newly registered suite in simulation mode using:
+%        \begin{lstlisting}
+%cylc restart --simulation-mode SUITE PATH
+%        \end{lstlisting}
+%        where PATH is a state dump file from the original suite. The
+%        absolute path is required here because the default state
+%        dump location depends on the registered suite name (so that
+%        different suites don't interfere with each other's state
+%        dumps).
+%
+%\end{myitemize}
+%
+
+        
+
+%\pagebreak
+
+%\section{Network Issues}
+%
+%Cylc can control tasks on a distributed system (multiple hosts).  If you
+%do have a distributed suite, in any or all of these ways, be aware of
+%the following issues: 
+%
+%\begin{myitemize}
+%
+%    \item In addition to the cylc host, cylc must be installed on all
+%        task hosts; and the remote task scripts must
+%        themselves be installed on their host machines.  Refer to {\em
+%        Running Tasks On A Remote Host}
+%        (Section~\ref{RunningTasksOnARemoteHost}) for more on this.
+%
+%    \item Pyro must be installed on every host used by the suite.
+%         Ideally all relevant machines should have the same version of
+%         Pyro, but you can easily check for Pyro version
+%         compatibility by attempting to run one of the cylc example
+%         system.
+%        
+%\end{myitemize}
+%
+%Other notes relevant to the last point above: the \lstinline=--host=
+%cylc command option defaults to Python \lstinline=socket.getfqdn()=,
+%which retrieves the fully qualified domain name of the local host
+%if possible.  But \lstinline=/etc/hosts= may cause this to return
+%just the hostname, which locally may resolve to the local-only IP
+%address that is not accessible on the network.  Short of reconfiguring
+%the hosts file, you may be able to workaround these problems by:
+%
+%\begin{myitemize}
+%
+%    \item and, get cylc to configure the Pyro daemon 
+%        with \lstinline@Pyro.config.PYRO_DNS_URI = True@ 
+%        
+%    \item and, use the \lstinline=--host= cylc command option where
+%        required.
+%
+%\end{myitemize}
+
+
+\subsection{Automated Reference Test Suites}
+\label{AutoRefTests}
+
+Reference tests are finite-duration suite runs that abort with non-zero
+exit status if any of the following conditions occur:
+
+\begin{myitemize}
+    \item cylc fails (this always causes an abort)
+    \item any task fails
+    \item the suite times out (which may indicate that a task has died
+        without reporting failure to the suite)
+    \item a nominated shutdown event handler, executed in the foreground
+        so that cylc can detect its exit status, reports failure
+\end{myitemize}
+
+The default shutdown event handler for reference tests is   
+\lstinline=cylc hook check-triggering= which compares task triggering
+information (what triggers off what at run time) in the test run suite
+log to that from an earlier reference run.  This triggering information
+disregards the timing and order of events that are not directly causally
+connected, so a correct run will still verify as correct regardless of
+how cycle interleaving, for example, varies according to the external
+queing conditions and so on.
+
+To prepare a reference log for a suite just run it with the
+\lstinline=--reference-log= option, and manually verify the
+correctness of the reference run.
+
+To run a reference test just run the suite (in dummy mode for the most
+comprehensive test without running real tasks) with the
+\lstinline=--reference-test= option.
+
+A battery of reference tests are (or will soon be) used to automatically
+test cylc before posting a new release version.  They can also be used
+at cylc upgrade time to check that changes in cylc will not break
+your own complex suites - the triggering check will catch any bug that
+causes a task to run when it shouldn't, for instance; and even in a
+dummy mode reference test the full task job script (sans real command
+scripting) has to execute successfully on the proper task host by the
+proper job submission method.
+
+The reference test can be configured with the following settings:
+\lstset{suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[cylc]
+    [[reference test]]
+        suite shutdown event handler = cylc check-triggering
+        live mode suite timeout = 5 # minutes
+        dummy mode suite timeout = 2
+        simulation mode suite timeout = 2
+\end{lstlisting}
+
+\subsubsection{Roll-your-own Reference Tests}
+
+If the default reference test is not sufficient for your needs, firstly
+note that you can change the default shutdown event handler, and
+secondly that the \lstinline=--reference-test= option is merely a short
+cut to the following suite.rc settings which can also be set manually if
+you wish:
+
+\lstset{suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[cylc]
+    abort if any task fails = True
+    [[event hooks]]
+        script = cylc check-triggering
+        events = shutdown
+        timeout = 5
+        abort if shutdown handler fails = True
+        abort on timeout = True
+\end{lstlisting}
+
 \section{Other Topics In Brief}
 
 The following topics have yet to be documented in detail.
@@ -5035,7 +5326,7 @@ The following topics have yet to be documented in detail.
 
     \item Understanding suite evolution, particularly in delayed/catchup
         operation: the {\em Quick Start Guide} helps here, along with
-        playing with example suites.
+        running the example suites.
 
     \item Automatic state dump backups, named pre-intervention state dumps:
         these are used to resetart a suite from a previous state of operation.
@@ -5479,221 +5770,6 @@ jumping layout problem:
         destroy the graph structure, to state the obvious).
 \end{myitemize}
 
-
-\section{The Simulation And Dummy Run Modes} 
-\label{SimulationMode}
-
-Since cylc-4.6.0 any cylc suite can run in {\em live}, {\em simulation},
-or {\em dummy} mode.  Prior to that release ``simulation mode'' was a
-hybrid mode that replaced real tasks with local dummy tasks. This
-allowed local simulation testing of any suite, to get the scheduling
-right without running real tasks, but running dummy tasks locally does
-not add much value over a pure simulation (in which no tasks are
-submitted at all) because all job submission configuration has to be
-ignored and most task job script sections have to be cut out to avoid
-any code that could potentially be specific to the intended task host.
-So at 4.6.0 we replaced this with a pure simulation mode (task proxies
-go through the ``running'' state automatically within cylc, and no
-dummy tasks are submitted to run) and a new dummy mode in which only the
-real task command scripting  is dummied out - each dummy task is
-submitted exactly as the task it represents on the correct host and in
-the same execution environment. A successful dummy run confirms not only
-that the scheduling works correctly but also tests real job submission,
-communication from remote task hosts, and the real task job scripts (in
-which errors such as use of undefined variables will cause a task to
-fail).
-
-The run mode, which defaults to {\em live}, is set on the command line
-(for run and restart):
-\lstset{language=transcript}
-\begin{lstlisting}
-% cylc run --mode=dummy SUITE
-\end{lstlisting}
-but you can configure the suite to force a particular run mode,
-\lstset{language=suiterc}
-\begin{lstlisting}
-# SUITE.RC
-[cylc]
-    force run mode = simulation
-\end{lstlisting}
-This can be used, for example, for demo suites that necessarily run out
-of their original context; or to temporarily prevent accidental
-execution of expensive real tasks during suite development.
-
-Dummy task command scripting just prints a message and sleeps for ten
-seconds by default, but you can override this behaviour for particular
-tasks or task groups if you like. Here's how to make a task sleep for
-twenty seconds and then fail in dummy mode:
-\lstset{language=suiterc}
-\begin{lstlisting}
-# SUITE.RC
-[runtime]
-    [[foo]]
-        command scripting = "run-real-task.sh"
-        dummy mode command scripting = """
-echo "hello from dummy task $CYLC_TASK_ID"
-sleep 20
-echo "ABORTING"
-/bin/false"""
-\end{lstlisting}
-
-Finally, in simulation mode each task tasks ten seconds to ``run'' by
-default, but you can also alter this for particular tasks or groups of
-tasks:
-\lstset{language=suiterc}
-\begin{lstlisting}
-# SUITE.RC
-[runtime]
-    [[foo]]
-        simulation mode run length = 20 # (seconds)
-        fail in simulation mode = True
-\end{lstlisting}
-Note that to get a failed simulation or dummy mode task to succeed on
-re-triggering, just change the suite.rc file appropriately and reload
-the suite definition at run time with \lstinline=cylc reload SUITE=
-before re-triggering the task.
-
-Dummy mode is equivalent to simply commenting out the a task's command
-scripting to expose the default dummy scripting. 
-
-\subsection{The Non-live-mode Accelerated Clock}
-
-In simulation and dummy mode cylc uses an accelerated clock with
-configurable rate and offset relative to the suite's initial cycle time.
-This affects the trigger time of any clock-triggered tasks in the suite,
-and the length of time between cycles if simulating ``caught up''
-operation (without this a six-hour cycling suite, for instance, would
-wait six hours between cycles when simulating caught-up operation, even
-though the simulated or dummy tasks run very quickly). By configuring
-the initial clock offset you can quickly simulate how suites catch up
-and transition from delayed to real time operation.
-
-See Section~\ref{ClockConfig} for accelerated clock configuration
-settings.
-
-\subsection{Restarting Suites With A Different Run Mode?}
-
-The run mode is recorded in the suite state dump file. Cylc will not let
-you {\em restart} a non-live mode suite in live mode, or vice versa -
-any attempt to do the former would certainly be a mistake (because the
-simulation mode dummy tasks do not generate any of the real outputs
-depended on by downstream live tasks), and the latter, while feasible,
-would corrupt the live state dump by turning it over to simulation mode.
-The easiest way to test a live suite in simulation mode, if you don't
-want to obliterate the current state dump by doing a cold or warm start
-(as opposed to a restart from the previous state) is to take a quick
-copy of the suite and run the copy in simulation mode. However, if you
-really want to run a live suite forward in simulation mode without
-copying it, do this:
-\begin{myenumerate}
-    \item Back up the live mode suite state dump file.
-    \item Edit the mode line in the state dump and restart in simulation mode.
-    \item Later, restart the live suite from the restored live state dump back up.
-\end{myenumerate}
-
-%{\em Finally, it should be noted that cylc previously had the ability to
-%create an instant safe simulation mode clone of the current state of any
-%suite, running or stopped, but this ``practice mode'' has been disabled
-%since the upgrade to cylc-3, pending testing; it could easily be
-%restored if needed.}
-
-%\subsubsection{Practice Mode}
-%
-%Practice mode allows quick and easy testing of potentially complex
-%suite interventions, with complete safety.
-%
-%\begin{lstlisting}
-%cylc restart --practice examples:CUG_1
-%\end{lstlisting}
-%
-%This will start a simulation mode clone of an existing suite from the
-%current state of that suite (which may be paused, still running, or
-%halted), but using different state and log files so that the original
-%suite will not be corrupted by the clone.
-%
-%{\em At start-up in practice mode, failed tasks are not reset to waiting}
-%because the whole point of practice mode is to ``practice'' how to
-%recover from failures.
-%
-%Note that other cylc commands for monitoring or interacting with the
-%suite must also use the \lstinline=--practice= option in order to
-%target the practice suite and not the real one. Be sure to set
-%\lstinline=cylc lock= on the original suite first, to avoid
-%accidentally messing with it (even if you do screw up, however, cylc's
-%automatic pre-intervention state dumps will save you!).
-%
-%
-%\subsubsection{Roll Your Own Practice Mode}
-%
-%A less automated way to ``practice'' on a copy of an existing suite
-%that starts up from the current (or previous) state of that suite, 
-%\lstinline=cylc run --practice= is this:
-%
-%\begin{myitemize}
-%    \item register your suite again under a different name. This allows
-%        you to run a simulation mode copy of the same suite without
-%        interfering with the original suite (it also allows you to run
-%        a copy of the live mode suite without interference, but only if
-%        the real suite tasks are configured to use the registered
-%        suite name in all important input and output filenames and/or
-%        directory paths - see {\em Command Reference} Section~\ref{register}).
-%
-%    \item start-up the newly registered suite in simulation mode using:
-%        \begin{lstlisting}
-%cylc restart --simulation-mode SUITE PATH
-%        \end{lstlisting}
-%        where PATH is a state dump file from the original suite. The
-%        absolute path is required here because the default state
-%        dump location depends on the registered suite name (so that
-%        different suites don't interfere with each other's state
-%        dumps).
-%
-%\end{myitemize}
-%
-
-        
-
-%\pagebreak
-
-%\section{Network Issues}
-%
-%Cylc can control tasks on a distributed system (multiple hosts).  If you
-%do have a distributed suite, in any or all of these ways, be aware of
-%the following issues: 
-%
-%\begin{myitemize}
-%
-%    \item In addition to the cylc host, cylc must be installed on all
-%        task hosts; and the remote task scripts must
-%        themselves be installed on their host machines.  Refer to {\em
-%        Running Tasks On A Remote Host}
-%        (Section~\ref{RunningTasksOnARemoteHost}) for more on this.
-%
-%    \item Pyro must be installed on every host used by the suite.
-%         Ideally all relevant machines should have the same version of
-%         Pyro, but you can easily check for Pyro version
-%         compatibility by attempting to run one of the cylc example
-%         system.
-%        
-%\end{myitemize}
-%
-%Other notes relevant to the last point above: the \lstinline=--host=
-%cylc command option defaults to Python \lstinline=socket.getfqdn()=,
-%which retrieves the fully qualified domain name of the local host
-%if possible.  But \lstinline=/etc/hosts= may cause this to return
-%just the hostname, which locally may resolve to the local-only IP
-%address that is not accessible on the network.  Short of reconfiguring
-%the hosts file, you may be able to workaround these problems by:
-%
-%\begin{myitemize}
-%
-%    \item and, get cylc to configure the Pyro daemon 
-%        with \lstinline@Pyro.config.PYRO_DNS_URI = True@ 
-%        
-%    \item and, use the \lstinline=--host= cylc command option where
-%        required.
-%
-%\end{myitemize}
 
 \section{Cylc Development History}
 \subsection{Pre-3.0}

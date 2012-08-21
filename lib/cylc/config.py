@@ -1584,12 +1584,14 @@ class config( CylcConfigObj ):
         taskd.command = taskconfig['command scripting']
         if self.run_mode == 'dummy':
             taskd.command = taskconfig['dummy mode command scripting']
+            taskd.precommand = None
+            taskd.postcommand = None
+        else:
+            taskd.precommand = taskconfig['pre-command scripting'] 
+            taskd.postcommand = taskconfig['post-command scripting'] 
 
         if self.run_mode == 'live':
             taskd.retry_delays = deque( taskconfig['retry delays'])
-
-        taskd.precommand = taskconfig['pre-command scripting'] 
-        taskd.postcommand = taskconfig['post-command scripting'] 
 
         # check retry delay type (must be float):
         for i in taskd.retry_delays:

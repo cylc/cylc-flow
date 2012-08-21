@@ -295,7 +295,7 @@ The handler script to call when one of the nominated events occurs.
     \item {\em default:} (none)
 \end{myitemize}
 
-\paragraph[timeout]{[cylc] $\rightarrow$ [[[event hooks]]] $\rightarrow$ timeout}
+\paragraph[timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ timeout}
 
 If a timeout is set and the timeout event is handled the event
 handler will be called if the suite times out before it finishes.
@@ -448,21 +448,19 @@ from a delay and subsequent transition to real time operation.
 \label{ReferenceTestConfig}
 
 Reference tests are finite-duration suite runs that abort with non-zero
-error status if cylc fails, or if any task fails, or if the suite times
-out, or if a shutdown event handler than compares the test run with a
-reference run fails. To use this feature first generate a reference
-suite log with task triggering information in it by running a suite with
-the \lstinline=--reference-log= option and manually verify the
-correctness of the reference run; then later, to do a reference test run
-just run the suite (in dummy mode for the most comprehensive test
-without running real tasks) with the \lstinline=--reference-test= option.
+exit status if cylc fails, if any task fails, if the suite times
+out, or if a shutdown event handler that (by default) compares the test
+run with a reference run reports failure. See {\em Automated Reference Test
+Suites}, Section~\ref{AutoRefTests}.
 
 \paragraph[suite shutdown event handler]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ suite shutdown event handler}
 
-The shutdown event handler that will compare the test run with the reference run.
+A shutdown event handler that should compare the test run with the
+reference run, exiting with zero exit status only if the test run
+verifies.
 
 \begin{myitemize}
-    \item {\em type:} event handler command name or path
+    \item {\em type:} string (event handler command name or path)
     \item {\em default:} \lstinline=cylc hook check-triggering=
 \end{myitemize}
 As for any event handler, the full path can be ommited if the script is
