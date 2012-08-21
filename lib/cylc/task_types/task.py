@@ -456,13 +456,7 @@ class task( Pyro.core.ObjBase ):
         self.latest_message = message
         self.latest_message_priority = priority
 
-        # setting state_changed results in task processing loop
-        # invocation. We should really only do this when the
-        # incoming message results in a state change that matters to
-        # scheduling ... but system monitor may need latest message, and
-        # we don't yet have a separate state-summary-update invocation
-        # flag.
-
+        # set state_changed to stimulate the task processing loop
         task.state_changed = True
 
         if message == self.id + ' started':

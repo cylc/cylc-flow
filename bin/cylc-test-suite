@@ -31,7 +31,6 @@ usage() {
     echo "  - Copies the 'intro' example suite definition directory;"
     echo "  - Registers the new suite;"
     echo "  - Starts the suite at T=06Z, with task X set to fail at 12Z;"
-    echo "  - Unlocks the running suite;"
     echo "  - Sets a stop time at 12Z (i.e. T+30 hours);"
     echo "  - Waits for the suite to stall as result of X failing;"
     echo "  - Inserts a new coldstart task at 06Z (T+24 hours);"

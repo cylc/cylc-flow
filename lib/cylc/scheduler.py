@@ -373,6 +373,8 @@ class scheduler(object):
 
         self.orphans = []
         self.reconfiguring = False
+        self.nudge_timer_start = None
+        self.nudge_timer_on = False
 
     def ctexpand( self, tag ):
         # expand truncated cycle times (2012 => 2012010100)
@@ -890,6 +892,24 @@ class scheduler(object):
             # up AND its prerequisites are satisfied; it won't result
             # in multiple passes through the main loop.
             process = True
+
+        if not process:
+            # Process after a 5 second lull too - else we occasionally
+            # need a manual nudge for reasons I don't understand.
+            # To Do: (not urgent) turn this off and determine the problem.
+            self.nudge_timer_start = None
+            self.nudge_timer_on = False
+            auto_nudge_interval = 5 # seconds
+            if not self.nudge_timer_on:
+                self.nudge_timer_start = datetime.datetime.now()
+                self.nudge_timer_on = True
+            else:
+                timeout = self.nudge_timer_start + \
+                        datetime.timedelta( seconds=auto_nudge_interval )
+                if datetime.datetime.now() > timeout:
+                    process = True
+                    self.nudge_timer_on = False
+
         return process
 
     def shutdown( self, message='' ):
