@@ -959,3 +959,6 @@ case a specific instance of an added task will still have to be inserted
 manually after the reload operation). This allows task settings
 (environment variables etc.) to be changed without restarting the suite.
 
++ Higher-level family triggers (families of families) can now be used in
+the graph.
+

@@ -996,6 +996,12 @@ class config( CylcConfigObj ):
 
         # REPLACE FAMILY NAMES WITH MEMBER DEPENDENCIES
         for fam in self.members:
+            members = deepcopy(self.members[fam])
+            for member in members:
+                # remove family names from the member list (leave just tasks)
+                if member in self.members:
+                    members.remove(member)
+            
             # Note, in the regular expressions below, the word boundary
             # marker before the time offset pattern is required to close
             # the match in the no-offset case (offset and no-offset
@@ -1012,10 +1018,10 @@ class config( CylcConfigObj ):
             for foffset in m:
                 if fam not in self.families_used_in_graph:
                     self.families_used_in_graph.append(fam)
-                mem0 = self.members[fam][0]
+                mem0 = members[0]
                 cond1 = mem0 + foffset + ':fail'
                 cond2 = '( ' + mem0 + foffset + ' | ' + mem0 + foffset + ':fail )' 
-                for mem in self.members[fam][1:]:
+                for mem in members[1:]:
                     cond1 += ' | ' + mem + foffset + ':fail'
                     cond2 += ' & ( ' + mem + foffset + ' | ' + mem + foffset + ':fail )'
                 cond = '( ' + cond1 + ') & ' + cond2 
@@ -1029,7 +1035,7 @@ class config( CylcConfigObj ):
             for foffset in m:
                 if fam not in self.families_used_in_graph:
                     self.families_used_in_graph.append(fam)
-                mems = ' | '.join( [ i + foffset + ':start' for i in self.members[fam] ] )
+                mems = ' | '.join( [ i + foffset + ':start' for i in members ] )
                 line = re.sub( r"\b" + fam + r"\b" + re.escape( foffset) + ':start', mems, line )
 
             # 3/ Replace "fam" with "mem1 & mem2" etc.
@@ -1040,7 +1046,7 @@ class config( CylcConfigObj ):
             for foffset in m:
                 if fam not in self.families_used_in_graph:
                     self.families_used_in_graph.append(fam)
-                mems = ' & '.join( [ i + foffset for i in self.members[fam] ] )
+                mems = ' & '.join( [ i + foffset for i in members ] )
                 line = re.sub( r"\b" + fam + r"\b" + re.escape( foffset), mems, line )
 
         # Split line on dependency arrows.
