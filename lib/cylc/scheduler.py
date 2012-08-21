@@ -312,7 +312,8 @@ class scheduler(object):
             spec = LogSpec( self.reflogfile )
             self.start_tag = spec.get_start_tag()
             self.stop_tag = spec.get_stop_tag()
-            self.config['cylc']['abort if any task fails'] = True
+            if not self.config['cylc']['reference test']['allow task failures']:
+                self.config['cylc']['abort if any task fails'] = True
             self.config.event_config.abort_on_timeout = True
             timeout = self.config['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
             if not timeout:
@@ -1736,7 +1737,7 @@ class scheduler(object):
                     if foo:
                         spawn.append( foo )
                     die.append( itask.id )
- 
+
         # reset any prerequisites "virtually" satisfied during the purge
         for task in spawn:
             task.prerequisites.set_all_unsatisfied()

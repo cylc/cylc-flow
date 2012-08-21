@@ -137,7 +137,7 @@ if config['cylc']['lockserver']['enable']:
 
 # Running in UTC time? (else just use the system clock)
 utc = config['cylc']['UTC mode']
-dclock = accelerated_clock.clock( None, None, utc, False ) 
+dclock = accelerated_clock.clock( 0, 0, utc, 'live' ) 
 
 # CYLC EXECUTION ENVIRONMENT
 cylcenv = OrderedDict()

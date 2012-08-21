@@ -64,6 +64,7 @@ description = string( default="No description provided" )
         offset = integer( default=24 )
     [[reference test]]
         suite shutdown event handler = string( default='cylc hook check-triggering' )
+        allow task failures = boolean( default=False )
         live mode suite timeout = float( default=None )
         dummy mode suite timeout = float( default=None )
         simulation mode suite timeout = float( default=None )

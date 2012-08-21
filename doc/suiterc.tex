@@ -466,6 +466,17 @@ verifies.
 As for any event handler, the full path can be ommited if the script is
 located somewhere in \lstinline=$PATH= or in the suite bin directory.
 
+\paragraph[allow task failures]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ allow task failures}
+
+A reference test run will abort immediately if any task fails, unless
+this item is set for test suites that incorporate some kind of
+deliberate failed task handling.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False
+\end{myitemize}
+
 \paragraph[live mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ live mode suite timeout}
 
 The timeout value in minutes after which the test run should be aborted

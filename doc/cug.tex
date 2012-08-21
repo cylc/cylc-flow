@@ -5243,7 +5243,7 @@ exit status if any of the following conditions occur:
 
 \begin{myitemize}
     \item cylc fails (this always causes an abort)
-    \item any task fails
+    \item any task fails (unless told not to abort)
     \item the suite times out (which may indicate that a task has died
         without reporting failure to the suite)
     \item a nominated shutdown event handler, executed in the foreground
@@ -5283,6 +5283,7 @@ The reference test can be configured with the following settings:
 [cylc]
     [[reference test]]
         suite shutdown event handler = cylc check-triggering
+        allow task failures = False
         live mode suite timeout = 5 # minutes
         dummy mode suite timeout = 2
         simulation mode suite timeout = 2
