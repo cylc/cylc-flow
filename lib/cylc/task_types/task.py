@@ -408,7 +408,10 @@ class task( Pyro.core.ObjBase ):
         timeout = self.started_time_real + \
                 datetime.timedelta( seconds=self.sim_mode_run_length )
         if datetime.datetime.now() > timeout:
-            self.incoming( 'NORMAL', self.id + ' succeeded' )
+            if self.fail_in_sim_mode:
+                self.incoming( 'CRITICAL', self.id + ' failed' )
+            else:
+                self.incoming( 'NORMAL', self.id + ' succeeded' )
             task.state_changed = True
 
     def set_all_internal_outputs_completed( self ):

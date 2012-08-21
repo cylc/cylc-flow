@@ -76,7 +76,7 @@ for REG in $( cylc db pr -xy $REG_GROUP ); do
     N_TOTAL=$(( N_TOTAL + 1 ))
     LOG=$PWD/${REG}.log
     echo -n "$REG (see $LOG)..."
-    if $( cylc run $REG > $LOG 2>&1 ); then
+    if $( cylc run --reference-test $REG > $LOG 2>&1 ); then
         echo PASSED
         N_PASSED=$(( N_PASSED + 1 ))
     else

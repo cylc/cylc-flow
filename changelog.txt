@@ -870,7 +870,12 @@ failing task has retries lined up with a very short delay period.
 
 + New config item "[cylc] abort if any task fails = False"; if True,
 the suite will abort with exit status 1 if any task false. The main
-intended use for this is for pre-release automated test suites.
+intended use for this is for pre-release automated test suites (but 
+see also "reference test runs" below).
+
++ Suites can now be told to abort with error status if a shutdown handler 
+fails - to allow use of shutdown handlers as suite run diagnosis tools
+in cylc test suites (but see also "reference test runs" below).
 
 + Initial GUI text view task state filtering now shows all tasks, as
 users often forget that some task states are filtered out if they did
@@ -880,10 +885,16 @@ not activate the filters themselves.
 (waiting alone is not enough to contstrain a single task cycling suite,
 in which successive instances all go off at once).
 
++ The runahead limit now defaults to (the largest of the maximum interval
+between cycles in each graph section) plus 1 hour. The extra hour is
+sufficient to stop suites with single-cycle intercycle dependence from
+stalling. Note that for good cycle interleaving you should set the
+runahead limit higher than this!
+
 + Removed the requirement to preface the integer TAG of an asynchronous
 task, on the command line, with 'a:'.
 
-+ Suites can now be restarted after task definitions have been deleted 
++ Suites can now be restarted after task definitions have been deleted, 
 without manually altering the suite state dump file. Undefined tasks in
 the state dump are just be ignored at start up.
 
@@ -898,12 +909,6 @@ to be installed on a remote task host if you choose to use ssh
 messaging, and you can still work with suites - but not run them - if
 Pyro is not installed on the suite host.
 
-+ Runahead limit now defaults to (the largest of the maximum interval
-between cycles in each graph section) plus 1 hour. The extra hour is
-sufficient to stop suites with single-cycle intercycle dependence from
-stalling. Note that for good cycle interleaving you should set the
-runahead limit higher than this!
-
 + Suites with intercycle connections like the following now run correctly:
     [scheduling]
         initial cycle time = 20110101
@@ -913,23 +918,15 @@ runahead limit higher than this!
                 graph = "A"
             [[[ 6,18 ]]]
                 graph  =  "A[T-6] => B"
-(previously A would run in 6,18 as well as 0,12, which it shouldn't).
-
-+ Suites can now be told to abort with error status if a shutdown handler 
-fails - to allow use of shutdown handlers as suite run diagnosis tools
-in cylc test suites.
+(previously A would run in 6,18 as well as 0,12, which it shouldn't have).
 
 + Restored runtime "resolved dependency" graphing (disabled since
 internal queues were implemented); and added optional logging of
 resolved dependencies.
- 
+
 + The gcapture log window (used to display suite stdout) now only color-highlights 
 lines containing the strings CRITICAL, WARNING, or ERROR (not "failed"
 or "error" anymore).
-
-+ Added a simple framework for creating self-diagnosing cylc test suites
-(the intention is to create a battery of automatic tests to make it
-harder to break cylc in the future).
 
 + Added a suite startup event hook.
 
@@ -938,4 +935,27 @@ run locally after nobbling the task job script, with: (1) a proper
 simulation mode that submits not real dummy tasks, and (2) a dummy mode
 that simply dummies out command scripting but leaves job submission,
 hosting, etc. intact.
+
++ Added a simple means of creating self-diagnosing cylc test suites:
+running a suite in any run mode with '--reference-log' creates a special
+reference suite log in the suite definition directory containing
+task triggering information. Later, running with '--reference-test'
+automatically switches on "abort if any task fails", "abort if suite
+times out" (configured in [cylc][[reference test]]), and runs "cylc hook
+check-triggering" on the shutdown hook with "abort if shutdown event
+handler fails" switched on. The event handler compares triggering
+behaviour in the test run with that of the reference run, and aborts the
+test with non-zero exit status if any differences, disregarding timing
+and order, are detected (i.e. tasks triggering off different upstream
+tasks or running in different cycles).
+The intention is to create a battery of automatic tests to make it
+harder to break cylc in the future; and to make it easy for users with
+complex suites to quickly verify, in dummy mode, that changes to cylc
+will not break their suites. 
+
++ Suite definitions can now be reparsed at run time with the new "cylc
+reload" command, even in tasks have been removed or added (in the later
+case a specific instance of an added task will still have to be inserted
+manually after the reload operation). This allows task settings
+(environment variables etc.) to be changed without restarting the suite.
 

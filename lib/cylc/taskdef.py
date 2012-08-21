@@ -32,7 +32,7 @@
 import sys, re
 from OrderedDict import OrderedDict
 from copy import deepcopy
-
+from collections import deque
 from prerequisites.prerequisites_fuzzy import fuzzy_prerequisites
 from prerequisites.prerequisites_loose import loose_prerequisites
 from prerequisites.prerequisites import prerequisites
@@ -110,7 +110,7 @@ class taskdef(object):
         self.loose_prerequisites = [] # asynchronous tasks
 
         self.command = None
-        self.retry_delays = []
+        self.retry_delays = deque()
         self.precommand = None
         self.postcommand = None
         self.initial_scripting = None
@@ -122,6 +122,7 @@ class taskdef(object):
         self.namespace_hierarchy = []
 
         self.sim_mode_run_length = None
+        self.fail_in_sim_mode = False
 
     def add_trigger( self, trigger, cycler ):
         if cycler not in self.triggers:
@@ -314,6 +315,7 @@ class taskdef(object):
             sself.command = self.command
 
             sself.sim_mode_run_length = self.sim_mode_run_length
+            sself.fail_in_sim_mode = self.fail_in_sim_mode
 
             # deepcopy retry delays: the deque gets pop()'ed in the task
             # proxy objects, which is no good if all instances of the
@@ -364,7 +366,7 @@ class taskdef(object):
                 sself.stop_c_time = '99991231230000'
                 super( sself.__class__, sself ).__init__( initial_state )
 
-            sself.reconfiguring = False
+            sself.reconfigure_me = False
 
         tclass.__init__ = tclass_init
 

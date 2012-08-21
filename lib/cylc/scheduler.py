@@ -313,11 +313,11 @@ class scheduler(object):
             self.start_tag = spec.get_start_tag()
             self.stop_tag = spec.get_stop_tag()
             self.config['cylc']['abort if any task fails'] = True
-            self.config['cylc']['event hooks']['abort on timeout'] = True
+            self.config.event_config.abort_on_timeout = True
             timeout = self.config['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
             if not timeout:
                 raise SystemExit( 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference runs' )
-            self.config['cylc']['event hooks']['timeout'] = timeout
+            self.config.event_config.timeout = timeout
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
@@ -371,6 +371,9 @@ class scheduler(object):
         if self.config['visualization']['runtime graph']['enable']:
             self.runtime_graph = rGraph( self.suite, self.config, self.initial_oldest_ctime, self.start_tag )
 
+        self.orphans = []
+        self.reconfiguring = False
+
     def ctexpand( self, tag ):
         # expand truncated cycle times (2012 => 2012010100)
         try:
@@ -411,8 +414,36 @@ class scheduler(object):
         self.suite_state.config = self.config
         self.configure_environments()
         self.print_banner( reload=True )
+        self.reconfiguring = True
         for itask in self.pool.get_tasks():
-            itask.reconfiguring = True
+            itask.reconfigure_me = True
+
+    def reload_taskdefs( self ):
+        found = False
+        for itask in self.pool.get_tasks():
+            if itask.state.is_running():
+                # do not reload running tasks as some internal state
+                # (e.g. timers) not easily cloneable at the moment,
+                # and it is possible to make changes to the task config
+                # that would be incompatible with the running task.
+                if itask.reconfigure_me:
+                    found = True
+                continue
+            if itask.reconfigure_me:
+                itask.reconfigure_me = False
+                if itask.name in self.orphans:
+                    # set orphaned tasks spawned so they won't cycle on
+                    # after the current instances have finished.
+                    itask.state.set_spawned()
+                    self.log.warning( 'NOT RELOADING ORPHANED TASK ' + itask.id  )
+                else:
+                    self.log.warning( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
+                    new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, False )
+                    if itask.state.has_spawned():
+                        new_task.state.set_spawned()
+                    self.pool.remove( itask, '(suite definition reload)' )
+                    self.pool.add( new_task )
+        self.reconfiguring = found
 
     def parse_commandline( self ):
         self.banner[ 'SUITE NAME' ] = self.suite
@@ -686,6 +717,10 @@ class scheduler(object):
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
 
+            if self.reconfiguring:
+                # user has requested a suite definition reload
+                self.reload_taskdefs()
+
             if self.process_tasks():
                 #print "ENTERING MAIN LOOP"
                 if self.options.timing:
@@ -718,7 +753,6 @@ class scheduler(object):
             # HOWEVER, we now need to check if clock-triggered tasks are ready
             # to trigger according on wall clock time, so we also need a
             # timeout to handle this when nothing else is happening.
-            #--
 
             # incoming task messages set task.task.state_changed to True
             self.pyro.handleRequests(timeout=1)
@@ -807,7 +841,7 @@ class scheduler(object):
         self.log.critical( "Suite shutting down at " + str(datetime.datetime.now()) )
 
         if self.options.genref:
-            print 'COPYING REFERENCE LOG to suite definition directory'
+            print '\nCOPYING REFERENCE LOG to suite definition directory'
             from shutil import copy
             copy( self.logfile, self.reflogfile)
 
@@ -1053,7 +1087,6 @@ class scheduler(object):
 
     def no_tasks_running( self ):
         # return True if no REAL tasks are submitted or running
-        #--
         for itask in self.pool.get_tasks():
             if itask.state.is_running() or itask.state.is_submitted():
                 if hasattr( itask, 'is_pseudo_task' ):
@@ -1074,7 +1107,6 @@ class scheduler(object):
         # run time dependency negotiation: tasks attempt to get their
         # prerequisites satisfied by other tasks' outputs.
         # BROKERED NEGOTIATION is O(n) in number of tasks.
-        #--
 
         self.broker.reset()
 
@@ -1147,27 +1179,14 @@ class scheduler(object):
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
         # the slowest task, and if foo(T) spawns
-
         for itask in self.pool.get_tasks():
             if itask.ready_to_spawn():
                 itask.log( 'DEBUG', 'spawning')
-            
-                if itask.reconfiguring:
-                    itask.state.set_spawned()
-                    if itask.name not in self.orphans:
-                        self.log.warning( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
-                        new_task = self.config.get_task_proxy( itask.name, itask.next_tag(), 'waiting', None, False )
-                    else:
-                        self.log.warning( 'NOT RELOADING ORPHANED TASK ' + itask.id )
-                        continue
-                else: 
-                    new_task = itask.spawn( 'waiting' )
-
+                new_task = itask.spawn( 'waiting' )
                 if itask.is_cycling():
                     self.check_hold_spawned_task( itask, new_task )
                     # perpetuate the task stop time, if there is one
                     new_task.stop_c_time = itask.stop_c_time
-
                 self.pool.add( new_task )
 
     def force_spawn( self, itask ):
@@ -1277,7 +1296,6 @@ class scheduler(object):
         # Delete tasks that are no longer needed, i.e. those that
         # spawned, succeeded, AND are no longer needed to satisfy
         # the prerequisites of other tasks.
-        #--
 
         # times of any failed tasks. 
         failed_rt = {}
@@ -1340,7 +1358,6 @@ class scheduler(object):
         #    task whose successor could subsequently fail, thus
         #    requiring manual task reset after a restart).
         #  ALTERNATIVE TO (ii): DO NOT ALLOW non-INTERCYCLE tied tasks
-        #--
 
         # time of the earliest unspawned task
         [all_spawned, earliest_unspawned] = self.earliest_unspawned()

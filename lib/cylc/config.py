@@ -1583,7 +1583,7 @@ class config( CylcConfigObj ):
 
         taskd.command = taskconfig['command scripting']
         if self.run_mode == 'dummy':
-            taskd.command = taskconfig['dummy command scripting']
+            taskd.command = taskconfig['dummy mode command scripting']
 
         if self.run_mode == 'live':
             taskd.retry_delays = deque( taskconfig['retry delays'])
@@ -1599,6 +1599,7 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, "ERROR, retry delay values must be floats: " + str(i)
 
         taskd.sim_mode_run_length = taskconfig['simulation mode run length'] 
+        taskd.fail_in_sim_mode = taskconfig['fail in simulation mode'] 
 
         # initial scripting (could be required to access cylc even in sim mode).
         taskd.initial_scripting = taskconfig['initial scripting'] 

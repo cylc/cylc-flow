@@ -1,18 +1,12 @@
 
-title = "test-suite: zig-zag intercycle dependencies"
+title = "reference test suite: zig-zag intercycle dependencies"
 
 description = """
 Task A should only run at 0, 12 hours; Task B at 6, 18"""
 
 [cylc]
-    abort if any task fails = True
-    log resolved dependencies = True
-    [[event hooks]]
-        events = shutdown
-        script = "cylc hook diagnose-suite"
-        abort if shutdown handler fails = True
-        timeout = 0.5  # minutes
-        abort on timeout = True
+    [[reference test]]
+        live mode suite timeout = 0.5
 
 [scheduling]
     initial cycle time = 2012010100
@@ -23,7 +17,3 @@ Task A should only run at 0, 12 hours; Task B at 6, 18"""
         [[[6,18]]]
             graph = "A[T-6] => B"
 
-[runtime]
-    [[root]]
-        [[[environment]]]
-            CYLC_TASK_DUMMY_RUN_LENGTH = 5

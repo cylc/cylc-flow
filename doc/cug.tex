@@ -1464,12 +1464,11 @@ Section~\ref{QuickStartGuide}).
 
 \subsubsection{Choosing The Initial Cycle Time}
 
-When running any suite in live mode (or suites that depend on
-clock-triggered tasks at least) do not give an initial cycle time in the
-future unless you want nothing to happen until that time. However, you
-can also run any suite in {\em simulation mode}
-in which case a future start time is
-fine (see Appendix~\ref{SimulationMode}). 
+When running a suite in live mode that contains clock-triggered tasks do
+not give an initial cycle time in the future or nothing will happen
+until that time. However, you can also run any suite in {\em simulation
+mode} or {\em dummy mode} in which case a future start time is fine (see
+Appendix~\ref{SimulationMode}). 
 %\pagebreak
 
 \section{Suite Registration}
@@ -1825,10 +1824,7 @@ Cylc suite.rc files consist of a suite title and description followed by
 configuration items grouped under several top level section headings:
 
 \begin{myitemize}
-    \item {\bf [cylc] } - {\em non task-related suite configuration}
-        \begin{myitemize}
-            \item suite logging directories, simulation mode, UTC mode, etc.
-        \end{myitemize}
+    \item {\bf [cylc] } - {\em non task-specific suite configuration}
     \item {\bf [scheduling] } - {\em determines when tasks are ready to run}
         \begin{myitemize}
             \item tasks with special behaviour, e.g. clock-triggered tasks
@@ -1910,8 +1906,7 @@ A[T-6] => A  # Model A restart trigger
 Figure~\ref{fig-dep-eg-1} shows the complete suite.rc listing alongside
 the suite graph.
 This is actually a complete, valid, runnable suite (it will use default 
-runtime properties such as dummy command scripting, because no runtime 
-properties are explicitly defined, and you'll need to trigger task A
+runtime properties and command scripting and you'll need to trigger task A
 manually to get the suite started because A[T] depends on A[T-6] and at
 start-up there is no previous cycle to satisfy that dependence - how to
 handle this properly is described in 
@@ -5485,69 +5480,115 @@ jumping layout problem:
 \end{myitemize}
 
 
-\section{Simulation Mode} 
+\section{The Simulation And Dummy Run Modes} 
 \label{SimulationMode}
 
-If you run a suite in simulation mode its tasks will be replaced by dummy
-tasks that just print a message and then exit after a few seconds, and
-the suite will run quickly on an accelerated clock. As far as cylc is
-concerned this is essentially identical to real operation. Simulation
-mode can be used to get the scheduling of a complex suite right without
-having to run real tasks, and to test recovery strategies for simulated
-task failure scenarios. 
+Since cylc-4.6.0 any cylc suite can run in {\em live}, {\em simulation},
+or {\em dummy} mode.  Prior to that release ``simulation mode'' was a
+hybrid mode that replaced real tasks with local dummy tasks. This
+allowed local simulation testing of any suite, to get the scheduling
+right without running real tasks, but running dummy tasks locally does
+not add much value over a pure simulation (in which no tasks are
+submitted at all) because all job submission configuration has to be
+ignored and most task job script sections have to be cut out to avoid
+any code that could potentially be specific to the intended task host.
+So at 4.6.0 we replaced this with a pure simulation mode (task proxies
+go through the ``running'' state automatically within cylc, and no
+dummy tasks are submitted to run) and a new dummy mode in which only the
+real task command scripting  is dummied out - each dummy task is
+submitted exactly as the task it represents on the correct host and in
+the same execution environment. A successful dummy run confirms not only
+that the scheduling works correctly but also tests real job submission,
+communication from remote task hosts, and the real task job scripts (in
+which errors such as use of undefined variables will cause a task to
+fail).
 
-By configuring how the accelerated clock is initialized you can watch
-suites catch up and transition from delayed to real time operation.
+The run mode, which defaults to {\em live}, is set on the command line
+(for run and restart):
+\lstset{language=transcript}
+\begin{lstlisting}
+% cylc run --mode=dummy SUITE
+\end{lstlisting}
+but you can configure the suite to force a particular run mode,
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[cylc]
+    force run mode = simulation
+\end{lstlisting}
+This can be used, for example, for demo suites that necessarily run out
+of their original context; or to temporarily prevent accidental
+execution of expensive real tasks during suite development.
 
-Remote task hosting and job submission configuration is ignored in
-simulation mode so you can simulate any suite, even outside of its
-normal operating environment.
+Dummy task command scripting just prints a message and sleeps for ten
+seconds by default, but you can override this behaviour for particular
+tasks or task groups if you like. Here's how to make a task sleep for
+twenty seconds and then fail in dummy mode:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[runtime]
+    [[foo]]
+        command scripting = "run-real-task.sh"
+        dummy mode command scripting = """
+echo "hello from dummy task $CYLC_TASK_ID"
+sleep 20
+echo "ABORTING"
+/bin/false"""
+\end{lstlisting}
 
-A more realistic but less portable simulation mode, with full remote job
-submission etc., can be achieved by simply commenting out task
-command scripting so that it defaults to dummy command scripting, and
-running the suite in live mode (note however that this won't work for
-tasks with internal outputs unless you provide your own dummy command 
-scripting that reports the internal outputs finished). 
+Finally, in simulation mode each task tasks ten seconds to ``run'' by
+default, but you can also alter this for particular tasks or groups of
+tasks:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[runtime]
+    [[foo]]
+        simulation mode run length = 20 # (seconds)
+        fail in simulation mode = True
+\end{lstlisting}
+Note that to get a failed simulation or dummy mode task to succeed on
+re-triggering, just change the suite.rc file appropriately and reload
+the suite definition at run time with \lstinline=cylc reload SUITE=
+before re-triggering the task.
 
-Simulation mode was, and remains, an important aid to cylc development
-because it allows testing of all aspects of scheduling without having to
-run real tasks in real time. Prior to cylc-3 it was also a critical aid
-to suite construction, quickly identifying any mismatch between the
-user-defined task prerequisites and outputs across a suite.
-Post cylc-3.0 this is less important because task prerequisites
-and outputs are now implicitly defined by the suite dependency graph
-and, short of a bug in cylc, the suite will run according to the graph.
+Dummy mode is equivalent to simply commenting out the a task's command
+scripting to expose the default dummy scripting. 
 
-\subsection{Clock Rate and Offset}
+\subsection{The Non-live-mode Accelerated Clock}
 
-You can set the simulation mode clock rate and offset with respect
-to the initial cycle time with options to the \lstinline=cylc run=
-command. An offset of 10 hours, say, means that the clock starts at 10
-hours prior to the suite's initial cycle time.  You can thus simulate
-the behaviour of the suite as it catches up from a delay and transitions
-to real time operation.  By default, the clock runs at a rate of 10
-seconds real time to 1 hour suite time, and with an initial offset of 10
-hours. 
+In simulation and dummy mode cylc uses an accelerated clock with
+configurable rate and offset relative to the suite's initial cycle time.
+This affects the trigger time of any clock-triggered tasks in the suite,
+and the length of time between cycles if simulating ``caught up''
+operation (without this a six-hour cycling suite, for instance, would
+wait six hours between cycles when simulating caught-up operation, even
+though the simulated or dummy tasks run very quickly). By configuring
+the initial clock offset you can quickly simulate how suites catch up
+and transition from delayed to real time operation.
 
-\subsection{Switching A Suite Between Simulation And Live Modes?}
+See Section~\ref{ClockConfig} for accelerated clock configuration
+settings.
 
-The scheduler mode (simulation or live) is recorded in the suite state
-dump file. Cylc will not let you {\em restart} a simulation mode suite in
-live mode, or vice versa - any attempt to do the former would certainly
-be a mistake (because the simulation mode dummy tasks do not generate
-any of the real outputs depended on by downstream live tasks), and the
-latter, while feasible, would corrupt the live state dump and turn it
-over to simulation mode. The easiest way to test a live suite in
-simulation mode, if you don't want to obliterate the current state dump
-by doing a cold or warm start (as opposed to a restart from the previous
-state) is to take a quick copy of the suite and run the copy in simulation
-mode. However, if you really want to run a live suite forward in
-simulation mode without copying it, do this:
+\subsection{Restarting Suites With A Different Run Mode?}
+
+The run mode is recorded in the suite state dump file. Cylc will not let
+you {\em restart} a non-live mode suite in live mode, or vice versa -
+any attempt to do the former would certainly be a mistake (because the
+simulation mode dummy tasks do not generate any of the real outputs
+depended on by downstream live tasks), and the latter, while feasible,
+would corrupt the live state dump by turning it over to simulation mode.
+The easiest way to test a live suite in simulation mode, if you don't
+want to obliterate the current state dump by doing a cold or warm start
+(as opposed to a restart from the previous state) is to take a quick
+copy of the suite and run the copy in simulation mode. However, if you
+really want to run a live suite forward in simulation mode without
+copying it, do this:
 \begin{myenumerate}
-    \item Backup the live state dump file.
-    \item Edit the mode line in the state dump file and restart in simulation mode.
-    \item Later, restart the live suite from the restored live state dump backup.
+    \item Back up the live mode suite state dump file.
+    \item Edit the mode line in the state dump and restart in simulation mode.
+    \item Later, restart the live suite from the restored live state dump back up.
 \end{myenumerate}
 
 %{\em Finally, it should be noted that cylc previously had the ability to
@@ -5689,11 +5730,12 @@ by the user because they are implied by the graph.
 Version 4.0 has the following major improvements over cylc-3.x, along with
 many refinements: 
 \begin{myitemize}
-    \item Suite registration has been generalized from GROUP:NAME to a 
+    \item Suite registration was generalized from GROUP:NAME to a 
         hierarchy of arbitrary depth, e.g foo.bar.baz, allowing suites
         to be organized in a tree-like structure.
-    \item The suite.rc file has been extensively reorganized. In
-        particular it now defines a {\em namespace hierarchy} of
+    \item The suite.rc file, which was initially somewhat haphazardly
+        structured, was reviewed in great detail and clearly organized.
+        In particular it now defines a {\em namespace hierarchy} of
         families and tasks to allow common runtime properties to be
         grouped naturally among related tasks.
     \item The Jinja2 template engine is now supported, adding general

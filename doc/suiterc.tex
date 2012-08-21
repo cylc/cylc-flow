@@ -47,6 +47,19 @@ can also be retrieved from a suite at run time with
 This section is for suite configuration that is not specifically
 task-related.
 
+\subsubsection[force run mode]{ [cylc] $\rightarrow$ force run mode}
+
+If this item is set, cylc will refuse to run the suite in anything but
+the specified run mode. This can be used for demo suites taken out of
+their normal context (which will likely have to be run in simulation
+mode) or to prevent accidental submission of expensive real tasks during
+suite development. 
+\begin{myitemize}
+    \item {\em type:} string
+    \item {\em legal valuse:} live, simulation, dummy
+    \item {\em default:} None 
+\end{myitemize}
+
 \subsubsection[UTC mode]{ [cylc] $\rightarrow$ UTC mode}
 
 Cylc runs off the suite host's system clock by default. This item allows
@@ -403,6 +416,7 @@ parser is concerned these are normal configuration items).
 \end{myitemize}
 
 \subsubsection[{[[}accelerated clock{]]}]{[cylc] $\rightarrow$ [[accelerated clock]] }
+\label{ClockConfig}
 
 Accelerated clock settings, used to speed up the wait between cycles in
 the simulation and dummy run modes. 
@@ -428,6 +442,71 @@ from a delay and subsequent transition to real time operation.
     \item {\em type:} integer ($\geq 0$, hours behind initial cycle time)
     \item {\em default:} $24$
 \end{myitemize}
+
+
+\subsubsection[{[[}reference test{]]}]{[cylc] $\rightarrow$ [[reference test]] }
+\label{ReferenceTestConfig}
+
+Reference tests are finite-duration suite runs that abort with non-zero
+error status if cylc fails, or if any task fails, or if the suite times
+out, or if a shutdown event handler than compares the test run with a
+reference run fails. To use this feature first generate a reference
+suite log with task triggering information in it by running a suite with
+the \lstinline=--reference-log= option and manually verify the
+correctness of the reference run; then later, to do a reference test run
+just run the suite (in dummy mode for the most comprehensive test
+without running real tasks) with the \lstinline=--reference-test= option.
+
+\paragraph[suite shutdown event handler]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ suite shutdown event handler}
+
+The shutdown event handler that will compare the test run with the reference run.
+
+\begin{myitemize}
+    \item {\em type:} event handler command name or path
+    \item {\em default:} \lstinline=cylc hook check-triggering=
+\end{myitemize}
+As for any event handler, the full path can be ommited if the script is
+located somewhere in \lstinline=$PATH= or in the suite bin directory.
+
+\paragraph[live mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ live mode suite timeout}
+
+The timeout value in minutes after which the test run should be aborted
+if it has not finished, for live mode runs. 
+Test runs cannot be done in live mode unless you define a value for this
+item, because it is not possible to arrive at a sensible default for all
+suites.
+
+\begin{myitemize}
+    \item {\em type:} float (minutes)
+    \item {\em default:} None
+\end{myitemize}
+
+\paragraph[simulation mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ simulation mode suite timeout}
+
+The timeout value in minutes after which the test run should be aborted
+if it has not finished, for simulation mode runs. 
+Test runs cannot be done in simulation mode unless you define a value for this
+item, because it is not possible to arrive at a sensible default for
+all suites.
+
+\begin{myitemize}
+    \item {\em type:} float (minutes)
+    \item {\em default:} None
+\end{myitemize}
+
+\paragraph[dummy mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ dummy mode suite timeout}
+
+The timeout value in minutes after which the test run should be aborted
+if it has not finished, for dummy mode runs. 
+Test runs cannot be done in dummy mode unless you define a value for this
+item, because it is not possible to arrive at a sensible default for all
+suites.
+
+\begin{myitemize}
+    \item {\em type:} float (minutes)
+    \item {\em default:} None
+\end{myitemize}
+
 
 \subsection{[scheduling]}
 
@@ -844,23 +923,45 @@ it can has access to the task execution environment.
 \paragraph[command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ command scripting}
 
 The scripting to execute when the associated task is ready to run - this
-can be a single command or a multiline string of scripting. 
+can be a single command or multiple lines of scripting. 
 
 \begin{myitemize}
-\item {\em type:} multiline string
-\item {\em root default:} \lstinline=echo "Default command scripting: sleep 10..."; sleep 10=
+\item {\em type:} string
+\item {\em root default:} \lstinline=echo "Default command scripting"; sleep 10=
 \end{myitemize}
 
-\paragraph[dummy command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ dummy command scripting}
+\paragraph[dummy mode command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ dummy command scripting}
 
-The scripting to execute when the associated task is ready to run, {\em in dummy mode} - this
-can be a single command or a multiline string of scripting. 
+The scripting to execute when the associated task is ready to run, {\em
+in dummy mode} - this can be a single command or a multiple lines of
+scripting. 
 
 \begin{myitemize}
-\item {\em type:} multiline string
-\item {\em root default:} \lstinline=echo "Default command scripting: sleep 10..."; sleep 10=
+\item {\em type:} string
+\item {\em root default:} \lstinline=echo "Dummy command scripting"; sleep 10=
 \end{myitemize}
 
+\paragraph[simulation mode run length]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ simulation mode run length}
+
+The time interval in seconds that a task proxy remains in the `running'
+state in simulation mode.
+
+\begin{myitemize}
+\item {\em type:} float
+\item {\em root default:} \lstinline=10=
+\end{myitemize}
+
+\paragraph[fail in simulation mode]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ fail in simulation mode}
+
+This determines whether or not tasks succeed or fail in simulation mode.
+Note that to experiment with task failure in simulation mode you can 
+alter this setting and then reload the suite definition at run time
+before re-triggering an affected task. 
+
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em root default:} \lstinline=False=
+\end{myitemize}
 
 \paragraph[retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ retry delays}
 \label{RefRetries}
@@ -1536,7 +1637,7 @@ assignment.
 Cylc can generate graphs of dependencies resolved at run time, i.e.\ what 
 actually triggers off what as the suite runs. This feature is retained
 mainly for development and debugging purposes. You can use simulation
-mode to generate runtime graphs very quickly.
+mode or dummy mode to generate runtime graphs very quickly.
 
 \paragraph[enable]{[visualization] $\rightarrow$ [[runtime graph]] $\rightarrow$ enable}
 
