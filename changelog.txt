@@ -962,3 +962,7 @@ manually after the reload operation). This allows task settings
 + Higher-level family triggers (families of families) can now be used in
 the graph.
 
++ Fixed a minor bug that could, in usual circumstances, cause cylc not
+to recognize the need for another round of task processing and requiring
+a manual nudge to get the suite to continue.
+

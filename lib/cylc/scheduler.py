@@ -17,8 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc_pyro_server import pyro_server
-from task_types import task
-from task_types import clocktriggered
+from task_types import task, clocktriggered
 from prerequisites.plain_prerequisites import plain_prerequisites
 from hostname import hostname
 from owner import user
@@ -93,26 +92,27 @@ class pool(object):
                         self.new_queues[myq].append( task )
             self.queues = self.new_queues
 
-    def add( self, task ):
+    def add( self, itask ):
         try:
-            self.pyro.connect( task, task.id )
+            self.pyro.connect( itask, itask.id )
         except NamingError, x:
             # Attempted insertion of a task that already exists.
             print >> sys.stderr, x
-            self.log.critical( task.id + ' CANNOT BE INSERTED (already exists)' )
+            self.log.critical( itask.id + ' CANNOT BE INSERTED (already exists)' )
             return
         except Exception, x:
             print >> sys.stderr, x
-            self.log.critical( task.id + ' CANNOT BE INSERTED (unknown error)' )
+            self.log.critical( itask.id + ' CANNOT BE INSERTED (unknown error)' )
             return
 
         # add task to the appropriate queue
-        queue = self.myq[task.name]
+        queue = self.myq[itask.name]
         if queue not in self.queues:
-            self.queues[queue] = [task]
+            self.queues[queue] = [itask]
         else:
-            self.queues[queue].append(task)
-        task.log('DEBUG', "task proxy inserted" )
+            self.queues[queue].append(itask)
+        task.task.state_changed = True
+        itask.log('DEBUG', "task proxy inserted" )
 
     def remove( self, task, reason ):
         # remove a task from the pool
@@ -726,7 +726,7 @@ class scheduler(object):
                 self.reload_taskdefs()
 
             if self.process_tasks():
-                #print "ENTERING MAIN LOOP"
+                self.log.debug( "ENTERING TASK PROCESSING" )
                 if self.options.timing:
                     # loop timing: use real clock even in sim mode
                     main_loop_start_time = datetime.datetime.now()
@@ -895,19 +895,26 @@ class scheduler(object):
             # in multiple passes through the main loop.
             process = True
 
-        if not process:
-            # Process after a 5 second lull too - else we occasionally
-            # need a manual nudge for reasons I don't understand.
-            # To Do: (not urgent) turn this off and determine the problem.
-            if not self.nudge_timer_on:
-                self.nudge_timer_start = datetime.datetime.now()
-                self.nudge_timer_on = True
-            else:
-                timeout = self.nudge_timer_start + \
-                        datetime.timedelta( seconds=self.auto_nudge_interval )
-                if datetime.datetime.now() > timeout:
-                    process = True
-                    self.nudge_timer_on = False
+        ##if not process:
+        ##    # If we neglect to set task.state_changed on some event that 
+        ##    # makes re-negotiation of dependencies necessary then if
+        ##    # that event ever happens in isolation the suite could stall
+        ##    # unless manually nudged ("cylc nudge SUITE").  If this
+        ##    # happens turn on debug logging to see what happens
+        ##    # immediately before the stall, then set task.state_changed
+        ##    # = True in the corresponding code section. Alternatively,
+        ##    # for an undiagnosed stall you can uncomment this section to 
+        ##    # stimulate task processing every few seconds even during
+        ##    # lulls in activity.  THIS SHOULD NOT BE NECESSARY, HOWEVER.
+        ##    if not self.nudge_timer_on:
+        ##        self.nudge_timer_start = datetime.datetime.now()
+        ##        self.nudge_timer_on = True
+        ##    else:
+        ##        timeout = self.nudge_timer_start + \
+        ##              datetime.timedelta( seconds=self.auto_nudge_interval )
+        ##      if datetime.datetime.now() > timeout:
+        ##          process = True
+        ##          self.nudge_timer_on = False
 
         return process
 
