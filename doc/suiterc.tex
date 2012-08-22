@@ -47,16 +47,16 @@ can also be retrieved from a suite at run time with
 This section is for suite configuration that is not specifically
 task-related.
 
-\subsubsection[force run mode]{ [cylc] $\rightarrow$ force run mode}
+\subsubsection[required run mode]{ [cylc] $\rightarrow$ required run mode}
 
-If this item is set, cylc will refuse to run the suite in anything but
-the specified run mode. This can be used for demo suites taken out of
-their normal context (which will likely have to be run in simulation
-mode) or to prevent accidental submission of expensive real tasks during
-suite development. 
+If this item is set cylc will abort if the suite is not started in the
+specified mode. This can be used for demo suites that have to be
+run in simulation mode, for example, because they have been taken out of
+their normal operational context; or to prevent accidental submission of
+expensive real tasks during suite development. 
 \begin{myitemize}
     \item {\em type:} string
-    \item {\em legal valuse:} live, simulation, dummy
+    \item {\em legal values:} live, dummy, simulation 
     \item {\em default:} None 
 \end{myitemize}
 
@@ -73,15 +73,13 @@ logged by cylc will also be in UTC.
     \item {\em default:} False 
 \end{myitemize}
 
-
-\subsubsection[max simultaneous job submissions]{[cylc] $\rightarrow$ max simultaneous job submission}
+\subsubsection[maximum simultaneous job submissions]{[cylc] $\rightarrow$ maximum simultaneous job submissions}
 
 This sets the maximum allowable number of simultaneous (parallel) job
-submissions. If a greater number of tasks than this happen to become
-ready to run at once (as would be typical for ensemble suites), cylc
-will submit them in batches of this size, waiting for all members of a
-batch to return before proceeding to the next batch.  See
-Section~\ref{MaxSimJobSub}.
+submissions. If a greater number of tasks happen to become ready to run
+at once (as in ensemble suites for instance) cylc will submit them in
+batches of this size, waiting for all batch members to return before
+proceeding to the next batch. See Section~\ref{MaxSimJobSub}.
 
 \begin{myitemize}
     \item {\em type:} integer (minimum 1)
@@ -110,7 +108,6 @@ on it will abort with exit status 1 if any task fails.
     \item {\em default:} False
 \end{myitemize}
 
-
 \subsubsection[log resolved dependencies]{[cylc] $\rightarrow$ log resolved dependencies}
 
 If this is turned on cylc will write the resolved dependencies of each
@@ -122,57 +119,6 @@ used for cylc testing and development.
     \item {\em type:} boolean
     \item {\em default:} False
 \end{myitemize}
-
-\paragraph[directory]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ directory}
-
-The cylc log and its backups are stored in this directory. If you change
-the directory make sure it remains suite-specific by using suite
-identity environment variables in the path.
-
-\begin{myitemize}
-    \item {\em type:} string (directory path, may contain environment variables)
-    \item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite=
-\end{myitemize}
-
-\paragraph[roll over at start-up]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ roll over at start-up}
-
-Suite logs roll over (start anew) automatically when they reach a
-certain size - currently hardwired to 1MB in
-\lstinline=$CYLC_DIR/lib/cylc/pimp_my_logger.py=. 
-They can also be rolled automatically whenever a
-suite is started or restarted.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} True
-\end{myitemize}
-
-
-\paragraph[directory]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ directory}
-
-The cylc log and its backups are stored in this directory. If you change
-the directory make sure it remains suite-specific by using suite
-identity environment variables in the path.
-
-\begin{myitemize}
-    \item {\em type:} string (directory path, may contain environment variables)
-    \item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite=
-\end{myitemize}
-
-\paragraph[roll over at start-up]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ roll over at start-up}
-
-Suite logs roll over (start anew) automatically when they reach a
-certain size - currently hardwired to 1MB in
-\lstinline=$CYLC_DIR/lib/cylc/pimp_my_logger.py=. 
-They can also be rolled automatically whenever a
-suite is started or restarted.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} True
-\end{myitemize}
-
-
 
 \subsubsection[{[[}logging{]]} ]{[cylc] $\rightarrow$ [[logging]]}
 
@@ -307,9 +253,9 @@ See also ``abort on timeout'', below.
 \end{myitemize}
 
 
-\paragraph[script]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort if shutdown handler fails}
+\paragraph[abort if shutdown handler fails]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort if shutdown handler fails}
 
-Cylc does not normally care whether a shutdown handler, executed just
+Cylc does not normally care whether a shutdown event handler, executed just
 prior to shutting down, succeeds or fails; but if this is turned on 
 cylc will execute the shutdown handler in the foreground and the suite
 will abort with error status if the handler script fails. This feature
@@ -321,7 +267,7 @@ handlers.
     \item {\em default:} False
 \end{myitemize}
 
-\paragraph[script]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort on timeout}
+\paragraph[abort on timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort on timeout}
 
 If a suite timer is set (above) this will cause the suite to abort with
 error status if the suite times out while still running. This feature
@@ -421,9 +367,22 @@ parser is concerned these are normal configuration items).
 Accelerated clock settings, used to speed up the wait between cycles in
 the simulation and dummy run modes. 
 
-\paragraph[clock rate]{[cylc] $\rightarrow$ [[accelerated clock]] $\rightarrow$ clock rate}
+\paragraph[disable]{[cylc] $\rightarrow$ [[accelerated clock]] $\rightarrow$ disable}
 
-The speed at which the accelerated clock runs in real seconds per
+Disabling the accelerated clock makes the suite (and its log time stamps
+etc.) run on real time. Note that if the suite has clock-triggered tasks
+that catch up to the wall clock, the interval between cycles will also be
+in real time - e.g.\ six hours for a six hourly cycle.
+
+\begin{myitemize}
+    \item {\em type:} boolean 
+    \item {\em default:} False
+\end{myitemize}
+
+
+\paragraph[rate]{[cylc] $\rightarrow$ [[accelerated clock]] $\rightarrow$ rate}
+
+The rate at which the accelerated clock runs in real seconds per
 simulated hour.
 
 \begin{myitemize}
@@ -431,7 +390,7 @@ simulated hour.
     \item {\em default:} $10$
 \end{myitemize}
 
-\paragraph[clock offset]{[cylc] $\rightarrow$ [[accelerated clock]] $\rightarrow$ clock offset}
+\paragraph[offset]{[cylc] $\rightarrow$ [[accelerated clock]] $\rightarrow$ offset}
 
 The clock offset determines the initial time on the accelerated clock, 
 at suite startup, relative to the initial cycle time. An offset of
@@ -466,6 +425,18 @@ verifies.
 As for any event handler, the full path can be ommited if the script is
 located somewhere in \lstinline=$PATH= or in the suite bin directory.
 
+\paragraph[required run mode]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ required run mode}
+
+If your reference test is only valid for a particular run mode, this
+setting will cause cylc to abort if a reference test is attempted 
+in another run mode.
+
+\begin{myitemize}
+    \item {\em type:} string
+    \item {\em legal values:} live, dummy, simulation
+    \item {\em default:} None
+\end{myitemize}
+
 \paragraph[allow task failures]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ allow task failures}
 
 A reference test run will abort immediately if any task fails, unless
@@ -480,10 +451,9 @@ deliberate failed task handling.
 \paragraph[live mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ live mode suite timeout}
 
 The timeout value in minutes after which the test run should be aborted
-if it has not finished, for live mode runs. 
-Test runs cannot be done in live mode unless you define a value for this
-item, because it is not possible to arrive at a sensible default for all
-suites.
+if it has not finished, in live mode. Test runs cannot be done in live
+mode unless you define a value for this item, because it is not possible
+to arrive at a sensible default for all suites.
 
 \begin{myitemize}
     \item {\em type:} float (minutes)
@@ -493,10 +463,9 @@ suites.
 \paragraph[simulation mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ simulation mode suite timeout}
 
 The timeout value in minutes after which the test run should be aborted
-if it has not finished, for simulation mode runs. 
-Test runs cannot be done in simulation mode unless you define a value for this
-item, because it is not possible to arrive at a sensible default for
-all suites.
+if it has not finished, in simulation mode. Test runs cannot be done in
+simulation mode unless you define a value for this item, because it is
+not possible to arrive at a sensible default for all suites.
 
 \begin{myitemize}
     \item {\em type:} float (minutes)
@@ -506,10 +475,9 @@ all suites.
 \paragraph[dummy mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ dummy mode suite timeout}
 
 The timeout value in minutes after which the test run should be aborted
-if it has not finished, for dummy mode runs. 
-Test runs cannot be done in dummy mode unless you define a value for this
-item, because it is not possible to arrive at a sensible default for all
-suites.
+if it has not finished, in dummy mode.  Test runs cannot be done in
+dummy mode unless you define a value for this item, because it is not
+possible to arrive at a sensible default for all suites.
 
 \begin{myitemize}
     \item {\em type:} float (minutes)
@@ -778,30 +746,35 @@ below for graph string syntax, and Section~\ref{DependencyGraphs}.
  
 \paragraph[{[[[}\_\_VALIDITY\_\_{]]]}]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_VALIDITY\_\_]]]}
 
-Replace \_\_VALIDITY\_\_ with a comma-separated list of integer hours, 
-$0\leq H \leq 23$,  defining the valid
-cycle times for the subsequent graph of cycling tasks, or multiple such
-subsections as required for different dependencies at different hours; 
-or with `ASYNCID:{\em pattern}', where {\em pattern} is a regular
-expression that matches an asynchronous task ID, for each graph of
-repeating asynchronous tasks.
-
+\_\_VALIDITY\_\_ section headings define the sequence of cycle times for
+which the subsequent graph section is valid. For cycling tasks use a
+comma-separated list of integer hours, $0\leq H \leq 23$ for the original 
+hours-of-the-day cycling, or reference a particular stepped daily,
+monthly, or yearly cycling module:
 \begin{myitemize}
     \item {\em examples:} 
         \begin{myitemize} 
-            \item (cycling tasks) \lstinline@[[0,6,12,18]]@ 
-            \item (repeating asynchronous tasks) \lstinline@[[ASYNCID:SAT-\d+]]@ 
+            \item hours-of-the-day cycling: \lstinline@[[[0,6,12,18]]]@ or \lstinline@[[[HoursOfTheDay(0,6,12,18)]]]@ 
+            \item stepped daily cycling: \lstinline@[[[Daily(20100823,2)]]]@ 
+            \item stepped monthly cycling: \lstinline@[[[Monthly(201008,2)]]]@ 
+            \item stepped yearly cycling: \lstinline@[[[Yearly(2010,2)]]]@ 
         \end{myitemize}
     \item {\em default:} (none)
 \end{myitemize}
-For a cycling graph with multiple validity sections for different
-hours of the day, the different sections {\em add} to generate the
-complete graph. Different graph sections can overlap (i.e.\ the same hours
-may appear in multiple section headings) and the same tasks may appear
-in multiple sections, but the individual dependencies must be unique
-across the entire graph. Duplicate dependencies will cause a run time 
-error at start-up, as documented in {\em How Multiple Graph Strings Combine} 
-(Section~\ref{HowMultipleGraphStringsCombine}).
+For repeating asynchronous tasks put `ASYNCID:{\em pattern}' in the
+section heading, where {\em pattern} is a regular expression that
+matches an asynchronous task ID:
+\begin{myitemize}
+    \item {\em examples:} 
+        \begin{myitemize} 
+            \item repeating asynchronous tasks: \lstinline@[[ASYNCID:SAT-\d+]]@ 
+        \end{myitemize}
+    \item {\em default:} (none)
+\end{myitemize}
+
+See Section~\ref{GraphTypes}, {\em Graph Types} for the meaning of the
+stepped cycler arguments, how multiple graph sections combine within a
+single suite, and so on.
 
 \subparagraph[graph]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_VALIDITY\_\_]]] $\rightarrow$ graph }
 \label{GraphDescrip}
@@ -939,38 +912,6 @@ can be a single command or multiple lines of scripting.
 \item {\em root default:} \lstinline=echo "Default command scripting"; sleep 10=
 \end{myitemize}
 
-\paragraph[dummy mode command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ dummy command scripting}
-
-The scripting to execute when the associated task is ready to run, {\em
-in dummy mode} - this can be a single command or a multiple lines of
-scripting. 
-
-\begin{myitemize}
-\item {\em type:} string
-\item {\em root default:} \lstinline=echo "Dummy command scripting"; sleep 10=
-\end{myitemize}
-
-\paragraph[simulation mode run length]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ simulation mode run length}
-
-The time interval in seconds that a task proxy remains in the `running'
-state in simulation mode.
-
-\begin{myitemize}
-\item {\em type:} float
-\item {\em root default:} \lstinline=10=
-\end{myitemize}
-
-\paragraph[fail in simulation mode]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ fail in simulation mode}
-
-This determines whether or not tasks succeed or fail in simulation mode.
-Note that to experiment with task failure in simulation mode you can 
-alter this setting and then reload the suite definition at run time
-before re-triggering an affected task. 
-
-\begin{myitemize}
-\item {\em type:} boolean
-\item {\em root default:} \lstinline=False=
-\end{myitemize}
 
 \paragraph[retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ retry delays}
 \label{RefRetries}
@@ -1053,7 +994,7 @@ for a job with higher immediate priority. See also
 Section~\ref{PreemptionHPC}, {\em Handling Job Preemption}
 \begin{myitemize}
 \item {\em type:} boolean
-\item {\em default:} \lstinline=False=
+\item {\em default:} False
 \end{myitemize}
 
 
@@ -1113,6 +1054,59 @@ It can be accessed by tasks at run time via the environment variable
 \item {\em default:} \lstinline=$CYLC_SUITE_DEF_PATH/share=
 \end{myitemize}
 
+\paragraph[{[[[}dummy mode{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[dummy mode]]]}
+
+Dummy mode configuration.
+
+\subparagraph[command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[dummy mode]]] $\rightarrow$ command scripting}
+
+The scripting to execute when the associated task is ready to run, {\em
+in dummy mode} - this can be a single command or a multiple lines of
+scripting. 
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em root default:} \lstinline=echo "Dummy command scripting"; sleep $(cylc rnd 1 16)=
+\end{myitemize}
+
+\subparagraph[disable pre-command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[dummy mode]]] $\rightarrow$ disable pre-command scripting}
+
+This disables pre-command scripting, is likely to contain code specific
+to the real task, in dummy mode. 
+
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em root default:} True
+\end{myitemize}
+
+\subparagraph[disable post-command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[dummy mode]]] $\rightarrow$ disable post-command scripting}
+
+This disables post-command scripting, which is likely to contain code
+specific to the real task, in dummy mode. 
+
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em root default:} True
+\end{myitemize}
+
+\paragraph[{[[[}simulation mode{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[simulation mode]]]}
+
+Simulation mode configuration.
+
+\begin{myitemize}
+\item {\em type:} float
+\item {\em root default:} $10$
+\end{myitemize}
+
+\paragraph[run time range]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[simulation mode]]] $\rightarrow$ run time range}
+
+This defines an interval \lstinline=[min,max)= (seconds) from within
+which the the simulation mode task run length will be randomly chosen.
+
+\begin{myitemize}
+\item {\em type:} integer list (two members)
+\item {\em root default:} $1,16$
+\end{myitemize}
 
 \paragraph[{[[[}job submission{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]]}
 

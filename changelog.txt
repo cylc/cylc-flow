@@ -898,10 +898,10 @@ task, on the command line, with 'a:'.
 without manually altering the suite state dump file. Undefined tasks in
 the state dump are just be ignored at start up.
 
-+ WARNING for those who override the default task log, work, and share
++ WARNING for anyone overriding the default task log, work, and share
 directory config items, they have been moved up out of the "job
-submission" runtime sub-section, because they are common to all job
-submission methods. 
+submission" runtime sub-section, because they are not really properties 
+of the job submission process. 
 
 + The main cylc command interface no longer checks that Pyro is
 installed, but the commands that it do. Consequently Pyro does not have
@@ -965,4 +965,10 @@ the graph.
 + Fixed a minor bug that could, in usual circumstances, cause cylc not
 to recognize the need for another round of task processing and requiring
 a manual nudge to get the suite to continue.
+
++ Documented stepped daily, monthly, and yearly cycling.
+
++ Added a simple utility command that generates random integers on a
+given interval; used for computing random task run lengths in simulation
+and dummy mode. 
 

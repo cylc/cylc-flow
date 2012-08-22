@@ -1592,7 +1592,7 @@ Groups of suites (at any level in the registration hierarchy) can be deleted,
 copied, imported, and exported; as well as individual suites.  To do this, 
 just use suite group names as source and/or target for operations, as
 appropriate.  For instance, if a group \lstinline=foo.bar= contains the 
-suites \lstinline=foo.bar.baz= and \lstinline=foo.bar.waz=, you can copy
+suites \lstinline=foo.bar.baz= and \lstinline=foo.bar.qux=, you can copy
 a single suite like this:
 \begin{lstlisting}
 % cylc copy foo.bar.baz boo $HOME/suites
@@ -1601,11 +1601,11 @@ a single suite like this:
 \begin{lstlisting}
 % cylc copy foo.bar boo $HOME/suites
 \end{lstlisting}
-(resulting in new suites \lstinline=boo.baz= and \lstinline=boo.waz=); or the group like this:
+(resulting in new suites \lstinline=boo.baz= and \lstinline=boo.qux=); or the group like this:
 \begin{lstlisting}
 % cylc copy foo boo $HOME/suites
 \end{lstlisting}
-(resulting in new suites \lstinline=boo.bar.baz= and \lstinline=boo.bar.waz=).
+(resulting in new suites \lstinline=boo.bar.baz= and \lstinline=boo.bar.qux=).
 When suites are copied, the suite definition directories are copied into
 a directory tree, under the target directory, that reflects the
 registration name hierarchy. \lstinline=cylc copy --help= has some explicit examples.
@@ -1886,9 +1886,9 @@ relationships between tasks in a suite - the information that allows
 cylc to determine when tasks are ready to run. The most important
 component of this is the suite dependency graph. Cylc graph notation
 makes clear textual graph representations that are very concise because
-sections of the graph that repeat at different hours of the day only
-have to be defined once.  Here's an example showing a simple task tree
-with dependencies that vary depending on cycle time:
+sections of the graph that repeat at different hours of the day, say,
+only have to be defined once.  Here's an example with dependencies that
+vary depending on cycle time:
 \lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
@@ -2107,11 +2107,11 @@ the line; it cannot be followed by trailing spaces or a comment.
 \lstset{language=transcript}
 
 \subsubsection{Graph Types (VALIDITY)}
+\label{GraphTypes}
 
 A suite definition can contain multiple graph strings that are combined
 to generate the final graph. There are different graph VALIDITY section
-headings (the heading of the suite.rc section that encloses the graph
-string) for cycling, one-off asynchronous, and repeating asynchronous
+headings for cycling, one-off asynchronous, and repeating asynchronous
 tasks. Additionally, there may be multiple graph strings under different
 VALIDITY sections for cycling tasks with different dependencies at
 different cycle times.
@@ -2132,7 +2132,7 @@ task (below) spawns.
 title = some one-off asynchronous tasks
 [scheduling]
     [[dependencies]]
-        graph = "foo => bar & baz => waz"
+        graph = "foo => bar & baz => qux"
 \end{lstlisting}
 \lstset{language=transcript}
 \end{minipage}
@@ -2148,10 +2148,9 @@ title = some one-off asynchronous tasks
 
 \paragraph{Cycling Tasks}
 
-Valid cycle times for cycling tasks are defined by the graph VALIDITY
-section headings - lists of hours in the day - for the graph strings
-in which the tasks appear. Figure~\ref{fig-test2} shows a small suite of
-cycling tasks.
+For cycling tasks the graph VALIDITY section heading defines a sequence of 
+cycles times for which the subsequent graph section is valid. 
+Figure~\ref{fig-test2} shows a small suite of cycling tasks.
 \begin{figure}
 \begin{minipage}[b]{0.5\textwidth}
 \lstset{language=suiterc}
@@ -2162,7 +2161,7 @@ title = some cycling tasks
 [scheduling]
     [[dependencies]]
         [[[0,12]]]
-            graph = "foo => bar & baz => waz"
+            graph = "foo => bar & baz => qux"
 \end{lstlisting}
 \lstset{language=transcript}
 \end{minipage}
@@ -2175,6 +2174,42 @@ title = some cycling tasks
 \caption[Cycling Tasks]{\scriptsize Cycling Tasks.}
 \label{fig-test2}
 \end{figure}
+
+\subparagraph{Stepped Daily, Monthly, And Yearly Cycling}
+
+In addition to the original hours-of-the-day section headings, cylc now
+has an extensible cycling mechanism and (so far) stepped daily, monthly,
+and yearly cycling modules:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[scheduling]
+    [[dependencies]]
+        [[[Daily(20100809,2)]]]
+            graph = "foo => bar"
+        [[[Monthly(201008,2)]]]
+            graph = "cat[T-2] => dog"
+        [[[Yearly(2010,2)]]]
+            graph = "apple => orange"
+\end{lstlisting}
+In the examples above the section headings define an infinite sequence of 
+cycle times {\em anchored} on the first (date-time) argument and {\em
+stepped} by the second (integer) argument. The anchoring serves to
+generate the same sequence, as opposed to some off-set sequence,
+regardless of the initial cycle time from which the suite is started.
+The anchor date can lie outside of the suite's initial and final cycle
+times.
+
+Note that hours-of-the-day graph section headings can also be written
+to explicitly reference the associated cycling module:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[scheduling]
+    [[dependencies]]
+        [[[HoursOfTheDay(0,6,12,18)]]] # same as [[[0,6,12,18]]]
+            graph = "red => blue"
+\end{lstlisting}
 
 \subparagraph{How Multiple Graph Strings Combine}
 \label{HowMultipleGraphStringsCombine}
@@ -2244,7 +2279,7 @@ title = one-off async and cycling tasks
         graph = "prep1 => prep2"
         [[[0,12]]]
             graph = """
-    prep2 => foo => bar & baz => waz
+    prep2 => foo => bar & baz => qux
     foo[T-12] => foo
                     """
 \end{lstlisting}
@@ -2274,7 +2309,7 @@ title = one-off start-up and cycling tasks
     [[dependencies]]
         [[[0,12]]]
             graph = """
-    prep1 => prep2 => foo => bar & baz => waz
+    prep1 => prep2 => foo => bar & baz => qux
     foo[T-12] => foo
                     """
 \end{lstlisting}
@@ -4049,7 +4084,7 @@ the suite.rc file:
     [[__NAME__]]
         [[[directives]]] 
             foo = bar
-            baz = waz
+            baz = qux
 \end{lstlisting}
 These are written to the top of the task job script like this: 
 \lstset{language=bash}
@@ -4057,7 +4092,7 @@ These are written to the top of the task job script like this:
 #!/bin/bash
 # DIRECTIVES
 # @ foo = bar
-# @ baz = waz
+# @ baz = qux
 # @ queue
 \end{lstlisting}
 
@@ -5277,7 +5312,7 @@ scripting) has to execute successfully on the proper task host by the
 proper job submission method.
 
 The reference test can be configured with the following settings:
-\lstset{suiterc}
+\lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
 [cylc]
@@ -5297,7 +5332,7 @@ secondly that the \lstinline=--reference-test= option is merely a short
 cut to the following suite.rc settings which can also be set manually if
 you wish:
 
-\lstset{suiterc}
+\lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
 [cylc]
