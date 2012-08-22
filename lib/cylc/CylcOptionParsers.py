@@ -105,7 +105,7 @@ Arguments:"""
                 metavar="DB", action="store", default=None, dest="db" )
 
         self.add_option( "-o", "--override",
-                help="Override cylc version compatibilty checking.",
+                help="Override cylc version compatibility checking.",
                 action="store_true", default=False, dest="override" )
 
         if pyro:
