@@ -972,3 +972,5 @@ a manual nudge to get the suite to continue.
 given interval; used for computing random task run lengths in simulation
 and dummy mode. 
 
++ Allow running simulation and dummy mode on the real time clock.
+

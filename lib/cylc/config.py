@@ -44,6 +44,7 @@ from TaskID import TaskID, AsyncTag
 from Jinja2Support import Jinja2Process, TemplateError, TemplateSyntaxError
 from continuation_lines import join
 from include_files import inline
+from random import randrange
 
 try:
     import graphing
@@ -1589,9 +1590,11 @@ class config( CylcConfigObj ):
 
         taskd.command = taskconfig['command scripting']
         if self.run_mode == 'dummy':
-            taskd.command = taskconfig['dummy mode command scripting']
-            taskd.precommand = None
-            taskd.postcommand = None
+            taskd.command = taskconfig['dummy mode']['command scripting']
+            if taskconfig['dummy mode']['disable pre-command scripting']:
+                taskd.precommand = None
+            if taskconfig['dummy mode']['disable post-command scripting']:
+                taskd.postcommand = None
         else:
             taskd.precommand = taskconfig['pre-command scripting'] 
             taskd.postcommand = taskconfig['post-command scripting'] 
@@ -1606,10 +1609,23 @@ class config( CylcConfigObj ):
             except ValueError:
                 raise SuiteConfigError, "ERROR, retry delay values must be floats: " + str(i)
 
-        taskd.sim_mode_run_length = taskconfig['simulation mode run length'] 
-        taskd.fail_in_sim_mode = taskconfig['fail in simulation mode'] 
+        rrange = taskconfig['simulation mode']['run time range']
+        ok = True
+        if len(rrange) != 2:
+            ok = False
+        try:
+            res = [ int( rrange[0] ), int( rrange[1] ) ]
+        except:
+            ok = False
+        if not ok:
+            raise SuiteConfigError, "ERROR, " + taskd.name + ": simulation mode run time range must be 'int, int'" 
+        try:
+            taskd.sim_mode_run_length = randrange( res[0], res[1] )
+        except Exception, x:
+            print >> sys.stderr, x
+            raise SuiteConfigError, "ERROR: simulation mode task run time range must be [MIN,MAX)" 
+        taskd.fail_in_sim_mode = taskconfig['simulation mode']['simulate failure']
 
-        # initial scripting (could be required to access cylc even in sim mode).
         taskd.initial_scripting = taskconfig['initial scripting'] 
 
         taskd.ssh_messaging = str(taskconfig['remote']['ssh messaging'])

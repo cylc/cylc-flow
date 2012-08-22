@@ -9,6 +9,7 @@ title = "Cylc Admin Test Suite"
 
 [cylc]
     [[reference test]]
+        required run mode = live
         allow task failures = True
         live mode suite timeout = 3.0 # minutes
 
@@ -47,7 +48,7 @@ title = "Cylc Admin Test Suite"
     [[root]]
         command scripting = <TASK>.sh
         [[[environment]]]
-            TASK_EXE_SECONDS = 10
+            TASK_EXE_SECONDS = $( cylc rnd 1 15 )
             WORKSPACE  = /tmp/$USER/$CYLC_SUITE_REG_NAME/common
             RUNNING    = $WORKSPACE/running
             INPUT_DIR  = $WORKSPACE

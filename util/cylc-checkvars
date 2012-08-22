@@ -20,7 +20,7 @@ import os, sys
 from optparse import OptionParser
 from cylc.mkdir_p import mkdir_p
 
-parser = OptionParser( usage = """cylc checkvars [OPTIONS] VARNAMES
+parser = OptionParser( usage = """cylc [util] checkvars [OPTIONS] VARNAMES
 
 Check that each member of a list of environment variables is defined,
 and then optionally check their values according to the chosen

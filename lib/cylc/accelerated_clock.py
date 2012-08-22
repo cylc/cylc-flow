@@ -30,11 +30,11 @@ class clock( Pyro.core.ObjBase ):
     simulation time at the requested rate of seconds per hour.
     """
 
-    def __init__( self, rate, offset, utc, run_mode ):
+    def __init__( self, rate, offset, utc, disable ):
         
         Pyro.core.ObjBase.__init__(self)
         
-        self.run_mode = run_mode
+        self.disable = disable
         self.utc = utc
 
         # time acceleration (N real seconds = 1 simulation hour)
@@ -46,8 +46,8 @@ class clock( Pyro.core.ObjBase ):
         self.base_realtime = self.now() 
         self.base_simulationtime = self.base_realtime
 
-        #if run_mode != 'live':
-        #    print "simulation CLOCK ........"
+        #if not self.disable:
+        #    print "accelerated CLOCK ........"
         #    print " - accel:  " + str( self.acceleration ) + "s = 1 simulated hour"
         #    print " - offset: " + str( self.offset_hours )
 
@@ -74,7 +74,7 @@ class clock( Pyro.core.ObjBase ):
 
         self.acceleration = int( rate )
 
-        if self.run_mode == 'live':
+        if self.disable:
             print "(ignoring clock reset in real time)"
             return
         
@@ -112,8 +112,8 @@ class clock( Pyro.core.ObjBase ):
         print " - start:  " + str( self.base_simulationtime )
 
     def get_datetime( self ):
-        if self.run_mode == 'live':
-            # return real time
+        if self.disable:
+            # just return real time
             return self.now()
         else:
             # compute simulation time based on how much real time has passed

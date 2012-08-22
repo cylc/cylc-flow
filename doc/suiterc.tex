@@ -1168,9 +1168,10 @@ Remote hosting configuration for tasks that run on hosts other than the
 suite host. If a remote host is specified cylc will attempt to execute
 the task on that host by passwordless ssh. Cylc must be installed on 
 remote task hosts, but of the external software dependencies only Pyro 
-is required there (and actually not even that - see ``ssh messaging''
-below). Passwordless ssh must be configured between the local suite
-owner on the suite host, and the task owner on the remote task host.
+is required there (actually, not even that if {\em ssh messaging} is
+used; see below). Passwordless ssh must be configured between the local
+suite owner on the suite host, and the task owner on the remote task
+host.
 
 \subparagraph[host]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ host}
 

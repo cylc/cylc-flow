@@ -290,10 +290,10 @@ class scheduler(object):
 
         self.configure_suite()
 
-        forced_mode = self.config['cylc']['force run mode']
-        if forced_mode:
-            if self.run_mode != forced_mode:
-                raise SchedulerError, 'ERROR: this suite can only run in ' + forced_mode + ' mode'
+        reqmode = self.config['cylc']['required run mode']
+        if reqmode:
+            if reqmode != self.run_mode:
+                raise SchedulerError, 'ERROR: this suite requires the ' + reqmode + ' run mode'
         
         self.logfile = os.path.join(self.logging_dir,'log')
         self.reflogfile = os.path.join(self.config.dir,'reference.log')
@@ -302,6 +302,9 @@ class scheduler(object):
             self.config['cylc']['log resolved dependencies'] = True
 
         elif self.options.reftest:
+            req = self.config['cylc']['reference test']['required run mode']
+            if req and req != self.run_mode:
+                raise SystemExit( 'ERROR: this suite allows only ' + req + ' mode reference tests')
             if 'shutdown' in self.config.event_config.events:
                 print >> sys.stderr, 'WARNING: replacing shutdown event handler for reference test run'
             else:
@@ -574,8 +577,11 @@ class scheduler(object):
         # ACCELERATED CLOCK for simulation and dummy run modes
         rate = self.config['cylc']['accelerated clock']['rate']
         offset = self.config['cylc']['accelerated clock']['offset']
+        disable = self.config['cylc']['accelerated clock']['disable']
+        if self.run_mode == 'live':
+            disable = True
         if not reconfigure:
-            self.clock = accelerated_clock.clock( int(rate), int(offset), self.utc, self.run_mode ) 
+            self.clock = accelerated_clock.clock( int(rate), int(offset), self.utc, disable ) 
             task.task.clock = self.clock
             clocktriggered.clocktriggered.clock = self.clock
             self.pyro.connect( self.clock, 'clock' )
