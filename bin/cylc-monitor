@@ -241,7 +241,7 @@ try:
             # when task processing is invoked).
             blit.append( 'suite state summary last updated at:              ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
-            if run_mode != live:
+            if run_mode != 'live':
                 foo = 'SIMULATION:'
                 bar = str(rate) + ' real seconds = 1 hour' 
                 baz = header
