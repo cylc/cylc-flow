@@ -242,6 +242,7 @@ control_commands['set-verbosity' ] = ['set-verbosity' ]
 utility_commands = OrderedDict()
 utility_commands['cycletime'    ] = ['cycletime' ]
 utility_commands['checkvars'    ] = ['checkvars'] 
+utility_commands['random'       ] = ['random', 'rnd'] 
 utility_commands['housekeeping' ] = ['housekeeping'] 
 utility_commands['scp-transfer' ] = ['scp-transfer'] 
 utility_commands['lockserver'] = ['lockserver' ]
@@ -484,6 +485,7 @@ comsum[ 'failed'     ] = 'Release task lock and report failure'
 # utility
 comsum[ 'cycletime'    ] = 'Cycle time arithmetic and filename templating'
 comsum[ 'checkvars'    ] = 'Check required environment variables en masse'
+comsum[ 'random'       ] = 'Generate a random integer within a given range'
 comsum[ 'jobscript'    ] = 'Generate a task job script and print it to stdout'
 comsum[ 'housekeeping' ] = 'Parallel archiving and cleanup on cycle time offsets'
 comsum[ 'scp-transfer' ] = 'Scp-based file transfer for cylc suites'
