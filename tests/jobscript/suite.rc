@@ -4,10 +4,11 @@ title = "job script torture test"
 description = """Any task job script may fail regardless of user runtime
 settings if changes to cylc re-order the job script sections badly: e.g.
 "cylc task started" must be called after the CYLC_ environment variables
-are exported. Additionally, in particular suites users may rely on
-certain things being defined and available in the environment and
-command scripting sections, and on the relative ordering of these
-sections."""
+are exported. Additionally, users may rely on the order of variable
+definition in each environment and command scripting section: e.g. suite
+bin directory must go in PATH before the task runtime environment is
+defined because suite bin commands could be used in variable assignment
+expressions."""
 
 [cylc]
     [[reference test]]
@@ -79,4 +80,8 @@ export VAR_PostCS=postcs"""
             E_FOU = $CYLC_TASK_NAME
             # the suite bin must be in $PATH already:
             E_FIV = $( foo.sh )
+        [[[remote]]]
+            # force use of ssh job submission to disconnect local tasks
+            # from the submitting suite environment.
+            host = localhost
 
