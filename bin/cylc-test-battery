@@ -19,30 +19,40 @@
 set -e; trap "echo 'TEST BATTERY FAILED'" ERR
 
 usage() {
-    echo "USAGE: cylc [admin] test-battery [--help]"
+    echo "USAGE: cylc [admin] test-battery [options] [TOPDIR]"
     echo ""
-    echo "This command runs the full battery of self-diagnosing test-suites"
-    echo "under \$CYLC_DIR/tests/ - part of the automated testing done before"
-    echo "releasing a new cylc version."
+    echo "This command runs a battery of self-diagnosing test-suites. "
+    echo "See documention of \"Reference Tests\" in the User Guide."
+    echo "If test batteries are kept in a directory tree, use TOPDIR to "
+    echo "target all the contained suites, or a sub-tree, or a single "
+    echo "one of them. TOPDIR defaults to \$CYLC_DIR/tests/, the location"
+    echo "of the official cylc reference tests."
     echo
     echo "Options:"
     echo "  -h, --help   Print this help message and exit."
 }
 
-if [[ $# != 0 ]]; then 
+if [[ $# > 1 ]]; then
     usage
+    exit 1
+elif [[ $# == 1 ]]; then
     if [[ $1 == "--help" ]]; then
+        usage
         exit 0
     else
-        echo "ERROR: illegal command line arguments"
-        exit 1
+        SOURCE_DIR=$1
+        if [[ $SOURCE_DIR != /* ]]; then
+            # abs path:
+            SOURCE_DIR=$PWD/$SOURCE_DIR
+        fi
     fi
+else
+    SOURCE_DIR=$CYLC_DIR/tests
 fi
 
 MY_TMPDIR=${CYLC_TMPDIR:-${TMPDIR:-/tmp}}
 mkdir -p $MY_TMPDIR
 
-SOURCE_DIR=$CYLC_DIR/tests
 TARGET_DIR=$(mktemp -d)
 REG_GROUP=battery
 
@@ -51,16 +61,16 @@ echo ">> COPYING test suites to $TARGET_DIR... "
 cp -r $SOURCE_DIR $TARGET_DIR
 
 echo
-echo ">> UNREGISTERING any previous test battery... "
+echo ">> UNREGISTERING previous test suites... "
 cylc unreg -df ${REG_GROUP}'.*' #> /dev/null
 
 echo
-echo ">> REGISTERING test suites under ${REG_GROUP}... "
+echo ">> REGISTERING test suites... "
 CWD=$PWD
 cd $TARGET_DIR
-for RC in $( find tests -name 'suite.rc' ); do
+for RC in $( find . -name 'suite.rc' ); do
     DIR=$(dirname $RC)
-    NAME=${DIR#tests/}
+    NAME=${DIR#./}
     NAME=${REG_GROUP}.$(echo $NAME | tr '/' '.')
     cylc db reg $NAME $DIR
 done
@@ -72,6 +82,7 @@ cd ..
 N_FAILED=0
 N_PASSED=0
 N_TOTAL=0
+FAILED=""
 for REG in $( cylc db pr -xy $REG_GROUP ); do
     N_TOTAL=$(( N_TOTAL + 1 ))
     LOG=$PWD/${REG}.log
@@ -82,26 +93,32 @@ for REG in $( cylc db pr -xy $REG_GROUP ); do
     else
         echo FAILED
         N_FAILED=$(( N_FAILED + 1 ))
+        FAILED="$FAILED $REG"
     fi
 done
 
 set -e; trap "echo 'TEST BATTERY FAILED'" ERR
 
 echo
+echo ">> UNREGISTERING test suites..."
+cylc unreg -df ${REG_GROUP}'.*'
+
+echo
 echo "SUMMARY:"
-echo "  $N_PASSED of $N_TOTAL passed"
-echo "  $N_FAILED of $N_TOTAL failed"
+echo "  $N_PASSED of $N_TOTAL tests passed"
+echo "  $N_FAILED of $N_TOTAL tests failed"
+if (( N_FAILED != 0 )); then
+    for REG in $FAILED; do
+        echo "  - $REG"
+    done
+fi
 
 if (( N_FAILED != 0 )); then
     echo
     echo "ERROR: $N_FAILED test suites FAILED"
     exit 1
+else
+    echo
+    echo ">> DONE: all test suites passed."
 fi
-
-echo
-echo ">> UNREGISTERING the test battery ..."
-cylc unreg -df ${REG_GROUP}'.*'
-
-echo
-echo ">> DONE: all test suites passed."
 
