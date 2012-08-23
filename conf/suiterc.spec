@@ -21,9 +21,9 @@
 
 # _________________________________________________________MAIN SECTIONS
 # [cylc]          - non task-related suite config.
-# [scheduling]    - items affecting when a task is deemed ready to run.
-# [runtime]       - what to execute (and how) when a task is ready.
-# [visualization] - for suite graphing and the graph-based control GUI.
+# [scheduling]    - determines when tasks are ready to run.
+# [runtime]       - how, where, what to execute when a task is ready.
+# [visualization] - for suite graphing and the gcontrol graph view.
 
 #_______________________________________________________________________
 # WARNING: a CONFIGOBJ or VALIDATE bug? list constructor fails if final

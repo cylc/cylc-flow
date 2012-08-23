@@ -5274,31 +5274,27 @@ copying it, do this:
 \label{AutoRefTests}
 
 Reference tests are finite-duration suite runs that abort with non-zero
-exit status if any of the following conditions occur:
+exit status if any of the following conditions occur (by default):
 
 \begin{myitemize}
-    \item cylc fails (this always causes an abort)
-    \item any task fails (unless told not to abort)
-    \item the suite times out (which may indicate that a task has died
-        without reporting failure to the suite)
-    \item a nominated shutdown event handler, executed in the foreground
-        so that cylc can detect its exit status, reports failure
+    \item cylc fails
+    \item any task fails
+    \item the suite times out (e.g.\ a task dies without reporting failure)
+    \item a nominated shutdown event handler exits with error status
 \end{myitemize}
 
 The default shutdown event handler for reference tests is   
 \lstinline=cylc hook check-triggering= which compares task triggering
 information (what triggers off what at run time) in the test run suite
-log to that from an earlier reference run.  This triggering information
-disregards the timing and order of events that are not directly causally
-connected, so a correct run will still verify as correct regardless of
-how cycle interleaving, for example, varies according to the external
-queing conditions and so on.
+log to that from an earlier reference run, disregarding the timing and
+order of events - which can vary according to the external queueing
+conditions, runahead limit, and so on.
 
-To prepare a reference log for a suite just run it with the
+To prepare a reference log for a suite, run it with the
 \lstinline=--reference-log= option, and manually verify the
 correctness of the reference run.
 
-To run a reference test just run the suite (in dummy mode for the most
+To reference test a suite, just run it (in dummy mode for the most
 comprehensive test without running real tasks) with the
 \lstinline=--reference-test= option.
 
@@ -5318,6 +5314,7 @@ The reference test can be configured with the following settings:
 [cylc]
     [[reference test]]
         suite shutdown event handler = cylc check-triggering
+        required run mode = dummy
         allow task failures = False
         live mode suite timeout = 5 # minutes
         dummy mode suite timeout = 2
@@ -5327,7 +5324,7 @@ The reference test can be configured with the following settings:
 \subsubsection{Roll-your-own Reference Tests}
 
 If the default reference test is not sufficient for your needs, firstly
-note that you can change the default shutdown event handler, and
+note that you can override the default shutdown event handler, and
 secondly that the \lstinline=--reference-test= option is merely a short
 cut to the following suite.rc settings which can also be set manually if
 you wish:
