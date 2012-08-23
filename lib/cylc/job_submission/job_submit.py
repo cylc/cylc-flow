@@ -92,9 +92,8 @@ class job_submit(object):
         self.remote_cylc_dir = remote_cylc_dir
         self.remote_suite_dir = remote_suite_dir
 
-        if ( remote_host and remote_host != "localhost" and remote_host != socket.gethostname() ) or \
-            ( task_owner and task_owner != self.suite_owner ):
-            # REMOTE TASKS
+        if remote_host or task_owner:
+            # REMOTE TASK OR USER ACCOUNT SPECIFIED FOR TASK - submit using ssh
             self.local = False
             if task_owner:
                 self.task_owner = task_owner
