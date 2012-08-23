@@ -1599,7 +1599,9 @@ class config( CylcConfigObj ):
             taskd.precommand = taskconfig['pre-command scripting'] 
             taskd.postcommand = taskconfig['post-command scripting'] 
 
-        if self.run_mode == 'live':
+        if self.run_mode == 'live' or \
+                ( self.run_mode == 'simulation' and not taskd['simulation mode']['disable retries'] ) or \
+                ( self.run_mode == 'dummy' and not taskd['dummy mode']['disable retries'] ):
             taskd.retry_delays = deque( taskconfig['retry delays'])
 
         # check retry delay type (must be float):
@@ -1678,7 +1680,9 @@ class config( CylcConfigObj ):
             print >> sys.stderr, "WARNING: unsetting manual completion (dummy tasks don't detach)" 
             taskd.manual_messaging = False
 
-        if self.run_mode == 'live':
+        if self.run_mode == 'live' or \
+                ( self.run_mode == 'simulation' and not taskd['simulation mode']['disable event hooks'] ) or \
+                ( self.run_mode == 'dummy' and not taskd['dummy mode']['disable event hooks'] ):
             # configure task event hooks
             taskd.hook_script = taskconfig['event hooks']['script']
             taskd.hook_events = taskconfig['event hooks']['events']

@@ -89,6 +89,8 @@ description = "No description provided"
             command scripting = "echo Dummy command scripting; sleep $(cylc rnd 1 16)"
             disable pre-command scripting = True
             disable post-command scripting = True
+            disable event hooks = True
+            disable retries = True
         [[[job submission]]]
             method = background
             command template = None

@@ -116,10 +116,14 @@ description = string( default="No description provided" )
         [[[simulation mode]]]
             run time range = list( default=list(1,16))
             simulate failure = boolean( default=False )
+            disable event hooks = boolean( default=True )
+            disable retries = boolean( default=True )
         [[[dummy mode]]]
             command scripting = string( default='echo Dummy command scripting; sleep $(cylc rnd 1 16)')
             disable pre-command scripting = boolean( default=True )
             disable post-command scripting = boolean( default=True )
+            disable event hooks = boolean( default=True )
+            disable retries = boolean( default=True )
         [[[job submission]]]
             method = string( default=background )
             command template = string( default=None )
