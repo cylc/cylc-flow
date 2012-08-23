@@ -3204,19 +3204,19 @@ a host other than the suit host, e.g.:
             suite definition directory = /path/to/remote/suite/definition/on/foo
 \end{lstlisting}
 \lstset{language=transcript}
-cylc will attempt to execute the task on the declared host, by the
-configured job submission method, as the declared owner,
-using passwordless ssh. 
+cylc will execute the task on the declared host, by the configured job
+submission method, as the declared owner, using passwordless ssh. 
 
 \begin{myitemize}
     \item passwordless ssh must be configured between the suite owner on
-        the suite host and the task owner on the remote host.
-    \item cylc and Pyro must be installed on the remote host so that the
+        the suite host and the task owner on the task host.
+    \item cylc and Pyro must be installed on the task host so that the
         remote task can communicate with the suite (but graphviz,
-        Pygraphviz, and Jinja2 are not needed there).
-    \item the suite definition directory must be installed on the remote
-        host, if the task needs access to scripts in the suite bin
-        directory or to any other files stored there.
+        Pygraphviz, and Jinja2 are not needed by the task messaging
+        commands).
+    \item the suite definition directory can optionally be installed on
+        the task host if the task needs access to the suite bin
+        directory or to other suite files.
 \end{myitemize}
 
 A local task to run under another user account is treated as a remote task.
@@ -3225,22 +3225,22 @@ A local task to run under another user account is treated as a remote task.
 resource manager, such as loadleveler, that allows you to submit a job
 locally to run on the remote host}.
 
-Remote host functionality, like other namespace properties, can 
-be declared globally (in the root namespace) or per family, or per 
-individual task. Use the global settings if all or most of your tasks
+Remote host functionality, like all namespace settings, can 
+be declared globally (in the root namespace) or per family, or for 
+individual tasks. Use the global settings if all or most of your tasks
 need to run on the same remote host.
 
-If cylc is not in your \lstinline=$PATH= on the remote host use the
-``cylc directory'' item to give remote tasks access to cylc commands.
-If \lstinline=$PATH= is configured in your \lstinline=$HOME/.profile=
-script it will be picked up as the remote job submission mechanism
-automatically sources \lstinline=.profile= if it exists. Similarly the
-remote suite directory gives tasks access to
-suite files via \lstinline=$CYLC_SUITE_DEF_PATH= on the remote
-host and to the suite bin directory via \lstinline=$PATH=. If a remote
-suite definition directory is not given the local (suite host) path will
-be assumed with the local home directory, if present, substituted with 
-literal \lstinline=$HOME= for evaluation on the remote host.
+If cylc is not in your \lstinline=$PATH= on the remote host you can use
+the ``cylc directory'' item to give remote tasks access to cylc. However,
+the remote job submission mechanism automatically sources
+\lstinline=.profile= if it exists, so you can also set your
+\lstinline=PATH= for cylc there. Similarly tasks can use 
+\lstinline=$CYLC_SUITE_DEF_PATH= to access suite files on the task host,
+and the suite bin directory is automatically added \lstinline=$PATH=. 
+If a remote suite definition directory is not specified the local (suite
+host) path will be assumed with the local home directory, if present,
+substituted with literal \lstinline=$HOME= for evaluation on the task
+host.
 
 \paragraph{Remote Task Log Directories}
 
