@@ -19,6 +19,7 @@
 import subprocess
 import os, sys, re
 from Jinja2Support import Jinja2Process, TemplateSyntaxError, TemplateError
+from include_files import inline
 from version import cylc_version, cylc_dir
 from hostname import hostname
 
@@ -124,6 +125,9 @@ class compat_file( compat ):
         flines = f.readlines()
         f.close()
 
+        # handle cylc include-files
+        flines = inline( flines, os.path.dirname( suiterc ))
+
         # Here we must process with Jinja2 before checking the first two
         # lines, to allow use of the cylc version number as a Jinja2
         # variable (for use in multiple places):
@@ -155,7 +159,7 @@ class compat_file( compat ):
             #    raise
             #raise SystemExit(str(x))
         except TemplateError, x:
-            print >> sys.stderr, 'Jinja2 Template Error'
+            print >> sys.stderr, 'Jinja2 Template Error:', x
             print >> sys.stderr, 'Continuing cylc version check without Jinja2'
             suiterclines = flines
             #if debug:
