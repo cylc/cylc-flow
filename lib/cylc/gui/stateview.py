@@ -700,8 +700,11 @@ class lupdater(threading.Thread):
         x, y = self.led_treeview.convert_widget_to_tree_coords(x, y)
         path, column, cell_x, cell_y = self.led_treeview.get_path_at_pos(x, y)
         col_index = self.led_treeview.get_columns().index(column)
-        name = self.task_list[col_index - 1]
         ctime = self.ctimes[path[0]]
+        if col_index == 0:
+            tooltip.set_text(ctime)
+            return True
+        name = self.task_list[col_index - 1]
         task_id = name + "%" + ctime
         state = self.state_summary.get(task_id, {}).get("state", "")
         tooltip.set_text((task_id + "\n" + state).strip())
