@@ -17,32 +17,30 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from cylc.run import remote_run
-from cylc.CylcOptionParsers import NoPromptOptionParser
-from cylc.registration import dbgetter, RegistrationError
+from cylc.CylcOptionParsers import cop
+from cylc.registration import localdb, RegistrationError
 
-remote_run( 'get-directory' )
+from cylc.remote import remrun
+remrun().execute()
 
-parser = NoPromptOptionParser( usage = """cylc [db] get-directory SUITE
+parser = cop( usage = """cylc [db] get-directory REG
 
-Retrieve and print a suite definition directory path.
-How to move to a suite definition directory, for the lazy: 
-  $ cd $(cylc get SUITE).""" )
-
-parser.add_option( "-c", "--central",
-        help="Target the central suite database.",
-        action="store_true", default=False, dest="central" )
+Retrieve and print the directory location of suite REG.
+Tip: here's how to move to a suite definition directory: 
+  $ cd $(cylc get-dir REG).""" )
 
 ( options, args ) = parser.parse_args()
 
-if len(args) != 1:
-    parser.error( "Wrong number of arguments" )
+# (no need for compat reinvocation here - this command accesses
+# the suite database but not the suite defintion).
 
 reg = args[0]
-dbg = dbgetter( options.central )
+db = localdb( file=options.db, verbose=options.verbose )
+db.load_from_file()
 try:
-    suite, suiterc = dbg.get_suite(reg)
+    suite, suiterc = db.get_suite(reg)
 except RegistrationError, x:
     raise SystemExit(x)
 
 print os.path.dirname(suiterc)
+

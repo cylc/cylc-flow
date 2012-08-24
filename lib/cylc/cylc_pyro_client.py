@@ -16,28 +16,44 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
-import Pyro.core
+try:
+    import Pyro.core
+except ImportError, x:
+    raise SystemExit("ERROR: Pyro is not installed")
+
+import sys
 from optparse import OptionParser
 from hostname import hostname
 from time import sleep
-from passphrase import passphrase, PassphraseNotFoundError, SecurityError
 from port_scan import get_port, check_port
+from passphrase import passphrase
+from owner import user
 
 class client( object ):
-    def __init__( self, suite, owner=os.environ['USER'], host=hostname, port=None, pfile=None ):
+    def __init__( self, suite, pphrase=None, owner=user, host=hostname, pyro_timeout=None, port=None, verbose=False ):
         self.suite = suite
         self.owner = owner
         self.host = host
         self.port = port
-        self.passphrase = passphrase( suite, owner, host ).get(pfile)
+        self.verbose = verbose
+        if pyro_timeout:
+            self.pyro_timeout = float(pyro_timeout)
+        else:
+            self.pyro_timeout = None
+
+        #if pphrase:
+        self.pphrase = pphrase
+        #else:
+        #    # TO DO: IS THIS NECESSARY - called from gcylc
+        #    # get the suite passphrase
+        #    self.pphrase = passphrase( suite, owner, host).get( None, None )
 
     def get_proxy( self, target ):
         # callers need to check for port_scan.SuiteIdentificationError:
         if self.port:
-            check_port( self.suite, self.port, self.owner, self.host, silent=True )
+            check_port( self.suite, self.pphrase, self.port, self.owner, self.host, self.pyro_timeout, self.verbose )
         else:
-            self.port = get_port( self.suite, self.owner, self.host, silent=True, pphrase=self.passphrase )
+            self.port = get_port( self.suite, self.owner, self.host, self.pphrase, self.pyro_timeout, self.verbose )
 
         # get a pyro proxy for the target object
         objname = self.owner + '.' + self.suite + '.' + target
@@ -47,7 +63,8 @@ class client( object ):
         proxy = Pyro.core.getProxyForURI(uri)
 
         # set set passphrase if necessary:
-        if self.passphrase:
-            proxy._setIdentification( self.passphrase )
+        if self.pphrase:
+            proxy._setIdentification( self.pphrase )
 
         return proxy
+

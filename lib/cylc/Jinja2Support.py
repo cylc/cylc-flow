@@ -27,8 +27,6 @@ else:
     jinja2_loaded = True
 
 def Jinja2Process( flines, dir, verbose ):
-    # Callers should handle Jinja2 TemplateSyntaxError or TemplateError
-
     # check first line of file for template engine directive
     # (check for new empty suite.rc files - zero lines - first)
     if flines and re.match( '^#![jJ]inja2\s*', flines[0] ):
@@ -47,9 +45,9 @@ def Jinja2Process( flines, dir, verbose ):
         #|  #!/usr/bin/env python
         #|  def foo( value, length, fillchar ):
         #|     return str(value).rjust( int(length), str(fillchar) )
-        fdirs = [os.path.join( dir, 'Jinja2' ), os.path.join( dir, 'jinja2' ), \
-                os.path.join( os.path.join( os.environ['HOME'], '.cylc', 'Jinja2' )), \
-                os.path.join( os.path.join( os.environ['HOME'], '.cylc', 'jinja2' ))]
+        fdirs = [os.path.join( os.environ['CYLC_DIR'], 'lib', 'Jinja2Filters' ),
+                os.path.join( dir, 'Jinja2Filters' ),
+                os.path.join( os.path.join( os.environ['HOME'], '.cylc', 'Jinja2Filters' ))]
         usedfdirs = []
         for fdir in fdirs:
             if os.path.isdir( fdir ):
@@ -68,15 +66,21 @@ def Jinja2Process( flines, dir, verbose ):
 
         # load file lines into a template, excluding '#!jinja2' so
         # that '#!cylc-x.y.z' rises to the top.
-        try:
-            template = env.from_string( ''.join(flines[1:]) )
-        except Exception, x:
-            # This happens if we use an unknown Jinja2 filter, for example.
-            # TO DO: THIS IS CAUGHT BY VALIDATE BUT NOT BY VIEW COMMAND...
-            raise TemplateError( x )
+        # CALLERS SHOULD HANDLE JINJA2 TEMPLATESYNTAXERROR AND TEMPLATEERROR
+       # try:
+        template = env.from_string( ''.join(flines[1:]) )
+       # except Exception, x:
+       #     # This happens if we use an unknown Jinja2 filter, for example.
+       ##     # TO DO: THIS IS CAUGHT BY VALIDATE BUT NOT BY VIEW COMMAND...
+       #     raise TemplateError( x )
 
+        
+        # CALLERS SHOULD HANDLE JINJA2 TEMPLATESYNTAXERROR AND TEMPLATEERROR
         # (converting unicode to plain string; configobj doesn't like?)
+        #try:
         rendered = str( template.render() )
+        #except Exception, x:
+        #    raise TemplateError( x )
 
         xlines = rendered.split('\n') # pass a list of lines to configobj
         suiterc = []

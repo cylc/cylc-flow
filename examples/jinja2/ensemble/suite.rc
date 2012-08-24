@@ -1,9 +1,11 @@
 #!jinja2
 
-title = Jinja2 simple ensemble example
-description = """
-Illustrates programmatic generation of dependencies for related tasks.
-The same can be done for runtime settings."""
+title = "Jinja2 simple ensemble example"
+description = "Auto-generation of dependencies for related tasks."
+
+# Note that depending on the structure of the suite you may be able to
+# simply use a task family name in the graph to represent the entire
+# ensemble (which would be defined by inheritance under [runtime]).
 
 {% set N_MEMBERS = 5 %}
 [scheduling]

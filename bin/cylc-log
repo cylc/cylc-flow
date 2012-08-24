@@ -16,23 +16,18 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.remote import remrun
+remrun().execute()
+
 import os, re, sys
-from optparse import OptionParser
-import tempfile
-import subprocess
-from cylc.registration import dbgetter, RegistrationError
+from cylc.CylcOptionParsers import cop
 from cylc.config import config, SuiteConfigError
-from cylc.version import compat
+from cylc.command_prep import prep_file
 
-parser = OptionParser( """cylc [info] log [options] SUITE 
-Print, or view in $EDITOR, local suite log files, with optional
-filtering. This command is a convenience: you don't need to
-know the log file location on disk.
+parser = cop( """cylc [info] log [OPTIONS] ARGS 
+Print and filter cylc suite (not task) log files.""" )
 
-Arguments:
-  SUITE - Target suite.""")
-
-parser.add_option( "-p", "--print", 
+parser.add_option( "-l", "--location", 
         help="Print the suite log file location and exit. This is "
         "equivalent to 'cylc get-config SUITE cylc logging directory'.",
         action="store_true", default=False, dest="print_location" )
@@ -50,29 +45,16 @@ parser.add_option( "-r", "--rotation",
         help="Rotation number (to view older, rotated logs)",
         metavar="INT", action="store", default="0", dest="rotation" )
 
-parser.add_option( "-e", "--edit",
-        help="View a temporary copy of the (filtered) log file in $EDITOR "
-        "instead of printing it to stdout.",
-        action="store_true", default=False, dest="edit" )
-
 ( options, args ) = parser.parse_args()
 
-if len(args) != 1:
-    parser.error( "wrong number of arguments" )
-
-reg = args[0]
-
-dbg = dbgetter()
-try:
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    raise SystemExit(x)
-
-compat( suite, suiterc ).execute( sys.argv )
+suite, suiterc = prep_file( args[0], options ).execute()
+owner = options.db_owner
 
 try:
-    filename = os.path.join( config( suite, suiterc )['cylc']['logging']['directory'], 'log' )
-except SuiteConfigError, x:
+    filename = os.path.join( config( suite, suiterc, owner )['cylc']['logging']['directory'], 'log' )
+except Exception, x:
+    if options.debug:
+        raise
     raise SystemExit(x)
  
 if options.rotation != "0":
@@ -106,31 +88,6 @@ if filter:
 else:
     filtered = lines
 
-if not options.edit:
-    for line in filtered:
-        print line.rstrip()
-    sys.exit(0)
+for line in filtered:
+    print line.rstrip()
 
-try:
-    editor = os.environ['EDITOR']
-except KeyError:
-    raise SystemExit( 'export $EDITOR before using this command' )
-
-tmpfile = tempfile.mktemp( suffix = ".tmp", prefix = suite+'-log', dir = cylc_tmpdir )
-tmp = open( tmpfile, 'wb' )
-tmp.writelines( filtered )
-tmp.close()
-
-command_list = [ editor, tmpfile ]
-try:
-    # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-    retcode = subprocess.call( command_list )
-    if retcode != 0:
-        # the command returned non-zero exist status
-        print >> sys.stderr, ' '.join( command_list ), ' failed: ', retcode
-        sys.exit(1)
-
-except OSError:
-    # the command was not invoked
-    print >> sys.stderr, 'ERROR: unable to execute ', ' '.join(command_list)
-    sys.exit(1)

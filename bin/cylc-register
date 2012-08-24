@@ -16,32 +16,28 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.remote import remrun
+remrun().execute()
+
 import os, sys
-from cylc.run import remote_run
-from cylc.CylcOptionParsers import NoPromptOptionParser
+from cylc.CylcOptionParsers import cop
 from cylc.registration import localdb, RegistrationError, DatabaseLockedError
 from cylc.passphrase import passphrase
 from cylc.hostname import hostname
+from cylc.owner import user
 
-remote_run( 'register' )
+parser = cop( usage = """cylc [db] register [OPTIONS] ARGS
 
-parser = NoPromptOptionParser( usage = """cylc [db] register [options] SUITE PATH
+Register the suite definition located in PATH as REG.
 
-Register a suite in your private suite database.
+Suite names are hierarchical, delimited by '.' (foo.bar.baz); they
+may contain letters, digits, underscore, and hyphens. Colons are not
+allowed because directory paths incorporating the suite name are 
+sometimes needed in PATH variables.
 
-Cylc commands target suites via names registered in a suite database so
-that you don't need to continually re-type the actual location of the
-suite definition directory on disk. Suite names are hierarchical like
-directory paths but delimited by '.' (foo.bar.baz), allowing suites to
-be grouped and organised into tree-like structures. Groups are virtual
-and do not need to be explicitly created before use.
+EXAMPLES:
 
-Legal name characters are letters, digits, underscore, and hyphen. The
-period '.' is the registration hierarchy delimiter. Colon cannot be used
-because of the potential for trouble with PATH variables if the suite
-name is used in certain directory paths.
-
-EXAMPLES, for suite definition dirs /home/bob/(one,two,three,four):
+For suite definition directories /home/bob/(one,two,three,four):
 
 % cylc db reg bob         /home/bob/one
 % cylc db reg foo.bag     /home/bob/two
@@ -61,27 +57,24 @@ EXAMPLES, for suite definition dirs /home/bob/(one,two,three,four):
    `-bar
      |-baz   "Test Suite Three" | /home/bob/three
      `-waz   "Test Suite Four"  | /home/bob/four""",
-     extra_args = ["PATH                 A cylc suite definition directory."] )
-
-parser.add_option( "-v","--verbose",
-        help="Print extra information.",
-        action="store_true", default=False, dest="verbose" )
+     argdoc=[("REG", "Suite name"), 
+         ("PATH", "Suite definition directory")])
 
 ( options, args ) = parser.parse_args()
 
-if len(args) != 2:
-    parser.error( "Wrong number of arguments" )
+if args[1].endswith('suite.rc'):
+    suiterc = args[1]
+    rdir = os.path.dirname(suiterc)
+else:
+    rdir = args[1]
+    suiterc = os.path.join( rdir, 'suite.rc' )
 
-# NEW REGISTRATION: cylc register SUITE PATH
-suite = args[0]
-rdir = args[1]
-if rdir.endswith('suite.rc'):
-    # just want the directory
-    rdir = os.path.dirname(rdir)
 if not os.path.isdir( rdir ):
     raise SystemExit( "Directory not found: " + rdir )
 
-db = localdb( verbose=options.verbose )
+suite = args[0]
+
+db = localdb( file=options.db, verbose=options.verbose )
 try:
     db.lock()
     db.load_from_file()
@@ -89,16 +82,22 @@ try:
     db.dump_to_file()
     db.unlock()
 except DatabaseLockedError, x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 except RegistrationError, x:
     print >> sys.stderr, x
     db.unlock()
+    if options.debug:
+        raise
     sys.exit(1)
 except Exception, x:
     print >> sys.stderr, 'ERROR:', x
     db.unlock()
+    if options.debug:
+        raise
     sys.exit(1)
 
 # create a new passphrase for the suite if necessary
-passphrase( suite, os.environ['USER'], hostname ).generate(rdir)
+passphrase( suite, user, hostname, verbose=options.verbose ).generate(rdir)
 

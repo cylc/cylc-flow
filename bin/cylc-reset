@@ -17,16 +17,18 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+if '--use-ssh' in sys.argv[1:]: 
+    sys.argv.remove( '--use-ssh' )
+    from cylc.remote import remrun
+    remrun().execute( force_required=True )
+
+from cylc.prompt import prompt
 from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
-from cylc.CylcOptionParsers import PromptOptionParser
-from cylc.port_scan import SuiteIdentificationError
-from cylc.CylcError import CylcError
-from cylc.registration import dbgetter, RegistrationError
-from cylc.version import compat
-from cylc.passphrase import SecurityError
+from cylc.CylcOptionParsers import cop
+from cylc.command_prep import prep_pyro
 
-parser = PromptOptionParser( """cylc [control] reset [options] SUITE TASK
+parser = cop( """cylc [control] reset [OPTIONS] ARGS
 
 Force a task's state to:
  1/ 'ready' .... (default)   ...... all prerequisites satisfied (default) 
@@ -45,7 +47,8 @@ failed "sequential task" that cannot be re-run successfully after fixing
 the problem, because sequential tasks do not spawn until they succeed. 
 Alternatively, you could force the failed task to the succeeded state, 
 or insert a new instance into the suite at the next cycle time.""",
-[ 'TASK                 The target task.'] )
+    pyro=True,
+    argdoc=[ ('REG', 'Suite name'), ('TASK', 'Target task ID')])
 
 parser.add_option( "--ready", 
         help="Force task to the 'ready' state.",
@@ -69,8 +72,7 @@ parser.add_option( "--spawn",
 
 (options, args) = parser.parse_args()
 
-if len(args) != 2:
-    parser.error( "Suite name and task ID required." )
+suite, pphrase = prep_pyro( args[0], options ).execute()
 
 count = [ options.waiting, options.succeeded, options.failed, options.ready, options.spawn ].count( True )
 if count != 0 and count != 1:
@@ -92,37 +94,25 @@ task_id = args[1]
 try:
     tid = TaskID( task_id )
 except TaskIDError,x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 else:
     task_id = tid.getstr()
 
-reg = parser.get_suite_name()
-dbg = dbgetter()
 try:
-    # unalias your own suite names
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    # may be a remote suite (if not we fail to get a Pyro proxy below)
-    suite = reg
-else:
-    # pseudo backward compatibility for your own suites
-    compat( suite, suiterc ).execute( sys.argv )
-
-try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
-    host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
-except SuiteIdentificationError, x:
-    raise SystemExit(x)
-except SecurityError, x:
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host, options.pyro_timeout, None, options.verbose ).get_proxy( 'remote' )
+except Exception, x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 
-if not parser.prompt( 'Reset task ' + task_id + ' in'):
-    sys.exit(0)
-
+prompt( 'Reset task ' + task_id + ' in ' + suite, options.force )
 result = proxy.reset_task_state( task_id, state )
 
 if result.success:
     print result.reason
 else:
-    print 'ERROR:', result.reason
-    sys.exit(1)
+    sys.exit( 'ERROR: ' + result.reason )
+

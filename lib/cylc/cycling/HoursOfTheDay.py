@@ -69,6 +69,15 @@ class HoursOfTheDay( cycler ):
     def get_def_min_runahead( self ):
         return self.minimum_runahead_limit
 
+    def adjust_state( self, offset ):
+        adj_hours = []
+        for hour in self.valid_hours:
+            adj = hour - int(offset)
+            if adj < 0:
+                adj = 24 + adj
+            adj_hours.append( adj )
+        self.valid_hours = adj_hours
+
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""
         adjusted = ct( T )

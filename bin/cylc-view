@@ -16,21 +16,23 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.remote import remrun
+remrun().execute()
+
 import os, re, sys
 import tempfile
 import subprocess
-from optparse import OptionParser
-from cylc.registration import dbgetter, RegistrationError
+from cylc.CylcOptionParsers import cop
 from cylc.conf.CylcGlobals import cylc_tmpdir
 from cylc.continuation_lines import join
 from cylc.Jinja2Support import Jinja2Process
 from cylc.include_files import inline_for_viewing
+from cylc.command_prep import prep_file
 
-parser = OptionParser( """cylc [prep] view [options] SUITE 
+parser = cop( """cylc [prep] view [OPTIONS] ARGS 
 
-View a read-only temporary copy of a suite definition (suite.rc file) in
-your editor. If the suite uses include-files you can view it inlined. If
-it uses a template engine such as Jinja2 you can view the processed file.
+View a read-only temporary copy of suite NAME's suite.rc file, in your
+editor, after optional include-file inlining and Jinja2 preprocessing.
 
 The edit process is spawned in the foreground as follows:
   $(G)EDITOR suite.rc
@@ -46,17 +48,17 @@ You can set both $GEDITOR and $EDITOR to a GUI editor if you like, but
 $GEDITOR at least *must* be a GUI editor, or an in-terminal invocation 
 of a non-GUI editor, if you want to spawn editing sessions via gcylc.
 
-See also 'cylc [prep] edit'.
+For remote host or owner, the suite will be printed to stdout unless
+the '-g,--gui' flag is used to spawn a remote GUI edit session.
 
-Arguments:
-  SUITE         Target suite.""")
+See also 'cylc [prep] edit'.""")
 
 parser.add_option( "--inline", "-i", 
         help="Inline any include-files.",
         action="store_true", default=False, dest="inline" )
 
-parser.add_option( "--processed", "-p",
-        help="View the suite after template engine processing. "
+parser.add_option( "--jinja2", "-j",
+        help="View the suite after Jinja2 template processing. "
         "This necessarily implies '-i' as well.",
         action="store_true", default=False, dest="process" )
 
@@ -80,25 +82,18 @@ parser.add_option( "--nojoin", "-n",
         "not correspond to those reported by the parser).",
         action="store_true", default=False, dest="nojoin" )
 
-parser.add_option( "--central",
-        help="Target the central suite database.",
-        action="store_true", default=False, dest="central" )
-
 parser.add_option( "--gui", "-g", 
         help="Use GUI editor $GEDITOR instead of $EDITOR. This option is "
         "automatically used when an editing session is spawned by gcylc.",
         action="store_true", default=False, dest="geditor" )
 
-parser.add_option( "--stdout", "-o", 
-        help="Print the suite definition to stdout instead of editing it.",
+parser.add_option( "--stdout", 
+        help="Print the suite definition to stdout.",
         action="store_true", default=False, dest="stdout" )
 
 ( options, args ) = parser.parse_args()
 
-if len(args) != 1:
-    parser.error( "wrong number of arguments" )
-
-reg = args[0]
+suite, suiterc = prep_file( args[0], options ).execute()
 
 if options.geditor:
     edvar = 'GEDITOR'
@@ -110,15 +105,7 @@ try:
 except KeyError:
     raise SystemExit( 'export $' + edvar + ' before using this command' )
 
-# find location of the suite definition directory
 global suitedir
-
-dbg = dbgetter( options.central )
-try:
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    raise SystemExit(x)
-
 suitedir = os.path.dirname(suiterc)
 
 # read the suite.rc file

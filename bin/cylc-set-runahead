@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import sys
+if '--use-ssh' in sys.argv[1:]: 
+    sys.argv.remove( '--use-ssh' )
+    from cylc.remote import remrun
+    remrun().execute( force_required=True )
+
+import os
+from cylc.prompt import prompt
+from cylc import cylc_pyro_client
+from cylc.CylcOptionParsers import cop
+from cylc.command_prep import prep_pyro
+
+parser = cop("""cylc [control] set-runahead [OPTIONS] ARGS
+
+Change the suite runahead limit in a running suite. This is the number of 
+hours that the fastest task is allowed to get ahead of the slowest. If a 
+task spawns beyond that limit it will be held back from running until the
+slowest tasks catch up enough. WARNING: if you omit HOURS no runahead
+limit will be set - DO NOT DO THIS for for any cycling suite that has
+no near stop cycle set and is not constrained by clock-triggered
+tasks.""", pyro=True,
+    argdoc=[ ('REG', 'Suite name'),
+        ('[HOURS]', 'Runahead limit (default: no limit)')])
+
+(options, args) = parser.parse_args()
+
+suite, pphrase = prep_pyro( args[0], options ).execute()
+
+runahead = None
+if len(args) == 2:
+    runahead = args[1]
+
+try:
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host, options.pyro_timeout, None, options.verbose ).get_proxy( 'remote' )
+except Exception, x:
+    if options.debug:
+        raise
+    raise SystemExit(x)
+
+if runahead:
+    prompt( 'Change runahead limit in ' + suite + ' to ' + runahead, options.force )
+else:
+    prompt( 'Change runahead limit in ' + suite + ' to NO LIMIT', options.force )
+
+if runahead:
+    result = proxy.set_runahead( hours=runahead )
+else:
+    # no limit!
+    result = proxy.set_runahead( hours=None )
+
+if result.success:
+    print result.reason
+else:
+    sys.exit( 'ERROR: ' + result.reason )
+

@@ -24,7 +24,7 @@ import datetime
 from optparse import OptionParser
 from cylc.housekeeping import config_file, config_line
 
-usage = """1/ cylc [util] housekeeping [options] SOURCE MATCH OPER OFFSET [TARGET]
+usage = """1/ cylc [util] housekeeping [OPTIONS] SOURCE MATCH OPER OFFSET [TARGET]
 Usage: 2/ cylc [util] housekeeping [options] FILE
 
 Parallel archiving and cleanup of files or directories with names
@@ -100,7 +100,7 @@ parser.add_option( "--cycletime",
 #        action="store_true", dest="force", default=False )
 
 parser.add_option( "--mode", 
-        help="Octal umask for creating new destination directories"
+        help="Octal umask for creating new destination directories. "
         "E.g. 0775 for drwxrwxr-x",
         metavar='MODE',
         action="store", dest="mode", default=None )

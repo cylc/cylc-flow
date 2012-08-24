@@ -16,54 +16,41 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, re, sys
-from optparse import OptionParser
-from cylc.registration import dbgetter, RegistrationError, DatabaseLockedError
+from cylc.remote import remrun
+remrun().execute()
+
+import sys
+from cylc.CylcOptionParsers import cop
+from cylc.registration import localdb, RegistrationError, DatabaseLockedError
 from cylc.config import config, SuiteConfigError
 from cylc.regpath import RegPath
 
-parser = OptionParser( usage = """cylc [db] refresh [options] SUITE
+parser = cop( usage = """cylc [db] refresh [OPTIONS] ARGS
 
 Check a suite database for invalid registrations (no suite definition 
 directory or suite.rc file) and refresh suite titles in case they have
-changed since the suite was registered (for the central database this
-also updates the titles of suites owned by others).
-
-Arguments:
-    SUITE      - suite name, or match pattern""" )
-
-parser.add_option( "-c","--central",
-        help="Print suite registrations from the central database.",
-        action="store_true", default=False, dest="central" )
+changed since the suite was registered. Explicit wildcards must be 
+used in the match pattern (e.g. 'f' will not match 'foo.bar' unless
+you use 'f.*').""", 
+argdoc=[('[REGEX]', 'Suite name match pattern')])
 
 parser.add_option( "-u","--unregister",
         help="Automatically unregister invalid registrations.",
         action="store_true", default=False, dest="unregister" )
 
-parser.add_option( "-v","--verbose",
-        help="Print extra information.",
-        action="store_true", default=False, dest="verbose" )
-
 ( options, args ) = parser.parse_args()
 
-db = dbgetter(central=options.central, verbose=options.verbose).db
+db = localdb(file=options.db, verbose=options.verbose)
 
 if len(args) == 0:
-    pattern = None
-elif len(args) == 1:
-    pattern = args[0]
+    pattern = '.*'
 else:
-    parser.error( "Wrong number of arguments")
-
-if options.central:
-    # only allow users to refresh their own suites
-    owner = os.environ['USER']
-    if not pattern or pattern == owner:
-        pattern = owner + RegPath.delimiter_re
-    else:
-        pattern = re.sub( '^' + owner + '\.', '', pattern) # remove 'owner.'
-        pattern = re.sub( '^' + owner + '\.', '', pattern) # remove 'owner\.'
-        pattern = owner + RegPath.delimiter_re + pattern # prepend 'owner\.'
+    pattern = args[0]
+    # force explicit wildcards
+    if not pattern.startswith( '^' ):
+        pattern = '^' + pattern
+    if not pattern.endswith( '$' ):
+        pattern += '$'
 
 invalid = []    # no suite.rc file
 readerror = []  # can't read title (suite.rc parse error)
@@ -113,3 +100,4 @@ except Exception, x:
     print >> sys.stderr, 'ERROR:', x
     db.unlock()
     sys.exit(1)
+

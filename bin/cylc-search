@@ -16,12 +16,14 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.remote import remrun
+remrun().execute()
+
 import os, re, sys
-from optparse import OptionParser
 from collections import deque
-from cylc.registration import dbgetter, RegistrationError
-from cylc.version import compat
+from cylc.CylcOptionParsers import cop
 from cylc.include_files import inline_for_search
+from cylc.command_prep import prep_file
 
 def section_level( heading ):
     # e.g. foo => 0
@@ -42,69 +44,34 @@ def print_heading( heading ):
     #    indent += space * 2
     #print indent + heading
 
-parser = OptionParser( """cylc [prep] search|grep [options] PATTERN SUITE 
+parser = cop( """cylc [prep] search|grep [OPTIONS] ARGS
 
-Find matches to PATTERN in the suite.rc file, and any contained
-include-files, and in any files in the suite bin directory. For the
-suite.rc and include-files, matches are reported by file line number and
-suite section (even if include files are nested).
-
-An unquoted list of PATTERNs will be converted to an OR'd pattern.
-
-Note that the order of command line arguments conforms to grep command usage
-('grep PATTERN FILE') not normal cylc command usage ('command SUITE ARGS').
-However, if the second argument is not found to be a registered suite, an
-attempt will be made to action the command with the arguments reversed.
+Search for pattern matches in suite definitions and any files in the
+suite bin directory. Matches are reported by line number and suite
+section. An unquoted list of PATTERNs will be converted to an OR'd
+pattern. Note that the order of command line arguments conforms to
+normal cylc command usage ('command SUITE ARGS') not shell grep usage.
 
 Note that this command performs a text search on the suite definition,
-rather than search all item names and values in the data structure that 
-results from parsing the suite definition. Both types of search may be
-implemented in the future.
+it does not search the data structure that results from parsing the
+suite definition - so it will not report implicit default settings.
 
-For case insenstive matching use '(?i)PATTERN'.
-
-Arguments:
-  SUITE   - Suite database registration
-  PATTERN - (list of) Python-style regular expression(s).
-  """)
+For case insenstive matching use '(?i)PATTERN'.""",
+    argdoc = [('REG', 'Suite name'), 
+        ('PATTERN', 'Python-style regular expression'),
+        ('[PATTERN2...]', 'Addtional search patterns')])
 
 parser.add_option( "-x", help="Do not search in the suite bin directory",
         action="store_false", default=True, dest="search_bin" )
 
-parser.add_option( "-c", "--central", 
-        help="Target the central database.",
-        action="store_true", default=False, dest="central" )
-
 ( options, args ) = parser.parse_args()
 
-arg0 = args[0]
-arg1n = '|'.join(args[1:])
-argn = args[-1]
-argn1 = '|'.join(args[0:-1])
+suite, suiterc = prep_file( args[0], options ).execute()
 
-# find location of the suite definition directory
-dbg = dbgetter( options.central )
-try:
-    suite, suiterc = dbg.get_suite( argn )
-except RegistrationError,x:
-    print >> sys.stderr, x
-    print "Trying reversed arguments..."
-    try:
-        suite, suiterc = dbg.get_suite( arg0 )
-    except RegistrationError,x:
-        raise SystemExit(x)
-    else:
-        # cylc prep search SUITE PATTERN
-        pattern = arg1n
-        print 'SUITE:', suite, suiterc
-        print 'PATTERN:', pattern
-else:
-    # cylc prep search PATTERN SUITE
-    pattern = argn1
-    print 'SUITE:', suite, suiterc
-    print 'PATTERN:', pattern
-
-compat( suite, suiterc ).execute( sys.argv )
+# cylc search SUITE PATTERN
+pattern = '|'.join(args[1:])
+print 'SUITE:', suite, suiterc
+print 'PATTERN:', pattern
 
 suitedir = os.path.dirname( suiterc )
 

@@ -16,74 +16,41 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.remote import remrun
+remrun().execute()
+
 import os, sys
 import subprocess
-from optparse import OptionParser
-from cylc.config import config, SuiteConfigError
-from cylc.registration import dbgetter, RegistrationError
-from cylc.version import compat
+from cylc.CylcOptionParsers import cop
+from cylc.config import config
+from cylc.command_prep import prep_file
 
-parser = OptionParser( """cylc [info|prep] list|ls [OPTIONS] SUITE [FILTER]
+parser = cop( """cylc [info|prep] list|ls [OPTIONS] ARGS 
 
-Print a suite's task list; or print or graph its runtime namespace
-inheritance hierarchy.
-
-Arguments:
-   SUITE    - Target suite
-   FILTER   - regular expression filter on task names.""")
-
-parser.add_option( "-c", "--central", 
-        help="Target the central database.",
-        action="store_true", default=False, dest="central" )
+Print a suite's task list or runtime namespace inheritance hierarchy.
+To graph the namespace hierarchy, see 'cylc graph'.""" )
 
 parser.add_option( "-t","--tree",
         help="Print the full runtime inheritance hierarchy.",
         action="store_true", default=False, dest="tree" )
 
-parser.add_option( "-g","--graph",
-        help="Graph the full runtime inheritance hierarchy.",
-        action="store_true", default=False, dest="gui" )
-
-parser.add_option( "-p","--pretty",
-        help="Use unicode box drawing characters when printing "
-        "the suite runtime inheritance hierarchy.",
+parser.add_option( "-b", "--box",
+        help="(with -t,--tree) Use unicode box characters.",
         action="store_true", default=False, dest="pretty" )
 
 (options, args) = parser.parse_args()
 
-if len(args) == 1:
-    filter = None
-elif len(args) == 2:
-    filter = args[1]
-else:
-    parser.error( "Wrong number or arguments" )
-
-reg = args[0]
-dbg = dbgetter( options.central )
-try:
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    raise SystemExit(x)
-
-compat( suite, suiterc ).execute( sys.argv )
-
-if options.gui:
-    command = [ 'cylc', 'graph', '--namespaces', suite ]
-    try:
-        # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-        retcode = subprocess.call( command )
-    except OSError, x:
-        print >> sys.stderr, 'ERROR: Unable to invoke', new_cylc
-        raise SystemExit( str(x) )
-    else:
-        sys.exit(retcode)
+suite, suiterc = prep_file( args[0], options ).execute()
 
 try:
     config = config( suite, suiterc )
-except SuiteConfigError,x:
+except Exception,x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 
-if options.tree:
-    config.print_inheritance_tree( filter=filter, pretty=options.pretty )
+if options.tree or options.pretty:
+    config.print_inheritance_tree( pretty=options.pretty )
 else:
-    config.print_task_list( filter=filter )
+    config.print_task_list()
+

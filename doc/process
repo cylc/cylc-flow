@@ -5,7 +5,7 @@ set -e
 # Generate PDF and HTML User Guides from the LaTeX source.
 
 usage() {
-	echo "USAGE: [-p] [-h] $0"
+	echo "USAGE: $0 [-p] [-h] [-s]"
     echo ' -p, generate PDF output only'
     echo ' -h, generate HTML output only'
     echo ' -s, generate HTML one page output only' 
@@ -84,9 +84,7 @@ if $PDF_ONLY; then
     rm cylc-version.txt # gets regenerated every time
     exit 0
 elif $HTML_ONE_PAGE; then
-    if [ ! -d single ]; then
-        mkdir single
-    fi 
+    mkdir -p single
     htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in" "" -dsingle/
     rm cylc-version.txt
     cp -r images single
@@ -98,13 +96,23 @@ elif $HTML_ONLY; then
     exit 0
 fi
 
-pdflatex cug-pdf.tex
+# PDF 
+pdflatex cug-pdf.tex  # three runs to get references right
 pdflatex cug-pdf.tex
 pdflatex cug-pdf.tex
 
+# multiple referencing runs don't seem to be required for htlatex:
+
+# HTML ONE PAGE (generate in sub-dir single/)
 rm *.aux
+mkdir -p single
+htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in" "" -dsingle/
+cp -r images single  # needs to be done manually!
+cp -r screenshots single
 
-htlatex cug-html.tex "cug-html.cfg,xhtml,3,next"
+# HTML MULTI-PAGE (overwrites cug-html.html in doc)
+rm *.aux
 htlatex cug-html.tex "cug-html.cfg,xhtml,3,next"
 
 rm cylc-version.txt # gets regenerated every time
+

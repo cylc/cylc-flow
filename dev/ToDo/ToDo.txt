@@ -1,27 +1,17 @@
 
 Since moving cylc to github, I'm using this page to keep track of 
-half-formed ideas and issues that require further investigation 
-before concluding there is a problem ... at which point the issue
-can be migrated to the github issue tracker.
+half-formed and relatively insignificant ideas, and issues that require
+further investigation before concluding there is a problem ... at which
+point the issue can be migrated to the github issue tracker.
 _______
 GENERAL
+ 
+ + with a ctrl-Z stopped suite present, gcylc takes the port scan
+ timeout time to start up. We should be able to show the window *before*
+ the updater thread does a port scan.
 
- + New multi-view suite control GUI: all suite info is now got from the
- suite via Pyro instead of from a local config file parsed when the GUI
- starts up (because with remote control capability we may not have a
- local config file to parse).  Will this be a performance hit (either
- for the GUI or the suite) in large suites?  If so, we could optionally
- allow the old method with the proviso that it would not work for remote
- controlled suites.
-
- + To start a suite by GUI we still need to parse the config file to
- get, for example, configured initial and final cycle times for display!
-
- + gcylc --host=FOO still starts up if FOO is an unknown host, and then tries
-to start the suite locally.
-
- + run suite from GUI after shutting down a remote suite, will attempt 
-to run it locally.
+ + Python dict.get( key, default ) never returns KeyError, and seems to
+ be valid right back to Python 2.4 and earlier.
 
  + cylc command tab completion?  see /etc/bash_completion.d/git.sh !
 
@@ -55,12 +45,6 @@ which frees up model-type suites - maybe no stallng now?
     (a) task -> suite (remote TCP/IP or ssh -> local TCP/IP)
     (b) command -> suite (remote? or local TCP/IP)
     
-* ssh retry for task messaging results in:
-  "/usr/lib64/python2.6/site-packages/gtk-2.0/gtk/__init__.py:57:
-    GtkWarning: could not open display"
-traced to "import graphing" in config.py, loaded by registration.py.
-=> refactor the source so that this is only needed by GUI commands.
-
 * can validation be made to detect circular dependencies. E.g. 
 if foo is a member of FAM, then "FAM => foo" means foo will not run
 because it depends on itself.  This could be detected as a
@@ -141,12 +125,6 @@ messages such as remote error tracebacks to be sent to the handler.
 
 * GUI: check for suite blocking before popping up entry dialogs?
 
-* Practice mode (currently disabled):
-    * message command (command line usage only) lock and practice mode?
-    * practice mode should be allowed even for exclusive suite locks. 
-    * check that practice mode suites initialise with the same clock time
-      as the original suite.
-
 * method arg checking in remote switch: just use generic exception
   handling for efficiency, leaving specific arg format checking to
   the commands?
@@ -159,9 +137,6 @@ messages such as remote error tracebacks to be sent to the handler.
 
 * config(suite) writes to stdout/stderr (gcylc parent terminal) - see
   gcylc:view_log() for a non-validating suite.
-
-* clean up src/gui/textload.py and use of it: it was quickly hacked out
-  of the tailing logviewer and should be treated separately and more simply.
 
 * clean up prerequisites classes - put all in one module? (same with
   outputs + requisites?)
@@ -206,11 +181,6 @@ messages such as remote error tracebacks to be sent to the handler.
 * ?can deletion and insertion while a suite is HELD result in 
     "INSERTING A TASK
       ERROR: A%2010081800 has already registered its outputs"
-
-* document reason for naming of pyro-connected objects
-  (owner.suite.obj): prevent accidentally intervening in the wrong
-  suite when using explicit port numbers (if we allow that). Also, 
-  is this still required?
 
 * Python re: check use of re m.group() and m.groups(): 
 
@@ -323,12 +293,6 @@ messages such as remote error tracebacks to be sent to the handler.
 * clean up the clock class with respect to dummy vs real time, and move
   it into task pool?
 
-GUI
-
-* currently scans for port on every command - should store found port.
-
-* catch invalid regex (e.g. unbalanced paren) in user-entered filters.
-
 * Cylc internals can easily handle different task commands, environment,
 outputs etc., at different times, BUT this would complicate the suite.rc 
 spec considerably for very rare use cases.  (EXAMPLE
@@ -339,6 +303,27 @@ prerequisites via the dependency graph cycle-time lists, and some
 interface to this in config.py (which however should be designed
 not to further complicate suite.rc files for general use).
 
+GUI
+
++ can we keep the control GUI graph view centered, after layout
+ changes, on the most recently clicked-on task? (clicking on a task
+ centers it now, for a given layout).
+
+ + New multi-view suite control GUI: all suite info is now got from the
+ suite via Pyro instead of from a local config file parsed when the GUI
+ starts up (because with remote control capability we may not have a
+ local config file to parse).  Will this be a performance hit (either
+ for the GUI or the suite) in large suites?  If so, we could optionally
+ allow the old method with the proviso that it would not work for remote
+ controlled suites.
+
+
+* currently scans for port on every command - should store found port?
+
+* catch invalid regex (e.g. unbalanced paren) in user-entered filters.
+
+* clean up src/gui/textload.py and use of it: it was quickly hacked out
+  of the tailing logviewer and should be treated separately and more simply.
 
 ====================================
 GRAPH STABILITY:

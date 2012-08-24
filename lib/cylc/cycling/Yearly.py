@@ -126,6 +126,9 @@ class Yearly( cycler ):
 
         return result
 
+    def adjust_state( self, offset ):
+        self.anchorDate = sub_years( ct(self.anchorDate), int(offset) ).get()
+
 if __name__ == "__main__":
     # UNIT TEST
 

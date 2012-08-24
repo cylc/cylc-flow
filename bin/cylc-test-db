@@ -20,8 +20,7 @@ set -e
 
 usage() {
     echo "USAGE: cylc [admin] test-db [--help]"
-    echo "This is a thorough test of cylc suite registration"
-    echo "database functionality (private and central)."
+    echo "A thorough test of suite registration database functionality."
     echo "Options:"
     echo "  --help   Print this usage message."
 }
@@ -76,61 +75,25 @@ echo cylc db copy $REG2 $REG4 $MY_TMPDIR/$REG4
 cylc db copy $REG2 $REG4 $MY_TMPDIR/$REG4
 
 echo
-echo "> TEST5: print LDB reg group $GRP"
+echo "> TEST5: print DB reg group $GRP"
 echo cylc db pr $GRP
 cylc db pr $GRP
 
 echo
-echo "> TEST6: export $REG2 to CDB"
-echo cylc db exp $REG2
-cylc db exp $REG2
-
-echo
-echo "> TEST7: export the whole group to CDB"
-echo cylc db unreg --central --delete -f ${USER}.$REG2
-cylc db unreg --central --delete -f ${USER}.$REG2
-echo cylc db exp ${GRP}
-cylc db exp ${GRP}
-
-echo
-echo "> TEST8: print CDB reg group $GRP:"
-echo cylc db pr --central ${USER}.${GRP}
-cylc db pr --central ${USER}.${GRP}
-
-echo
-echo "> TEST9: import central $REG4 as $REG5"
-echo cylc db imp ${USER}.$REG4 $REG5 $MY_TMPDIR/$REG5
-cylc db imp ${USER}.$REG4 $REG5 $MY_TMPDIR/$REG5
-
-echo
-echo "> TEST10: delete $REG2 from CDB"
-echo cylc db unreg --central --delete -f ${USER}.$REG2
-cylc db unreg --central --delete -f ${USER}.$REG2
-
-echo
-echo "> TEST11: delete the rest of group $GRP from CDB"
-echo cylc db unreg --central --delete -f ${USER}.${GRP}
-cylc db unreg --central --delete -f ${USER}.$GRP
-
-echo
-echo "> TEST12: print CDB group $GRP (should be empty)"
-echo cylc db pr --central ${USER}.$GRP
-cylc db pr --central ${USER}.$GRP
-
-echo
-echo "> TEST13: unregister $REG2 from LDB"
+echo "> TEST13: unregister $REG2 from DB"
 echo cylc db unreg $REG2
 cylc db unreg $REG2
 
 echo
-echo "> TEST14: delete the rest of group $GRP from LDB"
+echo "> TEST14: delete the rest of group $GRP from DB"
 echo cylc db unreg --delete -f $GRP
-cylc db unreg --delete -f $GRP
+cylc db unreg --delete -f "${GRP}\..*"
 
 echo
-echo "> TEST16: print LDB group $GRP (should be empty)"
+echo "> TEST16: print DB group $GRP (should be empty)"
 echo cylc db pr $GRP
 cylc db pr $GRP
 
 echo
 echo "> All database tests passed."
+

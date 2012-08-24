@@ -16,6 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.remote import remrun
+remrun().execute()
+
 import re, os, sys, logging
 import subprocess
 from time import sleep
@@ -24,8 +27,7 @@ from cylc.mkdir_p import mkdir_p
 from cylc.execute import execute
 from cylc.job_submission.job_submit import job_submit
 from cylc.config import config, SuiteConfigError, TaskNotDefinedError
-from cylc.registration import dbgetter, RegistrationError
-from cylc.CylcOptionParsers import NoPromptOptionParser
+from cylc.CylcOptionParsers import cop
 from cylc.TaskID import TaskID, TaskIDError
 from cylc.locking.suite_lock import suite_lock
 from cylc.locking.lockserver import lockserver
@@ -34,11 +36,11 @@ from cylc.task_types import clocktriggered
 from cylc import accelerated_clock
 from cylc.hostname import hostname
 from cylc.port_scan import SuiteIdentificationError
-from cylc.version import compat
 from cylc.regpath import RegPath
 from cylc import pimp_my_logger
+from cylc.command_prep import prep_file
 
-usage = """cylc [task] submit|single [options] SUITE TASK
+usage = """cylc [task] submit|single [OPTIONS] ARGS
 
 Submit a single task to run exactly as it would be submitted by its 
 parent suite, in terms of both execution environment and job submission
@@ -50,11 +52,12 @@ exclusive suite lock (which means you cannot running multiple instances
 of the suite at once, even under different registrations) then the
 lockserver will let you 'submit' a task from the suite only under the
 same registration, and only if the task is not locked (i.e. only if 
-the same task, NAME%CYCLE, is not currently running in the suite)."""
+the same task, NAME%TAG, is not currently running in the suite)."""
 
 def commandline_parser():
-    parser = NoPromptOptionParser( usage, 
-            [ "TASK                 Identity of the task to run (NAME%CYCLE)." ])
+    parser = cop( usage, 
+            argdoc=[ ("REG", "Suite name"),
+                ("TASK", "Target task (NAME%TAG)")])
 
     parser.set_defaults( sched=False, dry_run=False )
 
@@ -75,54 +78,18 @@ def commandline_parser():
 parser = commandline_parser()
 ( options, args ) = parser.parse_args()
 
-if len( args ) != 2:
-    parser.error( "suite name and task ID required." )
+suite, suiterc = prep_file( args[0], options ).execute()
 
 owner = options.owner
 host = options.host
-if owner != os.environ['USER'] or host != hostname:
-    print "_________________________________________________"
-    print "Remote suite invocation by passwordless ssh. The "
-    print "invocation process will direct stdout and stderr "
-    print "to bar.out on the remote account and then detach."
-    print "-------------------------------------------------"
-    if owner: 
-        sshopts = owner  + '@'
-    if host:
-        sshopts += host
-    else:
-        sshopts += 'localhost'
-    command = ['ssh', sshopts, 'source', '.profile;', 'cylc', 'submit' ] + sys.argv[1:] + [ '> bar.out 2>&1 &' ]
-    try:
-        # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-        retcode = subprocess.call( command )
-    except OSError, x:
-        print >> sys.stderr, 'ERROR: Unable to invoke', ' '.join(command)
-        raise 
-    else:
-        if retcode != 0:
-            print >> sys.stderr, 'ERROR: remote command failed'
-            sys.exit(retcode)
-    sys.exit(0)
 
-# get input args------------------------------------------------------
-reg = args[0]
 task_id = args[1]
-
-# find location of the suite definition directory --------------------
-dbg = dbgetter()
-try:
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError,x:
-    raise SystemExit(x)
-
-compat( suite, suiterc ).execute( sys.argv )
 
 suite_dir = os.path.dirname(suiterc)
 # For user-defined job submission methods:
 sys.path.append( os.path.join( suite_dir, 'python' ))
 
-# check task ---------------------------------------------------------
+# check task
 try:
     tid = TaskID( task_id )
 except TaskIDError, x:
@@ -130,15 +97,13 @@ except TaskIDError, x:
 else:
     task_name, ctime = tid.splitstr()
 
-# owner is now local (i.e. at this point the command is executing on 
-# the suite owner account on the suite host).
-owner = os.environ['USER']
-
-# load suite config item --------------------------------------------
+# load suite config
 try:
-    config = config( suite, suiterc )
+    config = config( suite, suiterc, verbose=options.verbose )
     config.create_directories( task_name )
-except SuiteConfigError,x:
+except Exception,x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 
 # modify logging dir for single task submit so as not to alter suite logs
@@ -172,21 +137,22 @@ if config['cylc']['lockserver']['enable']:
 
 # Running in UTC time? (else just use the system clock)
 utc = config['cylc']['UTC mode']
-dclock = accelerated_clock.clock( None, None, utc, False ) 
+dclock = accelerated_clock.clock( 0, 0, utc, 'live' ) 
 
 # CYLC EXECUTION ENVIRONMENT
 cylcenv = OrderedDict()
-cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
-cylcenv[ 'CYLC_DIR_LOCAL' ] = os.environ[ 'CYLC_DIR' ]
+cylcenv[ 'CYLC_DIR_ON_SUITE_HOST' ] = os.environ[ 'CYLC_DIR' ]
 if options.sched:
     cylcenv[ 'CYLC_MODE' ] = 'scheduler'
 else:
     cylcenv[ 'CYLC_MODE' ] = 'submit'
+cylcenv[ 'CYLC_DEBUG' ] = str( options.debug )
+cylcenv[ 'CYLC_VERBOSE' ] = str(options.verbose)
 cylcenv[ 'CYLC_SUITE_HOST' ] = hostname
-cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
-cylcenv[ 'CYLC_SUITE_DEF_PATH' ] =  re.sub( os.environ['HOME'], '$HOME', suite_dir )
+cylcenv[ 'CYLC_SUITE_PORT' ] = 'None'
 cylcenv[ 'CYLC_SUITE_REG_NAME' ] = suite
 cylcenv[ 'CYLC_SUITE_REG_PATH' ] = RegPath( suite ).get_fpath()
+# replace home dir with literal '$HOME' for the benefit of remote tasks:
 cylcenv[ 'CYLC_SUITE_OWNER' ] = owner
 cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 if use_lockserver:
@@ -194,10 +160,12 @@ if use_lockserver:
 cylcenv[ 'CYLC_UTC' ] = str(utc)
 ict = config['scheduling']['initial cycle time']
 fct = config['scheduling']['final cycle time'  ]
-if ict:
-    cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( ict )
-if fct:
-    cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( fct )
+cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( ict ) # may be "None"
+cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( fct ) # may be "None"
+cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] =  suite_dir
+cylcenv[ 'CYLC_SUITE_DEF_PATH' ] =  re.sub( os.environ['HOME'], '$HOME', suite_dir )
+cylcenv[ 'CYLC_SUITE_PYRO_TIMEOUT' ] = str( config.pyro_timeout )
+cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = config['cylc']['logging']['directory']
 
 # SCHEDULER ENVIRONMENT
 # Access to the suite bin directory for alert scripts executed
@@ -211,7 +179,6 @@ for var in senv:
 for var in cylcenv:
     os.environ[var] = cylcenv[var]
 
-# nasty kludge to give the simulation mode clock to task classes:
 task.task.clock = dclock
 clocktriggered.clocktriggered.clock = dclock
 task.task.suite = suite
@@ -246,5 +213,5 @@ except TaskNotDefinedError, x:
 if not options.dry_run:
     print "Logging directory: " + logging_dir
     print
-task_proxy.run_external_task( dry_run=options.dry_run )
-print
+task_proxy.submit( dry_run=options.dry_run )
+

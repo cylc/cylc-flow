@@ -22,24 +22,22 @@ usage() {
     echo "USAGE: cylc [admin] test-suite [--help]"
     echo ""
     echo "Run an automated test of core cylc functionality using a new copy of"
-    echo "'$CYLC_DIR/examples/admin'. This should be used to check that new"
-    echo "developments in the cylc codebase have not introduced serious bugs."
-    echo "The test runs a suite registered as 'test'; to watch its progress"
-    echo "use 'cylc view'. Aside from timing differences results should be the"
-    echo "same in live or simulation mode."
+    echo "\$CYLC_DIR/examples/admin. This is recommended by the User Guide as"
+    echo "a check that a new cylc installation is working properly; it is also"
+    echo "one of many automated tests run before releasing a new cylc version."
+    echo "See also cylc-test-db and cylc-test-battery."
     echo
     echo "Currently the test does the following:"
     echo "  - Copies the 'intro' example suite definition directory;"
-    echo "  - Registers the new suite as $SUITE_REG;"
-    echo "  - Starts the suite at T0=06Z, with task X set to fail at 12Z;"
-    echo "  - Unlocks the running suite;"
-    echo "  - Sets a stop time at 12Z (i.e. T0+30 hours);"
+    echo "  - Registers the new suite;"
+    echo "  - Starts the suite at T=06Z, with task X set to fail at 12Z;"
+    echo "  - Sets a stop time at 12Z (i.e. T+30 hours);"
     echo "  - Waits for the suite to stall as result of X failing;"
-    echo "  - Inserts a new coldstart task at 06Z (T0+24 hours);"
-    echo "  - Purges the failed X and dependants through to 00Z (T0+18 hours)"
+    echo "  - Inserts a new coldstart task at 06Z (T+24 hours);"
+    echo "  - Purges the failed X and dependants through to 00Z (T+18 hours)"
     echo "    inclusive, which allows the suite to get going again at 06Z;"
     echo "  - Waits for the suite to shut itself down at the 12Z stop time."
-    echo "  - Run a single task (called prep) from the suite with submit." 
+    echo "  - Runs a single task 'prep' outside of the suite." 
     echo
     echo "Options:"
     echo "  -h, --help   Print this help message and exit."
@@ -77,6 +75,7 @@ rm -f $OUT $OUT_SCHED
 # START UP THE TEST SUITE
 echo
 echo ">> STARTING at 2010010106, with TASK X to FAIL at 2010010112"
+echo ">> Output logs: $PWD/$OUT $PWD/$OUT_SCHED"
 export TEST_X_FAIL_TIME=2010010112
 
 # startup errors aren't trapped here because we run cylc in the background
@@ -137,6 +136,13 @@ echo
 echo ">> PURGING X%2010010112 and all dependents, through to 2010010200"
 echo -n "   ... "
 cylc purge -f $SUITE_REG X%2010010112 2010010200 >> $OUT 2>&1
+echo done
+
+# INCREASE THE RUNAHEAD LIMIT TO GET OVER THE GAP
+echo
+echo ">> Setting suite runahead limit to 48"
+echo -n "   ... "
+cylc set-runahead -f $SUITE_REG 48 >> $OUT 2>&1
 echo done
 
 # WAIT FOR THE SUITE TO FINISH AT 2010010212

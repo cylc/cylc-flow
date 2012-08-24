@@ -16,65 +16,36 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from cylc.job_submission.job_submit import job_submit
-from optparse import OptionParser
-from cylc.registration import dbgetter, RegistrationError
-from cylc.config import config, SuiteConfigError
-from cylc.taskdef import DefinitionError
-from cylc.version import compat, cylc_version
+from cylc.remote import remrun
+remrun().execute()
 
-parser = OptionParser( """cylc [prep] validate [options] SUITE
+from cylc.CylcOptionParsers import cop
+from cylc.version import cylc_version
+from cylc.config import config
+from cylc.command_prep import prep_file
 
-Parse and validate a suite config (suite.rc) file to check that all
-entries conform to the $CYLC_DIR/conf/suiterc.spec specification, and
-then attempt to instantiate a proxy object for each task in the suite.
+parser = cop( """cylc [prep] validate [OPTIONS] REG 
 
-IF THE SUITE.RC FILE USES INCLUDE-FILES: line numbers reported with
-validation errors will be wrong because the parser sees an inlined
-version of the file. You can use 'cylc prep inline SUITE' to trace
-errors to the correct source line, although the extra information
-reported by the validator should be sufficient to make this unnecessary.
+Validate a suite definition against the official specification
+held in $CYLC_DIR/conf/suiterc.spec.
 
-Arguments:
-   SUITE    - Suite database registration.""")
-
-parser.add_option( "-c", "--central", 
-        help="target the central database.",
-        action="store_true", default=False, dest="central" )
-
-parser.add_option( "-v","--verbose",
-        help="Print extra information from the validation process.",
-        action="store_true", default=False, dest="verbose" )
-
-parser.add_option( "-d","--debug",
-        help="Print full exception traceback and abort on error.",
-        action="store_true", default=False, dest="debug" )
+If the suite definition uses include-files reported line numbers
+will be wrong because the parser sees an inlined version of the suite.
+Use 'cylc view -i SUITE' to see the inlined version for comparison.""" )
 
 (options, args) = parser.parse_args()
 
-if len(args) != 1:
-    parser.error( "Wrong number or arguments" )
-
-reg = args[0]
-
-dbg = dbgetter( options.central )
-try:
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    if options.debug:
-        raise
-    raise SystemExit(x)
-
-compat( suite, suiterc ).execute( sys.argv )
+suite, suiterc = prep_file( args[0], options ).execute()
 
 if options.verbose:
     print "Parsing Suite Definition"
+
 try:
-    config = config( suite, suiterc, verbose=options.verbose )
+    config = config( suite, suiterc, validation=True, verbose=options.verbose )
 except Exception,x:
     if options.debug:
         raise
     raise SystemExit(x)
 
 print "Suite " + suite + " is valid for cylc-" + cylc_version
+

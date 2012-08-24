@@ -16,36 +16,27 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.remote import remrun
+remrun().execute()
+
 import sys
-from optparse import OptionParser
-from cylc.registration import dbgetter, RegistrationError, DatabaseLockedError
+from cylc.CylcOptionParsers import cop
+from cylc.registration import localdb, RegistrationError, DatabaseLockedError
 
-parser = OptionParser( usage = """cylc [db] reregister|rename [options] SOURCE TARGET
+parser = cop( usage = """cylc [db] reregister|rename [OPTIONS] ARGS
 
-Change the hierarchical registration name of a suite or group.
+Change the name of a suite (or group of suites) from REG1 to REG2.
 Example:
-  cylc db rereg foo.bar.baz test.baz
-
-Arguments:
-    SOURCE, TARGET  - suite or group names.""" )
-
-parser.add_option( "-c", "--central",
-        help="Target the central suite database.",
-        action="store_true", default=False, dest="central" )
-
-parser.add_option( "-v","--verbose",
-        help="Print extra information.",
-        action="store_true", default=False, dest="verbose" )
+  cylc db rereg foo.bar.baz test.baz""",
+       argdoc=[("REG1", "original name"), 
+         ("REG2", "new name")])
 
 ( options, args ) = parser.parse_args()
-
-if len(args) != 2:
-    parser.error( "Wrong number of arguments" )
 
 arg_from = args[0]
 arg_to = args[1]
 
-db = dbgetter( central=options.central, verbose=options.verbose ).db
+db = localdb( file=options.db, verbose=options.verbose )
 
 try:
     db.lock()
@@ -55,12 +46,19 @@ try:
     db.unlock()
 
 except DatabaseLockedError, x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 except RegistrationError,x:
     print >> sys.stderr, x
     db.unlock()
+    if options.debug:
+        raise
     sys.exit(1)
 except Exception, x:
     print >> sys.stderr, 'ERROR:', x
     db.unlock()
+    if options.debug:
+        raise
     sys.exit(1)
+

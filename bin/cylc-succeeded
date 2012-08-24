@@ -16,27 +16,25 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import os, sys
 from cylc import cylc_mode
 from optparse import OptionParser
 from cylc.task_message import message
-from cylc.locking.task_lock import task_lock
-from Pyro.errors import NamingError
 
-usage = """cylc [task] succeeded [options]
+usage = """cylc [task] succeeded [OPTIONS]
 
-This command is part of the cylc task messaging interface, by which
-means running tasks communicate with their parent suite; it is used to
-report successful task completion (and releases the task lock to the
-lockserver, if the lockserver is used).
+This command is part of the cylc task messaging interface, used by
+running tasks to communicate progress to their parent suite.
 
-NOTE that this command is automatically called at the end of the job
-scripts of non-detaching tasks; but it must be called manually in the
-external implementation of detaching tasks ('manual completion = True').
+The succeeded command reports successful completion of task execution
+(and releases the task lock to the lockserver if necessary). It is
+automatically written to the end of task jobs scripts by cylc, except in
+the case of detaching tasks (suite.rc: 'manual completion = True'), in
+which case it must be called explicitly by final task scripting. 
 
 Suite and task identity are determined from the task execution
-environment supplied by the suite or by 'cylc [task] submit'. In the
-latter case no communication occurs, but a message is printed to stdout.
+environment supplied by the suite (or by the single task 'submit'
+command, in which case case the message is just printed to stdout).
 
 See also:
     cylc [task] message
@@ -45,23 +43,41 @@ See also:
 
 parser = OptionParser( usage )
 
+parser.add_option( "-v", "--verbose",
+        help="Verbose output mode.",
+        action="store_true", default=False, dest="verbose" )
+
 ( options, args ) = parser.parse_args()
 
 if len( args ) != 0:
     parser.error( "Wrong number of arguments" )
 
+debug = False
+try:
+    # from task execution environment
+    if os.environ['CYLC_DEBUG'] == 'True':
+        debug = True
+except KeyError:
+    pass
+
 # release task lock if using the lockserver
 if not cylc_mode.mode().is_raw():
+    from cylc.locking.task_lock import task_lock
     try:
         if not task_lock().release():
             raise SystemExit( "Failed to release task lock" )
     except Exception, z:
         print >> sys.stderr, z
+        if debug:
+            raise
         raise SystemExit( "Failed to connect to the lockserver" )
  
 # send succeeded message
 try:
-    message().send_succeeded()
+    message(verbose=options.verbose).send_succeeded()
 except Exception, x:
     print >> sys.stderr, 'ERROR: task messaging failure.'
+    if debug:
+        raise
     raise SystemExit(x)
+

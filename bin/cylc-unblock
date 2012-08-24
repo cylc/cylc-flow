@@ -17,49 +17,41 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from cylc import cylc_pyro_client
-from cylc.CylcOptionParsers import PromptOptionParser
-from cylc.port_scan import SuiteIdentificationError
-from cylc.registration import dbgetter, RegistrationError
-from cylc.version import compat
-from cylc.passphrase import SecurityError
+if '--use-ssh' in sys.argv[1:]: 
+    sys.argv.remove( '--use-ssh' )
+    from cylc.remote import remrun
+    remrun().execute( force_required=True )
 
-parser = PromptOptionParser( """cylc [control] unblock [options] SUITE 
+from cylc.prompt import prompt
+from cylc import cylc_pyro_client
+from cylc.CylcOptionParsers import cop
+from cylc.command_prep import prep_pyro
+
+parser = cop( """cylc [control] unblock [OPTIONS] ARGS
 
 Unblock a blocked suite, which will refuse to comply with intervention
 commands until deliberately unblocked. This is a crude safety device to guard
 against accidental intervention in your own suites (if you are running multiple
-suites at once a simple typo on the command line could target the wrong suite).""")
+suites at once a simple typo on the command line could target the wrong suite).""",
+    pyro=True )
 
 (options, args) = parser.parse_args()
 
-reg = parser.get_suite_name()
-dbg = dbgetter()
-try:
-    # unalias your own suite names
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    # may be a remote suite (if not we fail to get a Pyro proxy below)
-    suite = reg
-else:
-    # pseudo backward compatibility for your own suites
-    compat( suite, suiterc ).execute( sys.argv )
+suite, pphrase = prep_pyro( args[0], options ).execute()
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
-    host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
-except SuiteIdentificationError, x:
-    raise SystemExit(x)
-except SecurityError, x:
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host, options.pyro_timeout, None, options.verbose ).get_proxy( 'remote' )
+except Exception, x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 
-if not parser.prompt( 'Unblock' ):
-    sys.exit(0)
-
+parser.prompt( 'Unblock ' + suite, options.force )
 result = proxy.unblock()
 
 if result.success:
     print result.reason
 else:
-    print 'ERROR:', result.reason
-    sys.exit(1)
+    sys.exit( 'ERROR:' + result.reason )
+

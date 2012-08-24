@@ -1,0 +1,115 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import sys
+if '--use-ssh' in sys.argv[1:]: 
+    sys.argv.remove( '--use-ssh' )
+    from cylc.remote import remrun
+    remrun().execute()
+
+import os, gtk
+import warnings
+warnings.filterwarnings('ignore', 'use the new', Warning)
+from cylc.CylcOptionParsers import cop
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
+
+from conf.CylcGlobals import cylc_tmpdir
+from cylc.gui.SuiteControl import ControlApp
+from cylc.hostname import hostname, is_remote_host
+from cylc.owner import user, is_remote_user
+from cylc.registration import localdb
+from cylc.passphrase import passphrase
+
+parser = cop( """cylc gcontrol [OPTIONS] REG
+gcontrol [OPTIONS] REG
+
+The cylc Suite Control GUI - can also be launched from the main GUI
+(cylc gui / gcylc)
+
+If the '-t,--timeout=' option is used the timeout value will be passed
+on to the suite if it is subsequently started up from the gcontrol GUI
+(where it will in turn be passed to tasks submitted by the suite).
+
+NOTE: daemonize important suites with the POSIX nohup command:
+    $ nohup gcontrol [OPTIONS] REG &""", pyro=True,
+    argdoc=[('REG', 'Suite name' )])
+
+parser.add_option( "-w", "--views", metavar="VIEWS", 
+        help="Initial view panes for the suite control GUI. "
+        "choose one or two, comma separated, from 'dot', "
+        "'text', and 'graph'; the default is 'dot,text'",
+        action="store", default='dot,text', dest="gviews" )
+
+parser.remove_option("-f" ) # don't need force (To Do: a read-only GUI)
+
+( options, args ) = parser.parse_args()
+
+# Make current working directory be $HOME. Otherwise (1) if the user
+# attempts to start gcylc from a CWD that has been removed, Pyro will
+# not be importable below; and (2) if the CWD gets removed later while
+# gcylc is running, subprocesses spawned by gcylc will fail when they
+# attempt to determine their CWD.
+os.chdir(os.environ['HOME'])
+
+suite = args[0]
+suitedir = None
+# dealias the suite name (an aliased name may be given for local suites)
+if not is_remote_host( options.host ) and not is_remote_user( options.owner ):
+    db = localdb(file=options.db, verbose=options.verbose)
+    db.load_from_file()
+    try:
+        suite = db.unalias( suite )
+        suitedir = db.getdir( suite )
+    except Exception, x:
+        if options.debug:
+            raise
+        raise SystemExit(x)
+
+try:
+    pphrase = passphrase( suite, options.owner, options.host,
+            verbose=options.verbose ).get( options.pfile, suitedir )
+except Exception, x:
+    sys.exit(str(x))
+
+gtk.settings_get_default().set_long_property("gtk-toolbar-icon-size", gtk.ICON_SIZE_SMALL_TOOLBAR, "main")
+gtk.settings_get_default().set_long_property("gtk-button-images", True, "main")
+gtk.settings_get_default().set_long_property("gtk-menu-images", True, "main")
+
+views = (options.gviews).split(',')
+
+if len(views) > 2:
+    sys.exit( 'Too many views specified' )
+
+illegal = []
+for view in views:
+    if view not in ['dot', 'text', 'graph' ]:
+        illegal.append(view)
+if len(illegal) != 0:
+    sys.exit( "ERROR, illegal view specs: " + ', '.join( illegal))
+
+try:
+    app = ControlApp( suite, pphrase, options.owner, options.host, None,
+            cylc_tmpdir, views, options.pyro_timeout )
+except Exception, x:
+    if options.debug:
+        raise
+    raise SystemExit(x)
+gtk.main()
+

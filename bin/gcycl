@@ -16,12 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-# Catch a common command line typo: 'gcycl'.
-# Could be done by shell alias, but this 
-# relieves the cylc user of the burden.
-
+# Catch a common command line typo: 'gcycl':
 echo >&2
 echo "TYPO ALERT: it's \"gcylc\", not \"gcycl\"!" >&2
 echo >&2
-$(dirname $0)/gcylc "$@"
+$(dirname $0)/cylc gui "$@"
+

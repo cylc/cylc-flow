@@ -1,0 +1,80 @@
+#!/bin/bash
+
+#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -e
+
+usage() {
+    echo ""
+    echo "USAGE: cylc [admin] import-examples TOPDIR"
+    echo ""
+    echo "Copy the cylc example suites to TOPDIR and register them for use."
+    echo ""
+    echo "Arguments:"
+    echo "   TOPDIR     Example suite destination directory: TOPDIR/examples/."
+}
+
+if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then
+    usage
+    exit 0
+fi
+
+if [[ -z $CYLC_DIR ]]; then
+    echo "ERROR: \$CYLC_DIR is not defined. Run this script via" >&2
+    echo "the main command interface: 'cylc admin import-examples'" >&2
+    exit 1
+fi
+
+if [[ $# != 1 ]]; then
+    echo "ERROR: TOPDIR required"
+    exit 0
+fi
+
+TOPDIR=$1
+
+CYLC_VERSION=$( cylc -v )
+if [[ $CYLC_VERSION == "VERSION-TEMPLATE" ]]; then
+    # we are in a cylc git repository - get most recent tag
+    CYLC_VERSION=$( git tag | tail -1 )X
+fi
+SSE=$( date +%s )
+TOP=cylc-$( echo $CYLC_VERSION | tr '.' '-' )-$SSE
+
+echo " + Copying example suites to $TOPDIR"
+mkdir -p $TOPDIR
+cp -r $CYLC_DIR/examples $TOPDIR
+
+echo " + Registering example suites"
+cd $TOPDIR/examples
+SUITE_RCS=$( find . -name suite.rc | sed -e 's@./@@' )
+for SUITE_RC in $SUITE_RCS; do
+    SUITE_DEF_DIR=$( dirname $SUITE_RC )
+    SUITE_REG_NAME=${TOP}.$( echo $SUITE_DEF_DIR | tr '/' '.' )
+    cylc db register $SUITE_REG_NAME $SUITE_DEF_DIR
+done
+
+echo
+echo "______________________________________________________________________"
+echo "NOTE: the example suites have been registered with seconds since epoch"
+echo "appended to the cylc version group name: $TOP"
+echo "This is to ensure uniqueness in case you modify the example suites and"
+echo "import them again at the same cylc version. You may want to reregister"
+echo "the group to plain cylc-$CYLC_VERSION after deleting any older uploads."
+echo "----------------------------------------------------------------------"
+echo
+
+echo "DONE"

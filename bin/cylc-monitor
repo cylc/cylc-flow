@@ -23,45 +23,41 @@ For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
 """
 
+import sys
+if '--use-ssh' in sys.argv[1:]: 
+    # requires local terminal
+    sys.exit( "No '--use-ssh': this command requires a local terminal." )
+
+import os, re
+from time import sleep
 from cylc.cycle_time import ct, CycleTimeError
 from cylc import cylc_pyro_client
 from cylc.port_scan import SuiteIdentificationError
-import os, re, sys
-from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
-from time import sleep
-from cylc.CylcOptionParsers import NoPromptOptionParser
-from cylc.registration import dbgetter, RegistrationError
-from cylc.version import compat
 from cylc.passphrase import SecurityError
+from cylc.CylcOptionParsers import cop
+from Pyro.errors import ProtocolError,TimeoutError,ConnectionClosedError
+from cylc.command_prep import prep_pyro
 
 compress = True
 
-parser = NoPromptOptionParser( """cylc [info] monitor [options] SUITE 
+parser = cop( """cylc [info] monitor [OPTIONS] ARGS 
 
 A terminal-based suite monitor that updates the current state of all
 tasks in real time. It is effective even for quite large suites if
 '--align' is not used. Being a passive monitor that cannot intervene in
 a suite's operation, it is allowed to monitor suites owned by others
-and/or running on remote hosts.""")
+and/or running on remote hosts.""", pyro=True )
 
 parser.add_option( "-a", "--align", 
         help="Align columns by task name. This option "
         "is only useful for small suites.",
         action="store_true", default=False, dest="align_columns" )
 
+parser.remove_option("-f" ) # don't need force
+
 ( options, args ) = parser.parse_args()
 
-reg = parser.get_suite_name()
-dbg = dbgetter()
-try:
-    # unalias your own suite names
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    # may be a remote suite (if not we fail to get a Pyro proxy below)
-    suite = reg
-else:
-    # pseudo backward compatibility for your own suites
-    compat( suite, suiterc ).execute( sys.argv )
+suite, pphrase = prep_pyro( args[0], options ).execute()
 
 header = 'waiting retry runahead queued submitted running succeeded held failed'
 header = '                                                                     '
@@ -77,9 +73,12 @@ try:
     while True:
         # connect to remote state summary object
         try: 
-            proxy = cylc_pyro_client.client( suite, owner=options.owner, \
-            host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
+            proxy = cylc_pyro_client.client( suite, pphrase,
+                    options.owner, options.host,
+                    options.pyro_timeout, None, options.verbose ).get_proxy( 'state_summary' )
         except SecurityError, x:
+            if options.debug:
+                raise
             raise SystemExit(x)
         except SuiteIdentificationError, x:
             if not alerted:
@@ -133,8 +132,8 @@ try:
             alerted3 = False
 
             dt = glbl[ 'last_updated' ]
-            rate = glbl[ 'simulation_clock_rate' ]
-            simulation_mode = glbl[ 'simulation_mode' ]
+            rate = glbl[ 'clock_rate' ]
+            run_mode = glbl[ 'run_mode' ]
             paused = glbl['paused']
             stopping = glbl['stopping']
             will_pause_at = glbl['will_pause_at']
@@ -228,7 +227,7 @@ try:
             # MONITOR HEADER and CURRENT TIME
             blit = []
             blitlines = {}
-            # SUITE NAME, NUMBER OF TASKS, SIMULATION MODE
+            # SUITE NAME, NUMBER OF TASKS, RUN MODE
             foo = header
             bar = suite + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'
             foo = re.sub( '^.{' + str(len('cylc!')) + '}', 'cylc!', foo )
@@ -242,7 +241,7 @@ try:
             # when task processing is invoked).
             blit.append( 'suite state summary last updated at:              ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
-            if simulation_mode:
+            if run_mode != 'live':
                 foo = 'SIMULATION:'
                 bar = str(rate) + ' real seconds = 1 hour' 
                 baz = header

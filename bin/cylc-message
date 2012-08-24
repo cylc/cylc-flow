@@ -16,21 +16,18 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import os, sys
 from optparse import OptionParser
 from cylc.task_message import message
-from Pyro.errors import NamingError
 
-usage = """cylc [task] message [options]
+usage = """cylc [task] message [OPTIONS] MESSAGE
 
-This command is part of the cylc task messaging interface, by which
-means running tasks communicate with their parent suite; it is used to
-report registered outputs completed, and any general progress messages
-(which will be logged by the suite).
+This command is part of the cylc task messaging interface, used by
+running tasks to communicate progress to their parent suite.
 
 Suite and task identity are determined from the task execution
-environment supplied by the suite or by 'cylc [task] submit'. In the
-latter case no communication occurs, but a message is printed to stdout.
+environment supplied by the suite (or by the single task 'submit'
+command, in which case case the message is just printed to stdout).
 
 See also:
     cylc [task] started
@@ -57,27 +54,41 @@ parser.add_option( "--all-outputs-completed",
         help="Report all internal outputs completed at once.",
         action="store_true", dest="all_outputs_completed" )
 
+parser.add_option( "-v", "--verbose",
+        help="Verbose output mode.",
+        action="store_true", default=False, dest="verbose" )
+
 ( options, args ) = parser.parse_args()
 
 if options.next_restart_completed:
-    message().shortcut_next_restart()
+    message(verbose=options.verbose).shortcut_next_restart()
     sys.exit(0)
 
 elif options.all_restarts_completed:
-    message().shortcut_all_restarts()
+    message(verbose=options.verbose).shortcut_all_restarts()
     sys.exit(0)
 
 elif options.all_outputs_completed:
-    message().shortcut_all_outputs()
+    message(verbose=options.verbose).shortcut_all_outputs()
     sys.exit(0)
 
 elif len( args ) == 0:
     parser.error( "No task message supplied" )
 
-else:
-    msg = ' '.join( args )
-    try:
-        message( msg=msg, priority=options.priority ).send()
-    except Exception, x:
-        print >> sys.stderr, 'ERROR: task messaging failure.'
-        raise SystemExit(x)
+debug = False
+try:
+    # from task execution environment
+    if os.environ['CYLC_DEBUG'] == 'True':
+        debug = True
+except KeyError:
+    pass
+
+msg = ' '.join( args )
+try:
+    message( msg=msg, priority=options.priority, verbose=options.verbose ).send()
+except Exception, x:
+    print >> sys.stderr, 'ERROR: task messaging failure.'
+    if debug:
+        raise
+    raise SystemExit(x)
+

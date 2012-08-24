@@ -1,7 +1,7 @@
 ;; Simple syntax highlighting for cylc suite definition files.
 ;; Author: Luis Kornblueh, 2012
 ;;
-;; 1. copyt this file to $HOME/.emacs.d
+;; 1. copy this file to $HOME/.emacs.d
 ;; 2. add in $HOME/.emacs the following lines:
 ;;
 ;;   (setq load-path (cons (expand-file-name "~/.emacs.d") load-path))
@@ -11,16 +11,19 @@
 ;;   (global-font-lock-mode t)
 ;;______________________________________________________________________________
 
-(defconst cylc-mode-version "0.01")
+(defconst cylc-mode-version "0.1")
 
 (setq cylc-font-lock-keywords
-      '(("\\[\\[\\[[[:alnum:], ]+\\]\\]\\]" . font-lock-constant-face)
-	("\\[\\[[[:alnum:], _]*\\]\\]" . font-lock-warning-face)
-	("\\[[[:alnum:], ]+\\]" . font-lock-builtin-face)
-        ("\\<\\(title\\|description\\)\\>" . font-lock-type-face)
-	("\\<\\(cold-start\\|start-up\\)\\>" . font-lock-function-name-face)
-        ("\\<\\(graph\\|initial cycle time\\|final cycle time\\|cycling\\)\\>"
-	 . font-lock-function-name-face)
+      '(("{%[[:alnum:], _=\\(\\)]*%}" . font-lock-constant-face) 
+	("{{[[:alnum:] ]*}}" . font-lock-constant-face) 
+        ("\\[\\[\\[[[:alnum:], _]+\\]\\]\\]" . font-lock-type-face)
+        ("\\[\\[\\[[[:alnum:], _]+" . font-lock-type-face)
+        ("\\]\\]\\]" . font-lock-type-face)
+	("\\[\\[[[:alnum:], _]*\\]\\]" . font-lock-function-name-face)
+	("\\[\\[[[:alnum:], _]*" . font-lock-function-name-face)
+	("\\]\\]" . font-lock-function-name-face)
+	("\\[[[:alnum:], ]+\\]" . font-lock-warning-face)
+        ("^[[:alnum:] -_]*=" . font-lock-variable-name-face)
 	))
 
 ;; define the mode
@@ -34,3 +37,10 @@
 )
 
 (provide 'cylc-mode)
+
+(add-hook 'cylc-mode-hook
+  (lambda ()
+    (font-lock-add-keywords nil
+       '(("\\({%[[:alnum:], _=\\(\\)]*%}\\|{{[[:alnum:] ]*}}\\)" 0
+	  font-lock-constant-face t)))))
+

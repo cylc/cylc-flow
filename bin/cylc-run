@@ -16,17 +16,21 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.CylcOptionParsers import NoPromptOptionParser
-from cylc.cycle_time import ct, CycleTimeError
+from cylc.remote import remrun
+remrun().execute()
+
+import os
+from cylc.CylcOptionParsers import cop
 from cylc.scheduler import scheduler
 from cylc.run import main, set_main_debug
+from cylc.command_prep import prep_file
 
 class start( scheduler ):
     def __init__( self ):
-        usage = """cylc [control] run|start [options] SUITE [START]
+        usage = """cylc [control] run|start [OPTIONS] ARGS
 
 Start a suite running at a specified initial cycle time.
-(To restart a suite from a previous state, see 'cylc restart SUITE').
+(To restart a suite from a previous state, see 'cylc restart REG').
 
 The following are all equivalent if no intercycle dependence exists:
   1/ Cold start (default)    : use special cold-start tasks 
@@ -35,11 +39,22 @@ The following are all equivalent if no intercycle dependence exists:
 
 1/ COLD START -- at start up, insert designated cold-start tasks in the 
 waiting state, to satisfy any initial dependence on a previous cycle.
+In task environments $CYLC_SUITE_INITIAL_CYCLE_TIME will be set
+to the initial cold start cycle time.
 
 2/ WARM START -- at start up, insert designated cold-start tasks in the
 succeeded state, to stand in for a previous cycle (from a previous run).
+In task environments $CYLC_SUITE_INITIAL_CYCLE_TIME will be set to None
+unless '--ict' is used, because a warm start is really an implicit
+restart that does not reference a previous suite state - instead it
+assumes that the previous cycle (for each task) completed entirely in a
+previous run.
 
 3/ RAW START -- do not insert cold-start tasks at all.
+
+In task environments, $CYLC_SUITE_FINAL_CYCLE_TIME is always set to the 
+final cycle time if one is set (by suite.rc file or command line). The 
+initial and final cycle time variables persists across suite restarts.
 
 NOTE: daemonize important suites with the POSIX nohup command:
   $ nohup cylc [con] run SUITE [START] > suite.out 2> suite.err &
@@ -48,52 +63,78 @@ NOTE: suites can be (re)started on remote hosts or other user accounts
 if passwordless ssh is set up. The ssh tunnel will remain open to
 receive the suite stdout and stderr streams. To control the running 
 suite from the local host requires the suite passphrase to be installed.
-If they exist /etc/profile and $HOME/.profile will be sourced on the
-remote host prior to attempting to run the suite.""" 
+Both /etc/profile and $HOME/.profile, if they exist, will be sourced on
+the remote host before starting the suite.""" 
 
-        self.parser = NoPromptOptionParser( usage,
-                extra_args=[ """START                Initial cycle time. This is optional if defined in the 
-                        suite.rc file, in which case the command line
-                        takes priority (and a suite.rc final cycle time
-                        will be ignored), and is not required if the
-                        suite contains no cycling tasks.""" ])
+        self.parser = cop( usage,
+                argdoc=[ ("REG", "Suite name"), 
+                ("[START]", """Initial cycle time, optional if defined in the 
+                        suite.rc file (in which case the command line
+                        takes priority and a suite.rc final cycle time
+                        will be ignored); not required if the
+                        suite contains no cycling tasks.""")])
 
         self.parser.add_option( "-w", "--warm", help="Warm start the suite",
-        action="store_true", default=False, dest="warm" )
+                action="store_true", default=False, dest="warm" )
 
         self.parser.add_option( "-r", "--raw", help="Raw start the suite",
-        action="store_true", default=False, dest="raw" )
+                action="store_true", default=False, dest="raw" )
+
+        self.parser.add_option( "--ict", 
+                help="Set $CYLC_SUITE_INITIAL_CYCLE_TIME to the initial "
+                "cycle time even in a warm start (as for cold starts).",
+                action="store_true", default=False, dest="set_ict" )
+
+        self.parser.add_option( "-t", "--timeout", metavar='SEC',
+                help="Set a Pyro network connection timeout for tasks "
+                "submitted by the suite (this will override the suite "
+                "default if if one is configured).", action="store",
+                default=None, dest="pyro_timeout" )
 
         scheduler.__init__( self )
 
     def parse_commandline( self ):
         ( self.options, self.args ) = self.parser.parse_args()
-        self.start_time = None
+
+        self.suite, self.suiterc = prep_file( self.args[0], self.options ).execute()
+
+        self.suite_dir = os.path.dirname( self.suiterc )
+
+        self.start_tag = None
         if len( self.args ) == 2:
-            try:
-                self.start_time = ct( self.args[1] ).get()
-            except CycleTimeError, x:
-                raise SystemExit(x)
+            self.start_tag = self.args[1]
 
         scheduler.parse_commandline( self )
+        self.verbose = self.options.verbose
 
         if self.options.warm:
-            self.banner[ "WARM START" ] = self.start_time
             self.load_tasks = self.load_tasks_warm
         elif self.options.raw:
-            self.banner[ "RAW START" ] = self.start_time
             self.load_tasks = self.load_tasks_raw
         else:
-            self.banner[ "COLD START" ] = self.start_time
             self.load_tasks = self.load_tasks_cold
 
         set_main_debug( self.options.debug )
 
+    def add_to_banner( self ):
+        if self.options.warm:
+            self.banner[ "WARM START" ] = self.start_tag
+            if self.options.set_ict:
+                self.ict = self.start_tag
+            else:
+                self.ict = None
+        elif self.options.raw:
+            self.banner[ "RAW START" ] = self.start_tag
+            self.ict = None
+        else:
+            self.banner[ "COLD START" ] = self.start_tag
+            self.ict = self.start_tag
+
     def load_tasks_cold( self ):
-        if self.start_time:
-            self.log.info( 'Cold Start ' + self.start_time )
+        if self.start_tag:
+            self.log.info( 'Cold Start ' + self.start_tag )
             # set clock before using log (affects simulation mode only)
-            self.clock.set( self.start_time )
+            self.clock.set( self.start_tag )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
 
@@ -101,26 +142,26 @@ remote host prior to attempting to run the suite."""
             if name in self.asynchronous_task_list:
                 tag = '1' # asynchronous tasks start with tag = 1
             else:
-                if self.start_time:
-                    tag = self.start_time
+                if self.start_tag:
+                    tag = self.start_tag
                 else:
                     # no initial cycle time: we can't load cycling tasks
                     continue
             itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=True )
-            # check stop time in case the user has set a very quick stop
-            if self.stop_time and int( itask.tag ) > int( self.stop_time ):
-                # we've reached the stop time already: delete the new task 
-                itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
+            # check stop cycle in case the user has set a very quick stop
+            if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
+                # we've reached the stop cycle already: delete the new task 
+                itask.plog( "STOPPING at configured stop cycle " + self.stop_tag )
                 itask.prepare_for_death()
                 del itask
             else:
                 self.pool.add( itask )
 
     def load_tasks_warm( self ):
-        if self.start_time:
-            self.log.info( 'Warm Start ' + self.start_time )
+        if self.start_tag:
+            self.log.info( 'Warm Start ' + self.start_tag )
             # set clock before using log (affects simulation mode only)
-            self.clock.set( self.start_time )
+            self.clock.set( self.start_tag )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
         coldstart_tasks = self.config.get_coldstart_task_list()
@@ -132,64 +173,64 @@ remote host prior to attempting to run the suite."""
             if name in self.asynchronous_task_list:
                 tag = '1' # asynchronous tasks start with tag = 1
             else:
-                if self.start_time:
-                    tag = self.start_time
+                if self.start_tag:
+                    tag = self.start_tag
                 else:
                     # no initial cycle time: we can't load cycling tasks
                     continue
             itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=False )
             if name in coldstart_tasks:
-                itask.log( 'WARNING', "warm start: starting in succeeded state" )
+                itask.plog( "warm start: starting in succeeded state" )
                 itask.state.set_status( 'succeeded' )
                 itask.prerequisites.set_all_satisfied()
                 itask.outputs.set_all_completed()
             if name in startup_tasks:
-                itask.log( 'WARNING', "This is a warm start: I will self-destruct." )
+                itask.plog( "This is a warm start: I will self-destruct." )
                 itask.prepare_for_death()
                 del itask
                 continue
-            # check stop time in case the user has set a very quick stop
-            if self.stop_time and int( itask.tag ) > int( self.stop_time ):
-                # we've reached the stop time already: delete the new task 
-                itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
+            # check stop cycle in case the user has set a very quick stop
+            if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
+                # we've reached the stop cycle already: delete the new task 
+                itask.plog( "STOPPING at configured stop cycle " + self.stop_tag )
                 itask.prepare_for_death()
                 del itask
             else:
                 self.pool.add( itask )
 
     def load_tasks_raw( self ):
-        if self.start_time:
-            self.log.info( 'Raw Start ' + self.start_time )
+        if self.start_tag:
+            self.log.info( 'Raw Start ' + self.start_tag )
             # set clock before using log (affects simulation mode only)
-            self.clock.set( self.start_time )
+            self.clock.set( self.start_tag )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
 
         coldstart_tasks = self.config.get_coldstart_task_list()
         startup_tasks = self.config.get_startup_task_list()
-        if len( coldstart_tasks ) == 0:
-            self.log.warning( "THIS SUITE HAS NOT DEFINED THE 'cold start task list' CONFIG ITEM" )
+        #if len( coldstart_tasks ) == 0:
+        #    self.log.warning( "THIS SUITE HAS NOT DEFINED THE 'cold start task list' CONFIG ITEM" )
 
         for name in task_list:
             # startup=True only for cold start
             if name in self.asynchronous_task_list:
                 tag = '1' # asynchronous tasks start with tag = 1
             else:
-                if self.start_time:
-                    tag = self.start_time
+                if self.start_tag:
+                    tag = self.start_tag
                 else:
                     # no initial cycle time: we can't load cycling tasks
                     continue
             itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=False )
             if name in coldstart_tasks or name in startup_tasks:
-                itask.log( 'WARNING', "This is a raw start: I will self-destruct." )
+                itask.plog( "This is a raw start: I will self-destruct." )
                 itask.prepare_for_death()
                 del itask
                 continue
-            # check stop time in case the user has set a very quick stop
-            if self.stop_time and int( itask.tag ) > int( self.stop_time ):
-                # we've reached the stop time already: delete the new task 
-                itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
+            # check stop cycle in case the user has set a very quick stop
+            if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
+                # we've reached the stop cycle already: delete the new task 
+                itask.plog( "STOPPING at configured stop cycle " + self.stop_tag )
                 itask.prepare_for_death()
                 del itask
                 continue

@@ -16,42 +16,36 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.remote import remrun
+remrun().execute()
+
 import sys
-from cylc.run import remote_run
-from cylc.CylcOptionParsers import NoPromptOptionParser
+from cylc.CylcOptionParsers import cop
 from cylc.registration import localdb, RegistrationError, DatabaseLockedError
 
-remote_run( 'alias' )
+parser = cop( usage = """cylc [db] alias [OPTIONS] ARGS
 
-parser = NoPromptOptionParser( usage = """cylc [db] alias [options] SUITE ALIAS 
-
-Register an alias for suite. Using the alias on the command line is
-entirely equivalent to using target suite name (and if you run a suite
-via an alias, run time identity will correspond to the target suite).
+Register an alias REG2 for suite REG1. Using an alias is equivalent to
+using the full suite name, except for the following caveat: aliases are
+stored in your local suite db and aliased suites run under their full
+name; therefore you can't interact with remote suites via an alias
+unless you use '--use-ssh' (for [control] category commands), which
+re-invokes the control command on the remote suite host (where the alias
+is known).
 
   $ cylc alias global.ensemble.parallel.test3 bob
   $ cylc edit bob
-  $ cylc run  bob     # work with global.ensemble.parallel.test3
-  $ cylc stop bob
-
-This differs from registering the target suite definition under another
-name with 'cylc register' - in that case run time suite identity will
-correspond to the new registered name.""", 
-    extra_args = ["ALIAS                An alternative name for the same suite."] )
-
-parser.add_option( "-v","--verbose",
-        help="Print extra information.",
-        action="store_true", default=False, dest="verbose" )
+  $ cylc run  bob
+  $ cylc show bob # etc.""", 
+    argdoc = [("REG1", "Target suite name"),
+              ("REG2", "An alias for REG1")])
 
 ( options, args ) = parser.parse_args()
-
-if len(args) != 2:
-    parser.error( "Wrong number of arguments" )
 
 suite = args[0]
 alias = args[1]
 
-db = localdb( verbose=options.verbose )
+db = localdb( file=options.db, verbose=options.verbose )
 try:
     db.lock()
     db.load_from_file()
@@ -69,3 +63,4 @@ except Exception, x:
     print >> sys.stderr, 'ERROR:', x
     db.unlock()
     sys.exit(1)
+

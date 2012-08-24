@@ -16,38 +16,31 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
  
-import sys, os
-from cylc.hostname import hostname
+import sys
+if '--use-ssh' in sys.argv[1:]: 
+    sys.argv.remove( '--use-ssh' )
+    from cylc.remote import remrun
+    remrun().execute()
+
+import os
 from cylc import cylc_pyro_client
-from cylc.CylcOptionParsers import NoPromptOptionParser
-from cylc.port_scan import SuiteIdentificationError
+from cylc.CylcOptionParsers import cop
 from cylc.TaskID import TaskID, InvalidTaskIDError, InvalidCycleTimeError
-from cylc.registration import dbgetter, RegistrationError
-from cylc.version import compat
-from cylc.passphrase import SecurityError
+from cylc.command_prep import prep_pyro
 
-parser = NoPromptOptionParser( """cylc [info] show [options] SUITE [NAME[%TAG]]
+parser = cop( """cylc [info] show [OPTIONS] ARGS
 
-Print global or task-specific information from a running suite: title
-and task list, task descriptions, current state of task prerequisites
-and outputs and, for clock-triggered tasks, whether the delayed start
-time is up yet.""",
-["""NAME                 Name of a task type. 
-   TAG                  Cycle time, or asynchronous tag 'a:INT'."""] )
+Interrogate a running suite for its title and task list, task
+descriptions, current state of task prerequisites and outputs and, for
+clock-triggered tasks, whether or not the trigger time is up yet.""",
+    pyro=True, 
+    argdoc=[('REG', 'Suite name'), ('[NAME[%TAG]]', 'Task name or ID')])
+
+parser.remove_option("-f" ) # don't need force
 
 (options, args) = parser.parse_args()
 
-reg = parser.get_suite_name()
-dbg = dbgetter()
-try:
-    # unalias your own suite names
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    # may be a remote suite (if not we fail to get a Pyro proxy below)
-    suite = reg
-else:
-    # pseudo backward compatibility for your own suites
-    compat( suite, suiterc ).execute( sys.argv )
+suite, pphrase = prep_pyro( args[0], options ).execute()
 
 prnt_suite = False
 prnt_name = False
@@ -71,20 +64,18 @@ if len(args) == 2:
 else:
     prnt_suite = True
  
-owner=options.owner 
-
 try:
-    proxy = cylc_pyro_client.client( suite, owner, \
-    host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
-except SuiteIdentificationError, x:
-    raise SystemExit(x)
-except SecurityError, x:
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host, options.pyro_timeout, None, options.verbose ).get_proxy( 'remote' )
+except Exception, x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 
 title, defdir, username = proxy.get_suite_info()
 
 if prnt_suite:
-    print suite + ' (' + owner + ') --> ' + defdir
+    print suite + ' (' + options.owner + ') --> ' + defdir
     print title
 
     for task in proxy.get_task_list():
@@ -139,3 +130,4 @@ if prnt_id:
         print """
 NOTE: for tasks that have triggered already, prerequisites are 
 shown here in the state they were in at the time of triggering."""
+

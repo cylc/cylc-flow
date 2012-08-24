@@ -16,30 +16,30 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.remote import remrun
+remrun().execute()
+
 import os, sys, re
-from cylc.CylcOptionParsers import NoPromptOptionParser
-from cylc.cycle_time import ct, CycleTimeError
+from cylc.CylcOptionParsers import cop
+from cylc.cycle_time import ct
 from cylc.scheduler import scheduler
 from cylc.run import main, set_main_debug
+from cylc.command_prep import prep_file
 
 class restart( scheduler ):
     def __init__( self ):
-        usage = """cylc [control] restart [options] SUITE [FILE]
+        usage = """cylc [control] restart [OPTIONS] ARGS
 
 Restart a cylc suite from a previous state.
-(To start a suite from a specific cycle time, see 'cylc run SUITE').
+(To start a suite from a specific cycle time, see 'cylc run REG').
 
 The most recent previous state is used by default but other state dumps
 can be specified on the command line (e.g. cylc writes a special state
 dump and logs its filename before actioning any intervention command).
 
-By default:
- 1/ 'submitted', 'running', or 'failed' states will be resubmitted.
-     Use '--no-reset' to prevent this.
- 2/ 'held' tasks will be released.
-    Use '--no-release' to prevent this.
- 3/ A final cycle time set prior to shutdown will be ignored on restart.
-    Use '--keep-stopcycle' to prevent this.
+By default any tasks recorded in the 'submitted', 'running', or 'failed'
+states will be automatically resubmitted on restart; and any tasks in
+the 'held' state will be released.
 
 NOTE: daemonize important suites with the POSIX nohup command:
     nohup cylc [con] restart SUITE > suite.out 2> suite.err &
@@ -48,31 +48,51 @@ NOTE: suites can be (re)started on remote hosts or other user accounts
 if passwordless ssh is set up. The ssh tunnel will remain open to
 receive the suite stdout and stderr streams. To control the running 
 suite from the local host requires the suite passphrase to be installed.
-If they exist /etc/profile and $HOME/.profile will be sourced on the
-remote host prior to attempting to run the suite."""
+Both /etc/profile and $HOME/.profile, if they exist, will be sourced on
+the remote host before starting the suite."""
 
-        self.parser = NoPromptOptionParser( usage,
-   extra_args=["""FILE                 Optional non-default state dump file (assumed to
-                        reside in the suite state dump directory unless
-                        you give the full path)."""]) 
+        self.parser = cop( usage,
+   argdoc=[("REG", "Suite name"),
+   ( "[FILE]", """Optional state dump file (in the suite state
+                        dump directory, or give full path).""")]) 
 
         self.parser.add_option( "--no-reset", 
             help="Do not reset failed tasks to ready on restarting",
             action="store_true", default=False, dest="no_reset" )
+
         self.parser.add_option( "--no-release", 
             help="Do not release held tasks on restarting.",
             action="store_true", default=False, dest="no_release" )
-        self.parser.add_option( "--keep-stopcycle", 
-            help="Do not ignore a previously set final cycle time on restarting",
-            action="store_true", default=False, dest="keep_stopcycle" )
- 
-        self.start_time = None  # used in scheduler.py:initialize_graph()
+
+        self.parser.add_option( "--ignore-final-cycle", 
+            help="Ignore a final cycle time specified in the state dump. "
+            "This will not ignore one hardwired into the suite definition.",
+            action="store_true", default=False, dest="ignore_stopcycle" )
+
+        self.parser.add_option( "--ignore-initial-cycle", 
+            help="Ignore an initial cycle time specified in the state dump. "
+            "If one is hardwired into the suite definition it will be used. "
+            "In a restart the only use of the start cycle is to be exported "
+            "to $CYLC_SUITE_INITIAL_CYCLE_TIME in the task environment.",
+            action="store_true", default=False, dest="ignore_startcycle" )
+
+        self.parser.add_option( "-t", "--timeout", metavar='SEC',
+                help="Set a Pyro network connection timeout for tasks "
+                "submitted by the suite (this will override the suite "
+                "default if one is configured).", action="store",
+                default=None, dest="pyro_timeout" )
+
+        self.start_tag = None  # used in scheduler.py:initialize_graph()
         scheduler.__init__( self, is_restart=True )
 
     def parse_commandline( self ):
         ( self.options, self.args ) = self.parser.parse_args()
+
+        self.suite, self.suiterc = prep_file( self.args[0], self.options ).execute()
+
+        self.suite_dir = os.path.dirname( self.suiterc )
+
         self.no_reset = False
-        #DISABLED if self.options.no_reset or self.options.practice_mode:
         if self.options.no_reset:
             self.no_reset = True
         self.restart_from = None
@@ -84,24 +104,21 @@ remote host prior to attempting to run the suite."""
                 pass
             else:
                 # user must have meant to cold or warm start, not restart.
-                raise SystemExit("ERROR: restart dump filename is a valid cycle time!")
+                sys.exit("ERROR: restart dump filename is a valid cycle time!")
 
         scheduler.parse_commandline( self )
+        self.verbose = self.options.verbose
 
         set_main_debug( self.options.debug )
 
+    def add_to_banner( self ):
         if self.restart_from:
             self.banner['RESTART'] = self.restart_from
         else:
-            self.banner['RESTART' ] = 'state'
+            self.banner['RESTART' ] = 'previous state'
 
     def load_tasks( self ):
         # FIND THE INITIAL STATE DUMP FILE
-        #DISABLED if self.practice:
-        #DISABLED     # in practice mode, we reset from the parent suite's state dump
-        #DISABLED     state_dump_dir = re.sub( '-practice', '', self.state_dump_dir )
-        #DISABLED     state_dump_file = re.sub( '-practice', '', self.state_dump_filename )
-        #DISABLED else:
         state_dump_dir = self.state_dump_dir
         state_dump_file = self.state_dump_filename
 
@@ -115,12 +132,12 @@ remote host prior to attempting to run the suite."""
                 # check if the named file is in the suite state dump dir
                 path = os.path.join( state_dump_dir, self.restart_from )
                 if not os.path.exists( path ):
-                    raise SystemExit( "state dump file not found: " + self.restart_from )
+                    sys.exit( "state dump file not found: " + self.restart_from )
                 self.initial_state_dump = os.path.abspath( path )
         else:
             # No state dump file specified, restart from the default file.
             if not os.path.exists( state_dump_file ):
-                raise SystemExit( "state dump file not found: " + state_dump_file )
+                sys.exit( "state dump file not found: " + state_dump_file )
             self.initial_state_dump = state_dump_file
 
         self.log.info( 'Restart ' + self.initial_state_dump )
@@ -141,18 +158,18 @@ remote host prior to attempting to run the suite."""
             FILE = open( self.initial_state_dump, 'r' )
         except IOError,x:
             print >> sys.stderr, x
-            raise SystemExit( "ERROR, cannot open suite state dump: " + self.initial_state_dump )
+            sys.exit( "ERROR, cannot open suite state dump: " + self.initial_state_dump )
         lines = FILE.readlines()
         FILE.close()
 
         nlines = len(lines)
         if nlines == 0:
-            raise SystemExit( "ERROR, empty suite state dump: " + self.initial_state_dump )
+            sys.exit( "ERROR, empty suite state dump: " + self.initial_state_dump )
         elif nlines < 3:
-            print >> sys.stderr, "!!! The suite state dump contains only", nlines, "lines:"
+            print >> sys.stderr, "ERROR, The suite state dump contains only", nlines, "lines:"
             for l in lines:
                 print ' ', l.rstrip()
-            raise SystemExit( "ERROR, incomplete suite state dump: " + self.initial_state_dump )
+            sys.exit( "ERROR, incomplete suite state dump: " + self.initial_state_dump )
 
         # RESET THE TIME TO THE LATEST DUMPED TIME
         # The state dump file first line is:
@@ -163,50 +180,89 @@ remote host prior to attempting to run the suite."""
         line1 = line1.rstrip()
         [ time_type, time_string ] = line1.split(' : ')
         if time_type == 'simulation time':
-            if not self.simulation_mode:
-                raise SystemExit("ERROR: cannot RESTART in live mode from a simulation mode state dump")
+            if self.run_mode == 'live':
+                sys.exit("ERROR: cannot RESTART in live mode from a non live mode state dump")
             [ time, rate ] = time_string.split( ',' )
             self.clock.reset( time, rate )
         elif time_type == 'suite time':
-            if self.simulation_mode:
-                raise SystemExit("ERROR: cannot RESTART in simulation mode from a live mode state dump")
+            if self.run_mode != 'live':
+                sys.exit("ERROR: cannot RESTART in " + self.run_mode + " mode from a live mode state dump")
         else:
-            print >> sys.stderr, "!!! Illegal state dump line 1 (time):"
+            print >> sys.stderr, "ERROR, Illegal state dump line 1 (time):"
             print >> sys.stderr, ' ', line1
-            raise SystemExit("ERROR: corrupted state dump")
+            sys.exit("ERROR: corrupted state dump")
 
         line2 = lines[1]
         line2 = line2.rstrip()
         try:
-            label, oldstoptime = line2.split(' : ')
+            label, oldstartcycle = line2.split(' : ')
         except ValueError, x: 
-            print >> sys.stderr, '!!! Illegal state dump line 2 (stop time):'
+            print >> sys.stderr, 'ERROR, Illegal state dump line 2 (initial cycle):'
             print >> sys.stderr, ' ', line2
-            raise SystemExit("ERROR: corrupted state dump")
-        if oldstoptime == '(none)':
+            sys.exit("ERROR: corrupted state dump")
+        if oldstartcycle == '(none)':
+            # then we take whatever the suite.rc file gives us
             pass
         else:
+            # the state dump prescribes a start cycle
             try:
-                ct( oldstoptime )
+                ct( oldstartcycle )
             except:
-                raise SystemExit("ERROR, Illegal stop cycle in state dump line 2: " + oldstoptime)
+                sys.exit("ERROR, Illegal start cycle in state dump line 2: " + oldstartcycle)
+            if self.options.ignore_startcycle:
+                # ignore it and take whatever the suite.rc file gives us
+                if self.start_tag:
+                    print >> sys.stderr, """WARNING: I'm ignoring the old initial cycle as requested, but I 
+  can't ignore the one set in the suite definition."""
+            elif self.start_tag: 
+                # a start cycle was given in the suite.rc file
+                if self.start_tag != oldstartcycle:
+                    # the state dump doesn't lie about start cycles
+                    if self.options.ignore_startcycle:
+                        print >> sys.stderr, "WARNING: ignoring old initial cycle", oldstartcycle, "; using suite.rc", self.start_tag
+                    else:
+                        print >> sys.stderr, "WARNING: old initial cycle", oldstartcycle, "overriding suite.rc", self.start_tag
+            else:
+                # reinstate the former start cycle
+                self.start_tag = oldstartcycle
+ 
+        self.ict = self.start_tag
 
-            # the suite had a prescribed stop time when it shut down
-            if self.stop_time:
-                # a stop time was given on the restart command line
-                if self.stop_time != oldstoptime:
-                    # OK, override the old stop time with the new
-                    if self.options.keep_stopcycle:
-                        print >> sys.stderr, "ERROR: new stop time incompatible with --keep-stopcycle"
-                        sys.exit(1)
-            elif self.options.keep_stopcycle:
-                    # reinstate the former stop time
-                    self.stop_time = oldstoptime
+        line3 = lines[2]
+        line3 = line3.rstrip()
+        try:
+            label, oldstopcycle = line3.split(' : ')
+        except ValueError, x: 
+            print >> sys.stderr, 'ERROR, Illegal state dump line 3 (final cycle):'
+            print >> sys.stderr, ' ', line3
+            sys.exit("ERROR: corrupted state dump")
+
+        if oldstopcycle == '(none)':
+            # then we take whatever the command line or suite.rc file gives us
+            pass
+        else:
+            # the state dump prescribes a stop cycle
+            try:
+                ct( oldstopcycle )
+            except:
+                sys.exit("ERROR, Illegal stop cycle in state dump line 3: " + oldstopcycle)
+            if self.options.ignore_stopcycle:
+                # ignore it and take whatever the command line or suite.rc file gives us
+                if self.stop_tag:
+                    print >> sys.stderr, """WARNING: I'm ignoring the old final cycle as requested, but I
+  can't ignore the one set on the command line or in the suite definition."""
+            elif self.stop_tag:
+                # a stop cycle was given on the restart command line or suite.rc file
+                if self.stop_tag != oldstopcycle:
+                    print >> sys.stderr, "WARNING: overriding the old stop cycle", oldstopcycle, "with", self.stop_tag
+            else:
+                # reinstate the old stop cycle
+                self.stop_tag = oldstopcycle
         
         # parse each line and create the task it represents
         tasknames = {}
         taskstates = {}
-        for line in lines[2:]:
+        for line in lines[3:]:
             # strip trailing newlines
             line = line.rstrip( '\n' )
 
@@ -226,9 +282,9 @@ remote host prior to attempting to run the suite."""
                 ( id, state ) = line.split(' : ')
                 ( name, tag ) = id.split('%')
             except:
-                print >> sys.stderr, "!!! Illegal line in suite state dump:"
+                print >> sys.stderr, "ERROR, Illegal line in suite state dump:"
                 print >> sys.stderr, " ", line
-                raise SystemExit( "ERROR: corrupted state dump" )
+                sys.exit( "ERROR: corrupted state dump" )
             tasknames[name] = True
             taskstates[id] = (name, tag, state )
 
@@ -245,8 +301,8 @@ remote host prior to attempting to run the suite."""
                 itask = self.config.get_task_proxy( name, tag, state, stopctime=None, startup=False )
             except Exception, x:
                 print >> sys.stderr, x
-                print >> sys.stderr, "!!! Unable to instantiate task", name, "from state dump."
-                raise SystemExit( "ERROR: corrupted state dump" )
+                print >> sys.stderr, "WARNING: ignoring task", name, "from the suite state dump file"
+                print >> sys.stderr, "(the task definition has probably been deleted from the suite)."
 
             if itask.state.is_succeeded():  
                 # must have satisfied prerequisites and completed outputs
@@ -278,10 +334,10 @@ remote host prior to attempting to run the suite."""
                 itask.state.set_status( 'waiting' )
                 itask.prerequisites.set_all_unsatisfied()
 
-            # check stop time in case the user has set a very quick stop
-            if self.stop_time and int( itask.tag ) > int( self.stop_time ):
-                # we've reached the stop time already: delete the new task 
-                itask.log( 'WARNING', "HOLDING at configured stop time " + self.stop_time )
+            # check stop cycle in case the user has set a very quick stop
+            if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
+                # we've reached the stop cycle already: delete the new task 
+                itask.log( 'WARNING', "HOLDING at configured stop cycle " + self.stop_tag )
                 itask.state.set_status('held')
             self.pool.add( itask )
 

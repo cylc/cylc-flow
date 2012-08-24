@@ -21,14 +21,22 @@ import gobject
 #pygtk.require('2.0')
 import gtk
 import subprocess
-import time, os, re
+import time, os, re, sys
 import threading
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.config import config, SuiteConfigError
 from cylc.version import cylc_version
-from cylc import cylc_pyro_client
-from cylc.port_scan import scan, SuiteIdentificationError
-from cylc.registration import dbgetter, localdb, centraldb, RegistrationError
+
+try:
+    from cylc import cylc_pyro_client
+except BaseException, x: # this catches SystemExit
+    PyroInstalled = False
+    print >> sys.stderr, "WARNING: Pyro is not installed."
+else:
+    PyroInstalled = True
+    from cylc.port_scan import scan, SuiteIdentificationError
+
+from cylc.registration import localdb, RegistrationError
 from cylc.regpath import RegPath
 from warning_dialog import warning_dialog, info_dialog, question_dialog
 from util import get_icon, get_image_dir, get_logo
@@ -36,33 +44,37 @@ import helpwindow
 from gcapture import gcapture, gcapture_tmpfile
 from cylc.mkdir_p import mkdir_p
 from cylc_logviewer import cylc_logviewer
+from cylc.passphrase import passphrase
 
 debug = False
 
 # WHY LAUNCH CONTROL GUIS AS STANDALONE APPS (via gcapture) rather than
-# as part of the main gcylc app: we can then capture out and err
-# streams into suite-specific log files rather than have it all come
-# out with the gcylc stdout and stderr streams.
+# as part of the main gcylc app: we can then capture out and err streams
+# into suite-specific log files rather than have it all come out with
+# the gcylc stdout and stderr streams.
 
 class db_updater(threading.Thread):
     count = 0
-    def __init__(self, owner, regd_treestore, db, is_cdb, host, filtr=None ):
+    def __init__(self, regd_treestore, db, filtr=None, pyro_timeout=None ):
         self.__class__.count += 1
         self.me = self.__class__.count
         self.filtr = filtr
         self.db = db
-        self.is_cdb = is_cdb
-        self.owner = owner
         self.quit = False
-        self.host = host
         self.reload = False
+        if pyro_timeout:
+            self.pyro_timeout = float(pyro_timeout)
+        else:
+            self.pyro_timeout = None
+
         self.regd_treestore = regd_treestore
         super(db_updater, self).__init__()
-        self.running_choices = []
 
+        self.running_choices = []
         self.newtree = {}
 
         self.db.load_from_file()
+
         self.regd_choices = []
         self.regd_choices = self.db.get_list(filtr)
 
@@ -226,8 +238,10 @@ class db_updater(threading.Thread):
             self.__class__.count -= 1
     
     def running_choices_changed( self ):
+        if not PyroInstalled:
+            return
         # (name, port)
-        suites = scan( self.host, mine=True, silent=True )
+        suites = scan( pyro_timeout=self.pyro_timeout )
         if suites != self.running_choices:
             self.running_choices = suites
             return True
@@ -284,21 +298,30 @@ class db_updater(threading.Thread):
         return value == key
 
 class MainApp(object):
-    def __init__(self, host, tmpdir ):
+    def __init__(self, db, db_owner, tmpdir, pyro_timeout ):
+
+        if not db:
+            dbname = "(default DB)"
+        else:
+            dbname = db
+        self.db = db
+        self.db_owner = db_owner
+        if pyro_timeout:
+            self.pyro_timeout = float(pyro_timeout)
+        else:
+            self.pyro_timeout = None
+
         self.updater = None
         self.tmpdir = tmpdir
         self.filter_window = None
-        self.owner = os.environ['USER']
         self.gcapture_windows = []
 
         gobject.threads_init()
 
-        self.host = host
-
         self.imagedir = get_image_dir()
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_title("Registered Suites (PRIVATE DATABASE)" )
+        self.window.set_title("Registered Suites " + dbname )
         self.window.set_size_request(600, 300)
         self.window.set_icon(get_icon())
         #self.window.set_border_width( 5 )
@@ -355,21 +378,17 @@ class MainApp(object):
         reload_item = gtk.MenuItem( '_Reload' )
         view_menu.append( reload_item )
         reload_item.connect( 'activate', self.reload )
+ 
+        ## TO DO: restore ability to switch databases
+        ##db_menu = gtk.Menu()
+        ##db_menu_root = gtk.MenuItem( '_Database' )
+        ##db_menu_root.set_submenu( db_menu )
 
-        db_menu = gtk.Menu()
-        db_menu_root = gtk.MenuItem( '_Database' )
-        db_menu_root.set_submenu( db_menu )
+        ##self.dblocal_item = gtk.MenuItem( '_User' )
+        ##db_menu.append( self.dblocal_item )
+        ##self.dblocal_item.set_sensitive(False) # (already on local at startup)
 
-        self.dblocal_item = gtk.MenuItem( '_Private' )
-        db_menu.append( self.dblocal_item )
-        self.dblocal_item.set_sensitive(False) # (already on local at startup)
-
-        self.dbcentral_item = gtk.MenuItem( '_Central' )
-        db_menu.append( self.dbcentral_item )
-        self.dbcentral_item.set_sensitive(True) # (on local at startup)
-
-        self.dblocal_item.connect( 'activate', self.localdb )
-        self.dbcentral_item.connect( 'activate', self.centraldb )
+        #self.dblocal_item.connect( 'activate', self.localdb )
 
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( '_Help' )
@@ -383,15 +402,19 @@ class MainApp(object):
         help_menu.append( chelp_menu )
         self.construct_command_menu( chelp_menu )
 
-        cug_pdf_item = gtk.MenuItem( 'User Guide (_PDF)' )
+        cug_pdf_item = gtk.MenuItem( '_PDF User Guide' )
         help_menu.append( cug_pdf_item )
-        cug_pdf_item.connect( 'activate', self.browse )
+        cug_pdf_item.connect( 'activate', self.browse, '--pdf' )
   
-        cug_html_item = gtk.MenuItem( 'User Guide (_HTML)' )
+        cug_html_item = gtk.MenuItem( '_Multi Page HTML User Guide' )
         help_menu.append( cug_html_item )
         cug_html_item.connect( 'activate', self.browse, '--html' )
 
-        cug_www_item = gtk.MenuItem( '_Home Page (www)' )
+        cug_shtml_item = gtk.MenuItem( '_Single Page HTML User Guide' )
+        help_menu.append( cug_shtml_item )
+        cug_shtml_item.connect( 'activate', self.browse, '--html-single' )
+
+        cug_www_item = gtk.MenuItem( '_Internet Home Page' )
         help_menu.append( cug_www_item )
         cug_www_item.connect( 'activate', self.browse, '--www' )
  
@@ -405,16 +428,17 @@ class MainApp(object):
  
         self.menu_bar = gtk.MenuBar()
         self.menu_bar.append( file_menu_root )
-        self.menu_bar.append( db_menu_root )
+        ##self.menu_bar.append( db_menu_root )
         self.menu_bar.append( view_menu_root )
         self.menu_bar.append( help_menu_root )
 
         # Start updating the liststore now, as we need values in it
         # immediately below (it may be possible to delay this till the
         # end of __init___() but it doesn't really matter.
-        self.cdb = False # start with local reg db
-        self.dbopt = ''
-        self.start_updater()
+        if self.db:
+            self.dbopt = '--db='+self.db
+        else:
+            self.dbopt = ''
 
         regd_ts = self.regd_treeview.get_selection()
         regd_ts.set_mode( gtk.SELECTION_SINGLE )
@@ -463,6 +487,8 @@ class MainApp(object):
 
         self.window.add(vbox)
         self.window.show_all()
+
+        self.start_updater()
 
     def construct_command_menu( self, menu ):
         # ALL COMMANDS
@@ -518,17 +544,12 @@ The cylc forecast suite metascheduler.
         view.collapse_all()
 
     def start_updater(self, filtr=None ):
-        if self.cdb:
-            db = centraldb()
-            #self.db_button.set_label( "_Local/Central DB" )
-            #self.main_label.set_text( "Central Suite Registrations" )
-        else:
-            db = localdb()
-            #self.db_button.set_label( "_Local/Central DB" )
-            #self.main_label.set_text( "Local Suite Registrations" )
+        db = localdb(self.db)
+        #self.db_button.set_label( "_Local/Central DB" )
+        #self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:
             self.updater.quit = True # does this take effect?
-        self.updater = db_updater( self.owner, self.regd_treestore, db, self.cdb, self.host, filtr )
+        self.updater = db_updater( self.regd_treestore, db, filtr, self.pyro_timeout )
         self.updater.start()
 
     def newreg_popup( self, w ):
@@ -716,37 +737,23 @@ The cylc forecast suite metascheduler.
         self.filter_window.add( vbox )
         self.filter_window.show_all()
 
-    def localdb( self, w ):
-        if not self.cdb:
-            return
-        self.window.set_title("Registered Suites (PRIVATE DATABASE)" )
-        w.set_sensitive(False)
-        self.dbcentral_item.set_sensitive(True)
-        self.cdb = False
-        self.dbopt = ''
-        if self.filter_window:
-            self.filter_window.destroy()
-        # setting base color to None should return it to the default
-        self.regd_treeview.modify_base( gtk.STATE_NORMAL, None)
-        self.reg_new_item.set_sensitive( True )
-        self.start_updater()
-
-    def centraldb( self, w ):
-        if self.cdb:
-            return
-        self.window.set_title("Registered Suites (CENTRAL DATABASE)" )
-        w.set_sensitive(False)
-        self.dblocal_item.set_sensitive(True)
-        self.cdb = True
-        self.dbopt = '--central'
-        if self.filter_window:
-            self.filter_window.destroy()
-        # note treeview.modify_base() doesn't seem to have same effect
-        # on all platforms. It either colours the full background or
-        # just inside (behind the treeeview?) the expander triangles.
-        self.regd_treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#bdf" ))
-        self.reg_new_item.set_sensitive( False )
-        self.start_updater()
+    #def localdb( self, w ):
+    #    # switch to local db
+    #    # TO DO: THIS WAS USED WHEN WE HAD A CENTRAL DATABASE
+    #    # MAY LATER BE CO-OPTED TO VIEW OTHER USER DATABASES?
+    #    self.window.set_title("Registered Suites" )
+    #    w.set_sensitive(False)
+    #    self.dbopt = ''
+    #    if self.filter_window:
+    #        self.filter_window.destroy()
+    #    # Note treeview.modify_base() doesn't seem to have same effect
+    #    # on all platforms. It either colours the full background or
+    #    # just inside (behind the treeeview?) the expander triangles.
+    #    #self.regd_treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#bdf" ))
+    #    # Setting base color to None should return it to the default.
+    #    self.regd_treeview.modify_base( gtk.STATE_NORMAL, None)
+    #    self.reg_new_item.set_sensitive( True )
+    #    self.start_updater()
 
     def delete_all_event( self, w, e ):
         self.updater.quit = True
@@ -843,39 +850,21 @@ The cylc forecast suite metascheduler.
             return reg
 
         reg = get_reg( item, iter )
-        if self.cdb:
-            owner = reg.split(RegPath.delimiter)[0]
 
         if group_clicked:
             group = reg
             # MENU OPTIONS FOR GROUPS
-            if not self.cdb:
-                copy_item = gtk.MenuItem( 'C_opy' )
-                menu.append( copy_item )
-                copy_item.connect( 'activate', self.copy_popup, group )
-
-            if self.cdb:
-                imp_item = gtk.MenuItem( 'I_mport' )
-                menu.append( imp_item )
-                imp_item.connect( 'activate', self.import_popup, group )
-            else:
-                exp_item = gtk.MenuItem( 'E_xport' )
-                menu.append( exp_item )
-                exp_item.connect( 'activate', self.export_popup, group )
+            copy_item = gtk.MenuItem( 'C_opy' )
+            menu.append( copy_item )
+            copy_item.connect( 'activate', self.copy_popup, group, True )
 
             reregister_item = gtk.MenuItem( '_Reregister' )
             menu.append( reregister_item )
-            reregister_item.connect( 'activate', self.reregister_popup, group)
-            if self.cdb:
-                if owner != self.owner:
-                    reregister_item.set_sensitive( False )
+            reregister_item.connect( 'activate', self.reregister_popup, group, True )
 
             del_item = gtk.MenuItem( '_Unregister' )
             menu.append( del_item )
-            del_item.connect( 'activate', self.unregister_popup, group )
-            if self.cdb:
-                if owner != self.owner:
-                    del_item.set_sensitive( False )
+            del_item.connect( 'activate', self.unregister_popup, group, True )
 
         else:
             # MENU OPTIONS FOR SUITES
@@ -883,22 +872,39 @@ The cylc forecast suite metascheduler.
             infomenu = gtk.Menu()
             infomenu_item.set_submenu(infomenu)
  
-            if not self.cdb:
-                ctrlmenu_item = gtk.MenuItem( '_Control' )
-                ctrlmenu = gtk.Menu()
-                ctrlmenu_item.set_submenu(ctrlmenu)
+            ctrlmenu_item = gtk.MenuItem( '_Control' )
+            ctrlmenu = gtk.Menu()
+            ctrlmenu_item.set_submenu(ctrlmenu)
  
-                con_item = gtk.MenuItem( '_Dot Control GUI')
-                ctrlmenu.append( con_item )
-                con_item.connect( 'activate', self.launch_controller, reg, state )
+            con_item = gtk.MenuItem( '_Text View')
+            ctrlmenu.append( con_item )
+            con_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'text' )
 
-                cong_item = gtk.MenuItem( '_Graph Control GUI')
-                ctrlmenu.append( cong_item )
-                cong_item.connect( 'activate', self.launch_controller, reg, state, True )
+            con_item = gtk.MenuItem( '_Dot View')
+            ctrlmenu.append( con_item )
+            con_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'dot' )
 
-                subm_item = gtk.MenuItem( '_Submit a Task')
-                ctrlmenu.append( subm_item )
-                subm_item.connect( 'activate', self.submit_task_popup, reg )
+            con_item = gtk.MenuItem( '_Graph View')
+            ctrlmenu.append( con_item )
+            con_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'graph' )
+
+            cong_item = gtk.MenuItem( '_Dot & Text View')
+            ctrlmenu.append( cong_item )
+            cong_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'dot,text' )
+
+            cong_item = gtk.MenuItem( '_Graph & Text View')
+            ctrlmenu.append( cong_item )
+            cong_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'graph,text' )
+
+            cong_item = gtk.MenuItem( '_Dot & Graph View')
+            ctrlmenu.append( cong_item )
+            cong_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'dot,graph' )
+
+            ctrlmenu.append( gtk.SeparatorMenuItem() )
+ 
+            subm_item = gtk.MenuItem( '_Submit a Task')
+            ctrlmenu.append( subm_item )
+            subm_item.connect( 'activate', self.submit_task_popup, reg )
 
             descr_item = gtk.MenuItem( '_Description' )
             infomenu.append( descr_item )
@@ -909,43 +915,44 @@ The cylc forecast suite metascheduler.
             listmenu = gtk.Menu()
             listitem.set_submenu(listmenu)
  
-            flat_item = gtk.MenuItem( 'Print _Tasks' )
+            flat_item = gtk.MenuItem( '_Tasks' )
             listmenu.append( flat_item )
             flat_item.connect( 'activate', self.list_suite, reg )
 
-            tree_item = gtk.MenuItem( 'Print _Namespaces' )
+            tree_item = gtk.MenuItem( '_Namespaces' )
             listmenu.append( tree_item )
-            # use "-tp" for unicode box-drawing characters (seems to be
-            # OK in pygtk textview).
-            tree_item.connect( 'activate', self.list_suite, reg, '-tp' )
-
-            gtree_item = gtk.MenuItem( '_Graph Namespaces' )
-            listmenu.append( gtree_item )
-            gtree_item.connect( 'activate', self.nsgraph_suite, reg )
+            tree_item.connect( 'activate', self.list_suite, reg, '-t' )
 
             igraph_item = gtk.MenuItem( '_Graph' )
             infomenu.append( igraph_item )
-            igraph_item.connect( 'activate', self.graph_suite_popup, reg, suite_dir )
+            igraphmenu = gtk.Menu()
+            igraph_item.set_submenu(igraphmenu)
 
-            if not self.cdb:
-                jobs_item = gtk.MenuItem( 'Generate A _Job Script')
-                infomenu.append( jobs_item )
-                jobs_item.connect( 'activate', self.jobscript_popup, reg )
+            igtree_item = gtk.MenuItem( '_Dependencies' )
+            igraphmenu.append( igtree_item )
+            igtree_item.connect( 'activate', self.graph_suite_popup, reg, suite_dir )
+
+            igns_item = gtk.MenuItem( '_Namespaces' )
+            igraphmenu.append( igns_item )
+            igns_item.connect( 'activate', self.nsgraph_suite, reg )
+
+            jobs_item = gtk.MenuItem( 'Generate A _Job Script')
+            infomenu.append( jobs_item )
+            jobs_item.connect( 'activate', self.jobscript_popup, reg )
  
-                out_item = gtk.MenuItem( 'View Suite _Stdout')
-                infomenu.append( out_item )
-                out_item.connect( 'activate', self.view_output, reg, state )
+            out_item = gtk.MenuItem( 'View Suite _Stdout')
+            infomenu.append( out_item )
+            out_item.connect( 'activate', self.view_output, reg, state )
 
-                out_item = gtk.MenuItem( '_View Suite Log')
-                infomenu.append( out_item )
-                out_item.connect( 'activate', self.view_log, reg )
+            out_item = gtk.MenuItem( '_View Suite Log')
+            infomenu.append( out_item )
+            out_item.connect( 'activate', self.view_log, reg )
 
-                if state != '-':
-                    # suite is running
-                    dump_item = gtk.MenuItem( 'D_ump Suite State' )
-                    infomenu.append( dump_item )
-                    dump_item.connect( 'activate', self.dump_suite, reg )
-
+            if state != '-':
+                # suite is running
+                dump_item = gtk.MenuItem( 'D_ump Suite State' )
+                infomenu.append( dump_item )
+                dump_item.connect( 'activate', self.dump_suite, reg )
    
             prepmenu_item = gtk.MenuItem( '_Preparation' )
             prepmenu = gtk.Menu()
@@ -990,23 +997,26 @@ The cylc forecast suite metascheduler.
             plistmenu = gtk.Menu()
             plistitem.set_submenu(plistmenu)
  
-            pflat_item = gtk.MenuItem( 'Print _Tasks' )
+            pflat_item = gtk.MenuItem( '_Tasks' )
             plistmenu.append( pflat_item )
             pflat_item.connect( 'activate', self.list_suite, reg )
 
-            ptree_item = gtk.MenuItem( 'Print _Namespaces' )
+            ptree_item = gtk.MenuItem( '_Namespaces' )
             plistmenu.append( ptree_item )
-            # use "-tp" for unicode box-drawing characters (seems to be
-            # OK in pygtk textview).
-            ptree_item.connect( 'activate', self.list_suite, reg, '-tp' )
+            ptree_item.connect( 'activate', self.list_suite, reg, '-t' )
  
-            gtree_item = gtk.MenuItem( '_Graph Namespaces' )
-            plistmenu.append( gtree_item )
-            gtree_item.connect( 'activate', self.nsgraph_suite, reg )
-
             graph_item = gtk.MenuItem( '_Graph' )
             prepmenu.append( graph_item )
-            graph_item.connect( 'activate', self.graph_suite_popup, reg, suite_dir )
+            graphmenu = gtk.Menu()
+            graph_item.set_submenu(graphmenu)
+
+            gtree_item = gtk.MenuItem( '_Dependencies' )
+            graphmenu.append( gtree_item )
+            gtree_item.connect( 'activate', self.graph_suite_popup, reg, suite_dir )
+
+            gns_item = gtk.MenuItem( '_Namespaces' )
+            graphmenu.append( gns_item )
+            gns_item.connect( 'activate', self.nsgraph_suite, reg )
 
             search_item = gtk.MenuItem( '_Search' )
             prepmenu.append( search_item )
@@ -1020,23 +1030,13 @@ The cylc forecast suite metascheduler.
             dbmenu = gtk.Menu()
             dbmenu_item.set_submenu(dbmenu)
     
-            if not self.cdb:
-                copy_item = gtk.MenuItem( '_Copy' )
-                dbmenu.append( copy_item )
-                copy_item.connect( 'activate', self.copy_popup, reg )
+            copy_item = gtk.MenuItem( '_Copy' )
+            dbmenu.append( copy_item )
+            copy_item.connect( 'activate', self.copy_popup, reg )
 
-                alias_item = gtk.MenuItem( '_Alias' )
-                dbmenu.append( alias_item )
-                alias_item.connect( 'activate', self.alias_popup, reg )
-    
-            if self.cdb:
-                imp_item = gtk.MenuItem( '_Import' )
-                dbmenu.append( imp_item )
-                imp_item.connect( 'activate', self.import_popup, reg )
-            else:
-                exp_item = gtk.MenuItem( 'E_xport' )
-                dbmenu.append( exp_item )
-                exp_item.connect( 'activate', self.export_popup, reg )
+            alias_item = gtk.MenuItem( '_Alias' )
+            dbmenu.append( alias_item )
+            alias_item.connect( 'activate', self.alias_popup, reg )
     
             compare_item = gtk.MenuItem( 'C_ompare' )
             dbmenu.append( compare_item )
@@ -1045,20 +1045,13 @@ The cylc forecast suite metascheduler.
             reregister_item = gtk.MenuItem( '_Reregister' )
             dbmenu.append( reregister_item )
             reregister_item.connect( 'activate', self.reregister_popup, reg )
-            if self.cdb:
-                if owner != self.owner:
-                    reregister_item.set_sensitive( False )
     
             del_item = gtk.MenuItem( '_Unregister' )
             dbmenu.append( del_item )
             del_item.connect( 'activate', self.unregister_popup, reg )
-            if self.cdb:
-                if owner != self.owner:
-                    del_item.set_sensitive( False )
 
             menu.append( prepmenu_item )
-            if not self.cdb:
-                menu.append( ctrlmenu_item )
+            menu.append( ctrlmenu_item )
             menu.append( infomenu_item )
             menu.append( dbmenu_item )
 
@@ -1088,7 +1081,7 @@ The cylc forecast suite metascheduler.
         label = gtk.Label( 'ALIAS:' )
         box.pack_start( label, True )
         alias_entry = gtk.Entry()
-        alias_entry.set_text( self.ownerless(reg) )
+        alias_entry.set_text( reg )
         box.pack_start (alias_entry, True)
         vbox.pack_start(box)
 
@@ -1111,13 +1104,13 @@ The cylc forecast suite metascheduler.
         window.show_all()
 
     def alias_suite( self, b, w, reg, alias_entry ):
-        command = "cylc alias --notify-completion " + reg + " " + alias_entry.get_text()
+        command = "cylc alias --notify-completion " + self.dbopt + " " + reg + " " + alias_entry.get_text()
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
         w.destroy()
 
-    def unregister_popup( self, w, reg ):
+    def unregister_popup( self, w, reg, is_group=False ):
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Unregister Suite(s)")
@@ -1133,7 +1126,7 @@ The cylc forecast suite metascheduler.
         oblit_cb.set_active(False)
 
         ok_button = gtk.Button( "_Unregister" )
-        ok_button.connect("clicked", self.unregister_suites, window, reg, oblit_cb )
+        ok_button.connect("clicked", self.unregister_suites, window, reg, oblit_cb, is_group )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", self.command_help, 'db', 'unregister' )
@@ -1151,7 +1144,7 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def unregister_suites( self, b, w, reg, oblit_cb ):
+    def unregister_suites( self, b, w, reg, oblit_cb, is_group ):
         options = ''
         if oblit_cb.get_active():
             res = question_dialog( "!DANGER! !DANGER! !DANGER! !DANGER! !DANGER! !DANGER!\n"
@@ -1162,6 +1155,11 @@ The cylc forecast suite metascheduler.
             else:
                 return False
  
+        if is_group:
+            reg = '^' + reg + '\..*$'
+        else:
+            reg = '^' + reg + '$'
+
         command = "cylc unregister " + self.dbopt + " --notify-completion --force " + options + reg
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
@@ -1169,124 +1167,18 @@ The cylc forecast suite metascheduler.
         w.destroy()
 
     def browse( self, b, option='' ):
-        command = 'cylc browse ' + option
+        command = 'cylc documentation ' + option
         foo = gcapture_tmpfile( command, self.tmpdir, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def ownerless( self, creg ):
-        # remove owner from a central suite registration
-        return RegPath.delimiter.join( creg.split(RegPath.delimiter)[1:] )
- 
-    def import_popup( self, w, reg ):
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "Import Suite(s)")
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
-
-        vbox = gtk.VBox()
-        label = gtk.Label( 'SOURCE: ' + reg )
-        vbox.pack_start( label )
-
-        box = gtk.HBox()
-        label = gtk.Label( 'TARGET:' )
-        box.pack_start( label, True )
-        newreg_entry = gtk.Entry()
-        newreg_entry.set_text( self.ownerless(reg) )
-        box.pack_start (newreg_entry, True)
-        vbox.pack_start(box)
-
-        box = gtk.HBox()
-        label = gtk.Label( 'TOPDIR' )
-        box.pack_start( label, True )
-        dir_entry = gtk.Entry()
-        box.pack_start (dir_entry, True)
-        vbox.pack_start(box)
-
-        cancel_button = gtk.Button( "_Close" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
-        ok_button = gtk.Button( "_Import" )
-        ok_button.connect("clicked", self.import_suites, window, reg, newreg_entry, dir_entry )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'db', 'import' )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( ok_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def import_suites( self, b, w, reg, newreg_entry, dir_entry ):
-        newreg  = newreg_entry.get_text()
-        sdir = dir_entry.get_text()
-        if not self.check_entries( [newreg, sdir] ):
-            return False
-        command = "cylc import --notify-completion " + reg + ' ' + newreg + ' ' + sdir
-        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-        w.destroy()
- 
-    def export_popup( self, w, reg ):
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "Export Suite(s)")
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
-
-        vbox = gtk.VBox()
-        label = gtk.Label( 'SOURCE: ' + reg )
-        vbox.pack_start( label )
-
-        box = gtk.HBox()
-        label = gtk.Label( 'TARGET:' )
-        box.pack_start( label, True )
-        newreg_entry = gtk.Entry()
-        newreg_entry.set_text( reg )
-        box.pack_start (newreg_entry, True)
-        vbox.pack_start( box )
-
-        cancel_button = gtk.Button( "_Cancel" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
-        ok_button = gtk.Button( "_Export" )
-        ok_button.connect("clicked", self.export_suites, window, reg, newreg_entry )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'db', 'export' )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( ok_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def export_suites( self, b, w, reg, newreg_entry ):
-        newreg  = newreg_entry.get_text()
-        if not self.check_entries( [newreg] ):
-            return False
-        command = "cylc export --notify-completion " + reg + ' ' + newreg
-        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-        w.destroy()
- 
     def toggle_entry_sensitivity( self, w, entry ):
         if entry.get_property( 'sensitive' ) == 0:
             entry.set_sensitive( True )
         else:
             entry.set_sensitive( False )
 
-    def reregister_popup( self, w, reg ):
+    def reregister_popup( self, w, reg, is_group=False ):
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Reregister Suite(s)" )
@@ -1310,7 +1202,7 @@ The cylc forecast suite metascheduler.
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Reregister" )
-        ok_button.connect("clicked", self.reregister_suites, window, reg, name_entry )
+        ok_button.connect("clicked", self.reregister_suites, window, reg, name_entry, is_group )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", self.command_help, 'db', 'reregister' )
@@ -1324,7 +1216,7 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def reregister_suites( self, b, w, reg, n_e ):
+    def reregister_suites( self, b, w, reg, n_e, is_group ):
         newreg = n_e.get_text()
         command = "cylc reregister " + self.dbopt + " --notify-completion " + reg + ' ' + newreg
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
@@ -1373,7 +1265,7 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def copy_popup( self, w, reg ):
+    def copy_popup( self, w, reg, is_group=False ):
 
         window = gtk.Window()
         window.set_border_width(5)
@@ -1405,7 +1297,7 @@ The cylc forecast suite metascheduler.
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "Co_py" )
-        ok_button.connect("clicked", self.copy_suites, window, reg, name_entry, dir_entry )
+        ok_button.connect("clicked", self.copy_suites, window, reg, name_entry, dir_entry, is_group )
 
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", self.command_help, 'db', 'copy')
@@ -1433,13 +1325,17 @@ The cylc forecast suite metascheduler.
         foo.run()
         w.destroy()
  
-    def copy_suites( self, b, w, reg, name_entry, dir_entry ):
+    def copy_suites( self, b, w, reg, name_entry, dir_entry, is_group ):
         name  = name_entry.get_text()
         sdir  = dir_entry.get_text()
         chk = [ name, sdir ]
         if not self.check_entries( chk ):
             return False
-        command = "cylc copy --notify-completion " + reg + ' ' + name + ' ' + sdir
+        #if is_group:
+        #    reg = '^' + reg + '\..*$'
+        #else:
+        #    reg = '^' + reg + '$'
+        command = "cylc copy --notify-completion " + self.dbopt + ' ' + reg + ' ' + name + ' ' + sdir
         foo = gcapture_tmpfile( command, self.tmpdir, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1464,7 +1360,7 @@ The cylc forecast suite metascheduler.
         hbox.pack_start(pattern_entry, True) 
         vbox.pack_start( hbox )
 
-        yesbin_cb = gtk.CheckButton( "search suite bin/ directory" )
+        yesbin_cb = gtk.CheckButton( "Also search suite bin directory" )
         yesbin_cb.set_active(True)
         vbox.pack_start (yesbin_cb, True)
 
@@ -1518,9 +1414,11 @@ The cylc forecast suite metascheduler.
         hbox.pack_start (warm_rb, True)
         vbox.pack_start( hbox, True )
 
-        suite, rcfile = dbgetter(self.cdb).get_suite(reg)
+        db = localdb(self.db)
+        db.load_from_file()
+        suite, rcfile = db.get_suite(reg)
         try:
-            suiterc = config( suite, rcfile )
+            suiterc = config( suite, rcfile, self.db_owner )
         except SuiteConfigError, x:
             warning_dialog( str(x) + \
                     '\n\n Suite.rc parsing failed (needed\nfor default start and stop cycles.',
@@ -1570,7 +1468,7 @@ The cylc forecast suite metascheduler.
         options = ''
         if not yesbin_cb.get_active():
             options += ' -x '
-        command = "cylc search " + self.dbopt + " --notify-completion " + options + ' ' + pattern + ' ' + reg 
+        command = "cylc search " + self.dbopt + " --notify-completion " + options + ' ' + reg + ' ' + pattern 
         foo = gcapture_tmpfile( command, self.tmpdir, width=600, height=500 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1612,13 +1510,14 @@ The cylc forecast suite metascheduler.
         foo = gcapture_tmpfile( command, self.tmpdir )
         self.gcapture_windows.append(foo)
         foo.run()
+        return False
 
     def view_suite( self, w, reg, method ):
         extra = ''
         if method == 'inlined':
             extra = ' -i'
         elif method == 'processed':
-            extra = ' -p'
+            extra = ' -j'
 
         command = "cylc view " + self.dbopt + " --notify-completion -g " + extra + ' ' + reg
         foo = gcapture_tmpfile( command, self.tmpdir )
@@ -1659,7 +1558,7 @@ The cylc forecast suite metascheduler.
         label = gtk.Label("SUITE: " + reg )
         vbox.pack_start( label )
 
-        label = gtk.Label("TASK: " )
+        label = gtk.Label("TASK ID: " )
         task_entry = gtk.Entry()
         hbox = gtk.HBox()
         hbox.pack_start( label, True )
@@ -1695,7 +1594,7 @@ The cylc forecast suite metascheduler.
         label = gtk.Label("SUITE: " + reg )
         vbox.pack_start( label )
  
-        label = gtk.Label("TASK" )
+        label = gtk.Label("TASK ID" )
         task_entry = gtk.Entry()
         hbox = gtk.HBox()
         hbox.pack_start( label, True )
@@ -1721,13 +1620,13 @@ The cylc forecast suite metascheduler.
         window.show_all()
 
     def submit_task( self, w, reg, task_entry ):
-        command = "cylc submit --notify-completion " + reg + " " + task_entry.get_text()
+        command = "cylc submit --notify-completion " + self.dbopt + " " + reg + " " + task_entry.get_text()
         foo = gcapture_tmpfile( command, self.tmpdir, 500, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
 
     def jobscript( self, w, reg, task_entry ):
-        command = "cylc jobscript " + reg + " " + task_entry.get_text()
+        command = "cylc jobscript " + self.dbopt + " " + reg + " " + task_entry.get_text()
         foo = gcapture_tmpfile( command, self.tmpdir, 800, 800 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -1751,14 +1650,25 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def launch_controller( self, w, name, state, depgraph=False ):
+    def launch_gcontrol( self, w, name, suite_dir, state, views=None ):
+        if not PyroInstalled:
+            warning_dialog( "Cannot run gcontrol: Pyro is not installed"  ).warn()
+            return
+
+        suite_dir = os.path.expanduser(suite_dir)
+        # (we replaced home dir with '~' above for display purposes)
         running_already = False
         if state != '-':
             # suite running
             running_already = True
             # was it started by gcylc?
             try:
-                ssproxy = cylc_pyro_client.client( name ).get_proxy( 'state_summary' )
+                pphrase = passphrase( name ).get( suitedir=suite_dir )
+            except Exception, x:
+                warning_dialog( str(x), self.window ).warn()
+                return False
+            try:
+                ssproxy = cylc_pyro_client.client( name, pphrase, pyro_timeout=self.pyro_timeout ).get_proxy( 'state_summary' )
             except SuiteIdentificationError, x:
                 warning_dialog( str(x), self.window ).warn()
                 return False
@@ -1766,13 +1676,14 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             if glbl['started by gcylc']:
                 started_by_gcylc = True
                 #info_dialog( "This suite is running already. It was started by "
-                #    "gcylc, which redirects suite stdout and stderr to special files "
-                #    "so we can connect a new output capture window to those files.",
+                #    "gcontrol which redirects suite stdout and stderr "
+                #    "to special files so we can connect a new output "
+                #    "capture window to those files.",
                 #    self.window ).inform()
             else:
                 started_by_gcylc = False
                 info_dialog( "This suite is running but it was started from "
-                    "the command line, so gcylc does not have access its stdout "
+                    "the command line so we do not have access its stdout "
                     "and stderr streams.", self.window ).inform()
 
         if running_already and started_by_gcylc or not running_already:
@@ -1828,10 +1739,13 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
                 warning_dialog( str(x), self.window ).warn()
                 return False
 
-            if depgraph:
-                command = "gcylc --graph " + name
+            if views:
+                command = "gcontrol --views=" + views + " " + self.dbopt
             else:
-                command = "gcylc " + name
+                command = "gcontrol " + self.dbopt
+            if self.pyro_timeout:
+                command += " --timeout=" + str(self.pyro_timeout)
+            command += " " + name
             foo = gcapture( command, stdout, 800, 400 )
             self.gcapture_windows.append(foo)
             foo.run()
@@ -1840,10 +1754,10 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             # connecting a controller to a running suite started by command line
             # so no point in connecting to the special stdout and stderr files.
             # User was informed of this already by a dialog above.
-            if depgraph:
-                command = "gcylc --graph " + name
+            if views:
+                command = "gcontrol --views=" + views + " " + self.dbopt + " " + name
             else:
-                command = "gcylc " + name
+                command = "gcontrol " + self.dbopt + " " + name
             foo = gcapture_tmpfile( command, self.tmpdir, 400 )
             self.gcapture_windows.append(foo)
             foo.run()
@@ -1853,9 +1767,11 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         clv.quit()
 
     def view_log( self, w, reg ):
-        suite, rcfile = dbgetter(self.cdb).get_suite(reg)
+        db = localdb( self.db )
+        db.load_from_file()
+        suite, rcfile = db.get_suite(reg)
         try:
-            suiterc = config( suite, rcfile )
+            suiterc = config( suite, rcfile, self.db_owner )
         except SuiteConfigError, x:
             warning_dialog( str(x) + \
                     '\n\n Suite.rc parsing failed (needed\nto determine the suite log path.',
@@ -1871,7 +1787,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             running_already = True
             # was it started by gcylc?
             try:
-                ssproxy = cylc_pyro_client.client( name ).get_proxy( 'state_summary' )
+                ssproxy = cylc_pyro_client.client( name, pyro_timeout=self.pyro_timeout ).get_proxy( 'state_summary' )
             except SuiteIdentificationError, x:
                 warning_dialog( str(x), self.window ).warn()
                 return False
@@ -1884,16 +1800,16 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             else:
                 started_by_gcylc = False
                 info_dialog( "This suite is running, but it was started from "
-                    "the command line, so gcylc cannot access its cylc stdout/stderr file.",
+                    "the command line so we cannot access its stdout/stderr.",
                     self.window ).inform()
                 return False
         else:
             # suite not running
-            info_dialog( "This suite is not running, so "
-                    "the suite output window will show stdout and stderr "
-                    "messages captured the last time(s) the suite was started "
-                    "from via the GUI (gcylc cannot access stdout "
-                    "and stderr for suites started by the command line).",
+            info_dialog( "This suite is not running. "
+                    "The suite output window may show stdout and stderr "
+                    "captured during the last GUI-initiated run "
+                    "(we can't access stdout/stderr from suites started "
+                    "at the command line).",
                     self.window ).inform()
 
         # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?
@@ -1901,7 +1817,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         # reconnect to the output of a running suite. Some
         # non-fatal textbuffer insertion warnings may occur if several
         # control guis are open at once both trying to write to it.
-        prefix = os.path.join( '$HOME', '.cylc', name )
+        prefix = os.path.join( '~' + self.db_owner, '.cylc', name )
 
         # environment variables allowed
         prefix = os.path.expandvars( prefix )
@@ -1910,7 +1826,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             # open existing out and err files
             stdout = open( prefix + '.out', 'rb' )
         except IOError,x:
-            msg = '''This probably means the suite has not yet been started via gcylc
+            msg = '''This probably means the suite has not yet been started via gcontrol
 (if you start a suite on the command line stdout and stderr redirection is up to you).'''
             warning_dialog( str(x) + '\n' + msg, self.window ).warn()
             return False

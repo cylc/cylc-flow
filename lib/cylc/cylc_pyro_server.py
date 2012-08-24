@@ -1,4 +1,4 @@
-#!/usr/bin/pyro
+#!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
@@ -16,15 +16,20 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
+import sys
 import socket
-import Pyro
+try:
+    import Pyro
+except ImportError, x:
+    print >> sys.stderr, x
+    sys.exit( "ERROR: Pyro is not installed" )
 from passphrase import passphrase
 from hostname import hostname
+from owner import user
 from conf.CylcGlobals import pyro_base_port, pyro_port_range
 
 class pyro_server( object ):
-    def __init__( self, suite, user=os.environ['USER'] ):
+    def __init__( self, suite, suitedir, user=user ):
 
         self.suite = suite
         self.owner = user
@@ -42,7 +47,7 @@ class pyro_server( object ):
 
         Pyro.core.initServer()
         self.daemon = Pyro.core.Daemon()
-        self.daemon.setAllowedIdentifications( [passphrase(suite,user,hostname).get()] )
+        self.daemon.setAllowedIdentifications( [passphrase(suite,user,hostname).get(suitedir=suitedir)] )
 
     def shutdown( self ):
         print "Pyro daemon shutdown"

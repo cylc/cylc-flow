@@ -31,7 +31,8 @@
 
 import sys, re
 from OrderedDict import OrderedDict
-
+from copy import deepcopy
+from collections import deque
 from prerequisites.prerequisites_fuzzy import fuzzy_prerequisites
 from prerequisites.prerequisites_loose import loose_prerequisites
 from prerequisites.prerequisites import prerequisites
@@ -87,6 +88,7 @@ class taskdef(object):
         self.submission_timeout = None
         self.execution_timeout = None
         self.reset_timer = None
+        self.resurrectable = False
 
         self.intercycle = False
         self.cyclers = []
@@ -108,15 +110,19 @@ class taskdef(object):
         self.loose_prerequisites = [] # asynchronous tasks
 
         self.command = None
-        self.retry_delays = []
+        self.retry_delays = deque()
         self.precommand = None
         self.postcommand = None
         self.initial_scripting = None
+        self.ssh_messaging = False
 
         self.environment = OrderedDict()  # var = value
         self.directives  = OrderedDict()  # var = value
 
         self.namespace_hierarchy = []
+
+        self.sim_mode_run_length = None
+        self.fail_in_sim_mode = False
 
     def add_trigger( self, trigger, cycler ):
         if cycler not in self.triggers:
@@ -197,6 +203,7 @@ class taskdef(object):
         tclass.submission_timeout = self.submission_timeout
         tclass.execution_timeout  = self.execution_timeout
         tclass.reset_timer =self.reset_timer
+        tclass.resurrectable = self.resurrectable
 
         tclass.remote_host = self.remote_host
         tclass.owner = self.owner
@@ -303,8 +310,18 @@ class taskdef(object):
             sself.asyncid_pattern = self.asyncid_pattern
 
             sself.initial_scripting = self.initial_scripting
+            sself.ssh_messaging = self.ssh_messaging
+
             sself.command = self.command
-            sself.retry_delays = self.retry_delays
+
+            sself.sim_mode_run_length = self.sim_mode_run_length
+            sself.fail_in_sim_mode = self.fail_in_sim_mode
+
+            # deepcopy retry delays: the deque gets pop()'ed in the task
+            # proxy objects, which is no good if all instances of the
+            # same task class reference the original deque!
+            sself.retry_delays = deepcopy(self.retry_delays)
+
             sself.precommand = self.precommand
             sself.postcommand = self.postcommand
 
@@ -348,6 +365,8 @@ class taskdef(object):
                 # TO DO: TEMPORARY HACK FOR ASYNC
                 sself.stop_c_time = '99991231230000'
                 super( sself.__class__, sself ).__init__( initial_state )
+
+            sself.reconfigure_me = False
 
         tclass.__init__ = tclass_init
 

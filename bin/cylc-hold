@@ -17,39 +17,30 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+if '--use-ssh' in sys.argv[1:]: 
+    sys.argv.remove( '--use-ssh' )
+    from cylc.remote import remrun
+    remrun().execute( force_required=True )
+
+from cylc.prompt import prompt
 from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
-from cylc.CylcOptionParsers import PromptOptionParser
-from cylc.port_scan import SuiteIdentificationError
-from cylc.registration import dbgetter, RegistrationError
-from cylc.version import compat
-from cylc.passphrase import SecurityError
+from cylc.CylcOptionParsers import cop
+from cylc.command_prep import prep_pyro
 
-parser = PromptOptionParser( """cylc [control] hold [options] SUITE [TASK]
+parser = cop( """cylc [control] hold [OPTIONS] ARGS
 
-Holding a SUITE stops it from submitting tasks that are ready to run,
-until it is released. Holding a waiting TASK in a SUITE prevents it
+Holding a suite stops it from submitting tasks that are ready to run,
+until it is released. Holding a waiting TASK in a suite prevents it
 from running or spawning successors, until it is released.  
 
-See also 'cylc [control] release'.""",
-["""TASK                 Task to hold (NAME%CYCLE)"""])
+See also 'cylc [control] release'.""", pyro=True,
+    argdoc=[("REG", "Suite name"), 
+            ("[TASK]", "Task to hold (NAME%CYCLE)")]) 
 
 (options, args) = parser.parse_args()
 
-if len(args) > 2:
-    parser.error("too many arguments")
- 
-reg = parser.get_suite_name()
-dbg = dbgetter()
-try:
-    # unalias your own suite names
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    # may be a remote suite (if not we fail to get a Pyro proxy below)
-    suite = reg
-else:
-    # pseudo backward compatibility for your own suites
-    compat( suite, suiterc ).execute( sys.argv )
+suite, pphrase = prep_pyro( args[0], options ).execute()
 
 task_only = False
 if len(args) == 2:
@@ -62,18 +53,16 @@ if len(args) == 2:
     else:
         task = tid.getstr()
 
-    if not parser.prompt( 'Hold task ' + task + ' in'):
-        sys.exit(0)
+    prompt( 'Hold task ' + task + ' in ' + suite, options.force )
 else:
-    if not parser.prompt( 'Hold suite ' ):
-        sys.exit(0)
+    prompt( 'Hold suite ' + suite, options.force )
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
-    host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
-except SuiteIdentificationError, x:
-    raise SystemExit(x)
-except SecurityError, x:
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host, options.pyro_timeout, None, options.verbose ).get_proxy( 'remote' )
+except Exception, x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 
 if task_only:
@@ -84,5 +73,5 @@ else:
 if result.success:
     print result.reason
 else:
-    print 'ERROR:', result.reason
-    sys.exit(1)
+    sys.exit( 'ERROR:' + result.reason )
+

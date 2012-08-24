@@ -21,9 +21,9 @@
 
 # _________________________________________________________MAIN SECTIONS
 # [cylc]          - non task-related suite config.
-# [scheduling]    - items affecting when a task is deemed ready to run.
-# [runtime]       - what to execute (and how) when a task is ready.
-# [visualization] - for suite graphing and the graph-based control GUI.
+# [scheduling]    - determines when tasks are ready to run.
+# [runtime]       - how, where, what to execute when a task is ready.
+# [visualization] - for suite graphing and the gcontrol graph view.
 
 #_______________________________________________________________________
 # WARNING: a CONFIGOBJ or VALIDATE bug? list constructor fails if final
@@ -37,7 +37,11 @@ description = string( default="No description provided" )
 #___________________________________________________________________CYLC
 [cylc]
     UTC mode = boolean( default=False )
-    simulation mode only = boolean( default=False )
+    required run mode = option( 'live','dummy','simulation', default=None )
+    pyro connection timeout = float( min=0.0, default=None )
+    maximum simultaneous job submissions = integer( min=1, default=50 )
+    abort if any task fails = boolean( default=False )
+    log resolved dependencies = boolean( default=False )
     [[logging]]
         directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite' )
         roll over at start-up = boolean( default=True )
@@ -49,18 +53,23 @@ description = string( default="No description provided" )
         simultaneous instances = boolean( default=False )
     [[environment]]
         __many__ = string
-    [[simulation mode]]
-        clock offset = integer( default=24 )
-        clock rate = integer( default=10 )
-        command scripting = string( default="echo SIMULATION MODE; sleep $CYLC_TASK_DUMMY_RUN_LENGTH")
-        retry delays = force_list( default=list() )
-        [[[event hooks]]]
-            enable = boolean( default=False )
-        [[[job submission]]]
-            method = string( default=background )
     [[event hooks]]
         script = string( default=None )
         events = force_list( default=list() )
+        timeout = float( default=None )
+        abort if shutdown handler fails = boolean( default=False )
+        abort on timeout = boolean( default=False )
+    [[accelerated clock]]
+        disable = boolean( default=False )
+        rate = integer( default=10 )
+        offset = integer( default=24 )
+    [[reference test]]
+        suite shutdown event handler = string( default='cylc hook check-triggering' )
+        required run mode = option( 'live', 'simulation', 'dummy', default=None )
+        allow task failures = boolean( default=False )
+        live mode suite timeout = float( default=None )
+        dummy mode suite timeout = float( default=None )
+        simulation mode suite timeout = float( default=None )
 #_____________________________________________________________SCHEDULING
 [scheduling]
     initial cycle time = integer( default=None )
@@ -94,19 +103,31 @@ description = string( default="No description provided" )
         inherit = string( default=None )
         description = string( default="No description provided" )
         initial scripting = string( default=None )
-        command scripting = string( default='echo Dummy command scripting; sleep $CYLC_TASK_DUMMY_RUN_LENGTH')
+        command scripting = string( default='echo Default command scripting; sleep $(cylc rnd 1 16)')
         retry delays = force_list( default=list() )
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
         manual completion = boolean( default=False )
         extra log files = force_list( default=list())
+        enable resurrection = boolean( default=False )
+        log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job' )
+        share directory = string( default='$CYLC_SUITE_DEF_PATH/share' )
+        work directory = string( default='$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID' )
+        [[[simulation mode]]]
+            run time range = list( default=list(1,16))
+            simulate failure = boolean( default=False )
+            disable event hooks = boolean( default=True )
+            disable retries = boolean( default=True )
+        [[[dummy mode]]]
+            command scripting = string( default='echo Dummy command scripting; sleep $(cylc rnd 1 16)')
+            disable pre-command scripting = boolean( default=True )
+            disable post-command scripting = boolean( default=True )
+            disable event hooks = boolean( default=True )
+            disable retries = boolean( default=True )
         [[[job submission]]]
             method = string( default=background )
             command template = string( default=None )
             shell = string( default='/bin/bash' )
-            log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job' )
-            share directory = string( default='$CYLC_SUITE_DEF_PATH/share' )
-            work directory = string( default='$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID' )
         [[[remote]]]
             host = string( default=None )
             owner = string( default=None )
@@ -124,7 +145,6 @@ description = string( default="No description provided" )
             execution timeout = float( default=None )
             reset timer = boolean( default=False )
         [[[environment]]]
-            CYLC_TASK_DUMMY_RUN_LENGTH = integer( default=10 )
             __many__ = string
         [[[directives]]]
             __many__ = string
@@ -136,18 +156,27 @@ description = string( default="No description provided" )
         description = string( default=None )
         initial scripting = string( default=None )
         command scripting = string( default=None )
+        fail in simulation mode = boolean( default=None )
         retry delays = force_list( default=list() )
         pre-command scripting = string( default=None )
         post-command scripting = string( default=None )
         manual completion = boolean( default=None )
         extra log files = force_list( default=list())
+        enable resurrection = boolean( default=None )
+        log directory = string( default=None )
+        share directory = string( default=None )
+        work directory = string( default=None )
+        [[[simulation mode]]]
+            run time range = list( default=list() )
+            simulate failure = boolean( default=None )
+        [[[dummy mode]]]
+            command scripting = string( default=None )
+            disable pre-command scripting = boolean( default=None )
+            disable post-command scripting = boolean( default=None )
         [[[job submission]]]
             method = string( default=None )
             command template = string( default=None )
             shell = string( default=None )
-            log directory = string( default=None )
-            share directory = string( default=None )
-            work directory = string( default=None )
         [[[remote]]]
             host = string( default=None )
             owner = string( default=None )
@@ -166,7 +195,6 @@ description = string( default="No description provided" )
             execution timeout = float( default=None )
             reset timer = boolean( default=False )
         [[[environment]]]
-            CYLC_TASK_DUMMY_RUN_LENGTH = integer( default=None )
             __many__ = string
         [[[directives]]]
             __many__ = string
@@ -186,7 +214,7 @@ description = string( default="No description provided" )
         __many__ = force_list( default=list())
     [[node attributes]]
         __many__ = force_list( default=list())
-    [[run time graph]]
+    [[runtime graph]]
         enable = boolean( default=False )
         cutoff = integer( default=24 )
         directory = string( default='$CYLC_SUITE_DEF_PATH/graphing')

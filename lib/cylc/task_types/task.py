@@ -30,12 +30,9 @@
 import sys, re
 import datetime
 from cylc import task_state
+from cylc.RunEventHandler import RunHandler
 import logging
 import Pyro.core
-import subprocess
-
-global state_changed
-state_changed = True
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -79,6 +76,7 @@ class task( Pyro.core.ObjBase ):
     clock = None
     intercycle = False
     suite = None
+    state_changed = True
 
     @classmethod
     def describe( cls ):
@@ -147,11 +145,6 @@ class task( Pyro.core.ObjBase ):
 
         Pyro.core.ObjBase.__init__(self)
 
-        # set state_changed True if any task's state changes
-        # as a result of a remote method call
-        global state_changed
-        state_changed = True
-
         self.latest_message = ""
         self.latest_message_priority = "NORMAL"
 
@@ -165,6 +158,11 @@ class task( Pyro.core.ObjBase ):
         self.to_go = None
         self.try_number = 1
         self.retry_delay_timer_start = None
+
+    def plog( self, message ):
+        # print and log a low priority message
+        print self.id + ':', message
+        self.log( 'NORMAL', message )
 
     def log( self, priority, message ):
         logger = logging.getLogger( "main" )
@@ -182,13 +180,11 @@ class task( Pyro.core.ObjBase ):
             logger.warning( '-> ' + message )
 
     def prepare_for_death( self ):
-        # The task manager MUST call this immediately before deleting a
-        # task object. It decrements the instance count of top level
-        # objects derived from task base. It would be nice to use Python's
-        # __del__() function for this, but that is only called when a
-        # deleted object is about to be garbage collected (which is not
-        # guaranteed to be right away). This was once used for
-        # constraining the number of instances of each task type.
+        # Decrement the instance count of objects derived from task
+        # base. Was once used for constraining the number of instances
+        # of each task type. Python's __del__() function cannot be used
+        # for this as it is only called when a deleted object is about
+        # to be garbage collected (not guaranteed to be right away). 
         self.__class__.instance_count -= 1
 
     def ready_to_run( self ):
@@ -212,9 +208,8 @@ class task( Pyro.core.ObjBase ):
         return dep
 
     def call_warning_hook( self, message ):
-        self.log( 'WARNING', 'calling task warning hook script' )
-        command = ' '.join( [self.__class__.hook_script, 'warning', self.__class__.suite, self.id, "'" + message + "' &"] )
-        subprocess.call( command, shell=True )
+        self.plog( 'calling task warning hook script' )
+        RunHandler( 'warning', self.__class__.hook_script, self.__class__.suite, self.id, message )
 
     def set_submitted( self ):
         self.state.set_status( 'submitted' )
@@ -222,18 +217,17 @@ class task( Pyro.core.ObjBase ):
         self.submitted_time = task.clock.get_datetime()
         self.submission_timer_start = self.submitted_time
         if 'submitted' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'WARNING', 'calling task submitted hook script' )
-            command = ' '.join( [self.__class__.hook_script, 'submitted', self.__class__.suite, self.id, "'(task submitted)' &"] )
-            subprocess.call( command, shell=True )
+            self.plog( 'calling task submitted hook script' )
+            RunHandler( 'submitted', self.__class__.hook_script, self.__class__.suite, self.id, '(task submitted)' )
 
     def set_running( self ):
         self.state.set_status( 'running' )
         self.started_time = task.clock.get_datetime()
+        self.started_time_real = datetime.datetime.now()
         self.execution_timer_start = self.started_time
         if 'started' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'WARNING', 'calling task started hook script' )
-            command = ' '.join( [self.__class__.hook_script, 'started', self.__class__.suite, self.id, "'(task running)' &"] )
-            subprocess.call( command, shell=True )
+            self.plog( 'calling task started hook script' )
+            RunHandler( 'started', self.__class__.hook_script, self.__class__.suite, self.id, '(task started)' )
 
     def set_succeeded( self ):
         self.outputs.set_all_completed()
@@ -246,26 +240,22 @@ class task( Pyro.core.ObjBase ):
         print '\n' + self.id + " SUCCEEDED"
         self.state.set_status( 'succeeded' )
         if 'succeeded' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'WARNING', 'calling task succeeded hook script' )
-            command = ' '.join( [self.__class__.hook_script, 'succeeded', self.__class__.suite, self.id, "'(task succeeded)' &"] )
-            subprocess.call( command, shell=True )
+            self.plog( 'calling task succeeded hook script' )
+            RunHandler( 'succeeded', self.__class__.hook_script, self.__class__.suite, self.id, '(task succeeded)' )
 
-    def set_failed( self, reason ):
+    def set_failed( self, reason='(task failed)' ):
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
         if 'failed' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'WARNING', 'calling task failed hook script' )
-            command = ' '.join( [self.__class__.hook_script, 'failed', self.__class__.suite, self.id, "'" + reason + "' &"] )
-            subprocess.call( command, shell=True )
+            self.plog( 'calling task failed hook script' )
+            RunHandler( 'failed', self.__class__.hook_script, self.__class__.suite, self.id, reason )
 
-    def set_submit_failed( self ):
-        reason = 'job submission failed'
+    def set_submit_failed( self, reason='(job submission failed)' ):
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
         if 'submission_failed' in self.__class__.hook_events and self.__class__.hook_script:
-            self.log( 'WARNING', 'calling task submission failed hook script' )
-            command = ' '.join( [self.__class__.hook_script, 'submission_failed', self.__class__.suite, self.id, "'" + reason + "' &"] )
-            subprocess.call( command, shell=True )
+            self.plog( 'calling task submission failed hook script' )
+            RunHandler( 'submission_failed', self.__class__.hook_script, self.__class__.suite, self.id, reason )
 
     def unfail( self ):
         # if a task is manually reset remove any previous failed message
@@ -305,8 +295,8 @@ class task( Pyro.core.ObjBase ):
     def reset_state_held( self ):
         itask.state.set_status( 'held' )
 
-    def run_external_task( self, dry_run=False ):
-        self.log( 'DEBUG',  'submitting task script' )
+    def submit( self, dry_run=False ):
+        self.log( 'DEBUG',  'submitting task job script' )
         # construct the job launcher here so that a new one is used if
         # the task is re-triggered by the suite operator - so it will
         # get new stdout/stderr logfiles and not overwrite the old ones.
@@ -330,6 +320,7 @@ class task( Pyro.core.ObjBase ):
 
         launcher_class = getattr( mod, class_name )
 
+        # To Do: most of the following arguments could be class variables
         self.launcher = launcher_class(
                         self.id, self.initial_scripting,
                         self.precommand, self.command, self.try_number,
@@ -346,13 +337,18 @@ class task( Pyro.core.ObjBase ):
                         self.__class__.remote_shell_template,
                         self.__class__.remote_log_directory,
                         self.__class__.job_submit_command_template,
-                        self.__class__.job_submission_shell )
+                        self.__class__.job_submission_shell,
+                        self.ssh_messaging )
 
-        if self.launcher.submit( dry_run ):
+        try:
+            p = self.launcher.submit( dry_run )
+        except:
+            self.set_submit_failed()
+            return None
+        else:
             self.set_submitted()
             self.submission_timer_start = task.clock.get_datetime()
-        else:
-            self.set_submit_failed()
+            return p
 
     def check_submission_timeout( self ):
         if not self.__class__.hook_script:
@@ -373,9 +369,8 @@ class task( Pyro.core.ObjBase ):
             if current_time > timeout:
                 msg = 'submitted ' + str( self.submission_timeout ) + ' minutes ago, but has not started'
                 self.log( 'WARNING', msg )
-                self.log( 'WARNING', 'Calling task submission timeout hook script.' )
-                command = ' '.join( [ self.__class__.hook_script, 'submission_timeout', self.__class__.suite, self.id, "'" + msg + "' &" ] )
-                subprocess.call( command, shell=True )
+                self.plog( 'Calling task submission timeout hook script.' )
+                RunHandler( 'submission_timeout', self.__class__.hook_script, self.__class__.suite, self.id, msg )
                 self.submission_timer_start = None
 
     def check_execution_timeout( self ):
@@ -401,10 +396,21 @@ class task( Pyro.core.ObjBase ):
                 else:
                     msg = 'started ' + str( self.execution_timeout ) + ' minutes ago, but has not succeeded'
                 self.log( 'WARNING', msg )
-                self.log( 'WARNING', 'Calling task execution timeout hook script.' )
-                command = ' '.join( [ self.__class__.hook_script, 'execution_timeout', self.__class__.suite, self.id, "'" + msg + "' &" ] )
-                subprocess.call( command, shell=True )
+                self.plog( 'Calling task execution timeout hook script.' )
+                RunHandler( 'execution_timeout', self.__class__.hook_script, self.__class__.suite, self.id, msg )
                 self.execution_timer_start = None
+
+    def sim_time_check( self ):
+        if not self.state.is_running():
+            return
+        timeout = self.started_time_real + \
+                datetime.timedelta( seconds=self.sim_mode_run_length )
+        if datetime.datetime.now() > timeout:
+            if self.fail_in_sim_mode:
+                self.incoming( 'CRITICAL', self.id + ' failed' )
+            else:
+                self.incoming( 'NORMAL', self.id + ' succeeded' )
+            task.state_changed = True
 
     def set_all_internal_outputs_completed( self ):
         if self.reject_if_failed( 'set_all_internal_outputs_completed' ):
@@ -424,8 +430,12 @@ class task( Pyro.core.ObjBase ):
 
     def reject_if_failed( self, message ):
         if self.state.is_failed():
-            self.log( 'WARNING', 'rejecting the following message as I am in the failed state:' )
-            self.log( 'WARNING', '  ' + message )
+            if self.__class__.resurrectable:
+                self.log( 'WARNING', 'message receive while failed: I am returning from the dead!' )
+                return False
+            else:
+                self.log( 'WARNING', 'rejecting a message received while in the failed state:' )
+                self.log( 'WARNING', '  ' + message )
             return True
         else:
             return False
@@ -444,15 +454,8 @@ class task( Pyro.core.ObjBase ):
         self.latest_message = message
         self.latest_message_priority = priority
 
-        # setting state_change results in task processing loop
-        # invocation. We should really only do this when the
-        # incoming message results in a state change that matters to
-        # scheduling ... but system monitor may need latest message, and
-        # we don't yet have a separate state-summary-update invocation
-        # flag.
-
-        global state_changed
-        state_changed = True
+        # set state_changed to stimulate the task processing loop
+        task.state_changed = True
 
         if message == self.id + ' started':
             self.set_running()
@@ -478,17 +481,19 @@ class task( Pyro.core.ObjBase ):
                 self.outputs.set_completed( message )
                 # this also calls the task failure hook script:
                 self.set_failed( message )
-                state_changed = True
+                task.state_changed = True
             else:
                 # Yep, we can retry.
-                self.log( 'CRITICAL',  \
-                    'Setting retry delay in minutes: ' + str(self.retry_delay) )
+                self.plog( 'Setting retry delay: ' + str(self.retry_delay) +  ' minutes' )
                 self.retry_delay_timer_start = task.clock.get_datetime()
                 self.try_number += 1
                 self.state.set_status( 'retry_delayed' )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
-                state_changed = True
+                task.state_changed = True
+                if 'retry' in self.__class__.hook_events and self.__class__.hook_script:
+                    self.plog( 'calling task retry hook script' )
+                    RunHandler( 'retry', self.__class__.hook_script, self.__class__.suite, self.id, '(task retrying)' )
 
         elif self.outputs.exists( message ):
             # registered output messages
@@ -549,7 +554,7 @@ class task( Pyro.core.ObjBase ):
             return False
 
     def check_requisites( self ):
-        # overridden by asynchronous tasks
+        # overridden by repeating asynchronous tasks
         pass
 
     def get_state_summary( self ):
@@ -624,14 +629,14 @@ class task( Pyro.core.ObjBase ):
     def not_fully_satisfied( self ):
         if not self.prerequisites.all_satisfied():
             return True
-        if not self.suicide_prerequisites.all_satisfied(): # TO DO: IS THIS CORRECT?
+        if not self.suicide_prerequisites.all_satisfied():
             return True
         return False
 
     def satisfy_me( self, outputs ):
         self.prerequisites.satisfy_me( outputs )
-        # TO DO: DONT DO THIS IF HAVE NO SUICIDE PREREQUISITES (efficiency reasons):
-        self.suicide_prerequisites.satisfy_me( outputs )
+        if self.suicide_prerequisites.count() > 0:
+            self.suicide_prerequisites.satisfy_me( outputs )
 
     def adjust_tag( self, tag ):
         # Override to modify initial tag if necessary.

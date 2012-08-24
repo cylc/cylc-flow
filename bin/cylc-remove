@@ -16,25 +16,31 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, re
+import sys
+if '--use-ssh' in sys.argv[1:]: 
+    sys.argv.remove( '--use-ssh' )
+    from cylc.remote import remrun
+    remrun().execute( force_required=True )
+
+import re
+from cylc.prompt import prompt
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
-from cylc.CylcOptionParsers import PromptOptionParser
-from cylc.port_scan import SuiteIdentificationError
-from cylc.registration import dbgetter, RegistrationError
-from cylc.version import compat
-from cylc.passphrase import SecurityError
+from cylc.CylcOptionParsers import cop
+from cylc.command_prep import prep_pyro
 
-parser = PromptOptionParser( """cylc [control] remove|kill [options] SUITE TARGET
+parser = cop( """cylc [control] remove|kill [OPTIONS] ARGS
 
 Remove a single task, or all tasks with a common TAG (cycle time or
-asynchronous 'a:INT'), from a running suite. 
+integer) from a running suite. 
 
 Target tasks will be forced to spawn successors before being removed if
 they have not done so already, unless you use '--no-spawn'.""",
-["""TARGET      NAME%CYCLE or NAME%a:TAG to remove a single task;
-               CYCLE or a:TAG to remove all tasks with the same tag."""])
+    pyro=True,
+    argdoc=[("REG", "Suite name"), 
+            ("TARGET", """NAME%TAG to remove a single task;
+               CYCLE or INT to remove all tasks with the same tag.""")])
 
 parser.add_option( "--no-spawn", 
         help="Do not spawn successors before removal.",
@@ -42,20 +48,7 @@ parser.add_option( "--no-spawn",
 
 (options, args) = parser.parse_args()
 
-if len(args) != 2:
-    parser.error( "Task ID or cycle time required" )
-
-reg = parser.get_suite_name()
-dbg = dbgetter()
-try:
-    # unalias your own suite names
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    # may be a remote suite (if not we fail to get a Pyro proxy below)
-    suite = reg
-else:
-    # pseudo backward compatibility for your own suites
-    compat( suite, suiterc ).execute( sys.argv )
+suite, pphrase = prep_pyro( args[0], options ).execute()
 
 target = args[1]
 
@@ -68,38 +61,44 @@ try:
 except TaskIDError:
     # no
     kill_tag = True
-    # is target a valid cycle time or asynchronous ID?
-    if re.match( '^a:', target ):
-        target = target[2:]
-    else:
+    try:
+        # is it a cycle time?
+        ct(target)
+    except CycleTimeError,x:
+        # nope: is it an async integer tag?
         try:
-            ct(target)
-        except CycleTimeError,x:
-            raise SystemExit(x)
+            int( target )
+        except ValueError:
+            # nope: not task ID, date time, or TAG
+            raise SystemExit( "ERROR, invalid kill target: " + target )
+        else:
+            # is probably an async TAG
+            pass
+    else:
+        # is a cycle time
+        pass
 else:
-    # yes
+    # is a task id
     kill_task = True
     target = tid.getstr()
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
-    host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
-except SuiteIdentificationError, x:
-    raise SystemExit(x)
-except SecurityError, x:
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host, options.pyro_timeout, None, options.verbose ).get_proxy( 'remote' )
+except Exception, x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 
 if kill_tag:
-    if not parser.prompt( 'Kill ALL tasks with tag ' + target + ' in' ):
-        sys.exit(0)
+    prompt( 'Kill ALL tasks with tag ' + target + ' in ' + suite, options.force )
     if options.no_spawn:
         result = proxy.die_cycle( target )
     else:
         result = proxy.spawn_and_die_cycle( target )
 
 if kill_task:
-    if not parser.prompt( 'Kill task ' + target + ' in'):
-        sys.exit(0)
+    prompt( 'Kill task ' + target + ' in ' + suite, options.force )
     if options.no_spawn:
        result = proxy.die( target )
     else:
@@ -108,5 +107,5 @@ if kill_task:
 if result.success:
     print result.reason
 else:
-    print 'ERROR:', result.reason
-    sys.exit(1)
+    sys.exit( 'ERROR: ' + result.reason )
+

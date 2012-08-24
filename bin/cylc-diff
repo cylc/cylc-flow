@@ -16,11 +16,13 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.remote import remrun
+remrun().execute()
+
 import os, sys
-from optparse import OptionParser
-from cylc.config import config, SuiteConfigError
-from cylc.registration import dbgetter, RegistrationError
-from cylc.version import compat
+from cylc.CylcOptionParsers import cop
+from cylc.config import config
+from cylc.command_prep import prep_file
 
 n_oone = 0
 n_otwo = 0
@@ -91,7 +93,7 @@ def prdict( dct, arrow='<', section='', level=0, diff=False, nested=False ):
             else:
                 print ' ' + arrow + '  ', key, '=', dct[key]
 
-parser = OptionParser( """cylc [prep] diff|compare [options] SUITE1 SUITE2
+parser = cop( """cylc [prep] diff|compare [OPTIONS] REG REG2
 
 Compare two suite definitions and display any differences.
 
@@ -100,58 +102,45 @@ account of default values that are not explicitly defined, it disregards
 the order of configuration items, and it sees any include-file content
 after inlining has occurred.
 
-Seemingly identical suites can differ slightly if they use default
-configuration items, such as the default job submission log directory,
-that are suite-specific (i.e. they include $CYLC_SUITE_REG_NAME etc.).
+Note that seemingly identical suites normally differ due to inherited
+default configuration values (e.g. the default job submission log
+directory.
 
 Files in the suite bin directory and other sub-directories of the 
-suite definition directory are not currently differenced.
-
-Arguments:
-   SUITE1, SUITE2  - suites to compare.""")
+suite definition directory are not currently differenced.""", 
+    argdoc=[('REG1', 'Suite name'), ('REG1', 'Suite name')] )
 
 parser.add_option( "-n", "--nested", help="print suite.rc "
         "section headings in nested form.",
         action="store_true", default=False, dest="nested" )
 
-parser.add_option( "-c", "--central", 
-        help="target the central database.",
-        action="store_true", default=False, dest="central" )
-
 (options, args) = parser.parse_args()
 
-if len(args) != 2:
-    parser.error( "Wrong number or arguments" )
-else:
-    reg1 = args[0]
-    reg2 = args[1]
+prep1 = prep_file( args[0], options )
+prep2 = prep_file( args[1], options )
 
-dbg = dbgetter( options.central )
-try:
-    suite1, suite1rc = dbg.get_suite(reg1)
-    suite2, suite2rc = dbg.get_suite(reg2)
-except RegistrationError, x:
-    raise SystemExit(x)
-
-compat1 = compat( suite1, suite1rc )
-compat2 = compat( suite2, suite2rc )
-ver1 = compat1.get_version()
-ver2 = compat2.get_version()
+ver1 = prep1.get_version()
+ver2 = prep2.get_version()
 
 if ver1 != ver2:
     print >> sys.stderr, 'Suite cylc version spec:'
-    print >> sys.stderr, ' ', suite1 + ':', ver1
-    print >> sys.stderr, ' ', suite2 + ':', ver2
-    raise SystemExit('ERROR: suites cannot be compared at different cylc versions' )
+    print >> sys.stderr, ' ', args[0] + ':', ver1
+    print >> sys.stderr, ' ', args[1] + ':', ver2
+    # To Do: this may not matter - we should carry on with difference
+    # here, but account for new or missing config items.
+    raise SystemExit('ERROR: these suites require different cylc versions' )
 
-compat1.execute( sys.argv )
+suite1, suite1rc = prep1.execute()
+suite2, suite2rc = prep2.get_suite()
 
 try:
     print "Parsing", suite1
     config1 = config( suite1, suite1rc )
     print "Parsing", suite2
     config2 = config( suite2, suite2rc )
-except SuiteConfigError,x:
+except Exception,x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 
 if config1 == config2: # does this work, or do we need to do key by key comparison?
@@ -186,3 +175,4 @@ if n_diff > 0:
     print msg
     #print '-' * len(msg)
     prdict( diff_1_2, '', diff=True, nested=options.nested )
+

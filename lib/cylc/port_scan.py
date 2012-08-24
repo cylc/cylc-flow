@@ -18,8 +18,10 @@
 
 import os, sys
 from hostname import hostname
-from registration import localdb
+from owner import user
 from passphrase import passphrase
+from registration import localdb
+import datetime
 import Pyro.errors, Pyro.core
 from conf.CylcGlobals import pyro_base_port, pyro_port_range
 
@@ -33,6 +35,9 @@ class SuiteIdentificationError( Exception ):
         return repr(self.msg)
 
 class ConnectionDeniedError( SuiteIdentificationError ):
+    pass
+
+class ConnectionTimedOutError( SuiteIdentificationError ):
     pass
 
 class NoSuiteFoundError( SuiteIdentificationError ):
@@ -49,25 +54,26 @@ class OtherServerFoundError( SuiteIdentificationError ):
 
 class port_interrogator(object):
     # find which suite or lockserver is running on a given port
-    def __init__( self, host, port, my_passphrases=None, timeout=None ):
+    def __init__( self, host, port, my_passphrases=None, pyro_timeout=None ):
         self.host = host
         self.port = port
-        self.timeout = timeout
+        if pyro_timeout: # convert from string
+            self.pyro_timeout = float(pyro_timeout)
+        else:
+            self.pyro_timeout = None
         self.my_passphrases = my_passphrases
-        self.me = os.environ['USER']
 
     def interrogate( self ):
         # get a proxy to the cylcid object
         # this raises ProtocolError if connection fails
         uri = 'PYROLOC://' + self.host + ':' + str(self.port) + '/cylcid' 
         self.proxy = Pyro.core.getProxyForURI(uri)
-        self.proxy._setTimeout(self.timeout)
-
-        # note: get a TimeoutError if the connection times out
+        self.proxy._setTimeout(self.pyro_timeout)
 
         # first try access with no passphrase
         name = owner = None
         try:
+            # (caller handles TimeoutError)
             name, owner = self.proxy.id()
         except Pyro.errors.ConnectionDeniedError, x:
             # must be a secure suite, try my passphrases
@@ -82,7 +88,7 @@ class port_interrogator(object):
                     continue
                 else:
                     # got access
-                    if name == reg and owner == self.me:
+                    if name == reg and owner == user:
                         return name, owner, 'secure'
                     else:
                         # this indicates that one of my suites has an
@@ -92,11 +98,16 @@ class port_interrogator(object):
             # loop end without returning ID => all of my passphrases denied
             raise Pyro.errors.ConnectionDeniedError, x
         except:
-            # another error (other than ConnectionDenied)
             raise
         else:
             # got access with no passphrase => not a secure suite
+            # TO DO: THIS IS NO LONGER LEGAL from cylc-4.5.0
             return name, owner, 'insecure'
+
+def warn_timeout( host, port, timeout ):
+    print >> sys.stderr, "WARNING: connection timed out (" + str(timeout) + "s) at", portid( host, port )
+    print >> sys.stderr, '  This could mean a Ctrl-Z stopped suite or similar is holding up the port,'
+    print >> sys.stderr, '  or your pyro connection timeout needs to be longer than', str(timeout), 'seconds.'
 
 def portid( host, port ):
     return host + ":" + str(port)
@@ -113,15 +124,8 @@ def portid( host, port ):
 def cylcid_uri( host, port ):
     return 'PYROLOC://' + host + ':' + str(port) + '/cylcid' 
 
-def get_port( suite, owner=os.environ['USER'], host=hostname, pphrase=None, timeout=None, silent=False ):
+def get_port( suite, owner=user, host=hostname, pphrase=None, pyro_timeout=None, verbose=False ):
     # Scan ports until a particular suite is found.
-
-    # does this suite have a secure passphrase defined?
-    if not pphrase:
-        try:
-            pphrase = passphrase( suite, owner, host ).get()
-        except:
-            pphrase = None
 
     for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
         uri = cylcid_uri( host, port )
@@ -130,27 +134,34 @@ def get_port( suite, owner=os.environ['USER'], host=hostname, pphrase=None, time
         except Pyro.errors.URIError, x:
             # No such host?
             raise SuiteNotFoundError, x
-        proxy._setTimeout(timeout)
-        # note: we'll get a TimeoutError if the connection times out
 
-        # Giving the suite passphrase does not result in connection
-        # denied if the suite is currently not using its passphrase
+        if pyro_timeout: # convert from string
+            pyro_timeout = float( pyro_timeout )
+
+        proxy._setTimeout(pyro_timeout)
         proxy._setIdentification( pphrase )
 
+        before = datetime.datetime.now()
         try:
             name, xowner = proxy.id()
+        except Pyro.errors.TimeoutError:
+            warn_timeout( host, port, pyro_timeout )
+            pass
         except Pyro.errors.ConnectionDeniedError:
-            #print "Wrong suite or wrong passphrase at " + portid( host, port )
+            #print >> sys.stderr, "Wrong suite or wrong passphrase at " + portid( host, port )
             pass
         except Pyro.errors.ProtocolError:
-            #print "No Suite Found at " + portid( host, port )
+            #print >> sys.stderr, "No Suite Found at " + portid( host, port )
             pass
         except Pyro.errors.NamingError:
-            #print "Non-cylc pyro server found at " + portid( host, port )
+            #print >> sys.stderr, "Non-cylc pyro server found at " + portid( host, port )
             pass
         else:
+            if verbose:
+                after = datetime.datetime.now()
+                print >> sys.stderr, "Pyro connection on port " +str(port) + " took: " + str( after - before )
             if name == suite and xowner == owner:
-                if not silent:
+                if verbose:
                     print suite, owner, host, port
                 # RESULT
                 return port
@@ -160,26 +171,23 @@ def get_port( suite, owner=os.environ['USER'], host=hostname, pphrase=None, time
                 pass
     raise SuiteNotFoundError, "Suite not running: " + suite + ' ' + owner + ' ' + host
 
-def check_port( suite, port, owner=os.environ['USER'], host=hostname, timeout=None, silent=False ):
+def check_port( suite, pphrase, port, owner=user, host=hostname, pyro_timeout=None, verbose=False ):
     # is a particular suite running at host:port?
-
-    # does this suite have a secure passphrase defined?
-    try:
-        pphrase = passphrase( suite, owner, host ).get()
-    except:
-        pphrase = None
 
     uri = cylcid_uri( host, port )
     proxy = Pyro.core.getProxyForURI(uri)
-    proxy._setTimeout(timeout)
-    # note: we'll get a TimeoutError if the connection times out
+    if pyro_timeout: # convert from string
+        pyro_timeout = float(pyro_timeout)
+    proxy._setTimeout(pyro_timeout)
 
-    # Giving the suite passphrase does not result in connection
-    # denied if the suite is currently not using its passphrase
     proxy._setIdentification( pphrase )
 
+    before = datetime.datetime.now()
     try:
         name, xowner = proxy.id()
+    except Pyro.errors.TimeoutError:
+        warn_timeout( host, port, pyro_timeout )
+        raise ConnectionTimedOutError, "ERROR, Connection Timed Out " + portid( host, port )
     except Pyro.errors.ConnectionDeniedError:
         raise ConnectionDeniedError, "ERROR: Connection Denied  at " + portid( host, port )
     except Pyro.errors.ProtocolError:
@@ -187,9 +195,12 @@ def check_port( suite, port, owner=os.environ['USER'], host=hostname, timeout=No
     except Pyro.errors.NamingError:
         raise OtherServerFoundError, "ERROR: non-cylc pyro server found at " + portid( host, port )
     else:
+        if verbose:
+            after = datetime.datetime.now()
+            print >> sys.stderr, "Pyro connection on port " +str(port) + " took: " + str( after - before )
         if name == suite and xowner == owner:
             # RESULT
-            if not silent:
+            if verbose:
                 print suite, owner, host, port
             return True
         else:
@@ -198,51 +209,59 @@ def check_port( suite, port, owner=os.environ['USER'], host=hostname, timeout=No
             print >> sys.stderr, ' NOT ' + suite + ' ' + owner + ' ' + host + ' ' + port
             raise OtherSuiteFoundError, "ERROR: Found another suite"
 
-def scan( host, verbose=True, mine=False, silent=False ):
+def scan( host=hostname, db=None, pyro_timeout=None, verbose=False ):
+    #print 'SCANNING PORTS'
     # scan all cylc Pyro ports for cylc suites
-    me = os.environ['USER']
+
+    # In non-verbose mode print nothing (scan is used by gcylc).
 
     # load my suite passphrases 
-    reg = localdb()
+    reg = localdb(db)
     reg.load_from_file()
     reg_suites = reg.get_list()
     my_passphrases = {}
     for item in reg_suites:
         rg = item[0]
+        di = item[1]
         try:
-            # in case one is using a secure passphrase
-            pp = passphrase( rg, me, host ).get()
-        except:
-            # we have no passphrase defined for this suite
+            pp = passphrase( rg, user, host ).get( suitedir=di )
+        except Exception, x:
+            #print >> sys.stderr, x
+            # no passphrase defined for this suite
             pass
         else:
             my_passphrases[ rg ] = pp
 
     suites = []
     for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
+        before = datetime.datetime.now()
         try:
-            name, owner, security = port_interrogator( host, port, my_passphrases ).interrogate()
+            name, owner, security = port_interrogator( host, port, my_passphrases, pyro_timeout ).interrogate()
+        except Pyro.errors.TimeoutError:
+            warn_timeout( host, port, pyro_timeout )
+            pass
         except Pyro.errors.ConnectionDeniedError:
             # secure suite
-            if not silent:
-                print "Connection Denied at " + portid( host, port )
+            if verbose:
+                print >> sys.stderr, "Connection Denied at " + portid( host, port )
         except Pyro.errors.ProtocolError:
             # no suite
-            #if not silent:
-            #    print "No Suite Found at " + portid( host, port )
+            #if verbose:
+            #    print >> sys.stderr, "No Suite Found at " + portid( host, port )
             pass
         except Pyro.errors.NamingError:
             # other Pyro server
-            if not silent:
-                print "Non-cylc Pyro server found at " + portid( host, port )
+            if verbose:
+                print >> sys.stderr, "Non-cylc Pyro server found at " + portid( host, port )
+        except:
+            raise
         else:
             if verbose:
-                if not silent:
-                    print name, owner, host, port
+                after = datetime.datetime.now()
+                print >> sys.stderr, "Pyro connection on port " +str(port) + " took: " + str( after - before )
+            if verbose:
+                print name, owner, host, port
             # found a cylc suite or lock server
-            if mine:
-                if owner == me:
-                    suites.append( ( name, port ) )
-            else:
-                suites.append( ( name, owner, port ) )
+            suites.append( ( name, port ) )
     return suites
+

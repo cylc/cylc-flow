@@ -19,9 +19,6 @@
 # TO DO: document use foo[T-6]:out1, not foo:out1 with
 # <CYLC_TASK_CYCLE_TIME-6> in the output message.
 
-# TO DO: check that mid-level families used in the graph are replaced
-# by *task* members, not *family* members.
-
 # NOTE: configobj.reload() apparently does not revalidate (list-forcing
 # is not done, for example, on single value lists with no trailing
 # comma) ... so to reparse the file  we have to instantiate a new config
@@ -47,6 +44,7 @@ from TaskID import TaskID, AsyncTag
 from Jinja2Support import Jinja2Process, TemplateError, TemplateSyntaxError
 from continuation_lines import join
 from include_files import inline
+from random import randrange
 
 try:
     import graphing
@@ -68,6 +66,67 @@ class SuiteConfigError( Exception ):
 
 class TaskNotDefinedError( SuiteConfigError ):
     pass
+
+class SuiteEventHookConfig( object ):
+    legal_events = ['startup', 'shutdown', 'timeout']
+
+    def __init__( self, events=[], script=None, timeout=None,
+            abort_on_timeout=False, abort_on_shutdown=False,
+            verbose=False ):
+        self.events = events
+        self.script = script
+        self.timeout = timeout
+        self.abort_on_timeout = abort_on_timeout
+        self.abort_if_shutdown_handler_fails = abort_on_shutdown
+        self.verbose = verbose
+        self.check()
+
+    def check( self ):
+        if self.verbose:
+            print "Checking suite event hook config"
+
+        for event in self.events:
+            if event not in self.__class__.legal_events:
+                raise SuiteConfigError, "ERROR, illegal suite hook event: " + event
+
+        if len(self.events) > 0 and not self.script:
+            raise SuiteConfigError, "ERROR, no handler specified for the nominated suite events: " + ','.join(self.events)
+
+        if len(self.events) == 0 and self.script:
+            print >> sys.stderr, "WARNING: a suite event handler is specified, but no events"
+            self.script = None
+
+        if 'timeout' in self.events and not self.timeout:
+            print >> sys.stderr, 'WARNING: disabling suite timeout (no timeout given)'
+            self.events.remove('timeout')
+ 
+        if self.timeout and 'timeout' not in self.events and not self.abort_on_timeout:
+            print >> sys.stderr, 'WARNING: a suite timeout was given, but the timeout event ...'
+            print >> sys.stderr, 'WARNING: ... is not handled and abort-on-timeout is not set'
+            self.timeout = None
+ 
+        if self.abort_if_shutdown_handler_fails:
+            if 'shutdown' not in self.events:
+                print >> sys.stderr, 'WARNING: abort-if-shutdown-handler-fails is set, but event is not handled'
+                self.abort_if_shutdown_handler_fails = False
+            if not self.script:
+                print >> sys.stderr, 'WARNING: abort-if-shutdown-handler-fails is set, but no handler script'
+                self.abort_if_shutdown_handler_fails = False
+ 
+        if self.abort_on_timeout:
+            if not self.timeout:
+                print >> sys.stderr, 'WARNING: disabling abort-on-timeout (no timeout given)'
+                self.abort_on_timeout = False
+            else:
+                print >> sys.stderr, 'WARNING: suite will abort on timeout (' + str( self.timeout ) + ' minutes)'
+
+    def disable( self ):
+        self.events = []
+        self.script = None
+        self.timeout = None
+        self.abort_on_timeout
+        self.timeout = None
+
 
 class edge( object):
     def __init__( self, l, r, cyclr, sasl=False, suicide=False, conditional=False ):
@@ -93,10 +152,6 @@ class edge( object):
 
         # strip off special outputs
         self.right = re.sub( ':\w+', '', self.right )
-
-        # TO DO: SORT OUT USE OF ASYNC TAGS!!!!
-        if len(str(tag)) < 6:
-            tag = 'a:' + tag
 
         return TaskID( self.right, tag )
 
@@ -130,20 +185,23 @@ class edge( object):
             else:
                 tag = tag
 
-        # TO DO: SORT OUT USE OF ASYNC TAGS!!!!
-        if len(tag) < 6:
-            tag = 'a:' + tag
-
         return TaskID( left, tag )
 
 class config( CylcConfigObj ):
 
-    def __init__( self, suite, suiterc, simulation_mode=False, verbose=False, collapsed=[] ):
-        self.simulation_mode = simulation_mode
+    def __init__( self, suite, suiterc, owner=None, run_mode='live',
+            verbose=False, validation=False, pyro_timeout=None, collapsed=[] ):
+
+        self.run_mode = run_mode
         self.verbose = verbose
+        if pyro_timeout:
+            self.pyro_timeout = float(pyro_timeout)
+        else:
+            self.pyro_timeout = None
         self.edges = []
         self.cyclers = []
         self.taskdefs = OrderedDict()
+        self.validation = validation
 
         self.async_oneoff_edges = []
         self.async_oneoff_tasks = []
@@ -158,6 +216,12 @@ class config( CylcConfigObj ):
         self.suite = suite
         self.file = suiterc
         self.dir = os.path.dirname(suiterc)
+
+        self.owner = owner
+        if owner:
+            self.homedir = os.path.expanduser( '~' + owner )
+        else:
+            self.homedir = os.environ[ 'HOME' ]
 
         if not os.path.isfile( self.file ):
             raise SuiteConfigError, 'File not found: ' + self.file
@@ -205,14 +269,14 @@ class config( CylcConfigObj ):
             # Always print reason for validation failure
             for item in failed_items:
                 sections, key, result = item
-                print ' ',
+                print >> sys.stderr, ' ',
                 for sec in sections:
-                    print sec, '->',
-                print key
+                    print >> sys.stderr, sec, '->',
+                print >> sys.stderr, key
                 if result == False:
-                    print "Required item missing."
+                    print >> sys.stderr, "Required item missing."
                 else:
-                    print result
+                    print >> sys.stderr, result
             raise SuiteConfigError, "ERROR: suite.rc validation failed"
         
         extras = []
@@ -326,23 +390,26 @@ class config( CylcConfigObj ):
                 print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
                 self.closed_families.remove( cfam )
         self.vis_families = list(self.closed_families)
+
+        if not self.pyro_timeout:
+            # no timeout specified on the command line
+            tmp = self['cylc']['pyro connection timeout']
+            if tmp:
+                self.pyro_timeout = float(tmp)
+
         if self.verbose:
-            print "Checking suite event hooks"
-        script = None
-        events = []
-        if not self.simulation_mode or self['cylc']['simulation mode']['event hooks']['enable']:
-            # configure suite event hooks
-            script = self['cylc']['event hooks']['script']
-            events = self['cylc']['event hooks']['events']
-            for event in events:
-                if event not in ['shutdown']:
-                    raise SuiteConfigError, "ERROR, illegal suite hook event: " + event
-        if len(events) == 0 and script:
-            # this is not a fatal error
-            print >> sys.stderr, "WARNING: suite event handler specified without events to handle."
-        if len(events) > 0 and not script:
-            # but this is
-            raise SuiteConfigError, "ERROR, no handler specified for these suite events: " + ','.join(events)
+            print "Pyro connection timeout for tasks in this suite:", self.pyro_timeout, "seconds"
+
+        if self.run_mode != 'live':
+            self.event_config = SuiteEventHookConfig()
+        else:
+            self.event_config = SuiteEventHookConfig( \
+                self['cylc']['event hooks']['events'],
+                self['cylc']['event hooks']['script'],
+                self['cylc']['event hooks']['timeout'],
+                self['cylc']['event hooks']['abort on timeout'],
+                self['cylc']['event hooks']['abort if shutdown handler fails'],
+                self.verbose )
 
         self.process_directories()
 
@@ -364,6 +431,11 @@ class config( CylcConfigObj ):
             mrl = max(mrls)
             if self.verbose:
                 print "Largest minimum runahead limit from cycling modules:", mrl, "hours"
+            # Add one hour, which is enough to prevent single-cycle intercycle
+            # dependence from stalling the suite. To Do: find a robust
+            # method to handle any kind of intercycle dependence (is it
+            # ever more than one cycle in practice?)
+            mrl += 1
 
             # 2/ or if there is a configured runahead limit, use it.
             rl = self['scheduling']['runahead limit']
@@ -371,7 +443,7 @@ class config( CylcConfigObj ):
                 if self.verbose:
                     print "Configured runahead limit: ", rl, "hours"
                 if rl < mrl:
-                    print >> sys.stderr, 'WARNING: runahead limit (' + str(rl) + ') is too low (<' + str(mrl) + '), suite may stall'
+                    print >> sys.stderr, 'WARNING: runahead limit (' + str(rl) + ') may be too low (<' + str(mrl) + ')'
                 crl = rl
             else:
                 crl = mrl
@@ -386,7 +458,12 @@ class config( CylcConfigObj ):
         self.prune_inheritance_tree( self.family_tree, self.task_runtimes )
 
         self.process_queues()
-        self.check_tasks()
+        if self.validation:
+            self.check_tasks()
+
+        if self['visualization']['runtime graph']['enable'] and graphing_disabled:
+            print >> sys.stderr, 'WARNING: disabling runtime graphing (graphing not available).'
+            self['visualization']['runtime graph']['enable'] = False
 
         # Default visualization start and stop cycles (defined here
         # rather than in the spec file so we can set a sensible stop
@@ -423,10 +500,23 @@ class config( CylcConfigObj ):
         # nodes, whereas the reverse is needed - fixing this would
         # require reordering task_attr in lib/cylc/graphing.py).
 
+    def adopt_orphans( self, orphans ):
+        # Called by the scheduler after reloading the suite definition
+        # at run time and finding any live task proxies whose
+        # definitions have been removed from the suite. Keep them 
+        # in the default queue and under the root family, until they
+        # run their course and disappear.
+        queues = self['scheduling']['queues']
+        for orphan in orphans:
+            self.family_hierarchy[orphan] = [ orphan, 'root' ]
+            queues['default']['members'].append( orphan )
 
     def process_queues( self ):
         # TO DO: user input consistency checking (e.g. duplicate queue
         # assignments and non-existent task names)
+
+        # NOTE: this method modifies the parsed config dict itself.
+
         queues = self['scheduling']['queues']
         # add all tasks to the default queue
         queues['default']['members'] = self.get_task_name_list()
@@ -540,29 +630,36 @@ class config( CylcConfigObj ):
         padding = (maxlen+1) * ' '
         print_tree( ft, padding=padding, unicode=pretty, labels=labels )
 
+    def expandvars( self, item ):
+        # first replace '$HOME' with actual home dir
+        item = item.replace( '$HOME', self.homedir )
+        # now expand any other environment variable or tilde-username
+        item = os.path.expandvars( os.path.expanduser( item ))
+        return item
+
     def process_directories(self):
         # Environment variable interpolation in directory paths.
         # Allow use of suite, BUT NOT TASK, identity variables.
         for item in self['runtime']:
-            logd = self['runtime'][item]['job submission']['log directory']
+            logd = self['runtime'][item]['log directory']
             if logd.find( '$CYLC_TASK_' ) != -1:
-                print >> sys.stderr, 'runtime -> job submission -> log directory =', logd
-                raise SuiteConfigError, 'ERROR: job submission log directories cannot be task-specific'
+                print >> sys.stderr, 'runtime -> log directory =', logd
+                raise SuiteConfigError, 'ERROR: log directories cannot be task-specific'
 
         os.environ['CYLC_SUITE_REG_NAME'] = self.suite
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
         self['cylc']['logging']['directory'] = \
-                os.path.expandvars( os.path.expanduser( self['cylc']['logging']['directory']))
+                self.expandvars( self['cylc']['logging']['directory'])
         self['cylc']['state dumps']['directory'] =  \
-                os.path.expandvars( os.path.expanduser( self['cylc']['state dumps']['directory']))
-        self['visualization']['run time graph']['directory'] = \
-                os.path.expandvars( os.path.expanduser( self['visualization']['run time graph']['directory']))
+                self.expandvars( self['cylc']['state dumps']['directory'])
+        self['visualization']['runtime graph']['directory'] = \
+                self.expandvars( self['visualization']['runtime graph']['directory'])
 
         for item in self['runtime']:
             # Local job sub log directories: interpolate all environment variables.
-            self['runtime'][item]['job submission']['log directory'] = os.path.expandvars( os.path.expanduser( self['runtime'][item]['job submission']['log directory']))
-            # Remote job sub log directories: just suite identity - local variables aren't relevant.
+            self['runtime'][item]['log directory'] = self.expandvars( self['runtime'][item]['log directory'])
+            # Remote log directories: just suite identity - local variables aren't relevant.
             if self['runtime'][item]['remote']['log directory']:
                 for var in ['CYLC_SUITE_REG_PATH', 'CYLC_SUITE_DEF_PATH', 'CYLC_SUITE_REG_NAME']: 
                     self['runtime'][item]['remote']['log directory'] = re.sub( '\${'+var+'}'+r'\b', os.environ[var], self['runtime'][item]['remote']['log directory'])
@@ -633,7 +730,7 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, "ERROR: '" + task_name + "' does not define output '" + output_name  + "'"
             else:
                 # There is a matching output defined under the task runtime section
-                if self.simulation_mode:
+                if self.run_mode != 'live':
                     # Ignore internal outputs: dummy tasks will not report them finished.
                     return None
         else:
@@ -664,6 +761,9 @@ class config( CylcConfigObj ):
 
     def check_tasks( self ):
         # Call after all tasks are defined.
+        # ONLY IF VALIDATING THE SUITE
+        # because checking conditional triggers below may be slow for
+        # huge suites (several thousand tasks).
         # Note: 
         #   (a) self['runtime'][name] 
         #       contains the task definition sections of the suite.rc file.
@@ -680,6 +780,22 @@ class config( CylcConfigObj ):
                         print >> sys.stderr, 'WARNING: task "' + name + '" is not used in the graph.'
 
         self.check_for_case_errors()
+
+        # warn if listed special tasks are not defined
+        for type in self['scheduling']['special tasks']:
+            for name in self['scheduling']['special tasks'][type]:
+                if type == 'clock-triggered':
+                    name = re.sub('\(.*\)','',name)
+                if re.search( '[^0-9a-zA-Z_]', name ):
+                    raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
+                if name not in self.taskdefs and name not in self['runtime']:
+                    raise SuiteConfigError, 'ERROR: special task "' + name + '" is not defined.' 
+
+        try:
+            import Pyro.constants
+        except:
+            print >> sys.stderr, "WARNING, INCOMPLETE VALIDATION: Pyro is not installed"
+            return
 
         # Instantiate tasks and force evaluation of conditional trigger expressions.
         if self.verbose:
@@ -698,6 +814,7 @@ class config( CylcConfigObj ):
                     # startup True here or oneoff async tasks will be ignored:
                     itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True )
                 except TypeError, x:
+                    raise
                     # This should not happen as we now explicitly catch use
                     # of synchronous special tasks in an asynchronous graph.
                     # But in principle a clash of multiply inherited base
@@ -707,7 +824,7 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, '(inconsistent use of special tasks?)' 
                 except Exception, x:
                     print >> sys.stderr, x
-                    raise SuiteConfigError, 'ERROR, failed to instantiate task ' + name
+                    raise SuiteConfigError, 'ERROR, failed to instantiate task ' + str(name)
                 # force trigger evaluation now
                 try:
                     itask.prerequisites.eval_all()
@@ -720,18 +837,7 @@ class config( CylcConfigObj ):
                 tag = itask.next_tag()
             #print "OK:", itask.id
 
-        # warn if listed special tasks are not defined
-        for type in self['scheduling']['special tasks']:
-            for name in self['scheduling']['special tasks'][type]:
-                if type == 'clock-triggered':
-                    name = re.sub('\(.*\)','',name)
-                if re.search( '[^0-9a-zA-Z_]', name ):
-                    raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
-                if name not in self.taskdefs and name not in self['runtime']:
-                    raise SuiteConfigError, 'ERROR: special task "' + name + '" is not defined.' 
-
-        # TASK INSERTION GROUPS TEMPORARILY DISABLED PENDING USE OF
-        # RUNTIME GROUPS FOR INSERTION ETC.
+        # TASK INSERTION GROUPS DISABLED - WILL USE RUNTIME GROUPS FOR INSERTION ETC.
         ### check task insertion groups contain valid tasks
         ##for group in self['task insertion groups']:
         ##    for name in self['task insertion groups'][group]:
@@ -785,7 +891,7 @@ class config( CylcConfigObj ):
         # Create suite log, state, and local job log directories.
         dirs = [ self['cylc']['logging']['directory'], self['cylc']['state dumps']['directory'] ]
         for item in self['runtime']:
-            d = self['runtime'][item]['job submission']['log directory']
+            d = self['runtime'][item]['log directory']
             if d not in dirs:
                 dirs.append(d)
         for d in dirs:
@@ -891,6 +997,12 @@ class config( CylcConfigObj ):
 
         # REPLACE FAMILY NAMES WITH MEMBER DEPENDENCIES
         for fam in self.members:
+            members = deepcopy(self.members[fam])
+            for member in members:
+                # remove family names from the member list (leave just tasks)
+                if member in self.members:
+                    members.remove(member)
+            
             # Note, in the regular expressions below, the word boundary
             # marker before the time offset pattern is required to close
             # the match in the no-offset case (offset and no-offset
@@ -907,10 +1019,10 @@ class config( CylcConfigObj ):
             for foffset in m:
                 if fam not in self.families_used_in_graph:
                     self.families_used_in_graph.append(fam)
-                mem0 = self.members[fam][0]
+                mem0 = members[0]
                 cond1 = mem0 + foffset + ':fail'
                 cond2 = '( ' + mem0 + foffset + ' | ' + mem0 + foffset + ':fail )' 
-                for mem in self.members[fam][1:]:
+                for mem in members[1:]:
                     cond1 += ' | ' + mem + foffset + ':fail'
                     cond2 += ' & ( ' + mem + foffset + ' | ' + mem + foffset + ':fail )'
                 cond = '( ' + cond1 + ') & ' + cond2 
@@ -924,7 +1036,7 @@ class config( CylcConfigObj ):
             for foffset in m:
                 if fam not in self.families_used_in_graph:
                     self.families_used_in_graph.append(fam)
-                mems = ' | '.join( [ i + foffset + ':start' for i in self.members[fam] ] )
+                mems = ' | '.join( [ i + foffset + ':start' for i in members ] )
                 line = re.sub( r"\b" + fam + r"\b" + re.escape( foffset) + ':start', mems, line )
 
             # 3/ Replace "fam" with "mem1 & mem2" etc.
@@ -935,7 +1047,7 @@ class config( CylcConfigObj ):
             for foffset in m:
                 if fam not in self.families_used_in_graph:
                     self.families_used_in_graph.append(fam)
-                mems = ' & '.join( [ i + foffset for i in self.members[fam] ] )
+                mems = ' & '.join( [ i + foffset for i in members ] )
                 line = re.sub( r"\b" + fam + r"\b" + re.escape( foffset), mems, line )
 
         # Split line on dependency arrows.
@@ -1080,12 +1192,13 @@ class config( CylcConfigObj ):
                 continue
             try:
                 name = graphnode( node ).name
+                offset = graphnode( node ).offset
             except GraphNodeError, x:
                 print >> sys.stderr, line
                 raise SuiteConfigError, str(x)
 
             if name not in self['runtime']:
-                if self.verbose:
+                if self.verbose and self.validation:
                     print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph - it will inherit root.'
                 # inherit the root runtime
                 self['runtime'][name] = self['runtime']['root'].odict()
@@ -1117,9 +1230,17 @@ class config( CylcConfigObj ):
                 self.taskdefs[name].cycling = True
                 if name not in self.cycling_tasks:
                     self.cycling_tasks.append(name)
-            self.taskdefs[ name ].add_to_valid_cycles( cyclr )
 
-            if not self.simulation_mode:
+            if offset:
+                cyc = deepcopy( cyclr )
+                # this changes the cyclers internal state so we need a
+                # private copy of it:
+                cyc.adjust_state(offset)
+            else:
+                cyc = cyclr
+            self.taskdefs[ name ].add_to_valid_cycles( cyc )
+
+            if self.run_mode == 'live':
                 # register any explicit internal outputs
                 taskconfig = self['runtime'][name]
                 for lbl in taskconfig['outputs']:
@@ -1128,6 +1249,7 @@ class config( CylcConfigObj ):
                     self.taskdefs[ name ].outputs.append( outp )
 
             # collate which tasks appear in each section
+            # (used in checking conditional trigger expressions)
             if cyclr not in self.tasks_by_cycler:
                 self.tasks_by_cycler[cyclr] = []
             if name not in self.tasks_by_cycler[cyclr]:
@@ -1314,15 +1436,24 @@ class config( CylcConfigObj ):
         gr_edges.sort()
         for e in gr_edges:
             l, r, dashed, suicide, conditional = e
-            style=None
-            arrowhead='normal'
-            if dashed:
-                style='dashed'
-            if suicide:
-                style='dashed'
-                arrowhead='dot'
             if conditional:
-                arrowhead='onormal'
+                if suicide:
+                    style='dashed'
+                    arrowhead='odot'
+                else:
+                    style='solid'
+                    arrowhead='onormal'
+            else:
+                if suicide:
+                    style='dashed'
+                    arrowhead='dot'
+                else:
+                    style='solid'
+                    arrowhead='normal'
+            if dashed:
+                # override
+                style='dashed'
+
             graph.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead )
 
         for n in graph.nodes():
@@ -1454,41 +1585,63 @@ class config( CylcConfigObj ):
 
         taskd.description = taskconfig['description']
 
-        if self.simulation_mode:
-            taskd.job_submit_method = self['cylc']['simulation mode']['job submission']['method']
-            taskd.command = self['cylc']['simulation mode']['command scripting']
-            taskd.retry_delays = deque( self['cylc']['simulation mode']['retry delays'] )
+        taskd.owner = taskconfig['remote']['owner']
+        taskd.job_submit_method = taskconfig['job submission']['method']
+
+        taskd.command = taskconfig['command scripting']
+        if self.run_mode == 'dummy':
+            taskd.command = taskconfig['dummy mode']['command scripting']
+            if taskconfig['dummy mode']['disable pre-command scripting']:
+                taskd.precommand = None
+            if taskconfig['dummy mode']['disable post-command scripting']:
+                taskd.postcommand = None
         else:
-            taskd.owner = taskconfig['remote']['owner']
-            taskd.job_submit_method = taskconfig['job submission']['method']
-            taskd.command   = taskconfig['command scripting']
-            taskd.retry_delays = deque( taskconfig['retry delays'])
             taskd.precommand = taskconfig['pre-command scripting'] 
             taskd.postcommand = taskconfig['post-command scripting'] 
 
-        # initial scripting (could be required to access cylc even in sim mode).
+        if self.run_mode == 'live' or \
+                ( self.run_mode == 'simulation' and not taskd['simulation mode']['disable retries'] ) or \
+                ( self.run_mode == 'dummy' and not taskd['dummy mode']['disable retries'] ):
+            taskd.retry_delays = deque( taskconfig['retry delays'])
+
+        # check retry delay type (must be float):
+        for i in taskd.retry_delays:
+            try:
+                float(i)
+            except ValueError:
+                raise SuiteConfigError, "ERROR, retry delay values must be floats: " + str(i)
+
+        rrange = taskconfig['simulation mode']['run time range']
+        ok = True
+        if len(rrange) != 2:
+            ok = False
+        try:
+            res = [ int( rrange[0] ), int( rrange[1] ) ]
+        except:
+            ok = False
+        if not ok:
+            raise SuiteConfigError, "ERROR, " + taskd.name + ": simulation mode run time range must be 'int, int'" 
+        try:
+            taskd.sim_mode_run_length = randrange( res[0], res[1] )
+        except Exception, x:
+            print >> sys.stderr, x
+            raise SuiteConfigError, "ERROR: simulation mode task run time range must be [MIN,MAX)" 
+        taskd.fail_in_sim_mode = taskconfig['simulation mode']['simulate failure']
+
         taskd.initial_scripting = taskconfig['initial scripting'] 
-        # the ssh messaging variable must go in initial scripting so
-        # that it affects the task started call as well as later
-        # messages:
-        tmp = taskconfig['remote']['ssh messaging']
-        if tmp != None:
-            tmp = "\nexport CYLC_SSH_MESSAGING=" + str(tmp) + "\n"
-            if taskd.initial_scripting != None: 
-                taskd.initial_scripting += tmp
-            else:
-                taskd.initial_scripting = tmp
+
+        taskd.ssh_messaging = str(taskconfig['remote']['ssh messaging'])
 
         taskd.job_submission_shell = taskconfig['job submission']['shell']
 
         taskd.job_submit_command_template = taskconfig['job submission']['command template']
 
-        taskd.job_submit_log_directory = taskconfig['job submission']['log directory']
-        taskd.job_submit_share_directory = taskconfig['job submission']['share directory']
-        taskd.job_submit_work_directory = taskconfig['job submission']['work directory']
+        taskd.job_submit_log_directory = taskconfig['log directory']
+        taskd.job_submit_share_directory = taskconfig['share directory']
+        taskd.job_submit_work_directory = taskconfig['work directory']
 
-        if not self.simulation_mode and (taskconfig['remote']['host'] or taskconfig['remote']['owner']):
-            # Remote task hosting config, ignored in sim mode.
+        if taskconfig['remote']['host'] or taskconfig['remote']['owner']:
+            # Remote task hosting
             taskd.remote_host = taskconfig['remote']['host']
             taskd.remote_shell_template = taskconfig['remote']['remote shell template']
             taskd.remote_cylc_directory = taskconfig['remote']['cylc directory']
@@ -1502,7 +1655,7 @@ class config( CylcConfigObj ):
                 # Use local log directory path, but replace home dir
                 # (if present) with literal '$HOME' for interpretation
                 # on the remote host.
-                taskd.remote_log_directory  = re.sub( os.environ['HOME'], '$HOME', taskd.job_submit_log_directory )
+                taskd.remote_log_directory  = re.sub( self.homedir, '$HOME', taskd.job_submit_log_directory )
 
             if taskconfig['remote']['work directory']:
                 # Replace local work directory.
@@ -1511,7 +1664,7 @@ class config( CylcConfigObj ):
                 # Use local work directory path, but replace home dir
                 # (if present) with literal '$HOME' for interpretation
                 # on the remote host.
-                taskd.job_submit_work_directory  = re.sub( os.environ['HOME'], '$HOME', taskd.job_submit_work_directory )
+                taskd.job_submit_work_directory  = re.sub( self.homedir, '$HOME', taskd.job_submit_work_directory )
 
             if taskconfig['remote']['share directory']:
                 # Replace local share directory.
@@ -1520,35 +1673,42 @@ class config( CylcConfigObj ):
                 # Use local share directory path, but replace home dir
                 # (if present) with literal '$HOME' for interpretation
                 # on the remote host.
-                taskd.job_submit_share_directory  = re.sub( os.environ['HOME'], '$HOME', taskd.job_submit_share_directory )
+                taskd.job_submit_share_directory  = re.sub( self.homedir, '$HOME', taskd.job_submit_share_directory )
 
         taskd.manual_messaging = taskconfig['manual completion']
+        if self.run_mode == 'dummy':
+            print >> sys.stderr, "WARNING: unsetting manual completion (dummy tasks don't detach)" 
+            taskd.manual_messaging = False
 
-        if not self.simulation_mode or self['cylc']['simulation mode']['event hooks']['enable']:
+        if self.run_mode == 'live' or \
+                ( self.run_mode == 'simulation' and not taskd['simulation mode']['disable event hooks'] ) or \
+                ( self.run_mode == 'dummy' and not taskd['dummy mode']['disable event hooks'] ):
             # configure task event hooks
             taskd.hook_script = taskconfig['event hooks']['script']
             taskd.hook_events = taskconfig['event hooks']['events']
             for event in taskd.hook_events:
-                if event not in ['submitted', 'started', 'succeeded', 'warning', 'failed', 'submission_failed', \
-                        'submission_timeout', 'execution_timeout' ]:
+                if event not in ['submitted', 'started', 'succeeded', 'warning', 'failed', 'retry', \
+                        'submission_failed', 'submission_timeout', 'execution_timeout' ]:
                     raise SuiteConfigError, name + ": illegal task event: " + event
             taskd.submission_timeout = taskconfig['event hooks']['submission timeout']
             taskd.execution_timeout  = taskconfig['event hooks']['execution timeout']
             taskd.reset_timer = taskconfig['event hooks']['reset timer']
 
-        if len(taskd.hook_events) == 0 and taskd.hook_script:
+        if self.validation and len(taskd.hook_events) == 0 and taskd.hook_script:
             # this is not a fatal error
             print >> sys.stderr, "WARNING: task event handler specified without events to handle."
+
         if len(taskd.hook_events) > 0 and not taskd.hook_script:
             # but this is
-            raise SuiteConfigError, "ERROR, no handler specified for these task events: " + ','.join(taskd.hook_events)
+            raise SuiteConfigError, "ERROR, no handler specified for task events: " + ','.join(taskd.hook_events)
 
         if 'submission_timeout' in taskd.hook_events and not taskd.submission_timeout:
-            print >> sys.stderr, 'WARNING:', taskd.name, 'job submission timeout disabled (no timeout given)'
+            print >> sys.stderr, 'WARNING:', taskd.name, 'disabling job submission timeout (no timeout given)'
         if 'execution_timeout' in taskd.hook_events and not taskd.execution_timeout:
-            print >> sys.stderr, 'WARNING:', taskd.name, 'job execution timeout disabled (no timeout given)'
+            print >> sys.stderr, 'WARNING:', taskd.name, 'disabling job execution timeout (no timeout given)'
          
         taskd.logfiles    = taskconfig[ 'extra log files' ]
+        taskd.resurrectable = taskconfig[ 'enable resurrection' ]
 
         taskd.environment = taskconfig[ 'environment' ]
         self.check_environment( taskd.name, taskd.environment )

@@ -23,6 +23,16 @@ import helpwindow
 from stateview import tupdater
 from gcapture import gcapture_tmpfile
 
+try:
+    any
+except NameError:
+    # any() appeared in Python 2.5
+    def any(iterable):
+        for entry in iterable:
+            if entry:
+                return True
+        return False
+
 class ControlTree(object):
     """
 Text Treeview suite control interface.
@@ -184,8 +194,9 @@ Text Treeview suite control interface.
         labels[ 'runahead'  ] = '_runahead'
         labels[ 'queued'   ] = '_queued'
   
-        # initially filter out 'succeeded' and 'waiting' tasks
-        self.tfilter_states = [ 'waiting', 'succeeded' ]
+        # To initially filter out 'succeeded' and 'waiting' tasks:
+        #self.tfilter_states = [ 'waiting', 'succeeded' ]
+        self.tfilter_states = []
 
         for st in all_states:
             b = gtk.CheckButton( labels[st] )
@@ -333,12 +344,24 @@ Text Treeview suite control interface.
 
         self.group_toolbutton = gtk.ToggleToolButton()
         self.group_toolbutton.set_active( self.t.should_group_families )
+
+        ### GTK.IMAGE_NEW_FROM_FILE() REQUIRES PYGTK 2.12: 
+        ## root_img_dir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
+        ## g_image = gtk.image_new_from_file( root_img_dir + '/group.png' )
+        ## self.group_toolbutton.set_icon_widget( g_image )
+        ## FOR BETTER PYGTK COMPATIBILITY WE CAN DO THIS:
+        # create a new stock icon for the 'group' action
         root_img_dir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
-        g_image = gtk.image_new_from_file( root_img_dir + '/group.png' )
+        factory = gtk.IconFactory()
+        pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/group.png' )
+        iconset = gtk.IconSet(pixbuf)
+        factory.add( 'group', iconset )
+        factory.add_default()
+        g_image = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_SMALL_TOOLBAR )
         self.group_toolbutton.set_icon_widget( g_image )
+ 
         self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
-        self._set_tooltip( self.group_toolbutton,
-                           "Click to group tasks by families" )
+        self._set_tooltip( self.group_toolbutton, "Click to group tasks by families" )
         items.append( self.group_toolbutton )
 
         return items

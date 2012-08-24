@@ -16,25 +16,29 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, re
+import sys
+if '--use-ssh' in sys.argv[1:]: 
+    sys.argv.remove( '--use-ssh' )
+    from cylc.remote import remrun
+    remrun().execute( force_required=True )
+
+import re
+from cylc.prompt import prompt
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
-from cylc.CylcOptionParsers import PromptOptionParser
-from cylc.port_scan import SuiteIdentificationError
-from cylc.registration import dbgetter, RegistrationError
-from cylc.version import compat
-from cylc.passphrase import SecurityError
+from cylc.CylcOptionParsers import cop
+from cylc.command_prep import prep_pyro
 
 # NOTE: it is not clear that this command does the right thing for
 # asynchronous tasks - testing needed if purge is required for such.
 
-parser = PromptOptionParser( """cylc [control] purge [options] SUITE TASK STOP
+parser = cop( """cylc [control] purge [OPTIONS] ARGS
 
-Remove an entire tree of dependent tasks from a running suite. The root
-task will be forced to spawn and will then be removed, then so will
-every task that depends on it, and every task that depends on those, and
-so on until the given stop cycle time.
+Remove an entire tree of dependent tasks, across multiple cycles, from a
+running suite. The root task will be forced to spawn and will then be
+removed, then so will every task that depends on it, and every task that
+depends on those, and so on until the given stop cycle time.
 
 WARNING: THIS COMMAND IS DANGEROUS but in case of disaster you can
 restart the suite from the automatic pre-purge state dump (the filename
@@ -49,23 +53,23 @@ prerequisites get satisfied to "succeeded"; then it negotiates
 dependencies again, and so on until the stop cycle is reached or nothing
 new triggers. Finally it marks "virtually triggered" tasks for removal.
 Consequently:
- * Dependent tasks will only be identified as such if they have already
-   spawned into the root cycle, otherwise they will be missed by the
-   purge. To avoid this, wait until all tasks that depend on the root
-   have caught up to it before purging.
- * If you purge a task that has already finished, only it and its own
-   successors will be purged (other downstream tasks will already have
-   triggered if they were able to).
-[development note: post cylc-3.0 we should be able to identify tasks
-that depend on the purge root by using the suite dependency graph, even
-if they have not spawned into the cycle time of the root yet.]""",
-["TASK                 Task (NAME%CYCLE) at which to start the purge.",
- "STOP                 Cycle time (inclusive!) at which to stop purging."] )
+ * Dependent tasks will only be identified as such, and purged, if they
+   have already spawned into the root cycle - so let them catch up first.
+ * You can't purge a tree of tasks that has already triggered, because
+   the algorithm relies on detecting new triggering.
+Note also the suite runahead limit must be large enough to bridge the
+purge gap, or runahead-held tasks will prevent the full purge occuring.
+
+[development note: post cylc-3.0 we could potentially use the suite
+graph to determine downstream tasks to remove, without doing this
+internal triggering simulation.]""",
+    pyro=True, argdoc=[("REG", "Suite name"), 
+                ("TASK", "Task (NAME%CYCLE) to start purge"),
+                ("STOP", "Cycle (inclusive!) to stop purge")])
 
 (options, args) = parser.parse_args()
 
-if len( args ) != 3:
-    parser.error( "suite name, task ID, and stop cycle required." )
+suite, pphrase = prep_pyro( args[0], options ).execute()
 
 target = args[1]
 stoptag = args[2]
@@ -76,42 +80,28 @@ except TaskIDError, x:
     raise SystemExit(x)
 else:
     task_id, (name, start) = tid.getstr(), tid.splitstr()
- 
-if re.match( '^a:', stoptag ):
-    stop = stoptag[2:]
-else:
-    try:
-        stop = ct(stoptag).get()
-    except CycleTimeError,x:
-        raise SystemExit(x)
 
-reg = parser.get_suite_name()
-dbg = dbgetter()
+stopid = 'junk%' + stoptag
 try:
-    # unalias your own suite names
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    # may be a remote suite (if not we fail to get a Pyro proxy below)
-    suite = reg
+    tid = TaskID( stopid )
+except TaskIDError, x:
+    raise SystemExit( 'ERROR, invalid purge stop tag: ' + stoptag )
 else:
-    # pseudo backward compatibility for your own suites
-    compat( suite, suiterc ).execute( sys.argv )
+    junk, stop = tid.splitstr()
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
-    host=options.host, pfile=options.pfile ).get_proxy( 'remote' )
-except SuiteIdentificationError, x:
-    raise SystemExit(x)
-except SecurityError, x:
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host, options.pyro_timeout, None, options.verbose ).get_proxy( 'remote' )
+except Exception, x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 
-if not parser.prompt( 'Purge from ' + task_id + ' to ' + stop + ' in'):
-    sys.exit(0)
-
+prompt( 'Purge from ' + task_id + ' to ' + stop + ' in ' + suite, options.force )
 result = proxy.purge( target, stop )
 
 if result.success:
     print result.reason
 else:
-    print 'ERROR:', result.reason
-    sys.exit(1)
+    sys.exit( 'ERROR: ' + result.reason )
+

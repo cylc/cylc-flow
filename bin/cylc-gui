@@ -1,0 +1,63 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from cylc.remote import remrun
+remrun().execute()
+
+import os, sys, gtk
+import warnings
+warnings.filterwarnings('ignore', 'use the new', Warning)
+from cylc.CylcOptionParsers import cop
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
+
+from conf.CylcGlobals import cylc_tmpdir
+from cylc.gui.gcylc import MainApp
+
+parser = cop( """cylc gui|gcylc [OPTIONS]
+gcylc [OPTIONS]
+
+This is the cylc Graphical User Interface; it is functionally equivalent
+to the Command Line Interface in most respects (see 'cylc help').
+Right-click on suites or groups to access cylc functionality from
+suite editing and graphing through to suite control and monitoring.
+
+NOTE: to daemonize suites launched from the GUI use POSIX nohup command:
+    $ nohup gcylc [OPTIONS] &""", argdoc=[])
+
+parser.add_option( "-t", "--timeout", metavar='SEC',
+        help="Set a timeout value for Pyro network connections. The default "
+        "is no timeout. In gcylc the timeout value is used when scanning "
+        "ports for running suites, and it is also passed on to any suite "
+        "started from a gcontrol app launched from gcylc (in which case it "
+        "will override a Pyro timeout set in the suite definition).",
+        action="store", default=None, dest="pyro_timeout" )
+
+( options, args ) = parser.parse_args()
+
+# Make current working directory be $HOME. Otherwise (1) if the user
+# attempts to start gcylc from a CWD that has been removed, Pyro will
+# not be importable below; and (2) if the CWD gets removed later while
+# gcylc is running, subprocesses spawned by gcylc will fail when they
+# attempt to determine their CWD.
+os.chdir(os.environ['HOME'])
+
+app = MainApp( options.db, options.db_owner, cylc_tmpdir, options.pyro_timeout )
+gtk.main()
+

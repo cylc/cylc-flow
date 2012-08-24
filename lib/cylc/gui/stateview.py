@@ -28,6 +28,16 @@ import pygtk
 from string import zfill
 ####pygtk.require('2.0')
 
+try:
+    any
+except NameError:
+    # any() appeared in Python 2.5
+    def any(iterable):
+        for entry in iterable:
+            if entry:
+                return True
+        return False
+
 def compare_dict_of_dict( one, two ):
     for key in one:
         if key not in two:
@@ -100,6 +110,7 @@ class tupdater(threading.Thread):
 
         self.state_summary = {}
         self.global_summary = {}
+        self.fam_state_summary = {}
         self.god = None
         self.mode = "mode:\nwaiting..."
         self.dt = "state last updated at:\nwaiting..."
@@ -120,14 +131,18 @@ class tupdater(threading.Thread):
         try:
             client = cylc_pyro_client.client(
                     self.cfg.suite,
+                    self.cfg.pphrase,
                     self.cfg.owner,
                     self.cfg.host,
+                    self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
             self.remote = client.get_proxy( 'remote' )
-        except:
+        except Exception, x:
+            #print 'FAILED TO GET A CLIENT PROXY'
             return False
         else:
+            #print 'GOT A CLIENT PROXY'
             self.status = "status:\nconnected"
             self.info_bar.set_status( self.status )
             self.family_hierarchy = self.remote.get_family_hierarchy()
@@ -175,13 +190,7 @@ class tupdater(threading.Thread):
         else:
             self.status = 'status:\nrunning'
 
-        if glbl[ 'simulation_mode' ]:
-            #rate = glbl[ 'simulation_clock_rate' ]
-            #self.mode = 'SIMULATION (' + str( rate ) + 's/hr)'
-            #self.mode = 'SIMULATION'
-            self.mode = 'mode:\nsimulation'
-        else:
-            self.mode = 'mode:\nlive'
+        self.mode = "mode:\n" + glbl[ 'run_mode' ] 
 
         if glbl[ 'blocked' ]:
             self.block = 'access:\nblocked'
@@ -507,11 +516,12 @@ class lupdater(threading.Thread):
         try:
             client = cylc_pyro_client.client(
                     self.cfg.suite,
+                    self.cfg.pphrase,
                     self.cfg.owner,
                     self.cfg.host,
+                    self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
-            self.rem = client.get_proxy( 'remote' )
         except:
             return False
         else:
@@ -541,7 +551,7 @@ class lupdater(threading.Thread):
         #print "Updating"
         try:
             [glbl, states, fam_states] = self.god.get_state_summary()
-            self.task_list = self.rem.get_task_list()
+            self.task_list = self.god.get_task_name_list()
         except Exception, x:
             #print >> sys.stderr, x
             gobject.idle_add( self.connection_lost )
@@ -565,13 +575,7 @@ class lupdater(threading.Thread):
         else:
             self.status = 'status:\nrunning'
 
-        if glbl[ 'simulation_mode' ]:
-            #rate = glbl[ 'simulation_clock_rate' ]
-            #self.mode = 'SIMULATION (' + str( rate ) + 's/hr)'
-            #self.mode = 'SIMULATION'
-            self.mode = 'mode:\nsimulation'
-        else:
-            self.mode = 'mode:\nlive'
+        self.mode = 'mode:\n' + glbl['run_mode']
 
         if glbl[ 'blocked' ]:
             self.block = 'access:\nblocked'

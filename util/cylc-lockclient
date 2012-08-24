@@ -1,0 +1,208 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import os, sys, re
+from cylc.hostname import hostname
+from optparse import OptionParser
+from time import sleep
+from cylc.cycle_time import ct, CycleTimeError
+from cylc.port_scan import SuiteNotFoundError
+from cylc.registration import localdb, RegistrationError
+from cylc.locking.lockserver import lockserver
+from cylc.locking.task_lock import task_lock
+from cylc.locking.suite_lock import suite_lock
+
+import Pyro.core, Pyro.errors
+
+def print_heading( heading ):
+        line = re.sub( '.', '_', heading )
+        print line
+        print heading
+
+def check_suite_spec( name ):
+    reg = localdb()
+    reg.load_from_file()
+    try:
+        suite_dir, title = reg.get( name )
+    except RegistrationError,x:
+        raise SystemExit(x)
+    return suite_dir
+
+def check_task_spec( task_spec ):
+    # SUITE:TASK%CYCLE
+    try:
+        suite, task_id = task_spec.split( ':' )
+    except:
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK%CYCLE" )
+
+    check_suite_spec( suite )
+
+    try:
+        (name, tag) = task_id.split( '%' )
+    except ValueError:
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK%CYCLE" )
+ 
+    try:
+        cycle = ct(tag).get()
+    except CycleTimeError,x:
+        raise SystemExit(x)
+
+    return ( suite, task_id )
+
+if __name__ == "__main__":
+
+    usage = """cylc [util] lockclient|lc [OPTIONS]
+
+This is the command line client interface to the cylc lockserver daemon,
+for server interrogation and manual lock management.
+
+Use of the lockserver is optional (see suite.rc documentation)
+
+Manual lock acquisition is mainly for testing purposes, but manual
+release may be required to remove stale locks if a suite or task dies
+without cleaning up after itself.
+
+See also:
+    cylc lockserver"""
+
+    parser = OptionParser( usage )
+
+    parser.set_defaults( acquire=None, release=None, suite_acquire=None,
+            suite_acquire_nonex=None, suite_release=None, 
+            list_all=False, get_filenames=False )
+
+    parser.add_option( "--acquire-task", help="Acquire a task lock.",
+            metavar="SUITE:TASK%CYCLE", action="store", dest="acquire" )
+
+    parser.add_option( "--release-task", help="Release a task lock.",
+            metavar="SUITE:TASK%CYCLE", action="store", dest="release" )
+
+    parser.add_option( "--acquire-suite", help="Acquire an exclusive suite lock.",
+            metavar="SUITE", action="store", dest="suite_acquire" )
+
+    parser.add_option( "--acquire-suite-nonex", help="Acquire a non-exclusive suite lock.",
+            metavar="SUITE", action="store", dest="suite_acquire_nonex" )
+
+    parser.add_option( "--release-suite", help="Release a suite and associated task locks",
+            metavar="SUITE", action="store", dest="suite_release" )
+
+    parser.add_option( "-p", "--print", help="Print all locks.",
+            action="store_true", dest="list_all" )
+
+    parser.add_option( "-l", "--list", help="List all locks (same as -p).",
+            action="store_true", dest="list_all" )
+
+    parser.add_option( "-c", "--clear", help="Release all locks.",
+            action="store_true", dest="clear_all" )
+
+    parser.add_option( "-f", "--filenames", 
+            help="Print lockserver PID, log, and state filenames.",
+            action="store_true", dest="get_filenames" )
+
+    parser.add_option( "-t", "--timeout", metavar='SECONDS',
+            help="Set a network connection timeout for Pyro.",
+            action="store",default=None, dest="pyro_timeout" )
+
+    #parser.add_option( "--debug",
+    #        help="Print full Python exception tracebacks",
+    #        action="store_true", default=False, dest="debug" )
+
+    ( options, args ) = parser.parse_args()
+
+    count = 0
+    for opt in [ options.acquire, options.release,
+            options.suite_acquire, options.suite_acquire_nonex,
+            options.suite_release, options.list_all, 
+            options.clear_all, options.get_filenames ]:
+        if opt:
+            count += 1
+
+    if count != 1:
+        parser.error( "choose one option only!" )
+    
+    owner = os.environ[ 'USER' ]
+    os.environ[ 'CYLC_USE_LOCKSERVER' ] = 'True'
+
+    try:
+        if options.acquire:
+            (suite, task_id) = check_task_spec( options.acquire )
+            if not task_lock( task_id, suite, owner, hostname ).acquire():
+                raise SystemExit( "ERROR: Failed to acquire a lock for " + options.acquire )
+
+        elif options.release:
+            (suite, task_id) = check_task_spec( options.release )
+            if not task_lock( task_id, suite, owner, hostname ).release():
+                raise SystemExit( "ERROR: Failed to release a lock for " + options.release )
+
+        elif options.suite_acquire:
+            suite = options.suite_acquire
+            suitedir = check_suite_spec( suite )
+            if not suite_lock( suite, suitedir, hostname, None, 'scheduler' ).request_suite_access( True ):
+                raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire )
+
+        elif options.suite_acquire_nonex:
+            suite = options.suite_acquire_nonex
+            suitedir = check_suite_spec( suite )
+            if not suite_lock( suite, suitedir, hostname, None, 'scheduler' ).request_suite_access( False ):
+                raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire_nonex )
+
+        elif options.suite_release:
+            suite = options.suite_release
+            suitedir = check_suite_spec( suite )
+            if not suite_lock( suite, suitedir, hostname, None, 'scheduler' ).release_suite_access():
+                raise SystemExit( "ERROR: Failed to release a lock for " + options.suite_release )
+
+        elif options.list_all:
+            (task_locks, suite_ex, suite_nonex ) = lockserver( hostname, timeout=options.pyro_timeout ).dump()
+
+            print_heading( str( len( suite_ex ) ) + " exclusive suite locks" )
+            for suitedir in suite_ex:
+                [ group ] = suite_ex[ suitedir ]
+                print " - ", group, '-->', suitedir
+
+            print_heading( str( len( suite_nonex ) ) + " non-exclusive suite locks" )
+            for suitedir in suite_nonex:
+                groups = suite_nonex[ suitedir ]
+                for group in groups:
+                    print " - ", group, '-->', suitedir
+
+            print_heading( str( len( task_locks ) ) + " task locks" )
+            for lock in task_locks:
+                print " - ", lock
+
+        elif options.clear_all:
+            lockserver( hostname, timeout=options.pyro_timeout ).clear()
+
+        elif options.get_filenames:
+            pid, log, state = lockserver( hostname, timeout=options.pyro_timeout ).get_filenames()
+
+            print "lockserver files:"
+            print "  PID ......", pid
+            print "  log ......", log
+            print "  state ....", state
+
+        else:
+            # this should not be reached
+            parser.error( "Command line parsing error!" )
+            #raise SystemExit( "unknown cylc lockserver option" )
+
+    except SuiteNotFoundError, x:
+        #if options.debug:
+        #    raise
+        #else:
+        raise SystemExit( 'Lockserver not found; try \'lockserver status\'.' )

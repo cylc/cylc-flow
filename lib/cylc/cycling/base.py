@@ -74,3 +74,9 @@ class cycler( object ):
         members of the sequence defined by this cycler.""" 
         raise CyclerOverrideError( "get_def_min_runahead" )
 
+    def adjust_state( self, offset ):
+        """Adjust the state variables that define the cycle time sequence
+        to offset the whole sequence. This is used for tasks on the left 
+        of intercycle triggers, e.g. in "A[T-6] => B" implies that task A 
+        runs at cycles 6 hours prior to the cycler sequence."""
+        raise CyclerOverrideError( "adjust_state" )

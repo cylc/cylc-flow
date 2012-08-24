@@ -54,7 +54,18 @@ class clocktriggered(object):
         if self.state.is_queued() or \
                 self.state.is_waiting() and self.prerequisites.all_satisfied():
             if self.start_time_reached():
-                ready = True
+                # We've reached the clock-trigger time
+                if self.retry_delay_timer_start:
+                    # A retry delay has been set ...
+                    diff = clocktriggered.clock.get_datetime() - self.retry_delay_timer_start
+                    foo = datetime.timedelta( 0,0,0,0,self.retry_delay,0,0 )
+                    if diff >= foo:
+                        # ... we've reached the retry delay time
+                        ready = True
+                else:
+                    # no retry delay has been set
+                    ready = True
             else:
                 self.log( 'DEBUG', 'prerequisites satisfied but waiting on delayed start time' )
         return ready
+

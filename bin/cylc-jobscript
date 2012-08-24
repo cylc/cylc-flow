@@ -20,50 +20,40 @@ set -e
 
 usage() {
     echo ""
-    echo "USAGE: cylc [prep] jobscript [options] SUITE TASK"
+    echo "USAGE: cylc [prep] jobscript [OPTIONS] REG TASK"
     echo ""
     echo "Generate a task job script and print it to stdout."
     echo ""
     echo "Here's how to capture the script in the vim editor:"
-    echo "  % cylc jobscript SUITE TASK | vim -"
+    echo "  % cylc jobscript REG TASK | vim -"
     echo "Emacs unfortunately cannot read from stdin:"
-    echo "  % cylc jobscript SUITE TASK > tmp.sh; emacs tmp.sh"
+    echo "  % cylc jobscript REG TASK > tmp.sh; emacs tmp.sh"
     echo ""
     echo "This command wraps 'cylc [control] submit --dry-run'."
+    echo "Other options (e.g. for suite host and owner) are passed"
+    echo "through to the submit command."
     echo ""
     echo "Options:"
     echo "  -h,--help   - print this usage message."
+    echo " (see also 'cylc submit --help')"
     echo ""
     echo "Arguments:"
-    echo "  SUITE       - Target suite."
-    echo "  TASK        - Task NAME or NAME[%CYCLE] (if you omit"
-    echo "                cycle time a default value will be used)."
+    echo "  REG         - Registered suite name."
+    echo "  TASK        - Task ID (NAME%TAG)"
 }
 
-if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then
-    usage
-    exit 0
-fi
+for arg in $@; do
+    if [[ $arg == '-h' ]] || [[ $arg == '--help' ]]; then
+        usage
+        exit 0
+    fi
+done
 
-if [[ $# != 2 ]]; then
-    usage
-    echo
-    echo "ERROR: wrong number of arguments"
-    exit 1
-fi
-
-SUITE=$1
-TASK=$2
-
-# supply a cycle time if necessary
-if ! $( echo $TASK | grep % >/dev/null 2>&1 ); then
-    TASK=${TASK}%2999010100
-fi
-
-JOBSCRIPT=$( cylc submit --dry-run $SUITE $TASK | grep 'GENERATED JOB SCRIPT' | sed -e 's/.*: //' )
+JOBSCRIPT=$( cylc submit --dry-run $@ | grep 'JOB SCRIPT' | sed -e 's/.*: //' )
 if [[ -z $JOBSCRIPT ]]; then
     echo "ERROR: no jobscript generated" >&2
     exit 1
 fi
 echo "Task Job Script Generated: $JOBSCRIPT" >&2 # (only send script contents to stdout)
 cat $JOBSCRIPT
+

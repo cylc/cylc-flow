@@ -16,14 +16,14 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, re
-from cylc.run import remote_run
-from cylc.CylcOptionParsers import NoPromptOptionParser
-from cylc.registration import dbgetter, RegistrationError
+from cylc.remote import remrun
+remrun().execute()
+
+import os, re, sys
+from cylc.CylcOptionParsers import cop
+from cylc.registration import localdb
 from cylc.print_tree import print_tree
 from cylc.regpath import RegPath
-
-remote_run('print')
 
 def get_padding( reglist ):
     maxlen = 0
@@ -38,26 +38,23 @@ def get_padding( reglist ):
                 maxlen = tmp
     return (maxlen+1) * ' '
 
-parser = NoPromptOptionParser( usage = """cylc [db] print [options] [FILTER]
+parser = cop( usage = """cylc [db] print [OPTIONS] [REGEX]
 
-Print private or central suite registrations.
+Print suite database registrations.
 
-FILTERING: 
+Note on result filtering: 
   (a) The filter patterns are Regular Expressions, not shell globs, so
 the general wildcard is '.*' (match zero or more of anything), NOT '*'.
   (b) For printing purposes there is an implicit wildcard at the end of
 each pattern ('foo' is the same as 'foo.*'); use the string end marker
-to stop this ('foo$' matches only literal 'foo').""", suite_specific=False )
-
-parser.add_option( "-c","--central",
-        help="Target the the central database.",
-        action="store_true", default=False, dest="central" )
+to prevent this ('foo$' matches only literal 'foo').""",
+        argdoc=[('[REGEX]', 'Suite name regular expression pattern')])
 
 parser.add_option( "-t","--tree",
         help="Print registrations in nested tree form.",
         action="store_true", default=False, dest="tree" )
 
-parser.add_option( "--pretty",
+parser.add_option( "-b", "--box",
         help="Use unicode box drawing characters in tree views.",
         action="store_true", default=False, dest="unicode" )
 
@@ -86,7 +83,7 @@ elif len(args) == 1:
 else:
     parser.error( "Wrong number of arguments.")
 
-db = dbgetter(options.central).db
+db = localdb(file=options.db, verbose=options.verbose)
 try:
     db.load_from_file()
     allsuites = db.get_list(regfilter)
@@ -151,5 +148,8 @@ try:
         pad = get_padding( allsuites )
         print_tree(tree, pad, options.unicode )
 
-except RegistrationError,x:
+except Exception,x:
+    if options.debug:
+        raise
     raise SystemExit(x)
+

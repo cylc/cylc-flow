@@ -22,7 +22,7 @@ from cylc.cycling.Monthly import Monthly
 from cylc.cycling.Yearly import Yearly
 from optparse import OptionParser
 
-parser = OptionParser( usage = """cylc [util] cycletime [options] [CYCLE]
+parser = OptionParser( usage = """cylc [util] cycletime [OPTIONS] [CYCLE]
 
 Arithmetic cycle time offset computation, and filename templating.
 
@@ -49,7 +49,7 @@ Examples:
   foo-201208.nc
 
 Arguments:
-   CYCLE        YYYY[MM[DD[HH[mm[ss]]]]] OR default to $CYLC_TASK_CYCLE_TIME.""" )
+   [CYCLE]    YYYY[MM[DD[HH[mm[ss]]]]], default $CYLC_TASK_CYCLE_TIME""" )
 
 parser.add_option( "--offset-hours", metavar="HOURS",
         help="Add N hours to CYCLE (may be negative)", 

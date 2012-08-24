@@ -35,7 +35,7 @@ time, to display in a GUI window. Examples:
     $ capture "echo foo"
     $ capture "echo hello && sleep 5 && echo bye"
 Lines containing:
-  'CRITICAL', 'WARNING', 'ERROR', 'error', 'failed'
+  'CRITICAL', 'WARNING', 'ERROR'
 are displayed in red.
     $ capture "echo foo && echox bar"
     """
@@ -71,7 +71,7 @@ are displayed in red.
         self.ftag = tb.create_tag( None, background="#70FFA9" )
 
         self.warning_re = 'WARNING'
-        self.critical_re = 'CRITICAL|ERROR|error|failed'
+        self.critical_re = 'CRITICAL|ERROR'
 
         if not self.ignore_command:
             tb.insert_with_tags( tb.get_end_iter(), 'command: ' + command + '\n', self.blue )

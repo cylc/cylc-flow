@@ -16,6 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Here lies the unfinished early beginnings of more consistent
+cylc-wide exception handling ..."""
+
 class CylcError( Exception ):
     """
     Attributes:

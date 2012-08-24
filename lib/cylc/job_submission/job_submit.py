@@ -29,27 +29,26 @@ If OWNER@REMOTE_HOST is not equivalent to whoami@localhost:
 so passwordless ssh must be configured.
 """
 
-import pwd
-import re, os, sys
+import pwd, re, sys, os
 import stat
 import string
 from jobfile import jobfile
 import socket
 import subprocess
 import time
+from cylc.owner import user
 
 class job_submit(object):
     REMOTE_COMMAND_TEMPLATE = ( " '"
-            + "mkdir -p $(dirname %(jobfile_path)s)"
+            + "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1;"
+            + "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1;"
+            + " mkdir -p $(dirname %(jobfile_path)s)"
             + " && cat >%(jobfile_path)s"
             + " && chmod +x %(jobfile_path)s"
             + " && (%(command)s)"
             + "'" )
 
     # class variables that are set remotely at startup:
-    # (e.g. 'job_submit.simulation_mode = True')
-    simulation_mode = False
-    failout_id = None
     cylc_env = None
 
     def __init__( self, task_id, initial_scripting, pre_command, task_command,
@@ -57,7 +56,7 @@ class job_submit(object):
             manual_messaging, logfiles, log_dir, share_dir, work_dir, task_owner,
             remote_host, remote_cylc_dir, remote_suite_dir,
             remote_shell_template, remote_log_dir,
-            job_submit_command_template, job_submission_shell ):
+            job_submit_command_template, job_submission_shell, ssh_messaging ):
 
         self.try_number = try_number
         self.task_id = task_id
@@ -65,13 +64,12 @@ class job_submit(object):
         self.pre_command = pre_command
         self.task_command = task_command
         self.post_command = post_command
-        if self.__class__.simulation_mode and self.__class__.failout_id == self.task_id:
-            self.task_command = '/bin/false'
 
         self.task_env = task_env
         self.namespace_hierarchy = ns_hier
         self.directives  = directives
         self.logfiles = logfiles
+        self.ssh_messaging = ssh_messaging
 
         self.share_dir = share_dir
         self.work_dir = work_dir
@@ -89,17 +87,13 @@ class job_submit(object):
         # The directory is created in config.py
         self.logfiles.add_path( self.local_jobfile_path )
 
-        self.suite_owner = os.environ['USER']
+        self.suite_owner = user
         self.remote_shell_template = remote_shell_template
         self.remote_cylc_dir = remote_cylc_dir
         self.remote_suite_dir = remote_suite_dir
 
-        # Use remote job submission if (a) not simulation mode, (b) a
-        # remote host is defined or task owner is defined.
-        if not self.__class__.simulation_mode and \
-            ( remote_host and remote_host != "localhost" and remote_host != socket.gethostname() ) or \
-            ( task_owner and task_owner != self.suite_owner ):
-            # REMOTE TASKS
+        if remote_host or task_owner:
+            # REMOTE TASK OR USER ACCOUNT SPECIFIED FOR TASK - submit using ssh
             self.local = False
             if task_owner:
                 self.task_owner = task_owner
@@ -202,17 +196,20 @@ class job_submit(object):
                 self.remote_cylc_dir, self.remote_suite_dir,
                 self.job_submission_shell, self.share_dir,
                 self.work_dir, self.jobfile_path,
-                self.__class__.simulation_mode, self.__class__.__name__ )
+                self.__class__.__name__,
+                self.ssh_messaging )
         # write the job file
         jf.write( self.local_jobfile_path )
         # make it executable
         os.chmod( self.local_jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
-        print "GENERATED JOB SCRIPT: " + self.local_jobfile_path
+
+        # this is needed by the 'cylc jobscript' command:
+        print "JOB SCRIPT: " + self.local_jobfile_path
 
         # Construct self.command, the command to submit the jobfile to run
         self.construct_jobfile_submission_command()
 
-        if self.local or self.simulation_mode:
+        if self.local:
             stdin = None
             command = self.command
         else:
@@ -224,34 +221,22 @@ class job_submit(object):
         # execute the local command to submit the job
         if dry_run:
             print "THIS IS A DRY RUN. HERE'S HOW I WOULD SUBMIT THE TASK:"
-            print command
-            return True
+            print 'SUBMIT:', command
+            return None
 
-        print "SUBMITTING TASK: " + command
+        if not self.local:
+            # direct the local jobfile across the ssh tunnel via stdin
+            command = command + ' < ' + self.local_jobfile_path
+        print 'SUBMISSION:', command
+
         try:
-            popen = subprocess.Popen( command, shell=True, stdin=stdin )
-            if not self.local:
-                f = open(self.local_jobfile_path)
-                popen.communicate(f.read())
-                f.close()
-            res = popen.wait()
-            if res < 0:
-                print >> sys.stderr, "command terminated by signal", res
-                success = False
-            elif res > 0:
-                print >> sys.stderr, "command failed", res
-                success = False
-            else:
-                # res == 0
-                success = True
+            popen = subprocess.Popen( command, shell=True )
+            # To test sequential job submission (pre cylc-4.5.1)
+            # uncomment the following line (this tie cylc up for a while
+            # in the event of submitting many ensemble tasks at once):
+            ###popen.wait()
         except OSError, e:
-            # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
-            # (i.e. cylc's simplest "background" job submit method)
-            # because a background job returns immediately and the failure
-            # occurs in the background sub-shell.
-            print >> sys.stderr, "Job submission failed", e
-            success = False
-            raise
-
-        return success
+            print >> sys.stderr, "ERROR: Job submission failed", e
+            popen = None
+        return popen
 

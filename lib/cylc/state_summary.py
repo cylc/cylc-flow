@@ -23,7 +23,7 @@ import logging
 class state_summary( Pyro.core.ObjBase ):
     """supply suite state summary information to remote cylc clients."""
 
-    def __init__( self, config, simulation_mode, start_time, gcylc=False ):
+    def __init__( self, config, run_mode, start_time, gcylc=False ):
         Pyro.core.ObjBase.__init__(self)
         self.gcylc = gcylc
         self.task_summary = {}
@@ -32,11 +32,12 @@ class state_summary( Pyro.core.ObjBase ):
         # class, in case config items are ever updated dynamically by
         # remote control
         self.config = config
-        self.simulation_mode = simulation_mode
+        self.run_mode = run_mode
         self.start_time = start_time
  
     def update( self, tasks, clock, oldest, newest,
             paused, will_pause_at, stopping, will_stop_at, blocked ):
+        self.task_name_list = []
         self.task_summary = {}
         self.global_summary = {}
         self.family_summary = {}
@@ -47,6 +48,8 @@ class state_summary( Pyro.core.ObjBase ):
             name, ctime = task.id.split('%')
             task_states.setdefault(ctime, {})
             task_states[ctime][name] = self.task_summary[task.id]['state']
+            if name not in self.task_name_list:
+                self.task_name_list.append(name)
 
         fam_states = {}
         for ctime, c_task_states in task_states.items():
@@ -76,18 +79,18 @@ class state_summary( Pyro.core.ObjBase ):
         self.global_summary[ 'oldest cycle time' ] = oldest
         self.global_summary[ 'newest cycle time' ] = newest
         self.global_summary[ 'last_updated' ] = clock.get_datetime()
-        self.global_summary[ 'simulation_mode' ] = self.simulation_mode
-        self.global_summary[ 'simulation_clock_rate' ] = clock.get_rate()
+        self.global_summary[ 'run_mode' ] = self.run_mode
+        self.global_summary[ 'clock_rate' ] = clock.get_rate()
         self.global_summary[ 'paused' ] = paused
         self.global_summary[ 'stopping' ] = stopping
         self.global_summary[ 'will_pause_at' ] = will_pause_at
         self.global_summary[ 'will_stop_at' ] = will_stop_at
         self.global_summary[ 'started by gcylc' ] = self.gcylc
         self.global_summary[ 'blocked' ] = blocked
-            
-        # update deprecated old-style summary (DELETE WHEN NO LONGER NEEDED)
-        #self.get_summary()
 
+    def get_task_name_list( self ):
+        return self.task_name_list
+            
     def get_state_summary( self ):
         return [ self.global_summary, self.task_summary, self.family_summary ]
 

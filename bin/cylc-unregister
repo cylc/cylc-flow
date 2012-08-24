@@ -16,59 +16,41 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.remote import remrun
+remrun().execute()
+
 import os, sys
 from shutil import rmtree
-from optparse import OptionParser
-from cylc.registration import localdb, centraldb, RegistrationError, DatabaseLockedError
+from cylc.CylcOptionParsers import cop
+from cylc.registration import localdb, RegistrationError, DatabaseLockedError
 
-parser = OptionParser( usage = """cylc [db] unregister [OPTIONS] SUITE
+parser = cop( usage = """cylc [db] unregister [OPTIONS] ARGS
 
-Unregister suites from your private database, or remove your suites from
-the central suite database. This does not delete the corresponding suite
-definition directories unless you use the '--delete' option.
+Remove one or more suites from your suite database. The REGEX pattern
+must match whole suite names to avoid accidental de-registration of
+partial matches (e.g. 'bar.baz' will not match 'foo.bar.baz').
 
-If you accidentally unregister a running suite, just register it again 
-under the original name to regain access to it.
-
-Arguments:
-    SUITE - suite or group name, or filter expression.""" )
+Associated suite definition directories will not be deleted unless the
+'-d,--delete' option is used.""",
+    argdoc=[('REGEX', 'Regular expression to match suite names.')] )
 
 parser.add_option( "-d", "--delete",
         help="Delete the suite definition directory too (!DANGEROUS!).",
         action="store_true", default=False, dest="obliterate" )
 
 parser.add_option( "-f", "--force",
-        help="Don't ask for confirmation before deleting suites.",
+        help="Don't ask for confirmation before deleting suite definitions.",
         action="store_true", default=False, dest="force" )
-
-parser.add_option( "-c", "--central",
-        help="Target the central suite database.",
-        action="store_true", default=False, dest="central" )
 
 parser.add_option( "--dry-run",
         help="Just show what I would do.",
         action="store_true", default=False, dest="dryrun" )
 
-parser.add_option( "--filter",
-        help="A regular expression to select multiple suites. "
-        "This must be explicit for unregister, for safety. ",
-        action="store_true", default=False, dest="regfilter" )
-
-parser.add_option( "-v","--verbose",
-        help="Print extra information.",
-        action="store_true", default=False, dest="verbose" )
-
 ( options, args ) = parser.parse_args()
-
-if len(args) != 1:
-    parser.error( "Wrong number of arguments" )
 
 arg = args[0]
 
-if options.central:
-    db = centraldb( verbose=options.verbose )
-else:
-    db = localdb( verbose=options.verbose )
+db = localdb( file=options.db, verbose=options.verbose )
 
 try:
     if not options.dryrun:
@@ -76,26 +58,30 @@ try:
     else:
         print "This is DRY RUN - reported actions will not take effect:\n"
     db.load_from_file()
-    dirs = db.unregister( arg, regfilter=options.regfilter )
+    dirs = db.unregister( arg )
     if not options.dryrun:
         db.dump_to_file()
         db.unlock()
 
 except DatabaseLockedError, x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 except RegistrationError, x:
     print >> sys.stderr, x
     if not options.dryrun:
         db.unlock()
+    if options.debug:
+        raise
     sys.exit(1)
 except Exception, x:
     print >> sys.stderr, 'ERROR:', x
     if not options.dryrun:
         db.unlock()
+    if options.debug:
+        raise
     sys.exit(1)
 
-# TO DO: should this be inside the db lock in the case of
-# central copied registrations (probably not).
 n = len(dirs)
 if n == 0:
     print 'No suites unregistered.'
@@ -119,7 +105,11 @@ if options.obliterate and len(dirs) > 0:
     if options.force:
         really_obliterate = True
     else:
-        response = raw_input( "DO YOU REALLY WANT TO DELETE THESE SUITE DEFINITIONS? (y/n) " )
+        if len(dirs) == 1:
+            words = "THIS SUITE DEFINITION"
+        else:
+            words = "THESE SUITE DEFINITIONS"
+        response = raw_input( "DO YOU REALLY WANT TO DELETE " + words + "? (y/n) " )
         if response == 'y':
             really_obliterate = True
     if really_obliterate and len(dirs)>0:

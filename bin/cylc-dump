@@ -16,16 +16,18 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
-from cylc.hostname import hostname
-from cylc import cylc_pyro_client
-from cylc.CylcOptionParsers import NoPromptOptionParser
-from cylc.port_scan import SuiteIdentificationError
-from cylc.registration import dbgetter, RegistrationError
-from cylc.version import compat
-from cylc.passphrase import SecurityError
+import sys
+if '--use-ssh' in sys.argv[1:]: 
+    sys.argv.remove( '--use-ssh' )
+    from cylc.remote import remrun
+    remrun().execute()
 
-parser = NoPromptOptionParser( """cylc [info] dump [options] SUITE 
+import os
+from cylc import cylc_pyro_client
+from cylc.CylcOptionParsers import cop
+from cylc.command_prep import prep_pyro
+
+parser = cop( """cylc [info] dump [OPTIONS] ARGS
 
 Print current suite state information (e.g. the state of each task). For
 small suites 'watch cylc [info] dump SUITE' is an effective non-GUI real
@@ -36,15 +38,17 @@ its prerequisites and outputs, see 'cylc [info] show'.
 
 Examples:
  Display the state of all running tasks, sorted by cycle time:
- % cylc [info] dump -ts SUITE | grep running
+ % cylc [info] dump --tasks --sort SUITE | grep running
 
  Display the state of all tasks in a particular cycle:
- % cylc [info] dump -t SUITE | grep 2010082406""")
+ % cylc [info] dump -t SUITE | grep 2010082406""", pyro=True )
+
+parser.remove_option("-f" ) # don't need force
 
 parser.add_option( "-g", "--global", help="Global information only.",
         action="store_true", default=False, dest="global_only" )
 
-parser.add_option( "-t", "--tasks", help="Task states only.",
+parser.add_option( "--tasks", help="Task states only.",
         action="store_true", default=False, dest="tasks_only" )
 
 parser.add_option( "-s", "--sort", help="Task states only; "
@@ -53,17 +57,7 @@ parser.add_option( "-s", "--sort", help="Task states only; "
 
 ( options, args ) = parser.parse_args()
 
-reg = parser.get_suite_name()
-dbg = dbgetter()
-try:
-    # unalias your own suite names
-    suite, suiterc = dbg.get_suite(reg)
-except RegistrationError, x:
-    # may be a remote suite (if not we fail to get a Pyro proxy below)
-    suite = reg
-else:
-    # pseudo backward compatibility for your own suites
-    compat( suite, suiterc ).execute( sys.argv )
+suite, pphrase = prep_pyro( args[0], options ).execute()
 
 # default: display all information
 display_tasks = True
@@ -75,11 +69,11 @@ if options.tasks_only:
     display_global = False
 
 try:
-    proxy = cylc_pyro_client.client( suite, owner=options.owner, \
-    host=options.host, pfile=options.pfile ).get_proxy( 'state_summary' )
-except SuiteIdentificationError, x:
-    raise SystemExit(x)
-except SecurityError, x:
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host, options.pyro_timeout, None, options.verbose ).get_proxy( 'state_summary' )
+except Exception, x:
+    if options.debug:
+        raise
     raise SystemExit(x)
 
 # get state summary, task names, cycle times
@@ -88,9 +82,9 @@ except SecurityError, x:
 if display_global:
     print "suite : " + suite
 
-    simulation_mode = glbl[ 'simulation_mode' ]
-    if simulation_mode:
-        print 'SIMULATION MODE (clock rate: ', glbl[ 'simulation_clock_rate' ], ')'
+    run_mode = glbl[ 'run_mode' ]
+    if run_mode != 'live':
+        print 'SIM MODE (clock rate: ', glbl[ 'clock_rate' ], ')'
 
     dt = glbl[ 'last_updated' ]
     print 'last summary update: ' +  dt.strftime( "%Y/%m/%d %H:%M:%S" )
