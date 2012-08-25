@@ -62,14 +62,13 @@ def displaytd( td ):
 # manager must instantiate each task with a flattened list of all the
 # state values found in the state dump file.
 
-# NOTE ON EXECUTION OF EVENT HOOK SCRIPTS:
+# NOTE ON EXECUTION OF EVENT HANDLERS:
 # These have to be executed in the background because (a) they could
 # take a long time to execute, or (b) they could try to operate on the
 # suite in some way (e.g. to remove a failed task automatically) - this
 # would create a deadlock if cylc waited on them to complete before
-# carrying on. Consequently cylc cannot to detect failure of a hook
-# script (not easily at least ... could check on the process in a
-# background thread...?)
+# carrying on. Consequently cylc cannot to detect failure of a handler
+# (not easily at least ...)
 
 class task( Pyro.core.ObjBase ):
 
@@ -207,27 +206,23 @@ class task( Pyro.core.ObjBase ):
             dep.append( satby[ label ] )
         return dep
 
-    def call_warning_hook( self, message ):
-        self.plog( 'calling task warning hook script' )
-        RunHandler( 'warning', self.__class__.hook_script, self.__class__.suite, self.id, message )
-
     def set_submitted( self ):
         self.state.set_status( 'submitted' )
         self.log( 'NORMAL', "job submitted" )
         self.submitted_time = task.clock.get_datetime()
         self.submission_timer_start = self.submitted_time
-        if 'submitted' in self.__class__.hook_events and self.__class__.hook_script:
-            self.plog( 'calling task submitted hook script' )
-            RunHandler( 'submitted', self.__class__.hook_script, self.__class__.suite, self.id, '(task submitted)' )
+        handler = self.__class__.event_handlers['submitted']
+        if handler:
+            RunHandler( 'submitted', handler, self.__class__.suite, self.id, '(task submitted)' )
 
     def set_running( self ):
         self.state.set_status( 'running' )
         self.started_time = task.clock.get_datetime()
         self.started_time_real = datetime.datetime.now()
         self.execution_timer_start = self.started_time
-        if 'started' in self.__class__.hook_events and self.__class__.hook_script:
-            self.plog( 'calling task started hook script' )
-            RunHandler( 'started', self.__class__.hook_script, self.__class__.suite, self.id, '(task started)' )
+        handler = self.__class__.event_handlers['started']
+        if handler:
+            RunHandler( 'started', handler, self.__class__.suite, self.id, '(task started)' )
 
     def set_succeeded( self ):
         self.outputs.set_all_completed()
@@ -235,27 +230,27 @@ class task( Pyro.core.ObjBase ):
         self.succeeded_time = task.clock.get_datetime()
         # don't update mean total elapsed time if set_succeeded() was called
 
-    def set_succeeded_hook( self ):
+    def set_succeeded_handler( self ):
         # (set_succeeded() is used by remote switch)
         print '\n' + self.id + " SUCCEEDED"
         self.state.set_status( 'succeeded' )
-        if 'succeeded' in self.__class__.hook_events and self.__class__.hook_script:
-            self.plog( 'calling task succeeded hook script' )
-            RunHandler( 'succeeded', self.__class__.hook_script, self.__class__.suite, self.id, '(task succeeded)' )
+        handler = self.__class__.event_handlers['succeeded']
+        if handler:
+            RunHandler( 'succeeded', handler, self.__class__.suite, self.id, '(task succeeded)' )
 
     def set_failed( self, reason='(task failed)' ):
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
-        if 'failed' in self.__class__.hook_events and self.__class__.hook_script:
-            self.plog( 'calling task failed hook script' )
-            RunHandler( 'failed', self.__class__.hook_script, self.__class__.suite, self.id, reason )
+        handler = self.__class__.event_handlers['failed']
+        if handler:
+            RunHandler( 'failed', handler, self.__class__.suite, self.id, reason )
 
     def set_submit_failed( self, reason='(job submission failed)' ):
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
-        if 'submission_failed' in self.__class__.hook_events and self.__class__.hook_script:
-            self.plog( 'calling task submission failed hook script' )
-            RunHandler( 'submission_failed', self.__class__.hook_script, self.__class__.suite, self.id, reason )
+        handler = self.__class__.event_handlers['submission failed']
+        if handler:
+            RunHandler( 'submission_failed', handler, self.__class__.suite, self.id, reason )
 
     def unfail( self ):
         # if a task is manually reset remove any previous failed message
@@ -351,53 +346,40 @@ class task( Pyro.core.ObjBase ):
             return p
 
     def check_submission_timeout( self ):
-        if not self.__class__.hook_script:
-            # no event handler specified.
-            return
-        if 'submission_timeout' not in self.__class__.hook_events:
-            # not handling timeouts
-            return
-        if not self.submission_timeout:
-            # no timeout values specified
+        handler = self.__class__.event_handlers['submission timeout']
+        timeout = self.__class__.timeouts['submission']
+        if not handler or not timeout:
             return
         if not self.state.is_submitted() and not self.state.is_running():
             # nothing to time out yet
             return
         current_time = task.clock.get_datetime()
         if self.submission_timer_start != None and not self.state.is_running():
-            timeout = self.submission_timer_start + datetime.timedelta( minutes=self.submission_timeout )
-            if current_time > timeout:
-                msg = 'submitted ' + str( self.submission_timeout ) + ' minutes ago, but has not started'
+            cutoff = self.submission_timer_start + datetime.timedelta( minutes=timeout )
+            if current_time > cutoff:
+                msg = 'submitted ' + str( timeout ) + ' minutes ago, but has not started'
                 self.log( 'WARNING', msg )
-                self.plog( 'Calling task submission timeout hook script.' )
-                RunHandler( 'submission_timeout', self.__class__.hook_script, self.__class__.suite, self.id, msg )
+                RunHandler( 'submission_timeout', handler, self.__class__.suite, self.id, msg )
                 self.submission_timer_start = None
 
     def check_execution_timeout( self ):
-        if not self.__class__.hook_script:
-            # no event handler specified.
-            return
-        if 'execution_timeout' not in self.__class__.hook_events:
-            # not handling timeouts
-            return
-        if not self.execution_timeout:
-            # no timeout values specified
+        handler = self.__class__.event_handlers['execution timeout']
+        timeout = self.__class__.timeouts['execution']
+        if not handler or not timeout:
             return
         if not self.state.is_submitted() and not self.state.is_running():
             # nothing to time out yet
             return
         current_time = task.clock.get_datetime()
         if self.execution_timer_start != None and self.state.is_running():
-            # check for job execution timeout
-            timeout = self.execution_timer_start + datetime.timedelta( minutes=self.execution_timeout )
-            if current_time > timeout:
+            cutoff = self.execution_timer_start + datetime.timedelta( minutes=timeout )
+            if current_time > cutoff:
                 if self.reset_timer:
-                    msg = 'last message ' + str( self.execution_timeout ) + ' minutes ago, but has not succeeded'
+                    msg = 'last message ' + str( timeout ) + ' minutes ago, but has not succeeded'
                 else:
-                    msg = 'started ' + str( self.execution_timeout ) + ' minutes ago, but has not succeeded'
+                    msg = 'started ' + str( timeout ) + ' minutes ago, but has not succeeded'
                 self.log( 'WARNING', msg )
-                self.plog( 'Calling task execution timeout hook script.' )
-                RunHandler( 'execution_timeout', self.__class__.hook_script, self.__class__.suite, self.id, msg )
+                RunHandler( 'execution_timeout', handler, self.__class__.suite, self.id, msg )
                 self.execution_timer_start = None
 
     def sim_time_check( self ):
@@ -441,8 +423,9 @@ class task( Pyro.core.ObjBase ):
             return False
 
     def incoming( self, priority, message ):
-        if self.__class__.hook_script and priority == 'WARNING':
-            self.call_warning_hook( message )
+        handler = self.__class__.event_handlers['warning']
+        if priority == 'WARNING' and handler:
+            RunHandler( 'warning', handler, self.__class__.suite, self.id, message )
 
         if self.reject_if_failed( message ):
             return
@@ -479,7 +462,7 @@ class task( Pyro.core.ObjBase ):
                 # circumstances they will not be completed outputs).
                 self.outputs.add( message )
                 self.outputs.set_completed( message )
-                # this also calls the task failure hook script:
+                # this also calls the task failure handler:
                 self.set_failed( message )
                 task.state_changed = True
             else:
@@ -491,9 +474,9 @@ class task( Pyro.core.ObjBase ):
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 task.state_changed = True
-                if 'retry' in self.__class__.hook_events and self.__class__.hook_script:
-                    self.plog( 'calling task retry hook script' )
-                    RunHandler( 'retry', self.__class__.hook_script, self.__class__.suite, self.id, '(task retrying)' )
+                handler = self.__class__.event_handlers['retry']
+                if handler:
+                    RunHandler( 'retry', handler, self.__class__.suite, self.id, '(task retrying)' )
 
         elif self.outputs.exists( message ):
             # registered output messages
@@ -510,7 +493,7 @@ class task( Pyro.core.ObjBase ):
                     if not self.outputs.all_completed():
                         self.set_failed( 'succeeded before all outputs were completed' )
                     else:
-                        self.set_succeeded_hook()
+                        self.set_succeeded_handler()
             else:
                 # this output has already been satisfied
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already completed):" )

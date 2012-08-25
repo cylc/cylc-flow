@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
+import re, os
 import StringIO
 from copy import deepcopy
 
@@ -141,6 +141,11 @@ class jobfile(object):
         # Override CYLC_SUITE_DEF_PATH for remotely hosted tasks
         if self.remote_suite_dir:
             self.cylc_env['CYLC_SUITE_DEF_PATH'] = self.remote_suite_dir
+        else:
+            # for remote tasks that don't specify a remote suite dir
+            # default to replace home dir with literal '$HOME' (works
+            # for local tasks too):
+            self.cylc_env[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', self.cylc_env['CYLC_SUITE_DEF_PATH'])
 
         BUFFER.write( "\n\n# CYLC LOCATION; SUITE LOCATION, IDENTITY, AND ENVIRONMENT:" )
         for var in self.cylc_env:

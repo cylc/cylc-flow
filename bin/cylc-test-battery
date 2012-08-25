@@ -32,6 +32,8 @@ usage() {
     echo "  -h, --help   Print this help message and exit."
 }
 
+OFFICIAL_TESTS=false
+
 if [[ $# > 1 ]]; then
     usage
     exit 1
@@ -47,8 +49,30 @@ elif [[ $# == 1 ]]; then
         fi
     fi
 else
+    OFFICIAL_TESTS=true
     SOURCE_DIR=$CYLC_DIR/tests
 fi
+
+if $OFFICIAL_TESTS; then
+    if [[ -z $CYLC_TEST_TASK_HOST ]]; then
+        echo "ERROR: official tests need \$CYLC_TEST_TASK_HOST"
+        exit 1
+    fi
+    if [[ -z $CYLC_TEST_TASK_OWNER ]]; then
+        CYLC_TEST_TASK_OWNER=$USER
+    fi
+    for HOST in localhost ${CYLC_TEST_TASK_OWNER}@${CYLC_TEST_TASK_HOST}; do
+        echo "Testing ssh to ${HOST}..."
+        if ! ssh -oBatchmode=yes $HOST /bin/true > /dev/null; then
+            echo "  ERROR: ssh test to $HOST failed"
+            exit 1
+        else
+            echo "  OK"
+        fi
+    done
+fi
+
+exit 0
 
 MY_TMPDIR=${CYLC_TMPDIR:-${TMPDIR:-/tmp}}
 mkdir -p $MY_TMPDIR

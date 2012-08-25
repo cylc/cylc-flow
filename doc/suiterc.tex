@@ -187,28 +187,20 @@ are logged by cylc.
 \subsubsection[{[[}event hooks{]]}]{[cylc] $\rightarrow$ [[event hooks]]}
 \label{SuiteEventHandling}
 
-Cylc can call a nominated handler when certain suite events occur.
-Event handlers can send an email or an SMS, call a pager, and so on; or
-intervene in the operation of their own suite using cylc commands. The
-command \lstinline=cylc [hook] email-suite= is a ready-made suite event
-handler.
-
-A single script can be nominated to handle a list of chosen events, and
-the event name is passed to the handler to allow it to distinguish
-between them.
+Cylc has internal ``hooks'' onto which you can hang handler scripts
+whenever certain suite or task events occur. This section is for
+configuring the suite event hooks. Event handlers can send an email or
+an SMS, call a pager, and so on; or intervene in the operation of their
+own suite using cylc commands. 
+The command \lstinline=cylc [hook] email-suite= is a ready-made suite
+event handler.
 
 Custom suite event handlers can be located in the suite bin directory.
-They are passed the following arguments by cylc:
-
+They are called by cylc as follows:
 \begin{lstlisting}
-<hook-script> EVENT SUITE MESSAGE
+<handler> EVENT SUITE MESSAGE
 \end{lstlisting}
-where EVENT is one of the following strings:
-\begin{myitemize}
-    \item `startup' - the suite started running 
-    \item `shutdown' - the suite stopped, normally or not
-    \item `timeout' - the suite timed out
-\end{myitemize}
+where EVENT is the event name (see below), SUITE is the suite name, and 
 MESSAGE, if provided, describes what has happened.
 
 {\em Note that event handlers are called by cylc itself} so if you wish
@@ -217,33 +209,28 @@ to pass them additional information via the environment you must use
 (suite-level variables - \lstinline=$CYLC_SUITE_INITIAL_CYCLE_TIME=
 etc.\ - are exported into the suite environment, however).
 
-To configure suite timeout handling put `timeout' in the event list and
-specify corresponding timeout values in minutes for the timeout item
-below.
-
 See also Section~\ref{TaskEventHandling} for task event hooks.
 
-\paragraph[events]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ events }
+\paragraph[script]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ EVENT handler}
 
-The list of events to handle, as documented for EVENT just above.
+The event handler to call when the EVENT event occurs. Repeat this
+section for each of the following suite events that you wish to handle:
 \begin{myitemize}
-    \item {\em type:} list of strings
-    \item {\em default:} (none)
+    \item `startup' - the suite started running 
+    \item `shutdown' - the suite stopped, normally or not
+    \item `timeout' - the suite timed out
 \end{myitemize}
 
-
-\paragraph[script]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ script}
-
-The handler script to call when one of the nominated events occurs.
-
+Suite event handlers can be located in the suite bin directory.
 \begin{myitemize}
-    \item {\em type:} string
-    \item {\em default:} (none)
+    \item {\em type:} string (the event handler)
+    \item {\em default:} None
+    \item {\em example:} startup handler = my-handler.sh
 \end{myitemize}
 
 \paragraph[timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ timeout}
 
-If a timeout is set and the timeout event is handled the event
+If a timeout is set and the timeout event is handled, the event
 handler will be called if the suite times out before it finishes.
 See also ``abort on timeout'', below.
 
@@ -253,26 +240,24 @@ See also ``abort on timeout'', below.
 \end{myitemize}
 
 
-\paragraph[abort if shutdown handler fails]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort if shutdown handler fails}
-
-Cylc does not normally care whether a shutdown event handler, executed just
-prior to shutting down, succeeds or fails; but if this is turned on 
-cylc will execute the shutdown handler in the foreground and the suite
-will abort with error status if the handler script fails. This feature
-is used by cylc test suites that diagnose their own logs with shutdown
-handlers.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} False
-\end{myitemize}
-
 \paragraph[abort on timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort on timeout}
 
 If a suite timer is set (above) this will cause the suite to abort with
 error status if the suite times out while still running. This feature
 is used by cylc test suites to catch any error that prevents a suite
 from completing.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False
+\end{myitemize}
+
+\paragraph[abort if startup handler fails]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort if EVENT handler fails}
+
+Cylc does not normally care whether an event handler succeeds or fails,
+but if this is turned on the EVENT handler will be executed in the
+foreground (which will block the suite while it is running) and the
+suite will abort if the handler fails.
 
 \begin{myitemize}
     \item {\em type:} boolean

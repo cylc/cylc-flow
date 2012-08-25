@@ -305,23 +305,22 @@ class scheduler(object):
             req = self.config['cylc']['reference test']['required run mode']
             if req and req != self.run_mode:
                 raise SystemExit( 'ERROR: this suite allows only ' + req + ' mode reference tests')
-            if 'shutdown' in self.config.event_config.events:
+            handler = self.config.event_handlers['shutdown']
+            if handler: 
                 print >> sys.stderr, 'WARNING: replacing shutdown event handler for reference test run'
-            else:
-                self.config.event_config.events.append('shutdown')
+            self.config.event_handlers['shutdown'] = self.config['cylc']['reference test']['suite shutdown event handler']
             self.config['cylc']['log resolved dependencies'] = True
-            self.config.event_config.abort_if_shutdown_handler_fails = True
-            self.config.event_config.script = self.config['cylc']['reference test']['suite shutdown event handler']
+            self.config.abort_if_shutdown_handler_fails = True
             spec = LogSpec( self.reflogfile )
             self.start_tag = spec.get_start_tag()
             self.stop_tag = spec.get_stop_tag()
             if not self.config['cylc']['reference test']['allow task failures']:
                 self.config['cylc']['abort if any task fails'] = True
-            self.config.event_config.abort_on_timeout = True
+            self.abort_on_timeout = True
             timeout = self.config['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
             if not timeout:
-                raise SystemExit( 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference runs' )
-            self.config.event_config.timeout = timeout
+                raise SystemExit( 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test' )
+            self.suite_timeout = timeout
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
@@ -333,13 +332,6 @@ class scheduler(object):
         self.log.info( 'Run mode: ' + self.run_mode )
         self.log.info( 'Start tag: ' + str(self.start_tag) )
         self.log.info( 'Stop tag: ' + str(self.stop_tag) )
-
-        if 'startup' in self.config.event_config.events:
-            # we have to wait until the suite is configured before doing this
-            msg = 'Calling startup event handler'
-            print msg
-            self.log.info(msg)
-            RunHandler( 'startup', self.config.event_config.script, self.suite, msg='suite starting' )
 
         if self.start_tag:
             self.start_tag = self.ctexpand( self.start_tag)
@@ -364,11 +356,29 @@ class scheduler(object):
         self.add_to_banner() # must be before configure_environments for self.ict
         self.configure_environments()
 
+        handler = self.config.event_handlers['startup']
+        if handler:
+            # we have to wait until the suite is configured before doing
+            # this; and also after configuring the suite environment
+            if self.config.abort_if_startup_handler_fails:
+                foreground = True
+                self.log.warning('Calling startup event handler in the foreground')
+            else:
+                foreground = False
+                msg = 'Calling startup event handler'
+                print msg
+                self.log.info(msg)
+            try:
+                RunHandler( 'startup', handler, self.suite, msg='suite starting', fg=foreground )
+            except Exception, x:
+                print >> sys.stderr, '\nERROR: STARTUP EVENT HANDLER FAILED'
+                raise
+
         self.already_timed_out = False
-        if self.config.event_config.timeout:
+        if self.config.suite_timeout:
             now = datetime.datetime.now()
             self.suite_timer_start = now
-            print str(self.config.event_config.timeout) + " minute suite timer starts NOW:", str(now)
+            print str(self.config.suite_timeout) + " minute suite timer starts NOW:", str(now)
 
         self.print_banner()
 
@@ -616,7 +626,6 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
         cylcenv[ 'CYLC_SUITE_REG_NAME' ] = self.suite
         cylcenv[ 'CYLC_SUITE_REG_PATH' ] = RegPath( self.suite ).get_fpath()
-        # replace home dir with literal '$HOME' for the benefit of remote tasks:
         cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner
         cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
         cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port ) # "None" if not using lockserver
@@ -624,7 +633,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( self.ict ) # may be "None"
         cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( self.stop_tag  ) # may be "None"
         cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
-        cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', self.suite_dir )
+        cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_PYRO_TIMEOUT' ] = str( self.config.pyro_timeout )
         cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = self.config['cylc']['logging']['directory']
         job_submit.cylc_env = cylcenv
@@ -767,7 +776,7 @@ class scheduler(object):
             # incoming task messages set task.task.state_changed to True
             self.pyro.handleRequests(timeout=1)
 
-            if self.config.event_config.timeout:
+            if self.config.suite_timeout:
                 self.check_suite_timer()
 
             # SHUT DOWN IF ALL TASKS ARE SUCCEEDED OR HELD
@@ -867,17 +876,31 @@ class scheduler(object):
         if self.already_timed_out:
             return
         now = datetime.datetime.now()
-        timeout = self.suite_timer_start + datetime.timedelta( minutes=self.config.event_config.timeout )
+        timeout = self.suite_timer_start + datetime.timedelta( minutes=self.config.suite_timeout )
+        handler = self.config.event_handlers['timeout']
         if now > timeout:
-            self.already_timed_out = True
-            self.log.warning( "Suite timed out (" + str(self.config.event_config.timeout) + " minutes)" )
-            if 'timeout' in self.config.event_config.events:
-                self.log.warning( 'Calling suite timeout event handler' )
-                message = 'Suite timed out after ' + str( self.config.event_config.timeout) + ' minutes' 
-                RunHandler( 'timeout', self.config.event_config.script, self.suite, msg=message )
-            if self.config.event_config.abort_on_timeout:
-                print >> sys.stderr, 'Abort on suite timeout is set'
-                raise SchedulerError, 'Aborting on suite timeout'
+            # suite timed out
+            if handler:
+                # a handler is defined
+                self.already_timed_out = True
+                message = 'Suite timed out after ' + str( self.config.suite_timeout) + ' minutes' 
+                self.log.warning( message )
+                if self.abort_if_timeout_handler_fails:
+                    foreground = True
+                    self.log.warning('Calling timeout event handler in the foreground')
+                else:
+                    foreground = False
+                    msg = 'Calling timeout event handler'
+                    print msg
+                    self.log.info(msg)
+                try:
+                    RunHandler( 'timeout', handler, self.suite, msg='suite starting', fg=foreground )
+                except Exception, x:
+                    print >> sys.stderr, '\nERROR: TIMEOUT EVENT HANDLER FAILED'
+                    raise
+
+            if self.config.abort_on_timeout:
+                raise SchedulerError, 'Abort on suite timeout is set'
 
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
@@ -949,17 +972,24 @@ class scheduler(object):
 
         print message
 
-        if 'shutdown' in self.config.event_config.events:
-            if self.config.event_config.abort_if_shutdown_handler_fails:
+        handler = self.config.event_handlers['shutdown']
+        if handler:
+            if self.config.abort_if_shutdown_handler_fails:
                 foreground = True
-                self.log.warning('Calling shutdown handler in the foreground')
+                self.log.warning('Calling shutdown event handler in the foreground')
             else:
                 foreground = False
+                msg = 'Calling shutdown event handler'
+                print msg
+                self.log.info(msg)
             try:
-                RunHandler( 'shutdown', self.config.event_config.script, self.suite, msg=message, fg=foreground )
+                RunHandler( 'shutdown', handler, self.suite, msg=message, fg=foreground )
             except Exception, x:
                 if self.options.reftest:
-                    print '\nERROR: SUITE REFERENCE TEST FAILED' 
+                    print >> sys.stderr, '\nERROR: SUITE REFERENCE TEST FAILED' 
+                    raise
+                else:
+                    print >> sys.stderr, '\nERROR: SHUTDOWN EVENT HANDLER FAILED' 
                     raise
             else:
                 print '\nSUITE REFERENCE TEST PASSED'

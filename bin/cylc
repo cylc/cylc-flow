@@ -255,7 +255,6 @@ hook_commands['check-triggering'  ] = ['check-triggering' ]
 
 admin_commands = OrderedDict()
 admin_commands['test-db'     ] = [ 'test-db']
-admin_commands['test-suite'  ] = [ 'test-suite']
 admin_commands['test-battery'  ] = [ 'test-battery']
 admin_commands['import-examples' ] = ['import-examples']
 admin_commands['check-examples'  ] = [ 'check-examples']
@@ -419,7 +418,6 @@ Command CATEGORIES:"""
 comsum = OrderedDict()
 # admin
 comsum[ 'test-db'    ] = '(ADMIN) Run an automated suite database test'
-comsum[ 'test-suite' ] = '(ADMIN) Run an automated scheduler test'
 comsum[ 'test-battery' ] = '(ADMIN) Run a battery of self-diagnosing test suites'
 comsum[ 'check-examples' ] = '(ADMIN) Check all example suites validate'
 comsum[ 'import-examples' ] = '(ADMIN) import example suites your user database'

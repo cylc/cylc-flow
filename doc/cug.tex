@@ -453,11 +453,11 @@ Recent versions of Pyro require Python 2.5 or greater, due to use of the
 Beware of Linux distributions that come packaged with old Pyro versions.
 Pyro 3.9 and earlier is not compatible with the new-style Python classes
 used in cylc. It has been reported that Ubuntu 10.04 (Lucid Lynx),
-released in September 2009, suffers from this problem. And surprisingly 
+released in September 2009, suffers from this problem. Surprisingly, 
 so does Ubuntu 11.10 (Oneiric Ocelot), released in October 2011 - and
-therefore, presumably, all earlier Ubuntu releases.  Attempting to run
-\lstinline=cylc admin test-suite= with Pyro 3.9 or earlier results
-in the following Python traceback:
+therefore, presumably, earlier Ubuntu releases.  Attempting to run
+a suite with Pyro 3.9 or earlier installed results in the following
+Python traceback:
 
 \lstset{language=Python}
 \begin{lstlisting}
@@ -636,17 +636,35 @@ suites, registers it under a new name and then manipulates it by
 recopying the suite in various ways, and so on, before finally deleting
 the test registrations. This should complete without error in a few seconds.
 
-\subsection{Automated Scheduler Test} 
+\subsection{Automated Scheduler Tests} 
 \label{RTAST}
 
-The command \lstinline=cylc admin test-suite= tests the cylc scheduler
-itself by running a suite temporarily registered under
-\lstinline=testsuite=, configuring it to fail out a specific task, and
-then doing some advanced failure recovery intervention on it (recursive
-purge plus insertion of cold-start tasks). This process should complete
-in 2-3 minutes and can be watched in real time by right-clicking on the
-temporary test suite when it appears in gcylc and opening a gcontrol
-suite control GUI.
+Cylc has a battery of self-diagnosing test suites for pre-release
+testing that you can also run after installation to check that
+everything works properly.
+
+The command \lstinline=cylc admin test-battery= copies, registers, and
+runs, the official cylc test suites, and reports the results. Some tests
+may take several minutes to complete. Pre-test requirements:
+
+\begin{myitemize}
+    \item Some test suites require passwordless self-ssh to be
+        configured, i.e.\ 
+        \lstinline=ssh -oBatchmode=yes ssh localhost ls= should work.
+    \item  Some tests require a remote task host with passwordless ssh
+        configured, i.e.\ 
+        \lstinline=ssh -oBatchmode=yes ssh <HOSTNAME> ls= should work.
+        You must specify the hostname in the environment before running
+        the tests:
+        \lstinline@export CYLC_TEST_TASK_HOST=<HOSTNAME>@.
+        If you don't have access to a remote task host, just specify
+        \lstinline=localhost= as the remote hostname.
+\end{myitemize}
+
+If these requirements are satisfied no tests should fail on an official
+cylc release, because of pre-release testing. If you find that some do
+fail, consider reporting this to cylc's maintainer or the cylc mailing
+list.
 
 \subsection{Complete Non-System-Level Installation}
 \label{LocalInstall}

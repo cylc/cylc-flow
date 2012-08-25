@@ -25,11 +25,18 @@ description = "No description provided"
         directory = '$HOME/cylc-run/$CYLC_SUITE_REG_NAME/state'
         number of backups = 10
     [[event hooks]]
-        script = None
-        events = (none)
+        startup handler = None
+        timeout handler = None
+        shutdown handler = None
         timeout = None
+        abort if startup handler fails = False
+        abort if timeout handler fails = False
         abort if shutdown handler fails = False
         abort on timeout = False
+    [[simulation mode]]
+        disable suite event hooks = True
+    [[dummy mode]]
+        disable suite event hooks = True
     [[lockserver]]
         enable = False
         simultaneous instances = False
@@ -106,11 +113,18 @@ description = "No description provided"
             remote shell template = 'ssh -oBatchMode=yes %s'
             ssh messaging = False
         [[[event hooks]]]
-            script = None
-            events = (none)
-            submission timeout = None
-            execution timeout = None
-            reset timer = False
+            submit handler = None
+            submit failed handler = None
+            submit timeout handler = None
+            submission timeout = default=None
+            start handler = None
+            timeout handler = None
+            timeout = None
+            reset timer = default=False
+            success handler = None
+            fail handler = None
+            warn handler = None
+            retry handler = None
         [[[environment]]]
             # (SUITE AND TASK IDENTITY VARIABLES ARE PROVIDED)
         [[[directives]]]
