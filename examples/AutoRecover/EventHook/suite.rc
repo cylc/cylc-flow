@@ -16,8 +16,7 @@ Illustrates use of a task event hook script to clean up failed tasks."""
 [runtime]
     [[fam]]
         [[[event hooks]]]
-            script = failhook.sh
-            events = failed
+            failed handler = failhook.sh
     [[m_foo]]
         inherit = fam
         command scripting = sleep 8 
