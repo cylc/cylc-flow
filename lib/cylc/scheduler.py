@@ -304,7 +304,7 @@ class scheduler(object):
         elif self.options.reftest:
             req = self.config['cylc']['reference test']['required run mode']
             if req and req != self.run_mode:
-                raise SystemExit( 'ERROR: this suite allows only ' + req + ' mode reference tests')
+                raise SchedulerError, 'ERROR: this suite allows only ' + req + ' mode reference tests'
             handler = self.config.event_handlers['shutdown']
             if handler: 
                 print >> sys.stderr, 'WARNING: replacing shutdown event handler for reference test run'
@@ -319,7 +319,7 @@ class scheduler(object):
             self.abort_on_timeout = True
             timeout = self.config['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
             if not timeout:
-                raise SystemExit( 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test' )
+                raise SchedulerError, 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test'
             self.suite_timeout = timeout
 
         # Note that the following lines must be present at the top of
@@ -362,17 +362,14 @@ class scheduler(object):
             # this; and also after configuring the suite environment
             if self.config.abort_if_startup_handler_fails:
                 foreground = True
-                self.log.warning('Calling startup event handler in the foreground')
             else:
                 foreground = False
-                msg = 'Calling startup event handler'
-                print msg
-                self.log.info(msg)
             try:
                 RunHandler( 'startup', handler, self.suite, msg='suite starting', fg=foreground )
             except Exception, x:
-                print >> sys.stderr, '\nERROR: STARTUP EVENT HANDLER FAILED'
-                raise
+                # Note: test suites depends on this message:
+                print >> sys.stderr, '\nERROR: startup EVENT HANDLER FAILED'
+                raise SchedulerError, x
 
         self.already_timed_out = False
         if self.config.suite_timeout:
@@ -884,19 +881,16 @@ class scheduler(object):
                 self.already_timed_out = True
                 message = 'Suite timed out after ' + str( self.config.suite_timeout) + ' minutes' 
                 self.log.warning( message )
-                if self.abort_if_timeout_handler_fails:
+                if self.config.abort_if_timeout_handler_fails:
                     foreground = True
-                    self.log.warning('Calling timeout event handler in the foreground')
                 else:
                     foreground = False
-                    msg = 'Calling timeout event handler'
-                    print msg
-                    self.log.info(msg)
                 try:
                     RunHandler( 'timeout', handler, self.suite, msg='suite starting', fg=foreground )
                 except Exception, x:
-                    print >> sys.stderr, '\nERROR: TIMEOUT EVENT HANDLER FAILED'
-                    raise
+                    # Note: tests suites depend on the following message:
+                    print >> sys.stderr, '\nERROR: timeout EVENT HANDLER FAILED'
+                    raise SchedulerError, x
 
             if self.config.abort_on_timeout:
                 raise SchedulerError, 'Abort on suite timeout is set'
@@ -975,20 +969,17 @@ class scheduler(object):
         if handler:
             if self.config.abort_if_shutdown_handler_fails:
                 foreground = True
-                self.log.warning('Calling shutdown event handler in the foreground')
             else:
                 foreground = False
-                msg = 'Calling shutdown event handler'
-                print msg
-                self.log.info(msg)
             try:
                 RunHandler( 'shutdown', handler, self.suite, msg=message, fg=foreground )
             except Exception, x:
                 if self.options.reftest:
                     print >> sys.stderr, '\nERROR: SUITE REFERENCE TEST FAILED' 
-                    raise
+                    raise SchedulerError, x
                 else:
-                    print >> sys.stderr, '\nERROR: SHUTDOWN EVENT HANDLER FAILED' 
+                    # Note: tests suites depend on the following message:
+                    print >> sys.stderr, '\nERROR: shutdown EVENT HANDLER FAILED' 
                     raise
             else:
                 print '\nSUITE REFERENCE TEST PASSED'

@@ -17,8 +17,15 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
+import logging
 
 def RunHandler( event, script, suite, taskID=None, msg=None, fg=False ):
+    tolog = 'Calling ' + event + ' handler'
+    if fg:
+        tolog += ' in the foreground'
+    print tolog
+    logger = logging.getLogger('main')
+    logger.info( tolog )
     command = script + ' ' + event + ' ' + suite
     if taskID:
         command += ' ' + taskID
