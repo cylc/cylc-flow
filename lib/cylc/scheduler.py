@@ -483,8 +483,7 @@ class scheduler(object):
     def check_not_running_already( self ):
         try:
             # get the suite passphrase
-            pphrase = passphrase( self.suite, self.owner, self.host,
-                    verbose=self.verbose ).get( None, self.suite_dir )
+            pphrase = passphrase( self.suite, self.owner, self.host, verbose=self.verbose ).get( None, self.suite_dir )
         except Exception, x:
             raise SchedulerError( "ERROR: failed to find passphrase for " + self.suite )
         try:
