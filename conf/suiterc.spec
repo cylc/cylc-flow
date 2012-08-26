@@ -187,10 +187,14 @@ description = string( default="No description provided" )
         [[[simulation mode]]]
             run time range = list( default=list() )
             simulate failure = boolean( default=None )
+            disable task event hooks = boolean( default=None )
+            disable retries = boolean( default=None )
         [[[dummy mode]]]
             command scripting = string( default=None )
             disable pre-command scripting = boolean( default=None )
             disable post-command scripting = boolean( default=None )
+            disable task event hooks = boolean( default=None )
+            disable retries = boolean( default=None )
         [[[job submission]]]
             method = string( default=None )
             command template = string( default=None )
@@ -216,7 +220,7 @@ description = string( default="No description provided" )
             warning handler = string( default=None )
             retry handler = string( default=None )
 
-            submit timeout handler = string( default=None )
+            submission timeout handler = string( default=None )
             submission timeout = float( default=None )
 
             execution timeout handler = string( default=None )
