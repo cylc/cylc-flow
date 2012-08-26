@@ -1,0 +1,38 @@
+#!Jinja2
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 1.0
+[scheduling]
+    [[dependencies]]
+        graph = "startup => timeout => shutdown"
+[runtime]
+    [[common]]
+        command scripting = """
+cylc unreg $REG
+cylc reg $REG $DEF
+echo "Sub-suite log file is: $PWD/$LOG"
+if cylc run $REG > $LOG 2>&1; then 
+    echo "ERROR: sub-suite did not abort as planned"
+    exit 1
+else
+    if grep "$GREP" $LOG; then
+        echo "Sub-suite aborted as planned"
+    else
+        echo "ERROR: sub-suite did not abort as planned"
+        exit 1
+    fi
+fi
+cylc unreg $REG"""
+        [[[environment]]]
+            DEF = $CYLC_SUITE_DEF_PATH/hidden/<TASK>
+            REG = ${CYLC_SUITE_REG_NAME}-<TASK>
+            LOG = ${CYLC_TASK_NAME}.log
+            GREP = "ERROR: <TASK> EVENT HANDLER FAILED"
+        [[[remote]]]
+            # divorce sub-suites from the task execution environments
+            # that launch them
+            host = {{ environ['CYLC_TEST_TASK_HOST'] }}
+    [[startup, timeout, shutdown]]
+        inherit = common
+

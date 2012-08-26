@@ -27,12 +27,14 @@ usage() {
     echo "target all the contained suites, or a sub-tree, or a single "
     echo "one of them. TOPDIR defaults to \$CYLC_DIR/tests/, the location"
     echo "of the official cylc reference tests."
-    echo
+    echo ""
+    echo "Directory paths containing the word 'hidden' will be ignored."
+    echo "This can be used to hide sub-suites that are not intended run"
+    echo "as standalone tests."
+    echo ""
     echo "Options:"
     echo "  -h, --help   Print this help message and exit."
 }
-
-OFFICIAL_TESTS=false
 
 if [[ $# > 1 ]]; then
     usage
@@ -49,30 +51,22 @@ elif [[ $# == 1 ]]; then
         fi
     fi
 else
-    OFFICIAL_TESTS=true
     SOURCE_DIR=$CYLC_DIR/tests
 fi
 
-if $OFFICIAL_TESTS; then
-    if [[ -z $CYLC_TEST_TASK_HOST ]]; then
-        echo "ERROR: official tests need \$CYLC_TEST_TASK_HOST"
-        exit 1
-    fi
-    if [[ -z $CYLC_TEST_TASK_OWNER ]]; then
-        CYLC_TEST_TASK_OWNER=$USER
-    fi
-    for HOST in localhost ${CYLC_TEST_TASK_OWNER}@${CYLC_TEST_TASK_HOST}; do
-        echo "Testing ssh to ${HOST}..."
-        if ! ssh -oBatchmode=yes $HOST /bin/true > /dev/null; then
-            echo "  ERROR: ssh test to $HOST failed"
-            exit 1
-        else
-            echo "  OK"
-        fi
-    done
-fi
+CYLC_TEST_TASK_HOST=${CYLC_TEST_TASK_HOST:-localhost}
+CYLC_TEST_TASK_OWNER=${CYLC_TEST_TASK_OWNER:-$USER}
 
-exit 0
+ACCOUNT=${CYLC_TEST_TASK_OWNER}@${CYLC_TEST_TASK_HOST}
+
+echo -n "Testing ssh to ${ACCOUNT}..."
+if ! ssh -oBatchmode=yes $ACCOUNT /bin/true > /dev/null 2>&1; then
+    echo FAILED
+    echo "ERROR: ssh test to $ACCOUNT failed"
+    exit 1
+else
+    echo "  OK"
+fi
 
 MY_TMPDIR=${CYLC_TMPDIR:-${TMPDIR:-/tmp}}
 mkdir -p $MY_TMPDIR
@@ -86,17 +80,19 @@ cp -r $SOURCE_DIR $TARGET_DIR
 
 echo
 echo ">> UNREGISTERING previous test suites... "
-cylc unreg -df ${REG_GROUP}'.*' #> /dev/null
+cylc unreg -df ${REG_GROUP}'.*' > /dev/null
 
 echo
 echo ">> REGISTERING test suites... "
 CWD=$PWD
 cd $TARGET_DIR
 for RC in $( find . -name 'suite.rc' ); do
+    # ignore paths containing 'hidden/'
+    echo $RC | grep 'hidden/' > /dev/null && continue
     DIR=$(dirname $RC)
     NAME=${DIR#./}
     NAME=${REG_GROUP}.$(echo $NAME | tr '/' '.')
-    cylc db reg $NAME $DIR
+    cylc db reg $NAME $DIR > /dev/null
 done
 
 echo
@@ -107,6 +103,7 @@ N_FAILED=0
 N_PASSED=0
 N_TOTAL=0
 FAILED=""
+PASSED=""
 for REG in $( cylc db pr -xy $REG_GROUP ); do
     N_TOTAL=$(( N_TOTAL + 1 ))
     LOG=$PWD/${REG}.log
@@ -114,6 +111,7 @@ for REG in $( cylc db pr -xy $REG_GROUP ); do
     if $( cylc run --reference-test $REG > $LOG 2>&1 ); then
         echo PASSED
         N_PASSED=$(( N_PASSED + 1 ))
+        PASSED="$PASSED $REG"
     else
         echo FAILED
         N_FAILED=$(( N_FAILED + 1 ))
@@ -124,10 +122,6 @@ done
 set -e; trap "echo 'TEST BATTERY FAILED'" ERR
 
 echo
-echo ">> UNREGISTERING test suites..."
-cylc unreg -df ${REG_GROUP}'.*'
-
-echo
 echo "SUMMARY:"
 echo "  $N_PASSED of $N_TOTAL tests passed"
 echo "  $N_FAILED of $N_TOTAL tests failed"
@@ -136,6 +130,12 @@ if (( N_FAILED != 0 )); then
         echo "  - $REG"
     done
 fi
+
+echo
+echo ">> UNREGISTERING successful test suites..."
+for REG in $PASSED; do
+    cylc unreg -df $REG > /dev/null
+done
 
 if (( N_FAILED != 0 )); then
     echo
