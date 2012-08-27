@@ -1062,24 +1062,6 @@ class scheduler(object):
     def will_pause_at( self ):
         return self.hold_time
 
-    def get_oldest_waiting_or_running_or_submitted_c_time( self ):
-        # return the cycle time of the oldest waiting or running task
-        # ('or running' to handle a cycling single task suite - they all
-        # go off at once so 'waiting' won't constrain with runahead
-        # limit)
-        oldest = '99991228235959'
-        for itask in self.pool.get_tasks():
-            if not itask.state.is_waiting() and \
-                    not itask.state.is_running() and \
-                    not itask.state.is_submitted():
-                continue
-            #if itask.is_daemon():
-            #    # avoid daemon tasks
-            #    continue
-            if int( itask.c_time ) < int( oldest ):
-                oldest = itask.c_time
-        return oldest
-
     def get_oldest_unfailed_c_time( self ):
         # return the cycle time of the oldest task
         oldest = '99991228235959'
@@ -1179,7 +1161,6 @@ class scheduler(object):
     def release_runahead( self ):
         if self.runahead_limit:
             ouct = self.get_oldest_unfailed_c_time() 
-            #ouct = self.get_oldest_waiting_c_time() 
             for itask in self.pool.get_tasks():
                 if not itask.is_cycling():
                     # TO DO: this test is not needed?
@@ -1212,7 +1193,7 @@ class scheduler(object):
             new_task.log( 'NORMAL', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
             new_task.state.set_status('held')
         elif self.runahead_limit:
-            ouct = self.get_oldest_waiting_or_running_or_submitted_c_time() 
+            ouct = self.get_oldest_unfailed_c_time()
             foo = ct( new_task.c_time )
             foo.decrement( hours=self.runahead_limit )
             if int( foo.get() ) >= int( ouct ):
