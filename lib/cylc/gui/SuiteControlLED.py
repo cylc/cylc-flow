@@ -49,6 +49,7 @@ LED suite control interface.
         types = tuple( [gtk.gdk.Pixbuf]* (10 ))
         liststore = gtk.ListStore(*types)
         treeview = gtk.TreeView( liststore )
+        treeview.connect( 'button_press_event', self.on_treeview_button_pressed )
         sw.add( treeview )
 
         main_box.pack_start( sw, expand=True, fill=True )
@@ -57,6 +58,63 @@ LED suite control interface.
         self.t.start()
 
         return main_box
+
+    def on_treeview_button_pressed( self, treeview, event ):
+        # DISPLAY MENU ONLY ON RIGHT CLICK ONLY
+        if event.button != 3:
+            return False
+        # the following sets selection to the position at which the
+        # right click was done (otherwise selection lags behind the
+        # right click):
+        x = int( event.x )
+        y = int( event.y )
+        time = event.time
+        pth = treeview.get_path_at_pos(x,y)
+
+        if pth is None:
+            return False
+
+        path, col, cellx, celly = pth
+        r_iter = treeview.get_model().get_iter( path )
+
+        column_index = treeview.get_columns().index(col)
+        if column_index == 0:
+            return False
+        name = self.t.task_list[column_index - 1]
+        ctime_column = treeview.get_model().get_n_columns() - 1
+        ctime = treeview.get_model().get_value( r_iter, ctime_column )
+
+        task_id = name + '%' + ctime
+
+        menu = self.get_right_click_menu( task_id )
+
+        sep = gtk.SeparatorMenuItem()
+        sep.show()
+        menu.append( sep )
+
+        group_item = gtk.CheckMenuItem( 'Toggle Hide Task Headings' )
+        group_item.set_active( self.t.should_hide_headings )
+        menu.append( group_item )
+        group_item.connect( 'toggled', self.toggle_headings )
+        group_item.show()
+
+        menu.popup( None, None, None, event.button, event.time )
+
+        # TO DO: popup menus are not automatically destroyed and can be
+        # reused if saved; however, we need to reconstruct or at least
+        # alter ours dynamically => should destroy after each use to
+        # prevent a memory leak? But I'm not sure how to do this as yet.)
+
+        return True
+
+    def toggle_headings(self, toggle_item):
+        headings_off = toggle_item.get_active()
+        if headings_off == self.t.should_hide_headings:
+            return False
+        self.t.should_hide_headings = headings_off
+        if toggle_item != self.headings_menu_item:
+            self.headings_menu_item.set_active( headings_off )
+        self.t.set_led_headings()
 
     def stop(self):
         self.t.quit = True
@@ -68,7 +126,13 @@ LED suite control interface.
 
     def get_menuitems( self ):
         """Return the menuitems specific to this view."""
-        return []
+        items = []
+        self.headings_menu_item = gtk.CheckMenuItem( 'Toggle _Hide Task Headings' )
+        self.headings_menu_item.set_active( self.t.should_hide_headings )
+        items.append( self.headings_menu_item )
+        self.headings_menu_item.show()
+        self.headings_menu_item.connect( 'toggled', self.toggle_headings )
+        return items
 
     def get_toolitems( self ):
         """Return the tool bar items specific to this view."""

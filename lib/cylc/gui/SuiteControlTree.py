@@ -162,7 +162,6 @@ Text Treeview suite control interface.
         ts.set_mode( gtk.SELECTION_SINGLE )
 
         self.ttreeview.connect( 'button_press_event', self.on_treeview_button_pressed )
-
         headings = [ None, 'task', 'state', 'message', 'Tsubmit', 'Tstart', 'mean dT', 'ETC' ]
         bkgcols  = [ None, None,  '#def',  '#fff',    '#def',    '#fff',   '#def',    '#fff']
         for n in range(1, len(headings)):
