@@ -489,6 +489,7 @@ class lupdater(threading.Thread):
 
         self.led_treeview = treeview
         self.led_liststore = treeview.get_model()
+        self._prev_tooltip_task_id = None
 
         self.reconnect()
 
@@ -702,10 +703,16 @@ class lupdater(threading.Thread):
         col_index = self.led_treeview.get_columns().index(column)
         ctime = self.ctimes[path[0]]
         if col_index == 0:
-            tooltip.set_text(ctime)
+            task_id = ctime
+        else:
+            name = self.task_list[col_index - 1]
+            task_id = name + "%" + ctime
+        if task_id != self._prev_tooltip_task_id:
+            self._prev_tooltip_task_id = task_id
+            return False
+        if col_index == 0:
+            tooltip.set_text(task_id)
             return True
-        name = self.task_list[col_index - 1]
-        task_id = name + "%" + ctime
         state = self.state_summary.get(task_id, {}).get("state", "")
         tooltip.set_text((task_id + "\n" + state).strip())
         return True
