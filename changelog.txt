@@ -977,3 +977,6 @@ and dummy mode.
 + Bug fix: Sub-suites now load their own passphrase on start-up, not
 that of their parent suite.
 
++ The gcontrol dot view now has hover-over task state information, and
+right-click menus.
+
