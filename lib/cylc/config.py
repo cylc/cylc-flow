@@ -1600,8 +1600,8 @@ class config( CylcConfigObj ):
             taskd.postcommand = taskconfig['post-command scripting'] 
 
         if self.run_mode == 'live' or \
-                ( self.run_mode == 'simulation' and not taskd['simulation mode']['disable retries'] ) or \
-                ( self.run_mode == 'dummy' and not taskd['dummy mode']['disable retries'] ):
+                ( self.run_mode == 'simulation' and not taskconfig['simulation mode']['disable retries'] ) or \
+                ( self.run_mode == 'dummy' and not taskconfig['dummy mode']['disable retries'] ):
             taskd.retry_delays = deque( taskconfig['retry delays'])
 
         # check retry delay type (must be float):
@@ -1681,8 +1681,8 @@ class config( CylcConfigObj ):
             taskd.manual_messaging = False
 
         if self.run_mode == 'live' or \
-                ( self.run_mode == 'simulation' and not taskd['simulation mode']['disable event hooks'] ) or \
-                ( self.run_mode == 'dummy' and not taskd['dummy mode']['disable event hooks'] ):
+                ( self.run_mode == 'simulation' and not taskconfig['simulation mode']['disable event hooks'] ) or \
+                ( self.run_mode == 'dummy' and not taskconfig['dummy mode']['disable event hooks'] ):
             # configure task event hooks
             taskd.hook_script = taskconfig['event hooks']['script']
             taskd.hook_events = taskconfig['event hooks']['events']
