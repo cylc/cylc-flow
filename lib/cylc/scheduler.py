@@ -927,6 +927,7 @@ class scheduler(object):
     def shutdown( self, message='' ):
         # called by main command
         print "\nSUITE SHUTTING DOWN"
+        self.dump_state()
         if self.use_lockserver:
             # do this last
             suitename = self.suite

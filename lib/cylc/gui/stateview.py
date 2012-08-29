@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.config import config
+import cylc.dump
 import inspect
 import sys, re, string
 import gobject
@@ -111,6 +112,7 @@ class tupdater(threading.Thread):
         self.state_summary = {}
         self.global_summary = {}
         self.fam_state_summary = {}
+        self.stop_summary = None
         self.god = None
         self.mode = "mode:\nwaiting..."
         self.dt = "state last updated at:\nwaiting..."
@@ -139,10 +141,17 @@ class tupdater(threading.Thread):
             self.god = client.get_proxy( 'state_summary' )
             self.remote = client.get_proxy( 'remote' )
         except Exception, x:
-            #print 'FAILED TO GET A CLIENT PROXY'
+            if self.stop_summary is None:
+                self.stop_summary = cylc.dump.get_stop_state_summary(
+                                                            self.cfg.suite,
+                                                            self.cfg.owner,
+                                                            self.cfg.host)
+                if any(self.stop_summary):
+                    self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
             #print 'GOT A CLIENT PROXY'
+            self.stop_summary = None
             self.status = "status:\nconnected"
             self.info_bar.set_status( self.status )
             self.family_hierarchy = self.remote.get_family_hierarchy()
@@ -481,6 +490,7 @@ class lupdater(threading.Thread):
 
         self.state_summary = {}
         self.global_summary = {}
+        self.stop_summary = None
         self.god = None
         self.mode = "mode:\nwaiting..."
         self.dt = "state last updated at:\nwaiting..."
@@ -522,8 +532,16 @@ class lupdater(threading.Thread):
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
         except:
+            if self.stop_summary is None:
+                self.stop_summary = cylc.dump.get_stop_state_summary(
+                                                            self.cfg.suite,
+                                                            self.cfg.owner,
+                                                            self.cfg.host)
+                if any(self.stop_summary):
+                    self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
+            self.stop_summary = None
             self.status = "status:\nconnected"
             self.info_bar.set_status( self.status )
             return True
