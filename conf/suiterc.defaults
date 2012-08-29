@@ -29,6 +29,7 @@ description = "No description provided"
         timeout handler = None
         shutdown handler = None
         timeout = None
+        reset timer = False
         abort if startup handler fails = False
         abort if timeout handler fails = False
         abort if shutdown handler fails = False

@@ -373,9 +373,7 @@ class scheduler(object):
 
         self.already_timed_out = False
         if self.config.suite_timeout:
-            now = datetime.datetime.now()
-            self.suite_timer_start = now
-            print str(self.config.suite_timeout) + " minute suite timer starts NOW:", str(now)
+            self.set_suite_timer()
 
         self.print_banner()
 
@@ -387,6 +385,11 @@ class scheduler(object):
         self.nudge_timer_start = None
         self.nudge_timer_on = False
         self.auto_nudge_interval = 5 # seconds
+
+    def set_suite_timer( self, reset=False ):
+        now = datetime.datetime.now()
+        self.suite_timer_start = now
+        print str(self.config.suite_timeout) + " minute suite timer starts NOW:", str(now)
 
     def ctexpand( self, tag ):
         # expand truncated cycle times (2012 => 2012010100)
@@ -875,12 +878,11 @@ class scheduler(object):
         timeout = self.suite_timer_start + datetime.timedelta( minutes=self.config.suite_timeout )
         handler = self.config.event_handlers['timeout']
         if now > timeout:
-            # suite timed out
+            message = 'Suite timed out after ' + str( self.config.suite_timeout) + ' minutes' 
+            self.log.warning( message )
             if handler:
                 # a handler is defined
                 self.already_timed_out = True
-                message = 'Suite timed out after ' + str( self.config.suite_timeout) + ' minutes' 
-                self.log.warning( message )
                 if self.config.abort_if_timeout_handler_fails:
                     foreground = True
                 else:
@@ -903,8 +905,13 @@ class scheduler(object):
                     itask.sim_time_check()
 
         if task.task.state_changed:
-            task.task.state_changed = False
             process = True
+            task.task.state_changed = False
+            # a task changing state indicates new suite activity
+            # so reset the suite timer.
+            if self.config.suite_timeout and self.config.reset_timer:
+                self.set_suite_timer()
+
         elif self.remote.process_tasks:
             # reset the remote control flag
             self.remote.process_tasks = False

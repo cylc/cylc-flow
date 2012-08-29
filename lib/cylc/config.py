@@ -349,6 +349,8 @@ class config( CylcConfigObj ):
                     'shutdown' : self['cylc']['event hooks']['shutdown handler']
                     }
             self.suite_timeout = self['cylc']['event hooks']['timeout']
+            self.reset_timer = self['cylc']['event hooks']['reset timer']
+            self.abort_on_timeout = self['cylc']['event hooks']['abort on timeout']
             self.abort_if_startup_handler_fails = self['cylc']['event hooks']['abort if startup handler fails']
             self.abort_if_timeout_handler_fails = self['cylc']['event hooks']['abort if timeout handler fails']
             self.abort_if_shutdown_handler_fails = self['cylc']['event hooks']['abort if shutdown handler fails']
@@ -359,6 +361,8 @@ class config( CylcConfigObj ):
                     'shutdown' : None
                     }
             self.suite_timeout = None
+            self.reset_timer = False
+            self.abort_on_timeout = None
             self.abort_if_startup_handler_fails = False
             self.abort_if_timeout_handler_fails = False
             self.abort_if_shutdown_handler_fails = False

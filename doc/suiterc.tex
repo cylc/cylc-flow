@@ -232,20 +232,29 @@ Suite event handlers can be located in the suite bin directory.
 
 If a timeout is set and the timeout event is handled, the event
 handler will be called if the suite times out before it finishes.
-See also ``abort on timeout'', below.
+The timer is set initially at suite start up. 
 
 \begin{myitemize}
     \item {\em type:} float (minutes)
     \item {\em default:} (none)
 \end{myitemize}
 
+\paragraph[reset timer]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ reset timer}
+
+If this is set to \lstinline=True= the suite timer will continually
+reset after any task changes state, so you can time out after some
+interval since the last activity occured rather than on absolute suite
+execution time.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False
+\end{myitemize}
 
 \paragraph[abort on timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort on timeout}
 
 If a suite timer is set (above) this will cause the suite to abort with
-error status if the suite times out while still running. This feature
-is used by cylc test suites to catch any error that prevents a suite
-from completing.
+error status if the suite times out while still running.
 
 \begin{myitemize}
     \item {\em type:} boolean
