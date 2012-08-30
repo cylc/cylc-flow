@@ -1585,6 +1585,7 @@ class config( CylcConfigObj ):
         taskd.fail_in_sim_mode = taskconfig['simulation mode']['simulate failure']
 
         taskd.initial_scripting = taskconfig['initial scripting'] 
+        taskd.enviro_scripting = taskconfig['environment scripting'] 
 
         taskd.ssh_messaging = str(taskconfig['remote']['ssh messaging'])
 

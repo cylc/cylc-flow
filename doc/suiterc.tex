@@ -896,6 +896,19 @@ it can has access to the task execution environment.
 \item {\em example:} \lstinline@initial scripting = "echo Hello World"@
 \end{myitemize}
 
+\paragraph[environment scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ environment scripting}
+
+Environment scripting is inserted into the task task job script between
+the cylc-defined environment (suite and task identity, etc.) and the 
+user-defined task runtime environment - i.e.\ it has access to the 
+cylc environment, and the task environment has access to the results of
+this scripting.
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} (none)
+\item {\em example:} \lstinline@environment scripting = "echo Hello World"@
+\end{myitemize}
+
 \paragraph[command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ command scripting}
 
 The scripting to execute when the associated task is ready to run - this

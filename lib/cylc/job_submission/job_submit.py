@@ -51,16 +51,18 @@ class job_submit(object):
     # class variables that are set remotely at startup:
     cylc_env = None
 
-    def __init__( self, task_id, initial_scripting, pre_command, task_command,
-            try_number, post_command, task_env, ns_hier, directives,
-            manual_messaging, logfiles, log_dir, share_dir, work_dir, task_owner,
-            remote_host, remote_cylc_dir, remote_suite_dir,
-            remote_shell_template, remote_log_dir,
-            job_submit_command_template, job_submission_shell, ssh_messaging ):
+    def __init__( self, task_id, initial_scripting, enviro_scripting,
+            pre_command, task_command, try_number, post_command,
+            task_env, ns_hier, directives, manual_messaging, logfiles,
+            log_dir, share_dir, work_dir, task_owner, remote_host,
+            remote_cylc_dir, remote_suite_dir, remote_shell_template,
+            remote_log_dir, job_submit_command_template,
+            job_submission_shell, ssh_messaging ):
 
         self.try_number = try_number
         self.task_id = task_id
         self.initial_scripting = initial_scripting
+        self.enviro_scripting = enviro_scripting
         self.pre_command = pre_command
         self.task_command = task_command
         self.post_command = post_command
@@ -191,9 +193,9 @@ class job_submit(object):
                 self.namespace_hierarchy, self.directive_prefix,
                 self.directive_connector, self.directives,
                 self.final_directive, self.manual_messaging,
-                self.initial_scripting, self.pre_command,
-                self.task_command, self.try_number, self.post_command,
-                self.remote_cylc_dir, self.remote_suite_dir,
+                self.initial_scripting, self.enviro_scripting,
+                self.pre_command, self.task_command, self.try_number,
+                self.post_command, self.remote_cylc_dir, self.remote_suite_dir,
                 self.job_submission_shell, self.share_dir,
                 self.work_dir, self.jobfile_path,
                 self.__class__.__name__,

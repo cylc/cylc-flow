@@ -81,6 +81,7 @@ description = "No description provided"
         inherit = None # (other namespaces inherit first from root)
         description = "No description provided"
         initial scripting = None
+        environment scripting = string( default=None )
         pre-command scripting = None
         command scripting = "echo Dummy command scripting; sleep $(cylc rnd 1 16)"
         retry delays = (none)

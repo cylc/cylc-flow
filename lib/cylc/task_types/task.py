@@ -318,6 +318,7 @@ class task( Pyro.core.ObjBase ):
         # To Do: most of the following arguments could be class variables
         self.launcher = launcher_class(
                         self.id, self.initial_scripting,
+                        self.enviro_scripting,
                         self.precommand, self.command, self.try_number,
                         self.postcommand, self.env_vars,
                         self.namespace_hierarchy, self.directives,

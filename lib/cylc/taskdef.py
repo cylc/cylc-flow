@@ -112,6 +112,7 @@ class taskdef(object):
         self.precommand = None
         self.postcommand = None
         self.initial_scripting = None
+        self.enviro_scripting = None
         self.ssh_messaging = False
 
         self.environment = OrderedDict()  # var = value
@@ -307,6 +308,7 @@ class taskdef(object):
             sself.asyncid_pattern = self.asyncid_pattern
 
             sself.initial_scripting = self.initial_scripting
+            sself.enviro_scripting = self.enviro_scripting
             sself.ssh_messaging = self.ssh_messaging
 
             sself.command = self.command
