@@ -1719,8 +1719,7 @@ sufficient, in fact, to allow test suites defined by dependency graph
 alone (command scripting, for example, defaults to printing a simple
 message, sleeping for a few seconds, and then exiting). 
 
-The reference above gives default values where applicable. The spec file
-itself can also be consulted, but note that several defaults come in via
-the cylc configuration source module \lstinline=lib/cylc/config.py=
-after the suite.rc file is parsed and validated against the spec.
+The \lstinline=cylc get-config= command parses a suite definition and
+retrieves configuration values for individual items, sections, or entire
+suites.
 
