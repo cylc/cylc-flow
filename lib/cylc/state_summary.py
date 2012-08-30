@@ -68,7 +68,7 @@ class state_summary( Pyro.core.ObjBase ):
             
             for fam, child_states in c_fam_task_states.items():
                 f_id = fam + "%" + ctime
-                state = self.extract_group_state(child_states)
+                state = extract_group_state(child_states)
                 if state is None:
                     continue
                 self.family_summary[f_id] = {'name': fam,
@@ -94,12 +94,13 @@ class state_summary( Pyro.core.ObjBase ):
     def get_state_summary( self ):
         return [ self.global_summary, self.task_summary, self.family_summary ]
 
-    def extract_group_state( self, child_states ):
-        """Summarise child states as a group."""
-        ordered_states = ['failed', 'held', 'running', 'submitted',
-                          'retry_delayed', 'queued', 'waiting', 'runahead',
-                          'succeeded']
-        for state in ordered_states:
-            if state in child_states:
-                return state
-        return None
+
+def extract_group_state( child_states ):
+    """Summarise child states as a group."""
+    ordered_states = ['failed', 'held', 'running', 'submitted',
+                        'retry_delayed', 'queued', 'waiting', 'runahead',
+                        'succeeded']
+    for state in ordered_states:
+        if state in child_states:
+            return state
+    return None
