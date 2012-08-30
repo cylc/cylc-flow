@@ -17,7 +17,6 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
-import shlex
 import subprocess
 
 import cylc.hostname
@@ -35,7 +34,7 @@ def get_stop_state(suite, owner=None, host=None):
     
     cat_string = ("cat $(cylc get-config " + suite +
                   " cylc 'state dumps' directory)/state")
-    stdin = """for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE; done; """
+    stdin = """for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE > /dev/null; done; """
     stdin += cat_string
     if cylc.hostname.is_remote_host(host):
         # ssh command and options (X forwarding):
