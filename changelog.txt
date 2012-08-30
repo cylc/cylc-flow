@@ -980,3 +980,7 @@ that of their parent suite.
 + The gcontrol dot view now has hover-over task state information, and
 right-click menus.
 
++ Added a new "environment scripting" task runtime configuration item.
+In the task job script it fits between the cylc-defined environment 
+and the task runtime environment.
+
