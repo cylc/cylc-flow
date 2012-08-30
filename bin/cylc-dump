@@ -23,13 +23,13 @@ if '--use-ssh' in sys.argv[1:]:
     remrun().execute()
 
 import os
-from cylc import cylc_pyro_client
+from cylc import cylc_pyro_client, dump
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
 
 parser = cop( """cylc [info] dump [OPTIONS] ARGS
 
-Print current suite state information (e.g. the state of each task). For
+Print suite state information (e.g. the state of each task). For
 small suites 'watch cylc [info] dump SUITE' is an effective non-GUI real
 time monitor (but see also 'cylc monitor').
 
@@ -57,7 +57,14 @@ parser.add_option( "-s", "--sort", help="Task states only; "
 
 ( options, args ) = parser.parse_args()
 
-suite, pphrase = prep_pyro( args[0], options ).execute()
+suite_is_dead = False
+
+try:
+    suite, pphrase = prep_pyro( args[0], options ).execute()
+except:  # Trap SystemExit
+    suite = args[0]
+    pphrase = None
+    suite_is_dead = True
 
 # default: display all information
 display_tasks = True
@@ -68,23 +75,30 @@ if options.global_only:
 if options.tasks_only:
     display_global = False
 
-try:
-    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, None, options.verbose ).get_proxy( 'state_summary' )
-except Exception, x:
-    if options.debug:
-        raise
-    raise SystemExit(x)
-
-# get state summary, task names, cycle times
-[glbl, states, fam_states] = proxy.get_state_summary()
+if suite_is_dead:
+    [glbl, states, fam_states] = dump.get_stop_state_summary(
+                      suite, options.owner, options.host)
+else:
+    try:
+        proxy = cylc_pyro_client.client(
+                     suite, pphrase, options.owner,
+                     options.host, options.pyro_timeout, None,
+                     options.verbose).get_proxy('state_summary' )
+    except Exception, x:
+        if options.debug:
+            raise
+        raise SystemExit(x)
+    # get state summary, task names, cycle times
+    [glbl, states, fam_states] = proxy.get_state_summary()
 
 if display_global:
     print "suite : " + suite
 
     run_mode = glbl[ 'run_mode' ]
-    if run_mode != 'live':
+    if run_mode in ['simulation', 'dummy']:
         print 'SIM MODE (clock rate: ', glbl[ 'clock_rate' ], ')'
+    elif run_mode == 'dead':
+        print 'STOPPED'
 
     dt = glbl[ 'last_updated' ]
     print 'last summary update: ' +  dt.strftime( "%Y/%m/%d %H:%M:%S" )

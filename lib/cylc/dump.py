@@ -66,6 +66,7 @@ def get_stop_state_summary(suite, owner=None, hostname=None):
     if len(lines) == 0 or len(lines) < 3:
         return None
     [ time_type, time_string ] = lines.pop(0).rstrip().split(' : ')
+    time_string = time_string.rsplit(",")[0]
     dt = datetime.datetime.strptime(time_string, "%Y:%m:%d:%H:%M:%S")
     global_summary["last_updated"] = dt
     start = lines.pop(0).rstrip().rsplit(None, 1)[-1]
