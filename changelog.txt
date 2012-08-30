@@ -984,3 +984,5 @@ right-click menus.
 In the task job script it fits between the cylc-defined environment 
 and the task runtime environment.
 
++ External host selection officially supported (host = selector.sh).
+

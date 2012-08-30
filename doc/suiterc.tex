@@ -1171,10 +1171,11 @@ to be modified slightly to allow use of the C shell.
 
 \paragraph[{[[[}remote{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]]}
 
-Remote hosting configuration for tasks that run on hosts other than the
-suite host. If a remote host is specified cylc will attempt to execute
-the task on that host by passwordless ssh. Cylc must be installed on 
-remote task hosts, but of the external software dependencies only Pyro 
+Configuration for tasks that run on a different host than the one the suite 
+is running on. If a remote host is specified cylc will use passwordless
+ssh to submit the task, using the specified job submission method, on
+that host. Cylc must be installed on remote task hosts, but of the
+external software dependencies only Pyro 
 is required there (actually, not even that if {\em ssh messaging} is
 used; see below). Passwordless ssh must be configured between the local
 suite owner on the suite host, and the task owner on the remote task
@@ -1182,11 +1183,20 @@ host.
 
 \subparagraph[host]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ host}
 
-The remote host for this task or family.
+The remote host for this task or family. A literal host name can be
+specified, or a shell back-tick expression to execute an external
+command that writes a hostname to stdout.
 
 \begin{myitemize}
 \item {\em type:} string (a valid hostname on the network)
 \item {\em default:} (none)
+\item {\em examples:}
+    \begin{myitemize}
+        \item short name: \lstinline@host = foo@
+        \item fully qualified name: \lstinline@host = foo.bar.baz@
+        \item external host selector: \lstinline@host = $(host-selector.sh)@ 
+        \item external host selector: \lstinline@host = `host-selector.sh)`@ (back-tick version)
+    \end{myitemize}
 \end{myitemize}
 
 \subparagraph[owner]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ owner}

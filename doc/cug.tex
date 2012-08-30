@@ -3260,6 +3260,13 @@ host) path will be assumed with the local home directory, if present,
 substituted with literal \lstinline=$HOME= for evaluation on the task
 host.
 
+\paragraph{External Host Selection}
+
+Instead of hardwiring task host names into the suite definition you
+can specify a shell back-tick expression, as the value of the host
+config item, which executes an external command (it may be a script
+located in the suite bin directory) that writes a hostname to stdout. 
+
 \paragraph{Remote Task Log Directories}
 
 The stdout and stderr streams from local tasks are directed into files in
