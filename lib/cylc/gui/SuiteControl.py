@@ -1914,9 +1914,39 @@ without restarting the suite."""
         self.view_menu.append( info_item )
         info_item.connect( 'activate', self.view_suite_info )
 
+        graph_item = gtk.MenuItem( 'Suite _Graph' )
+        self.view_menu.append( graph_item )
+        graphmenu = gtk.Menu()
+        graph_item.set_submenu(graphmenu)
+
+        gtree_item = gtk.MenuItem( '_Dependencies' )
+        graphmenu.append( gtree_item )
+        gtree_item.connect( 'activate', self.view_suite_graph, False )
+
+        gns_item = gtk.MenuItem( '_Namespaces' )
+        graphmenu.append( gns_item )
+        gns_item.connect( 'activate', self.view_suite_graph, True )
+
         log_item = gtk.MenuItem( 'Suite _Log' )
         self.view_menu.append( log_item )
         log_item.connect( 'activate', self.view_log )
+
+        view_item = gtk.MenuItem( 'Suite _View' )
+        self.view_menu.append( view_item )
+        subviewmenu = gtk.Menu()
+        view_item.set_submenu(subviewmenu)
+
+        rw_item = gtk.MenuItem( '_Raw' )
+        subviewmenu.append( rw_item )
+        rw_item.connect( 'activate', self.view_suite_view, 'raw' )
+ 
+        viewi_item = gtk.MenuItem( '_Inlined' )
+        subviewmenu.append( viewi_item )
+        viewi_item.connect( 'activate', self.view_suite_view, 'inlined' )
+ 
+        viewp_item = gtk.MenuItem( '_Processed' )
+        subviewmenu.append( viewp_item )
+        viewp_item.connect( 'activate', self.view_suite_view, 'processed' )
 
         self.view_menu.append( gtk.SeparatorMenuItem() )
 
@@ -2253,11 +2283,32 @@ For more Stop options use the Control menu.""" )
             foo = cylc_logviewer( 'log', self.logging_dir, task_list)
             self.quitters.append(foo)
 
+    def view_suite_graph( self, w, show_ns=False ):
+        command = "cylc graph --notify-completion " + self.cfg.suite
+        if show_ns:
+            command = "cylc graph --notify-completion --namespaces " + self.cfg.suite
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
     def view_suite_info( self, w ):
         command = "cylc show --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite 
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
+        
+    def view_suite_view( self, w, method ):
+        extra = ''
+        if method == 'inlined':
+            extra = ' -i'
+        elif method == 'processed':
+            extra = ' -j'
+
+        command = "cylc view --notify-completion -g " + extra + ' ' + self.cfg.suite
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+        return False
 
     def browse( self, b, option='' ):
         command = 'cylc documentation ' + option
