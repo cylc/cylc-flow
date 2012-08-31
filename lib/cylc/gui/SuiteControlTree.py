@@ -299,7 +299,8 @@ Text Treeview suite control interface.
     def get_menuitems( self ):
         """Return the menu items specific to this view."""
         items = []
-        autoex_item = gtk.MenuItem( 'Toggle _Auto-Expand Tree' )
+        autoex_item = gtk.CheckMenuItem( 'Toggle _Auto-Expand Tree' )
+        autoex_item.set_active( self.t.autoexpand )
         items.append( autoex_item )
         autoex_item.connect( 'activate', self.toggle_autoexpand )
 
