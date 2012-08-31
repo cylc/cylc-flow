@@ -29,8 +29,8 @@ parser = cop( usage = """cylc [info] cat-state [OPTIONS] REG
 
 Print the suite state dump file directly to stdout.""" )
 
-parser.add_option( "-d", "--dump", help="Display the information in "
-        "the same form as 'cylc dump' for running suites.",
+parser.add_option( "-d", "--dump", help="Use the same display "
+        "format as the 'cylc dump' command.",
         action="store_true", default=False, dest="dumpform" )
 
 ( options, args ) = parser.parse_args()
