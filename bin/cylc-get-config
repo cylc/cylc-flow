@@ -32,7 +32,7 @@ def prdict( dct, level=0, indent=0, prefix='' ):
         else:
             print prefix + '   '*indent + str(key) + ' = ' + str(val) 
 
-parser = cop( usage = """cylc [info] get-config REG [ITEMS...]
+parser = cop( usage = """cylc [info] get-config [OPTIONS] REG [ITEMS...]
 
 Print configuration settings from a parsed suite definition, after
 runtime inheritance processing and including default values for items
