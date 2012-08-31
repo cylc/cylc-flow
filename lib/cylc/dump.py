@@ -21,7 +21,12 @@ import subprocess
 
 def get_stop_state(suite, owner=None, host=None):
     """Return the contents of the last 'state' file."""
-    command = "cylc cat-state --host=" +host + " --owner=" + owner + " " + suite 
+    command = "cylc cat-state"
+    if host:
+        command += " --host=" +host
+    if owner:
+        command += " --owner=" + owner
+    command += " " + suite 
     try:
         p = subprocess.Popen(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         stdout, stderr = p.communicate()
