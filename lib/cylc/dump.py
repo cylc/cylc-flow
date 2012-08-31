@@ -19,32 +19,17 @@
 import datetime
 import subprocess
 
-import cylc.hostname
-
-
 def get_stop_state(suite, owner=None, host=None):
     """Return the contents of the last 'state' file."""
-    user_at_host = ''
-    if owner is not None: 
-        user_at_host = owner  + '@'
-    if host is not None:
-        user_at_host += host
-    else:
-        user_at_host += 'localhost'
-    
-    cat_string = ("cat $(cylc get-config " + suite +
-                  " cylc 'state dumps' directory)/state")
-    stdin = """for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE > /dev/null; done; """
-    stdin += cat_string
-    if cylc.hostname.is_remote_host(host):
-        # ssh command and options (X forwarding):
-        command = ["ssh", "-oBatchMode=yes", user_at_host, "/usr/bin/env", "bash"]
-    else:
-        command = ["bash"]
+    command = "cylc cat-state"
+    if host:
+        command += " --host=" +host
+    if owner:
+        command += " --owner=" + owner
+    command += " " + suite 
     try:
-        p = subprocess.Popen(command, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE)
-        stdout, stderr = p.communicate(stdin)
+        p = subprocess.Popen(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        stdout, stderr = p.communicate()
     except:
         return None
     if stdout:
@@ -52,16 +37,16 @@ def get_stop_state(suite, owner=None, host=None):
     else:
         return None
 
-
-def get_stop_state_summary(suite, owner=None, hostname=None):
+def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
     """Load the contents of the last 'state' file into summary maps."""
     global_summary = {}
     task_summary = {}
     family_summary = {}
-    state_file_text = get_stop_state(suite, owner, hostname)
-    if state_file_text is None:
-        return global_summary, task_summary, family_summary
-    lines = state_file_text.splitlines()
+    if not lines:
+        state_file_text = get_stop_state(suite, owner, hostname)
+        if state_file_text is None:
+            return global_summary, task_summary, family_summary
+        lines = state_file_text.splitlines()
     if len(lines) == 0 or len(lines) < 3:
         return None
     [ time_type, time_string ] = lines.pop(0).rstrip().split(' : ')
@@ -93,3 +78,36 @@ def get_stop_state_summary(suite, owner=None, hostname=None):
     for key in ["paused", "stopping", "will_pause_at", "will_stop_at"]:
         global_summary.setdefault(key, "")
     return global_summary, task_summary, family_summary
+
+def dump_to_stdout( states, sort_by_cycle=False ):
+    lines = []
+    #print 'TASK INFORMATION'
+    task_ids = states.keys()
+    #task_ids.sort()
+
+    for id in task_ids:
+        name  = states[ id ][ 'name' ]
+        label = states[ id ][ 'label' ]
+        state = states[ id ][ 'state' ]
+
+        if states[ id ][ 'spawned' ]:
+            spawned = 'spawned'
+        else:
+            spawned = 'unspawned'
+
+        if sort_by_cycle:
+            line = label + ', ' + name + ', '
+        else:
+            line = name + ', ' + label + ', '
+
+        line += state + ', ' + spawned
+
+        if 'asyncid' in states[id]:
+            line += ', ' + states[id]['asyncid']
+
+        lines.append( line )
+
+    lines.sort()
+    for line in lines:
+        print line
+

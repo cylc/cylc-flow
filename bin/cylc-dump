@@ -26,12 +26,13 @@ import os
 from cylc import cylc_pyro_client, dump
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
+from cylc.dump import dump_to_stdout
 
 parser = cop( """cylc [info] dump [OPTIONS] ARGS
 
-Print suite state information (e.g. the state of each task). For
-small suites 'watch cylc [info] dump SUITE' is an effective non-GUI real
-time monitor (but see also 'cylc monitor').
+Print state information (e.g. the state of each task) from a running
+suite. For small suites 'watch cylc [info] dump SUITE' is an effective
+non-GUI real time monitor (but see also 'cylc monitor').
 
 For more information about a specific task, such as the current state of
 its prerequisites and outputs, see 'cylc [info] show'.
@@ -57,14 +58,11 @@ parser.add_option( "-s", "--sort", help="Task states only; "
 
 ( options, args ) = parser.parse_args()
 
-suite_is_dead = False
-
 try:
     suite, pphrase = prep_pyro( args[0], options ).execute()
 except:  # Trap SystemExit
     suite = args[0]
     pphrase = None
-    suite_is_dead = True
 
 # default: display all information
 display_tasks = True
@@ -75,21 +73,17 @@ if options.global_only:
 if options.tasks_only:
     display_global = False
 
-if suite_is_dead:
-    [glbl, states, fam_states] = dump.get_stop_state_summary(
-                      suite, options.owner, options.host)
-else:
-    try:
-        proxy = cylc_pyro_client.client(
-                     suite, pphrase, options.owner,
-                     options.host, options.pyro_timeout, None,
-                     options.verbose).get_proxy('state_summary' )
-    except Exception, x:
-        if options.debug:
-            raise
-        raise SystemExit(x)
-    # get state summary, task names, cycle times
-    [glbl, states, fam_states] = proxy.get_state_summary()
+try:
+    proxy = cylc_pyro_client.client(
+                 suite, pphrase, options.owner,
+                 options.host, options.pyro_timeout, None,
+                 options.verbose).get_proxy('state_summary' )
+except Exception, x:
+    if options.debug:
+        raise
+    raise SystemExit(x)
+# get state summary, task names, cycle times
+[glbl, states, fam_states] = proxy.get_state_summary()
 
 if display_global:
     print "suite : " + suite
@@ -118,33 +112,5 @@ if display_global:
         print 'STOPPING AT ' + stopping_at
 
 if display_tasks:
-    lines = []
-    #print 'TASK INFORMATION'
-    task_ids = states.keys()
-    #task_ids.sort()
+    dump_to_stdout( states, options.sort_by_cycle )
 
-    for id in task_ids:
-        name  = states[ id ][ 'name' ]
-        label = states[ id ][ 'label' ]
-        state = states[ id ][ 'state' ]
-
-        if states[ id ][ 'spawned' ]:
-            spawned = 'spawned'
-        else:
-            spawned = 'unspawned'
-
-        if options.sort_by_cycle:
-            line = label + ', ' + name + ', '
-        else:
-            line = name + ', ' + label + ', '
-
-        line += state + ', ' + spawned
-
-        if 'asyncid' in states[id]:
-            line += ', ' + states[id]['asyncid']
-
-        lines.append( line )
-
-    lines.sort()
-    for line in lines:
-        print line
