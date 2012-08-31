@@ -32,13 +32,13 @@ def prdict( dct, level=0, indent=0, prefix='' ):
         else:
             print prefix + '   '*indent + str(key) + ' = ' + str(val) 
 
-parser = cop( usage = """cylc [info] get-config REG [ITEMS...]
+parser = cop( usage = """cylc [info] get-config [OPTIONS] REG [ITEMS...]
 
 Print configuration settings from a parsed suite definition, after
 runtime inheritance processing and including default values for items
 that are not explicitly set in the suite.rc file. This command enables,
-for example, scripted control of suites without having to assume
-directory locations and so on.
+for example, automated handling of suites and suite output without
+assuming directory locations and the like.
 
 Config items containing spaces must be quoted on the command line. If
 a single item is requested only its value will be printed; otherwise the 
