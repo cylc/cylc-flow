@@ -219,6 +219,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         
         self.cfg = InitData( suite, pphrase, owner, host, port, cylc_tmpdir, pyro_timeout )
 
+        self.setup_icons()
+
         self.view_layout_horizontal = False
         #try:
         #    god = cylc_pyro_client.client( self.cfg.suite,
@@ -263,6 +265,19 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         self.window.add( bigbox )
         self.window.show_all()
+
+    def setup_icons( self ):
+        """Set up some extra stock icons for better PyGTK compatibility."""
+        # create a new stock icon for the 'group' action
+        root_img_dir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
+        pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/group.png' )
+        grp_iconset = gtk.IconSet(pixbuf)
+        pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/ungroup.png' )
+        ungrp_iconset = gtk.IconSet(pixbuf)
+        factory = gtk.IconFactory()
+        factory.add( 'group', grp_iconset )
+        factory.add( 'ungroup', ungrp_iconset )
+        factory.add_default()
 
     def setup_views( self, startup_views=[] ):
         """Create our view containers and the startup views."""
@@ -891,20 +906,26 @@ The cylc forecast suite metascheduler.
         items.append( trigger_now_item )
         trigger_now_item.connect( 'activate', self.trigger_task_now, task_id )
 
-        reset_ready_item = gtk.MenuItem( 'Reset to "ready"' )
-        items.append( reset_ready_item )
+        reset_menu = gtk.Menu()
+        reset_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_CONVERT )
+        reset_item.set_label( "Reset task state" )
+        reset_item.set_submenu( reset_menu )
+        items.append( reset_item )
+        
+        reset_ready_item = gtk.MenuItem('Reset to "ready"' )
+        reset_menu.append( reset_ready_item )
         reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
 
         reset_waiting_item = gtk.MenuItem( 'Reset to "waiting"' )
-        items.append( reset_waiting_item )
+        reset_menu.append( reset_waiting_item )
         reset_waiting_item.connect( 'activate', self.reset_task_state, task_id, 'waiting' )
 
         reset_succeeded_item = gtk.MenuItem( 'Reset to "succeeded"' )
-        items.append( reset_succeeded_item )
+        reset_menu.append( reset_succeeded_item )
         reset_succeeded_item.connect( 'activate', self.reset_task_state, task_id, 'succeeded' )
 
         reset_failed_item = gtk.MenuItem( 'Reset to "failed"' )
-        items.append( reset_failed_item )
+        reset_menu.append( reset_failed_item )
         reset_failed_item.connect( 'activate', self.reset_task_state, task_id, 'failed' )
 
         spawn_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_ADD )
@@ -2073,7 +2094,7 @@ without restarting the suite."""
 
         help_menu.append( gtk.SeparatorMenuItem() )
 
-        cug_pdf_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_JUSTIFY_LEFT )
+        cug_pdf_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_EDIT )
         cug_pdf_item.set_label( '_PDF User Guide' )
         help_menu.append( cug_pdf_item )
         cug_pdf_item.connect( 'activate', self.browse, '--pdf' )

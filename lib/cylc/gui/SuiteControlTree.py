@@ -347,18 +347,6 @@ Text Treeview suite control interface.
         self.group_toolbutton = gtk.ToggleToolButton()
         self.group_toolbutton.set_active( self.t.should_group_families )
 
-        ### GTK.IMAGE_NEW_FROM_FILE() REQUIRES PYGTK 2.12: 
-        ## root_img_dir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
-        ## g_image = gtk.image_new_from_file( root_img_dir + '/group.png' )
-        ## self.group_toolbutton.set_icon_widget( g_image )
-        ## FOR BETTER PYGTK COMPATIBILITY WE CAN DO THIS:
-        # create a new stock icon for the 'group' action
-        root_img_dir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
-        factory = gtk.IconFactory()
-        pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/group.png' )
-        iconset = gtk.IconSet(pixbuf)
-        factory.add( 'group', iconset )
-        factory.add_default()
         g_image = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_SMALL_TOOLBAR )
         self.group_toolbutton.set_icon_widget( g_image )
  
