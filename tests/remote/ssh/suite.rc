@@ -1,0 +1,19 @@
+#!Jinja2
+
+{% set HOST = environ['CYLC_TEST_TASK_HOST'] %}
+{% set OWNER = environ['CYLC_TEST_TASK_OWNER'] %}
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 0.5
+
+[scheduling]
+    [[dependencies]]
+        graph = "foo"
+[runtime]
+    [[foo]]
+        [[[remote]]]
+            ssh messaging = True
+            host = {{ HOST }}
+            owner = {{ OWNER }}
+

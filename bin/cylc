@@ -209,8 +209,9 @@ information_commands = OrderedDict()
 information_commands['gui'      ] = ['gui', 'gcylc' ]
 information_commands['list'     ] = ['list', 'ls' ]
 information_commands['dump'     ] = ['dump'       ]
+information_commands['cat-state'    ] = ['cat-state'      ]
 information_commands['show'     ] = ['show'       ]
-information_commands['log'      ] = ['log'        ]
+information_commands['cat-log'  ] = ['cat-log', 'log'     ]
 information_commands['documentation'   ] = ['documentation', 'browse']
 information_commands['monitor'  ] = ['monitor'  ]
 information_commands['get-config'] = ['get-config' ]
@@ -255,7 +256,6 @@ hook_commands['check-triggering'  ] = ['check-triggering' ]
 
 admin_commands = OrderedDict()
 admin_commands['test-db'     ] = [ 'test-db']
-admin_commands['test-suite'  ] = [ 'test-suite']
 admin_commands['test-battery'  ] = [ 'test-battery']
 admin_commands['import-examples' ] = ['import-examples']
 admin_commands['check-examples'  ] = [ 'check-examples']
@@ -419,7 +419,6 @@ Command CATEGORIES:"""
 comsum = OrderedDict()
 # admin
 comsum[ 'test-db'    ] = '(ADMIN) Run an automated suite database test'
-comsum[ 'test-suite' ] = '(ADMIN) Run an automated scheduler test'
 comsum[ 'test-battery' ] = '(ADMIN) Run a battery of self-diagnosing test suites'
 comsum[ 'check-examples' ] = '(ADMIN) Check all example suites validate'
 comsum[ 'import-examples' ] = '(ADMIN) import example suites your user database'
@@ -445,8 +444,9 @@ comsum[ 'diff'       ] = 'Compare two suite definitions and print differences'
 # information
 comsum[ 'list'       ] = 'Print suite tasks and runtime hierarchies'
 comsum[ 'dump'       ] = 'Print the state of tasks in a running suite'
+comsum[ 'cat-state'  ] = 'Print the state of tasks from the state dump'
 comsum[ 'show'       ] = 'Print task state (prerequisites and outputs etc.)'
-comsum[ 'log'        ] = 'Print or view filtered suite logs'
+comsum[ 'cat-log'        ] = 'Print or view filtered suite logs'
 comsum[ 'documentation'     ] = 'Display cylc documentation (User Guide etc.)'
 comsum[ 'monitor'    ] = 'An in-terminal suite monitor (see also gcylc)'
 comsum[ 'get-config' ] = 'Parse a suite and report configuration values'

@@ -24,7 +24,7 @@ from cylc.CylcOptionParsers import cop
 from cylc.config import config, SuiteConfigError
 from cylc.command_prep import prep_file
 
-parser = cop( """cylc [info] log [OPTIONS] ARGS 
+parser = cop( """cylc [info] cat-log|log [OPTIONS] ARGS 
 Print and filter cylc suite (not task) log files.""" )
 
 parser.add_option( "-l", "--location", 

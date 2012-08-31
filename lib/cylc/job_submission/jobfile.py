@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
+import re, os
 import StringIO
 from copy import deepcopy
 
@@ -25,9 +25,9 @@ class jobfile(object):
     def __init__( self, task_id, cylc_env, task_env, ns_hier,
             directive_prefix, directive_connector, directives,
             final_directive, manual_messaging, initial_scripting,
-            precommand_scripting, command_scripting, try_number,
-            postcommand_scripting, remote_cylc_dir, remote_suite_dir,
-            shell, share_dir, work_dir, log_root,
+            enviro_scripting, precommand_scripting, command_scripting,
+            try_number, postcommand_scripting, remote_cylc_dir,
+            remote_suite_dir, shell, share_dir, work_dir, log_root,
             job_submission_method, ssh_messaging ):
 
         self.task_id = task_id
@@ -38,6 +38,7 @@ class jobfile(object):
         self.final_directive = final_directive
         self.directives = directives
         self.initial_scripting = initial_scripting
+        self.enviro_scripting = enviro_scripting
         self.precommand_scripting = precommand_scripting
         self.command_scripting = command_scripting
         self.try_number = try_number
@@ -85,6 +86,7 @@ class jobfile(object):
         self.write_initial_scripting()
 
         self.write_environment_1()
+        self.write_enviro_scripting()
 
         # suite bin access must be before runtime environment
         # because suite bin commands may be used in variable
@@ -134,6 +136,14 @@ class jobfile(object):
         BUFFER.write( "\n\n# INITIAL SCRIPTING:\n" )
         BUFFER.write( self.initial_scripting )
 
+    def write_enviro_scripting( self, BUFFER=None ):
+        if not self.enviro_scripting:
+            return
+        if not BUFFER:
+            BUFFER = self.FILE
+        BUFFER.write( "\n\n# ENVIRONWENT SCRIPTING:\n" )
+        BUFFER.write( self.enviro_scripting )
+
     def write_environment_1( self, BUFFER=None ):
         if not BUFFER:
             BUFFER = self.FILE
@@ -141,6 +151,11 @@ class jobfile(object):
         # Override CYLC_SUITE_DEF_PATH for remotely hosted tasks
         if self.remote_suite_dir:
             self.cylc_env['CYLC_SUITE_DEF_PATH'] = self.remote_suite_dir
+        else:
+            # for remote tasks that don't specify a remote suite dir
+            # default to replace home dir with literal '$HOME' (works
+            # for local tasks too):
+            self.cylc_env[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', self.cylc_env['CYLC_SUITE_DEF_PATH'])
 
         BUFFER.write( "\n\n# CYLC LOCATION; SUITE LOCATION, IDENTITY, AND ENVIRONMENT:" )
         for var in self.cylc_env:

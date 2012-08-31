@@ -1,0 +1,20 @@
+
+title = "Test external task host selection"
+
+description = """
+Task host is determined by a script in the suite bin directory; for this
+test suite it just returns the value of $CYLC_TEST_TASK_HOST as used 
+by many of the other test suites (see "cylc test-battery --help")."""
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 0.5
+[scheduling]
+    [[dependencies]]
+        graph = "foo"
+[runtime]
+    [[foo]]
+        [[[remote]]]
+            # in suite bin directory:
+            host = $(host-select.sh)
+

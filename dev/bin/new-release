@@ -58,7 +58,7 @@ cd $REPO
 cylc admin check-examples
 # RUN TESTS
 cylc admin test-db
-cylc admin test-suite
+cylc admin test-battery
 
 # doc/process needs access to this cylc
 export PATH=bin:$PATH

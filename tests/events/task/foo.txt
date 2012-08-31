@@ -1,0 +1,94 @@
+___________________________________________________________________
+The cylc suite engine, version 4.5.1-108-ge849147
+Home page: http://hjoliver.github.com/cylc
+-------------------------------------------------------------------
+Copyright (C) 2008-2012 Hilary Oliver, NIWA
+-------------------------------------------------------------------
+This program comes with ABSOLUTELY NO WARRANTY; for details type:
+ `cylc license warranty'.
+This is free software, and you are welcome to redistribute it under
+certain conditions; for details type:
+ `cylc license conditions'.
+-------------------------------------------------------------------
+ o  SUITE NAME....vag
+ o  SUITE DEFN..../home/oliverh/cylc/tests/events/task/./suite.rc
+ o  RUN MODE......live
+ o  LOG DIR......./home/oliverh/cylc-run/vag/log/suite
+ o  STATE DIR...../home/oliverh/cylc-run/vag/state
+ o  PORT..........7766
+ o  Final Cycle...None
+ o  COLD START....None
+
+STARTING
+
+1 TASKS READY TO BE SUBMITTED
+
+TASK READY: foo%1
+JOB SCRIPT: /home/oliverh/cylc-run/vag/log/job/foo%1-1345985914.239648
+SUBMISSION: /home/oliverh/cylc-run/vag/log/job/foo%1-1345985914.239648 </dev/null 1>/home/oliverh/cylc-run/vag/log/job/foo%1-1345985914.239648.out 2>/home/oliverh/cylc-run/vag/log/job/foo%1-1345985914.239648.err &
+Calling submitted handler
+
+WAITING ON JOB SUBMISSIONS
+JOB SUBMISSIONS COMPLETED:
+  Time taken: 0:00:00.006804
+  1 of 1 job submissions succeeded
+  0 of 1 job submissions failed
+
+HELLO FROM TASK EVENT HANDLER
+  EVENT submitted
+  SUITE vag
+  TASK foo%1
+  MSG (task submitted)
+BYE FROM TASK EVENT HANDLER
+
+Calling submission_timeout handler
+Calling started handler
+
+HELLO FROM TASK EVENT HANDLER
+
+HELLO FROM TASK EVENT HANDLER
+  EVENT submission_timeout
+  EVENT started
+  SUITE vag
+  SUITE vag
+  TASK foo%1
+  TASK foo%1
+  MSG submitted 0.0001 minutes ago, but has not started
+BYE FROM TASK EVENT HANDLER
+
+  MSG (task started)
+BYE FROM TASK EVENT HANDLER
+
+Calling execution_timeout handler
+Calling warning handler
+
+HELLO FROM TASK EVENT HANDLER
+  EVENT execution_timeout
+  SUITE vag
+
+HELLO FROM TASK EVENT HANDLER
+  TASK foo%1
+  EVENT warning
+  MSG started 0.001 minutes ago, but has not succeeded
+BYE FROM TASK EVENT HANDLER
+
+  SUITE vag
+  TASK foo%1
+  MSG WARNING - shit happens!
+BYE FROM TASK EVENT HANDLER
+
+
+foo%1 SUCCEEDED
+Calling succeeded handler
+
+SUITE SHUTTING DOWN
+Pyro daemon shutdown
+Run completed normally
+
+HELLO FROM TASK EVENT HANDLER
+  EVENT succeeded
+  SUITE vag
+  TASK foo%1
+  MSG (task succeeded)
+BYE FROM TASK EVENT HANDLER
+

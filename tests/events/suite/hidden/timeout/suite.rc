@@ -1,0 +1,10 @@
+[cylc]
+    [[event hooks]]
+        timeout = 0.01 # minutes
+        timeout handler = "/bin/false"
+        abort if timeout handler fails = True
+
+[scheduling]
+    [[dependencies]]
+        graph = "foo"
+

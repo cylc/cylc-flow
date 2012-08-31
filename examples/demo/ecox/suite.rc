@@ -12,9 +12,9 @@ description = "EcoConnect Operation, circa August 2011"
 # make efficient use of common configuration settings.
 
 [cylc]
-    simulation mode only = True
-    [[simulation mode]]
-        clock offset = 0
+    required run mode = simulation # demo suite, taken out of context
+    [[accelerated clock]]
+        offset = 0
 
 [scheduling]
     #runahead limit = 48
@@ -161,13 +161,13 @@ description = "EcoConnect Operation, circa August 2011"
         [[[environment]]]
             SYS = "${USER##*_}"
             ARCHIVE = /$SYS/archive/ecoconnect
-        [[[event hooks]]]
-            # note that timeout values are redefined in some tasks
-            # ALSO: event hooks are ignored by default in simulation mode.
-            script = nagios.sh
-            events = started,failed,succeeded,submission_failed,submission_timeout,execution_timeout
-            submission timeout = 2
-            execution timeout = 30
+        #[[[event hooks]]]
+        #    # note that timeout values are redefined in some tasks
+        #    # ALSO: event hooks are ignored by default in simulation mode.
+        #    script = nagios.sh
+        #    events = started,failed,succeeded,submission_failed,submission_timeout,execution_timeout
+        #    submission timeout = 2
+        #    execution timeout = 30
 
     [[UKMO]]
         description = "UK Met Office data retrieval"

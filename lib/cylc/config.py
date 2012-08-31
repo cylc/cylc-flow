@@ -67,67 +67,6 @@ class SuiteConfigError( Exception ):
 class TaskNotDefinedError( SuiteConfigError ):
     pass
 
-class SuiteEventHookConfig( object ):
-    legal_events = ['startup', 'shutdown', 'timeout']
-
-    def __init__( self, events=[], script=None, timeout=None,
-            abort_on_timeout=False, abort_on_shutdown=False,
-            verbose=False ):
-        self.events = events
-        self.script = script
-        self.timeout = timeout
-        self.abort_on_timeout = abort_on_timeout
-        self.abort_if_shutdown_handler_fails = abort_on_shutdown
-        self.verbose = verbose
-        self.check()
-
-    def check( self ):
-        if self.verbose:
-            print "Checking suite event hook config"
-
-        for event in self.events:
-            if event not in self.__class__.legal_events:
-                raise SuiteConfigError, "ERROR, illegal suite hook event: " + event
-
-        if len(self.events) > 0 and not self.script:
-            raise SuiteConfigError, "ERROR, no handler specified for the nominated suite events: " + ','.join(self.events)
-
-        if len(self.events) == 0 and self.script:
-            print >> sys.stderr, "WARNING: a suite event handler is specified, but no events"
-            self.script = None
-
-        if 'timeout' in self.events and not self.timeout:
-            print >> sys.stderr, 'WARNING: disabling suite timeout (no timeout given)'
-            self.events.remove('timeout')
- 
-        if self.timeout and 'timeout' not in self.events and not self.abort_on_timeout:
-            print >> sys.stderr, 'WARNING: a suite timeout was given, but the timeout event ...'
-            print >> sys.stderr, 'WARNING: ... is not handled and abort-on-timeout is not set'
-            self.timeout = None
- 
-        if self.abort_if_shutdown_handler_fails:
-            if 'shutdown' not in self.events:
-                print >> sys.stderr, 'WARNING: abort-if-shutdown-handler-fails is set, but event is not handled'
-                self.abort_if_shutdown_handler_fails = False
-            if not self.script:
-                print >> sys.stderr, 'WARNING: abort-if-shutdown-handler-fails is set, but no handler script'
-                self.abort_if_shutdown_handler_fails = False
- 
-        if self.abort_on_timeout:
-            if not self.timeout:
-                print >> sys.stderr, 'WARNING: disabling abort-on-timeout (no timeout given)'
-                self.abort_on_timeout = False
-            else:
-                print >> sys.stderr, 'WARNING: suite will abort on timeout (' + str( self.timeout ) + ' minutes)'
-
-    def disable( self ):
-        self.events = []
-        self.script = None
-        self.timeout = None
-        self.abort_on_timeout
-        self.timeout = None
-
-
 class edge( object):
     def __init__( self, l, r, cyclr, sasl=False, suicide=False, conditional=False ):
         """contains qualified node names, e.g. 'foo[T-6]:out1'"""
@@ -400,16 +339,33 @@ class config( CylcConfigObj ):
         if self.verbose:
             print "Pyro connection timeout for tasks in this suite:", self.pyro_timeout, "seconds"
 
-        if self.run_mode != 'live':
-            self.event_config = SuiteEventHookConfig()
+        # suite event hooks
+        if self.run_mode == 'live' or \
+                ( self.run_mode == 'simulation' and not self['cylc']['simulation mode']['disable suite event hooks'] ) or \
+                ( self.run_mode == 'dummy' and not self['cylc']['dummy mode']['disable suite event hooks'] ):
+            self.event_handlers = {
+                    'startup'  : self['cylc']['event hooks']['startup handler'],
+                    'timeout'  : self['cylc']['event hooks']['timeout handler'],
+                    'shutdown' : self['cylc']['event hooks']['shutdown handler']
+                    }
+            self.suite_timeout = self['cylc']['event hooks']['timeout']
+            self.reset_timer = self['cylc']['event hooks']['reset timer']
+            self.abort_on_timeout = self['cylc']['event hooks']['abort on timeout']
+            self.abort_if_startup_handler_fails = self['cylc']['event hooks']['abort if startup handler fails']
+            self.abort_if_timeout_handler_fails = self['cylc']['event hooks']['abort if timeout handler fails']
+            self.abort_if_shutdown_handler_fails = self['cylc']['event hooks']['abort if shutdown handler fails']
         else:
-            self.event_config = SuiteEventHookConfig( \
-                self['cylc']['event hooks']['events'],
-                self['cylc']['event hooks']['script'],
-                self['cylc']['event hooks']['timeout'],
-                self['cylc']['event hooks']['abort on timeout'],
-                self['cylc']['event hooks']['abort if shutdown handler fails'],
-                self.verbose )
+            self.event_handlers = {
+                    'startup'  : None,
+                    'timeout'  : None,
+                    'shutdown' : None
+                    }
+            self.suite_timeout = None
+            self.reset_timer = False
+            self.abort_on_timeout = None
+            self.abort_if_startup_handler_fails = False
+            self.abort_if_timeout_handler_fails = False
+            self.abort_if_shutdown_handler_fails = False
 
         self.process_directories()
 
@@ -1600,8 +1556,8 @@ class config( CylcConfigObj ):
             taskd.postcommand = taskconfig['post-command scripting'] 
 
         if self.run_mode == 'live' or \
-                ( self.run_mode == 'simulation' and not taskd['simulation mode']['disable retries'] ) or \
-                ( self.run_mode == 'dummy' and not taskd['dummy mode']['disable retries'] ):
+                ( self.run_mode == 'simulation' and not taskconfig['simulation mode']['disable retries'] ) or \
+                ( self.run_mode == 'dummy' and not taskconfig['dummy mode']['disable retries'] ):
             taskd.retry_delays = deque( taskconfig['retry delays'])
 
         # check retry delay type (must be float):
@@ -1629,6 +1585,7 @@ class config( CylcConfigObj ):
         taskd.fail_in_sim_mode = taskconfig['simulation mode']['simulate failure']
 
         taskd.initial_scripting = taskconfig['initial scripting'] 
+        taskd.enviro_scripting = taskconfig['environment scripting'] 
 
         taskd.ssh_messaging = str(taskconfig['remote']['ssh messaging'])
 
@@ -1680,33 +1637,44 @@ class config( CylcConfigObj ):
             print >> sys.stderr, "WARNING: unsetting manual completion (dummy tasks don't detach)" 
             taskd.manual_messaging = False
 
+        # task event hooks
         if self.run_mode == 'live' or \
-                ( self.run_mode == 'simulation' and not taskd['simulation mode']['disable event hooks'] ) or \
-                ( self.run_mode == 'dummy' and not taskd['dummy mode']['disable event hooks'] ):
-            # configure task event hooks
-            taskd.hook_script = taskconfig['event hooks']['script']
-            taskd.hook_events = taskconfig['event hooks']['events']
-            for event in taskd.hook_events:
-                if event not in ['submitted', 'started', 'succeeded', 'warning', 'failed', 'retry', \
-                        'submission_failed', 'submission_timeout', 'execution_timeout' ]:
-                    raise SuiteConfigError, name + ": illegal task event: " + event
-            taskd.submission_timeout = taskconfig['event hooks']['submission timeout']
-            taskd.execution_timeout  = taskconfig['event hooks']['execution timeout']
+                ( self.run_mode == 'simulation' and not taskconfig['simulation mode']['disable task event hooks'] ) or \
+                ( self.run_mode == 'dummy' and not taskconfig['dummy mode']['disable task event hooks'] ):
+            taskd.event_handlers = {
+                'submitted' : taskconfig['event hooks']['submitted handler'],
+                'started'   : taskconfig['event hooks']['started handler'],
+                'succeeded' : taskconfig['event hooks']['succeeded handler'],
+                'failed'    : taskconfig['event hooks']['failed handler'],
+                'warning'   : taskconfig['event hooks']['warning handler'],
+                'retry'     : taskconfig['event hooks']['retry handler'],
+                'submission failed'  : taskconfig['event hooks']['submission failed handler'],
+                'submission timeout' : taskconfig['event hooks']['submission timeout handler'],
+                'execution timeout'  : taskconfig['event hooks']['execution timeout handler']
+                }
+            taskd.timeouts = {
+                'submission' : taskconfig['event hooks']['submission timeout'],
+                'execution'  : taskconfig['event hooks']['execution timeout']
+                }
             taskd.reset_timer = taskconfig['event hooks']['reset timer']
+        else:
+            taskd.event_handlers = {
+                'submitted' : None,
+                'started'   : None,
+                'succeeded' : None,
+                'failed'    : None,
+                'warning'   : None,
+                'retry'     : None,
+                'submission failed'  : None,
+                'submission timeout' : None,
+                'execution timeout'  : None
+                }
+            taskd.timeouts = {
+                'submission' : None,
+                'execution'  : None
+                }
+            taskd.reset_timer = False
 
-        if self.validation and len(taskd.hook_events) == 0 and taskd.hook_script:
-            # this is not a fatal error
-            print >> sys.stderr, "WARNING: task event handler specified without events to handle."
-
-        if len(taskd.hook_events) > 0 and not taskd.hook_script:
-            # but this is
-            raise SuiteConfigError, "ERROR, no handler specified for task events: " + ','.join(taskd.hook_events)
-
-        if 'submission_timeout' in taskd.hook_events and not taskd.submission_timeout:
-            print >> sys.stderr, 'WARNING:', taskd.name, 'disabling job submission timeout (no timeout given)'
-        if 'execution_timeout' in taskd.hook_events and not taskd.execution_timeout:
-            print >> sys.stderr, 'WARNING:', taskd.name, 'disabling job execution timeout (no timeout given)'
-         
         taskd.logfiles    = taskconfig[ 'extra log files' ]
         taskd.resurrectable = taskconfig[ 'enable resurrection' ]
 

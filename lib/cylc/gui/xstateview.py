@@ -69,6 +69,7 @@ class xupdater(threading.Thread):
 
         self.cfg = cfg
         self.info_bar = info_bar
+        self.stop_summary = None
 
         self.god = None
         self.mode = "mode:\nwaiting..."
@@ -103,8 +104,16 @@ class xupdater(threading.Thread):
             self.god = client.get_proxy( 'state_summary' )
             self.remote = client.get_proxy( 'remote' )
         except:
+            if self.stop_summary is None:
+                self.stop_summary = cylc.dump.get_stop_state_summary(
+                                                            self.cfg.suite,
+                                                            self.cfg.owner,
+                                                            self.cfg.host)
+                if any(self.stop_summary):
+                    self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
+            self.stop_summary = None
             self.family_nodes = self.remote.get_family_nodes()
             self.graphed_family_nodes = self.remote.get_graphed_family_nodes()
             self.families = self.remote.get_families()
