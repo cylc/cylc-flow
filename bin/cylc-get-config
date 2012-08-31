@@ -80,6 +80,10 @@ parser.add_option( "-m", "--mark-output",
         "invocation).",
         action="store_true", default=False, dest="markoutput" )
 
+parser.add_option( "-p", "--python",
+        help="Write out the config data structure in Python native format.",
+        action="store_true", default=False, dest="pnative" )
+
 ( options, args ) = parser.parse_args()
 owner = options.db_owner
 
@@ -125,7 +129,10 @@ except KeyError, x:
     raise SystemExit( 'ERROR, item not found: ' + str(x) )
 
 if isinstance( res, dict ):
-    prdict( res, level=len(args[1:]), prefix=prefix)
+    if options.pnative:
+        print res
+    else:
+        prdict( res, level=len(args[1:]), prefix=prefix)
 else:
     print prefix + str(res)
 
