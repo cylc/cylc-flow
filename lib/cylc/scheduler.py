@@ -754,10 +754,11 @@ class scheduler(object):
                 self.spawn()
                 self.dump_state()
 
-                self.suite_state.update( self.pool.get_tasks(), self.clock, \
+                self.suite_state.update( self.pool.get_tasks(), self.clock,
                         self.get_oldest_c_time(), self.get_newest_c_time(),
-                        self.paused(), self.will_pause_at(), \
-                        self.remote.halt, self.will_stop_at(), self.blocked )
+                        self.paused(), self.will_pause_at(), 
+                        self.remote.halt, self.will_stop_at(), self.blocked,
+                        self.runahead_limit )
 
                 if self.options.timing:
                     delta = datetime.datetime.now() - main_loop_start_time

@@ -104,7 +104,7 @@ Arguments:"""
                 "Defaults to $HOME/.cylc/DB.",
                 metavar="DB", action="store", default=None, dest="db" )
 
-        self.add_option( "-o", "--override",
+        self.add_option( "--override",
                 help="Override cylc version compatibility checking.",
                 action="store_true", default=False, dest="override" )
 
@@ -113,7 +113,7 @@ Arguments:"""
                     help="Use ssh to re-invoke the command on the suite host.",
                     action="store_true", default=False, dest="use_ssh" )
 
-            self.add_option( "-t", "--timeout", metavar='SEC',
+            self.add_option( "--pyro-timeout", metavar='SEC',
                     help="Set a timeout value for Pyro network connections "
                     "to the running suite. The default is no timeout.",
                     action="store", default=None, dest="pyro_timeout" )
