@@ -25,12 +25,8 @@ class async( cycler ):
     def offset( cls, tag, n ):
         return str(int(tag)-int(n))
  
-    def __init__( self, *args ):
-        # asynchronous task do not have a runahead limit
-        self.default_runahead_limit = None
-
-    def get_def_runahead( self ):
-        return self.default_runahead_limit
+    def get_min_cycling_interval( self ):
+        return None
 
     def next( self, tag ):
         return str( int(tag) + 1 )

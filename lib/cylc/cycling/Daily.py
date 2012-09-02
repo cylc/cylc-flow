@@ -54,10 +54,8 @@ class Daily( cycler ):
         if self.step <= 0:
             raise SystemExit( "ERROR: step must be a positive integer: " + step )
 
-        self.default_runahead_limit = 2 * 24 * self.step
-
-    def get_def_runahead( self ):
-        return self.default_runahead_limit
+    def get_min_cycling_interval( self ):
+        return self.step
 
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""
