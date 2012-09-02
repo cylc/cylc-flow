@@ -384,17 +384,11 @@ class config( CylcConfigObj ):
             mrl = None
             for cyc in self.cyclers:
                 rahd = cyc.get_def_runahead()
-                print rahd
                 if rahd:
                     mrls.append(rahd)
             mrl = min(mrls)
             if self.verbose:
                 print "Default runahead limit from cycling modules:", mrl, "hours"
-            # Add one hour, which is enough to prevent single-cycle intercycle
-            # dependence from stalling the suite. To Do: find a robust
-            # method to handle any kind of intercycle dependence (is it
-            # ever more than one cycle in practice?)
-            mrl += 1
 
             # 2/ or if there is a configured runahead limit, use it.
             rl = self['scheduling']['runahead limit']

@@ -881,16 +881,6 @@ in cylc test suites (but see also "reference test runs" below).
 users often forget that some task states are filtered out if they did
 not activate the filters themselves.
 
-+ The runahead limit now waits on waiting, submitted, and running tasks
-(waiting alone is not enough to contstrain a single task cycling suite,
-in which successive instances all go off at once).
-
-+ The runahead limit now defaults to (the largest of the maximum interval
-between cycles in each graph section) plus 1 hour. The extra hour is
-sufficient to stop suites with single-cycle intercycle dependence from
-stalling. Note that for good cycle interleaving you should set the
-runahead limit higher than this!
-
 + Removed the requirement to preface the integer TAG of an asynchronous
 task, on the command line, with 'a:'.
 
@@ -985,4 +975,9 @@ In the task job script it fits between the cylc-defined environment
 and the task runtime environment.
 
 + External host selection officially supported (host = selector.sh).
+
++ The runahead limit base is now the oldest non-finished (i.e. not
+succeeded or failed); it defaults to the twice the smallest cycling
+interval in the suite; and it will not stall even if set to less than
+the smallest cycling interval in the suite.
 

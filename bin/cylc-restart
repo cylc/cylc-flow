@@ -303,6 +303,7 @@ the remote host before starting the suite."""
                 print >> sys.stderr, x
                 print >> sys.stderr, "WARNING: ignoring task", name, "from the suite state dump file"
                 print >> sys.stderr, "(the task definition has probably been deleted from the suite)."
+                continue
 
             if itask.state.is_succeeded():  
                 # must have satisfied prerequisites and completed outputs
