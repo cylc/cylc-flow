@@ -104,7 +104,7 @@ Arguments:"""
                 "Defaults to $HOME/.cylc/DB.",
                 metavar="DB", action="store", default=None, dest="db" )
 
-        self.add_option( "--override",
+        self.add_option( "--invoked",
                 help="Override cylc version compatibility checking.",
                 action="store_true", default=False, dest="override" )
 

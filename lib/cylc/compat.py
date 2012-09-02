@@ -99,7 +99,7 @@ class compat( object ):
             sys.exit(retcode)
         except OSError, x:
             print >> sys.stderr, "ERROR: Failed to invoke " + new_cylc
-            print >> sys.stderr, "(Note you can FORCE USE OF THE INVOKED VERSION with '-o,--override')"
+            print >> sys.stderr, "(Note you can FORCE USE OF THE INVOKED VERSION with '--invoked')"
             sys.exit(1)
 
 class compat_explicit( compat ):
