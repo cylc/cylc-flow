@@ -2954,14 +2954,13 @@ provides default configuration for all tasks in the suite.
 
 Most root items are unset by default, but some values are set,
 sufficient to allow simple test suites to be defined by dependency graph
-alone - as can be seen from many of the examples 
-that illustrate this User Guide (command scripting, for example,
-defaults to printing a simple message, sleeping for ten seconds, and
-then exiting). These default values are documented with each
-configuration item in Appendix~\ref{SuiteRCReference}, and
-Section~\ref{SuiteDefaults} shows them all in context. 
-You can override them or provide your own defaults for other items by
-explicitly configuring the root namespace. 
+alone as can be seen from many of the examples that illustrate this
+User Guide (command scripting, for example, defaults to printing a
+simple message, sleeping for between 1 and 15 seconds, and then
+exiting). These default values are documented with each configuration
+item in Appendix~\ref{SuiteRCReference}, and Section~\ref{SuiteDefaults}
+shows them all in context.  You can override them or provide your own
+defaults for other items by explicitly configuring the root namespace. 
 
 \subsubsection{Defining Multiple Namespaces At Once}
 \label{MultiTaskDef}
@@ -5136,24 +5135,24 @@ echo "ABORTING"
 /bin/false"""
 \end{lstlisting}
 
-Finally, in simulation mode each task tasks ten seconds to ``run'' by
-default, but you can also alter this for particular tasks or groups of
-tasks:
+Finally, in simulation mode each task takes between 1 and 15 seconds to
+``run'' by default, but you can also alter this for particular tasks or
+groups of tasks:
 \lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
 [runtime]
     [[foo]]
-        simulation mode run length = 20 # (seconds)
-        fail in simulation mode = True
+        run time range = 20,31 # (between 20 and 30 seconds)
+        command scripting = "echo ABORTING; /bin/false" # fail in dummy mode
 \end{lstlisting}
 Note that to get a failed simulation or dummy mode task to succeed on
 re-triggering, just change the suite.rc file appropriately and reload
 the suite definition at run time with \lstinline=cylc reload SUITE=
 before re-triggering the task.
 
-Dummy mode is equivalent to simply commenting out the a task's command
-scripting to expose the default dummy scripting. 
+Dummy mode is equivalent to commenting out each task's command scripting
+to expose the default scripting. 
 
 \subsubsection{The Non-live-mode Accelerated Clock}
 
