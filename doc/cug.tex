@@ -1080,9 +1080,8 @@ and~\ref{fig-QuickStartA-ControlStalled}.
     \end{center}
     \caption[ Suite {\em examples.QuickStart.a} stalled.]
     {\scriptsize Suite {\em examples.QuickStart.a} stalled after the
-    clock-triggered GetData tasks have finished, because of Model's
-    previous-cycle dependence and the suite runahead limit (see main
-    text).}
+    clock-triggered GetData tasks have finished because of Model's
+    previous-cycle dependence and the suite runahead limit.}
     \label{fig-QuickStartA-ControlStalled}
 \end{figure} 
 
@@ -1093,15 +1092,14 @@ wait on any upstream tasks), their trigger time has long passed (the
 initial cycle time was in the past), and they are not sequential tasks
 (so they are able to run in parallel - try declaring GetData
 sequential to see the difference).
-Beyond the suite {\em runahead limit}, which defaults to 12 hours for
+Beyond the suite {\em runahead limit} which is set to 12 hours in
 this suite - see Section~\ref{RunaheadLimit}) GetData is put into a
 special `runahead' held state indicated by the darker blue graph node.
 The task will be released from this state when the slower tasks have
-caught up sufficiently. The runahead limit is designed to stop tasks
-like this from running off too far into the future in delayed operation.
-It is of little consequence in real time operation because such tasks
-are then typically constrained by a clock trigger, and other tasks
-have to wait on them.
+caught up sufficiently. The runahead limit is designed to stop quick
+tasks from running off too far into the future.  It is typically of
+little consequence in real time operation when suites are typically
+constrained by clock triggered tasks.
 
 \subsubsection{Viewing The State Of Tasks}
 
@@ -4658,41 +4656,29 @@ strike a hung port.
 
 \subsection{Internal Queues And The Runahead Limit}
 
-Cylc suites are self-limiting to the extent that tasks are only
-submitted to run if they are actually ready to run. But even so some
-suites may generate too much activity at once, particularly in
-delayed/catch-up/historical operation when they are not constrained by
-clock-triggered tasks that normally have to wait on real time data.
-There are two issues to be aware of here: overburdening an external
-batch queueing system, or the task host hardware, by submitting too many
-tasks at once
-- this can be prevented by cylc's {\em internal queues}; and
-overburdening cylc itself by letting unconstrained or loosely
-constrained tasks run off far into the future (which would require cylc
-to keep vast numbers of ``succeeded'' tasks around until other tasks,
-which may depend on them, have caught up) - this can be prevented by the
-suite runahead limit.
+Some cylc suites have the potential to generate too much activity at
+once by virtue of the fact that each task cycles independently
+constrained only by dependence on other tasks or by clock triggers. 
+Quick-running tasks at the top of the dependency tree with no
+prerequisites and no clock-triggers (or when running far behind the
+clock) will spawn rapidly into the future if not constrained somehow.
+There are two issues to be aware of here: over-burdening task host
+resources by submitting too many tasks at once, and over-burdening cylc
+itself by letting the task pool become too big (when fast tasks spawn
+ahead of the pack cylc has to keep them around in the ``succeeded''
+state until other tasks, which may depend on them, have caught up). 
 
 \subsubsection{The Suite Runahead Limit}
 \label{RunaheadLimit}
 
-In a cylc suite each task cycles independently, constrained only by
-dependence on other tasks or by clock triggers. A cycling task with no
-prerequisites and no clock-trigger will want to run off into the future
-(it is unlikely that you will need such a task but it is possible to
-define one). Similarly, in delayed or historical operation a
-clock-triggered task with no dependence on other tasks will run off
-ahead because the clock trigger provides no constraint until the task
-catches up to the wall clock. There is no advantage in letting a few
-fast data retrieval tasks, say, get way ahead of the slower tasks
-that actually use the data; in fact it makes suite monitoring more
-difficult and for large suites it could eventually swamp cylc because a
-large number of ``succeeded'' tasks would have to be maintained until
-the slower tasks, which might depend on them, have caught up. 
+The runahead limit prevents the fastest tasks in a suite from getting too
+far ahead of the slowest ones. Cylc's cycle-interleaving abilities make 
+for generally efficient scheduling, but there is no great advantage in
+letting a few fast data retrieval tasks, say, get far ahead of the
+slower tasks because it is typically the tasks at the bottom of the
+dependency tree, which necessarily run last, that generate the final
+products.
 
-To control this sort of behaviour cylc has a configurable {\em runahead
-limit} that stops the fastest tasks from getting too far ahead of the
-slowest tasks:
 \lstset{language=suiterc}
 \begin{lstlisting}
 #SUITE.RC
@@ -4701,35 +4687,26 @@ slowest tasks:
 \end{lstlisting}
 
 A cycling task spawns its successor when it enters the submitted state
-or, for sequential tasks, when it finishes. If the successor's cycle
-time is ahead of the oldest non-failed task by more than the runahead
-limit it is put into the special ``runahead held'' state until other
-tasks catch up sufficiently. In real time operation the runahead limit
-is of little consequence, because the suite will be constrained by its
-clock-triggered tasks, but the limit must be long enough to cover the
-minimum cycle time range present in the suite. A task that only runs
-once per day, for example, must be able to spawn 24 hours ahead. 
+or, for sequential tasks, when it finishes. If a newly spawned task's
+cycle time is ahead of the oldest non-finished (succeeded or failed)
+task by more than the runahead limit it is put into the special
+``runahead held'' state until other tasks catch up sufficiently.
 
-The default runahead limit is now set to the largest of the minimum
-limit values supplied by each of the suite's cycling modules (which are
-referenced by the graph section headings). So, for instance, for a suite
-that has tasks cycling every 12 hours and every day, the default limit
-will be 24 hours.  Recent versions of cylc, however, can take a lower
-limit than this without actually stalling the suite, because
-runahead-constrained tasks are now just put into the temporary
-``runahead held'' state instead of being prevented from spawning. 
+In cylc-4.5.1 and earlier it was possible to stall a suite by setting
+the runahead limit too low; now however it is applied in such a way
+that it simply constrains the number of different cycles that can run at
+once. If the limit is set to the smallest interval between cycles, or
+less than that, just a single cycle will run at a time.
 
-Failed tasks, which are not automatically removed from a suite,
-are ignored when applying the runahead limit (but tasks that can't run
-because they depend on a failed task are not ignored, of course). 
+The default runahead limit is now set to {\em twice the smallest of the
+cycling intervals of the suite's cycling modules} (i.e.\ the graph
+section headings). For a suite that has 1- and 24-hourly cylcing tasks
+the default limit will be 2 hours, so that two of the hourly cycles will
+run at once in between the 24-hourly cycles. 
 
-Note that it may occasionally be useful to have tasks that are
-entirely unconstrained even in real time operation.  Consider a tide
-prediction model, for instance, that does not wait on real time data
-(tide is astronomically determined) and does not take inputs from other
-tasks. The runahead limit prevents tasks like this from running off into
-the future without tying them artificially (via false dependencies) to
-slower tasks.
+Succeeded and failed tasks are ignored when computing the runahead limit
+(but tasks that can't run because they depend on a failed task are not
+ignored, of course). 
 
 \subsubsection{Internal Queues}
 \label{InternalQueues}
@@ -6013,16 +5990,8 @@ code development as well.
 %
 %\end{myitemize}
 %
-%The following problems will eventually cause a suite to get stuck at
-%the {\em runahead limit} (which by default is 24 hours: i.e.\ the
-%fastest task in the suite is only allowed to get 24 hours ahead of the
-%slowest) because cylc does not automatically remove failed tasks from
-%the system.  Operational suites should have automated means of
-%alerting the operators to any failure that occurs, but in the
-%unlikely event that the failure is not noticed until the system stalls
-%at the runahead limit, then to get things moving again the operator must
-%either remove the failed task or reset (and thereby rerun) it after
-%fixing the problem that cause the failure.
+%Operational suites should have automated means of alerting the
+%operators to any failure that occurs
 %
 %\begin{myitemize}
 %    \item If the system operator, perhaps in a post-task-failure
@@ -6032,10 +6001,7 @@ code development as well.
 %    unable to run. Solution: insert tasks (possibly one-off cold-start
 %    tasks) to get the suite running again.
 %
-%    \item If some task in the suite has a cycling interval long than
-%        the runahead limit, the suite will stall (e.g.\ if
-%    you have a task that runs 24-hourly at 00Z, but set the runahead
-%    limit to just 12 hours). This could also happen if you purge enough
+%    \ldots This could also happen if you purge enough
 %    cycles that the difference between the pre- and post-purge tasks
 %    is greater than the runahead limit. Solution: ensure your runahead
 %    limit is large enough to span these gaps.
@@ -6062,11 +6028,6 @@ code development as well.
 %        correctly.
 %
 %\end{myitemize}
-%
-%To confirm that the runahead limit is causing a stall, you can use 
-%\lstinline=cylc verbosity= to set the debug logging level: any task
-%that is not spawning a successor only because it has exceeded the
-%runahead limit will report that to the log.
 %
 %
 %\subsection{Failure Recovery Scenarios}

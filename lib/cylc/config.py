@@ -377,16 +377,19 @@ class config( CylcConfigObj ):
             raise SuiteConfigError, 'No suite dependency graph defined.'
 
         # Compute runahead limit
-        # 1/ take the largest of the minimum limits from each graph section
+        # 1/ take the smallest of the default limits from each graph section
         if len(self.cyclers) != 0:
             # runahead limit is only relevant for cycling sections
             mrls = []
             mrl = None
             for cyc in self.cyclers:
-                mrls.append(cyc.get_def_min_runahead())
-            mrl = max(mrls)
+                rahd = cyc.get_def_runahead()
+                print rahd
+                if rahd:
+                    mrls.append(rahd)
+            mrl = min(mrls)
             if self.verbose:
-                print "Largest minimum runahead limit from cycling modules:", mrl, "hours"
+                print "Default runahead limit from cycling modules:", mrl, "hours"
             # Add one hour, which is enough to prevent single-cycle intercycle
             # dependence from stalling the suite. To Do: find a robust
             # method to handle any kind of intercycle dependence (is it
@@ -398,8 +401,6 @@ class config( CylcConfigObj ):
             if rl:
                 if self.verbose:
                     print "Configured runahead limit: ", rl, "hours"
-                if rl < mrl:
-                    print >> sys.stderr, 'WARNING: runahead limit (' + str(rl) + ') may be too low (<' + str(mrl) + ')'
                 crl = rl
             else:
                 crl = mrl

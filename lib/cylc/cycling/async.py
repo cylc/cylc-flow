@@ -27,11 +27,10 @@ class async( cycler ):
  
     def __init__( self, *args ):
         # asynchronous task do not have a runahead limit
-        self.minimum_runahead_limit = 0
-        pass
+        self.default_runahead_limit = None
 
-    def get_def_min_runahead( self ):
-        return self.minimum_runahead_limit
+    def get_def_runahead( self ):
+        return self.default_runahead_limit
 
     def next( self, tag ):
         return str( int(tag) + 1 )

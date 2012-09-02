@@ -93,11 +93,11 @@ class Monthly( cycler ):
         if self.step <= 0:
             raise SystemExit( "ERROR: step must be a positive integer: " + step )
 
-        # default minimum runahead limit in hours
-        self.minimum_runahead_limit = 24 * 31 * self.step
+        # default runahead limit in hours
+        self.default_runahead_limit = 2 * 24 * 31 * self.step
 
-    def get_def_min_runahead( self ):
-        return self.minimum_runahead_limit
+    def get_def_runahead( self ):
+        return self.mum_runahead_limit
 
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""

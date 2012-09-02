@@ -1071,13 +1071,16 @@ class scheduler(object):
     def will_pause_at( self ):
         return self.hold_time
 
-    def get_oldest_unfailed_c_time( self ):
-        # return the cycle time of the oldest task
+    def get_runahead_base( self ):
+        # Return the cycle time from which to compute the runahead
+        # limit: take the oldest task not succeeded or failed (note this
+        # excludes finished tasks and it includes runahead-limited tasks
+        # - consequently "too low" a limit cannot actually stall a suite.
         oldest = '99991228235959'
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
-            if itask.state.is_failed():
+            if itask.state.is_failed() or itask.state.is_succeeded():
                 continue
             #if itask.is_daemon():
             #    # avoid daemon tasks
@@ -1169,7 +1172,7 @@ class scheduler(object):
 
     def release_runahead( self ):
         if self.runahead_limit:
-            ouct = self.get_oldest_unfailed_c_time() 
+            ouct = self.get_runahead_base() 
             for itask in self.pool.get_tasks():
                 if not itask.is_cycling():
                     # TO DO: this test is not needed?
@@ -1202,7 +1205,7 @@ class scheduler(object):
             new_task.log( 'NORMAL', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
             new_task.state.set_status('held')
         elif self.runahead_limit:
-            ouct = self.get_oldest_unfailed_c_time()
+            ouct = self.get_runahead_base()
             foo = ct( new_task.c_time )
             foo.decrement( hours=self.runahead_limit )
             if int( foo.get() ) >= int( ouct ):

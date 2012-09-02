@@ -68,11 +68,10 @@ class cycler( object ):
         be assumed that T is already on sequence."""
         raise CyclerOverrideError( "next" )
 
-    def get_def_min_runahead( self ):
-        """Return the default minimum runahead limit in hours. This
-        should be greater than or equal to the largest interval between
-        members of the sequence defined by this cycler.""" 
-        raise CyclerOverrideError( "get_def_min_runahead" )
+    def get_def_runahead( self ):
+        """Return the default runahead limit in hours. This should be
+        twice the cycling interval defined by this cycler.""" 
+        raise CyclerOverrideError( "get_def_runahead" )
 
     def adjust_state( self, offset ):
         """Adjust the state variables that define the cycle time sequence

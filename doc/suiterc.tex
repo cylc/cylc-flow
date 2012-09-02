@@ -514,16 +514,12 @@ can override it on the command line or in the gcylc suite start panel.
 
 The suite runahead limit prevents the fastest tasks in a suite from
 getting too far ahead of the slowest ones, as documented in
-Section~\ref{RunaheadLimit}. Tasks exceeding the limit will be put into
+Section~\ref{RunaheadLimit}. Tasks exceeding the limit are put into
 a special runahead held state until slower tasks have caught up
-sufficiently. The limit must be long enough to cover the minimum cycle
-time range of tasks present in the suite: a task that only runs once per
-day, for instance, needs to spawn 24 hours ahead.  Failed tasks, which
-are not automatically removed from a suite, are ignored when computing
-the runahead limit. 
+sufficiently. 
 \begin{myitemize}
     \item {\em type:} integer ($\geq 0$, hours)
-    \item {\em default:} $24$
+    \item {\em default:} (twice the minimum cycling interval in the suite)
 \end{myitemize}
 
 \subsubsection[{[[}queues{]]}]{[scheduling] $\rightarrow$ [[queues]]}

@@ -58,7 +58,7 @@ Consequently:
  * You can't purge a tree of tasks that has already triggered, because
    the algorithm relies on detecting new triggering.
 Note also the suite runahead limit must be large enough to bridge the
-purge gap, or runahead-held tasks will prevent the full purge occuring.
+purge gap or runahead-held tasks may prevent the purge completing fully.
 
 [development note: post cylc-3.0 we could potentially use the suite
 graph to determine downstream tasks to remove, without doing this
