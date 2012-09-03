@@ -317,11 +317,11 @@ class scheduler(object):
             self.stop_tag = spec.get_stop_tag()
             if not self.config['cylc']['reference test']['allow task failures']:
                 self.config['cylc']['abort if any task fails'] = True
-            self.abort_on_timeout = True
+            self.config.abort_on_timeout = True
             timeout = self.config['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
             if not timeout:
                 raise SchedulerError, 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test'
-            self.suite_timeout = timeout
+            self.config.suite_timeout = timeout
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
