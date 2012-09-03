@@ -22,6 +22,10 @@ from cylc.cycling.base import cycler
 class async( cycler ):
     is_async = True
     @classmethod
+
+    def __init__( self, *args ):
+        pass
+
     def offset( cls, tag, n ):
         return str(int(tag)-int(n))
  

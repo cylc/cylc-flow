@@ -382,13 +382,15 @@ class config( CylcConfigObj ):
             # runahead limit is only relevant for cycling sections
             mrls = []
             mrl = None
+            crl = None
             for cyc in self.cyclers:
                 rahd = cyc.get_min_cycling_interval()
                 if rahd:
                     mrls.append(rahd)
-            mrl = min(mrls)
-            if self.verbose:
-                print "Smallest cycling interval:", mrl, "hours"
+            if len(mrls) > 0:
+                mrl = min(mrls)
+                if self.verbose:
+                    print "Smallest cycling interval:", mrl, "hours"
 
             # 2/ or if there is a configured runahead limit, use it.
             rl = self['scheduling']['runahead limit']
@@ -396,11 +398,13 @@ class config( CylcConfigObj ):
                 if self.verbose:
                     print "Configured runahead limit: ", rl, "hours"
                 crl = rl
-            else:
+            elif mrl:
                 crl = 2 * mrl
                 if self.verbose:
                     print "Runahead limit defaulting to:", crl, "hours"
-
+            else:
+                if self.verbose:
+                    print "No runahead limit (no cycling tassks)"
             self['scheduling']['runahead limit'] = crl
 
         self.family_tree = {}
