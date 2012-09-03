@@ -322,7 +322,7 @@ Text Treeview suite control interface.
         expand_button = gtk.ToolButton()
         image = gtk.image_new_from_stock( gtk.STOCK_ADD, gtk.ICON_SIZE_SMALL_TOOLBAR )
         expand_button.set_icon_widget( image )
-        self._set_tooltip( expand_button, "Expand all" )
+        self._set_tooltip( expand_button, "Tree View - Expand all" )
         expand_button.connect( 'clicked', lambda x: self.ttreeview.expand_all() )
         items.append( expand_button )
 
@@ -330,7 +330,7 @@ Text Treeview suite control interface.
         image = gtk.image_new_from_stock( gtk.STOCK_REMOVE, gtk.ICON_SIZE_SMALL_TOOLBAR )
         collapse_button.set_icon_widget( image )        
         collapse_button.connect( 'clicked', lambda x: self.ttreeview.collapse_all() )
-        self._set_tooltip( collapse_button, "Collapse all" )
+        self._set_tooltip( collapse_button, "Tree View - Collapse all" )
         items.append( collapse_button )
      
         self.filter_entry = gtk.Entry()
@@ -340,7 +340,7 @@ Text Treeview suite control interface.
         filter_toolitem.add(self.filter_entry)
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip(filter_toolitem, "Filter tasks by name")
+        tooltip.set_tip(filter_toolitem, "Tree View - Filter tasks by name")
         items.append(filter_toolitem)
 
         self.group_toolbutton = gtk.ToggleToolButton()
@@ -350,7 +350,7 @@ Text Treeview suite control interface.
         self.group_toolbutton.set_icon_widget( g_image )
  
         self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
-        self._set_tooltip( self.group_toolbutton, "Click to group tasks by families" )
+        self._set_tooltip( self.group_toolbutton, "Tree View - Click to group tasks by families" )
         items.append( self.group_toolbutton )
 
         return items

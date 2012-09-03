@@ -167,7 +167,8 @@ Dependency graph suite control interface.
         ungroup_item.set_sensitive( name not in self.x.ungroup )
         ungroup_item.set_label( 'UnGroup' )
         ungroup_item.connect( 'activate', self.grouping, name, False )
-        ungroup_rec_item = gtk.MenuItem( 'Recursive UnGroup' )
+        ungroup_rec_item = gtk.ImageMenuItem( stock_id='ungroup' )
+        ungroup_rec_item.set_label( 'Recursive UnGroup' )
         ungroup_rec_item.set_sensitive( not self.x.ungroup_recursive )
         ungroup_rec_item.connect( 'activate', self.grouping, name, False, True )
 
@@ -241,19 +242,19 @@ Dependency graph suite control interface.
 
     def collapse_subtree( self, w, id ):
         self.x.collapse.append(id)
-        self.menu_expand_item.set_sensitive( self.x.collapse )
+        self.menu_expand_item.set_sensitive( bool(self.x.collapse) )
         self.x.action_required = True
         self.x.best_fit = True
 
     def expand_subtree( self, w, id ):
         self.x.collapse.remove(id)
-        self.menu_expand_item.set_sensitive( self.x.collapse )
+        self.menu_expand_item.set_sensitive( bool(self.x.collapse) )
         self.x.action_required = True
         self.x.best_fit = True
 
     def expand_all_subtrees( self, w ):
         del self.x.collapse[:]
-        self.menu_expand_item.set_sensitive( self.x.collapse )
+        self.menu_expand_item.set_sensitive( bool(self.x.collapse) )
         self.x.action_required = True
         self.x.best_fit = True
 
@@ -283,13 +284,14 @@ Dependency graph suite control interface.
         crop_item.set_active( self.x.crop )
         crop_item.connect( 'activate', self.toggle_crop )
 
-        self.menu_filter_item = gtk.MenuItem( 'Task _Filtering ...' )
+        self.menu_filter_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_CLEAR )
+        self.menu_filter_item.set_label( 'Task _Filtering ...' )
         items.append( self.menu_filter_item )
         self.menu_filter_item.connect( 'activate', self.filter_popup )
 
         self.menu_expand_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_ADD )
         self.menu_expand_item.set_label( '_Expand All Subtrees' )
-        self.menu_expand_item.set_sensitive( self.x.collapse )
+        self.menu_expand_item.set_sensitive( bool(self.x.collapse) )
         items.append( self.menu_expand_item )
         self.menu_expand_item.connect( 'activate', self.expand_all_subtrees )
 
@@ -305,7 +307,7 @@ Dependency graph suite control interface.
         items.append( self.menu_ungroup_item )
         self.menu_ungroup_item.connect( 'activate', self.group_all_families, False )
 
-        key_item = gtk.CheckMenuItem( 'Toggle Graph _Key' )
+        key_item = gtk.CheckMenuItem( '- Toggle Graph _Key' )
         items.append( key_item )
         key_item.set_active( self.x.show_key )
         key_item.connect( 'activate', self.toggle_key )
@@ -327,25 +329,25 @@ Dependency graph suite control interface.
         zoomin_button = gtk.ToolButton( gtk.STOCK_ZOOM_IN )
         zoomin_button.connect( 'clicked', self.xdot.widget.on_zoom_in )
         zoomin_button.set_label( None )
-        self._set_tooltip( zoomin_button, "Zoom In" )
+        self._set_tooltip( zoomin_button, "Graph View - Zoom In" )
         items.append( zoomin_button )
 
         zoomout_button = gtk.ToolButton( gtk.STOCK_ZOOM_OUT )
         zoomout_button.connect( 'clicked', self.xdot.widget.on_zoom_out )
         zoomout_button.set_label( None )
-        self._set_tooltip( zoomout_button, "Zoom Out" )
+        self._set_tooltip( zoomout_button, "Graph View - Zoom Out" )
         items.append( zoomout_button )
         
         zoomfit_button = gtk.ToolButton( gtk.STOCK_ZOOM_FIT )
         zoomfit_button.connect('clicked', self.xdot.widget.on_zoom_fit)
         zoomfit_button.set_label( None )
-        self._set_tooltip( zoomfit_button, "Best Fit" )
+        self._set_tooltip( zoomfit_button, "Graph View - Best Fit" )
         items.append( zoomfit_button )
 
         zoom100_button = gtk.ToolButton( gtk.STOCK_ZOOM_100 )
         zoom100_button.connect('clicked', self.xdot.widget.on_zoom_100)
         zoom100_button.set_label( None )
-        self._set_tooltip( zoom100_button, "Normal Size" )
+        self._set_tooltip( zoom100_button, "Graph View - Normal Size" )
         items.append( zoom100_button )
        
         connect_button = gtk.ToggleButton()
@@ -353,7 +355,7 @@ Dependency graph suite control interface.
                                           gtk.ICON_SIZE_SMALL_TOOLBAR )
         connect_button.set_image( image )
         connect_button.set_relief( gtk.RELIEF_NONE )
-        self._set_tooltip( connect_button, "Click to disconnect" )
+        self._set_tooltip( connect_button, "Graph View - Click to disconnect" )
         connect_item = gtk.ToolItem()
         connect_item.add( connect_button )
         items.append( connect_item )
@@ -362,7 +364,7 @@ Dependency graph suite control interface.
         update_button.connect( 'clicked', self.graph_update )
         update_button.set_label( None )
         update_button.set_sensitive( False )
-        self._set_tooltip( update_button, "Update graph" ) 
+        self._set_tooltip( update_button, "Graph View - Update graph" ) 
         items.append( update_button )
         
         connect_button.connect( 'clicked', self.toggle_graph_disconnect, update_button )
