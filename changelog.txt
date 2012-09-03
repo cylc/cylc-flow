@@ -985,3 +985,6 @@ the smallest cycling interval in the suite.
 simple information to environment variables made available to other
 tasks downstream of them. 
 
++ Fixed a problem with remote command invocation that caused the new ssh
+messaging feature to fail in some (most?) cases.
+
