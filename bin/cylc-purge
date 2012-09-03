@@ -20,9 +20,9 @@ import sys
 if '--use-ssh' in sys.argv[1:]: 
     sys.argv.remove( '--use-ssh' )
     from cylc.remote import remrun
-    remrun().execute( force_required=True )
+    if remrun().execute( force_required=True ):
+        sys.exit(0)
 
-import re
 from cylc.prompt import prompt
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
@@ -58,7 +58,7 @@ Consequently:
  * You can't purge a tree of tasks that has already triggered, because
    the algorithm relies on detecting new triggering.
 Note also the suite runahead limit must be large enough to bridge the
-purge gap, or runahead-held tasks will prevent the full purge occuring.
+purge gap or runahead-held tasks may prevent the purge completing fully.
 
 [development note: post cylc-3.0 we could potentially use the suite
 graph to determine downstream tasks to remove, without doing this

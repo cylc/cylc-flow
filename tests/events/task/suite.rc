@@ -1,5 +1,3 @@
-#!Jinja2
-
 [cylc]
     [[reference test]]
         live mode suite timeout = 1.0
@@ -14,7 +12,8 @@
 cylc message -p WARNING "WARNING - shit happens!"
 """
         [[[remote]]]
-            host = {{ environ['CYLC_TEST_TASK_HOST'] }}
+            # divorce us from the cylc server environment
+            host = localhost
         [[[event hooks]]]
             submitted handler = handler.sh
             started handler = handler.sh

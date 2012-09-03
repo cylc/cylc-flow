@@ -20,10 +20,9 @@ import sys
 if '--use-ssh' in sys.argv[1:]: 
     sys.argv.remove( '--use-ssh' )
     from cylc.remote import remrun
-    remrun().execute()
+    if remrun().execute():
+        sys.exit(0)
 
-import os, re
-import socket
 from cylc.port_scan import scan
 from cylc.hostname import hostname
 from cylc.CylcOptionParsers import cop

@@ -178,15 +178,12 @@ class message(object):
             # The path to cylc/bin on the remote end may be required:
             path = [ os.path.join( os.environ['CYLC_DIR_ON_SUITE_HOST'], 'bin' ) ]
 
-            # Note that remrun().execute() calls sys.exit(0) after successful
-            # remote command invocation (i.e. execution on the local
-            # side stops at that point) but if it determines that host
-            # and owner are actually local it does not do the
-            # reinvocation and just returns rather than exits. This
-            # allows us to drop straight through to local Pyro messaging
-            # (immediately below) in case of inadvertant use of
-            # "ssh messaging = True" for local tasks.
-            remrun().execute( env=env, path=path )
+            if remrun().execute( env=env, path=path ):
+                # Return here if remote re-invocation occurred,
+                # otherwise drop through to local Pyro messaging.
+                # Note: do not sys.exit(0) here as the commands do, it
+                # will cause messaging failures on the remote host. 
+                return
 
         self.print_msg( msg )
         self.send_pyro( msg )

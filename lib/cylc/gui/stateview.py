@@ -639,6 +639,7 @@ class lupdater(threading.Thread):
         return led_ctime
 
     def set_led_headings( self ):
+        self.task_list.sort()
         self.led_headings = ['Tag' ] + self.task_list
         tvcs = self.led_treeview.get_columns()
         labels = []

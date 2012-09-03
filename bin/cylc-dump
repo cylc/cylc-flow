@@ -20,9 +20,9 @@ import sys
 if '--use-ssh' in sys.argv[1:]: 
     sys.argv.remove( '--use-ssh' )
     from cylc.remote import remrun
-    remrun().execute()
+    if remrun().execute():
+        sys.exit(0)
 
-import os
 from cylc import cylc_pyro_client, dump
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
@@ -49,7 +49,7 @@ parser.remove_option("-f" ) # don't need force
 parser.add_option( "-g", "--global", help="Global information only.",
         action="store_true", default=False, dest="global_only" )
 
-parser.add_option( "--tasks", help="Task states only.",
+parser.add_option( "-t", "--tasks", help="Task states only.",
         action="store_true", default=False, dest="tasks_only" )
 
 parser.add_option( "-s", "--sort", help="Task states only; "
@@ -68,6 +68,9 @@ except:  # Trap SystemExit
 display_tasks = True
 display_global = True
 # check for restricted output
+if options.global_only and options.tasks_only:
+    parser.error( '--tasks and --global are incompatible' )
+
 if options.global_only:
     display_tasks = False
 if options.tasks_only:
@@ -86,31 +89,11 @@ except Exception, x:
 [glbl, states, fam_states] = proxy.get_state_summary()
 
 if display_global:
-    print "suite : " + suite
-
-    run_mode = glbl[ 'run_mode' ]
-    if run_mode in ['simulation', 'dummy']:
-        print 'SIM MODE (clock rate: ', glbl[ 'clock_rate' ], ')'
-    elif run_mode == 'dead':
-        print 'STOPPED'
-
-    dt = glbl[ 'last_updated' ]
-    print 'last summary update: ' +  dt.strftime( "%Y/%m/%d %H:%M:%S" )
-
-    if glbl['paused']:
-        print 'PAUSED'
-
-    if glbl['stopping']:
-        print 'STOPPING'
-
-    pausing_at = glbl['will_pause_at']
-    if pausing_at:
-        print 'PAUSING AT ' + pausing_at
-
-    stopping_at = glbl['will_stop_at']
-    if stopping_at:
-        print 'STOPPING AT ' + stopping_at
+    #print 'GLOBALS:'
+    for item in glbl:
+        print item, '=', glbl[item]
 
 if display_tasks:
+    #print 'TASKS:'
     dump_to_stdout( states, options.sort_by_cycle )
 

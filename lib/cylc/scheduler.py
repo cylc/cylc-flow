@@ -21,11 +21,10 @@ from task_types import task, clocktriggered
 from prerequisites.plain_prerequisites import plain_prerequisites
 from hostname import hostname
 from owner import user
-from cycle_time import CycleTimeError
+from cycle_time import ct, CycleTimeError
 import logging
 import datetime
 import port_scan
-from cycle_time import ct
 import pimp_my_logger
 import accelerated_clock 
 import re, os, sys, shutil
@@ -47,6 +46,7 @@ from CylcError import TaskNotFoundError, TaskStateError
 from RuntimeGraph import rGraph
 from RunEventHandler import RunHandler
 from LogDiagnosis import LogSpec
+from receiver import receiver
 
 class SchedulerError( Exception ):
     """
@@ -60,7 +60,7 @@ class SchedulerError( Exception ):
         return repr(self.msg)
 
 class pool(object):
-    def __init__( self, suite, config, pyro, log, run_mode, verbose ):
+    def __init__( self, suite, config, wireless, pyro, log, run_mode, verbose ):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
@@ -68,6 +68,7 @@ class pool(object):
         self.qconfig = config['scheduling']['queues'] 
         self.n_max_sub = config['cylc']['maximum simultaneous job submissions']
         self.assign()
+        self.wireless = wireless
 
     def assign( self, reload=False ):
         # self.myq[taskname] = 'foo'
@@ -200,7 +201,7 @@ class pool(object):
         for task in tasks:
             print
             print 'TASK READY:', task.id 
-            p = task.submit()
+            p = task.submit( self.wireless.get(task.c_time) )
             if p:
                 ps.append( (task,p) ) 
         print
@@ -316,11 +317,11 @@ class scheduler(object):
             self.stop_tag = spec.get_stop_tag()
             if not self.config['cylc']['reference test']['allow task failures']:
                 self.config['cylc']['abort if any task fails'] = True
-            self.abort_on_timeout = True
+            self.config.abort_on_timeout = True
             timeout = self.config['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
             if not timeout:
                 raise SchedulerError, 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test'
-            self.suite_timeout = timeout
+            self.config.suite_timeout = timeout
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
@@ -343,7 +344,11 @@ class scheduler(object):
         self.runahead_limit = self.config['scheduling']['runahead limit']
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
-        self.pool = pool( self.suite, self.config, self.pyro, self.log, self.run_mode, self.verbose )
+        # RECEIVER FOR BROADCAST VARIABLES
+        self.wireless = receiver()
+        self.pyro.connect( self.wireless, 'receiver')
+
+        self.pool = pool( self.suite, self.config, self.wireless, self.pyro, self.log, self.run_mode, self.verbose )
 
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD
         self.load_tasks()
@@ -754,10 +759,15 @@ class scheduler(object):
                 self.spawn()
                 self.dump_state()
 
-                self.suite_state.update( self.pool.get_tasks(), self.clock, \
-                        self.get_oldest_c_time(), self.get_newest_c_time(),
-                        self.paused(), self.will_pause_at(), \
-                        self.remote.halt, self.will_stop_at(), self.blocked )
+                oldest_c_time = self.get_oldest_c_time()
+                self.suite_state.update( self.pool.get_tasks(), self.clock,
+                        oldest_c_time, self.get_newest_c_time(),
+                        self.paused(), self.will_pause_at(), 
+                        self.remote.halt, self.will_stop_at(), self.blocked,
+                        self.runahead_limit )
+
+                # expire old broadcast variables
+                self.wireless.expire( oldest_c_time )
 
                 if self.options.timing:
                     delta = datetime.datetime.now() - main_loop_start_time
@@ -1070,13 +1080,16 @@ class scheduler(object):
     def will_pause_at( self ):
         return self.hold_time
 
-    def get_oldest_unfailed_c_time( self ):
-        # return the cycle time of the oldest task
+    def get_runahead_base( self ):
+        # Return the cycle time from which to compute the runahead
+        # limit: take the oldest task not succeeded or failed (note this
+        # excludes finished tasks and it includes runahead-limited tasks
+        # - consequently "too low" a limit cannot actually stall a suite.
         oldest = '99991228235959'
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
-            if itask.state.is_failed():
+            if itask.state.is_failed() or itask.state.is_succeeded():
                 continue
             #if itask.is_daemon():
             #    # avoid daemon tasks
@@ -1168,7 +1181,7 @@ class scheduler(object):
 
     def release_runahead( self ):
         if self.runahead_limit:
-            ouct = self.get_oldest_unfailed_c_time() 
+            ouct = self.get_runahead_base() 
             for itask in self.pool.get_tasks():
                 if not itask.is_cycling():
                     # TO DO: this test is not needed?
@@ -1201,7 +1214,7 @@ class scheduler(object):
             new_task.log( 'NORMAL', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
             new_task.state.set_status('held')
         elif self.runahead_limit:
-            ouct = self.get_oldest_unfailed_c_time()
+            ouct = self.get_runahead_base()
             foo = ct( new_task.c_time )
             foo.decrement( hours=self.runahead_limit )
             if int( foo.get() ) >= int( ouct ):

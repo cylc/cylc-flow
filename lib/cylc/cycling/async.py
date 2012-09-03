@@ -22,16 +22,15 @@ from cylc.cycling.base import cycler
 class async( cycler ):
     is_async = True
     @classmethod
+
+    def __init__( self, *args ):
+        pass
+
     def offset( cls, tag, n ):
         return str(int(tag)-int(n))
  
-    def __init__( self, *args ):
-        # asynchronous task do not have a runahead limit
-        self.minimum_runahead_limit = 0
-        pass
-
-    def get_def_min_runahead( self ):
-        return self.minimum_runahead_limit
+    def get_min_cycling_interval( self ):
+        return None
 
     def next( self, tag ):
         return str( int(tag) + 1 )

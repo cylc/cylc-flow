@@ -26,6 +26,7 @@ import gtk
 import pygtk
 from cylc.cycle_time import ct
 from cylc.mkdir_p import mkdir_p
+import cylc.dump
 ####pygtk.require('2.0')
 
 def compare_dict_of_dict( one, two ):

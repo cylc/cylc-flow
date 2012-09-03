@@ -377,35 +377,34 @@ class config( CylcConfigObj ):
             raise SuiteConfigError, 'No suite dependency graph defined.'
 
         # Compute runahead limit
-        # 1/ take the largest of the minimum limits from each graph section
+        # 1/ take the smallest of the default limits from each graph section
         if len(self.cyclers) != 0:
             # runahead limit is only relevant for cycling sections
             mrls = []
             mrl = None
+            crl = None
             for cyc in self.cyclers:
-                mrls.append(cyc.get_def_min_runahead())
-            mrl = max(mrls)
-            if self.verbose:
-                print "Largest minimum runahead limit from cycling modules:", mrl, "hours"
-            # Add one hour, which is enough to prevent single-cycle intercycle
-            # dependence from stalling the suite. To Do: find a robust
-            # method to handle any kind of intercycle dependence (is it
-            # ever more than one cycle in practice?)
-            mrl += 1
+                rahd = cyc.get_min_cycling_interval()
+                if rahd:
+                    mrls.append(rahd)
+            if len(mrls) > 0:
+                mrl = min(mrls)
+                if self.verbose:
+                    print "Smallest cycling interval:", mrl, "hours"
 
             # 2/ or if there is a configured runahead limit, use it.
             rl = self['scheduling']['runahead limit']
             if rl:
                 if self.verbose:
                     print "Configured runahead limit: ", rl, "hours"
-                if rl < mrl:
-                    print >> sys.stderr, 'WARNING: runahead limit (' + str(rl) + ') may be too low (<' + str(mrl) + ')'
                 crl = rl
-            else:
-                crl = mrl
+            elif mrl:
+                crl = 2 * mrl
                 if self.verbose:
                     print "Runahead limit defaulting to:", crl, "hours"
-
+            else:
+                if self.verbose:
+                    print "No runahead limit (no cycling tassks)"
             self['scheduling']['runahead limit'] = crl
 
         self.family_tree = {}

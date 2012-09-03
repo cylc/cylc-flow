@@ -1,0 +1,49 @@
+2012/09/03 14:58:05 CRITICAL - Suite starting at 2012-09-03 14:58:05.016546
+2012/09/03 14:58:05 INFO - Log event clock: real time
+2012/09/03 14:58:05 INFO - Run mode: live
+2012/09/03 14:58:05 INFO - Start tag: 2010080100
+2012/09/03 14:58:05 INFO - Stop tag: 2010080400
+2012/09/03 14:58:05 INFO - Cold Start 2010080100
+2012/09/03 14:58:05 INFO - [prep%1] -job submitted
+2012/09/03 14:58:05 INFO - [prep%1] -triggered off []
+2012/09/03 14:58:05 INFO - [prep%1] -prep%1 started
+2012/09/03 14:58:16 INFO - [prep%1] -prep%1 succeeded
+2012/09/03 14:58:16 INFO - [foo%2010080100] -job submitted
+2012/09/03 14:58:16 INFO - [foo%2010080100] -triggered off ['prep%1']
+2012/09/03 14:58:16 INFO - [foo%2010080200] -job submitted
+2012/09/03 14:58:16 INFO - [foo%2010080200] -triggered off []
+2012/09/03 14:58:16 INFO - [foo%2010080300] -HOLDING (runahead limit)
+2012/09/03 14:58:16 INFO - [foo%2010080100] -foo%2010080100 started
+2012/09/03 14:58:16 INFO - [foo%2010080200] -foo%2010080200 started
+2012/09/03 14:58:26 INFO - [foo%2010080100] -foo%2010080100 succeeded
+2012/09/03 14:58:26 INFO - [bar%2010080100] -job submitted
+2012/09/03 14:58:26 INFO - [bar%2010080100] -triggered off ['foo%2010080100']
+2012/09/03 14:58:26 INFO - [foo%2010080200] -foo%2010080200 succeeded
+2012/09/03 14:58:26 INFO - [bar%2010080200] -job submitted
+2012/09/03 14:58:26 INFO - [bar%2010080200] -triggered off ['foo%2010080200']
+2012/09/03 14:58:26 INFO - [bar%2010080300] -HOLDING (runahead limit)
+2012/09/03 14:58:27 INFO - [bar%2010080100] -bar%2010080100 started
+2012/09/03 14:58:27 INFO - [bar%2010080200] -bar%2010080200 started
+2012/09/03 14:58:37 INFO - [bar%2010080100] -bar%2010080100 succeeded
+2012/09/03 14:58:37 INFO - [foo%2010080300] -job submitted
+2012/09/03 14:58:37 INFO - [foo%2010080300] -triggered off []
+2012/09/03 14:58:37 INFO - [foo%2010080400] -HOLDING (runahead limit)
+2012/09/03 14:58:37 INFO - [bar%2010080200] -bar%2010080200 succeeded
+2012/09/03 14:58:37 INFO - [foo%2010080400] -job submitted
+2012/09/03 14:58:37 INFO - [foo%2010080400] -triggered off []
+2012/09/03 14:58:37 INFO - [foo%2010080500] -HOLDING (beyond suite stop cycle) 2010080400
+2012/09/03 14:58:37 INFO - [foo%2010080300] -foo%2010080300 started
+2012/09/03 14:58:37 INFO - [foo%2010080400] -foo%2010080400 started
+2012/09/03 14:58:48 INFO - [foo%2010080300] -foo%2010080300 succeeded
+2012/09/03 14:58:48 INFO - [bar%2010080300] -job submitted
+2012/09/03 14:58:48 INFO - [bar%2010080300] -triggered off ['foo%2010080300']
+2012/09/03 14:58:48 INFO - [foo%2010080400] -foo%2010080400 succeeded
+2012/09/03 14:58:48 INFO - [bar%2010080400] -job submitted
+2012/09/03 14:58:48 INFO - [bar%2010080400] -triggered off ['foo%2010080400']
+2012/09/03 14:58:48 INFO - [bar%2010080500] -HOLDING (beyond suite stop cycle) 2010080400
+2012/09/03 14:58:48 INFO - [bar%2010080300] -bar%2010080300 started
+2012/09/03 14:58:48 INFO - [bar%2010080400] -bar%2010080400 started
+2012/09/03 14:58:58 INFO - [bar%2010080300] -bar%2010080300 succeeded
+2012/09/03 14:58:58 INFO - [bar%2010080400] -bar%2010080400 succeeded
+2012/09/03 14:58:58 WARNING - ALL TASKS FINISHED OR HELD
+2012/09/03 14:58:58 CRITICAL - Suite shutting down at 2012-09-03 14:58:58.630005
