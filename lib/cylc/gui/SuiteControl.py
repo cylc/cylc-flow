@@ -134,6 +134,9 @@ Class to create an information bar.
         eb = gtk.EventBox()
         eb.add( self.status_widget )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
+        hbox.pack_start( eb, False )
+        
+        eb = gtk.EventBox()
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
@@ -175,7 +178,7 @@ Class to create an information bar.
         if mode == self._mode:
             return False
         self._mode = mode
-        self.mode_widget.set_markup( "  " + self._mode + " ")
+        self.mode_widget.set_markup( "  " + self._mode )
 
     def set_state(self, suite_states):
         """Set state text."""
@@ -202,7 +205,7 @@ Class to create an information bar.
         if status == self._status:
             return False
         self._status = status
-        self.status_widget.set_text( self._status )
+        self.status_widget.set_text( " " + self._status )
         self.notify_status_changed( self._status )
 
     def set_stop_summary(self, summary_maps):
