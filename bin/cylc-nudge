@@ -20,7 +20,8 @@ import sys
 if '--use-ssh' in sys.argv[1:]: 
     sys.argv.remove( '--use-ssh' )
     from cylc.remote import remrun
-    remrun().execute()
+    if remrun().execute():
+        sys.exit(0)
 
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop

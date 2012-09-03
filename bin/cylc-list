@@ -16,11 +16,11 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 from cylc.remote import remrun
-remrun().execute()
+if remrun().execute():
+    sys.exit(0)
 
-import os, sys
-import subprocess
 from cylc.CylcOptionParsers import cop
 from cylc.config import config
 from cylc.command_prep import prep_file

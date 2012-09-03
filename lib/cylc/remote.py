@@ -56,8 +56,11 @@ class remrun( object ):
             self.is_remote = False
 
     def execute( self, force_required=False, env={}, path=[] ):
+        # returns False if remote re-invocation is not needed,
+        # True it is is needed and executes successfully
+        # otherwise aborts.
         if not self.is_remote:
-            return
+            return False
 
         if force_required and \
                 '-f' not in sys.argv[1:] and '--force' not in sys.argv[1:]:
@@ -108,5 +111,5 @@ for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE > /dev/null; do
             sys.exit("ERROR: remote command invocation failed %s" % str(e))
         else:
             print >> sys.stderr, 'Remote command re-invocation done'
-            sys.exit(0)
+            return True
 
