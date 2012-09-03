@@ -2054,8 +2054,6 @@ without restarting the suite."""
         self.views_option_menuitems[1].set_submenu( self.views_option_menus[1] )
         self.view_menu.append( self.views_option_menuitems[1] )
 
-        self.view_menu.append( gtk.SeparatorMenuItem() )
-
         start_menu = gtk.Menu()
         start_menu_root = gtk.MenuItem( '_Control' )
         start_menu_root.set_submenu( start_menu )
