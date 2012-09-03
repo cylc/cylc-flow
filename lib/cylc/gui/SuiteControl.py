@@ -2013,6 +2013,7 @@ without restarting the suite."""
         self.views_option_menuitems = [ gtk.MenuItem(  "1 - _Options" ) ]
         self.views_option_menus = [gtk.Menu()]
         self.views_option_menuitems[0].set_submenu( self.views_option_menus[0] )
+        self._set_tooltip( self.views_option_menuitems[0], "Options for primary panel" )
         self.view_menu.append( self.views_option_menuitems[0] )
         
         self.view_menu.append( gtk.SeparatorMenuItem() )
@@ -2049,6 +2050,7 @@ without restarting the suite."""
 
         self.views_option_menuitems.append( gtk.MenuItem(  "2 - O_ptions" ) )
         self.views_option_menus.append( gtk.Menu() )
+        self._set_tooltip( self.views_option_menuitems[1], "Options for secondary panel" )
         self.views_option_menuitems[1].set_submenu( self.views_option_menus[1] )
         self.view_menu.append( self.views_option_menuitems[1] )
 
