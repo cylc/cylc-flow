@@ -96,7 +96,6 @@ class state_summary( Pyro.core.ObjBase ):
     def get_state_summary( self ):
         return [ self.global_summary, self.task_summary, self.family_summary ]
 
-
 def extract_group_state( child_states ):
     """Summarise child states as a group."""
     ordered_states = ['failed', 'held', 'running', 'submitted',
@@ -106,3 +105,4 @@ def extract_group_state( child_states ):
         if state in child_states:
             return state
     return None
+

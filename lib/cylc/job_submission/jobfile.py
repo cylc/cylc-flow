@@ -22,7 +22,7 @@ from copy import deepcopy
 
 class jobfile(object):
 
-    def __init__( self, task_id, cylc_env, task_env, ns_hier,
+    def __init__( self, task_id, cylc_env, task_env, bc_env, ns_hier,
             directive_prefix, directive_connector, directives,
             final_directive, manual_messaging, initial_scripting,
             enviro_scripting, precommand_scripting, command_scripting,
@@ -33,6 +33,7 @@ class jobfile(object):
         self.task_id = task_id
         self.cylc_env = deepcopy(cylc_env)  # deep copy as may be modified below
         self.task_env = task_env
+        self.bc_env = bc_env
         self.directive_prefix = directive_prefix
         self.directive_connector = directive_connector
         self.final_directive = final_directive
@@ -92,7 +93,10 @@ class jobfile(object):
         # because suite bin commands may be used in variable
         # assignment expressions: FOO=$(command args).
         self.write_suite_bin_access()
+
         self.write_environment_2()
+
+        self.write_bc_environment()
 
         self.write_task_started()
 
@@ -143,6 +147,16 @@ class jobfile(object):
             BUFFER = self.FILE
         BUFFER.write( "\n\n# ENVIRONWENT SCRIPTING:\n" )
         BUFFER.write( self.enviro_scripting )
+
+
+    def write_bc_environment( self, BUFFER=None ):
+        if not BUFFER:
+            BUFFER = self.FILE
+        if len( self.bc_env.keys() ) == 0:
+            return
+        BUFFER.write( "\n\n# BROADCAST VARIABLES FROM OTHER TASKS:" )
+        for var, val in self.bc_env.items():
+            BUFFER.write( "\nexport " + var + "=" + str( val ) )
 
     def write_environment_1( self, BUFFER=None ):
         if not BUFFER:
@@ -268,11 +282,13 @@ cd $CYLC_TASK_WORK_PATH""" )
             #| ~
 
     def write_manual_environment( self ):
+        # TO DO: THIS METHOD NEEDS UPDATING FOR CURRENT SECTIONS
         if self.manual_messaging:
             strio = StringIO.StringIO()
             self.write_initial_scripting( strio )
             self.write_environment_1( strio )
             self.write_cylc_access( strio )
+            self.write_bc_environment( strio )
             # now escape quotes in the environment string
             str = strio.getvalue()
             strio.close()

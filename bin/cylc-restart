@@ -76,7 +76,7 @@ the remote host before starting the suite."""
             "to $CYLC_SUITE_INITIAL_CYCLE_TIME in the task environment.",
             action="store_true", default=False, dest="ignore_startcycle" )
 
-        self.parser.add_option( "-t", "--timeout", metavar='SEC',
+        self.parser.add_option( "--pyro-timeout", metavar='SEC',
                 help="Set a Pyro network connection timeout for tasks "
                 "submitted by the suite (this will override the suite "
                 "default if one is configured).", action="store",

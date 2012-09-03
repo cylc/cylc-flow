@@ -290,8 +290,8 @@ class task( Pyro.core.ObjBase ):
     def reset_state_held( self ):
         itask.state.set_status( 'held' )
 
-    def submit( self, dry_run=False ):
-        self.log( 'DEBUG',  'submitting task job script' )
+    def submit( self, bcvars={}, dry_run=False ):
+        self.log( 'DEBUG', 'submitting task job script' )
         # construct the job launcher here so that a new one is used if
         # the task is re-triggered by the suite operator - so it will
         # get new stdout/stderr logfiles and not overwrite the old ones.
@@ -320,7 +320,7 @@ class task( Pyro.core.ObjBase ):
                         self.id, self.initial_scripting,
                         self.enviro_scripting,
                         self.precommand, self.command, self.try_number,
-                        self.postcommand, self.env_vars,
+                        self.postcommand, self.env_vars, bcvars,
                         self.namespace_hierarchy, self.directives,
                         self.manual_messaging, self.logfiles,
                         self.__class__.job_submit_log_directory,

@@ -1,0 +1,27 @@
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 0.5
+
+[scheduling]
+    initial cycle time = 2010080100
+    final cycle time = 2010080400
+    [[dependencies]]
+        graph = "prep"
+        [[[0]]]
+            graph = "prep => foo => bar"
+
+[runtime]
+    [[prep]]
+        command scripting = "cylc broadcast PREP_SAYS JUMP#; sleep 10"
+    [[foo]]
+        command scripting = """
+echo prep said $PREP_SAYS
+cylc broadcast FOO_SAYS FLY_$CYLC_TASK_CYCLE_TIME $CYLC_TASK_CYCLE_TIME
+#sleep 10"""
+    [[bar]]
+        command scripting = """
+echo prep said $PREP_SAYS
+echo foo said $FOO_SAYS
+#sleep 10"""
+

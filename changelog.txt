@@ -981,3 +981,7 @@ succeeded or failed); it defaults to the twice the smallest cycling
 interval in the suite; and it will not stall even if set to less than
 the smallest cycling interval in the suite.
 
++ A new command 'cylc broadcast NAME VALUE' allows tasks to broadcast
+simple information to environment variables made available to other
+tasks downstream of them. 
+

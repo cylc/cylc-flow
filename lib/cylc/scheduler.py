@@ -21,11 +21,10 @@ from task_types import task, clocktriggered
 from prerequisites.plain_prerequisites import plain_prerequisites
 from hostname import hostname
 from owner import user
-from cycle_time import CycleTimeError
+from cycle_time import ct, CycleTimeError
 import logging
 import datetime
 import port_scan
-from cycle_time import ct
 import pimp_my_logger
 import accelerated_clock 
 import re, os, sys, shutil
@@ -47,6 +46,7 @@ from CylcError import TaskNotFoundError, TaskStateError
 from RuntimeGraph import rGraph
 from RunEventHandler import RunHandler
 from LogDiagnosis import LogSpec
+from receiver import receiver
 
 class SchedulerError( Exception ):
     """
@@ -60,7 +60,7 @@ class SchedulerError( Exception ):
         return repr(self.msg)
 
 class pool(object):
-    def __init__( self, suite, config, pyro, log, run_mode, verbose ):
+    def __init__( self, suite, config, wireless, pyro, log, run_mode, verbose ):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
@@ -68,6 +68,7 @@ class pool(object):
         self.qconfig = config['scheduling']['queues'] 
         self.n_max_sub = config['cylc']['maximum simultaneous job submissions']
         self.assign()
+        self.wireless = wireless
 
     def assign( self, reload=False ):
         # self.myq[taskname] = 'foo'
@@ -200,7 +201,7 @@ class pool(object):
         for task in tasks:
             print
             print 'TASK READY:', task.id 
-            p = task.submit()
+            p = task.submit( self.wireless.get(task.c_time) )
             if p:
                 ps.append( (task,p) ) 
         print
@@ -343,7 +344,11 @@ class scheduler(object):
         self.runahead_limit = self.config['scheduling']['runahead limit']
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
-        self.pool = pool( self.suite, self.config, self.pyro, self.log, self.run_mode, self.verbose )
+        # RECEIVER FOR BROADCAST VARIABLES
+        self.wireless = receiver()
+        self.pyro.connect( self.wireless, 'receiver')
+
+        self.pool = pool( self.suite, self.config, self.wireless, self.pyro, self.log, self.run_mode, self.verbose )
 
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD
         self.load_tasks()
@@ -754,11 +759,15 @@ class scheduler(object):
                 self.spawn()
                 self.dump_state()
 
+                oldest_c_time = self.get_oldest_c_time()
                 self.suite_state.update( self.pool.get_tasks(), self.clock,
-                        self.get_oldest_c_time(), self.get_newest_c_time(),
+                        oldest_c_time, self.get_newest_c_time(),
                         self.paused(), self.will_pause_at(), 
                         self.remote.halt, self.will_stop_at(), self.blocked,
                         self.runahead_limit )
+
+                # expire old broadcast variables
+                self.wireless.expire( oldest_c_time )
 
                 if self.options.timing:
                     delta = datetime.datetime.now() - main_loop_start_time

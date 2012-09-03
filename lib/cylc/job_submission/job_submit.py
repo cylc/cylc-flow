@@ -53,11 +53,12 @@ class job_submit(object):
 
     def __init__( self, task_id, initial_scripting, enviro_scripting,
             pre_command, task_command, try_number, post_command,
-            task_env, ns_hier, directives, manual_messaging, logfiles,
-            log_dir, share_dir, work_dir, task_owner, remote_host,
-            remote_cylc_dir, remote_suite_dir, remote_shell_template,
-            remote_log_dir, job_submit_command_template,
-            job_submission_shell, ssh_messaging ):
+            task_env, bcvars, ns_hier, directives, manual_messaging,
+            logfiles, log_dir, share_dir, work_dir, task_owner,
+            remote_host, remote_cylc_dir, remote_suite_dir,
+            remote_shell_template, remote_log_dir,
+            job_submit_command_template, job_submission_shell,
+            ssh_messaging ):
 
         self.try_number = try_number
         self.task_id = task_id
@@ -68,6 +69,7 @@ class job_submit(object):
         self.post_command = post_command
 
         self.task_env = task_env
+        self.bcvars = bcvars
         self.namespace_hierarchy = ns_hier
         self.directives  = directives
         self.logfiles = logfiles
@@ -189,7 +191,7 @@ class job_submit(object):
             return False
 
         jf = jobfile( self.task_id,
-                self.__class__.cylc_env, self.task_env,
+                self.__class__.cylc_env, self.task_env, self.bcvars,
                 self.namespace_hierarchy, self.directive_prefix,
                 self.directive_connector, self.directives,
                 self.final_directive, self.manual_messaging,
