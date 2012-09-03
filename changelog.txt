@@ -988,3 +988,5 @@ tasks downstream of them.
 + Fixed a problem with remote command invocation that caused the new ssh
 messaging feature to fail in some (most?) cases.
 
++ Suite info, view, log, and graphing from gcontrol View menu.
+
