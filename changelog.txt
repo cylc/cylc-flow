@@ -974,3 +974,15 @@ and dummy mode.
 
 + Allow running simulation and dummy mode on the real time clock.
 
++ Bug fix: Sub-suites now load their own passphrase on start-up, not
+that of their parent suite.
+
++ The gcontrol dot view now has hover-over task state information, and
+right-click menus.
+
++ Added a new "environment scripting" task runtime configuration item.
+In the task job script it fits between the cylc-defined environment 
+and the task runtime environment.
+
++ External host selection officially supported (host = selector.sh).
+

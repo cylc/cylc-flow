@@ -106,7 +106,17 @@ that do not actually need the suite definition directory to be installed.
                 # if an explicit location is given, the file must exist
                 raise SecurityError, 'ERROR, file not found on ' + user + '@' + hostname + ': ' + pfile
 
-        # 2/ running tasks: suite definition directory (from the task execution environment)
+        # 2/ cylc commands with suite definition directory from local registration
+        if not self.location and suitedir:
+            pfile = os.path.join( suitedir, 'passphrase' )
+            if os.path.isfile( pfile ):
+                self.set_location( pfile )
+
+        # (2 before 3 else sub-suites load their parent suite's
+        # passphrase on start-up because the "cylc run" command runs in
+        # a parent suite task execution environment).
+
+        # 3/ running tasks: suite definition directory (from the task execution environment)
         if not self.location:
             try:
                 # Test for presence of task execution environment
@@ -146,12 +156,6 @@ that do not actually need the suite definition directory to be installed.
                     else:
                         if os.path.isfile( pfile ):
                             self.set_location( pfile )
-
-        # 3/ cylc commands with suite definition directory from local registration
-        if not self.location and suitedir:
-            pfile = os.path.join( suitedir, 'passphrase' )
-            if os.path.isfile( pfile ):
-                self.set_location( pfile )
 
         # 4/ other allowed locations, as documented above
         if not self.location:

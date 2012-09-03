@@ -1,0 +1,30 @@
+#!Jinja2
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 1.0
+        suite shutdown event handler = log-check.sh
+    
+[scheduling]
+    [[dependencies]]
+        graph = "foo"
+[runtime]
+    [[foo]]
+        command scripting = """
+cylc message -p WARNING "WARNING - shit happens!"
+"""
+        [[[remote]]]
+            host = {{ environ['CYLC_TEST_TASK_HOST'] }}
+        [[[event hooks]]]
+            submitted handler = handler.sh
+            started handler = handler.sh
+            succeeded handler = handler.sh
+            warning handler = handler.sh
+
+            submission timeout handler = handler.sh
+            submission timeout = 0.0001
+
+            execution timeout handler = handler.sh
+            execution timeout = 0.001
+
+

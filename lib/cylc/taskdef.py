@@ -83,11 +83,9 @@ class taskdef(object):
         self.remote_suite_directory = None
         self.remote_log_directory = None
 
-        self.hook_script = None
-        self.hook_events = []
-        self.submission_timeout = None
-        self.execution_timeout = None
-        self.reset_timer = None
+        self.reset_timer = False
+        self.event_handlers = {}
+        self.timeouts = {}
         self.resurrectable = False
 
         self.intercycle = False
@@ -114,6 +112,7 @@ class taskdef(object):
         self.precommand = None
         self.postcommand = None
         self.initial_scripting = None
+        self.enviro_scripting = None
         self.ssh_messaging = False
 
         self.environment = OrderedDict()  # var = value
@@ -198,11 +197,10 @@ class taskdef(object):
         tclass.elapsed_times = []
         tclass.mean_total_elapsed_time = None
 
-        tclass.hook_script = self.hook_script
-        tclass.hook_events = self.hook_events
-        tclass.submission_timeout = self.submission_timeout
-        tclass.execution_timeout  = self.execution_timeout
+        tclass.event_handlers = self.event_handlers
+        tclass.timeouts = self.timeouts
         tclass.reset_timer =self.reset_timer
+
         tclass.resurrectable = self.resurrectable
 
         tclass.remote_host = self.remote_host
@@ -310,6 +308,7 @@ class taskdef(object):
             sself.asyncid_pattern = self.asyncid_pattern
 
             sself.initial_scripting = self.initial_scripting
+            sself.enviro_scripting = self.enviro_scripting
             sself.ssh_messaging = self.ssh_messaging
 
             sself.command = self.command

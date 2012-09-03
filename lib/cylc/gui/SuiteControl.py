@@ -32,6 +32,7 @@ from cylc.gui.SuiteControlTree import ControlTree
 from cylc.gui.util import get_icon, get_image_dir, get_logo
 from cylc import cylc_pyro_client
 from cylc.port_scan import SuiteIdentificationError
+from cylc.state_summary import extract_group_state
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
 from cylc.version import cylc_version
@@ -71,6 +72,7 @@ def run_get_stdout( command, filter=False ):
                 res.append(line)
         return ( True, res )
     return (False, [])
+
 
 class InitData(object):
     """
@@ -184,6 +186,24 @@ Class to create an information bar.
         else:
             self.status_widget.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
         self.notify_status_changed( self._status )
+
+    def set_stop_summary(self, summary_maps):
+        """Set various summary info."""
+        summary = "stopped with '{0}'"
+        glob, task, fam = summary_maps
+        states = [t["state"] for t in task.values() if "state" in t]
+        suite_state = "?"
+        if states:
+            suite_state = extract_group_state(states)
+        summary = summary.format(suite_state)
+        num_failed = 0
+        for task_id in task:
+            if task[task_id].get("state") == "failed":
+                num_failed += 1
+        if num_failed:
+            summary += " {0} failed tasks".format(num_failed)
+        self.set_mode(summary)
+        self.set_time(glob["last_updated"].strftime("%Y/%m/%d %H:%M:%S"))
 
     def set_time(self, time):
         """Set last update text."""

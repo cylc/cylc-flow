@@ -304,24 +304,23 @@ class scheduler(object):
         elif self.options.reftest:
             req = self.config['cylc']['reference test']['required run mode']
             if req and req != self.run_mode:
-                raise SystemExit( 'ERROR: this suite allows only ' + req + ' mode reference tests')
-            if 'shutdown' in self.config.event_config.events:
+                raise SchedulerError, 'ERROR: this suite allows only ' + req + ' mode reference tests'
+            handler = self.config.event_handlers['shutdown']
+            if handler: 
                 print >> sys.stderr, 'WARNING: replacing shutdown event handler for reference test run'
-            else:
-                self.config.event_config.events.append('shutdown')
+            self.config.event_handlers['shutdown'] = self.config['cylc']['reference test']['suite shutdown event handler']
             self.config['cylc']['log resolved dependencies'] = True
-            self.config.event_config.abort_if_shutdown_handler_fails = True
-            self.config.event_config.script = self.config['cylc']['reference test']['suite shutdown event handler']
+            self.config.abort_if_shutdown_handler_fails = True
             spec = LogSpec( self.reflogfile )
             self.start_tag = spec.get_start_tag()
             self.stop_tag = spec.get_stop_tag()
             if not self.config['cylc']['reference test']['allow task failures']:
                 self.config['cylc']['abort if any task fails'] = True
-            self.config.event_config.abort_on_timeout = True
+            self.abort_on_timeout = True
             timeout = self.config['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
             if not timeout:
-                raise SystemExit( 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference runs' )
-            self.config.event_config.timeout = timeout
+                raise SchedulerError, 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test'
+            self.suite_timeout = timeout
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
@@ -333,13 +332,6 @@ class scheduler(object):
         self.log.info( 'Run mode: ' + self.run_mode )
         self.log.info( 'Start tag: ' + str(self.start_tag) )
         self.log.info( 'Stop tag: ' + str(self.stop_tag) )
-
-        if 'startup' in self.config.event_config.events:
-            # we have to wait until the suite is configured before doing this
-            msg = 'Calling startup event handler'
-            print msg
-            self.log.info(msg)
-            RunHandler( 'startup', self.config.event_config.script, self.suite, msg='suite starting' )
 
         if self.start_tag:
             self.start_tag = self.ctexpand( self.start_tag)
@@ -364,11 +356,24 @@ class scheduler(object):
         self.add_to_banner() # must be before configure_environments for self.ict
         self.configure_environments()
 
+        handler = self.config.event_handlers['startup']
+        if handler:
+            # we have to wait until the suite is configured before doing
+            # this; and also after configuring the suite environment
+            if self.config.abort_if_startup_handler_fails:
+                foreground = True
+            else:
+                foreground = False
+            try:
+                RunHandler( 'startup', handler, self.suite, msg='suite starting', fg=foreground )
+            except Exception, x:
+                # Note: test suites depends on this message:
+                print >> sys.stderr, '\nERROR: startup EVENT HANDLER FAILED'
+                raise SchedulerError, x
+
         self.already_timed_out = False
-        if self.config.event_config.timeout:
-            now = datetime.datetime.now()
-            self.suite_timer_start = now
-            print str(self.config.event_config.timeout) + " minute suite timer starts NOW:", str(now)
+        if self.config.suite_timeout:
+            self.set_suite_timer()
 
         self.print_banner()
 
@@ -380,6 +385,11 @@ class scheduler(object):
         self.nudge_timer_start = None
         self.nudge_timer_on = False
         self.auto_nudge_interval = 5 # seconds
+
+    def set_suite_timer( self, reset=False ):
+        now = datetime.datetime.now()
+        self.suite_timer_start = now
+        print str(self.config.suite_timeout) + " minute suite timer starts NOW:", str(now)
 
     def ctexpand( self, tag ):
         # expand truncated cycle times (2012 => 2012010100)
@@ -473,8 +483,7 @@ class scheduler(object):
     def check_not_running_already( self ):
         try:
             # get the suite passphrase
-            pphrase = passphrase( self.suite, self.owner, self.host,
-                    verbose=self.verbose ).get( None, self.suite_dir )
+            pphrase = passphrase( self.suite, self.owner, self.host, verbose=self.verbose ).get( None, self.suite_dir )
         except Exception, x:
             raise SchedulerError( "ERROR: failed to find passphrase for " + self.suite )
         try:
@@ -616,7 +625,6 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
         cylcenv[ 'CYLC_SUITE_REG_NAME' ] = self.suite
         cylcenv[ 'CYLC_SUITE_REG_PATH' ] = RegPath( self.suite ).get_fpath()
-        # replace home dir with literal '$HOME' for the benefit of remote tasks:
         cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner
         cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
         cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port ) # "None" if not using lockserver
@@ -624,7 +632,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( self.ict ) # may be "None"
         cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( self.stop_tag  ) # may be "None"
         cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
-        cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', self.suite_dir )
+        cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_PYRO_TIMEOUT' ] = str( self.config.pyro_timeout )
         cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = self.config['cylc']['logging']['directory']
         job_submit.cylc_env = cylcenv
@@ -767,7 +775,7 @@ class scheduler(object):
             # incoming task messages set task.task.state_changed to True
             self.pyro.handleRequests(timeout=1)
 
-            if self.config.event_config.timeout:
+            if self.config.suite_timeout:
                 self.check_suite_timer()
 
             # SHUT DOWN IF ALL TASKS ARE SUCCEEDED OR HELD
@@ -867,17 +875,27 @@ class scheduler(object):
         if self.already_timed_out:
             return
         now = datetime.datetime.now()
-        timeout = self.suite_timer_start + datetime.timedelta( minutes=self.config.event_config.timeout )
+        timeout = self.suite_timer_start + datetime.timedelta( minutes=self.config.suite_timeout )
+        handler = self.config.event_handlers['timeout']
         if now > timeout:
-            self.already_timed_out = True
-            self.log.warning( "Suite timed out (" + str(self.config.event_config.timeout) + " minutes)" )
-            if 'timeout' in self.config.event_config.events:
-                self.log.warning( 'Calling suite timeout event handler' )
-                message = 'Suite timed out after ' + str( self.config.event_config.timeout) + ' minutes' 
-                RunHandler( 'timeout', self.config.event_config.script, self.suite, msg=message )
-            if self.config.event_config.abort_on_timeout:
-                print >> sys.stderr, 'Abort on suite timeout is set'
-                raise SchedulerError, 'Aborting on suite timeout'
+            message = 'Suite timed out after ' + str( self.config.suite_timeout) + ' minutes' 
+            self.log.warning( message )
+            if handler:
+                # a handler is defined
+                self.already_timed_out = True
+                if self.config.abort_if_timeout_handler_fails:
+                    foreground = True
+                else:
+                    foreground = False
+                try:
+                    RunHandler( 'timeout', handler, self.suite, msg='suite starting', fg=foreground )
+                except Exception, x:
+                    # Note: tests suites depend on the following message:
+                    print >> sys.stderr, '\nERROR: timeout EVENT HANDLER FAILED'
+                    raise SchedulerError, x
+
+            if self.config.abort_on_timeout:
+                raise SchedulerError, 'Abort on suite timeout is set'
 
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
@@ -887,8 +905,13 @@ class scheduler(object):
                     itask.sim_time_check()
 
         if task.task.state_changed:
-            task.task.state_changed = False
             process = True
+            task.task.state_changed = False
+            # a task changing state indicates new suite activity
+            # so reset the suite timer.
+            if self.config.suite_timeout and self.config.reset_timer:
+                self.set_suite_timer()
+
         elif self.remote.process_tasks:
             # reset the remote control flag
             self.remote.process_tasks = False
@@ -927,6 +950,7 @@ class scheduler(object):
     def shutdown( self, message='' ):
         # called by main command
         print "\nSUITE SHUTTING DOWN"
+        self.dump_state()
         if self.use_lockserver:
             # do this last
             suitename = self.suite
@@ -949,17 +973,21 @@ class scheduler(object):
 
         print message
 
-        if 'shutdown' in self.config.event_config.events:
-            if self.config.event_config.abort_if_shutdown_handler_fails:
+        handler = self.config.event_handlers['shutdown']
+        if handler:
+            if self.config.abort_if_shutdown_handler_fails:
                 foreground = True
-                self.log.warning('Calling shutdown handler in the foreground')
             else:
                 foreground = False
             try:
-                RunHandler( 'shutdown', self.config.event_config.script, self.suite, msg=message, fg=foreground )
+                RunHandler( 'shutdown', handler, self.suite, msg=message, fg=foreground )
             except Exception, x:
                 if self.options.reftest:
-                    print '\nERROR: SUITE REFERENCE TEST FAILED' 
+                    print >> sys.stderr, '\nERROR: SUITE REFERENCE TEST FAILED' 
+                    raise SchedulerError, x
+                else:
+                    # Note: tests suites depend on the following message:
+                    print >> sys.stderr, '\nERROR: shutdown EVENT HANDLER FAILED' 
                     raise
             else:
                 print '\nSUITE REFERENCE TEST PASSED'
@@ -1041,24 +1069,6 @@ class scheduler(object):
 
     def will_pause_at( self ):
         return self.hold_time
-
-    def get_oldest_waiting_or_running_or_submitted_c_time( self ):
-        # return the cycle time of the oldest waiting or running task
-        # ('or running' to handle a cycling single task suite - they all
-        # go off at once so 'waiting' won't constrain with runahead
-        # limit)
-        oldest = '99991228235959'
-        for itask in self.pool.get_tasks():
-            if not itask.state.is_waiting() and \
-                    not itask.state.is_running() and \
-                    not itask.state.is_submitted():
-                continue
-            #if itask.is_daemon():
-            #    # avoid daemon tasks
-            #    continue
-            if int( itask.c_time ) < int( oldest ):
-                oldest = itask.c_time
-        return oldest
 
     def get_oldest_unfailed_c_time( self ):
         # return the cycle time of the oldest task
@@ -1159,7 +1169,6 @@ class scheduler(object):
     def release_runahead( self ):
         if self.runahead_limit:
             ouct = self.get_oldest_unfailed_c_time() 
-            #ouct = self.get_oldest_waiting_c_time() 
             for itask in self.pool.get_tasks():
                 if not itask.is_cycling():
                     # TO DO: this test is not needed?
@@ -1192,7 +1201,7 @@ class scheduler(object):
             new_task.log( 'NORMAL', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
             new_task.state.set_status('held')
         elif self.runahead_limit:
-            ouct = self.get_oldest_waiting_or_running_or_submitted_c_time() 
+            ouct = self.get_oldest_unfailed_c_time()
             foo = ct( new_task.c_time )
             foo.decrement( hours=self.runahead_limit )
             if int( foo.get() ) >= int( ouct ):

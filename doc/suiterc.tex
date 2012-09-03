@@ -187,28 +187,20 @@ are logged by cylc.
 \subsubsection[{[[}event hooks{]]}]{[cylc] $\rightarrow$ [[event hooks]]}
 \label{SuiteEventHandling}
 
-Cylc can call a nominated handler when certain suite events occur.
-Event handlers can send an email or an SMS, call a pager, and so on; or
-intervene in the operation of their own suite using cylc commands. The
-command \lstinline=cylc [hook] email-suite= is a ready-made suite event
-handler.
-
-A single script can be nominated to handle a list of chosen events, and
-the event name is passed to the handler to allow it to distinguish
-between them.
+Cylc has internal ``hooks'' onto which you can hang handler scripts
+whenever certain suite or task events occur. This section is for
+configuring the suite event hooks. Event handlers can send an email or
+an SMS, call a pager, and so on; or intervene in the operation of their
+own suite using cylc commands. 
+The command \lstinline=cylc [hook] email-suite= is a ready-made suite
+event handler.
 
 Custom suite event handlers can be located in the suite bin directory.
-They are passed the following arguments by cylc:
-
+They are called by cylc as follows:
 \begin{lstlisting}
-<hook-script> EVENT SUITE MESSAGE
+<handler> EVENT SUITE MESSAGE
 \end{lstlisting}
-where EVENT is one of the following strings:
-\begin{myitemize}
-    \item `startup' - the suite started running 
-    \item `shutdown' - the suite stopped, normally or not
-    \item `timeout' - the suite timed out
-\end{myitemize}
+where EVENT is the event name (see below), SUITE is the suite name, and 
 MESSAGE, if provided, describes what has happened.
 
 {\em Note that event handlers are called by cylc itself} so if you wish
@@ -217,50 +209,42 @@ to pass them additional information via the environment you must use
 (suite-level variables - \lstinline=$CYLC_SUITE_INITIAL_CYCLE_TIME=
 etc.\ - are exported into the suite environment, however).
 
-To configure suite timeout handling put `timeout' in the event list and
-specify corresponding timeout values in minutes for the timeout item
-below.
-
 See also Section~\ref{TaskEventHandling} for task event hooks.
 
-\paragraph[events]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ events }
+\paragraph[script]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ EVENT handler}
 
-The list of events to handle, as documented for EVENT just above.
+The event handler to call when the EVENT event occurs. Repeat this
+section for each of the following suite events that you wish to handle:
 \begin{myitemize}
-    \item {\em type:} list of strings
-    \item {\em default:} (none)
+    \item `startup' - the suite started running 
+    \item `shutdown' - the suite stopped, normally or not
+    \item `timeout' - the suite timed out
 \end{myitemize}
 
-
-\paragraph[script]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ script}
-
-The handler script to call when one of the nominated events occurs.
-
+Suite event handlers can be located in the suite bin directory.
 \begin{myitemize}
-    \item {\em type:} string
-    \item {\em default:} (none)
+    \item {\em type:} string (the event handler)
+    \item {\em default:} None
+    \item {\em example:} startup handler = my-handler.sh
 \end{myitemize}
 
 \paragraph[timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ timeout}
 
-If a timeout is set and the timeout event is handled the event
+If a timeout is set and the timeout event is handled, the event
 handler will be called if the suite times out before it finishes.
-See also ``abort on timeout'', below.
+The timer is set initially at suite start up. 
 
 \begin{myitemize}
     \item {\em type:} float (minutes)
     \item {\em default:} (none)
 \end{myitemize}
 
+\paragraph[reset timer]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ reset timer}
 
-\paragraph[abort if shutdown handler fails]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort if shutdown handler fails}
-
-Cylc does not normally care whether a shutdown event handler, executed just
-prior to shutting down, succeeds or fails; but if this is turned on 
-cylc will execute the shutdown handler in the foreground and the suite
-will abort with error status if the handler script fails. This feature
-is used by cylc test suites that diagnose their own logs with shutdown
-handlers.
+If this is set to \lstinline=True= the suite timer will continually
+reset after any task changes state, so you can time out after some
+interval since the last activity occured rather than on absolute suite
+execution time.
 
 \begin{myitemize}
     \item {\em type:} boolean
@@ -270,9 +254,19 @@ handlers.
 \paragraph[abort on timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort on timeout}
 
 If a suite timer is set (above) this will cause the suite to abort with
-error status if the suite times out while still running. This feature
-is used by cylc test suites to catch any error that prevents a suite
-from completing.
+error status if the suite times out while still running.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False
+\end{myitemize}
+
+\paragraph[abort if startup handler fails]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort if EVENT handler fails}
+
+Cylc does not normally care whether an event handler succeeds or fails,
+but if this is turned on the EVENT handler will be executed in the
+foreground (which will block the suite while it is running) and the
+suite will abort if the handler fails.
 
 \begin{myitemize}
     \item {\em type:} boolean
@@ -902,6 +896,19 @@ it can has access to the task execution environment.
 \item {\em example:} \lstinline@initial scripting = "echo Hello World"@
 \end{myitemize}
 
+\paragraph[environment scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ environment scripting}
+
+Environment scripting is inserted into the task job script between
+the cylc-defined environment (suite and task identity, etc.) and the 
+user-defined task runtime environment - i.e.\ it has access to the 
+cylc environment, and the task environment has access to the results of
+this scripting.
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} (none)
+\item {\em example:} \lstinline@environment scripting = "echo Hello World"@
+\end{myitemize}
+
 \paragraph[command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ command scripting}
 
 The scripting to execute when the associated task is ready to run - this
@@ -1164,10 +1171,11 @@ to be modified slightly to allow use of the C shell.
 
 \paragraph[{[[[}remote{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]]}
 
-Remote hosting configuration for tasks that run on hosts other than the
-suite host. If a remote host is specified cylc will attempt to execute
-the task on that host by passwordless ssh. Cylc must be installed on 
-remote task hosts, but of the external software dependencies only Pyro 
+Configuration for tasks that run on a different host than the one the suite 
+is running on. If a remote host is specified cylc will use passwordless
+ssh to submit the task, using the specified job submission method, on
+that host. Cylc must be installed on remote task hosts, but of the
+external software dependencies only Pyro 
 is required there (actually, not even that if {\em ssh messaging} is
 used; see below). Passwordless ssh must be configured between the local
 suite owner on the suite host, and the task owner on the remote task
@@ -1175,11 +1183,20 @@ host.
 
 \subparagraph[host]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ host}
 
-The remote host for this task or family.
+The remote host for this task or family. A literal host name can be
+specified, or a shell back-tick expression to execute an external
+command that writes a hostname to stdout.
 
 \begin{myitemize}
 \item {\em type:} string (a valid hostname on the network)
 \item {\em default:} (none)
+\item {\em examples:}
+    \begin{myitemize}
+        \item short name: \lstinline@host = foo@
+        \item fully qualified name: \lstinline@host = foo.bar.baz@
+        \item external host selector: \lstinline@host = $(host-selector.sh)@ 
+        \item external host selector: \lstinline@host = `host-selector.sh)`@ (back-tick version)
+    \end{myitemize}
 \end{myitemize}
 
 \subparagraph[owner]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ owner}
@@ -1705,14 +1722,14 @@ Jinja2 template processor (Section~\ref{Jinja2}).
 \subsection{Default Suite Configuration}
 \label{SuiteDefaults}
 
-Cylc provides, via the suite.rc spec file, sensible default values for
-many configuration items so that users may not need to explicitly
-configure log directories and the like. The defaults are sufficient, in
-fact, to define simple test suites by dependency graph alone
-(command scripting, for example, defaults to printing a
-simple message, sleeping for ten seconds, and then exiting). The
-following listing shows all current legal items and any default values:
+Cylc provides, via \lstinline=$CYLC_DIR/conf/suiterc.spec=, sensible
+default values for many configuration items so that most users will not
+need to explicitly configure log directories and so on. The defaults are
+sufficient, in fact, to allow test suites defined by dependency graph
+alone (command scripting, for example, defaults to printing a simple
+message, sleeping for a few seconds, and then exiting). 
 
-\lstset{language=suiterc}
-\lstinputlisting{../conf/suiterc.defaults}
-\lstset{language=transcript}
+The \lstinline=cylc get-config= command parses a suite definition and
+retrieves configuration values for individual items, sections, or entire
+suites.
+

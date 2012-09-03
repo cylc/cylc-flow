@@ -54,11 +54,19 @@ description = string( default="No description provided" )
     [[environment]]
         __many__ = string
     [[event hooks]]
-        script = string( default=None )
-        events = force_list( default=list() )
+        startup handler = string( default=None )
+        timeout handler = string( default=None )
+        shutdown handler = string( default=None ) 
         timeout = float( default=None )
+        reset timer = boolean( default=False )
+        abort if startup handler fails = boolean( default=False )
         abort if shutdown handler fails = boolean( default=False )
+        abort if timeout handler fails = boolean( default=False )
         abort on timeout = boolean( default=False )
+    [[simulation mode]]
+        disable suite event hooks = boolean( default=True )
+    [[dummy mode]]
+        disable suite event hooks = boolean( default=True )
     [[accelerated clock]]
         disable = boolean( default=False )
         rate = integer( default=10 )
@@ -103,6 +111,7 @@ description = string( default="No description provided" )
         inherit = string( default=None )
         description = string( default="No description provided" )
         initial scripting = string( default=None )
+        environment scripting = string( default=None )
         command scripting = string( default='echo Default command scripting; sleep $(cylc rnd 1 16)')
         retry delays = force_list( default=list() )
         pre-command scripting = string( default=None )
@@ -116,13 +125,13 @@ description = string( default="No description provided" )
         [[[simulation mode]]]
             run time range = list( default=list(1,16))
             simulate failure = boolean( default=False )
-            disable event hooks = boolean( default=True )
+            disable task event hooks = boolean( default=True )
             disable retries = boolean( default=True )
         [[[dummy mode]]]
             command scripting = string( default='echo Dummy command scripting; sleep $(cylc rnd 1 16)')
             disable pre-command scripting = boolean( default=True )
             disable post-command scripting = boolean( default=True )
-            disable event hooks = boolean( default=True )
+            disable task event hooks = boolean( default=True )
             disable retries = boolean( default=True )
         [[[job submission]]]
             method = string( default=background )
@@ -139,10 +148,21 @@ description = string( default="No description provided" )
             work directory = string( default=None )
             ssh messaging = boolean( default=False )
         [[[event hooks]]]
-            script = string( default=None )
-            events = force_list( default=list() )
+            submitted handler = string( default=None )
+            started handler = string( default=None )
+            succeeded handler = string( default=None )
+            failed handler = string( default=None )
+
+            submission failed handler = string( default=None )
+            warning handler = string( default=None )
+            retry handler = string( default=None )
+
+            submission timeout handler = string( default=None )
             submission timeout = float( default=None )
+
+            execution timeout handler = string( default=None )
             execution timeout = float( default=None )
+
             reset timer = boolean( default=False )
         [[[environment]]]
             __many__ = string
@@ -169,10 +189,14 @@ description = string( default="No description provided" )
         [[[simulation mode]]]
             run time range = list( default=list() )
             simulate failure = boolean( default=None )
+            disable task event hooks = boolean( default=None )
+            disable retries = boolean( default=None )
         [[[dummy mode]]]
             command scripting = string( default=None )
             disable pre-command scripting = boolean( default=None )
             disable post-command scripting = boolean( default=None )
+            disable task event hooks = boolean( default=None )
+            disable retries = boolean( default=None )
         [[[job submission]]]
             method = string( default=None )
             command template = string( default=None )
@@ -189,11 +213,22 @@ description = string( default="No description provided" )
             work directory = string( default=None )
             ssh messaging = boolean( default=None )
         [[[event hooks]]]
-            script = string( default=None )
-            events = force_list( default=list() )
+            submitted handler = string( default=None )
+            started handler = string( default=None )
+            succeeded handler = string( default=None )
+            failed handler = string( default=None )
+
+            submission failed handler = string( default=None )
+            warning handler = string( default=None )
+            retry handler = string( default=None )
+
+            submission timeout handler = string( default=None )
             submission timeout = float( default=None )
+
+            execution timeout handler = string( default=None )
             execution timeout = float( default=None )
-            reset timer = boolean( default=False )
+
+            reset timer = boolean( default=None )
         [[[environment]]]
             __many__ = string
         [[[directives]]]

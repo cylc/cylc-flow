@@ -86,7 +86,7 @@ class remrun( object ):
         print >> sys.stderr, "Remote command re-invocation for", user_at_host
         if self.verbose:
             print '|' + ' '.join(command) + '\\'
-            print '|  for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE; done;' + '\\'
+            print '|  for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE > /dev/null; done;' + '\\'
             if len( env.keys() ) != 0:
                 print '|  %s ' % (' '.join( item + '=' + value for item, value in env.items())) + '\\'
             print '|  cylc %s %s' % ( name, ' '.join( '"' + arg + '"' for arg in self.args))
@@ -94,7 +94,7 @@ class remrun( object ):
         try:
             popen = subprocess.Popen( command, stdin=subprocess.PIPE )
             popen.communicate( """
-for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE; done
+for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE > /dev/null; done
 %s cylc %s %s""" % (' '.join( item + '=' + value for item, value in env.items()),\
             name, ' '.join( '"' + arg + '"' for arg in self.args)) )
             # above: args quoted to avoid interpretation by the shell, 
