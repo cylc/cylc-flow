@@ -298,7 +298,8 @@ Text Treeview suite control interface.
     def get_menuitems( self ):
         """Return the menu items specific to this view."""
         items = []
-        autoex_item = gtk.MenuItem( 'Toggle _Auto-Expand Tree' )
+        autoex_item = gtk.CheckMenuItem( 'Toggle _Auto-Expand Tree' )
+        autoex_item.set_active( self.t.autoexpand )
         items.append( autoex_item )
         autoex_item.connect( 'activate', self.toggle_autoexpand )
 
@@ -321,7 +322,7 @@ Text Treeview suite control interface.
         expand_button = gtk.ToolButton()
         image = gtk.image_new_from_stock( gtk.STOCK_ADD, gtk.ICON_SIZE_SMALL_TOOLBAR )
         expand_button.set_icon_widget( image )
-        self._set_tooltip( expand_button, "Expand all" )
+        self._set_tooltip( expand_button, "Tree View - Expand all" )
         expand_button.connect( 'clicked', lambda x: self.ttreeview.expand_all() )
         items.append( expand_button )
 
@@ -329,7 +330,7 @@ Text Treeview suite control interface.
         image = gtk.image_new_from_stock( gtk.STOCK_REMOVE, gtk.ICON_SIZE_SMALL_TOOLBAR )
         collapse_button.set_icon_widget( image )        
         collapse_button.connect( 'clicked', lambda x: self.ttreeview.collapse_all() )
-        self._set_tooltip( collapse_button, "Collapse all" )
+        self._set_tooltip( collapse_button, "Tree View - Collapse all" )
         items.append( collapse_button )
      
         self.filter_entry = gtk.Entry()
@@ -339,29 +340,17 @@ Text Treeview suite control interface.
         filter_toolitem.add(self.filter_entry)
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip(filter_toolitem, "Filter tasks by name")
+        tooltip.set_tip(filter_toolitem, "Tree View - Filter tasks by name")
         items.append(filter_toolitem)
 
         self.group_toolbutton = gtk.ToggleToolButton()
         self.group_toolbutton.set_active( self.t.should_group_families )
 
-        ### GTK.IMAGE_NEW_FROM_FILE() REQUIRES PYGTK 2.12: 
-        ## root_img_dir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
-        ## g_image = gtk.image_new_from_file( root_img_dir + '/group.png' )
-        ## self.group_toolbutton.set_icon_widget( g_image )
-        ## FOR BETTER PYGTK COMPATIBILITY WE CAN DO THIS:
-        # create a new stock icon for the 'group' action
-        root_img_dir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
-        factory = gtk.IconFactory()
-        pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/group.png' )
-        iconset = gtk.IconSet(pixbuf)
-        factory.add( 'group', iconset )
-        factory.add_default()
         g_image = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_SMALL_TOOLBAR )
         self.group_toolbutton.set_icon_widget( g_image )
  
         self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
-        self._set_tooltip( self.group_toolbutton, "Click to group tasks by families" )
+        self._set_tooltip( self.group_toolbutton, "Tree View - Click to group tasks by families" )
         items.append( self.group_toolbutton )
 
         return items

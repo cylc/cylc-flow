@@ -225,7 +225,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
               "dot": ControlLED,
               "text": ControlTree }
     VIEW_DESC = { "graph": "Dependency graph view",
-                  "dot": "DOT summary view",
+                  "dot": "Dot summary view",
                   "text": "Detailed list view" }
     VIEW_ICON_PATHS = { "graph": "/icons/tab-graph.xpm",
                         "dot": "/icons/tab-led.xpm",
@@ -238,6 +238,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         gobject.threads_init()
         
         self.cfg = InitData( suite, pphrase, owner, host, port, cylc_tmpdir, pyro_timeout )
+
+        self.setup_icons()
 
         self.view_layout_horizontal = False
         #try:
@@ -270,7 +272,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox.pack_start( self.menu_bar, False )
 
         self.create_tool_bar()
-        bigbox.pack_start( self.tool_bar, False )
+        bigbox.pack_start( self.tool_bar_box, False, False )
         self.create_info_bar()
 
         self.views_parent = gtk.VBox()
@@ -284,6 +286,19 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.window.add( bigbox )
         self.window.show_all()
 
+    def setup_icons( self ):
+        """Set up some extra stock icons for better PyGTK compatibility."""
+        # create a new stock icon for the 'group' action
+        root_img_dir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
+        pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/group.png' )
+        grp_iconset = gtk.IconSet(pixbuf)
+        pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/ungroup.png' )
+        ungrp_iconset = gtk.IconSet(pixbuf)
+        factory = gtk.IconFactory()
+        factory.add( 'group', grp_iconset )
+        factory.add( 'ungroup', ungrp_iconset )
+        factory.add_default()
+
     def setup_views( self, startup_views=[] ):
         """Create our view containers and the startup views."""
         num_views = 2
@@ -291,12 +306,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             startup_views = [ self.DEFAULT_VIEW ]
         self.view_containers = []
         self.current_views = []
-        self.current_view_menuitems = []
         self.current_view_toolitems = []
         for i in range(num_views):
             self.view_containers.append(gtk.HBox())
             self.current_views.append(None)
-            self.current_view_menuitems.append([])
             self.current_view_toolitems.append([])
         self.views_parent.pack_start( self.view_containers[0],
                                       expand=True, fill=True )
@@ -420,8 +433,14 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     def _cb_change_view_align( self, widget ):
         # This is the view menu callback to toggle side-by-side layout.
-        if hasattr( widget, "get_active" ):
-            self.change_view_layout( widget.get_active() )
+        horizontal = widget.get_active()
+        if self.view_layout_horizontal == horizontal:
+            return False
+        self.change_view_layout( widget.get_active() )
+        if widget == self.layout_toolbutton:
+            self.view1_align_item.set_active( horizontal )
+        else:
+            self.layout_toolbutton.set_active( horizontal )
 
     def switch_view( self, new_viewname, view_num=0 ):
         """Remove a view instance and replace with a different one."""
@@ -478,37 +497,37 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         container.pack_start( view_widgets,
                               expand=True, fill=True )
         # Handle menu
-        for view_menuitems in self.current_view_menuitems:
-            for item in view_menuitems:
-                self.view_menu.remove( item )
+        menu = self.views_option_menus[view_num]
+        for item in menu.get_children():
+            menu.remove( item )
         new_menuitems = view.get_menuitems()
-        if new_menuitems:
-            new_menuitems.insert( 0, gtk.SeparatorMenuItem() )
-        self.current_view_menuitems[view_num] = new_menuitems
-        for menuitems in self.current_view_menuitems:
-            for item in menuitems:
-                self.view_menu.append( item )
+        for item in new_menuitems:
+            menu.append( item )
+        self.views_option_menuitems[view_num].set_sensitive( True )
         # Handle toolbar
-        for view_toolitems in self.current_view_toolitems:
+        for view_toolitems in self.current_view_toolitems[view_num]:
             for item in view_toolitems:
-                self.tool_bar.remove( item )
+                self.tool_bars[view_num].remove( item )
         new_toolitems = view.get_toolitems()
         if new_toolitems:
-            new_toolitems.insert( 0, gtk.SeparatorToolItem() ) 
+            index = self.tool_bars[view_num].get_children().index(
+                              self.view_toolitems[view_num])
+        for toolitem in reversed(new_toolitems):
+            self.tool_bars[view_num].insert( toolitem, index + 1)
         self.current_view_toolitems[view_num] = new_toolitems
-        for toolitems in self.current_view_toolitems:
-            for item in toolitems:
-                self.tool_bar.insert( item, -1 )
         self.window.show_all()
 
     def remove_view( self, view_num ):
         """Remove a view instance."""
         self.current_views[view_num].stop()
         self.current_views[view_num] = None
-        while len(self.current_view_menuitems[view_num]):
-            self.view_menu.remove( self.current_view_menuitems[view_num].pop() )
+        menu = self.views_option_menus[view_num]
+        for item in menu.get_children():
+            menu.remove( item )
+        self.views_option_menuitems[view_num].set_sensitive( False )
         while len(self.current_view_toolitems[view_num]):
-            self.tool_bar.remove( self.current_view_toolitems[view_num].pop() )    
+            self.tool_bars[view_num].remove(
+                      self.current_view_toolitems[view_num].pop() )
         if view_num == 1:
             parent = self.view_containers[0].get_parent()
             parent.remove( self.view_containers[0] )
@@ -886,11 +905,13 @@ The cylc forecast suite metascheduler.
 
         items = []
 
-        js0_item = gtk.MenuItem( 'View Task Info' )
+        js0_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DIALOG_INFO )
+        js0_item.set_label( 'View Task Info' )
         items.append( js0_item )
         js0_item.connect( 'activate', self.view_task_descr, task_id )
 
-        js_item = gtk.MenuItem( 'View Job Script' )
+        js_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DND )
+        js_item.set_label( 'View Job Script' )
         items.append( js_item )
         js_item.connect( 'activate', self.view_task_info, task_id, True )
 
@@ -904,57 +925,71 @@ The cylc forecast suite metascheduler.
 
         items.append( gtk.SeparatorMenuItem() )
 
-        trigger_now_item = gtk.MenuItem( 'Trigger' )
+        trigger_now_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_MEDIA_PLAY )
+        trigger_now_item.set_label( 'Trigger' )
         items.append( trigger_now_item )
         trigger_now_item.connect( 'activate', self.trigger_task_now, task_id )
 
-        reset_ready_item = gtk.MenuItem( 'Reset to "ready"' )
-        items.append( reset_ready_item )
+        reset_menu = gtk.Menu()
+        reset_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_CONVERT )
+        reset_item.set_label( "Reset task state" )
+        reset_item.set_submenu( reset_menu )
+        items.append( reset_item )
+        
+        reset_ready_item = gtk.MenuItem('Reset to "ready"' )
+        reset_menu.append( reset_ready_item )
         reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
 
         reset_waiting_item = gtk.MenuItem( 'Reset to "waiting"' )
-        items.append( reset_waiting_item )
+        reset_menu.append( reset_waiting_item )
         reset_waiting_item.connect( 'activate', self.reset_task_state, task_id, 'waiting' )
 
         reset_succeeded_item = gtk.MenuItem( 'Reset to "succeeded"' )
-        items.append( reset_succeeded_item )
+        reset_menu.append( reset_succeeded_item )
         reset_succeeded_item.connect( 'activate', self.reset_task_state, task_id, 'succeeded' )
 
         reset_failed_item = gtk.MenuItem( 'Reset to "failed"' )
-        items.append( reset_failed_item )
+        reset_menu.append( reset_failed_item )
         reset_failed_item.connect( 'activate', self.reset_task_state, task_id, 'failed' )
 
-        spawn_item = gtk.MenuItem( 'Force spawn' )
+        spawn_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_ADD )
+        spawn_item.set_label( 'Force spawn' )
         items.append( spawn_item )
         spawn_item.connect( 'activate', self.reset_task_state, task_id, 'spawn' )
 
         items.append( gtk.SeparatorMenuItem() )
 
-        stoptask_item = gtk.MenuItem( 'Hold' )
+        stoptask_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_MEDIA_PAUSE )
+        stoptask_item.set_label( 'Hold' )
         items.append( stoptask_item )
         stoptask_item.connect( 'activate', self.hold_task, task_id, True )
 
-        unstoptask_item = gtk.MenuItem( 'Release' )
+        unstoptask_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_MEDIA_PLAY )
+        unstoptask_item.set_label( 'Release' )
         items.append( unstoptask_item )
         unstoptask_item.connect( 'activate', self.hold_task, task_id, False )
 
         items.append( gtk.SeparatorMenuItem() )
     
-        kill_item = gtk.MenuItem( 'Remove after spawning' )
+        kill_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_CLEAR )
+        kill_item.set_label( 'Remove after spawning' )
         items.append( kill_item )
         kill_item.connect( 'activate', self.kill_task, task_id )
 
-        kill_nospawn_item = gtk.MenuItem( 'Remove without spawning' )
+        kill_nospawn_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_CLEAR )
+        kill_nospawn_item.set_label( 'Remove without spawning' )
         items.append( kill_nospawn_item )
         kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
 
-        purge_item = gtk.MenuItem( 'Remove Tree (Recursive Purge)' )
+        purge_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DELETE )
+        purge_item.set_label( 'Remove Tree (Recursive Purge)' )
         items.append( purge_item )
         purge_item.connect( 'activate', self.popup_purge, task_id )
 
         items.append( gtk.SeparatorMenuItem() )
     
-        addprereq_item = gtk.MenuItem( 'Add A Prerequisite' )
+        addprereq_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_ADD )
+        addprereq_item.set_label( 'Add A Prerequisite' )
         items.append( addprereq_item )
         addprereq_item.connect( 'activate', self.add_prerequisite_popup, task_id )
 
@@ -1922,7 +1957,8 @@ without restarting the suite."""
         file_menu_root = gtk.MenuItem( '_File' )
         file_menu_root.set_submenu( file_menu )
 
-        exit_item = gtk.MenuItem( 'E_xit (Disconnect From Suite)' )
+        exit_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_QUIT )
+        exit_item.set_label( 'E_xit (Disconnect From Suite)' )
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
 
@@ -1930,44 +1966,25 @@ without restarting the suite."""
         view_menu_root = gtk.MenuItem( '_View' )
         view_menu_root.set_submenu( self.view_menu )
 
-        info_item = gtk.MenuItem( 'Suite _Info' )
+        info_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DIALOG_INFO )
+        info_item.set_label( 'Suite _Info' )
         self.view_menu.append( info_item )
         info_item.connect( 'activate', self.view_suite_info )
 
-        graph_item = gtk.MenuItem( 'Suite _Graph' )
-        self.view_menu.append( graph_item )
-        graphmenu = gtk.Menu()
-        graph_item.set_submenu(graphmenu)
-
-        gtree_item = gtk.MenuItem( '_Dependencies' )
-        graphmenu.append( gtree_item )
-        gtree_item.connect( 'activate', self.view_suite_graph, False )
-
-        gns_item = gtk.MenuItem( '_Namespaces' )
-        graphmenu.append( gns_item )
-        gns_item.connect( 'activate', self.view_suite_graph, True )
-
-        log_item = gtk.MenuItem( 'Suite _Log' )
+        log_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_EDIT )
+        log_item.set_label( 'Suite _Log' )
         self.view_menu.append( log_item )
         log_item.connect( 'activate', self.view_log )
 
-        view_item = gtk.MenuItem( 'Suite _View' )
-        self.view_menu.append( view_item )
-        subviewmenu = gtk.Menu()
-        view_item.set_submenu(subviewmenu)
+        self.view_menu.append( gtk.SeparatorMenuItem() )
 
-        rw_item = gtk.MenuItem( '_Raw' )
-        subviewmenu.append( rw_item )
-        rw_item.connect( 'activate', self.view_suite_view, 'raw' )
- 
-        viewi_item = gtk.MenuItem( '_Inlined' )
-        subviewmenu.append( viewi_item )
-        viewi_item.connect( 'activate', self.view_suite_view, 'inlined' )
- 
-        viewp_item = gtk.MenuItem( '_Processed' )
-        subviewmenu.append( viewp_item )
-        viewp_item.connect( 'activate', self.view_suite_view, 'processed' )
-
+        self.view1_align_item = gtk.CheckMenuItem(
+                                    label="Toggle views _side-by-side" )
+        self._set_tooltip( self.view1_align_item,
+                           "Toggle horizontal layout of views." )
+        self.view1_align_item.connect( 'toggled', self._cb_change_view_align )
+        self.view_menu.append( self.view1_align_item )
+        
         self.view_menu.append( gtk.SeparatorMenuItem() )
 
         graph_view0_item = gtk.RadioMenuItem( label="1 - _Graph View" )
@@ -1993,6 +2010,12 @@ without restarting the suite."""
         text_view0_item.connect( 'toggled', self._cb_change_view0_menu )
         self.view_menu_views0 = [ graph_view0_item, dot_view0_item, text_view0_item ]
         
+        self.views_option_menuitems = [ gtk.MenuItem(  "1 - _Options" ) ]
+        self.views_option_menus = [gtk.Menu()]
+        self.views_option_menuitems[0].set_submenu( self.views_option_menus[0] )
+        self._set_tooltip( self.views_option_menuitems[0], "Options for primary panel" )
+        self.view_menu.append( self.views_option_menuitems[0] )
+        
         self.view_menu.append( gtk.SeparatorMenuItem() )
         
         no_view1_item = gtk.RadioMenuItem( label="2 - Off" )
@@ -2008,7 +2031,7 @@ without restarting the suite."""
         graph_view1_item._viewname = "graph"
         graph_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        dot_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - D_OT View" )
+        dot_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - Dot _View" )
         self.view_menu.append( dot_view1_item )
         self._set_tooltip( dot_view1_item, self.VIEW_DESC["dot"] + " - secondary panel" )
         dot_view1_item._viewname = "dot"
@@ -2025,55 +2048,75 @@ without restarting the suite."""
                                   dot_view1_item,
                                   text_view1_item ]
 
-        self.view_menu.append( gtk.SeparatorMenuItem() )
-        
-        view1_align_item = gtk.CheckMenuItem( label="Toggle views side-by-side" )
-        self._set_tooltip( view1_align_item,
-                           "Toggle horizontal layout of views." )
-        view1_align_item.connect( 'toggled', self._cb_change_view_align )
-        self.view_menu.append( view1_align_item )
+        self.views_option_menuitems.append( gtk.MenuItem(  "2 - O_ptions" ) )
+        self.views_option_menus.append( gtk.Menu() )
+        self._set_tooltip( self.views_option_menuitems[1], "Options for secondary panel" )
+        self.views_option_menuitems[1].set_submenu( self.views_option_menus[1] )
+        self.view_menu.append( self.views_option_menuitems[1] )
 
         start_menu = gtk.Menu()
         start_menu_root = gtk.MenuItem( '_Control' )
         start_menu_root.set_submenu( start_menu )
 
-        start_item = gtk.MenuItem( '_Run Suite ... ' )
-        start_menu.append( start_item )
-        start_item.connect( 'activate', self.startsuite_popup )
+        self.run_menuitem = gtk.ImageMenuItem( 
+                                   stock_id=gtk.STOCK_MEDIA_PLAY )
+        self.run_menuitem.set_label( '_Run Suite ... ' )
+        start_menu.append( self.run_menuitem )
+        self.run_menuitem.connect( 'activate', self.startsuite_popup )
 
-        stop_item = gtk.MenuItem( '_Stop Suite ... ' )
-        start_menu.append( stop_item )
-        stop_item.connect( 'activate', self.stopsuite_popup )
+        self.pause_menuitem = gtk.ImageMenuItem(
+                                   stock_id=gtk.STOCK_MEDIA_PAUSE )
+        self.pause_menuitem.set_label( '_Hold Suite (pause)' )
+        start_menu.append( self.pause_menuitem )
+        self.pause_menuitem.connect( 'activate', self.pause_suite )
 
-        pause_item = gtk.MenuItem( '_Hold Suite (pause)' )
-        start_menu.append( pause_item )
-        pause_item.connect( 'activate', self.pause_suite )
+        self.unpause_menuitem = gtk.ImageMenuItem(
+                                    stock_id=gtk.STOCK_MEDIA_PLAY )
+        self.unpause_menuitem.set_label( 'R_elease Suite (unpause)' )
+        start_menu.append( self.unpause_menuitem )
+        self.unpause_menuitem.connect( 'activate', self.resume_suite )
 
-        resume_item = gtk.MenuItem( 'R_elease Suite (unpause)' )
-        start_menu.append( resume_item )
-        resume_item.connect( 'activate', self.resume_suite )
+        self.stop_menuitem = gtk.ImageMenuItem( 
+                                  stock_id=gtk.STOCK_MEDIA_STOP )
+        self.stop_menuitem.set_label( '_Stop Suite ... ' )
+        start_menu.append( self.stop_menuitem )
+        self.stop_menuitem.connect( 'activate', self.stopsuite_popup )
 
-        nudge_item = gtk.MenuItem( "_Nudge (updates times)" )
+        start_menu.append( gtk.SeparatorMenuItem() )
+
+        nudge_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_REFRESH )
+        nudge_item.set_label( "_Nudge (updates times)" )
         start_menu.append( nudge_item )
         nudge_item.connect( 'activate', self.nudge_suite  )
 
-        reload_item = gtk.MenuItem( "Re_load Suite Definition ..." )
+        reload_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_CDROM )
+        reload_item.set_label( "Re_load Suite Definition ..." )
         start_menu.append( reload_item )
         reload_item.connect( 'activate', self.reload_suite  )
 
-        insert_item = gtk.MenuItem( '_Insert Task(s) ...' )
+        insert_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_PASTE )
+        insert_item.set_label( '_Insert Task(s) ...' )
         start_menu.append( insert_item )
         insert_item.connect( 'activate', self.insert_task_popup )
 
-        block_item = gtk.MenuItem( '_Block Access' )
+        start_menu.append( gtk.SeparatorMenuItem() )
+
+        block_item = gtk.ImageMenuItem( 
+                         stock_id=gtk.STOCK_DIALOG_AUTHENTICATION )
+        block_item.set_label( '_Block Access' )
         start_menu.append( block_item )
         block_item.connect( 'activate', self.block_suite )
 
-        unblock_item = gtk.MenuItem( 'Unbl_ock Access' )
+        unblock_item = gtk.ImageMenuItem(
+                           stock_id=gtk.STOCK_DIALOG_AUTHENTICATION )
+        unblock_item.set_label( 'Unbl_ock Access' )
         start_menu.append( unblock_item )
         unblock_item.connect( 'activate', self.unblock_suite )
 
-        runahead_item = gtk.MenuItem( '_Change Runahead Limit ...' )
+        start_menu.append( gtk.SeparatorMenuItem() )
+
+        runahead_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_JUMP_TO )
+        runahead_item.set_label( '_Change Runahead Limit ...' )
         start_menu.append( runahead_item )
         runahead_item.connect( 'activate', self.change_runahead_popup )
 
@@ -2081,34 +2124,48 @@ without restarting the suite."""
         help_menu_root = gtk.MenuItem( '_Help' )
         help_menu_root.set_submenu( help_menu )
 
-        self.userguide_item = gtk.MenuItem( '_GUI Quick Guide' )
+        self.userguide_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_HELP )
+        self.userguide_item.set_label( '_GUI Quick Guide' )
         help_menu.append( self.userguide_item )
 
-        chelp_menu = gtk.MenuItem( 'Command Help' )
+        help_menu.append( gtk.SeparatorMenuItem() )
+
+        chelp_menu = gtk.ImageMenuItem( stock_id=gtk.STOCK_EXECUTE )
+        chelp_menu.set_label( 'Command Help' )
         help_menu.append( chelp_menu )
         self.construct_command_menu( chelp_menu )
 
-        cug_pdf_item = gtk.MenuItem( '_PDF User Guide' )
+        help_menu.append( gtk.SeparatorMenuItem() )
+
+        cug_pdf_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_EDIT )
+        cug_pdf_item.set_label( '_PDF User Guide' )
         help_menu.append( cug_pdf_item )
         cug_pdf_item.connect( 'activate', self.browse, '--pdf' )
   
-        cug_html_item = gtk.MenuItem( '_Multi Page HTML User Guide' )
+        cug_html_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DND_MULTIPLE )
+        cug_html_item.set_label( '_Multi Page HTML User Guide' )
         help_menu.append( cug_html_item )
         cug_html_item.connect( 'activate', self.browse, '--html' )
 
-        cug_shtml_item = gtk.MenuItem( '_Single Page HTML User Guide' )
+        cug_shtml_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DND )
+        cug_shtml_item.set_label( '_Single Page HTML User Guide' )
         help_menu.append( cug_shtml_item )
         cug_shtml_item.connect( 'activate', self.browse, '--html-single' )
 
-        cug_www_item = gtk.MenuItem( '_Internet Home Page' )
+        cug_www_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_HOME )
+        cug_www_item.set_label( '_Internet Home Page' )
         help_menu.append( cug_www_item )
         cug_www_item.connect( 'activate', self.browse, '--www' )
  
-        cug_clog_item = gtk.MenuItem( 'Change _Log' )
+        help_menu.append( gtk.SeparatorMenuItem() )
+ 
+        cug_clog_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_EDIT )
+        cug_clog_item.set_label( 'Change _Log' )
         help_menu.append( cug_clog_item )
         cug_clog_item.connect( 'activate', self.browse, '-g --log' )
  
-        about_item = gtk.MenuItem( '_About' )
+        about_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_ABOUT )
+        about_item.set_label( '_About' )
         help_menu.append( about_item )
         about_item.connect( 'activate', self.about )
 
@@ -2154,7 +2211,7 @@ without restarting the suite."""
 
     def create_tool_bar( self ):
         """Create the tool bar for the control GUI."""
-        self.tool_bar = gtk.Toolbar()
+        self.tool_bars = [ gtk.Toolbar(), gtk.Toolbar() ]
         views = self.VIEWS_ORDERED
         self.tool_bar_view0 = gtk.ComboBox()
         self.tool_bar_view1 = gtk.ComboBox()
@@ -2174,8 +2231,8 @@ without restarting the suite."""
         self.tool_bar_view0.set_active(0)
         self.tool_bar_view0.connect( "changed", self._cb_change_view0_tool )
         self._set_tooltip( self.tool_bar_view0, "Change primary view" )
-        view0_toolitem = gtk.ToolItem()
-        view0_toolitem.add( self.tool_bar_view0 )
+        self.view_toolitems = [ gtk.ToolItem() ]
+        self.view_toolitems[0].add( self.tool_bar_view0 )
         # Secondary view chooser
         self.tool_bar_view1.set_model( pixlist1 )
         cell_pix1 = gtk.CellRendererPixbuf()
@@ -2189,8 +2246,8 @@ without restarting the suite."""
         self.tool_bar_view1.set_active(0)
         self.tool_bar_view1.connect( "changed", self._cb_change_view1_tool )
         self._set_tooltip( self.tool_bar_view1, "Change secondary view" )
-        view1_toolitem = gtk.ToolItem()
-        view1_toolitem.add( self.tool_bar_view1 )
+        self.view_toolitems.append( gtk.ToolItem() )
+        self.view_toolitems[1].add( self.tool_bar_view1 )
         # Horizontal layout toggler
         self.layout_toolbutton = gtk.ToggleToolButton()
         image1 = gtk.image_new_from_stock( gtk.STOCK_GOTO_FIRST, gtk.ICON_SIZE_MENU )
@@ -2206,12 +2263,19 @@ without restarting the suite."""
         toggle_layout_toolitem = gtk.ToolItem()
         toggle_layout_toolitem.add( self.layout_toolbutton )
         # Insert the view choosers
-        self.tool_bar.insert( toggle_layout_toolitem, 0 )
-        self.tool_bar.insert( view1_toolitem, 0 )
-        self.tool_bar.insert( gtk.SeparatorToolItem(), 0 )
-        self.tool_bar.insert( view0_toolitem, 0 )
-        self.tool_bar.insert( gtk.SeparatorToolItem(), 0 )
-
+        view0_label_item = gtk.ToolItem()
+        view0_label_item.add( gtk.Label("View 1: ") )
+        self._set_tooltip( view0_label_item, "Configure primary view" )
+        view1_label_item = gtk.ToolItem()
+        view1_label_item.add( gtk.Label("View 2: ") )
+        self._set_tooltip( view1_label_item, "Configure secondary view" )
+        self.tool_bars[1].insert( self.view_toolitems[1], 0 )
+        self.tool_bars[1].insert( view1_label_item, 0 )
+        self.tool_bars[0].insert( self.view_toolitems[0], 0 )
+        self.tool_bars[0].insert( view0_label_item, 0 )
+        self.tool_bars[0].insert( gtk.SeparatorToolItem(), 0 )
+        self.tool_bars[0].insert( toggle_layout_toolitem, 0 )
+        self.tool_bars[0].insert( gtk.SeparatorToolItem(), 0 )
         stop_icon = gtk.image_new_from_stock( gtk.STOCK_MEDIA_STOP,
                                               gtk.ICON_SIZE_SMALL_TOOLBAR )
         self.stop_toolbutton = gtk.ToolButton( icon_widget=stop_icon )
@@ -2221,7 +2285,7 @@ without restarting the suite."""
 """Stop Suite after all running tasks finish.
 For more Stop options use the Control menu.""" )
         self.stop_toolbutton.connect( "clicked", self.stopsuite_default )
-        self.tool_bar.insert(self.stop_toolbutton, 0)
+        self.tool_bars[0].insert(self.stop_toolbutton, 0)
 
         run_icon = gtk.image_new_from_stock( gtk.STOCK_MEDIA_PLAY,
                                              gtk.ICON_SIZE_SMALL_TOOLBAR )
@@ -2231,23 +2295,36 @@ For more Stop options use the Control menu.""" )
         tooltip.enable()
         tooltip.set_tip( self.run_pause_toolbutton, "Run Suite..." )
         self.run_pause_toolbutton.connect( "clicked", lambda w: w.click_func( w ) )
-        self.tool_bar.insert(self.run_pause_toolbutton, 0)
+        self.tool_bars[0].insert(self.run_pause_toolbutton, 0)
+        self.tool_bar_box = gtk.HPaned()
+        self.tool_bar_box.pack1( self.tool_bars[0], resize=True, shrink=True )
+        self.tool_bar_box.pack2( self.tool_bars[1], resize=True, shrink=True )
 
-    def _alter_status_tool_bar( self, new_status ):
-        # Handle changes in status for the status-sensitive tool bar items.
+    def _alter_status_toolbar_menu( self, new_status ):
+        # Handle changes in status for some toolbar/menuitems.
         if "connected" in new_status:
             self.stop_toolbutton.set_sensitive( False )
             return False
-        self.stop_toolbutton.set_sensitive( "STOPPED" not in new_status )
-        if "running" in new_status or re.search("STOP\s", new_status):
+        run_ok = bool( "STOPPED" in new_status )
+        pause_ok = bool( "running" in new_status or
+                         re.search("STOP\s", new_status) )
+        unpause_ok = bool( "HELD" in new_status or "STOPPING" in new_status )
+        stop_ok = bool( "STOPPED" not in new_status )
+        self.run_menuitem.set_sensitive( run_ok )
+        self.pause_menuitem.set_sensitive( pause_ok )
+        self.unpause_menuitem.set_sensitive( unpause_ok )
+        self.stop_menuitem.set_sensitive( stop_ok )
+        self.stop_toolbutton.set_sensitive( stop_ok and 
+                                            "STOPPING" not in new_status )
+        if pause_ok:
             icon = gtk.STOCK_MEDIA_PAUSE
             tip_text = "Hold Suite (pause)"
             click_func = self.pause_suite
-        elif "STOPPED" in new_status:
+        elif run_ok:
             icon = gtk.STOCK_MEDIA_PLAY
             tip_text = "Run Suite ..."
             click_func = self.startsuite_popup
-        elif "HELD" in new_status or "STOPPING" in new_status:
+        elif unpause_ok:
             icon = gtk.STOCK_MEDIA_PLAY
             tip_text = "Release Suite (unpause)"
             click_func = self.resume_suite
@@ -2265,7 +2342,8 @@ For more Stop options use the Control menu.""" )
         self.run_pause_toolbutton.click_func = click_func
 
     def create_info_bar( self ):
-        self.info_bar = InfoBar( self.cfg.suite, self._alter_status_tool_bar )
+        self.info_bar = InfoBar( self.cfg.suite,
+                                 self._alter_status_toolbar_menu )
 
     #def check_connection( self ):
     #    # called on a timeout in the gtk main loop, tell the log viewer
@@ -2303,32 +2381,11 @@ For more Stop options use the Control menu.""" )
             foo = cylc_logviewer( 'log', self.logging_dir, task_list)
             self.quitters.append(foo)
 
-    def view_suite_graph( self, w, show_ns=False ):
-        command = "cylc graph --notify-completion " + self.cfg.suite
-        if show_ns:
-            command = "cylc graph --notify-completion --namespaces " + self.cfg.suite
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
     def view_suite_info( self, w ):
         command = "cylc show --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite 
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
-        
-    def view_suite_view( self, w, method ):
-        extra = ''
-        if method == 'inlined':
-            extra = ' -i'
-        elif method == 'processed':
-            extra = ' -j'
-
-        command = "cylc view --notify-completion -g " + extra + ' ' + self.cfg.suite
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 400 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-        return False
 
     def browse( self, b, option='' ):
         command = 'cylc documentation ' + option
