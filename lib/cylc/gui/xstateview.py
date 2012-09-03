@@ -20,7 +20,7 @@ import sys, os, re
 import gobject
 import time
 import threading
-from cylc import cylc_pyro_client
+from cylc import cylc_pyro_client, dump
 from cylc import graphing
 import gtk
 import pygtk
@@ -106,7 +106,7 @@ class xupdater(threading.Thread):
             self.remote = client.get_proxy( 'remote' )
         except:
             if self.stop_summary is None:
-                self.stop_summary = cylc.dump.get_stop_state_summary(
+                self.stop_summary = dump.get_stop_state_summary(
                                                             self.cfg.suite,
                                                             self.cfg.owner,
                                                             self.cfg.host)
