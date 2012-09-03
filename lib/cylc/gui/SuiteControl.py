@@ -2158,6 +2158,7 @@ without restarting the suite."""
 
         self.userguide_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_HELP )
         self.userguide_item.set_label( '_GUI Quick Guide' )
+        self.userguide_item.connect( 'activate', helpwindow.userguide )
         help_menu.append( self.userguide_item )
 
         help_menu.append( gtk.SeparatorMenuItem() )
