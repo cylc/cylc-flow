@@ -127,7 +127,7 @@ else:
     prefix = ''
 
 if options.tasks:
-    for task in config.get_task_list():
+    for task in config.get_task_name_list():
         print prefix + task
     sys.exit(0)
 

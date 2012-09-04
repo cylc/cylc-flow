@@ -533,9 +533,6 @@ class config( CylcConfigObj ):
                 tree[item] = dline1
                 runtimes[item] = self['runtime'][item]
 
-    def get_task_list( self ):
-        return self.task_runtimes.keys()
-
     def print_task_list( self, filter=None, labels=None, pretty=False ):
         # determine padding for alignment of task descriptions
         tasks = self.task_runtimes.keys()
@@ -881,8 +878,7 @@ class config( CylcConfigObj ):
 
     def get_task_name_list( self ):
         # return a list of all tasks used in the dependency graph
-        tasknames = self.taskdefs.keys()
-        return tasknames
+        return self.taskdefs.keys()
 
     def get_asynchronous_task_name_list( self ):
         names = []
