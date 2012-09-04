@@ -24,6 +24,8 @@ import pango
 import os, re, sys
 import subprocess
 import helpwindow
+from cylc.hostname import is_remote_host
+from cylc.owner import is_remote_user
 from combo_logviewer import combo_logviewer
 from warning_dialog import warning_dialog, info_dialog
 from cylc.gui.SuiteControlGraph import ControlGraph
@@ -242,16 +244,6 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.setup_icons()
 
         self.view_layout_horizontal = False
-        #try:
-        #    god = cylc_pyro_client.client( self.cfg.suite,
-        #            self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-        #            self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-
-        #    self.logging_dir = god.get_logging_directory()
-
-        #except SuiteIdentificationError, x:
-        self.logging_dir = None
-        #    warning_dialog( x.__str__() ).warn()
 
         #self.connection_lost = False # (not used)
         self.quitters = []
@@ -2402,28 +2394,47 @@ For more Stop options use the Control menu.""" )
                 self.cfg.pyro_timeout, self.cfg.port ).get_proxy( object )
  
     def view_log( self, w ):
-        try:
-            god = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-            self.logging_dir = god.get_logging_directory()
-            task_list = god.get_task_list()
-        except SuiteIdentificationError, x:
-            warning_dialog( x.__str__() ).warn()
+        com = False
+        if is_remote_host( self.cfg.host ) or is_remote_user( self.cfg.owner ):
+            com = True
+            warning_dialog( \
+"""The full-function GUI log viewer is only available
+for local suites; I will call "cylc cat-log" instead.""" ).warn()
+            command = "cylc cat-log --notify-completion --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite
+            foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+            self.gcapture_windows.append(foo)
+            foo.run()
+            return
+
+        # local suites (--host and --owner not needed here, but for
+        # completeness...)
+        command = "cylc get-config --mark-output --host=" + \
+                self.cfg.host + " --owner=" + self.cfg.owner + " " + \
+                self.cfg.suite + " cylc logging directory"
+        res, lst = run_get_stdout( command, filter=True )
+        logging_dir = lst[0]
+        command = "cylc get-config --mark-output --host=" + \
+                self.cfg.host + " --owner=" + self.cfg.owner + \
+                ' --tasks ' + self.cfg.suite
+        res, tasks = run_get_stdout( command, filter=True )
+        if res:
+            task_list = tasks
         else:
-            foo = cylc_logviewer( 'log', self.logging_dir, task_list)
-            self.quitters.append(foo)
+            task_list = []
+        print tasks
+        foo = cylc_logviewer( 'log', logging_dir, task_list)
+        self.quitters.append(foo)
 
     def view_suite_graph( self, w, show_ns=False ):
-        command = "cylc graph --notify-completion " + self.cfg.suite
+        command = "cylc graph --notify-completion --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite
         if show_ns:
-            command = "cylc graph --notify-completion --namespaces " + self.cfg.suite
+            command = "cylc graph --notify-completion --namespaces --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
         self.gcapture_windows.append(foo)
         foo.run()
 
     def view_suite_info( self, w ):
-        command = "cylc show --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite 
+        command = "cylc show --notify-completion --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite 
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -2435,7 +2446,7 @@ For more Stop options use the Control menu.""" )
         elif method == 'processed':
             extra = ' -j'
 
-        command = "cylc view --notify-completion -g " + extra + ' ' + self.cfg.suite
+        command = "cylc view --notify-completion -g --host=" + self.cfg.host + " --owner=" + self.cfg.owner + extra + " " + self.cfg.suite
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 400 )
         self.gcapture_windows.append(foo)
         foo.run()

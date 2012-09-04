@@ -70,8 +70,12 @@ work directory = $CYLC_SUITE_DEF_PATH/share
     argdoc=[('REG', 'Suite name'), 
         ('[ITEMS...]', 'suite.rc section and item hierarchy')])
 
+parser.add_option( "-t", "--tasks",
+        help="Print configured task list.",
+        action="store_true", default=False, dest="tasks" )
+
 parser.add_option( "-d", "--directories",
-        help="Print all configured suite directory paths.",
+        help="Print configured suite directory paths.",
         action="store_true", default=False, dest="dpaths" )
 
 parser.add_option( "-m", "--mark-output",
@@ -121,6 +125,11 @@ if options.markoutput:
     prefix = '!cylc!'
 else:
     prefix = ''
+
+if options.tasks:
+    for task in config.get_task_list():
+        print prefix + task
+    sys.exit(0)
 
 res = config
 try:

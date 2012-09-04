@@ -533,6 +533,9 @@ class config( CylcConfigObj ):
                 tree[item] = dline1
                 runtimes[item] = self['runtime'][item]
 
+    def get_task_list( self ):
+        return self.task_runtimes.keys()
+
     def print_task_list( self, filter=None, labels=None, pretty=False ):
         # determine padding for alignment of task descriptions
         tasks = self.task_runtimes.keys()
