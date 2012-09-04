@@ -23,14 +23,16 @@ usage() {
     echo ""
     echo "This command runs a battery of self-diagnosing test-suites. "
     echo "See documention of \"Reference Tests\" in the User Guide."
-    echo "If test batteries are kept in a directory tree, use TOPDIR to "
+    echo "Test batteries should be kept in a directory tree; use TOPDIR to "
     echo "target all the contained suites, or a sub-tree, or a single "
     echo "one of them. TOPDIR defaults to \$CYLC_DIR/tests/, the location"
     echo "of the official cylc reference tests."
     echo ""
     echo "Directory paths containing the word 'hidden' will be ignored."
     echo "This can be used to hide sub-suites that are not intended run"
-    echo "as standalone tests."
+    echo "as standalone tests (this is how to handle tests that are "
+    echo "supposed to cause a suite to fail: put them in a hidden sub-suite"
+    echo "and have the calling task in the main suite check the result)."
     echo ""
     echo "Some of the official test suites submit test jobs to a task host"
     echo "and user account taken from the environment:"
@@ -80,7 +82,7 @@ MY_TMPDIR=${CYLC_TMPDIR:-${TMPDIR:-/tmp}}
 mkdir -p $MY_TMPDIR
 
 TARGET_DIR=$(mktemp -d)
-REG_GROUP=battery
+REG_GROUP=$( basename $SOURCE_DIR )
 
 echo
 echo ">> COPYING test suites to $TARGET_DIR... "
@@ -99,7 +101,7 @@ for RC in $( find . -name 'suite.rc' ); do
     echo $RC | grep 'hidden/' > /dev/null && continue
     DIR=$(dirname $RC)
     NAME=${DIR#./}
-    NAME=${REG_GROUP}.$(echo $NAME | tr '/' '.')
+    NAME=$(echo $NAME | tr '/' '.')
     cylc db reg $NAME $DIR > /dev/null
 done
 

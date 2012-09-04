@@ -878,8 +878,7 @@ class config( CylcConfigObj ):
 
     def get_task_name_list( self ):
         # return a list of all tasks used in the dependency graph
-        tasknames = self.taskdefs.keys()
-        return tasknames
+        return self.taskdefs.keys()
 
     def get_asynchronous_task_name_list( self ):
         names = []

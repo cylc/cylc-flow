@@ -19,7 +19,7 @@
 import Pyro.core
 from cycle_time import ct, CycleTimeError
 from copy import deepcopy
-#import logging
+import logging
 
 class receiver( Pyro.core.ObjBase ):
     """Receive broadcast variables from cylc clients."""
@@ -27,27 +27,43 @@ class receiver( Pyro.core.ObjBase ):
     def __init__( self ):
         self.targetted = {}  # targetted[ctime][var] = value
         self.universal = {}  # universal[var] = value
+        self.log = logging.getLogger('main')
         Pyro.core.ObjBase.__init__(self)
  
-    def receive( self, varname, value, target=None ):
+    def receive( self, varname, value, target=None, load=False ):
         # currently target validity is checked by client
+        if load:
+            msg = 'Loaded: '
+        else:
+            msg = 'Received: '
+        msg += varname + '="' + value + '"'
         if not target:
             self.universal[varname] = value
         else:
+            msg += ' for ' + target
             if target not in self.targetted:
                 self.targetted[target] = {}
             self.targetted[target][varname] = value
+        self.log.info( msg )
 
-    def expire( self, expire ):
+    def expire( self, expire=None ):
+        if not expire:
+            # expire all variables immediately
+            self.log.warning( 'Expiring all broadcast variables now' ) 
+            self.targetted = {}
+            self.universal = {}
+            return
         newtarg = {}
         for ctime in self.targetted:
             if ctime < expire:
-                print 'RECEIVER: expiring', ctime
+                #print 'RECEIVER: expiring', ctime
+                pass
             else:
                 newtarg[ctime] = self.targetted[ctime]
         self.targetted = newtarg
 
     def get( self, taskctime ):
+        # retrieve all broadcast variables valid for a given cycle time
         vars = deepcopy( self.universal )
         for ctime in self.targetted:
             if taskctime != ctime:
@@ -55,4 +71,17 @@ class receiver( Pyro.core.ObjBase ):
             for var, val in self.targetted[ctime].items():
                 vars[ var ] = val
         return vars
+
+    def dump( self, FILE ):
+        if len( self.universal.items()) > 0:
+            FILE.write( 'Begin broadcast variables, universal\n' )
+            for var, value in self.universal.items():
+                FILE.write( '%s=%s\n' % (var,value) )
+            FILE.write( 'End broadcast variables, universal\n' )
+        if len( self.targetted.items()) > 0:
+            FILE.write( 'Begin broadcast variables, targetted\n' )
+            for ctime in self.targetted:
+                for var, value in self.targetted[ctime].items():
+                    FILE.write( '%s %s=%s\n' % (ctime,var,value) )
+            FILE.write( 'End broadcast variables, targetted\n' )
 
