@@ -1273,6 +1273,8 @@ class scheduler(object):
         else:
             FILE.write( 'final cycle : (none)\n' )
 
+        self.wireless.dump(FILE)
+
         for itask in self.pool.get_tasks():
             # TO DO: CHECK THIS STILL WORKS 
             itask.dump_class_vars( FILE )

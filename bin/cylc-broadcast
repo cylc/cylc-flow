@@ -33,20 +33,26 @@ from cylc.cycle_time import ct, CycleTimeError
 usage = """cylc [task] broadcast [OPTIONS] ARGS
 
 This command allows running tasks to broadcast environment variables
-(name=value) to other task execution environments (via their job
-scripts). Broadcast variables override existing variables of the same
-name in the task execution environment. It is up to the user to ensure
-that broadcast variable names are unique across the suite, or unique by
+(name=value) to the execution environments of other downstream tasks.
+Broadcast variables override existing variables of the same name in the
+task execution environment. It is up to the user to ensure that
+broadcast variable names are unique across the suite, or unique by
 cycle time the optional CYCLE argument is used, and that use of
 broadcast variables is consistent with the suite dependency structure
-(i.e. receiving tasks must be downstream of generating tasks). Note that
-cylc task execution environments do not allow use of unset variables 
-(supply a default value in task scripting if necessary, e.g.
-VAR_THAT_MAY_BE_UNSET=${VARNAME:-DEFAULT}).
+(i.e. receiving tasks must be downstream of generating tasks - note that
+task execution environments do not allow use of unset variables). 
 
 Target suite identity is determined from the task execution environment
 supplied by the suite. Export CYLC_SUITE_REG_NAME before manual use on
-the command line."""
+the command line.
+
+Broadcast variables persist across suite restarts.
+
+Note that variable values with internal spaces must be quoted, e.g.:
+ % cylc broadcast MYVAR "the quick brown fox"
+Within scripting sections in the suite.rc file single quotes can be used
+inside triple-quoted multi-line strings so long as there is a space
+before the closing triple quotes."""
 
 parser = cop( usage, pyro=True, 
         argdoc = [ ("NAME", "Variable name"), ("VALUE", "Variable value"),

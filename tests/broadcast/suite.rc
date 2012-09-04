@@ -1,6 +1,7 @@
 
 [cylc]
     [[reference test]]
+        # increase this time if using 'sleep 10' below:
         live mode suite timeout = 0.5
 
 [scheduling]
@@ -13,15 +14,17 @@
 
 [runtime]
     [[prep]]
-        command scripting = "cylc broadcast PREP_SAYS JUMP#; sleep 10"
+        command scripting = """
+#sleep 10        
+cylc broadcast PREP_SAYS "the quick brown fox" """
     [[foo]]
         command scripting = """
-echo prep said $PREP_SAYS
-cylc broadcast FOO_SAYS FLY_$CYLC_TASK_CYCLE_TIME $CYLC_TASK_CYCLE_TIME
-#sleep 10"""
+#sleep 10
+echo "prep said: $PREP_SAYS"
+cylc broadcast FOO_SAYS "jumped over the lazy dog at $CYLC_TASK_CYCLE_TIME" $CYLC_TASK_CYCLE_TIME"""
     [[bar]]
         command scripting = """
-echo prep said $PREP_SAYS
-echo foo said $FOO_SAYS
-#sleep 10"""
+#sleep 10
+echo "prep said: $PREP_SAYS"
+echo "foo said: $FOO_SAYS" """
 

@@ -173,12 +173,13 @@ the remote host before starting the suite."""
                 print ' ', l.rstrip()
             sys.exit( "ERROR, incomplete suite state dump: " + self.initial_state_dump )
 
+        index = 0
         # RESET THE TIME TO THE LATEST DUMPED TIME
         # The state dump file first line is:
         # suite time : <time>
         #   OR
         # simulation time : <time>,rate
-        line1 = lines[0]
+        line1 = lines[index]
         line1 = line1.rstrip()
         [ time_type, time_string ] = line1.split(' : ')
         if time_type == 'simulation time':
@@ -194,7 +195,8 @@ the remote host before starting the suite."""
             print >> sys.stderr, ' ', line1
             sys.exit("ERROR: corrupted state dump")
 
-        line2 = lines[1]
+        index += 1
+        line2 = lines[index]
         line2 = line2.rstrip()
         try:
             label, oldstartcycle = line2.split(' : ')
@@ -230,7 +232,8 @@ the remote host before starting the suite."""
  
         self.ict = self.start_tag
 
-        line3 = lines[2]
+        index += 1
+        line3 = lines[index]
         line3 = line3.rstrip()
         try:
             label, oldstopcycle = line3.split(' : ')
@@ -261,10 +264,40 @@ the remote host before starting the suite."""
                 # reinstate the old stop cycle
                 self.stop_tag = oldstopcycle
         
+        # broadcast variables:
+        index += 1
+        if lines[index].rstrip() == 'Begin broadcast variables, universal':
+            while True:
+                index += 1
+                line = lines[index].rstrip()
+                if line == 'End broadcast variables, universal':
+                    break
+                m = re.match( '^(.*?)=(.*)$', line )
+                if m:
+                    var, val = m.groups()
+                    self.wireless.receive( var, val, load=True )
+                else:
+                    sys.exit("ERROR, illegal state dump line: " + line )
+            index += 1
+        
+        if lines[index].rstrip() == 'Begin broadcast variables, targetted':
+            while True:
+                index += 1
+                line = lines[index].rstrip()
+                if line == 'End broadcast variables, targetted':
+                    break
+                m = re.match( '^(.*) (.*?)=(.*)$', line )
+                if m:
+                    targ, var, val = m.groups()
+                    self.wireless.receive( var, val, targ, load=True )
+                else:
+                    sys.exit("ERROR, illegal state dump line: " + line )
+            index += 1
+
         # parse each line and create the task it represents
         tasknames = {}
         taskstates = {}
-        for line in lines[3:]:
+        for line in lines[index:]:
             # strip trailing newlines
             line = line.rstrip( '\n' )
 
