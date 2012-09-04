@@ -31,6 +31,7 @@ from warning_dialog import warning_dialog, info_dialog
 from cylc.gui.SuiteControlGraph import ControlGraph
 from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
+from cylc.gui.stateview import DotGetter
 from cylc.gui.util import get_icon, get_image_dir, get_logo
 from cylc import cylc_pyro_client
 from cylc.port_scan import SuiteIdentificationError
@@ -96,55 +97,67 @@ Class to hold initialisation data.
         self.imagedir = get_image_dir()
 
 
-class InfoBar(gtk.HBox):
+class InfoBar(gtk.VBox):
     """
 Class to create an information bar.
     """
 
-    def __init__( self, suite, status_changed_hook=lambda s: False ):
+    def __init__( self, suite, imagedir, 
+                  status_changed_hook=lambda s: False ):
         super(InfoBar, self).__init__()
+
+        self.dots = DotGetter( imagedir )
+        self._suite_states = ["empty"]
+        self.state_widget = gtk.HBox()
+        self._set_tooltip( self.state_widget, "states" )  
 
         self._status = "status..."
         self.notify_status_changed = status_changed_hook
         self.status_widget = gtk.Label()
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip( self.status_widget, "status" )
+        self._set_tooltip( self.status_widget, "status" )
 
         self._mode = "mode..."
         self.mode_widget = gtk.Label()
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip( self.mode_widget, "mode" )
+        self._set_tooltip( self.mode_widget, "mode" )
 
         self._time = "time..."
         self.time_widget = gtk.Label()
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip( self.time_widget, "last update time" )
+        self._set_tooltip( self.time_widget, "last update time" )
 
         self._block = "access..."
         self.block_widget = gtk.image_new_from_stock( gtk.STOCK_DIALOG_QUESTION,
                                                       gtk.ICON_SIZE_SMALL_TOOLBAR )
 
-        eb = gtk.EventBox()
-        eb.add( self.mode_widget )
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
-        self.pack_start( eb, True )
+        self.pack_start( gtk.HSeparator(), False, False )
+        
+        hbox = gtk.HBox()
+        self.pack_start( hbox, False, True )
 
         eb = gtk.EventBox()
         eb.add( self.status_widget )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
-        self.pack_start( eb, True )
+        hbox.pack_start( eb, False )
+        
+        eb = gtk.EventBox()
+        hbox.pack_start( eb, True )
+
+        eb = gtk.EventBox()
+        eb.add( self.state_widget )
+        hbox.pack_start( eb, False )
+
+        eb = gtk.EventBox()
+        eb.add( self.mode_widget )
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
+        hbox.pack_start( eb, False )
 
         eb = gtk.EventBox()
         eb.add( self.time_widget )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) ) 
-        self.pack_start( eb, True )
+        hbox.pack_start( eb, False )
 
         eb = gtk.EventBox()
         eb.add( self.block_widget )
-        self.pack_end( eb, False )
+        hbox.pack_end( eb, False )
 
     def set_block( self, block ):
         """Set block or access icon."""
@@ -160,33 +173,41 @@ Class to create an information bar.
         elif "waiting" in block:
             self.block_widget.set_from_stock( gtk.STOCK_DIALOG_QUESTION,
                                               gtk.ICON_SIZE_SMALL_TOOLBAR )
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip(self.block_widget, self._block)
+        self._set_tooltip( self.block_widget, "access: " + block )
 
     def set_mode(self, mode):
         """Set mode text."""
-        text = mode.replace( "mode:", "" ).strip()
-        if text == self._mode:
+        if mode == self._mode:
             return False
-        self._mode = text
-        self.mode_widget.set_text( self._mode )
+        self._mode = mode
+        self.mode_widget.set_markup( "  " + self._mode )
+
+    def set_state(self, suite_states):
+        """Set state text."""
+        if suite_states == self._suite_states:
+            return False
+        self._suite_states = suite_states
+        state_info = {}
+        for state in self._suite_states:
+            state_info.setdefault(state, 0)
+            state_info[state] += 1
+        for child in self.state_widget.get_children():
+            self.state_widget.remove(child)
+        items = state_info.items()
+        items.sort()
+        items.sort( lambda x, y: cmp(y[1], x[1]) )
+        for state, num in items:
+            icon = self.dots.get_image( state )
+            icon.show()
+            self.state_widget.pack_start( icon, False, False )
+            self._set_tooltip( icon, str(num) + " " + state )
 
     def set_status(self, status):
         """Set status text."""
-        text = status.replace( "status:", "" ).strip()
-        if text == self._status:
+        if status == self._status:
             return False
-        self._status = text
-        self.status_widget.set_text( self._status )
-        if re.search( 'STOPPED', status ):
-            self.status_widget.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
-        elif re.search( 'STOP', status ):  # stopping
-            self.status_widget.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff8c2a' ))
-        elif re.search( 'HELD', status ):
-            self.status_widget.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ffde00' ))
-        else:
-            self.status_widget.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
+        self._status = status
+        self.status_widget.set_text( " " + self._status )
         self.notify_status_changed( self._status )
 
     def set_stop_summary(self, summary_maps):
@@ -203,17 +224,21 @@ Class to create an information bar.
             if task[task_id].get("state") == "failed":
                 num_failed += 1
         if num_failed:
-            summary += " {0} failed tasks".format(num_failed)
-        self.set_mode(summary)
+            summary += ": {0} failed tasks".format(num_failed)
+        self.set_status(summary)
         self.set_time(glob["last_updated"].strftime("%Y/%m/%d %H:%M:%S"))
 
     def set_time(self, time):
         """Set last update text."""
-        text = time.replace("state last updated at:", "").strip() 
-        if text == self._time:
+        if time == self._time:
             return False
-        self._time = text
-        self.time_widget.set_text( self._time )
+        self._time = time
+        self.time_widget.set_text( " " + self._time + " " )
+
+    def _set_tooltip(self, widget, text):
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(widget, text)
 
 
 class ControlApp(object):
@@ -258,6 +283,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.window.set_size_request(800, 500)
         self.window.connect("delete_event", self.delete_event)
 
+        self._prev_status = None
         self.create_main_menu()
 
         bigbox = gtk.VBox()
@@ -2327,20 +2353,22 @@ For more Stop options use the Control menu.""" )
 
     def _alter_status_toolbar_menu( self, new_status ):
         # Handle changes in status for some toolbar/menuitems.
+        if new_status == self._prev_status:
+            return False
+        self._prev_status = new_status
         if "connected" in new_status:
             self.stop_toolbutton.set_sensitive( False )
             return False
-        run_ok = bool( "STOPPED" in new_status )
-        pause_ok = bool( "running" in new_status or
-                         re.search("STOP\s", new_status) )
-        unpause_ok = bool( "HELD" in new_status or "STOPPING" in new_status )
-        stop_ok = bool( "STOPPED" not in new_status )
+        run_ok = bool( "stopped" in new_status )
+        pause_ok = bool( "running" in new_status )
+        unpause_ok = bool( "held" in new_status or "stopping" in new_status )
+        stop_ok = bool( "stopped" not in new_status )
         self.run_menuitem.set_sensitive( run_ok )
         self.pause_menuitem.set_sensitive( pause_ok )
         self.unpause_menuitem.set_sensitive( unpause_ok )
         self.stop_menuitem.set_sensitive( stop_ok )
         self.stop_toolbutton.set_sensitive( stop_ok and 
-                                            "STOPPING" not in new_status )
+                                            "stopping" not in new_status )
         if pause_ok:
             icon = gtk.STOCK_MEDIA_PAUSE
             tip_text = "Hold Suite (pause)"
@@ -2361,13 +2389,15 @@ For more Stop options use the Control menu.""" )
                                                 gtk.ICON_SIZE_SMALL_TOOLBAR )
         icon_widget.show()
         self.run_pause_toolbutton.set_icon_widget( icon_widget )
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip( self.run_pause_toolbutton, tip_text )
+        tip_tuple = gtk.tooltips_data_get( self.run_pause_toolbutton )
+        if tip_tuple is None:
+            tips = gtk.Tooltips()
+            tips.enable()
+        tips.set_tip( self.run_pause_toolbutton, tip_text )
         self.run_pause_toolbutton.click_func = click_func
 
     def create_info_bar( self ):
-        self.info_bar = InfoBar( self.cfg.suite,
+        self.info_bar = InfoBar( self.cfg.suite, self.cfg.imagedir,
                                  self._alter_status_toolbar_menu )
 
     #def check_connection( self ):
