@@ -1402,7 +1402,7 @@ The cylc forecast suite metascheduler.
         except SuiteConfigError, x:
             warning_dialog( str(x) + \
                     '\n\n Suite.rc parsing failed (needed\nfor default start and stop cycles.',
-                    parent_window ).warn()
+                    self.window ).warn()
             return
         defstartc = suiterc['visualization']['initial cycle time']
         defstopc  = suiterc['visualization']['final cycle time']
