@@ -92,12 +92,18 @@ LED suite control interface.
         sep.show()
         menu.append( sep )
 
-        group_item = gtk.CheckMenuItem( 'Toggle Hide Task Headings' )
-        group_item.set_active( self.t.should_hide_headings )
-        menu.append( group_item )
-        group_item.connect( 'toggled', self.toggle_headings )
-        group_item.show()
+        toggle_item = gtk.CheckMenuItem( 'Toggle Hide Task Headings' )
+        toggle_item.set_active( self.t.should_hide_headings )
+        menu.append( toggle_item )
+        toggle_item.connect( 'toggled', self.toggle_headings )
+        toggle_item.show()
 
+        group_item = gtk.CheckMenuItem( 'Toggle Family Grouping' )
+        group_item.set_active( self.t.should_group_families )
+        menu.append( group_item )
+        group_item.connect( 'toggled', self.toggle_grouping )
+        group_item.show()
+        
         menu.popup( None, None, None, event.button, event.time )
 
         # TO DO: popup menus are not automatically destroyed and can be
@@ -106,6 +112,30 @@ LED suite control interface.
         # prevent a memory leak? But I'm not sure how to do this as yet.)
 
         return True
+
+    def toggle_grouping( self, toggle_item ):
+        """Toggle grouping by visualisation families."""
+        if isinstance( toggle_item, gtk.ToggleToolButton ):
+            group_on = toggle_item.get_active()
+            if group_on == self.t.should_group_families:
+                return False
+            self.t.should_group_families = group_on
+            if group_on:
+                tip_text = "Click to ungroup families"
+            else:
+                tip_text = "Click to group tasks by families"
+            self._set_tooltip( toggle_item, tip_text )
+            self.group_menu_item.set_active( group_on )
+        else:
+            group_on = toggle_item.get_active()
+            if group_on == self.t.should_group_families:
+                return False
+            self.t.should_group_families = group_on
+            if toggle_item != self.group_menu_item:
+                self.group_menu_item.set_active( group_on )
+            self.group_toolbutton.set_active( group_on )            
+        self.t.update_gui()
+        return False
 
     def toggle_headings(self, toggle_item):
         headings_off = toggle_item.get_active()
@@ -124,6 +154,12 @@ LED suite control interface.
         self.quitters.remove( lv )
         w.destroy()
 
+    def _set_tooltip( self, widget, tip_text ):
+        # Convenience function to add hover over text to a widget.
+        tip = gtk.Tooltips()
+        tip.enable()
+        tip.set_tip( widget, tip_text )
+
     def get_menuitems( self ):
         """Return the menuitems specific to this view."""
         items = []
@@ -132,8 +168,21 @@ LED suite control interface.
         items.append( self.headings_menu_item )
         self.headings_menu_item.show()
         self.headings_menu_item.connect( 'toggled', self.toggle_headings )
+        
+        self.group_menu_item = gtk.CheckMenuItem( 'Toggle _Family Grouping' )
+        self.group_menu_item.set_active( self.t.should_group_families )
+        items.append( self.group_menu_item )
+        self.group_menu_item.connect( 'toggled', self.toggle_grouping )
         return items
 
     def get_toolitems( self ):
         """Return the tool bar items specific to this view."""
-        return []
+        items = []
+        self.group_toolbutton = gtk.ToggleToolButton()
+        self.group_toolbutton.set_active( self.t.should_group_families )
+        g_image = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_SMALL_TOOLBAR )
+        self.group_toolbutton.set_icon_widget( g_image )
+        self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
+        self._set_tooltip( self.group_toolbutton, "Click to group tasks by families" )
+        items.append( self.group_toolbutton )
+        return items

@@ -484,6 +484,7 @@ class lupdater(threading.Thread):
         self.quit = False
         self.autoexpand = True
         self.should_hide_headings = False
+        self.should_group_families = False
 
         self.cfg = cfg
         self.info_bar = info_bar
@@ -533,6 +534,7 @@ class lupdater(threading.Thread):
                     self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
+            self.remote = client.get_proxy( 'remote' )
         except:
             if self.stop_summary is None:
                 self.stop_summary = cylc.dump.get_stop_state_summary(
@@ -543,6 +545,7 @@ class lupdater(threading.Thread):
                     self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
+            self.families = self.remote.get_families()
             self.stop_summary = None
             self.status = "status:\nconnected"
             self.info_bar.set_status( self.status )
@@ -575,6 +578,9 @@ class lupdater(threading.Thread):
             #print >> sys.stderr, x
             gobject.idle_add( self.connection_lost )
             return False
+
+        if self.should_group_families:
+            self.task_list = [t for t in sorted(fam_states.keys())]
 
         # always update global info
         self.global_summary = glbl
@@ -612,6 +618,7 @@ class lupdater(threading.Thread):
         else:
             #print "STATE CHANGED"
             self.state_summary = states
+            self.fam_state_summary = fam_states
             return True
 
     def digitize( self, ctin ):
@@ -732,32 +739,49 @@ class lupdater(threading.Thread):
         if col_index == 0:
             tooltip.set_text(task_id)
             return True
-        state = self.state_summary.get(task_id, {}).get("state", "")
-        tooltip.set_text((task_id + "\n" + state).strip())
+        if task_id in self.state_summary:
+            state = self.state_summary[task_id].get("state", "")
+        else:
+            state = self.fam_state_summary.get(task_id, {}).get("state", "")
+        tooltip.set_text( self.get_summary(task_id) )
         return True
+
+    def get_summary( self, task_id ):
+        if task_id in self.state_summary:
+            return task_id + " " + self.state_summary[task_id]['state']
+        if task_id in self.fam_state_summary:
+            name, ctime = task_id.split("%")
+            text = task_id + " " + self.fam_state_summary[task_id]['state']
+            for child in self.families[name]:
+                child_id = child + "%" + ctime
+                text += "\n    " + self.get_summary(child_id).replace("\n", "\n    ")
+            return text
+        return task_id
 
     def update_gui( self ):
         #print "Updating GUI"
         new_data = {}
-        for id in self.state_summary:
+        state_summary = {}
+        state_summary.update( self.state_summary )
+        state_summary.update( self.fam_state_summary )
+        for id in state_summary:
             name, ctime = id.split( '%' )
             if ctime not in new_data:
                 new_data[ ctime ] = {}
-            state = self.state_summary[ id ][ 'state' ]
-            message = self.state_summary[ id ][ 'latest_message' ]
-            tsub = self.state_summary[ id ][ 'submitted_time' ]
-            tstt = self.state_summary[ id ][ 'started_time' ]
-            meant = self.state_summary[ id ][ 'mean total elapsed time' ]
-            tetc = self.state_summary[ id ][ 'Tetc' ]
-            priority = self.state_summary[ id ][ 'latest_message_priority' ]
-            message = markup( get_col_priority( priority ), message )
+            state = state_summary[ id ].get( 'state' )
+            message = state_summary[ id ].get( 'latest_message' )
+            tsub = state_summary[ id ].get( 'submitted_time' )
+            tstt = state_summary[ id ].get( 'started_time' )
+            meant = state_summary[ id ].get( 'mean total elapsed time' )
+            tetc = state_summary[ id ].get( 'Tetc' )
+            priority = state_summary[ id ].get( 'latest_message_priority' )
             state = markup( get_col(state), state )
             new_data[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc ]
 
         self.ledview_widgets()
 
         tasks = {}
-        for id in self.state_summary:
+        for id in state_summary:
             name, ctime = id.split( '%' )
             if ctime not in tasks:
                 tasks[ ctime ] = [ name ]
@@ -777,7 +801,7 @@ class lupdater(threading.Thread):
             
             for name in self.task_list:
                 if name in tasks_at_ctime:
-                    state = self.state_summary[ name + '%' + ctime ][ 'state' ]
+                    state = state_summary[ name + '%' + ctime ][ 'state' ]
                     if state == 'waiting':
                         state_list.append( self.waiting_led )
                     elif state == 'retry_delayed':
