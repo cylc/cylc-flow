@@ -31,6 +31,7 @@ from warning_dialog import warning_dialog, info_dialog
 from cylc.gui.SuiteControlGraph import ControlGraph
 from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
+from cylc.gui.graph import graph_suite_popup
 from cylc.gui.util import get_icon, get_image_dir, get_logo
 from cylc import cylc_pyro_client
 from cylc.port_scan import SuiteIdentificationError
@@ -2107,7 +2108,16 @@ without restarting the suite."""
         edit_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DIALOG_INFO )
         edit_item.set_label( 'Suite _Edit' )
         tools_menu.append( edit_item )
-        edit_item.connect( 'activate', self.run_suite_edit )
+        edit_menu = gtk.Menu()
+        edit_item.set_submenu(edit_menu)
+
+        raw_item = gtk.MenuItem( '_Raw' )
+        edit_menu.append( raw_item )
+        raw_item.connect( 'activate', self.run_suite_edit, False )
+
+        inl_item = gtk.MenuItem( '_Inlined' )
+        edit_menu.append( inl_item )
+        inl_item.connect( 'activate', self.run_suite_edit, True )
 
         info_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DIALOG_INFO )
         info_item.set_label( 'Suite _Info' )
@@ -2116,7 +2126,7 @@ without restarting the suite."""
 
         graph_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_SELECT_COLOR )
         graph_item.set_label( 'Suite _Graph' )
-        tools.append( graph_item )
+        tools_menu.append( graph_item )
         graphmenu = gtk.Menu()
         graph_item.set_submenu(graphmenu)
 
@@ -2131,30 +2141,39 @@ without restarting the suite."""
         list_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_INDEX )
         list_item.set_label( 'Suite _List' )
         tools_menu.append( list_item )
-        list_item.connect( 'activate', self.run_suite_list )
+        list_menu = gtk.Menu()
+        list_item.set_submenu( list_menu )
+ 
+        flat_item = gtk.MenuItem( '_Tasks' )
+        list_menu.append( flat_item )
+        flat_item.connect( 'activate', self.run_suite_list )
+
+        tree_item = gtk.MenuItem( '_Namespaces' )
+        list_menu.append( tree_item )
+        tree_item.connect( 'activate', self.run_suite_list, '-t' )
 
         log_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DND )
         log_item.set_label( 'Suite _Log' )
-        tools.append( log_item )
+        tools_menu.append( log_item )
         log_item.connect( 'activate', self.run_suite_log )
 
         view_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_EDIT )
         view_item.set_label( 'Suite _View' )
-        tools.append( view_item )
+        tools_menu.append( view_item )
         subviewmenu = gtk.Menu()
         view_item.set_submenu(subviewmenu)
 
         rw_item = gtk.MenuItem( '_Raw' )
         subviewmenu.append( rw_item )
-        rw_item.connect( 'activate', self.view_suite_view, 'raw' )
+        rw_item.connect( 'activate', self.run_suite_view, 'raw' )
  
         viewi_item = gtk.MenuItem( '_Inlined' )
         subviewmenu.append( viewi_item )
-        viewi_item.connect( 'activate', self.view_suite_view, 'inlined' )
+        viewi_item.connect( 'activate', self.run_suite_view, 'inlined' )
  
         viewp_item = gtk.MenuItem( '_Processed' )
         subviewmenu.append( viewp_item )
-        viewp_item.connect( 'activate', self.view_suite_view, 'processed' )
+        viewp_item.connect( 'activate', self.run_suite_view, 'processed' )
 
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( '_Help' )
@@ -2209,6 +2228,7 @@ without restarting the suite."""
         self.menu_bar.append( file_menu_root )
         self.menu_bar.append( view_menu_root )
         self.menu_bar.append( start_menu_root )
+        self.menu_bar.append( tools_menu_root )
         self.menu_bar.append( help_menu_root )
 
     def construct_command_menu( self, menu ):
@@ -2419,21 +2439,21 @@ For more Stop options use the Control menu.""" )
                 command = ( "cylc get-config" + self.get_remote_run_opts() +
                             " " + self.cfg.suite + 
                             " visualization " + option )
-                res, lines = run_get_stdout( command, filter=True )
-                if not (res or lines):
+                res, pieces = run_get_stdout( command )
+                if not res or not pieces:
                     return False
-                times.append(lines[0].strip())
-            graph_suite_popup( reg, self.command_help, times[0], times[1],
-                               self.get_remote_run_opts(),
-                               self.gcapture_windows, self.cfg.tmpdir, parent_window=self.window )
+                times.append(pieces[0].strip())
+            graph_suite_popup( self.cfg.suite, self.command_help, times[0], times[1],
+                               self.get_remote_run_opts(), self.gcapture_windows,
+                               self.cfg.cylc_tmpdir, parent_window=self.window )
 
-    def run_suite_edit( self, w ):
+    def run_suite_edit( self, w, inlined=False):
         extra = ''
         if inlined:
             extra = '-i '
         command = ( "cylc edit --notify-completion -g" + self.get_remote_run_opts() + 
-                    " " + extra + ' ' + reg )
-        foo = gcapture_tmpfile( command, self.tmpdir )
+                    " " + extra + ' ' + self.cfg.suite )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
         self.gcapture_windows.append(foo)
         foo.run()
         return False
@@ -2445,9 +2465,10 @@ For more Stop options use the Control menu.""" )
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def run_suite_list( self, w, name, opt='' ):
-        command = "cylc list " + self.get_remote_run_opts() + " " + opt + " --notify-completion " + name
-        foo = gcapture_tmpfile( command, self.tmpdir, 600, 600 )
+    def run_suite_list( self, w, opt='' ):
+        command = ( "cylc list " + self.get_remote_run_opts() + " " + opt +
+                    " --notify-completion " + self.cfg.suite )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
 
@@ -2478,7 +2499,6 @@ for local suites; I will call "cylc cat-log" instead.""" ).warn()
             task_list = tasks
         else:
             task_list = []
-        print tasks
         foo = cylc_logviewer( 'log', logging_dir, task_list)
         self.quitters.append(foo)
 
@@ -2490,7 +2510,7 @@ for local suites; I will call "cylc cat-log" instead.""" ).warn()
             extra = ' -j'
 
         command = ( "cylc view --notify-completion -g " + self.get_remote_run_opts() + 
-                    " " + extra + " " + self.cfg.suite
+                    " " + extra + " " + self.cfg.suite )
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 400 )
         self.gcapture_windows.append(foo)
         foo.run()

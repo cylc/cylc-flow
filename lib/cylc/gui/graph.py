@@ -82,12 +82,14 @@ def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
     cancel_button = gtk.Button( "_Close" )
     cancel_button.connect("clicked", lambda x: window.destroy() )
     ok_button = gtk.Button( "_Graph" )
-    ok_button.connect("clicked", graph_func, reg, warm_rb,
-                      outputfile_entry.get_text(),
-                      start_entry.get_text(),
-                      stop_entry.get_text(),
-                      graph_opts,  gcapture_windows, this_db_opt,
-                      tmpdir, parent_window)
+    ok_button.connect(
+              "clicked",
+              lambda w: graph_suite( reg, warm_rb.get_active(),
+                                     outputfile_entry.get_text(),
+                                     start_entry.get_text(),
+                                     stop_entry.get_text(),
+                                     graph_opts,  gcapture_windows,
+                                     tmpdir, parent_window ) )
 
     help_button = gtk.Button( "_Help" )
     help_button.connect("clicked", cmd_help, 'prep', 'graph' )
@@ -102,11 +104,10 @@ def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
     window.show_all()
 
 
-def graph_suite( reg, warm_rb, ofile, start, stop, graph_opts,
-                 gcapture_windows, dbopt, tmpdir, window=None ):
+def graph_suite( reg, is_warm, ofile, start, stop, graph_opts,
+                 gcapture_windows, tmpdir, window=None ):
     """Launch the cylc graph command with some options."""
     options = graph_opts
-    ofile = outputfile_entry.get_text()
     if ofile != '':
         options += ' -o ' + ofile
 
@@ -130,10 +131,10 @@ def graph_suite( reg, warm_rb, ofile, start, stop, graph_opts,
                 warning_dialog( str(x), window ).warn()
                 return False
 
-    if warm_rb.get_active():
+    if is_warm:
         options += ' -w '
     options += ' ' + reg + ' ' + start + ' ' + stop
-    command = "cylc graph " --notify-completion " + options
+    command = "cylc graph --notify-completion " + options
     foo = gcapture_tmpfile( command, tmpdir )
     gcapture_windows.append(foo)
     foo.run()
