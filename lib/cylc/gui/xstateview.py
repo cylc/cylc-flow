@@ -25,8 +25,9 @@ from cylc import graphing
 import gtk
 import pygtk
 from cylc.cycle_time import ct
-from cylc.mkdir_p import mkdir_p
 import cylc.dump
+from cylc.mkdir_p import mkdir_p
+from cylc.state_summary import get_id_summary
 ####pygtk.require('2.0')
 
 def compare_dict_of_dict( one, two ):
@@ -147,16 +148,8 @@ class xupdater(threading.Thread):
         return False
 
     def get_summary( self, task_id ):
-        if task_id in self.state_summary:
-            return task_id + " " + self.state_summary[task_id]['state']
-        if task_id in self.fam_state_summary:
-            name, ctime = task_id.split("%")
-            text = task_id + " " + self.fam_state_summary[task_id]['state']
-            for child in self.families[name]:
-                child_id = child + "%" + ctime
-                text += "\n    " + self.get_summary(child_id).replace("\n", "\n    ")
-            return text
-        return task_id
+        return get_id_summary( task_id, self.state_summary,
+                               self.fam_state_summary, self.families )
 
     def update(self):
         #print "Updating"

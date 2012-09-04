@@ -24,6 +24,7 @@ import gobject
 import time
 import threading
 from cylc import cylc_pyro_client
+from cylc.state_summary import get_id_summary
 import gtk
 import pygtk
 from string import zfill
@@ -545,7 +546,10 @@ class lupdater(threading.Thread):
                     self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
+            self.family_hierarchy = self.remote.get_family_hierarchy()
             self.families = self.remote.get_families()
+            self.allowed_families = self.remote.get_vis_families()
+            print self.families["root"]
             self.stop_summary = None
             self.status = "status:\nconnected"
             self.info_bar.set_status( self.status )
@@ -580,7 +584,15 @@ class lupdater(threading.Thread):
             return False
 
         if self.should_group_families:
-            self.task_list = [t for t in sorted(fam_states.keys())]
+            allowed_names = self.allowed_families + self.task_list
+            self.task_list = []
+            for families in self.family_hierarchy.values():
+                for name in reversed(families):
+                    if name in allowed_names:
+                        if name not in self.task_list:
+                            self.task_list.append( name )
+                        break
+            self.task_list.sort()
 
         # always update global info
         self.global_summary = glbl
@@ -743,20 +755,9 @@ class lupdater(threading.Thread):
             state = self.state_summary[task_id].get("state", "")
         else:
             state = self.fam_state_summary.get(task_id, {}).get("state", "")
-        tooltip.set_text( self.get_summary(task_id) )
+        tooltip.set_text( get_id_summary( task_id, self.state_summary,
+                                          self.fam_state_summary, self.families ) )
         return True
-
-    def get_summary( self, task_id ):
-        if task_id in self.state_summary:
-            return task_id + " " + self.state_summary[task_id]['state']
-        if task_id in self.fam_state_summary:
-            name, ctime = task_id.split("%")
-            text = task_id + " " + self.fam_state_summary[task_id]['state']
-            for child in self.families[name]:
-                child_id = child + "%" + ctime
-                text += "\n    " + self.get_summary(child_id).replace("\n", "\n    ")
-            return text
-        return task_id
 
     def update_gui( self ):
         #print "Updating GUI"
