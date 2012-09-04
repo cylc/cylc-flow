@@ -192,7 +192,7 @@ Class to create an information bar.
         for child in self.state_widget.get_children():
             self.state_widget.remove(child)
         items = state_info.items()
-        items.sort( lambda x, y: cmp(x[0], y[0]) )
+        items.sort()
         items.sort( lambda x, y: cmp(y[1], x[1]) )
         for state, num in items:
             icon = self.dots.get_image( state )
