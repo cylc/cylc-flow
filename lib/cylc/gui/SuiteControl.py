@@ -586,10 +586,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
-            if result.success:
-                info_dialog( result.reason, self.window ).inform()
-            else:
+            if not result.success:
                 warning_dialog( result.reason, self.window ).warn()
+            #else:
+            #    info_dialog( result.reason, self.window ).inform()
 
     def resume_suite( self, bt ):
         try:
@@ -600,10 +600,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = god.resume()
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def stopsuite_default( self, *args ):
         """Try to stop the suite (after currently running tasks...)."""
@@ -615,10 +615,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
-            if result.success:
-                info_dialog( result.reason, self.window ).inform()
-            else:
+            if not result.success:
                 warning_dialog( result.reason, self.window ).warn()
+            #else:
+            #    info_dialog( result.reason, self.window ).inform()
 
     def stopsuite( self, bt, window,
             stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
@@ -705,10 +705,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
-            if result.success:
-                info_dialog( result.reason, self.window ).inform()
-            else:
+            if not result.success:
                 warning_dialog( result.reason, self.window ).warn()
+            #else:
+            #    info_dialog( result.reason, self.window ).inform()
 
     def loadctimes( self, bt, startentry, stopentry ):
         command = "cylc get-config --mark-output --host=" + \
@@ -1079,10 +1079,10 @@ The cylc forecast suite metascheduler.
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.set_runahead( limit )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def add_prerequisite_popup( self, b, task_id ):
         window = gtk.Window()
@@ -1162,10 +1162,10 @@ The cylc forecast suite metascheduler.
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.add_prerequisite( task_id, msg )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def update_tb( self, tb, line, tags = None ):
         if tags:
@@ -1309,10 +1309,10 @@ shown here in the state they were in at the time of triggering.''' )
         else:
             result = proxy.release_task( task_id )
 
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def trigger_task_now( self, b, task_id ):
         msg = "trigger " + task_id + " now?"
@@ -1338,10 +1338,10 @@ shown here in the state they were in at the time of triggering.''' )
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.trigger_task( task_id )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def reset_task_state( self, b, task_id, state ):
         msg = "reset " + task_id + " to " + state +"?"
@@ -1368,10 +1368,10 @@ shown here in the state they were in at the time of triggering.''' )
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.reset_task_state( task_id, state )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def kill_task( self, b, task_id ):
         msg = "remove " + task_id + " (after spawning)?"
@@ -1397,10 +1397,10 @@ shown here in the state they were in at the time of triggering.''' )
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.spawn_and_die( task_id )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
  
     def kill_task_nospawn( self, b, task_id ):
         msg = "remove " + task_id + " (without spawning)?"
@@ -1425,10 +1425,10 @@ shown here in the state they were in at the time of triggering.''' )
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.die( task_id )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def purge_cycle_entry( self, e, w, task_id ):
         stop = e.get_text()
@@ -1441,10 +1441,10 @@ shown here in the state they were in at the time of triggering.''' )
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.purge( task_id, stop )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def purge_cycle_button( self, b, e, w, task_id ):
         stop = e.get_text()
@@ -1457,10 +1457,10 @@ shown here in the state they were in at the time of triggering.''' )
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.purge( task_id, stop )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def stopsuite_popup( self, b ):
         window = gtk.Window()
@@ -1869,10 +1869,10 @@ shown here in the state they were in at the time of triggering.''' )
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.insert( torg, stop )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def reload_suite( self, w ):
         msg = """Reload the suite definition (EXPERIMENTAL!)
