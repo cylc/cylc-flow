@@ -21,16 +21,17 @@ from job_submit import job_submit
 class background_slow( job_submit ):
     """
 This is a deliberately slow version of background job submission, used
-for cylc development purposes.
+for cylc development purposes - sleep 10s before executing the task.
     """
     # stdin redirection (< /dev/null) allows background execution
     # even on a remote host - ssh can exit without waiting for the
     # remote process to finish.
-    COMMAND_TEMPLATE = "sleep 10; %s </dev/null 1>%s 2>%s &"
+    COMMAND_TEMPLATE = "sleep 10 && %s </dev/null 1>%s 2>%s &"
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template
         if not command_template:
-            command_template = self.COMMAND_TEMPLATE
+            command_template = self.__class__.COMMAND_TEMPLATE
         self.command = command_template % ( self.jobfile_path,
                                             self.stdout_file,
                                             self.stderr_file )
+
