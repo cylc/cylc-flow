@@ -2436,22 +2436,16 @@ for local suites; I will call "cylc cat-log" instead.""" ).warn()
             foo.run()
             return
 
-        # local suites (--host and --owner not needed here, but for
-        # completeness...)
-        command = "cylc get-config --mark-output --host=" + \
-                self.cfg.host + " --owner=" + self.cfg.owner + " " + \
-                self.cfg.suite + " cylc logging directory"
+        # just for local suites (so --host and --owner are not needed here)
+        command = "cylc get-config --mark-output " + self.cfg.suite + " cylc logging directory"
         res, lst = run_get_stdout( command, filter=True )
         logging_dir = lst[0]
-        command = "cylc get-config --mark-output --host=" + \
-                self.cfg.host + " --owner=" + self.cfg.owner + \
-                ' --tasks ' + self.cfg.suite
+        command = "cylc get-config --mark-output --tasks " + self.cfg.suite
         res, tasks = run_get_stdout( command, filter=True )
         if res:
             task_list = tasks
         else:
             task_list = []
-        print tasks
         foo = cylc_logviewer( 'log', logging_dir, task_list)
         self.quitters.append(foo)
 
