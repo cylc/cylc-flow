@@ -53,6 +53,7 @@ class state_summary( Pyro.core.ObjBase ):
                 self.task_name_list.append(name)
 
         fam_states = {}
+        all_states = []
         for ctime, c_task_states in task_states.items():
             # For each cycle time, construct a family state tree           
             c_fam_task_states = {}
@@ -61,6 +62,7 @@ class state_summary( Pyro.core.ObjBase ):
                 state = task_states.get(ctime, {}).get(key)
                 if state is None:
                     continue
+                all_states.append( state )
                 for parent in parent_list:
                     if parent == key:
                         continue
@@ -76,6 +78,8 @@ class state_summary( Pyro.core.ObjBase ):
                                              'label': ctime,
                                              'state': state}
         
+        all_states.sort()
+
         self.global_summary[ 'start time' ] = self.start_time
         self.global_summary[ 'oldest cycle time' ] = oldest
         self.global_summary[ 'newest cycle time' ] = newest
@@ -89,6 +93,7 @@ class state_summary( Pyro.core.ObjBase ):
         self.global_summary[ 'started by gcylc' ] = self.gcylc
         self.global_summary[ 'blocked' ] = blocked
         self.global_summary[ 'runahead limit' ] = runahead
+        self.global_summary[ 'states' ] = all_states
 
     def get_task_name_list( self ):
         return self.task_name_list
