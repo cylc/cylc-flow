@@ -5057,16 +5057,17 @@ invoked version: \lstinline=cylc -V avail= (capital V).
 
 The top level command interface, \lstinline=$CYLC_DIR/bin/cylc=,
 determines the legality of requested sub-command names so any attempt to
-run a sub-command that no longer exists in the invoked version
-of cylc will fail. Additionally, the command line must be parsed first
-by the sub-command of the invoked cylc version in order to determine
-which command line argument references the suite (the suite name is
-always the first non-option argument but only sub-commands know if
-particular options have their own arguments or are just logical flags,
-and can therefore determine which is the first true argument);
-consequently any attempt to use a command option that is illegal in the
-invoked version of cylc will also fail.
+run a sub-command that no longer exists in the invoked version.
+Additionally, the command line must be parsed first by the sub-command
+of the invoked version in order to determine which command line argument
+references the suite (the suite name is always the first non-option
+argument but only sub-commands know if other options have their own
+arguments or are just logical flags, and can therefore determine which
+is the first true argument); consequently any attempt to use a command
+option that is illegal in the invoked version of cylc will also fail.
 
+Finally, note that the task messaging commands are exempt from version 
+compatibility checking, to avoid the overhead while a suite is running.
 
 \subsubsection{A Usage Suggestion}
 
