@@ -341,6 +341,7 @@ class task( Pyro.core.ObjBase ):
                 'use ssh messaging' : self.ssh_messaging,
                 'use manual completion' : self.manual_messaging,
                 'try number' : self.try_number,
+                'is cold-start' : self.is_coldstart,
                 'remote cylc path' : self.__class__.remote_cylc_directory,
                 'remote suite path' : self.__class__.remote_suite_directory,
                 'share path' : self.__class__.job_submit_share_directory,

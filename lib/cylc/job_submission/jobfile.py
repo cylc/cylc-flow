@@ -158,6 +158,7 @@ class jobfile(object):
         BUFFER.write( "\n\n# CYLC TASK IDENTITY AND ENVIRONMENT:" )
         BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
         BUFFER.write( "\nexport CYLC_TASK_NAME=" + self.task_name )
+        BUFFER.write( "\nexport CYLC_TASK_IS_COLDSTART=" + str( self.jobconfig['is cold-start']) )
         BUFFER.write( "\nexport CYLC_TASK_CYCLE_TIME=" + self.tag )
         BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
         BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.jobconfig['namespace hierarchy']) + '"')
