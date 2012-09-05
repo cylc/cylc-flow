@@ -18,47 +18,17 @@
 
 import re, os
 import StringIO
-from copy import deepcopy
 
 class jobfile(object):
 
-    def __init__( self, task_id, cylc_env, task_env, bc_env, ns_hier,
-            directive_prefix, directive_connector, directives,
-            final_directive, manual_messaging, initial_scripting,
-            enviro_scripting, precommand_scripting, command_scripting,
-            try_number, postcommand_scripting, remote_cylc_dir,
-            remote_suite_dir, shell, share_dir, work_dir, log_root,
-            job_submission_method, ssh_messaging ):
+    def __init__( self, log_root, job_submission_method, task_id, jobconfig ):
 
-        self.task_id = task_id
-        self.cylc_env = deepcopy(cylc_env)  # deep copy as may be modified below
-        self.task_env = task_env
-        self.bc_env = bc_env
-        self.directive_prefix = directive_prefix
-        self.directive_connector = directive_connector
-        self.final_directive = final_directive
-        self.directives = directives
-        self.initial_scripting = initial_scripting
-        self.enviro_scripting = enviro_scripting
-        self.precommand_scripting = precommand_scripting
-        self.command_scripting = command_scripting
-        self.try_number = try_number
-        self.postcommand_scripting = postcommand_scripting
-        self.shell = shell
-        self.share_dir = share_dir
-        self.work_dir = work_dir
         self.log_root = log_root
         self.job_submission_method = job_submission_method
-        self.remote_cylc_dir = remote_cylc_dir
-        self.remote_suite_dir = remote_suite_dir
-        self.manual_messaging = manual_messaging
-        self.namespace_hierarchy = ns_hier
-        self.ssh_messaging = ssh_messaging
+        self.task_id = task_id
+        self.jobconfig = jobconfig
 
-        # Get NAME%CYCLE (cycling tasks) or NAME%TAG (asynchronous tasks)
-        ( self.task_name, tag ) = task_id.split( '%' )
-        # TO DO: asynchronous tasks
-        self.cycle_time = tag
+        self.task_name, self.tag = task_id.split( '%' )
 
     def write( self, path ):
         ############# !!!!!!!! WARNING !!!!!!!!!!! #####################
@@ -80,7 +50,6 @@ class jobfile(object):
         self.write_directives()
 
         self.write_task_job_script_starting()
-
         self.write_err_trap()
 
         self.write_cylc_access()
@@ -95,19 +64,17 @@ class jobfile(object):
         self.write_suite_bin_access()
 
         self.write_environment_2()
-
         self.write_bc_environment()
-
         self.write_task_started()
 
         self.write_work_directory_create()
         self.write_manual_environment()
         self.write_identity_scripting()
+
         self.write_pre_scripting()
-
         self.write_command_scripting()
-
         self.write_post_scripting()
+
         self.write_work_directory_remove()
 
         self.write_task_succeeded()
@@ -115,49 +82,58 @@ class jobfile(object):
         self.FILE.close()
 
     def write_header( self ):
-        self.FILE.write( '#!' + self.shell )
+        self.FILE.write( '#!' + self.jobconfig['job script shell'] )
         self.FILE.write( '\n\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++' )
         self.FILE.write( '\n# Task: ' + self.task_id )
-        self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'')
+        self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'' )
 
     def write_directives( self ):
-        if len( self.directives.keys() ) == 0 or not self.directive_prefix:
+        directives = self.jobconfig['directives']
+        prefix = self.jobconfig['directive prefix']
+        final = self.jobconfig['directive final']
+        connector = self.jobconfig['directive connector']
+
+        if len( directives.keys() ) == 0 or not prefix:
             return
+
         self.FILE.write( "\n\n# DIRECTIVES:" )
-        for d in self.directives:
-            self.FILE.write( '\n' + self.directive_prefix + ' ' + d + self.directive_connector + self.directives[ d ] )
-        if self.final_directive:
-            self.FILE.write( '\n' + self.final_directive )
+        for d in directives:
+            self.FILE.write( '\n' + prefix + ' ' + d + connector + directives[ d ] )
+        if final:
+            self.FILE.write( '\n' + final )
 
     def write_task_job_script_starting( self ):
         self.FILE.write( '\n\necho "JOB SCRIPT STARTING"')
 
     def write_initial_scripting( self, BUFFER=None ):
-        if not self.initial_scripting:
+        iscr = self.jobconfig['initial scripting']
+        if not iscr:
             return
         if not BUFFER:
             BUFFER = self.FILE
         BUFFER.write( "\n\n# INITIAL SCRIPTING:\n" )
-        BUFFER.write( self.initial_scripting )
+        BUFFER.write( iscr )
 
     def write_enviro_scripting( self, BUFFER=None ):
-        if not self.enviro_scripting:
+        escr = self.jobconfig['environment scripting']
+        if not escr:
             return
         if not BUFFER:
             BUFFER = self.FILE
-        BUFFER.write( "\n\n# ENVIRONWENT SCRIPTING:\n" )
-        BUFFER.write( self.enviro_scripting )
+        BUFFER.write( "\n\n# ENVIRONMENT SCRIPTING:\n" )
+        BUFFER.write( escr )
 
     def write_bc_environment( self, BUFFER=None ):
-        if len( self.bc_env.keys() ) == 0:
+        env = self.jobconfig['broadcast environment']
+        if len( env.keys() ) == 0:
             return
         if not BUFFER:
             BUFFER = self.FILE
         BUFFER.write( "\n\n# BROADCAST VARIABLES FROM OTHER TASKS:" )
-        for var, val in self.bc_env.items():
+        for var, val in env.items():
             BUFFER.write( self.get_var_assign(var,val))
         BUFFER.write( "\nexport" )
-        for var in self.bc_env:
+        for var in env:
             BUFFER.write( " " + var )
 
     def write_environment_1( self, BUFFER=None ):
@@ -165,36 +141,39 @@ class jobfile(object):
             BUFFER = self.FILE
 
         # Override CYLC_SUITE_DEF_PATH for remotely hosted tasks
-        if self.remote_suite_dir:
-            self.cylc_env['CYLC_SUITE_DEF_PATH'] = self.remote_suite_dir
+        rsp = self.jobconfig['remote suite path']
+        cenv = self.jobconfig['cylc environment']
+        if rsp:
+            cenv['CYLC_SUITE_DEF_PATH'] = rsp
         else:
             # for remote tasks that don't specify a remote suite dir
             # default to replace home dir with literal '$HOME' (works
             # for local tasks too):
-            self.cylc_env[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', self.cylc_env['CYLC_SUITE_DEF_PATH'])
+            cenv[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', cenv['CYLC_SUITE_DEF_PATH'])
 
         BUFFER.write( "\n\n# CYLC LOCATION; SUITE LOCATION, IDENTITY, AND ENVIRONMENT:" )
-        for var in self.cylc_env:
-            BUFFER.write( "\nexport " + var + "=" + str( self.cylc_env[var] ) )
+        for var, val in cenv.items():
+            BUFFER.write( "\nexport " + var + "=" + str(val) )
 
         BUFFER.write( "\n\n# CYLC TASK IDENTITY AND ENVIRONMENT:" )
         BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
         BUFFER.write( "\nexport CYLC_TASK_NAME=" + self.task_name )
-        BUFFER.write( "\nexport CYLC_TASK_CYCLE_TIME=" + self.cycle_time )
+        BUFFER.write( "\nexport CYLC_TASK_CYCLE_TIME=" + self.tag )
         BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
-        BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.namespace_hierarchy) + '"')
-        BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.try_number) )
-        BUFFER.write( "\nexport CYLC_TASK_SSH_MESSAGING=" + str(self.ssh_messaging) )
-        BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=" + self.work_dir )
+        BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.jobconfig['namespace hierarchy']) + '"')
+        BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.jobconfig['try number']) )
+        BUFFER.write( "\nexport CYLC_TASK_SSH_MESSAGING=" + str(self.jobconfig['use ssh messaging']) )
+        BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=" + self.jobconfig['work path'] )
         BUFFER.write( "\n# Note the suite share path may actually be family- or task-specific:" )
-        BUFFER.write( "\nexport CYLC_SUITE_SHARE_PATH=" + self.share_dir )
+        BUFFER.write( "\nexport CYLC_SUITE_SHARE_PATH=" + self.jobconfig['share path'] )
 
     def write_cylc_access( self, BUFFER=None ):
         if not BUFFER:
             BUFFER = self.FILE
-        if self.remote_cylc_dir:
+        rcp = self.jobconfig['remote cylc path']
+        if rcp:
             BUFFER.write( "\n\n# ACCESS TO CYLC:" )
-            BUFFER.write( "\nexport PATH=" + self.remote_cylc_dir + "/bin:$PATH" )
+            BUFFER.write( "\nexport PATH=" + rcp + "/bin:$PATH" )
 
     def write_suite_bin_access( self, BUFFER=None ):
         if not BUFFER:
@@ -277,34 +256,36 @@ cd $CYLC_TASK_WORK_PATH""" )
         return expr
 
     def write_environment_2( self ):
-        if len( self.task_env.keys()) == 0:
+        env = self.jobconfig['runtime environment']
+        if len( env.keys()) == 0:
             return
 
         # generate variable assignment expressions
         self.FILE.write( "\n\n# TASK RUNTIME ENVIRONMENT:" )
-        for var, val in self.task_env.items():
+        for var, val in env.items():
             self.FILE.write( self.get_var_assign(var,val))
 
         # export them all now (see note)
         self.FILE.write( "\nexport" )
-        for var in self.task_env:
+        for var in env:
             self.FILE.write( " " + var )
 
     def write_manual_environment( self ):
         # TO DO: THIS METHOD NEEDS UPDATING FOR CURRENT SECTIONS
-        if self.manual_messaging:
-            strio = StringIO.StringIO()
-            self.write_initial_scripting( strio )
-            self.write_environment_1( strio )
-            self.write_cylc_access( strio )
-            self.write_bc_environment( strio )
-            # now escape quotes in the environment string
-            str = strio.getvalue()
-            strio.close()
-            str = re.sub('"', '\\"', str )
-            self.FILE.write( '\n\n# SUITE AND TASK IDENTITY FOR CUSTOM TASK WRAPPERS:')
-            self.FILE.write( '\n# (contains embedded newlines so usage may require "QUOTES")' )
-            self.FILE.write( '\nexport CYLC_SUITE_ENVIRONMENT="' + str + '"' )
+        if not self.jobconfig['use manual completion']:
+            return
+        strio = StringIO.StringIO()
+        self.write_initial_scripting( strio )
+        self.write_environment_1( strio )
+        self.write_cylc_access( strio )
+        self.write_bc_environment( strio )
+        # now escape quotes in the environment string
+        str = strio.getvalue()
+        strio.close()
+        str = re.sub('"', '\\"', str )
+        self.FILE.write( '\n\n# SUITE AND TASK IDENTITY FOR CUSTOM TASK WRAPPERS:')
+        self.FILE.write( '\n# (contains embedded newlines so usage may require "QUOTES")' )
+        self.FILE.write( '\nexport CYLC_SUITE_ENVIRONMENT="' + str + '"' )
 
     def write_identity_scripting( self ):
         self.FILE.write( "\n\n# TASK IDENTITY SCRIPTING:" )
@@ -326,23 +307,25 @@ echo "  Task Try No.: $CYLC_TASK_TRY_NUMBER"
 echo ""''')
 
     def write_pre_scripting( self ):
-        if not self.precommand_scripting:
+        pcs = self.jobconfig['pre-command scripting']
+        if not pcs:
             return
         self.FILE.write( "\n\n# PRE-COMMAND SCRIPTING:" )
-        self.FILE.write( "\n" + self.precommand_scripting )
+        self.FILE.write( "\n" + pcs )
 
     def write_command_scripting( self ):
         self.FILE.write( "\n\n# TASK COMMAND SCRIPTING:" )
-        self.FILE.write( "\n" + self.command_scripting )
+        self.FILE.write( "\n" + self.jobconfig['command scripting'] )
 
     def write_post_scripting( self ):
-        if not self.postcommand_scripting:
+        pcs = self.jobconfig['post-command scripting']
+        if not pcs:
             return
         self.FILE.write( "\n\n# POST COMMAND SCRIPTING:" )
-        self.FILE.write( "\n" + self.postcommand_scripting )
+        self.FILE.write( "\n" + pcs )
 
     def write_work_directory_remove( self ):
-        if self.manual_messaging:
+        if self.jobconfig['use manual completion']:
             self.FILE.write( """
 
 # (detaching task: cannot safely remove the WORK DIRECTORY here)""")
@@ -354,7 +337,7 @@ cd
 rmdir $CYLC_TASK_WORK_PATH 2>/dev/null || true""" )
 
     def write_task_succeeded( self ):
-        if self.manual_messaging:
+        if self.jobconfig['use manual completion']:
             self.FILE.write( '\n\necho "JOB SCRIPT EXITING: THIS TASK HANDLES ITS OWN COMPLETION MESSAGING"')
         else:
             self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE:')

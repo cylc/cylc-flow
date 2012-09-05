@@ -4081,8 +4081,9 @@ shows how to extend cylc with new user-defined job submission methods.
 
 There are also two job submission methods intended for use in cylc
 development and testing: \lstinline=background_slow=, in which the job
-submission subprocess takes ten seconds to complete; and
-\lstinline=fail=, in which the job submission subprocess always fails.  
+submission subprocess itself takes ten seconds to complete before the
+task starts executing; and \lstinline=fail=, in which the job submission
+subprocess itself always fails.  
 
 \subsubsection{background}
 

@@ -27,7 +27,8 @@ service must be running.
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template
         if not command_template:
-            command_template = self.COMMAND_TEMPLATE
+            command_template = self.__class__.COMMAND_TEMPLATE
         self.command = command_template % ( self.jobfile_path,
                                             self.stdout_file,
                                             self.stderr_file )
+
