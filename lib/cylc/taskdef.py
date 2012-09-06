@@ -75,6 +75,7 @@ class taskdef(object):
         self.modifiers = []
         self.asyncid_pattern = None
         self.cycling = False
+        self.is_coldstart = False
 
         self.remote_host = None
         self.owner = None
@@ -366,6 +367,7 @@ class taskdef(object):
                 super( sself.__class__, sself ).__init__( initial_state )
 
             sself.reconfigure_me = False
+            sself.is_coldstart = self.is_coldstart
 
         tclass.__init__ = tclass_init
 

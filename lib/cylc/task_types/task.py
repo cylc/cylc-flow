@@ -28,6 +28,7 @@
 # TASK PROXY BASE CLASS:
 
 import sys, re
+from copy import deepcopy
 import datetime
 from cylc import task_state
 from cylc.RunEventHandler import RunHandler
@@ -76,6 +77,9 @@ class task( Pyro.core.ObjBase ):
     intercycle = False
     suite = None
     state_changed = True
+
+    # set by the back door at startup:
+    cylc_env = {}
 
     @classmethod
     def describe( cls ):
@@ -315,32 +319,53 @@ class task( Pyro.core.ObjBase ):
 
         launcher_class = getattr( mod, class_name )
 
-        # To Do: most of the following arguments could be class variables
-        self.launcher = launcher_class(
-                        self.id, self.initial_scripting,
-                        self.enviro_scripting,
-                        self.precommand, self.command, self.try_number,
-                        self.postcommand, self.env_vars, bcvars,
-                        self.namespace_hierarchy, self.directives,
-                        self.manual_messaging, self.logfiles,
-                        self.__class__.job_submit_log_directory,
-                        self.__class__.job_submit_share_directory,
-                        self.__class__.job_submit_work_directory,
-                        self.__class__.owner,
-                        self.__class__.remote_host,
-                        self.__class__.remote_cylc_directory,
-                        self.__class__.remote_suite_directory,
-                        self.__class__.remote_shell_template,
-                        self.__class__.remote_log_directory,
-                        self.__class__.job_submit_command_template,
-                        self.__class__.job_submission_shell,
-                        self.ssh_messaging )
+        # To Do: most of the following could be class variables?
+        # To Do: should cylc_env just be a task instance variable?
+        # (it has to be deepcopy'd below as as may be modified by task
+        # instances when writing the jobfile).
+
+        jobconfig = {
+                'directives' : self.directives,
+                'directive prefix' : None,
+                'directive final' : None,
+                'directive connector' : ' ',
+                'initial scripting' : self.initial_scripting,
+                'cylc environment' : deepcopy( task.cylc_env ),
+                'environment scripting' : self.enviro_scripting,
+                'runtime environment' : self.env_vars,
+                'broadcast environment' : bcvars,
+                'pre-command scripting' : self.precommand,
+                'command scripting' : self.command,
+                'post-command scripting' : self.postcommand,
+                'namespace hierarchy' : self.namespace_hierarchy,
+                'use ssh messaging' : self.ssh_messaging,
+                'use manual completion' : self.manual_messaging,
+                'try number' : self.try_number,
+                'is cold-start' : self.is_coldstart,
+                'remote cylc path' : self.__class__.remote_cylc_directory,
+                'remote suite path' : self.__class__.remote_suite_directory,
+                'share path' : self.__class__.job_submit_share_directory,
+                'work path' : self.__class__.job_submit_work_directory,
+                'job script shell' :  self.__class__.job_submission_shell,
+                }
+        xconfig = {
+                'owner' : self.__class__.owner,
+                'host' : self.__class__.remote_host,
+                'log path' : self.__class__.job_submit_log_directory,
+                'extra log files' : self.logfiles,
+                'remote shell template' : self.__class__.remote_shell_template,
+                'remote log path' : self.__class__.remote_log_directory,
+                'job submission command template' : self.__class__.job_submit_command_template,
+                }
+
+        self.launcher = launcher_class( self.id, jobconfig, xconfig )
 
         try:
             p = self.launcher.submit( dry_run )
-        except:
-            self.set_submit_failed()
-            return None
+        except Exception, x:
+            # a bug was activated in cylc job submission code
+            print >> sys.stderr, 'ERROR: cylc job submission bug?'
+            raise
         else:
             self.set_submitted()
             self.submission_timer_start = task.clock.get_datetime()
@@ -639,3 +664,4 @@ class task( Pyro.core.ObjBase ):
 
     def is_clock_triggered( self ):
         return False
+

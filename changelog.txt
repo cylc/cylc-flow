@@ -976,17 +976,21 @@ and the task runtime environment.
 
 + External host selection officially supported (host = selector.sh).
 
-+ The runahead limit base is now the oldest non-finished (i.e. not
++ The runahead limit base is now the oldest non-finished task (i.e. not
 succeeded or failed); it defaults to the twice the smallest cycling
-interval in the suite; and it will not stall even if set to less than
-the smallest cycling interval in the suite.
+interval in the suite; and it will not stall a suite even if set less
+than the smallest cycling.
 
 + A new command 'cylc broadcast NAME VALUE' allows tasks to broadcast
 simple information to environment variables made available to other
 tasks downstream of them. 
 
 + Fixed a problem with remote command invocation that caused the new ssh
-messaging feature to fail in some (most?) cases.
+messaging feature to fail in some cases.
 
 + Suite info, view, log, and graphing from gcontrol View menu.
+
++ A new task run time environment variable to allow a task to determine
+whether or not it is a cold-start task: $CYLC_TASK_IS_COLDSTART ('True'
+or 'False')
 
