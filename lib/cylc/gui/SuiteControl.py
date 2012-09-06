@@ -31,6 +31,7 @@ from warning_dialog import warning_dialog, info_dialog
 from cylc.gui.SuiteControlGraph import ControlGraph
 from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
+from cylc.gui.graph import graph_suite_popup
 from cylc.gui.stateview import DotGetter
 from cylc.gui.util import get_icon, get_image_dir, get_logo
 from cylc import cylc_pyro_client
@@ -369,7 +370,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         if self.current_views[0].name == item._viewname:
             return False
         self.switch_view( item._viewname )
-        # self._set_tool_bar_view0( item._viewname )
+        self._set_tool_bar_view0( item._viewname )
         return False
 
     def _set_tool_bar_view0( self, viewname ):
@@ -1984,50 +1985,6 @@ without restarting the suite."""
         view_menu_root = gtk.MenuItem( '_View' )
         view_menu_root.set_submenu( self.view_menu )
 
-        info_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DIALOG_INFO )
-        info_item.set_label( 'Suite _Info' )
-        self.view_menu.append( info_item )
-        info_item.connect( 'activate', self.view_suite_info )
-
-        graph_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_SELECT_COLOR )
-        graph_item.set_label( 'Suite _Graph' )
-        self.view_menu.append( graph_item )
-        graphmenu = gtk.Menu()
-        graph_item.set_submenu(graphmenu)
-
-        gtree_item = gtk.MenuItem( '_Dependencies' )
-        graphmenu.append( gtree_item )
-        gtree_item.connect( 'activate', self.view_suite_graph, False )
-
-        gns_item = gtk.MenuItem( '_Namespaces' )
-        graphmenu.append( gns_item )
-        gns_item.connect( 'activate', self.view_suite_graph, True )
-
-        log_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DND )
-        log_item.set_label( 'Suite _Log' )
-        self.view_menu.append( log_item )
-        log_item.connect( 'activate', self.view_log )
-
-        view_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_EDIT )
-        view_item.set_label( 'Suite _View' )
-        self.view_menu.append( view_item )
-        subviewmenu = gtk.Menu()
-        view_item.set_submenu(subviewmenu)
-
-        rw_item = gtk.MenuItem( '_Raw' )
-        subviewmenu.append( rw_item )
-        rw_item.connect( 'activate', self.view_suite_view, 'raw' )
- 
-        viewi_item = gtk.MenuItem( '_Inlined' )
-        subviewmenu.append( viewi_item )
-        viewi_item.connect( 'activate', self.view_suite_view, 'inlined' )
- 
-        viewp_item = gtk.MenuItem( '_Processed' )
-        subviewmenu.append( viewp_item )
-        viewp_item.connect( 'activate', self.view_suite_view, 'processed' )
-
-        self.view_menu.append( gtk.SeparatorMenuItem() )
-
         self.view1_align_item = gtk.CheckMenuItem(
                                     label="Toggle views _side-by-side" )
         self._set_tooltip( self.view1_align_item,
@@ -2170,6 +2127,80 @@ without restarting the suite."""
         start_menu.append( runahead_item )
         runahead_item.connect( 'activate', self.change_runahead_popup )
 
+        tools_menu = gtk.Menu()
+        tools_menu_root = gtk.MenuItem( '_Tools' )
+        tools_menu_root.set_submenu( tools_menu )
+
+        edit_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DIALOG_INFO )
+        edit_item.set_label( 'Suite _Edit' )
+        tools_menu.append( edit_item )
+        edit_menu = gtk.Menu()
+        edit_item.set_submenu(edit_menu)
+
+        raw_item = gtk.MenuItem( '_Raw' )
+        edit_menu.append( raw_item )
+        raw_item.connect( 'activate', self.run_suite_edit, False )
+
+        inl_item = gtk.MenuItem( '_Inlined' )
+        edit_menu.append( inl_item )
+        inl_item.connect( 'activate', self.run_suite_edit, True )
+
+        info_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DIALOG_INFO )
+        info_item.set_label( 'Suite _Info' )
+        tools_menu.append( info_item )
+        info_item.connect( 'activate', self.run_suite_info )
+
+        graph_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_SELECT_COLOR )
+        graph_item.set_label( 'Suite _Graph' )
+        tools_menu.append( graph_item )
+        graphmenu = gtk.Menu()
+        graph_item.set_submenu(graphmenu)
+
+        gtree_item = gtk.MenuItem( '_Dependencies' )
+        graphmenu.append( gtree_item )
+        gtree_item.connect( 'activate', self.run_suite_graph, False )
+
+        gns_item = gtk.MenuItem( '_Namespaces' )
+        graphmenu.append( gns_item )
+        gns_item.connect( 'activate', self.run_suite_graph, True )
+
+        list_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_INDEX )
+        list_item.set_label( 'Suite _List' )
+        tools_menu.append( list_item )
+        list_menu = gtk.Menu()
+        list_item.set_submenu( list_menu )
+ 
+        flat_item = gtk.MenuItem( '_Tasks' )
+        list_menu.append( flat_item )
+        flat_item.connect( 'activate', self.run_suite_list )
+
+        tree_item = gtk.MenuItem( '_Namespaces' )
+        list_menu.append( tree_item )
+        tree_item.connect( 'activate', self.run_suite_list, '-t' )
+
+        log_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DND )
+        log_item.set_label( 'Suite _Log' )
+        tools_menu.append( log_item )
+        log_item.connect( 'activate', self.run_suite_log )
+
+        view_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_EDIT )
+        view_item.set_label( 'Suite _View' )
+        tools_menu.append( view_item )
+        subviewmenu = gtk.Menu()
+        view_item.set_submenu(subviewmenu)
+
+        rw_item = gtk.MenuItem( '_Raw' )
+        subviewmenu.append( rw_item )
+        rw_item.connect( 'activate', self.run_suite_view, 'raw' )
+ 
+        viewi_item = gtk.MenuItem( '_Inlined' )
+        subviewmenu.append( viewi_item )
+        viewi_item.connect( 'activate', self.run_suite_view, 'inlined' )
+ 
+        viewp_item = gtk.MenuItem( '_Processed' )
+        subviewmenu.append( viewp_item )
+        viewp_item.connect( 'activate', self.run_suite_view, 'processed' )
+
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( '_Help' )
         help_menu_root.set_submenu( help_menu )
@@ -2223,6 +2254,7 @@ without restarting the suite."""
         self.menu_bar.append( file_menu_root )
         self.menu_bar.append( view_menu_root )
         self.menu_bar.append( start_menu_root )
+        self.menu_bar.append( tools_menu_root )
         self.menu_bar.append( help_menu_root )
 
     def construct_command_menu( self, menu ):
@@ -2422,15 +2454,63 @@ For more Stop options use the Control menu.""" )
         return cylc_pyro_client.client( self.cfg.suite,
                 self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                 self.cfg.pyro_timeout, self.cfg.port ).get_proxy( object )
- 
-    def view_log( self, w ):
+
+    def run_suite_edit( self, w, inlined=False):
+        extra = ''
+        if inlined:
+            extra = '-i '
+        command = ( "cylc edit --notify-completion -g" + self.get_remote_run_opts() + 
+                    " " + extra + ' ' + self.cfg.suite )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+        self.gcapture_windows.append(foo)
+        foo.run()
+        return False
+
+    def run_suite_graph( self, w, show_ns=False ):
+        if show_ns:
+            command = ( "cylc graph --notify-completion --namespaces " +
+                        self.get_remote_run_opts() +
+                        " " + self.cfg.suite )
+            foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+            self.gcapture_windows.append(foo)
+            foo.run()
+        else:
+            times = []
+            for option in ["'initial cycle time'", "'final cycle time'"]:
+                command = ( "cylc get-config" + self.get_remote_run_opts() +
+                            " " + self.cfg.suite + 
+                            " visualization " + option )
+                res, pieces = run_get_stdout( command )
+                if not res or not pieces:
+                    return False
+                times.append(pieces[0].strip())
+            graph_suite_popup( self.cfg.suite, self.command_help, times[0], times[1],
+                               self.get_remote_run_opts(), self.gcapture_windows,
+                               self.cfg.cylc_tmpdir, parent_window=self.window )
+
+    def run_suite_info( self, w ):
+        command = ( "cylc show --notify-completion" + self.get_remote_run_opts() + 
+                    " " + self.cfg.suite )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
+    def run_suite_list( self, w, opt='' ):
+        command = ( "cylc list " + self.get_remote_run_opts() + " " + opt +
+                    " --notify-completion " + self.cfg.suite )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
+    def run_suite_log( self, w ):
         com = False
         if is_remote_host( self.cfg.host ) or is_remote_user( self.cfg.owner ):
             com = True
             warning_dialog( \
 """The full-function GUI log viewer is only available
 for local suites; I will call "cylc cat-log" instead.""" ).warn()
-            command = "cylc cat-log --notify-completion --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite
+            command = ( "cylc cat-log --notify-completion" + self.get_remote_run_opts() +
+                        " " + self.cfg.suite )
             foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
             self.gcapture_windows.append(foo)
             foo.run()
@@ -2449,32 +2529,22 @@ for local suites; I will call "cylc cat-log" instead.""" ).warn()
         foo = cylc_logviewer( 'log', logging_dir, task_list)
         self.quitters.append(foo)
 
-    def view_suite_graph( self, w, show_ns=False ):
-        command = "cylc graph --notify-completion --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite
-        if show_ns:
-            command = "cylc graph --notify-completion --namespaces --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def view_suite_info( self, w ):
-        command = "cylc show --notify-completion --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite 
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def view_suite_view( self, w, method ):
+    def run_suite_view( self, w, method ):
         extra = ''
         if method == 'inlined':
             extra = ' -i'
         elif method == 'processed':
             extra = ' -j'
 
-        command = "cylc view --notify-completion -g --host=" + self.cfg.host + " --owner=" + self.cfg.owner + extra + " " + self.cfg.suite
+        command = ( "cylc view --notify-completion -g " + self.get_remote_run_opts() + 
+                    " " + extra + " " + self.cfg.suite )
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
         return False
+
+    def get_remote_run_opts( self ):
+        return " --host=" + self.cfg.host + " --owner=" + self.cfg.owner
 
     def browse( self, b, option='' ):
         command = 'cylc documentation ' + option
