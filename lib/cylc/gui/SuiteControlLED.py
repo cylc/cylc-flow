@@ -113,6 +113,12 @@ LED suite control interface.
 
         return True
 
+    def check_filter_entry( self, e ):
+        ftxt = self.filter_entry.get_text()
+        self.t.filter = self.filter_entry.get_text()
+        self.t.update()
+        self.t.update_gui()
+
     def toggle_grouping( self, toggle_item ):
         """Toggle grouping by visualisation families."""
         if isinstance( toggle_item, gtk.ToggleToolButton ):
@@ -179,11 +185,22 @@ LED suite control interface.
     def get_toolitems( self ):
         """Return the tool bar items specific to this view."""
         items = []
+        
+        self.filter_entry = gtk.Entry()
+        self.filter_entry.set_width_chars( 8 )  # Reduce width in toolbar
+        self.filter_entry.connect( "activate", self.check_filter_entry )
+        filter_toolitem = gtk.ToolItem()
+        filter_toolitem.add(self.filter_entry)
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(filter_toolitem, "Dot View - Filter tasks by name")
+        items.append(filter_toolitem)
+
         self.group_toolbutton = gtk.ToggleToolButton()
         self.group_toolbutton.set_active( self.t.should_group_families )
         g_image = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_SMALL_TOOLBAR )
         self.group_toolbutton.set_icon_widget( g_image )
         self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
-        self._set_tooltip( self.group_toolbutton, "Click to group tasks by families" )
+        self._set_tooltip( self.group_toolbutton, "Dot View - Click to group tasks by families" )
         items.append( self.group_toolbutton )
         return items

@@ -334,7 +334,7 @@ Text Treeview suite control interface.
         items.append( collapse_button )
      
         self.filter_entry = gtk.Entry()
-        self.filter_entry.set_width_chars( 10 )  # Reduce width in toolbar
+        self.filter_entry.set_width_chars( 8 )  # Reduce width in toolbar
         self.filter_entry.connect( "activate", self.check_filter_entry )
         filter_toolitem = gtk.ToolItem()
         filter_toolitem.add(self.filter_entry)

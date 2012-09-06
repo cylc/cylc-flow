@@ -503,6 +503,7 @@ class lupdater(threading.Thread):
         self.mode = "waiting..."
         self.dt = "waiting..."
         self.block = "waiting ..."
+        self.filter = ""
 
         self.led_treeview = treeview
         self.led_liststore = treeview.get_model()
@@ -602,6 +603,8 @@ class lupdater(threading.Thread):
                         break
 
         self.task_list.sort()
+        if self.filter:
+            self.task_list = [t for t in self.task_list if self.filter in t]
         # always update global info
         self.global_summary = glbl
 
