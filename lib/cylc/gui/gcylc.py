@@ -42,6 +42,7 @@ from warning_dialog import warning_dialog, info_dialog, question_dialog
 from util import get_icon, get_image_dir, get_logo
 import helpwindow
 from gcapture import gcapture, gcapture_tmpfile
+from graph import graph_suite_popup
 from cylc.mkdir_p import mkdir_p
 from cylc_logviewer import cylc_logviewer
 from cylc.passphrase import passphrase
@@ -930,7 +931,7 @@ The cylc forecast suite metascheduler.
 
             igtree_item = gtk.MenuItem( '_Dependencies' )
             igraphmenu.append( igtree_item )
-            igtree_item.connect( 'activate', self.graph_suite_popup, reg, suite_dir )
+            igtree_item.connect( 'activate', self.graph_suite_popup_driver, reg )
 
             igns_item = gtk.MenuItem( '_Namespaces' )
             igraphmenu.append( igns_item )
@@ -1012,7 +1013,7 @@ The cylc forecast suite metascheduler.
 
             gtree_item = gtk.MenuItem( '_Dependencies' )
             graphmenu.append( gtree_item )
-            gtree_item.connect( 'activate', self.graph_suite_popup, reg, suite_dir )
+            gtree_item.connect( 'activate', self.graph_suite_popup_driver, reg )
 
             gns_item = gtk.MenuItem( '_Namespaces' )
             graphmenu.append( gns_item )
@@ -1382,38 +1383,17 @@ The cylc forecast suite metascheduler.
         window.add( vbox )
         window.show_all()
 
-    def graph_suite_popup( self, w, reg, suite_dir ):
-        try:
-            import xdot
-        except Exception, x:
-            warning_dialog( str(x) + "\nGraphing disabled.", self.window ).warn()
-            return False
+    def search_suite( self, w, reg, yesbin_cb, pattern_entry ):
+        pattern = pattern_entry.get_text()
+        options = ''
+        if not yesbin_cb.get_active():
+            options += ' -x '
+        command = "cylc search " + self.dbopt + " --notify-completion " + options + ' ' + reg + ' ' + pattern 
+        foo = gcapture_tmpfile( command, self.tmpdir, width=600, height=500 )
+        self.gcapture_windows.append(foo)
+        foo.run()
 
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "Plot Suite Dependency Graph")
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
-
-        vbox = gtk.VBox()
-
-        label = gtk.Label("SUITE: " + reg )
-
-        label = gtk.Label("[output FILE]" )
-        outputfile_entry = gtk.Entry()
-        hbox = gtk.HBox()
-        hbox.pack_start( label )
-        hbox.pack_start(outputfile_entry, True) 
-        vbox.pack_start( hbox )
- 
-        cold_rb = gtk.RadioButton( None, "Cold Start" )
-        cold_rb.set_active( True )
-        warm_rb = gtk.RadioButton( cold_rb, "Warm Start" )
-        hbox = gtk.HBox()
-        hbox.pack_start (cold_rb, True)
-        hbox.pack_start (warm_rb, True)
-        vbox.pack_start( hbox, True )
-
+    def graph_suite_popup_driver( self, w, reg ):
         db = localdb(self.db)
         db.load_from_file()
         suite, rcfile = db.get_suite(reg)
@@ -1426,90 +1406,8 @@ The cylc forecast suite metascheduler.
             return
         defstartc = suiterc['visualization']['initial cycle time']
         defstopc  = suiterc['visualization']['final cycle time']
- 
-        label = gtk.Label("[START]: " )
-        start_entry = gtk.Entry()
-        start_entry.set_max_length(14)
-        start_entry.set_text( str(defstartc) )
-        ic_hbox = gtk.HBox()
-        ic_hbox.pack_start( label )
-        ic_hbox.pack_start(start_entry, True) 
-        vbox.pack_start(ic_hbox)
-
-        label = gtk.Label("[STOP]:" )
-        stop_entry = gtk.Entry()
-        stop_entry.set_max_length(14)
-        stop_entry.set_text( str(defstopc) )
-        fc_hbox = gtk.HBox()
-        fc_hbox.pack_start( label )
-        fc_hbox.pack_start(stop_entry, True) 
-        vbox.pack_start (fc_hbox, True)
-
-        cancel_button = gtk.Button( "_Close" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-        ok_button = gtk.Button( "_Graph" )
-        ok_button.connect("clicked", self.graph_suite, reg, suite_dir,
-                warm_rb, outputfile_entry, start_entry, stop_entry )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'prep', 'graph' )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( ok_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def search_suite( self, w, reg, yesbin_cb, pattern_entry ):
-        pattern = pattern_entry.get_text()
-        options = ''
-        if not yesbin_cb.get_active():
-            options += ' -x '
-        command = "cylc search " + self.dbopt + " --notify-completion " + options + ' ' + reg + ' ' + pattern 
-        foo = gcapture_tmpfile( command, self.tmpdir, width=600, height=500 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def graph_suite( self, w, reg, suite_dir, warm_rb, outputfile_entry,
-            start_entry, stop_entry ):
-
-        options = ''
-        ofile = outputfile_entry.get_text()
-        if ofile != '':
-            options += ' -o ' + ofile
-
-        if True:
-            start = start_entry.get_text()
-            stop = stop_entry.get_text()
-            if start != '':
-                try:
-                    ct(start)
-                except CycleTimeError,x:
-                    warning_dialog( str(x), self.window ).warn()
-                    return False
-            if stop != '':
-                if start == '':
-                    warning_dialog( "You cannot override Final Cycle without overriding Initial Cycle.",
-                                    self.window ).warn()
-                    return False
-
-                try:
-                    ct(stop)
-                except CycleTimeError,x:
-                    warning_dialog( str(x), self.window ).warn()
-                    return False
-
-        if warm_rb.get_active():
-            options += ' -w '
-        options += ' ' + reg + ' ' + start + ' ' + stop
-
-        command = "cylc graph " + self.dbopt + " --notify-completion " + options
-        foo = gcapture_tmpfile( command, self.tmpdir )
-        self.gcapture_windows.append(foo)
-        foo.run()
+        graph_suite_popup( reg, self.command_help, defstartc, defstopc, " " + self.dbopt,
+                           self.gcapture_windows, self.tmpdir, parent_window=self.window )
         return False
 
     def view_suite( self, w, reg, method ):
@@ -1847,4 +1745,3 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             return False
         else:
             return True
-
