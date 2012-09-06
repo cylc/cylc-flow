@@ -33,7 +33,6 @@ from state_summary import state_summary
 from remote_switch import remote_switch
 from passphrase import passphrase
 from OrderedDict import OrderedDict
-from job_submission.job_submit import job_submit
 from locking.lockserver import lockserver
 from locking.suite_lock import suite_lock
 from suite_id import identifier
@@ -640,7 +639,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_PYRO_TIMEOUT' ] = str( self.config.pyro_timeout )
         cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = self.config['cylc']['logging']['directory']
-        job_submit.cylc_env = cylcenv
+        task.task.cylc_env = cylcenv
 
         # Put suite identity variables (for event handlers executed by
         # cylc) into the environment in which cylc runs

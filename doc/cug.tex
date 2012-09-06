@@ -3002,7 +3002,7 @@ The following example illustrates this:
 ['echo Hello from baz via foo']
 \end{lstlisting}
 
-Of course particular tasks can also be singled out at runtime, in common
+Of course particular tasks can also be singled out at run time, in common
 command scripting or invoked task scripts, by testing the
 \lstinline=$CYLC_TASK_NAME= variable.
 
@@ -3133,6 +3133,10 @@ $CYLC_TASK_NAME                  # X
 $CYLC_TASK_CYCLE_TIME            # 2011051118
 $CYLC_TASK_LOG_ROOT              # ~/cylc-run/foo.bar.baz/log/job/X%2011051118-1317298378.191123
 $CYLC_TASK_NAMESPACE_HIERARCHY   # "root postproc X" (e.g.)
+$CYLC_TASK_TRY_NUMBER            # increments with automatic retry-on-fail
+$CYLC_TASK_WORK_PATH             # task work directory (see below)
+$CYLC_SUITE_SHARE_PATH           # suite (or task!) shared directory (see below)
+$CYLC_TASK_IS_COLDSTART          # 'True' for cold-start tasks, else 'False'
 \end{lstlisting}
 And the suite identity variables are:
 \begin{lstlisting}
@@ -3157,13 +3161,8 @@ suite.
 
 \paragraph{Suite Share And Task Work Directories}
 
-The following variables are also available to running tasks, and can be
-configured in the suite.rc file (see Sections~\ref{LocalWork} and
-\ref{LocalShare}):
-\begin{lstlisting}
-$CYLC_TASK_WORK_PATH     # task work directory
-$CYLC_SUITE_SHARE_PATH   # suite shared directory
-\end{lstlisting}
+See the variable listing above, and Sections~\ref{LocalWork} and
+\ref{LocalShare}.
 
 Task command scripting is executed from within a work directory created
 on the fly, if necessary, by the task's job script. In non-detaching
@@ -4081,8 +4080,9 @@ shows how to extend cylc with new user-defined job submission methods.
 
 There are also two job submission methods intended for use in cylc
 development and testing: \lstinline=background_slow=, in which the job
-submission subprocess takes ten seconds to complete; and
-\lstinline=fail=, in which the job submission subprocess always fails.  
+submission subprocess itself takes ten seconds to complete before the
+task starts executing; and \lstinline=fail=, in which the job submission
+subprocess itself always fails.  
 
 \subsubsection{background}
 
@@ -5057,16 +5057,17 @@ invoked version: \lstinline=cylc -V avail= (capital V).
 
 The top level command interface, \lstinline=$CYLC_DIR/bin/cylc=,
 determines the legality of requested sub-command names so any attempt to
-run a sub-command that no longer exists in the invoked version
-of cylc will fail. Additionally, the command line must be parsed first
-by the sub-command of the invoked cylc version in order to determine
-which command line argument references the suite (the suite name is
-always the first non-option argument but only sub-commands know if
-particular options have their own arguments or are just logical flags,
-and can therefore determine which is the first true argument);
-consequently any attempt to use a command option that is illegal in the
-invoked version of cylc will also fail.
+run a sub-command that no longer exists in the invoked version.
+Additionally, the command line must be parsed first by the sub-command
+of the invoked version in order to determine which command line argument
+references the suite (the suite name is always the first non-option
+argument but only sub-commands know if other options have their own
+arguments or are just logical flags, and can therefore determine which
+is the first true argument); consequently any attempt to use a command
+option that is illegal in the invoked version of cylc will also fail.
 
+Finally, note that the task messaging commands are exempt from version 
+compatibility checking, to avoid the overhead while a suite is running.
 
 \subsubsection{A Usage Suggestion}
 

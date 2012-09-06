@@ -19,19 +19,15 @@
 """
 Job submission base class.
 
-Writes a temporary "job file" that exports the cylc environment (so the
-executing task can access cylc commands), suite environment, and then
-executes the task command scripting. Derived job submission classes
-define the means by which the job file itself is executed.
+Writes a temporary "job file" that encapsulates the task runtime settings 
+(execution environment, command scripting, etc.) then submits it by the 
+chosen method on the chosen host (using passwordless ssh if not local).
 
-If OWNER@REMOTE_HOST is not equivalent to whoami@localhost:
-   ssh OWNER@HOST submit(FILE)
-so passwordless ssh must be configured.
+Derived classes define the particular job submission method.
 """
 
-import pwd, re, sys, os
+import pwd, sys, os
 import stat
-import string
 from jobfile import jobfile
 import socket
 import subprocess
@@ -48,53 +44,28 @@ class job_submit(object):
             + " && (%(command)s)"
             + "'" )
 
-    # class variables that are set remotely at startup:
-    cylc_env = None
+    def __init__( self, task_id, jobconfig, xconfig ):
 
-    def __init__( self, task_id, initial_scripting, enviro_scripting,
-            pre_command, task_command, try_number, post_command,
-            task_env, bcvars, ns_hier, directives, manual_messaging,
-            logfiles, log_dir, share_dir, work_dir, task_owner,
-            remote_host, remote_cylc_dir, remote_suite_dir,
-            remote_shell_template, remote_log_dir,
-            job_submit_command_template, job_submission_shell,
-            ssh_messaging ):
+        self.jobconfig = jobconfig
 
-        self.try_number = try_number
         self.task_id = task_id
-        self.initial_scripting = initial_scripting
-        self.enviro_scripting = enviro_scripting
-        self.pre_command = pre_command
-        self.task_command = task_command
-        self.post_command = post_command
+        self.logfiles = xconfig['extra log files']
 
-        self.task_env = task_env
-        self.bcvars = bcvars
-        self.namespace_hierarchy = ns_hier
-        self.directives  = directives
-        self.logfiles = logfiles
-        self.ssh_messaging = ssh_messaging
-
-        self.share_dir = share_dir
-        self.work_dir = work_dir
-        self.job_submit_command_template = job_submit_command_template
-        self.job_submission_shell = job_submission_shell
-
-        if manual_messaging != None:  # boolean, must distinguish None from False
-            self.manual_messaging = manual_messaging
+        self.job_submit_command_template = xconfig['job submission command template']
+        self.remote_shell_template = xconfig['remote shell template']
 
         # Local job script path: Tag with microseconds since epoch
         # (used by both local and remote tasks)
         now = time.time()
         tag = self.task_id + "-%.6f" % now
-        self.local_jobfile_path = os.path.join( log_dir, tag )
+        self.local_jobfile_path = os.path.join( xconfig['log path'], tag )
         # The directory is created in config.py
         self.logfiles.add_path( self.local_jobfile_path )
 
         self.suite_owner = user
-        self.remote_shell_template = remote_shell_template
-        self.remote_cylc_dir = remote_cylc_dir
-        self.remote_suite_dir = remote_suite_dir
+
+        remote_host = xconfig['host']
+        task_owner = xconfig['owner']
 
         if remote_host or task_owner:
             # REMOTE TASK OR USER ACCOUNT SPECIFIED FOR TASK - submit using ssh
@@ -109,7 +80,7 @@ class job_submit(object):
             else:
                 self.remote_host = socket.gethostname()
 
-            self.remote_jobfile_path = os.path.join( remote_log_dir, tag )
+            self.remote_jobfile_path = os.path.join( xconfig['remote log path'], tag )
 
             # Remote log files
             self.stdout_file = self.remote_jobfile_path + ".out"
@@ -158,15 +129,19 @@ class job_submit(object):
         self.set_environment()
 
     def set_directives( self ):
+        pass
         # OVERRIDE IN DERIVED JOB SUBMISSION CLASSES THAT USE DIRECTIVES
         # (directives will be ignored if the prefix below is not overridden)
 
-        # Prefix, e.g. '#QSUB' (qsub), or '# @' (loadleveler)
-        self.directive_prefix = None
-        # Final directive, WITH PREFIX, e.g. '# @ queue' for loadleveler
-        self.final_directive = "# FINAL_DIRECTIVE"
-        # Connector, e.g. ' = ' for loadleveler, ' ' for qsub
-        self.directive_connector = " DIRECTIVE_CONNECTOR "
+        # Defaults set in task.py:
+        # self.jobconfig = { 
+        #  PREFIX: e.g. '#QSUB' (qsub), or '# @' (loadleveler)
+        #      'directive prefix' : None,
+        #  FINAL directive, WITH PREFIX, e.g. '# @ queue' for loadleveler
+        #      'directive final' : '# FINAL_DIRECTIVE '
+        #  CONNECTOR, e.g. ' = ' for loadleveler, ' ' for qsub
+        #      'directive connector' :  " DIRECTIVE_CONNECTOR "
+        # }
 
     def set_scripting( self ):
         # Derived class can use this to modify pre- and post-command scripting
@@ -190,18 +165,12 @@ class job_submit(object):
             print >> sys.stderr, e
             return False
 
-        jf = jobfile( self.task_id,
-                self.__class__.cylc_env, self.task_env, self.bcvars,
-                self.namespace_hierarchy, self.directive_prefix,
-                self.directive_connector, self.directives,
-                self.final_directive, self.manual_messaging,
-                self.initial_scripting, self.enviro_scripting,
-                self.pre_command, self.task_command, self.try_number,
-                self.post_command, self.remote_cylc_dir, self.remote_suite_dir,
-                self.job_submission_shell, self.share_dir,
-                self.work_dir, self.jobfile_path,
+        jf = jobfile(\
+                self.jobfile_path,
                 self.__class__.__name__,
-                self.ssh_messaging )
+                self.task_id,
+                self.jobconfig )
+
         # write the job file
         jf.write( self.local_jobfile_path )
         # make it executable
@@ -221,7 +190,6 @@ class job_submit(object):
             command = self.__class__.REMOTE_COMMAND_TEMPLATE % { "jobfile_path": self.jobfile_path, "command": self.command }
             destination = self.task_owner + "@" + self.remote_host
             command = self.remote_shell_template % destination + command
-
         # execute the local command to submit the job
         if dry_run:
             print "THIS IS A DRY RUN. HERE'S HOW I WOULD SUBMIT THE TASK:"

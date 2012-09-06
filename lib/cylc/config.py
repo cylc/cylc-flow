@@ -1503,12 +1503,14 @@ class config( CylcConfigObj ):
         # (DefinitionError caught above)
         taskd = taskdef.taskdef( name )
 
-        # SET ONE OFF TASK INDICATOR
-        #   cold start and startup tasks are automatically one off
+        # SET ONE-OFF AND COLD-START TASK INDICATORS
+        if name in self['scheduling']['special tasks']['cold-start']:
+            taskd.modifiers.append( 'oneoff' )
+            taskd.is_coldstart = True
+
         if name in self['scheduling']['special tasks']['one-off'] or \
-            name in self['scheduling']['special tasks']['start-up'] or \
-            name in self['scheduling']['special tasks']['cold-start']:
-                taskd.modifiers.append( 'oneoff' )
+                name in self['scheduling']['special tasks']['start-up']:
+            taskd.modifiers.append( 'oneoff' )
 
         # SET SEQUENTIAL TASK INDICATOR
         if name in self['scheduling']['special tasks']['sequential']:

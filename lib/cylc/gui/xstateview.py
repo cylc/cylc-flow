@@ -74,9 +74,9 @@ class xupdater(threading.Thread):
         self.stop_summary = None
 
         self.god = None
-        self.mode = "mode:\nwaiting..."
-        self.dt = "state last updated at:\nwaiting..."
-        self.block = "access:\nwaiting ..."
+        self.mode = "waiting..."
+        self.dt = "waiting..."
+        self.block = "waiting ..."
 
         self.reconnect()
         # TO DO: handle failure to get a remote proxy in reconnect()
@@ -127,12 +127,12 @@ class xupdater(threading.Thread):
                     print >> sys.stderr, x
                     raise SuiteConfigError, 'ERROR, illegal dir? ' + self.live_graph_dir 
 
-            self.status = "status:\nconnected"
+            self.status = "connected"
             self.info_bar.set_status( self.status )
             return True
 
     def connection_lost( self ):
-        self.status = "status:\nSTOPPED"
+        self.status = "stopped"
 
         # Get an *empty* graph object
         # (comment out to show the last suite state before shutdown)
@@ -142,7 +142,10 @@ class xupdater(threading.Thread):
         self.update_xdot()
 
         if not self.quit:
+            self.info_bar.set_state( [] )
             self.info_bar.set_status( self.status )
+            if self.stop_summary is not None and any(self.stop_summary):
+                self.info_bar.set_stop_summary(self.stop_summary)
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
         self.reconnect()
         return False
@@ -186,29 +189,29 @@ class xupdater(threading.Thread):
         self.global_summary = glbl
 
         if glbl['stopping']:
-            self.status = 'status:\nSTOPPING'
+            self.status = 'stopping'
 
         elif glbl['paused']:
-            self.status = 'status:\nHELD'
+            self.status = 'held'
        
         elif glbl['will_pause_at']:
-            self.status = 'status:\nHOLD ' + glbl[ 'will_pause_at' ]
+            self.status = 'hold at ' + glbl[ 'will_pause_at' ]
 
         elif glbl['will_stop_at']:
-            self.status = 'status:\nSTOP ' + glbl[ 'will_stop_at' ]
+            self.status = 'running to ' + glbl[ 'will_stop_at' ]
 
         else:
-            self.status = 'status:\nrunning'
+            self.status = 'running'
 
-        self.mode = 'mode:\n' + glbl['run_mode']
+        self.mode = glbl['run_mode']
 
         if glbl[ 'blocked' ]:
-            self.block = 'access:\nblocked'
+            self.block = 'blocked'
         else:
-            self.block = 'access:\nunblocked'
+            self.block = 'unblocked'
 
         dt = glbl[ 'last_updated' ]
-        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
+        self.dt = dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
 
         # only update states if a change occurred, or action required
         if self.action_required:
@@ -227,6 +230,7 @@ class xupdater(threading.Thread):
             return False
 
     def update_globals( self ):
+        self.info_bar.set_state( self.global_summary.get( "states", [] ) )
         self.info_bar.set_mode( self.mode )
         self.info_bar.set_time( self.dt )
         self.info_bar.set_block( self.block )

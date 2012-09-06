@@ -115,9 +115,9 @@ class tupdater(threading.Thread):
         self.fam_state_summary = {}
         self.stop_summary = None
         self.god = None
-        self.mode = "mode:\nwaiting..."
-        self.dt = "state last updated at:\nwaiting..."
-        self.block = "access:\nwaiting ..."
+        self.mode = "waiting..."
+        self.dt = "waiting..."
+        self.block = "waiting ..."
 
         self.autoexpand_states = [ 'submitted', 'running', 'failed', 'held' ]
         self._last_autoexpand_me = []
@@ -126,7 +126,6 @@ class tupdater(threading.Thread):
         self.ttreeview = ttreeview
         # Hierarchy of models: view <- sorted <- filtered <- base model
         self.ttreestore = ttreeview.get_model().get_model().get_model()
-        self.info_bar = info_bar
 
         self.reconnect()
 
@@ -153,7 +152,7 @@ class tupdater(threading.Thread):
         else:
             #print 'GOT A CLIENT PROXY'
             self.stop_summary = None
-            self.status = "status:\nconnected"
+            self.status = "connected"
             self.info_bar.set_status( self.status )
             self.family_hierarchy = self.remote.get_family_hierarchy()
             self.allowed_families = self.remote.get_vis_families()
@@ -170,8 +169,11 @@ class tupdater(threading.Thread):
         self.state_summary = {}
         self.fam_state_summary = {}
 
-        self.status = "status:\nSTOPPED"
+        self.status = "stopped"
+        self.info_bar.set_state( [] )
         self.info_bar.set_status( self.status )
+        if self.stop_summary is not None and any(self.stop_summary):
+            self.info_bar.set_stop_summary(self.stop_summary)
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
         self.reconnect()
         return False
@@ -187,29 +189,29 @@ class tupdater(threading.Thread):
         self.global_summary = glbl
 
         if glbl['stopping']:
-            self.status = 'status:\nSTOPPING'
+            self.status = 'stopping'
 
         elif glbl['paused']:
-            self.status = 'status:\nHELD'
+            self.status = 'held'
 
         elif glbl['will_pause_at']:
-            self.status = 'status:\nHOLD ' + glbl[ 'will_pause_at' ]
+            self.status = 'hold at ' + glbl[ 'will_pause_at' ]
 
         elif glbl['will_stop_at']:
-            self.status = 'status:\nSTOP ' + glbl[ 'will_stop_at' ]
+            self.status = 'running to ' + glbl[ 'will_stop_at' ]
 
         else:
-            self.status = 'status:\nrunning'
+            self.status = 'running'
 
-        self.mode = "mode:\n" + glbl[ 'run_mode' ] 
+        self.mode = glbl[ 'run_mode' ] 
 
         if glbl[ 'blocked' ]:
-            self.block = 'access:\nblocked'
+            self.block = 'blocked'
         else:
-            self.block = 'access:\nunblocked'
+            self.block = 'unblocked'
 
         dt = glbl[ 'last_updated' ]
-        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" )
+        self.dt = dt.strftime( " %Y/%m/%d %H:%M:%S" )
 
         # only update states if a change occurred
         if compare_dict_of_dict( states, self.state_summary ):
@@ -457,6 +459,7 @@ class tupdater(threading.Thread):
         return False
 
     def update_globals( self ):
+        self.info_bar.set_state( self.global_summary.get( "states", [] ) )
         self.info_bar.set_mode( self.mode )
         self.info_bar.set_time( self.dt )
         self.info_bar.set_block( self.block )
@@ -479,6 +482,7 @@ class tupdater(threading.Thread):
 
 class lupdater(threading.Thread):
 
+
     def __init__(self, cfg, treeview, info_bar ):
 
         super(lupdater, self).__init__()
@@ -496,9 +500,9 @@ class lupdater(threading.Thread):
         self.global_summary = {}
         self.stop_summary = None
         self.god = None
-        self.mode = "mode:\nwaiting..."
-        self.dt = "state last updated at:\nwaiting..."
-        self.block = "access:\nwaiting ..."
+        self.mode = "waiting..."
+        self.dt = "waiting..."
+        self.block = "waiting ..."
 
         self.led_treeview = treeview
         self.led_liststore = treeview.get_model()
@@ -506,17 +510,18 @@ class lupdater(threading.Thread):
 
         self.reconnect()
 
-        self.waiting_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-waiting-glow.xpm" )
-        self.retry_delayed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-retry-glow.xpm" )
-        self.runahead_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-runahead-glow.xpm" )
-        self.queued_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-queued-glow.xpm" )
-        self.submitted_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-submitted-glow.xpm" )
-        self.running_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-running-glow.xpm" )
-        self.failed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-failed-glow.xpm" )
-        self.stopped_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-stopped-glow.xpm" )
-        self.succeeded_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-finished.xpm" )
+        self.leds = DotGetter( imagedir )
+        self.waiting_led = self.leds.get_icon( "waiting" )
+        self.retry_delayed_led = self.leds.get_icon( "retry_delayed" )
+        self.runahead_led = self.leds.get_icon( "runahead" )
+        self.queued_led = self.leds.get_icon( "queued" )
+        self.submitted_led = self.leds.get_icon( "submitted" )
+        self.running_led = self.leds.get_icon( "running" )
+        self.failed_led = self.leds.get_icon( "failed" )
+        self.stopped_led = self.leds.get_icon( "stopped" )
+        self.succeeded_led = self.leds.get_icon( "succeeded" )
 
-        self.empty_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-empty.xpm" )
+        self.empty_led = self.leds.get_icon( "empty" )
 
         self.led_digits_one = []
         self.led_digits_two = []
@@ -524,7 +529,6 @@ class lupdater(threading.Thread):
         for i in range(10):
             self.led_digits_one.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-" + str(i) + ".xpm" ))
             self.led_digits_two.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/two/digit-" + str(i) + ".xpm" ))
-
 
     def reconnect( self ):
         try:
@@ -551,7 +555,7 @@ class lupdater(threading.Thread):
             self.families = self.remote.get_families()
             self.allowed_families = self.remote.get_vis_families()
             self.stop_summary = None
-            self.status = "status:\nconnected"
+            self.status = "connected"
             self.info_bar.set_status( self.status )
             return True
 
@@ -567,9 +571,12 @@ class lupdater(threading.Thread):
         # comment out to show the last suite state before shutdown:
         self.led_liststore.clear()
 
-        self.status = "status:\nSTOPPED"
+        self.status = "stopped"
         if not self.quit:
+            self.info_bar.set_state( [] )
             self.info_bar.set_status( self.status )
+            if self.stop_summary is not None and any(self.stop_summary):
+                self.info_bar.set_stop_summary(self.stop_summary)
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
         self.reconnect()
         return False
@@ -599,29 +606,29 @@ class lupdater(threading.Thread):
         self.global_summary = glbl
 
         if glbl['stopping']:
-            self.status = 'status:\nSTOPPING'
+            self.status = 'stopping'
 
         elif glbl['paused']:
-            self.status = 'status:\nHELD'
+            self.status = 'held'
 
         elif glbl['will_pause_at']:
-            self.status = 'status:\nHOLD ' + glbl[ 'will_pause_at' ]
+            self.status = 'hold at ' + glbl[ 'will_pause_at' ]
 
         elif glbl['will_stop_at']:
-            self.status = 'status:\nSTOP ' + glbl[ 'will_stop_at' ]
+            self.status = 'running to ' + glbl[ 'will_stop_at' ]
 
         else:
-            self.status = 'status:\nrunning'
+            self.status = 'running'
 
-        self.mode = 'mode:\n' + glbl['run_mode']
+        self.mode = glbl['run_mode']
 
         if glbl[ 'blocked' ]:
-            self.block = 'access:\nblocked'
+            self.block = 'blocked'
         else:
-            self.block = 'access:\nunblocked'
+            self.block = 'unblocked'
 
         dt = glbl[ 'last_updated' ]
-        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" )
+        self.dt = dt.strftime( " %Y/%m/%d %H:%M:%S" )
 
         # only update states if a change occurred
         if compare_dict_of_dict( states, self.state_summary ):
@@ -829,6 +836,7 @@ class lupdater(threading.Thread):
         return False
 
     def update_globals( self ):
+        self.info_bar.set_state( self.global_summary.get( "states", [] ) )
         self.info_bar.set_mode( self.mode )
         self.info_bar.set_time( self.dt )
         self.info_bar.set_block( self.block )
@@ -847,3 +855,35 @@ class lupdater(threading.Thread):
         else:
             pass
             ####print "Disconnecting task state info thread"
+
+
+class DotGetter(object):
+
+    """Retrieve a Dot icon for a state."""
+
+    STATE_ICON_PATHS = {
+               "waiting": "lamps/led-waiting-glow.xpm",
+               "retry_delayed": "lamps/led-retry-glow.xpm",
+               "runahead": "lamps/led-runahead-glow.xpm",
+               "queued": "lamps/led-queued-glow.xpm",
+               "submitted": "lamps/led-submitted-glow.xpm",
+               "running": "lamps/led-running-glow.xpm",
+               "held": "lamps/led-stopped-glow.xpm",
+               "failed": "lamps/led-failed-glow.xpm",
+               "stopped": "lamps/led-stopped-glow.xpm",
+               "succeeded": "lamps/led-finished.xpm",
+               "empty": "lamps/led-empty.xpm"}
+
+    def __init__( self, imagedir ):
+        self.imagedir = imagedir
+
+    def get_icon( self, state ):
+        if state in self.STATE_ICON_PATHS:
+            icon_path = self.STATE_ICON_PATHS[state]
+        else:
+            icon_path = self.STATE_ICON_PATHS["empty"]
+        full_path = self.imagedir + "/" + icon_path
+        return gtk.gdk.pixbuf_new_from_file( full_path )
+
+    def get_image( self, state ):
+        return gtk.image_new_from_pixbuf( self.get_icon( state ) )

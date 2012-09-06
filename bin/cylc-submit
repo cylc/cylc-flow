@@ -27,7 +27,6 @@ from time import sleep
 from OrderedDict import OrderedDict
 from cylc.mkdir_p import mkdir_p
 from cylc.execute import execute
-from cylc.job_submission.job_submit import job_submit
 from cylc.config import config, SuiteConfigError, TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
 from cylc.TaskID import TaskID, TaskIDError
@@ -191,7 +190,7 @@ pimp_my_logger.pimp_it( log, logging_dir, \
         config['cylc']['logging']['roll over at start-up'], \
         logging.INFO, dclock )
 
-job_submit.cylc_env = cylcenv
+task.task.cylc_env = cylcenv
 
 # instantiate the task--------------------------------------------------
 if task_name in config.get_asynchronous_task_name_list():
