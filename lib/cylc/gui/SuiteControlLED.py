@@ -133,7 +133,8 @@ LED suite control interface.
             self.t.should_group_families = group_on
             if toggle_item != self.group_menu_item:
                 self.group_menu_item.set_active( group_on )
-            self.group_toolbutton.set_active( group_on )            
+            self.group_toolbutton.set_active( group_on )
+        self.t.update()           
         self.t.update_gui()
         return False
 

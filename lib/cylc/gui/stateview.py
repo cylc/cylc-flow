@@ -168,6 +168,7 @@ class tupdater(threading.Thread):
         # on a clock trigger - because we only update the tree after
         # changes in the state summary)
         self.state_summary = {}
+        self.fam_state_summary = {}
 
         self.status = "status:\nSTOPPED"
         self.info_bar.set_status( self.status )
@@ -549,7 +550,6 @@ class lupdater(threading.Thread):
             self.family_hierarchy = self.remote.get_family_hierarchy()
             self.families = self.remote.get_families()
             self.allowed_families = self.remote.get_vis_families()
-            print self.families["root"]
             self.stop_summary = None
             self.status = "status:\nconnected"
             self.info_bar.set_status( self.status )
@@ -562,6 +562,7 @@ class lupdater(threading.Thread):
 
     def connection_lost( self ):
         self.state_summary = {}
+        self.fam_state_summary = {}
 
         # comment out to show the last suite state before shutdown:
         self.led_liststore.clear()
@@ -584,7 +585,7 @@ class lupdater(threading.Thread):
             return False
 
         if self.should_group_families:
-            allowed_names = self.allowed_families + self.task_list
+            allowed_names = [i for i in self.family_hierarchy if i != "root"]
             self.task_list = []
             for families in self.family_hierarchy.values():
                 for name in reversed(families):
@@ -799,7 +800,7 @@ class lupdater(threading.Thread):
             self.ctimes.append(ctime)
             tasks_at_ctime = tasks[ ctime ]
             state_list = [ ]
-            
+            print self.task_list[:4], self.should_group_families, self.led_liststore.get_n_columns()
             for name in self.task_list:
                 if name in tasks_at_ctime:
                     state = state_summary[ name + '%' + ctime ][ 'state' ]

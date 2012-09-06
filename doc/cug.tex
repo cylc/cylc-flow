@@ -4885,22 +4885,24 @@ next task instance is spawned (existing instances will not be affected).
 
 Some HPC facilities allow job preemption: the resource manager can kill
 or suspend running low priority jobs in order to make way for high
-priority jobs. The preempted jobs may then be restarted later from the
-same point (if suspended) or requeued to run again from the start (if killed).
-If a running cylc task get suspended or hard-killed 
+priority jobs. The preempted jobs may then be automatically restarted
+by the resource manager, from the same point (if suspended) or requeued
+to run again from the start (if killed). If a running cylc task gets
+suspended or hard-killed 
 (\lstinline=kill -9 <PID>= is not a trappable signal so cylc cannot detect
 task failure in this case) and then later restarted, it will just appear
 to cylc as if it takes longer than normal to run. If the job is
 soft-killed the signal will be trapped by the task job script and a
 failure message sent, resulting in cylc putting the task into the failed
 state.  When the preempted task restarts and sends its started message
-cylc would normally treat this as an error condition (a
-dead task is not supposed to be sending messages anymore) - a warning
-will be logged and the task will remain in the failed state. However, if
-you know that preemption is possible on your system you can tell cylc
-that affected tasks should be resurrected from the dead, to carry on as
-normal if progress messages start coming in again after a failure: 
+cylc would normally treat this as an error condition (a dead task is not
+supposed to be sending messages) - a warning will be logged and the task
+will remain in the failed state. However, if you know that preemption is
+possible on your system you can tell cylc that affected tasks should be
+resurrected from the dead, to carry on as normal if progress messages
+start coming in again after a failure: 
 
+\lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
 # ...
@@ -4917,7 +4919,39 @@ registers the task failed, resubmit the killed job manually by
 cutting-and-pasting the original job submission command from the suite
 stdout stream.
 
+\subsection{Communication Between Tasks: Environment Variable Broadcast}
 
+Communication of information from one task to another normally takes place 
+via the filesystem, i.e.\ input/output file releationships expressed in
+task dependencies. Since cylc-4.6.0, however, tasks can also communicate 
+some information to other downstream tasks via an environment variable
+broadcast mechanism. The following task scripting, for instance, broadcasts 
+three environment variables to other tasks: \lstinline=$VERSE1= will be
+available to all subsequent tasks for the duration of the current suite
+run; \lstinline=$VERSE2= will be available only to tasks with the same
+cycle time as the broadcasting task; and \lstinline=$VERSE3= will be
+available only to tasks with a cycle time six hours beyond that of the 
+broadcasting task.
+
+\lstset{language=bash}
+\begin{lstlisting}
+# (TASK IMPLEMENTATION SCRIPTING)
+# broadcast some environment variables to downstream tasks:
+cylc broadcast VERSE1 "the quick brown fox"
+cylc broadcast VERSE2 "jumped over" $CYLC_TASK_CYCLE_TIME
+cylc broadcast VERSE3 "the lazy dog" $( cylc cycletime --offset-hours=6 )
+\end{lstlisting}
+
+When a task is ready to run any broadcast variables valid at job
+submission time will be written to its job script, after the rest of
+the task execution environment is defined so that broadcast variables 
+take precedence over existing variables of the same name.
+
+Broadcast variables targetted at a particular cycle time expire as the
+suite moves on, but untargetted variables persist throughout the entire
+suite run and so should be used sparingly. 
+
+Broadcast variables persist across suite restarts.
 
 \subsection{The Meaning And Use Of Initial Cycle Time}
 
