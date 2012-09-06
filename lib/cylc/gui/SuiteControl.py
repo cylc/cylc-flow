@@ -370,7 +370,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         if self.current_views[0].name == item._viewname:
             return False
         self.switch_view( item._viewname )
-        # self._set_tool_bar_view0( item._viewname )
+        self._set_tool_bar_view0( item._viewname )
         return False
 
     def _set_tool_bar_view0( self, viewname ):
