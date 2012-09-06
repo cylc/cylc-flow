@@ -2455,6 +2455,17 @@ For more Stop options use the Control menu.""" )
                 self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                 self.cfg.pyro_timeout, self.cfg.port ).get_proxy( object )
 
+    def run_suite_edit( self, w, inlined=False):
+        extra = ''
+        if inlined:
+            extra = '-i '
+        command = ( "cylc edit --notify-completion -g" + self.get_remote_run_opts() + 
+                    " " + extra + ' ' + self.cfg.suite )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+        self.gcapture_windows.append(foo)
+        foo.run()
+        return False
+
     def run_suite_graph( self, w, show_ns=False ):
         if show_ns:
             command = ( "cylc graph --notify-completion --namespaces " +
@@ -2476,17 +2487,6 @@ For more Stop options use the Control menu.""" )
             graph_suite_popup( self.cfg.suite, self.command_help, times[0], times[1],
                                self.get_remote_run_opts(), self.gcapture_windows,
                                self.cfg.cylc_tmpdir, parent_window=self.window )
-
-    def run_suite_edit( self, w, inlined=False):
-        extra = ''
-        if inlined:
-            extra = '-i '
-        command = ( "cylc edit --notify-completion -g" + self.get_remote_run_opts() + 
-                    " " + extra + ' ' + self.cfg.suite )
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
-        self.gcapture_windows.append(foo)
-        foo.run()
-        return False
 
     def run_suite_info( self, w ):
         command = ( "cylc show --notify-completion" + self.get_remote_run_opts() + 
