@@ -121,9 +121,9 @@ LED suite control interface.
                 return False
             self.t.should_group_families = group_on
             if group_on:
-                tip_text = "Click to ungroup families"
+                tip_text = "Dot View - Click to ungroup families"
             else:
-                tip_text = "Click to group tasks by families"
+                tip_text = "Dot View - Click to group tasks by families"
             self._set_tooltip( toggle_item, tip_text )
             self.group_menu_item.set_active( group_on )
         else:

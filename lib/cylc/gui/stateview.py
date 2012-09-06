@@ -593,8 +593,8 @@ class lupdater(threading.Thread):
                         if name not in self.task_list:
                             self.task_list.append( name )
                         break
-            self.task_list.sort()
 
+        self.task_list.sort()
         # always update global info
         self.global_summary = glbl
 
@@ -659,7 +659,6 @@ class lupdater(threading.Thread):
         return led_ctime
 
     def set_led_headings( self ):
-        self.task_list.sort()
         self.led_headings = ['Tag' ] + self.task_list
         tvcs = self.led_treeview.get_columns()
         labels = []
@@ -736,8 +735,9 @@ class lupdater(threading.Thread):
         """Handle a tooltip creation request."""
         tip_context = self.led_treeview.get_tooltip_context(x, y, kbd_ctx)
         if tip_context is None:
+            self._prev_tooltip_task_id = None
             return False
-        x, y = self.led_treeview.convert_widget_to_tree_coords(x, y)
+        x, y = self.led_treeview.convert_widget_to_bin_window_coords(x, y)
         path, column, cell_x, cell_y = self.led_treeview.get_path_at_pos(x, y)
         col_index = self.led_treeview.get_columns().index(column)
         ctime = self.ctimes[path[0]]
@@ -748,16 +748,16 @@ class lupdater(threading.Thread):
             task_id = name + "%" + ctime
         if task_id != self._prev_tooltip_task_id:
             self._prev_tooltip_task_id = task_id
+            tooltip.set_text(None)
             return False
         if col_index == 0:
             tooltip.set_text(task_id)
             return True
-        if task_id in self.state_summary:
-            state = self.state_summary[task_id].get("state", "")
-        else:
-            state = self.fam_state_summary.get(task_id, {}).get("state", "")
-        tooltip.set_text( get_id_summary( task_id, self.state_summary,
-                                          self.fam_state_summary, self.families ) )
+        text = get_id_summary( task_id, self.state_summary,
+                               self.fam_state_summary, self.families )
+        if text == task_id:
+            return False
+        tooltip.set_text(text)
         return True
 
     def update_gui( self ):
@@ -800,7 +800,6 @@ class lupdater(threading.Thread):
             self.ctimes.append(ctime)
             tasks_at_ctime = tasks[ ctime ]
             state_list = [ ]
-            print self.task_list[:4], self.should_group_families, self.led_liststore.get_n_columns()
             for name in self.task_list:
                 if name in tasks_at_ctime:
                     state = state_summary[ name + '%' + ctime ][ 'state' ]
