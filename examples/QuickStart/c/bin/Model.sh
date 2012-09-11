@@ -46,9 +46,9 @@ for PRE in $ONE $TWO; do
 done
 
 # generate a restart file for the next three cycles
-touch $MODEL_RUNNING_DIR/A-$(cylc cycletime --add=6 ).restart
-touch $MODEL_RUNNING_DIR/A-$(cylc cycletime --add=12).restart
-touch $MODEL_RUNNING_DIR/A-$(cylc cycletime --add=18).restart
+touch $MODEL_RUNNING_DIR/A-$(cylc cycletime --offset-hours=6 ).restart
+touch $MODEL_RUNNING_DIR/A-$(cylc cycletime --offset-hours=12).restart
+touch $MODEL_RUNNING_DIR/A-$(cylc cycletime --offset-hours=18).restart
 
 # model outputs
 touch $MODEL_OUTPUT_DIR/surface-winds-${CYLC_TASK_CYCLE_TIME}.nc

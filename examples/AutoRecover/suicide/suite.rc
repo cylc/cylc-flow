@@ -23,7 +23,7 @@ model | recover => post
         command scripting = """
 echo Hello from $CYLC_TASK_ID
 sleep 10
-if [[ $(cylc util cycletime --hour) == 12 ]]; then 
+if [[ $(cylc util cycletime --print-hour) == 12 ]]; then 
     echo "FAILING NOW!"
     false
 else

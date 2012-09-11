@@ -144,12 +144,12 @@ export UM_DATAMDIR=$(  cylc template TEMPLATE_DATAM_DIR  )
 export UM_DATAWDIR=$(  cylc template TEMPLATE_DATAW_DIR  )
 export UM_ALABCFILE=$( cylc template TEMPLATE_ALABC_FILE )
 export UM_VARINCFILE=$( cylc template TEMPLATE_VAR_INCR_FILE )
-if [[ $( cylc cycletime --hour ) == 00 ]]; then
-    export UM_STARTDUMP=$( cylc template -s 6 $TEMPLATE_RECONFIGURED_RESTART_DUMP )
+if [[ $( cylc cycletime --print-hour ) == 00 ]]; then
+    export UM_STARTDUMP=$( cylc cycletime --offset-hours=-6 --template=$TEMPLATE_RECONFIGURED_RESTART_DUMP )
 else
-    export UM_STARTDUMP=$( cylc template -s 6 $TEMPLATE_RESTART_DUMP )
+    export UM_STARTDUMP=$( cylc cycletime --offset-hours=-6 --template=$TEMPLATE_RESTART_DUMP )
 fi
-export UM_LOGDIR=$( cylc template TEMPLATE_LOGFILE_DIR )
+export UM_LOGDIR=$( cylc cycletime --template=TEMPLATE_LOGFILE_DIR )
 UM-wrapper.sh"""
          [[[environment]]]
             UMUI_JOBDIR   = $WARMSTART_JOBDIR
