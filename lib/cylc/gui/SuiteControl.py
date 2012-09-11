@@ -213,19 +213,23 @@ Class to create an information bar.
 
     def set_stop_summary(self, summary_maps):
         """Set various summary info."""
-        summary = "stopped with '{0}'"
+        # new string format() introduced in Python 2.6
+        #o>summary = "stopped with '{0}'"
+        summary = "stopped with '%s'"
         glob, task, fam = summary_maps
         states = [t["state"] for t in task.values() if "state" in t]
         suite_state = "?"
         if states:
             suite_state = extract_group_state(states)
-        summary = summary.format(suite_state)
+        #o>summary = summary.format(suite_state)
+        summary = summary % suite_state
         num_failed = 0
         for task_id in task:
             if task[task_id].get("state") == "failed":
                 num_failed += 1
         if num_failed:
-            summary += ": {0} failed tasks".format(num_failed)
+            #o> summary += ": {0} failed tasks".format(num_failed)
+            summary += ": %s failed tasks" % num_failed
         self.set_status(summary)
         self.set_time(glob["last_updated"].strftime("%Y/%m/%d %H:%M:%S"))
 
