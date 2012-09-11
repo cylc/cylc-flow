@@ -680,6 +680,9 @@ class config( CylcConfigObj ):
                 elif output_name == 'start':
                     # OK, task:start
                     trig.set_type('started')
+                elif output_name == 'succeed':
+                    # OK, task:succeed
+                    trig.set_type('succeeded')
                 else:
                     # ERROR
                     raise SuiteConfigError, "ERROR: '" + task_name + "' does not define output '" + output_name  + "'"
