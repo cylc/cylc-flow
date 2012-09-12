@@ -4779,24 +4779,19 @@ Section~\ref{EventHandling}.
 See also Sections~\ref{SuiteEventHandling} and~\ref{TaskEventHandling}
 in the {\em Suite.rc Reference}.
 
-Cylc can call a nominated ``event handler'' script when events such as
-suite shutdown, or task failure or timeout occur. This is intended to
-facilitate centralized alerting and automated handling of critical
-events. Event handlers can send an email or an SMS, call a pager, and so
-on; or intervene in the operation of their own suite using cylc commands.
-\lstinline=cylc [hook] email-suite= and \lstinline=cylc [hook] email-task=
-are example event handlers packaged with cylc.
-
-Currently a single script can be nominated to handle a list of chosen
-events, and the event name is passed to the handler to allow it to
-distinguish between them (cylc once allowed distinct handlers for each
-event but this required verbose configuration for little gain).
+Cylc can call nominated event handlers when certain suite or task events
+occur. This is intended to facilitate centralized alerting and automated
+handling of critical events. Event handlers can send an email or an SMS,
+call a pager, and so on; or intervene in the operation of their own
+suite using cylc commands.  \lstinline=cylc [hook] email-suite= and
+\lstinline=cylc [hook] email-task= are example event handlers packaged
+with cylc.
 
 Custom task event handlers can be located in the suite bin directory.
 They are passed the following arguments by cylc:
 
 \begin{lstlisting}
-<hook-script> EVENT SUITE TASKID MESSAGE
+<handler> EVENT SUITE TASKID MESSAGE
 \end{lstlisting}
 where EVENT is one of the following strings:
 \begin{myitemize}
@@ -4817,11 +4812,6 @@ The retry event occurs if a task fails and has any remaining retries
 configured (see Section~\ref{TaskRetries}). 
 The event handler will be called as soon as the task fails, not after
 the retry delay period when it is resubmitted.
-
-To configure timeout handling, list `submission\_timeout' and/or
-`execution\_timeout' in the events to handle, and then specify 
-corresponding timeout values in minutes using the timeout config items
-as documented in the suite.rc reference.
 
 {\em Note that event handlers are called by cylc itself, not by the 
 running tasks} so if you wish to pass them additional information via
@@ -4854,8 +4844,8 @@ if (( CYLC_TASK_TRY_NUMBER <= 2 )) || \
     /bin/false
 fi"""
         [[[event hooks]]]
-            events = retry, failed
-            script = "echo !!!!!EVENT!!!!! "
+            retry handler = "echo !!!!!EVENT!!!!! "
+            failed handler = "echo !!!!!EVENT!!!!! "
 \end{lstlisting}
 
 \subsection{Reloading The Suite Definition At Runtime}
@@ -5371,8 +5361,7 @@ you wish:
 [cylc]
     abort if any task fails = True
     [[event hooks]]
-        script = cylc check-triggering
-        events = shutdown
+        shutdown handler = cylc check-triggering
         timeout = 5
         abort if shutdown handler fails = True
         abort on timeout = True

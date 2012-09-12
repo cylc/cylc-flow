@@ -321,6 +321,7 @@ class scheduler(object):
             if not timeout:
                 raise SchedulerError, 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test'
             self.config.suite_timeout = timeout
+            self.config.reset_timer = False
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:

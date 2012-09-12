@@ -241,14 +241,14 @@ The timer is set initially at suite start up.
 
 \paragraph[reset timer]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ reset timer}
 
-If this is set to \lstinline=True= the suite timer will continually
-reset after any task changes state, so you can time out after some
-interval since the last activity occured rather than on absolute suite
-execution time.
+If \lstinline=True= (the default) the suite timer will continually reset
+after any task changes state, so you can time out after some interval
+since the last activity occured rather than on absolute suite execution
+time.
 
 \begin{myitemize}
     \item {\em type:} boolean
-    \item {\em default:} False
+    \item {\em default:} True
 \end{myitemize}
 
 \paragraph[abort on timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort on timeout}
