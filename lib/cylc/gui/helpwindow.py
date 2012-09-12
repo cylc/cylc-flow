@@ -445,10 +445,6 @@ def userguide( w ):
     update_tb( tb, "\n o View Suite Info: ", [bold])
     update_tb( tb, "View the suite's description and task list." )
 
-    update_tb( tb, "\n o (Graph View) Expand All Subtrees ", [bold])
-    update_tb( tb, "Expand any graph subtrees that you have "
-            "collapsed via the right-click popup menu.")
-
     update_tb( tb, "\n o (Graph View) Time Range Focus ", [bold])
     update_tb( tb, "Restrict display to a specified range of cycle times.")
 
@@ -487,7 +483,7 @@ def userguide( w ):
             "because the graphviz layout engine performs a new global optimization "
             "each time the graph is plotted. The 'DIS|REconnect' "
             "toggle button is provided to freeze the action temporarily. "
-            "Time-zoom, collapse-tree, and task-filtering can also be used "
+            "Time-zoom, family grouping, and task-filtering can also be used "
             "to focus on particular parts of a suite." )
 
     update_tb( tb, "\n\nMenu: Control > ", [bold, red] )
@@ -514,9 +510,6 @@ def userguide( w ):
 
     update_tb( tb, "\n\nRight-Click Task Popup Menu > ", [bold, red] )
             
-    update_tb( tb, "\n o (Graph View) Collapse Subtree: ", [bold])
-    update_tb( tb, "Collapse everything downstream of this task into a single node." )
-
     update_tb( tb, "\n o (Graph View) Focus On YYYYMMDDHH: ", [bold])
     update_tb( tb, "Restrict the graph to just the cycle time of this node (task)." )
  

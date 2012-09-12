@@ -74,13 +74,6 @@ Dependency graph suite control interface.
             # graph key node
             return
 
-        m = re.match( 'SUBTREE:(.*)', url )
-        if m:
-            #print 'SUBTREE'
-            task_id = m.groups()[0]
-            self.right_click_menu( event, task_id, type='collapsed subtree' )
-            return
-
         m = re.match( 'base:(.*)', url )
         if m:
             #print 'BASE GRAPH'
@@ -172,46 +165,22 @@ Dependency graph suite control interface.
         ungroup_rec_item.set_sensitive( not self.x.ungroup_recursive )
         ungroup_rec_item.connect( 'activate', self.grouping, name, False, True )
 
-        if type == 'collapsed subtree':
-            title_item = gtk.MenuItem( 'Subtree: ' + task_id )
-            title_item.set_sensitive(False)
-            menu.append( title_item )
-            menu.append( gtk.SeparatorMenuItem() )
+        title_item = gtk.MenuItem( 'Task: ' + task_id )
+        title_item.set_sensitive(False)
+        menu.append( title_item )
 
-            expand_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_ADD )
-            expand_item.set_label( 'Expand Subtree' )
-            expand_item.set_sensitive( task_id in self.x.collapse )
-            menu.append( expand_item )
-            expand_item.connect( 'activate', self.expand_subtree, task_id )
-    
-            menu.append( timezoom_item_direct )
-            menu.append( timezoom_item )
-            menu.append( timezoom_reset_item )
+        menu.append( gtk.SeparatorMenuItem() )
 
-        else:
+        menu.append( timezoom_item_direct )
+        menu.append( timezoom_item )
+        menu.append( timezoom_reset_item )
 
-            title_item = gtk.MenuItem( 'Task: ' + task_id )
-            title_item.set_sensitive(False)
-            menu.append( title_item )
+        menu.append( gtk.SeparatorMenuItem() )
+        menu.append( group_item )
+        menu.append( ungroup_item )
+        menu.append( ungroup_rec_item )
 
-            menu.append( gtk.SeparatorMenuItem() )
-
-            menu.append( timezoom_item_direct )
-            menu.append( timezoom_item )
-            menu.append( timezoom_reset_item )
-
-            menu.append( gtk.SeparatorMenuItem() )
-            menu.append( group_item )
-            menu.append( ungroup_item )
-            menu.append( ungroup_rec_item )
-
-            menu.append( gtk.SeparatorMenuItem() )
-
-            collapse_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_REMOVE )
-            collapse_item.set_label( 'Collapse Subtree' )
-            collapse_item.set_sensitive( task_id not in self.x.collapse )
-            menu.append( collapse_item )
-            collapse_item.connect( 'activate', self.collapse_subtree, task_id )
+        menu.append( gtk.SeparatorMenuItem() )
 
         if type == 'live task':
             menu.append( gtk.SeparatorMenuItem() )
@@ -237,24 +206,6 @@ Dependency graph suite control interface.
             self.x.group.append(name)
         else:
             self.x.ungroup.append(name)
-        self.x.action_required = True
-        self.x.best_fit = True
-
-    def collapse_subtree( self, w, id ):
-        self.x.collapse.append(id)
-        self.menu_expand_item.set_sensitive( bool(self.x.collapse) )
-        self.x.action_required = True
-        self.x.best_fit = True
-
-    def expand_subtree( self, w, id ):
-        self.x.collapse.remove(id)
-        self.menu_expand_item.set_sensitive( bool(self.x.collapse) )
-        self.x.action_required = True
-        self.x.best_fit = True
-
-    def expand_all_subtrees( self, w ):
-        del self.x.collapse[:]
-        self.menu_expand_item.set_sensitive( bool(self.x.collapse) )
         self.x.action_required = True
         self.x.best_fit = True
 
@@ -288,12 +239,6 @@ Dependency graph suite control interface.
         self.menu_filter_item.set_label( 'Task _Filtering ...' )
         items.append( self.menu_filter_item )
         self.menu_filter_item.connect( 'activate', self.filter_popup )
-
-        self.menu_expand_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_ADD )
-        self.menu_expand_item.set_label( '_Expand All Subtrees' )
-        self.menu_expand_item.set_sensitive( bool(self.x.collapse) )
-        items.append( self.menu_expand_item )
-        self.menu_expand_item.connect( 'activate', self.expand_all_subtrees )
 
         self.menu_group_item = gtk.ImageMenuItem( stock_id='group' )
         self.menu_group_item.set_label( '_Group All Families' )
