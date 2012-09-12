@@ -29,6 +29,16 @@ from cylc.mkdir_p import mkdir_p
 import cylc.dump
 ####pygtk.require('2.0')
 
+try:
+    any
+except NameError:
+    # any() appeared in Python 2.5
+    def any(iterable):
+        for entry in iterable:
+            if entry:
+                return True
+        return False
+
 def compare_dict_of_dict( one, two ):
     # return True if one == two, else return False.
     for key in one:
