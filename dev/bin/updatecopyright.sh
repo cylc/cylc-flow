@@ -10,8 +10,10 @@ set -e
 
 YY=$(date +%y)
 
-OLD="Copyright \(C\) 2008-20\d\d Hilary Oliver, NIWA"
-NEW="Copyright (C) 2008-20$YY Hilary Oliver, NIWA"
+#OLD="Copyright \(C\) 2008-20\d\d Hilary Oliver, NIWA"
+#NEW="Copyright (C) 2008-20$YY Hilary Oliver, NIWA"
+OLD="#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE."
+NEW="#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE."
 
 FILES=$@
 for FILE in $FILES; do

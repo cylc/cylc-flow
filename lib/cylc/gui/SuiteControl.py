@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -858,7 +858,7 @@ been defined for this suite""").inform()
 
         about.set_comments( 
 """
-The cylc forecast suite metascheduler.
+The Cylc Suite Engine.
 """ )
         #about.set_website( "http://www.niwa.co.nz" )
         about.set_logo( get_logo() )

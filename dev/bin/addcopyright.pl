@@ -16,7 +16,7 @@ while (<>) {
     if ( $skip and $count == 1 or ! $skip and $count == 0 ) {
         print <<eof
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
