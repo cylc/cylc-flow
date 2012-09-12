@@ -314,7 +314,8 @@ class scheduler(object):
             spec = LogSpec( self.reflogfile )
             self.start_tag = spec.get_start_tag()
             self.stop_tag = spec.get_stop_tag()
-            if not self.config['cylc']['reference test']['allow task failures']:
+            self.ref_test_allowed_failures = self.config['cylc']['reference test']['expected task failures']
+            if not self.config['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
                 self.config['cylc']['abort if any task fails'] = True
             self.config.abort_on_timeout = True
             timeout = self.config['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
@@ -822,6 +823,13 @@ class scheduler(object):
                 if self.any_task_failed():
                     raise SchedulerError( 'One or more tasks failed, and this suite sets "abort if any task fails"' )
 
+            if self.options.reftest:
+                if len( self.ref_test_allowed_failures ) > 0:
+                    for task in self.get_failed_tasks():
+                        if task.id not in self.ref_test_allowed_failures:
+                            print >> sys.stderr, task.id
+                            raise SchedulerError( 'A task failed unexpectedly: not in allowed failures list' )
+
             if stop_now:
                 self.log.warning( "ALL TASKS FINISHED OR HELD" )
                 break
@@ -1150,6 +1158,13 @@ class scheduler(object):
                 else:
                     return False
         return True
+
+    def get_failed_tasks( self ):
+        failed = []
+        for itask in self.pool.get_tasks():
+            if itask.state.is_failed():
+                failed.append( itask )
+        return failed
 
     def any_task_failed( self ):
         for itask in self.pool.get_tasks():
