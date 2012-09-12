@@ -4912,36 +4912,40 @@ stdout stream.
 \subsection{Communication Between Tasks: Environment Variable Broadcast}
 
 Communication of information from one task to another normally takes place 
-via the filesystem, i.e.\ input/output file releationships expressed in
-task dependencies. Since cylc-4.6.0, however, tasks can also communicate 
-some information to other downstream tasks via an environment variable
-broadcast mechanism. The following task scripting, for instance, broadcasts 
-three environment variables to other tasks: \lstinline=$VERSE1= will be
-available to all subsequent tasks for the duration of the current suite
-run; \lstinline=$VERSE2= will be available only to tasks with the same
-cycle time as the broadcasting task; and \lstinline=$VERSE3= will be
-available only to tasks with a cycle time six hours beyond that of the 
-broadcasting task.
+via the filesystem, i.e.\ the input/output file relationships embodied in
+inter-task dependencies. Since cylc-4.6.0, however, tasks can also communicate 
+information to other downstream tasks via an environment variable
+broadcast mechanism. Variables may be broadcast to all subsequent tasks, 
+or targetted specifically at a specific task, all subsequent tasks with a 
+given name, or all tasks with a given cycle time:
 
 \lstset{language=bash}
 \begin{lstlisting}
 # (TASK IMPLEMENTATION SCRIPTING)
 # broadcast some environment variables to downstream tasks:
-cylc broadcast VERSE1 "the quick brown fox"
-cylc broadcast VERSE2 "jumped over" $CYLC_TASK_CYCLE_TIME
-cylc broadcast VERSE3 "the lazy dog" $( cylc cycletime --offset-hours=6 )
+cylc broadcast FOO "the quick brown"              # to all tasks
+cylc broadcast BAR "fox jumped" TaskA%2012080806  # to a specific task
+cylc broadcast BAZ "over the"   TaskA             # to all TaskA's
+cylc broadcast QUX "lazy dog"   2012080806        # to all at 2012080806
 \end{lstlisting}
 
-When a task is ready to run any broadcast variables valid at job
-submission time will be written to its job script, after the rest of
-the task execution environment is defined so that broadcast variables 
-take precedence over existing variables of the same name.
+All current broadcast variables that target a particular task at the 
+instant it is ready to be submitted will be written to its job script
+after the rest of the task execution environment (broadcast variables 
+take precedence over existing variables of the same name).
 
-Broadcast variables targetted at a particular cycle time expire as the
-suite moves on, but untargetted variables persist throughout the entire
-suite run and so should be used sparingly. 
+Broadcast variables targetted at a specific task ID or cycle time expire
+and are forgotten as the suite moves on. Untargetted variables and those
+targetted at a task name persist throughout the suite run and so should
+be used sparingly. 
 
 Broadcast variables persist across suite restarts.
+
+Note that variable values with internal spaces must be quoted, e.g.:
+ % cylc broadcast MYVAR "the quick brown fox"
+Within suite.rc scripting sections single quotes can be used inside
+triple-quoted multi-line strings so long as there is whitespace or a
+newline before the closing triple quotes."""
 
 \subsection{The Meaning And Use Of Initial Cycle Time}
 

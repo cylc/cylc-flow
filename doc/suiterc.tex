@@ -434,12 +434,24 @@ in another run mode.
 \paragraph[allow task failures]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ allow task failures}
 
 A reference test run will abort immediately if any task fails, unless
-this item is set for test suites that incorporate some kind of
-deliberate failed task handling.
+this item is set, or a list of {\em expected task failures} is provided
+(below).
 
 \begin{myitemize}
     \item {\em type:} boolean
     \item {\em default:} False
+\end{myitemize}
+
+\paragraph[expected task failures]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ expected task failures}
+
+A reference test run will abort immediately if any task fails, unless
+{\em allow task failures} is set (above) or the failed task is found 
+in a list IDs of tasks that are expected to fail.
+
+\begin{myitemize}
+    \item {\em type:} list of strings (task IDs: \lstinline=name%tag=)
+    \item {\em default:} (none)
+    \item {\em example:} \lstinline=foo%20120808, bar%20120908=
 \end{myitemize}
 
 \paragraph[live mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ live mode suite timeout}

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -65,6 +65,11 @@ Arguments:"""
         self.n_optional_args = 0
         self.unlimited_args = False
         self.pyro = pyro
+        maxlen = 0
+        for arg in argdoc:
+            if len(arg[0]) > maxlen:
+                maxlen = len(arg[0])
+ 
         for arg in argdoc:
             if arg[0].startswith('['):
                 self.n_optional_args += 1
@@ -74,7 +79,9 @@ Arguments:"""
                 self.unlimited_args = True
 
             args += arg[0] + " "
-            usage += "\n   " + arg[0] + "                  " + arg[1]
+
+            pad = ( maxlen - len(arg[0]) ) * ' ' + '               '
+            usage += "\n   " + arg[0] + pad + arg[1]
 
         usage = re.sub( 'ARGS', args, usage )
         

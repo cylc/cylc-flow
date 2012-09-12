@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -858,7 +858,7 @@ been defined for this suite""").inform()
 
         about.set_comments( 
 """
-The cylc forecast suite metascheduler.
+The Cylc Suite Engine.
 """ )
         #about.set_website( "http://www.niwa.co.nz" )
         about.set_logo( get_logo() )
@@ -2135,19 +2135,10 @@ without restarting the suite."""
         tools_menu_root = gtk.MenuItem( '_Tools' )
         tools_menu_root.set_submenu( tools_menu )
 
-        edit_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DIALOG_INFO )
-        edit_item.set_label( 'Suite _Edit' )
-        tools_menu.append( edit_item )
-        edit_menu = gtk.Menu()
-        edit_item.set_submenu(edit_menu)
-
-        raw_item = gtk.MenuItem( '_Raw' )
-        edit_menu.append( raw_item )
-        raw_item.connect( 'activate', self.run_suite_edit, False )
-
-        inl_item = gtk.MenuItem( '_Inlined' )
-        edit_menu.append( inl_item )
-        inl_item.connect( 'activate', self.run_suite_edit, True )
+        val_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_APPLY )
+        val_item.set_label( 'Suite _Validate' ) 
+        tools_menu.append( val_item )
+        val_item.connect( 'activate', self.run_suite_validate )
 
         info_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DIALOG_INFO )
         info_item.set_label( 'Suite _Info' )
@@ -2204,6 +2195,20 @@ without restarting the suite."""
         viewp_item = gtk.MenuItem( '_Processed' )
         subviewmenu.append( viewp_item )
         viewp_item.connect( 'activate', self.run_suite_view, 'processed' )
+
+        edit_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_EDIT )
+        edit_item.set_label( 'Suite _Edit' )
+        tools_menu.append( edit_item )
+        edit_menu = gtk.Menu()
+        edit_item.set_submenu(edit_menu)
+
+        raw_item = gtk.MenuItem( '_Raw' )
+        edit_menu.append( raw_item )
+        raw_item.connect( 'activate', self.run_suite_edit, False )
+
+        inl_item = gtk.MenuItem( '_Inlined' )
+        edit_menu.append( inl_item )
+        inl_item.connect( 'activate', self.run_suite_edit, True )
 
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( '_Help' )
@@ -2458,6 +2463,14 @@ For more Stop options use the Control menu.""" )
         return cylc_pyro_client.client( self.cfg.suite,
                 self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                 self.cfg.pyro_timeout, self.cfg.port ).get_proxy( object )
+
+    def run_suite_validate( self, w ):
+        command = ( "cylc validate -v " + self.get_remote_run_opts() + 
+                " --notify-completion " + self.cfg.suite )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+        self.gcapture_windows.append(foo)
+        foo.run()
+        return False
 
     def run_suite_edit( self, w, inlined=False):
         extra = ''

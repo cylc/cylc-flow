@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -680,6 +680,9 @@ class config( CylcConfigObj ):
                 elif output_name == 'start':
                     # OK, task:start
                     trig.set_type('started')
+                elif output_name == 'succeed':
+                    # OK, task:succeed
+                    trig.set_type('succeeded')
                 else:
                     # ERROR
                     raise SuiteConfigError, "ERROR: '" + task_name + "' does not define output '" + output_name  + "'"
