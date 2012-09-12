@@ -67,8 +67,7 @@ before the closing triple quotes."""
 parser = cop( usage, pyro=True, 
         argdoc = [ ("NAME", "Variable name"), ("VALUE", "Variable value"),
             ("[TARGET]", 
-                "Broadcast only to a particular target task name, "
-                "task ID, or cycle time")])
+                "Broadcast only to a target task ID, name, or cycle.")])
 
 ( options, args ) = parser.parse_args()
 

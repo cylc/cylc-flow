@@ -180,8 +180,6 @@ Dependency graph suite control interface.
         menu.append( ungroup_item )
         menu.append( ungroup_rec_item )
 
-        menu.append( gtk.SeparatorMenuItem() )
-
         if type == 'live task':
             menu.append( gtk.SeparatorMenuItem() )
             
