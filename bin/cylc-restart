@@ -55,8 +55,9 @@ the remote host before starting the suite."""
 
         self.parser = cop( usage,
    argdoc=[("REG", "Suite name"),
-   ( "[FILE]", """Optional state dump file (in the suite state
-                        dump directory, or give full path).""")]) 
+   ( "[FILE]", """Optional state dump file, assumed to reside in the
+                        suite state dump directory unless an absolute path
+                        is given. Defaults to the most recent suite state.""")]) 
 
         self.parser.add_option( "--no-reset", 
             help="Do not reset failed tasks to ready on restarting",
@@ -67,15 +68,14 @@ the remote host before starting the suite."""
             action="store_true", default=False, dest="no_release" )
 
         self.parser.add_option( "--ignore-final-cycle", 
-            help="Ignore a final cycle time specified in the state dump. "
-            "This will not ignore one hardwired into the suite definition.",
+            help="Ignore the final cycle time in the state dump. If one is"
+            "specified in the suite definition it will be used, however.",
             action="store_true", default=False, dest="ignore_stopcycle" )
 
         self.parser.add_option( "--ignore-initial-cycle", 
-            help="Ignore an initial cycle time specified in the state dump. "
-            "If one is hardwired into the suite definition it will be used. "
-            "In a restart the only use of the start cycle is to be exported "
-            "to $CYLC_SUITE_INITIAL_CYCLE_TIME in the task environment.",
+            help="Ignore the initial cycle time in the state dump. If one is "
+            "specified in the suite definition it will be used, however. In a "
+            "restart this is only used to set $CYLC_SUITE_INITIAL_CYCLE_TIME.",
             action="store_true", default=False, dest="ignore_startcycle" )
 
         self.parser.add_option( "--pyro-timeout", metavar='SEC',
@@ -264,7 +264,7 @@ the remote host before starting the suite."""
                 # reinstate the old stop cycle
                 self.stop_tag = oldstopcycle
         
-        # broadcast variables:
+        # broadcast variables (universal):
         index += 1
         if lines[index].rstrip() == 'Begin broadcast variables, universal':
             while True:
@@ -279,20 +279,27 @@ the remote host before starting the suite."""
                 else:
                     sys.exit("ERROR, illegal state dump line: " + line )
             index += 1
-        
-        if lines[index].rstrip() == 'Begin broadcast variables, targetted':
-            while True:
+        # broadcast variables (targetted):
+        for ttype in [ 'id', 'name', 'tag' ]:
+            if lines[index].rstrip() == 'Begin broadcast variables, targetted by ' + ttype:
+                while True:
+                    index += 1
+                    line = lines[index].rstrip()
+                    if line == 'End broadcast variables, targetted by ' + ttype:
+                        break
+                    m = re.match( '^(.*) (.*?)=(.*)$', line )
+                    if m:
+                        targ, var, val = m.groups()
+                        self.wireless.receive( var, val, targ, load=True )
+                    else:
+                        sys.exit("ERROR, illegal state dump line for broadcast target " + ttype + ": "  + line )
                 index += 1
-                line = lines[index].rstrip()
-                if line == 'End broadcast variables, targetted':
-                    break
-                m = re.match( '^(.*) (.*?)=(.*)$', line )
-                if m:
-                    targ, var, val = m.groups()
-                    self.wireless.receive( var, val, targ, load=True )
-                else:
-                    sys.exit("ERROR, illegal state dump line: " + line )
-            index += 1
+
+        line = lines[index].rstrip() 
+        if line != 'Begin task states':
+            sys.exit("ERROR, illegal state dump line (expected 'Begin task states'): " + line )
+
+        index += 1
 
         # parse each line and create the task it represents
         tasknames = {}

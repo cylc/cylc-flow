@@ -200,7 +200,7 @@ class pool(object):
         for task in tasks:
             print
             print 'TASK READY:', task.id 
-            p = task.submit( self.wireless.get(task.c_time) )
+            p = task.submit( self.wireless.get(task.id) )
             if p:
                 ps.append( (task,p) ) 
         print
@@ -1288,6 +1288,8 @@ class scheduler(object):
             FILE.write( 'final cycle : (none)\n' )
 
         self.wireless.dump(FILE)
+
+        FILE.write( 'Begin task states\n' )
 
         for itask in self.pool.get_tasks():
             # TO DO: CHECK THIS STILL WORKS 
