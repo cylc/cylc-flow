@@ -1,0 +1,46 @@
+2012/09/12 09:36:00 CRITICAL - Suite starting at 2012-09-12 09:36:00.719144
+2012/09/12 09:36:00 INFO - Log event clock: real time
+2012/09/12 09:36:00 INFO - Run mode: live
+2012/09/12 09:36:00 INFO - Start tag: 2011010100
+2012/09/12 09:36:00 INFO - Stop tag: 2011010112
+2012/09/12 09:36:00 INFO - Cold Start 2011010100
+2012/09/12 09:36:00 INFO - [pre%2011010100] -job submitted
+2012/09/12 09:36:00 INFO - [pre%2011010100] -triggered off []
+2012/09/12 09:36:00 INFO - [pre%2011010112] -job submitted
+2012/09/12 09:36:00 INFO - [pre%2011010112] -triggered off []
+2012/09/12 09:36:00 INFO - [pre%2011010200] -HOLDING (beyond suite stop cycle) 2011010112
+2012/09/12 09:36:01 INFO - [pre%2011010100] -pre%2011010100 started
+2012/09/12 09:36:01 INFO - [pre%2011010112] -pre%2011010112 started
+2012/09/12 09:36:01 INFO - [pre%2011010100] -pre%2011010100 succeeded
+2012/09/12 09:36:01 INFO - [model%2011010100] -job submitted
+2012/09/12 09:36:01 INFO - [model%2011010100] -triggered off ['pre%2011010100']
+2012/09/12 09:36:01 INFO - [pre%2011010112] -pre%2011010112 succeeded
+2012/09/12 09:36:01 INFO - [model%2011010112] -job submitted
+2012/09/12 09:36:01 INFO - [model%2011010112] -triggered off ['pre%2011010112']
+2012/09/12 09:36:01 INFO - [model%2011010200] -HOLDING (beyond suite stop cycle) 2011010112
+2012/09/12 09:36:01 INFO - [model%2011010100] -model%2011010100 started
+2012/09/12 09:36:01 INFO - [model%2011010112] -model%2011010112 started
+2012/09/12 09:36:01 INFO - [model%2011010100] -model%2011010100 succeeded
+2012/09/12 09:36:01 INFO - [post%2011010100] -job submitted
+2012/09/12 09:36:02 INFO - [post%2011010100] -triggered off ['model%2011010100']
+2012/09/12 09:36:02 CRITICAL - [model%2011010112] -*Task job script received signal ERR
+2012/09/12 09:36:02 CRITICAL - [model%2011010112] -model%2011010112 failed
+2012/09/12 09:36:02 INFO - [diagnose%2011010112] -job submitted
+2012/09/12 09:36:02 INFO - [diagnose%2011010112] -triggered off ['model%2011010112']
+2012/09/12 09:36:02 INFO - [diagnose%2011010200] -HOLDING (beyond suite stop cycle) 2011010112
+2012/09/12 09:36:02 INFO - [post%2011010100] -post%2011010100 started
+2012/09/12 09:36:02 INFO - [diagnose%2011010112] -diagnose%2011010112 started
+2012/09/12 09:36:02 INFO - [post%2011010100] -post%2011010100 succeeded
+2012/09/12 09:36:02 INFO - [diagnose%2011010112] -diagnose%2011010112 succeeded
+2012/09/12 09:36:02 INFO - [recover%2011010112] -job submitted
+2012/09/12 09:36:02 INFO - [recover%2011010112] -triggered off ['diagnose%2011010112']
+2012/09/12 09:36:02 INFO - [recover%2011010200] -HOLDING (beyond suite stop cycle) 2011010112
+2012/09/12 09:36:02 INFO - [recover%2011010112] -recover%2011010112 started
+2012/09/12 09:36:03 INFO - [recover%2011010112] -recover%2011010112 succeeded
+2012/09/12 09:36:03 INFO - [post%2011010112] -job submitted
+2012/09/12 09:36:03 INFO - [post%2011010112] -triggered off ['recover%2011010112']
+2012/09/12 09:36:03 INFO - [post%2011010200] -HOLDING (beyond suite stop cycle) 2011010112
+2012/09/12 09:36:03 INFO - [post%2011010112] -post%2011010112 started
+2012/09/12 09:36:03 INFO - [post%2011010112] -post%2011010112 succeeded
+2012/09/12 09:36:03 WARNING - ALL TASKS FINISHED OR HELD
+2012/09/12 09:36:03 CRITICAL - Suite shutting down at 2012-09-12 09:36:03.462191
