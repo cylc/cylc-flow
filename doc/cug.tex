@@ -4620,7 +4620,8 @@ submission occurs in its own spawned subprocess - in batches whose
 members are submitted in parallel. The default batch size of 50 can be
 overridden in suite definitions: \begin{lstlisting}
 # SUITE.RC
-[cylc] maximum number of simultaneous job submissions = 50
+[cylc]
+    maximum number of simultaneous job submissions = 50
 \end{lstlisting} A 120 task ensemble, for example, would be submitted in
 two batches of 50 followed by one of 20, with cylc waiting on all member
 job submissions to return before going on to the next batch. Note that
