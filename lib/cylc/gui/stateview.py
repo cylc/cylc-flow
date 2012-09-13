@@ -861,4 +861,8 @@ class DotGetter(object):
         return gtk.gdk.pixbuf_new_from_file( full_path )
 
     def get_image( self, state ):
-        return gtk.image_new_from_pixbuf( self.get_icon( state ) )
+        #return gtk.image_new_from_pixbuf( self.get_icon( state ) )
+        img = gtk.Image()
+        img.set_from_pixbuf( self.get_icon( state ) )
+        return img
+
