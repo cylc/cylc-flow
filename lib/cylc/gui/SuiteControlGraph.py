@@ -109,13 +109,6 @@ Dependency graph suite control interface.
             self.xdot.widget.set_tooltip_text(url)
             return False
 
-        m = re.match( 'SUBTREE:(.*)', url )
-        if m:
-            #print 'SUBTREE'
-            task_id = m.groups()[0]
-            self.xdot.widget.set_tooltip_text(self.x.get_summary(task_id))
-            return False
-
         m = re.match( 'base:(.*)', url )
         if m:
             #print 'BASE GRAPH'
