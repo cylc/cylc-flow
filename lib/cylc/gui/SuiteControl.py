@@ -2470,7 +2470,7 @@ For more Stop options use the Control menu.""" )
         if tip_tuple is None:
             tips = gtk.Tooltips()
             tips.enable()
-        tips.set_tip( self.run_pause_toolbutton, tip_text )
+            tips.set_tip( self.run_pause_toolbutton, tip_text )
         self.run_pause_toolbutton.click_func = click_func
 
     def create_info_bar( self ):
