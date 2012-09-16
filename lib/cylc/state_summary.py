@@ -96,6 +96,7 @@ class state_summary( Pyro.core.ObjBase ):
         self.global_summary[ 'states' ] = all_states
 
     def get_task_name_list( self ):
+        self.task_name_list.sort()
         return self.task_name_list
             
     def get_state_summary( self ):
