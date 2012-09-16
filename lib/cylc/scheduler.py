@@ -189,40 +189,40 @@ class pool(object):
 
     def batch_submit( self, tasks ):
         if self.run_mode == 'simulation':
-            for task in tasks:
+            for itask in tasks:
                 print
-                print 'TASK READY:', task.id 
-                task.incoming( 'NORMAL', task.id + ' started' )
+                print 'TASK READY:', itask.id 
+                itask.incoming( 'NORMAL', itask.id + ' started' )
             return
 
         before = datetime.datetime.now()
         ps = []
-        for task in tasks:
+        for itask in tasks:
             print
-            print 'TASK READY:', task.id 
-            p = task.submit( self.wireless.get(task.id) )
+            print 'TASK READY:', itask.id 
+            p = itask.submit( self.wireless.get(itask.id) )
             if p:
-                ps.append( (task,p) ) 
+                ps.append( (itask,p) ) 
         print
         print 'WAITING ON JOB SUBMISSIONS'
         n_succ = 0
         n_fail = 0
-        for task, p in ps:
+        for itask, p in ps:
             res = p.wait()
             if res < 0:
-                print >> sys.stderr, "ERROR: Task", task.id, "job submission terminated by signal", res
-                task.reset_state_failed()
+                print >> sys.stderr, "ERROR: Task", itask.id, "job submission terminated by signal", res
+                itask.reset_state_failed()
                 task.task.state_changed = True
                 n_fail += 1
             elif res > 0:
-                print >> sys.stderr, "ERROR: Task", task.id, "job submission failed", res
-                task.reset_state_failed()
+                print >> sys.stderr, "ERROR: Task", itask.id, "job submission failed", res
+                itask.reset_state_failed()
                 task.task.state_changed = True
                 n_fail += 1
             else:
                 n_succ += 1
                 if self.verbose:
-                    print "Task", task.id, "job submission succeeded"
+                    print "Task", itask.id, "job submission succeeded"
 
         after = datetime.datetime.now()
         n_tasks = len(tasks)
