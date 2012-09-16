@@ -22,11 +22,15 @@ class background_slow( job_submit ):
     """
 This is a deliberately slow version of background job submission, used
 for cylc development purposes - sleep 10s before executing the task.
+
+Change sleep time by setting $CYLC_BG_SLOW_SLEEP in [cylc][[environment]]
+(or in the terminal environment before running the suite).
     """
     # stdin redirection (< /dev/null) allows background execution
     # even on a remote host - ssh can exit without waiting for the
     # remote process to finish.
-    COMMAND_TEMPLATE = "sleep 10; %s </dev/null 1>%s 2>%s &"
+
+    COMMAND_TEMPLATE = "sleep ${CYLC_BG_SLOW_SLEEP:-60}; %s </dev/null 1>%s 2>%s &"
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template
         if not command_template:
