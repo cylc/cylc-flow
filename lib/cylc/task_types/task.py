@@ -77,6 +77,7 @@ class task( Pyro.core.ObjBase ):
     intercycle = False
     suite = None
     state_changed = True
+    progress_msg_rec = True
 
     # set by the back door at startup:
     cylc_env = {}
@@ -465,6 +466,7 @@ class task( Pyro.core.ObjBase ):
 
         # set state_changed to stimulate the task processing loop
         task.state_changed = True
+        task.progress_msg_rc = False
 
         if message == self.id + ' started':
             self.set_running()
@@ -529,6 +531,7 @@ class task( Pyro.core.ObjBase ):
             # log other (non-failed) unregistered messages with a '*' prefix
             message = '*' + message
             self.log( priority, message )
+            task.progress_msg_rec = True
 
     def update( self, reqs ):
         for req in reqs.get_list():
