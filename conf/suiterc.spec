@@ -110,6 +110,7 @@ description = string( default="No description provided" )
 [runtime]
     [[root]]
         inherit = string( default=None )
+        title = string( default="No title provided" )
         description = string( default="No description provided" )
         initial scripting = string( default=None )
         environment scripting = string( default=None )
@@ -174,6 +175,7 @@ description = string( default="No description provided" )
 
     [[__many__]]
         inherit = string( default=root )
+        title = string( default=None )
         description = string( default=None )
         initial scripting = string( default=None )
         command scripting = string( default=None )
