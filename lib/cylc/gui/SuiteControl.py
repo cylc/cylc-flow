@@ -935,7 +935,13 @@ The Cylc Suite Engine.
         ## help_menu.append( cug_pdf_item )
         ## cug_pdf_item.connect( 'activate', self.browse, '--pdf' )
 
-        js0_item = gtk.ImageMenuItem( 'View Task Info' )
+        info_item = gtk.ImageMenuItem( 'View State' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
+        info_item.set_image(img)
+        items.append( info_item )
+        info_item.connect( 'activate', self.popup_requisites, task_id )
+
+        js0_item = gtk.ImageMenuItem( 'View Info' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
         js0_item.set_image(img)
         items.append( js0_item )
@@ -947,13 +953,11 @@ The Cylc Suite Engine.
         items.append( js_item )
         js_item.connect( 'activate', self.view_task_info, task_id, True )
 
-        info_item = gtk.MenuItem( 'View Task Output' )
+        info_item = gtk.ImageMenuItem( 'View Logs' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        info_item.set_image(img)
         items.append( info_item )
         info_item.connect( 'activate', self.view_task_info, task_id, False )
-
-        info_item = gtk.MenuItem( 'View Task State' )
-        items.append( info_item )
-        info_item.connect( 'activate', self.popup_requisites, task_id )
 
         items.append( gtk.SeparatorMenuItem() )
 

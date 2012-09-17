@@ -92,7 +92,8 @@ class taskdef(object):
         self.intercycle = False
         self.cyclers = []
         self.logfiles = []
-        self.description = ['Task description has not been completed' ]
+        self.title = []
+        self.description = []
 
         self.follow_on_task = None
 
@@ -193,6 +194,7 @@ class taskdef(object):
         tclass.name = self.name        # TO DO: NOT NEEDED, USED class.__name__
         tclass.instance_count = 0
         tclass.upward_instance_count = 0
+        tclass.title = self.title
         tclass.description = self.description
 
         tclass.elapsed_times = []
