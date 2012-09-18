@@ -212,11 +212,13 @@ class pool(object):
             if res < 0:
                 print >> sys.stderr, "ERROR: Task", itask.id, "job submission terminated by signal", res
                 itask.reset_state_failed()
+                itask.set_submit_failed()
                 task.task.state_changed = True
                 n_fail += 1
             elif res > 0:
                 print >> sys.stderr, "ERROR: Task", itask.id, "job submission failed", res
                 itask.reset_state_failed()
+                itask.set_submit_failed()
                 task.task.state_changed = True
                 n_fail += 1
             else:
