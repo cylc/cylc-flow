@@ -4,6 +4,9 @@
     maximum simultaneous job submissions = integer( min=1, default=50 )
     abort if any task fails = boolean( default=False )
     log resolved dependencies = boolean( default=False )
+    [[job submission]]
+        batch size = integer( min=1, default=10 )
+        delay between batches = integer( min=0, default=15 ) # seconds
     [[lockserver]]
         enable = boolean( default=False )
         simultaneous instances = boolean( default=False )

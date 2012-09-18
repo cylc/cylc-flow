@@ -36,5 +36,3 @@ class msgqueue( Pyro.core.ObjBase ):
     def get_queue( self ):
         return self.queue
 
-
-

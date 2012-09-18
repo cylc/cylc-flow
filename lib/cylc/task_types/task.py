@@ -493,8 +493,6 @@ class task( object ):
             print >> sys.stderr, 'ERROR: cylc job submission bug?'
             raise
         else:
-            self.set_submitted()
-            self.submission_timer_start = task.clock.get_datetime()
             return p
 
     def check_submission_timeout( self ):
@@ -576,7 +574,7 @@ class task( object ):
 
     def incoming( self, priority, message ):
         # queue incoming messages for this task
-        self.message_queue.put( (priority, message) )
+        self.message_queue.incoming( priority, message )
 
     def process_incoming_messages( self ):
         queue = self.message_queue.get_queue() 
@@ -610,9 +608,13 @@ class task( object ):
             # Received a 'task started' message
             self.set_running()
 
-        if not self.state.is_currently('running'):
-            # Only running tasks should be sending messages
-            self.log( 'WARNING', "UNEXPECTED MESSAGE (task should not be running):\n" + message )
+        ## now the message queue is also by the job submission worker thread
+        ##if not self.state.is_currently('running'):
+        ##    # Only running tasks should be sending messages
+        ##    self.log( 'WARNING', "UNEXPECTED MESSAGE (task should not be running):\n" + message )
+
+        if message == self.id + ' submitted':
+            self.set_submitted()
 
         if message == self.id + ' failed':
             # Received a 'task failed' message
@@ -628,13 +630,13 @@ class task( object ):
                 self.outputs.add( message )
                 self.outputs.set_completed( message )
                 # (this also calls the task failure handler):
-                self.set_failed()
+                self.set_failed( message )
             else:
                 # There is a retry lined up
                 self.plog( 'Setting retry delay: ' + str(self.retry_delay) +  ' minutes' )
                 self.retry_delay_timer_start = task.clock.get_datetime()
                 self.try_number += 1
-                self.state.set_status( 'retry_delayed' )
+                self.state.set_status( 'retrying' )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 # Handle retry events

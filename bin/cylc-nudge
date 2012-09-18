@@ -52,7 +52,7 @@ except Exception, x:
         raise
     raise SystemExit(x)
 
-result = proxy.put( 'nudge' )
+result = proxy.put( 'nudge suite' )
 
 if result[0]:
     print result[1]

@@ -114,8 +114,8 @@ class state_summary( Pyro.core.ObjBase ):
 def extract_group_state( child_states ):
     """Summarise child states as a group."""
     ordered_states = ['failed', 'held', 'running', 'submitted',
-                        'retry_delayed', 'queued', 'waiting', 'runahead',
-                        'succeeded']
+            'submitting', 'retrying', 'queued', 'waiting',
+            'runahead', 'succeeded']
     for state in ordered_states:
         if state in child_states:
             return state

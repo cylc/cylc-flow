@@ -54,6 +54,7 @@ import threading
 from suite_cmd_interface import comqueue
 from suite_info_interface import info_interface
 from TaskID import TaskID, TaskIDError
+from task_pool import pool
 
 class result:
     """TO DO: GET RID OF THIS - ONLY USED BY INFO COMMANDS"""
@@ -77,8 +78,6 @@ class request_handler( threading.Thread ):
     def __init__( self, pyro, verbose ):
         threading.Thread.__init__(self)
         self.pyro = pyro
-        # This kills the thread when the main prog finishes:
-        self.daemon = True
         self.quit = False
 
     def run( self ):
@@ -88,186 +87,6 @@ class request_handler( threading.Thread ):
                 break
         print "REQUEST HANDLER THREAD EXIT"
 
-class pool(object):
-    def __init__( self, suite, config, wireless, pyro, log, run_mode, verbose, debug=False ):
-        self.pyro = pyro
-        self.run_mode = run_mode
-        self.log = log
-        self.verbose = verbose
-        self.debug = debug
-        self.qconfig = config['scheduling']['queues'] 
-        self.config = config
-        self.n_max_sub = config['cylc']['maximum simultaneous job submissions']
-        self.assign()
-        self.wireless = wireless
-
-    def assign( self, reload=False ):
-        # self.myq[taskname] = 'foo'
-        # self.queues['foo'] = [live tasks in queue foo]
-
-        self.myq = {}
-        for queue in self.qconfig:
-            for taskname in self.qconfig[queue]['members']:
-                self.myq[taskname] = queue
-
-        if not reload:
-            self.queues = {}
-        else:
-            # reassign live tasks from the old queues to the new
-            self.new_queues = {}
-            for queue in self.queues:
-                for itask in self.queues[queue]:
-                    myq = self.myq[itask.name]
-                    if myq not in self.new_queues:
-                        self.new_queues[myq] = [itask]
-                    else:
-                        self.new_queues[myq].append( itask )
-            self.queues = self.new_queues
-
-    def add( self, itask ):
-        try:
-            self.pyro.connect( itask.message_queue, itask.id )
-        except NamingError, x:
-            # Attempted insertion of a task that already exists.
-            print >> sys.stderr, x
-            self.log.critical( itask.id + ' CANNOT BE INSERTED (already exists)' )
-            return
-        except Exception, x:
-            print >> sys.stderr, x
-            self.log.critical( itask.id + ' CANNOT BE INSERTED (unknown error)' )
-            return
-
-        # add task to the appropriate queue
-        queue = self.myq[itask.name]
-        if queue not in self.queues:
-            self.queues[queue] = [itask]
-        else:
-            self.queues[queue].append(itask)
-        task.task.state_changed = True
-        itask.log('DEBUG', "task proxy inserted" )
-
-    def remove( self, task, reason ):
-        # remove a task from the pool
-        try:
-            self.pyro.disconnect( task.message_queue )
-        except NamingError, x:
-            # Attempted removal of a task that does not exist.
-            print >> sys.stderr, x
-            self.log.critical( task.id + ' CANNOT BE REMOVED (no such task)' )
-            return
-        except Exception, x:
-            print >> sys.stderr, x
-            self.log.critical( task.id + ' CANNOT BE REMOVED (unknown error)' )
-            return
-        task.prepare_for_death()
-        # remove task from its queue
-        queue = self.myq[task.name]
-        self.queues[queue].remove( task )
-        task.log( 'DEBUG', "task proxy removed (" + reason + ")" )
-        del task
-
-    def get_tasks( self ):
-        tasks = []
-        for queue in self.queues:
-            tasks += self.queues[queue]
-        #tasks.sort() # sorting any use here?
-        return tasks
-
-    def process( self ):
-        readytogo = []
-        for queue in self.queues:
-            n_active = 0
-            n_limit = self.qconfig[queue]['limit']
-            for itask in self.queues[queue]:
-                if n_limit:
-                    # there is a limit on this queue
-                    if itask.state.is_currently('submitted') or itask.state.is_currently('running'):
-                        # count active tasks in this queue
-                        n_active += 1
-                    # compute difference from the limit
-                    n_release = n_limit - n_active
-                    if n_release <= 0:
-                        # the limit is currently full
-                        continue
-            for itask in self.queues[queue]:
-                if itask.ready_to_run():
-                    if n_limit:
-                        if n_release > 0:
-                            n_release -= 1
-                            readytogo.append(itask)
-                        else:
-                            itask.state.set_status('queued')
-                    else:
-                        readytogo.append(itask)
-
-        if len(readytogo) == 0:
-            if self.verbose:
-                print "(No tasks ready to run)"
-            return []
-
-        print
-        n_tasks = len(readytogo)
-        print n_tasks, 'TASKS READY TO BE SUBMITTED'
-        n_max = self.n_max_sub
-        if n_tasks > n_max:
-            print 'BATCHING: maximum simultaneous job submissions is set to', n_max
-        batches, remainder = divmod( n_tasks, n_max )
-        for i in range(0,batches):
-            start = i*n_max
-            self.batch_submit( readytogo[start:start+n_max] )
-        if remainder != 0:
-            self.batch_submit( readytogo[batches*n_max:n_tasks] )
-        return readytogo
-
-    def batch_submit( self, tasks ):
-        if self.run_mode == 'simulation':
-            for itask in tasks:
-                print
-                print 'TASK READY:', itask.id 
-                itask.incoming( 'NORMAL', itask.id + ' started' )
-            return
-
-        before = datetime.datetime.now()
-        ps = []
-        n_fail = 0
-        for itask in tasks:
-            print
-            print 'TASK READY:', itask.id 
-            p = itask.submit( debug=self.debug, overrides=self.wireless.get(itask.id) )
-            if p:
-                ps.append( (itask,p) ) 
-            else:
-                n_fail += 1
-
-        print
-        print 'WAITING ON JOB SUBMISSIONS'
-        n_succ = 0
-        for itask, p in ps:
-            res = p.wait()
-            if res < 0:
-                print >> sys.stderr, "ERROR: Task", itask.id, "job submission terminated by signal", res
-                itask.reset_state_failed()
-                itask.set_submit_failed()
-                task.task.state_changed = True
-                n_fail += 1
-            elif res > 0:
-                print >> sys.stderr, "ERROR: Task", itask.id, "job submission failed", res
-                itask.reset_state_failed()
-                itask.set_submit_failed()
-                task.task.state_changed = True
-                n_fail += 1
-            else:
-                n_succ += 1
-                if self.verbose:
-                    print "Task", itask.id, "job submission succeeded"
-
-        after = datetime.datetime.now()
-        n_tasks = len(tasks)
-        print 'JOB SUBMISSIONS COMPLETED:'
-        print "  Time taken: " + str( after - before )
-        print " ", n_succ, "of", n_tasks, "job submissions succeeded" 
-        if n_fail != 0:
-            print " ", n_fail, "of", n_tasks, "job submissions failed" 
 
 class scheduler(object):
     def __init__( self, is_restart=False ):
@@ -289,6 +108,8 @@ class scheduler(object):
         self.is_restart = is_restart
 
         self.graph_warned = {}
+
+        self.do_process_tasks = False
 
         # COMMANDLINE OPTIONS
 
@@ -671,8 +492,7 @@ class scheduler(object):
                 found = True
                 break
         if found:
-            pass
-            # TO DO: self.process_tasks = True # to update monitor
+            self.do_process_tasks = True
         else:
             print >> sys.stderr, "Task not found" 
 
@@ -697,7 +517,7 @@ class scheduler(object):
                 break
         if found:
             if was_waiting:
-                self.process_tasks = True # to update monitor
+                self.do_process_tasks = True # to update monitor
                 ##return result( True, "OK" )
             else:
                 pass
@@ -711,16 +531,16 @@ class scheduler(object):
             print >> sys.stderr, "COMMAND WARNING: the suite is already paused"
 
         self.hold_suite()
-        ## TO DO: process, to update state summary
-        # self.process_tasks = True
+        # TO DO: process, to update state summary
+        self.do_process_tasks = True
 
         ##return result( True, "Tasks that are ready to run will not be submitted" )
 
     def command_hold_after_tag( self, tag ):
         """To Do: not currently used - add to the cylc hold command"""
         self.hold_suite( tag )
-        ## TO DO: process, to update state summary
-        ##self.process_tasks = True
+        # TO DO: process, to update state summary
+        self.do_process_tasks = True
         print "COMMAND result: The suite will pause when all tasks have passed " + tag 
 
     def command_set_runahead( self, hours=None ):
@@ -732,7 +552,7 @@ class scheduler(object):
             self.log.warning( "setting NO runahead limit" )
             self.runahead_limit = None
 
-        ## TO DO: self.process_tasks = True
+        self.do_process_tasks = True
         ##return result( True, "Action succeeded" )
 
     def command_set_verbosity( self, level ):
@@ -791,9 +611,8 @@ class scheduler(object):
             # do not let a remote request bring the suite down for any reason
             self.log.warning( 'Remote reset failed: ' + x.__str__() )
         else:
-            pass
-            ## To Do: report success
-            ##self.process_tasks = True
+            # To Do: report success
+            self.do_process_tasks = True
 
     def command_trigger_task( self, task_id ):
         # TO DO: HANDLE EXCEPTIONS FOR THE NEW WAY
@@ -805,9 +624,8 @@ class scheduler(object):
             # do not let a remote request bring the suite down for any reason
             self.log.warning( 'Remote reset failed: ' + x.__str__() )
         else:
-            ## To Do: report success
-            ##self.process_tasks = True
-            pass
+            # To Do: report success
+            self.do_process_tasks = True
 
     def command_add_prerequisite( self, task_id, message ):
         try:
@@ -859,10 +677,7 @@ class scheduler(object):
     def command_nudge( self ):
         # cause the task processing loop to be invoked
         # just set the "process tasks" indicator
-
-        ## TO DO:
-        ##self.process_tasks = True
-        pass
+        self.do_process_tasks = True
 
     def command_reload_suite( self ):
         try:
@@ -917,7 +732,6 @@ class scheduler(object):
         self.runahead_limit = self.config.get_runahead_limit()
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
         self.pool.qconfig = self.config['scheduling']['queues']
-        self.pool.n_max_sub = self.config['cylc']['maximum simultaneous job submissions']
         self.pool.verbose = self.verbose
         self.pool.assign( reload=True )
         self.suite_state.config = self.config
@@ -1250,14 +1064,6 @@ class scheduler(object):
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     print "MAIN LOOP TIME TAKEN:", seconds, "seconds"
 
-            # REMOTE METHOD HANDLING; with no timeout and single- threaded pyro,
-            # handleRequests() returns after one or more remote method
-            # invocations are processed (these are not just task messages, hence
-            # the use of the state_changed variable below).
-            # HOWEVER, we now need to check if clock-triggered tasks are ready
-            # to trigger according on wall clock time, so we also need a
-            # timeout to handle this when nothing else is happening.
-
             # incoming task messages set task.task.state_changed to True
             #print 'Pyro>'
             #self.pyro.handleRequests(timeout=1)
@@ -1417,6 +1223,9 @@ class scheduler(object):
 
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
+        if self.do_process_tasks:
+            return True
+
         process = False
         if self.run_mode == 'simulation':
             for itask in self.pool.get_tasks():
@@ -1474,9 +1283,11 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             self.pyro.disconnect( itask.message_queue )
 
+        print " * terminating job submission thread"
+        self.pool.worker.quit = True
+        self.pool.worker.join()
         print " * terminating request handling thread"
         self.request_handler.quit = True
-        # is this needed?:
         self.request_handler.join()
 
         print " * terminating the suite Pyro daemon"
@@ -2067,7 +1878,7 @@ class scheduler(object):
             self.pool.remove( itask, 'general' )
 
     def trigger_task( self, task_id ):
-        # Set a task to the 'ready' state (all prerequisites satisfied)
+        # Set a task to the 'waiting' with all prerequisites satisfied,
         # and tell clock-triggered tasks to trigger regardless of their
         # designated trigger time.
         found = False
@@ -2078,6 +1889,12 @@ class scheduler(object):
                 break
         if not found:
             raise TaskNotFoundError, "Task not present in suite: " + task_id
+        if itask.state.is_submitting():
+            # (manual reset of 'submitting' tasks disabled pending
+            # some deep thought about concurrency with the job
+            # submission thread.
+            raise TaskStateError, "ERROR: cannot reset a submitting task: " + task_id
+
         # dump state
         self.log.warning( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         itask.plog( "triggering now" )
@@ -2096,6 +1913,9 @@ class scheduler(object):
                 break
         if not found:
             raise TaskNotFoundError, "Task not present in suite: " + task_id
+        if itask.state.is_submitting():
+            # Currently can't reset a 'submitting' task in the job submission thread!
+            raise TaskStateError, "ERROR: cannot reset a submitting task: " + task_id
 
         itask.plog( "resetting to " + state + " state" )
 

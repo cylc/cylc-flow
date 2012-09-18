@@ -24,6 +24,7 @@ from xstateview import xupdater
 from warning_dialog import warning_dialog, info_dialog
 from cylc.cycle_time import ct
 from cylc.cylc_xdot import xdot_widgets
+from cylc.task_state import task_state
 from gcapture import gcapture_tmpfile
 
 
@@ -357,22 +358,11 @@ Dependency graph suite control interface.
         vbox.pack_start( box )
 
         filterbox = gtk.HBox()
-        # allow filtering out of 'succeeded' and 'waiting'
-        all_states = [ 'waiting', 'retry_delayed', 'runahead', 'queued', 'submitted', 'running', 'succeeded', 'failed', 'held' ]
-        labels = {}
-        labels[ 'waiting'   ] = '_waiting'
-        labels[ 'retry_delayed'   ] = 'retry-_delayed'
-        labels[ 'runahead'  ] = 'run_ahead'
-        labels[ 'queued'   ] = '_queued'
-        labels[ 'submitted' ] = 's_ubmitted'
-        labels[ 'running'   ] = '_running'
-        labels[ 'succeeded'  ] = 'su_cceeded'
-        labels[ 'failed'    ] = 'f_ailed'
-        labels[ 'held'   ] = '_held'
-        # initially filter out 'succeeded' and 'waiting' tasks
+
+        # to initially filter out 'succeeded' and 'waiting' tasks
         #filter_states = [ 'waiting', 'succeeded' ]
-        for st in all_states:
-            b = gtk.CheckButton( labels[st] )
+        for st in task_state.legal:
+            b = gtk.CheckButton( task_state.labels[st] )
             filterbox.pack_start(b)
             #if st in filter_states:
             #    b.set_active(False)

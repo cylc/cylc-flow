@@ -24,6 +24,7 @@ from stateview import tupdater
 from gcapture import gcapture_tmpfile
 from util import EntryTempText
 from warning_dialog import warning_dialog, info_dialog
+from cylc.task_state import task_state
 
 try:
     any
@@ -208,24 +209,10 @@ Text Treeview suite control interface.
 
         self.tfilterbox = gtk.HBox()
 
-        # allow filtering out of 'succeeded' and 'waiting'
-        all_states = [ 'waiting', 'submitted', 'running', 'succeeded', 'failed', 'held', 'runahead', 'queued' ]
-        labels = {}
-        labels[ 'waiting'   ] = '_waiting'
-        labels[ 'submitted' ] = 's_ubmitted'
-        labels[ 'running'   ] = '_running'
-        labels[ 'succeeded' ] = 'su_cceeded'
-        labels[ 'failed'    ] = 'f_ailed'
-        labels[ 'held'      ] = '_held'
-        labels[ 'runahead'  ] = '_runahead'
-        labels[ 'queued'   ] = '_queued'
-  
-        # To initially filter out 'succeeded' and 'waiting' tasks:
-        #self.tfilter_states = [ 'waiting', 'succeeded' ]
         self.tfilter_states = []
 
-        for st in all_states:
-            b = gtk.CheckButton( labels[st] )
+        for st in task_state.legal:
+            b = gtk.CheckButton( task_state.labels[st] )
             self.tfilterbox.pack_start(b)
             if st in self.tfilter_states:
                 b.set_active(False)

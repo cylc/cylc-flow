@@ -936,7 +936,9 @@ The Cylc Suite Engine.
             view = False
             reasons.append( task_id + ' has no associated log files' )
 
-        if states[ task_id ][ 'state' ] == 'waiting' or states[ task_id ][ 'state' ] == 'queued':
+        if states[ task_id ][ 'state' ] == 'waiting' or \
+                states[ task_id ][ 'state' ] == 'submitting' or \
+                states[ task_id ][ 'state' ] == 'queued':
             view = False
             reasons.append( task_id + ' has not started running yet' )
 
@@ -1725,7 +1727,7 @@ shown here in the state they were in at the time of triggering.''' )
         is_box.pack_start (statedump_entry, True)
         vbox.pack_start(is_box)
 
-        no_reset_cb = gtk.CheckButton( "Don't reset failed tasks to the 'ready' state" )
+        no_reset_cb = gtk.CheckButton( "Don't reset failed tasks to 'ready'" )
         no_reset_cb.set_active(False)
         no_reset_cb.set_sensitive(False)
         vbox.pack_start (no_reset_cb, True)

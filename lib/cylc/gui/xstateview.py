@@ -94,6 +94,9 @@ class xupdater(threading.Thread):
         self.dt = "waiting..."
         self.block = "waiting ..."
 
+        # empty graphw object:
+        self.graphw = graphing.CGraphPlain( self.cfg.suite )
+ 
         self.reconnect()
         # TO DO: handle failure to get a remote proxy in reconnect()
 
@@ -134,7 +137,7 @@ class xupdater(threading.Thread):
             self.family_nodes = self.sinfo.get( 'family nodes' )
             self.graphed_family_nodes = self.sinfo.get( 'graphed family nodes' )
             self.families = self.sinfo.get( 'families' )
-            self.live_graph_movie, self.live_graph_dir = self.sinfo.do_live_graph_movie()
+            self.live_graph_movie, self.live_graph_dir = self.sinfo.get( 'do live graph movie' )
             if self.live_graph_movie:
                 try:
                     mkdir_p( self.live_graph_dir )
@@ -328,9 +331,8 @@ class xupdater(threading.Thread):
         # TO DO: remote connection exception handling?
         try:
             gr_edges = self.sinfo.get( 'graph raw', ct(oldest).get(), ct(newest).get(),
-                    raw=rawx, group_nodes=self.group, ungroup_nodes=self.ungroup,
-                    ungroup_recursive=self.ungroup_recursive, 
-                    group_all=self.group_all, ungroup_all=self.ungroup_all) 
+                    rawx, self.group, self.ungroup, self.ungroup_recursive, 
+                    self.group_all, self.ungroup_all) 
         except Exception:  # PyroError
             return False
 

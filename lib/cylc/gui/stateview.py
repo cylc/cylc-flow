@@ -70,7 +70,6 @@ def markup( col, string ):
     return string
     #return '<span foreground="' + col + '">' + string + '</span>'
 
-
 def get_col_priority( priority ):
     if priority == 'NORMAL':
         return '#006'
@@ -846,3 +845,4 @@ def _time_trim(time_value):
     if time_value is not None:
         return time_value.rsplit(".", 1)[0]
     return time_value
+
