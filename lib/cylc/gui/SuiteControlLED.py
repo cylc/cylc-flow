@@ -24,6 +24,7 @@ from stateview import lupdater
 from gcapture import gcapture_tmpfile
 from cylc.port_scan import SuiteIdentificationError
 from cylc import cylc_pyro_client
+from util import EntryTempText
 from warning_dialog import warning_dialog, info_dialog
 
 class ControlLED(object):
@@ -185,16 +186,6 @@ LED suite control interface.
     def get_toolitems( self ):
         """Return the tool bar items specific to this view."""
         items = []
-        
-        self.filter_entry = gtk.Entry()
-        self.filter_entry.set_width_chars( 8 )  # Reduce width in toolbar
-        self.filter_entry.connect( "activate", self.check_filter_entry )
-        filter_toolitem = gtk.ToolItem()
-        filter_toolitem.add(self.filter_entry)
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip(filter_toolitem, "Dot View - Filter tasks by name")
-        items.append(filter_toolitem)
 
         self.group_toolbutton = gtk.ToggleToolButton()
         self.group_toolbutton.set_active( self.t.should_group_families )
@@ -203,4 +194,16 @@ LED suite control interface.
         self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
         self._set_tooltip( self.group_toolbutton, "Dot View - Click to group tasks by families" )
         items.append( self.group_toolbutton )
+        
+        self.filter_entry = EntryTempText()
+        self.filter_entry.set_width_chars( 7 )  # Reduce width in toolbar
+        self.filter_entry.connect( "activate", self.check_filter_entry )
+        self.filter_entry.set_temp_text( "filter" )
+        filter_toolitem = gtk.ToolItem()
+        filter_toolitem.add(self.filter_entry)
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(filter_toolitem, "Dot View - Filter tasks by name")
+        items.append(filter_toolitem)
+
         return items

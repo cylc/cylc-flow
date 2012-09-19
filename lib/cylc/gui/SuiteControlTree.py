@@ -22,6 +22,7 @@ import gobject
 import helpwindow
 from stateview import tupdater
 from gcapture import gcapture_tmpfile
+from util import EntryTempText
 
 try:
     any
@@ -333,16 +334,6 @@ Text Treeview suite control interface.
         self._set_tooltip( collapse_button, "Tree View - Collapse all" )
         items.append( collapse_button )
      
-        self.filter_entry = gtk.Entry()
-        self.filter_entry.set_width_chars( 8 )  # Reduce width in toolbar
-        self.filter_entry.connect( "activate", self.check_filter_entry )
-        filter_toolitem = gtk.ToolItem()
-        filter_toolitem.add(self.filter_entry)
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip(filter_toolitem, "Tree View - Filter tasks by name")
-        items.append(filter_toolitem)
-
         self.group_toolbutton = gtk.ToggleToolButton()
         self.group_toolbutton.set_active( self.t.should_group_families )
         g_image = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_SMALL_TOOLBAR )
@@ -350,6 +341,17 @@ Text Treeview suite control interface.
         self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
         self._set_tooltip( self.group_toolbutton, "Tree View - Click to group tasks by families" )
         items.append( self.group_toolbutton )
+
+        self.filter_entry = EntryTempText()
+        self.filter_entry.set_width_chars( 7 )  # Reduce width in toolbar
+        self.filter_entry.connect( "activate", self.check_filter_entry )
+        self.filter_entry.set_temp_text( "filter" )
+        filter_toolitem = gtk.ToolItem()
+        filter_toolitem.add(self.filter_entry)
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(filter_toolitem, "Tree View - Filter tasks by name")
+        items.append(filter_toolitem)
 
         return items
 
