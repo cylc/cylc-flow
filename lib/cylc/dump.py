@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime
+import datetime, time
 import subprocess
 
 def get_stop_state(suite, owner=None, host=None):
@@ -51,7 +51,12 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
         return None
     [ time_type, time_string ] = lines.pop(0).rstrip().split(' : ')
     time_string = time_string.rsplit(",")[0]
-    dt = datetime.datetime.strptime(time_string, "%Y:%m:%d:%H:%M:%S")
+
+    # datetime.strptime() introduced in Python 2.5
+    ##dt = datetime.datetime.strptime(time_string, "%Y:%m:%d:%H:%M:%S")
+    # but is equivalent to this:
+    dt = datetime.datetime( *(time.strptime(time_string, "%Y:%m:%d:%H:%M:%S")[0:6]))
+
     global_summary["last_updated"] = dt
     start = lines.pop(0).rstrip().rsplit(None, 1)[-1]
     stop = lines.pop(0).rstrip().rsplit(None, 1)[-1]

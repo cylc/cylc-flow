@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -518,15 +518,15 @@ class config( CylcConfigObj ):
 
     def prune_inheritance_tree( self, tree, runtimes ):
         # When self.family_tree is constructed leaves are {}. This
-        # replaces the leaves with first line of task description, and
+        # replaces the leaves with first line of task title, and
         # populates self.task_runtimes with just the leaves (tasks).
         for item in tree:
             skeys = tree[item].keys() 
             if len( skeys ) > 0:
                 self.prune_inheritance_tree(tree[item], runtimes)
             else:
-                description = self['runtime'][item]['description']
-                dlines = re.split( '\n', description )
+                title = self['runtime'][item]['title']
+                dlines = re.split( '\n', title )
                 dline1 = dlines[0]
                 if len(dlines) > 1:
                     dline1 += '...'
@@ -534,7 +534,7 @@ class config( CylcConfigObj ):
                 runtimes[item] = self['runtime'][item]
 
     def print_task_list( self, filter=None, labels=None, pretty=False ):
-        # determine padding for alignment of task descriptions
+        # determine padding for alignment of task title
         tasks = self.task_runtimes.keys()
         maxlen = 0
         for task in tasks:
@@ -546,16 +546,16 @@ class config( CylcConfigObj ):
             if filter:
                 if not re.search( filter, task ):
                     continue
-            # print first line of task description
-            description = self['runtime'][task]['description']
-            dlines = re.split( '\n', description )
+            # print task title
+            title = self['runtime'][task]['title']
+            dlines = re.split( '\n', title )
             dline1 = dlines[0]
             if len(dlines) > 1:
                 dline1 += '...'
             print task + padding[ len(task): ] + dline1
 
     def print_inheritance_tree( self, filter=None, labels=None, pretty=False ):
-        # determine padding for alignment of task descriptions
+        # determine padding for alignment of task titles
         if filter:
             trt = {}
             ft = {}
@@ -680,6 +680,9 @@ class config( CylcConfigObj ):
                 elif output_name == 'start':
                     # OK, task:start
                     trig.set_type('started')
+                elif output_name == 'succeed':
+                    # OK, task:succeed
+                    trig.set_type('succeeded')
                 else:
                     # ERROR
                     raise SuiteConfigError, "ERROR: '" + task_name + "' does not define output '" + output_name  + "'"
@@ -861,12 +864,6 @@ class config( CylcConfigObj ):
 
     def get_dirname( self ):
         return self.dir
-
-    def get_title( self ):
-        return self['title']
-
-    def get_description( self ):
-        return self['description']
 
     def get_coldstart_task_list( self ):
         # TO DO: automatically determine this by parsing the dependency graph?
@@ -1539,6 +1536,7 @@ class config( CylcConfigObj ):
         # (otherwise they would inherit root with <TASK>=root).
         self.interpolate( name, taskconfig, '<TASK>' )
 
+        taskd.title = taskconfig['title']
         taskd.description = taskconfig['description']
 
         taskd.owner = taskconfig['remote']['owner']

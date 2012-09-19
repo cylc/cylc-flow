@@ -994,3 +994,5 @@ messaging feature to fail in some cases.
 whether or not it is a cold-start task: $CYLC_TASK_IS_COLDSTART ('True'
 or 'False')
 
++ Restore job submit failure hook activation, broken in 4.5.1.
+

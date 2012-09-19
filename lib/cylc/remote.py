@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -86,7 +86,7 @@ class remrun( object ):
             path.append('$PATH')
             env['PATH'] = ':'.join(path)
 
-        print >> sys.stderr, "Remote command re-invocation for", user_at_host
+        print "Remote command re-invocation for", user_at_host
         if self.verbose:
             print '|' + ' '.join(command) + '\\'
             print '|  for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE > /dev/null; done;' + '\\'
@@ -110,6 +110,6 @@ for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE > /dev/null; do
         except OSError, e:
             sys.exit("ERROR: remote command invocation failed %s" % str(e))
         else:
-            print >> sys.stderr, 'Remote command re-invocation done'
+            print "Remote command re-invocation done"
             return True
 

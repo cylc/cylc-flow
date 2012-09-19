@@ -43,7 +43,7 @@ available on their ftp site"""
             SRCE_LOC    = ~/
             DEST_LOC    = ${HOME}/output
             SRCE_USER   = niwa
-            PREV_CYLC_TASK_CYCLE_TIME  = $( cylc cycletime -s 6 )
+            PREV_CYLC_TASK_CYCLE_TIME  = $( cylc cycletime --offset-hours=-6 )
             FILENAME   = ${PREV_CYLC_TASK_CYCLE_TIME}_frames_checksum.txt
             SERVICE = ext_check_frames_ukmet
             TIMEOUT = 90
@@ -115,7 +115,7 @@ is available for download."""
             DEST_LOC    = ${HOME}/output
             SRCE_USER   = niwa
             TIMEOUT = 60 
-            PREV_CYLC_TASK_CYCLE_TIME  = $( cylc cycletime -s 6 )
+            PREV_CYLC_TASK_CYCLE_TIME  = $( cylc cycletime --offset-hours=-6 )
             HH  = ${PREV_CYLC_TASK_CYCLE_TIME:8:2}
             FILENAME  = qwqg${HH}.reduced.${PREV_CYLC_TASK_CYCLE_TIME}.T+3.gz  
             SERVICE = ext_check_dump_ukmet
@@ -172,7 +172,7 @@ is available for download."""
             DEST_LOC = ${HOME}/output
             SRCE_USER = niwa
             SERVICE = ext_get_frames_ukmet
-            PREV_CYLC_TASK_CYCLE_TIME   = $( cylc cycletime -s 6 )
+            PREV_CYLC_TASK_CYCLE_TIME   = $( cylc cycletime --offset-hours=-6 )
             YMD = ${PREV_CYLC_TASK_CYCLE_TIME:0:8}
             HH          = ${PREV_CYLC_TASK_CYCLE_TIME:8:2}
             FILENAME    = ${YMD}_frame_qg${HH}_niwa_*.gz
@@ -263,7 +263,7 @@ when needed."""
     	    FAST =   1
 	        TIMEOUT = 45
             HH          = ${CYLC_TASK_CYCLE_TIME:8:2}
-            PREV_CYLC_TASK_CYCLE_TIME   = $( cylc cycletime -s 6 )
+            PREV_CYLC_TASK_CYCLE_TIME   = $( cylc cycletime --offset-hours=-6 )
             FILENAME    = qwqg${HH}.reduced.${PREV_CYLC_TASK_CYCLE_TIME}.T+3.gz
             SERVICE     = ext_get_dump_ukmet
             FILEOUT = $FILENAME

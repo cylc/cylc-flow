@@ -96,7 +96,7 @@ class LogAnalyser( object ):
         ref.sort()
 
         if new != ref:
-            raise LogAnalyserError( "ERROR: triggering disagrees with the reference log" )
+            raise LogAnalyserError( "ERROR: triggering is NOT consistent with the reference log" )
         else:
-            print "LogAnalyser: triggering agrees with reference log"
+            print "LogAnalyser: triggering is consistent with the reference log"
 

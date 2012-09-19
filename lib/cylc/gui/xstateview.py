@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -29,6 +29,16 @@ import cylc.dump
 from cylc.mkdir_p import mkdir_p
 from cylc.state_summary import get_id_summary
 ####pygtk.require('2.0')
+
+try:
+    any
+except NameError:
+    # any() appeared in Python 2.5
+    def any(iterable):
+        for entry in iterable:
+            if entry:
+                return True
+        return False
 
 def compare_dict_of_dict( one, two ):
     # return True if one == two, else return False.
@@ -82,8 +92,6 @@ class xupdater(threading.Thread):
         # TO DO: handle failure to get a remote proxy in reconnect()
 
         self.graph_warned = {}
-
-        self.collapse = []
 
         self.group = []
         self.ungroup = []
@@ -512,57 +520,6 @@ class xupdater(threading.Thread):
                 continue
             self.set_live_node_attr( node, id )
 
-        for id in self.collapse:
-            try:
-                node = self.graphw.get_node( id )
-            except:
-                # node no longer in graph
-                self.collapse.remove(id)
-                continue
-
-            self.feedins = []
-            self.collapsems = []
-            for n in self.graphw.successors( id ):
-                self.remove_tree( id )
-
-            # replace collapsed node with a stand-in
-            new_node_label = 'SUBTREE:' + id
-            self.graphw.cylc_add_node( new_node_label, True )
-            new_node = self.graphw.get_node( new_node_label )
-            #new_node.attr['shape'] = 'doublecircle'
-            new_node.attr['shape'] = 'tripleoctagon'
-            new_node.attr['style'] = 'filled'
-            new_node.attr['color'] = 'magenta'
-            new_node.attr['fillcolor'] = 'yellow'
-            new_node.attr['URL'] = new_node_label
-
-            for n in self.graphw.predecessors( node ):
-                self.graphw.cylc_add_edge( n, new_node, True )
-
-            name, topctime = id.split('%')
-            for n in self.feedins:
-                #self.feedintops = []
-                #self.follow_up(n,topctime)
-                #if n not in self.collapsems and n not in self.feedintops:
-                if n not in self.collapsems:
-                    self.graphw.cylc_add_edge( n, new_node, True )
-                #for m in self.feedintops:
-                #    self.graphw.remove_node( m )
-
-            for n in self.collapsems:
-                id = n.get_name()
-                if id in self.state_summary:
-                    # (else is part of the base graph)
-                    state = self.state_summary[id]['state']
-                    if state == 'submitted' or state == 'running' or  state == 'failed' or state == 'held':
-                        if state not in extra_node_ids:
-                            extra_node_ids[state] = [id] 
-                        else:
-                            extra_node_ids[state].append(id) 
-                self.graphw.remove_node( n )
-
-            self.graphw.remove_node( node )
-
         # TO DO: ?optional transitive reduction:
         # self.graphw.tred()
 
@@ -589,51 +546,4 @@ class xupdater(threading.Thread):
             arg = os.path.join( self.live_graph_dir, 'live' + '-' + \
                     str( self.graph_frame_count ) + '.dot' )
             self.graphw.write( arg )
-
-    #def follow_up( self, id, topctime ):
-    #    name, ctime = id.split('%')
-    #    if int(ctime) < int(topctime):
-    #        return
-    #    pred = self.graphw.predecessors( id )
-    #    if len(pred) == 0:
-    #        # id has no predecessors
-    #        self.feedintops.append(id)
-    #        return
-    #    for m in pred:
-    #        self.follow_up(m,topctime)
-
-    def remove_empty_nodes( self, node ):
-        # recursively remove base graph nodes whose predecessors are
-        # also not live nodes. ABANDONED - this doesn't have the desired
-        # effect as we need to trace all branches encountered! 
-        empty = True
-        for n in self.graphw.predecessors( node ):
-            if n in self.rem_nodes:
-                continue
-            if n.get_name() in self.state_summary.keys():
-                empty = False
-            else:
-                self.remove_empty_nodes( n )
-        if empty:
-            self.rem_nodes.append(node)
-
-    def remove_tree(self, id ):
-        node = self.graphw.get_node(id)
-        for n in self.graphw.successors( id ):
-            for m in self.graphw.predecessors( n ):
-                if m != node:
-                    self.feedins.append(m)
-                #else:
-                #    print 'EQUAL'
-            self.remove_tree( n )
-            if n not in self.collapsems:
-                self.collapsems.append(n)
-
-    def get_leaves( self ):
-        od = self.graphw.out_degree(with_labels=True)
-        leaves = []
-        for id in od:
-            if od[id] == 0:
-                leaves.append(id)
-        return leaves
 

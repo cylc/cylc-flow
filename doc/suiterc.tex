@@ -22,23 +22,22 @@ and description.
 
 \subsubsection{title}
 
-The suite title is displayed in the gcylc suite database window. It can
-also be retrieved from a suite at run time with \lstinline=cylc show= 
-(or use \lstinline=cylc get-config=).
+A single line description of the suite. It is displayed in the gcylc
+suite database window and can be retrieved at run time with the
+\lstinline=cylc show= command.
 
 \begin{myitemize}
-\item {\em type:} string 
+\item {\em type:} single line string
 \item {\em default:} ``No title provided''
 \end{myitemize}
 
 \subsubsection{description}
 
-The suite description can be retrieved by gcylc right-click menu. It 
-can also be retrieved from a suite at run time with 
-\lstinline=cylc show= (or use \lstinline=cylc get-config=).
+A multi-line description of the suite. It can be retrieved by gcylc
+right-click menu, or at run time with the \lstinline=cylc show= command.
 
 \begin{myitemize}
-\item {\em type:} string
+\item {\em type:} multi-line string
 \item {\em default:} ``No description provided''
 \end{myitemize}
 
@@ -241,14 +240,14 @@ The timer is set initially at suite start up.
 
 \paragraph[reset timer]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ reset timer}
 
-If this is set to \lstinline=True= the suite timer will continually
-reset after any task changes state, so you can time out after some
-interval since the last activity occured rather than on absolute suite
-execution time.
+If \lstinline=True= (the default) the suite timer will continually reset
+after any task changes state, so you can time out after some interval
+since the last activity occured rather than on absolute suite execution
+time.
 
 \begin{myitemize}
     \item {\em type:} boolean
-    \item {\em default:} False
+    \item {\em default:} True
 \end{myitemize}
 
 \paragraph[abort on timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort on timeout}
@@ -434,12 +433,24 @@ in another run mode.
 \paragraph[allow task failures]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ allow task failures}
 
 A reference test run will abort immediately if any task fails, unless
-this item is set for test suites that incorporate some kind of
-deliberate failed task handling.
+this item is set, or a list of {\em expected task failures} is provided
+(below).
 
 \begin{myitemize}
     \item {\em type:} boolean
     \item {\em default:} False
+\end{myitemize}
+
+\paragraph[expected task failures]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ expected task failures}
+
+A reference test run will abort immediately if any task fails, unless
+{\em allow task failures} is set (above) or the failed task is found 
+in a list IDs of tasks that are expected to fail.
+
+\begin{myitemize}
+    \item {\em type:} list of strings (task IDs: \lstinline=name%tag=)
+    \item {\em default:} (none)
+    \item {\em example:} \lstinline=foo%20120808, bar%20120908=
 \end{myitemize}
 
 \paragraph[live mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ live mode suite timeout}
@@ -863,12 +874,25 @@ in the root namespace.
 \item {\em default:} root
 \end{myitemize}
 
+
+\paragraph[title]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ title}
+
+A single line description of this namespace. It is displayed by the
+\lstinline=cylc list= command and can be retrieved from running tasks
+with the \lstinline=cylc show= command.
+
+\begin{myitemize}
+\item {\em type:} single line string 
+\item {\em root default:} ``No title provided''
+\end{myitemize}
+
 \paragraph[description]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ description}
 
-A description of this namespace, retrievable from running tasks via 
-\lstinline=cylc show=.
+A multi-line description of this namespace, retrievable from running tasks with the 
+\lstinline=cylc show= command.
+
 \begin{myitemize}
-\item {\em type:} string 
+\item {\em type:} multi-line string 
 \item {\em root default:} ``No description provided''
 \end{myitemize}
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -32,21 +32,31 @@ from cylc.cycle_time import ct, CycleTimeError
 
 usage = """cylc [task] broadcast [OPTIONS] ARGS
 
-This command allows running tasks to broadcast environment variables
-(name=value) to the execution environments of other downstream tasks.
-Broadcast variables override existing variables of the same name in the
-task execution environment. It is up to the user to ensure that
-broadcast variable names are unique across the suite, or unique by
-cycle time the optional CYCLE argument is used, and that use of
-broadcast variables is consistent with the suite dependency structure
-(i.e. receiving tasks must be downstream of generating tasks - note that
-task execution environments do not allow use of unset variables). 
-
-Target suite identity is determined from the task execution environment
-supplied by the suite. Export CYLC_SUITE_REG_NAME before manual use on
-the command line.
+This command, normally used by running tasks, broadcasts environment
+variables (name=value) to the execution environments of subsequent
+tasks. Note this is achieved by writing broadcast variables to
+task job scripts, not by normal shell-to-subshell environment
+inheritance, so receiving tasks can even be on other hosts. Broadcast
+variables override existing variables of the same name in the task
+execution environment. It is up to the user to ensure that variable
+names do not clash and that the intended use of broadcast variables is
+consistent with the suite dependency structure (receiving tasks must be
+downstream of the broadcasting task, obviously).
 
 Broadcast variables persist across suite restarts.
+
+Task job scripts abort on use of unset environment variables so
+receiving tasks should supply a default value if the upstream broadcast
+can not be relied on: FOO=${BROADCAST:-default}.
+
+Suite identity is normally determined from the task execution
+environment supplied by the suite. Export CYLC_SUITE_REG_NAME before
+manual use on the command line.
+
+Broadcast variables targetted at a specific task ID or cycle time expire
+and are forgotten as the suite moves on. Untargetted variables and those
+targetted at a task name persist throughout the suite run and so should
+be used sparingly. 
 
 Note that variable values with internal spaces must be quoted, e.g.:
  % cylc broadcast MYVAR "the quick brown fox"
@@ -56,7 +66,8 @@ before the closing triple quotes."""
 
 parser = cop( usage, pyro=True, 
         argdoc = [ ("NAME", "Variable name"), ("VALUE", "Variable value"),
-            ("[CYCLE]", "Broadcast only to tasks with this cycle time")])
+            ("[TARGET]", 
+                "Broadcast only to a target task ID, name, or cycle.")])
 
 ( options, args ) = parser.parse_args()
 
@@ -85,18 +96,16 @@ if len(args) == 3:
 else:
     target = None
 
-if target:
-    try:
-        ct( target )
-    except CycleTimeError:
-        raise SystemExit('ERROR, receiver: invalid cycle time ' + str(target))
+# target validation is done by the receiver
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, None, options.verbose ).get_proxy( 'receiver' )
-    proxy.receive( varname, value, target )
+    success, msg = proxy.receive( varname, value, target )
 except Exception, x:
     if debug:
         raise
     raise SystemExit(x)
 
+if not success:
+    raise SystemExit( msg )

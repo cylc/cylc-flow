@@ -4620,7 +4620,8 @@ submission occurs in its own spawned subprocess - in batches whose
 members are submitted in parallel. The default batch size of 50 can be
 overridden in suite definitions: \begin{lstlisting}
 # SUITE.RC
-[cylc] maximum number of simultaneous job submissions = 50
+[cylc]
+    maximum number of simultaneous job submissions = 50
 \end{lstlisting} A 120 task ensemble, for example, would be submitted in
 two batches of 50 followed by one of 20, with cylc waiting on all member
 job submissions to return before going on to the next batch. Note that
@@ -4779,24 +4780,19 @@ Section~\ref{EventHandling}.
 See also Sections~\ref{SuiteEventHandling} and~\ref{TaskEventHandling}
 in the {\em Suite.rc Reference}.
 
-Cylc can call a nominated ``event handler'' script when events such as
-suite shutdown, or task failure or timeout occur. This is intended to
-facilitate centralized alerting and automated handling of critical
-events. Event handlers can send an email or an SMS, call a pager, and so
-on; or intervene in the operation of their own suite using cylc commands.
-\lstinline=cylc [hook] email-suite= and \lstinline=cylc [hook] email-task=
-are example event handlers packaged with cylc.
-
-Currently a single script can be nominated to handle a list of chosen
-events, and the event name is passed to the handler to allow it to
-distinguish between them (cylc once allowed distinct handlers for each
-event but this required verbose configuration for little gain).
+Cylc can call nominated event handlers when certain suite or task events
+occur. This is intended to facilitate centralized alerting and automated
+handling of critical events. Event handlers can send an email or an SMS,
+call a pager, and so on; or intervene in the operation of their own
+suite using cylc commands.  \lstinline=cylc [hook] email-suite= and
+\lstinline=cylc [hook] email-task= are example event handlers packaged
+with cylc.
 
 Custom task event handlers can be located in the suite bin directory.
 They are passed the following arguments by cylc:
 
 \begin{lstlisting}
-<hook-script> EVENT SUITE TASKID MESSAGE
+<handler> EVENT SUITE TASKID MESSAGE
 \end{lstlisting}
 where EVENT is one of the following strings:
 \begin{myitemize}
@@ -4817,11 +4813,6 @@ The retry event occurs if a task fails and has any remaining retries
 configured (see Section~\ref{TaskRetries}). 
 The event handler will be called as soon as the task fails, not after
 the retry delay period when it is resubmitted.
-
-To configure timeout handling, list `submission\_timeout' and/or
-`execution\_timeout' in the events to handle, and then specify 
-corresponding timeout values in minutes using the timeout config items
-as documented in the suite.rc reference.
 
 {\em Note that event handlers are called by cylc itself, not by the 
 running tasks} so if you wish to pass them additional information via
@@ -4854,8 +4845,8 @@ if (( CYLC_TASK_TRY_NUMBER <= 2 )) || \
     /bin/false
 fi"""
         [[[event hooks]]]
-            events = retry, failed
-            script = "echo !!!!!EVENT!!!!! "
+            retry handler = "echo !!!!!EVENT!!!!! "
+            failed handler = "echo !!!!!EVENT!!!!! "
 \end{lstlisting}
 
 \subsection{Reloading The Suite Definition At Runtime}
@@ -4922,36 +4913,40 @@ stdout stream.
 \subsection{Communication Between Tasks: Environment Variable Broadcast}
 
 Communication of information from one task to another normally takes place 
-via the filesystem, i.e.\ input/output file releationships expressed in
-task dependencies. Since cylc-4.6.0, however, tasks can also communicate 
-some information to other downstream tasks via an environment variable
-broadcast mechanism. The following task scripting, for instance, broadcasts 
-three environment variables to other tasks: \lstinline=$VERSE1= will be
-available to all subsequent tasks for the duration of the current suite
-run; \lstinline=$VERSE2= will be available only to tasks with the same
-cycle time as the broadcasting task; and \lstinline=$VERSE3= will be
-available only to tasks with a cycle time six hours beyond that of the 
-broadcasting task.
+via the filesystem, i.e.\ the input/output file relationships embodied in
+inter-task dependencies. Since cylc-4.6.0, however, tasks can also communicate 
+information to other downstream tasks via an environment variable
+broadcast mechanism. Variables may be broadcast to all subsequent tasks, 
+or targetted specifically at a specific task, all subsequent tasks with a 
+given name, or all tasks with a given cycle time:
 
 \lstset{language=bash}
 \begin{lstlisting}
 # (TASK IMPLEMENTATION SCRIPTING)
 # broadcast some environment variables to downstream tasks:
-cylc broadcast VERSE1 "the quick brown fox"
-cylc broadcast VERSE2 "jumped over" $CYLC_TASK_CYCLE_TIME
-cylc broadcast VERSE3 "the lazy dog" $( cylc cycletime --offset-hours=6 )
+cylc broadcast FOO "the quick brown"              # to all tasks
+cylc broadcast BAR "fox jumped" TaskA%2012080806  # to a specific task
+cylc broadcast BAZ "over the"   TaskA             # to all TaskA's
+cylc broadcast QUX "lazy dog"   2012080806        # to all at 2012080806
 \end{lstlisting}
 
-When a task is ready to run any broadcast variables valid at job
-submission time will be written to its job script, after the rest of
-the task execution environment is defined so that broadcast variables 
-take precedence over existing variables of the same name.
+All current broadcast variables that target a particular task at the 
+instant it is ready to be submitted will be written to its job script
+after the rest of the task execution environment (broadcast variables 
+take precedence over existing variables of the same name).
 
-Broadcast variables targetted at a particular cycle time expire as the
-suite moves on, but untargetted variables persist throughout the entire
-suite run and so should be used sparingly. 
+Broadcast variables targetted at a specific task ID or cycle time expire
+and are forgotten as the suite moves on. Untargetted variables and those
+targetted at a task name persist throughout the suite run and so should
+be used sparingly. 
 
 Broadcast variables persist across suite restarts.
+
+Note that variable values with internal spaces must be quoted, e.g.:
+ % cylc broadcast MYVAR "the quick brown fox"
+Within suite.rc scripting sections single quotes can be used inside
+triple-quoted multi-line strings so long as there is whitespace or a
+newline before the closing triple quotes."""
 
 \subsection{The Meaning And Use Of Initial Cycle Time}
 
@@ -5371,8 +5366,7 @@ you wish:
 [cylc]
     abort if any task fails = True
     [[event hooks]]
-        script = cylc check-triggering
-        events = shutdown
+        shutdown handler = cylc check-triggering
         timeout = 5
         abort if shutdown handler fails = True
         abort on timeout = True

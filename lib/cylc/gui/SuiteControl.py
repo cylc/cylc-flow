@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -31,6 +31,7 @@ from warning_dialog import warning_dialog, info_dialog
 from cylc.gui.SuiteControlGraph import ControlGraph
 from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
+from cylc.gui.graph import graph_suite_popup
 from cylc.gui.stateview import DotGetter
 from cylc.gui.util import get_icon, get_image_dir, get_logo
 from cylc import cylc_pyro_client
@@ -212,19 +213,23 @@ Class to create an information bar.
 
     def set_stop_summary(self, summary_maps):
         """Set various summary info."""
-        summary = "stopped with '{0}'"
+        # new string format() introduced in Python 2.6
+        #o>summary = "stopped with '{0}'"
+        summary = "stopped with '%s'"
         glob, task, fam = summary_maps
         states = [t["state"] for t in task.values() if "state" in t]
         suite_state = "?"
         if states:
             suite_state = extract_group_state(states)
-        summary = summary.format(suite_state)
+        #o>summary = summary.format(suite_state)
+        summary = summary % suite_state
         num_failed = 0
         for task_id in task:
             if task[task_id].get("state") == "failed":
                 num_failed += 1
         if num_failed:
-            summary += ": {0} failed tasks".format(num_failed)
+            #o> summary += ": {0} failed tasks".format(num_failed)
+            summary += ": %s failed tasks" % num_failed
         self.set_status(summary)
         self.set_time(glob["last_updated"].strftime("%Y/%m/%d %H:%M:%S"))
 
@@ -369,7 +374,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         if self.current_views[0].name == item._viewname:
             return False
         self.switch_view( item._viewname )
-        # self._set_tool_bar_view0( item._viewname )
+        self._set_tool_bar_view0( item._viewname )
         return False
 
     def _set_tool_bar_view0( self, viewname ):
@@ -853,7 +858,7 @@ been defined for this suite""").inform()
 
         about.set_comments( 
 """
-The cylc forecast suite metascheduler.
+The Cylc Suite Engine.
 """ )
         #about.set_website( "http://www.niwa.co.nz" )
         about.set_logo( get_logo() )
@@ -923,34 +928,49 @@ The cylc forecast suite metascheduler.
 
         items = []
 
-        js0_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DIALOG_INFO )
-        js0_item.set_label( 'View Task Info' )
-        items.append( js0_item )
-        js0_item.connect( 'activate', self.view_task_descr, task_id )
+        ## This method of setting a custom menu item is not supported
+        ## pre-PyGTK 2.16 (~Python 2.65?) due to MenuItem.set_label():
+        ## cug_pdf_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_EDIT )
+        ## cug_pdf_item.set_label( '_PDF User Guide' )
+        ## help_menu.append( cug_pdf_item )
+        ## cug_pdf_item.connect( 'activate', self.browse, '--pdf' )
 
-        js_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DND )
-        js_item.set_label( 'View Job Script' )
-        items.append( js_item )
-        js_item.connect( 'activate', self.view_task_info, task_id, True )
-
-        info_item = gtk.MenuItem( 'View Task Output' )
-        items.append( info_item )
-        info_item.connect( 'activate', self.view_task_info, task_id, False )
-
-        info_item = gtk.MenuItem( 'View Task State' )
+        info_item = gtk.ImageMenuItem( 'View State' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
+        info_item.set_image(img)
         items.append( info_item )
         info_item.connect( 'activate', self.popup_requisites, task_id )
 
+        js0_item = gtk.ImageMenuItem( 'View Info' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
+        js0_item.set_image(img)
+        items.append( js0_item )
+        js0_item.connect( 'activate', self.view_task_descr, task_id )
+
+        js_item = gtk.ImageMenuItem( 'View Job Script' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        js_item.set_image(img)
+        items.append( js_item )
+        js_item.connect( 'activate', self.view_task_info, task_id, True )
+
+        info_item = gtk.ImageMenuItem( 'View Logs' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        info_item.set_image(img)
+        items.append( info_item )
+        info_item.connect( 'activate', self.view_task_info, task_id, False )
+
         items.append( gtk.SeparatorMenuItem() )
 
-        trigger_now_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_MEDIA_PLAY )
-        trigger_now_item.set_label( 'Trigger' )
+        trigger_now_item = gtk.ImageMenuItem( 'Trigger' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU )
+        trigger_now_item.set_image(img)
         items.append( trigger_now_item )
         trigger_now_item.connect( 'activate', self.trigger_task_now, task_id )
 
         reset_menu = gtk.Menu()
-        reset_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_CONVERT )
-        reset_item.set_label( "Reset task state" )
+        reset_item = gtk.ImageMenuItem( "Reset task state" )
+        img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
+        reset_item.set_image(img)
         reset_item.set_submenu( reset_menu )
         items.append( reset_item )
         
@@ -970,44 +990,51 @@ The cylc forecast suite metascheduler.
         reset_menu.append( reset_failed_item )
         reset_failed_item.connect( 'activate', self.reset_task_state, task_id, 'failed' )
 
-        spawn_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_ADD )
-        spawn_item.set_label( 'Force spawn' )
+        spawn_item = gtk.ImageMenuItem( 'Force spawn' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_ADD, gtk.ICON_SIZE_MENU )
+        spawn_item.set_image(img)
         items.append( spawn_item )
         spawn_item.connect( 'activate', self.reset_task_state, task_id, 'spawn' )
 
         items.append( gtk.SeparatorMenuItem() )
 
-        stoptask_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_MEDIA_PAUSE )
-        stoptask_item.set_label( 'Hold' )
+        stoptask_item = gtk.ImageMenuItem( 'Hold' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PAUSE, gtk.ICON_SIZE_MENU )
+        stoptask_item.set_image(img)
         items.append( stoptask_item )
         stoptask_item.connect( 'activate', self.hold_task, task_id, True )
 
-        unstoptask_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_MEDIA_PLAY )
-        unstoptask_item.set_label( 'Release' )
+        unstoptask_item = gtk.ImageMenuItem( 'Release' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU )
+        unstoptask_item.set_image(img)
         items.append( unstoptask_item )
         unstoptask_item.connect( 'activate', self.hold_task, task_id, False )
 
         items.append( gtk.SeparatorMenuItem() )
     
-        kill_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_CLEAR )
-        kill_item.set_label( 'Remove after spawning' )
+        kill_item = gtk.ImageMenuItem( 'Remove after spawning' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
+        kill_item.set_image(img)
         items.append( kill_item )
         kill_item.connect( 'activate', self.kill_task, task_id )
 
-        kill_nospawn_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_CLEAR )
-        kill_nospawn_item.set_label( 'Remove without spawning' )
+        kill_nospawn_item = gtk.ImageMenuItem( 'Remove without spawning' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
+        kill_nospawn_item.set_image(img)
         items.append( kill_nospawn_item )
         kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
 
-        purge_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DELETE )
-        purge_item.set_label( 'Remove Tree (Recursive Purge)' )
+        purge_item = gtk.ImageMenuItem( 'Remove Tree (Recursive Purge)' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DELETE, gtk.ICON_SIZE_MENU )
+        purge_item.set_image(img)
         items.append( purge_item )
         purge_item.connect( 'activate', self.popup_purge, task_id )
 
         items.append( gtk.SeparatorMenuItem() )
     
-        addprereq_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_ADD )
-        addprereq_item.set_label( 'Add A Prerequisite' )
+        addprereq_item = gtk.ImageMenuItem( 'Add A Prerequisite' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_ADD, gtk.ICON_SIZE_MENU )
+        addprereq_item.set_image(img)
         items.append( addprereq_item )
         addprereq_item.connect( 'activate', self.add_prerequisite_popup, task_id )
 
@@ -1975,8 +2002,9 @@ without restarting the suite."""
         file_menu_root = gtk.MenuItem( '_File' )
         file_menu_root.set_submenu( file_menu )
 
-        exit_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_QUIT )
-        exit_item.set_label( 'E_xit (Disconnect From Suite)' )
+        exit_item = gtk.ImageMenuItem( 'E_xit (Disconnect From Suite)' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU )
+        exit_item.set_image(img)
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
 
@@ -1984,54 +2012,8 @@ without restarting the suite."""
         view_menu_root = gtk.MenuItem( '_View' )
         view_menu_root.set_submenu( self.view_menu )
 
-        info_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DIALOG_INFO )
-        info_item.set_label( 'Suite _Info' )
-        self.view_menu.append( info_item )
-        info_item.connect( 'activate', self.view_suite_info )
-
-        graph_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_SELECT_COLOR )
-        graph_item.set_label( 'Suite _Graph' )
-        self.view_menu.append( graph_item )
-        graphmenu = gtk.Menu()
-        graph_item.set_submenu(graphmenu)
-
-        gtree_item = gtk.MenuItem( '_Dependencies' )
-        graphmenu.append( gtree_item )
-        gtree_item.connect( 'activate', self.view_suite_graph, False )
-
-        gns_item = gtk.MenuItem( '_Namespaces' )
-        graphmenu.append( gns_item )
-        gns_item.connect( 'activate', self.view_suite_graph, True )
-
-        log_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DND )
-        log_item.set_label( 'Suite _Log' )
-        self.view_menu.append( log_item )
-        log_item.connect( 'activate', self.view_log )
-
-        view_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_EDIT )
-        view_item.set_label( 'Suite _View' )
-        self.view_menu.append( view_item )
-        subviewmenu = gtk.Menu()
-        view_item.set_submenu(subviewmenu)
-
-        rw_item = gtk.MenuItem( '_Raw' )
-        subviewmenu.append( rw_item )
-        rw_item.connect( 'activate', self.view_suite_view, 'raw' )
- 
-        viewi_item = gtk.MenuItem( '_Inlined' )
-        subviewmenu.append( viewi_item )
-        viewi_item.connect( 'activate', self.view_suite_view, 'inlined' )
- 
-        viewp_item = gtk.MenuItem( '_Processed' )
-        subviewmenu.append( viewp_item )
-        viewp_item.connect( 'activate', self.view_suite_view, 'processed' )
-
-        self.view_menu.append( gtk.SeparatorMenuItem() )
-
-        self.view1_align_item = gtk.CheckMenuItem(
-                                    label="Toggle views _side-by-side" )
-        self._set_tooltip( self.view1_align_item,
-                           "Toggle horizontal layout of views." )
+        self.view1_align_item = gtk.CheckMenuItem( label="Toggle views _side-by-side" )
+        self._set_tooltip( self.view1_align_item, "Toggle horizontal layout of views." )
         self.view1_align_item.connect( 'toggled', self._cb_change_view_align )
         self.view_menu.append( self.view1_align_item )
         
@@ -2108,121 +2090,220 @@ without restarting the suite."""
         start_menu_root = gtk.MenuItem( '_Control' )
         start_menu_root.set_submenu( start_menu )
 
-        self.run_menuitem = gtk.ImageMenuItem( 
-                                   stock_id=gtk.STOCK_MEDIA_PLAY )
-        self.run_menuitem.set_label( '_Run Suite ... ' )
+        self.run_menuitem = gtk.ImageMenuItem( '_Run Suite ... ' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU )
+        self.run_menuitem.set_image(img)
         start_menu.append( self.run_menuitem )
         self.run_menuitem.connect( 'activate', self.startsuite_popup )
 
-        self.pause_menuitem = gtk.ImageMenuItem(
-                                   stock_id=gtk.STOCK_MEDIA_PAUSE )
-        self.pause_menuitem.set_label( '_Hold Suite (pause)' )
+        self.pause_menuitem = gtk.ImageMenuItem( '_Hold Suite (pause)' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PAUSE, gtk.ICON_SIZE_MENU )
+        self.pause_menuitem.set_image(img)
         start_menu.append( self.pause_menuitem )
         self.pause_menuitem.connect( 'activate', self.pause_suite )
 
-        self.unpause_menuitem = gtk.ImageMenuItem(
-                                    stock_id=gtk.STOCK_MEDIA_PLAY )
-        self.unpause_menuitem.set_label( 'R_elease Suite (unpause)' )
+        self.unpause_menuitem = gtk.ImageMenuItem( 'R_elease Suite (unpause)' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU )
+        self.unpause_menuitem.set_image(img)
         start_menu.append( self.unpause_menuitem )
         self.unpause_menuitem.connect( 'activate', self.resume_suite )
 
-        self.stop_menuitem = gtk.ImageMenuItem( 
-                                  stock_id=gtk.STOCK_MEDIA_STOP )
-        self.stop_menuitem.set_label( '_Stop Suite ... ' )
+        self.stop_menuitem = gtk.ImageMenuItem( '_Stop Suite ... ' )
+        img = gtk.image_new_from_stock( gtk.STOCK_MEDIA_STOP, gtk.ICON_SIZE_MENU )
+        self.stop_menuitem.set_image(img)
         start_menu.append( self.stop_menuitem )
         self.stop_menuitem.connect( 'activate', self.stopsuite_popup )
 
         start_menu.append( gtk.SeparatorMenuItem() )
 
-        nudge_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_REFRESH )
-        nudge_item.set_label( "_Nudge (updates times)" )
+        nudge_item = gtk.ImageMenuItem( '_Nudge (updates times)' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU )
+        nudge_item.set_image(img)
         start_menu.append( nudge_item )
         nudge_item.connect( 'activate', self.nudge_suite  )
 
-        reload_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_CDROM )
-        reload_item.set_label( "Re_load Suite Definition ..." )
+        reload_item = gtk.ImageMenuItem( 'Re_load Suite Definition ...' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_CDROM, gtk.ICON_SIZE_MENU )
+        reload_item.set_image(img)
         start_menu.append( reload_item )
         reload_item.connect( 'activate', self.reload_suite  )
 
-        insert_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_PASTE )
-        insert_item.set_label( '_Insert Task(s) ...' )
+        insert_item = gtk.ImageMenuItem( '_Insert Task(s) ...' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_PASTE, gtk.ICON_SIZE_MENU )
+        insert_item.set_image(img)
         start_menu.append( insert_item )
         insert_item.connect( 'activate', self.insert_task_popup )
 
         start_menu.append( gtk.SeparatorMenuItem() )
 
-        block_item = gtk.ImageMenuItem( 
-                         stock_id=gtk.STOCK_DIALOG_AUTHENTICATION )
-        block_item.set_label( '_Block Access' )
+        block_item = gtk.ImageMenuItem( '_Block Access' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_AUTHENTICATION, gtk.ICON_SIZE_MENU )
+        block_item.set_image(img)
         start_menu.append( block_item )
         block_item.connect( 'activate', self.block_suite )
 
-        unblock_item = gtk.ImageMenuItem(
-                           stock_id=gtk.STOCK_DIALOG_AUTHENTICATION )
-        unblock_item.set_label( 'Unbl_ock Access' )
+        unblock_item = gtk.ImageMenuItem( 'Unbl_ock Access' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_AUTHENTICATION, gtk.ICON_SIZE_MENU )
+        unblock_item.set_image(img)
         start_menu.append( unblock_item )
         unblock_item.connect( 'activate', self.unblock_suite )
 
         start_menu.append( gtk.SeparatorMenuItem() )
 
-        runahead_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_JUMP_TO )
-        runahead_item.set_label( '_Change Runahead Limit ...' )
+        runahead_item = gtk.ImageMenuItem( '_Change Runahead Limit ...' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
+        runahead_item.set_image(img)
         start_menu.append( runahead_item )
         runahead_item.connect( 'activate', self.change_runahead_popup )
+
+        tools_menu = gtk.Menu()
+        tools_menu_root = gtk.MenuItem( '_Tools' )
+        tools_menu_root.set_submenu( tools_menu )
+
+        val_item = gtk.ImageMenuItem( 'Suite _Validate' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU )
+        val_item.set_image(img)
+        tools_menu.append( val_item )
+        val_item.connect( 'activate', self.run_suite_validate )
+
+        info_item = gtk.ImageMenuItem( 'Suite _Info' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
+        info_item.set_image(img)
+        tools_menu.append( info_item )
+        info_item.connect( 'activate', self.run_suite_info )
+
+        graph_item = gtk.ImageMenuItem( 'Suite _Graph' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU )
+        graph_item.set_image(img)
+        tools_menu.append( graph_item )
+        graphmenu = gtk.Menu()
+        graph_item.set_submenu(graphmenu)
+
+        gtree_item = gtk.MenuItem( '_Dependencies' )
+        graphmenu.append( gtree_item )
+        gtree_item.connect( 'activate', self.run_suite_graph, False )
+
+        gns_item = gtk.MenuItem( '_Namespaces' )
+        graphmenu.append( gns_item )
+        gns_item.connect( 'activate', self.run_suite_graph, True )
+
+        list_item = gtk.ImageMenuItem( 'Suite _List' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_INDEX, gtk.ICON_SIZE_MENU )
+        list_item.set_image(img)
+        tools_menu.append( list_item )
+        list_menu = gtk.Menu()
+        list_item.set_submenu( list_menu )
+ 
+        flat_item = gtk.MenuItem( '_Tasks' )
+        list_menu.append( flat_item )
+        flat_item.connect( 'activate', self.run_suite_list )
+
+        tree_item = gtk.MenuItem( '_Namespaces' )
+        list_menu.append( tree_item )
+        tree_item.connect( 'activate', self.run_suite_list, '-t' )
+
+        log_item = gtk.ImageMenuItem( 'Suite _Log' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        log_item.set_image(img)
+        tools_menu.append( log_item )
+        log_item.connect( 'activate', self.run_suite_log )
+
+        view_item = gtk.ImageMenuItem( 'Suite _View' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
+        view_item.set_image(img)
+        tools_menu.append( view_item )
+        subviewmenu = gtk.Menu()
+        view_item.set_submenu(subviewmenu)
+
+        rw_item = gtk.MenuItem( '_Raw' )
+        subviewmenu.append( rw_item )
+        rw_item.connect( 'activate', self.run_suite_view, 'raw' )
+ 
+        viewi_item = gtk.MenuItem( '_Inlined' )
+        subviewmenu.append( viewi_item )
+        viewi_item.connect( 'activate', self.run_suite_view, 'inlined' )
+ 
+        viewp_item = gtk.MenuItem( '_Processed' )
+        subviewmenu.append( viewp_item )
+        viewp_item.connect( 'activate', self.run_suite_view, 'processed' )
+
+        edit_item = gtk.ImageMenuItem( 'Suite _Edit' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
+        edit_item.set_image(img)
+        tools_menu.append( edit_item )
+        edit_menu = gtk.Menu()
+        edit_item.set_submenu(edit_menu)
+
+        raw_item = gtk.MenuItem( '_Raw' )
+        edit_menu.append( raw_item )
+        raw_item.connect( 'activate', self.run_suite_edit, False )
+
+        inl_item = gtk.MenuItem( '_Inlined' )
+        edit_menu.append( inl_item )
+        inl_item.connect( 'activate', self.run_suite_edit, True )
 
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( '_Help' )
         help_menu_root.set_submenu( help_menu )
 
-        self.userguide_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_HELP )
-        self.userguide_item.set_label( '_GUI Quick Guide' )
+        self.userguide_item = gtk.ImageMenuItem( '_GUI Quick Guide' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_HELP, gtk.ICON_SIZE_MENU )
+        self.userguide_item.set_image(img)
         self.userguide_item.connect( 'activate', helpwindow.userguide )
         help_menu.append( self.userguide_item )
 
         help_menu.append( gtk.SeparatorMenuItem() )
 
-        chelp_menu = gtk.ImageMenuItem( stock_id=gtk.STOCK_EXECUTE )
-        chelp_menu.set_label( 'Command Help' )
+        chelp_menu = gtk.ImageMenuItem( 'Command Help' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_EXECUTE, gtk.ICON_SIZE_MENU )
+        chelp_menu.set_image(img)
         help_menu.append( chelp_menu )
         self.construct_command_menu( chelp_menu )
 
         help_menu.append( gtk.SeparatorMenuItem() )
 
-        cug_pdf_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_EDIT )
-        cug_pdf_item.set_label( '_PDF User Guide' )
+        cug_pdf_item = gtk.ImageMenuItem( '_PDF User Guide' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
+        cug_pdf_item.set_image(img)
         help_menu.append( cug_pdf_item )
         cug_pdf_item.connect( 'activate', self.browse, '--pdf' )
   
-        cug_html_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DND_MULTIPLE )
-        cug_html_item.set_label( '_Multi Page HTML User Guide' )
+        cug_html_item = gtk.ImageMenuItem( '_Multi Page HTML User Guide' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND_MULTIPLE, gtk.ICON_SIZE_MENU )
+        cug_html_item.set_image(img)
         help_menu.append( cug_html_item )
         cug_html_item.connect( 'activate', self.browse, '--html' )
 
-        cug_shtml_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_DND )
-        cug_shtml_item.set_label( '_Single Page HTML User Guide' )
+        cug_shtml_item = gtk.ImageMenuItem( '_Single Page HTML User Guide' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        cug_shtml_item.set_image(img)
         help_menu.append( cug_shtml_item )
         cug_shtml_item.connect( 'activate', self.browse, '--html-single' )
 
-        cug_www_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_HOME )
-        cug_www_item.set_label( '_Internet Home Page' )
+        cug_www_item = gtk.ImageMenuItem( '_Internet Home Page' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_HOME, gtk.ICON_SIZE_MENU )
+        cug_www_item.set_image(img)
         help_menu.append( cug_www_item )
         cug_www_item.connect( 'activate', self.browse, '--www' )
  
         help_menu.append( gtk.SeparatorMenuItem() )
  
-        cug_clog_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_EDIT )
-        cug_clog_item.set_label( 'Change _Log' )
+        cug_clog_item = gtk.ImageMenuItem( 'Change _Log' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
+        cug_clog_item.set_image(img)
         help_menu.append( cug_clog_item )
         cug_clog_item.connect( 'activate', self.browse, '-g --log' )
  
-        about_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_ABOUT )
-        about_item.set_label( '_About' )
+        about_item = gtk.ImageMenuItem( '_About' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU )
+        about_item.set_image(img)
         help_menu.append( about_item )
         about_item.connect( 'activate', self.about )
 
         self.menu_bar.append( file_menu_root )
         self.menu_bar.append( view_menu_root )
         self.menu_bar.append( start_menu_root )
+        self.menu_bar.append( tools_menu_root )
         self.menu_bar.append( help_menu_root )
 
     def construct_command_menu( self, menu ):
@@ -2393,7 +2474,7 @@ For more Stop options use the Control menu.""" )
         if tip_tuple is None:
             tips = gtk.Tooltips()
             tips.enable()
-        tips.set_tip( self.run_pause_toolbutton, tip_text )
+            tips.set_tip( self.run_pause_toolbutton, tip_text )
         self.run_pause_toolbutton.click_func = click_func
 
     def create_info_bar( self ):
@@ -2422,15 +2503,71 @@ For more Stop options use the Control menu.""" )
         return cylc_pyro_client.client( self.cfg.suite,
                 self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                 self.cfg.pyro_timeout, self.cfg.port ).get_proxy( object )
- 
-    def view_log( self, w ):
+
+    def run_suite_validate( self, w ):
+        command = ( "cylc validate -v " + self.get_remote_run_opts() + 
+                " --notify-completion " + self.cfg.suite )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+        self.gcapture_windows.append(foo)
+        foo.run()
+        return False
+
+    def run_suite_edit( self, w, inlined=False):
+        extra = ''
+        if inlined:
+            extra = '-i '
+        command = ( "cylc edit --notify-completion -g" + self.get_remote_run_opts() + 
+                    " " + extra + ' ' + self.cfg.suite )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+        self.gcapture_windows.append(foo)
+        foo.run()
+        return False
+
+    def run_suite_graph( self, w, show_ns=False ):
+        if show_ns:
+            command = ( "cylc graph --notify-completion --namespaces " +
+                        self.get_remote_run_opts() +
+                        " " + self.cfg.suite )
+            foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+            self.gcapture_windows.append(foo)
+            foo.run()
+        else:
+            times = []
+            for option in ["'initial cycle time'", "'final cycle time'"]:
+                command = ( "cylc get-config" + self.get_remote_run_opts() +
+                            " " + self.cfg.suite + 
+                            " visualization " + option )
+                res, pieces = run_get_stdout( command )
+                if not res or not pieces:
+                    return False
+                times.append(pieces[0].strip())
+            graph_suite_popup( self.cfg.suite, self.command_help, times[0], times[1],
+                               self.get_remote_run_opts(), self.gcapture_windows,
+                               self.cfg.cylc_tmpdir, parent_window=self.window )
+
+    def run_suite_info( self, w ):
+        command = ( "cylc show --notify-completion" + self.get_remote_run_opts() + 
+                    " " + self.cfg.suite )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
+    def run_suite_list( self, w, opt='' ):
+        command = ( "cylc list " + self.get_remote_run_opts() + " " + opt +
+                    " --notify-completion " + self.cfg.suite )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
+    def run_suite_log( self, w ):
         com = False
         if is_remote_host( self.cfg.host ) or is_remote_user( self.cfg.owner ):
             com = True
             warning_dialog( \
 """The full-function GUI log viewer is only available
 for local suites; I will call "cylc cat-log" instead.""" ).warn()
-            command = "cylc cat-log --notify-completion --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite
+            command = ( "cylc cat-log --notify-completion" + self.get_remote_run_opts() +
+                        " " + self.cfg.suite )
             foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
             self.gcapture_windows.append(foo)
             foo.run()
@@ -2449,32 +2586,22 @@ for local suites; I will call "cylc cat-log" instead.""" ).warn()
         foo = cylc_logviewer( 'log', logging_dir, task_list)
         self.quitters.append(foo)
 
-    def view_suite_graph( self, w, show_ns=False ):
-        command = "cylc graph --notify-completion --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite
-        if show_ns:
-            command = "cylc graph --notify-completion --namespaces --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def view_suite_info( self, w ):
-        command = "cylc show --notify-completion --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite 
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def view_suite_view( self, w, method ):
+    def run_suite_view( self, w, method ):
         extra = ''
         if method == 'inlined':
             extra = ' -i'
         elif method == 'processed':
             extra = ' -j'
 
-        command = "cylc view --notify-completion -g --host=" + self.cfg.host + " --owner=" + self.cfg.owner + extra + " " + self.cfg.suite
+        command = ( "cylc view --notify-completion -g " + self.get_remote_run_opts() + 
+                    " " + extra + " " + self.cfg.suite )
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
         return False
+
+    def get_remote_run_opts( self ):
+        return " --host=" + self.cfg.host + " --owner=" + self.cfg.owner
 
     def browse( self, b, option='' ):
         command = 'cylc documentation ' + option

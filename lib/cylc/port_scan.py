@@ -1,6 +1,6 @@
 #!/usr/bin/pyro
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -159,7 +159,7 @@ def get_port( suite, owner=user, host=hostname, pphrase=None, pyro_timeout=None,
         else:
             if verbose:
                 after = datetime.datetime.now()
-                print >> sys.stderr, "Pyro connection on port " +str(port) + " took: " + str( after - before )
+                print "Pyro connection on port " +str(port) + " took: " + str( after - before )
             if name == suite and xowner == owner:
                 if verbose:
                     print suite, owner, host, port
@@ -197,7 +197,7 @@ def check_port( suite, pphrase, port, owner=user, host=hostname, pyro_timeout=No
     else:
         if verbose:
             after = datetime.datetime.now()
-            print >> sys.stderr, "Pyro connection on port " +str(port) + " took: " + str( after - before )
+            print "Pyro connection on port " +str(port) + " took: " + str( after - before )
         if name == suite and xowner == owner:
             # RESULT
             if verbose:
@@ -258,7 +258,7 @@ def scan( host=hostname, db=None, pyro_timeout=None, verbose=False ):
         else:
             if verbose:
                 after = datetime.datetime.now()
-                print >> sys.stderr, "Pyro connection on port " +str(port) + " took: " + str( after - before )
+                print "Pyro connection on port " +str(port) + " took: " + str( after - before )
             if verbose:
                 print name, owner, host, port
             # found a cylc suite or lock server

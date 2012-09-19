@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -74,13 +74,6 @@ Dependency graph suite control interface.
             # graph key node
             return
 
-        m = re.match( 'SUBTREE:(.*)', url )
-        if m:
-            #print 'SUBTREE'
-            task_id = m.groups()[0]
-            self.right_click_menu( event, task_id, type='collapsed subtree' )
-            return
-
         m = re.match( 'base:(.*)', url )
         if m:
             #print 'BASE GRAPH'
@@ -114,13 +107,6 @@ Dependency graph suite control interface.
         if url == 'KEY':
             # graph key node
             self.xdot.widget.set_tooltip_text(url)
-            return False
-
-        m = re.match( 'SUBTREE:(.*)', url )
-        if m:
-            #print 'SUBTREE'
-            task_id = m.groups()[0]
-            self.xdot.widget.set_tooltip_text(self.x.get_summary(task_id))
             return False
 
         m = re.match( 'base:(.*)', url )
@@ -159,59 +145,38 @@ Dependency graph suite control interface.
         timezoom_reset_item = gtk.MenuItem( 'Focus Reset' )
         timezoom_reset_item.connect( 'activate', self.focused_timezoom_direct, None )
 
-        group_item = gtk.ImageMenuItem( stock_id='group' )
-        group_item.set_label( 'Group' )
+        group_item = gtk.ImageMenuItem( 'Group' )
+        img = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_MENU )
+        group_item.set_image(img)
         group_item.set_sensitive( name not in self.x.group )
         group_item.connect( 'activate', self.grouping, name, True )
-        ungroup_item = gtk.ImageMenuItem( stock_id='ungroup' )
+
+        ungroup_item = gtk.ImageMenuItem( 'UnGroup' )
+        img = gtk.image_new_from_stock( 'ungroup', gtk.ICON_SIZE_MENU )
+        ungroup_item.set_image(img)
         ungroup_item.set_sensitive( name not in self.x.ungroup )
-        ungroup_item.set_label( 'UnGroup' )
         ungroup_item.connect( 'activate', self.grouping, name, False )
-        ungroup_rec_item = gtk.ImageMenuItem( stock_id='ungroup' )
-        ungroup_rec_item.set_label( 'Recursive UnGroup' )
+
+        ungroup_rec_item = gtk.ImageMenuItem( 'Recursive UnGroup' )
+        img = gtk.image_new_from_stock( 'ungroup', gtk.ICON_SIZE_MENU )
+        ungroup_rec_item.set_image(img)
         ungroup_rec_item.set_sensitive( not self.x.ungroup_recursive )
         ungroup_rec_item.connect( 'activate', self.grouping, name, False, True )
 
-        if type == 'collapsed subtree':
-            title_item = gtk.MenuItem( 'Subtree: ' + task_id )
-            title_item.set_sensitive(False)
-            menu.append( title_item )
-            menu.append( gtk.SeparatorMenuItem() )
+        title_item = gtk.MenuItem( 'Task: ' + task_id )
+        title_item.set_sensitive(False)
+        menu.append( title_item )
 
-            expand_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_ADD )
-            expand_item.set_label( 'Expand Subtree' )
-            expand_item.set_sensitive( task_id in self.x.collapse )
-            menu.append( expand_item )
-            expand_item.connect( 'activate', self.expand_subtree, task_id )
-    
-            menu.append( timezoom_item_direct )
-            menu.append( timezoom_item )
-            menu.append( timezoom_reset_item )
+        menu.append( gtk.SeparatorMenuItem() )
 
-        else:
+        menu.append( timezoom_item_direct )
+        menu.append( timezoom_item )
+        menu.append( timezoom_reset_item )
 
-            title_item = gtk.MenuItem( 'Task: ' + task_id )
-            title_item.set_sensitive(False)
-            menu.append( title_item )
-
-            menu.append( gtk.SeparatorMenuItem() )
-
-            menu.append( timezoom_item_direct )
-            menu.append( timezoom_item )
-            menu.append( timezoom_reset_item )
-
-            menu.append( gtk.SeparatorMenuItem() )
-            menu.append( group_item )
-            menu.append( ungroup_item )
-            menu.append( ungroup_rec_item )
-
-            menu.append( gtk.SeparatorMenuItem() )
-
-            collapse_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_REMOVE )
-            collapse_item.set_label( 'Collapse Subtree' )
-            collapse_item.set_sensitive( task_id not in self.x.collapse )
-            menu.append( collapse_item )
-            collapse_item.connect( 'activate', self.collapse_subtree, task_id )
+        menu.append( gtk.SeparatorMenuItem() )
+        menu.append( group_item )
+        menu.append( ungroup_item )
+        menu.append( ungroup_rec_item )
 
         if type == 'live task':
             menu.append( gtk.SeparatorMenuItem() )
@@ -237,24 +202,6 @@ Dependency graph suite control interface.
             self.x.group.append(name)
         else:
             self.x.ungroup.append(name)
-        self.x.action_required = True
-        self.x.best_fit = True
-
-    def collapse_subtree( self, w, id ):
-        self.x.collapse.append(id)
-        self.menu_expand_item.set_sensitive( bool(self.x.collapse) )
-        self.x.action_required = True
-        self.x.best_fit = True
-
-    def expand_subtree( self, w, id ):
-        self.x.collapse.remove(id)
-        self.menu_expand_item.set_sensitive( bool(self.x.collapse) )
-        self.x.action_required = True
-        self.x.best_fit = True
-
-    def expand_all_subtrees( self, w ):
-        del self.x.collapse[:]
-        self.menu_expand_item.set_sensitive( bool(self.x.collapse) )
         self.x.action_required = True
         self.x.best_fit = True
 
@@ -284,25 +231,22 @@ Dependency graph suite control interface.
         crop_item.set_active( self.x.crop )
         crop_item.connect( 'activate', self.toggle_crop )
 
-        self.menu_filter_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_CLEAR )
-        self.menu_filter_item.set_label( 'Task _Filtering ...' )
+        self.menu_filter_item = gtk.ImageMenuItem( 'Task _Filtering ...' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
+        self.menu_filter_item.set_image(img)
         items.append( self.menu_filter_item )
         self.menu_filter_item.connect( 'activate', self.filter_popup )
 
-        self.menu_expand_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_ADD )
-        self.menu_expand_item.set_label( '_Expand All Subtrees' )
-        self.menu_expand_item.set_sensitive( bool(self.x.collapse) )
-        items.append( self.menu_expand_item )
-        self.menu_expand_item.connect( 'activate', self.expand_all_subtrees )
-
-        self.menu_group_item = gtk.ImageMenuItem( stock_id='group' )
-        self.menu_group_item.set_label( '_Group All Families' )
+        self.menu_group_item = gtk.ImageMenuItem( '_Group All Families' )
+        img = gtk.image_new_from_stock(  'group', gtk.ICON_SIZE_MENU )
+        self.menu_group_item.set_image(img)
         self.menu_group_item.set_sensitive( not self.x.group_all )
         items.append( self.menu_group_item )
         self.menu_group_item.connect( 'activate', self.group_all_families, True )
 
-        self.menu_ungroup_item = gtk.ImageMenuItem( stock_id='ungroup' )
-        self.menu_ungroup_item.set_label( '_UnGroup All Families' )
+        self.menu_ungroup_item = gtk.ImageMenuItem( '_UnGroup All Families' )
+        img = gtk.image_new_from_stock(  'ungroup', gtk.ICON_SIZE_MENU )
+        self.menu_ungroup_item.set_image(img)
         self.menu_ungroup_item.set_sensitive( not self.x.ungroup_all )
         items.append( self.menu_ungroup_item )
         self.menu_ungroup_item.connect( 'activate', self.group_all_families, False )
@@ -351,8 +295,7 @@ Dependency graph suite control interface.
         items.append( zoom100_button )
        
         connect_button = gtk.ToggleButton()
-        image = gtk.image_new_from_stock( gtk.STOCK_CONNECT,
-                                          gtk.ICON_SIZE_SMALL_TOOLBAR )
+        image = gtk.image_new_from_stock( gtk.STOCK_CONNECT, gtk.ICON_SIZE_SMALL_TOOLBAR )
         connect_button.set_image( image )
         connect_button.set_relief( gtk.RELIEF_NONE )
         self._set_tooltip( connect_button, "Graph View - Click to disconnect" )

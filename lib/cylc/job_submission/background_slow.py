@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@ for cylc development purposes - sleep 10s before executing the task.
     # stdin redirection (< /dev/null) allows background execution
     # even on a remote host - ssh can exit without waiting for the
     # remote process to finish.
-    COMMAND_TEMPLATE = "sleep 10 && %s </dev/null 1>%s 2>%s &"
+    COMMAND_TEMPLATE = "sleep 10; %s </dev/null 1>%s 2>%s &"
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template
         if not command_template:

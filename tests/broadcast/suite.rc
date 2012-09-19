@@ -6,7 +6,7 @@
 
 [scheduling]
     initial cycle time = 2010080100
-    final cycle time = 2010080400
+    final cycle time = 2010080200
     [[dependencies]]
         graph = "prep"
         [[[0]]]
@@ -15,16 +15,56 @@
 [runtime]
     [[prep]]
         command scripting = """
-#sleep 10        
-cylc broadcast PREP_SAYS "the quick brown fox" """
+cylc broadcast PREP_TO_ALL "the quick brown"
+cylc broadcast PREP_TO_FOO "fox jumps" foo
+cylc broadcast PREP_TO_2010080200 "over the" 2010080200
+cylc broadcast PREP_TO_BAR_2010080200 "lazy dog" bar%2010080200
+                            """
+    [[cyc]]
+        pre-command scripting = """
+#sleep 10
+echo "PREP_TO_ALL: $PREP_TO_ALL"
+                                """
+        [[[environment]]]
+            PREP_TO_ALL            = ${PREP_TO_ALL:-UNDEFINED}
+            PREP_TO_FOO            = ${PREP_TO_FOO:-UNDEFINED}
+            PREP_TO_2010080200     = ${PREP_TO_2010080200:-UNDEFINED}
+            PREP_TO_BAR_2010080200 = ${PREP_TO_BAR_2010080200:-UNDEFINED}
+            
     [[foo]]
+        inherit = cyc
         command scripting = """
-#sleep 10
-echo "prep said: $PREP_SAYS"
-cylc broadcast FOO_SAYS "jumped over the lazy dog at $CYLC_TASK_CYCLE_TIME" $CYLC_TASK_CYCLE_TIME"""
+echo "PREP_TO_FOO: $PREP_TO_FOO"
+if [[ $CYLC_TASK_CYCLE_TIME = 2010080200 ]]; then
+    echo "PREP_TO_2010080200: $PREP_TO_2010080200"
+elif [[ $PREP_TO_2010080200 != UNDEFINED ]]; then
+    echo "PREP_TO_2010080200: $PREP_TO_2010080200"
+    echo "ERROR: PREP_TO_2010080200 should not be defined here"
+    /bin/false
+fi
+if [[ $PREP_TO_BAR_2010080200 != UNDEFINED ]]; then 
+    echo "PREP_TO_BAR_2010080200: $PREP_TO_BAR_2010080200"
+    echo "ERROR: PREP_TO_BAR_2010080200 should not be defined here"
+    /bin/false
+fi
+                            """
     [[bar]]
+        inherit = cyc
         command scripting = """
-#sleep 10
-echo "prep said: $PREP_SAYS"
-echo "foo said: $FOO_SAYS" """
+if [[ $CYLC_TASK_CYCLE_TIME = 2010080200 ]]; then
+    echo "PREP_TO_2010080200: $PREP_TO_2010080200"
+    echo "PREP_TO_BAR_2010080200: $PREP_TO_BAR_2010080200"
+else
+    if [[ $PREP_TO_2010080200 != UNDEFINED ]]; then
+        echo "PREP_TO_2010080200: $PREP_TO_2010080200"
+        echo "ERROR: PREP_TO_2010080200 should not be defined here"
+        /bin/false
+    fi
+    if [[ $PREP_TO_BAR_2010080200 != UNDEFINED ]]; then 
+        echo "PREP_TO_BAR_2010080200: $PREP_TO_BAR_2010080200"
+        echo "ERROR: PREP_TO_BAR_2010080200 should not be defined here"
+        /bin/false
+    fi
+fi
+                            """
 

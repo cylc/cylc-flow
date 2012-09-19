@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -189,38 +189,42 @@ class pool(object):
 
     def batch_submit( self, tasks ):
         if self.run_mode == 'simulation':
-            for task in tasks:
+            for itask in tasks:
                 print
-                print 'TASK READY:', task.id 
-                task.incoming( 'NORMAL', task.id + ' started' )
+                print 'TASK READY:', itask.id 
+                itask.incoming( 'NORMAL', itask.id + ' started' )
             return
 
         before = datetime.datetime.now()
         ps = []
-        for task in tasks:
+        for itask in tasks:
             print
-            print 'TASK READY:', task.id 
-            p = task.submit( self.wireless.get(task.c_time) )
+            print 'TASK READY:', itask.id 
+            p = itask.submit( self.wireless.get(itask.id) )
             if p:
-                ps.append( (task,p) ) 
+                ps.append( (itask,p) ) 
         print
         print 'WAITING ON JOB SUBMISSIONS'
         n_succ = 0
         n_fail = 0
-        for task, p in ps:
+        for itask, p in ps:
             res = p.wait()
             if res < 0:
-                print >> sys.stderr, "ERROR: Task", task.id, "job submission terminated by signal", res
-                task.reset_state_failed()
+                print >> sys.stderr, "ERROR: Task", itask.id, "job submission terminated by signal", res
+                itask.reset_state_failed()
+                itask.set_submit_failed()
+                task.task.state_changed = True
                 n_fail += 1
             elif res > 0:
-                print >> sys.stderr, "ERROR: Task", task.id, "job submission failed", res
-                task.reset_state_failed()
+                print >> sys.stderr, "ERROR: Task", itask.id, "job submission failed", res
+                itask.reset_state_failed()
+                itask.set_submit_failed()
+                task.task.state_changed = True
                 n_fail += 1
             else:
                 n_succ += 1
                 if self.verbose:
-                    print "Task", task.id, "job submission succeeded"
+                    print "Task", itask.id, "job submission succeeded"
 
         after = datetime.datetime.now()
         n_tasks = len(tasks)
@@ -314,13 +318,15 @@ class scheduler(object):
             spec = LogSpec( self.reflogfile )
             self.start_tag = spec.get_start_tag()
             self.stop_tag = spec.get_stop_tag()
-            if not self.config['cylc']['reference test']['allow task failures']:
+            self.ref_test_allowed_failures = self.config['cylc']['reference test']['expected task failures']
+            if not self.config['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
                 self.config['cylc']['abort if any task fails'] = True
             self.config.abort_on_timeout = True
             timeout = self.config['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
             if not timeout:
                 raise SchedulerError, 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test'
             self.config.suite_timeout = timeout
+            self.config.reset_timer = False
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
@@ -822,6 +828,13 @@ class scheduler(object):
                 if self.any_task_failed():
                     raise SchedulerError( 'One or more tasks failed, and this suite sets "abort if any task fails"' )
 
+            if self.options.reftest:
+                if len( self.ref_test_allowed_failures ) > 0:
+                    for task in self.get_failed_tasks():
+                        if task.id not in self.ref_test_allowed_failures:
+                            print >> sys.stderr, task.id
+                            raise SchedulerError( 'A task failed unexpectedly: not in allowed failures list' )
+
             if stop_now:
                 self.log.warning( "ALL TASKS FINISHED OR HELD" )
                 break
@@ -1151,6 +1164,13 @@ class scheduler(object):
                     return False
         return True
 
+    def get_failed_tasks( self ):
+        failed = []
+        for itask in self.pool.get_tasks():
+            if itask.state.is_failed():
+                failed.append( itask )
+        return failed
+
     def any_task_failed( self ):
         for itask in self.pool.get_tasks():
             if itask.state.is_failed():
@@ -1273,6 +1293,8 @@ class scheduler(object):
             FILE.write( 'final cycle : (none)\n' )
 
         self.wireless.dump(FILE)
+
+        FILE.write( 'Begin task states\n' )
 
         for itask in self.pool.get_tasks():
             # TO DO: CHECK THIS STILL WORKS 

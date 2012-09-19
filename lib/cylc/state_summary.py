@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -96,6 +96,7 @@ class state_summary( Pyro.core.ObjBase ):
         self.global_summary[ 'states' ] = all_states
 
     def get_task_name_list( self ):
+        self.task_name_list.sort()
         return self.task_name_list
             
     def get_state_summary( self ):
