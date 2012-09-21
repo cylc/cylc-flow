@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-# See CommsTest/README
-
 import sys
 import socket
 import Pyro.core
 
 if len(sys.argv) != 1:
-    print "USAGE: CommsTestServer.py HOST PORT"
+    print "USAGE: CommsTestServer.py"
+    print "(no options or arguments)"
     sys.exit(1)
 
 my_host = socket.getfqdn()

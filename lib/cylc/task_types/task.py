@@ -77,6 +77,7 @@ class task( Pyro.core.ObjBase ):
     intercycle = False
     suite = None
     state_changed = True
+    progress_msg_rec = True
 
     # set by the back door at startup:
     cylc_env = {}
@@ -449,86 +450,95 @@ class task( Pyro.core.ObjBase ):
             return False
 
     def incoming( self, priority, message ):
+        # Receive incoming messages for this task
+
+        if self.reject_if_failed( message ):
+            # Failed tasks do not send messages unless declared resurrectable
+            return
+
+        self.latest_message = message
+        self.latest_message_priority = priority
+
+        # Set this to stimulate task processing
+        task.state_changed = True
+        # Set this to stimulate suite state summary update even if not task processing.
+        task.progress_msg_rec = False
+
+        # Handle warning events
         handler = self.__class__.event_handlers['warning']
         if priority == 'WARNING' and handler:
             RunHandler( 'warning', handler, self.__class__.suite, self.id, message )
 
-        if self.reject_if_failed( message ):
-            return
-
         if self.reset_timer:
+            # Reset execution timer on incoming messages
             self.execution_timer_start = task.clock.get_datetime()
 
-        # receive all incoming pyro messages for this task
-        self.latest_message = message
-        self.latest_message_priority = priority
-
-        # set state_changed to stimulate the task processing loop
-        task.state_changed = True
-
         if message == self.id + ' started':
+            # Received a 'task started' message
             self.set_running()
 
         if not self.state.is_running():
-            # my external task should not be running!
-            self.log( 'WARNING', "UNEXPECTED MESSAGE (task should not be running)" )
-            self.log( 'WARNING', '-> ' + message )
+            # Only running tasks should be sending messages
+            self.log( 'WARNING', "UNEXPECTED MESSAGE (task should not be running):\n" + message )
 
         if message == self.id + ' failed':
-            # process task failure messages
+            # Received a 'task failed' message
             self.succeeded_time = task.clock.get_datetime()
             try:
                 # Is there a retry lined up for this task?
                 self.retry_delay = float(self.retry_delays.popleft())
             except IndexError:
-                # Nope, we are now failed as.
-                # Add the failed method as a task output so that other
-                # tasks can trigger off the failure event (failure
-                # outputs are not added in advance as under normal
-                # circumstances they will not be completed outputs).
+                # There is no retry lined up: definitive failure.
+                # Add the failed message as a task output so that other tasks can
+                # trigger off the failure event (failure outputs are not added in
+                # advance - they are not completed outputs in case of success):
                 self.outputs.add( message )
                 self.outputs.set_completed( message )
-                # this also calls the task failure handler:
+                # (this also calls the task failure handler):
                 self.set_failed( message )
-                task.state_changed = True
             else:
-                # Yep, we can retry.
+                # There is a retry lined up
                 self.plog( 'Setting retry delay: ' + str(self.retry_delay) +  ' minutes' )
                 self.retry_delay_timer_start = task.clock.get_datetime()
                 self.try_number += 1
                 self.state.set_status( 'retry_delayed' )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
-                task.state_changed = True
+                # Handle retry events
                 handler = self.__class__.event_handlers['retry']
                 if handler:
                     RunHandler( 'retry', handler, self.__class__.suite, self.id, '(task retrying)' )
 
         elif self.outputs.exists( message ):
-            # registered output messages
-
+            # Received a registered internal output message
+            # (this includes 'task succeeded')
             if not self.outputs.is_completed( message ):
-                # message indicates completion of a registered output.
                 self.log( priority,  message )
                 self.outputs.set_completed( message )
-
                 if message == self.id + ' succeeded':
-                    # TASK HAS SUCCEEDED
+                    # Task has succeeded
                     self.succeeded_time = task.clock.get_datetime()
                     self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
                     if not self.outputs.all_completed():
+                        # Reported success before all registered outputs were completed.
+                        # Currently this is treated as an error condition.
                         self.set_failed( 'succeeded before all outputs were completed' )
                     else:
+                        # Set state to 'succeeded' and handle succeeded events
                         self.set_succeeded_handler()
             else:
-                # this output has already been satisfied
+                # This output has already been reported complete.
+                # Currently this is treated as an error condition
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already completed):" )
                 self.log( 'WARNING', "-> " + message )
+                task.state_changed = False
 
         else:
-            # log other (non-failed) unregistered messages with a '*' prefix
+            # A general unregistered progress message: log with a '*' prefix
             message = '*' + message
             self.log( priority, message )
+            task.progress_msg_rec = True
+            task.state_changed = False
 
     def update( self, reqs ):
         for req in reqs.get_list():

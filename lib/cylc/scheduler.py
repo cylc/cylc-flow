@@ -84,12 +84,12 @@ class pool(object):
             # reassign live tasks from the old queues to the new
             self.new_queues = {}
             for queue in self.queues:
-                for task in self.queues[queue]:
-                    myq = self.myq[task.name]
+                for itask in self.queues[queue]:
+                    myq = self.myq[itask.name]
                     if myq not in self.new_queues:
-                        self.new_queues[myq] = [task]
+                        self.new_queues[myq] = [itask]
                     else:
-                        self.new_queues[myq].append( task )
+                        self.new_queues[myq].append( itask )
             self.queues = self.new_queues
 
     def add( self, itask ):
@@ -146,10 +146,10 @@ class pool(object):
         for queue in self.queues:
             n_active = 0
             n_limit = self.qconfig[queue]['limit']
-            for task in self.queues[queue]:
+            for itask in self.queues[queue]:
                 if n_limit:
                     # there is a limit on this queue
-                    if task.state.is_submitted() or task.state.is_running():
+                    if itask.state.is_submitted() or itask.state.is_running():
                         # count active tasks in this queue
                         n_active += 1
                     # compute difference from the limit
@@ -157,16 +157,16 @@ class pool(object):
                     if n_release <= 0:
                         # the limit is currently full
                         continue
-            for task in self.queues[queue]:
-                if task.ready_to_run():
+            for itask in self.queues[queue]:
+                if itask.ready_to_run():
                     if n_limit:
                         if n_release > 0:
                             n_release -= 1
-                            readytogo.append(task)
+                            readytogo.append(itask)
                         else:
-                            task.state.set_status('queued')
+                            itask.state.set_status('queued')
                     else:
-                        readytogo.append(task)
+                        readytogo.append(itask)
 
         if len(readytogo) == 0:
             if self.verbose:
@@ -757,22 +757,17 @@ class scheduler(object):
 
                 self.negotiate()
 
-                submitted = self.pool.process( )
+                submitted = self.pool.process()
                 self.process_resolved( submitted )
 
                 self.cleanup()
                 self.spawn()
                 self.dump_state()
 
-                oldest_c_time = self.get_oldest_c_time()
-                self.suite_state.update( self.pool.get_tasks(), self.clock,
-                        oldest_c_time, self.get_newest_c_time(),
-                        self.paused(), self.will_pause_at(), 
-                        self.remote.halt, self.will_stop_at(), self.blocked,
-                        self.runahead_limit )
+                self.update_state_summary()
 
                 # expire old broadcast variables
-                self.wireless.expire( oldest_c_time )
+                self.wireless.expire( self.get_oldest_c_time() )
 
                 if self.options.timing:
                     delta = datetime.datetime.now() - main_loop_start_time
@@ -788,7 +783,12 @@ class scheduler(object):
             # timeout to handle this when nothing else is happening.
 
             # incoming task messages set task.task.state_changed to True
+            #print 'Pyro>'
             self.pyro.handleRequests(timeout=1)
+            #print '<Pyro'
+            if task.task.progress_msg_rec:
+                task.task.progress_msg_rec = False
+                self.update_state_summary()
 
             if self.config.suite_timeout:
                 self.check_suite_timer()
@@ -830,9 +830,9 @@ class scheduler(object):
 
             if self.options.reftest:
                 if len( self.ref_test_allowed_failures ) > 0:
-                    for task in self.get_failed_tasks():
-                        if task.id not in self.ref_test_allowed_failures:
-                            print >> sys.stderr, task.id
+                    for itask in self.get_failed_tasks():
+                        if itask.id not in self.ref_test_allowed_failures:
+                            print >> sys.stderr, itask.id
                             raise SchedulerError( 'A task failed unexpectedly: not in allowed failures list' )
 
             if stop_now:
@@ -885,13 +885,20 @@ class scheduler(object):
             from shutil import copy
             copy( self.logfile, self.reflogfile)
 
+    def update_state_summary( self ):
+        self.log.debug( "UPDATING STATE SUMMARY" )
+        self.suite_state.update( self.pool.get_tasks(), self.clock,
+                self.get_oldest_c_time(), self.get_newest_c_time(), self.paused(),
+                self.will_pause_at(), self.remote.halt,
+                self.will_stop_at(), self.blocked, self.runahead_limit )
+
     def process_resolved( self, tasks ):
         # process resolved dependencies (what actually triggers off what at run time).
-        for task in tasks:
+        for itask in tasks:
             if self.config['visualization']['runtime graph']['enable']:
-                self.runtime_graph.update( task, self.get_oldest_c_time(), self.get_oldest_async_tag() )
+                self.runtime_graph.update( itask, self.get_oldest_c_time(), self.get_oldest_async_tag() )
             if self.config['cylc']['log resolved dependencies']:
-                task.log( 'NORMAL', 'triggered off ' + str( task.get_resolved_dependencies()) )
+                itask.log( 'NORMAL', 'triggered off ' + str( itask.get_resolved_dependencies()) )
 
     def check_suite_timer( self ):
         if self.already_timed_out:
@@ -1699,10 +1706,10 @@ class scheduler(object):
                 # so we have to create the task before checking if the task
                 # already exists in the system or the stop time has been reached.
                 rject = False
-                for task in self.pool.get_tasks():
-                    if not task.is_cycling():
+                for jtask in self.pool.get_tasks():
+                    if not jtask.is_cycling():
                         continue
-                    if itask.id == task.id:
+                    if itask.id == jtask.id:
                         # task already in the suite
                         rject = True
                         break
@@ -1723,8 +1730,8 @@ class scheduler(object):
 
         if len( to_insert ) > 0:
             self.log.warning( 'pre-insertion state dump: ' + self.dump_state( new_file = True ))
-            for task in to_insert:
-                self.pool.add( task )
+            for jtask in to_insert:
+                self.pool.add( jtask )
         return ( inserted, rejected )
 
     def purge( self, id, stop ):
@@ -1812,9 +1819,9 @@ class scheduler(object):
 
         # reset any prerequisites "virtually" satisfied during the purge
         print 'RESETTING spawned tasks to unsatisified:'
-        for task in spawn:
-            print '  ', task.id
-            task.prerequisites.set_all_unsatisfied()
+        for itask in spawn:
+            print '  ', itask.id
+            itask.prerequisites.set_all_unsatisfied()
 
         # finally, purge all tasks marked as depending on the target
         print 'REMOVING PURGED TASKS:'

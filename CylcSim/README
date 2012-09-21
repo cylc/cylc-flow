@@ -1,0 +1,9 @@
+
+A small test server and client programs to simulate cylc's main loop and
+Pyro request handling behavior - will use to improve responsiveness to
+requests (task messages and user commands) even with long task pool
+processing times. Preliminary results: switch to mult-threaded Pyro!
+It may also be worth calling handleRequest() multiple times (until a
+timeout) before processing tasks (but this may not be necessary
+with multithreaded pyro...). More soon ...
+
