@@ -102,6 +102,7 @@ class state_summary( Pyro.core.ObjBase ):
     def get_state_summary( self ):
         return [ self.global_summary, self.task_summary, self.family_summary ]
 
+
 def extract_group_state( child_states ):
     """Summarise child states as a group."""
     ordered_states = ['failed', 'held', 'running', 'submitted',
@@ -112,3 +113,42 @@ def extract_group_state( child_states ):
             return state
     return None
 
+
+def get_id_summary( id_, task_state_summary, fam_state_summary, id_family_map ):
+    """Return some state information about a task or family id."""
+    prefix_text = ""
+    sub_text = ""
+    sub_states = {}
+    stack = [( id_, 0 )]
+    done_ids = []
+    while stack:
+        this_id, depth = stack.pop( 0 )
+        if this_id in done_ids:  # family dive down will give duplicates
+            continue
+        done_ids.append( this_id )
+        prefix = "\n" + " " * 4 * depth + this_id + " "
+        if this_id in task_state_summary:
+            state = task_state_summary[this_id]['state']
+            sub_text += prefix + state
+            sub_states.setdefault( state, 0 )
+            sub_states[state] += 1
+        elif this_id in fam_state_summary:
+            name, ctime = this_id.split( "%" )
+            sub_text += prefix + fam_state_summary[this_id]['state']
+            for child in reversed( sorted( id_family_map[name] ) ):
+                child_id = child + "%" + ctime
+                stack.insert( 0, ( child_id, depth + 1 ) )
+        if not prefix_text:
+            prefix_text = sub_text.strip()
+            sub_text = ""
+    if len( sub_text.splitlines() ) > 10:
+        state_items = sub_states.items()
+        state_items.sort()
+        state_items.sort( lambda x, y: cmp( y[1], x[1] ) )
+        sub_text = ""
+        for state, number in state_items:
+            sub_text += "\n    {0} tasks {1}".format( number, state )
+    text = prefix_text + sub_text
+    if not text:
+        return id_
+    return text
