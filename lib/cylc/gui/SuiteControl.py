@@ -282,7 +282,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.log_colors = rotator()
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_title( self.cfg.suite + " - gcylc" )
+        self.window.set_title( self.cfg.suite + " - gcontrol" )
         self.window.set_icon(get_icon())
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(800, 500)
