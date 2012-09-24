@@ -49,6 +49,9 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
         lines = state_file_text.splitlines()
     if len(lines) == 0 or len(lines) < 3:
         return None
+    for line in list(lines):
+        if line.startswith('Remote command'):
+            lines.remove(line)
     [ time_type, time_string ] = lines.pop(0).rstrip().split(' : ')
     time_string = time_string.rsplit(",")[0]
 
@@ -66,7 +69,7 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
         global_summary["will_stop_at"] = stop
     while lines:
         line = lines.pop(0)
-        if line.startswith("class"):
+        if line.startswith("class") or line.startswith("Begin task"):
             continue
         try:
             ( task_id, info ) = line.split(' : ')

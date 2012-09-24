@@ -190,7 +190,10 @@ class message(object):
 
     def send_pyro( self, msg ):
         # exceptions are handled by the messaging commands now
+        ##before = datetime.datetime.now()
         self.get_proxy().incoming( self.priority, msg )
+        ##after = datetime.datetime.now()
+        ##print 'Pyro messaging took:', str(after - before)
 
     def send_succeeded( self ):
         self.send( self.task_id + ' succeeded' )
