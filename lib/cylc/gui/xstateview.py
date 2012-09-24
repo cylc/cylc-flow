@@ -218,6 +218,8 @@ class xupdater(threading.Thread):
         else:
             self.status = 'running'
 
+        self.info_bar.set_status( self.status )
+
         self.mode = glbl['run_mode']
 
         if glbl[ 'blocked' ]:
@@ -249,7 +251,6 @@ class xupdater(threading.Thread):
         self.info_bar.set_mode( self.mode )
         self.info_bar.set_time( self.dt )
         self.info_bar.set_block( self.block )
-        self.info_bar.set_status( self.status )
         return False
  
     def run(self):

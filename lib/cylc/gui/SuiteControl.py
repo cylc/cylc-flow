@@ -2422,7 +2422,7 @@ For more Stop options use the Control menu.""" )
         run_icon = gtk.image_new_from_stock( gtk.STOCK_MEDIA_PLAY,
                                              gtk.ICON_SIZE_SMALL_TOOLBAR )
         self.run_pause_toolbutton = gtk.ToolButton( icon_widget=run_icon )
-        click_func = self.startsuite_popup
+        self.run_pause_toolbutton.click_func = self.startsuite_popup
         tooltip = gtk.Tooltips()
         tooltip.enable()
         tooltip.set_tip( self.run_pause_toolbutton, "Run Suite..." )
