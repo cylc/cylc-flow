@@ -457,6 +457,8 @@ class tupdater(threading.Thread):
         return False
 
     def update_globals( self ):
+        self.info_bar.set_runahead( 
+                          self.global_summary.get( 'runahead limit' ) )
         self.info_bar.set_state( self.global_summary.get( "states", [] ) )
         self.info_bar.set_mode( self.mode )
         self.info_bar.set_time( self.dt )
