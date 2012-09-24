@@ -943,7 +943,7 @@ The Cylc Suite Engine.
  
             out_item = gtk.MenuItem( 'View Suite _Stdout')
             infomenu.append( out_item )
-            out_item.connect( 'activate', self.view_output, reg, state )
+            out_item.connect( 'activate', self.view_output, reg, suite_dir, state )
 
             out_item = gtk.MenuItem( '_View Suite Log')
             infomenu.append( out_item )
@@ -1678,36 +1678,40 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         logdir = os.path.join( suiterc['cylc']['logging']['directory'] )
         cylc_logviewer( 'log', logdir, suiterc.get_task_name_list() )
 
-    def view_output( self, w, name, state ):
+    def view_output( self, w, name, suite_dir, state ):
         running_already = False
+        suite_dir = os.path.expanduser(suite_dir)
+ 
         if state != '-':
             # suite running
             running_already = True
             # was it started by gcylc?
             try:
-                ssproxy = cylc_pyro_client.client( name, pyro_timeout=self.pyro_timeout ).get_proxy( 'state_summary' )
+                pphrase = passphrase( name ).get( suitedir=suite_dir )
+            except Exception, x:
+                warning_dialog( str(x), self.window ).warn()
+                return False
+            try:
+                ssproxy = cylc_pyro_client.client( name, pphrase, pyro_timeout=self.pyro_timeout ).get_proxy( 'state_summary' )
             except SuiteIdentificationError, x:
                 warning_dialog( str(x), self.window ).warn()
                 return False
             [ glbl, states, fam_states ] = ssproxy.get_state_summary()
             if glbl['started by gcylc']:
                 started_by_gcylc = True
-                # suite is running already, started by gcylc, which
-                # redirects output to a special file that we can
-                # reconnect to.
+                # The suite is running and gcontrol was started via
+                # gcylc, which redirects standard output to a file that
+                # we can reconnect to.
             else:
                 started_by_gcylc = False
-                info_dialog( "This suite is running, but it was started from "
-                    "the command line so we cannot access its stdout/stderr.",
+                info_dialog( "The suite is running but it was not started by a gcontrol "
+                        "instance launched by gcylc, so we cannot access its std output",
                     self.window ).inform()
                 return False
         else:
             # suite not running
-            info_dialog( "This suite is not running. "
-                    "The suite output window may show stdout and stderr "
-                    "captured during the last GUI-initiated run "
-                    "(we can't access stdout/stderr from suites started "
-                    "at the command line).",
+            info_dialog( "The suite is not running; its output log may "
+                    "contain output from the last gcylc-initiated run.",
                     self.window ).inform()
 
         # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?
@@ -1717,8 +1721,8 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         # control guis are open at once both trying to write to it.
         prefix = os.path.join( '~' + self.db_owner, '.cylc', name )
 
-        # environment variables allowed
-        prefix = os.path.expandvars( prefix )
+        # environment variables and tilde allowed
+        prefix = os.path.expanduser( os.path.expandvars( prefix ))
 
         try:
             # open existing out and err files
