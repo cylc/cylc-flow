@@ -1,0 +1,36 @@
+title = "Reference Test based on Quick Start Example A"
+ 
+description = """Quick Start A is supposed to stall because no
+cold-start task has been included for the Model task. Here, to keep the
+suite otherwise true to the example in the User Guide, we get the second
+GetData task to trigger the first Model."""
+
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.2 # minutes
+
+[scheduling]
+    initial cycle time = 2011010106
+    final cycle time = 2011010200
+    runahead limit = 12
+    [[special tasks]]
+        start-up        = Prep
+        clock-triggered = GetData(1)
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph  = """Prep => GetData => Model => PostA
+                        Model[T-6] => Model"""
+        [[[6,18]]]
+            graph = "Model => PostB"
+
+[runtime]
+    [[root]]
+        command scripting = "echo Hello" # override the default sleep 10
+    [[GetData]]
+        command scripting = """
+if [[ $CYLC_TASK_CYCLE_TIME == 2011010112 ]]; then
+    cylc message "TRIGGERING FIRST MODEL NOW!"
+    cylc trigger -f $CYLC_SUITE_REG_NAME Model%2011010106
+fi"""
+
