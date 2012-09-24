@@ -200,7 +200,7 @@ Class to create an information bar.
         if runahead == self._runahead:
             return False
         self._runahead = runahead
-        text = "runahead:" + str(runahead) + "  "
+        text = "runahead:" + str(runahead) + "h  "
         if runahead is None:
             text = ""
         gobject.idle_add( self.runahead_widget.set_text, text )
@@ -307,9 +307,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.log_colors = rotator()
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        title = self.cfg.suite + " - gcontrol"
+        title = self.cfg.suite
         if self.cfg.host != socket.getfqdn():
             title += " - " + self.cfg.host
+        title += " - gcontrol"
         self.window.set_title( title )
         self.window.set_icon(get_icon())
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
