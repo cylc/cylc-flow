@@ -22,6 +22,7 @@ import gtk
 import gobject
 import pango
 import os, re, sys
+import socket
 import subprocess
 import helpwindow
 from cylc.hostname import is_remote_host
@@ -103,9 +104,11 @@ class InfoBar(gtk.VBox):
 Class to create an information bar.
     """
 
-    def __init__( self, suite, imagedir, 
+    def __init__( self, host, imagedir, 
                   status_changed_hook=lambda s: False ):
         super(InfoBar, self).__init__()
+
+        self.host = host
 
         self.dots = DotGetter( imagedir )
         self._suite_states = ["empty"]
@@ -120,6 +123,10 @@ Class to create an information bar.
         self._mode = "mode..."
         self.mode_widget = gtk.Label()
         self._set_tooltip( self.mode_widget, "mode" )
+
+        self._runahead = ""
+        self.runahead_widget = gtk.Label()
+        self._set_tooltip( self.runahead_widget, "runahead limit" )
 
         self._time = "time..."
         self.time_widget = gtk.Label()
@@ -152,6 +159,10 @@ Class to create an information bar.
         hbox.pack_start( eb, False )
 
         eb = gtk.EventBox()
+        eb.add( self.runahead_widget )
+        hbox.pack_start( eb, False )
+
+        eb = gtk.EventBox()
         eb.add( self.time_widget )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) ) 
         hbox.pack_start( eb, False )
@@ -181,13 +192,27 @@ Class to create an information bar.
         if mode == self._mode:
             return False
         self._mode = mode
-        self.mode_widget.set_markup( "  " + self._mode )
+        gobject.idle_add( self.mode_widget.set_markup,
+                          "  " + self._mode + "  " )
+
+    def set_runahead(self, runahead):
+        """Set runahead limit."""
+        if runahead == self._runahead:
+            return False
+        self._runahead = runahead
+        text = "runahead:" + str(runahead) + "h  "
+        if runahead is None:
+            text = ""
+        gobject.idle_add( self.runahead_widget.set_text, text )
 
     def set_state(self, suite_states):
         """Set state text."""
         if suite_states == self._suite_states:
             return False
         self._suite_states = suite_states
+        gobject.idle_add( self._set_state_widget )
+
+    def _set_state_widget(self):
         state_info = {}
         for state in self._suite_states:
             state_info.setdefault(state, 0)
@@ -208,8 +233,8 @@ Class to create an information bar.
         if status == self._status:
             return False
         self._status = status
-        self.status_widget.set_text( " " + self._status )
-        self.notify_status_changed( self._status )
+        gobject.idle_add( self.status_widget.set_text, " " + self._status )
+        gobject.idle_add( self.notify_status_changed, self._status )
 
     def set_stop_summary(self, summary_maps):
         """Set various summary info."""
@@ -238,7 +263,7 @@ Class to create an information bar.
         if time == self._time:
             return False
         self._time = time
-        self.time_widget.set_text( " " + self._time + " " )
+        gobject.idle_add( self.time_widget.set_text, self._time.strip() + " " )
 
     def _set_tooltip(self, widget, text):
         tooltip = gtk.Tooltips()
@@ -282,7 +307,11 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.log_colors = rotator()
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_title( self.cfg.suite + " - gcontrol" )
+        title = self.cfg.suite
+        if self.cfg.host != socket.getfqdn():
+            title += " - " + self.cfg.host
+        title += " - gcontrol"
+        self.window.set_title( title )
         self.window.set_icon(get_icon())
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(800, 500)
@@ -2478,7 +2507,7 @@ For more Stop options use the Control menu.""" )
         self.run_pause_toolbutton.click_func = click_func
 
     def create_info_bar( self ):
-        self.info_bar = InfoBar( self.cfg.suite, self.cfg.imagedir,
+        self.info_bar = InfoBar( self.cfg.host, self.cfg.imagedir,
                                  self._alter_status_toolbar_menu )
 
     #def check_connection( self ):
