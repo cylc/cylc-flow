@@ -572,6 +572,16 @@ The Cylc Suite Engine.
         dialog.destroy()
         dir = os.path.dirname( suiterc )
 
+        # handle home directories under gpfs filesets, e.g.: if my home
+        # directory is /home/oliver:
+        home = os.environ['HOME']
+        # but is really located on a gpfs fileset such as this:
+        # /gpfs/filesets/hpcf/home/oliver; the pygtk file chooser will
+        # return the "real" path that really should be hidden:
+        home_real = os.path.realpath(home)
+        # so let's restore it to the familiar form (/home/oliver):
+        dir = re.sub( '^' + home_real, home, dir )
+
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "New Registration" )
