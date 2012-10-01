@@ -931,7 +931,7 @@ The Cylc Suite Engine.
 
         return False
 
-    def get_right_click_menu( self, task_id, hide_task=False ):
+    def get_right_click_menu( self, task_id, hide_task=False, task_is_family=False ):
         """Return the default menu for a task."""
         menu = gtk.Menu()
         if not hide_task:
@@ -941,9 +941,8 @@ The Cylc Suite Engine.
             title_item = gtk.MenuItem( 'Task: ' + task_id.replace( "_", "__" ) )
             title_item.set_sensitive(False)
             menu.append( title_item )
-            menu.append( gtk.SeparatorMenuItem() )
 
-        menu_items = self._get_right_click_menu_items( task_id )
+        menu_items = self._get_right_click_menu_items( task_id, task_is_family )
         for item in menu_items:
             menu.append( item )
 
@@ -951,7 +950,7 @@ The Cylc Suite Engine.
         return menu
 
 
-    def _get_right_click_menu_items( self, task_id ):
+    def _get_right_click_menu_items( self, task_id, task_is_family=False ):
         # Return the default menu items for a task
         name, ctime = task_id.split('%')
 
@@ -963,6 +962,12 @@ The Cylc Suite Engine.
         ## cug_pdf_item.set_label( '_PDF User Guide' )
         ## help_menu.append( cug_pdf_item )
         ## cug_pdf_item.connect( 'activate', self.browse, '--pdf' )
+
+        if task_is_family:
+            # At the moment, there are no relevant menu items.
+            return []
+
+        items.append( gtk.SeparatorMenuItem() )
 
         info_item = gtk.ImageMenuItem( 'View State' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
