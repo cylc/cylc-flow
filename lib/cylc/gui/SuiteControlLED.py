@@ -87,7 +87,9 @@ LED suite control interface.
 
         task_id = name + '%' + ctime
 
-        menu = self.get_right_click_menu( task_id )
+        is_fam = (name in self.t.families)
+
+        menu = self.get_right_click_menu( task_id, task_is_family=is_fam )
 
         sep = gtk.SeparatorMenuItem()
         sep.show()

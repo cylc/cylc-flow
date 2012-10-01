@@ -247,9 +247,13 @@ Text Treeview suite control interface.
 
         task_id = name + '%' + ctime
 
-        menu = self.get_right_click_menu( task_id )
+        is_fam = (name in self.t.families)
 
-        menu.append( gtk.SeparatorMenuItem() )
+        menu = self.get_right_click_menu( task_id, task_is_family=is_fam )
+
+        sep = gtk.SeparatorMenuItem()
+        sep.show()
+        menu.append( sep )
 
         group_item = gtk.CheckMenuItem( 'Toggle Family Grouping' )
         group_item.set_active( self.t.should_group_families )
