@@ -1005,25 +1005,25 @@ The Cylc Suite Engine.
         
         reset_ready_item = gtk.MenuItem('Reset to "ready"' )
         reset_menu.append( reset_ready_item )
-        reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
+        reset_ready_item.connect( 'button-press-event', self.reset_task_state, task_id, 'ready' )
 
         reset_waiting_item = gtk.MenuItem( 'Reset to "waiting"' )
         reset_menu.append( reset_waiting_item )
-        reset_waiting_item.connect( 'activate', self.reset_task_state, task_id, 'waiting' )
+        reset_waiting_item.connect( 'button-press-event', self.reset_task_state, task_id, 'waiting' )
 
         reset_succeeded_item = gtk.MenuItem( 'Reset to "succeeded"' )
         reset_menu.append( reset_succeeded_item )
-        reset_succeeded_item.connect( 'activate', self.reset_task_state, task_id, 'succeeded' )
+        reset_succeeded_item.connect( 'button-press-event', self.reset_task_state, task_id, 'succeeded' )
 
         reset_failed_item = gtk.MenuItem( 'Reset to "failed"' )
         reset_menu.append( reset_failed_item )
-        reset_failed_item.connect( 'activate', self.reset_task_state, task_id, 'failed' )
+        reset_failed_item.connect( 'button-press-event', self.reset_task_state, task_id, 'failed' )
 
         spawn_item = gtk.ImageMenuItem( 'Force spawn' )
         img = gtk.image_new_from_stock(  gtk.STOCK_ADD, gtk.ICON_SIZE_MENU )
         spawn_item.set_image(img)
         items.append( spawn_item )
-        spawn_item.connect( 'activate', self.reset_task_state, task_id, 'spawn' )
+        spawn_item.connect( 'button-press-event', self.reset_task_state, task_id, 'spawn' )
 
         items.append( gtk.SeparatorMenuItem() )
 
@@ -1399,7 +1399,9 @@ shown here in the state they were in at the time of triggering.''' )
         #else:
         #    info_dialog( result.reason, self.window ).inform()
 
-    def reset_task_state( self, b, task_id, state ):
+    def reset_task_state( self, b, e, task_id, state ):
+        if hasattr(e, "button") and e.button != 1:
+            return False
         msg = "reset " + task_id + " to " + state +"?"
         prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL,
                                     gtk.MESSAGE_QUESTION,
