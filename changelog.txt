@@ -999,3 +999,4 @@ or 'False')
 
 + Restore job submit failure hook activation, broken in 4.5.1.
 
++ Runahead limit is now displayed in the gcontrol status bar.
