@@ -114,6 +114,7 @@ class tupdater(threading.Thread):
         self.global_summary = {}
         self.fam_state_summary = {}
         self.stop_summary = None
+        self.families = []
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
@@ -154,6 +155,7 @@ class tupdater(threading.Thread):
             self.stop_summary = None
             self.status = "connected"
             self.info_bar.set_status( self.status )
+            self.families = self.remote.get_families()
             self.family_hierarchy = self.remote.get_family_hierarchy()
             self.allowed_families = self.remote.get_vis_families()
             return True
@@ -502,6 +504,7 @@ class lupdater(threading.Thread):
         self.state_summary = {}
         self.global_summary = {}
         self.stop_summary = None
+        self.families = []
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
