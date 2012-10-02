@@ -26,6 +26,7 @@ from cylc.cycle_time import ct
 from cylc.cylc_xdot import xdot_widgets
 from gcapture import gcapture_tmpfile
 
+
 class ControlGraph(object):
     """
 Dependency graph suite control interface.
@@ -163,7 +164,7 @@ Dependency graph suite control interface.
         ungroup_rec_item.set_sensitive( not self.x.ungroup_recursive )
         ungroup_rec_item.connect( 'activate', self.grouping, name, False, True )
 
-        title_item = gtk.MenuItem( 'Task: ' + task_id )
+        title_item = gtk.MenuItem( 'Task: ' + task_id.replace("_", "__") )
         title_item.set_sensitive(False)
         menu.append( title_item )
 
@@ -181,7 +182,9 @@ Dependency graph suite control interface.
         if type == 'live task':
             menu.append( gtk.SeparatorMenuItem() )
             
-            default_menu = self.get_right_click_menu( task_id, hide_task=True )
+            is_fam = (name in self.x.families)
+            default_menu = self.get_right_click_menu( task_id, hide_task=True,
+                                                      task_is_family=is_fam )
             for item in default_menu.get_children():
                 default_menu.remove( item )
                 menu.append( item )

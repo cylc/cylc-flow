@@ -78,6 +78,7 @@ class xupdater(threading.Thread):
         self.filter_include = None
         self.filter_exclude = None
         self.state_filter = None
+        self.families = []
 
         self.cfg = cfg
         self.info_bar = info_bar
