@@ -507,8 +507,8 @@ Dependency graph suite control interface.
         window.show_all()
 
     def focused_timezoom_direct( self, w, ctime ):
-        self.x.start_ctime = ctime
-        self.x.stop_ctime = ctime
+        self.x.focus_start_ctime = ctime
+        self.x.focus_stop_ctime = ctime
         self.x.action_required = True
         self.x.best_fit = True
 
@@ -569,8 +569,8 @@ Dependency graph suite control interface.
         window.show_all()
 
     def graph_timezoom(self, w, start_e, stop_e):
-        self.x.start_ctime = start_e.get_text()
-        self.x.stop_ctime = stop_e.get_text()
+        self.x.focus_start_ctime = start_e.get_text()
+        self.x.focus_stop_ctime = stop_e.get_text()
         self.x.best_fit = True
         self.x.action_required = True
 
@@ -579,10 +579,10 @@ Dependency graph suite control interface.
         post_hours = stop_e.get_text()
         foo = ct(focus_ctime)
         foo.decrement( hours=pre_hours )
-        self.x.start_ctime = foo.get()
+        self.x.focus_start_ctime = foo.get()
         bar = ct(focus_ctime)
         bar.increment( hours=post_hours )
-        self.x.stop_ctime = bar.get()
+        self.x.focus_stop_ctime = bar.get()
         self.x.best_fit = True
         self.x.action_required = True
 
