@@ -1006,3 +1006,6 @@ plotted off to the side as rectangular nodes (no longer necessary as we
 now have family state coloring and member state info in hover-over
 tool-tips).
 
++ Restore gcontrol graph-view "cycle time focus" functionality;
+accidentally broken between 4.2.2 and 4.5.1.
+
