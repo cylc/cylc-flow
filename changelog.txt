@@ -1000,3 +1000,9 @@ or 'False')
 + Restore job submit failure hook activation, broken in 4.5.1.
 
 + Runahead limit is now displayed in the gcontrol status bar.
+
++ gcontrol graph-view: members of collapsed families are no longer
+plotted off to the side as rectangular nodes (no longer necessary as we
+now have family state coloring and member state info in hover-over
+tool-tips).
+

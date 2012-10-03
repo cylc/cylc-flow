@@ -71,6 +71,7 @@ Dependency graph suite control interface.
     def on_url_clicked( self, widget, url, event ):
         if event.button != 3:
             return False
+
         if url == 'KEY':
             # graph key node
             return
