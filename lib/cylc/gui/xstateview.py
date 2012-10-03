@@ -65,7 +65,8 @@ class xupdater(threading.Thread):
         super(xupdater, self).__init__()
 
         self.quit = False
-        self.stop_ctime = None
+        self.focus_start_ctime = None
+        self.focus_stop_ctime = None
         self.xdot = xdot
         self.first_update = True
         self.graph_disconnect = False
@@ -392,8 +393,12 @@ class xupdater(threading.Thread):
         self.oldest_ctime = self.global_summary['oldest cycle time']
         self.newest_ctime = self.global_summary['newest cycle time']
 
-        oldest = self.oldest_ctime
-        newest = self.newest_ctime
+        if self.focus_start_ctime:
+            oldest = self.focus_start_ctime
+            newest = self.focus_stop_ctime
+        else:
+            oldest = self.oldest_ctime
+            newest = self.newest_ctime
 
         start_time = self.global_summary['start time']
 
