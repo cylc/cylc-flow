@@ -488,18 +488,46 @@ class xupdater(threading.Thread):
         # remove_nodes_from( nbunch ) - nbunch is any iterable container.
         self.graphw.remove_nodes_from( self.rem_nodes )
 
+        #print '____'
+        #print self.families
+        #print
+        #print self.family_nodes
+        #print 
+        #print self.graphed_family_nodes
+        #print '____'
+
         for id in self.state_summary:
+
             try:
                 node = self.graphw.get_node( id )
             except KeyError:
-                # this task is not present in the live graph
-                # TO DO: FAMILY MEMBERS NEED TO SELF-IDENTIFY IN STATE DUMP
-                #if hasattr( task, 'member_of' ):
-                    # OK: member of a family
-                    #continue
-                #else:
-                if id not in self.graph_warned or \
-                        not self.graph_warned[id]:
+                # This live task proxy is not represented in the graph.
+                # But it is live so if its state is deemed interesting
+                # plot it off to the right of the main graph.
+
+                # Tasks in this category include: members of collapsed
+                # families; tasks outside of the current focus range (if
+                # one is set), inserted tasks that are defined under
+                # [runtime] but not used in the suite graph.
+
+                # Now that we have family state coloring with family
+                # member states listed in tool-tips, don't draw
+                # off-graph family members:
+                name, tag = id.split('%')
+                omit = False
+                for fam in self.graphed_family_nodes:
+                    # for each family node that is being graphed (i.e.
+                    # collapsed families)
+                    if name in self.families[fam]:
+                        # if task name is a member of this family omit it
+                        omit = True
+                        break
+
+                if omit:
+                    #print 'Not graphing family-collapsed node', id
+                    continue
+
+                if id not in self.graph_warned or not self.graph_warned[id]:
                     print >> sys.stderr, 'WARNING: ' + id + ' is outside of the main graph.'
                     self.graph_warned[id] = True
 
@@ -533,7 +561,9 @@ class xupdater(threading.Thread):
         for state in extra_node_ids:
             for id in extra_node_ids[state]:
                 self.graphw.cylc_add_node( id, True )
-                self.set_live_node_attr( self.graphw.get_node(id), id, shape='box')
+                node = self.graphw.get_node(id)
+                self.set_live_node_attr( node, id, shape='box')
+
             # add invisible edges to force vertical alignment
             for i in range( 0, len(extra_node_ids[state])):
                if i == len(extra_node_ids[state]) -1:
