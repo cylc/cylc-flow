@@ -1010,7 +1010,7 @@ tool-tips).
 accidentally broken between 4.2.2 and 4.5.1.
 
 + New more powerful and flexible family trigger expressions. All 
-family names on the right hand side of a trigger arrow must now 
+family names on the left side of a trigger arrow must now 
 be of the form "fam:TRIG-all" or "fam:TRIG-any" where TRIG is 
 start, succeed, fail, or finish.  To get the old-style "family 
 finished" trigger (all members finished and at least one succeeded):
