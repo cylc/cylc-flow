@@ -2675,80 +2675,74 @@ foo | bar => !baz
 
 \paragraph{Family Triggers}
 
-Family names defined by the namespace inheritance hierarchy
-(Section~\ref{NIORP}) can be used in the suite graph as shorthand
-for dependencies among the member tasks (higher level families, i.e.
-families of families, can also be used and will be reduced to individual
-member tasks). Current semantics are:
-\begin{myitemize}
-    \item {\em family started} means {\em one or more members started} 
-    \item {\em family succeeded} means {\em all members succeeded}
-    \item {\em family failed} means {\em all members finished but one or
-        more of them failed}
-\end{myitemize}
-For example, this:
+Families defined by the namespace inheritance hierarchy
+(Section~\ref{NIORP}) can be used in the graph trigger whole groups of
+tasks at the same time (e.g.\ forecast model ensembles and groups of
+tasks for processing different observation types at the same time) and 
+for triggering downstream tasks off families as a whole. Higher level
+families, i.e.  families of families, can also be used, and are reduced
+to the lowest level member tasks. Note that tasks can also trigger off
+individual family members if necessary. 
+
+To trigger an entire task family at once:
 \begin{lstlisting}
 # SUITE.RC
 [scheduling]
     [[dependencies]]
-        graph = "foo => fam => bar"
+        graph = "foo => fam"
 [runtime]
-    [[fam]]  # a family (because others inherit from it)
-    [[a,b]]  # family members (inherit namespace fam)
+    [[fam]]    # a family (because others inherit from it)
+    [[m1,m2]]  # family members (inherit from namespace fam)
         inherit = fam
 \end{lstlisting}
-is equivalent to this:
+This is equivalent to:
 \begin{lstlisting}
 # SUITE.RC
 [scheduling]
     [[dependencies]]
-        graph = "foo => a & b => bar"
+        graph = "foo => m1 & m2"
 [runtime]
     [[fam]]
-    [[a,b]]
-        inherit = fam
-\end{lstlisting}
-And this:
-\begin{lstlisting}
-# SUITE.RC
-[scheduling]
-    [[dependencies]]
-        graph = "fam:fail => bar"
-[runtime]
-    [[fam]]
-    [[a,b]]
-        inherit = fam
-\end{lstlisting}
-is equivalent to this:
-\begin{lstlisting}
-# SUITE.RC
-[scheduling]
-    [[dependencies]]
-        graph = "( a:fail|b:fail ) & ( a|a:fail ) & ( b|b:fail ) => bar"
-[runtime]
-    [[fam]]
-    [[a,b]]
+    [[m1,m2]]
         inherit = fam
 \end{lstlisting}
 
-If current family trigger semantics (i.e.\ what a family trigger means
-in terms of member behaviour) does not fit your requirements you will
-have to use task members explicitly in the graph. In the future cylc may
-support alternate family trigger semantics; for instance {\em family
-succeeded} could mean {\em at least one member succeeded} and {\em
-family failed} could mean {\em all members failed}.
+To trigger other tasks off families we have to specify whether 
+to triggering off {\em all members} starting, succeeding, failing, 
+or finishing, or off {\em any} members (doing the same). Legal family
+triggers are thus:
 
-Task family triggers should be used sparingly as a convenient
-simplification for groups of tasks that would naturally trigger at the
-same time anyway (e.g.\ forecast ensembles and multiple tasks for
-processing different observations at the same time) and whose outputs
-would all be put to use at a similar time too. Otherwise family triggers
-will unnecessarily constrain cylc's ability to achieve maximum
-functional parallelism because all family members have to finish before
-downstream processing can continue.\footnote{Actually downstream tasks
-can also trigger off individual family members, rather than off the
-family as a whole, but extensive use of this would probably defeat the
-purpose of using a family in the first place.}
+\begin{lstlisting}
+# SUITE.RC
+[scheduling]
+    [[dependencies]]
+        graph = """
+      # all-member triggers:
+    fam:start-all => one
+    fam:succeed-all => one
+    fam:fail-all => one
+    fam:finish-all => one
+      # any-member triggers:
+    fam:start-any => one
+    fam:succeed-any => one
+    fam:fail-any => one
+    fam:finish-any => one
+                """
+\end{lstlisting}
+
+Here's how to trigger downstream processing after if one or more family
+members succeed, but only after all members have finished (succeeded or
+failed):
+
+\begin{lstlisting}
+# SUITE.RC
+[scheduling]
+    [[dependencies]]
+        graph = """
+    fam:finished-all & fam:succeeded-any => foo
+                """
+\end{lstlisting}
+
 
 \subsubsection{Handling Intercycle Dependence At Start-Up}
 \label{HandlingIntercycleDependenceAtStartUp}

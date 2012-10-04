@@ -12,7 +12,7 @@ To see the effect, examine task job scripts generated with the
         [[[0]]]
             graph = """
                 foo => OPS
-                OPS:finish => VAR => baz
+                OPS:finish-all & OPS:succeed-any => VAR => baz
                 atovs => atovs_post
                 """
 [runtime]

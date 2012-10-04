@@ -1,0 +1,38 @@
+title = "family triggering test"
+
+description = "for manual testing of family triggers"
+
+[scheduling]
+    initial cycle time = 2012080800
+    final cycle time = 2012080900
+    [[special tasks]]
+        cold-start = cold
+    [[dependencies]]
+            graph = """
+        foo => ens
+        ens:start-any => start_any
+        ens:start-all => start_all
+        ens:succeed-any => succeed_any
+        ens:succeed-all => succeed_all
+        ens:fail-any => fail_any
+        ens:fail-all => fail_all
+        ens:finish-any => finish_any
+        ens:finish-all => finish_all
+        ens:finish-all & ens:succeed-any => all_fin_some_succ 
+                    """
+            [[[0]]]
+                graph = "cold | ens[T-24] => ens"
+[runtime]
+    [[ens]]
+    [[m1]]
+        inherit = ens
+        command scripting = "sleep 10; true"
+    [[m2]]
+        inherit = ens
+        initial scripting = "sleep 5"
+        command scripting = "sleep 15; false"
+    [[m3]]
+        inherit = ens
+        initial scripting = "sleep 10"
+        command scripting = "sleep 20; true"
+

@@ -886,6 +886,35 @@ class config( CylcConfigObj ):
                 names.append(tn)
         return names
 
+    def replace_family_triggers( self, line_in, fam, members, orig ):
+        # Replace family trigger expressions with member trigger expressions.
+        # The replacements below handle optional [T-n] cycle offsets.
+
+        orig = ':' + orig
+        line = line_in
+        if orig.endswith( '-all' ):
+            connector = ' & ' 
+            paren_open = ''
+            paren_close = ''
+        elif orig.endswith( '-any' ):
+            connector = ' | ' 
+            paren_open = '( '
+            paren_close = ' )'
+        else:
+            print >> sys.stderr, line
+            raise SuiteConfigError, 'ERROR, illegal family trigger type: ' + orig
+        repl = orig[:-4]
+
+        m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}" + orig, line )
+        m.sort() # put empty offset '' first ...
+        m.reverse() # ... then last
+        for foffset in m:
+            if fam not in self.families_used_in_graph:
+                self.families_used_in_graph.append(fam)
+            mems = paren_open + connector.join( [ i + foffset + repl for i in members ] ) + paren_close
+            line = re.sub( r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
+        return line
+
     def process_graph_line( self, line, section ):
         # Extract dependent pairs from the suite.rc textual dependency
         # graph to use in constructing graphviz graphs.
@@ -942,63 +971,54 @@ class config( CylcConfigObj ):
         # Replace "foo:finish(ed)" or "foo:complete(ed)" with "( foo | foo:fail )"
         # line = re.sub(  r'\b(\w+(\[.*?]){0,1}):(complete(d){0,1}|finish(ed){0,1})\b', r'( \1 | \1:fail )', line )
 
-        # Replace "foo:finish" with "( foo | foo:fail )"
-        line = re.sub(  r'\b(\w+(\[.*?]){0,1}):finish\b', r'( \1 | \1:fail )', line )
-
         # REPLACE FAMILY NAMES WITH MEMBER DEPENDENCIES
         for fam in self.members:
             members = deepcopy(self.members[fam])
             for member in members:
-                # remove family names from the member list (leave just tasks)
+                # remove family names from the member list, leave just tasks
+                # (allows using higher-level family names in the graph)
                 if member in self.members:
                     members.remove(member)
-            
             # Note, in the regular expressions below, the word boundary
             # marker before the time offset pattern is required to close
             # the match in the no-offset case (offset and no-offset
             # cases are being matched by the same regular expression).
 
-            # The replacements below all handle optional [T-n] cycle offsets.
+            # raw strings (r'\bfoo\b') are needed to protect special
+            # backslashed re markers like \b from being interpreted as
+            # normal escapeded characters.
 
-            # 1/ Replace "fam:fail" with "(one or more members failed)
-            # AND (all members either succeeded or failed)", i.e.:
-            # ( a:fail | b:fail ) & ( a | a:fail ) & ( b|b:fail ).
-            m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}:fail", line )
-            m.sort() # put empty offset '' first ...
-            m.reverse() # ... then last
-            for foffset in m:
-                if fam not in self.families_used_in_graph:
-                    self.families_used_in_graph.append(fam)
-                mem0 = members[0]
-                cond1 = mem0 + foffset + ':fail'
-                cond2 = '( ' + mem0 + foffset + ' | ' + mem0 + foffset + ':fail )' 
-                for mem in members[1:]:
-                    cond1 += ' | ' + mem + foffset + ':fail'
-                    cond2 += ' & ( ' + mem + foffset + ' | ' + mem + foffset + ':fail )'
-                cond = '( ' + cond1 + ') & ' + cond2 
-                line = re.sub( r"\b" + fam + r"\b" + re.escape(foffset) + r":fail\b", cond, line )
+            # Replace:
+            #   "fam" with "fam:succeed-all"
+            #   "fam[T-n]" with "fam[T-n]:succeed-all"
+            # (plain fam is needed for lhs of triggers: foo => fam)
+            # I can't get this single expression working ...
+            #line = re.sub(  r'\b(' + fam + r'(\[.*?]){0,1})\b(?!:)', r'\1:succeed-all', line )
+            # ... so do it in two steps:
+            ##print '\n>>>', fam, '::', line
+            line = re.sub(  r'\b(' + fam + '(\[.*?\]))(?!:)', r'\1:succeed-all', line )
+            line = re.sub(  r'\b' + fam + r'\b(?![\[:])', fam + ':succeed-all', line )
+            ##print '>>>', line
+            # Replace family triggers with member triggers
+            for trig_type in [ 'start', 'succeed', 'fail', 'finish' ]:
+                line = self.replace_family_triggers( line, fam, members, trig_type + '-all' )
+                line = self.replace_family_triggers( line, fam, members, trig_type + '-any' )
 
-            # 2/ Replace "fam:start" with "mem1:start | mem2:start" etc.
-            # i.e. one or more members started.
-            m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}:start", line )
-            m.sort() # put empty offset '' first ...
-            m.reverse() # ... then last
-            for foffset in m:
-                if fam not in self.families_used_in_graph:
-                    self.families_used_in_graph.append(fam)
-                mems = ' | '.join( [ i + foffset + ':start' for i in members ] )
-                line = re.sub( r"\b" + fam + r"\b" + re.escape( foffset) + ':start', mems, line )
+            if re.search( r"\b" + fam + r"\b:", line ):
+                print >> sys.stderr, line
+                raise SuiteConfigError, 'ERROR, illegal family trigger detected'
 
-            # 3/ Replace "fam" with "mem1 & mem2" etc.
-            # i.e. all members succeeded (or all members trigger off)
-            m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}", line )
-            m.sort() # put empty offset '' first ...
-            m.reverse() # ... then last
-            for foffset in m:
-                if fam not in self.families_used_in_graph:
-                    self.families_used_in_graph.append(fam)
-                mems = ' & '.join( [ i + foffset for i in members ] )
-                line = re.sub( r"\b" + fam + r"\b" + re.escape( foffset), mems, line )
+            if re.search( r"\b" + fam + r"\b[^:]", line ) or re.search( r"\b" + fam + "\s*$", line ):
+                print >> sys.stderr, line
+                raise SuiteConfigError, 'ERROR, family triggers must be qualified with \':type\': ' + fam
+
+        # Replace "foo:finish" with "( foo:succeed | foo:fail )"
+        line = re.sub(  r'\b(\w+(\[.*?]){0,1}):finish\b', r'( \1:succeed | \1:fail )', line )
+
+        if self.verbose and line != orig_line:
+            print 'Graph line substitutions occurred:'
+            print '  IN:', orig_line
+            print '  OUT:', line
 
         # Split line on dependency arrows.
         tasks = re.split( '\s*=>\s*', line )
