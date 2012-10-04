@@ -404,7 +404,7 @@ class config( CylcConfigObj ):
                     print "Runahead limit defaulting to:", crl, "hours"
             else:
                 if self.verbose:
-                    print "No runahead limit (no cycling tassks)"
+                    print "No runahead limit (no cycling tasks)"
             self['scheduling']['runahead limit'] = crl
 
         self.family_tree = {}
@@ -895,19 +895,18 @@ class config( CylcConfigObj ):
         # 'A => C & D'     : [A => C], [A => D]
         # 'A & B => C & D' : [A => C], [A => D], [B => C], [B => D]
 
-        # '&' Groups aren't really "conditional expressions"; they're
+        # '&' groups aren't really "conditional expressions"; they're
         # equivalent to adding another line:
         #  'A & B => C'
         # is the same as:
         #  'A => C' and 'B => C'
 
-        #  An 'or' on the right side is an error:
-        #  'A = > B | C'     <--- NOT ALLOWED!
+        #  An 'or' on the right side is an ERROR:
+        #  'A = > B | C' # ?!
 
         orig_line = line
 
-        # [list of valid hours], or ["once"], or ["ASYNCID:pattern"]
-
+        # section: [list of valid hours], or ["once"], or ["ASYNCID:pattern"]
         if section == "once":
             ttype = 'async_oneoff'
             modname = 'async'
@@ -935,7 +934,7 @@ class config( CylcConfigObj ):
         cyclr = getattr( mod, modname )(*args)
         self.cyclers.append(cyclr)
 
-        ## SYNONYMS FOR TRIGGER-TYPES, e.g. 'fail' = 'failure' = 'failed'
+        ## SYNONYMS FOR TRIGGER-TYPES, e.g. 'fail' = 'failure' = 'failed' (NOT USED)
         ## we can replace synonyms here with the standard type designator:
         # line = re.sub( r':succe(ss|ed|eded){0,1}\b', '', line )
         # line = re.sub( r':fail(ed|ure){0,1}\b', ':fail', line )
