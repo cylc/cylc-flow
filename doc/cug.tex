@@ -4556,7 +4556,7 @@ with running suites (cylc servers):
         occurs on the suite host.
 \end{myenumerate}
 For the Pyro connection method to work the right network ports must be
-open (cylc starts grabbing ports at port 7766 by default.\footnote{The
+open (cylc starts grabbing ports at number 7766 by default.\footnote{The
 Pyro port range is configured in
 \lstinline=$CYLC_DIR/conf/CylcGlobals.py=.}) and there must be network
 routing between the involved hosts.
@@ -4634,6 +4634,27 @@ would then presumably be impossible, but:
     \item It has been suggested that some kind of network {\em port
         forwarding} could provide a possible solution ...
 \end{myitemize}
+
+
+
+\subsection{Determining The Suite Network Port}
+
+All Pyro communication with a running suite requires knowing the network
+port on which the suite is listening. Running tasks know their own
+suite's port number because the suite puts it in the task execution
+environment, but user commands must determine the port number somehow.
+Through to the 4.5.1 release, inclusive, cylc used port scanning to find
+the target port, but this could potentially cause delays on hosts
+with a large number of suites running at once. Consequently suites now
+write their own port number to \lstinline=$HOME/.cylc/<SUITE>/port= at
+start-up, and commands issued on the suite host read this file to get
+the port number. Commands issued on a remote host use passwordless ssh 
+to the suite owner account to retrieve the port number. Alternatively,
+if passwordless ssh is not configured to the suite host the port number
+can be given on the command line with the \lstinline=--port= option. 
+If you accidentally delete a suite's port file while the suite is still
+running, use \lstinline=cylc scan= to determine the port number to 
+use on the command line.
 
 
 \subsection{Job Submission, Ensemble Suites, And Network Timeouts}

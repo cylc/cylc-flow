@@ -196,13 +196,13 @@ class compat_pyro( compat ):
 
     """Determine version compatibility given a running suite name"""
 
-    def __init__( self, suite, owner, host, pphrase, pyro_timeout, verbose, debug ):
+    def __init__( self, suite, owner, host, port, pphrase, pyro_timeout, verbose, debug ):
         from cylc_pyro_client import client
 
         compat.__init__( self, suite, None, verbose, debug )
 
         try:
-            proxy = client( self.suite, pphrase, owner, host, pyro_timeout ).get_proxy( 'remote' )
+            proxy = client( self.suite, pphrase, owner, host, pyro_timeout, port ).get_proxy( 'remote' )
             self.required_version = proxy.get_cylc_version()
         except ConnectionDeniedError,x:
             raise SystemExit( 'ERROR, Connection Denied: ' + str(x) )

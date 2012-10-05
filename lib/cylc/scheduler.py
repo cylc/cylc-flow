@@ -38,6 +38,7 @@ from locking.suite_lock import suite_lock
 from suite_id import identifier
 from config import config, SuiteConfigError, TaskNotDefinedError
 from global_config import globalcfg
+from port_file import port_file, PortFileExistsError, PortFileError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
 from version import cylc_version
@@ -297,7 +298,6 @@ class scheduler(object):
                 action="store_true", default=False, dest="gcylc" )
 
         self.parse_commandline()
-        self.check_not_running_already()
 
         # global config
         self.globals = globalcfg()
@@ -507,20 +507,6 @@ class scheduler(object):
         else:
             self.gcylc = False
 
-    def check_not_running_already( self ):
-        try:
-            # get the suite passphrase
-            pphrase = passphrase( self.suite, self.owner, self.host, verbose=self.verbose ).get( None, self.suite_dir )
-        except Exception, x:
-            raise SchedulerError( "ERROR: failed to find passphrase for " + self.suite )
-        try:
-            port = port_scan.get_port( self.suite, self.owner, self.host, pphrase, pyro_timeout=self.options.pyro_timeout )
-        except port_scan.SuiteNotFoundError,x:
-            # The suite is not already running
-            pass
-        else:
-            raise SchedulerError( "ERROR: " + self.suite + " is already running")
-
     def configure_suite( self, reconfigure=False ):
         # LOAD SUITE CONFIG FILE
         self.config = config( self.suite, self.suiterc,
@@ -532,7 +518,7 @@ class scheduler(object):
 
         # DETERMINE SUITE LOGGING AND STATE DUMP DIRECTORIES
         self.logging_dir = self.config['cylc']['logging']['directory']
-        self.state_dump_dir = self.config['cylc']['state dumps']['directory']
+        self.state_dump_dir = self.config['cylc']['state dumps']['directory'] 
 
         self.banner[ 'LOG DIR' ] = self.logging_dir
         self.banner[ 'STATE DIR' ] = self.state_dump_dir
@@ -602,6 +588,11 @@ class scheduler(object):
             self.pyro.connect( suite_id, 'cylcid', qualified = False )
 
         self.banner[ 'PORT' ] = self.port
+        try:
+            self.port_file = port_file( self.suite, self.port, self.verbose )
+        except PortFileExistsError,x:
+            print >> sys.stderr, x
+            raise SchedulerError( 'ERROR: suite already running? (if not, delete the port file)' )
 
         # USE QUICK TASK ELIMINATION?
         self.use_quick = self.config['development']['use quick task elimination']
@@ -663,7 +654,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_PYRO_TIMEOUT' ] = str( self.config.pyro_timeout )
-        cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = self.config['cylc']['logging']['directory']
+        cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = self.logging_dir
         task.task.cylc_env = cylcenv
 
         # Put suite identity variables (for event handlers executed by
@@ -1019,6 +1010,11 @@ class scheduler(object):
 
         if self.pyro:
             self.pyro.shutdown()
+            try:
+                self.port_file.unlink()
+            except PortFileError, x:
+                # port file may have been deleted
+                print >> sys.stderr, x
 
         if self.config['visualization']['runtime graph']['enable']:
             self.runtime_graph.finalize()

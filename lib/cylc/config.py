@@ -683,9 +683,14 @@ class config( CylcConfigObj ):
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
         self['cylc']['logging']['directory'] = \
-                expandvars( self['cylc']['logging']['directory'], self.owner)
+                expandvars( self['cylc']['logging']['directory'], self.owner )
         self['cylc']['state dumps']['directory'] =  \
-                expandvars( self['cylc']['state dumps']['directory'], self.owner)
+                expandvars( self['cylc']['state dumps']['directory'], self.owner )
+
+        # suite config dir is not user-configurable as some processes
+        # need to know where it is without parsing the suite definition:
+        self.suite_config_dir = os.path.join( os.environ['HOME'], '.cylc', self.suite )
+
         self['visualization']['runtime graph']['directory'] = \
                 expandvars( self['visualization']['runtime graph']['directory'], self.owner)
 
@@ -863,7 +868,7 @@ class config( CylcConfigObj ):
  
     def create_directories( self, task=None ):
         # Create suite log, state, and local job log directories.
-        dirs = [ self['cylc']['logging']['directory'], self['cylc']['state dumps']['directory'] ]
+        dirs = [ self['cylc']['logging']['directory'], self['cylc']['state dumps']['directory'], self.suite_config_dir ]
         for d in dirs:
             try:
                 mkdir_p( d )

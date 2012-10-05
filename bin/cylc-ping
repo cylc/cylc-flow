@@ -24,7 +24,6 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.CylcOptionParsers import cop
-from cylc.port_scan import get_port
 from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.command_prep import prep_pyro
@@ -56,13 +55,15 @@ if options.print_ports:
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
+# cylc ping SUITE
 try:
-    port = get_port( suite, options.owner, options.host,
-            pphrase, options.pyro_timeout, not options.verbose )
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host, options.pyro_timeout, options.port,
+            options.verbose).get_proxy( 'remote' )
 except Exception, x:
     if options.debug:
         raise
-    raise SystemExit( x )
+    raise SystemExit(x)
 
 if len(args) == 1:
     sys.exit(0)
@@ -75,14 +76,6 @@ except TaskIDError,x:
     raise SystemExit(x)
 else:
     task_id = tid.getstr()
-
-try:
-    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, None, options.verbose ).get_proxy( 'remote' )
-except Exception, x:
-    if options.debug:
-        raise
-    raise SystemExit(x)
 
 result = proxy.ping_task( task_id )
 

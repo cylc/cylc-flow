@@ -34,7 +34,7 @@ except BaseException, x: # this catches SystemExit
     print >> sys.stderr, "WARNING: Pyro is not installed."
 else:
     PyroInstalled = True
-    from cylc.port_scan import scan, SuiteIdentificationError
+    from cylc.port_scan import scan
 
 from cylc.registration import localdb, RegistrationError
 from cylc.regpath import RegPath
@@ -1624,7 +1624,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
                 return False
             try:
                 ssproxy = cylc_pyro_client.client( name, pphrase, pyro_timeout=self.pyro_timeout ).get_proxy( 'state_summary' )
-            except SuiteIdentificationError, x:
+            except Exception, x:
                 warning_dialog( str(x), self.window ).warn()
                 return False
             [ glbl, states, fam_states ] = ssproxy.get_state_summary()
@@ -1750,7 +1750,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
                 return False
             try:
                 ssproxy = cylc_pyro_client.client( name, pphrase, pyro_timeout=self.pyro_timeout ).get_proxy( 'state_summary' )
-            except SuiteIdentificationError, x:
+            except Exception, x:
                 warning_dialog( str(x), self.window ).warn()
                 return False
             [ glbl, states, fam_states ] = ssproxy.get_state_summary()

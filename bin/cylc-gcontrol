@@ -292,7 +292,7 @@ if len(illegal) != 0:
     sys.exit( "ERROR, illegal view specs: " + ', '.join( illegal))
 
 try:
-    app = ControlApp( suite, pphrase, options.owner, options.host, None,
+    app = ControlApp( suite, pphrase, options.owner, options.host, options.port,
             cylc_tmpdir, views, options.pyro_timeout, usercfg.cfg,
             options.templatevars, options.templatevars_file )
 except Exception, x:

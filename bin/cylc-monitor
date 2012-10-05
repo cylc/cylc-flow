@@ -32,7 +32,6 @@ import os, re
 from time import sleep
 from cylc.cycle_time import ct, CycleTimeError
 from cylc import cylc_pyro_client
-from cylc.port_scan import SuiteIdentificationError
 from cylc.passphrase import SecurityError
 from cylc.CylcOptionParsers import cop
 from cylc.strftime import strftime
@@ -73,13 +72,13 @@ try:
         # connect to remote state summary object
         try: 
             proxy = cylc_pyro_client.client( suite, pphrase,
-                    options.owner, options.host,
-                    options.pyro_timeout, None, options.verbose ).get_proxy( 'state_summary' )
+                    options.owner, options.host, options.pyro_timeout,
+                    options.port, options.verbose ).get_proxy( 'state_summary' )
         except SecurityError, x:
             if options.debug:
                 raise
             raise SystemExit(x)
-        except SuiteIdentificationError, x:
+        except Exception, x:
             if not alerted:
                 print "\n\033[1;37;41mfailed to connect" + ctrl_end 
                 print >> sys.stderr, x

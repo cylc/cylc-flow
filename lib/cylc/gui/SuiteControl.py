@@ -36,7 +36,6 @@ from cylc.gui.graph import graph_suite_popup
 from cylc.gui.stateview import DotMaker
 from cylc.gui.util import get_icon, get_image_dir, get_logo
 from cylc import cylc_pyro_client
-from cylc.port_scan import SuiteIdentificationError
 from cylc.state_summary import extract_group_state
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
@@ -629,7 +628,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             result = god.hold()
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
             if not result.success:
@@ -642,7 +641,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             god = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = god.resume()
@@ -658,7 +657,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             result = god.shutdown()
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
             if not result.success:
@@ -748,7 +747,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 result = god.set_stop( stopclock_time, 'stop after clock time' )
             elif stoptask:
                 result = god.set_stop( stoptask_id, 'stop after task' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
             if not result.success:
@@ -877,7 +876,7 @@ been defined for this suite""").inform()
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             god.unblock()
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( 'ERROR: ' + str(x), self.window ).warn()
 
     def block_suite( self, bt ):
@@ -886,7 +885,7 @@ been defined for this suite""").inform()
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             god.block()
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( 'ERROR: ' + str(x), self.window ).warn()
 
     def about( self, bt ):
@@ -920,7 +919,7 @@ The Cylc Suite Engine.
             return False
         try:
             [ glbl, states, fam_states ] = self.get_pyro( 'state_summary').get_state_summary()
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( str(x), self.window ).warn()
             return
         view = True
@@ -1175,7 +1174,7 @@ The Cylc Suite Engine.
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.set_runahead( limit )
@@ -1258,7 +1257,7 @@ The Cylc Suite Engine.
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.add_prerequisite( task_id, msg )
@@ -1276,7 +1275,7 @@ The Cylc Suite Engine.
     def popup_requisites( self, w, task_id ):
         try:
             result = self.get_pyro( 'remote' ).get_task_requisites( [ task_id ] )
-        except SuiteIdentificationError,x:
+        except Exception,x:
             warning_dialog(str(x), self.window).warn()
             return
 
@@ -1400,7 +1399,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
             return
@@ -1433,7 +1432,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
             return
@@ -1465,7 +1464,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
             return
@@ -1495,7 +1494,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.spawn_and_die( task_id )
@@ -1523,7 +1522,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.die( task_id )
@@ -1539,7 +1538,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.purge( task_id, stop )
@@ -1555,7 +1554,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.purge( task_id, stop )
@@ -1967,7 +1966,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.insert( torg, stop )
@@ -2005,7 +2004,7 @@ or remove task definitions without restarting the suite."""
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( str(x), self.window ).warn()
             return False
         result = proxy.nudge()

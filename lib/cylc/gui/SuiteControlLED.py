@@ -22,7 +22,6 @@ import gobject
 import helpwindow
 from stateview import lupdater
 from gcapture import gcapture_tmpfile
-from cylc.port_scan import SuiteIdentificationError
 from cylc import cylc_pyro_client
 from util import EntryTempText
 

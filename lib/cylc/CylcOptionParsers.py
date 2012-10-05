@@ -117,6 +117,11 @@ Arguments:"""
                 action="store_true", default=False, dest="override" )
 
         if pyro:
+            self.add_option( "--port",
+                help="Suite port number on the suite host. NOTE: this is retrieved "
+                "automatically if passwordless ssh is configured to the suite host.",
+                metavar="INT", action="store", default=None, dest="port" )
+
             self.add_option( "--use-ssh",
                     help="Use ssh to re-invoke the command on the suite host.",
                     action="store_true", default=False, dest="use_ssh" )
