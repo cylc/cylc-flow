@@ -665,7 +665,7 @@ class scheduler(object):
         if not reload:
             msg.append( "_" )
             msg.append( "The cylc suite engine, version " + cylc_version )
-            msg.append( "Home page: http://hjoliver.github.com/cylc" )
+            msg.append( "Home page: http://cylc.github.com/cylc" )
             msg.append( "-" )
             msg.append( "Copyright (C) 2008-2012 Hilary Oliver, NIWA" )
             msg.append( "-" )
