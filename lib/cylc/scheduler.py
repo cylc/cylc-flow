@@ -59,11 +59,12 @@ class SchedulerError( Exception ):
         return repr(self.msg)
 
 class pool(object):
-    def __init__( self, suite, config, wireless, pyro, log, run_mode, verbose ):
+    def __init__( self, suite, config, wireless, pyro, log, run_mode, verbose, debug=False ):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
         self.verbose = verbose
+        self.debug = debug
         self.qconfig = config['scheduling']['queues'] 
         self.n_max_sub = config['cylc']['maximum simultaneous job submissions']
         self.assign()
@@ -197,16 +198,18 @@ class pool(object):
 
         before = datetime.datetime.now()
         ps = []
+        n_fail = 0
         for itask in tasks:
             print
             print 'TASK READY:', itask.id 
-            p = itask.submit( self.wireless.get(itask.id) )
+            p = itask.submit( self.wireless.get(itask.id), debug=self.debug )
             if p:
                 ps.append( (itask,p) ) 
+            else:
+                n_fail += 1
         print
         print 'WAITING ON JOB SUBMISSIONS'
         n_succ = 0
-        n_fail = 0
         for itask, p in ps:
             res = p.wait()
             if res < 0:
@@ -353,7 +356,7 @@ class scheduler(object):
         self.wireless = receiver()
         self.pyro.connect( self.wireless, 'receiver')
 
-        self.pool = pool( self.suite, self.config, self.wireless, self.pyro, self.log, self.run_mode, self.verbose )
+        self.pool = pool( self.suite, self.config, self.wireless, self.pyro, self.log, self.run_mode, self.verbose, self.options.debug )
 
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD
         self.load_tasks()

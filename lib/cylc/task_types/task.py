@@ -295,7 +295,7 @@ class task( Pyro.core.ObjBase ):
     def reset_state_held( self ):
         itask.state.set_status( 'held' )
 
-    def submit( self, bcvars={}, dry_run=False ):
+    def submit( self, bcvars={}, dry_run=False, debug=False ):
         self.log( 'DEBUG', 'submitting task job script' )
         # construct the job launcher here so that a new one is used if
         # the task is re-triggered by the suite operator - so it will
@@ -362,7 +362,7 @@ class task( Pyro.core.ObjBase ):
         self.launcher = launcher_class( self.id, jobconfig, xconfig )
 
         try:
-            p = self.launcher.submit( dry_run )
+            p = self.launcher.submit( dry_run, debug )
         except Exception, x:
             # a bug was activated in cylc job submission code
             print >> sys.stderr, 'ERROR: cylc job submission bug?'

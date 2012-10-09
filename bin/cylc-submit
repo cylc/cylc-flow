@@ -214,5 +214,5 @@ except TaskNotDefinedError, x:
 if not options.dry_run:
     print "Logging directory: " + logging_dir
     print
-task_proxy.submit( dry_run=options.dry_run )
+task_proxy.submit( dry_run=options.dry_run, debug=options.debug )
 

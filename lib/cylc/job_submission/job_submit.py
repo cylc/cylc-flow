@@ -157,13 +157,19 @@ class job_submit(object):
         # run by the derived class job submission method.
         raise SystemExit( 'ERROR: no job submission command defined!' )
 
-    def submit( self, dry_run ):
+    def submit( self, dry_run=False, debug=False ):
+        """ submit the task and return the process ID of the job
+        submission sub-process, or None if a failure occurs."""
+
         try:
             os.chdir( pwd.getpwnam(self.suite_owner).pw_dir )
         except OSError, e:
-            print >> sys.stderr, "Failed to change to suite owner's home directory"
-            print >> sys.stderr, e
-            return False
+            if debug:
+                raise
+            print >> sys.stderr, "ERROR:", e
+            print >> sys.stderr, "ERROR: Failed to change to suite owner's home directory"
+            print >> sys.stderr, "Use --debug to abort cylc with an exception traceback."
+            return None
 
         jf = jobfile(\
                 self.jobfile_path,
@@ -180,7 +186,17 @@ class job_submit(object):
         print "JOB SCRIPT: " + self.local_jobfile_path
 
         # Construct self.command, the command to submit the jobfile to run
-        self.construct_jobfile_submission_command()
+        try:
+            self.construct_jobfile_submission_command()
+        except TypeError, x:
+            if debug:
+                raise
+            print >> sys.stderr, "ERROR:", x
+            print >> sys.stderr, "ERROR: Failed to construct job submission command"
+            print >> sys.stderr, """  Possible cause: a command template that is not compatible with the
+  job submission method in terms of the number of string substitutions.
+  Use --debug to abort cylc with an exception traceback."""
+            return None
 
         if self.local:
             stdin = None
@@ -208,7 +224,12 @@ class job_submit(object):
             # in the event of submitting many ensemble tasks at once):
             ###popen.wait()
         except OSError, e:
-            print >> sys.stderr, "ERROR: Job submission failed", e
+            if debug:
+                raise
+            print >> sys.stderr, "ERROR:", e
+            print >> sys.stderr, "ERROR: Job submission failed"
+            print >> sys.stderr, "Use --debug to abort cylc with an exception traceback."
             popen = None
+
         return popen
 
