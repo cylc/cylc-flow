@@ -1009,3 +1009,7 @@ tool-tips).
 + Restore gcontrol graph-view "cycle time focus" functionality;
 accidentally broken between 4.2.2 and 4.5.1.
 
++ A new strict validation option to protect against inadvertant creation
+of naked dummy tasks (tasks with no explicit runtime config) resulting
+from misspelled task names.
+

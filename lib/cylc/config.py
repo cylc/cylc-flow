@@ -129,10 +129,13 @@ class edge( object):
 class config( CylcConfigObj ):
 
     def __init__( self, suite, suiterc, owner=None, run_mode='live',
-            verbose=False, validation=False, pyro_timeout=None, collapsed=[] ):
+            verbose=False, validation=False, strict=False,
+            pyro_timeout=None, collapsed=[] ):
 
         self.run_mode = run_mode
         self.verbose = verbose
+        self.strict = strict
+        self.naked_dummy_tasks = []
         if pyro_timeout:
             self.pyro_timeout = float(pyro_timeout)
         else:
@@ -373,6 +376,15 @@ class config( CylcConfigObj ):
             print 'Parsing the dependency graph'
         self.graph_found = False
         self.load_graph()
+        if len( self.naked_dummy_tasks ) > 0:
+            if self.strict or self.verbose:
+                print 'Naked dummy tasks detected:'
+                for ndt in self.naked_dummy_tasks:
+                    print '    +', ndt
+                print '  WARNING: this can be caused by misspelled task names!' 
+            if self.strict:
+                raise SuiteConfigError, 'ERROR: strict validation fails naked dummy tasks'
+
         if not self.graph_found:
             raise SuiteConfigError, 'No suite dependency graph defined.'
 
@@ -1148,8 +1160,7 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, str(x)
 
             if name not in self['runtime']:
-                if self.verbose and self.validation:
-                    print >> sys.stderr, 'WARNING: task "' + name + '" is defined only by graph - it will inherit root.'
+                self.naked_dummy_tasks.append( name )
                 # inherit the root runtime
                 self['runtime'][name] = self['runtime']['root'].odict()
                 if 'root' not in self.members:
@@ -1204,6 +1215,7 @@ class config( CylcConfigObj ):
                 self.tasks_by_cycler[cyclr] = []
             if name not in self.tasks_by_cycler[cyclr]:
                 self.tasks_by_cycler[cyclr].append(name)
+
 
     def generate_triggers( self, lexpression, lnames, right, cycler, asyncid_pattern, suicide ):
         if not right:
