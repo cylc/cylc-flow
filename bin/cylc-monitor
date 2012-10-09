@@ -44,9 +44,7 @@ parser = cop( """cylc [info] monitor [OPTIONS] ARGS
 
 A terminal-based suite monitor that updates the current state of all
 tasks in real time. It is effective even for quite large suites if
-'--align' is not used. Being a passive monitor that cannot intervene in
-a suite's operation, it is allowed to monitor suites owned by others
-and/or running on remote hosts.""", pyro=True )
+'--align' is not used.""", pyro=True )
 
 parser.add_option( "-a", "--align", 
         help="Align columns by task name. This option "

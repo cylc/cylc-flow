@@ -1016,4 +1016,7 @@ start, succeed, fail, or finish.  To get the old-style "family
 finished" trigger (all members finished and at least one succeeded):
    fam:finished-all & fam:succeeded-any => foo
 
++ A new strict validation option to protect against inadvertant creation
+of naked dummy tasks (tasks with no explicit runtime config) resulting
+from misspelled task names.
 

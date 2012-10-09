@@ -945,16 +945,20 @@ can be a single command or multiple lines of scripting.
 
 A list of time intervals in minutes after which to resubmit the task if it 
 fails. Before each try the variable \lstinline=$CYLC_TASK_TRY_NUMBER= is
-incremented and passed to the task execution environment; this can be
-used to alter the behaviour at each try.
+incremented (starting from 1) and passed to the task execution
+environment; this can be used to alter the behaviour at each try.
 
 \begin{myitemize}
 \item {\em type:} list of floats
-\item {\em example:} 1.5, 10, 10 10
+\item {\em example:} 1.5, 10, 10, 10
 \item {\em root default:} (none)
 \end{myitemize}
 
-
+Currently to get a task that keeps on retrying indefinitely you have to
+put a retry-and-wait loop in the task implementation itself (i.e.\ the
+task submits once and then keeps trying until it succeeds, and then
+report success, or it may eventually reports failure on some internal
+criterion, which may be some number of unsuccessful tries).
 
 \paragraph[pre-command scripting]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ pre-command scripting}
 
