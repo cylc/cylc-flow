@@ -1354,6 +1354,9 @@ they are found.  They are called by cylc with the following arguments:
 \end{lstlisting}
 EVENT is the event name (see below), SUITE is the suite name, TASK 
 is the task ID, and MESSAGE, if provided, describes what has happened.
+Note that {\em spaces in event names will be replaced by underscores 
+in the handler argument list} to make parsing easier in the script,
+e.g.\ ``submission failed'' becomes ``submission\_failed''.
 
 \subparagraph[EVENT handler]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ EVENT handler}
 
@@ -1364,11 +1367,11 @@ section for each of the following task events that you wish to handle:
     \item `started' - the task started running 
     \item `succeeded' - the task succeeded
     \item `failed' - the task failed
-    \item `submission\_failed' - the task failed in job submission
+    \item `submission failed' - the task failed in job submission
     \item `warning' - the task reported a warning message
     \item `retry' - the task failed but will retry
-    \item `submission\_timeout' - task job submission timed out
-    \item `execution\_timeout' - task execution timed out
+    \item `submission timeout' - task job submission timed out
+    \item `execution timeout' - task execution timed out
 \end{myitemize}
 MESSAGE, if provided, describes what has happened, and TASKID identifies
 the task (\lstinline=NAME%CYCLE= for cycling tasks).
