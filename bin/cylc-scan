@@ -62,5 +62,5 @@ if options.print_ports:
     print pyro_base_port, '<= port <=', pyro_base_port + pyro_port_range
     sys.exit(0)
 
-suites = scan( options.host, options.db, options.pyro_timeout, verbose=True )
-
+suites = scan( options.host, options.db, options.pyro_timeout,
+               verbose=options.verbose )

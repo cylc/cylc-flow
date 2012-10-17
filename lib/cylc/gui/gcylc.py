@@ -242,7 +242,7 @@ class db_updater(threading.Thread):
         if not PyroInstalled:
             return
         # (name, port)
-        suites = scan( pyro_timeout=self.pyro_timeout )
+        suites = scan( pyro_timeout=self.pyro_timeout, silent=True )
         if suites != self.running_choices:
             self.running_choices = suites
             return True
