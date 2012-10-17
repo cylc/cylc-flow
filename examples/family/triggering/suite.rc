@@ -23,7 +23,7 @@ with command scripting true/false to get different outcomes."""
         ens:finish-all & ens:succeed-any => all_fin_some_succ 
                     """
             [[[0]]]
-                graph = "cold | c_ens[T-24] => c_ens"
+                graph = "cold | c_ens[T-24]:succeed-all => c_ens"
 [runtime]
     [[ens]]
     [[m1]]

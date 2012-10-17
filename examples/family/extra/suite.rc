@@ -11,7 +11,9 @@ description = "Task families with family and extra-family dependencies."
         [[[12]]]
             graph = """
 # full family triggers:
-A => FAMx => B => FAMy => C
+A => FAMx
+FAMx:succeed-all => B => FAMy
+FAMy:succeed-all => C
 # internal dependence among family members:
 x1 => x2 
 # member of one family to member of another:
