@@ -61,8 +61,11 @@ Text Treeview suite control interface.
         return main_box
 
     def visible_cb(self, model, iter ):
-        # visibility determined by state matching active toggle buttons
-        # set visible if model value NOT in filter_states
+        # visibility result determined by state matching active check
+        # buttons: set visible if model value NOT in filter_states;
+        # and matching name against current name filter setting.
+        # (state result: sres; name result: nres)
+
         ctime = model.get_value(iter, 0 )
         name = model.get_value(iter, 1)
         if name is None or ctime is None:
@@ -79,7 +82,16 @@ Text Treeview suite control interface.
             state = re.sub( r'<.*?>', '', state )
         sres = state not in self.tfilter_states
 
-        nres = not self.tfilt or self.tfilt in name
+        if not self.tfilt:
+            nres = True
+        elif self.tfilt in name:
+            # tfilt is any substring of name
+            nres = True
+        elif re.search( self.tfilt, name ):
+            # full regex match
+            nres = True
+        else:
+            nres = False
 
         if model.iter_has_child( iter ):
             # Family.
