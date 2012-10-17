@@ -898,21 +898,21 @@ class config( CylcConfigObj ):
                 names.append(tn)
         return names
 
-    def replace_family_triggers( self, line_in, fam, members, orig ):
+    def replace_family_triggers( self, line_in, fam, members, orig='' ):
         # Replace family trigger expressions with member trigger expressions.
         # The replacements below handle optional [T-n] cycle offsets.
 
-        orig = ':' + orig
         line = line_in
+        paren_open = ''
+        paren_close = ''
+        connector = ' & ' 
         if orig.endswith( '-all' ):
-            connector = ' & ' 
-            paren_open = ''
-            paren_close = ''
+            pass
         elif orig.endswith( '-any' ):
             connector = ' | ' 
             paren_open = '( '
             paren_close = ' )'
-        else:
+        elif orig != '':
             print >> sys.stderr, line
             raise SuiteConfigError, 'ERROR, illegal family trigger type: ' + orig
         repl = orig[:-4]
@@ -1000,29 +1000,23 @@ class config( CylcConfigObj ):
             # backslashed re markers like \b from being interpreted as
             # normal escapeded characters.
 
-            # Replace:
-            #   "fam" with "fam:succeed-all"
-            #   "fam[T-n]" with "fam[T-n]:succeed-all"
-            # (plain fam is needed for lhs of triggers: foo => fam)
-            # I can't get this single expression working ...
-            #line = re.sub(  r'\b(' + fam + r'(\[.*?]){0,1})\b(?!:)', r'\1:succeed-all', line )
-            # ... so do it in two steps:
-            ##print '\n>>>', fam, '::', line
-            line = re.sub(  r'\b(' + fam + '(\[.*?\]))(?!:)', r'\1:succeed-all', line )
-            line = re.sub(  r'\b' + fam + r'\b(?![\[:])', fam + ':succeed-all', line )
-            ##print '>>>', line
             # Replace family triggers with member triggers
-            for trig_type in [ 'start', 'succeed', 'fail', 'finish' ]:
+            for trig_type in [ ':start', ':succeed', ':fail', ':finish' ]:
                 line = self.replace_family_triggers( line, fam, members, trig_type + '-all' )
                 line = self.replace_family_triggers( line, fam, members, trig_type + '-any' )
 
             if re.search( r"\b" + fam + r"\b:", line ):
+                # fam:illegal
                 print >> sys.stderr, line
                 raise SuiteConfigError, 'ERROR, illegal family trigger detected'
 
-            if re.search( r"\b" + fam + r"\b[^:]", line ) or re.search( r"\b" + fam + "\s*$", line ):
+            if re.search( r"\b" + fam + r"\b[^:].*=>", line ) or re.search( r"\b" + fam + "\s*=>$", line ):
+                # plain family names are not allowed on the left of a trigger
                 print >> sys.stderr, line
-                raise SuiteConfigError, 'ERROR, family triggers must be qualified with \':type\': ' + fam
+                raise SuiteConfigError, 'ERROR, upstream family triggers must be qualified with \':type\': ' + fam
+
+            # finally replace plain family names on the right of a trigger
+            line = self.replace_family_triggers( line, fam, members )
 
         # Replace "foo:finish" with "( foo:succeed | foo:fail )"
         line = re.sub(  r'\b(\w+(\[.*?]){0,1}):finish\b', r'( \1:succeed | \1:fail )', line )
