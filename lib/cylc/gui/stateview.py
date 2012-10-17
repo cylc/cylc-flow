@@ -122,7 +122,7 @@ class tupdater(threading.Thread):
 
         self.autoexpand_states = [ 'submitted', 'running', 'failed', 'held' ]
         self._last_autoexpand_me = []
-        self.ttree_paths = {}  # Dict of paths vs all descendant node states
+        self.ttree_paths = ttree_paths  # Dict of paths vs all descendant node states
         self.should_group_families = False
         self.ttreeview = ttreeview
         # Hierarchy of models: view <- sorted <- filtered <- base model
