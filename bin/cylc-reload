@@ -31,31 +31,20 @@ from cylc.prompt import prompt
 
 parser = cop( """cylc [control] reload [OPTIONS] ARGS 
 
-Reload the suite definition at run time. This allows:
- (a) changing task config such as command scripting or environment;
- (b) adding tasks to, or removing them from, the suite definition,
-at run time, i.e. without shutting the suite down and restarting it.
-(It is easy to shut down and restart a cylc suite, but this may be
-useful if you don't want to wait for long-running tasks to finish
-first.)
+Reload the suite definition at run time. All settings, including task
+definitions, can be changed on reload. Note that defined tasks can be
+be added to or removed from a running suite with the 'cylc insert' and
+'cylc remove' commands, without reloading. This command also allows
+addition and removal of actual task definitions, and therefore insertion
+of tasks that were not defined at all when the suite started (you will
+still need to manually insert a particular instance of a newly defined
+task). Live task proxies that are orphaned by a reload (i.e. their task
+definitions have been removed) will be removed from the task pool 
+if they have not started running yet. Changes to task definitions take
+effect immediately, unless a task is already running at reload time.
 
-Note that *defined tasks* can be already be added to or removed from a
-running suite with the 'cylc insert' and 'cylc remove' commands. This
-command also allows addition and removal of actual task definitions,
-and therefore insertion of tasks that were not even defined when the
-suite started (you will still need to manually insert a particular
-instance of a newly defined task). Orphaned task proxies (those whose
-task definitions have been deleted) will be removed from the task pool 
-if they have not started running yet.
-
-Suite logging and state directories cannot be reconfigured on reload;
-everything else, including internal queues, can be.
-
-Changes to task definitions take effect immediately, unless a task is 
-already running at reload time.
-
-If the updated suite definition does not parse, failure to reload will
-be reported, but no harm will be done to the running suite.""", pyro=True )
+If the modified suite definition does not parse, failure to reload will
+be reported but no harm will be done to the running suite.""", pyro=True )
 
 (options, args) = parser.parse_args()
 
