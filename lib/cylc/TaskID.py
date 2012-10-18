@@ -3,6 +3,7 @@
 import re
 import datetime
 from cylc.cycle_time import ct, CycleTimeError
+from cylc.strftime import strftime
 
 class TaskIDError( Exception ):
     def __str__( self ):
@@ -100,7 +101,7 @@ class CycleTime( object ):
         return self.dtvalue
 
     def _str_from_datetime( self, dt ): 
-        return dt.strftime( "%Y%m%d%H%M%S" )
+        return strftime( dt, "%Y%m%d%H%M%S" )
 
     def increment( self, weeks=0, days=0, hours=0, minutes=0, seconds=0,
             microseconds=0, milliseconds=0 ): 

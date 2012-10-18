@@ -22,6 +22,7 @@ import time
 import threading
 from cylc import cylc_pyro_client, dump
 from cylc import graphing
+from cylc.strftime import strftime
 import gtk
 import pygtk
 from cylc.cycle_time import ct
@@ -223,7 +224,7 @@ class xupdater(threading.Thread):
             self.block = 'unblocked'
 
         dt = glbl[ 'last_updated' ]
-        self.dt = dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
+        self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" ) 
 
         # only update states if a change occurred, or action required
         if self.action_required:

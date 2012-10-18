@@ -25,6 +25,7 @@ import time
 import threading
 from cylc import cylc_pyro_client
 from cylc.state_summary import get_id_summary
+from cylc.strftime import strftime
 import gtk
 import pygtk
 from string import zfill
@@ -215,7 +216,7 @@ class tupdater(threading.Thread):
             self.block = 'unblocked'
 
         dt = glbl[ 'last_updated' ]
-        self.dt = dt.strftime( " %Y/%m/%d %H:%M:%S" )
+        self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" )
 
         # only update states if a change occurred
         if compare_dict_of_dict( states, self.state_summary ):
@@ -639,7 +640,7 @@ class lupdater(threading.Thread):
             self.block = 'unblocked'
 
         dt = glbl[ 'last_updated' ]
-        self.dt = dt.strftime( " %Y/%m/%d %H:%M:%S" )
+        self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" )
 
         # only update states if a change occurred
         if compare_dict_of_dict( states, self.state_summary ):

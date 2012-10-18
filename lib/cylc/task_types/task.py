@@ -31,6 +31,7 @@ import sys, re
 from copy import deepcopy
 import datetime
 from cylc import task_state
+from cylc.strftime import strftime
 from cylc.RunEventHandler import RunHandler
 import logging
 import Pyro.core
@@ -594,20 +595,17 @@ class task( Pyro.core.ObjBase ):
         summary[ 'latest_message_priority' ] = self.latest_message_priority
 
         if self.submitted_time:
-            #summary[ 'submitted_time' ] = self.submitted_time.strftime("%Y/%m/%d %H:%M:%S" )
-            summary[ 'submitted_time' ] = self.submitted_time.strftime("%H:%M:%S" )
+            summary[ 'submitted_time' ] = strftime( self.submitted_time, "%H:%M:%S" )
         else:
             summary[ 'submitted_time' ] = '*'
 
         if self.started_time:
-            #summary[ 'started_time' ] =  self.started_time.strftime("%Y/%m/%d %H:%M:%S" )
-            summary[ 'started_time' ] =  self.started_time.strftime("%H:%M:%S" )
+            summary[ 'started_time' ] =  strftime( self.started_time, "%H:%M:%S" )
         else:
             summary[ 'started_time' ] =  '*'
 
         if self.succeeded_time:
-            #summary[ 'succeeded_time' ] =  self.succeeded_time.strftime("%Y/%m/%d %H:%M:%S" )
-            summary[ 'succeeded_time' ] =  self.succeeded_time.strftime("%H:%M:%S" )
+            summary[ 'succeeded_time' ] =  strftime( self.succeeded_time, "%H:%M:%S" )
         else:
             summary[ 'succeeded_time' ] =  '*'
 
@@ -626,11 +624,11 @@ class task( Pyro.core.ObjBase ):
                     run_time = current_time - self.started_time
                     self.to_go = met - run_time
                     self.etc = current_time + self.to_go
-                    summary[ 'Tetc' ] = self.etc.strftime( "%H:%M:%S" ) + '(' + re.sub( '\.\d*$', '', displaytd(self.to_go) ) + ')'
+                    summary[ 'Tetc' ] = strftime( self.etc, "%H:%M:%S" ) + '(' + re.sub( '\.\d*$', '', displaytd(self.to_go) ) + ')'
                 elif self.etc:
                     # the first time a task finishes self.etc is not defined
                     # task succeeded; leave final prediction
-                    summary[ 'Tetc' ] = self.etc.strftime( "%H:%M:%S" ) + '(' + re.sub( '\.\d*$', '', displaytd(self.to_go) ) + ')'
+                    summary[ 'Tetc' ] = strftime( self.etc, "%H:%M:%S" ) + '(' + re.sub( '\.\d*$', '', displaytd(self.to_go) ) + ')'
                 else:
                     summary[ 'Tetc' ] = '*'
             else:

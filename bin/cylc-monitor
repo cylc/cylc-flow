@@ -35,6 +35,7 @@ from cylc import cylc_pyro_client
 from cylc.port_scan import SuiteIdentificationError
 from cylc.passphrase import SecurityError
 from cylc.CylcOptionParsers import cop
+from cylc.strftime import strftime
 from Pyro.errors import ProtocolError,TimeoutError,ConnectionClosedError
 from cylc.command_prep import prep_pyro
 
@@ -237,7 +238,7 @@ try:
 
             # last time state summary was updated by cylc (only happens
             # when task processing is invoked).
-            blit.append( 'suite state summary last updated at:              ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
+            blit.append( 'suite state summary last updated at:              ' + '\033[1;38m' + strftime( dt, "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
             if run_mode != 'live':
                 foo = 'SIMULATION:'

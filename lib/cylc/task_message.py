@@ -24,6 +24,7 @@ import subprocess
 import datetime
 from remote import remrun
 from cylc.passphrase import passphrase
+from cylc.strftime import strftime
 
 class message(object):
     def __init__( self, msg=None, priority='NORMAL', verbose=False ):
@@ -128,7 +129,7 @@ class message(object):
                 self.verbose ).get_proxy( self.task_id )
 
     def print_msg( self, msg ):
-        now = self.now().strftime( "%Y/%m/%d %H:%M:%S" )
+        now = strftime( self.now(), "%Y/%m/%d %H:%M:%S" )
         prefix = 'cylc (' + self.mode + ' - ' + now + '): '
         if self.priority == 'NORMAL':
             print prefix + msg

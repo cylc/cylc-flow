@@ -41,6 +41,7 @@ from cylc.state_summary import extract_group_state
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
 from cylc.version import cylc_version
+from cylc.strftime import strftime
 from option_group import controlled_option_group
 from color_rotator import rotator
 from cylc_logviewer import cylc_logviewer
@@ -256,7 +257,7 @@ Class to create an information bar.
             #o> summary += ": {0} failed tasks".format(num_failed)
             summary += ": %s failed tasks" % num_failed
         self.set_status(summary)
-        self.set_time(glob["last_updated"].strftime("%Y/%m/%d %H:%M:%S"))
+        self.set_time( strftime( glob["last_updated"], "%Y/%m/%d %H:%M:%S"))
 
     def set_time(self, time):
         """Set last update text."""
