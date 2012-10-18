@@ -422,7 +422,7 @@ class scheduler(object):
         return tag
 
     def reconfigure( self ):
-        # EXPERIMENTAL
+        # reload the suite definition while the suite runs
         old_task_list = self.config.get_task_name_list()
         self.configure_suite( reconfigure=True )
         new_task_list = self.config.get_task_name_list()
@@ -462,15 +462,22 @@ class scheduler(object):
             if itask.reconfigure_me:
                 itask.reconfigure_me = False
                 if itask.name in self.orphans:
-                    # set orphaned tasks spawned so they won't cycle on
-                    # after the current instances have finished.
-                    itask.state.set_spawned()
-                    self.log.warning( 'NOT RELOADING ORPHANED TASK ' + itask.id  )
+                    # orphaned task
+                    if itask.state.is_waiting() or itask.state.is_queued():
+                        # if not started running yet, remove it.
+                        self.pool.remove( itask, '(task orphaned by suite reload)' )
+                    else:
+                        # set spawned already so it won't carry on into the future
+                        itask.state.set_spawned()
+                        self.log.warning( 'orphaned task will not continue: ' + itask.id  )
                 else:
                     self.log.warning( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
                     new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, False )
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
+                    # succeeded tasks need their outputs set completed:
+                    if itask.state.is_succeeded():
+                        new_task.set_succeeded()
                     self.pool.remove( itask, '(suite definition reload)' )
                     self.pool.add( new_task )
         self.reconfiguring = found
@@ -608,7 +615,6 @@ class scheduler(object):
             clocktriggered.clocktriggered.clock = self.clock
             self.pyro.connect( self.clock, 'clock' )
 
-        if not reconfigure:
             # PIMP THE SUITE LOG
             self.log = logging.getLogger( 'main' )
             pimp_my_logger.pimp_it( self.log, self.logging_dir,
@@ -625,8 +631,6 @@ class scheduler(object):
             self.pyro.connect( self.remote, 'remote' )
         else:
             self.remote.config = self.config
-            # NOT NEEDED: self.remote.pool = self
-
 
     def configure_environments( self ):
         cylcenv = OrderedDict()
@@ -681,7 +685,6 @@ class scheduler(object):
         else:
             msg.append( "_" )
             msg.append( "RELOADING THE SUITE DEFINITION AT RUNTIME" )
-            msg.append( "WARNING: THIS IS AN EXPERIMENTAL FEATURE!" )
             msg.append( "-" )
  
         lenm = 0

@@ -994,7 +994,6 @@ messaging feature to fail in some cases.
 whether or not it is a cold-start task: $CYLC_TASK_IS_COLDSTART ('True'
 or 'False')
 
-
 + Bug fix gcylc's "view suite stdout" menu item, broken since 4.5.0.
 
 + Restore job submit failure hook activation, broken in 4.5.1.
@@ -1016,7 +1015,7 @@ start, succeed, fail, or finish.  To get the old-style "family
 finished" trigger (all members finished and at least one succeeded):
    fam:finished-all & fam:succeeded-any => foo
 
-+ A new strict validation option to protect against inadvertant creation
++ A new strict validation option to protect against inadvertent creation
 of naked dummy tasks (tasks with no explicit runtime config) resulting
 from misspelled task names.
 

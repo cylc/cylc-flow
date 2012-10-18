@@ -338,8 +338,12 @@ class remote_switch( Pyro.core.ObjBase ):
         self.log.info( "servicing suite reconfigure request")
         if self._suite_is_blocked():
             return result( False, "Suite is blocked" )
-        self.pool.reconfigure()
-        return result( True, 'OK' )
+        try:
+            self.pool.reconfigure()
+        except Exception, x:
+            return result( False, str(x) )
+        else:
+            return result( True, 'OK' )
 
     def get_task_requisites( self, in_ids ):
         self.log.info( "servicing task state info request")
