@@ -352,7 +352,7 @@ class tupdater(threading.Thread):
                         f_iter = self.ttreestore.append(
                                       f_iter, [ ctime, fam ] + f_data )
                         family_iters[fam] = f_iter
-                    self._update_path_info( f_iter, state, fam )
+                    self._update_path_info( f_iter, state, name )
                 # Add task to tree
                 self.ttreestore.append( f_iter, [ ctime, name ] + new_data[ctime][name])
         if self.autoexpand:
