@@ -104,7 +104,6 @@ Text Treeview suite control interface.
             # sub_nm seems to contain the family name repeated?
             if self.tfilt:
                 sub_nm = self.ttree_paths.get( path, {} ).get( 'names', [] )
-                #print path, self.ttree_paths
                 nres = nres or any([self.tfilt in n for n in sub_nm])
 
         return sres and nres
