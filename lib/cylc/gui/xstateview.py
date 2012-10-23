@@ -81,7 +81,7 @@ class xupdater(threading.Thread):
         self.filter_exclude = None
         self.state_filter = None
         self.families = []
-        self.last_graph_id = ()
+        self.prev_graph_id = ()
 
         self.cfg = cfg
         self.info_bar = info_bar
@@ -107,7 +107,7 @@ class xupdater(threading.Thread):
 
     def reconnect( self ):
 
-        self.last_graph_id = ()
+        self.prev_graph_id = ()
         try:
             client = cylc_pyro_client.client( 
                     self.cfg.suite,
@@ -146,7 +146,7 @@ class xupdater(threading.Thread):
 
     def connection_lost( self ):
         self.status = "stopped"
-        self.last_graph_id = ()
+        self.prev_graph_id = ()
 
         # Get an *empty* graph object
         # (comment out to show the last suite state before shutdown)
@@ -424,21 +424,45 @@ class xupdater(threading.Thread):
 
         extra_node_ids = {}
 
-        current_id = self.get_graph_id()
-        needs_redraw = current_id != self.last_graph_id
+        # TO DO: mv ct().get() out of this call (for error checking):
+        # TO DO: remote connection exception handling?
+        try:
+            gr_edges = self.remote.get_graph_raw( ct(oldest).get(), ct(newest).get(),
+                    raw=rawx, group_nodes=self.group, ungroup_nodes=self.ungroup,
+                    ungroup_recursive=self.ungroup_recursive, 
+                    group_all=self.group_all, ungroup_all=self.ungroup_all) 
+        except Exception:  # PyroError
+            return False
+
+        extra_ids = []
+
+        for id in self.state_summary:
+            try:
+                node = self.graphw.get_node( id )
+            except AttributeError:
+                # No graphw yet.
+                break
+            except KeyError:
+                name, tag = id.split('%')
+                if any([name in self.families[fam] for
+                        fam in self.graphed_family_nodes]):
+                    # if task name is a member of a family omit it
+                    #print 'Not graphing family-collapsed node', id
+                    continue
+
+                state = self.state_summary[id]['state']
+                if state == 'submitted' or state == 'running' or  state == 'failed' or state == 'held':
+                    if id not in extra_ids:
+                        extra_ids.append(id)
+                    continue
+                else:
+                    continue
+
+        current_id = self.get_graph_id(gr_edges, extra_ids)
+        needs_redraw = current_id != self.prev_graph_id
 
         if needs_redraw:
-            # TO DO: mv ct().get() out of this call (for error checking):
-            # TO DO: remote connection exception handling?
-            try:
-                gr_edges = self.remote.get_graph_raw( ct(oldest).get(), ct(newest).get(),
-                        raw=rawx, group_nodes=self.group, ungroup_nodes=self.ungroup,
-                        ungroup_recursive=self.ungroup_recursive, 
-                        group_all=self.group_all, ungroup_all=self.ungroup_all) 
-            except Exception:  # PyroError
-                return False
-
-            # Get a graph object
+            #Get a graph object
             self.graphw = graphing.CGraphPlain( self.cfg.suite )
 
             # sort and then add edges in the hope that edges added in the
@@ -458,9 +482,9 @@ class xupdater(threading.Thread):
                     arrowhead='onormal'
                 self.graphw.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead )
 
-            for n in self.graphw.nodes():
-                n.attr['style'] = 'filled'
-                n.attr['fillcolor'] = 'cornsilk'
+        for n in self.graphw.nodes():
+            n.attr['style'] = 'filled'
+            n.attr['fillcolor'] = 'cornsilk'
 
         self.group = []
         self.ungroup = []
@@ -540,16 +564,9 @@ class xupdater(threading.Thread):
                 # member states listed in tool-tips, don't draw
                 # off-graph family members:
                 name, tag = id.split('%')
-                omit = False
-                for fam in self.graphed_family_nodes:
-                    # for each family node that is being graphed (i.e.
-                    # collapsed families)
-                    if name in self.families[fam]:
-                        # if task name is a member of this family omit it
-                        omit = True
-                        break
-
-                if omit:
+                if any([name in self.families[fam] for
+                        fam in self.graphed_family_nodes]):
+                    # if task name is a member of a family omit it
                     #print 'Not graphing family-collapsed node', id
                     continue
 
@@ -580,6 +597,7 @@ class xupdater(threading.Thread):
         # self.graphw.tred()
 
         if self.show_key:
+            # This is protected against redraw.
             self.add_graph_key()
 
         # process extra nodes (important nodes outside of focus range,
@@ -607,22 +625,10 @@ class xupdater(threading.Thread):
                     str( self.graph_frame_count ) + '.dot' )
             self.graphw.write( arg )
 
-        self.last_graph_id = current_id
+        self.prev_graph_id = current_id
         return not needs_redraw
 
-    def get_graph_id(self):
+    def get_graph_id(self, edges, extra_ids):
         """If any of these quantities change, the graph should be redrawn."""
-        oldest = self.global_summary['oldest cycle time']
-        newest = self.global_summary['newest cycle time']
-        if self.focus_start_ctime:
-            oldest = self.focus_start_ctime
-            newest = self.focus_stop_ctime
-        if self.state_filter is None:
-            filter_states = None
-        else:
-            filter_states = set(self.state_filter)
-        for key in self.state_summary.keys()
-        return (set(self.state_summary.keys()),
-                self.group, self.ungroup, self.group_all, self.ungroup_all,
-                self.ungroup_recursive, self.filter_include,
-                self.filter_exclude, filter_states, oldest, newest)
+        return (set(edges), set(extra_ids), self.show_key, self.crop,
+                self.filter_exclude, self.filter_include, self.state_filter)
