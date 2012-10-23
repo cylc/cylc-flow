@@ -105,8 +105,8 @@ class MyDotWindow2( xdot.DotWindow ):
         # Add a UI descrption
         uimanager.add_ui_from_string(self.ui)
 
-        landscape_menuitem = uimanager.get_widget('/ToolBar/Landscape')
-        landscape_menuitem.set_active(self.landscape_mode)
+        landscape_toolitem = uimanager.get_widget('/ToolBar/Landscape')
+        landscape_toolitem.set_active(self.landscape_mode)
 
         # Create a Toolbar
 
@@ -186,8 +186,8 @@ class MyDotWindow2( xdot.DotWindow ):
                 print >> sys.stderr, x
                 self.disable_output_image = True
 
-    def on_landscape(self, menuitem):
-        self.set_landscape(menuitem.get_active())
+    def on_landscape(self, toolitem):
+        self.set_landscape(toolitem.get_active())
 
     def set_landscape(self, landscape_mode):
         if landscape_mode == self.landscape_mode:
@@ -401,8 +401,8 @@ class MyDotWindow( xdot.DotWindow ):
                 print >> sys.stderr, x
                 self.disable_output_image = True
 
-    def on_landscape(self, menuitem):
-        self.set_landscape(menuitem.get_active())
+    def on_landscape(self, toolitem):
+        self.set_landscape(toolitem.get_active())
 
     def set_landscape(self, landscape_mode):
         if landscape_mode == self.landscape_mode:

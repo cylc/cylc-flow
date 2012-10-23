@@ -169,8 +169,6 @@ if options.filename:
     except OSError, x:
         print >> sys.stderr, x
         sys.exit(1)
-    if options.landscape:
-        window.graph.graph_attr['rankdir'] = 'LR'
     window.connect( 'destroy', gtk.main_quit)
     #if options.updatelive:
     # checking periodically for file changed
