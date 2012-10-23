@@ -37,17 +37,20 @@ class MyDotWindow2( xdot.DotWindow ):
             <toolitem action="ZoomOut"/>
             <toolitem action="ZoomFit"/>
             <toolitem action="Zoom100"/>
+            <separator name="LandscapeSep"/>
+            <toolitem action="Landscape"/>
             <separator expand="true"/> 
             <toolitem action="Help"/>
         </toolbar>
     </ui>
     '''
-    def __init__(self, suite, suiterc, watch, outfile=None ):
+    def __init__(self, suite, suiterc, watch, outfile=None, landscape_mode=False ):
         self.outfile = outfile
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
         self.watch = []
+        self.landscape_mode = landscape_mode
 
         gtk.Window.__init__(self)
 
@@ -92,12 +95,18 @@ class MyDotWindow2( xdot.DotWindow ):
             ('Zoom100', gtk.STOCK_ZOOM_100, None, None, 'Zoom 100', self.widget.on_zoom_100),
             ('Help', gtk.STOCK_HELP, None, None, 'Help', helpwindow.graph_viewer ),
         ))
+        actiongroup.add_toggle_actions((
+            ('Landscape', gtk.STOCK_JUMP_TO, None, None, 'Landscape', self.on_landscape),
+        ))
 
         # Add the actiongroup to the uimanager
         uimanager.insert_action_group(actiongroup, 0)
 
         # Add a UI descrption
         uimanager.add_ui_from_string(self.ui)
+
+        landscape_menuitem = uimanager.get_widget('/ToolBar/Landscape')
+        landscape_menuitem.set_active(self.landscape_mode)
 
         # Create a Toolbar
 
@@ -154,6 +163,8 @@ class MyDotWindow2( xdot.DotWindow ):
     def get_graph( self ):
         title = self.suite + ' runtime namespace inheritance graph'
         graph = CGraphPlain( title )
+        if self.landscape_mode:
+            graph.graph_attr['rankdir'] = 'LR'
         for ns in self.inherit:
             if self.inherit[ns]:
                 attr = {}
@@ -174,6 +185,15 @@ class MyDotWindow2( xdot.DotWindow ):
             except IOError, x:
                 print >> sys.stderr, x
                 self.disable_output_image = True
+
+    def on_landscape(self, menuitem):
+        self.set_landscape(menuitem.get_active())
+
+    def set_landscape(self, landscape_mode):
+        if landscape_mode == self.landscape_mode:
+            return False
+        self.landscape_mode = landscape_mode
+        self.get_graph()
 
     def update(self):
         # if any suite config file has changed, reparse the graph
@@ -213,12 +233,15 @@ class MyDotWindow( xdot.DotWindow ):
             <toolitem action="Zoom100"/>
             <toolitem action="Group"/>
             <toolitem action="UnGroup"/>
+            <separator name="LandscapeSep"/>
+            <toolitem action="Landscape"/>
             <separator expand="true"/> 
             <toolitem action="Help"/>
         </toolbar>
     </ui>
     '''
-    def __init__(self, suite, suiterc, watch, ctime, stop_after, raw, outfile=None ):
+    def __init__(self, suite, suiterc, watch, ctime, stop_after, raw, outfile=None,
+                 landscape_mode=False ):
         self.outfile = outfile
         self.disable_output_image = False
         self.suite = suite
@@ -227,6 +250,7 @@ class MyDotWindow( xdot.DotWindow ):
         self.raw = raw
         self.stop_after = stop_after
         self.watch = []
+        self.landscape_mode = landscape_mode
 
         gtk.Window.__init__(self)
 
@@ -271,6 +295,9 @@ class MyDotWindow( xdot.DotWindow ):
             ('Group', 'group', None, None, 'Group All Families', self.group_all),
             ('UnGroup', 'ungroup', None, None, 'Ungroup All Families', self.ungroup_all),
             ('Help', gtk.STOCK_HELP, None, None, 'Help', helpwindow.graph_viewer ),
+        ))
+        actiongroup.add_toggle_actions((
+            ('Landscape', gtk.STOCK_JUMP_TO, None, None, 'Landscape', self.on_landscape),
         ))
 
         # Add the actiongroup to the uimanager
@@ -355,6 +382,9 @@ class MyDotWindow( xdot.DotWindow ):
                 ungroup_recursive=ungroup_recursive, 
                 group_all=group_all, ungroup_all=ungroup_all )
 
+        if self.landscape_mode:
+            graph.graph_attr['rankdir'] = 'LR'
+
         for node in graph.nodes():
             name, tag = node.get_name().split('%')
             if name in family_nodes:
@@ -370,6 +400,15 @@ class MyDotWindow( xdot.DotWindow ):
             except IOError, x:
                 print >> sys.stderr, x
                 self.disable_output_image = True
+
+    def on_landscape(self, menuitem):
+        self.set_landscape(menuitem.get_active())
+
+    def set_landscape(self, landscape_mode):
+        if landscape_mode == self.landscape_mode:
+            return False
+        self.landscape_mode = landscape_mode
+        self.get_graph()
 
     def update(self):
         # if any suite config file has changed, reparse the graph

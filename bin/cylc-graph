@@ -106,6 +106,7 @@ GRAPH VIEWER CONTROLS:
     * Zoom buttons, mouse-wheel, or ctrl-left-drag to zoom in and out.
     * Shift-left-drag to zoom in on a box.
     * Also: "Best Fit" and "Normal Size".
+    * Landscape mode on/off.
   Family (namespace) grouping controls:
     Toolbar:
     * "group" - group all families up to root.
@@ -135,6 +136,11 @@ parser.add_option( "-n", "--namespaces",
     "(task run time properties).",
     action="store_true", default=False, dest="namespaces" )
 
+parser.add_option( "-l", "--landscape",
+    help="Plot in landscape mode instead of portrait (the default)."
+    "Cannot be used in conjunction with -f, --file",
+    action="store_true", default=False, dest="landscape")
+
 parser.add_option( "-f", "--file", 
     help="View a specific dot-language graphfile.",
     metavar="FILE", action="store", default=None, dest="filename" )
@@ -163,6 +169,8 @@ if options.filename:
     except OSError, x:
         print >> sys.stderr, x
         sys.exit(1)
+    if options.landscape:
+        window.graph.graph_attr['rankdir'] = 'LR'
     window.connect( 'destroy', gtk.main_quit)
     #if options.updatelive:
     # checking periodically for file changed
@@ -179,7 +187,7 @@ if len(args) < 1 or len(args) > 3:
     parser.error( "Argument list should be: SUITE [START [STOP]]" )
 
 if options.namespaces:
-    window = MyDotWindow2( suite, suiterc, watchers, options.outputfile )
+    window = MyDotWindow2( suite, suiterc, watchers, options.outputfile, options.landscape )
 else:
     # SUITE DEPENDENCY GRAPH
 
@@ -209,7 +217,8 @@ else:
     if options.rawstart:
         raw = True
 
-    window = MyDotWindow( suite, suiterc, watchers, start_ctime, stop_ctime, raw, options.outputfile )
+    window = MyDotWindow( suite, suiterc, watchers, start_ctime, stop_ctime, raw, options.outputfile,
+                          options.landscape )
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 
