@@ -75,7 +75,8 @@ class xupdater(threading.Thread):
         self.oldest_ctime = None
         self.newest_ctime = None
         self.show_key = False # graph key visibility default
-        self.best_fit = False
+        self.best_fit = False # If True, xdot will zoom to page size
+        self.normal_fit = False # if True, xdot will zoom to 1.0 scale
         self.crop = False
         self.filter_include = None
         self.filter_exclude = None
@@ -147,7 +148,7 @@ class xupdater(threading.Thread):
     def connection_lost( self ):
         self.status = "stopped"
         self.prev_graph_id = ()
-
+        self.normal_fit = True
         # Get an *empty* graph object
         # (comment out to show the last suite state before shutdown)
         self.graphw = graphing.CGraphPlain( self.cfg.suite )
@@ -278,6 +279,9 @@ class xupdater(threading.Thread):
         elif self.best_fit:
             self.xdot.widget.zoom_to_fit()
             self.best_fit = False
+        elif self.normal_fit:
+            self.xdot.widget.zoom_image(1.0, center=True)
+            self.normal_fit = False
 
     def add_graph_key(self):
         try:
@@ -454,9 +458,6 @@ class xupdater(threading.Thread):
                 if state == 'submitted' or state == 'running' or  state == 'failed' or state == 'held':
                     if id not in extra_ids:
                         extra_ids.append(id)
-                    continue
-                else:
-                    continue
 
         current_id = self.get_graph_id(gr_edges, extra_ids)
         needs_redraw = current_id != self.prev_graph_id
