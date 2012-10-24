@@ -903,7 +903,7 @@ The Cylc Suite Engine.
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def view_task_info( self, w, task_id, jsonly ):
+    def view_task_info( self, w, task_id, choice ):
         try:
             [ glbl, states, fam_states ] = self.get_pyro( 'state_summary').get_state_summary()
         except SuiteIdentificationError, x:
@@ -928,7 +928,7 @@ The Cylc Suite Engine.
         if not view:
             warning_dialog( '\n'.join( reasons ), self.window ).warn()
         else:
-            self.popup_logview( task_id, logfiles, jsonly )
+            self.popup_logview( task_id, logfiles, choice )
 
         return False
 
@@ -986,13 +986,19 @@ The Cylc Suite Engine.
         img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
         js_item.set_image(img)
         items.append( js_item )
-        js_item.connect( 'activate', self.view_task_info, task_id, True )
+        js_item.connect( 'activate', self.view_task_info, task_id, 'job script' )
 
-        info_item = gtk.ImageMenuItem( 'View Logs' )
+        info_item = gtk.ImageMenuItem( 'View stdout Log' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
         info_item.set_image(img)
         items.append( info_item )
-        info_item.connect( 'activate', self.view_task_info, task_id, False )
+        info_item.connect( 'activate', self.view_task_info, task_id, 'stdout' )
+
+        inf_item = gtk.ImageMenuItem( 'View stderr Log' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        inf_item.set_image(img)
+        items.append( inf_item )
+        inf_item.connect( 'activate', self.view_task_info, task_id, 'stderr' )
 
         items.append( gtk.SeparatorMenuItem() )
 
@@ -1975,9 +1981,9 @@ without restarting the suite."""
         if not result:
             warning_dialog( 'Failed to nudge the suite', self.window ).warn()
 
-    def popup_logview( self, task_id, logfiles, jsonly ):
-        # TO DO: jsonly is dirty hack to separate the task Job script from
-        # task log files; we should do this properly by storing them
+    def popup_logview( self, task_id, logfiles, choice='stdout' ):
+        # TO DO: choice is dirty hack to separate the task job script,
+        # stdout, and stderr file; we should do this properly by storing them
         # separately in the task proxy, or at least separating them in
         # the suite state summary.
         window = gtk.Window()
@@ -1988,25 +1994,30 @@ without restarting the suite."""
         window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         logs = []
         jsfound = False
+        err = []
+        out = []
         for f in logfiles:
-            if f.endswith('.err') or f.endswith('.out'):
-                logs.append(f)
+            if f.endswith('.err'):
+                err.append(f)
+            elif f.endswith('.out'):
+                out.append(f)
             else:
-                jsfound = True
                 js = f
 
+        # for re-tries this sorts in time order due to filename:
+        err.sort( reverse=True )
+        out.sort( reverse=True )
         window.set_size_request(800, 300)
-        if jsonly:
-            window.set_title( task_id + ": Task Job Submission Script" )
-            if jsfound:
-                lv = textload( task_id, js )
-            else:
-                # This should not happen anymore!
-                pass
+        if choice == 'job script':
+            window.set_title( task_id + ": Task Job Script" )
+            lv = textload( task_id, js )
 
         else:
-            # put '.out' before '.err'
-            logs.sort( reverse=True )
+            if choice == 'stdout':
+                logs = out + err
+            elif choice == 'stderr':
+                logs = err + out
+
             window.set_title( task_id + ": Task Logs" )
             lv = combo_logviewer( task_id, logs )
         #print "ADDING to quitters: ", lv
