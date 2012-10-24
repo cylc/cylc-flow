@@ -100,11 +100,8 @@ Text Treeview suite control interface.
             sub_st = self.ttree_paths.get( path, {} ).get( 'states', [] )
             sres = sres or any([t not in self.tfilter_states for t in sub_st])
 
-            # To Do: the following doesn't work:
-            # sub_nm seems to contain the family name repeated?
             if self.tfilt:
                 sub_nm = self.ttree_paths.get( path, {} ).get( 'names', [] )
-                #print path, self.ttree_paths
                 nres = nres or any([self.tfilt in n for n in sub_nm])
 
         return sres and nres

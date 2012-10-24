@@ -125,7 +125,7 @@ class xupdater(threading.Thread):
                                                             self.cfg.suite,
                                                             self.cfg.owner,
                                                             self.cfg.host)
-                if any(self.stop_summary):
+                if self.stop_summary is not None and any(self.stop_summary):
                     self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
