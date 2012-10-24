@@ -255,11 +255,15 @@ Dependency graph suite control interface.
         items.append( self.menu_ungroup_item )
         self.menu_ungroup_item.connect( 'activate', self.group_all_families, False )
 
-        key_item = gtk.CheckMenuItem( '- Toggle Graph _Key' )
+        key_item = gtk.CheckMenuItem( 'Toggle Graph _Key' )
         items.append( key_item )
         key_item.set_active( self.x.show_key )
         key_item.connect( 'activate', self.toggle_key )
         
+        self.menu_landscape_item = gtk.CheckMenuItem( 'Toggle _Landscape Mode' )
+        items.append( self.menu_landscape_item )
+        self.menu_landscape_item.set_active( self.x.orientation == "LR" )
+        self.menu_landscape_item.connect( 'activate', self.toggle_landscape_mode )
         return items
 
     def _set_tooltip( self, widget, tip_text ):
@@ -331,7 +335,15 @@ Dependency graph suite control interface.
     def toggle_crop( self, w ):
         self.x.crop = not self.x.crop
         self.x.action_required = True
-        
+
+    def toggle_landscape_mode( self, w ):
+        """Change the orientation of the graph - 'portrait' or 'landscape'."""
+        if self.x.orientation == "TB":  # Top -> bottom ordering
+            self.x.orientation = "LR"  # Left -> right ordering
+        elif self.x.orientation == "LR":
+            self.x.orientation = "TB"
+        self.x.action_required = True
+
     def toggle_key( self, w ):
         self.x.show_key = not self.x.show_key
         self.x.action_required = True
