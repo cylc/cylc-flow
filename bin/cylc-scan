@@ -31,9 +31,12 @@ from cylc.conf.CylcGlobals import pyro_base_port, pyro_port_range
 parser = cop( """cylc [discover] scan [OPTIONS]
     
 Detect (by port scanning) running cylc suites and lockservers, and 
-print the results. The simple space-delimited output format is designed
-for easy parsing: "SUITE OWNER HOST PORT".
+print the results. By default only your own running suites will be
+printed.  With --verbose you will also get "Connection Denied" from
+running suites owned by others on the same host.
 
+Simple space-delimited output format for easy parsing:
+    SUITE OWNER HOST PORT
 Here's one way to parse 'cylc scan' output by shell script: 
 ________________________________________________________________
 #!/bin/bash
@@ -46,7 +49,7 @@ IFS=$'\n'; for LINE in $( cylc scan ); do
 done
 IFS=$OFIS
 ----------------------------------------------------------------
-"Connection Denied" indicates another user's suite.""", pyro=True, 
+""", pyro=True, 
 argdoc=[])
 
 parser.remove_option("-p" ) # don't need passphrase
