@@ -280,7 +280,7 @@ class xupdater(threading.Thread):
             self.xdot.widget.zoom_to_fit()
             self.best_fit = False
         elif self.normal_fit:
-            self.xdot.widget.zoom_image(1.0, center=True)
+            self.xdot.widget.zoom_image( 1.0, center=True )
             self.normal_fit = False
 
     def add_graph_key(self):
@@ -448,8 +448,8 @@ class xupdater(threading.Thread):
                 break
             except KeyError:
                 name, tag = id.split('%')
-                if any([name in self.families[fam] for
-                        fam in self.graphed_family_nodes]):
+                if any( [name in self.families[fam] for
+                         fam in self.graphed_family_nodes] ):
                     # if task name is a member of a family omit it
                     #print 'Not graphing family-collapsed node', id
                     continue
@@ -457,9 +457,9 @@ class xupdater(threading.Thread):
                 state = self.state_summary[id]['state']
                 if state == 'submitted' or state == 'running' or  state == 'failed' or state == 'held':
                     if id not in extra_ids:
-                        extra_ids.append(id)
+                        extra_ids.append( id )
 
-        current_id = self.get_graph_id(gr_edges, extra_ids)
+        current_id = self.get_graph_id( gr_edges, extra_ids )
         needs_redraw = current_id != self.prev_graph_id
 
         if needs_redraw:
@@ -565,8 +565,8 @@ class xupdater(threading.Thread):
                 # member states listed in tool-tips, don't draw
                 # off-graph family members:
                 name, tag = id.split('%')
-                if any([name in self.families[fam] for
-                        fam in self.graphed_family_nodes]):
+                if any( [name in self.families[fam] for
+                         fam in self.graphed_family_nodes] ):
                     # if task name is a member of a family omit it
                     #print 'Not graphing family-collapsed node', id
                     continue
@@ -580,7 +580,7 @@ class xupdater(threading.Thread):
                     if state not in extra_node_ids:
                         extra_node_ids[state] = [id] 
                     else:
-                        extra_node_ids[state].append(id) 
+                        extra_node_ids[state].append(id)
                     continue
                 else:
                     continue
@@ -629,7 +629,7 @@ class xupdater(threading.Thread):
         self.prev_graph_id = current_id
         return not needs_redraw
 
-    def get_graph_id(self, edges, extra_ids):
+    def get_graph_id( self, edges, extra_ids ):
         """If any of these quantities change, the graph should be redrawn."""
-        return (set(edges), set(extra_ids), self.show_key, self.crop,
-                self.filter_exclude, self.filter_include, self.state_filter)
+        return ( set( edges ), set( extra_ids ), self.show_key, self.crop,
+                 self.filter_exclude, self.filter_include, self.state_filter )
