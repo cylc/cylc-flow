@@ -903,7 +903,7 @@ The Cylc Suite Engine.
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def view_task_info( self, w, task_id, jsonly ):
+    def view_task_info( self, w, task_id, choice ):
         try:
             [ glbl, states, fam_states ] = self.get_pyro( 'state_summary').get_state_summary()
         except SuiteIdentificationError, x:
@@ -928,7 +928,7 @@ The Cylc Suite Engine.
         if not view:
             warning_dialog( '\n'.join( reasons ), self.window ).warn()
         else:
-            self.popup_logview( task_id, logfiles, jsonly )
+            self.popup_logview( task_id, logfiles, choice )
 
         return False
 
@@ -970,58 +970,79 @@ The Cylc Suite Engine.
 
         items.append( gtk.SeparatorMenuItem() )
 
-        info_item = gtk.ImageMenuItem( 'View State' )
+        view_menu = gtk.Menu()
+        view_item = gtk.ImageMenuItem( "View" )
         img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
+        view_item.set_image(img)
+        view_item.set_submenu( view_menu )
+        items.append( view_item )
+ 
+        info_item = gtk.ImageMenuItem( 'stdout log' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
         info_item.set_image(img)
-        items.append( info_item )
-        info_item.connect( 'activate', self.popup_requisites, task_id )
+        view_menu.append( info_item )
+        info_item.connect( 'activate', self.view_task_info, task_id, 'stdout' )
 
-        js0_item = gtk.ImageMenuItem( 'View Info' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
-        js0_item.set_image(img)
-        items.append( js0_item )
-        js0_item.connect( 'activate', self.view_task_descr, task_id )
+        inf_item = gtk.ImageMenuItem( 'stderr log' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        inf_item.set_image(img)
+        view_menu.append( inf_item )
+        inf_item.connect( 'activate', self.view_task_info, task_id, 'stderr' )
 
-        js_item = gtk.ImageMenuItem( 'View Job Script' )
+        js_item = gtk.ImageMenuItem( 'job script' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
         js_item.set_image(img)
-        items.append( js_item )
-        js_item.connect( 'activate', self.view_task_info, task_id, True )
+        view_menu.append( js_item )
+        js_item.connect( 'activate', self.view_task_info, task_id, 'job script' )
 
-        info_item = gtk.ImageMenuItem( 'View Logs' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        info_item = gtk.ImageMenuItem( 'prereq\'s & outputs' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
         info_item.set_image(img)
-        items.append( info_item )
-        info_item.connect( 'activate', self.view_task_info, task_id, False )
+        view_menu.append( info_item )
+        info_item.connect( 'activate', self.popup_requisites, task_id )
+
+        js0_item = gtk.ImageMenuItem( 'run "cylc show"' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
+        js0_item.set_image(img)
+        view_menu.append( js0_item )
+        js0_item.connect( 'activate', self.view_task_descr, task_id )
 
         items.append( gtk.SeparatorMenuItem() )
 
-        trigger_now_item = gtk.ImageMenuItem( 'Trigger' )
+        trigger_now_item = gtk.ImageMenuItem( 'Trigger Now' )
         img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU )
         trigger_now_item.set_image(img)
         items.append( trigger_now_item )
         trigger_now_item.connect( 'activate', self.trigger_task_now, task_id )
 
         reset_menu = gtk.Menu()
-        reset_item = gtk.ImageMenuItem( "Reset task state" )
-        img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
-        reset_item.set_image(img)
+        reset_item = gtk.ImageMenuItem( "Reset State" )
+        reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
+        reset_item.set_image(reset_img)
         reset_item.set_submenu( reset_menu )
         items.append( reset_item )
         
-        reset_ready_item = gtk.MenuItem('Reset to "ready"' )
+        reset_ready_item = gtk.ImageMenuItem('"ready"' )
+        reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
+        reset_ready_item.set_image(reset_img)
         reset_menu.append( reset_ready_item )
         reset_ready_item.connect( 'button-press-event', self.reset_task_state, task_id, 'ready' )
 
-        reset_waiting_item = gtk.MenuItem( 'Reset to "waiting"' )
+        reset_waiting_item = gtk.ImageMenuItem( '"waiting"' )
+        reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
+        reset_waiting_item.set_image(reset_img)
         reset_menu.append( reset_waiting_item )
         reset_waiting_item.connect( 'button-press-event', self.reset_task_state, task_id, 'waiting' )
 
-        reset_succeeded_item = gtk.MenuItem( 'Reset to "succeeded"' )
+        reset_succeeded_item = gtk.ImageMenuItem( '"succeeded"' )
+        reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
+        reset_succeeded_item.set_image(reset_img)
         reset_menu.append( reset_succeeded_item )
         reset_succeeded_item.connect( 'button-press-event', self.reset_task_state, task_id, 'succeeded' )
 
-        reset_failed_item = gtk.MenuItem( 'Reset to "failed"' )
+        reset_failed_item = gtk.ImageMenuItem( '"failed"' )
+        reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
+        reset_failed_item.set_image(reset_img)
         reset_menu.append( reset_failed_item )
         reset_failed_item.connect( 'button-press-event', self.reset_task_state, task_id, 'failed' )
 
@@ -1939,10 +1960,9 @@ shown here in the state they were in at the time of triggering.''' )
         #    info_dialog( result.reason, self.window ).inform()
 
     def reload_suite( self, w ):
-        msg = """Reload the suite definition (EXPERIMENTAL!)
-This allows you change task runtime config items
-and add or remove task definitions
-without restarting the suite."""
+        msg = """Reload the suite definition.
+This allows you change task runtime configuration and add
+or remove task definitions without restarting the suite."""
         prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL,
                                     gtk.MESSAGE_QUESTION,
                                     gtk.BUTTONS_OK_CANCEL, msg )
@@ -1975,9 +1995,9 @@ without restarting the suite."""
         if not result:
             warning_dialog( 'Failed to nudge the suite', self.window ).warn()
 
-    def popup_logview( self, task_id, logfiles, jsonly ):
-        # TO DO: jsonly is dirty hack to separate the task Job script from
-        # task log files; we should do this properly by storing them
+    def popup_logview( self, task_id, logfiles, choice='stdout' ):
+        # TO DO: choice is dirty hack to separate the task job script,
+        # stdout, and stderr file; we should do this properly by storing them
         # separately in the task proxy, or at least separating them in
         # the suite state summary.
         window = gtk.Window()
@@ -1988,25 +2008,30 @@ without restarting the suite."""
         window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         logs = []
         jsfound = False
+        err = []
+        out = []
         for f in logfiles:
-            if f.endswith('.err') or f.endswith('.out'):
-                logs.append(f)
+            if f.endswith('.err'):
+                err.append(f)
+            elif f.endswith('.out'):
+                out.append(f)
             else:
-                jsfound = True
                 js = f
 
+        # for re-tries this sorts in time order due to filename:
+        err.sort( reverse=True )
+        out.sort( reverse=True )
         window.set_size_request(800, 300)
-        if jsonly:
-            window.set_title( task_id + ": Task Job Submission Script" )
-            if jsfound:
-                lv = textload( task_id, js )
-            else:
-                # This should not happen anymore!
-                pass
+        if choice == 'job script':
+            window.set_title( task_id + ": Task Job Script" )
+            lv = textload( task_id, js )
 
         else:
-            # put '.out' before '.err'
-            logs.sort( reverse=True )
+            if choice == 'stdout':
+                logs = out + err
+            elif choice == 'stderr':
+                logs = err + out
+
             window.set_title( task_id + ": Task Logs" )
             lv = combo_logviewer( task_id, logs )
         #print "ADDING to quitters: ", lv

@@ -615,12 +615,6 @@ class scheduler(object):
             clocktriggered.clocktriggered.clock = self.clock
             self.pyro.connect( self.clock, 'clock' )
 
-        # PIMP THE SUITE LOG
-        self.log = logging.getLogger( 'main' )
-        pimp_my_logger.pimp_it( self.log, self.logging_dir,
-               self.config['cylc']['logging']['roll over at start-up'], 
-               self.logging_level, self.clock )
-
         # STATE DUMP ROLLING ARCHIVE
         arclen = self.config[ 'cylc']['state dumps']['number of backups' ]
         self.state_dump_archive = rolling_archive( self.state_dump_filename, arclen )
@@ -630,6 +624,11 @@ class scheduler(object):
             # (note: passing in self to give access to task pool methods is a bit clunky?).
             self.remote = remote_switch( self.config, self.clock, self.suite_dir, self )
             self.pyro.connect( self.remote, 'remote' )
+            # PIMP THE SUITE LOG
+            self.log = logging.getLogger( 'main' )
+            pimp_my_logger.pimp_it( self.log, self.logging_dir,
+               self.config['cylc']['logging']['roll over at start-up'], 
+               self.logging_level, self.clock )
         else:
             self.remote.config = self.config
 
