@@ -18,6 +18,7 @@
 
 import subprocess
 import os, sys, re
+from Pyro.errors import ConnectionDeniedError
 from Jinja2Support import Jinja2Process, TemplateSyntaxError, TemplateError
 from include_files import inline
 from version import cylc_version, cylc_dir
@@ -196,6 +197,10 @@ class compat_pyro( compat ):
         try:
             proxy = client( self.suite, pphrase, owner, host, pyro_timeout ).get_proxy( 'remote' )
             self.required_version = proxy.get_cylc_version()
+        except ConnectionDeniedError,x:
+            raise SystemExit( 'ERROR, Connection Denied: ' + str(x) )
+            if debug:
+                raise
         except Exception, x:
             if debug:
                 raise
