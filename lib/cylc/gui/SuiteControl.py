@@ -1960,10 +1960,9 @@ shown here in the state they were in at the time of triggering.''' )
         #    info_dialog( result.reason, self.window ).inform()
 
     def reload_suite( self, w ):
-        msg = """Reload the suite definition (EXPERIMENTAL!)
-This allows you change task runtime config items
-and add or remove task definitions
-without restarting the suite."""
+        msg = """Reload the suite definition.
+This allows you change task runtime configuration and add
+or remove task definitions without restarting the suite."""
         prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL,
                                     gtk.MESSAGE_QUESTION,
                                     gtk.BUTTONS_OK_CANCEL, msg )
