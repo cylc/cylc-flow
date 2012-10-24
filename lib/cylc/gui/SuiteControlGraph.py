@@ -262,7 +262,7 @@ Dependency graph suite control interface.
         
         self.menu_landscape_item = gtk.CheckMenuItem( 'Toggle _Landscape Mode' )
         items.append( self.menu_landscape_item )
-        self.menu_landscape_item.set_active( self.x.landscape_mode )
+        self.menu_landscape_item.set_active( self.x.orientation == "LR" )
         self.menu_landscape_item.connect( 'activate', self.toggle_landscape_mode )
         return items
 
@@ -337,7 +337,11 @@ Dependency graph suite control interface.
         self.x.action_required = True
 
     def toggle_landscape_mode( self, w ):
-        self.x.landscape_mode = not self.x.landscape_mode
+        """Change the orientation of the graph - 'portrait' or 'landscape'."""
+        if self.x.orientation == "TB":  # Top -> bottom ordering
+            self.x.orientation = "LR"  # Left -> right ordering
+        elif self.x.orientation == "LR":
+            self.x.orientation = "TB"
         self.x.action_required = True
 
     def toggle_key( self, w ):

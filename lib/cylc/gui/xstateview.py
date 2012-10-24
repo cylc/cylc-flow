@@ -74,7 +74,7 @@ class xupdater(threading.Thread):
         self.action_required = True
         self.oldest_ctime = None
         self.newest_ctime = None
-        self.landscape_mode = False
+        self.orientation = "TB"  # Top to Bottom ordering of nodes, by default.
         self.show_key = False # graph key visibility default
         self.best_fit = False
         self.crop = False
@@ -563,10 +563,7 @@ class xupdater(threading.Thread):
         if self.show_key:
             self.add_graph_key()
 
-        if self.landscape_mode:
-            self.graphw.graph_attr['rankdir'] = 'LR'
-        else:
-            self.graphw.graph_attr['rankdir'] = 'TB'
+        self.graphw.graph_attr['rankdir'] = self.orientation
 
         # process extra nodes (important nodes outside of focus range,
         # and family members that aren't plotted in the main graph).

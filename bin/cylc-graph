@@ -139,7 +139,7 @@ parser.add_option( "-n", "--namespaces",
 parser.add_option( "-l", "--landscape",
     help="Plot in landscape mode instead of portrait (the default)."
     "Cannot be used in conjunction with -f, --file",
-    action="store_true", default=False, dest="landscape")
+    action="store_true", default=False, dest="landscape" )
 
 parser.add_option( "-f", "--file", 
     help="View a specific dot-language graphfile.",
@@ -180,12 +180,17 @@ prep = prep_file( args[0], options )
 suite, suiterc = prep.execute()
 watchers = prep.get_rcfiles()
 
+if options.landscape:
+    orientation = "LR"
+else:
+    orientation = "TB"
+
 # parse and plot the suite.rc dependency graph
 if len(args) < 1 or len(args) > 3:
     parser.error( "Argument list should be: SUITE [START [STOP]]" )
 
 if options.namespaces:
-    window = MyDotWindow2( suite, suiterc, watchers, options.outputfile, options.landscape )
+    window = MyDotWindow2( suite, suiterc, watchers, options.outputfile, orientation )
 else:
     # SUITE DEPENDENCY GRAPH
 
@@ -216,7 +221,7 @@ else:
         raw = True
 
     window = MyDotWindow( suite, suiterc, watchers, start_ctime, stop_ctime, raw, options.outputfile,
-                          options.landscape )
+                          orientation )
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 

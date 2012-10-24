@@ -44,13 +44,13 @@ class MyDotWindow2( xdot.DotWindow ):
         </toolbar>
     </ui>
     '''
-    def __init__(self, suite, suiterc, watch, outfile=None, landscape_mode=False ):
+    def __init__(self, suite, suiterc, watch, outfile=None, orientation="TB" ):
         self.outfile = outfile
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
         self.watch = []
-        self.landscape_mode = landscape_mode
+        self.orientation = orientation
 
         gtk.Window.__init__(self)
 
@@ -106,7 +106,7 @@ class MyDotWindow2( xdot.DotWindow ):
         uimanager.add_ui_from_string(self.ui)
 
         landscape_toolitem = uimanager.get_widget('/ToolBar/Landscape')
-        landscape_toolitem.set_active(self.landscape_mode)
+        landscape_toolitem.set_active(self.orientation == "LR")
 
         # Create a Toolbar
 
@@ -163,8 +163,7 @@ class MyDotWindow2( xdot.DotWindow ):
     def get_graph( self ):
         title = self.suite + ' runtime namespace inheritance graph'
         graph = CGraphPlain( title )
-        if self.landscape_mode:
-            graph.graph_attr['rankdir'] = 'LR'
+        graph.graph_attr['rankdir'] = self.orientation
         for ns in self.inherit:
             if self.inherit[ns]:
                 attr = {}
@@ -186,13 +185,17 @@ class MyDotWindow2( xdot.DotWindow ):
                 print >> sys.stderr, x
                 self.disable_output_image = True
 
-    def on_landscape(self, toolitem):
-        self.set_landscape(toolitem.get_active())
+    def on_landscape( self, toolitem ):
+        if toolitem.get_active():
+            self.set_orientation( "LR" )  # Left to right ordering of nodes
+        else:
+            self.set_orientation( "TB" )  # Top to bottom (default) ordering
 
-    def set_landscape(self, landscape_mode):
-        if landscape_mode == self.landscape_mode:
+    def set_orientation( self, orientation="TB" ):
+        """Set the orientation of the graph node ordering."""
+        if orientation == self.orientation:
             return False
-        self.landscape_mode = landscape_mode
+        self.orientation = orientation
         self.get_graph()
 
     def update(self):
@@ -241,7 +244,7 @@ class MyDotWindow( xdot.DotWindow ):
     </ui>
     '''
     def __init__(self, suite, suiterc, watch, ctime, stop_after, raw, outfile=None,
-                 landscape_mode=False ):
+                 orientation="TB" ):
         self.outfile = outfile
         self.disable_output_image = False
         self.suite = suite
@@ -250,7 +253,7 @@ class MyDotWindow( xdot.DotWindow ):
         self.raw = raw
         self.stop_after = stop_after
         self.watch = []
-        self.landscape_mode = landscape_mode
+        self.orientation = orientation
 
         gtk.Window.__init__(self)
 
@@ -305,6 +308,9 @@ class MyDotWindow( xdot.DotWindow ):
 
         # Add a UI descrption
         uimanager.add_ui_from_string(self.ui)
+
+        landscape_toolitem = uimanager.get_widget('/ToolBar/Landscape')
+        landscape_toolitem.set_active(self.orientation == "LR")
 
         # Create a Toolbar
 
@@ -382,8 +388,7 @@ class MyDotWindow( xdot.DotWindow ):
                 ungroup_recursive=ungroup_recursive, 
                 group_all=group_all, ungroup_all=ungroup_all )
 
-        if self.landscape_mode:
-            graph.graph_attr['rankdir'] = 'LR'
+        graph.graph_attr['rankdir'] = self.orientation
 
         for node in graph.nodes():
             name, tag = node.get_name().split('%')
@@ -401,13 +406,17 @@ class MyDotWindow( xdot.DotWindow ):
                 print >> sys.stderr, x
                 self.disable_output_image = True
 
-    def on_landscape(self, toolitem):
-        self.set_landscape(toolitem.get_active())
+    def on_landscape( self, toolitem ):
+        if toolitem.get_active():
+            self.set_orientation( "LR" )  # Left to right ordering of nodes
+        else:
+            self.set_orientation( "TB" )  # Top to bottom (default) ordering
 
-    def set_landscape(self, landscape_mode):
-        if landscape_mode == self.landscape_mode:
+    def set_orientation( self, orientation="TB" ):
+        """Set the orientation of the graph node ordering."""
+        if orientation == self.orientation:
             return False
-        self.landscape_mode = landscape_mode
+        self.orientation = orientation
         self.get_graph()
 
     def update(self):
