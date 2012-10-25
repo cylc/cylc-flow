@@ -74,6 +74,7 @@ class xupdater(threading.Thread):
         self.action_required = True
         self.oldest_ctime = None
         self.newest_ctime = None
+        self.orientation = "TB"  # Top to Bottom ordering of nodes, by default.
         self.show_key = False # graph key visibility default
         self.best_fit = False # If True, xdot will zoom to page size
         self.normal_fit = False # if True, xdot will zoom to 1.0 scale
@@ -600,6 +601,8 @@ class xupdater(threading.Thread):
         if self.show_key:
             # This is protected against redraw.
             self.add_graph_key()
+
+        self.graphw.graph_attr['rankdir'] = self.orientation
 
         # process extra nodes (important nodes outside of focus range,
         # and family members that aren't plotted in the main graph).

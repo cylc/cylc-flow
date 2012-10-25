@@ -519,33 +519,37 @@ def userguide( w ):
     update_tb( tb, "\n o (Graph View) Focus Reset: ", [bold])
     update_tb( tb, "Reset any cycle time focusing and show the whole graph." )
   
-    update_tb( tb, "\n o View Job Script: ", [bold])
-    update_tb( tb, "View the script used to submit this task to run." )
-    update_tb( tb, "\n o View Output: ", [bold])
-    update_tb( tb, "View task stdout and stderr logs in real time." )
-    update_tb( tb, "\n o View Task Info: ", [bold])
-    update_tb( tb, "View a task's description and the current state "
+    update_tb( tb, "\n o View ", [bold])
+    update_tb( tb, "\n     - stdout log: ", [bold])
+    update_tb( tb, "View the task's standard output log" )
+    update_tb( tb, "\n     - stderr log: ", [bold])
+    update_tb( tb, "View the task's standard error log" )
+    update_tb( tb, "\n     - job script: ", [bold])
+    update_tb( tb, "View the script generated to run this task" )
+    update_tb( tb, "\n     - prereqs & outputs: ", [bold])
+    update_tb( tb, "View task description and the current state "
             "of its prerequisites and outputs.")
-    update_tb( tb, "\n o View State: ", [bold])
-    update_tb( tb, "View the current state of a task's prerequisites "
-            "and outputs.")
+    update_tb( tb, "\n     - run 'cylc show': ", [bold])
+    update_tb( tb, "Run the 'cylc show' command on this task.")
     update_tb( tb, "\n o Trigger: ", [bold])
     update_tb( tb, "Set a task's prerequisites satisfied "
             "and, for clock-triggered tasks, ignore the trigger time. "
             "This will cause the task to trigger immediately (NOTE: "
             "if the suite is held (paused) the task will trigger when "
             "the hold is released)." )
-    update_tb( tb, "\n o Reset to 'ready': ", [bold])
+    update_tb( tb, "\n o Reset State: ", [bold])
+    update_tb( tb, "\n     - 'ready': ", [bold])
     update_tb( tb, "Set a task's prerequisites satisfied."
             "This is equivalent to 'Trigger' for non clock-triggered "
             "tasks (NOTE: if the suite is held (paused) the task will "
             "trigger when the hold is released)." )
-    update_tb( tb, "\n o Reset to 'waiting': ", [bold])
+    update_tb( tb, "\n     - 'waiting': ", [bold])
     update_tb( tb, "Set all of a task's prerequisites unsatisfied." )
-    update_tb( tb, "\n o Reset to 'succeeded': ", [bold])
+    update_tb( tb, "\n      - 'succeeded': ", [bold])
     update_tb( tb, "Set all of a task's outputs completed." )
-    update_tb( tb, "\n o Reset to 'failed': ", [bold])
+    update_tb( tb, "\n      - 'failed': ", [bold])
     update_tb( tb, "Put the task in the 'failed' state." )
+
     update_tb( tb, "\n o Force Spawn: ", [bold])
     update_tb( tb, "Force the task to spawn a successor if it hasn't done so already." )
 
