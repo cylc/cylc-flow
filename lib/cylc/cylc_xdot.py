@@ -514,12 +514,17 @@ class xdot_widgets(object):
     def set_filter(self, filter):
         self.widget.set_filter(filter)
 
-    def set_dotcode(self, dotcode, filename='<stdin>'):
+    def set_dotcode(self, dotcode, filename='<stdin>', no_zoom=False):
+        if no_zoom:
+            old_zoom_func = self.widget.zoom_image
+            self.widget.zoom_image = lambda *a, **b: self.widget.queue_draw()
         if self.widget.set_dotcode(dotcode, filename):
             #self.set_title(os.path.basename(filename) + ' - Dot Viewer')
             # disable automatic zoom-to-fit on update
             #self.widget.zoom_to_fit()
             pass
+        if no_zoom:
+            self.widget.zoom_image = old_zoom_func
 
     def set_xdotcode(self, xdotcode, filename='<stdin>'):
         if self.widget.set_xdotcode(xdotcode):
