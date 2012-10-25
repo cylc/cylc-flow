@@ -634,5 +634,9 @@ class xupdater(threading.Thread):
 
     def get_graph_id( self, edges, extra_ids ):
         """If any of these quantities change, the graph should be redrawn."""
+        states = self.state_filter
+        if self.state_filter:
+            states = set(self.state_filter)
         return ( set( edges ), set( extra_ids ), self.show_key, self.crop,
-                 self.filter_exclude, self.filter_include, self.state_filter )
+                 self.filter_exclude, self.filter_include, states,
+                 self.orientation )
