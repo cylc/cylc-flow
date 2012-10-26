@@ -36,7 +36,7 @@ class broadcast( Pyro.core.ObjBase ):
         self.log = logging.getLogger('main')
         self.settings = {}
         self.family_hierarchy = family_hierarchy
-        self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc.spec')
+        self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc-runtime.spec')
         Pyro.core.ObjBase.__init__(self)
 
     def validate( self, settings ):

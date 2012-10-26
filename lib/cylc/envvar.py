@@ -35,3 +35,14 @@ def check_varnames( env ):
             bad.append(varname)
     return bad
 
+def expandvars( item, owner=None ):
+    if owner:
+        homedir = os.path.expanduser( '~' + owner )
+    else:
+        homedir = os.environ[ 'HOME' ]
+    # first replace '$HOME' with actual home dir
+    item = item.replace( '$HOME', homedir )
+    # now expand any other environment variable or tilde-username
+    item = os.path.expandvars( os.path.expanduser( item ))
+    return item
+
