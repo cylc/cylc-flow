@@ -1019,3 +1019,7 @@ finished" trigger (all members finished and at least one succeeded):
 of naked dummy tasks (tasks with no explicit runtime config) resulting
 from misspelled task names.
 
++ optional gcontrol landscape graph view
+
++ gcontrol graph-view redraw reduced.
+
