@@ -278,10 +278,10 @@ class tupdater(threading.Thread):
                     dest[ ctime ] = {}
                 state = summary[ id ].get( 'state' )
                 message = summary[ id ].get( 'latest_message', )
-                tsub = summary[ id ].get( 'submitted_time' )
-                tstt = summary[ id ].get( 'started_time' )
-                meant = summary[ id ].get( 'mean total elapsed time' )
-                tetc = summary[ id ].get( 'Tetc' )
+                tsub = _time_trim( summary[ id ].get( 'submitted_time' ) )
+                tstt = _time_trim( summary[ id ].get( 'started_time' ) )
+                meant = _time_trim( summary[ id ].get( 'mean total elapsed time' ) )
+                tetc = _time_trim( summary[ id ].get( 'Tetc' ) )
                 priority = summary[ id ].get( 'latest_message_priority' )
                 if message is not None:
                     message = markup( get_col_priority( priority ), message )
@@ -902,3 +902,8 @@ class DotGetter(object):
         img.set_from_pixbuf( self.get_icon( state ) )
         return img
 
+
+def _time_trim(time_value):
+    if time_value is not None:
+        return time_value.rsplit(".", 1)[0]
+    return time_value
