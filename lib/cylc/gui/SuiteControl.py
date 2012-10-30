@@ -264,7 +264,8 @@ Class to create an information bar.
         if time == self._time:
             return False
         self._time = time
-        gobject.idle_add( self.time_widget.set_text, self._time.strip() + " " )
+        time_for_display = time.strip().rsplit(".", 1)[0]
+        gobject.idle_add( self.time_widget.set_text, time_for_display + " " )
 
     def _set_tooltip(self, widget, text):
         tooltip = gtk.Tooltips()
