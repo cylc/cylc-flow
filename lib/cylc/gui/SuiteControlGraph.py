@@ -181,8 +181,6 @@ Dependency graph suite control interface.
         menu.append( ungroup_rec_item )
 
         if type == 'live task':
-            menu.append( gtk.SeparatorMenuItem() )
-            
             is_fam = (name in self.x.families)
             default_menu = self.get_right_click_menu( task_id, hide_task=True,
                                                       task_is_family=is_fam )
