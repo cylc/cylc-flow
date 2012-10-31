@@ -219,7 +219,7 @@ class task( Pyro.core.ObjBase ):
         self.submission_timer_start = self.submitted_time
         handler = self.__class__.event_handlers['submitted']
         if handler:
-            RunHandler( 'submitted', handler, self.__class__.suite, self.id, '(task submitted)' )
+            RunHandler( 'submitted', handler, self.__class__.suite, self.id, 'task submitted' )
 
     def set_running( self ):
         self.state.set_status( 'running' )
@@ -228,7 +228,7 @@ class task( Pyro.core.ObjBase ):
         self.execution_timer_start = self.started_time
         handler = self.__class__.event_handlers['started']
         if handler:
-            RunHandler( 'started', handler, self.__class__.suite, self.id, '(task started)' )
+            RunHandler( 'started', handler, self.__class__.suite, self.id, 'task started' )
 
     def set_succeeded( self ):
         self.outputs.set_all_completed()
@@ -242,16 +242,16 @@ class task( Pyro.core.ObjBase ):
         self.state.set_status( 'succeeded' )
         handler = self.__class__.event_handlers['succeeded']
         if handler:
-            RunHandler( 'succeeded', handler, self.__class__.suite, self.id, '(task succeeded)' )
+            RunHandler( 'succeeded', handler, self.__class__.suite, self.id, 'task succeeded' )
 
-    def set_failed( self, reason='(task failed)' ):
+    def set_failed( self, reason='task failed' ):
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
         handler = self.__class__.event_handlers['failed']
         if handler:
             RunHandler( 'failed', handler, self.__class__.suite, self.id, reason )
 
-    def set_submit_failed( self, reason='(job submission failed)' ):
+    def set_submit_failed( self, reason='job submission failed' ):
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
         handler = self.__class__.event_handlers['submission failed']
@@ -385,7 +385,7 @@ class task( Pyro.core.ObjBase ):
         if self.submission_timer_start != None and not self.state.is_running():
             cutoff = self.submission_timer_start + datetime.timedelta( minutes=timeout )
             if current_time > cutoff:
-                msg = 'submitted ' + str( timeout ) + ' minutes ago, but has not started'
+                msg = 'task submitted ' + str( timeout ) + ' minutes ago, but has not started'
                 self.log( 'WARNING', msg )
                 RunHandler( 'submission_timeout', handler, self.__class__.suite, self.id, msg )
                 self.submission_timer_start = None
@@ -405,7 +405,7 @@ class task( Pyro.core.ObjBase ):
                 if self.reset_timer:
                     msg = 'last message ' + str( timeout ) + ' minutes ago, but has not succeeded'
                 else:
-                    msg = 'started ' + str( timeout ) + ' minutes ago, but has not succeeded'
+                    msg = 'task started ' + str( timeout ) + ' minutes ago, but has not succeeded'
                 self.log( 'WARNING', msg )
                 RunHandler( 'execution_timeout', handler, self.__class__.suite, self.id, msg )
                 self.execution_timer_start = None
@@ -496,7 +496,7 @@ class task( Pyro.core.ObjBase ):
                 self.outputs.add( message )
                 self.outputs.set_completed( message )
                 # (this also calls the task failure handler):
-                self.set_failed( message )
+                self.set_failed()
             else:
                 # There is a retry lined up
                 self.plog( 'Setting retry delay: ' + str(self.retry_delay) +  ' minutes' )
@@ -508,7 +508,7 @@ class task( Pyro.core.ObjBase ):
                 # Handle retry events
                 handler = self.__class__.event_handlers['retry']
                 if handler:
-                    RunHandler( 'retry', handler, self.__class__.suite, self.id, '(task retrying)' )
+                    RunHandler( 'retry', handler, self.__class__.suite, self.id, 'task retrying' )
 
         elif self.outputs.exists( message ):
             # Received a registered internal output message

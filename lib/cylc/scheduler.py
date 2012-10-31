@@ -378,7 +378,7 @@ class scheduler(object):
             else:
                 foreground = False
             try:
-                RunHandler( 'startup', handler, self.suite, msg='suite starting', fg=foreground )
+                RunHandler( 'startup', handler, self.suite, msg='Suite starting', fg=foreground )
             except Exception, x:
                 # Note: test suites depends on this message:
                 print >> sys.stderr, '\nERROR: startup EVENT HANDLER FAILED'
@@ -923,7 +923,7 @@ class scheduler(object):
                 else:
                     foreground = False
                 try:
-                    RunHandler( 'timeout', handler, self.suite, msg='suite starting', fg=foreground )
+                    RunHandler( 'timeout', handler, self.suite, msg=message, fg=foreground )
                 except Exception, x:
                     # Note: tests suites depend on the following message:
                     print >> sys.stderr, '\nERROR: timeout EVENT HANDLER FAILED'
