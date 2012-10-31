@@ -411,15 +411,10 @@ def userguide( w ):
     update_tb( tb, " (showing the dependency structure of the suite, with "
             "collapsible task families)." )
     
-    update_tb( tb, "\n\nTask coloring ", [bold] )
+    update_tb( tb, "\n\nDifferent task colors ", [bold] )
     
-    update_tb( tb, "indicates state: "
-            "light blue=waiting, orange=submitted, green=running, "
-            "gray=succeeded, red=failed, yellow=held, dark blue=runahead-held, "
-            "purple=internal-queued. Additionally, in the graph view off-white "
-            "\"base graph\" nodes are not currently represented by live proxies "
-            "in the running suite but are plotted just to complete the graph "
-            "structure." )
+    update_tb( tb, "represent different task states of live task proxies in the suite. "
+            "See 'gcontrol --help' for how to select or define color palettes." )
 
     update_tb( tb, 
             "\n\nRight-click on tasks in any view for task control "

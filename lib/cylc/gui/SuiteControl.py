@@ -33,7 +33,7 @@ from cylc.gui.SuiteControlGraph import ControlGraph
 from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
 from cylc.gui.graph import graph_suite_popup
-from cylc.gui.stateview import DotGetter
+from cylc.gui.stateview import DotMaker
 from cylc.gui.util import get_icon, get_image_dir, get_logo
 from cylc import cylc_pyro_client
 from cylc.port_scan import SuiteIdentificationError
@@ -105,13 +105,15 @@ class InfoBar(gtk.VBox):
 Class to create an information bar.
     """
 
-    def __init__( self, host, imagedir, 
+    def __init__( self, host, usercfg, 
                   status_changed_hook=lambda s: False ):
         super(InfoBar, self).__init__()
 
         self.host = host
 
-        self.dots = DotGetter( imagedir )
+        theme = usercfg['use theme']
+        self.dots = DotMaker( usercfg['themes'][theme] )
+
         self._suite_states = ["empty"]
         self.state_widget = gtk.HBox()
         self._set_tooltip( self.state_widget, "states" )  
@@ -289,14 +291,14 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     VIEW_ICON_PATHS = { "graph": "/icons/tab-graph.xpm",
                         "dot": "/icons/tab-led.xpm",
                         "text": "/icons/tab-tree.xpm" }
-                       
 
     def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir,
-            startup_views, pyro_timeout ):
+            startup_views, pyro_timeout, usercfg ):
 
         gobject.threads_init()
         
         self.cfg = InitData( suite, pphrase, owner, host, port, cylc_tmpdir, pyro_timeout )
+        self.usercfg = usercfg
 
         self.setup_icons()
 
@@ -522,6 +524,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         container = self.view_containers[view_num]
         self.current_views[view_num] = self.VIEWS[viewname]( 
                                                    self.cfg,
+                                                   self.usercfg,
                                                    self.info_bar,
                                                    self.get_right_click_menu,
                                                    self.log_colors )
@@ -2541,7 +2544,7 @@ For more Stop options use the Control menu.""" )
         self.run_pause_toolbutton.click_func = click_func
 
     def create_info_bar( self ):
-        self.info_bar = InfoBar( self.cfg.host, self.cfg.imagedir,
+        self.info_bar = InfoBar( self.cfg.host, self.usercfg,
                                  self._alter_status_toolbar_menu )
 
     #def check_connection( self ):

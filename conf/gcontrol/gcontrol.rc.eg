@@ -1,0 +1,12 @@
+
+# To customize your gcontrol task state color palettes copy this file to
+# $HOME/.cylc/gcontrol.rc and adapt to your needs. Then to see what themes 
+# are available: 'gcontrol -l|--list-themes'.
+
+use theme = my_theme
+
+[themes]
+    [[my_theme]] # override the 'running' color in the 'classic' theme
+        inherit = classic
+        running = "color=#ff00ff" # magenta
+

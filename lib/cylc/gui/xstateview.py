@@ -62,7 +62,7 @@ def compare_dict_of_dict( one, two ):
     return True
 
 class xupdater(threading.Thread):
-    def __init__(self, cfg, info_bar, xdot ):
+    def __init__(self, cfg, usercfg, info_bar, xdot ):
         super(xupdater, self).__init__()
 
         self.quit = False
@@ -75,7 +75,6 @@ class xupdater(threading.Thread):
         self.oldest_ctime = None
         self.newest_ctime = None
         self.orientation = "TB"  # Top to Bottom ordering of nodes, by default.
-        self.show_key = False # graph key visibility default
         self.best_fit = False # If True, xdot will zoom to page size
         self.normal_fit = False # if True, xdot will zoom to 1.0 scale
         self.crop = False
@@ -86,6 +85,7 @@ class xupdater(threading.Thread):
         self.prev_graph_id = ()
 
         self.cfg = cfg
+        self.usercfg = usercfg
         self.info_bar = info_bar
         self.stop_summary = None
 
@@ -106,6 +106,7 @@ class xupdater(threading.Thread):
         self.ungroup_all = False
 
         self.graph_frame_count = 0
+        self.theme = usercfg['themes'][ usercfg['use theme'] ]
 
     def reconnect( self ):
 
@@ -284,89 +285,6 @@ class xupdater(threading.Thread):
             self.xdot.widget.zoom_image( 1.0, center=True )
             self.normal_fit = False
 
-    def add_graph_key(self):
-        try:
-            self.graphw.get_node( 'retry_delayed' )
-        except KeyError:
-            pass
-        else:
-            # Already exists, assume the key has already been added.
-            return False
-
-        self.graphw.cylc_add_node( 'waiting', True )
-        self.graphw.cylc_add_node( 'retry_delayed', True )
-        self.graphw.cylc_add_node( 'runahead', True )
-        self.graphw.cylc_add_node( 'queued', True )
-        self.graphw.cylc_add_node( 'submitted', True )
-        self.graphw.cylc_add_node( 'running', True )
-        self.graphw.cylc_add_node( 'succeeded', True )
-        self.graphw.cylc_add_node( 'failed', True )
-        self.graphw.cylc_add_node( 'held', True )
-        self.graphw.cylc_add_node( 'base', True )
-        self.graphw.cylc_add_node( 'runtime family', True )
-        self.graphw.cylc_add_node( 'trigger family', True )
-
-        waiting = self.graphw.get_node( 'waiting' )
-        retry_delayed = self.graphw.get_node( 'retry_delayed' )
-        runahead = self.graphw.get_node( 'runahead' )
-        queued = self.graphw.get_node( 'queued' )
-        submitted = self.graphw.get_node( 'submitted' )
-        running = self.graphw.get_node( 'running' )
-        succeeded = self.graphw.get_node( 'succeeded' )
-        failed = self.graphw.get_node( 'failed' )
-        held = self.graphw.get_node( 'held' )
-        base = self.graphw.get_node( 'base' )
-        family = self.graphw.get_node( 'runtime family' )
-        grfamily = self.graphw.get_node( 'trigger family' )
-
-
-        for node in [ waiting, retry_delayed, runahead, queued, submitted, running, succeeded, failed, held, base, family, grfamily ]:
-            node.attr['style'] = 'filled'
-            node.attr['shape'] = 'ellipse'
-            node.attr['URL'] = 'KEY'
-
-        family.attr['shape'] = 'doublecircle'
-        grfamily.attr['shape'] = 'doubleoctagon'
-
-        waiting.attr['fillcolor'] = 'cadetblue2'
-        waiting.attr['color'] = 'cadetblue4'
-
-        retry_delayed.attr['fillcolor'] = 'pink'
-        retry_delayed.attr['color'] = 'red'
-
-        runahead.attr['fillcolor'] = 'cadetblue'
-        runahead.attr['color'] = 'cadetblue4'
-        queued.attr['fillcolor'] = 'purple'
-        queued.attr['color'] = 'purple'
-        submitted.attr['fillcolor'] = 'orange'
-        submitted.attr['color'] = 'darkorange3'
-        running.attr['fillcolor'] = 'green'
-        running.attr['color'] = 'darkgreen'
-        succeeded.attr['fillcolor'] = 'grey'
-        succeeded.attr['color'] = 'black'
-        failed.attr['fillcolor'] = 'red'
-        failed.attr['color'] = 'firebrick3'
-        base.attr['fillcolor'] = 'cornsilk'
-        base.attr['color'] = 'black'
-        family.attr['fillcolor'] = 'cornsilk'
-        family.attr['color'] = 'black'
-        grfamily.attr['fillcolor'] = 'cornsilk'
-        grfamily.attr['color'] = 'black'
-        held.attr['fillcolor'] = 'yellow'
-        held.attr['color'] = 'black'
-
-        self.graphw.cylc_add_edge( waiting, submitted, False, style='invis')
-        self.graphw.cylc_add_edge( submitted, running, False, style='invis')
-        self.graphw.cylc_add_edge( running, runahead, False, style='invis')
-
-        self.graphw.cylc_add_edge( succeeded, failed, False, style='invis')
-        self.graphw.cylc_add_edge( failed, held, False, style='invis')
-        self.graphw.cylc_add_edge( held, queued, False, style='invis')
-
-        self.graphw.cylc_add_edge( retry_delayed, base, False, style='invis')
-        self.graphw.cylc_add_edge( base, grfamily, False, style='invis')
-        self.graphw.cylc_add_edge( grfamily, family, False, style='invis')
-
     def set_live_node_attr( self, node, id, shape=None ):
         # override base graph URL to distinguish live tasks
         node.attr['URL'] = id
@@ -374,33 +292,11 @@ class xupdater(threading.Thread):
             state = self.state_summary[id]['state']
         else:
             state = self.fam_state_summary[id]['state']
-        if state == 'submitted':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'orange'
-        elif state == 'running':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'green'
-        elif state == 'waiting':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'cadetblue2'
-        elif state == 'retry_delayed':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'pink'
-        elif state == 'succeeded':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'grey'
-        elif state == 'failed':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'red'
-        elif state == 'held':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'yellow'
-        elif state == 'runahead':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'cadetblue'
-        elif state == 'queued':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'purple'
+
+        node.attr['style'    ] = 'bold,' + self.theme[state]['style']
+        node.attr['fillcolor'] = self.theme[state]['color']
+        node.attr['color'    ] = self.theme[state]['color' ]
+        node.attr['fontcolor'] = self.theme[state]['fontcolor']
 
         if shape:
             node.attr['shape'] = shape
@@ -484,9 +380,11 @@ class xupdater(threading.Thread):
                     arrowhead='onormal'
                 self.graphw.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead )
 
-        for n in self.graphw.nodes():
+        for n in self.graphw.nodes(): # base node defaults
             n.attr['style'] = 'filled'
-            n.attr['fillcolor'] = 'cornsilk'
+            n.attr['color'] = '#888888'
+            n.attr['fillcolor'] = 'white'
+            n.attr['fontcolor'] = '#888888'
 
         self.group = []
         self.ungroup = []
@@ -598,10 +496,6 @@ class xupdater(threading.Thread):
         # TO DO: ?optional transitive reduction:
         # self.graphw.tred()
 
-        if self.show_key:
-            # This is protected against redraw.
-            self.add_graph_key()
-
         self.graphw.graph_attr['rankdir'] = self.orientation
 
         # process extra nodes (important nodes outside of focus range,
@@ -637,6 +531,6 @@ class xupdater(threading.Thread):
         states = self.state_filter
         if self.state_filter:
             states = set(self.state_filter)
-        return ( set( edges ), set( extra_ids ), self.show_key, self.crop,
+        return ( set( edges ), set( extra_ids ), self.crop,
                  self.filter_exclude, self.filter_include, states,
                  self.orientation )
