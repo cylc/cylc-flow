@@ -378,7 +378,7 @@ class scheduler(object):
             else:
                 foreground = False
             try:
-                RunHandler( 'startup', handler, self.suite, msg='Suite starting', fg=foreground )
+                RunHandler( 'startup', handler, self.suite, msg='suite starting', fg=foreground )
             except Exception, x:
                 # Note: test suites depends on this message:
                 print >> sys.stderr, '\nERROR: startup EVENT HANDLER FAILED'
@@ -913,7 +913,7 @@ class scheduler(object):
         timeout = self.suite_timer_start + datetime.timedelta( minutes=self.config.suite_timeout )
         handler = self.config.event_handlers['timeout']
         if now > timeout:
-            message = 'Suite timed out after ' + str( self.config.suite_timeout) + ' minutes' 
+            message = 'suite timed out after ' + str( self.config.suite_timeout) + ' minutes' 
             self.log.warning( message )
             if handler:
                 # a handler is defined
