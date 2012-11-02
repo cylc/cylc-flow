@@ -1,0 +1,15 @@
+
+# gcontrol user configuration defaults
+
+# suport multiple palettes rather than just allowing users to override
+# a single default palette, so that we can have pre-configured high
+# contrast and color-blind palettes, for example.
+
+use theme = string( default="classic" )
+
+[themes]
+    [[__many__]]
+        inherit = string( default=None )
+        defaults = force_list( default=list() )
+        __many__ = force_list( default=list() )
+

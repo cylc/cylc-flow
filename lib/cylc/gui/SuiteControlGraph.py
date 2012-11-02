@@ -31,9 +31,10 @@ class ControlGraph(object):
     """
 Dependency graph suite control interface.
     """
-    def __init__(self, cfg, info_bar, get_right_click_menu, log_colors ):
+    def __init__(self, cfg, usercfg, info_bar, get_right_click_menu, log_colors ):
 
         self.cfg = cfg
+        self.usercfg = usercfg
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
         self.log_colors = log_colors
@@ -46,7 +47,7 @@ Dependency graph suite control interface.
         self.last_url = None
 
     def get_control_widgets( self ):
-        self.x = xupdater( self.cfg, self.info_bar, self.xdot )
+        self.x = xupdater( self.cfg, self.usercfg, self.info_bar, self.xdot )
         self.x.start()
         return self.xdot.get()
 
@@ -71,10 +72,6 @@ Dependency graph suite control interface.
     def on_url_clicked( self, widget, url, event ):
         if event.button != 3:
             return False
-
-        if url == 'KEY':
-            # graph key node
-            return
 
         m = re.match( 'base:(.*)', url )
         if m:
@@ -106,11 +103,6 @@ Dependency graph suite control interface.
             self.xdot.widget.set_tooltip_text(None)
             return False
         url = unicode(url.url)
-        if url == 'KEY':
-            # graph key node
-            self.xdot.widget.set_tooltip_text(url)
-            return False
-
         m = re.match( 'base:(.*)', url )
         if m:
             #print 'BASE GRAPH'
@@ -181,8 +173,6 @@ Dependency graph suite control interface.
         menu.append( ungroup_rec_item )
 
         if type == 'live task':
-            menu.append( gtk.SeparatorMenuItem() )
-            
             is_fam = (name in self.x.families)
             default_menu = self.get_right_click_menu( task_id, hide_task=True,
                                                       task_is_family=is_fam )
@@ -255,11 +245,6 @@ Dependency graph suite control interface.
         items.append( self.menu_ungroup_item )
         self.menu_ungroup_item.connect( 'activate', self.group_all_families, False )
 
-        key_item = gtk.CheckMenuItem( 'Toggle Graph _Key' )
-        items.append( key_item )
-        key_item.set_active( self.x.show_key )
-        key_item.connect( 'activate', self.toggle_key )
-        
         self.menu_landscape_item = gtk.CheckMenuItem( 'Toggle _Landscape Mode' )
         items.append( self.menu_landscape_item )
         self.menu_landscape_item.set_active( self.x.orientation == "LR" )
@@ -342,10 +327,6 @@ Dependency graph suite control interface.
             self.x.orientation = "LR"  # Left -> right ordering
         elif self.x.orientation == "LR":
             self.x.orientation = "TB"
-        self.x.action_required = True
-
-    def toggle_key( self, w ):
-        self.x.show_key = not self.x.show_key
         self.x.action_required = True
 
     def filter_popup( self, w ):

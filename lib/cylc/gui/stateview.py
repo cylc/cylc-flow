@@ -17,6 +17,8 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.config import config
+from cylc.task_state import task_state
+from DotMaker import DotMaker
 import cylc.dump
 import inspect
 import sys, re, string
@@ -29,6 +31,7 @@ from cylc.strftime import strftime
 import gtk
 import pygtk
 from string import zfill
+from copy import copy
 ####pygtk.require('2.0')
 
 try:
@@ -63,28 +66,9 @@ def compare_dict_of_dict( one, two ):
     return True
 
 def markup( col, string ):
-    #return string
-    return '<span foreground="' + col + '">' + string + '</span>'
+    return string
+    #return '<span foreground="' + col + '">' + string + '</span>'
 
-def get_col( state ):
-    if state == 'waiting':
-        return '#38a'
-    if state == 'retry_delayed':
-        return '#faa'
-    elif state == 'submitted':
-        return '#f83'
-    elif state == 'running':
-        return '#0a0'
-    elif state == 'failed':
-        return '#f00'
-    elif state == 'held':
-        return '#bb0'
-    elif state == 'runahead':
-        return '#216'
-    elif state == 'queued':
-        return '#9f219a'
-    else:
-        return '#000'
 
 def get_col_priority( priority ):
     if priority == 'NORMAL':
@@ -101,7 +85,7 @@ def get_col_priority( priority ):
 
 class tupdater(threading.Thread):
 
-    def __init__(self, cfg, ttreeview, ttree_paths, info_bar ):
+    def __init__(self, cfg, ttreeview, ttree_paths, info_bar, usercfg ):
 
         super(tupdater, self).__init__()
 
@@ -109,6 +93,7 @@ class tupdater(threading.Thread):
         self.autoexpand = True
 
         self.cfg = cfg
+        self.usercfg = usercfg
         self.info_bar = info_bar
 
         self.state_summary = {}
@@ -128,6 +113,13 @@ class tupdater(threading.Thread):
         self.ttreeview = ttreeview
         # Hierarchy of models: view <- sorted <- filtered <- base model
         self.ttreestore = ttreeview.get_model().get_model().get_model()
+
+        theme = usercfg['use theme']
+        dotm = DotMaker( self.usercfg['themes'][theme])
+        self.dots = {}
+        for state in task_state.allowed_status:
+            self.dots[ state ] = dotm.get_icon( state )
+        self.dots['empty'] = dotm.get_icon()
 
         self.reconnect()
 
@@ -285,8 +277,8 @@ class tupdater(threading.Thread):
                 priority = summary[ id ].get( 'latest_message_priority' )
                 if message is not None:
                     message = markup( get_col_priority( priority ), message )
-                state = markup( get_col(state), state )
-                dest[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc ]
+                icon = self.dots[state]
+                dest[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc, icon ]
 
         # print existing tree:
         #print
@@ -311,7 +303,7 @@ class tupdater(threading.Thread):
         times = new_data.keys()
         times.sort()
         for ctime in times:
-            f_data = [ None ] * 6
+            f_data = [ None ] * 7
             if "root" in new_fam_data[ctime]:
                 f_data = new_fam_data[ctime]["root"]
             piter = self.ttreestore.append(None, [ ctime, ctime ] + f_data )
@@ -335,8 +327,8 @@ class tupdater(threading.Thread):
             for named_path in task_named_paths:
                 name = named_path[-1]
                 state = new_data[ctime][name][0]
-                if state is not None:
-                    state = re.sub('<[^>]+>', '', state)
+###               if state is not None:
+###                   state = re.sub('<[^>]+>', '', state)
                 self._update_path_info( piter, state, name )
                 f_iter = piter
                 for i, fam in enumerate(named_path[:-1]):
@@ -346,7 +338,7 @@ class tupdater(threading.Thread):
                         f_iter = family_iters[fam]
                     else:
                         # Add family to tree
-                        f_data = [ None ] * 6
+                        f_data = [ None ] * 7
                         if fam in new_fam_data[ctime]:
                             f_data = new_fam_data[ctime][fam]
                         f_iter = self.ttreestore.append(
@@ -485,11 +477,9 @@ class tupdater(threading.Thread):
             pass
             ####print "Disconnecting task state info thread"
 
-
 class lupdater(threading.Thread):
 
-
-    def __init__(self, cfg, treeview, info_bar ):
+    def __init__(self, cfg, treeview, info_bar, usercfg ):
 
         super(lupdater, self).__init__()
 
@@ -499,6 +489,7 @@ class lupdater(threading.Thread):
         self.should_group_families = False
 
         self.cfg = cfg
+        self.usercfg = usercfg
         self.info_bar = info_bar
         imagedir = self.cfg.imagedir
 
@@ -518,18 +509,13 @@ class lupdater(threading.Thread):
 
         self.reconnect()
 
-        self.leds = DotGetter( imagedir )
-        self.waiting_led = self.leds.get_icon( "waiting" )
-        self.retry_delayed_led = self.leds.get_icon( "retry_delayed" )
-        self.runahead_led = self.leds.get_icon( "runahead" )
-        self.queued_led = self.leds.get_icon( "queued" )
-        self.submitted_led = self.leds.get_icon( "submitted" )
-        self.running_led = self.leds.get_icon( "running" )
-        self.failed_led = self.leds.get_icon( "failed" )
-        self.stopped_led = self.leds.get_icon( "stopped" )
-        self.succeeded_led = self.leds.get_icon( "succeeded" )
-
-        self.empty_led = self.leds.get_icon( "empty" )
+        # generate task state icons
+        theme = self.usercfg['use theme']
+        dotm = DotMaker( self.usercfg['themes'][theme])
+        self.dots = {}
+        for state in task_state.allowed_status:
+            self.dots[ state ] = dotm.get_icon( state )
+        self.dots['empty'] = dotm.get_icon()
 
         self.led_digits_one = []
         self.led_digits_two = []
@@ -796,7 +782,6 @@ class lupdater(threading.Thread):
             meant = state_summary[ id ].get( 'mean total elapsed time' )
             tetc = state_summary[ id ].get( 'Tetc' )
             priority = state_summary[ id ].get( 'latest_message_priority' )
-            state = markup( get_col(state), state )
             new_data[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc ]
 
         self.ledview_widgets()
@@ -822,26 +807,9 @@ class lupdater(threading.Thread):
             for name in self.task_list:
                 if name in tasks_at_ctime:
                     state = state_summary[ name + '%' + ctime ][ 'state' ]
-                    if state == 'waiting':
-                        state_list.append( self.waiting_led )
-                    elif state == 'retry_delayed':
-                        state_list.append( self.retry_delayed_led )
-                    elif state == 'submitted':
-                        state_list.append( self.submitted_led )
-                    elif state == 'running':
-                        state_list.append( self.running_led )
-                    elif state == 'succeeded':
-                        state_list.append( self.succeeded_led )
-                    elif state == 'failed':
-                        state_list.append( self.failed_led )
-                    elif state == 'held':
-                        state_list.append( self.stopped_led )
-                    elif state == 'runahead':
-                        state_list.append( self.runahead_led )
-                    elif state == 'queued':
-                        state_list.append( self.queued_led )
+                    state_list.append( self.dots[state] )
                 else:
-                    state_list.append( self.empty_led )
+                    state_list.append( self.dots['empty'] )
 
             self.led_liststore.append( self.digitize( ctime ) + state_list + [ctime])
 
@@ -866,42 +834,6 @@ class lupdater(threading.Thread):
         else:
             pass
             ####print "Disconnecting task state info thread"
-
-
-class DotGetter(object):
-
-    """Retrieve a Dot icon for a state."""
-
-    STATE_ICON_PATHS = {
-               "waiting": "lamps/led-waiting-glow.xpm",
-               "retry_delayed": "lamps/led-retry-glow.xpm",
-               "runahead": "lamps/led-runahead-glow.xpm",
-               "queued": "lamps/led-queued-glow.xpm",
-               "submitted": "lamps/led-submitted-glow.xpm",
-               "running": "lamps/led-running-glow.xpm",
-               "held": "lamps/led-stopped-glow.xpm",
-               "failed": "lamps/led-failed-glow.xpm",
-               "stopped": "lamps/led-stopped-glow.xpm",
-               "succeeded": "lamps/led-finished.xpm",
-               "empty": "lamps/led-empty.xpm"}
-
-    def __init__( self, imagedir ):
-        self.imagedir = imagedir
-
-    def get_icon( self, state ):
-        if state in self.STATE_ICON_PATHS:
-            icon_path = self.STATE_ICON_PATHS[state]
-        else:
-            icon_path = self.STATE_ICON_PATHS["empty"]
-        full_path = self.imagedir + "/" + icon_path
-        return gtk.gdk.pixbuf_new_from_file( full_path )
-
-    def get_image( self, state ):
-        #return gtk.image_new_from_pixbuf( self.get_icon( state ) )
-        img = gtk.Image()
-        img.set_from_pixbuf( self.get_icon( state ) )
-        return img
-
 
 def _time_trim(time_value):
     if time_value is not None:
