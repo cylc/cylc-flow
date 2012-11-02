@@ -913,7 +913,7 @@ class scheduler(object):
         timeout = self.suite_timer_start + datetime.timedelta( minutes=self.config.suite_timeout )
         handler = self.config.event_handlers['timeout']
         if now > timeout:
-            message = 'Suite timed out after ' + str( self.config.suite_timeout) + ' minutes' 
+            message = 'suite timed out after ' + str( self.config.suite_timeout) + ' minutes' 
             self.log.warning( message )
             if handler:
                 # a handler is defined
@@ -923,7 +923,7 @@ class scheduler(object):
                 else:
                     foreground = False
                 try:
-                    RunHandler( 'timeout', handler, self.suite, msg='suite starting', fg=foreground )
+                    RunHandler( 'timeout', handler, self.suite, msg=message, fg=foreground )
                 except Exception, x:
                     # Note: tests suites depend on the following message:
                     print >> sys.stderr, '\nERROR: timeout EVENT HANDLER FAILED'

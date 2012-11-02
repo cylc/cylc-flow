@@ -35,8 +35,8 @@ title = "Cylc Admin Test Suite"
       A => C => F
       B & C => D
 
-      Warm[T-6] & Post[T-6] & X:fail => recover
-      Warm & Post => !recover
+      Warm[T-6]:succeed-all & Post[T-6]:succeed-all & X:fail => recover
+      Warm:succeed-all & Post:succeed-all => !recover
     
       # A must be cold started after a gap  
       ColdA | A[T-6] => A
