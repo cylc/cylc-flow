@@ -38,9 +38,10 @@ class ControlTree(object):
     """
 Text Treeview suite control interface.
     """
-    def __init__(self, cfg, info_bar, get_right_click_menu, log_colors ):
+    def __init__(self, cfg, usercfg, info_bar, get_right_click_menu, log_colors ):
 
         self.cfg = cfg
+        self.usercfg = usercfg
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
         self.log_colors = log_colors
@@ -56,7 +57,7 @@ Text Treeview suite control interface.
         self.tfilt = ''
         
         self.t = tupdater( self.cfg, self.ttreeview, self.ttree_paths,
-                           self.info_bar )
+                           self.info_bar, self.usercfg )
         self.t.start()
         return main_box
 
@@ -165,7 +166,7 @@ Text Treeview suite control interface.
 
         self.sort_col_num = 0
 
-        self.ttreestore = gtk.TreeStore(str, str, str, str, str, str, str, str)
+        self.ttreestore = gtk.TreeStore(str, str, str, str, str, str, str, str, gtk.gdk.Pixbuf )
         self.tmodelfilter = self.ttreestore.filter_new()
         self.tmodelfilter.set_visible_func(self.visible_cb)
         self.tmodelsort = gtk.TreeModelSort(self.tmodelfilter)
@@ -178,12 +179,18 @@ Text Treeview suite control interface.
         self.ttreeview.connect( 'button_press_event', self.on_treeview_button_pressed )
         headings = [ None, 'task', 'state', 'message', 'Tsubmit', 'Tstart', 'mean dT', 'ETC' ]
         bkgcols  = [ None, None,  '#def',  '#fff',    '#def',    '#fff',   '#def',    '#fff']
+
         for n in range(1, len(headings)):
             # Skip first column (cycle time)
             cr = gtk.CellRendererText()
+            tvc = gtk.TreeViewColumn( headings[n] )
             cr.set_property( 'cell-background', bkgcols[n] )
-            #tvc = gtk.TreeViewColumn( headings[n], cr, text=n )
-            tvc = gtk.TreeViewColumn( headings[n], cr, markup=n )
+            if n == 2:
+                crp = gtk.CellRendererPixbuf()
+                tvc.pack_start( crp, False )
+                tvc.set_attributes( crp, pixbuf=8 )
+            tvc.pack_start( cr, True )
+            tvc.set_attributes( cr, text=n )
             tvc.set_resizable(True)
             tvc.set_clickable(True)
          #   tvc.connect("clicked", self.change_sort_order, n - 1 )
