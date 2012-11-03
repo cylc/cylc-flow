@@ -118,20 +118,6 @@ the remote host before starting the suite."""
 
         set_main_debug( self.options.debug )
 
-    def add_to_banner( self ):
-        if self.options.warm:
-            self.banner[ "WARM START" ] = self.start_tag
-            if self.options.set_ict:
-                self.ict = self.start_tag
-            else:
-                self.ict = None
-        elif self.options.raw:
-            self.banner[ "RAW START" ] = self.start_tag
-            self.ict = None
-        else:
-            self.banner[ "COLD START" ] = self.start_tag
-            self.ict = self.start_tag
-
     def load_tasks_cold( self ):
         if self.start_tag:
             self.log.info( 'Cold Start ' + self.start_tag )

@@ -1,0 +1,53 @@
+\section{Site.rc Reference}
+\label{SiteRCReference}
+
+\lstset{language=bash}
+
+*** NOT USED YET - TBD ***
+
+\subsection[suite run directory]{suite run directory}
+
+Cylc writes the following files to a special ``run'' directory:
+
+\begin{myitemize}
+    \item suite event log, and stdout and stderr logs, in \lstinline=SUITE/log/suite/=
+    \item task stdout and stderr logs, in \lstinline=SUITE/log/job/= 
+    \item suite state dump files used for restarts, in \lstinline=SUITE/state/=)
+\end{myitemize}
+Where \lstinline=SUITE= is the suite name.
+
+\begin{myitemize}
+    \item {\em type:} string (directory path, may contain environment variables)
+\end{myitemize}
+
+\subsection[state dump rolling archive length]{[cylc] $\rightarrow$ state dump rolling archive length}
+
+This is the length, in number of changes, of the automatic rolling
+archive of state dump files that allows you to restart a suite from a
+previous state.  Every time a task changes state cylc updates the state
+dump and rolls previous states back one on the archive. You'll probably
+only ever need the latest (most recent) state dump, which is
+automatically used in a restart, but any previous state still in the
+archive can be used.  Additionally, special labeled state dumps are
+written prior to actioning any suite intervention, and their filenames
+are logged by cylc.
+
+\begin{myitemize}
+    \item {\em type:} integer ($\geq 1$)
+    \item {\em default:} $10$
+\end{myitemize}
+
+
+\subsection{[logging]}
+
+\subsubsection[roll over at start-up]{[suite logging] $\rightarrow$ roll over at start-up}
+
+Suite logs roll over (start anew) automatically when they reach the
+configured maximum size, and whenever the suite is started or restarted.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} True
+\end{myitemize}
+
+

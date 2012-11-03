@@ -113,12 +113,6 @@ the remote host before starting the suite."""
 
         set_main_debug( self.options.debug )
 
-    def add_to_banner( self ):
-        if self.restart_from:
-            self.banner['RESTART'] = self.restart_from
-        else:
-            self.banner['RESTART' ] = 'previous state'
-
     def load_tasks( self ):
         # FIND THE INITIAL STATE DUMP FILE
         state_dump_dir = self.state_dump_dir

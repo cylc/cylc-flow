@@ -465,7 +465,6 @@ class remote_switch( Pyro.core.ObjBase ):
             self._warning( "Illegal logging level: " + level )
             return result( False, "Illegal logging level: " + level)
 
-        self.config[ 'logging level' ] = new_level
         self.log.setLevel( new_level )
         return result(True, 'OK')
 

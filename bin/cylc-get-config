@@ -128,9 +128,8 @@ if options.tasks:
     sys.exit(0)
 
 if options.dpaths:
-    print prefix + "SUITE LOG DIRECTORY:\n ", config['cylc']['logging']['directory']
-    print prefix + "SUITE STATE DUMP DIRECTORY:\n ", config['cylc']['state dumps']['directory']
-    print prefix + "TASK LOG DIRECTORIES:"
+    print "SUITE RUN DIRECTORY:\n ", config['cylc']['suite run directory']
+    print "TASK LOG DIRECTORIES:"
     logdirs = {}
     root_ldir = config.get_config(['runtime','root','log directory'])
     ldirs = [root_ldir]
