@@ -23,6 +23,7 @@ from suite_host import suite_host
 from owner import user
 from cycle_time import ct, CycleTimeError
 import datetime
+import time
 import port_scan
 import accelerated_clock 
 import logging
@@ -49,6 +50,8 @@ from broadcast import broadcast
 from suite_state_dumping import dumper
 from suite_logging import suite_log
 from suite_output import suite_output
+import threading
+import Queue
 
 class SchedulerError( Exception ):
     """
@@ -60,6 +63,17 @@ class SchedulerError( Exception ):
         self.msg = msg
     def __str__( self ):
         return repr(self.msg)
+
+class request_handler( threading.Thread ):
+    def __init__( self, pyro, verbose ):
+        threading.Thread.__init__(self)
+        self.pyro = pyro
+        # This kills the thread when the main prog finishes:
+        self.daemon = True # NOTE: fails pre 2.5 or 2.6? (use setDaemonic()?)
+
+    def run( self ):
+        while True:
+            self.pyro.handleRequests(timeout=1)
 
 class pool(object):
     def __init__( self, suite, config, wireless, pyro, log, run_mode, verbose, debug=False ):
@@ -366,6 +380,8 @@ class scheduler(object):
         self.pyro.connect( self.wireless, 'broadcast_receiver')
 
         self.pool = pool( self.suite, self.config, self.wireless, self.pyro, self.log, self.run_mode, self.verbose, self.options.debug )
+        self.request_handler = request_handler( self.pyro, self.verbose )
+        self.request_handler.start()
 
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD
         self.load_tasks()
@@ -750,7 +766,9 @@ class scheduler(object):
                 print >> sys.stderr, '\nERROR: startup EVENT HANDLER FAILED'
                 raise SchedulerError, x
 
+        count = 0
         while True: # MAIN LOOP
+            count += 1
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
 
@@ -794,7 +812,13 @@ class scheduler(object):
 
             # incoming task messages set task.task.state_changed to True
             #print 'Pyro>'
-            self.pyro.handleRequests(timeout=1)
+            #self.pyro.handleRequests(timeout=1)
+
+            time.sleep(1)
+            print 'PROCESSING', count
+            for itask in self.pool.get_tasks():
+                itask.process_incoming_messages()
+
             #print '<Pyro'
             if task.task.progress_msg_rec:
                 task.task.progress_msg_rec = False

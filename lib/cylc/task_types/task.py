@@ -37,6 +37,7 @@ from cylc.strftime import strftime
 from cylc.RunEventHandler import RunHandler
 import logging
 import Pyro.core
+import Queue
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -139,6 +140,8 @@ class task( Pyro.core.ObjBase ):
         self.to_go = None
         self.try_number = 1
         self.retry_delay_timer_start = None
+
+        self.message_queue = Queue.Queue()
 
     def plog( self, message ):
         # print and log a low priority message
@@ -575,8 +578,15 @@ class task( Pyro.core.ObjBase ):
             return False
 
     def incoming( self, priority, message ):
-        # Receive incoming messages for this task
+        # queue incoming messages for this task
+        self.message_queue.put( (priority, message) )
 
+    def process_incoming_messages( self ):
+        while self.message_queue.qsize() > 0:
+            self.process_incoming_message( self.message_queue.get() )
+            self.message_queue.task_done()
+
+    def process_incoming_message( self, (priority, message) ):
         if self.reject_if_failed( message ):
             # Failed tasks do not send messages unless declared resurrectable
             return
