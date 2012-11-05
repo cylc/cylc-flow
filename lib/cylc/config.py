@@ -24,12 +24,13 @@
 # comma) ... so to reparse the file  we have to instantiate a new config
 # object.
 
+import re, os, sys, logging
 import taskdef
 from copy import deepcopy
 from collections import deque
 from OrderedDict import OrderedDict
+from envvar import check_varnames
 from cycle_time import ct, CycleTimeError
-import re, os, sys, logging
 from mkdir_p import mkdir_p
 from validate import Validator
 from configobj import get_extra_values, flatten_errors, Section
@@ -44,7 +45,6 @@ from TaskID import TaskID, AsyncTag
 from Jinja2Support import Jinja2Process, TemplateError, TemplateSyntaxError
 from continuation_lines import join
 from include_files import inline
-from random import randrange
 
 try:
     import graphing
@@ -794,6 +794,7 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, '(inconsistent use of special tasks?)' 
                 except Exception, x:
                     print >> sys.stderr, x
+                    raise
                     raise SuiteConfigError, 'ERROR, failed to instantiate task ' + str(name)
                 # force trigger evaluation now
                 try:
@@ -806,6 +807,20 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
                 tag = itask.next_tag()
             #print "OK:", itask.id
+
+        if self.verbose:
+            print "Checking environment variable names"
+        badvars = {}
+        for name in self['runtime']:
+            bad = check_varnames( self['runtime'][name]['environment'] )
+            if len( bad ) > 0:
+                badvars[name] = bad
+        if badvars:
+            for key, val in badvars.items():
+                print key + ':'
+                for var in val:
+                    print '  +', var 
+            raise SuiteConfigError("ERROR: illegal environment variable name(s) detected" )
 
         # TASK INSERTION GROUPS DISABLED - WILL USE RUNTIME GROUPS FOR INSERTION ETC.
         ### check task insertion groups contain valid tasks
@@ -1523,7 +1538,19 @@ class config( CylcConfigObj ):
 
     def get_taskdef( self, name ):
         # (DefinitionError caught above)
-        taskd = taskdef.taskdef( name )
+
+        # get the task runtime
+        try:
+            taskcfg = self['runtime'][name]
+        except KeyError:
+            raise SuiteConfigError, "Task not found: " + name
+
+        # Interpolate <TASK> here (doing it earlier like <NAMESPACE>
+        # fails to catch dummy tasks that are defined only by graph
+        # (otherwise they would inherit root with <TASK>=root).
+        self.interpolate( name, taskcfg, '<TASK>' )
+
+        taskd = taskdef.taskdef( name, taskcfg, self.run_mode )
 
         # SET ONE-OFF AND COLD-START TASK INDICATORS
         if name in self['scheduling']['special tasks']['cold-start']:
@@ -1550,183 +1577,21 @@ class config( CylcConfigObj ):
             taskd.modifiers.append( 'clocktriggered' )
             taskd.clocktriggered_offset = self.clock_offsets[name]
 
-        # get the task runtime
-        try:
-            taskconfig = self['runtime'][name]
-        except KeyError:
-            raise SuiteConfigError, "Task not found: " + name
-
-        # Interpolate <TASK> here (doing it earlier like <NAMESPACE>
-        # fails to catch dummy tasks that are defined only by graph
-        # (otherwise they would inherit root with <TASK>=root).
-        self.interpolate( name, taskconfig, '<TASK>' )
-
-        taskd.title = taskconfig['title']
-        taskd.description = taskconfig['description']
-
-        taskd.owner = taskconfig['remote']['owner']
-        taskd.job_submit_method = taskconfig['job submission']['method']
-
-        taskd.command = taskconfig['command scripting']
-        if self.run_mode == 'dummy':
-            taskd.command = taskconfig['dummy mode']['command scripting']
-            if taskconfig['dummy mode']['disable pre-command scripting']:
-                taskd.precommand = None
-            if taskconfig['dummy mode']['disable post-command scripting']:
-                taskd.postcommand = None
-        else:
-            taskd.precommand = taskconfig['pre-command scripting'] 
-            taskd.postcommand = taskconfig['post-command scripting'] 
-
-        if self.run_mode == 'live' or \
-                ( self.run_mode == 'simulation' and not taskconfig['simulation mode']['disable retries'] ) or \
-                ( self.run_mode == 'dummy' and not taskconfig['dummy mode']['disable retries'] ):
-            taskd.retry_delays = deque( taskconfig['retry delays'])
-
-        # check retry delay type (must be float):
-        for i in taskd.retry_delays:
-            try:
-                float(i)
-            except ValueError:
-                raise SuiteConfigError, "ERROR, retry delay values must be floats: " + str(i)
-
-        rrange = taskconfig['simulation mode']['run time range']
-        ok = True
-        if len(rrange) != 2:
-            ok = False
-        try:
-            res = [ int( rrange[0] ), int( rrange[1] ) ]
-        except:
-            ok = False
-        if not ok:
-            raise SuiteConfigError, "ERROR, " + taskd.name + ": simulation mode run time range must be 'int, int'" 
-        try:
-            taskd.sim_mode_run_length = randrange( res[0], res[1] )
-        except Exception, x:
-            print >> sys.stderr, x
-            raise SuiteConfigError, "ERROR: simulation mode task run time range must be [MIN,MAX)" 
-        taskd.fail_in_sim_mode = taskconfig['simulation mode']['simulate failure']
-
-        taskd.initial_scripting = taskconfig['initial scripting'] 
-        taskd.enviro_scripting = taskconfig['environment scripting'] 
-
-        taskd.ssh_messaging = str(taskconfig['remote']['ssh messaging'])
-
-        taskd.job_submission_shell = taskconfig['job submission']['shell']
-
-        taskd.job_submit_command_template = taskconfig['job submission']['command template']
-
-        taskd.job_submit_log_directory = taskconfig['log directory']
-        taskd.job_submit_share_directory = taskconfig['share directory']
-        taskd.job_submit_work_directory = taskconfig['work directory']
-
-        if taskconfig['remote']['host'] or taskconfig['remote']['owner']:
-            # Remote task hosting
-            taskd.remote_host = taskconfig['remote']['host']
-            taskd.remote_shell_template = taskconfig['remote']['remote shell template']
-            taskd.remote_cylc_directory = taskconfig['remote']['cylc directory']
-            taskd.remote_suite_directory = taskconfig['remote']['suite definition directory']
-            if taskconfig['remote']['log directory']:
-                # (Unlike for the work and share directories below, we
-                # need to retain local and remote log directory paths - 
-                # the local one is still used for the task job script). 
-                taskd.remote_log_directory  = taskconfig['remote']['log directory']
-            else:
-                # Use local log directory path, but replace home dir
-                # (if present) with literal '$HOME' for interpretation
-                # on the remote host.
-                taskd.remote_log_directory  = re.sub( self.homedir, '$HOME', taskd.job_submit_log_directory )
-
-            if taskconfig['remote']['work directory']:
-                # Replace local work directory.
-                taskd.job_submit_work_directory  = taskconfig['remote']['work directory']
-            else:
-                # Use local work directory path, but replace home dir
-                # (if present) with literal '$HOME' for interpretation
-                # on the remote host.
-                taskd.job_submit_work_directory  = re.sub( self.homedir, '$HOME', taskd.job_submit_work_directory )
-
-            if taskconfig['remote']['share directory']:
-                # Replace local share directory.
-                taskd.job_submit_share_directory  = taskconfig['remote']['share directory']
-            else:
-                # Use local share directory path, but replace home dir
-                # (if present) with literal '$HOME' for interpretation
-                # on the remote host.
-                taskd.job_submit_share_directory  = re.sub( self.homedir, '$HOME', taskd.job_submit_share_directory )
-
-        taskd.manual_messaging = taskconfig['manual completion']
-        if self.run_mode == 'dummy':
-            print >> sys.stderr, "WARNING: unsetting manual completion (dummy tasks don't detach)" 
-            taskd.manual_messaging = False
-
-        # task event hooks
-        if self.run_mode == 'live' or \
-                ( self.run_mode == 'simulation' and not taskconfig['simulation mode']['disable task event hooks'] ) or \
-                ( self.run_mode == 'dummy' and not taskconfig['dummy mode']['disable task event hooks'] ):
-            taskd.event_handlers = {
-                'submitted' : taskconfig['event hooks']['submitted handler'],
-                'started'   : taskconfig['event hooks']['started handler'],
-                'succeeded' : taskconfig['event hooks']['succeeded handler'],
-                'failed'    : taskconfig['event hooks']['failed handler'],
-                'warning'   : taskconfig['event hooks']['warning handler'],
-                'retry'     : taskconfig['event hooks']['retry handler'],
-                'submission failed'  : taskconfig['event hooks']['submission failed handler'],
-                'submission timeout' : taskconfig['event hooks']['submission timeout handler'],
-                'execution timeout'  : taskconfig['event hooks']['execution timeout handler']
-                }
-            taskd.timeouts = {
-                'submission' : taskconfig['event hooks']['submission timeout'],
-                'execution'  : taskconfig['event hooks']['execution timeout']
-                }
-            taskd.reset_timer = taskconfig['event hooks']['reset timer']
-        else:
-            taskd.event_handlers = {
-                'submitted' : None,
-                'started'   : None,
-                'succeeded' : None,
-                'failed'    : None,
-                'warning'   : None,
-                'retry'     : None,
-                'submission failed'  : None,
-                'submission timeout' : None,
-                'execution timeout'  : None
-                }
-            taskd.timeouts = {
-                'submission' : None,
-                'execution'  : None
-                }
-            taskd.reset_timer = False
-
-        taskd.logfiles    = taskconfig[ 'extra log files' ]
-        taskd.resurrectable = taskconfig[ 'enable resurrection' ]
-
-        taskd.environment = taskconfig[ 'environment' ]
-        self.check_environment( taskd.name, taskd.environment )
-
-        taskd.directives  = taskconfig[ 'directives' ]
-
+        # FAMILY HIERARCHY
         foo = deepcopy(self.family_hierarchy[ name ])
         foo.reverse()
         taskd.namespace_hierarchy = foo
 
         return taskd
-
-    def check_environment( self, name, env ):
-        bad = []
-        for varname in env:
-            if not re.match( '^[a-zA-Z_][\w]*$', varname ):
-                bad.append(varname)
-        if len(bad) != 0:
-            for item in bad:
-                print >> sys.stderr, " ", item
-            raise SuiteConfigError("ERROR: illegal environment variable name(s) detected in namespace " + name )
-    
-    def get_task_proxy( self, name, ctime, state, stopctime, startup ):
-        try:
-            tdef = self.taskdefs[name]
-        except KeyError:
-            raise TaskNotDefinedError("ERROR, No such task name: " + name )
+   
+    def get_task_proxy( self, name, ctime, state, stopctime, startup, spcfg=None ):
+        if spcfg:
+            tdef = self.get_taskdef( name, spcfg )
+        else:
+            try:
+                tdef = self.taskdefs[name]
+            except KeyError:
+                raise TaskNotDefinedError("ERROR, No such task name: " + name )
         return tdef.get_task_class()( ctime, state, stopctime, startup )
 
     def get_task_proxy_raw( self, name, tag, state, stoptag, startup ):
@@ -1750,3 +1615,4 @@ class config( CylcConfigObj ):
 
     def get_task_class( self, name ):
         return self.taskdefs[name].get_task_class()
+

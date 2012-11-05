@@ -296,7 +296,7 @@ task_commands['started'  ] = [ 'started', 'task-started' ]
 task_commands['message'  ] = [ 'message', 'task-message' ]
 task_commands['succeeded'] = [ 'succeeded', 'task-succeeded' ]
 task_commands['failed'   ] = [ 'failed', 'task-failed' ]
-task_commands['broadcast' ] = [ 'broadcast' ]
+task_commands['broadcast'] = [ 'broadcast', 'bcast' ]
 
 all_commands = OrderedDict()
 for dct in [ 
