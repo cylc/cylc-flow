@@ -234,7 +234,8 @@ class pool(object):
         print 'JOB SUBMISSIONS COMPLETED:'
         print "  Time taken: " + str( after - before )
         print " ", n_succ, "of", n_tasks, "job submissions succeeded" 
-        print " ", n_fail, "of", n_tasks, "job submissions failed" 
+        if n_fail != 0:
+            print " ", n_fail, "of", n_tasks, "job submissions failed" 
 
 class scheduler(object):
     def __init__( self, is_restart=False ):
